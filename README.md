@@ -56,6 +56,6 @@ Links
 * Mailing list subscription: https://groups.google.com/forum/#!forum/faradaysec
 * Twitter: [@faradaysec] (https://twitter.com/faradaysec)
 * [Demos] (http://www.youtube.com/user/isrlab)
-* IRC: [ircs://irc.freenode.net/faradaydev] (ircs://irc.freenode.net/faradaydev)
+* IRC: [ircs://irc.freenode.net/faraday-dev] (ircs://irc.freenode.net/faraday-dev)
 * Screenshots: https://github.com/infobyte/faraday/wiki/Screenshots
 

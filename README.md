@@ -30,7 +30,7 @@ Quick install:
 
 Download the latest tarball by clicking [here] (https://github.com/infobyte/faradaysec/tarball/master) 
 
-Preferably, you can download faraday by cloning the [Git] https://github.com/infobyte/faraday repository:
+Preferably, you can download faraday by cloning the [Git] (https://github.com/infobyte/faraday repository):
 
     $ git clone https://github.com/infobyte/faraday.git faraday-dev
     $ cd faraday-dev

@@ -20,6 +20,7 @@ The following python libs:
   * argparse 
   * psycopg2
   * IPy
+  * requests
 
 Installation
 ---

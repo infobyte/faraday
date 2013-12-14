@@ -12,7 +12,7 @@ Modern Linux (Tested Debian / Ubuntu  * / Kali / Backtrack)
 * Python 2.6.x and 2.7.x
 * Qt3
 * CouchDB >= 1.2.0  
-The following python libs:
+* The following python libs:
   * mockito 
   * couchdbkit 
   * whoosh 

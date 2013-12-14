@@ -1,4 +1,4 @@
-![Faraday Logo](https://raw.github.com/wiki/infobyte/faraday/Faraday-Logo.png)
+![Faraday Logo](https://raw.github.com/wiki/infobyte/faraday/images/Faraday-Logo.png)
 
 Faraday is the first multiuser Penetration test IDE. Designed for distribution, indexation and analysis of the generated data during the process of a security audit.
 

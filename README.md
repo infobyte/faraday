@@ -1,11 +1,12 @@
 ![Faraday Logo](https://raw.github.com/wiki/infobyte/faraday/images/Faraday-Logo.png)
 
-Faraday introduce a new concept (IPE) Integrated Penetration-Test Enviroment.  
-The first multiuser Penetration test IDE. Designed for distribution, indexation and analysis of the generated data during the process of a security audit.
+Faraday introduce a new concept (IPE) Integrated Penetration-Test Enviroment a multiuser Penetration test IDE. Designed for distribution, indexation and analysis of the generated data during the process of a security audit.
 
 The main purpose of Faraday is to re-use the available tools in the community to take advantage of them in a multiuser way.
 
 Design for simplicity, users should feel no difference between their own terminal application and the one included in Faraday. Developed with a specialized set of functionalities that help users improve their own work. Do you remember yourself programming without an IDE? Well, Faraday does the same an IDE does for you when programming, but from the perspective of a penetration test.
+
+![Faraday Logo](https://raw.github.com/wiki/infobyte/faraday/images/Faraday-Mainwindow.png)
 
 Requirements
 ----

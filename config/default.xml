@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<faraday>
+
+    <appname>Faraday - Penetration Test IDE</appname>
+    <version>1.0</version>
+    <debug_status>0</debug_status>
+    <font>-Misc-Fixed-medium-r-normal-*-12-100-100-100-c-70-iso8859-1</font>
+    <home_path>~/</home_path>
+    <image_path>~/.faraday/images/</image_path>>
+    <icons_path>~/.faraday/images/icons/</icons_path>
+    <data_path>~/.faraday/data</data_path>
+    <config_path>~/.faraday/</config_path>
+    <default_temp_path>~/.faraday/temp/</default_temp_path>
+    <persistence_path>~/.faraday/persistence/</persistence_path>
+    <report_path>~/.faraday/report/</report_path>
+    <hstactions_path>~/.faraday/hstactions.dat</hstactions_path>
+
+    <default_category>General</default_category>
+    <auto_share_workspace>1</auto_share_workspace>
+    <network_location>LAN</network_location>
+    <perspective_view>Hosts</perspective_view>
+    <log_console_toggle></log_console_toggle>
+    <shell_maximized>0</shell_maximized>
+    <host_tree_toggle></host_tree_toggle>
+
+    <api_con_info>None</api_con_info>
+    <api_con_info_host>None</api_con_info_host>
+    <api_con_info_port>None</api_con_info_port>
+    <auth encrypted="no" algorithm="OTR">0</auth>
+    <repo_url type="svn"></repo_url>
+    <repo_user>u</repo_user>
+    <repo_password></repo_password>
+    <couch_uri/>
+    <couch_is_replicated/>
+    <couch_replics/>
+
+    <tickets_uri>https://www.faradaysec.com/scripts/listener.php</tickets_uri>
+    <tickets_template>{}</tickets_template>
+    <tickets_api>{}</tickets_api>
+
+
+</faraday>

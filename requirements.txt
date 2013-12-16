@@ -1,0 +1,7 @@
+couchdbkit==0.6.5
+mockito==0.5.1
+whoosh==2.5.5
+argparse==1.2.1
+psycopg2==2.4.5
+ipy==0.75
+requests==1.2.3

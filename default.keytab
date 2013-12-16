@@ -1,0 +1,138 @@
+# [default.Keytab] Buildin Keyboard Table
+
+# --------------------------------------------------------------
+#
+# This file is used to create the buildin keyboard table.
+# It is included for reference purpose with the *.keytab
+# files that are loaded dynamically.
+#
+# Modifying it does not have any effect (unless you
+# derive the default.keytab.h and recompile konsole).
+#
+# To customize your keyboard, copy this file to something
+# ending with .keytab and change it to meet you needs.
+# Please read the README.KeyTab and the README.keyboard
+# in this case.
+#
+# --------------------------------------------------------------
+
+keyboard "XTerm (XFree 4.x.x)"
+
+# --------------------------------------------------------------
+#
+# Note that this particular table is a "risc" version made to
+# ease customization without bothering with obsolete details.
+# See VT100.keytab for the more hairy stuff.
+#
+# --------------------------------------------------------------
+
+# common keys
+
+key Escape             : "\E"
+
+key Tab   -Shift       : "\t"
+key Tab   +Shift+Ansi  : "\E[Z"
+key Tab   +Shift-Ansi  : "\t"
+
+key Return-Shift-NewLine : "\r"
+key Return-Shift+NewLine : "\r\n"
+
+key Return+Shift         : "\EOM"
+
+# Backspace and Delete codes are preserving CTRL-H.
+
+key Backspace      : "\x7f"
+
+# Arrow keys in VT52 mode
+
+key Up   -Shift-Ansi : "\EA"
+key Down -Shift-Ansi : "\EB"
+key Right-Shift-Ansi : "\EC"
+key Left -Shift-Ansi : "\ED"
+
+# Arrow keys in ANSI mode with Application - and Normal Cursor Mode)
+
+key Up   -Shift+Ansi+AppCuKeys : "\EOA"
+key Down -Shift+Ansi+AppCuKeys : "\EOB"
+key Right-Shift+Ansi+AppCuKeys : "\EOC"
+key Left -Shift+Ansi+AppCuKeys : "\EOD"
+
+key Up   -Shift+Ansi-AppCuKeys : "\E[A"
+key Down -Shift+Ansi-AppCuKeys : "\E[B"
+key Right-Shift+Ansi-AppCuKeys : "\E[C"
+key Left -Shift+Ansi-AppCuKeys : "\E[D"
+
+# other grey PC keys
+
+key Enter+NewLine : "\r\n"
+key Enter-NewLine : "\r"
+
+key Home  -Shift-AppCuKeys : "\E[H"  
+key End   -Shift-AppCuKeys : "\E[F"  
+key Home  +Shift-AppCuKeys : "\E[2H"  
+key End   +Shift-AppCuKeys : "\E[2F"  
+
+key Home  -Shift+AppCuKeys : "\EOH"  
+key End   -Shift+AppCuKeys : "\EOF"  
+key Home  +Shift+AppCuKeys : "\EO2H"  
+key End   +Shift+AppCuKeys : "\EO2F"  
+
+key Insert-Shift : "\E[2~"  
+key Delete-Shift : "\E[3~"  
+key Prior -Shift : "\E[5~"  
+key Next  -Shift : "\E[6~"  
+
+key Delete+Shift : "\E[3;2~"  
+
+# Function keys w/o Shift modifier
+
+key F1    -Shift   : "\EOP"
+key F2    -Shift   : "\EOQ"
+key F3    -Shift   : "\EOR"
+key F4    -Shift   : "\EOS"
+key F5    -Shift   : "\E[15~"
+key F6    -Shift   : "\E[17~"
+key F7    -Shift   : "\E[18~"
+key F8    -Shift   : "\E[19~"
+key F9    -Shift   : "\E[20~"
+key F10   -Shift   : "\E[21~"
+key F11   -Shift   : "\E[23~"
+key F12   -Shift   : "\E[24~"
+
+key F1 +Shift    : "\EO2P"  
+key F2 +Shift    : "\EO2Q"
+key F3 +Shift    : "\EO2R"
+key F4 +Shift    : "\EO2S"
+key F5 +Shift    : "\E[15;2~"
+key F6 +Shift    : "\E[17;2~" 
+key F7 +Shift    : "\E[18;2~" 
+key F8 +Shift    : "\E[19;2~" 
+key F9 +Shift    : "\E[20;2~" 
+key F10+Shift    : "\E[21;2~" 
+key F11+Shift    : "\E[23;2~" 
+key F12+Shift    : "\E[24;2~" 
+
+# Work around dead keys
+
+key Space +Control : "\x00"
+
+# Some keys are used by konsole to cause operations.
+# The scroll* operations refer to the history buffer.
+
+key Left  +Shift -Control  : prevSession
+key Right +Shift -Control  : nextSession
+key Left  +Shift +Control  : moveSessionLeft
+key Right +Shift +Control  : moveSessionRight
+key N +Control +Alt: newSession
+key M +Control +Alt: activateMenu
+key S +Control +Alt: renameSession
+key Up    +Shift   : scrollLineUp
+key Prior +Shift   : scrollPageUp
+key Down  +Shift   : scrollLineDown
+key Next  +Shift   : scrollPageDown
+key Insert+Shift -Control  : emitClipboard
+key Insert+Shift +Control  : emitSelection
+
+key ScrollLock     : scrollLock
+
+# keypad characters are not offered differently by Qt.

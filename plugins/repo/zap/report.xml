@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?><report>
+Report generated at Tue, 12 Jul 2011 08:32:22.
+<alertitem>
+  <pluginid>40000</pluginid>
+  <alert>Cookie set without HttpOnly flag</alert>
+  <riskcode>1</riskcode>
+  <reliability>2</reliability>
+  <riskdesc>Low (Warning)</riskdesc>
+  <desc>A cookie has been set without the HttpOnly flag, which means that the cookie can be accessed by JavaScript. If a malicious script can be run on this page then the cookie will be accessible and can be transmitted to another site. If this is a session cookie then session hijacking may be possible.
+	</desc>
+  <uri>http://192.168.1.100/</uri>
+  <param>ASPSESSIONIDQSDRBCRQ=EEFHJOACLHOKLJHFNAFBBECK; path=/</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/ServFotoPorNoticia.asp</uri>
+  <param>ASPSESSIONIDCQATADBB=LMFPHGLBHIIEDFILGFJEJNGE; path=/</param>
+  <otherinfo/>
+  <uri>http://www.web1.com.ar/acceso/include/valida.asp</uri>
+  <param>ASPSESSIONIDSCBABSTB=MNPOKADDPAIDCDNBPGFDHGBF; path=/</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/files/</uri>
+  <param>ASPSESSIONIDCSCTCABB=HFCNOPJBMNJEAHDHMCKAHOBN; path=/</param>
+  <otherinfo/>
+  <uri>http://www.web2.com.ar/acceso/include/valida.asp</uri>
+  <param>ASPSESSIONIDQAASDACB=HADJFCIBOIANGBGNAOIDBGIL; path=/</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/</uri>
+  <param>ASPSESSIONIDSABQACDB=PAJBMJHBLOFELCIKBNLAAKKJ; path=/</param>
+  <otherinfo/>
+  <solution>Ensure that the HttpOnly flag is set for all cookies.
+	</solution>
+  <reference>www.owasp.org/index.php/HttpOnly
+	</reference>
+</alertitem>
+<alertitem>
+  <pluginid>40001</pluginid>
+  <alert>Password Autocomplete in browser</alert>
+  <riskcode>1</riskcode>
+  <reliability>2</reliability>
+  <riskdesc>Low (Warning)</riskdesc>
+  <desc>AUTOCOMPLETE attribute is not disabled in HTML FORM/INPUT element containing password type input.  Passwords may be stored in browsers and retrieved.
+	</desc>
+  <uri>http://192.168.1.100/</uri>
+  <param>input</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/</uri>
+  <param>input</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/default.asp?errsession=1</uri>
+  <param>input</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/</uri>
+  <param>input</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/</uri>
+  <param>input</param>
+  <otherinfo/>
+  <uri>http://www.web2.com.ar/dealers.htm</uri>
+  <param>input</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/</uri>
+  <param>input</param>
+  <otherinfo/>
+  <solution>Turn off AUTOCOMPLETE attribute in form or individual input elements containing password by using AUTOCOMPLETE='OFF'
+	</solution>
+  <reference>http://msdn.microsoft.com/library/default.asp?url=/workshop/author/forms/autocomplete_ovr.asp
+	</reference>
+</alertitem>
+<alertitem>
+  <pluginid>40003</pluginid>
+  <alert>Cross site scripting</alert>
+  <riskcode>3</riskcode>
+  <reliability>2</reliability>
+  <riskdesc>High (Warning)</riskdesc>
+  <desc>Cross-site scripting or HTML injection is possible.  Malicious script may be injected into the browser which appeared to be genuine content from the original site.  These scripts can be used to execute arbitrary code or steal customer sensitive information such as user password or cookies.
+	Very often this is in the form of a hyperlink with the injected script embeded in the query strings.  However, XSS is possible via FORM POST data, cookies, user data sent from another user or shared data retrieved from database.
+	Currently this check does not verify XSS from cookie or database.  They should be checked manually if the application retrieve database records from another user's input.
+	</desc>
+  <uri>http://www.web3.com.ar/Mes.asp?hhFrm=frm&amp;hhDia=DiaF&amp;hhMes=MesF&amp;hhAnno=%3CSCRIPT%3Ealert(%22OWASP%20ZAP%22);%3C/SCRIPT%3E</uri>
+  <param>hhAnno=&lt;SCRIPT&gt;alert("OWASP ZAP");&lt;/SCRIPT&gt;</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/Mes.asp?hhFrm=frm&amp;hhDia=DiaF&amp;hhMes=%3CSCRIPT%3Ealert(%22OWASP%20ZAP%22);%3C/SCRIPT%3E&amp;hhAnno=AnnoF</uri>
+  <param>hhMes=&lt;SCRIPT&gt;alert("OWASP ZAP");&lt;/SCRIPT&gt;</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/Mes.asp?hhFrm=frm&amp;hhDia=%3CSCRIPT%3Ealert(%22OWASP%20ZAP%22);%3C/SCRIPT%3E&amp;hhMes=MesF&amp;hhAnno=AnnoF</uri>
+  <param>hhDia=&lt;SCRIPT&gt;alert("OWASP ZAP");&lt;/SCRIPT&gt;</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/Mes.asp?hhFrm=%3CSCRIPT%3Ealert(%22OWASP%20ZAP%22);%3C/SCRIPT%3E&amp;hhDia=DiaF&amp;hhMes=MesF&amp;hhAnno=AnnoF</uri>
+  <param>hhFrm=&lt;SCRIPT&gt;alert("OWASP ZAP");&lt;/SCRIPT&gt;</param>
+  <otherinfo/>
+  <solution>Do not trust client side input even if there is client side validation.  Sanitize potentially danger characters in the server side.  Very often filtering the &lt;, &gt;, " characters prevented injected script to be executed in most cases.  However, sometimes other danger meta-characters such as ' , (, ), /, &amp;, ; etc are also needed.
+	In addition (or if these characters are needed), HTML encode meta-characters in the response.  For example, encode &lt; as &amp;lt;
+	
+	</solution>
+  <reference>The OWASP guide at http://www.owasp.org/documentation/guide
+	http://www.technicalinfo.net/papers/CSS.html
+	http://www.cgisecurity.org/articles/xss-faq.shtml
+	http://www.cert.org/tech_tips/malicious_code_FAQ.html
+	http://sandsprite.com/Sleuth/papers/RealWorld_XSS_1.html
+	
+	</reference>
+</alertitem>
+<alertitem>
+  <pluginid>40004</pluginid>
+  <alert>Cross site scripting without brackets</alert>
+  <riskcode>3</riskcode>
+  <reliability>1</reliability>
+  <riskdesc>High (Suspicious)</riskdesc>
+  <desc>Cross-site scripting or HTML injection is possible without '&lt;' and '&gt;'.  Malicious script may be injected into the browser which appeared to be genuine content from the original site.  These scripts can be used to execute arbitrary code or steal customer sensitive information such as user password or cookies.
+	Very often this is in the form of a hyperlink with the injected script embeded in the query strings.  However, XSS is possible via FORM POST data, cookies, user data sent from another user or shared data retrieved from database.
+	Currently this check does not verify XSS from cookie or database.  They should be checked manually if the application retrieve database records from another user's input.
+	</desc>
+  <uri>http://www.web3.com.ar/Mes.asp?hhFrm=frm&amp;hhDia=DiaF&amp;hhMes=MesF&amp;hhAnno=paros%22%20style=%22background:url(javascript:alert('OWASP%20ZAP'))</uri>
+  <param>hhAnno=paros" style="background:url(javascript:alert('OWASP ZAP'))</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/Mes.asp?hhFrm=frm&amp;hhDia=DiaF&amp;hhMes=paros%22%20style=%22background:url(javascript:alert('OWASP%20ZAP'))&amp;hhAnno=%3CSCRIPT%3Ealert(%22OWASP%20ZAP%22);%3C/SCRIPT%3E</uri>
+  <param>hhMes=paros" style="background:url(javascript:alert('OWASP ZAP'))</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/Mes.asp?hhFrm=frm&amp;hhDia=paros%22%20style=%22background:url(javascript:alert('OWASP%20ZAP'))&amp;hhMes=MesF&amp;hhAnno=%3CSCRIPT%3Ealert(%22OWASP%20ZAP%22);%3C/SCRIPT%3E</uri>
+  <param>hhDia=paros" style="background:url(javascript:alert('OWASP ZAP'))</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/Mes.asp?hhFrm=paros%22%20style=%22background:url(javascript:alert('OWASP%20ZAP'))&amp;hhDia=DiaF&amp;hhMes=MesF&amp;hhAnno=%3CSCRIPT%3Ealert(%22OWASP%20ZAP%22);%3C/SCRIPT%3E</uri>
+  <param>hhFrm=paros" style="background:url(javascript:alert('OWASP ZAP'))</param>
+  <otherinfo/>
+  <solution>Do not trust client side input even if there is client side validation.  Sanitize potentially danger characters in the server side.  Very often filtering the &lt;, &gt;, " characters prevented injected script to be executed in most cases.  However, sometimes other danger meta-characters such as ' , (, ), /, &amp;, ; etc are also needed.
+	In addition (or if these characters are needed), HTML encode meta-characters in the response.  For example, encode &lt; as &amp;lt;
+	
+	</solution>
+  <reference>The OWASP guide at http://www.owasp.org/documentation/guide
+	http://www.technicalinfo.net/papers/CSS.html
+	http://www.cgisecurity.org/articles/xss-faq.shtml
+	http://www.cert.org/tech_tips/malicious_code_FAQ.html
+	http://sandsprite.com/Sleuth/papers/RealWorld_XSS_1.html
+	
+	</reference>
+</alertitem>
+<alertitem>
+  <pluginid>40030</pluginid>
+  <alert>SQL Injection</alert>
+  <riskcode>3</riskcode>
+  <reliability>2</reliability>
+  <riskdesc>High (Warning)</riskdesc>
+  <desc>SQL injection is possible.  User parameters submitted will be formulated into a SQL query for database processing.  If the query is built by simple 'string concatenation', it is possible to modify the meaning of the query by carefully crafting the parameters.  Depending on the access right and type of database used, tampered query can be used to retrieve sensitive information from the database or execute arbitrary code.  MS SQL and PostGreSQL, which supports multiple statements, may be exploited if the database access right is more powerful.
+	This can occur in URL query strings, POST paramters or even cookies.  Currently check on cookie is not supported by Paros.  You should check SQL injection manually as well as some blind SQL injection areas cannot be discovered by this check.
+	</desc>
+  <uri>http://www.web3.com.ar/buscador.asp</uri>
+  <param>hId=&amp;hAreturn=&amp;hAccion=OK&amp;txtBuscar=test&amp;x=0&amp;y=0%27+AND+%271%27%3D%271</param>
+  <otherinfo/>
+  <uri>http://www.web3.com.ar/buscador.asp</uri>
+  <param>hId=&amp;hAreturn=&amp;hAccion=OK%22+OR+%221%22%3D%221&amp;txtBuscar=test&amp;x=0&amp;y=0</param>
+  <otherinfo/>
+  <solution>Do not trust client side input even if there is client side validation.  In general, If the input string is numeric, type check it.
+	If the application used JDBC, use PreparedStatement or CallableStatement with parameters passed by '?'
+	If the application used ASP, use ADO Command Objects with strong type checking and parameterized query.
+	If stored procedure or bind variables can be used, use it for parameter passing into query.  Do not just concatenate string into query in the stored procedure!
+	Do not create dynamic SQL query by simple string concatentation.
+	Use minimum database user privilege for the application.  This does not eliminate SQL injection but minimize its damage.  Eg if the application require reading one table only, grant such access to the application.  Avoid using 'sa' or 'db-owner'.
+	
+	</solution>
+  <reference>The OWASP guide at http://www.owasp.org/documentation/guide
+	http://www.sqlsecurity.com/DesktopDefault.aspx?tabid=23
+	http://www.spidynamics.com/whitepapers/WhitepaperSQLInjection.pdf
+	For Oracle database, refer to http://www.integrigy.com/info/IntegrigyIntrotoSQLInjectionAttacks.pdf
+	
+	</reference>
+</alertitem>
+</report>

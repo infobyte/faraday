@@ -1,0 +1,33 @@
+SIP - C/C++ Bindings Generator for Python v2 and v3
+===================================================
+
+The SIP documentation (including installation instructions) can be found in the
+``doc`` directory.
+
+
+Building from the Mercurial Repository
+--------------------------------------
+
+If you are using a copy of SIP cloned from the Mercurial repository, or are
+using a Mercurial archive, then you have to prepare it first before you follow
+the normal installation instructions.
+
+The preparation is done using the ``build.py`` script which can be found in the
+same directory as this ``README`` file.  If it isn't there then you probably
+have a packaged release and should just follow the normal installation
+instructions.
+
+The ``build.py`` script requires that ``flex`` and ``bison``, and the Mercurial
+Python bindings are installed.  If you want to create the HTML documentation
+then Sphinx must also be installed.
+
+To prepare run the following::
+
+    python build.py prepare
+
+Note that ``build.py`` is a Python v2 script.
+
+Now you can follow the normal installation instructions.
+
+The ``build.py`` script has other useful commands, use the ``--help`` option to
+see the details.

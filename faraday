@@ -1,0 +1,199 @@
+#!/bin/bash
+###
+## Faraday Penetration Test IDE - Community Version
+## Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+## See the file 'doc/LICENSE' for the license information
+###
+
+# faraday initial script
+# TODO:
+# Port to main.py
+#
+QTDIR=/usr/local/qt
+PATH=$QTDIR/bin:$PATH
+MANPATH=$QTDIR/doc/man:$MANPATH
+LD_LIBRARY_PATH=$QTDIR/lib:$LD_LIBRARY_PATH
+export QTDIR PATH MANPATH LD_LIBRARY_PATH
+## Color Settings
+stand_out=`tput smso`
+stand_off=`tput rmso`
+reset_color=`tput sgr0`
+red=`tput setaf 1`
+green=`tput setaf 2`
+white=`tput setaf 7`
+black_bg=`tput setab 0`
+red_bg=`tput setab 1`
+rev_color=`tput rev`
+bold=`tput bold`
+## Configuration
+faraday_base=`pwd`
+faraday_user="$HOME/.faraday"
+#platforms
+arch=$(uname -m)
+kernel=$(uname -r)
+if [ -f /etc/lsb-release ]; then
+        os=$(lsb_release -s -d)
+elif [ -f /etc/debian_version ]; then
+        os="Debian $(cat /etc/debian_version)"
+elif [ -f /etc/redhat-release ]; then
+        os=`cat /etc/redhat-release`
+else
+        os="$(uname -s) $(uname -r)"
+fi
+faraday_platform=`uname -m`
+faraday_os=`uname`
+faraday_pyver="none"
+
+# Switch on/off for plugin developing only.
+developingPlugins="on"
+
+##
+# export DISPLAY=0.0
+##
+echo -n """
+$red
+  _____                           .___
+_/ ____\_____  ____________     __| _/_____   ___.__.
+\   __\ \__  \ \_  __ \__  \   / __ | \__  \ <   |  |
+ |  |    / __ \_|  | \// __ \_/ /_/ |  / __ \_\___  |
+ |__|   (____  /|__|  (____  /\____ | (____  // ____|
+             \/            \/      \/      \/ \/
+$stand_out
+ [*[       Open Source Penetration Test IDE       ]*]$stand_off
+          $white $bold   Where pwnage goes multiplayer
+
+$reset_color"""
+#
+echo "[+] Starting faraday IDE"
+# This script checks everything whether or not it's the first time we run faraday, in case it was copied.
+# Qt theme
+
+if [ -e $HOME/.qt/qtrc ]; then
+       cp $HOME/.qt/qtrc $HOME/.qt/bak.qtrc
+fi
+
+if [ -d $HOME/.qt/ ]; then
+        echo "[*] QTconfig in place"
+else
+        echo "[+] Creating QT profile: $HOME/.qt/qtrc"
+        mkdir -p "$HOME/.qt"
+        cp deps/qtrc $HOME/.qt/
+fi
+#Replacing old plugins for updated ones.
+if [ $developingPlugins == "on" ]; then
+    echo "[*] Running under plugin development mode!"
+    echo "[-] Deleting old user directory: $faraday_user"
+    rm -rf "$faraday_user/plugins"
+    echo "[+] Creating user directory: $faraday_user"
+    mkdir -p "$faraday_user/plugins"
+    cp -a $faraday_base/plugins/repo/* $faraday_user/plugins/
+    echo "[*] Loading Plugins"
+else
+    # Checking plugins
+    if [ -d $faraday_user/plugins ]; then
+        echo "[*] Loading Plugins"
+    else
+        echo "[+] Creating user directory: $faraday_user"
+        mkdir -p "$faraday_user/plugins"
+        cp -a $faraday_base/plugins/repo/* $faraday_user/plugins/
+    fi
+fi
+
+# check if persistence dir exists
+if [ ! -d $faraday_user/persistence ]; then
+    echo "[+] Creating persistence directory"
+    mkdir -p "$faraday_user/persistence"
+fi
+
+# check if report dir exists
+if [ ! -d $faraday_user/report ]; then
+    echo "[+] Creating report directory"
+    mkdir -p "$faraday_user/report"
+fi
+
+# check if temp dir exists
+if [ ! -d $faraday_user/temp ]; then
+    echo "[+] Creating temp directory"
+    mkdir -p "$faraday_user/temp"
+fi
+
+# check if data dir exists
+if [ ! -d $faraday_user/data ]; then
+    echo "[+] Creating data directory"
+    mkdir -p "$faraday_user/data"
+fi
+
+# check if image dir exists
+if [ ! -d $faraday_user/images/ ] && [ ! -d $faraday_user/images/icons ]; then
+    echo "[+] Creating images directory"
+    mkdir -p "$faraday_user/images"
+    cp -r $faraday_base/data/images/ $faraday_user/
+
+else echo "[*] Using images/icons set from user"
+fi
+
+if [ ! -f $faraday_user/config/config.xml ]; then
+    if [ ! -d $faraday_user/config/ ]; then
+    	echo "[+] Creating user configuration directory"
+    	mkdir -p "$faraday_user/config"
+    fi
+    echo "[*] Copying default configuration from project"
+    cp $faraday_base/config/default.xml $faraday_user/config/config.xml
+
+else echo "[*] Using custom user configuration"
+fi
+
+# Setting _helpers.so, deleting the current one in case it's not the indicated.
+if [ -f $faraday_base/shell/core/_helpers.so ]; then
+	echo "[*] Cleaning up"
+	rm -rf $faraday_base/shell/core/_helpers.so
+fi
+
+# Setting the right _helpers.so
+if [ $faraday_platform == i386 ] || [ $faraday_platform == i686 ]; then
+	if [ $faraday_os == Darwin ]; then
+		echo "[+] Setting up for: $faraday_platform on $faraday_os"
+		ln -s $faraday_base/shell/core/_helpers.so.darwin $faraday_base/shell/core/_helpers.so
+	else
+		# If not darwin we assume is Linux
+		# Check other unix flavors TODO
+		echo "[+] Setting up for: $faraday_platform on $faraday_os"
+		ln -s $faraday_base/shell/core/_helpers.so.i386 $faraday_base/shell/core/_helpers.so
+	fi
+elif [ $faraday_platform == x86_64 ] || [ $faraday_platform == ia64 ]; then
+	if [ $faraday_os == Darwin ]; then
+        echo "[+] Setting up for: $faraday_platform on $faraday_os"
+        ln -s $faraday_base/shell/core/_helpers.so.darwin $faraday_base/shell/core/_helpers.so
+    else
+		echo "[+] Setting up for: $faraday_platform on $faraday_os"
+		ln -s $faraday_base/shell/core/_helpers.so.amd64 $faraday_base/shell/core/_helpers.so
+	fi
+else
+	echo "[-] Your platform $faraday_os $faraday_platform is not yet supported."
+	exit 0
+fi
+
+# Setting best python version to run faraday
+if [ "$os" == "Ubuntu 10.04.2 LTS" ]; then
+        faraday_pyver="python2.6"
+        echo "[+] Using python 2.6 to run faraday."
+else
+    if [ "`type -P "python2.7" &>/dev/null && echo "FOUND"`" = "FOUND" ]; then
+        faraday_pyver="python2.7"
+        echo "[+] Using python2.7 to run faraday."
+    elif [ "`type -P "python2.6" &>/dev/null && echo "FOUND"`" = "FOUND" ]; then
+        faraday_pyver="python2.6"
+        echo "[+] Using python 2.6 to run faraday."
+    elif [ "`type -P "python2.5" &>/dev/null && echo "FOUND"`" = "FOUND" ]; then
+        faraday_pyver="python2.5"
+        echo "[+] Using python2.5 to run faraday, must have multiprocessing installed."
+    else
+        echo "[-] Could not find a compatible version of python to run faraday"
+    fi
+fi
+if [ $faraday_os == Darwin ]; then
+	echo [!] OSX support is limited
+	arch -i386 python main.py $@
+else
+	$faraday_pyver main.py $@
+fi

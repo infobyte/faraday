@@ -1,0 +1,1 @@
+cuenta vulnerabilidades por prioridad, devuelve idPrioridad, cant donde idPrioridad esta entre 0 y 4 (info, low, medium, high, critical y 5 unclassified)

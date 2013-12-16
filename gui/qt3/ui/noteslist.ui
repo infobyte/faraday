@@ -1,0 +1,137 @@
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
+<class>NotesListUI</class>
+<widget class="QDialog">
+    <property name="name">
+        <cstring>NotesListUI</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>555</width>
+            <height>447</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Notes</string>
+    </property>
+    <widget class="QTable">
+        <column>
+            <property name="text">
+                <string>Name</string>
+            </property>
+        </column>
+        <column>
+            <property name="text">
+                <string>Content</string>
+            </property>
+        </column>
+        <property name="name">
+            <cstring>notes_table</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>20</x>
+                <y>20</y>
+                <width>510</width>
+                <height>360</height>
+            </rect>
+        </property>
+        <property name="minimumSize">
+            <size>
+                <width>300</width>
+                <height>0</height>
+            </size>
+        </property>
+        <property name="resizePolicy">
+            <enum>AutoOne</enum>
+        </property>
+        <property name="vScrollBarMode">
+            <enum>AlwaysOn</enum>
+        </property>
+        <property name="numRows">
+            <number>0</number>
+        </property>
+        <property name="numCols">
+            <number>2</number>
+        </property>
+    </widget>
+    <widget class="QLayoutWidget">
+        <property name="name">
+            <cstring>layout7</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>90</x>
+                <y>400</y>
+                <width>377</width>
+                <height>29</height>
+            </rect>
+        </property>
+        <hbox>
+            <property name="name">
+                <cstring>unnamed</cstring>
+            </property>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>add_button</cstring>
+                </property>
+                <property name="text">
+                    <string>Add</string>
+                </property>
+            </widget>
+            <spacer>
+                <property name="name">
+                    <cstring>spacer6_2</cstring>
+                </property>
+                <property name="orientation">
+                    <enum>Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                    <enum>Expanding</enum>
+                </property>
+                <property name="sizeHint">
+                    <size>
+                        <width>21</width>
+                        <height>21</height>
+                    </size>
+                </property>
+            </spacer>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>edit_button</cstring>
+                </property>
+                <property name="text">
+                    <string>Edit</string>
+                </property>
+            </widget>
+            <spacer>
+                <property name="name">
+                    <cstring>spacer6</cstring>
+                </property>
+                <property name="orientation">
+                    <enum>Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                    <enum>Expanding</enum>
+                </property>
+                <property name="sizeHint">
+                    <size>
+                        <width>21</width>
+                        <height>21</height>
+                    </size>
+                </property>
+            </spacer>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>delete_button</cstring>
+                </property>
+                <property name="text">
+                    <string>Delete</string>
+                </property>
+            </widget>
+        </hbox>
+    </widget>
+</widget>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

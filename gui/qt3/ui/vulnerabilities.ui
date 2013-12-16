@@ -1,0 +1,69 @@
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
+<class>VulnerabilitiesUi</class>
+<widget class="QDialog">
+    <property name="name">
+        <cstring>VulnerabilitiesUi</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>733</width>
+            <height>485</height>
+        </rect>
+    </property>
+    <property name="minimumSize">
+        <size>
+            <width>0</width>
+            <height>0</height>
+        </size>
+    </property>
+    <property name="caption">
+        <string>Vulnerability List</string>
+    </property>
+    <grid>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <widget class="QTable" row="0" column="0">
+            <column>
+                <property name="text">
+                    <string>Name</string>
+                </property>
+            </column>
+            <column>
+                <property name="text">
+                    <string>Refs</string>
+                </property>
+            </column>
+            <column>
+                <property name="text">
+                    <string>Description</string>
+                </property>
+            </column>
+            <property name="name">
+                <cstring>t_vulns</cstring>
+            </property>
+            <property name="minimumSize">
+                <size>
+                    <width>700</width>
+                    <height>0</height>
+                </size>
+            </property>
+            <property name="resizePolicy">
+                <enum>AutoOne</enum>
+            </property>
+            <property name="vScrollBarMode">
+                <enum>AlwaysOn</enum>
+            </property>
+            <property name="numRows">
+                <number>0</number>
+            </property>
+            <property name="numCols">
+                <number>5</number>
+            </property>
+        </widget>
+    </grid>
+</widget>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

@@ -1,0 +1,53 @@
+<!-- Faraday Penetration Test IDE &#45; Community Version -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Example CouchApp</title>
+    <link rel="stylesheet" href="style/main.css" type="text/css">
+  </head>
+  <body>
+    <!-- <div id="account"></div> -->
+
+    <h1>Welcome to Faraday Reports!</h1>
+
+    <div id="profile">
+        Have you wonder what's your infraestructure status?
+    </div>
+    <div id="content">
+        Available Workspaces
+    </div>
+
+    <div id="sidebar">
+      <p>Here you can find full visualization on your Security Assets.</p>
+    </div>
+  </body>
+  <script src="/_utils/script/sha1.js"></script>
+  <script src="script/app.js"></script>
+  <script src="script/reports_list.js"></script>
+
+  <script src="/_utils/script/json2.js"></script>
+  <script src="/_utils/script/jquery.js"></script>
+  <script src="/_utils/script/jquery.couch.js"></script>
+
+ <script >
+  $.couch.allDbs({
+      success : function(dbs) {
+          dbs.filter(function(db_name){
+              return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
+          .forEach(function(db) {
+              rep_links = [];
+              reports.forEach( function(reps) {
+                  var qs = ["workspace=" + db, 'design=' + designs[reps], 'view=' + views[reps]];
+                  rep_links.push('<a href="/reports/_design/reports/' + reps + '.html?' + qs.join('&') + '">[' + reps + ']</a>');
+              });
+          $(".databases").append('<li><a href="/_utils/database.html?'+db+'">'+db+'</a>' + rep_links.join(' ') + '</li>');
+        });
+      }
+    });
+  </script>
+
+<div id="content" class="databases"/>
+
+</html>

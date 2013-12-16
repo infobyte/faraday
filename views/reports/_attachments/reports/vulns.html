@@ -1,0 +1,37 @@
+<!-- Faraday Penetration Test IDE &#45; Community Version -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+<html>
+<head>
+	<title>Vulns report</title>
+	<script type="text/javascript" src="../script/app.js"></script>
+	<script type="text/javascript" src="/_utils/script/json2.js"></script>
+	<script type="text/javascript" src="/_utils/script/jquery.js"></script>
+	<script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
+	<script src="../script/common.js"></script>
+	<link rel="stylesheet" type="text/css" href="../estilos.css" />
+</head>
+<body style="background: #E8EFF0;">
+<h2>Vulnerabilities Report</h2>
+<div class="seccion2">
+</div>
+<script type="text/javascript">
+        var workspace = getParameterByName("workspace");
+        var view = getParameterByName("view");
+        var design = getParameterByName("design");
+	json_url = "/" + workspace + "/_design/" + design + "/_view/" + view+"?group=true";
+ 
+	$.getJSON(json_url, function(data) {
+		var colores = ["gris3", "verde", "amarillo", "rojo", "violeta", "gris2"];
+		var nombres = ["info", "low", "medium", "high", "critical", "n/a"];
+		var i = 0;
+		var divs = "";
+		$.each(data.rows, function(n, obj){
+			divs += "<div class=\"columna unsexto\"><article class=\"dato2 fondo-blanco\"><section><div class=\"nro texto-"+colores[obj.key]+"\">"+obj.value+"</div><div class=\"txt texto-negro\">"+nombres[obj.key]+"</div></section></article></div>";
+			i++;
+		});
+		$(".seccion2").append(divs);
+	});
+</script>
+</body>
+</html>

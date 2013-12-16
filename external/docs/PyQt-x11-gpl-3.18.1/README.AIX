@@ -1,0 +1,68 @@
+This file describes some things to be aware of when building SIP (and PyQt)
+under AIX.
+
+I had success building SIP V3/V4 (and PyQt) on AIX 4.3.3 and on AIX 5.1 with
+VisualAge C++ and with gcc.
+ 
+VisualAge C++ was version 6.0 but it should also work with version 5.x.
+The GNU compiler was version 3.3.2 downloaded as a binary from
+http://aixpdslib.seas.ucla.edu/aixpdslib.html
+
+The Qt-Version was 3.2.3 but it should also work with previous versions.
+
+If you are using Python version 2.3.3 or higher, SIP (and PyQt) should build
+out of the box without any changes.
+
+If you are using a Python version before 2.3.3, you have to patch Python,
+because until this version, Python uses the system calls load() and
+loadbind() to load and bind shared objects. These system calls cannot load
+and bind C++ shared objects properly (constructors and destructors for static
+classes are not called with these system calls). Since AIX version 4.2 the
+system calls dlopen() and dlsym() are available and should be used in
+preference.
+
+The following patch changes the configure script of Python to use dlopen()
+and dlsym() if they are available. It also fixes a bug with the definition of
+_XOPEN_SOURCE:
+
+---8<-------------------------------------------------------------------->8---
+diff -uNr Python-2.3.2.orig/configure Python-2.3.2/configure
+--- Python-2.3.2.orig/configure	2003-09-27 10:58:55.000000000 +0200
++++ Python-2.3.2/configure	2003-10-28 11:33:58.000000000 +0100
+@@ -1452,6 +1452,11 @@
+   # but used in struct sockaddr.sa_family. Reported by Tim Rice.
+   SCO_SV/3.2)
+     define_xopen_source=no;;
++  # On AIX 4, mbstate_t is defined only when _XOPEN_SOURCE == 500 but used in
++  # wcsnrtombs() and mbsnrtowcs() even if _XOPEN_SOURCE is not defined or
++  # has another value. By not (re)defining it, the defaults come in place.
++  AIX/4)
++    define_xopen_source=no;;
+ esac
+ 
+ if test $define_xopen_source = yes
+@@ -12965,7 +12970,12 @@
+ if test -z "$DYNLOADFILE"
+ then
+ 	case $ac_sys_system/$ac_sys_release in
+-	AIX*) DYNLOADFILE="dynload_aix.o";;
++	AIX*) # Use dynload_shlib.c and dlopen() if we have it.
++	if test "$ac_cv_func_dlopen" = yes
++	then DYNLOADFILE="dynload_shlib.o"
++	else DYNLOADFILE="dynload_aix.o"
++	fi
++	;;
+ 	BeOS*) DYNLOADFILE="dynload_beos.o";;
+ 	hp*|HP*) DYNLOADFILE="dynload_hpux.o";;
+ 	Darwin/*) DYNLOADFILE="dynload_next.o";;
+---8<-------------------------------------------------------------------->8---
+
+Note: I did not mix the compilers when building Qt, Python, SIP and PyQt. At
+least Qt, SIP and PyQt must be built with the same compiler because of
+different name mangling schemes.
+
+If you have any problems or questions on building SIP or PyQt on AIX, either
+send an email to ulrich.berning@desys.de or use the PyKDE mailing list.
+
+Ulrich Berning
+DESYS GmbH

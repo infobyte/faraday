@@ -1,0 +1,56 @@
+<!-- Faraday Penetration Test IDE &#45; Community Version -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+<html>
+<head>
+	<title>By Host report</title>
+	<script type="text/javascript" src="../script/app.js"></script>
+	<script type="text/javascript" src="/_utils/script/json2.js"></script>
+	<script type="text/javascript" src="/_utils/script/jquery.js"></script>
+	<script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
+	<script src="../script/common.js"></script>
+	<link rel="stylesheet" type="text/css" href="../estilos.css" />
+</head>
+<body style="background: #E8EFF0;">
+<h2>Report By Host</h2>
+<div class="seccion2">
+</div>
+<script type="text/javascript">
+function get_obj(ourl) {
+	var ls = {};
+	$.ajax({
+		dataType: "json",
+		url: ourl,
+		async: false,
+		success: function(data) {
+			$.each(data.rows, function(n, obj){
+				ls[obj.key] = obj.value;
+			});	
+		}
+	});
+	return ls;
+}
+
+        var workspace	= getParameterByName("workspace");
+        var design	= getParameterByName("design");
+	var iurl	= "/" + workspace + "/_design/" + design + "/_view/byinterfacecount?group=true";
+	var hurl	= "/" + workspace + "/_design/" + design + "/_view/hosts";
+	var surl	= "/" + workspace + "/_design/" + design + "/_view/byservicecount?group=true";
+	var hosts	= new Object();
+	var interfaces	= new Object();
+	var services	= new Object();
+
+	hosts		= get_obj(hurl);
+	interfaces	= get_obj(iurl, interfaces);
+	services	= get_obj(surl, services);
+
+	var tabla = "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr><th>Host</th><th>Services</th><th>Interfaces</th></tr></thead><tbody>";
+	$.each(hosts, function(k, v){
+		tabla += "<tr><td>"+v+"</td><td>"+services[k]+"</td><td>"+interfaces[k]+"</td></tr>";
+	});
+	tabla += "</tbody></table>";
+
+	$(".seccion2").append(tabla);
+</script>
+</body>
+</html>

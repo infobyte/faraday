@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+'''
+Faraday Penetration Test IDE - Community Version
+Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
+import re
+import os
+import pprint
+import sys
+import argparse
+import shlex
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument('-e')
+    parser.add_argument('-o')
+    parser.add_argument('-f')
+    
+    #get all hosts
+    #./fplugin -e 'for h in api.__model_controller.getAllHosts(): print h.name'
+    #create a new host
+    #./fplugin -e 'for h in api.createAndAddHost("8.8.8.8","Linux")'
+    #get all creds
+    #get all hostname
+    #get all ip port http/https
+
+    args, unknown = parser.parse_known_args()
+    
+    if args.o:
+        if os.path.isfile(args.o):
+            with open(args.o) as f:
+                data = f.read()
+                print data
+        
+    

@@ -903,6 +903,34 @@ class HostsBrowser(qt.QVBox):
         if item is not None and item.object is not None:
             dialog = VulnsDialog(parent=self, model_object=item.object)
             dialog.exec_loop()
+
+    def _listVulnsCvs(self,item):
+        vulns=""
+        hosts=[]
+        for k in self._host_items.keys():
+            hosts.append(self._host_items[k].object)
+            
+        f=open("/tmp/vulns.cvs","w")
+            
+        for host in hosts:
+            hostnames=""
+            for i in host.getAllInterfaces():
+                for h in i._hostnames:
+                        hostnames+=","+h
+        
+            for v in host.getVulns():
+                #vulns=+host.name+"("+hostnames+"),0,"+v.name+"\r\n"
+                vulns=host.name+"("+hostnames+")|0|"+v.name+ "|"+re.sub("\n|\r",",",v.desc)+"|"+str(v.severity)+"|"+str(v.id)+"\n"
+                print vulns
+                f.write(vulns)
+        
+            for i in host.getAllInterfaces():
+                for s in i.getAllServices():
+                    for v in s.getVulns():
+                        #vulns+=host.name+"("+hostnames+"),"+str(s.getPorts()[0]) if len(s.getPorts()) > 0 else "-1" + ","+v.name+"\r\n"
+                        vulns=host.name+"("+hostnames+")|"+str(s.getPorts()) + "|"+v.name+ "|"+re.sub("\n|\r",",",v.desc)+"|"+str(v.severity)+"|"+str(v.id)+"\n"
+                        print vulns
+                        f.write(vulns)
                                
 
     def _listNotes(self, item):
@@ -1029,6 +1057,7 @@ class HostsBrowser(qt.QVBox):
                                             
         popup.insertSeparator()
         popup.insertItem('Resolve Conflicts', 303)
+        popup.insertItem('List vulns cvs', 402)
                                 
                                               
         popup.insertSeparator()
@@ -1234,6 +1263,7 @@ class HostsBrowser(qt.QVBox):
 
         self.contextdispatchers[400] = self._newVuln
         self.contextdispatchers[401] = self._listVulns
+        self.contextdispatchers[402] = self._listVulnsCvs
 
         self.contextdispatchers[500] = self._newNote
         self.contextdispatchers[501] = self._listNotes

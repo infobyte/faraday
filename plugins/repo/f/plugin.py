@@ -17,7 +17,8 @@ import argparse
 import sys
 import random
 from StringIO import StringIO
-current_path = os.path.abspath(os.getcwd())
+import traceback
+#current_path = os.path.abspath(os.getcwd())
 
 
 class FPlugin(core.PluginBase):
@@ -57,6 +58,7 @@ class FPlugin(core.PluginBase):
         parser = argparse.ArgumentParser()
         
         parser.add_argument('-e')
+        parser.add_argument('-f')
         parser.add_argument('-o')
                 
         if arg_match is None:               
@@ -74,14 +76,25 @@ class FPlugin(core.PluginBase):
             self.args, unknown = parser.parse_known_args(cmd)
         except SystemExit:
             pass
-
+        
+        codeEx=""
         if self.args.e:
+            codeEx=self.args.e
+        elif self.args.f:
+            with open(current_path + "/" + self.args.f) as f:
+                codeEx = f.read()
+            f.close()
+
+        if codeEx:
             buffer = StringIO()
             sys.stdout = buffer
             
-            exec(self.args.e)
-            
-                                                     
+            try:
+                exec(codeEx)
+            except Exception:
+                api.devlog("[Error] - Faraday plugin")
+                api.devlog(traceback.format_exc())
+                                 
             sys.stdout = sys.__stdout__
 
             try:

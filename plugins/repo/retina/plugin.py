@@ -217,8 +217,8 @@ class RetinaPlugin(core.PluginBase):
                 if k:
                     for v in vulns:
                         web=False
-                        s_id = self.createAndAddServiceToInterface(h_id, i_id, v.port,
-                                                            v.protocol,
+                        s_id = self.createAndAddServiceToInterface(h_id, i_id, 'unknown',
+                                                            v.protocol.lower(),
                                                             ports = [str(v.port)],
                                                             status = "open")
                         

@@ -9,7 +9,7 @@ See the file 'doc/LICENSE' for the license information
 import threading
 import logging
 import logging.handlers
-import qt
+#import qt
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -156,7 +156,8 @@ class AppLogger(object):
         """
         for widget in self.__gui_output:
             event = LogCustomEvent(msg)
-            qt.QApplication.postEvent(widget, event)
+            widget.update(event)
+            #qt.QApplication.postEvent(widget, event)
             #guiapi.postCustomEvent(widget, event)
 
     def log(self, msg ,level = "INFO"):
@@ -188,30 +189,45 @@ class AppLogger(object):
             # after doing all release
             self.__lock.release()
 
-#-------------------------------------------------------------------------------
+#class LogCustomEvent(qt.QCustomEvent):
+#    def __init__(self, text):
+#        qt.QCustomEvent.__init__(self, LOGEVENT_TYPE)
+#        self.text = text
 
-class LogCustomEvent(qt.QCustomEvent):
+
+class LogCustomEvent(object):
     def __init__(self, text):
-        qt.QCustomEvent.__init__(self, LOGEVENT_TYPE)
+        self.type = LOGEVENT_TYPE
         self.text = text
 
-#-------------------------------------------------------------------------------
 
-class ShowDialogCustomEvent(qt.QCustomEvent):
+# class ShowDialogCustomEvent(qt.QCustomEvent):
+#     def __init__(self, text, level):
+#         qt.QCustomEvent.__init__(self, SHOWDIALOG_EVENT_TYPE)
+#         self.text = text
+#         self.level = level
+
+
+class ShowDialogCustomEvent(object):
     def __init__(self, text, level):
-        qt.QCustomEvent.__init__(self, SHOWDIALOG_EVENT_TYPE)
+        self.type = SHOWDIALOG_EVENT_TYPE
         self.text = text
         self.level = level
 
-#-------------------------------------------------------------------------------
 
-class ShowPopupCustomEvent(qt.QCustomEvent):
+# class ShowPopupCustomEvent(qt.QCustomEvent):
+#     def __init__(self, text, level):
+#         qt.QCustomEvent.__init__(self, SHOWPOPUP_EVENT_TYPE)
+#         self.text = text
+#         self.level = level
+
+
+class ShowPopupCustomEvent(object):
     def __init__(self, text, level):
-        qt.QCustomEvent.__init__(self, SHOWPOPUP_EVENT_TYPE)
+        self.type = SHOWPOPUP_EVENT_TYPE
         self.text = text
         self.level = level
 
-#-------------------------------------------------------------------------------
 
 class Notifier(object):
     """
@@ -229,7 +245,7 @@ class Notifier(object):
         getLogger().log(text, "NOTIFICATION")
         if self.widget is not None:
             event = customEventClass(text, level)
-            qt.QApplication.postEvent(self.widget, event)
+            #qt.QApplication.postEvent(self.widget, event)
 
     def showDialog(self, text, level="Information"):
         self._postCustomEvent(text, level, ShowDialogCustomEvent)

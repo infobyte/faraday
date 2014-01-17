@@ -16,9 +16,6 @@ from config.configuration import getInstanceConfiguration
 # from model.log import getNotifier
 from utils.common import *
 import shutil
-import xmlrpclib
-
-
 
 CONF = getInstanceConfiguration()
 
@@ -36,17 +33,12 @@ _remote_sync_server_proxy = None
 # name of the currently logged user
 __current_logged_user = ""
 
+
 def setUpAPIs(controller, hostname=None, port=None):
     global __model_controller
     __model_controller = controller
     _setUpAPIServer(hostname, port)
 
-def startAPIServer():
-    global _xmlrpc_api_server
-    if _xmlrpc_api_server is not None:
-        devlog("starting xmlrpc api server...")
-        #_xmlrpc_api_server.serve_forever()
-        _xmlrpc_api_server.start()
 
 def startAPIServer():
     global _xmlrpc_api_server
@@ -54,6 +46,7 @@ def startAPIServer():
         devlog("starting xmlrpc api server...")
         #_xmlrpc_api_server.serve_forever()
         _xmlrpc_api_server.start()
+
 
 def stopAPIServer():
     global _xmlrpc_api_server
@@ -64,8 +57,7 @@ def stopAPIServer():
         devlog("xmlrpc thread joined")
 
 
-#-------------------------------------------------------------------------------
-def _setUpAPIServer(hostname = None, port = None):
+def _setUpAPIServer(hostname=None, port=None):
     global _xmlrpc_api_server
     global api_conn_info
     if _xmlrpc_api_server is None:

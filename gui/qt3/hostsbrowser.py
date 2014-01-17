@@ -929,7 +929,7 @@ class HostsBrowser(qt.QVBox):
             
                 for v in host.getVulns():
                     #vulns=+host.name+"("+hostnames+"),0,"+v.name+"\r\n"
-                    vulns=host.name+"("+hostnames+")|0|"+v.name+ "|"+re.sub("\n|\r",",",v.desc)+"|"+str(v.severity)+"|"+str(v.id)+"\n"
+                    vulns=host.name+"("+hostnames+")|0|"+v.name.encode("utf-8")+ "|"+re.sub("\n|\r",",",v.desc.encode("utf-8"))+"|"+str(v.severity)+"|"+str(v.id)+"\n"
                     print vulns
                     f.write(vulns)
             
@@ -937,7 +937,7 @@ class HostsBrowser(qt.QVBox):
                     for s in i.getAllServices():
                         for v in s.getVulns():
                             #vulns+=host.name+"("+hostnames+"),"+str(s.getPorts()[0]) if len(s.getPorts()) > 0 else "-1" + ","+v.name+"\r\n"
-                            vulns=host.name+"("+hostnames+")|"+str(s.getPorts()) + "|"+v.name+ "|"+re.sub("\n|\r",",",v.desc)+"|"+str(v.severity)+"|"+str(v.id)+"\n"
+                            vulns=host.name+"("+hostnames+")|"+str(s.getPorts()) + "|"+v.name.encode("utf-8") + "|"+re.sub("\n|\r",",",v.desc.encode("utf-8"))+"|"+str(v.severity)+"|"+str(v.id)+"\n"
                             print vulns
                             f.write(vulns)
                                

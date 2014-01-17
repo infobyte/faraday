@@ -227,8 +227,8 @@ class MainWindow(qt.QMainWindow):
                                                                        
         
                         
-        a = self._actions["open-workspace"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"sync.png"))), "Open", 0, self, "Open" )
-        self.connect(a, qt.SIGNAL('activated()'), self.openWorkspace)
+        # a = self._actions["open-workspace"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"sync.png"))), "Open", 0, self, "Open" )
+        # self.connect(a, qt.SIGNAL('activated()'), self.openWorkspace)
 
                         
         a = self._actions["reconnect"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"sync.png"))), "Reconnect", 0, self, "Reconnect" )
@@ -296,7 +296,7 @@ class MainWindow(qt.QMainWindow):
                                
         self._menues["workspace"] = qt.QPopupMenu(self)
         self.menuBar().insertItem('&Workspace',self._menues["workspace"])
-        self._actions["open-workspace"].addTo(self._menues["workspace"])
+        # self._actions["open-workspace"].addTo(self._menues["workspace"])
         self._actions["create-workspace"].addTo(self._menues["workspace"])
                                                                           
                                                                           

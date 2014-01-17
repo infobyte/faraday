@@ -26,7 +26,11 @@ for host in api.__model_controller.getAllHosts():
                     break
             if web==True:
                 for p in s.getPorts():
-                    webs["http://" + host.name+":"+str(p)+"/"]=1
+                    if str(p)=="443":
+                        webs["https://" + host.name+":"+str(p)+"/"]=1
+                    else:
+                        webs["http://" + host.name+":"+str(p)+"/"]=1
+                    
                 for n in s.getNotes():
                     if n.name =="website":
                         for wn in n.getNotes():
@@ -35,13 +39,6 @@ for host in api.__model_controller.getAllHosts():
 
 for k,v in webs.iteritems():
     print k
-                # if s.class_signature == "VulnerabilityWeb":
 
-                # vulns=len(s.getVulns())
-                # notes=len(s.getNotes())
-                # if vulns >0 or notes>0:
-                #     print "Service not delete" + s.name + "from int:" + i.name + " vulns:"+vulns+",notes:"+notes
-                # else:
-                #     print "delService" + s.name + "from int:" + i.name
 
 

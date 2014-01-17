@@ -350,6 +350,10 @@ class HostListViewItem(ModelObjectListViewItem):
                 icon_name = "Apple.png"
             elif "CISCO" in _oper.upper():
                 icon_name = "Cisco.png"
+            elif "IOS" in _oper.upper():
+                icon_name = "Cisco.png"                
+            elif "LINKSYS" in _oper.upper():
+                icon_name = "Router.png"
             elif "ROUTER" in _oper.upper():
                 icon_name = "Router.png"
             else:

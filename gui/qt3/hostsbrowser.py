@@ -525,6 +525,7 @@ class HostsBrowser(qt.QVBox):
                         os=TEXT(stored=True),
                         port=TEXT(stored=True),
                         srvname=TEXT(stored=True),
+                        srvstatus=TEXT(stored=True),
                         vulnn=TEXT(stored=True),
                         namen=TEXT(stored=True),
                         owned=BOOLEAN,
@@ -574,7 +575,8 @@ class HostsBrowser(qt.QVBox):
                                         vuln=True if s.vulnsCount() >0 else False,
                                         note=True if len(s.getNotes()) >0 else False,
                                         cred=True if s.credsCount() > 0 else False,
-                                        srvname=unicode(s.getName()))
+                                        srvname=unicode(s.getName()),
+                                        srvstatus=unicode(s.getStatus()))
 
         writer.commit()
 
@@ -909,28 +911,35 @@ class HostsBrowser(qt.QVBox):
         hosts=[]
         for k in self._host_items.keys():
             hosts.append(self._host_items[k].object)
+
+        filename =  qt.QFileDialog.getSaveFileName(
+                    "/tmp",
+                    "Vulnerability CVS  (*.csv)",
+                    None,
+                    "save file dialog",
+                    "Choose a file to save the vulns" );
+        if filename and filename is not None:
+            f=open(filename+".csv","w")
+                
+            for host in hosts:
+                hostnames=""
+                for i in host.getAllInterfaces():
+                    for h in i._hostnames:
+                            hostnames+=","+h
             
-        f=open("/tmp/vulns.cvs","w")
+                for v in host.getVulns():
+                    #vulns=+host.name+"("+hostnames+"),0,"+v.name+"\r\n"
+                    vulns=host.name+"("+hostnames+")|0|"+v.name+ "|"+re.sub("\n|\r",",",v.desc)+"|"+str(v.severity)+"|"+str(v.id)+"\n"
+                    print vulns
+                    f.write(vulns)
             
-        for host in hosts:
-            hostnames=""
-            for i in host.getAllInterfaces():
-                for h in i._hostnames:
-                        hostnames+=","+h
-        
-            for v in host.getVulns():
-                #vulns=+host.name+"("+hostnames+"),0,"+v.name+"\r\n"
-                vulns=host.name+"("+hostnames+")|0|"+v.name+ "|"+re.sub("\n|\r",",",v.desc)+"|"+str(v.severity)+"|"+str(v.id)+"\n"
-                print vulns
-                f.write(vulns)
-        
-            for i in host.getAllInterfaces():
-                for s in i.getAllServices():
-                    for v in s.getVulns():
-                        #vulns+=host.name+"("+hostnames+"),"+str(s.getPorts()[0]) if len(s.getPorts()) > 0 else "-1" + ","+v.name+"\r\n"
-                        vulns=host.name+"("+hostnames+")|"+str(s.getPorts()) + "|"+v.name+ "|"+re.sub("\n|\r",",",v.desc)+"|"+str(v.severity)+"|"+str(v.id)+"\n"
-                        print vulns
-                        f.write(vulns)
+                for i in host.getAllInterfaces():
+                    for s in i.getAllServices():
+                        for v in s.getVulns():
+                            #vulns+=host.name+"("+hostnames+"),"+str(s.getPorts()[0]) if len(s.getPorts()) > 0 else "-1" + ","+v.name+"\r\n"
+                            vulns=host.name+"("+hostnames+")|"+str(s.getPorts()) + "|"+v.name+ "|"+re.sub("\n|\r",",",v.desc)+"|"+str(v.severity)+"|"+str(v.id)+"\n"
+                            print vulns
+                            f.write(vulns)
                                
 
     def _listNotes(self, item):
@@ -1057,7 +1066,7 @@ class HostsBrowser(qt.QVBox):
                                             
         popup.insertSeparator()
         popup.insertItem('Resolve Conflicts', 303)
-        popup.insertItem('List vulns cvs', 402)
+        popup.insertItem('Save Vulns CSV', 402)
                                 
                                               
         popup.insertSeparator()

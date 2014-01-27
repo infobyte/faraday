@@ -928,8 +928,10 @@ class HostsBrowser(qt.QVBox):
                             hostnames+=","+h
             
                 for v in host.getVulns():
+                    #ip,port,protocol,name,desc,severity,type
                     #vulns=+host.name+"("+hostnames+"),0,"+v.name+"\r\n"
-                    vulns=host.name+"("+hostnames+")|0|"+v.name.encode("utf-8")+ "|"+re.sub("\n|\r",",",v.desc.encode("utf-8"))+"|"+str(v.severity)+"|"+str(v.id)+"\n"
+                    api.devlog(dir(v))
+                    vulns=host.name+"|0||"+v.name.encode("utf-8")+ "|"+re.sub("\n|\r",",",v.desc.encode("utf-8"))+"|"+str(v.severity)+"type|0|("+hostnames+")"+"|"+str(v.id)+"\n"
                     print vulns
                     f.write(vulns)
             
@@ -937,10 +939,60 @@ class HostsBrowser(qt.QVBox):
                     for s in i.getAllServices():
                         for v in s.getVulns():
                             #vulns+=host.name+"("+hostnames+"),"+str(s.getPorts()[0]) if len(s.getPorts()) > 0 else "-1" + ","+v.name+"\r\n"
-                            vulns=host.name+"("+hostnames+")|"+str(s.getPorts()) + "|"+v.name.encode("utf-8") + "|"+re.sub("\n|\r",",",v.desc.encode("utf-8"))+"|"+str(v.severity)+"|"+str(v.id)+"\n"
+                            ",".join([str(i) for i in range(10)])
+                            vulns=host.name+"|"+",".join([str(i) for i in s.getPorts()]) + "|"+s.getProtocol()+ "|"+v.name.encode("utf-8") + "|"+re.sub("\n|\r",",",v.desc.encode("utf-8"))+"|"+str(v.severity)+"type|0|("+hostnames+")"+"|"+str(v.id)+"\n"
                             print vulns
                             f.write(vulns)
-                               
+
+    def _importVulnsCvs(self,item):
+        filename =  qt.QFileDialog.getOpenFileName(
+                    CONF.getDefaultTempPath(),
+                    "Csv vulnerability file  (*.*)",
+                    None,
+                    "open file dialog",
+                    "Choose a vulnerability file" );
+        
+        if os.path.isfile(filename):
+            with open(filename) as f:
+                data = f.read()
+            f.close()
+
+            for l in data.split("\n"):
+                api.devlog(l)
+                if re.search("^#",l):
+                    api.devlog("ERROR FILE")
+                    continue
+                
+                d = l.split("|")
+                
+                if len(d) <=5:
+                    api.devlog("Error vuln line: ("+l+")" )
+                else:
+                    self._newVulnImport(d[0],d[1],d[2],d[3],d[4],d[5],d[6])
+
+    def _newVulnImport(self,ip,port,protocol,name,desc,severity,type):
+        if port == "0": #vuln host
+            h_id = guiapi.createAndAddHost(ip)
+            v_id = guiapi.createAndAddVulnToHost(h_id, name, desc, [],severity)
+        else: #vuln port
+            h_id = guiapi.createAndAddHost(ip)
+            if self._isIPV4(ip):
+                i_id = guiapi.createAndAddInterface(h_id,ip,ipv4_address=ip)
+            else:
+                i_id = guiapi.createAndAddInterface(h_id,ip,ipv6_address=ip)
+            s_id = guiapi.createAndAddServiceToInterface(h_id,i_id,port,protocol,ports=[port])
+            if type == "2":
+                v_id = guiapi.createAndAddVulnWebToService(h_id,s_id, name, desc, "/","/",[],severity)
+            else:
+                v_id = guiapi.createAndAddVulnToService(h_id,s_id, name, desc, [],severity)
+
+        api.devlog("type:" + type)
+                                   
+    def _isIPV4(self, ip):
+        if len(ip.split(".")) == 4:
+            return True
+        else:
+            return False
 
     def _listNotes(self, item):
         if item is not None and item.object is not None:                                                  
@@ -1067,6 +1119,7 @@ class HostsBrowser(qt.QVBox):
         popup.insertSeparator()
         popup.insertItem('Resolve Conflicts', 303)
         popup.insertItem('Save Vulns CSV', 402)
+        popup.insertItem('Import Vulns CSV', 403)
                                 
                                               
         popup.insertSeparator()
@@ -1273,6 +1326,7 @@ class HostsBrowser(qt.QVBox):
         self.contextdispatchers[400] = self._newVuln
         self.contextdispatchers[401] = self._listVulns
         self.contextdispatchers[402] = self._listVulnsCvs
+        self.contextdispatchers[403] = self._importVulnsCvs
 
         self.contextdispatchers[500] = self._newNote
         self.contextdispatchers[501] = self._listNotes

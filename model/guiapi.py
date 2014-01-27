@@ -111,27 +111,37 @@ def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?
 
                
 
-def createAndAddVulnToHost(host_id, name, desc, ref):
-    vuln = newVuln(name, desc, ref)
+def createAndAddVulnToHost(host_id, name, desc, ref, severity="0"):
+    vuln = newVuln(name, desc, ref, severity)
     if addVulnToHost(host_id, vuln):
         return vuln.getID()
     return None
 
-def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref):
-    vuln = newVuln(name, desc, ref)
+def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref, severity="0"):
+    vuln = newVuln(name, desc, ref, severity)
     if addVulnToInterface(host_id, interface_id, vuln):
         return vuln.getID()
     return None
     
-def createAndAddVulnToApplication(host_id, application_id, name, desc, ref):
-    vuln = newVuln(name, desc, ref)
+def createAndAddVulnToApplication(host_id, application_id, name, desc, ref, severity="0"):
+    vuln = newVuln(name, desc, ref, severity)
     if addVulnToApplication(host_id, application_id, vuln):
         return vuln.getID()
     return None
 
-def createAndAddVulnToService(host_id, service_id, name, desc, ref):
+def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity="0"):
                                                                                    
-    vuln = newVuln(name, desc, ref)
+    vuln = newVuln(name, desc, ref, severity)
+    if addVulnToService(host_id, service_id, vuln):
+        return vuln.getID()
+    return None
+
+def createAndAddVulnWebToService(host_id, service_id, name, desc, website, path, ref=None, severity="0", request=None, response=None,
+                method=None,pname=None, params=None,query=None,category=None):
+                                                                                   
+    vuln = newVulnWeb(name, desc, website, path, ref, severity, request, response,
+                method,pname, params,query,category)
+    
     if addVulnToService(host_id, service_id, vuln):
         return vuln.getID()
     return None

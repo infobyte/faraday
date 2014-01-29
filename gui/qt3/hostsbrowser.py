@@ -907,6 +907,7 @@ class HostsBrowser(qt.QVBox):
             dialog.exec_loop()
 
     def _listVulnsCvs(self,item):
+        from datetime import date
         vulns=""
         hosts=[]
         for k in self._host_items.keys():
@@ -917,9 +918,26 @@ class HostsBrowser(qt.QVBox):
                     "Vulnerability CVS  (*.csv)",
                     None,
                     "save file dialog",
-                    "Choose a file to save the vulns" );
+                    "Choose a file to save the vulns" )
         if filename and filename is not None:
             f=open(filename+".csv","w")
+
+            # Date, status, Level, Name, Target, Description
+            vulns_list = []
+            import ipdb; ipdb.set_trace()
+            def getVulnCSVField(host, vuln):
+                vdate = str(date.fromtimestamp(v.getMetadata().create_time))
+                status = 'vuln'
+                level = v.severity
+                name = v.name
+                target = host.name
+                desc = v.desc.replace('\n', '<br/>')
+
+                csv_fields = [ vdate , status , level , name , target , desc]
+                encoded_csv_fields = map(lambda x: x.encode('utf-8'), csv_fields) 
+                field = "|".join(encoded_csv_fields)
+                return field
+
                 
             for host in hosts:
                 hostnames=""
@@ -927,22 +945,18 @@ class HostsBrowser(qt.QVBox):
                     for h in i._hostnames:
                             hostnames+=","+h
             
+                # Get al HostVulns
                 for v in host.getVulns():
-                    #ip,port,protocol,name,desc,severity,type
-                    #vulns=+host.name+"("+hostnames+"),0,"+v.name+"\r\n"
-                    api.devlog(dir(v))
-                    vulns=host.name+"|0||"+v.name.encode("utf-8")+ "|"+re.sub("\n|\r",",",v.desc.encode("utf-8"))+"|"+str(v.severity)+"type|0|("+hostnames+")"+"|"+str(v.id)+"\n"
-                    print vulns
-                    f.write(vulns)
-            
+                    
+                    vulns_list.append(getVulnCSVField(host, vuln))
+
+                # Service Vulns, we don't have Interface vulns
                 for i in host.getAllInterfaces():
                     for s in i.getAllServices():
-                        for v in s.getVulns():
-                            #vulns+=host.name+"("+hostnames+"),"+str(s.getPorts()[0]) if len(s.getPorts()) > 0 else "-1" + ","+v.name+"\r\n"
-                            ",".join([str(i) for i in range(10)])
-                            vulns=host.name+"|"+",".join([str(i) for i in s.getPorts()]) + "|"+s.getProtocol()+ "|"+v.name.encode("utf-8") + "|"+re.sub("\n|\r",",",v.desc.encode("utf-8"))+"|"+str(v.severity)+"type|0|("+hostnames+")"+"|"+str(v.id)+"\n"
-                            print vulns
-                            f.write(vulns)
+                        for v in s.getVulns(): 
+                            vulns_list.append(getVulnCSVField(host, v))
+                f.writelines('\n'.join(vulns_list))
+                f.write('\n')
 
     def _importVulnsCvs(self,item):
         filename =  qt.QFileDialog.getOpenFileName(

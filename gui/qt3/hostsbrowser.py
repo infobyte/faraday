@@ -933,22 +933,21 @@ class HostsBrowser(qt.QVBox):
                 target = host.name
                 desc = v.desc.replace('\n', '<br/>')
 
-                csv_fields = [ vdate , status , level , name , target , desc]
-                encoded_csv_fields = map(lambda x: x.encode('utf-8'), csv_fields) 
+                csv_fields = [ vdate , status , str(level) , name , target , desc]
+                try:
+                    encoded_csv_fields = map(lambda x: x.encode('utf-8'), csv_fields) 
+                except Exception as e:
+                    import ipdb; ipdb.set_trace()
+                    print e
+
                 field = "|".join(encoded_csv_fields)
                 return field
 
                 
             for host in hosts:
-                hostnames=""
-                for i in host.getAllInterfaces():
-                    for h in i._hostnames:
-                            hostnames+=","+h
-            
                 # Get al HostVulns
-                for v in host.getVulns():
-                    
-                    vulns_list.append(getVulnCSVField(host, vuln))
+                for v in host.getVulns(): 
+                    vulns_list.append(getVulnCSVField(host, v))
 
                 # Service Vulns, we don't have Interface vulns
                 for i in host.getAllInterfaces():

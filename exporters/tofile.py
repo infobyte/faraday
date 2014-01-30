@@ -22,6 +22,8 @@ class CSVVulnStatusReport(object):
         level = vuln.severity
         name = vuln.name
         target = host.name + ( ':' + ','.join([ str(x) for x in serv.getPorts()]) if serv else '')
+        if vuln.class_signature == "VulnerabilityWeb": 
+            target = "%s/%s" % (target, vuln.path)
         
         desc = vuln.desc.replace('\n', '<br/>')
 

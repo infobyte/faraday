@@ -906,8 +906,26 @@ class HostsBrowser(qt.QVBox):
             dialog = VulnsDialog(parent=self, model_object=item.object)
             dialog.exec_loop()
 
-    def _listVulnsCvs(self,item):
+    def getVulnCSVField(self, host, vuln, serv = None):
         from datetime import date
+        vdate = str(date.fromtimestamp(vuln.getMetadata().create_time))
+        status = 'vuln'
+        level = vuln.severity
+        name = vuln.name
+        target = host.name + ( ':' + ','.join([ str(x) for x in serv.getPorts()]) if serv else '')
+        
+        desc = vuln.desc.replace('\n', '<br/>')
+
+        csv_fields = [ vdate , status , str(level) , name , target , desc]
+        try:
+            encoded_csv_fields = map(lambda x: x.encode('utf-8'), csv_fields) 
+        except Exception as e:
+            print e
+
+        field = "|".join(encoded_csv_fields)
+        return field
+
+    def _listVulnsCvs(self,item):
         vulns=""
         hosts=[]
         for k in self._host_items.keys():
@@ -919,41 +937,21 @@ class HostsBrowser(qt.QVBox):
                     None,
                     "save file dialog",
                     "Choose a file to save the vulns" )
+
         if filename and filename is not None:
-            f=open(filename+".csv","w")
+            with open(filename + ".csv","w") as f: 
+                # Date, status, Level, Name, Target, Description
+                vulns_list = [] 
+                for host in hosts:
+                    # Get al HostVulns
+                    for v in host.getVulns(): 
+                        vulns_list.append(self.getVulnCSVField(host, v))
 
-            # Date, status, Level, Name, Target, Description
-            vulns_list = []
-            import ipdb; ipdb.set_trace()
-            def getVulnCSVField(host, vuln):
-                vdate = str(date.fromtimestamp(v.getMetadata().create_time))
-                status = 'vuln'
-                level = v.severity
-                name = v.name
-                target = host.name
-                desc = v.desc.replace('\n', '<br/>')
-
-                csv_fields = [ vdate , status , str(level) , name , target , desc]
-                try:
-                    encoded_csv_fields = map(lambda x: x.encode('utf-8'), csv_fields) 
-                except Exception as e:
-                    import ipdb; ipdb.set_trace()
-                    print e
-
-                field = "|".join(encoded_csv_fields)
-                return field
-
-                
-            for host in hosts:
-                # Get al HostVulns
-                for v in host.getVulns(): 
-                    vulns_list.append(getVulnCSVField(host, v))
-
-                # Service Vulns, we don't have Interface vulns
-                for i in host.getAllInterfaces():
-                    for s in i.getAllServices():
-                        for v in s.getVulns(): 
-                            vulns_list.append(getVulnCSVField(host, v))
+                    # Service Vulns, we don't have Interface vulns
+                    for i in host.getAllInterfaces():
+                        for s in i.getAllServices():
+                            for v in s.getVulns(): 
+                                vulns_list.append(self.getVulnCSVField(host, v, s))
                 f.writelines('\n'.join(vulns_list))
                 f.write('\n')
 

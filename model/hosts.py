@@ -732,7 +732,7 @@ class Service(ModelObject):
 
         self._name          = name
         self.description    = description
-        self._protocol      = protocol
+        self.setProtocol(protocol)
         self._ports=[]
         self.setPorts(ports)
         self._status        = status
@@ -768,7 +768,7 @@ class Service(ModelObject):
                                       
 
     def setProtocol(self, protocol):
-        self._protocol = protocol
+        self._protocol = protocol.lower()
 
     def getProtocol(self):
         return self._protocol

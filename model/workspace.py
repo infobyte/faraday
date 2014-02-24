@@ -26,12 +26,12 @@ from couchdbkit import Server, ChangesStream, Database, designer
 from couchdbkit.resource import ResourceNotFound
 
 import mockito
+import traceback
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
-from urlparse import urlsplit
-from urllib import splitport
+from urlparse import urlparse
 import json
 import shutil
 
@@ -419,10 +419,15 @@ class CouchdbManager(PersistenceManager):
         self._available = False
         try:
             self.testCouchUrl(uri)
+            url=urlparse(uri)
+            print ("Setting user,pass %s %s" % (url.username, url.password))
             self.__serv = Server(uri = uri)
+            #print dir(self.__serv)
+            self.__serv.resource_class.credentials = (url.username, url.password)
             self._available = True
         except:
             model.api.log("No route to couchdb server on: %s" % uri)
+            print(traceback.format_exc())
 
     def isAvailable(self):
         return self._available
@@ -450,8 +455,11 @@ class CouchdbManager(PersistenceManager):
         host, port = None, None
         try:
             import socket
-            proto, netloc, _, _, _ = urlsplit(uri)
-            host, port = splitport(netloc)
+            url=urlparse(uri)
+            proto = url.scheme
+            host=url.hostname
+            port=url.port
+
             port = port if port else socket.getservbyname(proto)
             s = socket.socket()
             s.settimeout(1)
@@ -464,8 +472,10 @@ class CouchdbManager(PersistenceManager):
 
 
     def testCouchUrl(self, uri):
-        _, netloc, _, _, _ = urlsplit(uri)
-        host, port = splitport(netloc)
+        url=urlparse(uri)
+        proto = url.scheme
+        host=url.hostname
+        port=url.port        
         self.test(host, int(port))
 
     def test(self, address, port):

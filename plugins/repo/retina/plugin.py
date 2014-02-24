@@ -217,8 +217,8 @@ class RetinaPlugin(core.PluginBase):
                 if k:
                     for v in vulns:
                         web=False
-                        s_id = self.createAndAddServiceToInterface(h_id, i_id, v.port,
-                                                            v.protocol,
+                        s_id = self.createAndAddServiceToInterface(h_id, i_id, 'unknown',
+                                                            v.protocol.lower(),
                                                             ports = [str(v.port)],
                                                             status = "open")
                         
@@ -228,14 +228,14 @@ class RetinaPlugin(core.PluginBase):
                             web=False
                         
                         if web:
-                            v_id=self.createAndAddVulnWebToService(h_id, s_id,v.name,ref=v.ref,website=hostname,severity=v.severity,desc=v.desc)
+                            v_id=self.createAndAddVulnWebToService(h_id, s_id,v.name.encode("utf-8"),ref=v.ref,website=hostname,severity=v.severity,desc=v.desc.encode("utf-8"))
                             n_id = self.createAndAddNoteToService(h_id,s_id,"website","")
                             n2_id = self.createAndAddNoteToNote(h_id,s_id,n_id,hostname,"")
                         else:
-                            v_id=self.createAndAddVulnToService(h_id, s_id,v.name,ref=v.ref,severity=v.severity,desc=v.desc)
+                            v_id=self.createAndAddVulnToService(h_id, s_id,v.name.encode("utf-8"),ref=v.ref,severity=v.severity,desc=v.desc.encode("utf-8"))
                 else:
                     for v in vulns:
-                        v_id=self.createAndAddVulnToHost(h_id,v.name,ref=v.ref,severity=v.severity,desc=v.desc)
+                        v_id=self.createAndAddVulnToHost(h_id,v.name.encode("utf-8"),ref=v.ref,severity=v.severity,desc=v.desc.encode("utf-8"))
         del parser
         
     def processCommandString(self, username, current_path, command_string):

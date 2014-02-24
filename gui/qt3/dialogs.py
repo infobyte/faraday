@@ -1085,6 +1085,8 @@ class WorkspaceCreationDialog(BaseDialog):
                 self.__type_txt = str(self._type_combobox.currentText())
                 self._callback(self.__name_txt, self.__desc_txt, self.__type_txt)
             self.accept()
+        else:
+            self._main_window.showPopup("A workspace must be named with all lowercase letters (a-z), digits (0-9) or any of the _$()+-/ characters. The name has to start with a lowercase letter (a-z)") 
 
                                                                                 
 

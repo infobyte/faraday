@@ -79,6 +79,15 @@ else
         mkdir -p "$HOME/.qt"
         cp deps/qtrc $HOME/.qt/
 fi
+
+# New zsh config dir
+if [ ! -d $faraday_user/zsh ]; then
+    echo "[+] Creating zsh config directory"
+    mkdir -p "$faraday_user/zsh"
+    cp -a $HOME/.zshrc $faraday_user/zsh/
+    echo "source $faraday_user/zsh/faraday.zsh" >> $faraday_user/zsh/.zshrc
+fi
+cp $faraday_base/zsh/faraday.zsh $faraday_user/zsh/
 #Replacing old plugins for updated ones.
 if [ $developingPlugins == "on" ]; then
     echo "[*] Running under plugin development mode!"

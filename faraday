@@ -88,6 +88,7 @@ if [ ! -d $faraday_user/zsh ]; then
     echo "source $faraday_user/zsh/faraday.zsh" >> $faraday_user/zsh/.zshrc
 fi
 cp $faraday_base/zsh/faraday.zsh $faraday_user/zsh/
+cp $faraday_base/zsh/plugin_controller_client.py $faraday_user/zsh/
 #Replacing old plugins for updated ones.
 if [ $developingPlugins == "on" ]; then
     echo "[*] Running under plugin development mode!"

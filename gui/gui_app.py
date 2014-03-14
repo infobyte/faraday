@@ -28,6 +28,7 @@ class FaradayUi(object):
         if gui == "gtk":
             from gui.gtk.application import GuiApp
             self.gui = GuiApp()
+        # TODO: elif qt3
         else:
             self.gui = NoUi()
 

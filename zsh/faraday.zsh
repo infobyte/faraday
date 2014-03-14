@@ -5,25 +5,27 @@
 #
 #'''
 
-echo "WELCOME MY FRIEND"
-alias nmap_test="nmap -A -T4"
+echo ">>> WELCOME TO FARADAY"
 
-autoload -U add-zsh-hook
 setopt multios
-#zle -N accept-line
-#if 
 
-hook_function()
-{
-    echo $3
-}
-
-add-zsh-hook preexec hook_function
+plugin_controller_client=$ZDOTDIR/plugin_controller_client.py
 
 add-output() {
-    echo "BUFFER:" $BUFFER
-    #[[ $BUFFER = grc* ]] || BUFFER="grc $BUFFER"; zle .$WIDGET "$@"; 
-    BUFFER="$BUFFER >&1 > output.txt"
+    output=`python2 $plugin_controller_client get_cmd $BUFFER`
+    response=("${(f)output}")
+    echo $response
+
+    # if [ ! -z $output ]; then
+    #     if [[ $output == "default" ]]; then
+    #         output=">&1 > output.txt"
+    #     fi
+    #     # else
+    #     #     BUFFER="$BUFFER $output"
+    #     # fi
+
+    #     BUFFER="$BUFFER $output && $plugin_controller_client send_output $output"
+    # fi
     zle .$WIDGET "$@"
 }
 

@@ -35,15 +35,6 @@ CONF = getInstanceConfiguration()
 
 class MainApplication(object):
     """
-    Contains the main QApplication to start the main loop
-    The application will handle one workspace at a time.
-    The workspace contains the list of hosts discovered
-    ShellEnvironments correspond to shell tabs
-    ModelController is the bridge between components and discovered
-    hosts & services
-
-    This class is the principal component, it is responsible for handling
-    some events coming from gui and connecting all components together
     """
 
     logger = None
@@ -52,14 +43,11 @@ class MainApplication(object):
     def getLogger():
 
         if MainApplication.logger is None:
-
             MainApplication.logger = model.log.getLogger()
         return MainApplication.logger
 
     def __init__(self, args):
         self._original_excepthook = sys.excepthook
-
-        self.gui_app = FaradayUi(args.gui)
 
         #if gui:
             # XXX: this should be done inside a class
@@ -86,6 +74,8 @@ class MainApplication(object):
 
         #self._main_window = MainWindow(CONF.getAppname(), self, self._model_controller)
         #self.app.setMainWidget(self._main_window)
+
+        self.gui_app = FaradayUi(self._model_controller, args.gui)
 
         self.gui_app.setSplashImage(os.path.join(
             CONF.getImagePath(), "splash2.png"))
@@ -114,6 +104,7 @@ class MainApplication(object):
 
             #splash_timer = qt.QTimer.singleShot(1700, lambda *args:None)
             #self._splash_screen.show()
+            self.gui_app.startSplashScreen()
 
             signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -143,7 +134,7 @@ class MainApplication(object):
             #self.logger.log("Faraday ready...")
             model.api.devlog("Faraday ready...")
 
-            #self._splash_screen.finish(self._main_window)
+            self.gui_app.stopSplashScreen()
             #self._main_window.showAll()
 
             logged = True
@@ -169,7 +160,7 @@ class MainApplication(object):
                 w = self._workspace_manager.createWorkspace(last_workspace)
                 self._workspace_manager.setActiveWorkspace(w)
 
-                #self._main_window.getWorkspaceTreeView().loadAllWorkspaces()
+                self.gui_app.loadWorkspaces()
 
                 self._workspace_manager.startReportManager()
 

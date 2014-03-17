@@ -11,7 +11,7 @@ from gui.gtk.mainwindow import MainWindow
 
 
 class GuiApp(Gtk.Application):
-    def __init__(self):
+    def __init__(self, model_controller):
         Gtk.Application.__init__(self)
 
     def do_activate(self):
@@ -23,5 +23,14 @@ class GuiApp(Gtk.Application):
     def setSplashImage(self, ipath):
         pass
 
+    def startSplashScreen(self):
+        pass
+
+    def stopSplashScreen(self):
+        pass
+
     def quit(self):
         self.main_window.hide()
+
+    def loadWorkspaces(self):
+        pass

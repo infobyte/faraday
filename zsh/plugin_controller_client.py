@@ -10,6 +10,7 @@ import json
 import requests
 import sys
 import base64
+import uuid
 
 
 class Plugin(object):
@@ -35,7 +36,6 @@ def get_cmd(command):
             output = plugin.output
 
     print output
-
 
 def send_output(output_file):
     pass

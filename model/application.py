@@ -217,13 +217,13 @@ class MainApplication(object):
         model.api.devlog("createShellEnvironment called - About to create new shell env with name %s" % name)
 
         shell_env = ShellEnvironment(name, self.gui_app,
-                                        self._main_window.getTabManager(),
+                                        self.gui_app.getMainWindow().getTabManager(),
                                         self._model_controller,
                                         self.plugin_manager.createController,
                                         self.deleteShellEnvironment)
 
         self._shell_envs[name] = shell_env
-        self._main_window.addShell(shell_env.widget)
+        self.gui_app.getMainWindow().addShell(shell_env.widget)
         shell_env.run()
 
     def deleteShellEnvironment(self, name, ref=None):
@@ -247,13 +247,13 @@ class MainApplication(object):
 
             if ref is not None:
 
-                result = self._main_window.exitFaraday()
+                result = self.gui_app.getMainWindow().exitFaraday()
                 if result == qt.QDialog.Accepted:
                     self.quit()
                 else:
 
                     _closeShellEnv(name)
-                    self._main_window.createShellTab()
+                    self.gui_app.getMainWindow().createShellTab()
 
     # def getMainWindow(self):
     #     return self._main_window

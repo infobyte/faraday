@@ -5,6 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import os
 try:
     import qt
 except ImportError:
@@ -31,6 +32,9 @@ class GuiApp(qt.QApplication):
         self._splash_screen = qt.QSplashScreen(
             qt.QPixmap(os.path.join(CONF.getImagePath(), "splash2.png")),
             qt.Qt.WStyle_StaysOnTop)
+
+    def getMainWindow(self):
+        return self._main_window
 
     def run(self):
         self._main_window.createShellTab()

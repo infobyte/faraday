@@ -37,12 +37,12 @@ def getMainWindow():
 def postCustomEvent(event, receiver=None):
     if receiver is None:
         receiver = getMainWindow()
-    __the_mainapp.qapp.postEvent(receiver, event)
+    __the_mainapp.postEvent(receiver, event)
     
 def sendCustomEvent(event, receiver=None):
     if receiver is None:
         receiver = getMainWindow()
-    __the_mainapp.qapp.sendEvent(receiver, event)
+    __the_mainapp.sendEvent(receiver, event)
 
 def setUpGUIAPIs(controller):
     global __model_controller

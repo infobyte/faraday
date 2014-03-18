@@ -26,7 +26,7 @@ class GuiApp(qt.QApplication):
 
         self._main_window = MainWindow(CONF.getAppname(),
                                        main_app, self._model_controller)
-        self.app.setMainWidget(self._main_window)
+        self.setMainWidget(self._main_window)
 
         self._splash_screen = qt.QSplashScreen(
             qt.QPixmap(os.path.join(CONF.getImagePath(), "splash2.png")),

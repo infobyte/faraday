@@ -33,13 +33,13 @@ class NoUi(object):
 
 
 class FaradayUi(object):
-    def __init__(self, model_controller, gui="gtk"):
+    def __init__(self, main_app, model_controller, gui="gtk"):
         if gui == "gtk":
             from gui.gtk.application import GuiApp
             self.gui = GuiApp(model_controller)
         elif gui == "qt3":
             from gui.qt3.application import GuiApp
-            self.gui = GuiApp(model_controller)
+            self.gui = GuiApp(main_app, model_controller)
         else:
             self.gui = NoUi()
 

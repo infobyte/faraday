@@ -75,7 +75,7 @@ class MainApplication(object):
         #self._main_window = MainWindow(CONF.getAppname(), self, self._model_controller)
         #self.app.setMainWidget(self._main_window)
 
-        self.gui_app = FaradayUi(self._model_controller, args.gui)
+        self.gui_app = FaradayUi(self, self._model_controller, args.gui)
 
         self.gui_app.setSplashImage(os.path.join(
             CONF.getImagePath(), "splash2.png"))

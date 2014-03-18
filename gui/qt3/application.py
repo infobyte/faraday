@@ -19,13 +19,13 @@ CONF = getInstanceConfiguration()
 
 class GuiApp(qt.QApplication):
 
-    def __init__(self, model_controller):
+    def __init__(self, main_app, model_controller):
         qt.QApplication.__init__(self, [])
         model.guiapi.setMainApp(self)
         self._model_controller = model_controller
 
         self._main_window = MainWindow(CONF.getAppname(),
-                                       self, self._model_controller)
+                                       main_app, self._model_controller)
         self.app.setMainWidget(self._main_window)
 
         self._splash_screen = qt.QSplashScreen(

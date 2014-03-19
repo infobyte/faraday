@@ -59,5 +59,5 @@ class GuiApp(qt.QApplication, FaradayUi):
     def quit(self):
         self._main_window.hide()
 
-    def postEvent(self, event):
-        qt.QApplication.postEvent(QtCustomEvent.create(event))
+    def postEvent(self, event, receiver):
+        qt.QApplication.postEvent(receiver, QtCustomEvent.create(event))

@@ -43,5 +43,5 @@ class FaradayUi(object):
     def quit(self):
         pass
 
-    def postEvent(self, event):
+    def postEvent(self, event, receiver):
         pass

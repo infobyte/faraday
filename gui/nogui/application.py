@@ -7,20 +7,13 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 from gui.gui_app import FaradayUi
-from gi.repository import Gtk
-from gui.gtk.mainwindow import MainWindow
 
 
-class GuiApp(Gtk.Application, FaradayUi):
+class GuiApp(FaradayUi):
     def __init__(self, main_app, model_controller):
         FaradayUi.__init__(self, main_app, model_controller)
-        Gtk.Application.__init__(self)
 
-    def do_activate(self):
-        self.main_window = MainWindow(self)
-
-    def do_startup(self):
-        Gtk.Application.do_startup(self)
-
-    def quit(self):
-        self.main_window.hide()
+    def run(self, args):
+        while True:
+            # find a way to keep this thread running, until CTRL+C is pressed
+            pass

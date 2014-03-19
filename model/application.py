@@ -27,7 +27,8 @@ from managers.all import PluginManager
 from utils.error_report import exception_handler
 from utils.error_report import installThreadExcepthook
 
-from gui.gui_app import FaradayUi
+#from gui.gui_app import FaradayUi
+from gui.gui_app import UiFactory
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -75,7 +76,8 @@ class MainApplication(object):
         #self._main_window = MainWindow(CONF.getAppname(), self, self._model_controller)
         #self.app.setMainWidget(self._main_window)
 
-        self.gui_app = FaradayUi(self, self._model_controller, args.gui)
+        #self.gui_app = FaradayUi(self, self._model_controller, args.gui)
+        self.gui_app = UiFactory.create(self, self._model_controller, args.gui)
 
         self.gui_app.setSplashImage(os.path.join(
             CONF.getImagePath(), "splash2.png"))

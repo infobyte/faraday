@@ -5,6 +5,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+
+from gui.gui_app import FaradayUi
 import os
 try:
     import qt
@@ -13,14 +15,15 @@ except ImportError:
     print "Check the deps file"
 from gui.qt3.mainwindow import MainWindow
 import model.guiapi
+from gui.qt3.customevents import QtCustomEvent
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 
-class GuiApp(qt.QApplication):
-
+class GuiApp(qt.QApplication, FaradayUi):
     def __init__(self, main_app, model_controller):
+        FaradayUi.__init__(self, main_app, model_controller)
         qt.QApplication.__init__(self, [])
         model.guiapi.setMainApp(self)
         self._model_controller = model_controller
@@ -43,12 +46,6 @@ class GuiApp(qt.QApplication):
     def loadWorkspaces(self):
         self._main_window.getWorkspaceTreeView().loadAllWorkspaces()
 
-    # def do_activate(self):
-    #     self.main_window = MainWindow(self)
-
-    # def do_startup(self):
-    #     Gtk.Application.do_startup(self)
-
     def setSplashImage(self, ipath):
         pass
 
@@ -60,4 +57,7 @@ class GuiApp(qt.QApplication):
         self._splash_screen.finish(self._main_window)
 
     def quit(self):
-        elf._main_window.hide()
+        self._main_window.hide()
+
+    def postEvent(self, event):
+        qt.QApplication.postEvent(QtCustomEvent.create(event))

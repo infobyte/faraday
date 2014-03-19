@@ -9,7 +9,7 @@ See the file 'doc/LICENSE' for the license information
 
 class UiFactory(object):
     @staticmethod
-    def create(main_app, model_controller, gui="gtk"):
+    def create(model_controller, plugin_manager, workspace_manager, gui="gtk"):
         if gui == "gtk":
             from gui.gtk.application import GuiApp
         elif gui == "qt3":
@@ -17,13 +17,18 @@ class UiFactory(object):
         else:
             from gui.nogui.application import GuiApp
 
-        return GuiApp(main_app, model_controller)
+        return GuiApp(model_controller, plugin_manager, workspace_manager)
 
 
 class FaradayUi(object):
-    def __init__(self, main_app, model_controller, gui="gtk"):
-        self.main_app = main_app
+    def __init__(self, model_controller, plugin_manager, workspace_manager, gui="gtk"):
+        #self.main_app = main_app
         self.model_controller = model_controller
+        self.plugin_manager = plugin_manager
+        self.workspace_manager = workspace_manager
+
+    def getWorkspaceManager(self):
+        return self.workspace_manager
 
     def setSplashImage(self, ipath):
         pass

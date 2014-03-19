@@ -10,8 +10,11 @@ from gui.gui_app import FaradayUi
 
 
 class GuiApp(FaradayUi):
-    def __init__(self, main_app, model_controller):
-        FaradayUi.__init__(self, main_app, model_controller)
+    def __init__(self, model_controller, plugin_manager, workspace_manager):
+        FaradayUi.__init__(self,
+                           model_controller,
+                           plugin_manager,
+                           workspace_manager)
 
     def run(self, args):
         while True:

@@ -12,8 +12,11 @@ from gui.gtk.mainwindow import MainWindow
 
 
 class GuiApp(Gtk.Application, FaradayUi):
-    def __init__(self, main_app, model_controller):
-        FaradayUi.__init__(self, main_app, model_controller)
+    def __init__(self, model_controller, plugin_manager, workspace_manager):
+        FaradayUi.__init__(self,
+                           model_controller,
+                           plugin_manager,
+                           workspace_manager)
         Gtk.Application.__init__(self)
 
     def do_activate(self):

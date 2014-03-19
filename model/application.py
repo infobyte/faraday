@@ -58,18 +58,16 @@ class MainApplication(object):
 
         self._configuration = CONF
 
-        self._shell_envs = dict()
-
         self._security_manager = SecurityManager()
 
         self._model_controller = model.controller.ModelController(
             security_manager=self._security_manager)
 
-        self.plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(),
-                                                         "plugins"))
+        self._plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(),
+                                             "plugins"))
 
         self._workspace_manager = WorkspaceManager(self._model_controller,
-                                                   self.plugin_manager.createController("ReportManager"))
+                                                   self._plugin_manager.createController("ReportManager"))
 
         #model.guiapi.setMainApp(self)
 
@@ -77,7 +75,10 @@ class MainApplication(object):
         #self.app.setMainWidget(self._main_window)
 
         #self.gui_app = FaradayUi(self, self._model_controller, args.gui)
-        self.gui_app = UiFactory.create(self, self._model_controller, args.gui)
+        self.gui_app = UiFactory.create(self._model_controller,
+                                        self._plugin_manager,
+                                        self._workspace_manager,
+                                        args.gui)
 
         self.gui_app.setSplashImage(os.path.join(
             CONF.getImagePath(), "splash2.png"))
@@ -189,14 +190,9 @@ class MainApplication(object):
         """
         self._workspace_manager.stopAutoLoader()
         self._workspace_manager.stopReportManager()
-
         #self._main_window.hide()
         model.api.devlog("Closing Faraday...")
         self._workspace_manager.saveWorkspaces()
-        envs = [env for env in self._shell_envs.itervalues()]
-        for env in envs:
-            env.terminate()
-
         model.api.devlog("stopping model controller thread...")
         self._model_controller.stop()
         model.api.devlog("stopping model controller thread...")
@@ -213,52 +209,6 @@ class MainApplication(object):
         """
 
         self.gui_app.quit()
-
-    def createShellEnvironment(self, name = None):
-
-        model.api.devlog("createShellEnvironment called - About to create new shell env with name %s" % name)
-
-        shell_env = ShellEnvironment(name, self.gui_app,
-                                        self.gui_app.getMainWindow().getTabManager(),
-                                        self._model_controller,
-                                        self.plugin_manager.createController,
-                                        self.deleteShellEnvironment)
-
-        self._shell_envs[name] = shell_env
-        self.gui_app.getMainWindow().addShell(shell_env.widget)
-        shell_env.run()
-
-    def deleteShellEnvironment(self, name, ref=None):
-
-        def _closeShellEnv(name):
-            try:
-                env = self._shell_envs[name]
-                env.terminate()                                  
-                tabmanager.removeView(env.widget)
-
-                del self._shell_envs[name]
-            except Exception:
-                model.api.devlog("ShellEnvironment could not be deleted")
-                model.api.devlog("%s" % traceback.format_exc())
-
-        model.api.devlog("deleteShellEnvironment called - name = %s - ref = %r" % (name, ref))
-        tabmanager = self._main_window.getTabManager()
-        if len(self._shell_envs) > 1 :
-            _closeShellEnv(name)
-        else:
-
-            if ref is not None:
-
-                result = self.gui_app.getMainWindow().exitFaraday()
-                if result == qt.QDialog.Accepted:
-                    self.quit()
-                else:
-
-                    _closeShellEnv(name)
-                    self.gui_app.getMainWindow().createShellTab()
-
-    # def getMainWindow(self):
-    #     return self._main_window
 
     def getWorkspaceManager(self):
         return self._workspace_manager

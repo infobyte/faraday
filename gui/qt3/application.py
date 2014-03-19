@@ -6,30 +6,41 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from gui.gui_app import FaradayUi
 import os
+
 try:
     import qt
 except ImportError:
     print "[-] Python QT3 was not found in the system, please install it and try again"
     print "Check the deps file"
+
+from gui.gui_app import FaradayUi
 from gui.qt3.mainwindow import MainWindow
-import model.guiapi
 from gui.qt3.customevents import QtCustomEvent
+from shell.controller.env import ShellEnvironment
+
+import model.guiapi
+import model.api
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 
 class GuiApp(qt.QApplication, FaradayUi):
-    def __init__(self, main_app, model_controller):
-        FaradayUi.__init__(self, main_app, model_controller)
+    def __init__(self, model_controller, plugin_manager, workspace_manager, workspace_manager):
+        FaradayUi.__init__(self,
+                           model_controller,
+                           plugin_manager,
+                           workspace_manager)
         qt.QApplication.__init__(self, [])
+
+        self._shell_envs = dict()
+
         model.guiapi.setMainApp(self)
-        self._model_controller = model_controller
 
         self._main_window = MainWindow(CONF.getAppname(),
-                                       main_app, self._model_controller)
+                                       self,
+                                       self._model_controller)
         self.setMainWidget(self._main_window)
 
         self._splash_screen = qt.QSplashScreen(
@@ -58,6 +69,51 @@ class GuiApp(qt.QApplication, FaradayUi):
 
     def quit(self):
         self._main_window.hide()
+        envs = [env for env in self._shell_envs.itervalues()]
+        for env in envs:
+            env.terminate()
+        # exit status
+        return 0
 
     def postEvent(self, receiver, event):
         qt.QApplication.postEvent(receiver, QtCustomEvent.create(event))
+
+    def createShellEnvironment(self, name=None):
+
+        model.api.devlog("createShellEnvironment called \
+            - About to create new shell env with name %s" % name)
+
+        shell_env = ShellEnvironment(name, self,
+                                     self.getMainWindow().getTabManager(),
+                                     self._model_controller,
+                                     self.plugin_manager.createController,
+                                     self.deleteShellEnvironment)
+
+        self._shell_envs[name] = shell_env
+        self.getMainWindow().addShell(shell_env.widget)
+        shell_env.run()
+
+    def deleteShellEnvironment(self, name, ref=None):
+        def _closeShellEnv(name):
+            try:
+                env = self._shell_envs[name]
+                env.terminate()
+                tabmanager.removeView(env.widget)
+                del self._shell_envs[name]
+            except Exception:
+                model.api.devlog("ShellEnvironment could not be deleted")
+                model.api.devlog("%s" % traceback.format_exc())
+
+        model.api.devlog("deleteShellEnvironment called \
+            - name = %s - ref = %r" % (name, ref))
+        tabmanager = self.getMainWindow().getTabManager()
+        if len(self._shell_envs) > 1:
+            _closeShellEnv(name)
+        else:
+            if ref is not None:
+                result = self.getMainWindow().exitFaraday()
+                if result == qt.QDialog.Accepted:
+                    self.quit()
+                else:
+                    _closeShellEnv(name)
+                    self.getMainWindow().createShellTab()

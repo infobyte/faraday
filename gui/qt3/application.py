@@ -39,7 +39,7 @@ class GuiApp(qt.QApplication, FaradayUi):
     def getMainWindow(self):
         return self._main_window
 
-    def run(self):
+    def run(self, args):
         self._main_window.createShellTab()
         self._main_window.showAll()
 

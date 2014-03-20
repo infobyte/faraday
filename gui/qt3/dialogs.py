@@ -48,11 +48,14 @@ class LogConsole(qt.QVBox):
         self._text_edit = qt.QTextEdit(self, caption)
                                            
         self._text_edit.setTextFormat(qt.Qt.LogText)
-    
+
     def customEvent(self, event):
-        if event.type() ==  3131:
+        self.update(event)
+
+    def update(self, event):
+        if event.type() == 3131:
             self.appendText(event.text)
-            
+
     def appendText(self, text):
         """
         appends new text to the console

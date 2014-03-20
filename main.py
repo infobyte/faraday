@@ -51,7 +51,7 @@ def setupOptions(parser):
     parser.add_argument('--profile-depth', action="store", dest="profile_depth", default=500, help="Sets the profile number of entries (depth). Default = 500")
     parser.add_argument('--disable-excepthook', action="store_true", dest="disableexcepthook", default=False, help="Disable the application Exception hook that allows to send error reports to developers.")
     parser.add_argument('--disable-login', action="store_true", dest="disablelogin", default=False, help="Disable the auth splash screen.")
-    parser.add_argument('--gui', action="store", dest="gui", default="gtk", help="Disable the gui and use your own shell")
+    parser.add_argument('--gui', action="store", dest="gui", default="qt3", help="Disable the gui and use your own shell")
 
 
 def main(args):

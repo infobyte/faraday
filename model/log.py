@@ -9,6 +9,9 @@ See the file 'doc/LICENSE' for the license information
 import threading
 import logging
 import logging.handlers
+from gui.customevents import (LogCustomEvent,
+                              ShowPopupCustomEvent,
+                              ShowDialogCustomEvent)
 #import qt
 
 from config.configuration import getInstanceConfiguration
@@ -16,6 +19,7 @@ CONF = getInstanceConfiguration()
 
 __the_logger = None
 __notifier = None
+
 
 def getLogger():
     global __the_logger
@@ -201,6 +205,7 @@ class Notifier(object):
         getLogger().log(text, "NOTIFICATION")
         if self.widget is not None:
             event = customEventClass(text, level)
+            widget.update(event)
             #qt.QApplication.postEvent(self.widget, event)
 
     def showDialog(self, text, level="Information"):

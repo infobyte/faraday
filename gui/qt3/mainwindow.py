@@ -571,10 +571,17 @@ class MainWindow(qt.QMainWindow):
         elif event.type() == CONFLICTS_ID:
                                                                   
             self.showConflictsDialog(event.local)
-            
-                                
-                                
-                                
+
+    def update(self, event):
+        if event.type() ==  EXCEPTION_ID:
+            self.showExceptionDialog(event.text, event.callback, event.exception_objects)
+        elif event.type() ==  SHOWDIALOG_ID:
+            self.showSimpleDialog(event.text, event.level)
+        elif event.type() ==  SHOWPOPUP_ID:
+            self.showPopup(event.text, event.level)
+        elif event.type() == CONFLICTS_ID:
+            self.showConflictsDialog(event.local)
+
     def toggleLogConsole(self):
         if self._log_console.isVisible():
             self._log_console.hide()

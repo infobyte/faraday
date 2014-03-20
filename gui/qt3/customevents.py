@@ -20,26 +20,26 @@ from gui.customevents import (LOGEVENT_ID, SHOWDIALOG_ID, SHOWPOPUP_ID,
 
 class LogCustomEvent(qt.QCustomEvent):
     def __init__(self, e):
-        qt.QCustomEvent.__init__(self, e.type)
+        qt.QCustomEvent.__init__(self, e.type())
         self.text = e.text
 
 
 class ShowDialogCustomEvent(qt.QCustomEvent):
     def __init__(self, e):
-        qt.QCustomEvent.__init__(self, e.type)
+        qt.QCustomEvent.__init__(self, e.type())
         self.text = e.text
 
 
 class ShowPopupCustomEvent(qt.QCustomEvent):
     def __init__(self, e):
-        qt.QCustomEvent.__init__(self, e.type)
+        qt.QCustomEvent.__init__(self, e.type())
         self.text = e.text
         self.level = e.level
 
 
 class ShowExceptionCustomEvent(qt.QCustomEvent):
     def __init__(self, e):
-        qt.QCustomEvent.__init__(self, e.type)
+        qt.QCustomEvent.__init__(self, e.type())
         self.text = e.text
         self.exception_objects = e.exception_objects
         self.callback = e.callback
@@ -47,43 +47,43 @@ class ShowExceptionCustomEvent(qt.QCustomEvent):
 
 class RenameHostsRootCustomEvent(qt.QCustomEvent):
     def __init__(self, e):
-        qt.QCustomEvent.__init__(self, e.type)
+        qt.QCustomEvent.__init__(self, e.type())
         self.name = e.name
 
 
 class WorkspaceChangedCustomEvent(qt.QCustomEvent):
     def __init__(self, e):
-        qt.QCustomEvent.__init__(self, e.type)
+        qt.QCustomEvent.__init__(self, e.type())
         self.workspace = e.workspace
 
 
 class ConflictUpdatedCustomEvent(qt.QCustomEvent):
     def __init__(self, e):
-        qt.QCustomEvent.__init__(self, e.type)
+        qt.QCustomEvent.__init__(self, e.type())
         self.nconflicts = e.nconflicts
 
 
 class DiffHostsCustomEvent(qt.QCustomEvent):
     def __init__(self, e):
-        qt.QCustomEvent.__init__(self, e.type)
+        qt.QCustomEvent.__init__(self, e.type())
         self.new_host = e.new_host
         self.old_host = e.old_host
 
 
 class ResolveConflictsCustomEvent(qt.QCustomEvent):
     def __init__(self, e):
-        qt.QCustomEvent.__init__(self, e.type)
+        qt.QCustomEvent.__init__(self, e.type())
         self.conflicts = e.conflicts
 
 
 class ClearHostsCustomEvent(qt.QCustomEvent):
     def __init__(self, e):
-        qt.QCustomEvent.__init__(self, e.type)
+        qt.QCustomEvent.__init__(self, e.type())
 
 
 class ModelObjectUpdateEvent(qt.QCustomEvent):
     def __init__(self, e):
-        qt.QCustomEvent.__init__(self, e.type)
+        qt.QCustomEvent.__init__(self, e.type())
         self.hosts = e.hosts
 
 

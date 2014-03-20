@@ -21,11 +21,18 @@ class UiFactory(object):
 
 
 class FaradayUi(object):
-    def __init__(self, model_controller, plugin_manager, workspace_manager, gui="gtk"):
+    def __init__(self, model_controller, plugin_manager,
+                 workspace_manager, gui="gtk"):
         #self.main_app = main_app
         self.model_controller = model_controller
         self.plugin_manager = plugin_manager
         self.workspace_manager = workspace_manager
+
+    def getModelController(self):
+        return self.model_controller
+
+    def getPluginManager(self):
+        return self.plugin_manager
 
     def getWorkspaceManager(self):
         return self.workspace_manager

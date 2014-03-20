@@ -11,7 +11,11 @@ These events are needed to communicate secondary threads with the GUI.
 
 """
 import qt
-import gui.customevents
+from gui.customevents import (LOGEVENT_ID, SHOWDIALOG_ID, SHOWPOPUP_ID,
+                              EXCEPTION_ID, RENAMEHOSTSROOT_ID,
+                              CLEARHOSTS_ID, DIFFHOSTS_ID, SYNCFAILED_ID,
+                              CONFLICTS_ID, WORKSPACE_CHANGED, CONFLICT_UPDATE,
+                              RESOLVECONFLICTS_ID, UPDATEMODEL_ID)
 
 
 class LogCustomEvent(qt.QCustomEvent):
@@ -85,19 +89,19 @@ class ModelObjectUpdateEvent(qt.QCustomEvent):
 
 class QtCustomEvent(qt.QCustomEvent):
     events = {
-        gui.customevents.LOGEVENT_ID: LogCustomEvent,
-        gui.customevents.SHOWDIALOG_ID: ShowDialogCustomEvent,
-        gui.customevents.SHOWPOPUP_ID: ShowPopupCustomEvent,
-        gui.customevents.EXCEPTION_ID: ShowExceptionCustomEvent,
-        gui.customevents.RENAMEHOSTSROOT_ID: RenameHostsRootCustomEvent,
-        gui.customevents.CLEARHOSTS_ID: ClearHostsCustomEvent,
-        gui.customevents.DIFFHOSTS_ID: DiffHostsCustomEvent,
-        gui.customevents.SYNCFAILED_ID: None,
-        gui.customevents.CONFLICTS_ID: None,
-        gui.customevents.WORKSPACE_CHANGED: WorkspaceChangedCustomEvent,
-        gui.customevents.CONFLICT_UPDATE: ConflictUpdatedCustomEvent,
-        gui.customevents.RESOLVECONFLICTS_ID: ResolveConflictsCustomEvent,
-        gui.customevents.UPDATEMODEL_ID: ModelObjectUpdateEvent
+        LOGEVENT_ID: LogCustomEvent,
+        SHOWDIALOG_ID: ShowDialogCustomEvent,
+        SHOWPOPUP_ID: ShowPopupCustomEvent,
+        EXCEPTION_ID: ShowExceptionCustomEvent,
+        RENAMEHOSTSROOT_ID: RenameHostsRootCustomEvent,
+        CLEARHOSTS_ID: ClearHostsCustomEvent,
+        DIFFHOSTS_ID: DiffHostsCustomEvent,
+        SYNCFAILED_ID: None,
+        CONFLICTS_ID: None,
+        WORKSPACE_CHANGED: WorkspaceChangedCustomEvent,
+        CONFLICT_UPDATE: ConflictUpdatedCustomEvent,
+        RESOLVECONFLICTS_ID: ResolveConflictsCustomEvent,
+        UPDATEMODEL_ID: ModelObjectUpdateEvent
     }
 
     @staticmethod

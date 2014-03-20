@@ -27,7 +27,7 @@ CONF = getInstanceConfiguration()
 
 
 class GuiApp(qt.QApplication, FaradayUi):
-    def __init__(self, model_controller, plugin_manager, workspace_manager, workspace_manager):
+    def __init__(self, model_controller, plugin_manager, workspace_manager):
         FaradayUi.__init__(self,
                            model_controller,
                            plugin_manager,
@@ -40,8 +40,9 @@ class GuiApp(qt.QApplication, FaradayUi):
 
         self._main_window = MainWindow(CONF.getAppname(),
                                        self,
-                                       self._model_controller)
-        self.setMainWidget(self._main_window)
+                                       self.getModelController(),
+                                       self.getPluginManager())
+        self.setMainWidget(self.getMainWindow())
 
         self._splash_screen = qt.QSplashScreen(
             qt.QPixmap(os.path.join(CONF.getImagePath(), "splash2.png")),
@@ -53,9 +54,11 @@ class GuiApp(qt.QApplication, FaradayUi):
     def run(self, args):
         self._main_window.createShellTab()
         self._main_window.showAll()
+        exit_code = self.exec_loop()
+        return exit_code
 
     def loadWorkspaces(self):
-        self._main_window.getWorkspaceTreeView().loadAllWorkspaces()
+        self.getMainWindow().getWorkspaceTreeView().loadAllWorkspaces()
 
     def setSplashImage(self, ipath):
         pass
@@ -68,12 +71,12 @@ class GuiApp(qt.QApplication, FaradayUi):
         self._splash_screen.finish(self._main_window)
 
     def quit(self):
-        self._main_window.hide()
+        self.getMainWindow().hide()
         envs = [env for env in self._shell_envs.itervalues()]
         for env in envs:
             env.terminate()
         # exit status
-        return 0
+        qt.QApplication.quit(self)
 
     def postEvent(self, receiver, event):
         qt.QApplication.postEvent(receiver, QtCustomEvent.create(event))
@@ -85,7 +88,7 @@ class GuiApp(qt.QApplication, FaradayUi):
 
         shell_env = ShellEnvironment(name, self,
                                      self.getMainWindow().getTabManager(),
-                                     self._model_controller,
+                                     self.model_controller,
                                      self.plugin_manager.createController,
                                      self.deleteShellEnvironment)
 
@@ -117,3 +120,50 @@ class GuiApp(qt.QApplication, FaradayUi):
                 else:
                     _closeShellEnv(name)
                     self.getMainWindow().createShellTab()
+
+    def removeWorkspace(self, name):
+        model.api.log("Removing Workspace: %s" % name)
+        return self.getWorkspaceManager().removeWorkspace(name)
+
+    def syncWorkspaces(self):
+        try:
+            self.getWorkspaceManager().saveWorkspaces()
+        except Exception:
+            model.api.log("An exception was captured while synchronizing \
+                workspaces\n%s" % traceback.format_exc(), "ERROR")
+
+    def saveWorkspaces(self):
+        try:
+            self.getWorkspaceManager().saveWorkspaces()
+        except Exception:
+            model.api.log("An exception was captured while saving \
+                workspaces\n%s" % traceback.format_exc(), "ERROR")
+
+    def createWorkspace(self, name, description="", w_type=""):
+
+        if name in self.getWorkspaceManager().getWorkspacesNames():
+
+            model.api.log("A workspace with name %s already exists"
+                          % name, "ERROR")
+        else:
+            model.api.log("Creating workspace '%s'" % name)
+            model.api.devlog("Looking for the delegation class")
+            workingClass = globals()[w_type]
+
+            w = self.getWorkspaceManager().\
+                createWorkspace(name, description, workspaceClass=workingClass)
+            self.getWorkspaceManager().setActiveWorkspace(w)
+            self.getModelController().setWorkspace(w)
+
+            self.getMainWindow().refreshWorkspaceTreeView()
+
+            self.getMainWindow().getWorkspaceTreeView().loadAllWorkspaces()
+
+    def openWorkspace(self, name):
+        self.saveWorkspaces()
+        try:
+            workspace = self.getWorkspaceManager().openWorkspace(name)
+            self.getModelController().setWorkspace(workspace)
+        except Exception:
+            model.api.log("An exception was captured while opening \
+                workspace %s\n%s" % (name, traceback.format_exc()), "ERROR")

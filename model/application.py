@@ -213,52 +213,5 @@ class MainApplication(object):
     def getWorkspaceManager(self):
         return self._workspace_manager
 
-    def removeWorkspace(self, name):
-        model.api.log("Removing Workspace: %s" % name) 
-        return self.getWorkspaceManager().removeWorkspace(name)
-
-    def syncWorkspaces(self):
-        try:
-            self._workspace_manager.saveWorkspaces()
-        except Exception:
-            model.api.log("An exception was captured while synchronizing workspaces\n%s"
-                          % traceback.format_exc(), "ERROR")
-
-    def saveWorkspaces(self):
-        try:
-            self._workspace_manager.saveWorkspaces()
-        except Exception:
-            model.api.log("An exception was captured while saving workspaces\n%s"
-                          % traceback.format_exc(), "ERROR")
-
-    def createWorkspace(self, name, description="", w_type=""):
-
-        if name in self._workspace_manager.getWorkspacesNames():
-
-            model.api.log("A workspace with name %s already exists"
-                          % name, "ERROR")
-        else:
-            model.api.log("Creating workspace '%s'" % name)
-            model.api.devlog("Looking for the delegation class")
-            workingClass = globals()[w_type]
-
-            w = self._workspace_manager.createWorkspace(name, description, workspaceClass = workingClass )
-            self._workspace_manager.setActiveWorkspace(w)
-            self._model_controller.setWorkspace(w)
-
-            self._main_window.refreshWorkspaceTreeView()
-
-            self._main_window.getWorkspaceTreeView().loadAllWorkspaces()
-
-    def openWorkspace(self, name):
-        self.saveWorkspaces()
-        try:
-            workspace = self._workspace_manager.openWorkspace(name)
-            self._model_controller.setWorkspace(workspace) 
-        except Exception:
-            model.api.log("An exception was captured while opening workspace %s\n%s"
-                          % (name, traceback.format_exc()), "ERROR")
-
-
     # def _writeSplashMessage(self, text):
     #     self._splash_screen.message(text, qt.Qt.AlignRight | qt.Qt.AlignTop, qt.Qt.red)

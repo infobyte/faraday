@@ -173,9 +173,9 @@ class MainWindow(qt.QMainWindow):
                                                                                         
 
                      
-        a = self._actions["test"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"donotpresstheredbutton.png"))), "Test", qt.Qt.CTRL + qt.Qt.Key_H, self, "Test" )
+        #a = self._actions["test"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"donotpresstheredbutton.png"))), "Test", qt.Qt.CTRL + qt.Qt.Key_H, self, "Test" )
                                                                 
-        self.connect(a, qt.SIGNAL('activated()'), self.test)
+        #self.connect(a, qt.SIGNAL('activated()'), self.test)
 
         a = self._actions["screenshot"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"Screenshot.png"))), "Take Screenshot", 0, self, "Take Screenshot" )
         self.connect(a, qt.SIGNAL('activated()'), self.takeScreenshot)

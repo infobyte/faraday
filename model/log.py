@@ -14,11 +14,6 @@ import logging.handlers
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
-#TODO: move all the custom events into some module to make it easier..
-LOGEVENT_TYPE = 3131
-SHOWDIALOG_EVENT_TYPE = 3132
-SHOWPOPUP_EVENT_TYPE = 3133
-
 __the_logger = None
 __notifier = None
 
@@ -188,45 +183,6 @@ class AppLogger(object):
         finally: # for safety so we don't block anything
             # after doing all release
             self.__lock.release()
-
-#class LogCustomEvent(qt.QCustomEvent):
-#    def __init__(self, text):
-#        qt.QCustomEvent.__init__(self, LOGEVENT_TYPE)
-#        self.text = text
-
-
-class LogCustomEvent(object):
-    def __init__(self, text):
-        self.type = LOGEVENT_TYPE
-        self.text = text
-
-
-# class ShowDialogCustomEvent(qt.QCustomEvent):
-#     def __init__(self, text, level):
-#         qt.QCustomEvent.__init__(self, SHOWDIALOG_EVENT_TYPE)
-#         self.text = text
-#         self.level = level
-
-
-class ShowDialogCustomEvent(object):
-    def __init__(self, text, level):
-        self.type = SHOWDIALOG_EVENT_TYPE
-        self.text = text
-        self.level = level
-
-
-# class ShowPopupCustomEvent(qt.QCustomEvent):
-#     def __init__(self, text, level):
-#         qt.QCustomEvent.__init__(self, SHOWPOPUP_EVENT_TYPE)
-#         self.text = text
-#         self.level = level
-
-
-class ShowPopupCustomEvent(object):
-    def __init__(self, text, level):
-        self.type = SHOWPOPUP_EVENT_TYPE
-        self.text = text
-        self.level = level
 
 
 class Notifier(object):

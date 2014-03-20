@@ -50,12 +50,6 @@ class MainApplication(object):
     def __init__(self, args):
         self._original_excepthook = sys.excepthook
 
-        #if gui:
-            # XXX: this should be done inside a class
-            # specific for the qt3 library
-            #self.app = qt.QApplication([])
-        #    self.gui_app = FaradayUi()
-
         self._configuration = CONF
 
         self._security_manager = SecurityManager()
@@ -69,12 +63,6 @@ class MainApplication(object):
         self._workspace_manager = WorkspaceManager(self._model_controller,
                                                    self._plugin_manager.createController("ReportManager"))
 
-        #model.guiapi.setMainApp(self)
-
-        #self._main_window = MainWindow(CONF.getAppname(), self, self._model_controller)
-        #self.app.setMainWidget(self._main_window)
-
-        #self.gui_app = FaradayUi(self, self._model_controller, args.gui)
         self.gui_app = UiFactory.create(self._model_controller,
                                         self._plugin_manager,
                                         self._workspace_manager,
@@ -83,12 +71,10 @@ class MainApplication(object):
         self.gui_app.setSplashImage(os.path.join(
             CONF.getImagePath(), "splash2.png"))
 
+        self.gui_app.setLogger(self.getLogger())
+
         #self._splash_screen = qt.QSplashScreen(qt.QPixmap(os.path.join(CONF.getImagePath(),"splash2.png")),
         #                                       qt.Qt.WStyle_StaysOnTop)
-
-        #if not self.getLogger().isGUIOutputRegistered():
-
-        #    self.logger.registerGUIOutput(self._main_window.getLogConsole())
 
         #notifier = model.log.getNotifier()
         #notifier.widget = self._main_window

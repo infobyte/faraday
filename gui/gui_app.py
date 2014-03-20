@@ -22,7 +22,7 @@ class UiFactory(object):
 
 class FaradayUi(object):
     def __init__(self, model_controller, plugin_manager,
-                 workspace_manager, gui="gtk"):
+                 workspace_manager, gui="qt3"):
         #self.main_app = main_app
         self.model_controller = model_controller
         self.plugin_manager = plugin_manager
@@ -56,4 +56,14 @@ class FaradayUi(object):
         pass
 
     def postEvent(self, receiver, event):
+        pass
+
+    def setLogger(self, logger):
+        self.logger = logger
+        self.createLoggerWidget()
+
+    def getLogger(self):
+        return self.logger
+
+    def createLoggerWidget(self):
         pass

@@ -21,6 +21,7 @@ from shell.controller.env import ShellEnvironment
 
 import model.guiapi
 import model.api
+import model.log
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -44,6 +45,9 @@ class GuiApp(qt.QApplication, FaradayUi):
                                        self.getPluginManager())
         self.setMainWidget(self.getMainWindow())
 
+        notifier = model.log.getNotifier()
+        notifier.widget = self._main_window
+
         self._splash_screen = qt.QSplashScreen(
             qt.QPixmap(os.path.join(CONF.getImagePath(), "splash2.png")),
             qt.Qt.WStyle_StaysOnTop)
@@ -56,6 +60,10 @@ class GuiApp(qt.QApplication, FaradayUi):
         self._main_window.showAll()
         exit_code = self.exec_loop()
         return exit_code
+
+    def createLoggerWidget(self):
+        if not self.getLogger().isGUIOutputRegistered():
+            self.logger.registerGUIOutput(self._main_window.getLogConsole())
 
     def loadWorkspaces(self):
         self.getMainWindow().getWorkspaceTreeView().loadAllWorkspaces()

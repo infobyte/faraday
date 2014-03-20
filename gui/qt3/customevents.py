@@ -106,7 +106,7 @@ class QtCustomEvent(qt.QCustomEvent):
 
     @staticmethod
     def create(custom_event):
-        return QtCustomEvent.events[custom_event.type](custom_event)
+        return QtCustomEvent.events[custom_event.type()](custom_event)
 
 
     # def create(custom_event):

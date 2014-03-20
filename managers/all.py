@@ -7,9 +7,15 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import model.api
+from utils.logs import getLogger
 from utils.decorators import trap_timeout
 from config.configuration import getInstanceConfiguration
+import threading
+import traceback
+from urlparse import urlparse
+from couchdbkit import Server, ChangesStream, Database, designer
+from couchdbkit.resource import ResourceNotFound
+
 CONF = getInstanceConfiguration()
 class CommandManager(object):
     """ A Command Persistence Manager """
@@ -72,7 +78,7 @@ class CouchdbManager(PersistenceManager):
     couchdb databases"""
     def __init__(self, uri):
         self._last_seq_ack = 0
-        model.api.log("Initializing CouchDBManager for url [%s]" % uri)
+        getLogger(self).debug("Initializing CouchDBManager for url [%s]" % uri)
         self._lostConnection = False
         self.__uri = uri
         self.__dbs = {} 
@@ -83,14 +89,14 @@ class CouchdbManager(PersistenceManager):
         try:
             self.testCouchUrl(uri)
             url=urlparse(uri)
-            print ("Setting user,pass %s %s" % (url.username, url.password))
+            getLogger(self).debug("Setting user,pass %s %s" % (url.username, url.password))
             self.__serv = Server(uri = uri)
             #print dir(self.__serv)
             self.__serv.resource_class.credentials = (url.username, url.password)
             self._available = True
         except:
-            model.api.log("No route to couchdb server on: %s" % uri)
-            print(traceback.format_exc())
+            getLogger(self).warn("No route to couchdb server on: %s" % uri)
+            getLogger(self).debug(traceback.format_exc())
 
     def isAvailable(self):
         return self._available

@@ -9,10 +9,8 @@ See the file 'doc/LICENSE' for the license information
 import os
 import model.api
 import model
-import threading
 import time
 import datetime
-import traceback
 from persistence.common import DataManager
 from model.report import ReportManager
 from model.diff import HostDiff
@@ -22,21 +20,16 @@ from model.hosts import Host
 import model.guiapi as guiapi
 from gui.qt3.customevents import ShowPopupCustomEvent
 
-from couchdbkit import Server, ChangesStream, Database, designer
-from couchdbkit.resource import ResourceNotFound
 
 import mockito
-import traceback
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
-from urlparse import urlparse
 import json
 import shutil
 
 from persistence.orm import WorkspacePersister
-from utils.decorators import trap_timeout
 
 from managers.all import CouchdbManager
 

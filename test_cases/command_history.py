@@ -26,7 +26,7 @@ from managers.all import CommandManager, CouchdbManager
 class CommandHistoryTestSuite(unittest.TestCase):
 
     def setUp(self):
-        self.couch_host = "http://192.168.33.10:5984" 
+        self.couch_host = "http://192.168.33.102:5984" 
         CONF.setCouchUri(self.couch_host)
         # self.plugin_repo_path = os.path.join(os.getcwd(), "plugins", "repo")
         # self.plugin_manager = managers.PluginManager(self.plugin_repo_path)
@@ -56,7 +56,7 @@ class CommandHistoryTestSuite(unittest.TestCase):
 
     def test_create_command_manager(self):
         cm = CommandManager()
-        self.assertIsNotNone(cm, "Command Manager noti nstantiated")
+        self.assertIsNotNone(cm, "Command Manager not instantiated")
 
     def getDefaultCommandInfo(self):
         information = { 'command' : 'nmap',

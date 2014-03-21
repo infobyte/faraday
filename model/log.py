@@ -13,6 +13,7 @@ from gui.customevents import (LogCustomEvent,
                               ShowPopupCustomEvent,
                               ShowDialogCustomEvent)
 #import qt
+import model.guiapi
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -155,9 +156,9 @@ class AppLogger(object):
         """
         for widget in self.__gui_output:
             event = LogCustomEvent(msg)
-            widget.update(event)
+            #widget.update(event)
             #qt.QApplication.postEvent(widget, event)
-            #guiapi.postCustomEvent(widget, event)
+            model.guiapi.postCustomEvent(event, widget)
 
     def log(self, msg ,level = "INFO"):
         """
@@ -205,8 +206,8 @@ class Notifier(object):
         getLogger().log(text, "NOTIFICATION")
         if self.widget is not None:
             event = customEventClass(text, level)
-            widget.update(event)
-            #qt.QApplication.postEvent(self.widget, event)
+            #widget.update(event)
+            model.guiapi.postEvent(event, self.widget)
 
     def showDialog(self, text, level="Information"):
         self._postCustomEvent(text, level, ShowDialogCustomEvent)

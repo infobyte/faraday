@@ -8,15 +8,9 @@ See the file 'doc/LICENSE' for the license information
 
 from model.common import factory
 from config.configuration import getInstanceConfiguration
-from model.api import showDialog, showPopup
+#from model.api import showDialog, showPopup
 
 CONF = getInstanceConfiguration()
-
-                                                                      
-                
-                                                                      
-showDialog = showDialog
-showPopup = showPopup
 
 __the_mainapp = None
                                                                          

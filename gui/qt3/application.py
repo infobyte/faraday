@@ -62,8 +62,8 @@ class GuiApp(qt.QApplication, FaradayUi):
         return exit_code
 
     def createLoggerWidget(self):
-        if not self.getLogger().isGUIOutputRegistered():
-            self.logger.registerGUIOutput(self._main_window.getLogConsole())
+        if not model.log.getLogger().isGUIOutputRegistered():
+            model.log.logger.registerGUIOutput(self._main_window.getLogConsole())
 
     def loadWorkspaces(self):
         self.getMainWindow().getWorkspaceTreeView().loadAllWorkspaces()
@@ -79,11 +79,14 @@ class GuiApp(qt.QApplication, FaradayUi):
         self._splash_screen.finish(self._main_window)
 
     def quit(self):
+        model.log.getLogger().clearWidgets()
         self.getMainWindow().hide()
         envs = [env for env in self._shell_envs.itervalues()]
         for env in envs:
             env.terminate()
         # exit status
+        notifier = model.log.getNotifier()
+        notifier.widget = None
         qt.QApplication.quit(self)
 
     def postEvent(self, receiver, event):

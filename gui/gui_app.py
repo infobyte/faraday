@@ -58,12 +58,5 @@ class FaradayUi(object):
     def postEvent(self, receiver, event):
         pass
 
-    def setLogger(self, logger):
-        self.logger = logger
-        self.createLoggerWidget()
-
-    def getLogger(self):
-        return self.logger
-
     def createLoggerWidget(self):
         pass

@@ -130,6 +130,11 @@ class AppLogger(object):
         # IMPORTANT: the widget MUST implement a method called appendText
         self.__gui_output.append(widget)
 
+    def clearWidgets(self):
+        self.__lock.acquire()
+        self.__gui_output = []
+        self.__lock.release()
+
     def setLogLevel(self, level):
         self.__logger.setLevel(level)
 

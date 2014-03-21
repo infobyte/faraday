@@ -38,15 +38,6 @@ class MainApplication(object):
     """
     """
 
-    logger = None
-
-    @staticmethod
-    def getLogger():
-
-        if MainApplication.logger is None:
-            MainApplication.logger = model.log.getLogger()
-        return MainApplication.logger
-
     def __init__(self, args):
         self._original_excepthook = sys.excepthook
 
@@ -71,15 +62,8 @@ class MainApplication(object):
         self.gui_app.setSplashImage(os.path.join(
             CONF.getImagePath(), "splash2.png"))
 
-        self.gui_app.setLogger(self.getLogger())
-
         #self._splash_screen = qt.QSplashScreen(qt.QPixmap(os.path.join(CONF.getImagePath(),"splash2.png")),
         #                                       qt.Qt.WStyle_StaysOnTop)
-
-        #notifier = model.log.getNotifier()
-        #notifier.widget = self._main_window
-
-        #model.guiapi.setMainApp(self)
 
     def enableExceptHook(self):
         sys.excepthook = exception_handler

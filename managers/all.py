@@ -15,8 +15,11 @@ import traceback
 from urlparse import urlparse
 from couchdbkit import Server, ChangesStream, Database, designer
 from couchdbkit.resource import ResourceNotFound
+import os
 
 CONF = getInstanceConfiguration()
+
+
 class CommandManager(object):
     """ A Command Persistence Manager """
     def __init__(self): 
@@ -24,7 +27,7 @@ class CommandManager(object):
 
     def saveCommand(self, command_info):
         self._manager.saveDocument(command_info.workspace,
-                command_info._toDict())
+                command_info.toDict())
 
 class PersistenceManagerFactory(object):
     """Creates PersistenceManager
@@ -135,7 +138,7 @@ class CouchdbManager(PersistenceManager):
             s.connect((host, int(port)))
         except:
             return False
-        model.api.log("Connecting Couch to: %s:%s" % (host, port))
+        getLogger(self).info("Connecting Couch to: %s:%s" % (host, port))
         return True
 
 
@@ -175,23 +178,23 @@ class CouchdbManager(PersistenceManager):
     @trap_timeout
     def saveDocument(self, aWorkspaceName, aDocument):
         self.incrementSeqNumber(aWorkspaceName)
-        model.api.log("Saving document in remote workspace %s" % aWorkspaceName)
+        getLogger(self).debug("Saving document in remote workspace %s" % aWorkspaceName)
         self.__getDb(aWorkspaceName).save_doc(aDocument, use_uuids = True, force_update = True)
 
     @trap_timeout
     def __getDb(self, aWorkspaceName): 
         aWorkspaceName = aWorkspaceName.lower()
-        model.api.log("Getting workspace [%s]" % aWorkspaceName)
+        getLogger(self).debug("Getting workspace [%s]" % aWorkspaceName)
         workspacedb = self.__dbs.get(aWorkspaceName, self.__serv.get_db(aWorkspaceName))
         if not self.__dbs.has_key(aWorkspaceName): 
-            model.api.log("Asking couchdb for workspace [%s]" % aWorkspaceName)
+            getLogger(self).debug("Asking couchdb for workspace [%s]" % aWorkspaceName)
             self.__dbs[aWorkspaceName] = workspacedb
             self.__seq_nums[aWorkspaceName] = workspacedb.info()['update_seq'] 
         return workspacedb
 
     @trap_timeout
     def getDocument(self, aWorkspaceName, documentId):
-        model.api.log("Getting document for workspace [%s]" % aWorkspaceName)
+        getLogger(self).debug("Getting document for workspace [%s]" % aWorkspaceName)
         return self.__getDb(aWorkspaceName).get(documentId)
 
     @trap_timeout
@@ -201,7 +204,7 @@ class CouchdbManager(PersistenceManager):
 
     @trap_timeout
     def replicate(self, workspace, *targets_dbs, **kwargs):
-        model.api.log("Targets to replicate %s" % str(targets_dbs))
+        getLogger(self).debug("Targets to replicate %s" % str(targets_dbs))
         for target_db in targets_dbs:
             src_db_path = "/".join([self.__uri, workspace])
             dst_db_path = "/".join([target_db, workspace])
@@ -309,3 +312,47 @@ class CouchdbManager(PersistenceManager):
         self.mutex.acquire()
         self.__seq_nums[workspaceName] += 1 
         self.mutex.release()
+
+class ViewsManager(object):
+    """docstring for ViewsWrapper"""
+                           
+                                        
+    def __init__(self):
+        self.vw = ViewsListObject()
+
+             
+    def addView(self, design_doc, workspaceDB):
+        designer.push(design_doc, workspaceDB, atomic = False)
+
+    def addViewForFS(self, design_doc, workspaceDB):
+        designer.fs.push(design_doc, workspaceDB, encode_attachments = False)
+
+
+    def getAvailableViews(self):
+        return self.vw.get_all_views()
+
+    def getViews(self, workspaceDB):
+        views = {}
+        result = workspaceDB.all_docs(startkey='_design', endkey='_design0')
+        if result:
+            for doc in result.all():
+                designdoc = workspaceDB.get(doc['id'])
+                views.update(designdoc.get("views", []))
+        return views
+
+class ViewsListObject(object):
+    """ Representation of the FS Views """
+    def __init__(self):
+        self.views_path = os.path.join(os.getcwd(), "views")
+        self.designs_path = os.path.join(self.views_path, "_design") 
+
+    def _listPath(self, path):
+        flist = filter(lambda x: not x.startswith('.'), os.listdir(path))
+        return map(lambda x: os.path.join(path, x), flist)
+
+    def get_fs_designs(self):
+        return self._listPath(self.designs_path)
+
+    def get_all_views(self):
+        return self.get_fs_designs()
+

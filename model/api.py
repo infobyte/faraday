@@ -663,7 +663,8 @@ def log(msg ,level = "INFO"):
     it will also log to a file with the corresponding level
     if logger was configured that way
     """
-    getLogger().log(msg,level)
+    # getLogger().log(msg,level)
+    pass
 
 def devlog(msg):
     """

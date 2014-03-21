@@ -26,7 +26,7 @@ from gui.qt3.dialogs import *
 from gui.qt3.configdialog import ConfigDialog
 from gui.qt3.toolbars import *
 from gui.qt3.customevents import *
-from model.workspace import CouchdbManager
+from managers.all import PersistenceManagerFactory, CouchdbManager
 
 
 import model.api
@@ -554,7 +554,7 @@ class MainWindow(qt.QMainWindow):
             CONF.saveConfig()
             
 
-            couchdbmanager = CouchdbManager(repourl)
+            couchdbmanager = PersistenceManagerFactory().getInstance()
             wm.setCouchManager(couchdbmanager)
 
             wm.loadWorkspaces()

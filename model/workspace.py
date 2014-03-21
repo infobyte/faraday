@@ -31,7 +31,7 @@ import shutil
 
 from persistence.orm import WorkspacePersister
 
-from managers.all import CouchdbManager
+from managers.all import PersistenceManagerFactory, CouchdbManager
 
 class Workspace(object):
     """
@@ -361,48 +361,6 @@ class WorkspaceOnCouch(Workspace):
             self._model_controller.setSavingModel(False)
             self._model_controller._notifyModelUpdated()
 
-class ViewsListObject(object):
-    """ Representation of the FS Views """
-    def __init__(self):
-        self.views_path = os.path.join(os.getcwd(), "views")
-        self.designs_path = os.path.join(self.views_path, "_design") 
-
-    def _listPath(self, path):
-        flist = filter(lambda x: not x.startswith('.'), os.listdir(path))
-        return map(lambda x: os.path.join(path, x), flist)
-
-    def get_fs_designs(self):
-        return self._listPath(self.designs_path)
-
-    def get_all_views(self):
-        return self.get_fs_designs()
-
-class ViewsManager(object):
-    """docstring for ViewsWrapper"""
-                           
-                                        
-    def __init__(self):
-        self.vw = ViewsListObject()
-
-             
-    def addView(self, design_doc, workspaceDB):
-        designer.push(design_doc, workspaceDB, atomic = False)
-
-    def addViewForFS(self, design_doc, workspaceDB):
-        designer.fs.push(design_doc, workspaceDB, encode_attachments = False)
-
-
-    def getAvailableViews(self):
-        return self.vw.get_all_views()
-
-    def getViews(self, workspaceDB):
-        views = {}
-        result = workspaceDB.all_docs(startkey='_design', endkey='_design0')
-        if result:
-            for doc in result.all():
-                designdoc = workspaceDB.get(doc['id'])
-                views.update(designdoc.get("views", []))
-        return views
             
 
 class WorkspaceManager(object):
@@ -421,7 +379,7 @@ class WorkspaceManager(object):
         self._couchAvailable  = False 
         self.report_manager = ReportManager(10, plugin_controller)
         
-        self.couchdbmanager = CouchdbManager(uri = CONF.getCouchURI())
+        self.couchdbmanager = PersistenceManagerFactory().getInstance()
         
         self._workspaces = {}
         self._model_controller = model_controller

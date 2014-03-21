@@ -18,4 +18,10 @@ class CommandRunInformation(object):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-        
+    def toDict(self):
+        return self.__dict__
+
+    def fromDict(self, dictt):
+        for k, v in dictt.items():
+            setattr(self, k, v)
+        return self 

@@ -57,6 +57,7 @@ class GuiApp(qt.QApplication, FaradayUi):
 
     def run(self, args):
         self._main_window.createShellTab()
+        self.createLoggerWidget()
         self._main_window.showAll()
         exit_code = self.exec_loop()
         return exit_code

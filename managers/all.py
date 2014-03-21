@@ -33,13 +33,18 @@ class PersistenceManagerFactory(object):
     """Creates PersistenceManager
     if CouchDB Available returns a couchdb manager
     otherwise FBManager"""
+    instance = None
     def __init__(self):
         pass
 
     @staticmethod
     def getInstance():
+        if PersistenceManagerFactory.instance: 
+            return PersistenceManagerFactory.instance
         persistence_manager = CouchdbManager(uri = CONF.getCouchURI()) 
+        PersistenceManagerFactory.instance = persistence_manager
         if persistence_manager.isAvailable():
+            PersistenceManagerFactory.instance = persistence_manager
             return persistence_manager
 
 class PersistenceManager(object):

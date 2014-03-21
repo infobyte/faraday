@@ -16,6 +16,12 @@ sys.path.append(os.path.abspath(os.getcwd()))
 import re
 
 from model.commands_history import CommandRunInformation
+from model.controller import ModelController
+from plugins.core import PluginController
+
+from model.workspace import WorkspaceOnCouch, WorkspaceManager
+from mockito import mock
+
 from time import time
 
 from config.configuration import getInstanceConfiguration
@@ -57,6 +63,17 @@ class CommandHistoryTestSuite(unittest.TestCase):
     def test_create_command_manager(self):
         cm = CommandManager()
         self.assertIsNotNone(cm, "Command Manager not instantiated")
+
+    def test_save_command_in_couch(self):
+        cm = CommandManager()
+
+        command = CommandRunInformation(**self.getDefaultCommandInfo())
+
+        wm = WorkspaceManager(mock(ModelController), mock(PluginController))
+        c = wm.createWorkspace(command.workspace, workspaceClass=WorkspaceOnCouch)
+
+        cm.saveCommand(command)
+
 
     def getDefaultCommandInfo(self):
         information = { 'command' : 'nmap',

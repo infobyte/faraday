@@ -11,8 +11,8 @@ import unittest
 import sys
 import os
 sys.path.append(os.path.abspath(os.getcwd()))
-from plugins import core
-from plugins import managers
+from plugins.core import  PluginController
+from managers.all import PluginManager
 import re
 
 # TODO: Doc strings
@@ -31,7 +31,7 @@ class TestSequenceFunctions(unittest.TestCase):
 
     def setUp(self):
         self.plugin_repo_path = os.path.join(os.getcwd(), "plugins", "repo")
-        self.plugin_manager = managers.PluginManager(self.plugin_repo_path)
+        self.plugin_manager = PluginManager(self.plugin_repo_path)
 
         class WorkspaceStub():
             def __init__(self):
@@ -46,7 +46,7 @@ class TestSequenceFunctions(unittest.TestCase):
         Generic test to verify that the object exists and can be
         instantiated without problems.
         """
-        controller = core.PluginController("test", {})
+        controller = PluginController("test", {})
         self.assertTrue(controller is not None)
 
     def test_sanitation_checker(self):
@@ -56,7 +56,7 @@ class TestSequenceFunctions(unittest.TestCase):
         The mechanism is not intend to be perfect but at least should give some
         amount of protection.
         """
-        controller = core.PluginController("test", {})
+        controller = PluginController("test", {})
 
         original_command = "nmap -v -iR 10000 -PN -p 80"
         modified_command = "nmap -v -iR 10000 -PN -p 80|"

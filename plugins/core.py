@@ -22,6 +22,9 @@ import traceback
 import model.common
 import errno
 
+from model.commands_history import CommandRunInformation
+from managers.all  import CommandManager
+
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
@@ -139,6 +142,7 @@ class PluginController(object):
         self.id                     = id
         self._actionDispatcher      = None
         self._setupActionDispatcher()
+        self._command_manager = CommandManager()
         
         debug="Available Plugins\n"
         for p,o in available_plugins.iteritems():

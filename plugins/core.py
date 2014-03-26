@@ -195,7 +195,7 @@ class PluginController(object):
         self.last_command_information  = CommandRunInformation( **{ 'workspace': model.api.getActiveWorkspace().name,
                                                         'itime': time(),
                                                         'command': command_string.split()[0],
-                                                        'parametrs': ' '.join(command_string.split()[1:]) } )
+                                                        'params': ' '.join(command_string.split()[1:]) } )
 
         return modified_cmd_string if isinstance(modified_cmd_string, basestring) else None
 

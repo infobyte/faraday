@@ -148,7 +148,7 @@ class CouchdbManager(PersistenceManager):
             s.connect((host, int(port)))
         except:
             return False
-        getLogger(self).info("Connecting Couch to: %s:%s" % (host, port))
+        getLogger(CouchdbManager).info("Connecting Couch to: %s:%s" % (host, port))
         return True
 
 

@@ -192,7 +192,7 @@ class PluginController(object):
         if self._is_command_malformed(command_string, modified_cmd_string):
             return None
 
-        self.last_command_information  = CommandRunInformation( **{ 'workspace': model.api.getActiveWorkspace(),
+        self.last_command_information  = CommandRunInformation( **{ 'workspace': model.api.getActiveWorkspace().name,
                                                         'itime': time(),
                                                         'command': command_string.split()[0],
                                                         'parametrs': ' '.join(command_string.split()[1:]) } )

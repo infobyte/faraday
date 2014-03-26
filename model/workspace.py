@@ -31,7 +31,7 @@ import shutil
 
 from persistence.orm import WorkspacePersister
 
-from managers.all import PersistenceManagerFactory, CouchdbManager
+from managers.all import PersistenceManagerFactory, CouchdbManager, FSManager
 
 class Workspace(object):
     """

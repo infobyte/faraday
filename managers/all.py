@@ -20,6 +20,7 @@ import sys
 import re
 import imp
 import plugins.core 
+import mockito
 
 CONF = getInstanceConfiguration()
 
@@ -181,6 +182,7 @@ class CouchdbManager(PersistenceManager):
 
     @trap_timeout
     def addDocument(self, aWorkspaceName, documentId, aDocument):
+        self.__getDb(aWorkspaceName)
         self.incrementSeqNumber(aWorkspaceName)
         self.__getDb(aWorkspaceName)[documentId] = aDocument
 
@@ -199,6 +201,8 @@ class CouchdbManager(PersistenceManager):
             getLogger(self).debug("Asking couchdb for workspace [%s]" % aWorkspaceName)
             self.__dbs[aWorkspaceName] = workspacedb
             self.__seq_nums[aWorkspaceName] = workspacedb.info()['update_seq'] 
+
+
         return workspacedb
 
     @trap_timeout
@@ -319,6 +323,8 @@ class CouchdbManager(PersistenceManager):
 
     def incrementSeqNumber(self, workspaceName):
         self.mutex.acquire()
+        if not self.__seq_nums.has_key(workspaceName):
+            self.__seq_nums[workspaceName] = 0
         self.__seq_nums[workspaceName] += 1 
         self.mutex.release()
 
@@ -379,7 +385,7 @@ class PluginManager(object):
         Creates a new plugin controller and adds it into the controllers list.
         """
         plugs = self._instancePlugins()
-        new_controller = plugins.core.PluginController(id, plugs)
+        new_controller = plugins.core.PluginController(id, plugs, CommandManager())
         self._controllers[new_controller.id] = new_controller
         return new_controller
 

@@ -21,7 +21,7 @@ import model.api
 import model.guiapi
 import model.log
 import traceback
-from plugins.managers import PluginManager
+from managers.all import PluginManager
 
                                                                               
 from gui.qt3.mainwindow import MainWindow

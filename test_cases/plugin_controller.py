@@ -11,20 +11,14 @@ import unittest
 import sys
 import os
 sys.path.append(os.path.abspath(os.getcwd()))
+import model.api
 from plugins.core import  PluginController
 from managers.all import PluginManager
 import re
-
-# TODO: Doc strings
-
-__author__     = "Facundo de Guzmán, Esteban Guillardoy"
-__copyright__  = "Copyright 2010, Faraday Project"
-__credits__    = ["Facundo de Guzmán", "Esteban Guillardoy"]
-__license__    = "GPL"
-__version__    = "1.0.0"
-__maintainer__ = "Facundo de Guzmán"
-__email__      = "fdeguzman@ribadeohacklab.com.ar"
-__status__     = "Development"
+from mockito import mock, when
+from model.controller import ModelController
+from config.configuration import getInstanceConfiguration
+CONF = getInstanceConfiguration()
 
 
 class TestSequenceFunctions(unittest.TestCase):
@@ -32,6 +26,12 @@ class TestSequenceFunctions(unittest.TestCase):
     def setUp(self):
         self.plugin_repo_path = os.path.join(os.getcwd(), "plugins", "repo")
         self.plugin_manager = PluginManager(self.plugin_repo_path)
+        mc = mock(ModelController)
+        when(mc).getWorkspace().thenReturn('default')
+        model.api.setUpAPIs(mc)
+        self.couch_host = "http://192.168.33.102:5984" 
+        CONF.setCouchUri(self.couch_host)
+
 
         class WorkspaceStub():
             def __init__(self):
@@ -46,7 +46,7 @@ class TestSequenceFunctions(unittest.TestCase):
         Generic test to verify that the object exists and can be
         instantiated without problems.
         """
-        controller = PluginController("test", {})
+        controller = PluginController("test", {}, mock())
         self.assertTrue(controller is not None)
 
     def test_sanitation_checker(self):
@@ -56,7 +56,7 @@ class TestSequenceFunctions(unittest.TestCase):
         The mechanism is not intend to be perfect but at least should give some
         amount of protection.
         """
-        controller = PluginController("test", {})
+        controller = PluginController("test", {}, mock())
 
         original_command = "nmap -v -iR 10000 -PN -p 80"
         modified_command = "nmap -v -iR 10000 -PN -p 80|"
@@ -116,13 +116,14 @@ class TestSequenceFunctions(unittest.TestCase):
                                                          command_string, False)
         self.controller.onCommandFinished()
 
-    def test_output_parsing(self):
-        """
-        Test that after receiving an output, the plugin controller gives
-        it to the correct plugin to parse it. Expects the nmap plugin and
-        the amap plugin to be present in the plugin repo.
-        """
-        pass
+    def test_process_command_keep_information(self):
+
+        prompt = "fdeguzman@testserver:$"
+
+        command_string = "nmap -oX benito_camelas.xml localhost"
+        modified_string = self.controller.processCommandInput(prompt, "", "",  command_string, False)
+
+        self.assertIsNotNone(self.controller.last_command_information, "Command Information not saved")
 
 
 

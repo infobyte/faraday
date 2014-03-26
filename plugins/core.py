@@ -23,7 +23,8 @@ import model.common
 import errno
 
 from model.commands_history import CommandRunInformation
-from managers.all  import CommandManager
+
+from time import time
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -134,7 +135,7 @@ class PluginController(object):
     """
     TODO: Doc string.
     """
-    def __init__(self, id, available_plugins):
+    def __init__(self, id, available_plugins, command_manager):
         self._plugins               = available_plugins
         self._active_plugin         = None
         self._process_pool          = multiprocessing.Pool(processes=4)
@@ -142,7 +143,9 @@ class PluginController(object):
         self.id                     = id
         self._actionDispatcher      = None
         self._setupActionDispatcher()
-        self._command_manager = CommandManager()
+
+        self._command_manager = command_manager
+        self.last_command_information  = None
         
         debug="Available Plugins\n"
         for p,o in available_plugins.iteritems():
@@ -188,8 +191,13 @@ class PluginController(object):
         
         if self._is_command_malformed(command_string, modified_cmd_string):
             return None
-        else:
-            return modified_cmd_string if isinstance(modified_cmd_string, basestring) else None
+
+        self.last_command_information  = CommandRunInformation( **{ 'workspace': model.api.getActiveWorkspace(),
+                                                        'itime': time(),
+                                                        'command': command_string.split()[0],
+                                                        'parametrs': ' '.join(command_string.split()[1:]) } )
+
+        return modified_cmd_string if isinstance(modified_cmd_string, basestring) else None
 
 
     def storeCommandOutput(self, output):
@@ -345,6 +353,9 @@ class PluginController(object):
                 model.api.devlog("PluginController.onCommandFinished - new_elem_queue Exception- something strange happened... unhandled exception?")
                 model.api.devlog(traceback.format_exc())
                 break
+        # Finally we register the recently executed command information
+        self.last_command_information.duration = time() - self.last_command_information.itime
+        self._command_manager.saveCommand(self.last_command_information)
         
         self._disable_active_plugin()
 

@@ -15,6 +15,7 @@ class CommandRunInformation(object):
     class_signature = "CommandHistory"
 
     def __init__(self, **kwargs):
+        self.type = self.class_signature
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -24,4 +25,4 @@ class CommandRunInformation(object):
     def fromDict(self, dictt):
         for k, v in dictt.items():
             setattr(self, k, v)
-        return self 
+        return self

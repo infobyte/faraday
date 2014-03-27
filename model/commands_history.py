@@ -12,10 +12,8 @@ class CommandRunInformation(object):
     """Command Run information object containing:
         command, parameters, time, workspace, etc."""
 
-    class_signature = "CommandHistory"
-
     def __init__(self, **kwargs):
-        self.type = self.class_signature
+        self.type = self.__class__.__name__
         for k, v in kwargs.items():
             setattr(self, k, v)
 

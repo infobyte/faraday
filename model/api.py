@@ -12,8 +12,8 @@ import zipfile
 import model.common
 from config.configuration import getInstanceConfiguration
 #from workspace import Workspace
-from model.log import getLogger
-from model.log import getNotifier
+# from model.log import getLogger
+# from model.log import getNotifier
 from utils.common import *
 import shutil
 import xmlrpclib
@@ -672,13 +672,15 @@ def devlog(msg):
     """
     if CONF.getDebugStatus():
         print "[DEBUG] - %s" % msg
-        getLogger().log(msg,"DEBUG")
+        # getLogger().log(msg,"DEBUG")
 
 def showDialog(msg, level="Information"):
-    return getNotifier().showDialog(msg, level)
+    # return getNotifier().showDialog(msg, level)
+    return None
 
 def showPopup(msg, level="Information"):
-    return getNotifier().showPopup(msg, level)
+    # return getNotifier().showPopup(msg, level)
+    return None
 
 #-------------------------------------------------------------------------------
 def getLoggedUser():

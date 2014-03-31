@@ -21,6 +21,7 @@ import re
 import imp
 import plugins.core 
 import mockito
+from model.common import ModelObject
 
 CONF = getInstanceConfiguration()
 
@@ -278,12 +279,20 @@ class CouchdbManager(PersistenceManager):
         return name in self.__serv.all_dbs()
 
     @trap_timeout
-    def workspaceDocumentsIterator(self, workspaceName):
-        return filter(lambda x: not x["id"].startswith("_"), self.__getDb(workspaceName).documents(include_docs=True))
+    def workspaceDocumentsIterator(self, workspaceName): 
+        return filter(self.filterConditions, self.__getDb(workspaceName).documents(include_docs=True))
+
+    def filterConditions(self, doc):
+        model_object_types = [c.__name__ for c in ModelObject.__subclasses__()]
+        ret = True
+        ret = ret and not doc["id"].startswith("_")
+        ret = ret and doc['doc']["type"] in model_object_types
+
+        return ret
 
     @trap_timeout
     def removeWorkspace(self, workspace_name):
-        return self.__serv.delete_db(workspace_name) 
+        return self.__serv.delete_db(workspace_name)
 
     @trap_timeout
     def remove(self, workspace, host_id):

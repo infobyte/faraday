@@ -149,18 +149,6 @@ class PluginControllerBase(object):
                                                         'command': command_string.split()[0],
                                                         'params': ' '.join(command_string.split()[1:])})
 
-    def storeCommandOutput(self, output):
-        """
-        Receives and output string and stores it in the buffer. Returns False
-        if the output was not added to the plugin controllers buffer. Returns
-        True otherwise.
-        """
-        if not self.getActivePluginStatus():
-            return False
-        else:
-            self._buffer.write(output)
-            return True
-
     def _is_command_malformed(self, original_command, modified_command):
         """
         Checks if the command to be executed is safe and it's not in the block list
@@ -798,7 +786,6 @@ class PluginProcess(multiprocessing.Process):
         while not done:
             output = self.output_queue.get()
             if output is not None:
-                print "output: %s" % output
                 model.api.devlog('%s: %s' % (proc_name, "New Output"))
                 try:
                     self.plugin.parseOutputString(output)

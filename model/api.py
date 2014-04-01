@@ -12,10 +12,10 @@ import zipfile
 import model.common
 from config.configuration import getInstanceConfiguration
 #from workspace import Workspace
-# from model.log import getLogger
-# from model.log import getNotifier
+import model.log
 from utils.common import *
 import shutil
+#from plugins.api import PluginControllerAPI
 
 CONF = getInstanceConfiguration()
 
@@ -24,6 +24,7 @@ __model_controller = None
 
 
 _xmlrpc_api_server = None
+_plugin_controller_api = None
 
 #XXX: temp way to replicate info
 _remote_servers_proxy = []
@@ -655,8 +656,7 @@ def log(msg ,level = "INFO"):
     it will also log to a file with the corresponding level
     if logger was configured that way
     """
-    # getLogger().log(msg,level)
-    pass
+    model.log.getLogger().log(msg,level)
 
 def devlog(msg):
     """
@@ -664,15 +664,13 @@ def devlog(msg):
     """
     if CONF.getDebugStatus():
         print "[DEBUG] - %s" % msg
-        # getLogger().log(msg,"DEBUG")
+        model.log.getLogger().log(msg,"DEBUG")
 
 def showDialog(msg, level="Information"):
-    # return getNotifier().showDialog(msg, level)
-    return None
+    return model.log.getNotifier().showDialog(msg, level)
 
 def showPopup(msg, level="Information"):
-    # return getNotifier().showPopup(msg, level)
-    return None
+    return model.log.getNotifier().showPopup(msg, level)
 
 #-------------------------------------------------------------------------------
 def getLoggedUser():

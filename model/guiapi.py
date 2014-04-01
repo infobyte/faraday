@@ -6,7 +6,8 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from model.common import factory
+#from model.common import factory
+import model.common
 from config.configuration import getInstanceConfiguration
 #from model.api import showDialog, showPopup
 
@@ -462,7 +463,7 @@ def newHost(name, os = "Unknown"):
     The object created is not added to the model.
     """
                                                                            
-    return factory.createModelObject("Host", name, os=os)
+    return model.common.factory.createModelObject("Host", name, os=os)
 
                                                                                 
 def newInterface(name = "", mac = "00:00:00:00:00:00",
@@ -475,7 +476,7 @@ def newInterface(name = "", mac = "00:00:00:00:00:00",
     It creates and returns an Interface object.
     The created object is not added to the model.
     """
-    return factory.createModelObject("Interface", name, mac = mac,
+    return model.common.factory.createModelObject("Interface", name, mac = mac,
                  ipv4_address = ipv4_address , ipv4_mask = ipv4_mask,
                  ipv4_gateway = ipv4_gateway, ipv4_dns = ipv4_dns,
                  ipv6_address = ipv6_address , ipv6_prefix = ipv6_prefix,
@@ -489,7 +490,7 @@ def newService(name, protocol = "tcp?", ports = [], status = "running",
     It creates and returns a Service object.
     The created object is not added to the model.
     """
-    return factory.createModelObject("Service",name,
+    return model.common.factory.createModelObject("Service",name,
                              protocol = protocol, ports = ports,
                              status = status, version = version,
                              description = description)
@@ -500,7 +501,7 @@ def newVuln(name, desc="", ref = None, severity=""):
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
-    return factory.createModelObject("Vulnerability", name, desc=desc,
+    return model.common.factory.createModelObject("Vulnerability", name, desc=desc,
                                                   ref=ref, severity=severity)
  
                                                                                 
@@ -511,7 +512,7 @@ def newVulnWeb(name, desc="", website="", path="", ref=None, severity="", reques
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
-    return factory.createModelObject("VulnerabilityWeb", name, desc=desc, ref=ref,severity=severity, website=website, path=path, request=request,
+    return model.common.factory.createModelObject("VulnerabilityWeb", name, desc=desc, ref=ref,severity=severity, website=website, path=path, request=request,
                                                   response=response,method=method,pname=pname, params=params,query=query,category=category )
  
                                                                                 
@@ -522,7 +523,7 @@ def newNote(name,text):
     It creates and returns a Note object.
     The created object is not added to the model.
     """
-    return factory.createModelObject("Note", name, text=text)
+    return model.common.factory.createModelObject("Note", name, text=text)
 
 
    
@@ -532,7 +533,7 @@ def newCred(username,password):
     It creates and returns a Cred object.
     The created object is not added to the model.
     """
-    return factory.createModelObject("Cred", username, password=password)
+    return model.common.factory.createModelObject("Cred", username, password=password)
 
 
                                                                                 
@@ -541,7 +542,7 @@ def newApplication(name, status = "running", version = "unknown"):
     It creates and returns an Application object.
     The created object is not added to the model.
     """
-    return factory.createModelObject("HostApplication",name,
+    return model.common.factory.createModelObject("HostApplication",name,
                              status = status,
                              version = version)
 

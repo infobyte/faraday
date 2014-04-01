@@ -19,6 +19,7 @@ from workspace import WorkspaceManager
 import model.controller
 import model.api
 import model.guiapi
+import plugins.api
 import model.log
 import traceback
 from managers.all import PluginManager
@@ -96,6 +97,7 @@ class MainApplication(object):
             model.api.devlog("Starting model controller daemon...")
             self._model_controller.start()
             model.api.startAPIServer()
+            plugins.api.startPluginControllerAPI(self._plugin_manager)
 
             #self._writeSplashMessage("Setting up main GUI...")
 
@@ -170,6 +172,7 @@ class MainApplication(object):
         model.api.devlog("Waiting for controller threads to end...")
         self._model_controller.join()
         model.api.stopAPIServer()
+        plugins.api.stopServer()
 
         return exit_code
 

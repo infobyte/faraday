@@ -9,47 +9,80 @@ See the file 'doc/LICENSE' for the license information
 import json
 import requests
 import sys
-import base64
 import uuid
+import os
+
+#TODO: load output dir from faraday config
+#check if output dir already exists, otherwise create it
+file_path = os.path.realpath(__file__)
+output_folder = "%s/output" % os.path.dirname(file_path)
+if not os.path.exists(output_folder):
+    os.mkdir(output_folder)
+
+#TODO: Load this from faraday config
+host = "127.0.0.1"
+port = 9977
+
+url_input = "http://%s:%d/cmd/input" % (host, port)
+url_output = "http://%s:%d/cmd/output" % (host, port)
+url_active_plugins = "http://%s:%d/cmd/active-plugins" % (host, port)
+headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
 
-class Plugin(object):
-    def __init__(self, id, custom_output, output):
-        self.id = id
-        self.custom_output = custom_output
-        self.output = output
+def send_cmd(cmd):
+    data = {"cmd": cmd}
+    new_cmd = cmd
+    result = False
+    try:
+        response = requests.post(url_input,
+                                 data=json.dumps(data),
+                                 headers=headers)
+
+        if response.status_code == 200:
+            json_response = response.json()
+            if "cmd" in json_response.keys():
+                if json_response.get("cmd") is not None:
+                    new_cmd = json_response.get("cmd")
+            if "custom_output_file" in json_response.keys():
+                output_file = json_response.get("custom_output_file")
+                if output_file is None:
+                    output_file = "%s/%s.output" % (output_folder, uuid.uuid4())
+                    new_cmd += " >&1 > %s" % output_file
+
+                new_cmd += " && python2 %s send_output \"%s\" \"%s\"" % (file_path, cmd, output_file)
+        result = True
+    except:
+        new_cmd = cmd
+    finally:
+        print new_cmd
+        return result
 
 
-def object_decoder(json_obj):
-    return Plugin(json_obj['id'], json_obj['custom_output'], json_obj['output'])
+def send_output(cmd, output_file):
+    output_file = open(output_file)
+    output = output_file.read()
+    data = {"cmd": cmd, "output": output}
+    response = requests.post(url_output,
+                             data=json.dumps(data),
+                             headers=headers)
+    if response.status_code != 200:
+        print "something wrong"
+        return True
+    return False
 
 
-def get_cmd(command):
-    response = requests.get("http://127.0.0.1:5000/plugins/%s" %
-                            (base64.b64encode(command)))
-    output = ""
-
-    if response.status_code == 200:
-        plugin = json.loads(response.text, object_hook=object_decoder)
-        output = "default"
-        if plugin.custom_output:
-            output = plugin.output
-
-    print output
-
-def send_output(output_file):
-    pass
-
-
-def main():
-    if len(sys.argv) != 3:
+def main(argv):
+    if len(argv) < 2:
         sys.exit(1)
 
-    action = sys.argv[1]
+    action = argv[1]
 
-    dispatcher = {'get_cmd': get_cmd, 'send_output': send_output}
+    dispatcher = {'send_cmd': send_cmd, 'send_output': send_output}
 
-    dispatcher[action](sys.argv[2])
+    if action in dispatcher.keys():
+        dispatcher[action](*argv[2:])
+
+    #sys.exit(0)
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)

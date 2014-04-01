@@ -6,3 +6,5 @@ psycopg2==2.4.5
 ipy==0.75
 restkit==4.2.2
 requests==1.2.3
+tornado==3.2
+Flask==0.10.1

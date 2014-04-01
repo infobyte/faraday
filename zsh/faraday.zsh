@@ -12,20 +12,8 @@ setopt multios
 plugin_controller_client=$ZDOTDIR/plugin_controller_client.py
 
 add-output() {
-    output=`python2 $plugin_controller_client get_cmd $BUFFER`
-    response=("${(f)output}")
-    echo $response
-
-    # if [ ! -z $output ]; then
-    #     if [[ $output == "default" ]]; then
-    #         output=">&1 > output.txt"
-    #     fi
-    #     # else
-    #     #     BUFFER="$BUFFER $output"
-    #     # fi
-
-    #     BUFFER="$BUFFER $output && $plugin_controller_client send_output $output"
-    # fi
+    new_cmd=`python2 $plugin_controller_client send_cmd $BUFFER`
+    BUFFER="$new_cmd"
     zle .$WIDGET "$@"
 }
 

@@ -7,14 +7,14 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
-import sys
 import model.api
 import threading
 import time
-import shutil
 import traceback
 import re
+import requests
 from persistence.utils import ET
+from plugins.api import PluginControllerAPIClient
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -76,24 +76,27 @@ class ReportManager(threading.Thread):
                                      
                     parser = ReportXmlParser(filename)
                     if (parser.report_type is not None):
-                        
-                        self._xml_output_path = filename
+                        #TODO: get host and port from config
+                        client = PluginControllerAPIClient("127.0.0.1", 9977)
+
+                        #self._xml_output_path = filename
                         model.api.devlog("The file is %s, %s" % (filename,parser.report_type))
-                        
-                        command_string="./%s report" % parser.report_type.lower()
+
+                        command_string = "./%s report" % parser.report_type.lower()
                         model.api.devlog("Executing %s" % (command_string))
                         
-                        current_path =""
-                        output=""
+                        # current_path =""
   
-                        new_cmd = self.plugin_controller.processCommandInput("", "",
-                                                                                 current_path,
-                                                                                 command_string,
-                                                                                 False)
+                        # new_cmd = self.plugin_controller.processCommandInput("", "",
+                        #                                                          current_path,
+                        #                                                          command_string,
+                        #                                                          False)
+                        new_cmd, output_file = client.send_cmd(command_string)
                         
-                        self.plugin_controller.storeCommandOutput(self._xml_output_path)
+                        #self.plugin_controller.storeCommandOutput(self._xml_output_path)
+                        client.send_output(command_string, filename)
                         
-                        self.plugin_controller.onCommandFinished()
+                        #self.plugin_controller.onCommandFinished()
                         
                         
                                      

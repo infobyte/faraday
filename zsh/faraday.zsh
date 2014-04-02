@@ -6,6 +6,7 @@
 #'''
 
 echo ">>> WELCOME TO FARADAY"
+PS1="%{${fg_bold[red]}%}[faraday]%{${reset_color}%} $PS1"
 
 setopt multios
 

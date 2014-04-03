@@ -57,7 +57,7 @@ class MetasploitOnPlugin(core.PluginBase):
         self._command_regex  = re.compile(r'^(metasploiton|sudo metasploiton|\.\/metasploiton).*?')
 
         global current_path
-        self._xml_output_path = os.path.join(self.data_path,
+        self._output_file_path = os.path.join(self.data_path,
                                              "metasploiton_output-%s.xml" % self._rid)
                                   
         self.addSetting("Database", str, "msf3")

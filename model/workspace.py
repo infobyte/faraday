@@ -11,14 +11,13 @@ import model.api
 import model
 import time
 import datetime
-from persistence.common import DataManager
 from model.report import ReportManager
 from model.diff import HostDiff
 from model.container import ModelObjectContainer, CouchedModelObjectContainer
 from model.conflict import Conflict
 from model.hosts import Host
 import model.guiapi as guiapi
-from gui.qt3.customevents import ShowPopupCustomEvent
+from gui.customevents import ShowPopupCustomEvent
 
 
 import mockito

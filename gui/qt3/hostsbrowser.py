@@ -917,32 +917,10 @@ class HostsBrowser(qt.QVBox):
                     "Vulnerability CVS  (*.csv)",
                     None,
                     "save file dialog",
-                    "Choose a file to save the vulns" );
-        if filename and filename is not None:
-            f=open(filename+".csv","w")
-                
-            for host in hosts:
-                hostnames=""
-                for i in host.getAllInterfaces():
-                    for h in i._hostnames:
-                            hostnames+=","+h
-            
-                for v in host.getVulns():
-                    #ip,port,protocol,name,desc,severity,type
-                    #vulns=+host.name+"("+hostnames+"),0,"+v.name+"\r\n"
-                    api.devlog(dir(v))
-                    vulns=host.name+"|0||"+v.name.encode("utf-8")+ "|"+re.sub("\n|\r",",",v.desc.encode("utf-8"))+"|"+str(v.severity)+"type|0|("+hostnames+")"+"|"+str(v.id)+"\n"
-                    print vulns
-                    f.write(vulns)
-            
-                for i in host.getAllInterfaces():
-                    for s in i.getAllServices():
-                        for v in s.getVulns():
-                            #vulns+=host.name+"("+hostnames+"),"+str(s.getPorts()[0]) if len(s.getPorts()) > 0 else "-1" + ","+v.name+"\r\n"
-                            ",".join([str(i) for i in range(10)])
-                            vulns=host.name+"|"+",".join([str(i) for i in s.getPorts()]) + "|"+s.getProtocol()+ "|"+v.name.encode("utf-8") + "|"+re.sub("\n|\r",",",v.desc.encode("utf-8"))+"|"+str(v.severity)+"type|0|("+hostnames+")"+"|"+str(v.id)+"\n"
-                            print vulns
-                            f.write(vulns)
+                    "Choose a file to save the vulns" )
+        from exporters.tofile import CSVVulnStatusReport
+        CSVVulnStatusReport(path = filename, 
+                            modelobjects = hosts).createCSVVulnStatusReport() 
 
     def _importVulnsCvs(self,item):
         filename =  qt.QFileDialog.getOpenFileName(

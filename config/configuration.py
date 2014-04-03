@@ -534,7 +534,7 @@ class Configuration:
         ROOT.append(TKT_TEMPLATE)
 
         self.indent(ROOT, 0)                         
-        dump(ROOT)                                        
+        #dump(ROOT)                                        
         xml_file = os.path.expanduser(xml_file)
         ElementTree(ROOT).write(xml_file)                                      
         

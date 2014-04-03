@@ -45,10 +45,8 @@ class ArachniXmlParser(object):
     
     :class:`.ArachniXmlParser`
     """
-    def __init__(self, arachni_xml_filepath):
-        self.filepath = arachni_xml_filepath
-
-        tree = self.parse_xml_file(self.filepath)
+    def __init__(self, xml_output):
+        tree = self.parse_xml(xml_output)
         
         if tree:
             self.issues = self.getIssues(tree)
@@ -57,23 +55,20 @@ class ArachniXmlParser(object):
             self.issues = []
             self.system = []
 
-    def parse_xml_file(self, filepath):
+    def parse_xml(self, xml_output):
         """Opens and parses an arachni xml report file.
         
         :param filepath:
 
         :rtype xml_tree: An xml tree instance. None if error.
         """
-        with open(filepath,"r") as f:
-            try:
-                tree = ET.fromstring(f.read())
-                           
-                          
-            except SyntaxError, err:
-                print "SyntaxError: %s. %s" % (err, filepath)
-                return None
+        try:
+            tree = ET.fromstring(xml_output)
+        except SyntaxError, err:
+            print "SyntaxError: %s. %s" % (err, xml_output)
+            return None
 
-            return tree
+        return tree
 
     def getIssues(self, tree):
         """
@@ -309,7 +304,7 @@ class ArachniPlugin(core.PluginBase):
         self._report_regex = re.compile(r"^.*(--report=xml\s*[^\s]+).*$")
         
         global current_path
-        self._xml_output_path = os.path.join(self.data_path, "arachni_report-%s.xml" % self._rid)
+        self._output_file_path = os.path.join(self.data_path, "arachni_report-%s.xml" % self._rid)
                                                                                                  
         self._completition = {
             "":"arachni [options] url",
@@ -380,13 +375,7 @@ class ArachniPlugin(core.PluginBase):
         NOTE: if 'debug' is true then it is being run from a test case and the
         output being sent is valid.
         """
-        if (re.search("\r\n",output) is None):
-            self._xml_output_path=output
-        
-        if not os.path.exists(self._xml_output_path):
-            return False
-        
-        parser = ArachniXmlParser(self._xml_output_path)
+        parser = ArachniXmlParser(output)
         for system in parser.system:
             self.hostname = self.getHostname(system.url)
             self.address = self.getAddress(self.hostname)
@@ -441,9 +430,9 @@ class ArachniPlugin(core.PluginBase):
         arg_match = self._report_regex.match(command_string)
 
         if arg_match is None:
-            return re.sub(r"(^.*?arachni)", r"\1 --report=xml:outfile=%s" % self._xml_output_path, command_string)
+            return re.sub(r"(^.*?arachni)", r"\1 --report=xml:outfile=%s" % self._output_file_path, command_string)
         else:
-            return re.sub(arg_match.group(1),r"--report=xml:outfile=%s" % self._xml_output_path, command_string)
+            return re.sub(arg_match.group(1),r"--report=xml:outfile=%s" % self._output_file_path, command_string)
             
     def getHostname(self, url):
         """

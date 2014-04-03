@@ -14,7 +14,6 @@ import copy_reg
 import types
 import model.api
 from cStringIO import StringIO
-import cPickle
 import os
 import re
 import Queue
@@ -30,20 +29,12 @@ from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 
-__author__     = "Facundo de Guzman, Esteban Guillardoy"
-__copyright__  = "Copyright 2010, Faraday Project"
-__credits__    = ["Facundo de Guzman", "Esteban Guillardoy"]
-__license__    = "GPL"
-__version__    = "1.0.0"
-__maintainer__ = "Facundo de Guzman"
-__email__      = "fdeguzman@ribadeohacklab.com.ar"
-__status__     = "Development"
-
 def _pickle_method(method):
     func_name = method.im_func.__name__
     obj = method.im_self
     cls = method.im_class
     return _unpickle_method, (func_name, obj, cls)
+
 
 def _unpickle_method(func_name, obj, cls):
     for cls in cls.mro():
@@ -54,7 +45,9 @@ def _unpickle_method(func_name, obj, cls):
         else:
             break
         return func.__get__(obj, cls)
+
 copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
+
 
 class modelactions:
     ADDHOST             = 2000
@@ -128,89 +121,33 @@ class modelactions:
 
     @staticmethod
     def getDescription(action):
-        return modelactions.__descriptions.get(action,"")
+        return modelactions.__descriptions.get(action, "")
 
 
-class PluginController(object):
+class PluginControllerBase(object):
     """
     TODO: Doc string.
     """
     def __init__(self, id, available_plugins, command_manager):
         self._plugins               = available_plugins
-        self._active_plugin         = None
-        self._process_pool          = multiprocessing.Pool(processes=4)
-        self._buffer                = StringIO()
         self.id                     = id
         self._actionDispatcher      = None
         self._setupActionDispatcher()
 
         self._command_manager = command_manager
         self.last_command_information  = None
-        
-        debug="Available Plugins\n"
-        for p,o in available_plugins.iteritems():
-            debug+="%s, %s, %s, %s\n" % (p, o.name,o.version,o.plugin_version)
-        
-        model.api.devlog(debug)
-    
+
     def _find_plugin(self, new_plugin_id):
         try:
             return self._plugins[new_plugin_id]
         except KeyError:
             return None
 
-    def setActivePlugin(self, plugin):
-        self._active_plugin = plugin
-
-    def processCommandInput(self, prompt, username, current_path, command_string, interactive):
-        """
-        Receives the prompt that the current session has, the actual command_string that
-        the user typed and if the command is interactive. If it is interactive the
-        plugin controller does not choose a new active plugin but use the one the
-        is already set (if none is set it raises an exeception).
-
-        If always returns an string. It could be modified by the active plugin or, if
-        there is none available, it will return the original command_string.
-        """
-       
-        if interactive:
-            return None
-        else:
-            self._disable_active_plugin()
-
-        choosen_plugin = self._get_plugins_by_input(command_string)
-        if choosen_plugin is None:
-            model.api.devlog("There is no active plugin to handle current command/user input")
-            return None
-        self._active_plugin = choosen_plugin
-
-        modified_cmd_string = self._active_plugin.processCommandString(
-                                                                username,
-                                                                current_path,
-                                                                command_string)
-        
-        if self._is_command_malformed(command_string, modified_cmd_string):
-            return None
-
-        self.last_command_information  = CommandRunInformation( **{ 'workspace': model.api.getActiveWorkspace().name,
+    def setLastCommandInformation(self, command_string):
+        self.last_command_information = CommandRunInformation( **{'workspace': model.api.getActiveWorkspace().name,
                                                         'itime': time(),
                                                         'command': command_string.split()[0],
-                                                        'params': ' '.join(command_string.split()[1:]) } )
-
-        return modified_cmd_string if isinstance(modified_cmd_string, basestring) else None
-
-
-    def storeCommandOutput(self, output):
-        """
-        Receives and output string and stores it in the buffer. Returns False
-        if the output was not added to the plugin controllers buffer. Returns
-        True otherwise.
-        """
-        if not self.getActivePluginStatus():
-            return False
-        else:
-            self._buffer.write(output)
-            return True
+                                                        'params': ' '.join(command_string.split()[1:])})
 
     def _is_command_malformed(self, original_command, modified_command):
         """
@@ -221,21 +158,20 @@ class PluginController(object):
         TODO: Use global command block list.
         TODO: complete block idioms
         """
-        block_chars = set(["|","$","#"])
+        block_chars = set(["|", "$", "#"])
 
         if original_command == modified_command:
             return False
 
         orig_cmd_args = shlex.split(original_command)
-        
+
         if not isinstance(modified_command, basestring):
             modified_command = ""
-        mod_cmd_args  = shlex.split(modified_command)
-        
-        
-        block_flag    = False
+        mod_cmd_args = shlex.split(modified_command)
+
+        block_flag = False
         orig_args_len = len(orig_cmd_args)
-        for index in xrange(0,len(mod_cmd_args)):
+        for index in xrange(0, len(mod_cmd_args)):
             if index < orig_args_len and orig_cmd_args[index] == mod_cmd_args[index]:
                 continue
 
@@ -246,89 +182,38 @@ class PluginController(object):
 
         return block_flag
 
-    def getPluginAutocompleteOptions(self, prompt, username, current_path, command_string, interactive):
-        """
-        This method should return a list of possible completitions based on the
-        current output.
-        TODO: We should think how to actually implement this...
-        May be checking which plugin should handle the command in the current input
-        and then passing it to the plugin to return a list of possible values.
-        Each plugin implementation should return possible option according to
-        what was received since it's the plugin the one it knows the command line
-        parameters, etc.
-        """
-        if interactive:
-            return None
-        else:
-            self._disable_active_plugin()
-
-        choosen_plugin = self._get_plugins_by_input(command_string)
-        if choosen_plugin is None:
-            model.api.devlog("There is no active plugin to handle current command/user input")
-            return None
-        
-        
-        self._active_plugin = choosen_plugin
-
-        new_options = self._active_plugin.getCompletitionSuggestionsList(command_string)
-        return new_options
-
     def _get_plugins_by_input(self, current_input):
         """
         Finds a plugin that can parse the current input and returns the plugin
         object. Otherwise returns None.
         """
-        
-
         for plugin in self._plugins.itervalues():
             if plugin.canParseCommandString(current_input):
                 return plugin
         return None
-            
-    def getActivePluginStatus(self):
-        """
-        Returns true if an active plugin is set, otherwise return False.
-        """
-        return (self._active_plugin is not None)
-    
+
     def getAvailablePlugins(self):
         """
         Return a dictionary with the available plugins.
         Plugin ID's as keys and plugin instences as values
         """
-        return self._plugins 
-        
-    def _disable_active_plugin(self):
-        """
-        This method is suppose to disable the active plugin.
-        """
-        model.api.devlog("Disabling active plugin")      
-        self._active_plugin = None
+        return self._plugins
 
-    def onCommandFinished(self):
-        """
-        This method is called when the last executed command has finished. It's
-        in charge of giving the plugin the output to be parsed.
-        """
-        
-        output_queue          = multiprocessing.JoinableQueue()
-        new_elem_queue        = multiprocessing.Queue()
+    def processOutput(self, plugin, output):
+        output_queue = multiprocessing.JoinableQueue()
+        new_elem_queue = multiprocessing.Queue()
 
-        plugin_process = PluginProcess(self._active_plugin, output_queue, new_elem_queue)
+        plugin_process = PluginProcess(plugin, output_queue, new_elem_queue)
         model.api.devlog("PluginController (%d) - Created plugin_process (%d) for plugin instance (%d)" %
-                         (id(self), id(plugin_process), id(self._active_plugin)))
-        
+                         (id(self), id(plugin_process), id(plugin)))
+
         plugin_process.start()
 
-        output_queue.put(self._buffer.getvalue())
+        output_queue.put(output)
         output_queue.put(None)
         output_queue.join()
-        
-        self._buffer.seek(0)
-        self._buffer.truncate()
-        model.api.devlog("PluginController buffer cleared")
 
-        model.api.devlog("Core: queue size '%s'" % new_elem_queue.qsize())        
+        model.api.devlog("Core: queue size '%s'" % new_elem_queue.qsize())
         while True:
             try:
                 current_action = new_elem_queue.get(block=False)
@@ -348,16 +233,15 @@ class PluginController(object):
                 else:
                     model.api.devlog("PluginController.onCommandFinished - new_elem_queue Exception- something strange happened... unhandled exception?")
                     model.api.devlog(traceback.format_exc())
-                    break                    
+                    break
             except Exception:
                 model.api.devlog("PluginController.onCommandFinished - new_elem_queue Exception- something strange happened... unhandled exception?")
                 model.api.devlog(traceback.format_exc())
                 break
+        
         # Finally we register the recently executed command information
         self.last_command_information.duration = time() - self.last_command_information.itime
         self._command_manager.saveCommand(self.last_command_information)
-        
-        self._disable_active_plugin()
 
     def _processAction(self, action, parameters):
         """
@@ -366,7 +250,7 @@ class PluginController(object):
         """
         model.api.devlog("(PluginController) _processAction - %s - parameters = %s" % (action, str(parameters)))
         res = self._actionDispatcher[action](*parameters)
-    
+
     def _setupActionDispatcher(self):
         self._actionDispatcher = {
                     modelactions.ADDHOST : model.api.addHost,
@@ -412,14 +296,187 @@ class PluginController(object):
                     modelactions.LOG : model.api.log,
                     modelactions.DEVLOG : model.api.devlog,
         }
-    
 
     def updatePluginSettings(self, plugin_id, new_settings):
         if plugin_id in self._plugins:
             self._plugins[plugin_id].updateSettings(new_settings)
 
-#    def terminate(self):
-#        self._process_pool.terminate()
+
+class PluginController(PluginControllerBase):
+    """
+    TODO: Doc string.
+    """
+    def __init__(self, id, available_plugins, command_manager):
+        PluginControllerBase.__init__(self, id, available_plugins, command_manager)
+        self._active_plugin = None
+        self._buffer = StringIO()
+
+    def setActivePlugin(self, plugin):
+        self._active_plugin = plugin
+
+    def processCommandInput(self, prompt, username, current_path, command_string, interactive):
+        """
+        Receives the prompt that the current session has, the actual command_string that
+        the user typed and if the command is interactive. If it is interactive the
+        plugin controller does not choose a new active plugin but use the one the
+        is already set (if none is set it raises an exeception).
+
+        If always returns an string. It could be modified by the active plugin or, if
+        there is none available, it will return the original command_string.
+        """
+
+        if interactive:
+            return None
+        else:
+            self._disable_active_plugin()
+
+        choosen_plugin = self._get_plugins_by_input(command_string)
+        if choosen_plugin is None:
+            model.api.devlog("There is no active plugin to handle current command/user input")
+            return None
+        self._active_plugin = choosen_plugin
+
+        modified_cmd_string = self._active_plugin.processCommandString(
+                                                                username,
+                                                                current_path,
+                                                                command_string)
+
+        if self._is_command_malformed(command_string, modified_cmd_string):
+            return None
+        else:
+            self.setLastCommandInformation(command_string)
+            return modified_cmd_string if isinstance(modified_cmd_string, basestring) else None
+
+    def storeCommandOutput(self, output):
+        """
+        Receives and output string and stores it in the buffer. Returns False
+        if the output was not added to the plugin controllers buffer. Returns
+        True otherwise.
+        """
+        if not self.getActivePluginStatus():
+            return False
+        else:
+            self._buffer.write(output)
+            return True
+
+    def getPluginAutocompleteOptions(self, prompt, username, current_path, command_string, interactive):
+        """
+        This method should return a list of possible completitions based on the
+        current output.
+        TODO: We should think how to actually implement this...
+        May be checking which plugin should handle the command in the current input
+        and then passing it to the plugin to return a list of possible values.
+        Each plugin implementation should return possible option according to
+        what was received since it's the plugin the one it knows the command line
+        parameters, etc.
+        """
+        if interactive:
+            return None
+        else:
+            self._disable_active_plugin()
+
+        choosen_plugin = self._get_plugins_by_input(command_string)
+        if choosen_plugin is None:
+            model.api.devlog("There is no active plugin to handle current command/user input")
+            return None
+
+        self._active_plugin = choosen_plugin
+
+        new_options = self._active_plugin.getCompletitionSuggestionsList(command_string)
+        return new_options
+
+    def getActivePluginStatus(self):
+        """
+        Returns true if an active plugin is set, otherwise return False.
+        """
+        return (self._active_plugin is not None)
+
+    def _disable_active_plugin(self):
+        """
+        This method is suppose to disable the active plugin.
+        """
+        model.api.devlog("Disabling active plugin")
+        self._active_plugin = None
+
+    def onCommandFinished(self):
+        """
+        This method is called when the last executed command has finished. It's
+        in charge of giving the plugin the output to be parsed.
+        """
+        if self._active_plugin.has_custom_output():
+            output_file = open(self._active_plugin.get_custom_file_path(), 'r')
+            output = output_file.read()
+            self._buffer.seek(0)
+            self._buffer.truncate()
+            self._buffer.write(output)
+
+        self.processOutput(self._active_plugin, self._buffer.getvalue())
+
+        self._buffer.seek(0)
+        self._buffer.truncate()
+        model.api.devlog("PluginController buffer cleared")
+
+        self._disable_active_plugin()
+
+        return True
+
+
+class PluginControllerForApi(PluginControllerBase):
+    def __init__(self, id, available_plugins, command_manager):
+        PluginControllerBase.__init__(self, id, available_plugins, command_manager)
+        self._active_plugins = {}
+
+    def setActivePlugin(self, plugin):
+        self._active_plugin = plugin
+
+    def processCommandInput(self, command_string):
+
+        plugin = self._get_plugins_by_input(command_string)
+
+        if plugin:
+            modified_cmd_string = plugin.processCommandString("", "", command_string)
+            if not self._is_command_malformed(command_string, modified_cmd_string):
+                self._active_plugins[command_string] = plugin
+                output_file_path = None
+                if plugin.has_custom_output():
+                    output_file_path = plugin.get_custom_file_path()
+                self.setLastCommandInformation(command_string)
+                return True, modified_cmd_string, output_file_path
+
+        return False, None, None
+
+    def getPluginAutocompleteOptions(self, command_string):
+        # if interactive:
+        #     return None
+        # else:
+        #     self._disable_active_plugin()
+
+        # choosen_plugin = self._get_plugins_by_input(command_string)
+        # if choosen_plugin is None:
+        #     model.api.devlog("There is no active plugin to handle current command/user input")
+        #     return None
+
+        # self._active_plugin = choosen_plugin
+
+        # new_options = self._active_plugin.getCompletitionSuggestionsList(command_string)
+        # return new_options
+        pass
+
+    def _disable_active_plugin(self):
+        model.api.devlog("Disabling active plugin")
+        self._active_plugin = None
+
+    def onCommandFinished(self, cmd, output):
+        if cmd not in self._active_plugins.keys():
+            return False
+
+        self.processOutput(self._active_plugins.get(cmd), output)
+
+        del self._active_plugins[cmd]
+        return True
+
+    def clearActivePlugins(self):
+        self._active_plugins = {}
 
 
 class PluginBase(object):
@@ -434,32 +491,24 @@ class PluginBase(object):
         # an existant plugin with the same id.
         # TODO: Make script that list current ids.
         self.id                = None
-
         self._rid              = id(self)
-
         self.version           = None
-
-        
         self.name = None
         self.description = ""
-        
-        
         self._command_regex    = None
-        
-        
+        self._output_file_path = None
         self.framework_version = None
-        
-        
         self._completition = {}
-
         self._new_elems = []
-        
-
         self._pending_actions = Queue.Queue()
-
         self._settings = {}
 
-    
+    def has_custom_output(self):
+        return bool(self._output_file_path)
+
+    def get_custom_file_path(self):
+        return self._output_file_path
+
     def getSettings(self):
         for param, (param_type, value) in self._settings.iteritems():
             yield param, value

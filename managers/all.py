@@ -473,6 +473,9 @@ class PluginManager(object):
                     getLogger(self).error(msg)
             else:
                 pass
+
+    def getPlugins(self):
+        return self._instancePlugins()
                                                  
 
     def _updatePluginSettings(self, new_plugin_id):

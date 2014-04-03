@@ -15,8 +15,8 @@ import traceback
 import threading
 import model.guiapi
 from cStringIO import StringIO
-from gui.qt3.customevents import ShowExceptionCustomEvent
-from gui.qt3.customevents import EXCEPTION_ID
+from gui.customevents import ShowExceptionCustomEvent
+from gui.customevents import EXCEPTION_ID
 from config.configuration import getInstanceConfiguration
 import json
 import time

@@ -72,15 +72,16 @@ def send_output(cmd, output_file):
 
 
 def main(argv):
-    if len(argv) < 2:
-        sys.exit(1)
+    if len(argv) < 3:
+        sys.exit(0)
 
     action = argv[1]
 
     dispatcher = {'send_cmd': send_cmd, 'send_output': send_output}
 
     if action in dispatcher.keys():
-        dispatcher[action](*argv[2:])
+        if len(argv[2:]) > 0:
+            dispatcher[action](*argv[2:])
 
     #sys.exit(0)
 

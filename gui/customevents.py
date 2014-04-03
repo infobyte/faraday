@@ -29,7 +29,10 @@ UPDATEMODEL_ID = 54321
 
 class CustomEvent(object):
     def __init__(self, type):
-        self.type = type
+        self._type = type
+
+    def type(self):
+        return self._type
 
 
 class LogCustomEvent(CustomEvent):

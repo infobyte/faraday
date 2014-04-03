@@ -64,7 +64,7 @@ class GuiApp(qt.QApplication, FaradayUi):
 
     def createLoggerWidget(self):
         if not model.log.getLogger().isGUIOutputRegistered():
-            model.log.logger.registerGUIOutput(self._main_window.getLogConsole())
+            model.log.getLogger().registerGUIOutput(self._main_window.getLogConsole())
 
     def loadWorkspaces(self):
         self.getMainWindow().getWorkspaceTreeView().loadAllWorkspaces()

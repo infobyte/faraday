@@ -32,8 +32,8 @@ class CommandManager(object):
         self._manager = PersistenceManagerFactory.getInstance()
 
     def saveCommand(self, command_info):
-        self._manager.saveDocument(command_info.workspace,
-                command_info.toDict())
+        return self._manager.saveDocument(command_info.workspace,
+                    command_info.toDict())
 
 class PersistenceManagerFactory(object):
     """Creates PersistenceManager
@@ -191,7 +191,7 @@ class CouchdbManager(PersistenceManager):
     def saveDocument(self, aWorkspaceName, aDocument):
         self.incrementSeqNumber(aWorkspaceName)
         getLogger(self).debug("Saving document in remote workspace %s" % aWorkspaceName)
-        self.__getDb(aWorkspaceName).save_doc(aDocument, use_uuids = True, force_update = True)
+        return self.__getDb(aWorkspaceName).save_doc(aDocument, use_uuids = True, force_update = True)
 
     @trap_timeout
     def __getDb(self, aWorkspaceName): 

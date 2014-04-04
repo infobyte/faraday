@@ -27,21 +27,14 @@ from time import time
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
-from managers.all import CommandManager, CouchdbManager
+from managers.all import CommandManager, CouchdbManager, PersistenceManagerFactory
 
 class CommandHistoryTestSuite(unittest.TestCase):
 
     def setUp(self):
-        self.couch_host = "http://192.168.33.102:5984" 
-        CONF.setCouchUri(self.couch_host)
-        # self.plugin_repo_path = os.path.join(os.getcwd(), "plugins", "repo")
-        # self.plugin_manager = managers.PluginManager(self.plugin_repo_path)
-
-        # class WorkspaceStub():
-        #     def __init__(self):
-        #         self.id = "test_space"
-        # self.controller = \
-        #     self.plugin_manager.createController(WorkspaceStub())
+        pass
+        # self.couch_host = "http://192.168.33.101:5984"
+        # CONF.setCouchUri(self.couch_host)
 
     def test_valid_command_creation(self):
         information = self.getDefaultCommandInfo()
@@ -49,30 +42,44 @@ class CommandHistoryTestSuite(unittest.TestCase):
         command_info = CommandRunInformation(**information)
         self.assertIsNotNone(command_info, "Command wrongly created")
 
-        self.assertEquals(command_info.command, information['command'], "Field %s not instantiated" % information['command'])
+        self.assertEquals(command_info.command, information['command'], \
+                "Field %s not instantiated" % information['command'])
 
-        self.assertEquals(command_info.parameters, information['parameters'],
+        self.assertEquals(command_info.parameters, information['parameters'], \
                 "Field %s not instantiated" % information['parameters'])
 
-        self.assertEquals(command_info.itime, information['itime'], "Field %s not instantiated" % information['itime'])
+        self.assertEquals(command_info.itime, information['itime'], \
+                "Field %s not instantiated" % information['itime'])
 
-        self.assertEquals(command_info.duration, information['duration'], "Field %s not instantiated" % information['duration'])
+        self.assertEquals(command_info.duration, information['duration'], \
+                "Field %s not instantiated" % information['duration'])
 
-        self.assertEquals(command_info.workspace, information['workspace'], "Field %s not instantiated" % information['workspace'])
+        self.assertEquals(command_info.workspace, information['workspace'], \
+                "Field %s not instantiated" % information['workspace'])
 
     def test_create_command_manager(self):
+        """ Tests the command manager creation """
         cm = CommandManager()
         self.assertIsNotNone(cm, "Command Manager not instantiated")
 
     def test_save_command_in_couch(self):
+        """ Tests if command is saved in couch """
         cm = CommandManager()
 
-        command = CommandRunInformation(**self.getDefaultCommandInfo())
+        exec_command = CommandRunInformation(**self.getDefaultCommandInfo())
 
         wm = WorkspaceManager(mock(ModelController), mock(PluginController))
-        c = wm.createWorkspace(command.workspace, workspaceClass=WorkspaceOnCouch)
+        c = wm.createWorkspace(exec_command.workspace, workspaceClass=WorkspaceOnCouch)
 
-        cm.saveCommand(command)
+        res = cm.saveCommand(exec_command)
+
+        self._manager = PersistenceManagerFactory.getInstance()
+        saved_doc = self._manager.getDocument(exec_command.workspace, res['id'] )
+
+        self.assertEquals(exec_command.command, saved_doc['command'], 'Saved command diffier')
+        self.assertEquals(exec_command.parameters, saved_doc['parameters'], 'Saved command diffier')
+        self.assertEquals(exec_command.itime, saved_doc['itime'], 'Saved command diffier')
+        self.assertEquals(exec_command.duration, saved_doc['duration'], 'Saved command diffier')
 
 
     def getDefaultCommandInfo(self):

@@ -23,7 +23,7 @@ from model.workspace import WorkspaceOnCouch, WorkspaceManager
 from auth.manager import SecurityManager
 
 
-class TestSequenceFunctions(unittest.TestCase):
+class PluginControllerTestSuite(unittest.TestCase):
 
     def setUp(self):
         self.plugin_repo_path = os.path.join(os.getcwd(), "plugins", "repo")

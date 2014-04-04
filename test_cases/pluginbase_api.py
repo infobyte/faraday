@@ -51,6 +51,7 @@ class TestPluginCreateModelObject(TestCase):
         Testing the creation of one host
         """
         h = self.plugin.createAndAddHost("pepito", "linux")
+        self._plugin_controller.setLastCommandInformation("mock")
         self._plugin_controller.onCommandFinished()
         self._model_controller.processAllPendingActions()
         
@@ -66,6 +67,7 @@ class TestPluginCreateModelObject(TestCase):
         """
         h1 = self.plugin.createAndAddHost("pepito", "linux")
         h2 = self.plugin.createAndAddHost("pepito", "linux")
+        self._plugin_controller.setLastCommandInformation("mock")
         self._plugin_controller.onCommandFinished()
         self._model_controller.processAllPendingActions()
         
@@ -78,6 +80,7 @@ class TestPluginCreateModelObject(TestCase):
         """
         h = self.plugin.createAndAddHost("pepito", "linux")
         i = self.plugin.createAndAddInterface(h, "1.2.3.4")
+        self._plugin_controller.setLastCommandInformation("mock")
         self._plugin_controller.onCommandFinished()
         self._model_controller.processAllPendingActions()
         
@@ -98,6 +101,7 @@ class TestPluginCreateModelObject(TestCase):
         h2 = self.plugin.createAndAddHost("pepito", "linux")
         i2 = self.plugin.createAndAddInterface(h2, "1.2.3.4")
 
+        self._plugin_controller.setLastCommandInformation("mock")
         self._plugin_controller.onCommandFinished()
         self._model_controller.processAllPendingActions()
         
@@ -111,6 +115,7 @@ class TestPluginCreateModelObject(TestCase):
         h = self.plugin.createAndAddHost("pepito", "linux")
         i = self.plugin.createAndAddInterface(h, "1.2.3.4")
         s = self.plugin.createAndAddServiceToInterface(h, i, "unknown", protocol="tcp", ports=['80'])
+        self._plugin_controller.setLastCommandInformation("mock")
         self._plugin_controller.onCommandFinished()
         self._model_controller.processAllPendingActions()
         
@@ -128,6 +133,7 @@ class TestPluginCreateModelObject(TestCase):
         i = self.plugin.createAndAddInterface(h, "1.2.3.4")
         s1 = self.plugin.createAndAddServiceToInterface(h, i, "unknown", protocol="tcp", ports=['80'])
         s2 = self.plugin.createAndAddServiceToInterface(h, i, "test", protocol="tcp", ports=['80'])
+        self._plugin_controller.setLastCommandInformation("mock")
         self._plugin_controller.onCommandFinished()
         self._model_controller.processAllPendingActions()
         
@@ -145,6 +151,7 @@ class TestPluginCreateModelObject(TestCase):
         i = self.plugin.createAndAddInterface(h, "1.2.3.4")
         s1 = self.plugin.createAndAddServiceToInterface(h, i, "unknown", protocol="tcp", ports=['80'])
         s2 = self.plugin.createAndAddServiceToInterface(h, i, "unknown", protocol="tcp", ports=['443'])
+        self._plugin_controller.setLastCommandInformation("mock")
         self._plugin_controller.onCommandFinished()
         self._model_controller.processAllPendingActions()
         
@@ -162,6 +169,7 @@ class TestPluginCreateModelObject(TestCase):
         s1 = self.plugin.createAndAddServiceToInterface(h, i, "unknown", protocol="tcp", ports=['80'])
         s2 = self.plugin.createAndAddServiceToInterface(h, i, "unknown", protocol="tcp", ports=['443'])
         v = self.plugin.createAndAddVulnToService(h, s1, "vuln1", "descripcion")
+        self._plugin_controller.setLastCommandInformation("mock")
         self._plugin_controller.onCommandFinished()
         self._model_controller.processAllPendingActions()
         
@@ -182,6 +190,7 @@ class TestPluginCreateModelObject(TestCase):
         s1 = self.plugin.createAndAddServiceToInterface(h, i, "unknown", protocol="tcp", ports=['80'])
         s2 = self.plugin.createAndAddServiceToInterface(h, i, "unknown", protocol="tcp", ports=['443'])
         n = self.plugin.createAndAddNoteToService(h, s1, "note1", "desc1")
+        self._plugin_controller.setLastCommandInformation("mock")
         self._plugin_controller.onCommandFinished()
         self._model_controller.processAllPendingActions()
         
@@ -203,6 +212,7 @@ class TestPluginCreateModelObject(TestCase):
         s2 = self.plugin.createAndAddServiceToInterface(h, i, "unknown", protocol="tcp", ports=['443'])
         n = self.plugin.createAndAddNoteToService(h, s1, "note1", "desc1")
         n2 = self.plugin.createAndAddNoteToNote(h, s1, n, "note2", "desc2")
+        self._plugin_controller.setLastCommandInformation("mock")
         self._plugin_controller.onCommandFinished()
         self._model_controller.processAllPendingActions()
         
@@ -222,6 +232,7 @@ class TestPluginCreateModelObject(TestCase):
         i = self.plugin.createAndAddInterface(h, "1.2.3.4")
         s1 = self.plugin.createAndAddServiceToInterface(h, i, "unknown", protocol="tcp", ports=['80'])
         c = self.plugin.createAndAddCredToService(h, s1, "user", "pass")
+        self._plugin_controller.setLastCommandInformation("mock")
         self._plugin_controller.onCommandFinished()
         self._model_controller.processAllPendingActions()
         

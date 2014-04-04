@@ -177,8 +177,8 @@ class SkipfishPlugin(core.PluginBase):
         output being sent is valid.
         """
                                                               
-        if (re.search("\r\n",output) is None):
-            self._output_path=output
+        # if (re.search("\r\n",output) is None):
+        #     self._output_path=output
             
         if not os.path.exists(self._output_path):
             return False

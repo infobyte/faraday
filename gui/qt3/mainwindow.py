@@ -13,20 +13,10 @@ from gui.qt3.perspective import PerspectiveManager
 from gui.qt3.hostsbrowser import HostsBrowser
 from gui.qt3.workspacebrowser import WorkspaceTreeWindow
 from gui.qt3.dialogs import *
-                                       
-                                        
-                                        
-                                            
-                                         
-                                                 
-                                              
-                                                   
-                                       
-                                               
 from gui.qt3.configdialog import ConfigDialog
 from gui.qt3.toolbars import *
 from gui.qt3.customevents import *
-from model.workspace import CouchdbManager
+from managers.all import PersistenceManagerFactory, CouchdbManager
 
 
 import model.api
@@ -47,7 +37,7 @@ test_count = 0
 
 class MainWindow(qt.QMainWindow):
 
-    def __init__(self, title, main_app, model_controller):
+    def __init__(self, title, main_app, model_controller, plugin_manager):
         qt.QMainWindow.__init__(self, None, title, qt.Qt.WDestructiveClose)
         self.setWindowState(qt.Qt.WindowMaximized)
         self.setCaption(title)
@@ -138,7 +128,7 @@ class MainWindow(qt.QMainWindow):
         
 
     def setMainApp(self, mainapp):
-        self._main_app = mainapp
+       self._main_app = mainapp
 
 
     def _setupActions(self):
@@ -183,9 +173,9 @@ class MainWindow(qt.QMainWindow):
                                                                                         
 
                      
-        a = self._actions["test"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"donotpresstheredbutton.png"))), "Test", qt.Qt.CTRL + qt.Qt.Key_H, self, "Test" )
+        #a = self._actions["test"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"donotpresstheredbutton.png"))), "Test", qt.Qt.CTRL + qt.Qt.Key_H, self, "Test" )
                                                                 
-        self.connect(a, qt.SIGNAL('activated()'), self.test)
+        #self.connect(a, qt.SIGNAL('activated()'), self.test)
 
         a = self._actions["screenshot"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"Screenshot.png"))), "Take Screenshot", 0, self, "Take Screenshot" )
         self.connect(a, qt.SIGNAL('activated()'), self.takeScreenshot)
@@ -554,7 +544,7 @@ class MainWindow(qt.QMainWindow):
             CONF.saveConfig()
             
 
-            couchdbmanager = CouchdbManager(repourl)
+            couchdbmanager = PersistenceManagerFactory().getInstance()
             wm.setCouchManager(couchdbmanager)
 
             wm.loadWorkspaces()
@@ -581,10 +571,17 @@ class MainWindow(qt.QMainWindow):
         elif event.type() == CONFLICTS_ID:
                                                                   
             self.showConflictsDialog(event.local)
-            
-                                
-                                
-                                
+
+    def update(self, event):
+        if event.type() ==  EXCEPTION_ID:
+            self.showExceptionDialog(event.text, event.callback, event.exception_objects)
+        elif event.type() ==  SHOWDIALOG_ID:
+            self.showSimpleDialog(event.text, event.level)
+        elif event.type() ==  SHOWPOPUP_ID:
+            self.showPopup(event.text, event.level)
+        elif event.type() == CONFLICTS_ID:
+            self.showConflictsDialog(event.local)
+
     def toggleLogConsole(self):
         if self._log_console.isVisible():
             self._log_console.hide()
@@ -745,69 +742,3 @@ class MainWindow(qt.QMainWindow):
         for env in self._main_app._shell_envs.itervalues():
             env.session.em.sendString("\033r")
     """
-    def testAPI(self):
-        import model.api
-        model.api.createAndAddHost("prueba-host","Windows 7")
-        model.api.createAndAddInterface("eth0", mac = "00:00:00:00:00:00",
-                 ipv4_address = "10.1.1.1", ipv4_mask = "255.255.0.0",
-                 ipv4_gateway = "10.1.1.2", hostname_resolution = "TestHost",
-                 hostname="prueba-host")
-
-        h = model.api.newHost("127.0.0.1", "Windows 2003")
-        h = model.api.getHost("prueba-host")
-        model.api.addHost(h)
-        h.name = "Nuevo Nombre"
-        model.api.addHost(h, update = True, old_hostname = "prueba-host")
-
-
-    def test(self):
-        """
-        DELETE THIS BEFORE RELEASE
-        used for internal testing (not correct way but we need to use it like
-        this for now)
-        """
-                                                              
-                       
-                       
-                                                                       
-               
-        global test_count
-        test_count += 1
-        model.api.showPopup("Creating test host %d" % test_count)
-                                                                     
-        from utils.error_report import exception_handler
-        
-        def raiser():
-            sys.excepthook = exception_handler
-            time.sleep(3)
-            raise Exception("Exception from a secondary thread...")
-                                            
-                  
-                                                                
-
-        from model.hosts import Host
-        from model.hosts import Interface
-        from model.hosts import Service
-        from model.hosts import HostApplication
-
-        self._main_app.getLogger().log("testing..")
-        self._main_app.getLogger().log("creating test host %d" % test_count)
-        host = Host("TestHost-%d" % test_count, "Windows 2003")
-        service = Service( "TestService-%d" % test_count, "TCP", [80,8080], "running")
-        interface = Interface("eth%d" % test_count, mac = "00:00:00:00:00:00",
-                 ipv4_address = "10.1.1.%d" % test_count, ipv4_mask = "255.255.0.0",
-                 ipv4_gateway = "10.1.1.%d" % (test_count+1),
-                 hostname_resolution = "TestHost-%d" % test_count)
-        app = HostApplication( "AppTest-%d" % test_count, "running", "1.0 beta")
-
-        
-        host.addInterface(interface)
-        host.addService(service)
-        host.addApplication(app)
-        interface.addService(service)
-        app.addService(service)
-        service.addInterface(interface)
-        self._model_controller.addHostASYNC(host)
-
-
-                                                                                

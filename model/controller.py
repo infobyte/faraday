@@ -18,7 +18,7 @@ from model.common import TreeWordsTries
 from model.container import ModelObjectContainer
 import model.api as api
 import model.guiapi as guiapi
-from gui.qt3.customevents import *
+from gui.customevents import *
 
 from model.workspace import WorkspaceSyncronizer
 from utils.decorators import lockModel

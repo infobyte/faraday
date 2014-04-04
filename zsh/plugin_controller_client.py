@@ -11,6 +11,7 @@ import requests
 import sys
 import uuid
 import os
+import base64
 
 #TODO: load output dir from faraday config
 #check if output dir already exists, otherwise create it
@@ -49,7 +50,7 @@ def send_cmd(cmd):
                     output_file = "%s/%s.output" % (output_folder, uuid.uuid4())
                     new_cmd += " >&1 > %s" % output_file
 
-                new_cmd += " && python2 %s send_output \"%s\" \"%s\"" % (file_path, cmd, output_file)
+                new_cmd += " && python2 %s send_output %s \"%s\"" % (file_path, base64.b64encode(cmd), output_file)
         result = True
     except:
         new_cmd = cmd
@@ -61,12 +62,13 @@ def send_cmd(cmd):
 def send_output(cmd, output_file):
     output_file = open(output_file)
     output = output_file.read()
-    data = {"cmd": cmd, "output": output}
+    data = {"cmd": base64.b64decode(cmd), "output": output}
     response = requests.post(url_output,
                              data=json.dumps(data),
                              headers=headers)
     if response.status_code != 200:
         print "something wrong"
+        print response.json()
         return True
     return False
 

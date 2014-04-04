@@ -19,6 +19,8 @@ from mockito import mock, when
 from model.controller import ModelController
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
+from model.workspace import WorkspaceOnCouch, WorkspaceManager
+from auth.manager import SecurityManager
 
 
 class TestSequenceFunctions(unittest.TestCase):
@@ -26,11 +28,14 @@ class TestSequenceFunctions(unittest.TestCase):
     def setUp(self):
         self.plugin_repo_path = os.path.join(os.getcwd(), "plugins", "repo")
         self.plugin_manager = PluginManager(self.plugin_repo_path)
-        mc = mock(ModelController)
-        when(mc).getWorkspace().thenReturn('default')
-        model.api.setUpAPIs(mc)
-        self.couch_host = "http://192.168.33.102:5984" 
-        CONF.setCouchUri(self.couch_host)
+
+        controller = ModelController(mock(SecurityManager))
+
+        wm = WorkspaceManager(controller, mock(PluginController))
+        work = wm.createWorkspace('default', workspaceClass=WorkspaceOnCouch)
+        work.setModelController(controller)
+        controller.setWorkspace(work)
+        model.api.setUpAPIs(controller)
 
 
         class WorkspaceStub():
@@ -101,20 +106,6 @@ class TestSequenceFunctions(unittest.TestCase):
         modified_string = self.controller.processCommandInput(prompt, "", "",  command_string, False)
         arg_search = re.match(r"^.*(-oX benito_camelas\.xml).*$", modified_string)
         self.assertTrue(arg_search is None)
-
-    def test_plugin_suggestion(self):
-        """
-        Test to verify that we can get reliable plugin suggestions after
-        we send some command inputs to the plugin controller. This tests
-        expects the nmap plugin and the amap plugin to be present in the
-        plugin repo.
-        """
-        prompt = "fdeguzman@testserver:$"
-
-        command_string = "nmap localhost"
-        modified_string = self.controller.processCommandInput(prompt, "", "", 
-                                                         command_string, False)
-        self.controller.onCommandFinished()
 
     def test_process_command_keep_information(self):
 

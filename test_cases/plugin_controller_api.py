@@ -14,11 +14,11 @@ from mockito import mock, when
 
 sys.path.append('.')
 
-from plugins import managers
+from managers.all import PluginManager
 import plugins.api
 import model.api
 import model.controller
-from model.workspace import Workspace, WorkspaceManager
+from model.workspace import Workspace
 from model.container import ModelObjectContainer
 
 
@@ -27,7 +27,7 @@ class TestPluginControllerApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         plugin_repo_path = os.path.join(os.getcwd(), "plugins", "repo")
-        plugin_manager = managers.PluginManager(plugin_repo_path)
+        plugin_manager = PluginManager(plugin_repo_path)
         plugins.api.startPluginControllerAPI(plugin_manager)
 
     @classmethod
@@ -37,6 +37,7 @@ class TestPluginControllerApi(unittest.TestCase):
     def setUp(self):
         self.model_controller = model.controller.ModelController(mock())
         self.workspace = mock(Workspace)
+        self.workspace.name = "default"
         when(self.workspace).getContainee().thenReturn(ModelObjectContainer())
         self.model_controller.setWorkspace(self.workspace)
 

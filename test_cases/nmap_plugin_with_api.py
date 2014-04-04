@@ -17,6 +17,7 @@ import model.api as api
 from plugins.repo.nmap import plugin
 from plugins.core import PluginControllerForApi
 from mockito import mock, when
+from managers.all import CommandManager
 
 
 class TestSequenceFunctions(unittest.TestCase):
@@ -29,20 +30,17 @@ class TestSequenceFunctions(unittest.TestCase):
         self.model_controller = controller.ModelController(mock())
         self.workspace = mock(Workspace)
         when(self.workspace).getContainee().thenReturn(ModelObjectContainer())
+        self.cm = mock(CommandManager)
+        when(self.cm).saveCommand().thenReturn(True)
         self.model_controller.setWorkspace(self.workspace)
-        self._plugin_controller = PluginControllerForApi("test", [plugin.NmapPlugin()])
+        self._plugin_controller = PluginControllerForApi("test", {"nmap": plugin.NmapPlugin()}, self.cm)
         api.setUpAPIs(self.model_controller)
 
     def test_ping_scan(self):
-        nmap_plugin = plugin.NmapPlugin()
         output_file = open(os.path.join(os.getcwd(), 'test_cases/data/nmap_plugin_with_api.xml'))
         output = output_file.read()
-        #ret_flag = nmap_plugin.parseOutputString(output, debug=True)
-        #self.assertTrue(ret_flag)
-
-        self._plugin_controller._active_plugins["test"] = nmap_plugin
-
-        self._plugin_controller.onCommandFinished("test", output)
+        self._plugin_controller.processCommandInput("nmap localhost")
+        self._plugin_controller.onCommandFinished("nmap localhost", output)
         self.model_controller.processAllPendingActions()
         self.assertEquals(len(self.model_controller.getAllHosts()), 1,
                 "Not all hosts added to model")

@@ -85,7 +85,11 @@ if [ ! -d $faraday_user/zsh ]; then
     echo "[+] Creating zsh config directory"
     mkdir -p "$faraday_user/zsh"
 fi
-cp -a $HOME/.zshrc $faraday_user/zsh/
+if [ -e $HOME/.zshrc ]; then
+    cp -a $HOME/.zshrc $faraday_user/zsh/
+else
+    touch $HOME/.zshrc $faraday_user/zsh/.zshrc    
+fi
 echo "source $faraday_user/zsh/faraday.zsh" >> $faraday_user/zsh/.zshrc
 cp $faraday_base/zsh/faraday.zsh $faraday_user/zsh/
 cp $faraday_base/zsh/plugin_controller_client.py $faraday_user/zsh/

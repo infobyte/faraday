@@ -17,13 +17,16 @@ from model import api
 from plugins.core import PluginBase, PluginController
 from model.workspace import Workspace
 from model.container import ModelObjectContainer
+from managers.all import CommandManager
 
 
 class TestPluginCreateModelObject(TestCase):
     """docstring for TestModelObjectCRUD"""
     def setUp(self):
         self._model_controller = controller.ModelController(mock())
-        self._plugin_controller = PluginController("test", {})
+        self.cm = mock(CommandManager)
+        when(self.cm).saveCommand().thenReturn(True)
+        self._plugin_controller = PluginController("test", {}, self.cm)
 
         class PluginTest(PluginBase):
             def __init__(self):

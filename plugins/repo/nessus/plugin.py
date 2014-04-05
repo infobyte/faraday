@@ -98,84 +98,72 @@ class NessusPlugin(core.PluginBase):
         NOTE: if 'debug' is true then it is being run from a test case and the
         output being sent is valid.
         """
+        p = dotnessus_v2.Report()
+              
+        try:
+            p.parse(output, from_string=True)
+        except Exception as e:
+            print "Exception - %s" % e
         
-                                                                           
-        self.output_path = output
-            
-        if 1==0:
-            parser = NessusParser(output)
-        else:
-            
-            if not os.path.exists(self.output_path):
-                return False
-            
-                                          
-            p = dotnessus_v2.Report()
-                  
-            try:
-                p.parse(self.output_path)
-            except Exception as e:
-                print "Exception - %s" % e
-            
-            for t in p.targets:
-                mac=""
-                host=""
-                ip=""
+        for t in p.targets:
+            mac=""
+            host=""
+            ip=""
 
-                if t.get('mac-address'):
-                    mac=t.get('mac-address')
-                if t.get('host-fqdn'):
-                    host=t.get('host-fqdn')
-                if t.get('host-ip'):
-                    ip=t.get('host-ip')
-                    
-
-                h_id = self.createAndAddHost(ip,t.get('operating-system'))
+            if t.get('mac-address'):
+                mac=t.get('mac-address')
+            if t.get('host-fqdn'):
+                host=t.get('host-fqdn')
+            if t.get('host-ip'):
+                ip=t.get('host-ip')
                 
-                if self._isIPV4(ip):
-                    i_id = self.createAndAddInterface(h_id, ip, mac, ipv4_address=ip, hostname_resolution=host)
+
+            h_id = self.createAndAddHost(ip,t.get('operating-system'))
+            
+            if self._isIPV4(ip):
+                i_id = self.createAndAddInterface(h_id, ip, mac, ipv4_address=ip, hostname_resolution=host)
+            else:
+                i_id = self.createAndAddInterface(h_id, ip, mac, ipv6_address=ip, hostname_resolution=host)
+            
+            srv={}
+            web=False
+            for v in t.vulns:
+                                                                                                   
+                desc=""
+                desc+=v.get('description') if v.get('description') else ""
+                desc+="\nSolution: "+ v.get('solution') if v.get('solution') else ""
+                desc+="\nOutput: "+v.get('plugin_output') if v.get('plugin_output') else ""
+                ref=[]
+                if v.get('cve'):
+                    ref.append(", ".join(v.get('cve')))
+                if v.get('bid'):
+                    ref.append(", ".join(v.get('bid')))
+                if v.get('xref'):
+                    ref.append(", ".join(v.get('xref')))
+                if v.get('svc_name') == "general":
+                    v_id = self.createAndAddVulnToHost(h_id, v.get('plugin_name'),
+                                                   desc,ref,severity=v.get('severity'))
                 else:
-                    i_id = self.createAndAddInterface(h_id, ip, mac, ipv6_address=ip, hostname_resolution=host)
-                
-                srv={}
-                web=False
-                for v in t.vulns:
-                                                                                                       
-                    desc=""
-                    desc+=v.get('description') if v.get('description') else ""
-                    desc+="\nSolution: "+ v.get('solution') if v.get('solution') else ""
-                    desc+="\nOutput: "+v.get('plugin_output') if v.get('plugin_output') else ""
-                    ref=[]
-                    if v.get('cve'):
-                        ref.append(", ".join(v.get('cve')))
-                    if v.get('bid'):
-                        ref.append(", ".join(v.get('bid')))
-                    if v.get('xref'):
-                        ref.append(", ".join(v.get('xref')))
-                    if v.get('svc_name') == "general":
-                        v_id = self.createAndAddVulnToHost(h_id, v.get('plugin_name'),
-                                                       desc,ref,severity=v.get('severity'))
-                    else:
 
-                        s_id = self.createAndAddServiceToInterface(h_id, i_id, v.get('svc_name'),
-                                                       v.get('protocol'), 
-                                                       ports = [str(v.get('port'))],
-                                                       status = "open")
-                        
-                        web=True if re.search(r'^(www|http)',v.get('svc_name')) else False
-                        if srv.has_key(v.get('svc_name')) == False:
-                            srv[v.get('svc_name')]=1
-                            if web:
-                                n_id = self.createAndAddNoteToService(h_id,s_id,"website","")
-                                n2_id = self.createAndAddNoteToNote(h_id,s_id,n_id,host,"")
-                        
+                    s_id = self.createAndAddServiceToInterface(h_id, i_id, v.get('svc_name'),
+                                                   v.get('protocol'), 
+                                                   ports = [str(v.get('port'))],
+                                                   status = "open")
+                    
+                    web=True if re.search(r'^(www|http)',v.get('svc_name')) else False
+                    if srv.has_key(v.get('svc_name')) == False:
+                        srv[v.get('svc_name')]=1
                         if web:
-                            v_id = self.createAndAddVulnWebToService(h_id, s_id, v.get('plugin_name'),
-                                                    desc,website=host, severity=v.get('severity'),ref=ref)
-                        else:
-                            v_id = self.createAndAddVulnToService(h_id, s_id, v.get('plugin_name'),
-                                                           desc,
-                                                           severity=v.get('severity'),ref = ref)
+                            n_id = self.createAndAddNoteToService(h_id,s_id,"website","")
+                            n2_id = self.createAndAddNoteToNote(h_id,s_id,n_id,host,"")
+                    
+                    if web:
+                        v_id = self.createAndAddVulnWebToService(h_id, s_id, v.get('plugin_name'),
+                                                desc,website=host, severity=v.get('severity'),ref=ref)
+                    else:
+                        v_id = self.createAndAddVulnToService(h_id, s_id, v.get('plugin_name'),
+                                                       desc,
+                                                       severity=v.get('severity'),ref = ref)
                         
     
     def _isIPV4(self, ip):

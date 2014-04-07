@@ -21,6 +21,7 @@ import model.api
 import model.guiapi
 import plugins.api
 import model.log
+from utils.logs import getLogger
 import traceback
 from managers.all import PluginManager
 
@@ -184,6 +185,7 @@ class MainApplication(object):
         self.gui_app.quit()
 
     def ctrlC(self, signal, frame):
+        getLogger(self).info("Exiting...")
         self.__exit(exit_code=0)
 
     def getWorkspaceManager(self):

@@ -80,7 +80,7 @@ class MainApplication(object):
             #self._splash_screen.show()
             self.gui_app.startSplashScreen()
 
-            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            signal.signal(signal.SIGINT, self.ctrlC)
 
             #self._writeSplashMessage("Setting up remote API's...")
 
@@ -182,6 +182,9 @@ class MainApplication(object):
         """
 
         self.gui_app.quit()
+
+    def ctrlC(self, signal, frame):
+        self.__exit(exit_code=0)
 
     def getWorkspaceManager(self):
         return self._workspace_manager

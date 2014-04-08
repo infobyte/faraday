@@ -15,6 +15,7 @@ import traceback
 from urlparse import urlparse
 from couchdbkit import Server, ChangesStream, Database, designer
 from couchdbkit.resource import ResourceNotFound
+import time
 import os
 import sys
 import re

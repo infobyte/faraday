@@ -213,20 +213,22 @@ class PluginControllerBase(object):
         output_queue.put(None)
         output_queue.join()
 
-        model.api.devlog("Core: queue size '%s'" % new_elem_queue.qsize())
+        #model.api.devlog("Core: queue size '%s'" % new_elem_queue.qsize())
         while True:
             try:
                 current_action = new_elem_queue.get(block=False)
+                if current_action is None:
+                    break
                 action = current_action[0]
                 parameters = current_action[1:]
                 model.api.devlog("Core: Processing a new '%s' , parameters (%s) \n" % (action,str(parameters)))
                 self._processAction(action, parameters)
 
-            except Queue.Empty:
-                if new_elem_queue.qsize() > 0:
-                    continue
-                else:
-                    break
+            # except Queue.Empty:
+            #     if new_elem_queue.qsize() > 0:
+            #         continue
+            #     else:
+            #         break
             except IOError, e:
                 if e.errno == errno.EINTR:
                     continue
@@ -799,7 +801,7 @@ class PluginProcess(multiprocessing.Process):
                         try:
                             self.new_elem_queue.put(self.plugin._pending_actions.get(block=False))
                         except Queue.Empty:
-                            
+                            self.new_elem_queue.put(None)
                             model.api.devlog("PluginProcess run _pending_actions queue Empty. Breaking loop")
                             break
                         except Exception:

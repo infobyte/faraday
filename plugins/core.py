@@ -798,7 +798,6 @@ class PluginProcess(multiprocessing.Process):
                         try:
                             self.new_elem_queue.put(self.plugin._pending_actions.get(block=False))
                         except Queue.Empty:
-                            self.new_elem_queue.put(None)
                             model.api.devlog("PluginProcess run _pending_actions queue Empty. Breaking loop")
                             break
                         except Exception:

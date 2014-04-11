@@ -8,6 +8,8 @@ Design for simplicity, users should feel no difference between their own termina
 
 ![Faraday Logo](https://raw.github.com/wiki/infobyte/faraday/images/Faraday-Mainwindow.png)
 
+Please read the [RELEASE notes](https://github.com/infobyte/faraday/RELEASE.md)!
+
 Requirements
 ----
 Modern Linux (Tested Debian / Ubuntu  * / Kali / Backtrack)

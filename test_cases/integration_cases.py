@@ -16,78 +16,124 @@ from model import api
 from model.hosts import Host, Interface, Service
 from model.workspace import WorkspaceOnCouch, WorkspaceManager
 
+
+def create_host(self, host_name="pepito", os="linux"):
+    host = Host(host_name, os)
+    self.model_controller.addHostSYNC(host)
+    return host
+
+def create_interface(self, host, iname="coqiuto", mac = "00:03:00:03:04:04"):
+    interface = Interface(name = iname, mac = mac)
+    self.model_controller.addInterfaceSYNC(host.getName(), interface)
+    return interface
+
+def create_service(self, host, interface, service_name = "coquito"):
+    service = Service(service_name)
+    self.model_controller.addServiceToInterfaceSYNC(host.getID(),
+                                interface.getID(), service)
+    return service
+
 class TestModelObjectCRUD(TestCase):
     """docstring for TestModelObjectCRUD"""
     def setUp(self):
-        self._model_controller = controller.ModelController(mock())
-        self.wm = WorkspaceManager(self._model_controller, mock(plcore.PluginController))
+        self.model_controller = controller.ModelController(mock())
+        self.wm = WorkspaceManager(self.model_controller, mock(plcore.PluginController))
         workspace = self.wm.createWorkspace('test_workspace', workspaceClass=WorkspaceOnCouch)
-        workspace.setModelController(self._model_controller)
-        self._model_controller.setWorkspace(workspace)
+       
+        self.wm.setActiveWorkspace(workspace)
 
-        api.setUpAPIs(self._model_controller)
+        api.setUpAPIs(self.model_controller)
 
     def tearDown(self):
         c = self.wm.removeWorkspace('test_workspace')
 
-    def create_host(self, host_name="pepito", os="linux"):
-        host = Host(host_name, os)
-        self._model_controller.addHostSYNC(host)
-        return host
-
-    def create_interface(self, host, iname="coqiuto", mac = "00:03:00:03:04:04"):
-        interface = Interface(name = iname, mac = mac)
-        self._model_controller.addInterfaceSYNC(host.getName(), interface)
-        return interface
-
-    def create_service(self, host, interface, service_name = "coquito"):
-        service = Service(service_name)
-        self._model_controller.addServiceToInterfaceSYNC(host.getID(),
-                                    interface.getID(), service)
-        return service
 
     def test_create_and_remove_host_from_controller(self):
-        host1 = self.create_host("coquito")
-        self.assertIn(host1, self._model_controller.getAllHosts(),
+        host1 = create_host(self, "coquito")
+        self.assertIn(host1, self.model_controller.getAllHosts(),
                                 "Host not in controller")
 
-        self._model_controller.delHostSYNC(host1.name)
+        self.model_controller.delHostSYNC(host1.name)
 
-        self.assertNotIn(host1.getID(), self._model_controller.getAllHosts(),
+        self.assertNotIn(host1.getID(), self.model_controller.getAllHosts(),
                                 "Host not deleted")
 
     def test_delete_interface(self):
-        host1 = self.create_host("coquito")
-        interface1 = self.create_interface(host1, iname = "pepito")
+        host1 = create_host(self, "coquito")
+        interface1 = create_interface(self, host1, iname = "pepito")
 
         self.assertIn(interface1, host1.getAllInterfaces(),
                                 "Interface not in host!")
 
-        self._model_controller.delInterfaceSYNC(host1.getID(), "pepito")
+        self.model_controller.delInterfaceSYNC(host1.getID(), "pepito")
         self.assertNotIn(interface1, host1.getAllInterfaces(),
                                 "Interface in host! Not deleted!")
-        self.assertIn(host1, self._model_controller.getAllHosts(),
+        self.assertIn(host1, self.model_controller.getAllHosts(),
                                 'Host removed after interface removal')
 
     def test_delete_service(self):
-        host1 = self.create_host("coquito")
-        interface1 = self.create_interface(host1, iname="pepito")
-        service1 = self.create_service(host1, interface1)
+        host1 = create_host(self, "coquito")
+        interface1 = create_interface(self, host1, iname="pepito")
+        service1 = create_service(self, host1, interface1)
 
-        self.assertIn(host1, self._model_controller.getAllHosts(),
+        self.assertIn(host1, self.model_controller.getAllHosts(),
                                 "Host not in controller")
         self.assertIn(interface1, host1.getAllInterfaces(),
                                 "Interface not in host!")
         self.assertIn(service1, interface1.getAllServices(),
                                 "Service not in Interface!")
-        self._model_controller.delServiceFromInterfaceSYNC(host1.getID(),
+        self.model_controller.delServiceFromInterfaceSYNC(host1.getID(),
                                     interface1.getID(), service1.getID())
 
-        self.assertNotIn(service1, self._model_controller.getHost(host1.getID())
+        self.assertNotIn(service1, self.model_controller.getHost(host1.getID())
                         .getInterface(interface1.getID()).getAllServices(), \
                         "Service not deleted")
 
+class TestWorkspaceCRUD(TestCase):
+    """docstring for TestWorspace"""
+    def setUp(self):
+        self.model_controller = controller.ModelController(mock())
+        self.wm = WorkspaceManager(self.model_controller,
+                            mock(plcore.PluginController))
 
+        api.setUpAPIs(self.model_controller)
+
+    def tearDown(self):
+        workspace = self.wm.removeWorkspace('test_workspace')
+
+
+    def test_switch_workspace_with_objects(self):
+        workspace = self.wm.createWorkspace('test_workspace',
+                            workspaceClass=WorkspaceOnCouch)
+        self.wm.setActiveWorkspace(workspace)
+
+        host1 = create_host(self, "coquito")
+        interface1 = create_interface(self, host1, iname="pepito")
+        service1 = create_service(self, host1, interface1)
+
+
+        self.assertIn(host1, self.model_controller.getAllHosts(),
+                                "Host not in controller")
+        self.assertIn(interface1, host1.getAllInterfaces(),
+                                "Interface not in host!")
+        self.assertIn(service1, interface1.getAllServices(),
+                                "Service not in Interface!")
+
+        workspace2 = self.wm.createWorkspace('test_workspace2',
+                            workspaceClass=WorkspaceOnCouch)
+        self.wm.setActiveWorkspace(workspace2)
+
+        self.assertNotIn(host1, self.model_controller.getAllHosts(),
+                                "Host in controller, should be removed when \
+                                switching workspaces")
+
+        self.wm.setActiveWorkspace(workspace)
+        self.assertIn(host1, self.model_controller.getAllHosts(),
+                                "Host not in controller")
+        self.assertIn(interface1, host1.getAllInterfaces(),
+                                "Interface not in host!")
+        self.assertIn(service1, interface1.getAllServices(),
+                                "Service not in Interface!")
 
 
 if __name__ == '__main__':

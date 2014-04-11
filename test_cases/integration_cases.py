@@ -98,9 +98,6 @@ class TestWorkspaceCRUD(TestCase):
 
         api.setUpAPIs(self.model_controller)
 
-    def tearDown(self):
-        workspace = self.wm.removeWorkspace('test_workspace')
-
 
     def test_switch_workspace_with_objects(self):
         workspace = self.wm.createWorkspace('test_workspace',
@@ -134,6 +131,32 @@ class TestWorkspaceCRUD(TestCase):
                                 "Interface not in host!")
         self.assertIn(service1, interface1.getAllServices(),
                                 "Service not in Interface!")
+
+    def test_remove_active_workspace(self):
+        workspace = self.wm.createWorkspace('test_workspace',
+                            workspaceClass=WorkspaceOnCouch)
+        self.wm.setActiveWorkspace(workspace)
+        create_host(self, "coquito")
+
+        self.wm.removeWorkspace(workspace.name)
+
+
+    def test_remove_another_workspace(self):
+        workspace = self.wm.createWorkspace('test_workspace',
+                            workspaceClass=WorkspaceOnCouch)
+
+        workspace2 = self.wm.createWorkspace('test_workspace2',
+                            workspaceClass=WorkspaceOnCouch)
+
+        self.wm.setActiveWorkspace(workspace)
+        create_host(self, "coquito")
+        self.wm.setActiveWorkspace(workspace2)
+        self.wm.removeWorkspace(workspace.name)
+
+        self.assertNotIn(workspace.name, self.wm.getWorkspacesNames(),
+                        "Workspace not removed")
+        self.assertIn(workspace2.name, self.wm.getWorkspacesNames(),
+                        "Workspace removed while removing another workspace")
 
 
 if __name__ == '__main__':

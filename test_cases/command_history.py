@@ -19,7 +19,7 @@ from model.commands_history import CommandRunInformation
 from model.controller import ModelController
 from plugins.core import PluginController
 
-from model.workspace import WorkspaceOnCouch, WorkspaceManager
+from model.workspace import WorkspaceOnCouch, WorkspaceOnFS, WorkspaceManager
 from mockito import mock
 
 from time import time
@@ -69,9 +69,9 @@ class CommandHistoryTestSuite(unittest.TestCase):
         exec_command = CommandRunInformation(**self.getDefaultCommandInfo())
 
         wm = WorkspaceManager(mock(ModelController), mock(PluginController))
-        c = wm.createWorkspace(exec_command.workspace, workspaceClass=WorkspaceOnCouch)
+        workspace = wm.createWorkspace(exec_command.workspace, workspaceClass=WorkspaceOnCouch)
 
-        res = cm.saveCommand(exec_command)
+        res = cm.saveCommand(exec_command, workspace)
 
         self._manager = PersistenceManagerFactory.getInstance()
         saved_doc = self._manager.getDocument(exec_command.workspace, res['id'] )
@@ -80,6 +80,27 @@ class CommandHistoryTestSuite(unittest.TestCase):
         self.assertEquals(exec_command.parameters, saved_doc['parameters'], 'Saved command diffier')
         self.assertEquals(exec_command.itime, saved_doc['itime'], 'Saved command diffier')
         self.assertEquals(exec_command.duration, saved_doc['duration'], 'Saved command diffier')
+
+    def test_save_command_in_fs(self):
+        """ Tests if command is saved in couch """
+        wm = WorkspaceManager(mock(ModelController), mock(PluginController))
+
+        command_info = self.getDefaultCommandInfo()
+        command_info['workspace'] = 'new_workspace'
+        exec_command = CommandRunInformation(**command_info)
+
+        workspace = wm.createWorkspace(exec_command.workspace, workspaceClass=WorkspaceOnFS)
+        wm.setActiveWorkspace(workspace)
+
+        cm = CommandManager()
+
+        res = cm.saveCommand(exec_command, workspace)
+
+        self._manager = PersistenceManagerFactory.getInstance()
+        # saved_doc = self._manager.getDocument(exec_command.workspace, res['id'])
+
+        # After all
+        wm.removeWorkspace(command_info['workspace'])
 
 
     def getDefaultCommandInfo(self):

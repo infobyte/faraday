@@ -14,7 +14,7 @@ import plugins.core as plcore
 from mockito import mock
 from model import api
 from model.hosts import Host, Interface, Service
-from model.workspace import WorkspaceOnCouch, WorkspaceManager
+from model.workspace import WorkspaceOnCouch, WorkspaceManager, WorkspaceOnFS
 
 
 def create_host(self, host_name="pepito", os="linux"):
@@ -137,6 +137,17 @@ class TestWorkspaceCRUD(TestCase):
     def test_remove_active_workspace(self):
         workspace = self.wm.createWorkspace('test_workspace',
                             workspaceClass=WorkspaceOnCouch)
+        self.wm.setActiveWorkspace(workspace)
+        host1 = create_host(self, "coquito")
+
+        self.wm.removeWorkspace(workspace.name)
+
+        self.assertNotIn(host1, self.model_controller.getAllHosts(),
+            'Host not removed while removing active workspace')
+
+    def test_remove_active_workspace_fs(self):
+        workspace = self.wm.createWorkspace('test_workspace',
+                            workspaceClass=WorkspaceOnFS)
         self.wm.setActiveWorkspace(workspace)
         host1 = create_host(self, "coquito")
 

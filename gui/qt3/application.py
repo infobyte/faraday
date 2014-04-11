@@ -18,6 +18,7 @@ from gui.gui_app import FaradayUi
 from gui.qt3.mainwindow import MainWindow
 from gui.qt3.customevents import QtCustomEvent
 from shell.controller.env import ShellEnvironment
+from model.workspace import WorkspaceOnFS, WorkspaceOnCouch
 
 import model.guiapi
 import model.api

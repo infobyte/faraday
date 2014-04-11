@@ -22,6 +22,8 @@ import re
 import imp
 import plugins.core 
 import mockito
+import shutil
+import json
 from model.common import ModelObject
 
 CONF = getInstanceConfiguration()
@@ -54,15 +56,22 @@ class PersistenceManagerFactory(object):
             PersistenceManagerFactory.instance = persistence_manager
             return persistence_manager
 
+    @staticmethod
+    def setInstance(manager):
+        PersistenceManagerFactory.instance = manager 
+
 class PersistenceManager(object):
     def waitForDBChange(self, db_name, since = 0, timeout = 15000):
         time.sleep(timeout)
         return False
 
+    def saveDocument(self, aWorkspaceName, aDocument):
+        raise NotImplementedError('Implement in subclass')
+
 class FSManager(PersistenceManager):
     """ This is a file system manager for the workspace, it will load from the provided FS"""
     def __init__(self, path):
-        self._path = path 
+        self._path = path
         if not os.path.exists(self._path):
             os.mkdir(self._path)
 
@@ -73,6 +82,12 @@ class FSManager(PersistenceManager):
         path = os.path.join(self._path, "%s.json" % obj_id)
         if os.path.isfile(path):
             os.remove(path)
+
+    def saveDocument(self, aWorkspaceName, aDocumentDict):
+        filepath = os.path.join(self._path, "command_history.json")
+        with open(filepath, "w") as outfile:
+            json.dump(aDocumentDict, outfile, indent = 2) 
+
 
 class NoCouchDBError(Exception): pass
 

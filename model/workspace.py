@@ -474,8 +474,7 @@ class WorkspaceManager(object):
 
         shutil.rmtree(self.getWorkspace(name).getReportPath())
         del self._workspaces[name]
-        if self.getWorkspace(name) == self.getActiveWorkspace() and self.getWorkspacesCount() > 0:
-                                                 
+        if self.getWorkspace(name) == self.getActiveWorkspace() and self.getWorkspacesCount() > 0: 
             self.setActiveWorkspace(self.getWorkspace(self._workspaces.keys()[0]))
 
     def getWorkspace(self, name):
@@ -501,14 +500,7 @@ class WorkspaceManager(object):
     def getWorkspacesNames(self):
         return self._workspaces.keys()
         
-    def loadWorkspaces(self):
-                                                                
-                                         
-                                                                              
-                                                                        
-                                                                                          
-                                                                                   
-                                                                            
+    def loadWorkspaces(self): 
         self._workspaces.clear()
         for name in os.listdir(CONF.getPersistencePath()):
             if name not in self._workspaces:
@@ -533,7 +525,8 @@ class WorkspaceManager(object):
         self._model_controller.setWorkspace(self.active_workspace)
         self.workspace_persister.setPersister(self.active_workspace, self.active_workspace._dmanager)
 
-                                                           
+        PersistenceManagerFactory.setInstance(self.active_workspace._dmanager)
+
         self.report_manager.path = workspace.report_path
 
         if isinstance(self.active_workspace, WorkspaceOnCouch):

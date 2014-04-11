@@ -69,9 +69,9 @@ class CommandHistoryTestSuite(unittest.TestCase):
         exec_command = CommandRunInformation(**self.getDefaultCommandInfo())
 
         wm = WorkspaceManager(mock(ModelController), mock(PluginController))
-        c = wm.createWorkspace(exec_command.workspace, workspaceClass=WorkspaceOnCouch)
+        workspace = wm.createWorkspace(exec_command.workspace, workspaceClass=WorkspaceOnCouch)
 
-        res = cm.saveCommand(exec_command)
+        res = cm.saveCommand(exec_command, workspace)
 
         self._manager = PersistenceManagerFactory.getInstance()
         saved_doc = self._manager.getDocument(exec_command.workspace, res['id'] )
@@ -94,7 +94,7 @@ class CommandHistoryTestSuite(unittest.TestCase):
 
         cm = CommandManager()
 
-        res = cm.saveCommand(exec_command)
+        res = cm.saveCommand(exec_command, workspace)
 
         self._manager = PersistenceManagerFactory.getInstance()
         # saved_doc = self._manager.getDocument(exec_command.workspace, res['id'])

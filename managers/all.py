@@ -34,7 +34,8 @@ class CommandManager(object):
     def __init__(self): 
         self._manager = PersistenceManagerFactory.getInstance()
 
-    def saveCommand(self, command_info):
+    def saveCommand(self, command_info, workspace):
+        self._manager = workspace._dmanager
         return self._manager.saveDocument(command_info.workspace,
                     command_info.toDict())
 

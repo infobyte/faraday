@@ -373,8 +373,6 @@ class WorkspaceManager(object):
     def __init__(self, model_controller, plugin_controller):
         self.active_workspace = None
                                                                   
-
-
         self._couchAvailable  = False 
         self.report_manager = ReportManager(10, plugin_controller)
         
@@ -382,7 +380,7 @@ class WorkspaceManager(object):
         
         self._workspaces = {}
         self._model_controller = model_controller
-        self._excluded_directories = [".svn"]                             
+        self._excluded_directories = [".svn"]
         self.workspace_persister = WorkspacePersister()
 
     def couchAvailable(self, isit):
@@ -524,8 +522,6 @@ class WorkspaceManager(object):
         self.active_workspace.setModelController(self._model_controller)
         self._model_controller.setWorkspace(self.active_workspace)
         self.workspace_persister.setPersister(self.active_workspace, self.active_workspace._dmanager)
-
-        PersistenceManagerFactory.setInstance(self.active_workspace._dmanager)
 
         self.report_manager.path = workspace.report_path
 

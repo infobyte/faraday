@@ -22,8 +22,8 @@ def create_host(self, host_name="pepito", os="linux"):
     self.model_controller.addHostSYNC(host)
     return host
 
-def create_interface(self, host, iname="coqiuto", mac = "00:03:00:03:04:04"):
-    interface = Interface(name = iname, mac = mac)
+def create_interface(self, host, iname="coqiuto", mac="00:03:00:03:04:04"):
+    interface = Interface(name=iname, mac=mac)
     self.model_controller.addInterfaceSYNC(host.getName(), interface)
     return interface
 
@@ -35,14 +35,16 @@ def create_service(self, host, interface, service_name = "coquito"):
 
 class TestModelObjectCRUD(TestCase):
     """docstring for TestModelObjectCRUD"""
-    def setUp(self):
-        self.model_controller = controller.ModelController(mock())
-        self.wm = WorkspaceManager(self.model_controller, mock(plcore.PluginController))
-        workspace = self.wm.createWorkspace('test_workspace', workspaceClass=WorkspaceOnCouch)
-       
-        self.wm.setActiveWorkspace(workspace)
 
-        api.setUpAPIs(self.model_controller)
+    @classmethod
+    def setUpClass(cls):
+        cls.model_controller = controller.ModelController(mock())
+        api.setUpAPIs(cls.model_controller)
+
+    def setUp(self):
+        self.wm = WorkspaceManager(self.model_controller, mock(plcore.PluginController))
+        workspace = self.wm.createWorkspace('test_workspace', workspaceClass=WorkspaceOnCouch) 
+        self.wm.setActiveWorkspace(workspace)
 
     def tearDown(self):
         c = self.wm.removeWorkspace('test_workspace')
@@ -91,13 +93,13 @@ class TestModelObjectCRUD(TestCase):
 
 class TestWorkspaceCRUD(TestCase):
     """docstring for TestWorspace"""
+    @classmethod
+    def setUpClass(cls):
+        cls.model_controller = controller.ModelController(mock())
+        api.setUpAPIs(cls.model_controller)
     def setUp(self):
-        self.model_controller = controller.ModelController(mock())
         self.wm = WorkspaceManager(self.model_controller,
                             mock(plcore.PluginController))
-
-        api.setUpAPIs(self.model_controller)
-
 
     def test_switch_workspace_with_objects(self):
         workspace = self.wm.createWorkspace('test_workspace',
@@ -136,10 +138,12 @@ class TestWorkspaceCRUD(TestCase):
         workspace = self.wm.createWorkspace('test_workspace',
                             workspaceClass=WorkspaceOnCouch)
         self.wm.setActiveWorkspace(workspace)
-        create_host(self, "coquito")
+        host1 = create_host(self, "coquito")
 
         self.wm.removeWorkspace(workspace.name)
 
+        self.assertNotIn(host1, self.model_controller.getAllHosts(),
+            'Host not removed while removing active workspace')
 
     def test_remove_another_workspace(self):
         workspace = self.wm.createWorkspace('test_workspace',

@@ -6,6 +6,8 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+import time
+
 from gui.gui_app import FaradayUi
 
 
@@ -15,8 +17,14 @@ class GuiApp(FaradayUi):
                            model_controller,
                            plugin_manager,
                            workspace_manager)
+        self._stop = False
 
     def run(self, args):
+
         while True:
-            # find a way to keep this thread running, until CTRL+C is pressed
-            pass
+            if self._stop:
+                return
+            time.sleep(0.01)
+
+    def quit(self):
+        self._stop = True

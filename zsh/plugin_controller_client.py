@@ -62,7 +62,7 @@ def send_cmd(cmd):
 def send_output(cmd, output_file):
     output_file = open(output_file)
     output = output_file.read()
-    data = {"cmd": base64.b64decode(cmd), "output": output}
+    data = {"cmd": base64.b64decode(cmd), "output": base64.b64encode(output)}
     response = requests.post(url_output,
                              data=json.dumps(data),
                              headers=headers)

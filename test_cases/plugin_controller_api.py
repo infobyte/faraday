@@ -10,6 +10,7 @@ import os
 import requests
 import json
 import sys
+import base64
 from mockito import mock, when
 
 sys.path.append('.')
@@ -107,7 +108,7 @@ class TestPluginControllerApi(unittest.TestCase):
 
         #send output, using a fake nmap xml ouput
         output_file = open(os.path.join(os.getcwd(), 'test_cases/data/nmap_plugin_with_api.xml'))
-        output = output_file.read()
+        output = base64.b64encode(output_file.read())
         data = {"cmd": cmd, "output": output}
         response = requests.post(self.url_output,
                                  data=json.dumps(data),
@@ -121,7 +122,7 @@ class TestPluginControllerApi(unittest.TestCase):
         #send output, using a fake nmap xml ouput
         cmd = "nmap 127.0.0.1"
         output_file = open(os.path.join(os.getcwd(), 'test_cases/data/nmap_plugin_with_api.xml'))
-        output = output_file.read()
+        output = base64.b64encode(output_file.read())
         data = {"cmd": cmd, "output": output}
         response = requests.post(self.url_output,
                                  data=json.dumps(data),

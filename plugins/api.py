@@ -10,7 +10,7 @@ import threading
 import logging
 import requests
 import json
-import uuid
+import base64
 
 from flask import Flask, request, jsonify
 from tornado.wsgi import WSGIContainer
@@ -129,7 +129,7 @@ class PluginControllerAPI(object):
         if 'cmd' in json_data.keys():
             if 'output' in json_data.keys():
                 cmd = json_data.get('cmd')
-                output = json_data.get('output')
+                output = base64.b64decode(json_data.get('output'))
                 if self.plugin_controller.onCommandFinished(cmd, output):
                     return self.ok("output successfully sent to plugin")
                 return self.badRequest("output received but no active plugin")
@@ -172,7 +172,7 @@ class PluginControllerAPIClient(object):
 
     def send_output(self, cmd, output_file):
         output_file = open(output_file)
-        output = output_file.read()
+        output = base64.b64encode(output_file.read())
         data = {"cmd": cmd, "output": output}
         response = requests.post(self.url_output,
                                  data=json.dumps(data),

@@ -21,10 +21,8 @@ class TestModelObjectCRUD(TestCase):
     def setUp(self):
         self._model_controller = controller.ModelController(mock())
         self.wm = WorkspaceManager(self._model_controller, mock(plcore.PluginController))
-        workspace = self.wm.createWorkspace('test_workspace', workspaceClass=WorkspaceOnCouch)
-
-        workspace.setModelController(self._model_controller)
-
+        workspace = self.wm.createWorkspace('test_workspace', workspaceClass=WorkspaceOnCouch) 
+        workspace.setModelController(self._model_controller) 
         self._model_controller.setWorkspace(workspace)
 
         api.setUpAPIs(self._model_controller)
@@ -47,9 +45,12 @@ class TestModelObjectCRUD(TestCase):
         self._model_controller.addServiceToInterfaceSYNC(host.getID(), interface.getID(), service)
         return service
 
-    def test_remove_host_from_controller(self):
+    def test_create_and_remove_host_from_controller(self):
         h1 = self.create_host("coquito")
+        self.assertIn(h1, self._model_controller.getAllHosts(), "Host not in controller")
+
         self._model_controller.delHostSYNC(h1.name)
+
         self.assertNotIn(h1.getID(), self._model_controller.getAllHosts(), "Host not deleted")
 
     def test_delete_interface(self):

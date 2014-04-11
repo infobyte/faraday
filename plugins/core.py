@@ -241,7 +241,8 @@ class PluginControllerBase(object):
         
         # Finally we register the recently executed command information
         self.last_command_information.duration = time() - self.last_command_information.itime
-        self._command_manager.saveCommand(self.last_command_information)
+        workspace = model.api.getActiveWorkspace()
+        self._command_manager.saveCommand(self.last_command_information, workspace)
 
     def _processAction(self, action, parameters):
         """

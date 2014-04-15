@@ -24,6 +24,7 @@ import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from StringIO import StringIO
+from dateutil.parser import parse
 
 # List all nodes in a ReportItem object that can have multiple values
 MULTI_VALUED_ATTS = [
@@ -134,10 +135,12 @@ class ReportHost(object):
 
 		# Convert scan dates and check for dead status
 		if self.get('HOST_START'):
-			self.host_start = datetime.strptime(self.get('HOST_START'), HOST_DATE_FORMAT)
+			self.host_start = parse(self.get('HOST_START'))
+			#self.host_start = datetime.strptime(self.get('HOST_START'), HOST_DATE_FORMAT)
 		else:
 			self.dead = True
-		self.host_end = datetime.strptime(self.get('HOST_END'), HOST_DATE_FORMAT)
+		self.host_end = self.get('HOST_END')
+		#self.host_end = datetime.strptime(self.get('HOST_END'), HOST_DATE_FORMAT)
 
 		# Get all ReportItems
 		for ri in xml_report_host.findall('ReportItem'):

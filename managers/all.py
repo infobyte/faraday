@@ -85,9 +85,7 @@ class FSManager(PersistenceManager):
             os.remove(path)
 
     def saveDocument(self, aWorkspaceName, aDocumentDict):
-        filepath = os.path.join(self._path, "command_history.json")
-        with open(filepath, "w") as outfile:
-            json.dump(aDocumentDict, outfile, indent = 2) 
+        pass 
 
 
 class NoCouchDBError(Exception): pass

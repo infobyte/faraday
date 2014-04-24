@@ -410,14 +410,7 @@ class HostsBrowser(qt.QVBox):
     def update(self, hosts):
         self.clearTree()
         self.redrawTree(hosts)
-
-                                              
-                                        
-                
-                                                  
-                                            
-                                                            
-                                                               
+                                         
     def sizeHint(self):
         """Returns recommended size of dialog."""
         return qt.QSize(70, 200)
@@ -457,26 +450,16 @@ class HostsBrowser(qt.QVBox):
                     self._delHostFromCategory(i.object, category_item.name)
 
     def redrawTree(self, hosts):
-
-                                                                        
-         
-                           
         for host in hosts:
-                                           
             category = host.getCurrentCategory()
             self._addCategory(category)
             self._addHostToCategory(host, category)
 
+        for ci in self._category_items.values():
+            ci.setOpen(True)
         self.createIndex(hosts)
         self.filterTree(self._filter)
 
-                          
-             
-                                        
-                
-                                 
-                      
-        
     def filterTree(self, mfilter=""):
         hosts=[]
         viewall=False

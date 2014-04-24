@@ -309,7 +309,6 @@ class WorkspaceOnCouch(Workspace):
                                             
 
     def load(self):
-        model.api.devlog("Changes from another instance")
         self._model_controller.setSavingModel(True)
         hosts = {}
 

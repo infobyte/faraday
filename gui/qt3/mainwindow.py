@@ -16,6 +16,7 @@ from gui.qt3.dialogs import *
 from gui.qt3.configdialog import ConfigDialog
 from gui.qt3.toolbars import *
 from gui.qt3.customevents import *
+from model.guiapi import notification_center as notifier
 from managers.all import PersistenceManagerFactory, CouchdbManager
 
 
@@ -73,7 +74,8 @@ class MainWindow(qt.QMainWindow):
 
                         
         self._hosts_treeview = HostsBrowser(self._perspective_manager,"Hosts")
-        self._model_controller.registerWidget(self._hosts_treeview)
+        notifier.registerWidget(self._hosts_treeview)
+
         self._perspective_manager.registerPerspective(self._hosts_treeview, default=True)
         
                                                                         

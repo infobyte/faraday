@@ -21,8 +21,8 @@ class UiFactory(object):
 
 
 class FaradayUi(object):
-    def __init__(self, model_controller, plugin_manager,
-                 workspace_manager, gui="qt3"):
+    def __init__(self, model_controller=None, plugin_manager=None,
+                 workspace_manager=None, gui="qt3"):
         #self.main_app = main_app
         self.model_controller = model_controller
         self.plugin_manager = plugin_manager

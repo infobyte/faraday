@@ -11,6 +11,7 @@ These events are needed to communicate secondary threads with the GUI.
 
 """
 
+import time
 
 LOGEVENT_ID = 3131
 SHOWDIALOG_ID = 3132
@@ -24,15 +25,22 @@ CONFLICTS_ID = 3139
 WORKSPACE_CHANGED = 3140
 CONFLICT_UPDATE = 3141
 RESOLVECONFLICTS_ID = 3142
+ADDHOST = 4100
+DELHOST = 4101
+EDITHOST = 4102
 UPDATEMODEL_ID = 54321
 
 
 class CustomEvent(object):
     def __init__(self, type):
         self._type = type
+        self._time = time.time()
 
     def type(self):
         return self._type
+
+    def time(self):
+        return self._time
 
 
 class LogCustomEvent(CustomEvent):
@@ -102,3 +110,21 @@ class ModelObjectUpdateEvent(CustomEvent):
     def __init__(self, hosts):
         CustomEvent.__init__(self, UPDATEMODEL_ID)
         self.hosts = hosts
+
+
+class AddHostCustomEvent(CustomEvent):
+    def __init__(self, host):
+        CustomEvent.__init__(self, ADDHOST)
+        self.host = host
+
+
+class EditHostCustomEvent(CustomEvent):
+    def __init__(self, host):
+        CustomEvent.__init__(self, EDITHOST)
+        self.host = host
+
+
+class DeleteHostCustomEvent(CustomEvent):
+    def __init__(self, host_id):
+        CustomEvent.__init__(self, DELHOST)
+        self.host_id = host_id

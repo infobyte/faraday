@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
+import traceback
 
 try:
     import qt
@@ -92,6 +93,8 @@ class GuiApp(qt.QApplication, FaradayUi):
         qt.QApplication.quit(self)
 
     def postEvent(self, receiver, event):
+        if receiver is None:
+            receiver = self.getMainWindow()
         qt.QApplication.postEvent(receiver, QtCustomEvent.create(event))
 
     def createShellEnvironment(self, name=None):

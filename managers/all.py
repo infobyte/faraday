@@ -115,6 +115,17 @@ class CouchdbManager(PersistenceManager):
         self.__serv = NoConectionServer()
         self.mutex = threading.Lock()
         self._available = False
+
+        #setting the doc types to load from couch
+        def get_types(subclasses):
+            if len(subclasses):
+                head = subclasses[0]
+                tail = []
+                if len(subclasses[1:]):
+                    tail = subclasses[1:]
+                return get_types(head.__subclasses__()) + [head.class_signature] + get_types(tail)
+            return []
+        self._model_object_types = get_types([ModelObject])
         try:
             self.testCouchUrl(uri)
             url=urlparse(uri)
@@ -298,10 +309,9 @@ class CouchdbManager(PersistenceManager):
         return filter(self.filterConditions, self.__getDb(workspaceName).documents(include_docs=True))
 
     def filterConditions(self, doc):
-        model_object_types = [c.__name__ for c in ModelObject.__subclasses__()]
         ret = True
         ret = ret and not doc["id"].startswith("_")
-        ret = ret and doc['doc']["type"] in model_object_types
+        ret = ret and doc['doc']["type"] in self._model_object_types
 
         return ret
 

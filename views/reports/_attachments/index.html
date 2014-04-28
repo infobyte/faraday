@@ -91,7 +91,7 @@
                 // alto del iframe fijo
 		//iframes.push("<iframe src="+iframe+" height=\""+sizes[reps]+"\" width=\"800\"></iframe>");
                 // sin alto de iframe
-		iframes.push("<iframe class=\"iframe\" src="+iframe+" width=\"800\"></iframe>");
+		iframes.push("<iframe class=\"iframe\" src="+iframe+" width=\"800\" height=\"500\"></iframe>");
               });
               $("#reportes").append("<div id=\"workspace-"+db+"\" class=\"workspace\"><h2>"+db+"</h2>"+iframes.join("")+"</div><!-- .workspace -->");
               // cuando termina de cargar los datos de los workspaces setea el alto del menu de la izquierda

@@ -8,4 +8,4 @@ restkit==4.2.2
 requests==1.2.3
 tornado==3.2
 Flask==0.10.1
-python-dateutil=2.2
+python-dateutil==2.2

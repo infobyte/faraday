@@ -5,6 +5,7 @@
 <head>
 	<title>By Host report</title>
 	<script type="text/javascript" src="../script/app.js"></script>
+	<script type="text/javascript" src="../script/couch.js"></script>
 	<script type="text/javascript" src="/_utils/script/json2.js"></script>
 	<script type="text/javascript" src="/_utils/script/jquery.js"></script>
 	<script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
@@ -55,42 +56,18 @@
 		$(".seccion2").append(table);
 	}
 
+	function get_services(db, design, hid) {
+		var sview = design + "/services";
+		var matches = db.view(sview, {key: hid});
+		return matches.rows;
+	}
+
 	function load_services(hid, hname) {
 	        var workspace	= getParameterByName("workspace");
 	        var design	= getParameterByName("design");
-		var surl	= "/" + workspace + "/_design/" + design + "/_view/services?group=false";
-		// la query a continuacion es la que quiero correr, por futon anda aca no WTF
-		//var surl	= "/" + workspace + "/_design/" + design + "/_view/services/?key=" + hid;
-		var services	= new Object();
-		services	= get_obj(surl);
-		var len = 0;
-		var content = ""; 
-		$.each(services, function(k, v){
-			// si se puede pasar el param en la query, este IF desaparece
-			if( v.hid == hid ) {
-				len++;
-				var desc = (v.description === "") ? "n/a" : v.description;
-				var ports = "";
-				if(v.ports.length === 0) {
-					ports = "no ports available";
-				} else {
-					for(i=0; i < v.ports.length; i++){
-						ports += v.ports[i];
-						if(v.ports.length != 1 && i != (v.ports.length-1)) {
-							ports += ", ";
-						}
-					}
-				}
-				content += "<tr id=\"service-"+k+"\">"+
-					"<td><a href=\"service-"+k+"\" class=\"service\">"+v.name+"</a></td>"+
-					"<td>"+desc+"</td>"+
-					"<td>"+v.owned+"</td>"+
-					"<td>"+ports+"</td>"+
-					"<td>"+v.protocol+"</td>"+
-					"<td>"+v.status+"</td></tr>";
-			}
-		});
-		var table = "<h3>Services for Host "+hname+" ("+len+" total)</h3>"+
+		var db = new CouchDB(workspace);
+		var services = get_services(db, design, hid);
+		var table = "<h3>Services for Host "+hname+" ("+services.length+" total)</h3>"+
 			"<table id=\"services-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 			"<th>Name</th>"+
 			"<th>Description</th>"+
@@ -98,7 +75,29 @@
 			"<th>Ports</th>"+
 			"<th>Protocol</th>"+
 			"<th>Status</th></tr></thead><tbody>";
-		table += content;
+		$.each(services, function(k, v){
+				var sid = v['id'];
+				v = v['value'];
+				var desc = (v['description'] === "") ? "n/a" : v['description'];
+				var ports = "";
+				if(v['ports'].length === 0) {
+					ports = "no ports available";
+				} else {
+					for(i=0; i < v['ports'].length; i++){
+						ports += v['ports'][i];
+						if(v['ports'].length != 1 && i != (v['ports'].length-1)) {
+							ports += ", ";
+						}
+					}
+				}
+				table += "<tr id=\"service-"+sid+"\">"+
+					"<td><a href=\"service-"+sid+"\" class=\"service\">"+v['name']+"</a></td>"+
+					"<td>"+desc+"</td>"+
+					"<td>"+v['owned']+"</td>"+
+					"<td>"+ports+"</td>"+
+					"<td>"+v['protocol']+"</td>"+
+					"<td>"+v['status']+"</td></tr>";
+		});
 		table += "</tbody></table>";
 		$(".seccion2").append(table);
 	}

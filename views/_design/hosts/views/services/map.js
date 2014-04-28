@@ -5,7 +5,7 @@ function(doc) {
   if(doc.type=="Service"){
     if(doc.parent != 'null') {
       var hid =  doc._id.substring(0, doc._id.indexOf('.'));
-      emit(doc._id, {"name": doc.name,
+      emit(hid, {"name": doc.name,
 			"description": doc.description,
 			"protocol": doc.protocol,
 			"ports": doc.ports,

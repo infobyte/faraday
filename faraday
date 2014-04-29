@@ -207,7 +207,7 @@ else
 fi
 if [ $faraday_os == Darwin ]; then
 	echo [!] OSX support is limited
-	arch -i386 python main.py $@
+	python main.py $@
 else
 	$faraday_pyver main.py $@
 fi

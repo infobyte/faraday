@@ -18,7 +18,7 @@ add-output() {
     old_cmd=$BUFFER
     new_cmd=`python2 $plugin_controller_client send_cmd $BUFFER`
     BUFFER=" $new_cmd"
-    zle .$WIDGET "$@"
+    zle .accept-line "$@"
 }
 
 function zshaddhistory() {

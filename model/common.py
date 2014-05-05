@@ -1123,7 +1123,7 @@ class ModelObjectVuln(ModelObject):
         if desc is not None:
             self.desc = desc
         if severity is not None:
-            self.severity = severity
+            self.severity = self.standarize(severity)
         if refs is not None:
             self.refs = refs
 

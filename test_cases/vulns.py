@@ -247,8 +247,20 @@ class VulnerabilityCreationTests(unittest.TestCase):
         vuln = ModelObjectVuln(name='VulnTest', desc='TestDescription',
                                 severity='tuvieja')
 
-        self.assertEquals(vuln.severity, 'unclassified', 
+        self.assertEquals(vuln.severity, 'unclassified',
                 'Vulnerability severity not transformed correctly')
+
+    def testStandarizeUpdatedSeverity(self):
+        vuln = ModelObjectVuln(name='VulnTest', desc='TestDescription',
+                                severity='informational')
+
+        self.assertEquals(vuln.severity, 'info',
+                'Vulnerability severity not transformed correctly')
+
+        vuln.updateAttributes(severity='3')
+        self.assertEquals(vuln.severity, 'high',
+                'Vulnerability severity not transformed correctly')
+
 
 
 if __name__ == '__main__':

@@ -1078,8 +1078,7 @@ class ModelObjectVuln(ModelObject):
         elif ref is not None:
             self.refs.append(ref)
 
-        # Severity Standarization
-
+        # Severity Standarization 
         self.severity = self.standarize(severity)
 
     def standarize(self, severity): 
@@ -1101,10 +1100,11 @@ class ModelObjectVuln(ModelObject):
         numeric_severities = { '0' : 'info',
                                  '1' : 'low',
                                  '2' : 'med',
-                                 '3' : 'high' }
+                                 '3' : 'high',
+                                 "4" : 'critical' }
 
 
-        if severity in numeric_severities:
+        if not severity in numeric_severities.values():
             severity = numeric_severities.get(severity, 'unclassified')
 
         return severity

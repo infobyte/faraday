@@ -15,7 +15,7 @@ from mockito import mock
 from model import api
 from model.hosts import Host, Interface, Service
 from model.workspace import WorkspaceOnCouch, WorkspaceManager, WorkspaceOnFS
-from model.common import ModelObjectVuln, ModelObjectVulnWeb
+from model.common import ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote
 from persistence.orm import WorkspacePersister
 import random
 
@@ -119,7 +119,7 @@ class ModelObjectRetrieval(unittest.TestCase):
         interface = create_interface(self, host)
         service = create_service(self, host, interface)
 
-        vuln = ModelObjectVulnWeb(name='VulnTest', desc='TestDescription',
+        vuln = ModelObjectVuln(name='VulnTest', desc='TestDescription',
                                 severity='high')
 
         self.model_controller.addVulnToServiceSYNC(host.getID(),
@@ -198,7 +198,7 @@ class ModelObjectRetrieval(unittest.TestCase):
         interface = create_interface(self, host)
         service = create_service(self, host, interface)
 
-        vuln = ModelObjectVuln(name='VulnTest', desc='TestDescription',
+        vuln = ModelObjectVulnWeb(name='VulnTest', desc='TestDescription',
                                 severity='high')
 
         self.model_controller.addVulnToServiceSYNC(host.getID(),
@@ -219,6 +219,84 @@ class ModelObjectRetrieval(unittest.TestCase):
         vulns = added_service.getVulns()
         self.assertIn(vuln.getID(), [v.getID() for v in vulns], 'Vuln not reloaded')
 
+    def testAddNoteToHost(self):
+        """ This test case creates a host within the Model Controller context
+        then adds a VULN"""
+
+        # When
+        h = create_host(self) 
+        note = ModelObjectNote(name='NoteTest', text='TestDescription')
+        self.model_controller.addNoteToHostSYNC(h.getID(), note)
+
+        added_host = self.model_controller.getHost(h.getName())
+        notes = added_host.getNotes()
+        self.assertIn(note, notes, 'Note not added')
+
+        self.temp_workspace.load()
+
+        # Then 
+        added_host = self.model_controller.getHost(h.getName())
+        notes = added_host.getNotes()
+        self.assertIn(note.getID(), [n.getID() for n in notes], 'Note not reloaded')
+
+
+    def testAddNoteToInterface(self):
+        """ This test case creates a host within the Model Controller context
+        adds an interface to it then adds a VULN"""
+
+        # When
+        host = create_host(self)
+        interface = create_interface(self, host)
+
+        note = ModelObjectNote(name='NoteTest', text='TestDescription')
+
+        self.model_controller.addNoteToInterfaceSYNC(host.getID(),
+                                interface.getID(), note)
+
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        notes = added_interface.getNotes()
+        self.assertIn(note, notes, 'Note not added')
+
+        self.temp_workspace.load()
+
+        # Then 
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        notes = added_interface.getNotes()
+        self.assertIn(note.getID(), [n.getID() for n in notes], 'Note not reloaded')
+
+
+
+    def testAddNoteToService(self):
+        """ This test case creates a host within the Model Controller context
+        adds an interface to it then adds service then a VULN"""
+
+        # When
+        host = create_host(self)
+        interface = create_interface(self, host)
+        service = create_service(self, host, interface)
+
+        note = ModelObjectNote(name='NoteTest', text='TestDescription')
+
+        self.model_controller.addNoteToServiceSYNC(host.getID(),
+                                service.getID(), note)
+
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        added_service = added_interface.getService(service.getID())
+        notes = added_service.getNotes()
+        self.assertIn(note, notes, 'Note not added')
+
+        self.temp_workspace.load()
+
+        # Then
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        added_service = added_interface.getService(service.getID())
+        notes = added_service.getNotes()
+
+        self.assertIn(note.getID(), [n.getID() for n in notes], 'Note not reloaded')
 
 if __name__ == '__main__':
     unittest.main()

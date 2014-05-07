@@ -69,10 +69,16 @@ class ModelObjectRetrieval(unittest.TestCase):
         vuln = ModelObjectVuln(name='VulnTest', desc='TestDescription', severity='high')
         self.model_controller.addVulnToHostSYNC(h.getID(), vuln)
 
-        # Then
         added_host = self.model_controller.getHost(h.getName())
         vulns = added_host.getVulns()
         self.assertIn(vuln, vulns, 'Vuln not added')
+
+        self.temp_workspace.load()
+
+        # Then 
+        added_host = self.model_controller.getHost(h.getName())
+        vulns = added_host.getVulns()
+        self.assertIn(vuln.getID(), [v.getID() for v in vulns], 'Vuln not reloaded')
 
 
     def testAddVulnToInterface(self):
@@ -89,11 +95,19 @@ class ModelObjectRetrieval(unittest.TestCase):
         self.model_controller.addVulnToInterfaceSYNC(host.getID(),
                                 interface.getID(), vuln)
 
-        # Then
         added_host = self.model_controller.getHost(host.getName())
         added_interface = added_host.getInterface(interface.getID())
         vulns = added_interface.getVulns()
         self.assertIn(vuln, vulns, 'Vuln not added')
+
+        self.temp_workspace.load()
+
+        # Then 
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        vulns = added_interface.getVulns()
+        self.assertIn(vuln.getID(), [v.getID() for v in vulns], 'Vuln not reloaded')
+
 
 
     def testAddVulnToService(self):
@@ -111,12 +125,21 @@ class ModelObjectRetrieval(unittest.TestCase):
         self.model_controller.addVulnToServiceSYNC(host.getID(),
                                 service.getID(), vuln)
 
-        # Then
         added_host = self.model_controller.getHost(host.getName())
         added_interface = added_host.getInterface(interface.getID())
         added_service = added_interface.getService(service.getID())
         vulns = added_service.getVulns()
         self.assertIn(vuln, vulns, 'Vuln not added')
+
+        self.temp_workspace.load()
+
+        # Then
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        added_service = added_interface.getService(service.getID())
+        vulns = added_service.getVulns()
+
+        self.assertIn(vuln.getID(), [v.getID() for v in vulns], 'Vuln not reloaded')
 
     def testAddVulnWebToHost(self):
         """ This test case creates a host within the Model Controller context
@@ -127,10 +150,15 @@ class ModelObjectRetrieval(unittest.TestCase):
         vuln = ModelObjectVulnWeb(name='VulnTest', desc='TestDescription', severity='high')
         self.model_controller.addVulnToHostSYNC(h.getID(), vuln)
 
-        # Then
         added_host = self.model_controller.getHost(h.getName())
         vulns = added_host.getVulns()
         self.assertIn(vuln, vulns, 'Vuln not added')
+
+        self.temp_workspace.load()
+        # Then
+        added_host = self.model_controller.getHost(h.getName())
+        vulns = added_host.getVulns()
+        self.assertIn(vuln.getID(), [v.getID() for v in vulns], 'Vuln not reloaded')
 
 
     def testAddVulnWebToInterface(self):
@@ -147,11 +175,18 @@ class ModelObjectRetrieval(unittest.TestCase):
         self.model_controller.addVulnToInterfaceSYNC(host.getID(),
                                 interface.getID(), vuln)
 
-        # Then
         added_host = self.model_controller.getHost(host.getName())
         added_interface = added_host.getInterface(interface.getID())
         vulns = added_interface.getVulns()
         self.assertIn(vuln, vulns, 'Vuln not added')
+
+        self.temp_workspace.load()
+
+        # Then 
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        vulns = added_interface.getVulns()
+        self.assertIn(vuln.getID(), [v.getID() for v in vulns], 'Vuln not reloaded')
 
 
     def testAddVulnWebToService(self):
@@ -169,12 +204,20 @@ class ModelObjectRetrieval(unittest.TestCase):
         self.model_controller.addVulnToServiceSYNC(host.getID(),
                                 service.getID(), vuln)
 
-        # Then
         added_host = self.model_controller.getHost(host.getName())
         added_interface = added_host.getInterface(interface.getID())
         added_service = added_interface.getService(service.getID())
         vulns = added_service.getVulns()
         self.assertIn(vuln, vulns, 'Vuln not added') 
+
+        self.temp_workspace.load()
+
+        # Then
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        added_service = added_interface.getService(service.getID())
+        vulns = added_service.getVulns()
+        self.assertIn(vuln.getID(), [v.getID() for v in vulns], 'Vuln not reloaded')
 
 
 if __name__ == '__main__':

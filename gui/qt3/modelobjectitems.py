@@ -412,6 +412,7 @@ class NoteRootItem(RootListViewItem):
     def __init__(self, qtparent, name = "", model_object=None):
         ModelObjectListViewItem.__init__(self, qtparent, name, model_object)
         self.name = self.object.name
+        self.setOpen(True)
 
     def _setIcon(self):
         pass
@@ -435,6 +436,7 @@ class VulnRootItem(RootListViewItem):
     def __init__(self, qtparent, name = "", model_object=None):
         ModelObjectListViewItem.__init__(self, qtparent, name, model_object)
         self.name = self.object.name
+        self.setOpen(True)
 
     def _setIcon(self):
         pass
@@ -463,6 +465,7 @@ class CredRootItem(RootListViewItem):
     def __init__(self, qtparent, name = "", model_object=None):
         ModelObjectListViewItem.__init__(self, qtparent, name, model_object)
         self.name = self.object.name
+        self.setOpen(True)
 
     def _setIcon(self):
         pass

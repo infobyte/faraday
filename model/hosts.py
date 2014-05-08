@@ -177,10 +177,6 @@ class Host(ModelObject):
         if name is found it returns the service object
         it returns None otherwise
         """
-                    
-                                                          
-                                                               
-                                                     
         service = None
         for interface in self.getAllInterfaces():
             if interface.getService(name):

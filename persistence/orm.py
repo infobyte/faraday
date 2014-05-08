@@ -81,17 +81,12 @@ class WorkspaceAutoSync(threading.Thread):
                      
         while not self._stop:
             try:
-                model.api.devlog("WorkspaceAutoSync start...")
                 result = self._listener()
                 if result:
-                    model.api.devlog("Found changes to load")
+                    model.api.devlog("Changes found: %s" % result)
                     self._action()
-                model.api.devlog("WorkspaceAutoSync end...")
             except Exception, e:
                 model.api.devlog("An exception was captured while saving workspaces\n%s" % traceback.format_exc())
-                      
-                               
-
 
     def stop(self):
         self._stop = True

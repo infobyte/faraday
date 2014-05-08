@@ -15,7 +15,8 @@ from gui.customevents import (LOGEVENT_ID, SHOWDIALOG_ID, SHOWPOPUP_ID,
                               EXCEPTION_ID, RENAMEHOSTSROOT_ID,
                               CLEARHOSTS_ID, DIFFHOSTS_ID, SYNCFAILED_ID,
                               CONFLICTS_ID, WORKSPACE_CHANGED, CONFLICT_UPDATE,
-                              RESOLVECONFLICTS_ID, UPDATEMODEL_ID)
+                              RESOLVECONFLICTS_ID, UPDATEMODEL_ID, ADDHOST,
+                              EDITHOST, DELHOST)
 
 
 class LogCustomEvent(qt.QCustomEvent):
@@ -87,6 +88,24 @@ class ModelObjectUpdateEvent(qt.QCustomEvent):
         self.hosts = e.hosts
 
 
+class AddHostCustomEvent(qt.QCustomEvent):
+    def __init__(self, e):
+        qt.QCustomEvent.__init__(self, e.type())
+        self.host = e.host
+
+
+class EditHostCustomEvent(qt.QCustomEvent):
+    def __init__(self, e):
+        qt.QCustomEvent.__init__(self, e.type())
+        self.host = e.host
+
+
+class DeleteHostCustomEvent(qt.QCustomEvent):
+    def __init__(self, e):
+        qt.QCustomEvent.__init__(self, e.type())
+        self.host_id = e.host_id
+
+
 class QtCustomEvent(qt.QCustomEvent):
     events = {
         LOGEVENT_ID: LogCustomEvent,
@@ -101,13 +120,12 @@ class QtCustomEvent(qt.QCustomEvent):
         WORKSPACE_CHANGED: WorkspaceChangedCustomEvent,
         CONFLICT_UPDATE: ConflictUpdatedCustomEvent,
         RESOLVECONFLICTS_ID: ResolveConflictsCustomEvent,
-        UPDATEMODEL_ID: ModelObjectUpdateEvent
+        UPDATEMODEL_ID: ModelObjectUpdateEvent,
+        ADDHOST: AddHostCustomEvent,
+        DELHOST: DeleteHostCustomEvent,
+        EDITHOST: EditHostCustomEvent
     }
 
     @staticmethod
     def create(custom_event):
         return QtCustomEvent.events[custom_event.type()](custom_event)
-
-
-    # def create(custom_event):
-    #     pass

@@ -410,14 +410,7 @@ class HostsBrowser(qt.QVBox):
     def update(self, hosts):
         self.clearTree()
         self.redrawTree(hosts)
-
-                                              
-                                        
-                
-                                                  
-                                            
-                                                            
-                                                               
+                                         
     def sizeHint(self):
         """Returns recommended size of dialog."""
         return qt.QSize(70, 200)
@@ -457,26 +450,16 @@ class HostsBrowser(qt.QVBox):
                     self._delHostFromCategory(i.object, category_item.name)
 
     def redrawTree(self, hosts):
-
-                                                                        
-         
-                           
         for host in hosts:
-                                           
             category = host.getCurrentCategory()
             self._addCategory(category)
             self._addHostToCategory(host, category)
 
+        for ci in self._category_items.values():
+            ci.setOpen(True)
         self.createIndex(hosts)
         self.filterTree(self._filter)
 
-                          
-             
-                                        
-                
-                                 
-                      
-        
     def filterTree(self, mfilter=""):
         hosts=[]
         viewall=False
@@ -603,9 +586,6 @@ class HostsBrowser(qt.QVBox):
                                 self.listview.setSelected(host_item, True)
                                 self.listview.ensureItemVisible(host_item)
                                 break
-                                              
-                                        
-                                              
 
     def workspaceChanged(self, workspace):
         if self.rootitem:
@@ -677,13 +657,34 @@ class HostsBrowser(qt.QVBox):
             ref = self._getCategoryListViewItem(category)
         return ref
 
+    def _addHost(self, host):
+        category = host.getCurrentCategory()
+        self._addCategory(category)
+        self._addHostToCategory(host, category)
+
+    def _removeHost(self, host_id):
+        item = self._host_items.get(host_id, None)
+        if host_id in self._host_items:
+            del self._host_items[host_id]
+        for category in self._category_tree.keys():
+            if host_id in self._category_tree.get(category):
+                self._category_tree[category].remove(host_id)
+                category_item = self._getCategoryListViewItem(category)
+                try:
+                    category_item.takeItem(item)
+                except Exception:
+                    api.devlog("Exception taking item from category")
+
+    def _editHost(self, host):
+        self._removeHost(host.getID())
+        self._addHost(host)
+
     def _addHostToCategory(self, host, category):
         category_item = self._addCategory(category)
         self._host_items[host.getID()] = HostListViewItem(category_item, host.name, host)
         self._category_tree[category].append(host.getID())
 
     def _delHostFromCategory(self, host, category):
-                                                                      
         id = host.getID()
         item = self._host_items.get(id, None)
         if id in self._host_items:
@@ -1064,7 +1065,7 @@ class HostsBrowser(qt.QVBox):
 
     def customEvent(self, event):
         if event.type() == UPDATEMODEL_ID:
-            self.__pendingModelObjectRedraws.append(event) 
+            self.__pendingModelObjectRedraws.append(event)
 
         elif event.type() == RENAMEHOSTSROOT_ID:
             self.renameRootItem(event.name)
@@ -1083,6 +1084,16 @@ class HostsBrowser(qt.QVBox):
 
         elif event.type() == RESOLVECONFLICTS_ID:
             self.showResolveConflictDialog(event.conflicts)
+
+        elif event.type() == ADDHOST:
+            self._addHost(event.host)
+
+        elif event.type() == DELHOST:
+            self._removeHost(event.host_id)
+
+        elif event.type() == EDITHOST:
+            self._editHost(event.host)
+
 
     def _setupContextPopups(self):
         """

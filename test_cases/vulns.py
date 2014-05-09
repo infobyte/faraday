@@ -17,6 +17,7 @@ from model.hosts import Host, Interface, Service
 from model.workspace import WorkspaceOnCouch, WorkspaceManager, WorkspaceOnFS
 from model.common import ModelObjectVuln, ModelObjectVulnWeb
 import random
+from persistence.orm import WorkspacePersister
 
 
 from managers.all import CommandManager, CouchdbManager, PersistenceManagerFactory
@@ -54,10 +55,10 @@ class VulnerabilityCreationTests(unittest.TestCase):
                                         workspaceClass=WorkspaceOnCouch) 
 
         self.wm.setActiveWorkspace(self.temp_workspace)
+        WorkspacePersister.stopThreads()
 
     def tearDown(self):
-        # self.wm.removeWorkspace(self.temp_workspace.name)
-        pass
+        self.wm.removeWorkspace(self.temp_workspace.name)
 
     def testAddVulnToHost(self):
         """ This test case creates a host within the Model Controller context

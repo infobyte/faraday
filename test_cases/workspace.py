@@ -10,7 +10,8 @@ import unittest
 import os
 import sys
 sys.path.append('.')
-from model.workspace import CouchdbManager, WorkspaceManager, WorkspaceOnCouch, WorkspaceOnFS
+from model.workspace import (CouchdbManager, WorkspaceManager,
+                             WorkspaceOnCouch, WorkspaceOnFS)
 from model.controller import ModelController
 
 from plugins.core import PluginController
@@ -23,11 +24,12 @@ from mockito import mock
 
 
 class TestWorkspacesManagement(unittest.TestCase):
-    """Used to test how a workspace changes and is updated"""
 
     def setUp(self):
         self.couch_uri = CONF.getCouchURI()
         self.cdm = CouchdbManager(uri=self.couch_uri)
+        self.wm = WorkspaceManager(mock(ModelController),
+                                   mock(PluginController))
         self._fs_workspaces = []
         self._couchdb_workspaces = []
 
@@ -37,7 +39,8 @@ class TestWorkspacesManagement(unittest.TestCase):
         # pass
 
     def new_random_workspace_name(self):
-        return ("aworkspace" + "".join(random.sample([chr(i) for i in range(65, 90)], 10))).lower()
+        return ("aworkspace" + "".join(random.sample(
+            [chr(i) for i in range(65, 90)], 10))).lower()
 
     def cleanFSWorkspaces(self):
         import shutil
@@ -56,10 +59,12 @@ class TestWorkspacesManagement(unittest.TestCase):
             print e
 
     def test_create_fs_workspace(self):
+        """
+        Verifies the creation of a filesystem workspace
+        """
         wname = self.new_random_workspace_name()
         self._fs_workspaces.append(wname)
-        wm = WorkspaceManager(mock(ModelController), mock(PluginController))
-        wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
+        self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
 
         self.assertFalse(self.cdm.existWorkspace(wname))
 
@@ -67,10 +72,12 @@ class TestWorkspacesManagement(unittest.TestCase):
         self.assertTrue(os.path.exists(wpath))
 
     def test_create_couch_workspace(self):
+        """
+        Verifies the creation of a couch workspace
+        """
         wname = self.new_random_workspace_name()
         self._couchdb_workspaces.append(wname)
-        wm = WorkspaceManager(mock(ModelController), mock(PluginController))
-        wm.createWorkspace(wname, workspaceClass=WorkspaceOnCouch)
+        self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnCouch)
 
         self.assertTrue(self.cdm.existWorkspace(wname))
 
@@ -78,26 +85,30 @@ class TestWorkspacesManagement(unittest.TestCase):
         self.assertFalse(os.path.exists(wpath))
 
     def test_delete_couch_workspace(self):
+        """
+        Verifies the deletion of a couch workspace
+        """
         wname = self.new_random_workspace_name()
-        wm = WorkspaceManager(mock(ModelController), mock(PluginController))
-        wm.createWorkspace(wname, workspaceClass=WorkspaceOnCouch)
+        self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnCouch)
 
         self.assertTrue(self.cdm.existWorkspace(wname))
 
         #Delete workspace
-        wm.removeWorkspace(wname)
+        self.wm.removeWorkspace(wname)
         self.assertFalse(self.cdm.existWorkspace(wname))
 
     def test_delete_fs_workspace(self):
+        """
+        Verifies the deletion of a filesystem workspace
+        """
         wname = self.new_random_workspace_name()
-        wm = WorkspaceManager(mock(ModelController), mock(PluginController))
-        wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
+        self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
 
         wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
         self.assertTrue(os.path.exists(wpath))
 
         #Delete workspace
-        wm.removeWorkspace(wname)
+        self.wm.removeWorkspace(wname)
         self.assertFalse(os.path.exists(wpath))
 
 

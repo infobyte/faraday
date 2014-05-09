@@ -61,123 +61,10 @@ class VulnerabilityCreationTests(unittest.TestCase):
     def tearDown(self):
         self.wm.removeWorkspace(self.temp_workspace.name)
 
-    def testAddVulnToHost(self):
-        """ This test case creates a host within the Model Controller context
-        then adds a VULN"""
+    def testStandarizeNumericVulnSeverity(self):
+        """ Verifies numeric severity transformed into 'info, low, high,
+        critical' severity"""
 
-        # When
-        h = create_host(self) 
-        vuln = ModelObjectVuln(name='VulnTest', desc='TestDescription', severity='high')
-        self.model_controller.addVulnToHostSYNC(h.getID(), vuln)
-
-        # Then
-        added_host = self.model_controller.getHost(h.getName())
-        vulns = added_host.getVulns()
-        self.assertIn(vuln, vulns, 'Vuln not added')
-
-
-    def testAddVulnToInterface(self):
-        """ This test case creates a host within the Model Controller context
-        adds an interface to it then adds a VULN"""
-
-        # When
-        host = create_host(self)
-        interface = create_interface(self, host)
-
-        vuln = ModelObjectVuln(name='VulnTest', desc='TestDescription',
-                                severity='high')
-
-        self.model_controller.addVulnToInterfaceSYNC(host.getID(),
-                                interface.getID(), vuln)
-
-        # Then
-        added_host = self.model_controller.getHost(host.getName())
-        added_interface = added_host.getInterface(interface.getID())
-        vulns = added_interface.getVulns()
-        self.assertIn(vuln, vulns, 'Vuln not added')
-
-
-    def testAddVulnToService(self):
-        """ This test case creates a host within the Model Controller context
-        adds an interface to it then adds service then a VULN"""
-
-        # When
-        host = create_host(self)
-        interface = create_interface(self, host)
-        service = create_service(self, host, interface)
-
-        vuln = ModelObjectVulnWeb(name='VulnTest', desc='TestDescription',
-                                severity='high')
-
-        self.model_controller.addVulnToServiceSYNC(host.getID(),
-                                service.getID(), vuln)
-
-        # Then
-        added_host = self.model_controller.getHost(host.getName())
-        added_interface = added_host.getInterface(interface.getID())
-        added_service = added_interface.getService(service.getID())
-        vulns = added_service.getVulns()
-        self.assertIn(vuln, vulns, 'Vuln not added')
-
-    def testAddVulnWebToHost(self):
-        """ This test case creates a host within the Model Controller context
-        then adds a VulnWeb"""
-
-        # When
-        h = create_host(self) 
-        vuln = ModelObjectVulnWeb(name='VulnTest', desc='TestDescription', severity='high')
-        self.model_controller.addVulnToHostSYNC(h.getID(), vuln)
-
-        # Then
-        added_host = self.model_controller.getHost(h.getName())
-        vulns = added_host.getVulns()
-        self.assertIn(vuln, vulns, 'Vuln not added')
-
-
-    def testAddVulnWebToInterface(self):
-        """ This test case creates a host within the Model Controller context
-        adds an interface to it then adds a VulnWeb"""
-
-        # When
-        host = create_host(self)
-        interface = create_interface(self, host)
-
-        vuln = ModelObjectVulnWeb(name='VulnTest', desc='TestDescription',
-                                severity='high')
-
-        self.model_controller.addVulnToInterfaceSYNC(host.getID(),
-                                interface.getID(), vuln)
-
-        # Then
-        added_host = self.model_controller.getHost(host.getName())
-        added_interface = added_host.getInterface(interface.getID())
-        vulns = added_interface.getVulns()
-        self.assertIn(vuln, vulns, 'Vuln not added')
-
-
-    def testAddVulnWebToService(self):
-        """ This test case creates a host within the Model Controller context
-        adds an interface to it then adds service then a VulnWeb"""
-
-        # When
-        host = create_host(self)
-        interface = create_interface(self, host)
-        service = create_service(self, host, interface)
-
-        vuln = ModelObjectVuln(name='VulnTest', desc='TestDescription',
-                                severity='high')
-
-        self.model_controller.addVulnToServiceSYNC(host.getID(),
-                                service.getID(), vuln)
-
-        # Then
-        added_host = self.model_controller.getHost(host.getName())
-        added_interface = added_host.getInterface(interface.getID())
-        added_service = added_interface.getService(service.getID())
-        vulns = added_service.getVulns()
-        self.assertIn(vuln, vulns, 'Vuln not added')
-
-    def testStamdarizeNumericVulnSeverity(self):
         vuln = ModelObjectVuln(name='VulnTest', desc='TestDescription',
                                 severity=0)
 
@@ -221,7 +108,10 @@ class VulnerabilityCreationTests(unittest.TestCase):
         self.assertEquals(vuln.severity, 'unclassified', 
                 'Vulnerability severity not transformed correctly')
 
-    def testStamdarizeShortnameVulnSeverity(self):
+    def testStandarizeShortnameVulnSeverity(self):
+        """ Verifies longname  severity transformed into 'info, low, high,
+        critical' severity (informational -> info)"""
+
         vuln = ModelObjectVuln(name='VulnTest', desc='TestDescription',
                                 severity='informational')
 

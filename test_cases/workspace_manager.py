@@ -74,7 +74,7 @@ class TestWorkspaceManager(unittest.TestCase):
         except Exception as e:
             print e
 
-    def _test_switch_workspace_with_objects(self):
+    def test_switch_workspace_with_objects(self):
         workspace = self.wm.createWorkspace(new_random_workspace_name(),
                                             workspaceClass=WorkspaceOnCouch)
         self._couchdb_workspaces.append(workspace.name)
@@ -111,7 +111,7 @@ class TestWorkspaceManager(unittest.TestCase):
         self.assertIn(service1, interface1.getAllServices(),
                       "Service not in Interface!")
 
-    def _test_remove_active_workspace(self):
+    def test_remove_active_workspace(self):
         workspace = self.wm.createWorkspace(new_random_workspace_name(),
                                             workspaceClass=WorkspaceOnCouch)
 
@@ -125,7 +125,7 @@ class TestWorkspaceManager(unittest.TestCase):
         self.assertNotIn(host1.getID(), hosts_ids,
                          'Host not removed while removing active workspace')
 
-    def _test_remove_active_workspace_fs(self):
+    def test_remove_active_workspace_fs(self):
         workspace = self.wm.createWorkspace(new_random_workspace_name(),
                                             workspaceClass=WorkspaceOnFS)
         self.wm.setActiveWorkspace(workspace)
@@ -137,7 +137,7 @@ class TestWorkspaceManager(unittest.TestCase):
         self.assertNotIn(host1, self.model_controller.getAllHosts(),
                          'Host not removed while removing active workspace')
 
-    def _test_remove_another_workspace(self):
+    def test_remove_another_workspace(self):
         workspace = self.wm.createWorkspace(new_random_workspace_name(),
                                             workspaceClass=WorkspaceOnCouch)
 

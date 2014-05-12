@@ -41,8 +41,16 @@
 				"<th>Owned</th>"+
 				"</tr></thead><tbody>";
 		$.each(hosts, function(k, v){
+			var hname = "";
+			if(!services.hasOwnProperty(k)) {
+				services[k] = 0;
+				hname = v.name;
+			} else {
+				hname = "<a href=\"host-"+k+"\" class=\"host\">"+v.name+"</a>";
+			}
+			if(!interfaces.hasOwnProperty(k)) interfaces[k] = 0;
 			table += "<tr id=\"host-"+k+"\">"+
-				"<td><a href=\"host-"+k+"\" class=\"host\">"+v.name+"</a></td>"+
+				"<td>"+hname+"</td>"+
 				"<td>"+services[k]+"</td>"+
 				"<td>"+interfaces[k]+"</td>"+
 				"<td>"+v.os+"</td>"+

@@ -336,6 +336,174 @@ class ModelObjectCRUD(unittest.TestCase):
         self.assertNotIn(service1.getID(), services_ids, \
                         "Service not deleted")
 
+    def testDeleteVulnFromHost(self):
+        """ Creates a Host adds a Vuln then removes """
+
+        host1 = create_host(self, "coquito")
+
+        vuln = ModelObjectVuln(name='VulnTest', desc='TestDescription',
+                                severity='high')
+
+        self.model_controller.addVulnToHostSYNC(host1.getID(), vuln)
+
+        hosts_ids = [h.getID() for h in self.model_controller.getAllHosts()]
+
+        self.assertIn(host1.getID(), hosts_ids,
+                                "Host not in controller")
+
+        self.model_controller.delVulnFromHostSYNC(host1.getID(), vuln.getID())
+
+        added_host = self.model_controller.getHost(host1.getName())
+
+        self.assertNotIn(vuln, added_host.getVulns(), 'Vuln not removed')
+
+
+    def testDelVulnFromInterface(self):
+        """ This test case creates a host within the Model Controller context
+        adds an interface to it then adds a VULN"""
+
+        # When
+        host = create_host(self)
+        interface = create_interface(self, host)
+
+        vuln = ModelObjectVuln(name='VulnTest', desc='TestDescription',
+                                severity='high')
+
+        self.model_controller.addVulnToInterfaceSYNC(host.getID(),
+                                interface.getID(), vuln)
+
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        vulns = added_interface.getVulns()
+        self.assertIn(vuln, vulns, 'Vuln not added')
+
+        # Then
+        self.model_controller.delVulnFromInterfaceSYNC(host.getID(),
+                            interface.getID(), vuln.getID())
+
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        vulns = added_interface.getVulns()
+
+        self.assertNotIn(vuln, vulns, 'Vuln not removed')
+
+
+
+    def testDelVulnFromService(self):
+        """ This test case creates a host within the Model Controller context
+        adds an interface to it then adds service then a Vuln, then removes the
+        Vuln"""
+
+        # When
+        host = create_host(self)
+        interface = create_interface(self, host)
+        service = create_service(self, host, interface)
+
+        vuln = ModelObjectVuln(name='VulnTest', desc='TestDescription',
+                                severity='high')
+
+        self.model_controller.addVulnToServiceSYNC(host.getID(),
+                                service.getID(), vuln)
+
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        added_service = added_interface.getService(service.getID())
+        vulns = added_service.getVulns()
+        self.assertIn(vuln, vulns, 'Vuln not added')
+
+        # Then
+
+        self.model_controller.delVulnFromServiceSYNC(host.getID(),
+                            service.getID(), vuln.getID())
+
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        added_service = added_interface.getService(service.getID())
+        vulns = added_service.getVulns()
+        self.assertNotIn(vuln, vulns, 'Vuln not removed')
+
+    def testDeleteNoteFromHost(self):
+        """ Creates a Host adds a Note then removes """
+
+        host1 = create_host(self, "coquito")
+
+        note = ModelObjectNote(name='NoteTest', text='TestDescription')
+
+        self.model_controller.addNoteToHostSYNC(host1.getID(), note)
+
+        hosts_ids = [h.getID() for h in self.model_controller.getAllHosts()]
+
+        self.assertIn(host1.getID(), hosts_ids,
+                                "Host not in controller")
+
+        self.model_controller.delNoteFromHostSYNC(host1.getID(), note.getID())
+
+        added_host = self.model_controller.getHost(host1.getName())
+
+        self.assertNotIn(note, added_host.getNotes(), 'Note not removed')
+
+
+    def testDelNoteFromInterface(self):
+        """ Creates a Hosts, adds an Interface and a Note, then removes the
+        note """
+
+        # When
+        host = create_host(self)
+        interface = create_interface(self, host)
+
+        note = ModelObjectNote(name='NoteTest', text='TestDescription')
+
+        self.model_controller.addNoteToInterfaceSYNC(host.getID(),
+                                interface.getID(), note)
+
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        notes = added_interface.getNotes()
+        self.assertIn(note, notes, 'Note not added')
+
+        # Then
+        self.model_controller.delNoteFromInterfaceSYNC(host.getID(),
+                            interface.getID(), note.getID())
+
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        notes = added_interface.getNotes()
+
+        self.assertNotIn(note, notes, 'Note not removed')
+
+
+
+    def testDelNoteFromService(self):
+        """ Creates a Hosts, adds an Interface, a Service and a Note, then removes the
+        note """
+
+        # When
+        host = create_host(self)
+        interface = create_interface(self, host)
+        service = create_service(self, host, interface)
+
+        note = ModelObjectNote(name='NoteTest', text='TestDescription')
+
+        self.model_controller.addNoteToServiceSYNC(host.getID(),
+                                service.getID(), note)
+
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        added_service = added_interface.getService(service.getID())
+        notes = added_service.getNotes()
+        self.assertIn(note, notes, 'Note not added')
+
+        # Then
+
+        self.model_controller.delNoteFromServiceSYNC(host.getID(),
+                            service.getID(), note.getID())
+
+        added_host = self.model_controller.getHost(host.getName())
+        added_interface = added_host.getInterface(interface.getID())
+        added_service = added_interface.getService(service.getID())
+        notes = added_service.getNotes()
+        self.assertNotIn(note, notes, 'Note not removed')
+
 if __name__ == '__main__':
     unittest.main()
 

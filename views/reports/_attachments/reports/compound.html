@@ -5,6 +5,7 @@
 <head>
 	<title>By Host report</title>
 	<script type="text/javascript" src="../script/app.js"></script>
+	<script type="text/javascript" src="../script/couch.js"></script>
 	<script type="text/javascript" src="/_utils/script/json2.js"></script>
 	<script type="text/javascript" src="/_utils/script/jquery.js"></script>
 	<script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
@@ -12,45 +13,126 @@
 	<link rel="stylesheet" type="text/css" href="../estilos.css" />
 </head>
 <body style="background: #E8EFF0;">
-<h2>Report By Host</h2>
+<div id="hosts-main">
+<h2>Hosts report</h2>
 <div class="seccion2">
-</div>
+</div><!-- .seccion2 -->
+</div><!-- .hosts-main -->
 <script type="text/javascript">
-function get_obj(ourl) {
-	var ls = {};
-	$.ajax({
-		dataType: "json",
-		url: ourl,
-		async: false,
-		success: function(data) {
-			$.each(data.rows, function(n, obj){
-				ls[obj.key] = obj.value;
-			});	
-		}
+	function get_obj(ourl) {
+		var ls = {};
+		$.ajax({
+			dataType: "json",
+			url: ourl,
+			async: false,
+			success: function(data) {
+				$.each(data.rows, function(n, obj){
+					ls[obj.key] = obj.value;
+				});	
+			}
+		});
+		return ls;
+	}
+
+	function load_all_hosts() {
+	        var workspace	= getParameterByName("workspace");
+	        var design	= getParameterByName("design");
+		var iurl	= "/" + workspace + "/_design/" + design + "/_view/byinterfacecount?group=true";
+		var hurl	= "/" + workspace + "/_design/" + design + "/_view/hosts";
+		var surl	= "/" + workspace + "/_design/" + design + "/_view/byservicecount?group=true";
+		var hosts	= new Object();
+		var interfaces	= new Object();
+		var services	= new Object();
+
+		hosts		= get_obj(hurl);
+		interfaces	= get_obj(iurl, interfaces);
+		services	= get_obj(surl, services);
+	
+		var table = "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr><th>Host</th><th>Services</th><th>Interfaces</th><th>OS</th><th>Owned</th></tr></thead><tbody>";
+		$.each(hosts, function(k, v){
+			table += "<tr id=\"host-"+k+"\"><td><a href=\"host-"+k+"\" class=\"host\">"+v.name+"</a></td><td>"+services[k]+"</td><td>"+interfaces[k]+"</td><td>"+v.os+"</td><td>"+v.owned+"</td></tr>";
+		});
+		table += "</tbody></table>";
+		$(".seccion2").append(table);
+	}
+
+	function get_services(db, design, hid) {
+		var sview = design + "/services";
+		var matches = db.view(sview, {key: hid});
+		return matches.rows;
+	}
+
+	function load_services(hid, hname) {
+	        var workspace	= getParameterByName("workspace");
+	        var design	= getParameterByName("design");
+		var db = new CouchDB(workspace);
+		var services = get_services(db, design, hid);
+		var table = "<h3>Services for Host "+hname+" ("+services.length+" total)</h3>"+
+			"<table id=\"services-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+			"<th>Name</th>"+
+			"<th>Description</th>"+
+			"<th>Owned</th>"+
+			"<th>Ports</th>"+
+			"<th>Protocol</th>"+
+			"<th>Status</th></tr></thead><tbody>";
+		$.each(services, function(k, v){
+				var sid = v['id'];
+				v = v['value'];
+				var desc = (v['description'] === "") ? "n/a" : v['description'];
+				var ports = "";
+				if(v['ports'].length === 0) {
+					ports = "no ports available";
+				} else {
+					for(i=0; i < v['ports'].length; i++){
+						ports += v['ports'][i];
+						if(v['ports'].length != 1 && i != (v['ports'].length-1)) {
+							ports += ", ";
+						}
+					}
+				}
+				table += "<tr id=\"service-"+sid+"\">"+
+					"<td><a href=\"service-"+sid+"\" class=\"service\">"+v['name']+"</a></td>"+
+					"<td>"+desc+"</td>"+
+					"<td>"+v['owned']+"</td>"+
+					"<td>"+ports+"</td>"+
+					"<td>"+v['protocol']+"</td>"+
+					"<td>"+v['status']+"</td></tr>";
+		});
+		table += "</tbody></table>";
+		$(".seccion2").append(table);
+	}
+
+	$(document).ready(function() {
+		// inicialmente cargo los hosts disponibles
+		load_all_hosts();
+		// jQuery 1.7++ usa on() para bindear eventos a elementos que existen ahora o en el futuro
+		// cuando se clickea un host carga todos los servicios para ese host
+		$(document).on('click', 'a.host', function(e) {
+			// no queremos que cargue nada
+			e.preventDefault();
+			// sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
+			$(".seccion2").empty().prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
+			// el ID del host que quiero traer es el ID del link clickeado menos el "host-" del ppio
+			var hid = $(this).attr("href").split('-')[1];
+			// el nombre del host que quiero traer es el valor del link
+			var hname = $(this).text();
+			load_services(hid, hname);
+		});
+		// cuando se clickea un servicio carga todos los hosts que tienen ese servicio
+		$(document).on('click', 'a.service', function(e) {
+			e.preventDefault();
+			$(".seccion2").empty().prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
+			// el nombre del servicio que quiero traer es el valor del link clickeado
+			var sname = $(this).text();
+			load_hosts_by_service(sname);
+		});
+		// comportamiento para "View all hosts"
+		$(document).on('click', 'a[href="load_all_hosts"]', function(e) {
+			e.preventDefault();
+			$(".seccion2").empty();
+			load_all_hosts();
+		});
 	});
-	return ls;
-}
-
-        var workspace	= getParameterByName("workspace");
-        var design	= getParameterByName("design");
-	var iurl	= "/" + workspace + "/_design/" + design + "/_view/byinterfacecount?group=true";
-	var hurl	= "/" + workspace + "/_design/" + design + "/_view/hosts";
-	var surl	= "/" + workspace + "/_design/" + design + "/_view/byservicecount?group=true";
-	var hosts	= new Object();
-	var interfaces	= new Object();
-	var services	= new Object();
-
-	hosts		= get_obj(hurl);
-	interfaces	= get_obj(iurl, interfaces);
-	services	= get_obj(surl, services);
-
-	var tabla = "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr><th>Host</th><th>Services</th><th>Interfaces</th></tr></thead><tbody>";
-	$.each(hosts, function(k, v){
-		tabla += "<tr><td>"+v+"</td><td>"+services[k]+"</td><td>"+interfaces[k]+"</td></tr>";
-	});
-	tabla += "</tbody></table>";
-
-	$(".seccion2").append(tabla);
 </script>
 </body>
 </html>

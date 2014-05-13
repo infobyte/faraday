@@ -78,35 +78,36 @@
 		</div><!--!/#wrapper -->
     </div><!--!/#container -->
 <script type="text/javascript">
+$(document).ready(function() {
 	loaded = false;
-	counter = 0;
+	var wss = $.couch.allDbs();
+console.log(wss);
+return true;
 	$.couch.allDbs({
       		success : function(dbs) {
-        	  dbs.filter(function(db_name){
-        	      return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
-        	  .forEach(function(db) {
-        	      var iframes = [];
-        	      reports.forEach( function(reps) {
-        	      	var iframe = "/reports/_design/reports/reports/"+reps+".html?workspace="+db+"&design="+designs[reps]+"&view="+views[reps]; 
-			iframes.push("<iframe class=\"iframe\" src="+iframe+" width=\"800\" height=\"500\"></iframe>");
-        	      });
-        	      $("#reportes").append("<div id=\"workspace-"+db+"\" class=\"workspace\"><h2>"+db+"</h2>"+iframes.join("")+"</div><!-- .workspace -->");
-        	      // cuando termina de cargar los datos de los workspaces setea el alto del menu de la izquierda
-        	      var h = $("div#reportes").height();
-        	      $("aside").height(h);
-        	      counter +=1;
-	        });
-
-
-
-
-	        if(counter < 1){ 
+        	  window.wss = dbs.filter(function(db_name){
+        	      return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;});
+console.log(window.wss);
+	        if(wss.length < 1){ 
 	            $("#reportes").empty();
 	              $("#reportes").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
 	        }
 	      }
 	});
-
+//console.log(window.wss);
+return true;
+	wss.forEach(function(db) {
+		var iframes = [];
+              	reports.forEach( function(reps) {
+        		var iframe = "/reports/_design/reports/reports/"+reps+".html?workspace="+db+"&design="+designs[reps]+"&view="+views[reps]; 
+			iframes.push("<iframe class=\"iframe\" src="+iframe+" width=\"800\" height=\"500\"></iframe>");
+        	});
+		$("#reportes").append("<div id=\"workspace-"+db+"\" class=\"workspace\"><h2>"+db+"</h2>"+iframes.join("")+"</div><!-- .workspace -->");
+        	// cuando termina de cargar los datos de los workspaces setea el alto del menu de la izquierda
+        	var h = $("div#reportes").height();
+        	$("aside").height(h);
+	});
+});
 </script>
 
 </body>

@@ -205,19 +205,24 @@ class CouchdbManager(PersistenceManager):
     @trap_timeout
     def addWorkspace(self, aWorkspace):
         self.__serv.create_db(aWorkspace.lower())
-        return self.__getDb(aWorkspace)
+        return self._getDb(aWorkspace)
 
     @trap_timeout
     def addDocument(self, aWorkspaceName, documentId, aDocument):
-        self.__getDb(aWorkspaceName)
+        self._getDb(aWorkspaceName)
         self.incrementSeqNumber(aWorkspaceName)
-        self.__getDb(aWorkspaceName)[documentId] = aDocument
+        self._getDb(aWorkspaceName)[documentId] = aDocument
 
     @trap_timeout
     def saveDocument(self, aWorkspaceName, aDocument):
         self.incrementSeqNumber(aWorkspaceName)
         getLogger(self).debug("Saving document in remote workspace %s" % aWorkspaceName)
-        return self.__getDb(aWorkspaceName).save_doc(aDocument, use_uuids = True, force_update = True)
+        return self._getDb(aWorkspaceName).save_doc(aDocument, use_uuids = True, force_update = True)
+
+    def _getDb(self, aWorkspaceName):
+        if not self.__dbs.has_key(aWorkspaceName):
+            self.__getDb(aWorkspaceName)
+        return self.__dbs.get(aWorkspaceName, None)
 
     @trap_timeout
     def __getDb(self, aWorkspaceName): 
@@ -235,11 +240,11 @@ class CouchdbManager(PersistenceManager):
     @trap_timeout
     def getDocument(self, aWorkspaceName, documentId):
         getLogger(self).debug("Getting document for workspace [%s]" % aWorkspaceName)
-        return self.__getDb(aWorkspaceName).get(documentId)
+        return self._getDb(aWorkspaceName).get(documentId)
 
     @trap_timeout
     def checkDocument(self, aWorkspaceName, documentName):
-        return  self.__getDb(aWorkspaceName).doc_exist(documentName)
+        return  self._getDb(aWorkspaceName).doc_exist(documentName)
 
 
     @trap_timeout
@@ -286,13 +291,17 @@ class CouchdbManager(PersistenceManager):
         done"""
         changes = []
         last_seq = max(self.getLastChangeSeq(db_name), since)
-        db = self.__getDb(db_name)
+        db = self._getDb(db_name)
         with ChangesStream(db, feed="longpoll", since = last_seq, timeout = timeout) as stream:
             for change in stream:
                 if change['seq'] > self.getLastChangeSeq(db_name):
-                    changes.append(change)
-            last_seq = reduce(lambda x,y:  max(y['seq'], x) , changes, self.getLastChangeSeq(db_name))
-            self.setLastChangeSeq(db_name, last_seq)
+                    self.setLastChangeSeq(db_name, change['seq'])
+                    if not change['id'].startswith('_design'):
+                        changes.append(change)
+            #last_seq = reduce(lambda x,y:  max(y['seq'], x) , changes, self.getLastChangeSeq(db_name))
+            #self.setLastChangeSeq(db_name, last_seq)
+        if len(changes):
+            getLogger(self).debug("Changes from another instance")
         return changes
 
     @trap_timeout
@@ -306,7 +315,7 @@ class CouchdbManager(PersistenceManager):
 
     @trap_timeout
     def workspaceDocumentsIterator(self, workspaceName): 
-        return filter(self.filterConditions, self.__getDb(workspaceName).documents(include_docs=True))
+        return filter(self.filterConditions, self._getDb(workspaceName).documents(include_docs=True))
 
     def filterConditions(self, doc):
         ret = True
@@ -326,7 +335,7 @@ class CouchdbManager(PersistenceManager):
 
     @trap_timeout
     def compactDatabase(self, aWorkspaceName):
-        self.__getDb(aWorkspaceName).compact()
+        self._getDb(aWorkspaceName).compact()
 
     def pushReports(self):
         vmanager = ViewsManager()
@@ -338,18 +347,18 @@ class CouchdbManager(PersistenceManager):
 
     def addViews(self, workspaceName):
         vmanager = ViewsManager()
-        workspace = self.__getDb(workspaceName)
+        workspace = self._getDb(workspaceName)
         for v in vmanager.getAvailableViews():
             vmanager.addView(v, workspace)
 
     def getViews(self, workspaceName):
         vmanager = ViewsManager()
-        workspace = self.__getDb(workspaceName)
+        workspace = self._getDb(workspaceName)
         return vmanager.getViews(workspace)
 
     def syncWorkspaceViews(self, workspaceName):
         vmanager = ViewsManager()
-        workspace = self.__getDb(workspaceName) 
+        workspace = self._getDb(workspaceName) 
         installed_views = vmanager.getViews(workspace)
         for v in vmanager.getAvailableViews():
             if v not in installed_views: 

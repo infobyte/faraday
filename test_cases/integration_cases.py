@@ -16,6 +16,7 @@ from model import api
 from model.hosts import Host, Interface, Service
 from model.workspace import WorkspaceOnCouch, WorkspaceManager, WorkspaceOnFS
 import random
+from persistence.orm import WorkspacePersister
 
 def new_random_workspace_name():
     return ("aworkspace" + "".join(random.sample([chr(i) for i in range(65, 90) ], 10 ))).lower() 
@@ -46,12 +47,12 @@ class TestModelObjectCRUD(TestCase):
 
     def setUp(self):
         self.wm = WorkspaceManager(self.model_controller, mock(plcore.PluginController))
-        workspace = self.wm.createWorkspace(new_random_workspace_name(), workspaceClass=WorkspaceOnCouch) 
-        self.wm.setActiveWorkspace(workspace)
+        self.workspace = self.wm.createWorkspace(new_random_workspace_name(), workspaceClass=WorkspaceOnCouch) 
+        self.wm.setActiveWorkspace(self.workspace)
+        WorkspacePersister.stopThreads()
 
     def tearDown(self):
-        # c = self.wm.removeWorkspace('test_workspace')
-        pass
+        self.wm.removeWorkspace(self.workspace.name)
 
 
     def test_create_and_remove_host_from_controller(self):
@@ -77,7 +78,6 @@ class TestModelObjectCRUD(TestCase):
 
         host1 = self.model_controller.getHost(host1.getID())
 
-        import ipdb; ipdb.set_trace()
         interfaces_ids = [i.getID() for i in host1.getAllInterfaces()]
         self.assertIn(interface1.getID(), interfaces_ids,
                                 "Interface not in host!")
@@ -121,91 +121,6 @@ class TestModelObjectCRUD(TestCase):
         self.assertNotIn(service1.getID(), services_ids, \
                         "Service not deleted")
 
-class TestWorkspaceCRUD(TestCase):
-    """docstring for TestWorspace"""
-    @classmethod
-    def setUpClass(cls):
-        cls.model_controller = controller.ModelController(mock())
-        api.setUpAPIs(cls.model_controller)
-    def setUp(self):
-        self.wm = WorkspaceManager(self.model_controller,
-                            mock(plcore.PluginController))
-
-    def _test_switch_workspace_with_objects(self):
-        workspace = self.wm.createWorkspace(new_random_workspace_name(),
-                            workspaceClass=WorkspaceOnCouch)
-        self.wm.setActiveWorkspace(workspace)
-
-        host1 = create_host(self, "coquito")
-        interface1 = create_interface(self, host1, iname="pepito")
-        service1 = create_service(self, host1, interface1)
-
-
-        self.assertIn(host1, self.model_controller.getAllHosts(),
-                                "Host not in controller")
-        self.assertIn(interface1, host1.getAllInterfaces(),
-                                "Interface not in host!")
-        self.assertIn(service1, interface1.getAllServices(),
-                                "Service not in Interface!")
-
-        workspace2 = self.wm.createWorkspace(new_random_workspace_name(),
-                            workspaceClass=WorkspaceOnCouch)
-        self.wm.setActiveWorkspace(workspace2)
-
-        self.assertNotIn(host1, self.model_controller.getAllHosts(),
-                                "Host in controller, should be removed when \
-                                switching workspaces")
-
-        self.wm.setActiveWorkspace(workspace)
-        self.assertIn(host1, self.model_controller.getAllHosts(),
-                                "Host not in controller")
-        self.assertIn(interface1, host1.getAllInterfaces(),
-                                "Interface not in host!")
-        self.assertIn(service1, interface1.getAllServices(),
-                                "Service not in Interface!")
-
-    def test_remove_active_workspace(self):
-        workspace = self.wm.createWorkspace(new_random_workspace_name(),
-                            workspaceClass=WorkspaceOnCouch)
-
-        self.wm.setActiveWorkspace(workspace)
-        host1 = create_host(self, "coquito")
-
-        self.wm.removeWorkspace(workspace.name)
-
-        hosts_ids = [h.getID() for h in self.model_controller.getAllHosts()]
-        self.assertNotIn(host1.getID(), hosts_ids,
-            'Host not removed while removing active workspace')
-
-    def _test_remove_active_workspace_fs(self):
-        workspace = self.wm.createWorkspace(new_random_workspace_name(),
-                            workspaceClass=WorkspaceOnFS)
-        self.wm.setActiveWorkspace(workspace)
-        host1 = create_host(self, "coquito")
-
-        self.wm.removeWorkspace(workspace.name)
-
-        self.assertNotIn(host1, self.model_controller.getAllHosts(),
-            'Host not removed while removing active workspace')
-
-    def _test_remove_another_workspace(self):
-        workspace = self.wm.createWorkspace(new_random_workspace_name(),
-                            workspaceClass=WorkspaceOnCouch)
-
-        workspace2 = self.wm.createWorkspace(new_random_workspace_name(),
-                            workspaceClass=WorkspaceOnCouch)
-
-        self.wm.setActiveWorkspace(workspace)
-        create_host(self, "coquito")
-        self.wm.setActiveWorkspace(workspace2)
-        self.wm.removeWorkspace(workspace.name)
-
-        self.assertNotIn(workspace.name, self.wm.getWorkspacesNames(),
-                        "Workspace not removed")
-        self.assertIn(workspace2.name, self.wm.getWorkspacesNames(),
-                        "Workspace removed while removing another workspace")
-
 
 if __name__ == '__main__':
     unittest.main()
-

@@ -8,18 +8,21 @@ See the file 'doc/LICENSE' for the license information
 
 #from model.common import factory
 import model.common
+from gui.notifier import NotificationCenter
 from config.configuration import getInstanceConfiguration
 #from model.api import showDialog, showPopup
 
 CONF = getInstanceConfiguration()
 
+
+notification_center = NotificationCenter()
 __the_mainapp = None
-                                                                         
 __model_controller = None
 
 def setMainApp(ref):
     global __the_mainapp
     __the_mainapp = ref
+    notification_center.setUiApp(__the_mainapp)
     
 def getMainApp():
     global __the_mainapp
@@ -42,21 +45,16 @@ def sendCustomEvent(event, receiver=None):
 def setUpGUIAPIs(controller):
     global __model_controller
     __model_controller = controller
-    
-                                                                                
-                                                 
-                                                                                
+
+
 def registerWidget(widget):
     if widget is not None:
-        __model_controller.registerWidget(widget)
+        notification_center.registerWidget(widget)
+
 
 def deregisterWidget(widget):
     if widget is not None:
-        __model_controller.deregisterWidget(widget)
-        
-                                                                                
-                                          
-                                                                                
+        notification_center.deregisterWidget(widget)
 
 
 def createAndAddHost(name, os = "Unknown", category=None, update = False, old_hostname = None ):

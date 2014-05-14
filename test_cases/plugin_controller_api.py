@@ -21,6 +21,7 @@ import model.api
 import model.controller
 from model.workspace import Workspace
 from model.container import ModelObjectContainer
+from managers.all import PersistenceManager
 
 
 class TestPluginControllerApi(unittest.TestCase):
@@ -39,6 +40,8 @@ class TestPluginControllerApi(unittest.TestCase):
         self.model_controller = model.controller.ModelController(mock())
         self.workspace = mock(Workspace)
         self.workspace.name = "default"
+        self.workspace._dmanager = mock(PersistenceManager())
+        when(self.workspace._dmanager).saveDocument().thenReturn(True)
         when(self.workspace).getContainee().thenReturn(ModelObjectContainer())
         self.model_controller.setWorkspace(self.workspace)
 

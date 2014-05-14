@@ -16,8 +16,7 @@ from model.diff import HostDiff
 from model.container import ModelObjectContainer, CouchedModelObjectContainer
 from model.conflict import Conflict
 from model.hosts import Host
-import model.guiapi as guiapi
-from gui.customevents import ShowPopupCustomEvent
+from model.guiapi import notification_center as notifier
 
 
 import mockito
@@ -77,8 +76,8 @@ class Workspace(object):
         if not os.path.exists(self._report_ppath):
             os.mkdir(self._report_ppath)
 
-    def notifyWorkspaceNoConnection(self): 
-        self._model_controller._notifyWorkspaceConnectionLost() 
+    def _notifyWorkspaceNoConnection(self):
+        notifier.showPopup("Couchdb Connection lost. Defaulting to memory. Fix network and try again in 5 minutes.")
 
     def getReportPath(self):
         return self._report_path
@@ -309,7 +308,6 @@ class WorkspaceOnCouch(Workspace):
                                             
 
     def load(self):
-        model.api.devlog("Changes from another instance")
         self._model_controller.setSavingModel(True)
         hosts = {}
 
@@ -358,9 +356,8 @@ class WorkspaceOnCouch(Workspace):
             model.api.devlog("Exception during load: %s" % e)
         finally:
             self._model_controller.setSavingModel(False)
-            self._model_controller._notifyModelUpdated()
+            notifier.workspaceLoad(self.getAllHosts())
 
-            
 
 class WorkspaceManager(object):
     """
@@ -388,7 +385,7 @@ class WorkspaceManager(object):
 
     def reconnect(self):
         if not self.reconnectCouchManager():
-            self._model_controller._notifyWorkspaceConnectionLost()
+            self._notifyWorkspaceNoConnection()
 
     def getCouchManager(self):
         return self.couchdbmanager
@@ -438,14 +435,14 @@ class WorkspaceManager(object):
         url = ""
         if self.couchdbmanager.isAvailable():
             stat = True
-            url  = self.couchdbmanager.pushReports() 
+            url  = self.couchdbmanager.pushReports()
         else:
-            self._notifyNoVisualizationAvailable() 
+            self._notifyNoVisualizationAvailable()
         return stat, url
 
     def _notifyNoVisualizationAvailable(self):
-        guiapi.postCustomEvent((ShowPopupCustomEvent("No visualizations available, please install and configure CouchDB")))
-    
+        notifier.showPopup("No visualizations available, please install and configure CouchDB")
+
     def createWorkspace(self, name, description="", workspaceClass = WorkspaceOnFS, shared=CONF.getAutoShareWorkspace(),
                         customer="", sdate=None, fdate=None):
         if name not in self._workspaces:

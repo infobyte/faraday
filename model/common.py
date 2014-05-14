@@ -1072,12 +1072,42 @@ class ModelObjectVuln(ModelObject):
         self._desc = desc
         
         self.refs = []
-        self.severity = severity
         
         if isinstance(ref, list):
             self.refs.extend(ref)
         elif ref is not None:
             self.refs.append(ref)
+
+        # Severity Standarization 
+        self.severity = self.standarize(severity)
+
+    def standarize(self, severity): 
+        # Transform all severities into lower strings
+        severity = str(severity).lower()
+        # If it has info, med, high, critical in it, standarized to it: 
+        
+
+        def align_string_based_vulns(severity):
+            severities = ['info','low', 'med', 'high', 'critical']
+            for sev in severities:
+                if severity[0:3] in sev:
+                    return sev
+            return severity
+
+        severity = align_string_based_vulns(severity)
+
+        # Transform numeric severity into desc severity
+        numeric_severities = { '0' : 'info',
+                                 '1' : 'low',
+                                 '2' : 'med',
+                                 '3' : 'high',
+                                 "4" : 'critical' }
+
+
+        if not severity in numeric_severities.values():
+            severity = numeric_severities.get(severity, 'unclassified')
+
+        return severity
 
     def updateID(self):
         self._id = get_hash([self.name, self._desc])
@@ -1093,7 +1123,7 @@ class ModelObjectVuln(ModelObject):
         if desc is not None:
             self.desc = desc
         if severity is not None:
-            self.severity = severity
+            self.severity = self.standarize(severity)
         if refs is not None:
             self.refs = refs
 

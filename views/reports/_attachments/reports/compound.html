@@ -19,21 +19,6 @@
 </div><!-- .seccion2 -->
 </div><!-- .hosts-main -->
 <script type="text/javascript">
-	function get_obj(ourl) {
-		var ls = {};
-		$.ajax({
-			dataType: "json",
-			url: ourl,
-			async: false,
-			success: function(data) {
-				$.each(data.rows, function(n, obj){
-					ls[obj.key] = obj.value;
-				});	
-			}
-		});
-		return ls;
-	}
-
 	function load_all_hosts() {
 	        var workspace	= getParameterByName("workspace");
 	        var design	= getParameterByName("design");
@@ -48,25 +33,81 @@
 		interfaces	= get_obj(iurl, interfaces);
 		services	= get_obj(surl, services);
 	
-		var table = "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr><th>Host</th><th>Services</th><th>Interfaces</th><th>OS</th><th>Owned</th></tr></thead><tbody>";
+		var table = "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+				"<th>Host</th>"+
+				"<th>Services</th>"+
+				"<th>Interfaces</th>"+
+				"<th>OS</th>"+
+				"<th>Owned</th>"+
+				"</tr></thead><tbody>";
 		$.each(hosts, function(k, v){
-			table += "<tr id=\"host-"+k+"\"><td><a href=\"host-"+k+"\" class=\"host\">"+v.name+"</a></td><td>"+services[k]+"</td><td>"+interfaces[k]+"</td><td>"+v.os+"</td><td>"+v.owned+"</td></tr>";
+			var hname = "";
+			if(!services.hasOwnProperty(k)) {
+				services[k] = 0;
+				hname = v.name;
+			} else {
+				hname = "<a href=\"host-"+k+"\" class=\"host\">"+v.name+"</a>";
+			}
+			if(!interfaces.hasOwnProperty(k)) interfaces[k] = 0;
+			table += "<tr id=\"host-"+k+"\">"+
+				"<td>"+hname+"</td>"+
+				"<td>"+services[k]+"</td>"+
+				"<td>"+interfaces[k]+"</td>"+
+				"<td>"+v.os+"</td>"+
+				"<td>"+v.owned+"</td></tr>";
 		});
 		table += "</tbody></table>";
 		$(".seccion2").append(table);
 	}
 
-	function get_services(db, design, hid) {
-		var sview = design + "/services";
-		var matches = db.view(sview, {key: hid});
-		return matches.rows;
+	function load_hosts_by_service(name) {
+	        var workspace	= getParameterByName("workspace");
+	        var design	= getParameterByName("design");
+		var services 	= get_obj_filter(workspace, "services", "byname", name);
+		var hids 	= [];
+		$.each(services, function(k, v) {
+			v = v['value'];
+			if($.inArray(v['hid'], hids) < 0) {
+				hids.push(v['hid']);
+			}
+		});
+		var hosts 	= get_obj_filter(workspace, "hosts", "hosts", hids);
+		var iurl	= "/" + workspace + "/_design/" + design + "/_view/byinterfacecount?group=true";
+		var interfaces	= new Object();
+		var surl	= "/" + workspace + "/_design/" + design + "/_view/byservicecount?group=true";
+		var scount	= new Object();
+
+		interfaces	= get_obj(iurl, interfaces);
+		scount		= get_obj(surl, services);
+	
+		var table = "<h3>Hosts with Service "+name+" ("+hids.length+" total)</h3>"+
+				"<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+				"<th>Host</th>"+
+				"<th>Services</th>"+
+				"<th>Interfaces</th>"+
+				"<th>OS</th>"+
+				"<th>Owned</th>"+
+				"</tr></thead><tbody>";
+		$.each(hosts, function(k, v){
+			var id = v['id'];
+			v = v['value'];
+			if($.inArray(id, hids) > -1) {
+				table += "<tr id=\"host-"+id+"\">"+
+					"<td><a href=\"host-"+id+"\" class=\"host\">"+v['name']+"</a></td>"+
+					"<td>"+scount[id]+"</td>"+
+					"<td>"+interfaces[id]+"</td>"+
+					"<td>"+v['os']+"</td>"+
+					"<td>"+v['owned']+"</td></tr>";
+			}
+		});
+		table += "</tbody></table>";
+		$(".seccion2").append(table);
 	}
 
 	function load_services(hid, hname) {
 	        var workspace	= getParameterByName("workspace");
-	        var design	= getParameterByName("design");
-		var db = new CouchDB(workspace);
-		var services = get_services(db, design, hid);
+		// el param design ya no es el recibido por GET, puesto que ahora estamos en services
+		var services = get_obj_filter(workspace, "services", "byhost", hid);
 		var table = "<h3>Services for Host "+hname+" ("+services.length+" total)</h3>"+
 			"<table id=\"services-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 			"<th>Name</th>"+
@@ -102,8 +143,36 @@
 		$(".seccion2").append(table);
 	}
 
+	function get_obj_filter(ws, design, view, key) {
+		var db = new CouchDB(ws);
+		var sview = design + "/" + view;
+		if(typeof key === 'undefined') {
+			var matches = db.view(sview);
+		} else if($.isArray(key)) {
+			var matches = db.view(sview, {keys: JSON.stringify(key)});
+		} else {
+			var matches = db.view(sview, {key: key});
+		}
+		return matches.rows;
+	}
+
+	function get_obj(ourl) {
+		var ls = {};
+		$.ajax({
+			dataType: "json",
+			url: ourl,
+			async: false,
+			success: function(data) {
+				$.each(data.rows, function(n, obj){
+					ls[obj.key] = obj.value;
+				});	
+			}
+		});
+		return ls;
+	}
+
 	$(document).ready(function() {
-		// inicialmente cargo los hosts disponibles
+		// inicialmente cargo todos los hosts disponibles
 		load_all_hosts();
 		// jQuery 1.7++ usa on() para bindear eventos a elementos que existen ahora o en el futuro
 		// cuando se clickea un host carga todos los servicios para ese host

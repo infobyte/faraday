@@ -135,19 +135,12 @@ class PluginControllerBase(object):
         self._setupActionDispatcher()
 
         self._command_manager = command_manager
-        self.last_command_information  = None
 
     def _find_plugin(self, new_plugin_id):
         try:
             return self._plugins[new_plugin_id]
         except KeyError:
             return None
-
-    def setLastCommandInformation(self, command_string):
-        self.last_command_information = CommandRunInformation( **{'workspace': model.api.getActiveWorkspace().name,
-                                                        'itime': time(),
-                                                        'command': command_string.split()[0],
-                                                        'params': ' '.join(command_string.split()[1:])})
 
     def _is_command_malformed(self, original_command, modified_command):
         """
@@ -239,9 +232,9 @@ class PluginControllerBase(object):
                 break
         
         # Finally we register the recently executed command information
-        self.last_command_information.duration = time() - self.last_command_information.itime
-        workspace = model.api.getActiveWorkspace()
-        self._command_manager.saveCommand(self.last_command_information, workspace)
+        # self.last_command_information.duration = time() - self.last_command_information.itime
+        # workspace = model.api.getActiveWorkspace()
+        # self._command_manager.saveCommand(self.last_command_information, workspace)
 
     def _processAction(self, action, parameters):
         """
@@ -309,6 +302,7 @@ class PluginController(PluginControllerBase):
     def __init__(self, id, available_plugins, command_manager):
         PluginControllerBase.__init__(self, id, available_plugins, command_manager)
         self._active_plugin = None
+        self.last_command_information = None
         self._buffer = StringIO()
 
     def setActivePlugin(self, plugin):
@@ -344,7 +338,16 @@ class PluginController(PluginControllerBase):
         if self._is_command_malformed(command_string, modified_cmd_string):
             return None
         else:
-            self.setLastCommandInformation(command_string)
+            cmd_info = CommandRunInformation(
+                **{'workspace': model.api.getActiveWorkspace().name,
+                    'itime': time(),
+                    'command': command_string.split()[0],
+                    'params': ' '.join(command_string.split()[1:])})
+            workspace = model.api.getActiveWorkspace()
+            self._command_manager.saveCommand(cmd_info, workspace)
+
+            self.last_command_information = cmd_info
+
             return modified_cmd_string if isinstance(modified_cmd_string, basestring) else None
 
     def storeCommandOutput(self, output):
@@ -403,6 +406,11 @@ class PluginController(PluginControllerBase):
         This method is called when the last executed command has finished. It's
         in charge of giving the plugin the output to be parsed.
         """
+        cmd_info = self.last_command_information
+        cmd_info.duration = time() - cmd_info.itime
+        workspace = model.api.getActiveWorkspace()
+        self._command_manager.saveCommand(cmd_info, workspace)
+
         if self._active_plugin.has_custom_output():
             output_file = open(self._active_plugin.get_custom_file_path(), 'r')
             output = output_file.read()
@@ -424,10 +432,6 @@ class PluginController(PluginControllerBase):
 class PluginControllerForApi(PluginControllerBase):
     def __init__(self, id, available_plugins, command_manager):
         PluginControllerBase.__init__(self, id, available_plugins, command_manager)
-        self._active_plugins = {}
-
-    def setActivePlugin(self, plugin):
-        self._active_plugin = plugin
 
     def processCommandInput(self, command_string):
 
@@ -436,11 +440,20 @@ class PluginControllerForApi(PluginControllerBase):
         if plugin:
             modified_cmd_string = plugin.processCommandString("", "", command_string)
             if not self._is_command_malformed(command_string, modified_cmd_string):
-                self._active_plugins[command_string] = plugin
+
+                cmd_info = CommandRunInformation(
+                    **{'workspace': model.api.getActiveWorkspace().name,
+                        'itime': time(),
+                        'command': command_string.split()[0],
+                        'params': ' '.join(command_string.split()[1:])})
+                workspace = model.api.getActiveWorkspace()
+                self._command_manager.saveCommand(cmd_info, workspace)
+
+                self._active_plugins[command_string] = plugin, cmd_info
+
                 output_file_path = None
                 if plugin.has_custom_output():
                     output_file_path = plugin.get_custom_file_path()
-                self.setLastCommandInformation(command_string)
                 return True, modified_cmd_string, output_file_path
 
         return False, None, None
@@ -462,15 +475,16 @@ class PluginControllerForApi(PluginControllerBase):
         # return new_options
         pass
 
-    def _disable_active_plugin(self):
-        model.api.devlog("Disabling active plugin")
-        self._active_plugin = None
-
     def onCommandFinished(self, cmd, output):
         if cmd not in self._active_plugins.keys():
             return False
 
-        self.processOutput(self._active_plugins.get(cmd), output)
+        plugin, cmd_info = self._active_plugins.get(cmd)
+        cmd_info.duration = time() - cmd_info.itime
+        workspace = model.api.getActiveWorkspace()
+        self._command_manager.saveCommand(cmd_info, workspace)
+
+        self.processOutput(plugin, output)
 
         del self._active_plugins[cmd]
         return True

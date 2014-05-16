@@ -41,7 +41,7 @@ class HydraParser(object):
         lines = xml_output.splitlines()
         self.items = []
         for l in lines:
-            reg = re.search("\[([^$]+)\]\[([^$]+)\] host: ([^$]+)   login: ([^$]+)   password: ([^$]+)\n",l)
+            reg = re.search("\[([^$]+)\]\[([^$]+)\] host: ([^$]+)   login: ([^$]+)   password: ([^$]+)",l)
             if reg:
                 item = {'port' : reg.group(1), 'plugin' : reg.group(2), 'ip' : reg.group(3), 'login' : reg.group(4), 'password' : reg.group(5) }
                                          

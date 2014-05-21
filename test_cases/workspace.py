@@ -113,7 +113,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         self.wm.removeWorkspace(wname)
         self.assertFalse(os.path.exists(wpath))
 
-    def test_list_workspaces(self):
+    def _test_list_workspaces(self):
         """ Lists FS workspaces and Couch workspaces """
         # First create workspaces manually 
         wnamefs = self.new_random_workspace_name()
@@ -128,6 +128,19 @@ class TestWorkspacesManagement(unittest.TestCase):
 
         self.assertIn(wnamefs, self.wm.getWorkspacesNames(), 'FS Workspace not loaded')
         self.assertIn(wnamecouch, self.wm.getWorkspacesNames(), 'Couch Workspace not loaded')
+
+    def test_get_workspace(self):
+        """ Create a workspace, now ask for it """
+        
+        # When
+        wname = self.new_random_workspace_name()
+        workspace = self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
+
+        added_workspace = self.wm.getWorkspace(wname)
+
+        # Then
+        self.assertIsNotNone(workspace, 'Workspace added should not be none')
+        self.assertEquals(workspace, added_workspace, 'Workspace created and added diffier')
 
 
 if __name__ == '__main__':

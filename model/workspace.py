@@ -473,6 +473,7 @@ class WorkspaceManager(object):
             self.setActiveWorkspace(self.getWorkspace(self._workspaces.keys()[0]))
 
     def getWorkspace(self, name):
+        ''' May return None '''
         return self._workspaces.get(name)
     
     def openWorkspace(self, name):

@@ -76,6 +76,11 @@ class FSManager(PersistenceManager):
         if not os.path.exists(self._path):
             os.mkdir(self._path)
 
+
+    def addWorkspace(self, wname):
+        wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
+        os.mkdir(wpath) 
+
     def removeWorkspace(self, name):
         shutil.rmtree(os.path.join(self._path))
 

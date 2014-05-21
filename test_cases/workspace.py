@@ -10,7 +10,7 @@ import unittest
 import os
 import sys
 sys.path.append('.')
-from model.workspace import (CouchdbManager, WorkspaceManager,
+from model.workspace import (FSManager, CouchdbManager, WorkspaceManager,
                              WorkspaceOnCouch, WorkspaceOnFS)
 from model.controller import ModelController
 
@@ -28,6 +28,8 @@ class TestWorkspacesManagement(unittest.TestCase):
     def setUp(self):
         self.couch_uri = CONF.getCouchURI()
         self.cdm = CouchdbManager(uri=self.couch_uri)
+        wpath = os.path.expanduser("~/.faraday/persistence/" )
+        self.fsm = FSManager(wpath)
         self.wm = WorkspaceManager(mock(ModelController),
                                    mock(PluginController))
         self._fs_workspaces = []
@@ -58,7 +60,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         except Exception as e:
             print e
 
-    def test_create_fs_workspace(self):
+    def _test_create_fs_workspace(self):
         """
         Verifies the creation of a filesystem workspace
         """
@@ -71,7 +73,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
         self.assertTrue(os.path.exists(wpath))
 
-    def test_create_couch_workspace(self):
+    def _test_create_couch_workspace(self):
         """
         Verifies the creation of a couch workspace
         """
@@ -84,7 +86,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
         self.assertFalse(os.path.exists(wpath))
 
-    def test_delete_couch_workspace(self):
+    def _test_delete_couch_workspace(self):
         """
         Verifies the deletion of a couch workspace
         """
@@ -97,7 +99,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         self.wm.removeWorkspace(wname)
         self.assertFalse(self.cdm.existWorkspace(wname))
 
-    def test_delete_fs_workspace(self):
+    def _test_delete_fs_workspace(self):
         """
         Verifies the deletion of a filesystem workspace
         """
@@ -110,6 +112,22 @@ class TestWorkspacesManagement(unittest.TestCase):
         #Delete workspace
         self.wm.removeWorkspace(wname)
         self.assertFalse(os.path.exists(wpath))
+
+    def test_list_workspaces(self):
+        """ Lists FS workspaces and Couch workspaces """
+        # First create workspaces manually 
+        wnamefs = self.new_random_workspace_name()
+        wnamecouch = self.new_random_workspace_name() 
+        # FS
+        self.fsm.addWorkspace(wnamefs)
+        # Couch
+        self.cdm.addWorkspace(wnamecouch)
+
+        # When  loading workspaces
+        self.wm.loadWorkspaces()
+
+        self.assertIn(wnamefs, self.wm.getWorkspacesNames(), 'FS Workspace not loaded')
+        self.assertIn(wnamecouch, self.wm.getWorkspacesNames(), 'Couch Workspace not loaded')
 
 
 if __name__ == '__main__':

@@ -496,16 +496,13 @@ class WorkspaceManager(object):
         return self._workspaces.keys()
         
     def loadWorkspaces(self): 
-        self._workspaces.clear()
-        for name in os.listdir(CONF.getPersistencePath()):
-            if name not in self._workspaces:
-                if os.path.isdir(os.path.join(CONF.getPersistencePath(),name)) and name not in self._excluded_directories:
-                    w = self.createWorkspace(name, workspaceClass = WorkspaceOnFS)
+        # self._workspaces.clear()
 
-        for name in self.couchdbmanager.getWorkspacesNames():
-            if name not in self._workspaces and not name == "reports":
-                self.createWorkspace(name, workspaceClass = WorkspaceOnCouch)
-    
+        self._workspaces.update({name: None for name in os.listdir(CONF.getPersistencePath())})
+        self._workspaces.update({name: None for name in self.couchdbmanager
+                                                .getWorkspacesNames()
+                                                if not name == 'reports'})
+ 
     def setActiveWorkspace(self, workspace):
         try:
             self.stopAutoLoader()

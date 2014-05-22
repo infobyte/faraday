@@ -7,5 +7,7 @@
 ###
 
 #ZDOTDIR="~/.faraday/zsh/" /bin/zsh
-ZDOTDIR="$HOME/.faraday/zsh/" /bin/zsh
+FARADAYZDOTDIR="$HOME/.faraday/zsh/"
+OLDZDOTDIR=$ZDOTDIR
+ZDOTDIR=$FARADAYZDOTDIR /bin/zsh
 #source ~/.faraday/zsh/.zshrc 

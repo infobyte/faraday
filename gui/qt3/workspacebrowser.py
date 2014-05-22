@@ -21,22 +21,23 @@ CONF = getInstanceConfiguration()
 class WorkspaceListViewItem(qt.QListViewItem):
     """Item for displaying in the WorkspaceTreeWindow."""
 
-    def __init__(self, qtparent,  name = "", workspace_object=None):
+    def __init__(self, qtparent,  name, is_active, workspace_type):
         qt.QListViewItem.__init__(self, qtparent)
                                    
         self.setRenameEnabled(0, False)
         self.index = 0
-        self.object = workspace_object
-        self.name = self.object.name if self.object is not None else name
+        self.is_active = is_active
+        self.workspace_type = workspace_type
+        self.name = name
         self.setDragEnabled(False)
         self.setDropEnabled(False)
         self._setIcon()
         
-        self.name = "%s (%s)" % (self.name , self.object.__class__.__name__.replace("WorkspaceOn",""))
+        self.name = "%s (%s)" % (self.name , self.workspace_type.replace("WorkspaceOn",""))
         
     
     def _setIcon(self):
-        active = self.object.isActive() if self.object is not None else False
+        active = self.is_active
         icon_name = "FolderBlue-20.png" if active else "FolderSteel-20.png"
         icon_path = os.path.join(CONF.getIconsPath(), icon_name)
         pm = qt.QPixmap(icon_path)
@@ -44,10 +45,7 @@ class WorkspaceListViewItem(qt.QListViewItem):
 
 
     def setText(self, col, text):
-        """Update name of widget if rename is called."""
-                                                      
-
-                               
+        """Update name of widget if rename is called.""" 
         if col == 0:
             try:
                 self.widget.rename( unicode(text) )
@@ -212,7 +210,9 @@ class WorkspaceTreeWindow(qt.QVBox):
         """
         self.clearTree()
         for w in self.manager.getWorkspaces():
-            witem = WorkspaceListViewItem(self.listview, w.name, w)
+            witem = WorkspaceListViewItem(self.listview, name=w.name, 
+                                            is_active=self.manager.isActive(w.name),
+                                            workspace_type=self.manager.getWorkspaceType(w.name))
             self._workspace_items.append(witem)
 
     def setDefaultWorkspace(self): 

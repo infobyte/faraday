@@ -38,12 +38,7 @@ class Workspace(object):
     history for all users working on the same workspace.
     It has a list with all existing workspaces just in case user wants to
     open a new one.
-    """
-                                                                    
-                                             
-                                                          
-                                                               
-                                                                                 
+    """ 
     
     def __init__(self, name, manager, shared=CONF.getAutoShareWorkspace()):
         self.name                   = name
@@ -374,8 +369,10 @@ class WorkspaceManager(object):
         self.report_manager = ReportManager(10, plugin_controller)
         
         self.couchdbmanager = PersistenceManagerFactory().getInstance()
+        self.fsmanager = FSManager()
         
         self._workspaces = {}
+        self._workspaces_types = {}
         self._model_controller = model_controller
         self._excluded_directories = [".svn"]
         self.workspace_persister = WorkspacePersister()
@@ -445,21 +442,20 @@ class WorkspaceManager(object):
 
     def createWorkspace(self, name, description="", workspaceClass = WorkspaceOnFS, shared=CONF.getAutoShareWorkspace(),
                         customer="", sdate=None, fdate=None):
-        if name not in self._workspaces:
-            w = workspaceClass(name, self, shared)
-            w.description = description
-            w.customer = customer
-            if sdate is not None:
-                w.start_date = sdate
-            if fdate is not None:
-                w.finish_date = fdate
-            self.addWorkspace(w)
-        else:
-            w = self._workspaces[name]
+        w = workspaceClass(name, self, shared)
+        w.description = description
+        w.customer = customer
+        if sdate is not None:
+            w.start_date = sdate
+        if fdate is not None:
+            w.finish_date = fdate
+        self.addWorkspace(w)
         return w
 
     def removeWorkspace(self, name):
-        dm = self.getWorkspace(name).getDataManager()
+        work = self.getWorkspace(name)
+        if not work: return
+        dm = work.getDataManager()
         dm.removeWorkspace(name)
                        
         datapath = CONF.getDataPath()
@@ -474,8 +470,21 @@ class WorkspaceManager(object):
 
     def getWorkspace(self, name):
         ''' May return None '''
-        return self._workspaces.get(name)
-    
+        if not self._workspaces.get(name):
+            # Retrieve the workspace
+            self.loadWorkspace(name) 
+        return  self._workspaces.get(name)
+
+    def loadWorkspace(self, name): 
+        workspaceClass = None
+        workspace = None
+        if name in self.fsmanager.getWorkspacesNames():
+            workspace = self.createWorkspace(name, workspaceClass = WorkspaceOnFS) 
+        elif name in self.couchdbmanager.getWorkspacesNames():
+            workspace = self.createWorkspace(name, workspaceClass = WorkspaceOnCouch)
+
+        return workspace
+
     def openWorkspace(self, name):
         if name in self._workspaces:
             w = self._workspaces[name]
@@ -497,12 +506,19 @@ class WorkspaceManager(object):
         return self._workspaces.keys()
         
     def loadWorkspaces(self): 
-        # self._workspaces.clear()
 
-        self._workspaces.update({name: None for name in os.listdir(CONF.getPersistencePath())})
-        self._workspaces.update({name: None for name in self.couchdbmanager
-                                                .getWorkspacesNames()
-                                                if not name == 'reports'})
+        self._workspaces_types = {}
+        fsworkspaces = {name: None for name in self.fsmanager.getWorkspacesNames()}
+        self._workspaces.update(fsworkspaces)
+        couchworkspaces = {name: None for name in self.couchdbmanager .getWorkspacesNames()
+                                                if not name == 'reports'}
+        self._workspaces.update(couchworkspaces)
+
+        self._workspaces_types.update({name: WorkspaceOnFS.__name__  for name in fsworkspaces})
+        self._workspaces_types.update({name: WorkspaceOnCouch.__name__  for name in couchworkspaces})
+
+    def getWorkspaceType(self, name):
+        return self._workspaces_types.get(name, 'undefined')
  
     def setActiveWorkspace(self, workspace):
         try:
@@ -522,6 +538,9 @@ class WorkspaceManager(object):
 
         if isinstance(self.active_workspace, WorkspaceOnCouch):
             self.startAutoLoader()
+
+    def isActive(self, name):
+        return self.active_workspace.name == name
                 
     def syncWorkspaces(self):
         """

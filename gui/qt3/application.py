@@ -164,10 +164,10 @@ class GuiApp(qt.QApplication, FaradayUi):
         else:
             model.api.log("Creating workspace '%s'" % name)
             model.api.devlog("Looking for the delegation class")
-            workingClass = globals()[w_type]
+            manager = self.getWorkspaceManager()
+            workingClass = globals()[manager.getWorkspaceType(name)]
 
-            w = self.getWorkspaceManager().\
-                createWorkspace(name, description, workspaceClass=workingClass)
+            w = manager.createWorkspace(name, description, workspaceClass=workingClass)
             self.getWorkspaceManager().setActiveWorkspace(w)
             self.getModelController().setWorkspace(w)
 

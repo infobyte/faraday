@@ -28,12 +28,11 @@ class WorkspaceListViewItem(qt.QListViewItem):
         self.index = 0
         self.is_active = is_active
         self.workspace_type = workspace_type
-        self.name = name
+        self.objname = name
+        self.name = "%s (%s)" % (self.objname , self.workspace_type.replace("WorkspaceOn",""))
         self.setDragEnabled(False)
         self.setDropEnabled(False)
-        self._setIcon()
-        
-        self.name = "%s (%s)" % (self.name , self.workspace_type.replace("WorkspaceOn",""))
+        self._setIcon() 
         
     
     def _setIcon(self):
@@ -209,10 +208,10 @@ class WorkspaceTreeWindow(qt.QVBox):
         Clear the tree and loads all workspaces defined in the workspace manager
         """
         self.clearTree()
-        for w in self.manager.getWorkspaces():
-            witem = WorkspaceListViewItem(self.listview, name=w.name, 
-                                            is_active=self.manager.isActive(w.name),
-                                            workspace_type=self.manager.getWorkspaceType(w.name))
+        for name in self.manager.getWorkspacesNames():
+            witem = WorkspaceListViewItem(self.listview, name=name, 
+                                            is_active=self.manager.isActive(name),
+                                            workspace_type=self.manager.getWorkspaceType(name))
             self._workspace_items.append(witem)
 
     def setDefaultWorkspace(self): 
@@ -220,11 +219,8 @@ class WorkspaceTreeWindow(qt.QVBox):
         if first_child: 
             self._openWorkspace(first_child)
             
-    def _itemDoubleClick(self, item, pos, val):
-                                  
-                                               
-                              
-        if not item.object.isActive():
+    def _itemDoubleClick(self, item, pos, val): 
+        if not self.manager.isActive(item.name):
             self._openWorkspace(item)
         
     def _showContextMenu(self, item, pos, val):
@@ -282,12 +278,9 @@ class WorkspaceTreeWindow(qt.QVBox):
         self._getMainApp().removeWorkspace(item.object.name)
         self.loadAllWorkspaces()
     
-    def _openWorkspace(self, item):
-                                               
-                                                                     
-        api.devlog("Opening workspace %s selected on the Workspace Perspective" % item.name)
-        self._getMainApp().openWorkspace(item.object.name)
-                         
+    def _openWorkspace(self, item): 
+        api.devlog("Opening workspace %s selected on the Workspace Perspective" % item.objname)
+        self._getMainApp().openWorkspace(item.objname) 
         self.loadAllWorkspaces()
 
     def _saveWorkspace(self):

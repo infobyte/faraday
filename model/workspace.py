@@ -440,8 +440,11 @@ class WorkspaceManager(object):
     def _notifyNoVisualizationAvailable(self):
         notifier.showPopup("No visualizations available, please install and configure CouchDB")
 
-    def createWorkspace(self, name, description="", workspaceClass = WorkspaceOnFS, shared=CONF.getAutoShareWorkspace(),
+    def createWorkspace(self, name, description="", workspaceClass = None, shared=CONF.getAutoShareWorkspace(),
                         customer="", sdate=None, fdate=None):
+        if not workspaceClass:
+            workspaceClass = globals()[self.getWorkspaceType(name)]
+
         w = workspaceClass(name, self, shared)
         w.description = description
         w.customer = customer
@@ -486,11 +489,9 @@ class WorkspaceManager(object):
         return workspace
 
     def openWorkspace(self, name):
-        if name in self._workspaces:
-            w = self._workspaces[name]
-            self.setActiveWorkspace(w)
-            return w
-        raise Exception("Error on OpenWorkspace for %s "  % name)
+        w = self.getWorkspace(name)
+        self.setActiveWorkspace(w)
+        return w
         
     def getWorkspaces(self):
         """

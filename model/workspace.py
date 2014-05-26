@@ -442,10 +442,18 @@ class WorkspaceManager(object):
 
     def createWorkspace(self, name, description="", workspaceClass = None, shared=CONF.getAutoShareWorkspace(),
                         customer="", sdate=None, fdate=None):
-        if not workspaceClass:
+
+        model.api.devlog("Creating Workspace")
+        if not workspaceClass and self.getWorkspaceType(name) in globals():
             workspaceClass = globals()[self.getWorkspaceType(name)]
+        elif not workspaceClass:
+            # Defaulting =( 
+            model.api.devlog("Defaulting to WorkspaceOnFS") 
+            workspaceClass = WorkspaceOnFS
 
         w = workspaceClass(name, self, shared)
+        # Register the created workspace type:
+        self._workspaces_types[name] = workspaceClass.__class__.__name__
         w.description = description
         w.customer = customer
         if sdate is not None:

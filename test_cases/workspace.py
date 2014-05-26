@@ -60,7 +60,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         except Exception as e:
             print e
 
-    def _test_create_fs_workspace(self):
+    def test_create_fs_workspace(self):
         """
         Verifies the creation of a filesystem workspace
         """
@@ -72,8 +72,9 @@ class TestWorkspacesManagement(unittest.TestCase):
 
         wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
         self.assertTrue(os.path.exists(wpath))
+        self.assertEquals(WorkspaceOnFS.__class__.__name__, self.wm.getWorkspaceType(wname))
 
-    def _test_create_couch_workspace(self):
+    def test_create_couch_workspace(self):
         """
         Verifies the creation of a couch workspace
         """
@@ -86,7 +87,9 @@ class TestWorkspacesManagement(unittest.TestCase):
         wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
         self.assertFalse(os.path.exists(wpath))
 
-    def _test_delete_couch_workspace(self):
+        self.assertEquals(WorkspaceOnCouch.__class__.__name__, self.wm.getWorkspaceType(wname))
+
+    def test_delete_couch_workspace(self):
         """
         Verifies the deletion of a couch workspace
         """
@@ -99,7 +102,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         self.wm.removeWorkspace(wname)
         self.assertFalse(self.cdm.existWorkspace(wname))
 
-    def _test_delete_fs_workspace(self):
+    def test_delete_fs_workspace(self):
         """
         Verifies the deletion of a filesystem workspace
         """
@@ -133,7 +136,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         self.assertEquals(self.wm.getWorkspaceType(wnamecouch), WorkspaceOnCouch.__name__, 'Workspace type bad defined') 
 
 
-    def _test_get_workspace(self):
+    def test_get_workspace(self):
         """ Create a workspace, now ask for it """
         
         # When
@@ -146,7 +149,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         self.assertIsNotNone(workspace, 'Workspace added should not be none')
         self.assertEquals(workspace, added_workspace, 'Workspace created and added diffier')
 
-    def _test_get_existent_couch_workspace(self):
+    def test_get_existent_couch_workspace(self):
         """ Create a workspace in the backend, now ask for it """
         
         # When
@@ -159,7 +162,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         # Then
         self.assertIsNotNone(added_workspace, 'Workspace added should not be none')
 
-    def _test_get_existent_fs_workspace(self):
+    def test_get_existent_fs_workspace(self):
         """ Create a workspace in the backend, now ask for it """
         
         # When
@@ -172,7 +175,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         # Then
         self.assertIsNotNone(added_workspace, 'Workspace added should not be none')
 
-    def _test_get_non_existent_workspace(self):
+    def test_get_non_existent_workspace(self):
         """ Retrieve a non existent workspace """
         
         added_workspace = self.wm.getWorkspace('inventado')
@@ -198,7 +201,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         self.assertTrue(self.wm.isActive(added_workspace.name),
                 'Workspace is active flag not set')
 
-    def _test_remove_fs_workspace(self):
+    def test_remove_fs_workspace(self):
         # First
         wname = self.new_random_workspace_name()
         added_workspace = self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
@@ -209,7 +212,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         # Then
         self.assertNotIn(wname, self.fsm.getWorkspacesNames())
 
-    def _test_remove_couch_workspace(self):
+    def test_remove_couch_workspace(self):
         # First
         wname = self.new_random_workspace_name()
         added_workspace = self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnCouch)

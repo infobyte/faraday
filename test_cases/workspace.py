@@ -72,7 +72,7 @@ class TestWorkspacesManagement(unittest.TestCase):
 
         wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
         self.assertTrue(os.path.exists(wpath))
-        self.assertEquals(WorkspaceOnFS.__class__.__name__, self.wm.getWorkspaceType(wname))
+        self.assertEquals(WorkspaceOnFS.__name__, self.wm.getWorkspaceType(wname))
 
     def test_create_couch_workspace(self):
         """
@@ -87,7 +87,7 @@ class TestWorkspacesManagement(unittest.TestCase):
         wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
         self.assertFalse(os.path.exists(wpath))
 
-        self.assertEquals(WorkspaceOnCouch.__class__.__name__, self.wm.getWorkspaceType(wname))
+        self.assertEquals(WorkspaceOnCouch.__name__, self.wm.getWorkspaceType(wname))
 
     def test_delete_couch_workspace(self):
         """

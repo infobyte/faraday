@@ -224,11 +224,7 @@ class WorkspaceTreeWindow(qt.QVBox):
             self._openWorkspace(item)
         
     def _showContextMenu(self, item, pos, val):
-        """Pop up a context menu when an item is right-clicked on the list view."""
-                                                                                               
-                                               
-                                               
-                                               
+        """Pop up a context menu when an item is right-clicked on the list view.""" 
                               
         popup = qt.QPopupMenu(self)
 
@@ -239,7 +235,7 @@ class WorkspaceTreeWindow(qt.QVBox):
             popup.insertItem('Create Workspace', 100)
         else:
             if len(selected_items) == 1:
-                if item.object.isActive():
+                if item.is_active:
                     popup.insertItem('Save', self._saveWorkspace)
                     popup.insertItem('Synchronize', self._syncWorkspace)
                     popup.insertItem('Close', 300)
@@ -271,11 +267,11 @@ class WorkspaceTreeWindow(qt.QVBox):
 
     def _deleteWorkspaces(self, items):
         for item in items:
-            self._getMainApp().removeWorkspace(item.object.name)
+            self._getMainApp().removeWorkspace(item.objname)
         self.loadAllWorkspaces()
 
     def _deleteWorkspace(self, item):
-        self._getMainApp().removeWorkspace(item.object.name)
+        self._getMainApp().removeWorkspace(item.objname)
         self.loadAllWorkspaces()
     
     def _openWorkspace(self, item): 
@@ -293,6 +289,5 @@ class WorkspaceTreeWindow(qt.QVBox):
         return self.parent().parent().getMainApp()
 
     def _showWorkspaceProperties(self, item):
-        if item.object is not None:
-            d = WorkspacePropertiesDialog(self, "Workspace Properties", workspace=item.object)
-            d.exec_loop()
+        d = WorkspacePropertiesDialog(self, "Workspace Properties", workspace=item.objname)
+        d.exec_loop()

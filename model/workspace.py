@@ -444,7 +444,7 @@ class WorkspaceManager(object):
                         customer="", sdate=None, fdate=None):
 
         model.api.devlog("Creating Workspace")
-        if not workspaceClass and self.getWorkspaceType(name) in globals():
+        if self.getWorkspaceType(name) in globals():
             workspaceClass = globals()[self.getWorkspaceType(name)]
         elif not workspaceClass:
             # Defaulting =( 
@@ -453,7 +453,7 @@ class WorkspaceManager(object):
 
         w = workspaceClass(name, self, shared)
         # Register the created workspace type:
-        self._workspaces_types[name] = workspaceClass.__class__.__name__
+        self._workspaces_types[name] = workspaceClass.__name__
         w.description = description
         w.customer = customer
         if sdate is not None:

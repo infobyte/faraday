@@ -70,8 +70,7 @@ class ChangeModelObject(Change):
 class ChangeCmd(Change):
     def __init__(self, doc):
         Change.__init__(self, doc)
-        cmd = CommandRunInformation.fromDict(doc)
-        self.cmd_info == cmd.command + cmd.params
+        self.cmd_info = doc.get('command') + doc.get('params')
         if doc.get("duration"):
             self.action = self.CMD_FINISHED
             self.msg = "Cmd finished: %s" % self.getCmdInfo()

@@ -25,6 +25,7 @@ import mockito
 import shutil
 import json
 from model.common import ModelObject
+from persistence.change import change_factory
 
 CONF = getInstanceConfiguration()
 
@@ -297,7 +298,7 @@ class CouchdbManager(PersistenceManager):
                 if change['seq'] > self.getLastChangeSeq(db_name):
                     self.setLastChangeSeq(db_name, change['seq'])
                     if not change['id'].startswith('_design'):
-                        changes.append(change)
+                        changes.append(change_factory.create(self.getDocument(db_name, change['id'])))
             #last_seq = reduce(lambda x,y:  max(y['seq'], x) , changes, self.getLastChangeSeq(db_name))
             #self.setLastChangeSeq(db_name, last_seq)
         if len(changes):

@@ -6,8 +6,10 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import model
-import  threading 
+import threading
 import traceback
+from controller.change import ChangeController
+
 
 class WorkspacePersister(object):
     _instance = None
@@ -15,29 +17,30 @@ class WorkspacePersister(object):
     _workspace = None
     _workspace_autoloader = None
     _pending_actions = None
+    _change_controller = ChangeController()
 
-
-    def __new__(cls, *args, **kargs): 
+    def __new__(cls, *args, **kargs):
         if cls._instance is None:
             cls._instance = object.__new__(cls, *args, **kargs)
         return cls._instance
 
-                                   
-                                    
-
     def setPersister(self, workspace, persister):
         WorkspacePersister._persister = persister
         WorkspacePersister._workspace = workspace
-        WorkspacePersister._workspace_autoloader = WorkspaceAutoSync(self.reloadWorkspace, self.backendChangeListener)
+        WorkspacePersister._change_controller.setWorkspace(workspace)
+        WorkspacePersister._workspace_autoloader = WorkspaceAutoSync(self.loadChanges, self.backendChangeListener)
         WorkspacePersister._workspace_autoloader.start()
         WorkspacePersister._pending_actions = PendingTransactionsQueue()
 
     @staticmethod
     def stopThreads():
-        WorkspacePersister._workspace_autoloader.stop() 
+        WorkspacePersister._workspace_autoloader.stop()
+
+    def loadChanges(self, changes):
+        self._change_controller.loadChanges(changes)
 
     def reloadWorkspace(self):
-        WorkspacePersister._workspace.load() 
+        WorkspacePersister._workspace.load()
 
     @staticmethod
     def addPendingAction(obj, func, args, kwargs):
@@ -78,13 +81,12 @@ class WorkspaceAutoSync(threading.Thread):
         self._action = action_callback
 
     def run(self):
-                     
         while not self._stop:
             try:
                 result = self._listener()
                 if result:
                     model.api.devlog("Changes found: %s" % result)
-                    self._action()
+                    self._action(result)
             except Exception, e:
                 model.api.devlog("An exception was captured while saving workspaces\n%s" % traceback.format_exc())
 

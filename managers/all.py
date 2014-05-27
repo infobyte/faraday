@@ -71,10 +71,22 @@ class PersistenceManager(object):
 
 class FSManager(PersistenceManager):
     """ This is a file system manager for the workspace, it will load from the provided FS"""
-    def __init__(self, path):
+    def __init__(self, path=CONF.getPersistencePath()):
         self._path = path
         if not os.path.exists(self._path):
             os.mkdir(self._path)
+
+    def getWorkspacesNames(self):
+        workspaces = []
+        for name in os.listdir(CONF.getPersistencePath()):
+            if os.path.isdir(os.path.join(CONF.getPersistencePath(), name)):
+                workspaces.append(name) 
+        return workspaces
+
+
+    def addWorkspace(self, wname):
+        wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
+        os.mkdir(wpath) 
 
     def removeWorkspace(self, name):
         shutil.rmtree(os.path.join(self._path))

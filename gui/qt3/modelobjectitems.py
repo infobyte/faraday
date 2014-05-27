@@ -237,7 +237,7 @@ class RootListViewItem(ModelObjectListViewItem):
 class WorkspaceListViewItem(ModelObjectListViewItem):
     type = "Workspace"
     def __init__(self, qtparent, model_object=None):
-        ModelObjectListViewItem.__init__(self, qtparent, model_object.name, model_object)
+        ModelObjectListViewItem.__init__(self, qtparent, model_object.name)
         self.nconflicts = 0
         self.setOpen(True)
 
@@ -484,4 +484,5 @@ class CredListViewItem(ModelObjectListViewItem):
             self.takeItem(s)
                   
         self._childs = []
+
 

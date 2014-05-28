@@ -256,6 +256,10 @@ class CouchdbManager(PersistenceManager):
         return self._getDb(aWorkspaceName).get(documentId)
 
     @trap_timeout
+    def getDeletedDocument(self, aWorkspaceName, documentId, documentRev):
+        return self._getDb(aWorkspaceName).get(documentId, rev=documentRev)
+
+    @trap_timeout
     def checkDocument(self, aWorkspaceName, documentName):
         return  self._getDb(aWorkspaceName).doc_exist(documentName)
 
@@ -305,14 +309,16 @@ class CouchdbManager(PersistenceManager):
         changes = []
         last_seq = max(self.getLastChangeSeq(db_name), since)
         db = self._getDb(db_name)
-        with ChangesStream(db, feed="longpoll", since = last_seq, timeout = timeout) as stream:
+        with ChangesStream(db, feed="longpoll", since=last_seq, timeout=timeout) as stream:
             for change in stream:
                 if change['seq'] > self.getLastChangeSeq(db_name):
                     self.setLastChangeSeq(db_name, change['seq'])
                     if not change['id'].startswith('_design'):
-                        changes.append(change_factory.create(self.getDocument(db_name, change['id'])))
-            #last_seq = reduce(lambda x,y:  max(y['seq'], x) , changes, self.getLastChangeSeq(db_name))
-            #self.setLastChangeSeq(db_name, last_seq)
+                        #fake doc type for deleted objects
+                        doc = {'type': 'unknown', '_deleted': 'False'}
+                        if not change.get('deleted'):
+                            doc = self.getDocument(db_name, change['id'])
+                        changes.append(change_factory.create(doc))
         if len(changes):
             getLogger(self).debug("Changes from another instance")
         return changes

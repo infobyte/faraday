@@ -8,7 +8,6 @@ See the file 'doc/LICENSE' for the license information
 from model.common import (ModelObjectNote, ModelObjectCred, ModelObjectVuln,
                           ModelObjectVulnWeb)
 from model.hosts import Host, Interface, Service
-from model.commands_history import CommandRunInformation
 
 
 class ChangeFactory(object):
@@ -58,7 +57,7 @@ class ChangeModelObject(Change):
         num_of_rev = int(doc.get("_rev")[0])
         if doc.get("_deleted"):
             self.action = self.MODEL_OBJECT_DELETED
-            self.msg = "%s deleted" % self.getType()
+            self.msg = "Object deleted"
         elif num_of_rev > 1:
             self.action = self.MODEL_OBJECT_MODIFIED
             self.msg = "%s modified" % self.getType()

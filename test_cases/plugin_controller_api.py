@@ -15,9 +15,9 @@ from mockito import mock, when
 
 sys.path.append('.')
 
+import model.api
 from managers.all import PluginManager
 import plugins.api
-import model.api
 import model.controller
 from model.workspace import Workspace
 from model.container import ModelObjectContainer

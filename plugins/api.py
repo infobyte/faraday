@@ -20,6 +20,8 @@ from tornado.ioloop import IOLoop
 from plugins.core import PluginControllerForApi
 from managers.all import CommandManager
 
+import utils.logs as logger
+
 
 _plugin_controller_api = None
 _http_server = None
@@ -37,59 +39,41 @@ def stopServer():
         IOLoop.instance().stop()
 
 
-def startPluginControllerAPI(plugin_manager):
-    global _plugin_controller_api
+def startAPIs(plugin_manager):
+    global _rest_controllers
     global _http_server
-    if _plugin_controller_api is None:
-        #TODO: load API configuration from config file
-        hostname = "localhost"
-        port = 9977
-        _plugin_controller_api = PluginControllerAPI(plugin_manager,
-                                                     hostname,
-                                                     port)
-        if _http_server is None:
-            _http_server = HTTPServer(WSGIContainer(_plugin_controller_api.getApp()))
-            _http_server.listen(port)
-            logging.getLogger("tornado.access").addHandler(logging.NullHandler())
-            logging.getLogger("tornado.access").propagate = False
-            threading.Thread(target=startServer).start()
+    _rest_controllers = loadRESTControllerAPIs(plugin_manager)
+    #TODO: load API configuration from config file
+    hostname = "localhost"
+    port = 9977
+    app = Flask('APISController')
 
+    _http_server = HTTPServer(WSGIContainer(app))
+    _http_server.listen(port) 
 
-def stopPluginControllerAPI():
+    routes = [r for c in _rest_controllers for r in c.getRoutes()]
+
+    for route in routes: 
+        app.add_url_rule(route.path, view_func=route.view_func, methods=route.methods) 
+
+    logging.getLogger("tornado.access").addHandler(logger.getLogger(app))
+    logging.getLogger("tornado.access").propagate = False
+    threading.Thread(target=startServer).start()
+
+def loadRESTControllerAPIs(plugin_manager):
+    return [PluginControllerAPI(plugin_manager)]
+
+def stopAPIs():
     stopServer()
 
 
-class PluginControllerAPI(object):
-    def __init__(self, plugin_manager, hostname, port):
-        self.plugin_controller = PluginControllerForApi("PluginController", plugin_manager.getPlugins(), CommandManager())
-        self.app = Flask(__name__.split('.')[0])
-        self.addRoutes()
-        self.hostname = hostname
-        self.port = port
-        #self.api = Api(self.app)
+class RESTApi(object):
+    """ Abstract class for REST Controllers
+    All REST Controllers should extend this class
+    in order to get published"""
 
-    def getApp(self):
-        return self.app
-
-    #def run(self):
-    #    self.app.run(host=self.hostname, port=self.port)
-
-    def addRoutes(self):
-        self.app.add_url_rule('/cmd/input',
-                              view_func=self.postCmdInput,
-                              methods=['POST'])
-        self.app.add_url_rule('/cmd/output',
-                              view_func=self.postCmdOutput,
-                              methods=['POST'])
-        self.app.add_url_rule('/cmd/active-plugins',
-                              view_func=self.clearActivePlugins,
-                              methods=['DELETE'])
-
-    def startAPI(self):
-        pass
-
-    def stopAPI(self):
-        pass
+    def getRoutes(self):
+        raise NotImplementedError('Abstract Class')
 
     def badRequest(self, message):
         error = 400
@@ -101,16 +85,34 @@ class PluginControllerAPI(object):
         return jsonify(code=code,
                        message=message), code
 
+    def ok(self, message):
+        code = 200
+        return jsonify(code=code,
+                       message=message)
+
+
+class PluginControllerAPI(RESTApi):
+    def __init__(self, plugin_manager):
+        self.plugin_controller = PluginControllerForApi("PluginController", plugin_manager.getPlugins(), CommandManager())
+
+    def getRoutes(self):
+        routes = []
+        routes.append(Route(path='/cmd/input',
+                              view_func=self.postCmdInput,
+                              methods=['POST']))
+        routes.append(Route(path='/cmd/output',
+                              view_func=self.postCmdOutput,
+                              methods=['POST']))
+        routes.append(Route(path='/cmd/active-plugins',
+                              view_func=self.clearActivePlugins,
+                              methods=['DELETE']))
+        return routes
+
     def pluginAvailable(self, new_cmd, output_file):
         code = 200
         return jsonify(code=code,
                        cmd=new_cmd,
                        custom_output_file=output_file)
-
-    def ok(self, message):
-        code = 200
-        return jsonify(code=code,
-                       message=message)
 
     def postCmdInput(self):
         json_data = request.get_json()
@@ -180,3 +182,10 @@ class PluginControllerAPIClient(object):
         if response.status_code != 200:
             return False
         return True
+
+class Route(object):
+    """ Route class, abstracts information about:
+    path, handler and methods """
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)

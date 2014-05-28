@@ -30,11 +30,11 @@ class TestPluginControllerApi(unittest.TestCase):
     def setUpClass(cls):
         plugin_repo_path = os.path.join(os.getcwd(), "plugins", "repo")
         plugin_manager = PluginManager(plugin_repo_path)
-        plugins.api.startPluginControllerAPI(plugin_manager)
+        plugins.api.startAPIs(plugin_manager)
 
     @classmethod
     def tearDownClass(cls):
-        plugins.api.stopPluginControllerAPI()
+        plugins.api.stopAPIs()
 
     def setUp(self):
         self.model_controller = model.controller.ModelController(mock())
@@ -108,6 +108,7 @@ class TestPluginControllerApi(unittest.TestCase):
         response = requests.post(self.url_input,
                                  data=json.dumps(data),
                                  headers=self.headers)
+
 
         #send output, using a fake nmap xml ouput
         output_file = open(os.path.join(os.getcwd(), 'test_cases/data/nmap_plugin_with_api.xml'))

@@ -70,4 +70,4 @@ class NotificationCenter():
         self._notifyWidgets(events.ResolveConflictsCustomEvent(conflicts))
 
     def changeFromInstance(self, change):
-        self._notifyWidgets(events.ShowPopupCustomEvent(change.getMessage()))
+        self._notifyWidgets(events.ChangeFromInstanceCustomEvent(change))

@@ -28,6 +28,7 @@ RESOLVECONFLICTS_ID = 3142
 ADDHOST = 4100
 DELHOST = 4101
 EDITHOST = 4102
+CHANGEFROMINSTANCE = 5100
 UPDATEMODEL_ID = 54321
 
 
@@ -128,3 +129,9 @@ class DeleteHostCustomEvent(CustomEvent):
     def __init__(self, host_id):
         CustomEvent.__init__(self, DELHOST)
         self.host_id = host_id
+
+
+class ChangeFromInstanceCustomEvent(CustomEvent):
+    def __init__(self, change):
+        CustomEvent.__init__(self, CHANGEFROMINSTANCE)
+        self.change = change

@@ -432,6 +432,7 @@ class PluginController(PluginControllerBase):
 class PluginControllerForApi(PluginControllerBase):
     def __init__(self, id, available_plugins, command_manager):
         PluginControllerBase.__init__(self, id, available_plugins, command_manager)
+        self._active_plugins = {}
 
     def processCommandInput(self, command_string):
 

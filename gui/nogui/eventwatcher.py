@@ -11,8 +11,9 @@ from gui.customevents import CHANGEFROMINSTANCE
 
 class EventWatcher(object):
     def __init__(self):
-        self.logger = getLogger()
+        self.logger = getLogger(self)
 
     def update(self, event):
         if event.type() == CHANGEFROMINSTANCE:
-            self.logger.info("[Update Received] " + event.change.getMessage())
+            getLogger(self).debug(
+                "[Update Received] " + event.change.getMessage())

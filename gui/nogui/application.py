@@ -20,6 +20,7 @@ class GuiApp(FaradayUi):
                            plugin_manager,
                            workspace_manager)
         self._stop = False
+        model.guiapi.setMainApp(self)
         self.event_watcher = EventWatcher()
         model.guiapi.notification_center.registerWidget(self.event_watcher)
 

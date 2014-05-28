@@ -5,7 +5,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-#from model.guiapi import notification_center as notifier
 import model.guiapi
 
 

@@ -38,23 +38,6 @@
 		<div class="wrapper">
 			<header class="head">
 				<a href="#"><img class="logo" src="images/logo-faraday.png"/></a>
-				<!-- <nav> -->
-				<!-- 	<ul class="menu"> -->
-				<!-- 		<li> -->
-				<!-- 			<a href="#">Opción 1</a> -->
-				<!-- 		</li> -->
-				<!-- 		<li> -->
-				<!-- 			<a href="#">Opción 1</a> -->
-				<!-- 		</li> -->
-				<!-- 		<li> -->
-				<!-- 			<a href="#" class="activo">Username</a> -->
-				<!-- 			<ul> -->
-				<!-- 				<li><a href="#">Sub opción 1</a></li> -->
-				<!-- 				<li><a href="#">Sub opción 2</a></li> -->
-				<!-- 			</ul> -->
-				<!-- 		</li> -->
-				<!-- 	</ul> -->
-				<!-- </nav> -->
 			</header>
 			
 			<aside>
@@ -69,7 +52,10 @@
 				</nav>
 			</aside>
 			
-			<section class="seccion clearfix">
+			<section id="sec" class="clearfix">
+				<ul id="nav"></ul><!-- navegacion de WS -->
+			</section><!-- #main -->
+			<section id="main" class="seccion clearfix">
 				<div id="reportes" class="fila clearfix">
 				</div><!-- fin fila -->
 			</section>
@@ -78,35 +64,44 @@
 		</div><!--!/#wrapper -->
     </div><!--!/#container -->
 <script type="text/javascript">
+$(document).ready(function() {
 	loaded = false;
 	counter = 0;
+	var h = 0;
 	$.couch.allDbs({
       		success : function(dbs) {
         	  dbs.filter(function(db_name){
         	      return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
         	  .forEach(function(db) {
-        	      var iframes = [];
-        	      reports.forEach( function(reps) {
-        	      	var iframe = "/reports/_design/reports/reports/"+reps+".html?workspace="+db+"&design="+designs[reps]+"&view="+views[reps]; 
-			iframes.push("<iframe class=\"iframe\" src="+iframe+" width=\"800\" height=\"500\"></iframe>");
-        	      });
-        	      $("#reportes").append("<div id=\"workspace-"+db+"\" class=\"workspace\"><h2>"+db+"</h2>"+iframes.join("")+"</div><!-- .workspace -->");
-        	      // cuando termina de cargar los datos de los workspaces setea el alto del menu de la izquierda
-        	      var h = $("div#reportes").height();
-        	      $("aside").height(h);
+                      $("#sec #nav").prepend('<li><a class="ws" href="'+db+'">'+db+'</a></li>');
+        	      if(counter == 0) {
+        	      	var iframes = get_iframes(db);
+			$("#reportes").append(iframes);
+		      }
         	      counter +=1;
 	        });
-
-
-
-
-	        if(counter < 1){ 
+	        if(counter < 1) { 
 	            $("#reportes").empty();
 	              $("#reportes").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
-	        }
+		}
+        	$("aside").height($("#main").height()+40);
 	      }
 	});
-
+	$(document).on("click", "a.ws", function(e) {
+		e.preventDefault();
+		$("#reportes").empty().append(get_iframes($(this).attr("href")));
+	});
+});
+function get_iframes(db) {
+	var iframes = [];
+	reports.forEach(function(rep) {
+		var iframe = "/reports/_design/reports/reports/"+rep+".html?workspace="+db+"&design="+designs[rep]+"&view="+views[rep];
+		iframes.push("<iframe class=\"iframe\" src="+iframe+" width=\"800\" height=\"500\"></iframe>");
+	});
+	var ret = "<div id=\"workspace-"+db+"\" class=\"workspace\"><h2>"+
+		db+"</h2>"+iframes.join("")+"</div><!-- .workspace -->";
+	return ret;
+}
 </script>
 
 </body>

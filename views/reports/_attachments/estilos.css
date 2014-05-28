@@ -524,3 +524,16 @@ label {
 	color: #2D333D;
 	font-size: 13px;
 }
+#sec {
+	background: none repeat scroll 0 0 #444444;
+	padding: 0;
+	width: 900px;
+}
+#sec a {
+	color: #ffffff;
+	font-size: 12px;
+	font-weight: bold;
+}
+#main {
+	margin-top: -10px;
+}

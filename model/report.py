@@ -14,7 +14,7 @@ import traceback
 import re
 import requests
 from persistence.utils import ET
-from plugins.api import PluginControllerAPIClient
+from apis.rest.api import PluginControllerAPIClient
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()

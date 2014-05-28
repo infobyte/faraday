@@ -16,7 +16,7 @@ from mockito import mock, when
 sys.path.append('.')
 
 from managers.all import PluginManager
-import plugins.api
+import apis.rest.api as api
 import model.api
 import model.controller
 from model.workspace import Workspace
@@ -30,11 +30,11 @@ class TestPluginControllerApi(unittest.TestCase):
     def setUpClass(cls):
         plugin_repo_path = os.path.join(os.getcwd(), "plugins", "repo")
         plugin_manager = PluginManager(plugin_repo_path)
-        plugins.api.startAPIs(plugin_manager)
+        api.startAPIs(plugin_manager)
 
     @classmethod
     def tearDownClass(cls):
-        plugins.api.stopAPIs()
+        api.stopAPIs()
 
     def setUp(self):
         self.model_controller = model.controller.ModelController(mock())

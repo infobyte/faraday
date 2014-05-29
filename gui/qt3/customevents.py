@@ -16,7 +16,7 @@ from gui.customevents import (LOGEVENT_ID, SHOWDIALOG_ID, SHOWPOPUP_ID,
                               CLEARHOSTS_ID, DIFFHOSTS_ID, SYNCFAILED_ID,
                               CONFLICTS_ID, WORKSPACE_CHANGED, CONFLICT_UPDATE,
                               RESOLVECONFLICTS_ID, UPDATEMODEL_ID, ADDHOST,
-                              EDITHOST, DELHOST)
+                              EDITHOST, DELHOST, CHANGEFROMINSTANCE)
 
 
 class LogCustomEvent(qt.QCustomEvent):
@@ -106,6 +106,12 @@ class DeleteHostCustomEvent(qt.QCustomEvent):
         self.host_id = e.host_id
 
 
+class ChangeFromInstanceCustomEvent(qt.QCustomEvent):
+    def __init__(self, e):
+        qt.QCustomEvent.__init__(self, e.type())
+        self.change = e.change
+
+
 class QtCustomEvent(qt.QCustomEvent):
     events = {
         LOGEVENT_ID: LogCustomEvent,
@@ -123,7 +129,8 @@ class QtCustomEvent(qt.QCustomEvent):
         UPDATEMODEL_ID: ModelObjectUpdateEvent,
         ADDHOST: AddHostCustomEvent,
         DELHOST: DeleteHostCustomEvent,
-        EDITHOST: EditHostCustomEvent
+        EDITHOST: EditHostCustomEvent,
+        CHANGEFROMINSTANCE: ChangeFromInstanceCustomEvent
     }
 
     @staticmethod

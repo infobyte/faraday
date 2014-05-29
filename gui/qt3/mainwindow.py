@@ -16,6 +16,7 @@ from gui.qt3.dialogs import *
 from gui.qt3.configdialog import ConfigDialog
 from gui.qt3.toolbars import *
 from gui.qt3.customevents import *
+from gui.qt3.notification import NotificationsDialog
 from model.guiapi import notification_center as notifier
 from managers.all import PersistenceManagerFactory, CouchdbManager
 
@@ -31,10 +32,6 @@ import time
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
-                                    
-test_count = 0
-
-                                                                                
 
 class MainWindow(qt.QMainWindow):
 
@@ -43,11 +40,9 @@ class MainWindow(qt.QMainWindow):
         self.setWindowState(qt.Qt.WindowMaximized)
         self.setCaption(title)
 
+        self.setIcon(qt.QPixmap(os.path.join(CONF.getIconsPath(),
+                                'faraday_icon.png')))
 
-                              
-        self.setIcon(qt.QPixmap(os.path.join(CONF.getIconsPath(),"faraday_icon.png")))
-
-                                                                                 
         self._main_app = main_app
         self._model_controller = model_controller
 
@@ -55,64 +50,52 @@ class MainWindow(qt.QMainWindow):
         self.setCentralWidget(self._mainArea)
         self._vb_splitter = qt.QSplitter(self._mainArea)
         self._vb_splitter.setOrientation(qt.QSplitter.Vertical)
-                                                         
         self._hb_splitter = qt.QSplitter(self._vb_splitter)
         self._hb_splitter.setOrientation(qt.QSplitter.Horizontal)
-                                                          
-                                                                            
-                                          
 
         self.statusBar().setSizeGripEnabled(False)
 
         self._shell_widgets = []
-
-                                  
-                                                                               
-                                         
+        self._notifications = []
         self._tab_manager = TabManager(self._hb_splitter)
-        self._perspective_manager = PerspectiveManager(self._hb_splitter, self._main_app)
+        self._perspective_manager = PerspectiveManager(self._hb_splitter,
+                                                       self._main_app)
 
-                        
-        self._hosts_treeview = HostsBrowser(self._perspective_manager,"Hosts")
+        self._hosts_treeview = HostsBrowser(self._perspective_manager,
+                                            'Hosts')
         notifier.registerWidget(self._hosts_treeview)
 
-        self._perspective_manager.registerPerspective(self._hosts_treeview, default=True)
-        
-                                                                        
-        wtw = WorkspaceTreeWindow(self._perspective_manager, "Workspaces",
+        self._perspective_manager.registerPerspective(self._hosts_treeview,
+                                                      default=True)
+
+        wtw = WorkspaceTreeWindow(self._perspective_manager, 'Workspaces',
                                   self._main_app.getWorkspaceManager())
         self._perspective_manager.registerPerspective(wtw)
         self._workspaces_treeview = wtw
 
-        self._log_console = LogConsole(self._vb_splitter,"Console")
+        self._log_console = LogConsole(self._vb_splitter, 'Console')
 
-                                         
         self._actions = dict()
         self._setupActions()
 
-                              
         self._menues = {}
         self._setupMenues()
 
-                  
-        self.main_toolbar = qt.QToolBar(self,'main toolbar')
+        self.main_toolbar = qt.QToolBar(self, 'main toolbar')
         self._setupMainToolbar()
 
-        self.location_toolbar = LocationToolbar(self,'location toolbar')
+        self.location_toolbar = LocationToolbar(self, 'location toolbar')
         self.location_toolbar.setOffset(1500)
-                                     
 
-                                    
         self._status_bar_widgets = dict()
         self._setupStatusBar()
 
         self._is_shell_maximized = False
 
-                    
-        self.shell_font=qt.QFont()
+        self.shell_font = qt.QFont()
         self.shell_font.setRawName(CONF.getFont())
         self.setSizeFont()
-        
+
     def setSizeFont(self):
         if re.search("fixed",str(self.shell_font.family()),re.IGNORECASE) is None:
             self.shell_font=qt.QFont()
@@ -237,7 +220,6 @@ class MainWindow(qt.QMainWindow):
             a = self._actions["debug"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"debug.png"))), "Debug", 0, self, "Debug" )
             self.connect(a, qt.SIGNAL('activated()'), self.doDebug)
 
-
     def _setupStatusBar(self):
         label_order = ["username", "userLevel", "space", "status"]
         for lname in label_order:
@@ -245,7 +227,15 @@ class MainWindow(qt.QMainWindow):
             l.setFrameStyle(qt.QFrame.MenuBarPanel | qt.QFrame.Plain)
             self._status_bar_widgets[lname] = l
             self.statusBar().addWidget(l, 0, True)
-                                                                                         
+
+        notification_button = qt.QPushButton("0", self)
+        notification_button.setSizePolicy(qt.QSizePolicy(
+            qt.QSizePolicy.Minimum, qt.QSizePolicy.Minimum))
+        self.connect(notification_button, qt.SIGNAL('clicked()'),
+                     self.showNotifications)
+        self._status_bar_widgets["notifications"] = notification_button
+        self.statusBar().addWidget(notification_button, 0, True)
+
         w = qt.QWidget(self)
         self.statusBar().addWidget(w, 1, True)
 
@@ -571,8 +561,9 @@ class MainWindow(qt.QMainWindow):
         elif event.type() ==  SHOWPOPUP_ID:
             self.showPopup(event.text, event.level)
         elif event.type() == CONFLICTS_ID:
-                                                                  
             self.showConflictsDialog(event.local)
+        elif event.type() == CHANGEFROMINSTANCE:
+            self.newNotification(event.change)
 
     def update(self, event):
         if event.type() ==  EXCEPTION_ID:
@@ -583,6 +574,20 @@ class MainWindow(qt.QMainWindow):
             self.showPopup(event.text, event.level)
         elif event.type() == CONFLICTS_ID:
             self.showConflictsDialog(event.local)
+
+    def newNotification(self, change):
+        button = self._status_bar_widgets["notifications"]
+        button.setText(str(int(button.text()) + 1))
+        button.setPaletteBackgroundColor(qt.QColor(180, 0, 0))
+        self._notifications.append(change)
+
+    def showNotifications(self):
+        button = self._status_bar_widgets["notifications"]
+        button.setText("0")
+        button.setPaletteBackgroundColor(self.paletteBackgroundColor())
+        dialog = NotificationsDialog(self, self._notifications)
+        dialog.exec_loop()
+        self._notifications[:] = []
 
     def toggleLogConsole(self):
         if self._log_console.isVisible():

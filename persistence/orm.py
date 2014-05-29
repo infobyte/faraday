@@ -8,7 +8,7 @@ See the file 'doc/LICENSE' for the license information
 import model
 import threading
 import traceback
-from controller.change import ChangeController
+from controllers.change import ChangeController
 
 
 class WorkspacePersister(object):

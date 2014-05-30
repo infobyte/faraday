@@ -55,15 +55,21 @@ class ChangeModelObject(Change):
     def __init__(self, doc):
         Change.__init__(self, doc)
         num_of_rev = int(doc.get("_rev")[0])
+        self.object_name = doc.get("name")
         if doc.get("_deleted"):
             self.action = self.MODEL_OBJECT_DELETED
             self.msg = "Object deleted"
         elif num_of_rev > 1:
             self.action = self.MODEL_OBJECT_MODIFIED
-            self.msg = "%s modified" % self.getType()
+            self.msg = "%s %s modified" % (self.getType(),
+                                           self.getObjectName())
         else:
             self.action = self.MODEL_OBJECT_ADDED
-            self.msg = "%s added" % self.getType()
+            self.msg = "%s %s added" % (self.getType(),
+                                        self.getObjectName())
+
+    def getObjectName(self):
+        return self.object_name
 
 
 class ChangeCmd(Change):

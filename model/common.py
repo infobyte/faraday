@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 '''
 Faraday Penetration Test IDE - Community Version
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -301,11 +300,8 @@ class ModelObject(object):
 
         self.updates = []
 
-    #def __getattr__( self, name):
-    #    l_strace = traceback.extract_stack(limit = 5)
-    #    print l_strace
-    #    print ("BBBBBBBBBBBBBBBB ModelObject attribute to refactor: %s" % name)
-
+    def accept(visitor):
+        visitor.visit(self) 
 
     def defaultValues(self):
         return [-1, 0, '', 'unknown', None, [], {}]

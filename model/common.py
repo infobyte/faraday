@@ -300,7 +300,7 @@ class ModelObject(object):
 
         self.updates = []
 
-    def accept(visitor):
+    def accept(self, visitor):
         visitor.visit(self) 
 
     def defaultValues(self):

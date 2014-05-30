@@ -22,22 +22,23 @@ import model.controller
 from model.workspace import Workspace
 from model.container import ModelObjectContainer
 from managers.all import PersistenceManager
+import test_cases.common as test_utils
 
 
 class TestPluginControllerApi(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.model_controller = model.controller.ModelController(mock())
         plugin_repo_path = os.path.join(os.getcwd(), "plugins", "repo")
         plugin_manager = PluginManager(plugin_repo_path)
-        api.startAPIs(plugin_manager)
+        api.startAPIs(plugin_manager, cls.model_controller)
 
     @classmethod
     def tearDownClass(cls):
         api.stopAPIs()
 
     def setUp(self):
-        self.model_controller = model.controller.ModelController(mock())
         self.workspace = mock(Workspace)
         self.workspace.name = "default"
         self.workspace._dmanager = mock(PersistenceManager())
@@ -51,10 +52,12 @@ class TestPluginControllerApi(unittest.TestCase):
         self.url_active_plugins = "http://127.0.0.1:9977/cmd/active-plugins"
         self.headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
+        self.url_model_edit_vulns = "http://127.0.0.1:9977/model/edit/vulns"
+
     def tearDown(self):
         requests.delete(self.url_active_plugins)
 
-    def test_cmd_input_ls(self):
+    def _test_cmd_input_ls(self):
         cmd = "ls"
         data = {"cmd": cmd}
         response = requests.post(self.url_input,
@@ -64,7 +67,7 @@ class TestPluginControllerApi(unittest.TestCase):
         self.assertEquals(response.status_code, 204, "Status Code should be 204: No Content, but received: %d" % response.status_code)
 
 
-    def test_cmd_input_ping(self):
+    def _test_cmd_input_ping(self):
         cmd = "ping 127.0.0.1"
         data = {"cmd": cmd}
         response = requests.post(self.url_input,
@@ -78,7 +81,7 @@ class TestPluginControllerApi(unittest.TestCase):
         self.assertIsNone(json_response.get("cmd"), "cmd should be None")
         self.assertIsNone(json_response.get("custom_output_file"), "custom_output_file should be None")
 
-    def test_cmd_input_nmap(self):
+    def _test_cmd_input_nmap(self):
         cmd = "nmap 127.0.0.1"
         data = {"cmd": cmd}
         response = requests.post(self.url_input,
@@ -92,7 +95,7 @@ class TestPluginControllerApi(unittest.TestCase):
         self.assertIsNotNone(json_response.get("cmd"), "cmd shouldn't be None")
         self.assertIsNotNone(json_response.get("custom_output_file"), "custom_output_file shouldn't be None")
 
-    def test_cmd_input_get_instead_post(self):
+    def _test_cmd_input_get_instead_post(self):
         cmd = "ls"
         data = {"cmd": cmd}
         response = requests.get(self.url_input,
@@ -101,7 +104,7 @@ class TestPluginControllerApi(unittest.TestCase):
 
         self.assertEquals(response.status_code, 405, "Status code should be 405, but received: %d" % response.status_code)
 
-    def test_cmd_output_nmap(self):
+    def _test_cmd_output_nmap(self):
         # send input to register the active plugin
         cmd = "nmap 127.0.0.1"
         data = {"cmd": cmd}
@@ -122,7 +125,7 @@ class TestPluginControllerApi(unittest.TestCase):
         self.assertEquals(response.status_code, 200, "Status Code should be 200: OK, but received: %d" % response.status_code)
         self.assertEquals(len(self.model_controller.getAllHosts()), 1, "Controller should have 1 host")
 
-    def test_cmd_output_plugin_not_active(self):
+    def _test_cmd_output_plugin_not_active(self):
         #send output, using a fake nmap xml ouput
         cmd = "nmap 127.0.0.1"
         output_file = open(os.path.join(os.getcwd(), 'test_cases/data/nmap_plugin_with_api.xml'))
@@ -133,6 +136,28 @@ class TestPluginControllerApi(unittest.TestCase):
                                  headers=self.headers)
 
         self.assertEquals(response.status_code, 400, "Status Code should be 400: Bad Request, but received: %d" % response.status_code)
+
+    def test_model_edit_vuln(self):
+        host = test_utils.create_host(self)
+        vuln = test_utils.create_host_vuln(self, host, 'vuln', 'desc', 'high')
+
+        data = {"vulnid": vuln.getID(), "hostid": host.getID(), 'name': 'coco',
+                'desc': 'newdesc', 'severity': 'low'}
+
+        response = requests.post(self.url_model_edit_vulns,
+                                 data=json.dumps(data),
+                                 headers=self.headers)
+
+        self.assertEquals(response.status_code, 200, "Status Code should be 200: OK")
+
+        addedhost = self.model_controller.getHost(host.getID())
+        addedvuln = addedhost.getVuln(vuln.getID())
+
+        self.assertEquals(addedvuln.name, 'coco', 'Name not updated')
+        self.assertEquals(addedvuln.desc, 'newdesc', 'Desc not updated')
+        self.assertEquals(addedvuln.severity, 'low', 'Severity not updated')
+
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -98,7 +98,7 @@ class MainApplication(object):
             model.api.devlog("Starting model controller daemon...")
             self._model_controller.start()
             model.api.startAPIServer()
-            restapi.startAPIs(self._plugin_manager)
+            restapi.startAPIs(self._plugin_manager, self._model_controller)
 
             #self._writeSplashMessage("Setting up main GUI...")
 

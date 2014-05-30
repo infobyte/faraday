@@ -428,6 +428,11 @@ class Interface(ModelObject):
                                 }, {'prefix': '00', 'gateway': '0000:0000:0000:0000:0000:0000:0000:0000', 'DNS': [], 'address': '0000:0000:0000:0000:0000:0000:0000:0000'}])
         return defVals
 
+    def accept(self, visitor):
+        for servs in self.getAllServices():
+            servs.accept(visitor)
+        visitor.visit(self) 
+
     
     def tieBreakable(self, property_key):
         if property_key in ["_hostnames"]:

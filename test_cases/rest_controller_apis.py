@@ -53,11 +53,12 @@ class TestPluginControllerApi(unittest.TestCase):
         self.headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
         self.url_model_edit_vulns = "http://127.0.0.1:9977/model/edit/vulns"
+        self.url_model_del_vulns = "http://127.0.0.1:9977/model/del/vulns"
 
     def tearDown(self):
         requests.delete(self.url_active_plugins)
 
-    def _test_cmd_input_ls(self):
+    def test_cmd_input_ls(self):
         cmd = "ls"
         data = {"cmd": cmd}
         response = requests.post(self.url_input,
@@ -67,7 +68,7 @@ class TestPluginControllerApi(unittest.TestCase):
         self.assertEquals(response.status_code, 204, "Status Code should be 204: No Content, but received: %d" % response.status_code)
 
 
-    def _test_cmd_input_ping(self):
+    def test_cmd_input_ping(self):
         cmd = "ping 127.0.0.1"
         data = {"cmd": cmd}
         response = requests.post(self.url_input,
@@ -81,7 +82,7 @@ class TestPluginControllerApi(unittest.TestCase):
         self.assertIsNone(json_response.get("cmd"), "cmd should be None")
         self.assertIsNone(json_response.get("custom_output_file"), "custom_output_file should be None")
 
-    def _test_cmd_input_nmap(self):
+    def test_cmd_input_nmap(self):
         cmd = "nmap 127.0.0.1"
         data = {"cmd": cmd}
         response = requests.post(self.url_input,
@@ -95,7 +96,7 @@ class TestPluginControllerApi(unittest.TestCase):
         self.assertIsNotNone(json_response.get("cmd"), "cmd shouldn't be None")
         self.assertIsNotNone(json_response.get("custom_output_file"), "custom_output_file shouldn't be None")
 
-    def _test_cmd_input_get_instead_post(self):
+    def test_cmd_input_get_instead_post(self):
         cmd = "ls"
         data = {"cmd": cmd}
         response = requests.get(self.url_input,
@@ -104,7 +105,7 @@ class TestPluginControllerApi(unittest.TestCase):
 
         self.assertEquals(response.status_code, 405, "Status code should be 405, but received: %d" % response.status_code)
 
-    def _test_cmd_output_nmap(self):
+    def test_cmd_output_nmap(self):
         # send input to register the active plugin
         cmd = "nmap 127.0.0.1"
         data = {"cmd": cmd}
@@ -125,7 +126,7 @@ class TestPluginControllerApi(unittest.TestCase):
         self.assertEquals(response.status_code, 200, "Status Code should be 200: OK, but received: %d" % response.status_code)
         self.assertEquals(len(self.model_controller.getAllHosts()), 1, "Controller should have 1 host")
 
-    def _test_cmd_output_plugin_not_active(self):
+    def test_cmd_output_plugin_not_active(self):
         #send output, using a fake nmap xml ouput
         cmd = "nmap 127.0.0.1"
         output_file = open(os.path.join(os.getcwd(), 'test_cases/data/nmap_plugin_with_api.xml'))
@@ -137,7 +138,7 @@ class TestPluginControllerApi(unittest.TestCase):
 
         self.assertEquals(response.status_code, 400, "Status Code should be 400: Bad Request, but received: %d" % response.status_code)
 
-    def test_model_edit_vuln(self):
+    def test_model_edit_host_vuln(self):
         host = test_utils.create_host(self)
         vuln = test_utils.create_host_vuln(self, host, 'vuln', 'desc', 'high')
 
@@ -157,6 +158,109 @@ class TestPluginControllerApi(unittest.TestCase):
         self.assertEquals(addedvuln.desc, 'newdesc', 'Desc not updated')
         self.assertEquals(addedvuln.severity, 'low', 'Severity not updated')
 
+
+    def test_model_edit_int_vuln(self):
+        host = test_utils.create_host(self)
+        inter = test_utils.create_interface(self, host)
+        vuln = test_utils.create_int_vuln(self, host, inter, 'vuln', 'desc', 'high')
+
+        data = {"vulnid": vuln.getID(), "hostid": host.getID(), 'name': 'coco',
+                'desc': 'newdesc', 'severity': 'low'}
+
+        response = requests.post(self.url_model_edit_vulns,
+                                 data=json.dumps(data),
+                                 headers=self.headers)
+
+        self.assertEquals(response.status_code, 200, "Status Code should be 200: OK")
+
+        addedhost = self.model_controller.getHost(host.getID())
+        addedInterface = addedhost.getInterface(inter.getID())
+        addedvuln = addedInterface.getVuln(vuln.getID())
+
+        self.assertEquals(addedvuln.name, 'coco', 'Name not updated')
+        self.assertEquals(addedvuln.desc, 'newdesc', 'Desc not updated')
+        self.assertEquals(addedvuln.severity, 'low', 'Severity not updated')
+
+
+    def test_model_edit_serv_vuln(self):
+        host = test_utils.create_host(self)
+        inter = test_utils.create_interface(self, host)
+        serv = test_utils.create_service(self, host, inter)
+        vuln = test_utils.create_serv_vuln(self, host, serv, 'vuln', 'desc', 'high')
+
+        data = {"vulnid": vuln.getID(), "hostid": host.getID(), 'name': 'coco',
+                'desc': 'newdesc', 'severity': 'low'}
+
+        response = requests.post(self.url_model_edit_vulns,
+                                 data=json.dumps(data),
+                                 headers=self.headers)
+
+        self.assertEquals(response.status_code, 200, "Status Code should be 200: OK")
+
+        addedhost = self.model_controller.getHost(host.getID())
+        addedInterface = addedhost.getInterface(inter.getID())
+        addedService = addedInterface.getService(serv.getID())
+        addedvuln = addedService.getVuln(vuln.getID())
+
+        self.assertEquals(addedvuln.name, 'coco', 'Name not updated')
+        self.assertEquals(addedvuln.desc, 'newdesc', 'Desc not updated')
+        self.assertEquals(addedvuln.severity, 'low', 'Severity not updated')
+
+
+    def test_model_remove_host_vuln(self):
+        host = test_utils.create_host(self)
+        vuln = test_utils.create_host_vuln(self, host, 'vuln', 'desc', 'high')
+
+        data = {"vulnid": vuln.getID(), "hostid": host.getID(), 'name': 'coco',
+                'desc': 'newdesc', 'severity': 'low'}
+
+        response = requests.delete(self.url_model_del_vulns,
+                                 data=json.dumps(data),
+                                 headers=self.headers)
+
+        self.assertEquals(response.status_code, 200, "Status Code should be 200: OK")
+
+        addedhost = self.model_controller.getHost(host.getID())
+        addedvuln = addedhost.getVulns()
+
+        self.assertEquals(len(addedvuln), 0, 'Vuln not removed from Host')
+
+    def test_model_del_int_vuln(self):
+        host = test_utils.create_host(self)
+        inter = test_utils.create_interface(self, host)
+        vuln = test_utils.create_int_vuln(self, host, inter, 'vuln', 'desc', 'high')
+
+        data = {"vulnid": vuln.getID(), "hostid": host.getID()}
+
+        response = requests.delete(self.url_model_del_vulns,
+                                 data=json.dumps(data),
+                                 headers=self.headers)
+
+        self.assertEquals(response.status_code, 200, "Status Code should be 200: OK")
+
+        addedhost = self.model_controller.getHost(host.getID())
+        addedInterface = addedhost.getInterface(inter.getID())
+        self.assertEquals(len(addedInterface.getVulns()), 0, 'Interface vulns not deleted')
+
+    def test_model_remove_serv_vuln(self):
+        host = test_utils.create_host(self)
+        inter = test_utils.create_interface(self, host)
+        serv = test_utils.create_service(self, host, inter)
+        vuln = test_utils.create_serv_vuln(self, host, serv, 'vuln', 'desc', 'high')
+
+        data = {"vulnid": vuln.getID(), "hostid": host.getID()}
+
+        response = requests.delete(self.url_model_del_vulns,
+                                 data=json.dumps(data),
+                                 headers=self.headers)
+
+        self.assertEquals(response.status_code, 200, "Status Code should be 200: OK")
+
+        addedhost = self.model_controller.getHost(host.getID())
+        addedInterface = addedhost.getInterface(inter.getID())
+        addedService = addedInterface.getService(serv.getID())
+
+        self.assertEquals(len(addedService.getVulns()), 0, 'Service vulns not removed')
 
 
 if __name__ == '__main__':

@@ -45,7 +45,7 @@ class ModelObjectCRUD(unittest.TestCase):
     def tearDown(self):
         self.wm.removeWorkspace(self.temp_workspace.name)
 
-    def _testAddHost(self):
+    def testAddHost(self):
         """ This test case creates a host within the Model Controller context
         then checks it's vality"""
         # When
@@ -59,7 +59,7 @@ class ModelObjectCRUD(unittest.TestCase):
                 'Saved object name is not correctly saved')
 
 
-    def _testAddVulnToHost(self):
+    def testAddVulnToHost(self):
         """ This test case creates a host within the Model Controller context
         then adds a VULN"""
 
@@ -76,7 +76,7 @@ class ModelObjectCRUD(unittest.TestCase):
 
 
 
-    def _testAddVulnToInterface(self):
+    def testAddVulnToInterface(self):
         """ This test case creates a host within the Model Controller context
         adds an interface to it then adds a VULN"""
 
@@ -96,7 +96,7 @@ class ModelObjectCRUD(unittest.TestCase):
         # Then
         self.assertIn(vuln, vulns, 'Vuln not added')
 
-    def _testAddVulnToService(self):
+    def testAddVulnToService(self):
         """ This test case creates a host within the Model Controller context
         adds an interface to it then adds service then a VULN"""
 
@@ -119,7 +119,7 @@ class ModelObjectCRUD(unittest.TestCase):
         self.assertIn(vuln, vulns, 'Vuln not added')
 
 
-    def _testAddVulnWebToHost(self):
+    def testAddVulnWebToHost(self):
         """ This test case creates a host within the Model Controller context
         then adds a VulnWeb"""
 
@@ -135,7 +135,7 @@ class ModelObjectCRUD(unittest.TestCase):
         self.assertIn(vuln, vulns, 'Vuln not added')
 
 
-    def _testAddVulnWebToInterface(self):
+    def testAddVulnWebToInterface(self):
         """ This test case creates a host within the Model Controller context
         adds an interface to it then adds a VulnWeb"""
 
@@ -164,7 +164,7 @@ class ModelObjectCRUD(unittest.TestCase):
                 'Vuln not reloaded')
 
 
-    def _testAddVulnWebToService(self):
+    def testAddVulnWebToService(self):
         """ This test case creates a host within the Model Controller context
         adds an interface to it then adds service then a VulnWeb"""
 
@@ -187,7 +187,7 @@ class ModelObjectCRUD(unittest.TestCase):
         self.assertIn(vuln, vulns, 'Vuln not added')
 
 
-    def _testAddNoteToHost(self):
+    def testAddNoteToHost(self):
         """ This test case creates a host within the Model Controller context
         then adds a Note"""
 
@@ -202,7 +202,7 @@ class ModelObjectCRUD(unittest.TestCase):
         self.assertIn(note, notes, 'Note not added')
 
 
-    def _testAddNoteToInterface(self):
+    def testAddNoteToInterface(self):
         """ This test case creates a host within the Model Controller context
         adds an interface to it then adds a Note"""
 
@@ -222,7 +222,7 @@ class ModelObjectCRUD(unittest.TestCase):
         self.assertIn(note, notes, 'Note not added')
 
 
-    def _testAddNoteToService(self):
+    def testAddNoteToService(self):
         """ This test case creates a host within the Model Controller context
         adds an interface to it then adds service then a Note"""
 
@@ -243,7 +243,7 @@ class ModelObjectCRUD(unittest.TestCase):
         # Then
         self.assertIn(note, notes, 'Note not added')
 
-    def _testDeleteHost(self):
+    def testDeleteHost(self):
         """ Creates a Host to test it's removal from the controllers list """
 
         host1 = test_utils.create_host(self, "coquito")
@@ -258,7 +258,7 @@ class ModelObjectCRUD(unittest.TestCase):
         self.assertNotIn(host1.getID(), hosts_ids,
                                 "Host not deleted")
 
-    def _testDeleteInterface(self):
+    def testDeleteInterface(self):
         """ Creates a Host and an Interface, then deletes the interface
         to test it's removal from the controllers list """
 
@@ -285,7 +285,7 @@ class ModelObjectCRUD(unittest.TestCase):
                                 "Interface not in host!")
 
 
-    def _testDeleteService(self):
+    def testDeleteService(self):
         """ Creates a Host an Interface and a Service, then deletes the Service
         to test it's removal from the controllers list """
 
@@ -319,7 +319,7 @@ class ModelObjectCRUD(unittest.TestCase):
         self.assertNotIn(service1.getID(), services_ids, \
                         "Service not deleted")
 
-    def _testDeleteVulnFromHost(self):
+    def testDeleteVulnFromHost(self):
         """ Creates a Host adds a Vuln then removes """
 
         host1 = test_utils.create_host(self, "coquito")
@@ -341,7 +341,7 @@ class ModelObjectCRUD(unittest.TestCase):
         self.assertNotIn(vuln, added_host.getVulns(), 'Vuln not removed')
 
 
-    def _testDelVulnFromInterface(self):
+    def testDelVulnFromInterface(self):
         """ This test case creates a host within the Model Controller context
         adds an interface to it then adds a VULN"""
 
@@ -372,7 +372,7 @@ class ModelObjectCRUD(unittest.TestCase):
 
 
 
-    def _testDelVulnFromService(self):
+    def testDelVulnFromService(self):
         """ This test case creates a host within the Model Controller context
         adds an interface to it then adds service then a Vuln, then removes the
         Vuln"""
@@ -405,7 +405,7 @@ class ModelObjectCRUD(unittest.TestCase):
         vulns = added_service.getVulns()
         self.assertNotIn(vuln, vulns, 'Vuln not removed')
 
-    def _testDeleteNoteFromHost(self):
+    def testDeleteNoteFromHost(self):
         """ Creates a Host adds a Note then removes """
 
         host1 = test_utils.create_host(self, "coquito")
@@ -426,7 +426,7 @@ class ModelObjectCRUD(unittest.TestCase):
         self.assertNotIn(note, added_host.getNotes(), 'Note not removed')
 
 
-    def _testDelNoteFromInterface(self):
+    def testDelNoteFromInterface(self):
         """ Creates a Hosts, adds an Interface and a Note, then removes the
         note """
 
@@ -456,7 +456,7 @@ class ModelObjectCRUD(unittest.TestCase):
 
 
 
-    def _testDelNoteFromService(self):
+    def testDelNoteFromService(self):
         """ Creates a Hosts, adds an Interface, a Service and a Note, then removes the
         note """
 
@@ -487,7 +487,7 @@ class ModelObjectCRUD(unittest.TestCase):
         notes = added_service.getNotes()
         self.assertNotIn(note, notes, 'Note not removed')
 
-    def _testVulnHostLookup(self):
+    def testVulnHostLookup(self):
         host = test_utils.create_host(self)
         vuln = test_utils.create_host_vuln(self, host, 'vuln', 'desc', 'high')
         visitor = VulnsLookupVisitor(vuln.getID())

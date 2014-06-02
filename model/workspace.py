@@ -380,6 +380,9 @@ class WorkspaceManager(object):
     def couchAvailable(self, isit):
         self._couchAvailable = isit
 
+    def _notifyWorkspaceNoConnection(self):
+        notifier.showPopup("Couchdb Connection lost. Defaulting to memory. Fix network and try again in 5 minutes.")
+
     def reconnect(self):
         if not self.reconnectCouchManager():
             self._notifyWorkspaceNoConnection()

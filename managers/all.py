@@ -140,13 +140,14 @@ class CouchdbManager(PersistenceManager):
             return []
         self._model_object_types = get_types([ModelObject])
         try:
-            self.testCouchUrl(uri)
-            url=urlparse(uri)
-            getLogger(self).debug("Setting user,pass %s %s" % (url.username, url.password))
-            self.__serv = Server(uri = uri)
-            #print dir(self.__serv)
-            self.__serv.resource_class.credentials = (url.username, url.password)
-            self._available = True
+            if uri is not None:
+                self.testCouchUrl(uri)
+                url = urlparse(uri)
+                getLogger(self).debug("Setting user,pass %s %s" % (url.username, url.password))
+                self.__serv = Server(uri=uri)
+                #print dir(self.__serv)
+                self.__serv.resource_class.credentials = (url.username, url.password)
+                self._available = True
         except:
             getLogger(self).warn("No route to couchdb server on: %s" % uri)
             getLogger(self).debug(traceback.format_exc())
@@ -170,35 +171,33 @@ class CouchdbManager(PersistenceManager):
 
         return ret_val
 
-
-
     @staticmethod
     def testCouch(uri):
-        host, port = None, None
-        try:
-            import socket
-            url=urlparse(uri)
-            proto = url.scheme
-            host=url.hostname
-            port=url.port
+        if uri is not None:
+            host, port = None, None
+            try:
+                import socket
+                url = urlparse(uri)
+                proto = url.scheme
+                host = url.hostname
+                port = url.port
 
-            port = port if port else socket.getservbyname(proto)
-            s = socket.socket()
-            s.settimeout(1)
-            s.connect((host, int(port)))
-        except:
-            return False
-        getLogger(CouchdbManager).info("Connecting Couch to: %s:%s" % (host, port))
-        return True
-
-
+                port = port if port else socket.getservbyname(proto)
+                s = socket.socket()
+                s.settimeout(1)
+                s.connect((host, int(port)))
+            except:
+                return False
+            getLogger(CouchdbManager).info("Connecting Couch to: %s:%s" % (host, port))
+            return True
 
     def testCouchUrl(self, uri):
-        url=urlparse(uri)
-        proto = url.scheme
-        host=url.hostname
-        port=url.port        
-        self.test(host, int(port))
+        if uri is not None:
+            url = urlparse(uri)
+            proto = url.scheme
+            host = url.hostname
+            port = url.port
+            self.test(host, int(port))
 
     def test(self, address, port):
         import socket

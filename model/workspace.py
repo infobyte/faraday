@@ -214,6 +214,7 @@ class WorkspaceOnFS(Workspace):
         for filename in files:
             newHost = self.__loadHostFromFile(filename)
             modelobjectcontainer[newHost.getID()] = newHost
+        notifier.workspaceLoad(self.getAllHosts())
 
     def __loadHostFromFile(self, filename):
         if os.path.basename(filename) in self._persistence_excluded_filenames:

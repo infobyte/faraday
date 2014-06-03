@@ -327,7 +327,13 @@ class WorkspaceOnCouch(Workspace):
                     hosts['subs'] = subs
                     continue
 
-                leaf = find_leaf(id_path)
+                leaf = {}
+	            try:
+                    leaf = find_leaf(id_path)
+                except Exception as e:
+                    model.api.devlog('Object parent not found, skipping: %s' % '.'.join(id_path))
+                    continue
+
                 subs = leaf.get('subs', {})
                 subs[d['obj_id']] = d
                 leaf['subs'] = subs

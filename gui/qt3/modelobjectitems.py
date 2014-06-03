@@ -233,14 +233,13 @@ class RootListViewItem(ModelObjectListViewItem):
     type = "Root"
     def __init__(self, qtparent, name = "", model_object=None):
         ModelObjectListViewItem.__init__(self, qtparent, name, model_object)
-        self.setOpen(True)
 
 class WorkspaceListViewItem(ModelObjectListViewItem):
     type = "Workspace"
     def __init__(self, qtparent, model_object=None):
-        ModelObjectListViewItem.__init__(self, qtparent, model_object.name, model_object)
-        self.setOpen(True)
+        ModelObjectListViewItem.__init__(self, qtparent, model_object.name)
         self.nconflicts = 0
+        self.setOpen(True)
 
     def _checkVulns(self):
         pass
@@ -268,7 +267,6 @@ class CategoryListViewItem(ModelObjectListViewItem):
     def __init__(self, qtparent, name = "", model_object=None):
         ModelObjectListViewItem.__init__(self, qtparent, name, model_object)
         self.setDropEnabled(True)                                     
-        self.setOpen(True)
 
     def selectByWord(self, word):
         for host_item in self.getChilds().values():
@@ -284,7 +282,6 @@ class HostListViewItem(ModelObjectListViewItem):
                                                      
                                                     
         self.setDragEnabled(True)
-        self.setOpen(True)
         self.editor = HostEditor(self.object)
 
     def _populateChildItems(self):
@@ -371,7 +368,6 @@ class InterfaceListViewItem(ModelObjectListViewItem):
     def __init__(self, qtparent, name = "", model_object=None):
         ModelObjectListViewItem.__init__(self, qtparent, name, model_object)
         self.editor = InterfaceEditor(self.object)
-        self.setOpen(True)
 
     def _populateChildItems(self):
                                                  
@@ -415,8 +411,8 @@ class NoteRootItem(RootListViewItem):
     type = "NoteRoot"
     def __init__(self, qtparent, name = "", model_object=None):
         ModelObjectListViewItem.__init__(self, qtparent, name, model_object)
-        self.setOpen(True)
         self.name = self.object.name
+        self.setOpen(True)
 
     def _setIcon(self):
         pass
@@ -425,9 +421,6 @@ class NoteListViewItem(ModelObjectListViewItem):
     type = "Note"
     def __init__(self, qtparent, name = "", model_object=None):
         ModelObjectListViewItem.__init__(self, qtparent, name, model_object)
-                                   
-                                          
-        self.setOpen(True)
 
     def _populateChildItems(self):
         self.addNotes()
@@ -442,8 +435,8 @@ class VulnRootItem(RootListViewItem):
     type = "VulnRoot"
     def __init__(self, qtparent, name = "", model_object=None):
         ModelObjectListViewItem.__init__(self, qtparent, name, model_object)
-        self.setOpen(True)
         self.name = self.object.name
+        self.setOpen(True)
 
     def _setIcon(self):
         pass
@@ -452,9 +445,6 @@ class VulnListViewItem(ModelObjectListViewItem):
     type = "Vuln"
     def __init__(self, qtparent, name = "", model_object=None):
         ModelObjectListViewItem.__init__(self, qtparent, name, model_object)
-                                   
-                                          
-        self.setOpen(True)
 
     def _populateChildItems(self):
         self.addVulns()
@@ -474,8 +464,8 @@ class CredRootItem(RootListViewItem):
     type = "CredRoot"
     def __init__(self, qtparent, name = "", model_object=None):
         ModelObjectListViewItem.__init__(self, qtparent, name, model_object)
-        self.setOpen(True)
         self.name = self.object.name
+        self.setOpen(True)
 
     def _setIcon(self):
         pass
@@ -484,7 +474,6 @@ class CredListViewItem(ModelObjectListViewItem):
     type = "Cred"
     def __init__(self, qtparent, name = "", model_object=None):
         ModelObjectListViewItem.__init__(self, qtparent, name, model_object)
-        self.setOpen(True)
         self.name = "%s: %s" % (model_object.username, model_object.password)
 
     def _populateChildItems(self):
@@ -495,4 +484,5 @@ class CredListViewItem(ModelObjectListViewItem):
             self.takeItem(s)
                   
         self._childs = []
+
 

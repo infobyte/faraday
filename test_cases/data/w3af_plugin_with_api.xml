@@ -1,0 +1,594 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<w3afrun start="1382975546" startstr="Mon Oct 28 12:52:26 2013" xmloutputversion="2.0">
+    <w3af-version>w3af - Web Application Attack and Audit Framework
+Version: 1.2
+Revision: unknown
+Distribution: Debian
+Author: Andres Riancho and the w3af team.</w3af-version>
+    <scaninfo target="http://s16620-101136-yly.sipontum.hack.me/">
+        <audit>
+            <plugin name="sqli"/>
+            <plugin name="xss">
+                <config parameter="checkStored" value="True"/>
+                <config parameter="numberOfChecks" value="3"/>
+            </plugin>
+        </audit>
+        <bruteforce/>
+        <grep>
+            <plugin name="dotNetEventValidation"/>
+            <plugin name="pathDisclosure"/>
+            <plugin name="codeDisclosure"/>
+            <plugin name="blankBody"/>
+            <plugin name="metaTags">
+                <config parameter="search404" value="False"/>
+            </plugin>
+            <plugin name="motw">
+                <config parameter="withoutMOTW" value="False"/>
+            </plugin>
+            <plugin name="privateIP"/>
+            <plugin name="directoryIndexing"/>
+            <plugin name="strangeReason"/>
+            <plugin name="ssn"/>
+            <plugin name="fileUpload"/>
+            <plugin name="strangeHTTPCode"/>
+            <plugin name="svnUsers"/>
+            <plugin name="hashFind"/>
+            <plugin name="getMails">
+                <config parameter="onlyTargetDomain" value="True"/>
+            </plugin>
+            <plugin name="httpAuthDetect"/>
+            <plugin name="wsdlGreper"/>
+            <plugin name="formAutocomplete"/>
+            <plugin name="passwordProfiling"/>
+            <plugin name="domXss">
+                <config parameter="simpleGrep" value="False"/>
+                <config parameter="smartGrep" value="True"/>
+            </plugin>
+            <plugin name="ajax"/>
+            <plugin name="findComments">
+                <config parameter="search404" value="False"/>
+            </plugin>
+            <plugin name="httpInBody"/>
+            <plugin name="strangeHeaders"/>
+            <plugin name="lang"/>
+            <plugin name="errorPages"/>
+            <plugin name="collectCookies"/>
+            <plugin name="strangeParameters"/>
+            <plugin name="error500"/>
+            <plugin name="objects"/>
+            <plugin name="creditCards"/>
+            <plugin name="oracle"/>
+            <plugin name="feeds"/>
+        </grep>
+        <evasion/>
+        <output>
+            <plugin name="xmlFile">
+                <config parameter="fileName" value="report-w3af.xml"/>
+            </plugin>
+            <plugin name="console">
+                <config parameter="verbose" value="False"/>
+            </plugin>
+            <plugin name="gtkOutput"/>
+        </output>
+        <mangle/>
+        <auth/>
+        <discovery>
+            <plugin name="webSpider">
+                <config parameter="onlyForward" value="False"/>
+                <config parameter="followRegex" value=".*"/>
+                <config parameter="ignoreRegex" value=""/>
+            </plugin>
+        </discovery>
+    </scaninfo>
+    <vulnerability id="[183]" method="GET" name="Cross site scripting vulnerability" plugin="xss" severity="Medium" url="http://s16620-101136-yly.sipontum.hack.me/chainedxss/search.php" var="q">
+        <description>Cross Site Scripting was found at: &quot;http://s16620-101136-yly.sipontum.hack.me/chainedxss/search.php&quot;, using HTTP method GET. The sent data was: &quot;q=%3CSCrIPT%3Ealert%28%22GlSV%22%29%3C%2FSCrIPT%3E&quot;. This vulnerability affects ALL browsers. This vulnerability was found in the request with id 183.</description>
+        <http-transactions>
+            <http-transaction id="183">
+                <httprequest>
+                    <status>GET http://s16620-101136-yly.sipontum.hack.me/chainedxss/search.php?q=%3CSCrIPT%3Ealert%28%22GlSV%22%29%3C%2FSCrIPT%3E HTTP/1.1</status>
+                    <headers>
+                        <header content="s16620-101136-yly.sipontum.hack.me" field="Host"/>
+                        <header content="http://s16620-101136-yly.sipontum.hack.me/" field="Referer"/>
+                        <header content="gzip" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.sourceforge.net" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse>
+                    <status>HTTP/1.1 200 OK</status>
+                    <headers>
+                        <header content="Mon, 28 Oct 2013 15:52:55 GMT" field="Date"/>
+                        <header content="366" field="Content-Length"/>
+                        <header content="Microsoft-IIS/7.5" field="Server"/>
+                        <header content="text/html" field="Content-Type"/>
+                        <header content="ASP.NET" field="X-Powered-By"/>
+                    </headers>
+                    <body content-encoding="text">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;../global.css&quot; type=&quot;text/css&quot; /&gt;
+  &lt;title&gt;XSSed&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt;Here are the results for &lt;SCrIPT&gt;alert(&quot;GlSV&quot;)&lt;/SCrIPT&gt;:
+&lt;ol&gt;
+  &lt;li&gt;&lt;a href=&quot;account.php?user=neo&quot;&gt;My Account&lt;/a&gt; - account.php (0.5KB)&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;index.htm&quot;&gt;Home&lt;/a&gt; - index.htm (0.4KB)&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+ &lt;/body&gt;
+&lt;/html&gt;</body>
+                </httpresponse>
+            </http-transaction>
+        </http-transactions>
+    </vulnerability>
+    <vulnerability id="[225]" method="GET" name="Cross site scripting vulnerability" plugin="xss" severity="Medium" url="http://s16620-101136-yly.sipontum.hack.me/filteredxss/vulnerable.php" var="id">
+        <description>Cross Site Scripting was found at: &quot;http://s16620-101136-yly.sipontum.hack.me/filteredxss/vulnerable.php&quot;, using HTTP method GET. The sent data was: &quot;creditcard=&amp;id=%3CScRIPT%3Ea%3D%2FnlkK%2F%0Aalert%28a.source%29%3C%2FSCRiPT%3E&quot;. The modified parameter was &quot;id&quot;. This vulnerability affects ALL browsers. This vulnerability was found in the request with id 225.</description>
+        <http-transactions>
+            <http-transaction id="225">
+                <httprequest>
+                    <status>GET http://s16620-101136-yly.sipontum.hack.me/filteredxss/vulnerable.php?creditcard=&amp;id=%3CScRIPT%3Ea%3D%2FnlkK%2F%0Aalert%28a.source%29%3C%2FSCRiPT%3E HTTP/1.1</status>
+                    <headers>
+                        <header content="s16620-101136-yly.sipontum.hack.me" field="Host"/>
+                        <header content="http://s16620-101136-yly.sipontum.hack.me/" field="Referer"/>
+                        <header content="gzip" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.sourceforge.net" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse>
+                    <status>HTTP/1.1 200 OK</status>
+                    <headers>
+                        <header content="Mon, 28 Oct 2013 15:53:00 GMT" field="Date"/>
+                        <header content="347" field="Content-Length"/>
+                        <header content="Microsoft-IIS/7.5" field="Server"/>
+                        <header content="text/html" field="Content-Type"/>
+                        <header content="ASP.NET" field="X-Powered-By"/>
+                    </headers>
+                    <body content-encoding="text">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;../global.css&quot; type=&quot;text/css&quot; /&gt;
+  &lt;title&gt;XSSed&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt;&lt;h1&gt;Please Confirm Your Order&lt;/h1&gt;
+&lt;div id=&quot;creditcard&quot;&gt;&lt;/div&gt;
+
+&lt;script type=&quot;text/javascript&quot;&gt;
+var q = &quot;&lt;ScRIPT&gt;a=/nlkK/
+alert(a.source)&lt;/SCRiPT&gt;&quot;;
+document.write(&quot;&lt;!-- &quot; + q + &quot;--&gt;&quot;);
+&lt;/script&gt;
+ &lt;/body&gt;
+&lt;/html&gt;</body>
+                </httpresponse>
+            </http-transaction>
+        </http-transactions>
+    </vulnerability>
+    <vulnerability id="[242]" method="GET" name="Cross site scripting vulnerability" plugin="xss" severity="Medium" url="http://s16620-101136-yly.sipontum.hack.me/chainedxss/account.php" var="user">
+        <description>Cross Site Scripting was found at: &quot;http://s16620-101136-yly.sipontum.hack.me/chainedxss/account.php&quot;, using HTTP method GET. The sent data was: &quot;user=%3CScRIPt%2FXSS%20SrC%3Dhttp%3A%2F%2F9Mqz%2Fx.js%3E%3C%2FScRIPt%3E&quot;. This vulnerability affects ALL browsers. This vulnerability was found in the request with id 242.</description>
+        <http-transactions>
+            <http-transaction id="242">
+                <httprequest>
+                    <status>GET http://s16620-101136-yly.sipontum.hack.me/chainedxss/account.php?user=%3CScRIPt%2FXSS%20SrC%3Dhttp%3A%2F%2F9Mqz%2Fx.js%3E%3C%2FScRIPt%3E HTTP/1.1</status>
+                    <headers>
+                        <header content="s16620-101136-yly.sipontum.hack.me" field="Host"/>
+                        <header content="http://s16620-101136-yly.sipontum.hack.me/" field="Referer"/>
+                        <header content="gzip" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.sourceforge.net" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse>
+                    <status>HTTP/1.1 200 OK</status>
+                    <headers>
+                        <header content="Mon, 28 Oct 2013 15:53:03 GMT" field="Date"/>
+                        <header content="588" field="Content-Length"/>
+                        <header content="Microsoft-IIS/7.5" field="Server"/>
+                        <header content="text/html" field="Content-Type"/>
+                        <header content="ASP.NET" field="X-Powered-By"/>
+                    </headers>
+                    <body content-encoding="text">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;../global.css&quot; type=&quot;text/css&quot; /&gt;
+  &lt;title&gt;XSSed&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt; &lt;a href=&quot;index.htm&quot;&gt;Return Home&lt;/a&gt;
+ &lt;h1&gt;My Account&lt;/h1&gt;
+ &lt;pre&gt;
+  Username: &lt;ScRIPt/XSS SrC=http://9Mqz/x.js&gt;&lt;/ScRIPt&gt;
+  Email: neo@example.com
+  Registered: June 21st, 2011&lt;/pre&gt;
+
+ &lt;h2&gt;Change Password&lt;/h2&gt;
+  &lt;pre&gt;
+   &lt;form action=&quot;setaccount.php&quot;&gt;
+   Password: &lt;input type=&quot;password&quot; id=&quot;pass1&quot; name=&quot;pass1&quot; /&gt;&lt;br /&gt;
+   Repeat it:&lt;input type=&quot;password&quot; id=&quot;pass2&quot; name=&quot;pass2&quot; /&gt;&lt;br /&gt;
+   &lt;input type=&quot;submit&quot; /&gt;
+   &lt;/form&gt;
+  &lt;/pre&gt;
+
+
+ &lt;/body&gt;
+&lt;/html&gt;</body>
+                </httpresponse>
+            </http-transaction>
+        </http-transactions>
+    </vulnerability>
+    <vulnerability id="[276]" method="GET" name="Cross site scripting vulnerability" plugin="xss" severity="Medium" url="http://s16620-101136-yly.sipontum.hack.me/javascriptxss/vulnerable.php" var="q">
+        <description>Cross Site Scripting was found at: &quot;http://s16620-101136-yly.sipontum.hack.me/javascriptxss/vulnerable.php&quot;, using HTTP method GET. The sent data was: &quot;q=%3CScRIPt%2FXSS%20SrC%3Dhttp%3A%2F%2FT3mz%2Fx.js%3E%3C%2FScRIPt%3E&quot;. This vulnerability affects ALL browsers. This vulnerability was found in the request with id 276.</description>
+        <http-transactions>
+            <http-transaction id="276">
+                <httprequest>
+                    <status>GET http://s16620-101136-yly.sipontum.hack.me/javascriptxss/vulnerable.php?q=%3CScRIPt%2FXSS%20SrC%3Dhttp%3A%2F%2FT3mz%2Fx.js%3E%3C%2FScRIPt%3E HTTP/1.1</status>
+                    <headers>
+                        <header content="s16620-101136-yly.sipontum.hack.me" field="Host"/>
+                        <header content="http://s16620-101136-yly.sipontum.hack.me/" field="Referer"/>
+                        <header content="gzip" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.sourceforge.net" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse>
+                    <status>HTTP/1.1 200 OK</status>
+                    <headers>
+                        <header content="Mon, 28 Oct 2013 15:53:08 GMT" field="Date"/>
+                        <header content="370" field="Content-Length"/>
+                        <header content="Microsoft-IIS/7.5" field="Server"/>
+                        <header content="text/html" field="Content-Type"/>
+                        <header content="ASP.NET" field="X-Powered-By"/>
+                    </headers>
+                    <body content-encoding="text">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;../global.css&quot; type=&quot;text/css&quot; /&gt;
+  &lt;title&gt;XSSed&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt;&lt;script type=&quot;text/javascript&quot;&gt;
+var search_term = &quot; &lt;ScRIPt/XSS SrC=http://T3mz/x.js&gt;&lt;/ScRIPt&gt;&quot;;
+&lt;/script&gt;
+
+Sorry, we could not find any results for:
+&lt;script type=&quot;text/javascript&quot;&gt;document.write(search_term);&lt;/script&gt;
+ &lt;/body&gt;
+&lt;/html&gt;</body>
+                </httpresponse>
+            </http-transaction>
+        </http-transactions>
+    </vulnerability>
+    <information id="[183]" name="Cross site scripting vulnerability" plugin="xss" url="http://s16620-101136-yly.sipontum.hack.me/chainedxss/search.php">
+        <description>Cross Site Scripting was found at: &quot;http://s16620-101136-yly.sipontum.hack.me/chainedxss/search.php&quot;, using HTTP method GET. The sent data was: &quot;q=%3CSCrIPT%3Ealert%28%22GlSV%22%29%3C%2FSCrIPT%3E&quot;. This vulnerability affects ALL browsers. This vulnerability was found in the request with id 183.</description>
+        <http-transactions>
+            <http-transaction id="183">
+                <httprequest>
+                    <status>GET http://s16620-101136-yly.sipontum.hack.me/chainedxss/search.php?q=%3CSCrIPT%3Ealert%28%22GlSV%22%29%3C%2FSCrIPT%3E HTTP/1.1</status>
+                    <headers>
+                        <header content="s16620-101136-yly.sipontum.hack.me" field="Host"/>
+                        <header content="http://s16620-101136-yly.sipontum.hack.me/" field="Referer"/>
+                        <header content="gzip" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.sourceforge.net" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse id="183">
+                    <status>HTTP/1.1 200 OK</status>
+                    <headers>
+                        <header content="Mon, 28 Oct 2013 15:52:55 GMT" field="Date"/>
+                        <header content="366" field="Content-Length"/>
+                        <header content="Microsoft-IIS/7.5" field="Server"/>
+                        <header content="text/html" field="Content-Type"/>
+                        <header content="ASP.NET" field="X-Powered-By"/>
+                    </headers>
+                    <body content-encoding="text">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;../global.css&quot; type=&quot;text/css&quot; /&gt;
+  &lt;title&gt;XSSed&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt;Here are the results for &lt;SCrIPT&gt;alert(&quot;GlSV&quot;)&lt;/SCrIPT&gt;:
+&lt;ol&gt;
+  &lt;li&gt;&lt;a href=&quot;account.php?user=neo&quot;&gt;My Account&lt;/a&gt; - account.php (0.5KB)&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;index.htm&quot;&gt;Home&lt;/a&gt; - index.htm (0.4KB)&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+ &lt;/body&gt;
+&lt;/html&gt;</body>
+                </httpresponse>
+            </http-transaction>
+        </http-transactions>
+    </information>
+    <information id="[225]" name="Cross site scripting vulnerability" plugin="xss" url="http://s16620-101136-yly.sipontum.hack.me/filteredxss/vulnerable.php">
+        <description>Cross Site Scripting was found at: &quot;http://s16620-101136-yly.sipontum.hack.me/filteredxss/vulnerable.php&quot;, using HTTP method GET. The sent data was: &quot;creditcard=&amp;id=%3CScRIPT%3Ea%3D%2FnlkK%2F%0Aalert%28a.source%29%3C%2FSCRiPT%3E&quot;. The modified parameter was &quot;id&quot;. This vulnerability affects ALL browsers. This vulnerability was found in the request with id 225.</description>
+        <http-transactions>
+            <http-transaction id="225">
+                <httprequest>
+                    <status>GET http://s16620-101136-yly.sipontum.hack.me/filteredxss/vulnerable.php?creditcard=&amp;id=%3CScRIPT%3Ea%3D%2FnlkK%2F%0Aalert%28a.source%29%3C%2FSCRiPT%3E HTTP/1.1</status>
+                    <headers>
+                        <header content="s16620-101136-yly.sipontum.hack.me" field="Host"/>
+                        <header content="http://s16620-101136-yly.sipontum.hack.me/" field="Referer"/>
+                        <header content="gzip" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.sourceforge.net" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse id="225">
+                    <status>HTTP/1.1 200 OK</status>
+                    <headers>
+                        <header content="Mon, 28 Oct 2013 15:53:00 GMT" field="Date"/>
+                        <header content="347" field="Content-Length"/>
+                        <header content="Microsoft-IIS/7.5" field="Server"/>
+                        <header content="text/html" field="Content-Type"/>
+                        <header content="ASP.NET" field="X-Powered-By"/>
+                    </headers>
+                    <body content-encoding="text">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;../global.css&quot; type=&quot;text/css&quot; /&gt;
+  &lt;title&gt;XSSed&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt;&lt;h1&gt;Please Confirm Your Order&lt;/h1&gt;
+&lt;div id=&quot;creditcard&quot;&gt;&lt;/div&gt;
+
+&lt;script type=&quot;text/javascript&quot;&gt;
+var q = &quot;&lt;ScRIPT&gt;a=/nlkK/
+alert(a.source)&lt;/SCRiPT&gt;&quot;;
+document.write(&quot;&lt;!-- &quot; + q + &quot;--&gt;&quot;);
+&lt;/script&gt;
+ &lt;/body&gt;
+&lt;/html&gt;</body>
+                </httpresponse>
+            </http-transaction>
+        </http-transactions>
+    </information>
+    <information id="[242]" name="Cross site scripting vulnerability" plugin="xss" url="http://s16620-101136-yly.sipontum.hack.me/chainedxss/account.php">
+        <description>Cross Site Scripting was found at: &quot;http://s16620-101136-yly.sipontum.hack.me/chainedxss/account.php&quot;, using HTTP method GET. The sent data was: &quot;user=%3CScRIPt%2FXSS%20SrC%3Dhttp%3A%2F%2F9Mqz%2Fx.js%3E%3C%2FScRIPt%3E&quot;. This vulnerability affects ALL browsers. This vulnerability was found in the request with id 242.</description>
+        <http-transactions>
+            <http-transaction id="242">
+                <httprequest>
+                    <status>GET http://s16620-101136-yly.sipontum.hack.me/chainedxss/account.php?user=%3CScRIPt%2FXSS%20SrC%3Dhttp%3A%2F%2F9Mqz%2Fx.js%3E%3C%2FScRIPt%3E HTTP/1.1</status>
+                    <headers>
+                        <header content="s16620-101136-yly.sipontum.hack.me" field="Host"/>
+                        <header content="http://s16620-101136-yly.sipontum.hack.me/" field="Referer"/>
+                        <header content="gzip" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.sourceforge.net" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse id="242">
+                    <status>HTTP/1.1 200 OK</status>
+                    <headers>
+                        <header content="Mon, 28 Oct 2013 15:53:03 GMT" field="Date"/>
+                        <header content="588" field="Content-Length"/>
+                        <header content="Microsoft-IIS/7.5" field="Server"/>
+                        <header content="text/html" field="Content-Type"/>
+                        <header content="ASP.NET" field="X-Powered-By"/>
+                    </headers>
+                    <body content-encoding="text">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;../global.css&quot; type=&quot;text/css&quot; /&gt;
+  &lt;title&gt;XSSed&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt; &lt;a href=&quot;index.htm&quot;&gt;Return Home&lt;/a&gt;
+ &lt;h1&gt;My Account&lt;/h1&gt;
+ &lt;pre&gt;
+  Username: &lt;ScRIPt/XSS SrC=http://9Mqz/x.js&gt;&lt;/ScRIPt&gt;
+  Email: neo@example.com
+  Registered: June 21st, 2011&lt;/pre&gt;
+
+ &lt;h2&gt;Change Password&lt;/h2&gt;
+  &lt;pre&gt;
+   &lt;form action=&quot;setaccount.php&quot;&gt;
+   Password: &lt;input type=&quot;password&quot; id=&quot;pass1&quot; name=&quot;pass1&quot; /&gt;&lt;br /&gt;
+   Repeat it:&lt;input type=&quot;password&quot; id=&quot;pass2&quot; name=&quot;pass2&quot; /&gt;&lt;br /&gt;
+   &lt;input type=&quot;submit&quot; /&gt;
+   &lt;/form&gt;
+  &lt;/pre&gt;
+
+
+ &lt;/body&gt;
+&lt;/html&gt;</body>
+                </httpresponse>
+            </http-transaction>
+        </http-transactions>
+    </information>
+    <information id="[276]" name="Cross site scripting vulnerability" plugin="xss" url="http://s16620-101136-yly.sipontum.hack.me/javascriptxss/vulnerable.php">
+        <description>Cross Site Scripting was found at: &quot;http://s16620-101136-yly.sipontum.hack.me/javascriptxss/vulnerable.php&quot;, using HTTP method GET. The sent data was: &quot;q=%3CScRIPt%2FXSS%20SrC%3Dhttp%3A%2F%2FT3mz%2Fx.js%3E%3C%2FScRIPt%3E&quot;. This vulnerability affects ALL browsers. This vulnerability was found in the request with id 276.</description>
+        <http-transactions>
+            <http-transaction id="276">
+                <httprequest>
+                    <status>GET http://s16620-101136-yly.sipontum.hack.me/javascriptxss/vulnerable.php?q=%3CScRIPt%2FXSS%20SrC%3Dhttp%3A%2F%2FT3mz%2Fx.js%3E%3C%2FScRIPt%3E HTTP/1.1</status>
+                    <headers>
+                        <header content="s16620-101136-yly.sipontum.hack.me" field="Host"/>
+                        <header content="http://s16620-101136-yly.sipontum.hack.me/" field="Referer"/>
+                        <header content="gzip" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.sourceforge.net" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse id="276">
+                    <status>HTTP/1.1 200 OK</status>
+                    <headers>
+                        <header content="Mon, 28 Oct 2013 15:53:08 GMT" field="Date"/>
+                        <header content="370" field="Content-Length"/>
+                        <header content="Microsoft-IIS/7.5" field="Server"/>
+                        <header content="text/html" field="Content-Type"/>
+                        <header content="ASP.NET" field="X-Powered-By"/>
+                    </headers>
+                    <body content-encoding="text">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;../global.css&quot; type=&quot;text/css&quot; /&gt;
+  &lt;title&gt;XSSed&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt;&lt;script type=&quot;text/javascript&quot;&gt;
+var search_term = &quot; &lt;ScRIPt/XSS SrC=http://T3mz/x.js&gt;&lt;/ScRIPt&gt;&quot;;
+&lt;/script&gt;
+
+Sorry, we could not find any results for:
+&lt;script type=&quot;text/javascript&quot;&gt;document.write(search_term);&lt;/script&gt;
+ &lt;/body&gt;
+&lt;/html&gt;</body>
+                </httpresponse>
+            </http-transaction>
+        </http-transactions>
+    </information>
+    <information id="[68]" name="Auto-completable form" plugin="" url="http://s16620-101136-yly.sipontum.hack.me/chainedxss/account.php">
+        <description>The URL: &quot;http://s16620-101136-yly.sipontum.hack.me/chainedxss/account.php&quot; has a &quot;&lt;form&gt;&quot; element with auto-complete enabled. This information was found in the request with id 68.</description>
+        <http-transactions>
+            <http-transaction id="68">
+                <httprequest>
+                    <status>GET http://s16620-101136-yly.sipontum.hack.me/chainedxss/account.php?user=neo HTTP/1.1</status>
+                    <headers>
+                        <header content="s16620-101136-yly.sipontum.hack.me" field="Host"/>
+                        <header content="http://s16620-101136-yly.sipontum.hack.me/" field="Referer"/>
+                        <header content="gzip" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.sourceforge.net" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse id="68">
+                    <status>HTTP/1.1 200 OK</status>
+                    <headers>
+                        <header content="Mon, 28 Oct 2013 15:52:36 GMT" field="Date"/>
+                        <header content="549" field="Content-Length"/>
+                        <header content="Microsoft-IIS/7.5" field="Server"/>
+                        <header content="text/html" field="Content-Type"/>
+                        <header content="ASP.NET" field="X-Powered-By"/>
+                    </headers>
+                    <body content-encoding="text">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;../global.css&quot; type=&quot;text/css&quot; /&gt;
+  &lt;title&gt;XSSed&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt; &lt;a href=&quot;index.htm&quot;&gt;Return Home&lt;/a&gt;
+ &lt;h1&gt;My Account&lt;/h1&gt;
+ &lt;pre&gt;
+  Username: neo
+  Email: neo@example.com
+  Registered: June 21st, 2011&lt;/pre&gt;
+
+ &lt;h2&gt;Change Password&lt;/h2&gt;
+  &lt;pre&gt;
+   &lt;form action=&quot;setaccount.php&quot;&gt;
+   Password: &lt;input type=&quot;password&quot; id=&quot;pass1&quot; name=&quot;pass1&quot; /&gt;&lt;br /&gt;
+   Repeat it:&lt;input type=&quot;password&quot; id=&quot;pass2&quot; name=&quot;pass2&quot; /&gt;&lt;br /&gt;
+   &lt;input type=&quot;submit&quot; /&gt;
+   &lt;/form&gt;
+  &lt;/pre&gt;
+
+
+ &lt;/body&gt;
+&lt;/html&gt;</body>
+                </httpresponse>
+            </http-transaction>
+        </http-transactions>
+    </information>
+    <information id="[104, 107, 115]" name="Strange HTTP Reason message - Moved Temporarily" plugin="strangeReason" url="http://s16620-101136-yly.sipontum.hack.me/chainedxss/setaccount.php">
+        <description>The remote Web server sent a strange HTTP reason message: &quot;Moved Temporarily&quot; manual inspection is advised. This information was found in the requests with ids 104, 107 and 115.</description>
+        <http-transactions>
+            <http-transaction id="104">
+                <httprequest>
+                    <status>GET http://s16620-101136-yly.sipontum.hack.me/chainedxss/setaccount.php HTTP/1.1</status>
+                    <headers>
+                        <header content="s16620-101136-yly.sipontum.hack.me" field="Host"/>
+                        <header content="http://s16620-101136-yly.sipontum.hack.me/" field="Referer"/>
+                        <header content="gzip" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.sourceforge.net" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse id="104">
+                    <status>HTTP/1.1 302 Moved Temporarily</status>
+                    <headers>
+                        <header content="324" field="Content-Length"/>
+                        <header content="ASP.NET" field="X-Powered-By"/>
+                        <header content="Microsoft-IIS/7.5" field="Server"/>
+                        <header content="index.htm" field="Location"/>
+                        <header content="Mon, 28 Oct 2013 15:52:42 GMT" field="Date"/>
+                        <header content="text/html; charset=UTF-8" field="Content-Type"/>
+                    </headers>
+                    <body content-encoding="text">&lt;head&gt;&lt;title&gt;Document Moved&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;&lt;h1&gt;Object Moved&lt;/h1&gt;This document may be found &lt;a HREF=&quot;index.htm&quot;&gt;here&lt;/a&gt;&lt;/body&gt;&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;../global.css&quot; type=&quot;text/css&quot; /&gt;
+  &lt;title&gt;XSSed&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt; Password Changed, redirecting you home.
+ &lt;/body&gt;
+&lt;/html&gt;</body>
+                </httpresponse>
+            </http-transaction>
+            <http-transaction id="107">
+                <httprequest>
+                    <status>GET http://s16620-101136-yly.sipontum.hack.me/chainedxss/setaccount.php?pass1=&amp;pass2= HTTP/1.1</status>
+                    <headers>
+                        <header content="s16620-101136-yly.sipontum.hack.me" field="Host"/>
+                        <header content="http://s16620-101136-yly.sipontum.hack.me/" field="Referer"/>
+                        <header content="gzip" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.sourceforge.net" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse id="107">
+                    <status>HTTP/1.1 302 Moved Temporarily</status>
+                    <headers>
+                        <header content="324" field="Content-Length"/>
+                        <header content="ASP.NET" field="X-Powered-By"/>
+                        <header content="Microsoft-IIS/7.5" field="Server"/>
+                        <header content="index.htm" field="Location"/>
+                        <header content="Mon, 28 Oct 2013 15:52:42 GMT" field="Date"/>
+                        <header content="text/html; charset=UTF-8" field="Content-Type"/>
+                    </headers>
+                    <body content-encoding="text">&lt;head&gt;&lt;title&gt;Document Moved&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;&lt;h1&gt;Object Moved&lt;/h1&gt;This document may be found &lt;a HREF=&quot;index.htm&quot;&gt;here&lt;/a&gt;&lt;/body&gt;&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;../global.css&quot; type=&quot;text/css&quot; /&gt;
+  &lt;title&gt;XSSed&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt; Password Changed, redirecting you home.
+ &lt;/body&gt;
+&lt;/html&gt;</body>
+                </httpresponse>
+            </http-transaction>
+            <http-transaction id="115">
+                <httprequest>
+                    <status>GET http://s16620-101136-yly.sipontum.hack.me/chainedxss/setaccount.php HTTP/1.1</status>
+                    <headers>
+                        <header content="s16620-101136-yly.sipontum.hack.me" field="Host"/>
+                        <header content="http://s16620-101136-yly.sipontum.hack.me/" field="Referer"/>
+                        <header content="gzip" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.sourceforge.net" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse id="115">
+                    <status>HTTP/1.1 302 Moved Temporarily</status>
+                    <headers>
+                        <header content="324" field="Content-Length"/>
+                        <header content="ASP.NET" field="X-Powered-By"/>
+                        <header content="Microsoft-IIS/7.5" field="Server"/>
+                        <header content="index.htm" field="Location"/>
+                        <header content="Mon, 28 Oct 2013 15:52:42 GMT" field="Date"/>
+                        <header content="text/html; charset=UTF-8" field="Content-Type"/>
+                    </headers>
+                    <body content-encoding="text">&lt;head&gt;&lt;title&gt;Document Moved&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;&lt;h1&gt;Object Moved&lt;/h1&gt;This document may be found &lt;a HREF=&quot;index.htm&quot;&gt;here&lt;/a&gt;&lt;/body&gt;&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;../global.css&quot; type=&quot;text/css&quot; /&gt;
+  &lt;title&gt;XSSed&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt; Password Changed, redirecting you home.
+ &lt;/body&gt;
+&lt;/html&gt;</body>
+                </httpresponse>
+            </http-transaction>
+        </http-transactions>
+    </information>
+    <error caller="exception_handler">An exception was found while running grep.privateIP on &quot;http://domain/ | Method: GET&quot;. The exception was: &quot;Complex classes like &lt;type 'NoneType'&gt; need to inherit from disk_item to be stored.&quot; at timeout_function.py:836. The scan will continue but some vulnerabilities might not be identified.</error>
+    <error caller="exception_handler">An exception was found while running grep.privateIP on &quot;http://domain/ | Method: GET&quot;. The exception was: &quot;Complex classes like &lt;type 'NoneType'&gt; need to inherit from disk_item to be stored.&quot; at timeout_function.py:836. The scan will continue but some vulnerabilities might not be identified.</error>
+    <error caller="exception_handler">An exception was found while running grep.privateIP on &quot;http://domain/xssed.js | Method: GET&quot;. The exception was: &quot;Complex classes like &lt;type 'NoneType'&gt; need to inherit from disk_item to be stored.&quot; at timeout_function.py:836. The scan will continue but some vulnerabilities might not be identified.</error>
+</w3afrun>

@@ -4,7 +4,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import os
 import time
 import threading
 import Queue
@@ -16,9 +15,11 @@ import model.hosts
 from config.configuration import getInstanceConfiguration
 from model.common import TreeWordsTries
 from model.container import ModelObjectContainer
+from utils.logs import getLogger
 import model.api as api
-import model.guiapi as guiapi
-from gui.qt3.customevents import *
+#import model.guiapi as guiapi
+from model.guiapi import notification_center as notifier
+from gui.customevents import *
 
 from model.workspace import WorkspaceSyncronizer
 from utils.decorators import lockModel
@@ -32,131 +33,113 @@ from model.conflict import Conflict, ConflictUpdate
 
 CONF = getInstanceConfiguration()
 
-#-------------------------------------------------------------------------------
+
 class modelactions:
-    ADDHOST         = 2000
-    DELHOST         = 2001
-    ADDINTERFACE    = 2002
-    DELINTERFACE    = 2003
-    ADDSERVICEINT   = 2004
-    ADDSERVICEAPP   = 2005
-    DELSERVICEINT   = 2006
-    DELSERVICEAPP   = 2007
-    DELSERVICEHOST  = 2008
-    ADDAPPLICATION  = 2009
-    DELAPPLICATION  = 2010
-    ADDCATEGORY     = 2011
-    DELCATEGORY     = 2012
-    ADDVULNINT      = 2013
-    DELVULNINT      = 2014
-    ADDVULNAPP      = 2015
-    DELVULNAPP      = 2016
-    ADDVULNHOST     = 2017
-    DELVULNHOST     = 2018
-    ADDVULNSRV      = 2019
-    DELVULNSRV      = 2020
-    ADDNOTEINT      = 2021
-    DELNOTEINT      = 2022
-    ADDNOTEAPP      = 2023
-    DELNOTEAPP      = 2024
-    ADDNOTEHOST     = 2025
-    DELNOTEHOST     = 2026
-    ADDNOTESRV      = 2027
-    DELNOTESRV      = 2028
-    RENAMEROOT      = 2029
-    ADDNOTEVULN     = 2030
-    DELNOTEVULN     = 2031
-    EDITHOST        = 2032
-    EDITINTERFACE   = 2033
+    ADDHOST = 2000
+    DELHOST = 2001
+    ADDINTERFACE = 2002
+    DELINTERFACE = 2003
+    ADDSERVICEINT = 2004
+    ADDSERVICEAPP = 2005
+    DELSERVICEINT = 2006
+    DELSERVICEAPP = 2007
+    DELSERVICEHOST = 2008
+    ADDAPPLICATION = 2009
+    DELAPPLICATION = 2010
+    ADDCATEGORY = 2011
+    DELCATEGORY = 2012
+    ADDVULNINT = 2013
+    DELVULNINT = 2014
+    ADDVULNAPP = 2015
+    DELVULNAPP = 2016
+    ADDVULNHOST = 2017
+    DELVULNHOST = 2018
+    ADDVULNSRV = 2019
+    DELVULNSRV = 2020
+    ADDNOTEINT = 2021
+    DELNOTEINT = 2022
+    ADDNOTEAPP = 2023
+    DELNOTEAPP = 2024
+    ADDNOTEHOST = 2025
+    DELNOTEHOST = 2026
+    ADDNOTESRV = 2027
+    DELNOTESRV = 2028
+    RENAMEROOT = 2029
+    ADDNOTEVULN = 2030
+    DELNOTEVULN = 2031
+    EDITHOST = 2032
+    EDITINTERFACE = 2033
     EDITAPPLICATION = 2034
-    EDITSERVICE     = 2035
-    ADDCREDSRV     = 2036
-    DELCREDSRV      = 2037
-    ADDVULNWEBSRV      = 2038
-    DELVULNWEBSRV      = 2039
-    ADDNOTENOTE     = 2040
-    DELNOTENOTE     = 2041
-    EDITNOTE        = 2042
-    EDITVULN        = 2043
-    ADDNOTE         = 2044
-    DELNOTE         = 2045
-    ADDVULN         = 2046
-    DELVULN         = 2047
-    EDITCRED        = 2048
-    ADDCRED         = 2049
-    DELCRED         = 2050
-    
+    EDITSERVICE = 2035
+    ADDCREDSRV = 2036
+    DELCREDSRV = 2037
+    ADDVULNWEBSRV = 2038
+    DELVULNWEBSRV = 2039
+    ADDNOTENOTE = 2040
+    DELNOTENOTE = 2041
+    EDITNOTE = 2042
+    EDITVULN = 2043
+    ADDNOTE = 2044
+    DELNOTE = 2045
+    ADDVULN = 2046
+    DELVULN = 2047
+    EDITCRED = 2048
+    ADDCRED = 2049
+    DELCRED = 2050
+
     __descriptions = {
-        ADDHOST         : "ADDHOST",
-        DELHOST         : "DELHOST",
-        ADDINTERFACE    : "ADDINTERFACE",
-        DELINTERFACE    : "DELINTERFACE",
-        ADDSERVICEINT   : "ADDSERVICEINT",
-        ADDSERVICEAPP   : "ADDSERVICEAPP",
-        DELSERVICEINT   : "DELSERVICEINT",
-        DELSERVICEAPP   : "DELSERVICEAPP",
-        DELSERVICEHOST  : "DELSERVICEHOST",
-        ADDAPPLICATION  : "ADDAPPLICATION",
-        DELAPPLICATION  : "DELAPPLICATION",
-        ADDCATEGORY     : "ADDCATEGORY",
-        DELCATEGORY     : "DELCATEGORY",
-        ADDVULNINT      : "ADDVULNINT",
-        DELVULNINT      : "DELVULNINT",
-        ADDVULNAPP      : "ADDVULNAPP",
-        DELVULNAPP      : "DELVULNAPP",
-        ADDVULNHOST     : "ADDVULNHOST",
-        DELVULNHOST     : "DELVULNHOST",
-        ADDVULNSRV      : "ADDVULNSRV",
-        DELVULNSRV      : "DELVULNSRV",
-        ADDNOTEVULN     : "ADDNOTEVULN",
-        DELNOTEVULN     : "DELNOTEVULN",
-        ADDNOTENOTE     : "ADDNOTENOTE",
-        DELNOTENOTE     : "DELNOTENOTE",
-        EDITHOST        : "EDITHOST",
-        EDITINTERFACE   : "EDITINTERFACE",
-        EDITAPPLICATION : "EDITAPPLICATION",
-        EDITSERVICE     : "EDITAPPLICATION",
-        ADDCREDSRV      : "ADDCREDSRV",
-        DELCREDSRV      : "DELCREDSRV",
-        ADDVULNWEBSRV      : "ADDVULNSWEBRV",
-        DELVULNWEBSRV      : "DELVULNWEBSRV",
-        EDITNOTE    : "EDITNOTE",
-        EDITVULN    : "EDITVULN",
-        EDITCRED    : "EDITCRED",
-        ADDNOTE     : "ADDNOTE",
-        DELNOTE     : "DELNOTE",
-        ADDVULN     : "ADDVULN",
-        DELVULN     : "DELVULN",
-        ADDCRED     : "ADDCRED",
-        DELCRED     : "DELCRED"
+        ADDHOST: "ADDHOST",
+        DELHOST: "DELHOST",
+        ADDINTERFACE: "ADDINTERFACE",
+        DELINTERFACE: "DELINTERFACE",
+        ADDSERVICEINT: "ADDSERVICEINT",
+        ADDSERVICEAPP: "ADDSERVICEAPP",
+        DELSERVICEINT: "DELSERVICEINT",
+        DELSERVICEAPP: "DELSERVICEAPP",
+        DELSERVICEHOST: "DELSERVICEHOST",
+        ADDAPPLICATION: "ADDAPPLICATION",
+        DELAPPLICATION: "DELAPPLICATION",
+        ADDCATEGORY: "ADDCATEGORY",
+        DELCATEGORY: "DELCATEGORY",
+        ADDVULNINT: "ADDVULNINT",
+        DELVULNINT: "DELVULNINT",
+        ADDVULNAPP: "ADDVULNAPP",
+        DELVULNAPP: "DELVULNAPP",
+        ADDVULNHOST: "ADDVULNHOST",
+        DELVULNHOST: "DELVULNHOST",
+        ADDVULNSRV: "ADDVULNSRV",
+        DELVULNSRV: "DELVULNSRV",
+        ADDNOTEVULN: "ADDNOTEVULN",
+        DELNOTEVULN: "DELNOTEVULN",
+        ADDNOTENOTE: "ADDNOTENOTE",
+        DELNOTENOTE: "DELNOTENOTE",
+        EDITHOST: "EDITHOST",
+        EDITINTERFACE: "EDITINTERFACE",
+        EDITAPPLICATION: "EDITAPPLICATION",
+        EDITSERVICE: "EDITAPPLICATION",
+        ADDCREDSRV: "ADDCREDSRV",
+        DELCREDSRV: "DELCREDSRV",
+        ADDVULNWEBSRV: "ADDVULNSWEBRV",
+        DELVULNWEBSRV: "DELVULNWEBSRV",
+        EDITNOTE: "EDITNOTE",
+        EDITVULN: "EDITVULN",
+        EDITCRED: "EDITCRED",
+        ADDNOTE: "ADDNOTE",
+        DELNOTE: "DELNOTE",
+        ADDVULN: "ADDVULN",
+        DELVULN: "DELVULN",
+        ADDCRED: "ADDCRED",
+        DELCRED: "DELCRED"
     }
 
     @staticmethod
     def getDescription(action):
-        return modelactions.__descriptions.get(action,"")
+        return modelactions.__descriptions.get(action, "")
 
-#-------------------------------------------------------------------------------
-#TODO: may be we should do some refactoring and rename this to something
-# like HostsController, because it doesn't control all the model.
-# MainApplication is doing that
-
-#TODO: we need to change all public async methods to add a parameter or something
-# to be able to determine who did it. This is needed for History logging
 
 class ModelController(threading.Thread):
-    """
-    The model controller handles all the changes in the application model, like
-    hosts, services, etc
-    This controller act as a bridge between the widgets in the GUI and model
-    objects.
-    Implemented like a MVP (Model-View-Presenter) design pattern
-    It acts as a daemon thread like in a producer-consumer scenary
-    The controller is a consumer, because it gets new hosts from a queue
-    The producers are other components which create new hosts discovered (commonly
-    done by an API)
-    """
 
-    def __init__(self, security_manager ):
+    def __init__(self, security_manager):
         threading.Thread.__init__(self)
 
         self.__sec = security_manager
@@ -166,22 +149,16 @@ class ModelController(threading.Thread):
 
         #TODO: think of a good way to handle cross reference between hosts and
         #categories
-        self._categories    = {}
+        self._categories = {}
         self._categories[CONF.getDefaultCategory()] = []
 
         # dictionary with host ids as key
-        self._hosts         = None
-
-        #TODO: should we have any other list with objects?
-        #TODO: if we work with events then this list may not be needed
-        # list of widgets controller must notify when model changes
-        self._widgets       = []
+        self._hosts = None
 
         # flag to stop daemon thread
-        self._stop          = False
+        self._stop = False
         # locks needed to make model thread-safe
-        self._widgets_lock  = threading.RLock()
-        self._hosts_lock    = threading.RLock()
+        self._hosts_lock = threading.RLock()
 
         #TODO: check if it is better using collections.deque
         # a performance analysis should be done
@@ -194,31 +171,27 @@ class ModelController(threading.Thread):
         self._object_factory = model.common.factory
         self._registerObjectTypes()
 
-        # sync api request flag. This flag is used to let the model know there's
-        # some other object trying to use a sync api, and it should give
-        # priority to that and stop processing the queue
+        # sync api request flag. This flag is used to let the model know
+        # there's some other object trying to use a sync api, and it should
+        # give priority to that and stop processing the queue
         self._sync_api_request = False
-        
+
         # This flag & lock are used when the complete model is being persisted
         self._saving_model_flag = False
         self._saving_model_lock = threading.RLock()
 
-        #XXX: clear to start from scratch .ONLY FOR DEMO!!!!!!!
-        if os.path.exists(CONF.getHsactionsPath()):
-            os.remove(CONF.getHsactionsPath())
-
         self._actionDispatcher = None
         self._setupActionDispatcher()
-        
+
         self._workspace = None
 
         self.objects_with_updates = []
 
         #used to highligthing
-        self.treeWordsTries = TreeWordsTries()        
+        self.treeWordsTries = TreeWordsTries()
 
-    def __getattr__( self, name):
-        api.devlog("ModelObject attribute to refactor: %s" % name)
+    def __getattr__(self, name):
+        getLogger(self).debug("ModelObject attribute to refactor: %s" % name)
 
     def _getValueByID(self, attrName, ID):
         """
@@ -245,7 +218,7 @@ class ModelController(threading.Thread):
                     return element
         return None
 
-    def _addValue(self, attrName, newValue, setparent = False, update = False):
+    def _addValue(self, attrName, newValue, setparent=False, update=False):
         # attribute passed as a parameter MUST BE  the name
         # of an internal attribute which is a dictionary indexed
         # with a string ID
@@ -253,27 +226,25 @@ class ModelController(threading.Thread):
         ref = self.__getattribute__(attrName)
         #if valID not in ref or update:
         if valID not in ref or update:
-        
             #TODO: Is this necesary?
             if setparent:
                 newValue.setParent(self)
-            ref[valID] =  newValue
+            ref[valID] = newValue
             return True
             #return not update
         return False
-
 
     def __acquire_host_lock(self):
         self._saving_model_lock.acquire()
         self._saving_model_lock.release()
         self._hosts_lock.acquire()
-    
+
     def __release_host_lock(self):
         try:
             self._hosts_lock.release()
         except RuntimeError:
             pass
-        
+
     def _registerObjectTypes(self):
         """
         Registers in the factory all object types that can be created
@@ -289,61 +260,60 @@ class ModelController(threading.Thread):
         self._object_factory.register(model.common.ModelObjectNote)
         self._object_factory.register(model.common.ModelObjectCred)
 
-
     def _setupActionDispatcher(self):
         self._actionDispatcher = {
-                    modelactions.ADDHOST : self.__addHost,
-                    modelactions.DELHOST : self.__delHost,
-                    modelactions.EDITHOST: self.__editHost,
-                    modelactions.ADDINTERFACE : self.__addInterfaceToHost,
-                    modelactions.DELINTERFACE : self.__delInterfaceFromHost,
-                    modelactions.EDITINTERFACE: self.__editInterface,
-                    modelactions.ADDSERVICEINT : self.__addServiceToInterface,
-                    modelactions.ADDSERVICEAPP : self.__addServiceToApplication,
-                    modelactions.DELSERVICEINT : self.__delServiceFromInterface,
-                    modelactions.DELSERVICEAPP : self.__delServiceFromApplication,
-                    modelactions.DELSERVICEHOST : self.__delService,
-                    modelactions.EDITSERVICE: self.__editService,
-                    modelactions.ADDAPPLICATION : self.__addApplication,
-                    modelactions.DELAPPLICATION :  self.__delApplication,
-                    modelactions.EDITAPPLICATION : self.__editApplication,
-                    modelactions.ADDCATEGORY : self.__addCategory,
-                    modelactions.DELCATEGORY :  self.__delCategory,
-                    #Vulnerability
-                    modelactions.ADDVULNINT : self.__addVulnerabilityToInterface,
-                    modelactions.DELVULNINT : self.__delVulnerabilityFromInterface,
-                    modelactions.ADDVULNAPP : self.__addVulnerabilityToApplication,
-                    modelactions.DELVULNAPP : self.__delVulnerabilityFromApplication,
-                    modelactions.ADDVULNHOST : self.__addVulnerabilityToHost,
-                    modelactions.DELVULNHOST : self.__delVulnerabilityFromHost,
-                    modelactions.ADDVULNSRV : self.__addVulnerabilityToService,
-                    modelactions.DELVULNSRV : self.__delVulnerabilityFromService,
-                    modelactions.ADDVULN : self.__addVulnToModelObject,
-                    modelactions.DELVULN : self.__delVulnFromModelObject,
-                    modelactions.ADDVULNWEBSRV : self.__addVulnerabilityToService,
-                    modelactions.DELVULNWEBSRV : self.__delVulnerabilityFromService,
-                    modelactions.EDITVULN : self.__editVulnerability,
-                    #Note
-                    modelactions.ADDNOTEINT : self.__addNoteToInterface,
-                    modelactions.DELNOTEINT : self.__delNoteFromInterface,
-                    modelactions.ADDNOTEAPP : self.__addNoteToApplication,
-                    modelactions.DELNOTEAPP : self.__delNoteFromApplication,
-                    modelactions.ADDNOTEHOST : self.__addNoteToHost,
-                    modelactions.DELNOTEHOST : self.__delNoteFromHost,
-                    modelactions.ADDNOTESRV : self.__addNoteToService,
-                    modelactions.DELNOTESRV : self.__delNoteFromService,
-                    modelactions.ADDNOTEVULN : self.__addNote,
-                    modelactions.DELNOTEVULN : self.__delNote,
-                    modelactions.ADDNOTE : self.__addNoteToModelObject,
-                    modelactions.DELNOTE : self.__delNoteFromModelObject,
-                    modelactions.ADDCREDSRV : self.__addCredToService,
-                    modelactions.DELCREDSRV : self.__delCredFromService,
-                    modelactions.ADDNOTENOTE : self.__addNoteToServiceNote,
-                    modelactions.DELNOTENOTE : self.__delNoteFromServiceNote,
-                    modelactions.EDITNOTE : self.__editNote,
-                    modelactions.EDITCRED : self.__editCred,
-                    modelactions.ADDCRED  : self.__addCredToModelObject,
-                    modelactions.DELCRED  : self.__delCredFromModelObject
+            modelactions.ADDHOST: self.__addHost,
+            modelactions.DELHOST: self.__delHost,
+            modelactions.EDITHOST: self.__editHost,
+            modelactions.ADDINTERFACE: self.__addInterfaceToHost,
+            modelactions.DELINTERFACE: self.__delInterfaceFromHost,
+            modelactions.EDITINTERFACE: self.__editInterface,
+            modelactions.ADDSERVICEINT: self.__addServiceToInterface,
+            modelactions.ADDSERVICEAPP: self.__addServiceToApplication,
+            modelactions.DELSERVICEINT: self.__delServiceFromInterface,
+            modelactions.DELSERVICEAPP: self.__delServiceFromApplication,
+            modelactions.DELSERVICEHOST: self.__delService,
+            modelactions.EDITSERVICE: self.__editService,
+            modelactions.ADDAPPLICATION: self.__addApplication,
+            modelactions.DELAPPLICATION:  self.__delApplication,
+            modelactions.EDITAPPLICATION: self.__editApplication,
+            modelactions.ADDCATEGORY: self.__addCategory,
+            modelactions.DELCATEGORY:  self.__delCategory,
+            #Vulnerability
+            modelactions.ADDVULNINT: self.__addVulnerabilityToInterface,
+            modelactions.DELVULNINT: self.__delVulnerabilityFromInterface,
+            modelactions.ADDVULNAPP: self.__addVulnerabilityToApplication,
+            modelactions.DELVULNAPP: self.__delVulnerabilityFromApplication,
+            modelactions.ADDVULNHOST: self.__addVulnerabilityToHost,
+            modelactions.DELVULNHOST: self.__delVulnerabilityFromHost,
+            modelactions.ADDVULNSRV: self.__addVulnerabilityToService,
+            modelactions.DELVULNSRV: self.__delVulnerabilityFromService,
+            modelactions.ADDVULN: self.__addVulnToModelObject,
+            modelactions.DELVULN: self.__delVulnFromModelObject,
+            modelactions.ADDVULNWEBSRV: self.__addVulnerabilityToService,
+            modelactions.DELVULNWEBSRV: self.__delVulnerabilityFromService,
+            modelactions.EDITVULN: self.__editVulnerability,
+            #Note
+            modelactions.ADDNOTEINT: self.__addNoteToInterface,
+            modelactions.DELNOTEINT: self.__delNoteFromInterface,
+            modelactions.ADDNOTEAPP: self.__addNoteToApplication,
+            modelactions.DELNOTEAPP: self.__delNoteFromApplication,
+            modelactions.ADDNOTEHOST: self.__addNoteToHost,
+            modelactions.DELNOTEHOST: self.__delNoteFromHost,
+            modelactions.ADDNOTESRV: self.__addNoteToService,
+            modelactions.DELNOTESRV: self.__delNoteFromService,
+            modelactions.ADDNOTEVULN: self.__addNote,
+            modelactions.DELNOTEVULN: self.__delNote,
+            modelactions.ADDNOTE: self.__addNoteToModelObject,
+            modelactions.DELNOTE: self.__delNoteFromModelObject,
+            modelactions.ADDCREDSRV: self.__addCredToService,
+            modelactions.DELCREDSRV: self.__delCredFromService,
+            modelactions.ADDNOTENOTE: self.__addNoteToServiceNote,
+            modelactions.DELNOTENOTE: self.__delNoteFromServiceNote,
+            modelactions.EDITNOTE: self.__editNote,
+            modelactions.EDITCRED: self.__editCred,
+            modelactions.ADDCRED: self.__addCredToModelObject,
+            modelactions.DELCRED: self.__delCredFromModelObject
         }
 
     def run(self):
@@ -355,50 +325,39 @@ class ModelController(threading.Thread):
         """
         self._stop = True
 
-    def _logAction(self, d1, d2, d3 = ""):
-        return
-        #XXX: temporal for demo purposes
-        # logs a line in a txt file
-        line = "|".join(["%s" % datetime.datetime.now(), d1, d2, d3])
-        api.devlog("logging action to file %s" % CONF.getHsActionsPath())
-        f = open(CONF.getHsActionsPath(),"a")
-        f.write("%s\n" % line)
-        api.devlog("action = %s" % line)
-        f.close()
-
-
     def _dispatchActionWithLock(self, action_callback, *args):
         res = False
         self.__acquire_host_lock()
         try:
             res = action_callback(*args)
         except Exception:
-            api.log("An exception occurred while dispatching an action (%r(%r)\n%s" % (action_callback, args, traceback.format_exc()), "ERROR")
+            api.log("An exception occurred while dispatching an action (%r(%r)\n%s" %
+                   (action_callback, args, traceback.format_exc()), "ERROR")
         finally:
             self.__release_host_lock()
         return res
-        
-        
+
     def _processAction(self, action, parameters, sync=False):
         """
         decodes and performs the action given
         It works kind of a dispatcher
         """
-        
         if sync:
             self._sync_api_request = True
-            
-        api.devlog("_processAction - %s - parameters = %s" % (action, str(parameters)))
+
+        api.devlog("_processAction - %s - parameters = %s" %
+                  (action, str(parameters)))
 
         action_callback = self._actionDispatcher[action]
         res = self._dispatchActionWithLock(action_callback, *parameters)
 
         # finally we notify the widgets about this change
-        if res: # notify only if action was done successfuly
-            self._notifyModelUpdated(*parameters)
-        else:
-            api.devlog("Action code %d failed. Parameters = %s" % (action, str(parameters)))
-                
+        #if res: # notify only if action was done successfuly
+            #self._notifyModelUpdated(*parameters)
+        #else:
+        if not res:
+            api.devlog("Action code %d failed. Parameters = %s" %
+                      (action, str(parameters)))
         if sync:
             self._sync_api_request = False
 
@@ -409,40 +368,37 @@ class ModelController(threading.Thread):
         return conflicts
 
     def resolveConflicts(self):
-        self._notifyConflictResolution(self.getConflicts())
+        notifier.conflictResolution(self.getConflicts())
 
     def resolveConflict(self, conflict, kwargs):
         if conflict.resolve(kwargs):
             if conflict.getModelObjectType() == "Interface":
-                ipv4=kwargs['ipv4']
-                ipv6=kwargs['ipv6']
-                hostnames=kwargs['hostnames']                
-                
-                if not ipv4['address'] in ["0.0.0.0",None]:
+                ipv4 = kwargs['ipv4']
+                ipv6 = kwargs['ipv6']
+                hostnames = kwargs['hostnames']
+
+                if not ipv4['address'] in ["0.0.0.0", None]:
                     self.treeWordsTries.removeWord(ipv4['address'])
                     self.treeWordsTries.addWord(ipv4['address'])
-                
-                if not ipv6['address'] in ["0000:0000:0000:0000:0000:0000:0000:0000",None]:
+
+                if not ipv6['address'] in ["0000:0000:0000:0000:0000:0000:0000:0000", None]:
                     self.treeWordsTries.removeWord(ipv6['address'])
                     self.treeWordsTries.addWord(ipv6['address'])
-                    
+
                 for h in hostnames:
                     if h is not None:
                         self.treeWordsTries.removeWord(h)
                         self.treeWordsTries.addWord(h)
 
-            self._notifyConflictsUpdated(-1)
-            self._notifyModelUpdated()
+            notifier.conflictUpdate(-1)
+            notifier.editHost(conflict.getFirstObject().getHost())
+            #self._notifyModelUpdated()
 
     def removeConflictsByObject(self, obj):
         if obj in self.objects_with_updates:
             self.objects_with_updates.remove(obj)
-        self._notifyConflictsUpdated(-len(obj.getUpdates()))
-    
-    def _loadCategories(self, path):
-        #TODO:
-        pass
-        
+        notifier.conflictUpdate(-len(obj.getUpdates()))
+
     def setSavingModel(self, value):
         api.devlog("setSavingModel: %s" % value)
         self._saving_model_flag = value
@@ -453,7 +409,7 @@ class ModelController(threading.Thread):
                 self._saving_model_lock.release()
             except RuntimeError:
                 pass
-        
+
     def _main(self):
         """
         The main method for the thread.
@@ -466,29 +422,23 @@ class ModelController(threading.Thread):
             # check if thread must finish
             if self._stop:
                 return
-
-            #XXX: we have to persist information somehow
-            # self.persistData()
-
             # first we check if there is a sync api request
             # or if the model is being saved/sync'ed
-            # or if we have pending duplicated hosts that need to be merged by the user
-            if not self._sync_api_request and  \
-                not self._saving_model_flag:
+            # or if we have pending duplicated hosts that need to be
+            # merged by the user
+            if not self._sync_api_request and not self._saving_model_flag:
 
                 self.processAction()
-
             else:
-                # there is some object requesting for a sync api so we sleep the
-                # thread execution for a moment to let others work
-                #XXX: check if this time is not too much...
+                # there is some object requesting for a sync api so we
+                # sleep the thread execution for a moment to let others work
+                # XXX: check if this time is not too much...
                 time.sleep(0.01)
 
     def processAllPendingActions(self):
         [self.processAction() for i in range(self._pending_actions.qsize())]
 
     def processAction(self):
-
         # check the queue for new actions
         # if there is no new action it will block until timeout is reached
         try:
@@ -505,72 +455,13 @@ class ModelController(threading.Thread):
             # because if we don't do it, the daemon will be blocked forever
             pass
         except Exception:
-           api.log("something strange happened... unhandled exception?", "ERROR")
-           api.log(traceback.format_exc(), "ERROR")
+            getLogger(self).devlog("something strange happened... unhandled exception?")
+            getLogger(self).devlog(traceback.format_exc())
 
-    def registerWidget(self, widget):
-        """
-        Registers a widget to be notified when the model changed
-        The widget MUST implement a customeEvent handler able to
-        process an ModelObjectUpdateEvent
-        taking as parameters an action and a list of parameters
-        """
-        self._widgets_lock.acquire()
-        if widget not in self._widgets:
-            self._widgets.append(widget)
-        self._widgets_lock.release()
-
-    def deregisterWidget(self, widget):
-        self._widgets_lock.acquire()
-        if widget in self._widgets:
-            self._widgets.remove(widget)
-        self._widgets_lock.release()
-
-    def _notifyWidgets(self, event):
-        self._widgets_lock.acquire()
-        #TODO: be carefull with deadlocks or passing a list of hosts, because
-        # it will be a reference that could change while iterating over it
-        for w in self._widgets:
-            guiapi.postCustomEvent(event, w)
-        self._widgets_lock.release()
-
-    def _notifyModelUpdated(self, *args, **kwargs):
-        #TODO: be carefull with deadlocks or passing a list of hosts, because
-        # it will be a reference that could change while iterating over it
-        #print "LEN HOSTS CONTROLLER: %s" % str(len(self.getAllHosts()))
-        #print "LEN HOSTS WORKSPACE: %s" % str(len(self.getWorkspace().getContainee()))
-        self._notifyWidgets(ModelObjectUpdateEvent(self.getAllHosts()))
-    
-    def _notifyRenameRoot(self, name):
-        self._notifyWidgets(RenameHostsRootCustomEvent(name))
-
-    def _notifyWorkspaceChanged(self, workspace):
-        self._notifyWidgets(WorkspaceChangedCustomEvent(workspace))
-
-    def _notifyConflictsUpdated(self, vulns_changed):
-        self._notifyWidgets(ConflictUpdatedCustomEvent(vulns_changed))
-
-    def _notifyConflictResolution(self, conflicts):
-        self._notifyWidgets(ResolveConflictsCustomEvent(conflicts))
-            
-    def _notifyDiffHost(self, hostLeft, hostRight):
-        self._notifyWidgets(DiffHostsCustomEvent(hostLeft, hostRight))
-
-    def _notifyWorkspaceConnectionLost(self):
-        guiapi.postCustomEvent((ShowPopupCustomEvent("Couchdb Connection lost. Defaulting to memory. Fix network and try again in 5 minutes.")))
-
-    def _notifyNoVisualizationAvailable(self):
-        guiapi.postCustomEvent((ShowPopupCustomEvent("You need Couchdb to run visualizations, sorry")))
-
-
-    def _notifySyncError(self):
-        #self._notifyWidgets(ShowPopupCustomEvent("Sync Failed!", "ERROR"))
-        guiapi.postCustomEvent((ShowPopupCustomEvent("Sync Failed! \nYou should check if there are some conflicts to resolve")))
-    
     def sync_lock(self):
         self._sync_api_request = True
         self.__acquire_host_lock()
-        
+
     def sync_unlock(self):
         self._sync_api_request = False
         self.__release_host_lock()
@@ -602,7 +493,6 @@ class ModelController(threading.Thread):
                         host.categories.remove(category)
                         host.categories.append(CONF.getDefaultCategory())
 
-
      # adding, deleting and moving hosts in categories seem to be thread
      # safe operations, so we don't need to acquire any lock
 
@@ -626,10 +516,11 @@ class ModelController(threading.Thread):
             return True
         return False
 
-    #TODO: CATEGORIES APIS are still missing...
-    # also we need some "move" api to be used when drag & drop exists in the host browser
+    # TODO: CATEGORIES APIS are still missing...
+    # also we need some "move" api to be used when drag & drop
+    # exists in the host browser
 
-    #TODO: >>> APIs <<< we have to know which plugin called the apis to store
+    # TODO: >>> APIs <<< we have to know which plugin called the apis to store
     # in the history
 
     def __addPendingAction(self, *args):
@@ -655,9 +546,6 @@ class ModelController(threading.Thread):
         self.__addPendingAction(modelactions.DELCATEGORY, category, recursive)
 
     def delCategorySYNC(self, category, recursive=False):
-#        self.sync_lock()
-#        self.__delCategory(category, recursive)
-#        self.sync_unlock()
         self._processAction(modelactions.DELCATEGORY, [category, recursive], sync=True)
 
     def addUpdate(self, old_object, new_object):
@@ -668,14 +556,15 @@ class ModelController(threading.Thread):
             if mergeAction:
                 if old_object not in self.objects_with_updates:
                     self.objects_with_updates.append(old_object)
-                self._notifyConflictsUpdated(1)
+                notifier.conflictUpdate(1)
                 res = False
         except:
             res = False
-            api.devlog("(%s).addUpdate(%s, %s) - failed" % (self, old_object, new_object))
+            api.devlog("(%s).addUpdate(%s, %s) - failed" %
+                      (self, old_object, new_object))
         return res
 
-    def addHostASYNC(self, host, category = None, update = False, old_hostname = None):
+    def addHostASYNC(self, host, category=None, update=False, old_hostname=None):
         """
         ASYNC API
         Adds an action to the ModelController actions queue indicating a
@@ -683,15 +572,14 @@ class ModelController(threading.Thread):
         """
         self.__addPendingAction(modelactions.ADDHOST, host, category, update, old_hostname)
 
-
-    def addHostSYNC(self, host, category = None, update = False, old_hostname = None):
+    def addHostSYNC(self, host, category=None, update=False, old_hostname=None):
         """
         SYNC API
         Adds a host directly to the model
         """
         self._processAction(modelactions.ADDHOST, [host, category, update, old_hostname], sync=True)
 
-    def __addHost(self, host, category, update = False, old_hostname = None):
+    def __addHost(self, host, category, update=False, old_hostname=None):
         res = False
         #self.__acquire_host_lock()
         old_host = self._getValueByID("_hosts", host.getID())
@@ -699,19 +587,19 @@ class ModelController(threading.Thread):
             res = self.addUpdate(old_host, host)
         else:
             res = self._addValue("_hosts", host, update=update)
-            host.setParent(None)
+            if res:
+                host.setParent(None)
 
-            if category is None:
-                category = CONF.getDefaultCategory()
-            elif category not in self._categories:
-                self.__addCategory(category)
+                if category is None:
+                    category = CONF.getDefaultCategory()
+                elif category not in self._categories:
+                    self.__addCategory(category)
 
+                self.treeWordsTries.addWord(host.getName())
+                self.treeWordsTries.addWord(category)
 
-            self.treeWordsTries.addWord(host.getName())
-            self.treeWordsTries.addWord(category)
-
-            self.__addHostToCategory(host, category)
-            
+                self.__addHostToCategory(host, category)
+                notifier.addHost(host)
             #self.__release_host_lock()
         return res
 
@@ -764,7 +652,7 @@ class ModelController(threading.Thread):
         for note in list(modelObj.getNotes()):
             self.__clearNote(note)
             modelObj.delNote(note.getID())
-    
+
     def __delVulns(self, modelObj):
         for vuln in list(modelObj.getVulns()):
             self.__clearVuln(vuln)
@@ -797,8 +685,9 @@ class ModelController(threading.Thread):
             self.treeWordsTries.removeWord(host.getName())
             for i in host.getAllInterfaces():
                 for h in i.getHostnames():
-                    self.treeWordsTries.removeWord(h) 
-            return True           
+                    self.treeWordsTries.removeWord(h)
+            notifier.delHost(host.getID())
+            res = True
 
         return res
 
@@ -812,45 +701,45 @@ class ModelController(threading.Thread):
         if valID in ref:
             del ref[valID]
             return True
-        
+
         hash_id = get_hash([valID])
         if hash_id in ref:
             del ref[hash_id]
             return True
-        
+
         for element in ref.itervalues():
             if valID == element.name:
                 del ref[element.getID()]
                 return True
-            
-        # none of the ids were found         
+
+        # none of the ids were found
         return False
-    
+
     def editHostSYNC(self, host, name, description, os, owned):
         """
         SYNC API
         Modifies a host from model
         """
         self._processAction(modelactions.EDITHOST, [host, name, description, os, owned], sync=True)
-    
+
     def __editHost(self, host, name=None, description=None, os=None, owned=None):
         res = False
         #host = self._getValueByID("_hosts", host)
         if host is not None:
-           host.updateAttributes(name, description, os, owned)
-           res = True
+            host.updateAttributes(name, description, os, owned)
+            res = True
+            notifier.editHost(host)
         return res
 
-
-    def addInterfaceASYNC(self, host, interface, update = False):
+    def addInterfaceASYNC(self, host, interface, update=False):
         """
         ASYNC API
         Adds an action to the ModelController actions queue indicating a
         new interface must be added to a specific host
         """
         self.__addPendingAction(modelactions.ADDINTERFACE, host, interface)
-        
-    def addInterfaceSYNC(self, host, interface, update = False):
+
+    def addInterfaceSYNC(self, host, interface, update=False):
         """
         SYNC API
         Adds interface directly to the model
@@ -869,16 +758,16 @@ class ModelController(threading.Thread):
                     res = self.addUpdate(old_interface, interface)
                 else:
                     res = host.addInterface(interface)
-                
+
                 if res:
                     self.treeWordsTries.addWord(interface.name)
                     for h in interface.getHostnames():
                         self.treeWordsTries.addWord(h)
+                    notifier.editHost(host)
         except Exception as e:
             raise e
         #self.__release_host_lock()
         return res
-
 
     def delInterfaceASYNC(self, host, interface_name):
         """
@@ -908,40 +797,50 @@ class ModelController(threading.Thread):
                 self.treeWordsTries.removeWord(interface.name)
                 for h in interface.getHostnames():
                     self.treeWordsTries.removeWord(h)
+                notifier.editHost(host)
 
-
-        #self.__release_host_lock()
         return res
-    
-    def editInterfaceSYNC(self, interface, name, description, hostnames, mac, ipv4, ipv6, network_segment, 
-                  amount_ports_opened, amount_ports_closed, amount_ports_filtered, owned):
+
+    def editInterfaceSYNC(self, interface, name, description, hostnames,
+                          mac, ipv4, ipv6, network_segment,
+                          amount_ports_opened, amount_ports_closed,
+                          amount_ports_filtered, owned):
         """
         SYNC API
         Modifies an interface from model
         """
-        self._processAction(modelactions.EDITINTERFACE, [interface, name, description, hostnames, mac, ipv4, ipv6, network_segment, 
-                  amount_ports_opened, amount_ports_closed, amount_ports_filtered, owned], sync=True)
-    
-    def __editInterface(self, interface, name, description, hostnames, mac, ipv4, ipv6, network_segment, 
-                  amount_ports_opened, amount_ports_closed, amount_ports_filtered, owned):
+        self._processAction(modelactions.EDITINTERFACE,
+                            [interface, name, description, hostnames,
+                             mac, ipv4, ipv6, network_segment,
+                             amount_ports_opened, amount_ports_closed,
+                             amount_ports_filtered, owned], sync=True)
+
+    def __editInterface(self, interface, name, description, hostnames,
+                        mac, ipv4, ipv6, network_segment,
+                        amount_ports_opened, amount_ports_closed,
+                        amount_ports_filtered, owned):
         res = False
         if interface is not None:
-            interface.updateAttributes(name, description, hostnames, mac, ipv4, ipv6, network_segment, 
-                   amount_ports_opened, amount_ports_closed, amount_ports_filtered, owned)
+            interface.updateAttributes(name, description, hostnames, mac,
+                                       ipv4, ipv6, network_segment,
+                                       amount_ports_opened,
+                                       amount_ports_closed,
+                                       amount_ports_filtered, owned)
 
-            if not ipv4['address'] in ["0.0.0.0",None]:
+            if not ipv4['address'] in ["0.0.0.0", None]:
                 self.treeWordsTries.removeWord(ipv4['address'])
                 self.treeWordsTries.addWord(ipv4['address'])
-            
-            if not ipv6['address'] in ["0000:0000:0000:0000:0000:0000:0000:0000",None]:
+
+            if not ipv6['address'] in ["0000:0000:0000:0000:0000:0000:0000:0000", None]:
                 self.treeWordsTries.removeWord(ipv6['address'])
                 self.treeWordsTries.addWord(ipv6['address'])
-                
+
             for h in hostnames:
                 if h is not None:
                     self.treeWordsTries.removeWord(h)
                     self.treeWordsTries.addWord(h)
-        res = True
+            notifier.editHost(interface.getHost())
+            res = True
         return res
 
     def addApplicationASYNC(self, host, application):
@@ -951,7 +850,7 @@ class ModelController(threading.Thread):
         new application must be added to a specific host
         """
         self.__addPendingAction(modelactions.ADDAPPLICATION, host, application)
-    
+
     def addApplicationSYNC(self, host, application):
         """
         SYNC API
@@ -971,9 +870,9 @@ class ModelController(threading.Thread):
                 res = self.addUpdate(old_application, application)
             else:
                 res = host.addApplication(application)
+                notifier.editHost(host)
         #self.__release_host_lock()
         return res
-
 
     def delApplicationASYNC(self, host, app_name):
         """
@@ -982,7 +881,7 @@ class ModelController(threading.Thread):
         particular host must be removed from the model
         """
         self.__addPendingAction(modelactions.DELAPPLICATION, host, app_name)
-    
+
     def delApplicationSYNC(self, host, app_name):
         """
         SYNC API
@@ -1000,23 +899,25 @@ class ModelController(threading.Thread):
             if application is not None:
                 self.__clearApplication(application)
                 res = host.delApplication(application.getID())
+                notifier.editHost(host)
 
         #self.__release_host_lock()
         return res
-    
+
     def editApplicationSYNC(self, application, name, description, status, version, owned):
         """
         SYNC API
         Modifies a host from model
         """
         self._processAction(modelactions.EDITAPPLICATION, [application, name, description, status, version, owned], sync=True)
-    
+
     def __editApplication(self, application, name=None, description=None, status=None, version=None, owned=None):
         res = False
         #host = self._getValueByID("_hosts", host)
         if application is not None:
-           application.updateAttributes(name, description, status, version, owned)
-           res = True
+            application.updateAttributes(name, description, status, version, owned)
+            notifier.editHost(application.getHost())
+            res = True
         return res
 
     def addServiceToInterfaceASYNC(self, host, interface_name, newService):
@@ -1026,7 +927,7 @@ class ModelController(threading.Thread):
         new services must be added to a specific host in a specific interface
         """
         self.__addPendingAction(modelactions.ADDSERVICEINT, host, interface_name, newService)
-    
+
     def addServiceToInterfaceSYNC(self, host_id, interface_id, newService):
         """
         SYNC API
@@ -1042,7 +943,7 @@ class ModelController(threading.Thread):
         new services must be added to a specific host in a specific interface
         """
         self.__addPendingAction(modelactions.ADDSERVICEAPP, host, appname, newService)
-    
+
     def addServiceToApplicationSYNC(self, host, appname, newService):
         """
         SYNC API
@@ -1050,7 +951,6 @@ class ModelController(threading.Thread):
         directly to the model
         """
         self._processAction(modelactions.ADDSERVICEAPP, [host, appname, newService], sync=True)
-
 
     def __addServiceToInterface(self, host_id, interface_id, service):
         res = False
@@ -1065,6 +965,8 @@ class ModelController(threading.Thread):
                     res = self.addUpdate(old_service, service)
                 else:
                     res = interface.addService(service)
+                    if res:
+                        notifier.editHost(host)
         else:
             api.devlog("__addService failed. Host ID: %s not found" % host_id)
         return res
@@ -1082,26 +984,27 @@ class ModelController(threading.Thread):
                     res = self.addUpdate(old_service, service)
                 else:
                     res = application.addService(service)
+                    if res:
+                        notifier.editHost(host)
         else:
             api.devlog("__addService failed. Host ID: %s not found" % host_id)
         return res
-    
+
     def delServiceFromInterfaceASYNC(self, host, interface, service):
         """
         ASYNC API
         Adds an action to the ModelController actions queue indicating a
-        particular service in a host and interface must be removed from the model
-        Interface parameter can be "ALL"
+        particular service in a host and interface must be removed from the
+        model Interface parameter can be "ALL"
         """
         self.__addPendingAction(modelactions.DELSERVICEINT, host, interface, service)
-    
+
     def delServiceFromInterfaceSYNC(self, host, interface, service):
         """
         SYNC API
         Delete a service in a host and interface from the model
         """
         self._processAction(modelactions.DELSERVICEINT, [host, interface, service], sync=True)
-
 
     def delServiceFromApplicationASYNC(self, host, appname, service):
         """
@@ -1111,7 +1014,7 @@ class ModelController(threading.Thread):
         appname parameter can be "ALL"
         """
         self.__addPendingAction(modelactions.DELSERVICEAPP, host, appname, service)
-    
+
     def delServiceFromApplicationSYNC(self, host, appname, service):
         """
         SYNC API
@@ -1119,20 +1022,20 @@ class ModelController(threading.Thread):
         """
         self._processAction(modelactions.DELSERVICEAPP, [host, appname, service], sync=True)
 
-
     def delServiceFromHostASYNC(self, host, service):
         self.__addPendingAction(modelactions.DELSERVICEHOST, host, service)
-    
+
     def delServiceFromHostSYNC(self, host, service):
         """
         SYNC API
         Delete a service from the model
         """
         self._processAction(modelactions.DELSERVICEHOST, [host, service], sync=True)
-        
+
     def __delServiceFromInterface(self, host_id, interface_id=None, service_id=None):
         res = False
-        api.devlog("ModelController.__delServiceFromInterface(%s, %s, %s)" % (host_id, interface_id, service_id))
+        api.devlog("ModelController.__delServiceFromInterface(%s, %s, %s)" %
+                  (host_id, interface_id, service_id))
         host = self._getValueByID("_hosts", host_id)
         if host is not None:
             if service_id is not None:
@@ -1141,11 +1044,14 @@ class ModelController(threading.Thread):
                     service = interface.getService(service_id)
                     self.__clearService(service)
                     res = interface.delService(service_id)
+                    if res:
+                        notifier.editHost(host)
         return res
 
     def __delServiceFromApplication(self, host_id, application_id=None, service_id=None):
         res = False
-        api.devlog("ModelController.__delService(%s, %s, %s)" % (host_id, application_id, service_id))
+        api.devlog("ModelController.__delService(%s, %s, %s)" %
+                  (host_id, application_id, service_id))
         host = self._getValueByID("_hosts", host_id)
         if host is not None:
             if service_id is not None and item_id is not None:
@@ -1154,19 +1060,24 @@ class ModelController(threading.Thread):
                     service = interface.getService(service_id)
                     self.__clearService(service)
                     res = application.delService(service_id)
+                    if res:
+                        notifier.editHost(host)
         return res
 
     def __delService(self, host_id, service_id=None):
         res = False
-        api.devlog("ModelController.__delService(%s, %s)" % (host_id, service_id))
+        api.devlog("ModelController.__delService(%s, %s)" %
+                  (host_id, service_id))
         host = self._getValueByID("_hosts", host_id)
         if host is not None:
             service = host.getService(service_id)
             self.__clearService(service)
             res = host.delService(service_id)
+            if res:
+                notifier.editHost(host)
 
         return res
-    
+
     def editServiceSYNC(self, service, name, description, protocol, ports, status, version, owned):
         """
         SYNC API
@@ -1181,51 +1092,46 @@ class ModelController(threading.Thread):
         """
         self.__addPendingAction(modelactions.EDITSERVICE, [service, name, description, protocol, ports, status, version, owned])
 
-    def __editService(self, service, name=None, description=None, protocol=None, ports=None, 
-                          status=None, version=None, owned=None):
+    def __editService(self, service, name=None, description=None,
+                      protocol=None, ports=None, status=None,
+                      version=None, owned=None):
         res = False
         if service is not None:
-           service.updateAttributes(name, description, protocol, ports, status, version, owned)
-           res = True
+            service.updateAttributes(name, description, protocol, ports, status, version, owned)
+            notifier.editHost(service.getHost())
+            res = True
         return res
-    
-    # Vulnerability
-    
+
     def addVulnToInterfaceASYNC(self, host, intname, newVuln):
-        
         self.__addPendingAction(modelactions.ADDVULNINT, host, intname, newVuln)
-    
+
     def addVulnToInterfaceSYNC(self, host, intname, newVuln):
         self._processAction(modelactions.ADDVULNINT, [host, intname, newVuln], sync=True)
-    
-    def addVulnToApplicationASYNC(self, host, appname, newVuln):
 
+    def addVulnToApplicationASYNC(self, host, appname, newVuln):
         self.__addPendingAction(modelactions.ADDVULNAPP, host, appname, newVuln)
-    
+
     def addVulnToApplicationSYNC(self, host, appname, newVuln):
         self._processAction(modelactions.ADDVULNAPP, [host, appname, newVuln], sync=True)
 
     def addVulnToHostASYNC(self, host, newVuln):
-
         self.__addPendingAction(modelactions.ADDVULNHOST, host, newVuln)
-    
+
     def addVulnToHostSYNC(self, host, newVuln):
         self._processAction(modelactions.ADDVULNHOST, [host, newVuln], sync=True)
-        
+
     def addVulnToServiceASYNC(self, host, srvname, newVuln):
-        
         self.__addPendingAction(modelactions.ADDVULNSRV, host, srvname, newVuln)
-    
+
     def addVulnToServiceSYNC(self, host, srvname, newVuln):
         self._processAction(modelactions.ADDVULNSRV, [host, srvname, newVuln], sync=True)
 
     def addVulnSYNC(self, model_object, newVuln):
         self._processAction(modelactions.ADDVULN, [model_object, newVuln], sync=True)
-        
+
     def addVulnWebToServiceASYNC(self, host, srvname, newVuln):
-        
         self.__addPendingAction(modelactions.ADDVULNWEBSRV, host, srvname, newVuln)
-    
+
     def addVulnWebToServiceSYNC(self, host, srvname, newVuln):
         self._processAction(modelactions.ADDVULNWEBSRV, [host, srvname, newVuln], sync=True)
 
@@ -1237,6 +1143,8 @@ class ModelController(threading.Thread):
                 res = self.addUpdate(old_vuln, vuln)
             else:
                 res = model_object.addVuln(vuln)
+                if res:
+                    notifier.editHost(model_object.getHost())
         return res
 
     def __addVulnerabilityToHost(self, host_id, vuln=None):
@@ -1248,6 +1156,8 @@ class ModelController(threading.Thread):
                 res = self.addUpdate(old_vuln, vuln)
             else:
                 res = host.addVuln(vuln)
+                if res:
+                    notifier.editHost(host)
         api.devlog("__addVulnerabilityToHost result = %s" % res)
         return res
 
@@ -1262,6 +1172,8 @@ class ModelController(threading.Thread):
                     res = self.addUpdate(old_vuln, vuln)
                 else:
                     res = application.addVuln(vuln)
+                    if res:
+                        notifier.editHost(application.getHost())
         api.devlog("__addVulnerabilityToApplication result = %s" % res)
         return res
 
@@ -1276,6 +1188,8 @@ class ModelController(threading.Thread):
                     res = self.addUpdate(old_vuln, vuln)
                 else:
                     res = interface.addVuln(vuln)
+                    if res:
+                        notifier.editHost(interface.getHost())
         api.devlog("__addVulnerabilityToInterface result = %s" % res)
         return res
 
@@ -1290,78 +1204,37 @@ class ModelController(threading.Thread):
                     res = self.addUpdate(old_vuln, vuln)
                 else:
                     res = service.addVuln(vuln)
+                    if res:
+                        notifier.editHost(service.getHost())
         api.devlog("__addVulnerabilityToService result = %s" % res)
         return res
 
     def delVulnFromApplicationASYNC(self, hostname, appname, vuln):
         self.__addPendingAction(modelactions.DELVULNAPP, hostname, appname, vuln)
-    
+
     def delVulnFromApplicationSYNC(self, hostname, appname, vuln):
         self._processAction(modelactions.DELVULNAPP, [hostname, appname, vuln], sync=True)
 
+    def delVulnFromInterfaceASYNC(self, hostname, intname, vuln):
+        self.__addPendingAction(modelactions.DELVULNINT, hostname, intname, vuln)
 
-    def delVulnFromInterfaceASYNC(self, hostname,intname, vuln):
-        self.__addPendingAction(modelactions.DELVULNINT, hostname,intname, vuln)
-    
     def delVulnFromInterfaceSYNC(self, hostname, intname, vuln):
         self._processAction(modelactions.DELVULNINT, [hostname,intname, vuln], sync=True)
 
     def delVulnFromHostASYNC(self, hostname, vuln):
         self.__addPendingAction(modelactions.DELVULNHOST, hostname, vuln)
-    
+
     def delVulnFromHostSYNC(self, hostname, vuln):
         self._processAction(modelactions.DELVULNHOST, [hostname, vuln], sync=True)
-        
-    def delVulnFromServiceASYNC(self, hostname,srvname, vuln):
+
+    def delVulnFromServiceASYNC(self, hostname, srvname, vuln):
         self.__addPendingAction(modelactions.DELVULNSRV, hostname, srvname, vuln)
-    
+
     def delVulnFromServiceSYNC(self, hostname, srvname, vuln):
         self._processAction(modelactions.DELVULNSRV, [hostname, srvname, vuln], sync=True)
 
     def delVulnSYNC(self, model_object, vuln_id):
         self._processAction(modelactions.DELVULN, [model_object, vuln_id], sync=True)
-        
-    
-    def __delVulnerability(self, action, host_name, item_name, vuln_id):
-
-        res = False
-        #self.__acquire_host_lock()
-        # DO NOT USE self.getHost because it will cause a deadlock
-        # if interface name is ALL then we delete the service from the whole host
-        host = self._getValueByID("_hosts", host_name)
-        if host is not None:
-            if action == modelactions.DELVULNHOST:
-                res = host.delVuln(vuln_id)
-            else:
-
-                if action == modelactions.DELVULNAPP:
-                    _getOne = host.getApplication
-                    _getAll = host.getAllApplications
-                    _delItem = host.delApplication
-                elif action == modelactions.DELVULNINT:
-                    _getOne = host.getInterface
-                    _getAll = host.getAllInterfaces
-                    _delItem = host.delInterface
-                elif action == modelactions.DELVULNSRV:
-                    _getOne = host.getService
-                    _getAll = host.getAllServices
-                    _delItem = host.delService
-
-                if item_name != "ALL":
-                    item = _getOne(item_name)
-                    # if the service is really in that interface we delete it
-                    # since there are cross references we have to delete the
-                    # service from the interface and if there aren't any other references
-                    # in any other interface then delete it from the host
-                    if item is not None:
-                        res = item.delVuln(vuln_id)
-                else:
-                    # remove from all interfaces
-                    for item in _getAll():
-                        res = item.delVuln(service.getID())
-
-        #self.__release_host_lock()
-        return res
 
     def __delVulnFromModelObject(self, model_object, vuln_id):
         res = False
@@ -1369,6 +1242,8 @@ class ModelController(threading.Thread):
             vuln = model_object.getVuln(vuln_id)
             self.__clearVuln(vuln)
             res = model_object.delVuln(vuln_id)
+            if res:
+                notifier.editHost(model_object.getHost())
         return res
 
     def __delVulnerabilityFromHost(self, host_id, vuln_id):
@@ -1378,6 +1253,8 @@ class ModelController(threading.Thread):
             vuln = host.getVuln(vuln_id)
             self.__clearVuln(vuln)
             res = host.delVuln(vuln_id)
+            if res:
+                notifier.editHost(host)
         return res
 
     def __delVulnerabilityFromInterface(self, host_id, interface_id, vuln_id):
@@ -1389,6 +1266,8 @@ class ModelController(threading.Thread):
                 vuln = interface.getVuln(vuln_id)
                 self.__clearVuln(vuln)
                 res = interface.delVuln(vuln_id)
+                if res:
+                    notifier.editHost(host)
         return res
 
     def __delVulnerabilityFromApplication(self, host_id, application_id, vuln_id):
@@ -1400,6 +1279,8 @@ class ModelController(threading.Thread):
                 vuln = application.getVuln(vuln_id)
                 self.__clearVuln(vuln)
                 res = application.delVuln(vuln_id)
+                if res:
+                    notifier.editHost(host)
         return res
 
     def __delVulnerabilityFromService(self, host_id, service_id, vuln_id):
@@ -1411,6 +1292,8 @@ class ModelController(threading.Thread):
                 vuln = service.getVuln(vuln_id)
                 self.__clearVuln(vuln)
                 res = service.delVuln(vuln_id)
+                if res:
+                    notifier.editHost(host)
         return res
 
     def editVulnSYNC(self, vuln, name, desc, severity, refs):
@@ -1419,48 +1302,56 @@ class ModelController(threading.Thread):
     def editVulnASYNC(self, vuln, name, desc, severity, refs):
         self.__addPendingAction(modelactions.EDITVULN, [vuln, name, desc, severity, refs])
 
-    def editVulnWebSYNC(self, vuln, name, desc, website, path, refs, severity, request, response,
-                method,pname, params,query,category):
-        self._processAction(modelactions.EDITVULN, [vuln, name, desc, website, path, refs, severity, request, response,
-                method,pname, params,query,category], sync=True)
+    def editVulnWebSYNC(self, vuln, name, desc, website, path, refs, severity,
+                        request, response, method, pname, params, query,
+                        category):
+        self._processAction(modelactions.EDITVULN,
+                            [vuln, name, desc, website, path, refs, severity,
+                             request, response, method, pname, params, query,
+                             category], sync=True)
 
-    def editVulnWebASYNC(self, vuln, name, desc, website, path, refs, severity, request, response,
-                method,pname, params,query,category):
-        self.__addPendingAction(modelactions.EDITVULN, [vuln, name, desc, website, path, refs, severity, request, response,
-                method,pname, params,query,category])
+    def editVulnWebASYNC(self, vuln, name, desc, website, path, refs,
+                         severity, request, response, method, pname,
+                         params, query, category):
+        self.__addPendingAction(modelactions.EDITVULN,
+                                [vuln, name, desc, website, path, refs,
+                                 severity, request, response, method,
+                                 pname, params, query, category])
 
     def __editVulnerability(self, vuln, *args):
         res = False
         if vuln is not None:
-           vuln.updateAttributes(*args)
-           res = True
+            vuln.updateAttributes(*args)
+            res = True
+            if res:
+                notifier.editHost(vuln.getHost())
         return res
-    
+
     # Note
     def addNoteToInterfaceASYNC(self, host, intname, newNote):
         self.__addPendingAction(modelactions.ADDNOTEINT, host, intname, newNote)
-    
+
     def addNoteToInterfaceSYNC(self, host, intname, newNote):
         self._processAction(modelactions.ADDNOTEINT, [host, intname, newNote], sync=True)
-    
+
     def addNoteToApplicationASYNC(self, host, appname, newNote):
         self.__addPendingAction(modelactions.ADDNOTEAPP, host, appname, newNote)
-    
+
     def addNoteToApplicationSYNC(self, host, appname, newNote):
         self._processAction(modelactions.ADDNOTEAPP, [host, appname, newNote], sync=True)
 
     def addNoteToHostASYNC(self, host, newNote):
         self.__addPendingAction(modelactions.ADDNOTEHOST, host, newNote)
-        
+
     def addNoteToHostSYNC(self, host, newNote):
         self._processAction(modelactions.ADDNOTEHOST, [host, newNote], sync=True)
-        
+
     def addNoteToServiceASYNC(self, host, srvname, newNote):
         self.__addPendingAction(modelactions.ADDNOTESRV, host, srvname, newNote)
-        
+
     def addNoteToNoteASYNC(self, host, srvname, note_id, newNote):
         self.__addPendingAction(modelactions.ADDNOTENOTE, host, srvname, note_id, newNote)
-    
+
     def addNoteToServiceSYNC(self, host, srvname, newNote):
         self._processAction(modelactions.ADDNOTESRV, [host, srvname, newNote], sync=True)
 
@@ -1469,25 +1360,25 @@ class ModelController(threading.Thread):
 
     def delNoteFromApplicationASYNC(self, hostname, appname, note):
         self.__addPendingAction(modelactions.DELNOTEAPP, hostname, appname, note)
-    
+
     def delNoteFromApplicationSYNC(self, hostname, appname, note):
         self._processAction(modelactions.DELNOTEAPP, [hostname, appname, note], sync=True)
 
-    def delNoteFromInterfaceASYNC(self, hostname,intname, note):
-        self.__addPendingAction(modelactions.DELNOTEINT, hostname,intname, note)
-    
+    def delNoteFromInterfaceASYNC(self, hostname, intname, note):
+        self.__addPendingAction(modelactions.DELNOTEINT, hostname, intname, note)
+
     def delNoteFromInterfaceSYNC(self, hostname, intname, note):
         self._processAction(modelactions.DELNOTEINT, [hostname, intname, note], sync=True)
 
     def delNoteFromHostASYNC(self, hostname, note):
         self.__addPendingAction(modelactions.DELNOTEHOST, hostname, note)
-    
+
     def delNoteFromHostSYNC(self, hostname, note):
         self._processAction(modelactions.DELNOTEHOST, [hostname, note], sync=True)
-        
-    def delNoteFromServiceASYNC(self, hostname,srvname, note):
+
+    def delNoteFromServiceASYNC(self, hostname, srvname, note):
         self.__addPendingAction(modelactions.DELNOTESRV, hostname, srvname, note)
-    
+
     def delNoteFromServiceSYNC(self, hostname, srvname, note):
         self._processAction(modelactions.DELNOTESRV, [hostname, srvname, note], sync=True)
 
@@ -1496,16 +1387,15 @@ class ModelController(threading.Thread):
 
     def addCredToServiceASYNC(self, host, srvname, newCred):
         self.__addPendingAction(modelactions.ADDCREDSRV, host, srvname, newCred)
-    
+
     def addCredToServiceSYNC(self, host, srvname, newCred):
         self._processAction(modelactions.ADDCREDSRV, [host, srvname, newCred], sync=True)
 
-    def delCredFromServiceASYNC(self, hostname,srvname, cred):
+    def delCredFromServiceASYNC(self, hostname, srvname, cred):
         self.__addPendingAction(modelactions.DELCREDSRV, hostname, srvname, cred)
-    
+
     def delCredFromServiceSYNC(self, hostname, srvname, note):
         self._processAction(modelactions.DELCREDSRV, [hostname, srvname, cred], sync=True)
-
 
     def __addNote(self, action, host_name, item_name=None, note=None, note_id=None):
         res = False
@@ -1513,7 +1403,6 @@ class ModelController(threading.Thread):
         # if host is not found nothing is done with the new interface
         host = self._getValueByID("_hosts", host_name)
         if host is not None:
-            
             if action == modelactions.ADDNOTEHOST:
                 res = host.addNote(note)
             else:
@@ -1524,19 +1413,19 @@ class ModelController(threading.Thread):
                 elif action == modelactions.ADDNOTESRV:
                     _getOne = host.getService
                 elif action == modelactions.ADDNOTENOTE:
-                    service=host.getService(item_name)
+                    service = host.getService(item_name)
                     _getOne = service.getNote
-                    item_name=note_id
+                    item_name = note_id
 
                 item = _getOne(item_name)
                 if item is not None:
                     res = item.addNote(note)
                 else:
                     api.devlog("__addNote: GetNote ID error" + str(item))
+            notifier.editHost(host)
 
         else:
             api.devlog("__addNote failed. Hostname: %s not found" % host_name)
-        #self.__release_host_lock()
         return res
 
     def __addNoteToModelObject(self, model_object, note=None):
@@ -1547,6 +1436,8 @@ class ModelController(threading.Thread):
                 res = self.addUpdate(old_note, note)
             else:
                 res = model_object.addNote(note)
+                if res:
+                    notifier.editHost(model_object.getHost())
         return res
 
     def __addNoteToHost(self, host_id, note=None):
@@ -1558,8 +1449,11 @@ class ModelController(threading.Thread):
                 res = self.addUpdate(old_note, note)
             else:
                 res = host.addNote(note)
+                if res:
+                    notifier.editHost(host)
         else:
-            api.devlog("__addNoteToHost failed. Hostname: %s not found" % host_id)
+            api.devlog("__addNoteToHost failed. Hostname: %s not found" %
+                       host_id)
         return res
 
     def __addNoteToInterface(self, host_id, interface_id, note=None):
@@ -1573,6 +1467,8 @@ class ModelController(threading.Thread):
                     res = self.addUpdate(old_note, note)
                 else:
                     res = interface.addNote(note)
+                    if res:
+                        notifier.editHost(host)
         else:
             api.devlog("__addNote failed. Host ID: %s not found" % host_id)
         return res
@@ -1588,6 +1484,8 @@ class ModelController(threading.Thread):
                     res = self.addUpdate(old_note, note)
                 else:
                     res = application.addNote(note)
+                    if res:
+                        notifier.editHost(host)
         else:
             api.devlog("__addNote failed. Host ID: %s not found" % host_id)
         return res
@@ -1603,6 +1501,8 @@ class ModelController(threading.Thread):
                     res = self.addUpdate(old_note, note)
                 else:
                     res = service.addNote(note)
+                    if res:
+                        notifier.editHost(host)
         else:
             api.devlog("__addNote failed. Host ID: %s not found" % host_id)
         return res
@@ -1620,6 +1520,8 @@ class ModelController(threading.Thread):
                         res = self.addUpdate(old_note, note)
                     else:
                         res = service_note.addNote(note)
+                        if res:
+                            notifier.editHost(host)
         else:
             api.devlog("__addNote failed. Host ID: %s not found" % host_id)
         return res
@@ -1628,9 +1530,9 @@ class ModelController(threading.Thread):
     def __delNote(self, action, host_name, item_name, note_id):
 
         res = False
-        #self.__acquire_host_lock()
         # DO NOT USE self.getHost because it will cause a deadlock
-        # if interface name is ALL then we delete the service from the whole host
+        # if interface name is ALL then we delete the service from
+        # the whole host
         host = self._getValueByID("_hosts", host_name)
         if host is not None:
             if action == modelactions.DELNOTEHOST:
@@ -1662,6 +1564,7 @@ class ModelController(threading.Thread):
                     # remove from all interfaces
                     for item in _getAll():
                         res = item.delNote(service.getID())
+            notifier.editHost(host)
 
         self.__release_host_lock()
         return res
@@ -1672,6 +1575,8 @@ class ModelController(threading.Thread):
             note = model_object.getNote(note_id)
             self.__clearNote(note)
             res = model_object.delNote(note_id)
+            if res:
+                notifier.editHost(model_object.getHost())
         return res
 
     def __delNoteFromHost(self, host_id, note_id):
@@ -1681,6 +1586,8 @@ class ModelController(threading.Thread):
             note = host.getNote(note_id)
             self.__clearNote(note)
             res = host.delNote(note_id)
+            if res:
+                notifier.editHost(host)
         return res
 
     def __delNoteFromInterface(self, host_id, interface_id, note_id):
@@ -1692,6 +1599,8 @@ class ModelController(threading.Thread):
                 note = interface.getNote(note_id)
                 self.__clearNote(note)
                 res = interface.delNote(note_id)
+                if res:
+                    notifier.editHost(host)
         return res
 
     def __delNoteFromApplication(self, host_id, application_id, note_id):
@@ -1703,6 +1612,8 @@ class ModelController(threading.Thread):
                 note = application.getNote(note_id)
                 self.__clearNote(note)
                 res = application.delNote(note_id)
+                if res:
+                    notifier.editHost(host)
         return res
 
     def __delNoteFromService(self, host_id, service_id, note_id):
@@ -1714,6 +1625,8 @@ class ModelController(threading.Thread):
                 note = service.getNote(note_id)
                 self.__clearNote(note)
                 res = service.delNote(note_id)
+                if res:
+                    notifier.editHost(host)
         return res
 
     def __delNoteFromServiceNote(self, host_id, service_id, note_id, deep_note_id):
@@ -1727,6 +1640,8 @@ class ModelController(threading.Thread):
                     deep_note = note.getNote(note_id)
                     self.__clearNote(deep_note)
                     res = note.delNote(deep_note_id)
+                    if res:
+                        notifier.editHost(host)
         return res
 
     def editNoteSYNC(self, note, name, text):
@@ -1738,8 +1653,10 @@ class ModelController(threading.Thread):
     def __editNote(self, note, name=None, text=None):
         res = False
         if note is not None:
-           note.updateAttributes(name, text)
-           res = True
+            note.updateAttributes(name, text)
+            res = True
+            if res:
+                notifier.editHost(note.getHost())
         return res
 
     def editCredSYNC(self, cred, username, password):
@@ -1753,6 +1670,8 @@ class ModelController(threading.Thread):
         if cred is not None:
             cred.updateAttributes(username, password)
             res = True
+            if res:
+                notifier.editHost(cred.getHost())
         return res
 
     def addCredSYNC(self, model_object, newCred):
@@ -1766,6 +1685,8 @@ class ModelController(threading.Thread):
                 res = self.addUpdate(old_cred, cred)
             else:
                 res = model_object.addCred(cred)
+                if res:
+                    notifier.editHost(model_object.getHost())
         return res
 
     def delCredSYNC(self, model_object, cred_id):
@@ -1777,6 +1698,8 @@ class ModelController(threading.Thread):
             cred = model_object.getCred(cred_id)
             self.__clearCred(cred)
             res = model_object.delCred(cred_id)
+            if res:
+                notifier.editHost(model_object.getHost())
         return res
 
     def __addCredToService(self, host_id, service_id, cred=None):
@@ -1790,6 +1713,8 @@ class ModelController(threading.Thread):
                     res = self.addUpdate(old_cred, cred)
                 else:
                     res = service.addCred(cred)
+                    if res:
+                        notifier.editHost(host)
         else:
             api.devlog("__addCred failed. Host ID: %s not found" % host_id)
         return res
@@ -1803,6 +1728,8 @@ class ModelController(threading.Thread):
                 cred = service.getCred(cred_id)
                 self.__clearCred(cred)
                 res = service.delCred(cred_id)
+                if res:
+                    notifier.editHost(host)
         return res
 
     def getHost(self, name):
@@ -1810,12 +1737,11 @@ class ModelController(threading.Thread):
         h = self._getValueByID("_hosts", name)
         self.__release_host_lock()
         return h
-    
-    
+
     def getHostsCount(self):
         return len(self._hosts)
-        
-    def getAllHosts(self, mode = 0):
+
+    def getAllHosts(self, mode=0):
         """
         return all interfaces in this host
         mode = 0 returns a list of hosts objects
@@ -1830,67 +1756,30 @@ class ModelController(threading.Thread):
         self.__release_host_lock()
         return hosts
 
-    def clearHosts(self, use_lock=True):
-        """
-        Clears the hosts saved in the model. This does not delete hosts from
-        workspaces or filesystem. Do not confuse this with deleteAllHosts
-        """
-        api.devlog("model controller clearHosts called")
-        # this method should be called when closing the current workspace
-        if use_lock: self.__acquire_host_lock()
-        self._hosts.clear()
-        self._widgets_lock.acquire()
-        for w in self._widgets:
-            event = ClearHostsCustomEvent()
-            guiapi.postCustomEvent(event, w)
-        self._widgets_lock.release()
-        if use_lock: self.__release_host_lock()
-    
-    def deleteAllHosts(self):
-        """
-        Be carefull when calling this method!
-        This will delete all hosts from the model and the workspace (as well
-        as the filesystem). This will delete all the contents and this will
-        be syncronized!!
-        """
-        #TODO: review this...
-        # should we allow this to everyone?
-        pass
-
-    def clearWidgets(self):
-        #XXX: is this really usefull??
-        self._widgets_lock.acquire()
-        del self._widgets[:]
-        self._widgets_lock.release()
-    
     def setWorkspace(self, workspace):
         self._workspace = workspace
-        self._hosts = self._workspace.getContainee()    
+        self._hosts = self._workspace.getContainee()
         self._workspace.load()
         self.createIndex(self._hosts)
-        self._notifyWorkspaceChanged(self._workspace)
-        self._notifyModelUpdated()
+        notifier.workspaceChanged(self._workspace)
 
     def createIndex(self, hosts):
-        self.treeWordsTries=TreeWordsTries()
+        self.treeWordsTries = TreeWordsTries()
         self.treeWordsTries.clear()
-        
         for k in hosts.keys():
-            h=hosts[k] 
-
+            h = hosts[k]
             self.treeWordsTries.addWord(h.getName())
             for intr in h.getAllInterfaces():
-                ipv4=intr.ipv4
-                ipv6=intr.ipv6
-                if not ipv4['address'] in ["0.0.0.0",None]:
+                ipv4 = intr.ipv4
+                ipv6 = intr.ipv6
+                if not ipv4['address'] in ["0.0.0.0", None]:
                     self.treeWordsTries.addWord(ipv4['address'])
-                
-                if not ipv6['address'] in ["0000:0000:0000:0000:0000:0000:0000:0000",None]:
+
+                if not ipv6['address'] in ["0000:0000:0000:0000:0000:0000:0000:0000", None]:
                     self.treeWordsTries.addWord(ipv6['address'])
-                    
+
                 for hostname in intr.getHostnames():
-                    self.treeWordsTries.addWord(hostname)        
-    
+                    self.treeWordsTries.addWord(hostname)
 
     def getWorkspace(self):
         return self._workspace
@@ -1900,25 +1789,20 @@ class ModelController(threading.Thread):
         ## The client should implement checkPermissions method.
         self.__sec.checkPermissions(op)
 
-
     def getWorkspaceSyncronizer(self):
         return WorkspaceSyncronizer(self.getWorkspace())
-    
+
     #@passPermissionsOrRaise
     @lockModel
     def syncActiveWorkspace(self):
-        if len(self.getWorkspace().getConflicts()): 
+        if len(self.getWorkspace().getConflicts()):
             #There are some conflicts
-            self._notifySyncError()
+            notifier.showPopup("Sync Failed! \nYou should check if there are some conflicts to resolve")
             return False
 
         ws = self.getWorkspaceSyncronizer()
         if not ws.sync():
-            self._notifySyncError()
+            notifier.showPopup("Sync Failed! \nYou should check if there are some conflicts to resolve")
             return False
-        self._notifyModelUpdated()
+        notifier.workspaceLoad(self.getAllHosts())
         return True
-    
-
-
-#-------------------------------------------------------------------------------

@@ -12,13 +12,10 @@ import zipfile
 import model.common
 from config.configuration import getInstanceConfiguration
 #from workspace import Workspace
-from model.log import getLogger
-from model.log import getNotifier
+import model.log
 from utils.common import *
 import shutil
-import xmlrpclib
-
-
+#from plugins.api import PluginControllerAPI
 
 CONF = getInstanceConfiguration()
 
@@ -27,6 +24,7 @@ __model_controller = None
 
 
 _xmlrpc_api_server = None
+_plugin_controller_api = None
 
 #XXX: temp way to replicate info
 _remote_servers_proxy = []
@@ -36,17 +34,12 @@ _remote_sync_server_proxy = None
 # name of the currently logged user
 __current_logged_user = ""
 
+
 def setUpAPIs(controller, hostname=None, port=None):
     global __model_controller
     __model_controller = controller
     _setUpAPIServer(hostname, port)
 
-def startAPIServer():
-    global _xmlrpc_api_server
-    if _xmlrpc_api_server is not None:
-        devlog("starting xmlrpc api server...")
-        #_xmlrpc_api_server.serve_forever()
-        _xmlrpc_api_server.start()
 
 def startAPIServer():
     global _xmlrpc_api_server
@@ -54,6 +47,7 @@ def startAPIServer():
         devlog("starting xmlrpc api server...")
         #_xmlrpc_api_server.serve_forever()
         _xmlrpc_api_server.start()
+
 
 def stopAPIServer():
     global _xmlrpc_api_server
@@ -64,8 +58,7 @@ def stopAPIServer():
         devlog("xmlrpc thread joined")
 
 
-#-------------------------------------------------------------------------------
-def _setUpAPIServer(hostname = None, port = None):
+def _setUpAPIServer(hostname=None, port=None):
     global _xmlrpc_api_server
     global api_conn_info
     if _xmlrpc_api_server is None:
@@ -663,7 +656,7 @@ def log(msg ,level = "INFO"):
     it will also log to a file with the corresponding level
     if logger was configured that way
     """
-    getLogger().log(msg,level)
+    model.log.getLogger().log(msg,level)
 
 def devlog(msg):
     """
@@ -671,13 +664,13 @@ def devlog(msg):
     """
     if CONF.getDebugStatus():
         print "[DEBUG] - %s" % msg
-        getLogger().log(msg,"DEBUG")
+        model.log.getLogger().log(msg,"DEBUG")
 
 def showDialog(msg, level="Information"):
-    return getNotifier().showDialog(msg, level)
+    return model.log.getNotifier().showDialog(msg, level)
 
 def showPopup(msg, level="Information"):
-    return getNotifier().showPopup(msg, level)
+    return model.log.getNotifier().showPopup(msg, level)
 
 #-------------------------------------------------------------------------------
 def getLoggedUser():

@@ -329,7 +329,7 @@ class WorkspaceOnCouch(Workspace):
                     continue
 
                 leaf = {}
-	            try:
+	        try:
                     leaf = find_leaf(id_path)
                 except Exception as e:
                     model.api.devlog('Object parent not found, skipping: %s' % '.'.join(id_path))

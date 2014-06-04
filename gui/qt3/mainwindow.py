@@ -62,6 +62,7 @@ class MainWindow(qt.QMainWindow):
                                                        self._main_app)
 
         self._hosts_treeview = HostsBrowser(self._perspective_manager,
+                                            self._model_controller,
                                             'Hosts')
         notifier.registerWidget(self._hosts_treeview)
 

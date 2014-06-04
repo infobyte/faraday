@@ -475,12 +475,10 @@ table.tablesorter tbody tr td:first-child {
 	margin-bottom: .5em !important;
 }
 .formu .input, .formu textarea, .formu select, .input {
-	/*
-border-radius:5px;
+		border-radius:5px;
 		-ms-border-radius:5px;
 		-moz-border-radius:5px;
 		-webkit-border-radius:5px;
-*/
 }
 	.formu .input:focus, .formu textarea:focus, .formu select:focus, .input:focus {
 		border-color: #aaa;
@@ -524,16 +522,12 @@ label {
 	color: #2D333D;
 	font-size: 13px;
 }
+.left {
+	float: left;
+}
 #sec {
-	background: none repeat scroll 0 0 #444444;
-	padding: 0;
-	width: 900px;
+	float: right;
 }
-#sec a {
-	color: #ffffff;
-	font-size: 12px;
-	font-weight: bold;
-}
-#main {
-	margin-top: -10px;
+* { /* compatibilidad entre nuestros estilos y los de bootstrap */ 
+	-moz-box-sizing: content-box !important;
 }

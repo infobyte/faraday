@@ -75,7 +75,7 @@ class ChangesTestSuite(unittest.TestCase):
             for wname in cls._couchdb_workspaces:
                 cls.cdm.removeWorkspace(wname)
         except Exception as e:
-            print e
+            print(e)
 
     def test_model_objects_added(self):
         d1 = {
@@ -105,6 +105,30 @@ class ChangesTestSuite(unittest.TestCase):
                                      "It shouldn't be a ChangeCmd")
             self.assertEquals(change.getAction(), Change.MODEL_OBJECT_ADDED,
                               "Change should be an addition")
+
+    def test_model_objects_delete(self):
+        d1 = {
+            '_id': '1',
+            'type': 'Host',
+        }
+        self.cdm._getDb(self.workspace.name).save_doc(d1, use_uuids=True,
+                                                      force_update=True)
+
+        time.sleep(1)
+
+        self.assertEquals(len(self.notifier.changes), 1,
+                          "Some changes weren't added")
+
+        self.assertEquals(self.notifier.changes[0].getAction(),
+                          Change.MODEL_OBJECT_ADDED,
+                          "First change should be an addition")
+
+        self.cdm._getDb(self.workspace.name).delete_doc(d1['_id'])
+        time.sleep(1)
+
+        self.assertEquals(self.notifier.changes[1].getAction(),
+                          Change.MODEL_OBJECT_DELETED,
+                          "Second change should be a Removal")
 
     def test_model_objects_modified(self):
         d1 = {

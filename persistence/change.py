@@ -22,7 +22,8 @@ class ChangeFactory(object):
                      ModelObjectNote.class_signature,
                      ModelObjectVuln.class_signature,
                      ModelObjectVulnWeb.class_signature,
-                     ModelObjectCred.class_signature]:
+                     ModelObjectCred.class_signature,
+                     'unknown']:
             return ChangeModelObject(dic)
         else:
             return ChangeCmd(dic)

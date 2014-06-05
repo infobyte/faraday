@@ -40,7 +40,7 @@ class Change(object):
     def __init__(self, doc):
         self.type = doc.get("type")
         self.action = self.UNKNOWN
-        self.msg = "Change: Action: %s - Type: %s"
+        self.msg = "Change: Action: %s - Type: %s" % (self.type, self.action)
 
     def getAction(self):
         return self.action

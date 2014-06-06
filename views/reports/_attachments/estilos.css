@@ -248,9 +248,7 @@ aside {
 			-moz-transition: all .3s ease;
 			-webkit-transition: all .3s ease;
 	}
-		aside nav a.activo, aside nav a:hover {
-			background: #DF3936;
-		}
+		
 
 .seccion {
 	background: #E8EFF0;

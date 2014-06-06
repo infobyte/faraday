@@ -18,6 +18,8 @@
 
 	<!-- !CSS -->
 	<link rel="stylesheet" type="text/css" href="estilos.css" />
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
 	
 	<link href="favicon.ico" rel="shortcut icon">
 	<link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
@@ -30,6 +32,7 @@
 	<script type="text/javascript" src="/_utils/script/jquery.js"></script>
 	<script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
 	<script type="text/javascript" src="script/jquery.tablesorter.min.js"></script>
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 </head>
 
 <body>
@@ -37,23 +40,6 @@
 		<div class="wrapper">
 			<header class="head">
 				<a href="#"><img class="logo" src="images/logo-faraday.png"/></a>
-				<!-- <nav> -->
-				<!-- 	<ul class="menu"> -->
-				<!-- 		<li> -->
-				<!-- 			<a href="#">Opción 1</a> -->
-				<!-- 		</li> -->
-				<!-- 		<li> -->
-				<!-- 			<a href="#">Opción 1</a> -->
-				<!-- 		</li> -->
-				<!-- 		<li> -->
-				<!-- 			<a href="#" class="activo">Username</a> -->
-				<!-- 			<ul> -->
-				<!-- 				<li><a href="#">Sub opción 1</a></li> -->
-				<!-- 				<li><a href="#">Sub opción 2</a></li> -->
-				<!-- 			</ul> -->
-				<!-- 		</li> -->
-				<!-- 	</ul> -->
-				<!-- </nav> -->
 			</header>
 			
 			<aside>
@@ -68,7 +54,17 @@
 				</nav>
 			</aside>
 			
-			<section class="seccion clearfix">
+			<section id="main" class="seccion clearfix">
+				<div id="sec" class="btn-group">
+					<button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
+						<span class="glyphicon glyphicon-refresh"></span>
+					</button>
+					<button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+						Change workspace <span class="caret"></span>
+					</button>
+					<ul id="nav" class="dropdown-menu" role="menu">
+					</ul><!-- navegacion de WS -->
+				</div>
 				<div id="reportes" class="fila clearfix">
 				</div><!-- fin fila -->
 			</section>
@@ -77,43 +73,59 @@
 		</div><!--!/#wrapper -->
     </div><!--!/#container -->
 <script type="text/javascript">
-    loaded = false;
-    counter = 0;
-  $.couch.allDbs({
-      success : function(dbs) {
-          dbs.filter(function(db_name){
-              return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
-              //return db_name == "ws0";})
-          .forEach(function(db) {
-              var iframes = [];
-              reports.forEach( function(reps) {
-                var iframe = "/reports/_design/reports/reports/"+reps+".html?workspace="+db+"&design="+designs[reps]+"&view="+views[reps]; 
-                // alto del iframe fijo
-		//iframes.push("<iframe src="+iframe+" height=\""+sizes[reps]+"\" width=\"800\"></iframe>");
-                // sin alto de iframe
-		iframes.push("<iframe class=\"iframe\" src="+iframe+" width=\"800\" height=\"500\"></iframe>");
-              });
-              $("#reportes").append("<div id=\"workspace-"+db+"\" class=\"workspace\"><h2>"+db+"</h2>"+iframes.join("")+"</div><!-- .workspace -->");
-              // cuando termina de cargar los datos de los workspaces setea el alto del menu de la izquierda
-              var h = $("div#reportes").height();
-              $("aside").height(h);
-              counter +=1;
-        });
-        if(counter < 1){ 
-            $("#reportes").empty();
-              $("#reportes").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
-        }
-      }
-    });
-
-</script>
-
-<script type="text/javascript">
-$(function(){
-	// Table sorter
-	$("#myTable").tablesorter(); 
-//	
+$(document).ready(function() {
+	var counter = 0;
+	var h = 0;
+	$.couch.allDbs({
+      		success : function(dbs) {
+        	  dbs.filter(function(db_name){
+        	      return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
+        	  .forEach(function(db) {
+		      // armo la lista con todos los WSs
+                      $("#sec #nav").append('<li><a href="#'+db+'" class="ws">'+db+'</a></li>');
+		      // navegación entre WSs
+        	      if(window.location.hash === "" && counter === 0) {
+			window.location.hash = db;
+		      }
+        	      counter +=1;
+	        });
+	        if(counter < 1) { 
+	            $("#reportes").empty();
+	              $("#reportes").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
+		}
+		// seteo el WS actual
+		var current = window.location.hash.substr(1);
+		// armo los iframes que le corresponden
+        	var iframes = get_iframes(current);
+		// los cargo
+		$("#reportes").append(iframes);
+		// calculo la altura del sidebar
+        	$("aside").height($("#main").height()+40);
+	      }
+	});
+	// navegacion entre WSs en el dropdown
+	$(document).on("click", "a.ws", function(e) {
+		e.preventDefault();
+		var hash = $(this).attr("href").substr(1);
+		$("#reportes").empty().append(get_iframes(hash));
+		window.location.hash = hash;
+	});
+	$(document).on("click", "#refresh", function() {
+		location.reload();
+	});
 });
+// genera los iframes correspondientes a un WS
+function get_iframes(db) {
+	var iframes = [];
+	reports.forEach(function(rep) {
+		var iframe = "/reports/_design/reports/reports/"+rep+".html?workspace="+db+"&design="+designs[rep]+"&view="+views[rep];
+		iframes.push("<iframe class=\"iframe\" src="+iframe+" width=\"800\" height=\"500\"></iframe>");
+	});
+	var ret = "<div id=\"workspace-"+db+"\" class=\"workspace\"><div class=\"left\"><h2>Viewing "+
+		db+"</h2></div>"+iframes.join("")+"</div><!-- .workspace -->";
+	return ret;
+}
 </script>
+
 </body>
 </html>

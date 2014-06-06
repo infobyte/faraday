@@ -248,9 +248,7 @@ aside {
 			-moz-transition: all .3s ease;
 			-webkit-transition: all .3s ease;
 	}
-		aside nav a.activo, aside nav a:hover {
-			background: #DF3936;
-		}
+		
 
 .seccion {
 	background: #E8EFF0;
@@ -475,12 +473,10 @@ table.tablesorter tbody tr td:first-child {
 	margin-bottom: .5em !important;
 }
 .formu .input, .formu textarea, .formu select, .input {
-	/*
-border-radius:5px;
+		border-radius:5px;
 		-ms-border-radius:5px;
 		-moz-border-radius:5px;
 		-webkit-border-radius:5px;
-*/
 }
 	.formu .input:focus, .formu textarea:focus, .formu select:focus, .input:focus {
 		border-color: #aaa;
@@ -523,4 +519,13 @@ label.error {
 label {
 	color: #2D333D;
 	font-size: 13px;
+}
+.left {
+	float: left;
+}
+#sec {
+	float: right;
+}
+* { /* compatibilidad entre nuestros estilos y los de bootstrap */ 
+	-moz-box-sizing: content-box !important;
 }

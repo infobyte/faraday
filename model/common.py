@@ -674,6 +674,8 @@ class ModelObject(object):
         if dict.get("vulnerability"):
             for vuln in dict["vulnerability"].values():
                 v = ModelObjectVuln("")
+                if vuln.get("type") == ModelObjectVulnWeb.class_signature:
+                    v = ModelObjectVulnWeb("")
                 v._parent = self
                 v._fromDict(vuln)
                 self.addVuln(v, setparent=False)

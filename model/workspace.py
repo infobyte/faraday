@@ -214,6 +214,7 @@ class WorkspaceOnFS(Workspace):
         for filename in files:
             newHost = self.__loadHostFromFile(filename)
             modelobjectcontainer[newHost.getID()] = newHost
+        notifier.workspaceLoad(self.getAllHosts())
 
     def __loadHostFromFile(self, filename):
         if os.path.basename(filename) in self._persistence_excluded_filenames:
@@ -327,7 +328,13 @@ class WorkspaceOnCouch(Workspace):
                     hosts['subs'] = subs
                     continue
 
-                leaf = find_leaf(id_path)
+                leaf = {}
+	        try:
+                    leaf = find_leaf(id_path)
+                except Exception as e:
+                    model.api.devlog('Object parent not found, skipping: %s' % '.'.join(id_path))
+                    continue
+
                 subs = leaf.get('subs', {})
                 subs[d['obj_id']] = d
                 leaf['subs'] = subs

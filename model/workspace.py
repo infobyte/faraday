@@ -38,12 +38,7 @@ class Workspace(object):
     history for all users working on the same workspace.
     It has a list with all existing workspaces just in case user wants to
     open a new one.
-    """
-                                                                    
-                                             
-                                                          
-                                                               
-                                                                                 
+    """ 
     
     def __init__(self, name, manager, shared=CONF.getAutoShareWorkspace()):
         self.name                   = name
@@ -219,6 +214,7 @@ class WorkspaceOnFS(Workspace):
         for filename in files:
             newHost = self.__loadHostFromFile(filename)
             modelobjectcontainer[newHost.getID()] = newHost
+        notifier.workspaceLoad(self.getAllHosts())
 
     def __loadHostFromFile(self, filename):
         if os.path.basename(filename) in self._persistence_excluded_filenames:
@@ -332,7 +328,13 @@ class WorkspaceOnCouch(Workspace):
                     hosts['subs'] = subs
                     continue
 
-                leaf = find_leaf(id_path)
+                leaf = {}
+	        try:
+                    leaf = find_leaf(id_path)
+                except Exception as e:
+                    model.api.devlog('Object parent not found, skipping: %s' % '.'.join(id_path))
+                    continue
+
                 subs = leaf.get('subs', {})
                 subs[d['obj_id']] = d
                 leaf['subs'] = subs
@@ -374,14 +376,19 @@ class WorkspaceManager(object):
         self.report_manager = ReportManager(10, plugin_controller)
         
         self.couchdbmanager = PersistenceManagerFactory().getInstance()
+        self.fsmanager = FSManager()
         
         self._workspaces = {}
+        self._workspaces_types = {}
         self._model_controller = model_controller
         self._excluded_directories = [".svn"]
         self.workspace_persister = WorkspacePersister()
 
     def couchAvailable(self, isit):
         self._couchAvailable = isit
+
+    def _notifyWorkspaceNoConnection(self):
+        notifier.showPopup("Couchdb Connection lost. Defaulting to memory. Fix network and try again in 5 minutes.")
 
     def reconnect(self):
         if not self.reconnectCouchManager():
@@ -443,23 +450,33 @@ class WorkspaceManager(object):
     def _notifyNoVisualizationAvailable(self):
         notifier.showPopup("No visualizations available, please install and configure CouchDB")
 
-    def createWorkspace(self, name, description="", workspaceClass = WorkspaceOnFS, shared=CONF.getAutoShareWorkspace(),
+    def createWorkspace(self, name, description="", workspaceClass = None, shared=CONF.getAutoShareWorkspace(),
                         customer="", sdate=None, fdate=None):
-        if name not in self._workspaces:
-            w = workspaceClass(name, self, shared)
-            w.description = description
-            w.customer = customer
-            if sdate is not None:
-                w.start_date = sdate
-            if fdate is not None:
-                w.finish_date = fdate
-            self.addWorkspace(w)
-        else:
-            w = self._workspaces[name]
+
+        model.api.devlog("Creating Workspace")
+        if self.getWorkspaceType(name) in globals():
+            workspaceClass = globals()[self.getWorkspaceType(name)]
+        elif not workspaceClass:
+            # Defaulting =( 
+            model.api.devlog("Defaulting to WorkspaceOnFS") 
+            workspaceClass = WorkspaceOnFS
+
+        w = workspaceClass(name, self, shared)
+        # Register the created workspace type:
+        self._workspaces_types[name] = workspaceClass.__name__
+        w.description = description
+        w.customer = customer
+        if sdate is not None:
+            w.start_date = sdate
+        if fdate is not None:
+            w.finish_date = fdate
+        self.addWorkspace(w)
         return w
 
     def removeWorkspace(self, name):
-        dm = self.getWorkspace(name).getDataManager()
+        work = self.getWorkspace(name)
+        if not work: return
+        dm = work.getDataManager()
         dm.removeWorkspace(name)
                        
         datapath = CONF.getDataPath()
@@ -473,14 +490,26 @@ class WorkspaceManager(object):
             self.setActiveWorkspace(self.getWorkspace(self._workspaces.keys()[0]))
 
     def getWorkspace(self, name):
-        return self._workspaces.get(name)
-    
+        ''' May return None '''
+        if not self._workspaces.get(name):
+            # Retrieve the workspace
+            self.loadWorkspace(name) 
+        return  self._workspaces.get(name)
+
+    def loadWorkspace(self, name): 
+        workspaceClass = None
+        workspace = None
+        if name in self.fsmanager.getWorkspacesNames():
+            workspace = self.createWorkspace(name, workspaceClass = WorkspaceOnFS) 
+        elif name in self.couchdbmanager.getWorkspacesNames():
+            workspace = self.createWorkspace(name, workspaceClass = WorkspaceOnCouch)
+
+        return workspace
+
     def openWorkspace(self, name):
-        if name in self._workspaces:
-            w = self._workspaces[name]
-            self.setActiveWorkspace(w)
-            return w
-        raise Exception("Error on OpenWorkspace for %s "  % name)
+        w = self.getWorkspace(name)
+        self.setActiveWorkspace(w)
+        return w
         
     def getWorkspaces(self):
         """
@@ -496,16 +525,20 @@ class WorkspaceManager(object):
         return self._workspaces.keys()
         
     def loadWorkspaces(self): 
-        self._workspaces.clear()
-        for name in os.listdir(CONF.getPersistencePath()):
-            if name not in self._workspaces:
-                if os.path.isdir(os.path.join(CONF.getPersistencePath(),name)) and name not in self._excluded_directories:
-                    w = self.createWorkspace(name, workspaceClass = WorkspaceOnFS)
 
-        for name in self.couchdbmanager.getWorkspacesNames():
-            if name not in self._workspaces and not name == "reports":
-                self.createWorkspace(name, workspaceClass = WorkspaceOnCouch)
-    
+        self._workspaces_types = {}
+        fsworkspaces = {name: None for name in self.fsmanager.getWorkspacesNames()}
+        self._workspaces.update(fsworkspaces)
+        couchworkspaces = {name: None for name in self.couchdbmanager .getWorkspacesNames()
+                                                if not name == 'reports'}
+        self._workspaces.update(couchworkspaces)
+
+        self._workspaces_types.update({name: WorkspaceOnFS.__name__  for name in fsworkspaces})
+        self._workspaces_types.update({name: WorkspaceOnCouch.__name__  for name in couchworkspaces})
+
+    def getWorkspaceType(self, name):
+        return self._workspaces_types.get(name, 'undefined')
+ 
     def setActiveWorkspace(self, workspace):
         try:
             self.stopAutoLoader()
@@ -524,6 +557,9 @@ class WorkspaceManager(object):
 
         if isinstance(self.active_workspace, WorkspaceOnCouch):
             self.startAutoLoader()
+
+    def isActive(self, name):
+        return self.active_workspace.name == name
                 
     def syncWorkspaces(self):
         """

@@ -49,6 +49,7 @@ class GuiApp(qt.QApplication, FaradayUi):
 
         notifier = model.log.getNotifier()
         notifier.widget = self._main_window
+        model.guiapi.notification_center.registerWidget(self._main_window)
 
         self._splash_screen = qt.QSplashScreen(
             qt.QPixmap(os.path.join(CONF.getImagePath(), "splash2.png")),
@@ -164,10 +165,14 @@ class GuiApp(qt.QApplication, FaradayUi):
         else:
             model.api.log("Creating workspace '%s'" % name)
             model.api.devlog("Looking for the delegation class")
-            workingClass = globals()[w_type]
+            manager = self.getWorkspaceManager()
 
-            w = self.getWorkspaceManager().\
-                createWorkspace(name, description, workspaceClass=workingClass)
+            workingClass = None
+            if w_type and w_type in globals(): 
+                # If set as argument, otherwise let creation delegate behaviour
+                workingClass = globals()[w_type]
+
+            w = manager.createWorkspace(name, description, workspaceClass=workingClass)
             self.getWorkspaceManager().setActiveWorkspace(w)
             self.getModelController().setWorkspace(w)
 

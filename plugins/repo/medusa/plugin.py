@@ -49,7 +49,8 @@ class MedusaParser(object):
         self.items = []
         for l in lines:
                                                                                       
-            reg = re.search("ACCOUNT FOUND: \[([^$]+)\] Host: ([^$]+) User: ([^$]+) Password: ([^$]+) \[SUCCESS\]\n",l)
+            reg = re.search("ACCOUNT FOUND: \[([^$]+)\] Host: ([^$]+) User: ([^$]+) Password: ([^$]+) \[SUCCESS\]",l)
+            print "REG" + str(reg)
                                                                                                              
             if reg:
                 item = {'service' : reg.group(1), 'host' : reg.group(2), 'user' : reg.group(3),

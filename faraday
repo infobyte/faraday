@@ -86,10 +86,11 @@ if [ ! -d $faraday_user/zsh ]; then
     mkdir -p "$faraday_user/zsh"
 fi
 if [ -e $HOME/.zshrc ]; then
-    cp -a $HOME/.zshrc $faraday_user/zsh/
+    cp -a -L $HOME/.zshrc $faraday_user/zsh/
 else
     touch $HOME/.zshrc $faraday_user/zsh/.zshrc    
 fi
+sed -i '1iZDOTDIR=$OLDZDOTDIR' $faraday_user/zsh/.zshrc
 echo "source $faraday_user/zsh/faraday.zsh" >> $faraday_user/zsh/.zshrc
 cp $faraday_base/zsh/faraday.zsh $faraday_user/zsh/
 cp $faraday_base/zsh/plugin_controller_client.py $faraday_user/zsh/

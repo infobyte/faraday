@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import qt
+from threading import Lock
 from gui.qt3.modelobjectitems import *
 import model.api as api
 import model.guiapi as guiapi
@@ -17,7 +18,6 @@ from gui.qt3.edition import EditionTable, NewServiceDialog, NewHostDialog, NewIn
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
-                      
 from whoosh.index import create_in
 from whoosh.fields import *
 
@@ -324,12 +324,17 @@ class HostsBrowserConcrete(AbstractModelObjectBrowser):
 class HostsBrowser(qt.QVBox):
     """Tree view to display Hosts"""
 
-    def __init__(self, parent, caption):
+    def __init__(self, parent, model_controller, caption):
         qt.QVBox.__init__(self, parent)
+
+        self._model_controller = model_controller
 
         self.modelUpdateTimer = qt.QTimer(self)
        
         self.__pendingModelObjectRedraws = []
+
+        self.reindex_flag_lock = Lock()
+        self.reindex_flag = False
 
         self.connect( self.modelUpdateTimer, qt.SIGNAL("timeout()"), self._modelObjectViewUpdater)
                                         
@@ -457,10 +462,24 @@ class HostsBrowser(qt.QVBox):
 
         for ci in self._category_items.values():
             ci.setOpen(True)
-        self.createIndex(hosts)
+        self.createIndex()
         self.filterTree(self._filter)
 
+    def setReindex(self):
+        self.reindex_flag_lock.acquire()
+        if not self.reindex_flag:
+            self.reindex_flag = True
+        self.reindex_flag_lock.release()
+
+    def reindex(self):
+        self.reindex_flag_lock.acquire()
+        if self.reindex_flag:
+            self.createIndex()
+            self.reindex_flag = False
+        self.reindex_flag_lock.release()
+
     def filterTree(self, mfilter=""):
+        self.reindex()
         hosts=[]
         viewall=False
         self._filter=mfilter
@@ -501,7 +520,8 @@ class HostsBrowser(qt.QVBox):
 
         return hostv
 
-    def createIndex(self,hosts):
+    def createIndex(self):
+        hosts = self._model_controller.getAllHosts()
         schema = Schema(ip=TEXT(stored=True),
                         hostname=TEXT(stored=True),
                         mac=TEXT(stored=True),
@@ -521,46 +541,46 @@ class HostsBrowser(qt.QVBox):
             os.mkdir(indexdir)
 
         self.ix = create_in(indexdir, schema)
-        writer = self.ix.writer()
-        revulns={}
         for host in hosts:
+            self.indexHost(host)
 
-                          
-            writer.add_document(ip=unicode(host.name), os=unicode(host.getOS()),owned=host.isOwned(),
-                                vuln=True if host.vulnsCount() >0 else False,
-                                note=True if len(host.getNotes()) >0 else False)
+    def indexHost(self, host):
+        writer = self.ix.writer()
+        writer.add_document(ip=unicode(host.name), os=unicode(host.getOS()),
+                            owned=host.isOwned(),
+                            vuln=True if host.vulnsCount() > 0 else False,
+                            note=True if len(host.getNotes()) > 0 else False)
 
-                               
-                            
-            for i in host.getAllInterfaces():
-                for h in i._hostnames:
-                    writer.add_document(ip=unicode(host.name), hostname=unicode(h),mac=unicode(i.getMAC()))
+        for i in host.getAllInterfaces():
+            for h in i._hostnames:
+                writer.add_document(ip=unicode(host.name),
+                                    hostname=unicode(h),
+                                    mac=unicode(i.getMAC()))
 
+        for v in host.getVulns():
+            writer.add_document(ip=unicode(host.name), vulnn=unicode(v.name))
 
-                             
-            for v in host.getVulns():
-                                          
-                                      
-                      
-                                       
-                                            
-                writer.add_document(ip=unicode(host.name), vulnn=unicode(v.name))
+        for i in host.getAllInterfaces():
+            for s in i.getAllServices():
+                for v in s.getVulns():
+                    writer.add_document(ip=unicode(host.name),
+                                        vulnn=unicode(v.name),
+                                        srvname=unicode(s.getName()))
+                for p in s.getPorts():
+                    writer.add_document(
+                        ip=unicode(host.name),
+                        port=unicode(str(p)),
+                        owned=s.isOwned(),
+                        vuln=True if s.vulnsCount() > 0 else False,
+                        note=True if len(s.getNotes()) > 0 else False,
+                        cred=True if s.credsCount() > 0 else False,
+                        srvname=unicode(s.getName()),
+                        srvstatus=unicode(s.getStatus()))
+        writer.commit()
 
-                             
-            for i in host.getAllInterfaces():
-                for s in i.getAllServices():
-                                        
-                    for v in s.getVulns():
-                        writer.add_document(ip=unicode(host.name), vulnn=unicode(v.name),srvname=unicode(s.getName()))
-                    
-                    for p in s.getPorts():
-                        writer.add_document(ip=unicode(host.name), port=unicode(str(p)),owned=s.isOwned(),
-                                        vuln=True if s.vulnsCount() >0 else False,
-                                        note=True if len(s.getNotes()) >0 else False,
-                                        cred=True if s.credsCount() > 0 else False,
-                                        srvname=unicode(s.getName()),
-                                        srvstatus=unicode(s.getStatus()))
-
+    def removeIndexHost(self, host):
+        writer = self.ix.writer()
+        writer.delete_by_term('ip', host.name)
         writer.commit()
 
     def selectWord(self, word):
@@ -661,6 +681,8 @@ class HostsBrowser(qt.QVBox):
         category = host.getCurrentCategory()
         self._addCategory(category)
         self._addHostToCategory(host, category)
+        #self.removeIndexHost(host)
+        #self.indexHost(host)
 
     def _removeHost(self, host_id):
         item = self._host_items.get(host_id, None)
@@ -1087,12 +1109,15 @@ class HostsBrowser(qt.QVBox):
 
         elif event.type() == ADDHOST:
             self._addHost(event.host)
+            self.setReindex()
 
         elif event.type() == DELHOST:
             self._removeHost(event.host_id)
+            self.setReindex()
 
         elif event.type() == EDITHOST:
             self._editHost(event.host)
+            self.setReindex()
 
 
     def _setupContextPopups(self):

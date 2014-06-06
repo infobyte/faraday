@@ -19,7 +19,7 @@ from workspace import WorkspaceManager
 import model.controller
 import model.api
 import model.guiapi
-import plugins.api
+import apis.rest.api as restapi
 import model.log
 from utils.logs import getLogger
 import traceback
@@ -98,7 +98,7 @@ class MainApplication(object):
             model.api.devlog("Starting model controller daemon...")
             self._model_controller.start()
             model.api.startAPIServer()
-            plugins.api.startPluginControllerAPI(self._plugin_manager)
+            restapi.startAPIs(self._plugin_manager, self._model_controller)
 
             #self._writeSplashMessage("Setting up main GUI...")
 
@@ -173,7 +173,7 @@ class MainApplication(object):
         model.api.devlog("Waiting for controller threads to end...")
         self._model_controller.join()
         model.api.stopAPIServer()
-        plugins.api.stopServer()
+        restapi.stopServer()
 
         return exit_code
 

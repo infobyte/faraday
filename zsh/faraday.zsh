@@ -11,7 +11,7 @@ PS1="%{${fg_bold[red]}%}[faraday]%{${reset_color}%} $PS1"
 setopt multios
 setopt histignorespace
 
-plugin_controller_client=$ZDOTDIR/plugin_controller_client.py
+plugin_controller_client=$HOME/.faraday/zsh/plugin_controller_client.py
 old_cmd=
 
 add-output() {

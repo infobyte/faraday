@@ -20,25 +20,6 @@ except ImportError:
     print "[-] ex: sudo pip install IPy"
 CONF = getInstanceConfiguration()
 
-                                                                                
-                                                           
-                                                                       
-                                                                                 
-                      
-
-                                                                                
-                                                                               
-                                                                                    
-                                                                               
-                          
-
-                                                                                
-                                                                                      
-                                                                                
-
-                                                                                
-                                                                      
-
 class Host(ModelObject):
     """
     Represents a host found in the network.
@@ -65,15 +46,22 @@ class Host(ModelObject):
         self._name = None
         if name is not None:
             self.setName(name)
-        self._name                  = name
-        self._operating_system      = os if os else "Unknown"
-        self._default_gateway       = api.getLocalDefaultGateway() if default_gateway is None else default_gateway
+        self._name = name
+        self._operating_system = os if os else "Unknown"
+        self._default_gateway = api.getLocalDefaultGateway() \
+                                if default_gateway is None else default_gateway
         self.getMetadataHistory().pushMetadataForId(self.getID(), self.getMetadata())
 
     def _updatePublicAttributes(self):
                                                                            
         self.publicattrs['Operating System'] = 'getOS'
         self.publicattrsrefs['Operating System'] = '_operating_system'
+
+    def accept(self, visitor):
+        """ Accept method for visitor in the host leaf"""
+        for ints in self.getAllInterfaces():
+            ints.accept(visitor)
+        visitor.visit(self) 
 
     def getCategories(self):
         return self.categories
@@ -439,6 +427,11 @@ class Interface(ModelObject):
                                 "DNS"     :  []
                                 }, {'prefix': '00', 'gateway': '0000:0000:0000:0000:0000:0000:0000:0000', 'DNS': [], 'address': '0000:0000:0000:0000:0000:0000:0000:0000'}])
         return defVals
+
+    def accept(self, visitor):
+        for servs in self.getAllServices():
+            servs.accept(visitor)
+        visitor.visit(self) 
 
     
     def tieBreakable(self, property_key):

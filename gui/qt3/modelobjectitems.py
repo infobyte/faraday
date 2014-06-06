@@ -237,9 +237,10 @@ class RootListViewItem(ModelObjectListViewItem):
 class WorkspaceListViewItem(ModelObjectListViewItem):
     type = "Workspace"
     def __init__(self, qtparent, model_object=None):
-        ModelObjectListViewItem.__init__(self, qtparent, model_object.name, model_object)
+        ModelObjectListViewItem.__init__(self, qtparent, model_object.name)
         self.nconflicts = 0
         self.setOpen(True)
+        self.workspace_name = "%s" % self.name
 
     def _checkVulns(self):
         pass
@@ -257,9 +258,10 @@ class WorkspaceListViewItem(ModelObjectListViewItem):
     def updateName(self, nconflicts):
         self.nconflicts += nconflicts
         if self.nconflicts:
-            self.name = "%s (%s)" % (self.getModelObject().name, self.nconflicts)
+            text = "%s (%s)" % (self.workspace_name, self.nconflicts)
         else:
-            self.name = "%s" % (self.getModelObject().name)
+            text = "%s" % (self.workspace_name)
+        self.setText(0, text)
 
                                                                                 
 class CategoryListViewItem(ModelObjectListViewItem):
@@ -484,4 +486,5 @@ class CredListViewItem(ModelObjectListViewItem):
             self.takeItem(s)
                   
         self._childs = []
+
 

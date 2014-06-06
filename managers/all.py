@@ -25,6 +25,7 @@ import mockito
 import shutil
 import json
 from model.common import ModelObject
+from persistence.change import change_factory
 
 CONF = getInstanceConfiguration()
 
@@ -71,10 +72,22 @@ class PersistenceManager(object):
 
 class FSManager(PersistenceManager):
     """ This is a file system manager for the workspace, it will load from the provided FS"""
-    def __init__(self, path):
+    def __init__(self, path=CONF.getPersistencePath()):
         self._path = path
         if not os.path.exists(self._path):
             os.mkdir(self._path)
+
+    def getWorkspacesNames(self):
+        workspaces = []
+        for name in os.listdir(CONF.getPersistencePath()):
+            if os.path.isdir(os.path.join(CONF.getPersistencePath(), name)):
+                workspaces.append(name) 
+        return workspaces
+
+
+    def addWorkspace(self, wname):
+        wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
+        os.mkdir(wpath) 
 
     def removeWorkspace(self, name):
         shutil.rmtree(os.path.join(self._path))
@@ -127,13 +140,14 @@ class CouchdbManager(PersistenceManager):
             return []
         self._model_object_types = get_types([ModelObject])
         try:
-            self.testCouchUrl(uri)
-            url=urlparse(uri)
-            getLogger(self).debug("Setting user,pass %s %s" % (url.username, url.password))
-            self.__serv = Server(uri = uri)
-            #print dir(self.__serv)
-            self.__serv.resource_class.credentials = (url.username, url.password)
-            self._available = True
+            if uri is not None:
+                self.testCouchUrl(uri)
+                url = urlparse(uri)
+                getLogger(self).debug("Setting user,pass %s %s" % (url.username, url.password))
+                self.__serv = Server(uri=uri)
+                #print dir(self.__serv)
+                self.__serv.resource_class.credentials = (url.username, url.password)
+                self._available = True
         except:
             getLogger(self).warn("No route to couchdb server on: %s" % uri)
             getLogger(self).debug(traceback.format_exc())
@@ -157,35 +171,33 @@ class CouchdbManager(PersistenceManager):
 
         return ret_val
 
-
-
     @staticmethod
     def testCouch(uri):
-        host, port = None, None
-        try:
-            import socket
-            url=urlparse(uri)
-            proto = url.scheme
-            host=url.hostname
-            port=url.port
+        if uri is not None:
+            host, port = None, None
+            try:
+                import socket
+                url = urlparse(uri)
+                proto = url.scheme
+                host = url.hostname
+                port = url.port
 
-            port = port if port else socket.getservbyname(proto)
-            s = socket.socket()
-            s.settimeout(1)
-            s.connect((host, int(port)))
-        except:
-            return False
-        getLogger(CouchdbManager).info("Connecting Couch to: %s:%s" % (host, port))
-        return True
-
-
+                port = port if port else socket.getservbyname(proto)
+                s = socket.socket()
+                s.settimeout(1)
+                s.connect((host, int(port)))
+            except:
+                return False
+            getLogger(CouchdbManager).info("Connecting Couch to: %s:%s" % (host, port))
+            return True
 
     def testCouchUrl(self, uri):
-        url=urlparse(uri)
-        proto = url.scheme
-        host=url.hostname
-        port=url.port        
-        self.test(host, int(port))
+        if uri is not None:
+            url = urlparse(uri)
+            proto = url.scheme
+            host = url.hostname
+            port = url.port
+            self.test(host, int(port))
 
     def test(self, address, port):
         import socket
@@ -243,6 +255,10 @@ class CouchdbManager(PersistenceManager):
         return self._getDb(aWorkspaceName).get(documentId)
 
     @trap_timeout
+    def getDeletedDocument(self, aWorkspaceName, documentId, documentRev):
+        return self._getDb(aWorkspaceName).get(documentId, rev=documentRev)
+
+    @trap_timeout
     def checkDocument(self, aWorkspaceName, documentName):
         return  self._getDb(aWorkspaceName).doc_exist(documentName)
 
@@ -292,14 +308,16 @@ class CouchdbManager(PersistenceManager):
         changes = []
         last_seq = max(self.getLastChangeSeq(db_name), since)
         db = self._getDb(db_name)
-        with ChangesStream(db, feed="longpoll", since = last_seq, timeout = timeout) as stream:
+        with ChangesStream(db, feed="longpoll", since=last_seq, timeout=timeout) as stream:
             for change in stream:
                 if change['seq'] > self.getLastChangeSeq(db_name):
                     self.setLastChangeSeq(db_name, change['seq'])
                     if not change['id'].startswith('_design'):
-                        changes.append(change)
-            #last_seq = reduce(lambda x,y:  max(y['seq'], x) , changes, self.getLastChangeSeq(db_name))
-            #self.setLastChangeSeq(db_name, last_seq)
+                        #fake doc type for deleted objects
+                        doc = {'type': 'unknown', '_deleted': 'False', '_rev':[0]}
+                        if not change.get('deleted'):
+                            doc = self.getDocument(db_name, change['id'])
+                        changes.append(change_factory.create(doc))
         if len(changes):
             getLogger(self).debug("Changes from another instance")
         return changes

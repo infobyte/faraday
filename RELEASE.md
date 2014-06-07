@@ -38,7 +38,7 @@ Apr 30, 2014:
 
 * https://github.com/infobyte/faraday/commit/931865fd4bd9c5fbd1a237b52659b1c873e1fcbf
 
-* MacOS Support
+MacOS Support
 
 Apr 04, 2014:
 ----

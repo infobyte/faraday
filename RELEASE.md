@@ -1,6 +1,3 @@
-Notes
---------
-
 IMPORTANT
 ===========
 
@@ -12,6 +9,7 @@ New features in the latest update
 =====================================
 
 Jun 06, 2014:
+----
 
 * https://github.com/infobyte/faraday/commit/e616bdb44b089bfccf2405e51837eeae5d403b9f
 
@@ -29,18 +27,21 @@ API: New operations on the Rest API (this is just for the following UI
 modifications). Vulnerability update and delete operations.
 
 May 14, 2014:
+----
 
 * https://github.com/infobyte/faraday/commit/9dfa9ad23dfe450ceb65d38074d55f07425aa90a
 
 Improving (web interface, vulnerability classification)
  
 Apr 30, 2014:
+----
 
 * https://github.com/infobyte/faraday/commit/931865fd4bd9c5fbd1a237b52659b1c873e1fcbf
 
 * MacOS Support
 
 Apr 04, 2014:
+----
 * https://github.com/infobyte/faraday/commit/0fe6978fe41dc85cd8540c2f26074f3e3f57507f
 
 We are proud to present two new features that will enhace the Faraday experience.

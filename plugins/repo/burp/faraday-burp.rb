@@ -19,7 +19,7 @@ require "pp"
 
 
 #FARADAY CONF:
-RPCSERVER="http://127.0.0.1:9876/" ##cambiar variable
+RPCSERVER="http://127.0.0.1:9876/"
 IMPORTVULN=1 #1 if you like to import the current vulnerabilities, or 0 if you only want to import new vulns
 PLUGINVERSION="Faraday v1.1 Ruby"
 #Tested: Burp Professional v1.5.18

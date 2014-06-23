@@ -314,7 +314,7 @@ class CouchdbManager(PersistenceManager):
                     self.setLastChangeSeq(db_name, change['seq'])
                     if not change['id'].startswith('_design'):
                         #fake doc type for deleted objects
-                        doc = {'type': 'unknown', '_deleted': 'False'}
+                        doc = {'type': 'unknown', '_deleted': 'False', '_rev':[0]}
                         if not change.get('deleted'):
                             doc = self.getDocument(db_name, change['id'])
                         changes.append(change_factory.create(doc))

@@ -34,3 +34,9 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# ui_mranea
+lib-ubuntu13-10-i686.tgz
+lib-ubuntu13-10-i686/
+views/reports/_attachments/reports/push.sh
+views/upload

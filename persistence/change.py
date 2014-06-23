@@ -22,7 +22,8 @@ class ChangeFactory(object):
                      ModelObjectNote.class_signature,
                      ModelObjectVuln.class_signature,
                      ModelObjectVulnWeb.class_signature,
-                     ModelObjectCred.class_signature]:
+                     ModelObjectCred.class_signature,
+                     'unknown']:
             return ChangeModelObject(dic)
         else:
             return ChangeCmd(dic)
@@ -39,7 +40,7 @@ class Change(object):
     def __init__(self, doc):
         self.type = doc.get("type")
         self.action = self.UNKNOWN
-        self.msg = "Change: Action: %s - Type: %s"
+        self.msg = "Change: Action: %s - Type: %s" % (self.type, self.action)
 
     def getAction(self):
         return self.action

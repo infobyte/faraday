@@ -171,6 +171,7 @@ class Host(object):
         @return An status or 'unknown'
         """
         status = self.get_attrib_from_subnode('status','state')
+        
         return status if status else 'unknown'
 
     def get_ipv4_address(self):
@@ -500,8 +501,8 @@ class NmapPlugin(core.PluginBase):
         parser = NmapXmlParser(output)
 
         for host in parser.hosts:
-            if not host.is_up():
-                continue
+            # if not host.is_up():
+            #     continue
 
             if host.mac_address == 'unknown':
                 host.mac_address="00:00:00:00:00:00"
@@ -550,7 +551,6 @@ class NmapPlugin(core.PluginBase):
                     else:
                         v_id = self.createAndAddVulnToService(h_id,s_id,v.name,desc=v.desc,
                                                                  severity=0)
-                        
                 
         del parser
         

@@ -107,6 +107,11 @@ class Host(ModelObject):
     
     name = property(getName, setName)
 
+    def getDefaultGateway(self):
+        return self._default_gateway
+
+    def setDefaultGateway(self, default_gateway):
+        self._default_gateway = default_gateway
                                                                          
 
     @save
@@ -474,10 +479,10 @@ class Interface(ModelObject):
                                                                      
     
     def setIPv4(self, ipv4):
-        self.ipv4["address"] = ipv4["address"]
-        self.ipv4["mask"] = ipv4["mask"]
-        self.ipv4["gateway"] = ipv4["gateway"]
-        self.ipv4["DNS"] = ipv4["DNS"]
+        self.ipv4["address"] = ipv4.get("address", None)
+        self.ipv4["mask"] = ipv4.get("mask", None)
+        self.ipv4["gateway"] = ipv4.get("gateway", None)
+        self.ipv4["DNS"] = ipv4.get("DNS", None)
     
     def getIPv4(self):
         return self.ipv4
@@ -495,10 +500,10 @@ class Interface(ModelObject):
         return self.ipv4["DNS"]
     
     def setIPv6(self, ipv6):
-        self.ipv6["address"] = ipv6["address"]
-        self.ipv6["prefix"] = ipv6["prefix"]
-        self.ipv6["gateway"] = ipv6["gateway"]
-        self.ipv6["DNS"] = ipv6["DNS"]
+        self.ipv6["address"] = ipv6.get("address", None)
+        self.ipv6["prefix"] = ipv6.get("prefix", None)
+        self.ipv6["gateway"] = ipv6.get("gateway", None)
+        self.ipv6["DNS"] = ipv6.get("DNS", None)
     
     def getIPv6(self):
         return self.ipv6

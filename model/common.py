@@ -417,7 +417,10 @@ class ModelObject(object):
     def getMetadata(self):
         """Returns the current metadata of the object"""
         return self._metadata
-    
+
+    def setMetadata(self, metadata):
+        self._metadata = metadata
+
     def getMetadataHistory(self):
         """Returns the current metadata of the object"""
         return self._metadataHistory
@@ -454,6 +457,12 @@ class ModelObject(object):
 
     def setOwned(self, owned=True):
         self._is_owned = owned
+
+    def getOwner(self):
+        return self.owner
+
+    def setOwner(self, owner=None):
+        self.owner = owner
 
     @save
     def setParent(self, parent):
@@ -1002,6 +1011,14 @@ class ModelObjectNote(ModelObject):
 #        return self._text.getvalue()
         return self._text
 
+    def getText(self):
+#        return self._text.getvalue()
+        return self._text
+
+    def setText(self, text):
+#        return self._text.getvalue()
+        self._text = str(text)
+
     text = property(_getText, _setText)
 
     @save
@@ -1131,6 +1148,27 @@ class ModelObjectVuln(ModelObject):
 
     desc = property(_getDesc, _setDesc)
 
+    def setDesc(self, desc):
+        self._desc = desc
+
+    def getDesc(self):
+        return self._desc
+
+    def getSeverity(self):
+        return self.severity
+
+    def setSeverity(self, severity):
+        self.severity = self.standarize(severity)
+
+    def getRefs(self):
+        return self.refs
+
+    def setRefs(self, refs):
+        if isinstance(ref, list):
+            self.refs.extend(ref)
+        elif ref is not None:
+            self.refs.append(ref)
+
     def __str__(self):
         return "vuln id:%s - %s" % (self.id, self.name)
 
@@ -1191,6 +1229,60 @@ class ModelObjectVulnWeb(ModelObjectVuln):
         
     def updateID(self):
         self._id = get_hash([self.name, self.website, self.path, self.desc ])
+
+    def getPath(self):
+        return self.path
+
+    def setPath(self, path):
+        self.path = path
+
+    def getWebsite(self):
+        return self.website
+
+    def setWebsite(self, website):
+        self.website = website
+
+    def getRequest(self):
+        return self.request
+
+    def setRequest(self, request):
+        self.request = request
+
+    def getResponse(self):
+        return self.response
+
+    def setResponse(self, response):
+        self.response = response
+
+    def getMethod(self):
+        return self.method
+
+    def setMethod(self, method):
+        self.method = method
+
+    def getPname(self):
+        return self.pname
+
+    def setPname(self, pname):
+        self.pname = pname
+
+    def getParams(self):
+        return self.params
+
+    def setParams(self, params):
+        self.params = params
+
+    def getQuery(self):
+        return self.query
+
+    def setQuery(self, query):
+        self.query = query
+
+    def getCategory(self):
+        return self.category
+
+    def setCategory(self, category):
+        self.category = category
 
     @save
     @updateLocalMetadata
@@ -1296,6 +1388,18 @@ class ModelObjectCred(ModelObject):
         return self._password
 
     password = property(_getPassword, _setPassword)
+
+    def getPassword(self):
+        return self._password
+
+    def setPassword(self, password):
+        self._password = password
+
+    def getUsername(self):
+        return self.username
+
+    def setUsername(self, username):
+        self.username = username
 
     @save
     @updateLocalMetadata

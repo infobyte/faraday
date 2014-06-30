@@ -85,143 +85,6 @@ class Metadata(object):
             return "ModelControler." +  " ModelControler.".join(controller_funcallnames)
         return "No model controller call"
         
-class PickleBackedDict(dict): 
-    def __init__(self, path, filename = None):
-        self.path = os.path.join(path, filename) if not filename is None else path
-        self.lock = threading.Lock()
-        if os.path.exists(self.path):
-            with open(self.path, 'rb') as f:
-                self.dict = pickle.load(f)
-
-        else:
-            self.dict = {}
-
-    def cleanUp(self):
-        with self.lock:
-            if os.path.isfile(self.path): 
-                os.remove(self.path)
-            self.dict = {}
-            # with open(self.path, 'wb', 0) as writer:
-            #     self.dict = {}
-            #     pickle.dump(self.dict, writer)
-
-
-    def __setitem__(self, key, value):
-        # When we set an item, we update the old dict
-        try:
-            with self.lock:
-                with open(self.path, 'wb', 0) as writer:
-                    self.dict.__setitem__(key, value)
-                    pickle.dump(self.dict, writer)
-        except Exception, e:
-            raise e
-
-    def __getitem__(self, key):
-        return self.dict.__getitem__(key)
-
-    def get(self, key, default = None):
-        return self.dict.get(key, default)
-
-    def __repr__(self):
-        return self.dict.__repr__()
-
-    def __str__(self):
-        return self.dict.__str__()
-
-
-
-class MetadataHistory(object):
-    """Wrap object for the history of metadata objects, just a wrap for an
-    object dict that persists to disc"""
-    class_signature = "MetadataHistory"
-
-    _history_dict = PickleBackedDict(path = getInstanceConfiguration().getPersistencePath(), 
-                                              filename = "metadata.pickle" )
-    
-    def __init__(self, *args):
-        self._history_dict = MetadataHistory._history_dict
-
-    def getHistory(self, objId):
-        """docstring for getHistory"""
-        return self._history_dict.get(objId, [])
-
-    def setHistory(self, objId, obj):
-        
-        self._history_dict[objId] =  obj
-        
-    def pushMetadataForId(self, objId, obj):
-        """Adds the metadata in obj for id into the internal rep. """ 
-        pass
-        # print "Object ID is: ", objId, " with type ", type(objId)
-        # hist = self.getHistory(objId)
-        # hist.append(obj)
-        # self.setHistory(objId, hist)
-
-    def cleanUp(self):
-        self._history_dict.cleanUp()
-
-
-    def toDict(self):
-        return self._history_dict
-    def fromDict(self, dictt):
-        self._history_dict.update(dictt)
-
-
-
-        
-#-------------------------------------------------------------------------------
-class ModelObjectDictAdapter(object):
-    def __init__(self):
-        self.excepts = ["_id"]
-        self.modified = []
-
-        # Here I register the classes I need on the factory to create the objects:
-        factory.register(model.hosts.Host)
-        factory.register(model.hosts.Interface)
-        factory.register(model.hosts.Service)
-        factory.register(model.hosts.HostApplication)
-        factory.register(model.common.ModelObjectVuln)
-        factory.register(model.common.ModelObjectNote)
-        factory.register(model.common.ModelObjectCred)
-        factory.register(model.common.Metadata)
-        factory.register(model.common.MetadataHistory)
-
-
-
-    def toDict(self, obj): 
-        obj_dict = obj.toDict().copy()
-        normalized_dict = {}
-
-        normalized_dict.update(self._normalizeKeys(obj_dict))
-
-        return normalized_dict
-
-    def _normalizeKeys(self, obj_dict):
-        normalized_dict = {}
-        for k, v in obj_dict.items():
-            if k is not None and k.startswith('_') and not k in self.excepts: 
-                k = k.replace('_', '', 1)
-                self.modified.append(k)
-            if isinstance(v, dict): v = self._normalizeKeys(v)
-            normalized_dict[k] = v
-
-        return normalized_dict
-
-    def _denormalizeKeys(self, dictt):
-        denormalized_dict = {}
-        for k, v in dictt.items():
-            if k in self.modified:
-                k = "_" + k
-            if isinstance(v, dict): v = self._denormalizeKeys(v)
-            denormalized_dict[k] = v
-
-        return denormalized_dict
-
-    def fromDict(self, obj, dictt):
-        dictt = self._denormalizeKeys(dictt)
-        return obj.fromDict(dictt)
-
-
 class ModelObject(object):
     """
     This is the base class for every object we need to represent in the
@@ -232,8 +95,6 @@ class ModelObject(object):
     """
     # this static attribute used with a factory
     class_signature = "ModelObject"
-    #_complex_attribs = ["_metadata", "_metadataHistory", "_notes", "_vulns", "_creds"]
-    _complex_attribs = ["_notes", "_vulns", "_creds"]
 
     def __init__(self):
         self._name          = ""
@@ -242,13 +103,6 @@ class ModelObject(object):
         
         self.owner          = api.getLoggedUser()
         self._metadata      = Metadata(self.owner)
-        self._metadataHistory = MetadataHistory()
-
-        
-        # this flag is used to determine if the object is an instance that is
-        # inside the ModelController or is just a copy of an existing ModelObject
-        # that can be used without worrying about changes affecting the real object
-        self.is_copy       = False
         
         # indicates if object was owned somehow
         # we could use this property to put a different color on the GUI
@@ -258,36 +112,12 @@ class ModelObject(object):
         # this can be used to explain the purpose of the object
         self.description    = ""
 
-        #IMPORTANT: this must be used in each object that inherits from this class
-        # DO NOT REDEFINE THIS, JUST ADD ENTRIES IN ORDER NOT TO LOOSE INHERITED ATTRS
-        # this attribute lists all values that can be shown in the gui, or
-        # can be accessed from outside. This is done to do things more generic and
-        # dynamic. The object that needs to use this should check if the element
-        # in the attribute list is callable or not
-        # To use this attributes list something like this should be done
-        # >>> for attrDesc, attrName in m_object.publicattrs.iteritems():
-        # >>>     attr_ref = m_object.__getattribute__(attrName)
-        # >>>     if callable(attr_ref):
-        # >>>         info = attr_ref()
-        # >>>     else:
-        # >>>         info = attr_ref
-        # the dictionary key is the description of the attribute that is like a
-        # display name to be used if needed to show in a GUI for example
-        # and the value is the attribute name, that can be the name of an attribute,
-        # a method or a property, that is why it needs to be checked with callable()
-
         self.publicattrs = {'Description':'description',
-                            'Name':'getName','Owned':'isOwned',
-                            #'Vulnerabilities' : 'vulnsCount',
-                            #'Notes' : 'notesCount',
-                            #'Creds' : 'credsCount'}
+                            'Name':'getName','Owned':'isOwned'
                             }
 
         self.publicattrsrefs = {'Description': '_description',
-                            'Name': '_name','Owned': '_is_owned',
-                            #'Vulnerabilities' : '_vulns',
-                            #'Notes' :'_notes',
-                            #'Creds' :'_creds'} 
+                            'Name': '_name','Owned': '_is_owned'
                             }
 
         self._updatePublicAttributes()
@@ -1012,44 +842,12 @@ class ModelObjectNote(ModelObject):
         if text is not None:
             self.text = text
 
-    def __add__(self, text):
-        # to be able to concat/append using +
-        # self._text.write(text)
-        self._text = self._text + str(text)
-        return self
-
-    def __radd__(self, text):
-        return self.__add__(str(text))
-
-    def __iadd__(self, text):
-        return self.__add__(str(text))
-
     def __str__(self):
         return self.text
 
     def __repr__(self):
         return self.text
 
-    def _toDict(self, full=False):
-        note = super(ModelObjectNote, self)._toDict(full)
-        note["text"] = self._text
-        return note
-
-    def _fromDict(self, dict):
-        super(ModelObjectNote, self)._fromDict(dict)
-        self._text = dict["text"]
-
-    def fromDict(self, dict):
-        self._id = dict["_id"]
-        self._text = dict["text"]
-        self.name = dict["name"]
-        
-        for note in dict["notes"]:
-            n = ModelObjectNote("")
-            self.setParent(self)
-            n.fromDict(note)
-            self.addNote(n)
-    
 #-------------------------------------------------------------------------------
 class ModelObjectVuln(ModelObject):
     """
@@ -1065,8 +863,6 @@ class ModelObjectVuln(ModelObject):
         """
         ModelObject.__init__(self)
         self.name = name
-        #self._parent = parent
-
         self._desc = desc
         
         self.refs = []
@@ -1137,33 +933,6 @@ class ModelObjectVuln(ModelObject):
     def __repr__(self):
         return self.__str__()
 
-    def _toDict(self, full=False):
-        vuln = super(ModelObjectVuln, self)._toDict(full)
-        vuln["desc"] = self._desc
-        vuln["severity"] = self.severity
-        vuln["refs"] = self.refs
-        return vuln
-
-    def _fromDict(self, dict):
-        super(ModelObjectVuln, self)._fromDict(dict)
-        self._desc = dict["desc"]
-        self.severity = dict["severity"]
-        self.refs = dict["refs"]
-
-    def fromDict(self, dict):
-        self._id = dict["_id"]
-        self._desc = dict["desc"]
-        self.name = dict["name"]
-        self.severity = dict["severity"]
-
-        for ref in dict["refs"]:
-            self.refs.append(ref)
-        
-        self.severity = dict["severity"]
-        
-
-#-------------------------------------------------------------------------------
-
 #-------------------------------------------------------------------------------
 class ModelObjectVulnWeb(ModelObjectVuln):
     """
@@ -1215,47 +984,6 @@ class ModelObjectVulnWeb(ModelObjectVuln):
             self.query = query
         if category is not None:
             self.category = category
-        
-    def _toDict(self, full=False):
-        vuln = super(ModelObjectVulnWeb, self)._toDict(full)
-        vuln['website'] = self.website
-        vuln['path'] = self.path
-        vuln['request'] = self.request
-        vuln['response'] = self.response
-        vuln['method'] = self.method
-        vuln['pname'] = self.pname
-        vuln['params'] = self.params
-        vuln['query'] = self.query
-        vuln['category'] = self.category
-        return vuln
-
-    def _fromDict(self, dict):
-        super(ModelObjectVulnWeb, self)._fromDict(dict)
-        self.path = dict["path"]
-        self.website = dict["website"]
-        self.request = dict["request"]
-        self.response = dict["response"]
-        self.method = dict["method"]
-        self.pname = dict["pname"]
-        self.params = dict["params"]
-        self.query = dict["query"]
-        self.category = dict["category"]
-
-    def fromDict(self, dict):
-        
-        ModelObjectVuln.fromDict(dict)
-        
-        self.path = dict["path"]
-        self.website = dict["website"]
-        self.request = dict["request"]
-        self.response = dict["response"]
-        self.method = dict["method"]
-        self.pname = dict["pname"]
-        self.params = dict["params"]
-        self.query = dict["query"]
-        self.category = dict["category"]
-        
-        return True
 
 
 #-------------------------------------------------------------------------------
@@ -1273,29 +1001,18 @@ class ModelObjectCred(ModelObject):
     
     def __init__(self, username="", password="", parent=None):
         ModelObject.__init__(self)
-        #self._parent = parent
         self.username = str(username)
         self._parent = parent
-        # using StringIO instead of common str because is more memory efficient
-#        self._password = StringIO()
-#        if password: self._password.write(password)
         self._password = str(password)
     
     def updateID(self):
         self._id = get_hash([self.username, self.password])
 
-    def _setPassword(self, password):
-        # clear buffer then write new password
-#        self._password.seek(0)
-#        self._password.truncate()
-#        self._password.write(password)
+    def setPassword(self, password):
         self._password = str(password)
 
-    def _getPassword(self):
-#        return self._password.getvalue()
+    def getPassword(self):
         return self._password
-
-    password = property(_getPassword, _setPassword)
 
     @save
     @updateLocalMetadata
@@ -1304,46 +1021,6 @@ class ModelObjectCred(ModelObject):
             self.username = username
         if password is not None:
             self.password = password
-
-    def __add__(self, password):
-        # to be able to concat/append using +
-        # self._password.write(password)
-        self._password = self._password + str(password)
-        return self
-
-    def __radd__(self, password):
-        return self.__add__(str(password))
-
-    def __iadd__(self, password):
-        return self.__add__(str(password))
-
-    def __str__(self):
-        return self.password
-
-    def __repr__(self):
-        return self.password
-
-    def _toDict(self, full=False):
-        cred = super(ModelObjectCred, self)._toDict(full)
-        cred["username"] = self.username
-        cred["password"] = self._password
-        return cred
-
-    def _fromDict(self, dict):
-        super(ModelObjectCred, self)._fromDict(dict)
-        self._password = dict["password"]
-        self.username = dict["username"]
-
-    def fromDict(self, dict):
-        self._id = dict["_id"]
-        self._password = dict["password"]
-        self.username = dict["username"]
-        
-        #for cred in dict["creds"]:
-        #    n = ModelObjectCred("")
-        #    self.setParent(self)
-        #    n.fromDict(cred)
-        #    self.addCred(n)
 
 class TreeWordsTries(object):
     instance = None       

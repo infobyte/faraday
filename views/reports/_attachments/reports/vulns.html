@@ -22,12 +22,12 @@
 	json_url = "/" + workspace + "/_design/" + design + "/_view/" + view+"?group=true";
  
 	$.getJSON(json_url, function(data) {
-		var colores = ["gris3", "verde", "amarillo", "rojo", "violeta", "gris2"];
-		var nombres = ["info", "low", "medium", "high", "critical", "n/a"];
+		var colores = {"info":"gris3", "low":"verde", "med":"amarillo", "high":"rojo", "critical":"violeta", "unclassified":"gris2"};
+		var nombres = ["info", "low", "med", "high", "critical", "n/a"];
 		var i = 0;
 		var divs = "";
 		$.each(data.rows, function(n, obj){
-			divs += "<div class=\"columna unsexto\"><article class=\"dato2 fondo-blanco\"><section><div class=\"nro texto-"+colores[obj.key]+"\">"+obj.value+"</div><div class=\"txt texto-negro\">"+nombres[obj.key]+"</div></section></article></div>";
+			divs += "<div class=\"columna unsexto\"><article class=\"dato2 fondo-blanco\"><section><div class=\"nro texto-"+colores[obj.key]+"\">"+obj.value+"</div><div class=\"txt texto-negro\">"+obj.key+"</div></section></article></div>";
 			i++;
 		});
 		$(".seccion2").append(divs);

@@ -84,7 +84,7 @@ class Metadata(object):
         if controller_funcallnames:
             return "ModelControler." +  " ModelControler.".join(controller_funcallnames)
         return "No model controller call"
-        
+
 class ModelObject(object):
     """
     This is the base class for every object we need to represent in the
@@ -398,17 +398,18 @@ class ModelObject(object):
     #Vulnerability
     @updateLocalMetadata
     def addVuln(self, newVuln, update=False, setparent=True):
-        return self._addValue("_vulns", newVuln, setparent=setparent, update=update)
+        self.addChild(newVuln.getID(), newVuln)
+        return True
 
     @updateLocalMetadata
     def delVuln(self, vulnID):
         return self._delValue("_vulns", vulnID)
 
     def getVulns(self):
-        return self._vulns.values()
+        return self.childs.values()
 
     def getVuln(self, vulnID):
-        return self._getValueByID("_vulns", vulnID)
+        return self.findChild(vulnID)
 
     def vulnsCount(self):
         return len(self._vulns.values())
@@ -460,69 +461,26 @@ class ModelObject(object):
                 return str(self.getID())
             return ".".join([self.getParent().ancestors_path()] + [str(self.getID())])
 
-    def _toDict(self, full=False):
-        d = {   
-                "_id" : self.ancestors_path(),
-                "obj_id": self.getID(),
-                "name" : self.name,
-                "owned" : str(self.isOwned()),
-                "parent" : self.getParent().getID() if self.getParent() is not None else "None",
-                "owner" : self.owner,
-                "description" : self.description,
-                "metadata" : self.getMetadata().__dict__,
-                "type" : self.class_signature
-            }
-        if full:
-            d["note"] = {}
-            d["vulnerability"] = {}
-            d["cred"] = {}
-            for note in self.getNotes():
-                d["note"][note.getID()] = note._toDict(full)
-            for vuln in self.getVulns():
-                d["vulnerability"][vuln.getID()] = vuln._toDict(full)
-            for cred in self.getCreds():
-                d["cred"][cred.getID()] = cred._toDict(full)
-        return d
+class ModelComposite(ModelObject):
+    """ Model Objects Composite Abstract Class """
 
-    def _fromDict(self, dict):
-        
-        self.id = dict["obj_id"]
-        self.name = dict["name"]
-        self._is_owned  = True if dict.get("owned", "").upper() == "TRUE" else False
-        #parent_id = dict["parent"]
-        self.owner = dict["owner"]
-        self.description = dict["description"]
-        self._metadata = Metadata("").fromDict(dict["metadata"])
+    def __init__(self):
+        ModelObject.__init__(self)
+        self.childs = {}
 
-        if dict.get("note"):
-            for note in dict["note"].values():
-                n = ModelObjectNote("")
-                n._parent = self
-                n._fromDict(note)
-                self.addNote(n, setparent=False)
+    def addChild(self, iid, model_object):
+        self.childs[iid] = model_object
+        # self.by_type[model_object.__class__.__name__].append(model_object)
 
-        if dict.get("vulnerability"):
-            for vuln in dict["vulnerability"].values():
-                v = ModelObjectVuln("")
-                if vuln.get("type") == ModelObjectVulnWeb.class_signature:
-                    v = ModelObjectVulnWeb("")
-                v._parent = self
-                v._fromDict(vuln)
-                self.addVuln(v, setparent=False)
+    def deleteChild(self, iid):
+        del self.childs[iid]
 
-        if dict.get("vulnerabilityweb"):
-            for vuln in dict["vulnerabilityweb"].values():
-                v = ModelObjectVulnWeb("")
-                v._parent = self
-                v._fromDict(vuln)
-                self.addVuln(v, setparent=False)
+    def findChild(self, iid):
+        return self.childs.get(iid)
 
-        if dict.get("cred"):
-            for cred in dict["cred"].values():
-                c = ModelObjectCred("")
-                c._parent = self
-                c._fromDict(cred)
-                self.addCred(c, setparent=False)
+class ModelLeaf(ModelObject):
+    def __init__(self):
+        ModelObject.__init__()
 
 #-------------------------------------------------------------------------------
 #TODO: refactor this class to make it generic so this can be used also for plugins
@@ -800,7 +758,7 @@ class XMLRPCKeywordProxy(object):
 
 
 #-------------------------------------------------------------------------------
-class ModelObjectNote(ModelObject):
+class ModelObjectNote(ModelLeaf):
     """
     Simple class to store notes about any object.
     id will be used to number notes (based on a counter on the object being commented)
@@ -849,7 +807,7 @@ class ModelObjectNote(ModelObject):
         return self.text
 
 #-------------------------------------------------------------------------------
-class ModelObjectVuln(ModelObject):
+class ModelObjectVuln(ModelLeaf):
     """
     Simple class to store vulnerability about any object.
     id will be used to number vulnerability (based on a counter on the object being commented)
@@ -987,7 +945,7 @@ class ModelObjectVulnWeb(ModelObjectVuln):
 
 
 #-------------------------------------------------------------------------------
-class ModelObjectCred(ModelObject):
+class ModelObjectCred(ModelLeaf):
     """
     Simple class to store credentials about any object.
     id will be used to number credentials (based on a counter on the object being commented)

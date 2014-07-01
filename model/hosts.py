@@ -7,7 +7,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 from config.configuration import getInstanceConfiguration
-from model.common import ModelObject, ModelObjectNote, ModelObjectVuln, ModelObjectVulnWeb, ModelObjectCred
+from model.common import ModelObject, ModelObjectNote, ModelObjectVuln, ModelObjectVulnWeb, ModelObjectCred, ModelComposite, ModelLeaf
 from model.common import Metadata
 from utils.common import *  
 from utils.decorators import updateLocalMetadata, save, delete
@@ -20,7 +20,7 @@ except ImportError:
     print "[-] ex: sudo pip install IPy"
 CONF = getInstanceConfiguration()
 
-class Host(ModelObject):
+class Host(ModelComposite):
     """
     Represents a host found in the network.
     A hosts can have 1 or more interfaces and also 1 or more services (apps)
@@ -218,7 +218,7 @@ class Host(ModelObject):
         l.sort()
         return l
 
-class Interface(ModelObject):
+class Interface(ModelComposite):
     """
     An interface in a host
     """
@@ -465,7 +465,7 @@ class Interface(ModelObject):
             self.setPortsFiltered(amount_ports_filtered)
 
 
-class Service(ModelObject):
+class Service(ModelComposite):
     """
     A service or application running in a host
     Commonly a service will have a name or description, a set of ports in which
@@ -476,7 +476,7 @@ class Service(ModelObject):
 
     def __init__(self, name, protocol="TCP", ports=None, status="running",
                  version="unknown", description = ""):
-        ModelObject.__init__(self)
+        ModelComposite.__init__(self)
 
         self._name          = name
         self.description    = description
@@ -507,8 +507,7 @@ class Service(ModelObject):
     
     def getName(self):
         return self._name
-    
-                                      
+
 
     def setProtocol(self, protocol):
         self._protocol = protocol.lower()
@@ -641,7 +640,7 @@ class Service(ModelObject):
         """
         return self._getValueByID("_applications", name)
 
-class HostApplication(ModelObject):
+class HostApplication(ModelLeaf):
     """
     An application running in a host
     The application can be related to more than one service

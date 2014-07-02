@@ -371,7 +371,8 @@ class ModelObject(object):
     #notes
     @updateLocalMetadata
     def addNote(self, newNote, update=False, setparent=True):
-        return self._addValue("_notes", newNote, setparent=setparent, update=update)
+        self.addChild(newNote.getID(), newNote)
+        return True
 
     def newNote(self, name, text):
         note = ModelObjectNote(name, text, self)
@@ -379,19 +380,15 @@ class ModelObject(object):
         
     @updateLocalMetadata
     def delNote(self, noteID):
-        return self._delValue("_notes", noteID)
+        self.deleteChild(noteID)
+        return True
 
     def getNotes(self):
-        return self._notes.values()
+        return self.childs.values()
 
     def getNote(self, noteID):
-        return self._getValueByID("_notes", noteID)
+        return self.findChild(noteID)
 
-    def notesToDict(self):
-        d = []
-        for note in self._notes.values():
-            d.append(note.toDictFull())
-        return d
     def notesCount(self):
         return len(self._notes.values())
         
@@ -403,7 +400,8 @@ class ModelObject(object):
 
     @updateLocalMetadata
     def delVuln(self, vulnID):
-        return self._delValue("_vulns", vulnID)
+        self.deleteChild(vulnID)
+        return True
 
     def getVulns(self):
         return self.childs.values()
@@ -480,7 +478,7 @@ class ModelComposite(ModelObject):
 
 class ModelLeaf(ModelObject):
     def __init__(self):
-        ModelObject.__init__()
+        ModelObject.__init__(self)
 
 #-------------------------------------------------------------------------------
 #TODO: refactor this class to make it generic so this can be used also for plugins
@@ -758,7 +756,7 @@ class XMLRPCKeywordProxy(object):
 
 
 #-------------------------------------------------------------------------------
-class ModelObjectNote(ModelLeaf):
+class ModelObjectNote(ModelComposite):
     """
     Simple class to store notes about any object.
     id will be used to number notes (based on a counter on the object being commented)
@@ -771,7 +769,7 @@ class ModelObjectNote(ModelLeaf):
     class_signature = "Note"
     
     def __init__(self, name="", text="", parent=None):
-        ModelObject.__init__(self)
+        ModelComposite.__init__(self)
         self.name = str(name)
         #self._parent = parent
         self._text = str(text)

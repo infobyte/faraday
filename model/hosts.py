@@ -32,7 +32,7 @@ class Host(ModelComposite):
     class_signature = "Host"
 
     def __init__(self, name, os = "Unknown", default_gateway=None, dic=None):
-        ModelObject.__init__(self)
+        ModelComposite.__init__(self)
         self._interfaces            = {}
         self._applications          = {}
         self.categories             = []
@@ -232,7 +232,7 @@ class Interface(ModelComposite):
                  ipv6_gateway = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns = [],
                  network_segment = "", hostname_resolution = None):
 
-        ModelObject.__init__(self)
+        ModelComposite.__init__(self)
 
                               
         self._name         = name
@@ -640,7 +640,7 @@ class Service(ModelComposite):
         """
         return self._getValueByID("_applications", name)
 
-class HostApplication(ModelLeaf):
+class HostApplication(ModelComposite):
     """
     An application running in a host
     The application can be related to more than one service
@@ -650,7 +650,7 @@ class HostApplication(ModelLeaf):
     class_signature = "HostApplication"
 
     def __init__(self, name, status = "running", version = "unknonw"):
-        ModelObject.__init__(self)
+        ModelComposite.__init__(self)
 
         self._name          = name
         self._status        = status

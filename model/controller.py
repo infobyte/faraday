@@ -1247,12 +1247,9 @@ class ModelController(threading.Thread):
         return res
 
     def __delVulnerabilityFromHost(self, host_id, vuln_id):
-        res = False
         host = self._getValueByID("_hosts", host_id)
         if host is not None:
-            vuln = host.getVuln(vuln_id)
-            self.__clearVuln(vuln)
-            res = host.delVuln(vuln_id)
+            res = host.deleteChild(vuln_id)
             if res:
                 notifier.editHost(host)
         return res

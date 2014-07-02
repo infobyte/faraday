@@ -1260,9 +1260,7 @@ class ModelController(threading.Thread):
         if host is not None:
             interface = host.getInterface(interface_id)
             if interface is not None:
-                vuln = interface.getVuln(vuln_id)
-                self.__clearVuln(vuln)
-                res = interface.delVuln(vuln_id)
+                res = interface.deleteChild(vuln_id)
                 if res:
                     notifier.editHost(host)
         return res
@@ -1286,9 +1284,7 @@ class ModelController(threading.Thread):
         if host is not None:
             service = host.getService(service_id)
             if service is not None:
-                vuln = service.getVuln(vuln_id)
-                self.__clearVuln(vuln)
-                res = service.delVuln(vuln_id)
+                res = service.deleteChild(vuln_id)
                 if res:
                     notifier.editHost(host)
         return res

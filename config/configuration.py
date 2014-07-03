@@ -8,10 +8,10 @@ import sys, os, string, ast, json
 
 try:
     import xml.etree.cElementTree as ET
-    from xml.etree.cElementTree import Element, ElementTree, dump
+    from xml.etree.cElementTree import Element, ElementTree
 except ImportError:
     import xml.etree.ElementTree as ET
-    from xml.etree.ElementTree import Element, ElementTree, dump
+    from xml.etree.ElementTree import Element, ElementTree
     
 the_config = None
     
@@ -65,8 +65,6 @@ class Configuration:
 
         if self._isConfig(): self._getConfig()
 
-                                                               
-    
     def _isConfig(self):
         """ Checks whether the given file exists and belongs 
         to faraday's configuration syntax"""
@@ -111,12 +109,6 @@ class Configuration:
             return default
 
         return elem[0].text
-        
-                                   
-                                                                       
- 
-                                 
-                            
 
     def _getConfig(self):
         """ Gathers all configuration data from self.filepath, and
@@ -124,8 +116,6 @@ class Configuration:
 
         tree = self._getTree()
         if tree:                                                          
-                                                                   
-                                                              
             self._api_con_info_host = self._getValue(tree, CONST_API_CON_INFO_HOST)
             self._api_con_info_port = self._getValue(tree, CONST_API_CON_INFO_PORT)
             self._api_con_info = self._getValue(tree, CONST_API_CON_INFO)
@@ -533,22 +523,17 @@ class Configuration:
         TKT_TEMPLATE.text = self.getTktTemplate()
         ROOT.append(TKT_TEMPLATE)
 
-        self.indent(ROOT, 0)                         
-        #dump(ROOT)                                        
+        self.indent(ROOT, 0)                                                          
         xml_file = os.path.expanduser(xml_file)
         ElementTree(ROOT).write(xml_file)                                      
         
 def getInstanceConfiguration():
     global the_config
-    if the_config is None:
-                                                                          
-                                              
-                                                                                              
+    if the_config is None:                                                                                           
         if os.path.exists(os.path.expanduser("~/.faraday/config/user.xml")):
             the_config = Configuration(os.path.expanduser("~/.faraday/config/user.xml"))
         else:
             the_config = Configuration(os.path.expanduser("~/.faraday/config/config.xml"))
-        
     return the_config
 
 

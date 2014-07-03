@@ -139,10 +139,11 @@ class modelactions:
 
 class ModelController(threading.Thread):
 
-    def __init__(self, security_manager):
+    def __init__(self, security_manager, mappers_manager):
         threading.Thread.__init__(self)
 
         self.__sec = security_manager
+        self.mappers_manager = mappers_manager
 
         # set as daemon
         self.setDaemon(True)
@@ -262,7 +263,7 @@ class ModelController(threading.Thread):
 
     def _setupActionDispatcher(self):
         self._actionDispatcher = {
-            modelactions.ADDHOST: self.__addHost,
+            modelactions.ADDHOST: self.__add,
             modelactions.DELHOST: self.__delHost,
             modelactions.EDITHOST: self.__editHost,
             modelactions.ADDINTERFACE: self.__addInterfaceToHost,
@@ -578,6 +579,10 @@ class ModelController(threading.Thread):
         Adds a host directly to the model
         """
         self._processAction(modelactions.ADDHOST, [host, category, update, old_hostname], sync=True)
+
+    def __add(self,  obj, parent_id=None, *args):
+        self.mappers_manager.getMapper(obj)
+
 
     def __addHost(self, host, category, update=False, old_hostname=None):
         res = False

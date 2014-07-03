@@ -20,7 +20,6 @@ import colorama
 
 from config.configuration import getInstanceConfiguration
 from model.application import MainApplication
-
 from utils.profilehooks import profile # statically added
 
 
@@ -81,46 +80,50 @@ def getParserArgs():
     parser_gui_ex.add_argument('--gui', action="store", dest="gui",
         default="qt3",
         help="Select interface to start faraday. Default = qt3")
-    parser_gui_ex.add_argument('--cli', '--console', action="store_true", dest="cli",
+
+    parser_gui_ex.add_argument('--cli', '--console', action="store_true", 
+        dest="cli",
         default="false",
         help="Set this flag to avoid gui and use faraday as a cli.")
 
     #args = parser.parse_args(['@parser_args.cfg'])
     return parser.parse_args()
 
-def query_yes_no(question, default="yes"):
-    """Ask a yes/no question via raw_input() and return their answer.
-    
-    Source from activestate recipes:
+def query_user_bool(question, default=True):
+    """Returns a boolean based on user input.
+
     "question" is a string that is presented to the user.
     "default" is the presumed answer if the user just hits <Enter>.
-        It must be "yes" (the default), "no" or None (meaning
+        It must be True (the default), False or None (meaning
         an answer is required of the user).
 
-    The "answer" return value is one of "yes" or "no".
+    The "answer" return value is one of True or False.
 
     """
+    valid_yes_ans = ["yes", "y"]
+    valid_no_ans = ["no", "n"]
 
-    valid = {"yes":"yes",   "y":"yes",  "ye":"yes",
-             "no":"no",     "n":"no"}
-    if default == None:
+    if default is None:
         prompt = " [y/n] "
-    elif default == "yes":
+    elif default:
         prompt = " [Y/n] "
-    elif default == "no":
-        prompt = " [y/N] "
     else:
-        raise ValueError("invalid default answer: '%s'" % default)
+        prompt = " [y/N] "
 
-    while 1:
+    while True:
         sys.stdout.write(question + prompt)
         choice = raw_input().lower()
+
         if default is not None and choice == '':
             return default
-        elif choice in valid.keys():
-            return valid[choice]
-        else:
-            sys.stdout.write("Please respond with 'yes' or 'no' "\
+
+        if choice in valid_yes_ans:
+            return True
+
+        if choice in valid_no_ans:
+            return False
+
+        sys.stdout.write("Please respond with 'yes' or 'no' "\
                              "(or 'y' or 'n').\n")
 
 
@@ -143,7 +146,7 @@ def checkDependencies():
         try:
             __import__(module[0])
         except ImportError:          
-            if query_yes_no("Missing module %s." \
+            if query_user_bool("Missing module %s." \
                 " Do you wish to install it?" % module[0]) == "yes":
                 # TODO: Cambiarlo por un subprocess.
                 print "pip2 install %s==%s" % (module[0], module[1])

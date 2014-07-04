@@ -27,6 +27,9 @@ from utils.profilehooks import profile # statically added
 
 REQUIREMENTS_FILE = 'requirements.txt'
 FARADAY_HOME_PATH = '~/.faraday'
+FARADAY_FOLDER_LIST = [ "config", "data", "images", 
+                        "persistence", "plugins",
+                        "report", "temp", "zsh" ]
 
 def getParserArgs():
     """Parser setup for faraday launcher arguments.
@@ -260,8 +263,18 @@ def checkConfiguration():
     #checkQtrc()
     #restoreQtrc()
     #checkZSH()
-    #checkFolders() [ config/ data/ images/ persistence/ report/ temp/ zsh/]
+    checkFolderList(FARADAY_FOLDER_LIST)
     #checkHelpers()
+
+def checkFolderList(folderlist):
+    for folder in folderlist:
+        fp_folder = "%s/%s" % (faraday_user_home, folder)
+        checkFolder(fp_folder)
+
+def checkFolder(folder):
+    if not os.path.isdir(folder):
+        print "Creating %s" % folder
+        os.mkdir(folder)
 
 def main():
     """Main.

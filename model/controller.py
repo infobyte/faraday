@@ -266,7 +266,7 @@ class ModelController(threading.Thread):
             modelactions.ADDHOST: self.__add,
             modelactions.DELHOST: self.__delHost,
             modelactions.EDITHOST: self.__editHost,
-            modelactions.ADDINTERFACE: self.__addInterfaceToHost,
+            modelactions.ADDINTERFACE: self.__add,
             modelactions.DELINTERFACE: self.__delInterfaceFromHost,
             modelactions.EDITINTERFACE: self.__editInterface,
             modelactions.ADDSERVICEINT: self.__addServiceToInterface,
@@ -581,7 +581,9 @@ class ModelController(threading.Thread):
         self._processAction(modelactions.ADDHOST, [host, category, update, old_hostname], sync=True)
 
     def __add(self,  obj, parent_id=None, *args):
-        self.mappers_manager.getMapper(obj)
+        dataMapper = self.mappers_manager.getMapper(obj)
+        dataMapper.saveObject(obj, parent_id) 
+        self.treeWordsTries.addWord(obj.getName())
 
 
     def __addHost(self, host, category, update=False, old_hostname=None):
@@ -600,7 +602,6 @@ class ModelController(threading.Thread):
                 elif category not in self._categories:
                     self.__addCategory(category)
 
-                self.treeWordsTries.addWord(host.getName())
                 self.treeWordsTries.addWord(category)
 
                 self.__addHostToCategory(host, category)
@@ -744,12 +745,12 @@ class ModelController(threading.Thread):
         """
         self.__addPendingAction(modelactions.ADDINTERFACE, host, interface)
 
-    def addInterfaceSYNC(self, host, interface, update=False):
+    def addInterfaceSYNC(self, hostId, interface, update=False):
         """
         SYNC API
         Adds interface directly to the model
         """
-        self._processAction(modelactions.ADDINTERFACE, [host, interface], sync=True)
+        self._processAction(modelactions.ADDINTERFACE, [interface, hostId], sync=True)
 
     def __addInterfaceToHost(self, host_id, interface):
         res = False

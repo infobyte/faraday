@@ -7,23 +7,26 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 # TODO:
-# - Pasar en limpio del papel!
-# - Manejar dinamicamente los requerimientos?
-# - Parsear adicionalmente los argumentos desde un archivo?
-# - Agregar outputs y colores a los mismos.
-# - Agregar todos los manejos del viejo bash launcher.
+# - Make a launcher class and remove globals for attributes!
+# - Handle requirements dinamically.
+# - Additionally parse arguments from file.
+# - Colorize!
+# - Refactor the still remaining bash launcher
 
 import os
 import sys
+import shutil
 import argparse
 import colorama
 
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))) # Necessary?
 from config.configuration import getInstanceConfiguration
 from model.application import MainApplication
 from utils.profilehooks import profile # statically added
 
 
 REQUIREMENTS_FILE = 'requirements.txt'
+FARADAY_HOME_PATH = '~/.faraday'
 
 def getParserArgs():
     """Parser setup for faraday launcher arguments.
@@ -76,6 +79,10 @@ def getParserArgs():
     parser.add_argument('--disable-login', action="store_true", dest="disable_login", 
         default=False, 
         help="Disable the auth splash screen.")
+
+    parser.add_argument('--dev-mode', action="store_true", dest="dev_mode",
+        default=False,
+        help="Enable dev mode. This will reset config and plugin folders.")
 
     parser_gui_ex.add_argument('--gui', action="store", dest="gui",
         default="qt3",
@@ -147,12 +154,29 @@ def checkDependencies():
             __import__(module[0])
         except ImportError:          
             if query_user_bool("Missing module %s." \
-                " Do you wish to install it?" % module[0]) == "yes":
+                " Do you wish to install it?" % module[0]):
                 # TODO: Cambiarlo por un subprocess.
                 print "pip2 install %s==%s" % (module[0], module[1])
             else:
                 return False
     return True
+
+def startProfiler(app, output, depth):
+    """Profiler handler.
+
+    Will start a profiler on the given application in a specified output with
+    a custom depth.
+
+    TODO: Check if it's necessary to add a dummy in case o failed import.
+
+    """
+    print "Faraday will be started with a profiler attached." \
+    "Performance may be affected."
+
+    start = profile(app,
+            filename=output,
+            entries=depth)
+    return start
 
 def setConf():
     """User configuration management and instantiation.
@@ -161,38 +185,100 @@ def setConf():
     settings or default ones.
 
     """
+
+    global args # TODO: Handle as a class attribute
+
     args = getParserArgs()
     CONF = getInstanceConfiguration()
     CONF.setDebugStatus(args.debug)
     CONF.setApiConInfo(args.host, args.port)
     CONF.setAuth(args.disable_login)
 
+
+def startFaraday():
+
+    #TODO: Handle args in CONF and send only necessary ones.
     main_app = MainApplication(args)
 
     if not args.disable_excepthook:
             main_app.enableExceptHook()
 
     if args.profile:
-        print "%s will be started with a profiler\
-            attached. Performance may be affected." % CONF.getAppname()
-        start = profile(main_app.start,
-                        filename=args.profile_output,
-                        entries=args.profile_depth)
+        start = startProfiler(
+                main_app.start, 
+                args.profile_output, 
+                args.profile_depth)
     else:
         start = main_app.start
 
+    # TODO: This should be outside setConf in order to retrieve exit status.
+
     exit_status = start()
 
-def main(args):
-    """
-        Main.
+def env():
+    # TODO: Make a launcher class and remove globals for attributes.
+    # Debugging purposes ONLY. Will be replaced soon.
+
+    global faraday_user_home
+    global faraday_base
+    global faraday_plugins_path 
+    global faraday_plugins_basepath
+    
+    faraday_user_home = os.path.expanduser(FARADAY_HOME_PATH)
+    faraday_base = os.path.dirname(os.path.realpath(__file__))
+    faraday_plugins_path = "%s/plugins" % faraday_user_home
+    faraday_plugins_basepath = "%s/plugins/repo/" % faraday_base
+
+
+def checkPlugins(dev_mode=False):
+    """Checks and handles Farada's plugin status.
+
+    When dev_mode is True, the user enters in development mode and the plugins will
+    be replaced with the latest ones. 
+
+    Otherwise, it checks if the plugin folders exists or not, and creates it
+    with its content.
+
     """
 
+    if not dev_mode and os.path.isdir(faraday_plugins_path):
+        print "[*] Plugins in place."
+    else:
+        if dev_mode:
+            print "[*] Running under plugin development mode!"
+            print "[-] Deleting old user directory: %s" % faraday_plugins_path
+            shutil.rmtree(faraday_plugins_path)
+        else:
+            print "[!] No plugin folder detected."
+
+        print "[+] Creating user directory: %s" % faraday_plugins_path
+        shutil.copytree(faraday_plugins_basepath, faraday_plugins_path)
+        print "[*] Plugins succesfully loaded."
+
+def checkConfiguration():
+    checkPlugins(args.dev_mode)
+    #checkQtrc()
+    #restoreQtrc()
+    #checkZSH()
+    #checkFolders() [ config/ data/ images/ persistence/ report/ temp/ zsh/]
+    #checkHelpers()
+
+def main():
+    """Main.
+
+    Main function for launcher.
+
+    TODO: Use this a a launcher _init_ method?
+    """
+
+    env()
     if checkDependencies():
         setConf()
+        checkConfiguration()
+        startFaraday()
     else:
         print "Dependencies not met. Unable to start Faraday."
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()

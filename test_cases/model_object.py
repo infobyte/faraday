@@ -29,12 +29,13 @@ class ModelObjectCRUD(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.model_controller = controller.ModelController(mock())
+        cls.model_controller = controller.ModelController(mock(), mock())
         api.setUpAPIs(cls.model_controller)
 
     def setUp(self):
         self.wm = WorkspaceManager(self.model_controller,
                                     mock(plcore.PluginController))
+
         self.temp_workspace = self.wm.createWorkspace(
                                         test_utils.new_random_workspace_name(),
                                         workspaceClass=WorkspaceOnCouch)

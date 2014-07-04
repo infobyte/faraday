@@ -582,8 +582,11 @@ class ModelController(threading.Thread):
 
     def __add(self,  obj, parent_id=None, *args):
         dataMapper = self.mappers_manager.getMapper(obj)
-        dataMapper.saveObject(obj, parent_id) 
+        object_parent = self.mappers_manager.findObject(parent_id)
+        object_parent.addChild(obj.getID(), obj)
+        dataMapper.saveObject(obj) 
         self.treeWordsTries.addWord(obj.getName())
+        notifier.addHost(obj)
 
 
     def __addHost(self, host, category, update=False, old_hostname=None):

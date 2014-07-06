@@ -22,14 +22,25 @@ import colorama
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))) # Necessary?
 from config.configuration import getInstanceConfiguration
 from model.application import MainApplication
-from utils.profilehooks import profile # statically added
+from utils.profilehooks import profile
 
 
+# Load constants from config file?
 REQUIREMENTS_FILE = 'requirements.txt'
 FARADAY_HOME_PATH = '~/.faraday'
+FARADAY_PLUGINS_PATH = "plugins"
+FARADAY_PLUGINS_REPO_PATH = "plugins/repo"
 FARADAY_FOLDER_LIST = [ "config", "data", "images", 
                         "persistence", "plugins",
                         "report", "temp", "zsh" ]
+
+
+faraday_user_home = os.path.expanduser(FARADAY_HOME_PATH)
+faraday_base = os.path.dirname(os.path.realpath(__file__))
+faraday_plugins_path = os.path.join(faraday_user_home, FARADAY_PLUGINS_PATH)
+faraday_plugins_basepath = os.path.join(faraday_base, 
+                            FARADAY_PLUGINS_REPO_PATH)
+
 
 def getParserArgs():
     """Parser setup for faraday launcher arguments.
@@ -45,9 +56,11 @@ def getParserArgs():
     #parser_gui = parser.add_argument_group('gui')
     parser_gui_ex = parser.add_mutually_exclusive_group()
 
-    parser_connection.add_argument('-n', '--hostname', action="store", dest="host", 
+    parser_connection.add_argument('-n', '--hostname', action="store", 
+        dest="host", 
         default="localhost", 
-        help="The hostname where api XMLRPCServer will listen. Default = localhost")
+        help="The hostname where api XMLRPCServer will listen. \
+        Default = localhost")
 
     parser_connection.add_argument('-p', '--port', action="store", dest="port", 
         default=9876, type=int,
@@ -57,16 +70,18 @@ def getParserArgs():
         default=False, 
         help="Enables debug mode. Default = disabled")
 
-    parser_profile.add_argument('--profile', action="store_true", dest="profile", 
+    parser_profile.add_argument('--profile', action="store_true", 
+        dest="profile", 
         default=False, 
         help="Enables application profiling. When this option is used \
-         --profile-output and --profile-depth can also be used. Default = disabled")
+         --profile-output and --profile-depth can also be used. \
+         Default = disabled")
 
     parser_profile.add_argument('--profile-output', action="store",
         dest="profile_output",
         default=None, 
-        help="Sets the profile output filename. If no value is provided, standard \
-        output will be used")
+        help="Sets the profile output filename. If no value is provided, \
+        standard output will be used")
 
     parser_profile.add_argument('--profile-depth', action="store", 
         dest="profile_depth", type=int,
@@ -79,7 +94,8 @@ def getParserArgs():
         help="Disable the application exception hook that allows to send error \
         reports to developers.")
 
-    parser.add_argument('--disable-login', action="store_true", dest="disable_login", 
+    parser.add_argument('--disable-login', action="store_true", 
+        dest="disable_login", 
         default=False, 
         help="Disable the auth splash screen.")
 
@@ -199,6 +215,13 @@ def setConf():
 
 
 def startFaraday():
+    """Application startup.
+
+    Starts a MainApplication with the previously parsed arguments, and handles
+    a profiler if requested.
+
+    Returns application status.
+    """
 
     #TODO: Handle args in CONF and send only necessary ones.
     main_app = MainApplication(args)
@@ -218,30 +241,19 @@ def startFaraday():
 
     exit_status = start()
 
-def env():
-    # TODO: Make a launcher class and remove globals for attributes.
-    # Debugging purposes ONLY. Will be replaced soon.
-
-    global faraday_user_home
-    global faraday_base
-    global faraday_plugins_path 
-    global faraday_plugins_basepath
-    
-    faraday_user_home = os.path.expanduser(FARADAY_HOME_PATH)
-    faraday_base = os.path.dirname(os.path.realpath(__file__))
-    faraday_plugins_path = "%s/plugins" % faraday_user_home
-    faraday_plugins_basepath = "%s/plugins/repo/" % faraday_base
-
+    return exit_status
 
 def checkPlugins(dev_mode=False):
-    """Checks and handles Farada's plugin status.
+    """Checks and handles Faraday's plugin status.
 
-    When dev_mode is True, the user enters in development mode and the plugins will
-    be replaced with the latest ones. 
+    When dev_mode is True, the user enters in development mode and the plugins 
+    will be replaced with the latest ones. 
 
     Otherwise, it checks if the plugin folders exists or not, and creates it
     with its content.
 
+    TODO: When dependencies are not satisfied ask user if he wants to try and
+    run faraday with a inestability warning.
     """
 
     if not dev_mode and os.path.isdir(faraday_plugins_path):
@@ -259,6 +271,12 @@ def checkPlugins(dev_mode=False):
         print "[*] Plugins succesfully loaded."
 
 def checkConfiguration():
+    """Checks if the environment is ready to run Faraday.
+
+    Checks different environment requirements and sets them before starting
+    Faraday. This includes checking for plugin folders, libraries, QT 
+    configuration and ZSH integration.
+    """
     checkPlugins(args.dev_mode)
     #checkQtrc()
     #restoreQtrc()
@@ -267,11 +285,17 @@ def checkConfiguration():
     #checkHelpers()
 
 def checkFolderList(folderlist):
+    """Checks if a list of folders exists and creates them otherwise.
+
+    """
     for folder in folderlist:
-        fp_folder = "%s/%s" % (faraday_user_home, folder)
+        fp_folder = os.path.join(faraday_user_home, folder)
         checkFolder(fp_folder)
 
 def checkFolder(folder):
+    """Checks whether a folder exists and creates it if it doesn't.
+
+    """
     if not os.path.isdir(folder):
         print "Creating %s" % folder
         os.mkdir(folder)
@@ -281,10 +305,9 @@ def main():
 
     Main function for launcher.
 
-    TODO: Use this a a launcher _init_ method?
+    TODO: Use this as launcher's _init_ method?
     """
 
-    env()
     if checkDependencies():
         setConf()
         checkConfiguration()

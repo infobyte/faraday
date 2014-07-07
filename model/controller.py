@@ -467,60 +467,6 @@ class ModelController(threading.Thread):
         self._sync_api_request = False
         self.__release_host_lock()
 
-    def __addCategory(self, category):
-        if category not in self._categories:
-            self._categories[category] = []
-
-    def getAllCategories(self):
-        return self._categories
-
-    def __delCategory(self, category, recursive=False):
-        """
-        Removes a given category from the model.
-        If recursive is True it will also delete all hosts inside the category.
-        If recursive is False it will first move the hosts in the category, to the
-        default category "ALL" and then remove the desired category
-        """
-        #XXX: test this implementation...
-        if category in self._categories:
-            if recursive:
-                for cat in self._categories[category]:
-                    self.__delHost(cat)
-            else:
-                # we just move all hosts to category ALL and delete the category
-                for host_id in self._categories[category]:
-                    host = self._getValueByID("_hosts", host_id)
-                    if host is not None:
-                        host.categories.remove(category)
-                        host.categories.append(CONF.getDefaultCategory())
-
-     # adding, deleting and moving hosts in categories seem to be thread
-     # safe operations, so we don't need to acquire any lock
-
-    def __addHostToCategory(self, host, category):
-        # we always try to create the category to make it safe.
-        # If category exists it just won't do anything
-        self.__addCategory(category)
-        self._categories[category].append(host.getID())
-        if category not in host.categories:
-            host.registerCategory(category)
-
-    def __delHostFromCategory(self, host, category):
-        self._categories[category].remove(host.getID())
-        host.removeCategory(category)
-
-    def moveHostToCategory(self, hostname, category):
-        host = self._getValueByID("_hosts", hostname)
-        if host is not None:
-            self.__delHostFromCategory(host, host.getCurrentCategory())
-            self.__addHostToCategory(host, category)
-            return True
-        return False
-
-    # TODO: CATEGORIES APIS are still missing...
-    # also we need some "move" api to be used when drag & drop
-    # exists in the host browser
-
     # TODO: >>> APIs <<< we have to know which plugin called the apis to store
     # in the history
 
@@ -534,20 +480,6 @@ class ModelController(threading.Thread):
         new_action = args
         self._pending_actions.put(new_action)
 
-    def addCategoryASYNC(self, category):
-        self.__addPendingAction(modelactions.ADDCATEGORY, category)
-
-    def addCategorySYNC(self, category):
-        #self.sync_lock()
-        #self.__addCategory(category)
-        #self.sync_unlock()
-        self._processAction(modelactions.ADDCATEGORY, category, sync=True)
-
-    def delCategoryASYNC(self, category, recursive=False):
-        self.__addPendingAction(modelactions.DELCATEGORY, category, recursive)
-
-    def delCategorySYNC(self, category, recursive=False):
-        self._processAction(modelactions.DELCATEGORY, [category, recursive], sync=True)
 
     def addUpdate(self, old_object, new_object):
         # Returns True if the update was resolved without user interaction
@@ -588,29 +520,6 @@ class ModelController(threading.Thread):
         self.treeWordsTries.addWord(obj.getName())
         notifier.addHost(obj)
 
-
-    def __addHost(self, host, category, update=False, old_hostname=None):
-        res = False
-        #self.__acquire_host_lock()
-        old_host = self._getValueByID("_hosts", host.getID())
-        if old_host:
-            res = self.addUpdate(old_host, host)
-        else:
-            res = self._addValue("_hosts", host, update=update)
-            if res:
-                host.setParent(None)
-
-                if category is None:
-                    category = CONF.getDefaultCategory()
-                elif category not in self._categories:
-                    self.__addCategory(category)
-
-                self.treeWordsTries.addWord(category)
-
-                self.__addHostToCategory(host, category)
-                notifier.addHost(host)
-            #self.__release_host_lock()
-        return res
 
     def delHostASYNC(self, host):
         """
@@ -1469,23 +1378,6 @@ class ModelController(threading.Thread):
                     res = self.addUpdate(old_note, note)
                 else:
                     res = interface.addNote(note)
-                    if res:
-                        notifier.editHost(host)
-        else:
-            api.devlog("__addNote failed. Host ID: %s not found" % host_id)
-        return res
-
-    def __addNoteToApplication(self, host_id, application_id, note=None):
-        res = False
-        host = self._getValueByID("_hosts", host_id)
-        if host is not None:
-            application = host.getApplication(application_id)
-            if application is not None:
-                old_note = application.getNote(note.getID())
-                if old_note:
-                    res = self.addUpdate(old_note, note)
-                else:
-                    res = application.addNote(note)
                     if res:
                         notifier.editHost(host)
         else:

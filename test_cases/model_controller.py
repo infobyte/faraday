@@ -119,10 +119,11 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
-        model_controller.addVulnToServiceSYNC(None, interface.getID(), vuln)
+        model_controller.addVulnToInterfaceSYNC(None, interface.getID(), vuln)
 
         verify(mappersManager).getMapper(vuln)
         verify(objectMapper).saveObject(vuln)
+
 
     def testAddVulnToHostGetsMapperDispatchSave(self): 
         host = Host("pepito")
@@ -139,6 +140,38 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         verify(mappersManager).getMapper(vuln)
         verify(objectMapper).saveObject(vuln)
+
+    def testAddNoteToServiceGetsMapperDispatchSave(self): 
+        service = Service("servi")
+        note = ModelObjectNote("a_note")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(note).thenReturn(objectMapper)
+        when(objectMapper).saveObject(note).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addNoteToServiceSYNC(None, service.getID(), note)
+
+        verify(mappersManager).getMapper(note)
+        verify(objectMapper).saveObject(note)
+
+    def testAddNoteToVulnGetsMapperDispatchSave(self): 
+        vuln = ModelObjectVuln('a vuln')
+        note = ModelObjectNote("a_note")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(note).thenReturn(objectMapper)
+        when(objectMapper).saveObject(note).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addNoteToServiceSYNC(None, vuln.getID(), note)
+
+        verify(mappersManager).getMapper(note)
+        verify(objectMapper).saveObject(note)
 
     def testAddNoteToServiceGetsMapperDispatchSave(self): 
         service = Service("servi")

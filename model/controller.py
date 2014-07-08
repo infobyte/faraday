@@ -281,8 +281,8 @@ class ModelController(threading.Thread):
             modelactions.ADDCATEGORY: self.__addCategory,
             modelactions.DELCATEGORY:  self.__delCategory,
             #Vulnerability
-            modelactions.ADDVULNINT: self.__addVulnerabilityToInterface,
-            modelactions.DELVULNINT: self.__delVulnerabilityFromInterface,
+            modelactions.ADDVULNINT: self.__add,
+            modelactions.DELVULNINT: self._delVulnerabilityFromInterface,
             modelactions.ADDVULNAPP: self.__addVulnerabilityToApplication,
             modelactions.DELVULNAPP: self.__delVulnerabilityFromApplication,
             modelactions.ADDVULNHOST: self.__add,
@@ -303,7 +303,7 @@ class ModelController(threading.Thread):
             modelactions.DELNOTEHOST: self.__delNoteFromHost,
             modelactions.ADDNOTESRV: self.__add,
             modelactions.DELNOTESRV: self.__delNoteFromService,
-            modelactions.ADDNOTEVULN: self.__addNote,
+            modelactions.ADDNOTEVULN: self.__add,
             modelactions.DELNOTEVULN: self.__delNote,
             modelactions.ADDNOTE: self.__addNoteToModelObject,
             modelactions.DELNOTE: self.__delNoteFromModelObject,
@@ -1023,8 +1023,8 @@ class ModelController(threading.Thread):
     def addVulnToInterfaceASYNC(self, host, intname, newVuln):
         self.__addPendingAction(modelactions.ADDVULNINT, host, intname, newVuln)
 
-    def addVulnToInterfaceSYNC(self, host, intname, newVuln):
-        self._processAction(modelactions.ADDVULNINT, [host, intname, newVuln], sync=True)
+    def addVulnToInterfaceSYNC(self, host, intId, newVuln):
+        self._processAction(modelactions.ADDVULNINT, [newVuln, intId], sync=True)
 
     def addVulnToApplicationASYNC(self, host, appname, newVuln):
         self.__addPendingAction(modelactions.ADDVULNAPP, host, appname, newVuln)

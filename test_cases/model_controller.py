@@ -91,6 +91,23 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(service)
         verify(objectMapper).saveObject(service)
 
+    def testAddServiceGetsMapperDispatchSave(self): 
+        interface = Interface("int_mock0") 
+        service = Service("servi")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(service).thenReturn(objectMapper)
+        when(objectMapper).saveObject(service).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addServiceToInterfaceSYNC(None, interface.getID(), service)
+
+        verify(mappersManager).getMapper(service)
+        verify(objectMapper).saveObject(service)
+
+
     def testAddSavesObjectNameInTrie(self):
         host = Host('coco')
 
@@ -111,10 +128,34 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(objectMapper).saveObject(host)
         verify(triemock).addWord(host.getName())
 
+
     def createMapperMock(self):
         map_mock = mock()
         when(map_mock).findObject(any()).thenReturn(mock())
         return map_mock
+
+
+
+ # def addHostSYNC(self, host, category=None, update=False, old_hostname=None):
+ # def addInterfaceSYNC(self, hostId, interface, update=False):
+
+ # def addApplicationSYNC(self, host, application): Should?
+
+ # def addServiceToInterfaceSYNC(self, host_id, interface_id, newService):
+ # def addServiceToApplicationSYNC(self, host, appname, newService):
+ #  def addVulnToInterfaceSYNC(self, host, intname, newVuln):
+ #  def addVulnToApplicationSYNC(self, host, appname, newVuln):
+ #  def addVulnToHostSYNC(self, host, newVuln):
+ #  def addVulnToServiceSYNC(self, host, srvname, newVuln):
+ #  def addVulnSYNC(self, model_object, newVuln):
+ #  def addVulnWebToServiceSYNC(self, host, srvname, newVuln):
+ #  def addNoteToInterfaceSYNC(self, host, intname, newNote):
+ #  def addNoteToApplicationSYNC(self, host, appname, newNote):
+ #  def addNoteToHostSYNC(self, host, newNote):
+ #  def addNoteToServiceSYNC(self, host, srvname, newNote):
+ #  def addNoteSYNC(self, model_object, newNote):
+ #  def addCredToServiceSYNC(self, host, srvname, newCred):
+ #  def addCredSYNC(self, model_object, newCred):
 
 
 if __name__ == '__main__':

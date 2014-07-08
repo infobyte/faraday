@@ -269,7 +269,7 @@ class ModelController(threading.Thread):
             modelactions.ADDINTERFACE: self.__add,
             modelactions.DELINTERFACE: self.__delInterfaceFromHost,
             modelactions.EDITINTERFACE: self.__editInterface,
-            modelactions.ADDSERVICEINT: self.__addServiceToInterface,
+            modelactions.ADDSERVICEINT: self.__add,
             modelactions.ADDSERVICEAPP: self.__addServiceToApplication,
             modelactions.DELSERVICEINT: self.__delServiceFromInterface,
             modelactions.DELSERVICEAPP: self.__delServiceFromApplication,
@@ -510,7 +510,7 @@ class ModelController(threading.Thread):
         SYNC API
         Adds a host directly to the model
         """
-        self._processAction(modelactions.ADDHOST, [host, category, update, old_hostname], sync=True)
+        self._processAction(modelactions.ADDHOST, [host, None], sync=True)
 
     def __add(self,  obj, parent_id=None, *args):
         dataMapper = self.mappers_manager.getMapper(obj)
@@ -852,7 +852,7 @@ class ModelController(threading.Thread):
         Adds a service to a specific host in a specific interface
         directly to the model
         """
-        self._processAction(modelactions.ADDSERVICEINT, [host_id, interface_id, newService], sync=True)
+        self._processAction(modelactions.ADDSERVICEINT, [newService, interface_id], sync=True)
 
     def addServiceToApplicationASYNC(self, host, appname, newService):
         """

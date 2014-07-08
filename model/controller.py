@@ -267,7 +267,7 @@ class ModelController(threading.Thread):
             modelactions.DELHOST: self.__del,
             modelactions.EDITHOST: self.__editHost,
             modelactions.ADDINTERFACE: self.__add,
-            modelactions.DELINTERFACE: self.__delInterfaceFromHost,
+            modelactions.DELINTERFACE: self.__del,
             modelactions.EDITINTERFACE: self.__editInterface,
             modelactions.ADDSERVICEINT: self.__add,
             modelactions.ADDSERVICEAPP: self.__addServiceToApplication,
@@ -522,9 +522,11 @@ class ModelController(threading.Thread):
 
     def __del(self,  objId, *args):
         dataMapper = self.mappers_manager.getMapper(objId) 
-        obj = dataMapper.getObject(objId)
-        # obj_parent = obj.getParent() 
-        # obj_parent.deleteChild(objId) 
+
+        obj = self.mappers_manager.findObject(objId)
+        obj_parent = obj.getParent() 
+        if obj_parent:
+            obj_parent.deleteChild(objId) 
 
         # self.treeWordsTries.addWord(obj.getName()) 
         # self.treeWordsTries.removeWord(host.getName())
@@ -684,12 +686,12 @@ class ModelController(threading.Thread):
         """
         self.__addPendingAction(modelactions.DELINTERFACE, host, interface_name)
 
-    def delInterfaceSYNC(self, host, interface_name):
+    def delInterfaceSYNC(self, host, interface_id):
         """
         SYNC API
         Deletes an interface from model
         """
-        self._processAction(modelactions.DELINTERFACE, [host, interface_name], sync=True)
+        self._processAction(modelactions.DELINTERFACE, [interface_id], sync=True)
 
     def __delInterfaceFromHost(self, host_id, interface_id):
         res = False

@@ -468,7 +468,7 @@ class ModelComposite(ModelObject):
 
     def addChild(self, iid, model_object):
         self.childs[iid] = model_object
-        # self.by_type[model_object.__class__.__name__].append(model_object)
+        model_object.setParent(self)
 
     def deleteChild(self, iid):
         del self.childs[iid]

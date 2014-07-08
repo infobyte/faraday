@@ -87,26 +87,122 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
-        model_controller.addInterfaceSYNC(interface.getID(), service)
-        verify(mappersManager).getMapper(service)
-        verify(objectMapper).saveObject(service)
-
-    def testAddServiceGetsMapperDispatchSave(self): 
-        interface = Interface("int_mock0") 
-        service = Service("servi")
-
-        mappersManager = self.createMapperMock()
-        objectMapper = mock()
-        when(mappersManager).getMapper(service).thenReturn(objectMapper)
-        when(objectMapper).saveObject(service).thenReturn(True)
-
-        model_controller = controller.ModelController(mock(), mappersManager)
-
         model_controller.addServiceToInterfaceSYNC(None, interface.getID(), service)
 
         verify(mappersManager).getMapper(service)
         verify(objectMapper).saveObject(service)
 
+    def testAddVulnToServiceGetsMapperDispatchSave(self): 
+        service = Service("servi")
+        vuln = ModelObjectVuln("a_vuln")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(vuln).thenReturn(objectMapper)
+        when(objectMapper).saveObject(vuln).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addVulnToServiceSYNC(None, service.getID(), vuln)
+
+        verify(mappersManager).getMapper(vuln)
+        verify(objectMapper).saveObject(vuln)
+
+    def testAddVulnToInterfaceGetsMapperDispatchSave(self): 
+        interface = Interface("int0")
+        vuln = ModelObjectVuln("a_vuln")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(vuln).thenReturn(objectMapper)
+        when(objectMapper).saveObject(vuln).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addVulnToServiceSYNC(None, interface.getID(), vuln)
+
+        verify(mappersManager).getMapper(vuln)
+        verify(objectMapper).saveObject(vuln)
+
+    def testAddVulnToHostGetsMapperDispatchSave(self): 
+        host = Host("pepito")
+        vuln = ModelObjectVuln("a_vuln")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(vuln).thenReturn(objectMapper)
+        when(objectMapper).saveObject(vuln).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addVulnToHostSYNC(host.getID(), vuln)
+
+        verify(mappersManager).getMapper(vuln)
+        verify(objectMapper).saveObject(vuln)
+
+    def testAddNoteToServiceGetsMapperDispatchSave(self): 
+        service = Service("servi")
+        note = ModelObjectNote("a_note")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(note).thenReturn(objectMapper)
+        when(objectMapper).saveObject(note).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addNoteToServiceSYNC(None, service.getID(), note)
+
+        verify(mappersManager).getMapper(note)
+        verify(objectMapper).saveObject(note)
+
+    def testAddNoteToInterfaceGetsMapperDispatchSave(self): 
+        interface = Interface("int0")
+        note = ModelObjectNote("a_note")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(note).thenReturn(objectMapper)
+        when(objectMapper).saveObject(note).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addNoteToServiceSYNC(None, interface.getID(), note)
+
+        verify(mappersManager).getMapper(note)
+        verify(objectMapper).saveObject(note)
+
+    def testAddNoteToHostGetsMapperDispatchSave(self): 
+        host = Host("pepito")
+        note = ModelObjectNote("a_note")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(note).thenReturn(objectMapper)
+        when(objectMapper).saveObject(note).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addNoteToHostSYNC(host.getID(), note)
+
+        verify(mappersManager).getMapper(note)
+        verify(objectMapper).saveObject(note)
+
+    def testAddNoteToNoteGetsMapperDispatchSave(self): 
+        host = Host("pepito")
+        note = ModelObjectNote("a_note")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(note).thenReturn(objectMapper)
+        when(objectMapper).saveObject(note).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addNoteToNoteSYNC(note.getID(), note)
+
+        verify(mappersManager).getMapper(note)
+        verify(objectMapper).saveObject(note)
 
     def testAddSavesObjectNameInTrie(self):
         host = Host('coco')
@@ -138,22 +234,27 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
  # def addHostSYNC(self, host, category=None, update=False, old_hostname=None):
  # def addInterfaceSYNC(self, hostId, interface, update=False):
+ # def addServiceToInterfaceSYNC(self, host_id, interface_id, newService): 
+ # def addVulnToServiceSYNC
+ #  def addVulnWebToServiceSYNC(self, host, srvname, newVuln):
+
+ #  def addVulnToInterfaceSYNC(self, host, intname, newVuln):
 
  # def addApplicationSYNC(self, host, application): Should?
 
- # def addServiceToInterfaceSYNC(self, host_id, interface_id, newService):
  # def addServiceToApplicationSYNC(self, host, appname, newService):
- #  def addVulnToInterfaceSYNC(self, host, intname, newVuln):
+
  #  def addVulnToApplicationSYNC(self, host, appname, newVuln):
  #  def addVulnToHostSYNC(self, host, newVuln):
  #  def addVulnToServiceSYNC(self, host, srvname, newVuln):
  #  def addVulnSYNC(self, model_object, newVuln):
- #  def addVulnWebToServiceSYNC(self, host, srvname, newVuln):
+
  #  def addNoteToInterfaceSYNC(self, host, intname, newNote):
  #  def addNoteToApplicationSYNC(self, host, appname, newNote):
  #  def addNoteToHostSYNC(self, host, newNote):
  #  def addNoteToServiceSYNC(self, host, srvname, newNote):
  #  def addNoteSYNC(self, model_object, newNote):
+
  #  def addCredToServiceSYNC(self, host, srvname, newCred):
  #  def addCredSYNC(self, model_object, newCred):
 

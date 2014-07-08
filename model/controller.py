@@ -285,9 +285,9 @@ class ModelController(threading.Thread):
             modelactions.DELVULNINT: self.__delVulnerabilityFromInterface,
             modelactions.ADDVULNAPP: self.__addVulnerabilityToApplication,
             modelactions.DELVULNAPP: self.__delVulnerabilityFromApplication,
-            modelactions.ADDVULNHOST: self.__addVulnerabilityToHost,
+            modelactions.ADDVULNHOST: self.__add,
             modelactions.DELVULNHOST: self.__delVulnerabilityFromHost,
-            modelactions.ADDVULNSRV: self.__addVulnerabilityToService,
+            modelactions.ADDVULNSRV: self.__add,
             modelactions.DELVULNSRV: self.__delVulnerabilityFromService,
             modelactions.ADDVULN: self.__addVulnToModelObject,
             modelactions.DELVULN: self.__delVulnFromModelObject,
@@ -299,9 +299,9 @@ class ModelController(threading.Thread):
             modelactions.DELNOTEINT: self.__delNoteFromInterface,
             modelactions.ADDNOTEAPP: self.__addNoteToApplication,
             modelactions.DELNOTEAPP: self.__delNoteFromApplication,
-            modelactions.ADDNOTEHOST: self.__addNoteToHost,
+            modelactions.ADDNOTEHOST: self.__add,
             modelactions.DELNOTEHOST: self.__delNoteFromHost,
-            modelactions.ADDNOTESRV: self.__addNoteToService,
+            modelactions.ADDNOTESRV: self.__add,
             modelactions.DELNOTESRV: self.__delNoteFromService,
             modelactions.ADDNOTEVULN: self.__addNote,
             modelactions.DELNOTEVULN: self.__delNote,
@@ -309,7 +309,7 @@ class ModelController(threading.Thread):
             modelactions.DELNOTE: self.__delNoteFromModelObject,
             modelactions.ADDCREDSRV: self.__addCredToService,
             modelactions.DELCREDSRV: self.__delCredFromService,
-            modelactions.ADDNOTENOTE: self.__addNoteToServiceNote,
+            modelactions.ADDNOTENOTE: self.__add,
             modelactions.DELNOTENOTE: self.__delNoteFromServiceNote,
             modelactions.EDITNOTE: self.__editNote,
             modelactions.EDITCRED: self.__editCred,
@@ -1035,14 +1035,14 @@ class ModelController(threading.Thread):
     def addVulnToHostASYNC(self, host, newVuln):
         self.__addPendingAction(modelactions.ADDVULNHOST, host, newVuln)
 
-    def addVulnToHostSYNC(self, host, newVuln):
-        self._processAction(modelactions.ADDVULNHOST, [host, newVuln], sync=True)
+    def addVulnToHostSYNC(self, hostId, newVuln):
+        self._processAction(modelactions.ADDVULNHOST, [newVuln, hostId], sync=True)
 
     def addVulnToServiceASYNC(self, host, srvname, newVuln):
         self.__addPendingAction(modelactions.ADDVULNSRV, host, srvname, newVuln)
 
-    def addVulnToServiceSYNC(self, host, srvname, newVuln):
-        self._processAction(modelactions.ADDVULNSRV, [host, srvname, newVuln], sync=True)
+    def addVulnToServiceSYNC(self, host, srvId, newVuln):
+        self._processAction(modelactions.ADDVULNSRV, [newVuln, srvId], sync=True)
 
     def addVulnSYNC(self, model_object, newVuln):
         self._processAction(modelactions.ADDVULN, [model_object, newVuln], sync=True)
@@ -1254,8 +1254,8 @@ class ModelController(threading.Thread):
     def addNoteToHostASYNC(self, host, newNote):
         self.__addPendingAction(modelactions.ADDNOTEHOST, host, newNote)
 
-    def addNoteToHostSYNC(self, host, newNote):
-        self._processAction(modelactions.ADDNOTEHOST, [host, newNote], sync=True)
+    def addNoteToHostSYNC(self, hostId, newNote):
+        self._processAction(modelactions.ADDNOTEHOST, [newNote, hostId], sync=True)
 
     def addNoteToServiceASYNC(self, host, srvname, newNote):
         self.__addPendingAction(modelactions.ADDNOTESRV, host, srvname, newNote)
@@ -1263,8 +1263,11 @@ class ModelController(threading.Thread):
     def addNoteToNoteASYNC(self, host, srvname, note_id, newNote):
         self.__addPendingAction(modelactions.ADDNOTENOTE, host, srvname, note_id, newNote)
 
-    def addNoteToServiceSYNC(self, host, srvname, newNote):
-        self._processAction(modelactions.ADDNOTESRV, [host, srvname, newNote], sync=True)
+    def addNoteToNoteSYNC(self, noteId, newNote):
+        self._processAction(modelactions.ADDNOTENOTE, [newNote, noteId], sync=True)
+
+    def addNoteToServiceSYNC(self, host, srvId, newNote):
+        self._processAction(modelactions.ADDNOTESRV, [newNote, srvId], sync=True)
 
     def addNoteSYNC(self, model_object, newNote):
         self._processAction(modelactions.ADDNOTE, [model_object, newNote], sync=True)

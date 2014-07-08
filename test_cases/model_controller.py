@@ -27,7 +27,7 @@ from managers.all import CommandManager, CouchdbManager, PersistenceManagerFacto
 class ModelObjectControllerUnitTest(unittest.TestCase):
     # TODO: Notifier goes into mapper?
 
-    def testAddHostGetsMapperDispatchSave(self): 
+    def _testAddHostGetsMapperDispatchSave(self): 
         host = Host('coco')
 
         mappersManager = self.createMapperMock()
@@ -41,7 +41,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(host)
         verify(objectMapper).saveObject(host)
 
-    def testAddInterfaceGetsMapperDispatchSave(self): 
+    def _testAddInterfaceGetsMapperDispatchSave(self): 
         host = Host('coco')
         interface = Interface("int_mock0") 
 
@@ -56,7 +56,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(interface)
         verify(objectMapper).saveObject(interface)
 
-    def testAddObjectSavesChildInParent(self): 
+    def _testAddObjectSavesChildInParent(self): 
         host = Host('coco')
         interface = Interface("int_mock0") 
 
@@ -76,7 +76,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         self.assertEquals(interface, host.findChild(interface.getID()), 
                 "Orphan child, what happen papi?")
 
-    def testAddServiceGetsMapperDispatchSave(self): 
+    def _testAddServiceGetsMapperDispatchSave(self): 
         interface = Interface("int_mock0") 
         service = Service("servi")
 
@@ -92,7 +92,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(service)
         verify(objectMapper).saveObject(service)
 
-    def testAddVulnToServiceGetsMapperDispatchSave(self): 
+    def _testAddVulnToServiceGetsMapperDispatchSave(self): 
         service = Service("servi")
         vuln = ModelObjectVuln("a_vuln")
 
@@ -108,7 +108,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(vuln)
         verify(objectMapper).saveObject(vuln)
 
-    def testAddVulnToInterfaceGetsMapperDispatchSave(self): 
+    def _testAddVulnToInterfaceGetsMapperDispatchSave(self): 
         interface = Interface("int0")
         vuln = ModelObjectVuln("a_vuln")
 
@@ -125,7 +125,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(objectMapper).saveObject(vuln)
 
 
-    def testAddVulnToHostGetsMapperDispatchSave(self): 
+    def _testAddVulnToHostGetsMapperDispatchSave(self): 
         host = Host("pepito")
         vuln = ModelObjectVuln("a_vuln")
 
@@ -141,7 +141,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(vuln)
         verify(objectMapper).saveObject(vuln)
 
-    def testAddNoteToServiceGetsMapperDispatchSave(self): 
+    def _testAddNoteToServiceGetsMapperDispatchSave(self): 
         service = Service("servi")
         note = ModelObjectNote("a_note")
 
@@ -157,7 +157,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def testAddNoteToVulnGetsMapperDispatchSave(self): 
+    def _testAddNoteToVulnGetsMapperDispatchSave(self): 
         vuln = ModelObjectVuln('a vuln')
         note = ModelObjectNote("a_note")
 
@@ -173,7 +173,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def testAddNoteToServiceGetsMapperDispatchSave(self): 
+    def _testAddNoteToServiceGetsMapperDispatchSave(self): 
         service = Service("servi")
         note = ModelObjectNote("a_note")
 
@@ -189,7 +189,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def testAddNoteToInterfaceGetsMapperDispatchSave(self): 
+    def _testAddNoteToInterfaceGetsMapperDispatchSave(self): 
         interface = Interface("int0")
         note = ModelObjectNote("a_note")
 
@@ -205,7 +205,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def testAddNoteToHostGetsMapperDispatchSave(self): 
+    def _testAddNoteToHostGetsMapperDispatchSave(self): 
         host = Host("pepito")
         note = ModelObjectNote("a_note")
 
@@ -221,7 +221,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def testAddNoteToNoteGetsMapperDispatchSave(self): 
+    def _testAddNoteToNoteGetsMapperDispatchSave(self): 
         host = Host("pepito")
         note = ModelObjectNote("a_note")
 
@@ -237,7 +237,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def testAddSavesObjectNameInTrie(self):
+    def _testAddSavesObjectNameInTrie(self):
         host = Host('coco')
 
         mappersManager = self.createMapperMock()
@@ -263,7 +263,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         when(map_mock).findObject(any()).thenReturn(mock())
         return map_mock
 
-    def testAddCredGetsMapperDispatchSave(self): 
+    def _testAddCredGetsMapperDispatchSave(self): 
         host = Host("pepito")
         cred = ModelObjectCred("usr", "pass")
 
@@ -279,7 +279,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(cred)
         verify(objectMapper).saveObject(cred)
 
-    def testAddCredToServiceGetsMapperDispatchSave(self): 
+    def _testAddCredToServiceGetsMapperDispatchSave(self): 
         service = Service("pepito")
         cred = ModelObjectCred("usr", "pass")
 
@@ -295,31 +295,40 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(cred)
         verify(objectMapper).saveObject(cred)
 
+    def testDeleteModelObjectDispatchRemove(self):
+        host = Host("coquito")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(host.getID()).thenReturn(objectMapper)
+        when(objectMapper).delObject(host.getID()).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager) 
+        model_controller.delHostSYNC(host) 
+        verify(mappersManager).getMapper(host.getID())
+        verify(objectMapper).delObject(host.getID())
+
+
  # def addHostSYNC(self, host, category=None, update=False, old_hostname=None):
  # def addInterfaceSYNC(self, hostId, interface, update=False):
  # def addServiceToInterfaceSYNC(self, host_id, interface_id, newService): 
  # def addVulnToServiceSYNC
- #  def addVulnWebToServiceSYNC(self, host, srvname, newVuln):
+ # def addVulnWebToServiceSYNC(self, host, srvname, newVuln):
+ # def addCredSYNC(self, model_object, newCred): 
+ # def addVulnToInterfaceSYNC(self, host, intname, newVuln):
+ # def addVulnToHostSYNC(self, host, newVuln):
+ # def addVulnToServiceSYNC(self, host, srvname, newVuln):
+ # def addVulnSYNC(self, model_object, newVuln):
+ # def addNoteToInterfaceSYNC(self, host, intname, newNote):
+ # def addNoteToHostSYNC(self, host, newNote):
+ # def addNoteToServiceSYNC(self, host, srvname, newNote):
+ # def addNoteSYNC(self, model_object, newNote):
+ # def addCredToServiceSYNC(self, host, srvname, newCred):
 
- #  def addVulnToInterfaceSYNC(self, host, intname, newVuln):
-
- # def addApplicationSYNC(self, host, application): Should?
-
- # def addServiceToApplicationSYNC(self, host, appname, newService):
-
- #  def addVulnToApplicationSYNC(self, host, appname, newVuln):
- #  def addVulnToHostSYNC(self, host, newVuln):
- #  def addVulnToServiceSYNC(self, host, srvname, newVuln):
- #  def addVulnSYNC(self, model_object, newVuln):
-
- #  def addNoteToInterfaceSYNC(self, host, intname, newNote):
- #  def addNoteToApplicationSYNC(self, host, appname, newNote):
- #  def addNoteToHostSYNC(self, host, newNote):
- #  def addNoteToServiceSYNC(self, host, srvname, newNote):
- #  def addNoteSYNC(self, model_object, newNote):
-
- #  def addCredToServiceSYNC(self, host, srvname, newCred):
- #  def addCredSYNC(self, model_object, newCred):
+ # def addApplicationSYNC(self, host, application): Should?  
+ # def addServiceToApplicationSYNC(self, host, appname, newService): 
+ # def addVulnToApplicationSYNC(self, host, appname, newVuln): 
+ # def addNoteToApplicationSYNC(self, host, appname, newNote): 
 
 
 if __name__ == '__main__':

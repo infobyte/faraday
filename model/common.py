@@ -956,13 +956,13 @@ class ModelObjectCred(ModelLeaf):
     class_signature = "Cred"
     
     def __init__(self, username="", password="", parent=None):
-        ModelObject.__init__(self)
+        ModelLeaf.__init__(self)
         self.username = str(username)
         self._parent = parent
         self._password = str(password)
     
     def updateID(self):
-        self._id = get_hash([self.username, self.password])
+        self._id = get_hash([self.username, self._password])
 
     def setPassword(self, password):
         self._password = str(password)

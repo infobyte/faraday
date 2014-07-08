@@ -307,13 +307,13 @@ class ModelController(threading.Thread):
             modelactions.DELNOTEVULN: self.__delNote,
             modelactions.ADDNOTE: self.__addNoteToModelObject,
             modelactions.DELNOTE: self.__delNoteFromModelObject,
-            modelactions.ADDCREDSRV: self.__addCredToService,
+            modelactions.ADDCREDSRV: self.__add,
             modelactions.DELCREDSRV: self.__delCredFromService,
             modelactions.ADDNOTENOTE: self.__add,
             modelactions.DELNOTENOTE: self.__delNoteFromServiceNote,
             modelactions.EDITNOTE: self.__editNote,
             modelactions.EDITCRED: self.__editCred,
-            modelactions.ADDCRED: self.__addCredToModelObject,
+            modelactions.ADDCRED: self.__add,
             modelactions.DELCRED: self.__delCredFromModelObject
         }
 
@@ -1053,80 +1053,6 @@ class ModelController(threading.Thread):
     def addVulnWebToServiceSYNC(self, host, srvname, newVuln):
         self._processAction(modelactions.ADDVULNWEBSRV, [host, srvname, newVuln], sync=True)
 
-    def __addVulnToModelObject(self, model_object, vuln=None):
-        res = False
-        if model_object is not None:
-            old_vuln = model_object.getVuln(vuln.getID())
-            if old_vuln:
-                res = self.addUpdate(old_vuln, vuln)
-            else:
-                res = model_object.addVuln(vuln)
-                if res:
-                    notifier.editHost(model_object.getHost())
-        return res
-
-    def __addVulnerabilityToHost(self, host_id, vuln=None):
-        res = False
-        host = self._getValueByID("_hosts", host_id)
-        if host is not None and vuln is not None:
-            old_vuln = host.getVuln(vuln.getID())
-            if old_vuln:
-                res = self.addUpdate(old_vuln, vuln)
-            else:
-                res = host.addVuln(vuln)
-                if res:
-                    notifier.editHost(host)
-        api.devlog("__addVulnerabilityToHost result = %s" % res)
-        return res
-
-    def __addVulnerabilityToApplication(self, host_id, application_id, vuln=None):
-        res = False
-        host = self._getValueByID("_hosts", host_id)
-        if host is not None and application_id is not None and vuln is not None:
-            application = host.getApplication(application_id)
-            if application is not None:
-                old_vuln = application.getVuln(vuln.getID())
-                if old_vuln:
-                    res = self.addUpdate(old_vuln, vuln)
-                else:
-                    res = application.addVuln(vuln)
-                    if res:
-                        notifier.editHost(application.getHost())
-        api.devlog("__addVulnerabilityToApplication result = %s" % res)
-        return res
-
-    def __addVulnerabilityToInterface(self, host_id, interface_id, vuln=None):
-        res = False
-        host = self._getValueByID("_hosts", host_id)
-        if host is not None and interface_id is not None and vuln is not None:
-            interface = host.getInterface(interface_id)
-            if interface is not None:
-                old_vuln = interface.getVuln(vuln.getID())
-                if old_vuln:
-                    res = self.addUpdate(old_vuln, vuln)
-                else:
-                    res = interface.addVuln(vuln)
-                    if res:
-                        notifier.editHost(interface.getHost())
-        api.devlog("__addVulnerabilityToInterface result = %s" % res)
-        return res
-
-    def __addVulnerabilityToService(self, host_id, service_id, vuln=None):
-        res = False
-        host = self._getValueByID("_hosts", host_id)
-        if host is not None and service_id is not None and vuln is not None:
-            service = host.getService(service_id)
-            if service is not None:
-                old_vuln = service.getVuln(vuln.getID())
-                if old_vuln:
-                    res = self.addUpdate(old_vuln, vuln)
-                else:
-                    res = service.addVuln(vuln)
-                    if res:
-                        notifier.editHost(service.getHost())
-        api.devlog("__addVulnerabilityToService result = %s" % res)
-        return res
-
     def delVulnFromApplicationASYNC(self, hostname, appname, vuln):
         self.__addPendingAction(modelactions.DELVULNAPP, hostname, appname, vuln)
 
@@ -1302,8 +1228,8 @@ class ModelController(threading.Thread):
     def addCredToServiceASYNC(self, host, srvname, newCred):
         self.__addPendingAction(modelactions.ADDCREDSRV, host, srvname, newCred)
 
-    def addCredToServiceSYNC(self, host, srvname, newCred):
-        self._processAction(modelactions.ADDCREDSRV, [host, srvname, newCred], sync=True)
+    def addCredToServiceSYNC(self, host, srvId, newCred):
+        self._processAction(modelactions.ADDCREDSRV, [newCred, srvId], sync=True)
 
     def delCredFromServiceASYNC(self, hostname, srvname, cred):
         self.__addPendingAction(modelactions.DELCREDSRV, hostname, srvname, cred)
@@ -1571,8 +1497,8 @@ class ModelController(threading.Thread):
                 notifier.editHost(cred.getHost())
         return res
 
-    def addCredSYNC(self, model_object, newCred):
-        self._processAction(modelactions.ADDCRED, [model_object, newCred], sync=True)
+    def addCredSYNC(self, model_object_id, newCred):
+        self._processAction(modelactions.ADDCRED, [newCred, model_object_id], sync=True)
 
     def __addCredToModelObject(self, model_object, cred=None):
         res = False

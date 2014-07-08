@@ -15,7 +15,7 @@ from mockito import mock, verify, when, any
 from model import api
 from model.hosts import Host, Interface, Service
 from model.workspace import WorkspaceOnCouch, WorkspaceManager, WorkspaceOnFS
-from model.common import ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote, ModelComposite
+from model.common import ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote, ModelComposite, ModelObjectCred
 from persistence.orm import WorkspacePersister
 import random
 
@@ -263,7 +263,37 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         when(map_mock).findObject(any()).thenReturn(mock())
         return map_mock
 
+    def testAddCredGetsMapperDispatchSave(self): 
+        host = Host("pepito")
+        cred = ModelObjectCred("usr", "pass")
 
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(cred).thenReturn(objectMapper)
+        when(objectMapper).saveObject(cred).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addCredSYNC(cred.getID(), cred)
+
+        verify(mappersManager).getMapper(cred)
+        verify(objectMapper).saveObject(cred)
+
+    def testAddCredToServiceGetsMapperDispatchSave(self): 
+        service = Service("pepito")
+        cred = ModelObjectCred("usr", "pass")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(cred).thenReturn(objectMapper)
+        when(objectMapper).saveObject(cred).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addCredToServiceSYNC(None, cred.getID(), cred)
+
+        verify(mappersManager).getMapper(cred)
+        verify(objectMapper).saveObject(cred)
 
  # def addHostSYNC(self, host, category=None, update=False, old_hostname=None):
  # def addInterfaceSYNC(self, hostId, interface, update=False):

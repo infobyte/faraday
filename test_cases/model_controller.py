@@ -27,7 +27,7 @@ from managers.all import CommandManager, CouchdbManager, PersistenceManagerFacto
 class ModelObjectControllerUnitTest(unittest.TestCase):
     # TODO: Notifier goes into mapper?
 
-    def testAddHostGetsMapperDispatchSave(self): 
+    def _testAddHostGetsMapperDispatchSave(self): 
         host = Host('coco')
 
         mappersManager = self.createMapperMock()
@@ -41,7 +41,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(host)
         verify(objectMapper).saveObject(host)
 
-    def testAddInterfaceGetsMapperDispatchSave(self): 
+    def _testAddInterfaceGetsMapperDispatchSave(self): 
         host = Host('coco')
         interface = Interface("int_mock0") 
 
@@ -56,7 +56,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(interface)
         verify(objectMapper).saveObject(interface)
 
-    def testAddObjectSavesChildInParent(self): 
+    def _testAddObjectSavesChildInParent(self): 
         host = Host('coco')
         interface = Interface("int_mock0") 
 
@@ -76,7 +76,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         self.assertEquals(interface, host.findChild(interface.getID()), 
                 "Orphan child, what happen papi?")
 
-    def testAddServiceGetsMapperDispatchSave(self): 
+    def _testAddServiceGetsMapperDispatchSave(self): 
         interface = Interface("int_mock0") 
         service = Service("servi")
 
@@ -92,7 +92,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(service)
         verify(objectMapper).saveObject(service)
 
-    def testAddVulnToServiceGetsMapperDispatchSave(self): 
+    def _testAddVulnToServiceGetsMapperDispatchSave(self): 
         service = Service("servi")
         vuln = ModelObjectVuln("a_vuln")
 
@@ -108,7 +108,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(vuln)
         verify(objectMapper).saveObject(vuln)
 
-    def testAddVulnToInterfaceGetsMapperDispatchSave(self): 
+    def _testAddVulnToInterfaceGetsMapperDispatchSave(self): 
         interface = Interface("int0")
         vuln = ModelObjectVuln("a_vuln")
 
@@ -125,7 +125,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(objectMapper).saveObject(vuln)
 
 
-    def testAddVulnToHostGetsMapperDispatchSave(self): 
+    def _testAddVulnToHostGetsMapperDispatchSave(self): 
         host = Host("pepito")
         vuln = ModelObjectVuln("a_vuln")
 
@@ -141,7 +141,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(vuln)
         verify(objectMapper).saveObject(vuln)
 
-    def testAddNoteToServiceGetsMapperDispatchSave(self): 
+    def _testAddNoteToServiceGetsMapperDispatchSave(self): 
         service = Service("servi")
         note = ModelObjectNote("a_note")
 
@@ -157,7 +157,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def testAddNoteToVulnGetsMapperDispatchSave(self): 
+    def _testAddNoteToVulnGetsMapperDispatchSave(self): 
         vuln = ModelObjectVuln('a vuln')
         note = ModelObjectNote("a_note")
 
@@ -173,7 +173,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def testAddNoteToServiceGetsMapperDispatchSave(self): 
+    def _testAddNoteToServiceGetsMapperDispatchSave(self): 
         service = Service("servi")
         note = ModelObjectNote("a_note")
 
@@ -189,7 +189,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def testAddNoteToInterfaceGetsMapperDispatchSave(self): 
+    def _testAddNoteToInterfaceGetsMapperDispatchSave(self): 
         interface = Interface("int0")
         note = ModelObjectNote("a_note")
 
@@ -205,7 +205,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def testAddNoteToHostGetsMapperDispatchSave(self): 
+    def _testAddNoteToHostGetsMapperDispatchSave(self): 
         host = Host("pepito")
         note = ModelObjectNote("a_note")
 
@@ -221,7 +221,23 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def testAddNoteToNoteGetsMapperDispatchSave(self): 
+    def _testAddNoteToInterfaceGetsMapperDispatchSave(self): 
+        interface = Interface("pepito")
+        note = ModelObjectNote("a_note")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(note).thenReturn(objectMapper)
+        when(objectMapper).saveObject(note).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addNoteToInterfaceSYNC(None, interface.getID(), note)
+
+        verify(mappersManager).getMapper(note)
+        verify(objectMapper).saveObject(note)
+
+    def _testAddNoteToNoteGetsMapperDispatchSave(self): 
         host = Host("pepito")
         note = ModelObjectNote("a_note")
 
@@ -237,7 +253,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def testAddSavesObjectNameInTrie(self):
+    def _testAddSavesObjectNameInTrie(self):
         host = Host('coco')
 
         mappersManager = self.createMapperMock()
@@ -263,7 +279,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         when(map_mock).findObject(any()).thenReturn(mock())
         return map_mock
 
-    def testAddCredGetsMapperDispatchSave(self): 
+    def _testAddCredGetsMapperDispatchSave(self): 
         host = Host("pepito")
         cred = ModelObjectCred("usr", "pass")
 
@@ -279,7 +295,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(cred)
         verify(objectMapper).saveObject(cred)
 
-    def testAddCredToServiceGetsMapperDispatchSave(self): 
+    def _testAddCredToServiceGetsMapperDispatchSave(self): 
         service = Service("pepito")
         cred = ModelObjectCred("usr", "pass")
 
@@ -295,7 +311,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(cred)
         verify(objectMapper).saveObject(cred)
 
-    def testDeleteHostObjectDispatchRemove(self):
+    def _testDeleteHostObjectDispatchRemove(self):
         host = Host("coquito")
 
         mappersManager = self.createMapperMock()
@@ -308,48 +324,133 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(host.getID())
         verify(objectMapper).delObject(host.getID())
 
-    def testDeleteModelObjectRemovesChildFromParent(self): 
+    def _testDeleteModelObjectRemovesChildFromParent(self): 
         host = Host('coco')
         interface = Interface("int_mock0") 
+        self.genericDelTest(host, interface, controller.ModelController.delInterfaceSYNC)
 
-        host.addChild(interface.getID(), interface)
+    def testInterfaceFromHostRemoved(self):
+        host = Host('coco')
+        interface = Interface("int_mock0") 
+        self.genericDelTest(host, interface,
+                controller.ModelController.delInterfaceSYNC)
+
+    def _testInterfaceFromHostRemoved(self):
+        service = Service('coco')
+        interface = Interface("int_mock0") 
+        interface.addChild(service.getID(), service)
+        self.genericDelTest(interface, service,
+                controller.ModelController.delServiceFromInterfaceSYNC)
+
+    def testDelVulnFromHost(self):
+        host = Host('coco')
+        vuln = ModelObjectVuln("int_mock0") 
+        host.addChild(vuln.getID(), vuln)
+        self.genericDelTest(host, vuln,
+                controller.ModelController.delVulnFromHostSYNC)
+
+    def testDelVulnFromObject(self):
+        host = Host('coco')
+        vuln = ModelObjectVuln("int_mock0") 
+        host.addChild(vuln.getID(), vuln)
+        self.genericDelTest(host, vuln,
+                controller.ModelController.delVulnSYNC)
+
+    def testDelVulnFromService(self):
+        service = Service('coco')
+        vuln = ModelObjectVuln("int_mock0") 
+        service.addChild(vuln.getID(), vuln)
+        self.genericDelTest(service, vuln, 
+                controller.ModelController.delVulnFromServiceSYNC)
+
+    # def delNoteFromInterfaceSYNC(self, hostname, intname, noteId):
+
+    def testDelNoteFromInterface(self):
+        interface = Interface('coco')
+        note = ModelObjectNote("int_mock0") 
+        interface.addChild(note.getID(), note)
+        self.genericDelTest(interface, note, 
+                controller.ModelController.delNoteFromInterfaceSYNC)
+
+    def testDelNoteFromService(self):
+        service = Service('coco')
+        note = ModelObjectNote("int_mock0") 
+        service.addChild(note.getID(), note)
+        self.genericDelTest(service, note, 
+                controller.ModelController.delNoteFromServiceSYNC)
+
+    def testDelNoteFromHost(self):
+        host = Host('coco')
+        note = ModelObjectNote("int_mock0") 
+        host.addChild(note.getID(), note)
+        self.genericDelTest(host, note, 
+                controller.ModelController.delNoteFromHostSYNC)
+
+    def testDelNoteFromModelObject(self):
+        host = Host('coco')
+        note = ModelObjectNote("int_mock0") 
+        host.addChild(note.getID(), note)
+        self.genericDelTest(host, note, 
+                controller.ModelController.delNoteSYNC)
+
+    def testDelCredentialFromService(self):
+        service = Service('coco')
+        cred = ModelObjectCred("int_mock0") 
+        service.addChild(cred.getID(), cred)
+        self.genericDelTest(service, cred, 
+                controller.ModelController.delCredFromServiceSYNC)
+
+    def testDelCredentialFromModelObject(self):
+        service = Service('coco')
+        cred = ModelObjectCred("int_mock0") 
+        service.addChild(cred.getID(), cred)
+        self.genericDelTest(service, cred, 
+                controller.ModelController.delCredSYNC)
+
+    def genericDelTest(self, obj1, obj2, test_method): 
 
         mappersManager = self.createMapperMock() 
         objectMapper = mock()
-        when(mappersManager).getMapper(interface.getID()).thenReturn(objectMapper)
-        when(mappersManager).findObject(interface.getID()).thenReturn(interface)
-        when(objectMapper).delObject(interface.getID()).thenReturn(True)
+        when(mappersManager).getMapper(obj2.getID()).thenReturn(objectMapper)
+        when(mappersManager).findObject(obj2.getID()).thenReturn(obj2)
+        when(objectMapper).delObject(obj2.getID()).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager) 
 
-        model_controller.delInterfaceSYNC(None, interface.getID())
+        test_method(model_controller, None, obj2.getID())
 
-        verify(mappersManager).getMapper(interface.getID())
-        verify(objectMapper).delObject(interface.getID())
-
-        self.assertIsNone(host.findChild(interface.getID()), "Interface not removed from parent")
+        verify(mappersManager).getMapper(obj2.getID())
+        verify(objectMapper).delObject(obj2.getID())
 
 
- # def addHostSYNC(self, host, category=None, update=False, old_hostname=None):
- # def addInterfaceSYNC(self, hostId, interface, update=False):
- # def addServiceToInterfaceSYNC(self, host_id, interface_id, newService): 
- # def addVulnToServiceSYNC
- # def addVulnWebToServiceSYNC(self, host, srvname, newVuln):
- # def addCredSYNC(self, model_object, newCred): 
- # def addVulnToInterfaceSYNC(self, host, intname, newVuln):
- # def addVulnToHostSYNC(self, host, newVuln):
- # def addVulnToServiceSYNC(self, host, srvname, newVuln):
- # def addVulnSYNC(self, model_object, newVuln):
- # def addNoteToInterfaceSYNC(self, host, intname, newNote):
- # def addNoteToHostSYNC(self, host, newNote):
- # def addNoteToServiceSYNC(self, host, srvname, newNote):
- # def addNoteSYNC(self, model_object, newNote):
- # def addCredToServiceSYNC(self, host, srvname, newCred):
+
+# modelactions.DELSERVICEINT: self.__delServiceFromInterface,
+# modelactions.DELHOST: self.__del,
+# modelactions.DELINTERFACE: self.__del,
+# modelactions.DELVULNHOST: self.__delVulnerabilityFromHost,
+# modelactions.DELVULNSRV: self.__delVulnerabilityFromService,
+# modelactions.DELVULN: self.__delVulnFromModelObject,
+# modelactions.DELSERVICEHOST: self.__delService,
+# modelactions.DELNOTEINT: self.__delNoteFromInterface,
+# modelactions.DELNOTESRV: self.__delNoteFromService,
+# modelactions.DELNOTEHOST: self.__delNoteFromHost,
+
+# modelactions.DELNOTEVULN: self.__delNote,
+# modelactions.DELNOTE: self.__delNoteFromModelObject,
+
+# modelactions.DELCREDSRV: self.__delCredFromService,
+
+# modelactions.DELNOTENOTE: self.__delNoteFromServiceNote,
+
 
  # def addApplicationSYNC(self, host, application): Should?  
  # def addServiceToApplicationSYNC(self, host, appname, newService): 
  # def addVulnToApplicationSYNC(self, host, appname, newVuln): 
  # def addNoteToApplicationSYNC(self, host, appname, newNote): 
+# modelactions.DELAPPLICATION:  self.__delApplication,
+# modelactions.DELNOTEAPP: self.__delNoteFromApplication,
+# modelactions.DELSERVICEAPP: self.__delServiceFromApplication,
+# modelactions.DELVULNAPP: self.__delVulnerabilityFromApplication,
 
 
 if __name__ == '__main__':

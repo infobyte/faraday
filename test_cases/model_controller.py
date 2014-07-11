@@ -27,7 +27,7 @@ from managers.all import CommandManager, CouchdbManager, PersistenceManagerFacto
 class ModelObjectControllerUnitTest(unittest.TestCase):
     # TODO: Notifier goes into mapper?
 
-    def _testAddHostGetsMapperDispatchSave(self): 
+    def testAddHostGetsMapperDispatchSave(self): 
         host = Host('coco')
 
         mappersManager = self.createMapperMock()
@@ -41,7 +41,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(host)
         verify(objectMapper).saveObject(host)
 
-    def _testAddInterfaceGetsMapperDispatchSave(self): 
+    def testAddInterfaceGetsMapperDispatchSave(self): 
         host = Host('coco')
         interface = Interface("int_mock0") 
 
@@ -56,7 +56,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(interface)
         verify(objectMapper).saveObject(interface)
 
-    def _testAddObjectSavesChildInParent(self): 
+    def testAddObjectSavesChildInParent(self): 
         host = Host('coco')
         interface = Interface("int_mock0") 
 
@@ -76,7 +76,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         self.assertEquals(interface, host.findChild(interface.getID()), 
                 "Orphan child, what happen papi?")
 
-    def _testAddServiceGetsMapperDispatchSave(self): 
+    def testAddServiceGetsMapperDispatchSave(self): 
         interface = Interface("int_mock0") 
         service = Service("servi")
 
@@ -92,7 +92,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(service)
         verify(objectMapper).saveObject(service)
 
-    def _testAddVulnToServiceGetsMapperDispatchSave(self): 
+    def testAddVulnToServiceGetsMapperDispatchSave(self): 
         service = Service("servi")
         vuln = ModelObjectVuln("a_vuln")
 
@@ -108,7 +108,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(vuln)
         verify(objectMapper).saveObject(vuln)
 
-    def _testAddVulnToInterfaceGetsMapperDispatchSave(self): 
+    def testAddVulnToInterfaceGetsMapperDispatchSave(self): 
         interface = Interface("int0")
         vuln = ModelObjectVuln("a_vuln")
 
@@ -125,7 +125,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(objectMapper).saveObject(vuln)
 
 
-    def _testAddVulnToHostGetsMapperDispatchSave(self): 
+    def testAddVulnToHostGetsMapperDispatchSave(self): 
         host = Host("pepito")
         vuln = ModelObjectVuln("a_vuln")
 
@@ -141,7 +141,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(vuln)
         verify(objectMapper).saveObject(vuln)
 
-    def _testAddNoteToServiceGetsMapperDispatchSave(self): 
+    def testAddNoteToServiceGetsMapperDispatchSave(self): 
         service = Service("servi")
         note = ModelObjectNote("a_note")
 
@@ -157,7 +157,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def _testAddNoteToVulnGetsMapperDispatchSave(self): 
+    def testAddNoteToVulnGetsMapperDispatchSave(self): 
         vuln = ModelObjectVuln('a vuln')
         note = ModelObjectNote("a_note")
 
@@ -173,7 +173,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def _testAddNoteToServiceGetsMapperDispatchSave(self): 
+    def testAddNoteToServiceGetsMapperDispatchSave(self): 
         service = Service("servi")
         note = ModelObjectNote("a_note")
 
@@ -189,7 +189,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def _testAddNoteToInterfaceGetsMapperDispatchSave(self): 
+    def testAddNoteToInterfaceGetsMapperDispatchSave(self): 
         interface = Interface("int0")
         note = ModelObjectNote("a_note")
 
@@ -205,7 +205,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def _testAddNoteToHostGetsMapperDispatchSave(self): 
+    def testAddNoteToHostGetsMapperDispatchSave(self): 
         host = Host("pepito")
         note = ModelObjectNote("a_note")
 
@@ -221,7 +221,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def _testAddNoteToInterfaceGetsMapperDispatchSave(self): 
+    def testAddNoteToInterfaceGetsMapperDispatchSave(self): 
         interface = Interface("pepito")
         note = ModelObjectNote("a_note")
 
@@ -237,7 +237,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def _testAddNoteToNoteGetsMapperDispatchSave(self): 
+    def testAddNoteToNoteGetsMapperDispatchSave(self): 
         host = Host("pepito")
         note = ModelObjectNote("a_note")
 
@@ -253,7 +253,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(note)
         verify(objectMapper).saveObject(note)
 
-    def _testAddSavesObjectNameInTrie(self):
+    def testAddSavesObjectNameInTrie(self):
         host = Host('coco')
 
         mappersManager = self.createMapperMock()
@@ -273,13 +273,28 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(objectMapper).saveObject(host)
         verify(triemock).addWord(host.getName())
 
+    def testAddNoteToModelObject(self): 
+        host = Host("pepito")
+        note = ModelObjectNote("a_note")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getMapper(note).thenReturn(objectMapper)
+        when(objectMapper).saveObject(note).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager)
+
+        model_controller.addNoteSYNC(host.getID(), note)
+
+        verify(mappersManager).getMapper(note)
+        verify(objectMapper).saveObject(note)
 
     def createMapperMock(self):
         map_mock = mock()
         when(map_mock).findObject(any()).thenReturn(mock())
         return map_mock
 
-    def _testAddCredGetsMapperDispatchSave(self): 
+    def testAddCredGetsMapperDispatchSave(self): 
         host = Host("pepito")
         cred = ModelObjectCred("usr", "pass")
 
@@ -295,7 +310,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(cred)
         verify(objectMapper).saveObject(cred)
 
-    def _testAddCredToServiceGetsMapperDispatchSave(self): 
+    def testAddCredToServiceGetsMapperDispatchSave(self): 
         service = Service("pepito")
         cred = ModelObjectCred("usr", "pass")
 
@@ -311,7 +326,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(cred)
         verify(objectMapper).saveObject(cred)
 
-    def _testDeleteHostObjectDispatchRemove(self):
+    def testDeleteHostObjectDispatchRemove(self):
         host = Host("coquito")
 
         mappersManager = self.createMapperMock()
@@ -324,7 +339,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(host.getID())
         verify(objectMapper).delObject(host.getID())
 
-    def _testDeleteModelObjectRemovesChildFromParent(self): 
+    def testDeleteModelObjectRemovesChildFromParent(self): 
         host = Host('coco')
         interface = Interface("int_mock0") 
         self.genericDelTest(host, interface, controller.ModelController.delInterfaceSYNC)
@@ -335,7 +350,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         self.genericDelTest(host, interface,
                 controller.ModelController.delInterfaceSYNC)
 
-    def _testInterfaceFromHostRemoved(self):
+    def testInterfaceFromHostRemoved(self):
         service = Service('coco')
         interface = Interface("int_mock0") 
         interface.addChild(service.getID(), service)
@@ -417,7 +432,10 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         model_controller = controller.ModelController(mock(), mappersManager) 
 
-        test_method(model_controller, None, obj2.getID())
+        try:
+            test_method(model_controller, None, obj2.getID())
+        except:
+            test_method(model_controller, None, None, obj2.getID())
 
         verify(mappersManager).getMapper(obj2.getID())
         verify(objectMapper).delObject(obj2.getID())

@@ -266,33 +266,30 @@ class ModelController(threading.Thread):
             modelactions.ADDSERVICEINT: self.__add,
             modelactions.DELSERVICEINT: self.__del,
             modelactions.EDITSERVICE: self.__editService,
-            modelactions.ADDAPPLICATION: self.__addApplication,
             modelactions.EDITAPPLICATION: self.__editApplication,
             modelactions.ADDCATEGORY: self.__addCategory,
             #Vulnerability
             modelactions.ADDVULNINT: self.__add,
             modelactions.DELVULNINT: self._delVulnerabilityFromInterface,
-            modelactions.ADDVULNAPP: self.__addVulnerabilityToApplication,
-            modelactions.DELVULNAPP: self.__delVulnerabilityFromApplication,
             modelactions.ADDVULNHOST: self.__add,
             modelactions.DELVULNHOST: self.__del,
             modelactions.ADDVULNSRV: self.__add,
-            modelactions.DELVULNSRV: self.__delVulnerabilityFromService,
+            modelactions.DELVULNSRV: self.__del,
             modelactions.ADDVULN: self.__addVulnToModelObject,
             modelactions.DELVULN: self.__del,
             modelactions.ADDVULNWEBSRV: self.__addVulnerabilityToService,
             modelactions.EDITVULN: self.__editVulnerability,
             #Note
             modelactions.ADDNOTEINT: self.__add,
-            modelactions.DELNOTEINT: self.__delNoteFromInterface,
+            modelactions.DELNOTEINT: self.__del,
             modelactions.ADDNOTEAPP: self.__addNoteToApplication,
             modelactions.DELNOTEAPP: self.__delNoteFromApplication,
             modelactions.ADDNOTEHOST: self.__add,
             modelactions.DELNOTEHOST: self.__del,
             modelactions.ADDNOTESRV: self.__add,
-            modelactions.DELNOTESRV: self.__delNoteFromService,
+            modelactions.DELNOTESRV: self.__del,
             modelactions.ADDNOTEVULN: self.__add,
-            modelactions.ADDNOTE: self.__addNoteToModelObject,
+            modelactions.ADDNOTE: self.__add,
             modelactions.DELNOTE: self.__del,
             modelactions.ADDCREDSRV: self.__add,
             modelactions.DELCREDSRV: self.__del,
@@ -1068,7 +1065,7 @@ class ModelController(threading.Thread):
         self._processAction(modelactions.ADDNOTESRV, [newNote, srvId], sync=True)
 
     def addNoteSYNC(self, model_object, newNote):
-        self._processAction(modelactions.ADDNOTE, [model_object, newNote], sync=True)
+        self._processAction(modelactions.ADDNOTE, [newNote, model_object], sync=True)
 
     def delNoteFromApplicationASYNC(self, hostname, appname, note):
         self.__addPendingAction(modelactions.DELNOTEAPP, hostname, appname, note)
@@ -1091,8 +1088,8 @@ class ModelController(threading.Thread):
     def delNoteFromServiceASYNC(self, hostname, srvname, note):
         self.__addPendingAction(modelactions.DELNOTESRV, hostname, srvname, note)
 
-    def delNoteFromServiceSYNC(self, hostname, srvname, note):
-        self._processAction(modelactions.DELNOTESRV, [hostname, srvname, note], sync=True)
+    def delNoteFromServiceSYNC(self, hostname, srvname, noteId):
+        self._processAction(modelactions.DELNOTESRV, [noteId], sync=True)
 
     def delNoteSYNC(self, model_object, note_id):
         self._processAction(modelactions.DELNOTE, [note_id], sync=True)

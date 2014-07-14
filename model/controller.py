@@ -282,8 +282,6 @@ class ModelController(threading.Thread):
             #Note
             modelactions.ADDNOTEINT: self.__add,
             modelactions.DELNOTEINT: self.__del,
-            modelactions.ADDNOTEAPP: self.__addNoteToApplication,
-            modelactions.DELNOTEAPP: self.__delNoteFromApplication,
             modelactions.ADDNOTEHOST: self.__add,
             modelactions.DELNOTEHOST: self.__del,
             modelactions.ADDNOTESRV: self.__add,
@@ -505,18 +503,15 @@ class ModelController(threading.Thread):
 
     def __del(self,  objId, *args):
         dataMapper = self.mappers_manager.getMapper(objId) 
-
         obj = self.mappers_manager.findObject(objId)
         obj_parent = obj.getParent() 
         if obj_parent:
             obj_parent.deleteChild(objId) 
 
-        # self.treeWordsTries.addWord(obj.getName()) 
-        # self.treeWordsTries.removeWord(host.getName())
+        self.treeWordsTries.removeWord(obj.getName())
 
         dataMapper.delObject(objId) 
-
-        # notifier.delHost(objId)
+        notifier.delHost(objId)
 
 
     def delHostASYNC(self, host):

@@ -422,15 +422,36 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         self.genericDelTest(service, cred, 
                 controller.ModelController.delCredSYNC)
 
+    def testDelRemovesObjectFromTrie(self): 
+        host = Host("coquito")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        triemock = mock()
+        when(mappersManager).getMapper(host.getID()).thenReturn(objectMapper)
+        when(objectMapper).delObject(host.getID()).thenReturn(True)
+        when(mappersManager).findObject(host.getID()).thenReturn(host)
+        when(triemock).addWord(host.getName()).thenReturn(True)
+
+        model_controller = controller.ModelController(mock(), mappersManager) 
+        model_controller.treeWordsTries = triemock
+        model_controller.delHostSYNC(host) 
+        verify(mappersManager).getMapper(host.getID())
+        verify(objectMapper).delObject(host.getID())
+
+        verify(triemock).removeWord(host.getName()) 
+
     def genericDelTest(self, obj1, obj2, test_method): 
 
         mappersManager = self.createMapperMock() 
         objectMapper = mock()
+        triemock = mock()
         when(mappersManager).getMapper(obj2.getID()).thenReturn(objectMapper)
         when(mappersManager).findObject(obj2.getID()).thenReturn(obj2)
         when(objectMapper).delObject(obj2.getID()).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager) 
+        model_controller.treeWordsTries = triemock
 
         try:
             test_method(model_controller, None, obj2.getID())

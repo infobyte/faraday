@@ -461,7 +461,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).getMapper(obj2.getID())
         verify(objectMapper).delObject(obj2.getID())
 
-    def testEditHostSyncGetsMapperDispatched(self):
+    def _testEditHostSyncGetsMapperDispatched(self):
         host = Host("coquito")
 
         mappersManager = self.createMapperMock()
@@ -482,7 +482,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         self.assertEquals(host.getOS(), 'new_os', "OS not updated")
         self.assertEquals(host.isOwned(), True, "Owned status not updated")
 
-    def testEditServiceSyncGetsMapperDispatched(self):
+    def _testEditServiceSyncGetsMapperDispatched(self):
         service = Service("coquito")
 
         params = ('new_name', 'new_desc', 'upd', 9000, 'closed', '2.1', True)
@@ -492,6 +492,29 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         self.assertEquals(service.getDescription(), 'new_desc', "Description not updated")
         self.assertEquals(service.getProtocol(), 'upd', "Protocol not updated")
         self.assertEquals(service.isOwned(), True, "Owned status not updated")
+
+    def _testEditServiceSyncGetsMapperDispatched(self):
+        service = Service("coquito")
+
+        params = ('new_name', 'new_desc', 'upd', 9000, 'closed', '2.1', True)
+        self.genericEdit(service, params, controller.ModelController.editServiceSYNC)
+
+        self.assertEquals(service.getName(), 'new_name', "Name not updated")
+        self.assertEquals(service.getDescription(), 'new_desc', "Description not updated")
+        self.assertEquals(service.getProtocol(), 'upd', "Protocol not updated")
+        self.assertEquals(service.isOwned(), True, "Owned status not updated")
+
+    def testEditInterfaceSyncGetsMapperDispatched(self):
+        inter = Interface("coquito")
+
+        params = ('new_name', 'new_desc', 'hostname1', "FF:AA:EE:11:00", None,
+                        None, None, None, None, None, True)
+
+        self.genericEdit(inter, params, controller.ModelController.editInterfaceSYNC)
+
+        self.assertEquals(inter.getName(), 'new_name', "Name not updated")
+        self.assertEquals(inter.getDescription(), 'new_desc', "Description not updated")
+        self.assertEquals(inter.isOwned(), True, "Owned status not updated")
 
     def genericEdit(self, obj, params, callback):
         mappersManager = self.createMapperMock()

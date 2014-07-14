@@ -262,7 +262,7 @@ class ModelController(threading.Thread):
             modelactions.EDITHOST: self.__edit,
             modelactions.ADDINTERFACE: self.__add,
             modelactions.DELINTERFACE: self.__del,
-            modelactions.EDITINTERFACE: self.__editInterface,
+            modelactions.EDITINTERFACE: self.__edit,
             modelactions.ADDSERVICEINT: self.__add,
             modelactions.DELSERVICEINT: self.__del,
             modelactions.EDITSERVICE: self.__edit,
@@ -502,6 +502,7 @@ class ModelController(threading.Thread):
         notifier.addHost(obj)
 
     def __edit(self, objId, *args, **kwargs):
+        import ipdb; ipdb.set_trace()
         obj = self.mappers_manager.findObject(objId)
         obj.updateAttributes(*args, **kwargs)
         self.mappers_manager.saveObject(obj) 

@@ -443,6 +443,7 @@ class Interface(ModelComposite):
     def updateAttributes(self, name=None, description=None, hostnames=None, mac=None, ipv4=None, ipv6=None,
                          network_segment=None, amount_ports_opened=None, amount_ports_closed=None,
                          amount_ports_filtered=None, owned=None):
+
         if name is not None:
             self.setName(name)
         if description is not None:
@@ -463,6 +464,8 @@ class Interface(ModelComposite):
             self.setPortsClosed(amount_ports_closed)
         if amount_ports_filtered is not None:
             self.setPortsFiltered(amount_ports_filtered)
+        if owned is not None:
+            self.setOwned(owned)
 
 
 class Service(ModelComposite):

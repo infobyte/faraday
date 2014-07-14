@@ -556,8 +556,41 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         self.assertEquals(cred.getUsername(), 'new_user', "Username not updated")
         self.assertEquals(cred.getPassword(), 'new_pass', "Password not updated")
 
+    def testGetAllHosts(self):
+        hosts = [ Host("coquito%i" % i ) for i in range(10)]
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getHostsMapper().thenReturn(objectMapper)
+        when(objectMapper).getAllHosts().thenReturn(hosts)
+
+        model_controller = controller.ModelController(mock(), mappersManager) 
+        hosts_obt =  model_controller.getAllHosts()
+        verify(objectMapper).getAllHosts()
+        verify(mappersManager).getHostsMapper()
+
+        self.assertListEqual(hosts, hosts_obt)
+
+    def testGetHost(self):
+        host = Host("coquito")
+
+        mappersManager = self.createMapperMock()
+        objectMapper = mock()
+        when(mappersManager).getHostsMapper().thenReturn(objectMapper)
+        when(objectMapper).getHost(host.getName()).thenReturn(host)
+        when(objectMapper).findObjectByName(host.getName()).thenReturn(host)
+
+        model_controller = controller.ModelController(mock(), mappersManager) 
+
+        host_obt =  model_controller.getHost('coquito')
+
+        verify(objectMapper).findObjectByName(host.getName())
+        verify(mappersManager).getHostsMapper()
+
+        self.assertEqual(host, host_obt)
 
     def genericEdit(self, obj, params, callback):
+
         mappersManager = self.createMapperMock()
         objId = obj.getID()
         when(mappersManager).findObject(objId).thenReturn(obj)

@@ -292,8 +292,8 @@ class ModelController(threading.Thread):
             modelactions.ADDCREDSRV: self.__add,
             modelactions.DELCREDSRV: self.__del,
             modelactions.ADDNOTENOTE: self.__add,
-            modelactions.EDITNOTE: self.__editNote,
-            modelactions.EDITCRED: self.__editCred,
+            modelactions.EDITNOTE: self.__edit,
+            modelactions.EDITCRED: self.__edit,
             modelactions.ADDCRED: self.__add,
             modelactions.DELCRED: self.__del
         }

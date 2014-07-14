@@ -527,6 +527,22 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         self.assertEquals(vuln.getDescription(), 'new_desc', "Description not updated")
         self.assertEquals(vuln.getSeverity(), 'high', "Severity not updated")
 
+    def testEditNoteSyncGetsMapperDispatched(self):
+        note = ModelObjectNote("coquito")
+
+        params = ('new_name', 'new_desc') 
+        self.genericEdit(note, params, controller.ModelController.editNoteSYNC) 
+        self.assertEquals(note.getName(), 'new_name', "Name not updated")
+        self.assertEquals(note.text, 'new_desc', "Description not updated")
+
+    def testEditCredSyncGetsMapperDispatched(self):
+        cred = ModelObjectCred("coquito")
+
+        params = ('new_user', 'new_pass') 
+        self.genericEdit(cred, params, controller.ModelController.editCredSYNC) 
+        self.assertEquals(cred.getUsername(), 'new_user', "Username not updated")
+        self.assertEquals(cred.getPassword(), 'new_pass', "Password not updated")
+
 
     def genericEdit(self, obj, params, callback):
         mappersManager = self.createMapperMock()
@@ -539,9 +555,6 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).findObject(obj.getID())
 
 # Edit cases:
-# __model_controller.editNoteSYNC(note, name, text)
-# __model_controller.editVulnSYNC(vuln, name, desc, severity, refs)
-
 # __model_controller.editVulnWebSYNC(vuln, name, desc, website, path, refs, severity, request, response,
 # __model_controller.editCredSYNC(cred, username, password)
 

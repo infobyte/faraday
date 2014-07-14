@@ -973,13 +973,19 @@ class ModelObjectCred(ModelLeaf):
     def getPassword(self):
         return self._password
 
+    def getUsername(self):
+        return self.username
+
+    def setUsername(self, username):
+        self.username = str(username)
+
     @save
     @updateLocalMetadata
     def updateAttributes(self, username=None, password=None):
         if username is not None:
             self.username = username
         if password is not None:
-            self.password = password
+            self.setPassword(password)
 
 class TreeWordsTries(object):
     instance = None       

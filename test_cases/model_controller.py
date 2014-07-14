@@ -527,6 +527,19 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         self.assertEquals(vuln.getDescription(), 'new_desc', "Description not updated")
         self.assertEquals(vuln.getSeverity(), 'high', "Severity not updated")
 
+    def testEditVulnWebSyncGetsMapperDispatched(self):
+        vuln = ModelObjectVulnWeb("coquito")
+
+        params = ('new_name', 'new_desc', 'www.goole.com', 'index.html',
+                "ref1", 'high', None, None, 'GET', 'pepe', 'coco' , 'caca',
+                None)
+
+        self.genericEdit(vuln, params, controller.ModelController.editVulnWebSYNC)
+
+        self.assertEquals(vuln.getName(), 'new_name', "Name not updated")
+        self.assertEquals(vuln.getDescription(), 'new_desc', "Description not updated")
+        self.assertEquals(vuln.getSeverity(), 'high', "Severity not updated")
+
     def testEditNoteSyncGetsMapperDispatched(self):
         note = ModelObjectNote("coquito")
 
@@ -553,11 +566,6 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         callback(model_controller, objId, *params) 
         verify(mappersManager).saveObject(obj) 
         verify(mappersManager).findObject(obj.getID())
-
-# Edit cases:
-# __model_controller.editVulnWebSYNC(vuln, name, desc, website, path, refs, severity, request, response,
-# __model_controller.editCredSYNC(cred, username, password)
-
 
 if __name__ == '__main__':
     unittest.main() 

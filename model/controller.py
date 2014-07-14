@@ -259,13 +259,13 @@ class ModelController(threading.Thread):
         self._actionDispatcher = {
             modelactions.ADDHOST: self.__add,
             modelactions.DELHOST: self.__del,
-            modelactions.EDITHOST: self.__editHost,
+            modelactions.EDITHOST: self.__edit,
             modelactions.ADDINTERFACE: self.__add,
             modelactions.DELINTERFACE: self.__del,
             modelactions.EDITINTERFACE: self.__editInterface,
             modelactions.ADDSERVICEINT: self.__add,
             modelactions.DELSERVICEINT: self.__del,
-            modelactions.EDITSERVICE: self.__editService,
+            modelactions.EDITSERVICE: self.__edit,
             modelactions.EDITAPPLICATION: self.__editApplication,
             modelactions.ADDCATEGORY: self.__addCategory,
             #Vulnerability
@@ -500,6 +500,13 @@ class ModelController(threading.Thread):
         dataMapper.saveObject(obj) 
         self.treeWordsTries.addWord(obj.getName())
         notifier.addHost(obj)
+
+    def __edit(self, objId, *args, **kwargs):
+        obj = self.mappers_manager.findObject(objId)
+        obj.updateAttributes(*args, **kwargs)
+        self.mappers_manager.saveObject(obj) 
+        # self.treeWordsTries.addWord(obj.getName())
+        # notifier.addHost(obj)
 
     def __del(self,  objId, *args):
         dataMapper = self.mappers_manager.getMapper(objId) 

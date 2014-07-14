@@ -871,7 +871,7 @@ class ModelObjectVuln(ModelLeaf):
         if name is not None:
             self.setName(name)
         if desc is not None:
-            self.desc = desc
+            self.setDescription(desc)
         if severity is not None:
             self.severity = self.standarize(severity)
         if refs is not None:
@@ -888,6 +888,9 @@ class ModelObjectVuln(ModelLeaf):
 
     def __repr__(self):
         return self.__str__()
+
+    def getSeverity(self):
+        return self.severity
 
 #-------------------------------------------------------------------------------
 class ModelObjectVulnWeb(ModelObjectVuln):

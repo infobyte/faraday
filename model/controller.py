@@ -278,7 +278,7 @@ class ModelController(threading.Thread):
             modelactions.ADDVULN: self.__addVulnToModelObject,
             modelactions.DELVULN: self.__del,
             modelactions.ADDVULNWEBSRV: self.__addVulnerabilityToService,
-            modelactions.EDITVULN: self.__editVulnerability,
+            modelactions.EDITVULN: self.__edit,
             #Note
             modelactions.ADDNOTEINT: self.__add,
             modelactions.DELNOTEINT: self.__del,
@@ -502,7 +502,6 @@ class ModelController(threading.Thread):
         notifier.addHost(obj)
 
     def __edit(self, objId, *args, **kwargs):
-        import ipdb; ipdb.set_trace()
         obj = self.mappers_manager.findObject(objId)
         obj.updateAttributes(*args, **kwargs)
         self.mappers_manager.saveObject(obj) 

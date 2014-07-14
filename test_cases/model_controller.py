@@ -516,6 +516,18 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         self.assertEquals(inter.getDescription(), 'new_desc', "Description not updated")
         self.assertEquals(inter.isOwned(), True, "Owned status not updated")
 
+    def testEditVulnSyncGetsMapperDispatched(self):
+        vuln = ModelObjectVuln("coquito")
+
+        params = ('new_name', 'new_desc', 'high', "ref1")
+
+        self.genericEdit(vuln, params, controller.ModelController.editVulnSYNC)
+
+        self.assertEquals(vuln.getName(), 'new_name', "Name not updated")
+        self.assertEquals(vuln.getDescription(), 'new_desc', "Description not updated")
+        self.assertEquals(vuln.getSeverity(), 'high', "Severity not updated")
+
+
     def genericEdit(self, obj, params, callback):
         mappersManager = self.createMapperMock()
         objId = obj.getID()
@@ -527,11 +539,9 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         verify(mappersManager).findObject(obj.getID())
 
 # Edit cases:
-# __model_controller.editServiceSYNC(service, name, description, protocol, ports, status, version, owned)
-# __model_controller.editApplicationSYNC(application, name, description, status, version, owned)
-# __model_controller.editInterfaceSYNC(interface, name, description, hostnames, mac, ipv4, ipv6, network_segment, 
 # __model_controller.editNoteSYNC(note, name, text)
 # __model_controller.editVulnSYNC(vuln, name, desc, severity, refs)
+
 # __model_controller.editVulnWebSYNC(vuln, name, desc, website, path, refs, severity, request, response,
 # __model_controller.editCredSYNC(cred, username, password)
 

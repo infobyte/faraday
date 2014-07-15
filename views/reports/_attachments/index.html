@@ -33,6 +33,12 @@
 	<script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
 	<script type="text/javascript" src="script/jquery.tablesorter.min.js"></script>
 	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	<style>
+	text {
+	  font: 10px sans-serif;
+	  color:#FFF;
+	}
+	</style>
 </head>
 
 <body>
@@ -47,7 +53,7 @@
 					<ul>
 						<li>
 							<a href="#"><img src="images/ico-settings.png" alt="Commercial version only"/></a>
-							<a href="#" class="activo"><img src="images/ico-graph.png" alt=""/></a>
+							<a href="http://127.0.0.1:5984/reports/_design/reports/d3.html#bersa" class="activo"><img src="images/ico-graph.png" alt=""/></a>
 							<a href="#"><img src="images/ico-stopwatch.png" alt="Commercial version only"/></a>
 						</li>
 					</ul>
@@ -78,11 +84,12 @@ $(document).ready(function() {
 	var h = 0;
 	$.couch.allDbs({
       		success : function(dbs) {
+
         	  dbs.filter(function(db_name){
         	      return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
         	  .forEach(function(db) {
-		      // armo la lista con todos los WSs
-                      $("#sec #nav").append('<li><a href="#'+db+'" class="ws">'+db+'</a></li>');
+		      // armo la lista con todos los 
+                      $("#sec #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
 		      // navegación entre WSs
         	      if(window.location.hash === "" && counter === 0) {
 			window.location.hash = db;
@@ -94,28 +101,132 @@ $(document).ready(function() {
 	              $("#reportes").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
 		}
 		// seteo el WS actual
-		var current = window.location.hash.substr(1);
+		//var current = window.location.hash.substr(1);
 		// armo los iframes que le corresponden
-        	var iframes = get_iframes(current);
+        	//var iframes = get_iframes(current);
 		// los cargo
-		$("#reportes").append(iframes);
-		// calculo la altura del sidebar
-        	$("aside").height($("#main").height()+40);
+		//$("#reportes").append(iframes);
 	      }
 	});
 	// navegacion entre WSs en el dropdown
 	$(document).on("click", "a.ws", function(e) {
 		e.preventDefault();
 		var hash = $(this).attr("href").substr(1);
-		$("#reportes").empty().append(get_iframes(hash));
 		window.location.hash = hash;
+		location.reload();
 	});
 	$(document).on("click", "#refresh", function() {
 		location.reload();
 	});
+
+	dominio = location.href;
+	space = dominio.split("#");
+	workspace = space[1];
+
+	var ret = "<div id=\"workspace-"+workspace+"\" class=\"workspace\"><div class=\"left\"><h2>Viewing "+workspace+"</h2></div></div><!-- .workspace -->";
+
+	$('#reportes').append(ret);
+
+	$('.workspace').append("<div class='iframes'></div>");
+
+var byservices = "http://127.0.0.1:5984/reports/_design/reports/reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices";
+var summarized = "http://127.0.0.1:5984/reports/_design/reports/reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized";
+var vulns = "http://127.0.0.1:5984/reports/_design/reports/reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns";
+var commands = "http://127.0.0.1:5984/reports/_design/reports/reports/commands.html?workspace="+workspace+"&design=commands&view=list";
+var compound = "http://127.0.0.1:5984/reports/_design/reports/reports/compound.html?workspace="+workspace+"&design=hosts&view=compound";
+
+	$('.iframes').load(compound, function (){
+	dominio = compound;
+
+	space = dominio.split("=");
+
+	workspace = space[1].split("&");
+	workspace = workspace[0];
+
+	design = space[2].split("&");
+	design = design[0];
+
+	view = space[3];
+
+	divs = traer(workspace, view, design);
+	console.log(divs);
+	$("#reportes").append(divs);
+	});
+
+
+	$('.iframes').load(byservices, function (){
+	dominio = byservices;
+
+	space = dominio.split("=");
+
+	workspace = space[1].split("&");
+	workspace = workspace[0];
+
+	design = space[2].split("&");
+	design = design[0];
+
+	view = space[3];
+
+	divs = traer(workspace, view, design);
+	$("#reportes").append(divs);
+	});
+
+	$('.iframes').load(summarized, function (){
+	dominio = summarized;
+
+	space = dominio.split("=");
+
+	workspace = space[1].split("&");
+	workspace = workspace[0];
+
+	design = space[2].split("&");
+	design = design[0];
+
+	view = space[3];
+
+	divs = traer(workspace, view, design);
+	$("#reportes").append(divs);
+	});
+
+	$('.iframes').load(vulns, function (){
+	dominio = vulns;
+
+	space = dominio.split("=");
+
+	workspace = space[1].split("&");
+	workspace = workspace[0];
+
+	design = space[2].split("&");
+	design = design[0];
+
+	view = space[3];
+
+	divs = traer(workspace, view, design);
+	$("#reportes").append(divs);
+	});
+
+	$('.iframes').load(commands, function (){
+	dominio = commands;
+
+	space = dominio.split("=");
+
+	workspace = space[1].split("&");
+	workspace = workspace[0];
+
+	design = space[2].split("&");
+	design = design[0];
+
+	view = space[3];
+
+	divs = traer(workspace, view, design);
+	$("#reportes").append(divs);
+	});
 });
+
+//Para traer los iframes le paso por parametro workspase, view, design ejecuta traer() y le tira return con el div hecho.
+
 // genera los iframes correspondientes a un WS
-function get_iframes(db) {
+/*function get_iframes(db) {
 	var iframes = [];
 	reports.forEach(function(rep) {
 		var iframe = "/reports/_design/reports/reports/"+rep+".html?workspace="+db+"&design="+designs[rep]+"&view="+views[rep];
@@ -124,8 +235,11 @@ function get_iframes(db) {
 	var ret = "<div id=\"workspace-"+db+"\" class=\"workspace\"><div class=\"left\"><h2>Viewing "+
 		db+"</h2></div>"+iframes.join("")+"</div><!-- .workspace -->";
 	return ret;
-}
+}*/
+setTimeout(function() {
+			// calculo la altura del sidebar
+       	$("aside").height($("#main").height()+40);
+}, 3000);
 </script>
-
 </body>
 </html>

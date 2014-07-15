@@ -78,7 +78,7 @@ body {
 }
 .left {
 	float:left;
-	margin-right:20px
+	margin-right:71%
 }
 .right {
 	float:right;
@@ -149,15 +149,17 @@ small{font-size: .75em;}
 a {
 	text-decoration:none;
 	outline-style:none;
-	color: #DF3936;
+	color: #DF3936!important;
 }
 p {margin-bottom: 1em;}
 h1 {
 	font-size:40px;
 }
 h2 {
-	font-size:17px;
-	font-weight: bold;
+	font-size:17px!important;
+	font-weight: bold!important;
+	text-align: left;
+	margin-top:45px!important;
 }
 .oculto {display:none;}
 
@@ -177,7 +179,7 @@ h2 {
 	.dostercios {width: 567px;}
 	.uncuarto {width: 200px;}
 	.trescuartos {width: 640px;}
-	.unquinto {width: 150px;}
+	.unquinto {width: 145px;}
 	.unsexto {width: 123px;}
 	.dosquintos {width: 332px;}
 	.tresquintos {width: 508px;}
@@ -259,10 +261,14 @@ aside {
 .seccion2 {
 	background: #E8EFF0;
 	float: left;
+	width: 800px;
+	overflow-y: auto;
+	height: 500px;
+	margin-bottom: 6%;
 }
 	.seccion article {
 		background-color: #fff;
-		min-height: 190px;
+		min-height: 125px;
 		font-size: 13px;
 		text-align: left;
 	}
@@ -280,7 +286,7 @@ aside {
 				line-height: 40px;
 			}
 		.seccion article section {
-			padding: 20px;
+			padding: 13px;
 		}
 			.sin_padding {
 				padding: 0 !important;
@@ -522,6 +528,9 @@ label {
 }
 .left {
 	float: left;
+}
+.left h2{
+	font-size: 30px!important;
 }
 #sec {
 	float: right;

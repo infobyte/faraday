@@ -1,9 +1,9 @@
 <!-- Faraday Penetration Test IDE &#45; Community Version -->
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
-<html>
+<!--<html>-->
 <head>
-	<title>By Host report</title>
+	<!--<title>By Host report</title>-->
 	<script type="text/javascript" src="../script/app.js"></script>
 	<script type="text/javascript" src="../script/couch.js"></script>
 	<script type="text/javascript" src="/_utils/script/json2.js"></script>
@@ -12,16 +12,14 @@
 	<script src="../script/common.js"></script>
 	<link rel="stylesheet" type="text/css" href="../estilos.css" />
 </head>
-<body style="background: #E8EFF0;">
+<!--<body style="background: #E8EFF0;">-->
 <div id="hosts-main">
-<h2>Hosts report</h2>
-<div class="seccion2">
+<div class="iframe">
 </div><!-- .seccion2 -->
 </div><!-- .hosts-main -->
 <script type="text/javascript">
+function traer(workspace, view, design){
 	function load_all_hosts() {
-	        var workspace	= getParameterByName("workspace");
-	        var design	= getParameterByName("design");
 		var iurl	= "/" + workspace + "/_design/" + design + "/_view/byinterfacecount?group=true";
 		var hurl	= "/" + workspace + "/_design/" + design + "/_view/hosts";
 		var surl	= "/" + workspace + "/_design/" + design + "/_view/byservicecount?group=true";
@@ -32,8 +30,8 @@
 		hosts		= get_obj(hurl);
 		interfaces	= get_obj(iurl, interfaces);
 		services	= get_obj(surl, services);
-	
-		var table = "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+		var table = "<div class='seccion2'><h2>Hosts report</h2>";
+		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+
 				"<th>Interfaces</th>"+
@@ -57,12 +55,10 @@
 				"<td>"+v.owned+"</td></tr>";
 		});
 		table += "</tbody></table>";
-		$(".seccion2").append(table);
+		return table;
 	}
 
 	function load_hosts_by_service(name) {
-	        var workspace	= getParameterByName("workspace");
-	        var design	= getParameterByName("design");
 		var services 	= get_obj_filter(workspace, "services", "byname", name);
 		var hids 	= [];
 		$.each(services, function(k, v) {
@@ -101,11 +97,10 @@
 			}
 		});
 		table += "</tbody></table>";
-		$(".seccion2").append(table);
+		$(".iframe").append(table);
 	}
 
 	function load_services(hid, hname) {
-	        var workspace	= getParameterByName("workspace");
 		// el param design ya no es el recibido por GET, puesto que ahora estamos en services
 		var services = get_obj_filter(workspace, "services", "byhost", hid);
 		var table = "<h3>Services for Host "+hname+" ("+services.length+" total)</h3>"+
@@ -140,7 +135,8 @@
 					"<td>"+v['status']+"</td></tr>";
 		});
 		table += "</tbody></table>";
-		$(".seccion2").append(table);
+		divs +="</div>";
+		$(".iframe").append(table);
 	}
 
 	function get_obj_filter(ws, design, view, key) {
@@ -171,16 +167,18 @@
 		return ls;
 	}
 
+		var hosts = load_all_hosts();
+		return hosts;
+
 	$(document).ready(function() {
 		// inicialmente cargo todos los hosts disponibles
-		load_all_hosts();
 		// jQuery 1.7++ usa on() para bindear eventos a elementos que existen ahora o en el futuro
 		// cuando se clickea un host carga todos los servicios para ese host
 		$(document).on('click', 'a.host', function(e) {
 			// no queremos que cargue nada
 			e.preventDefault();
 			// sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
-			$(".seccion2").empty().prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
+			$(".iframe").empty().prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
 			// el ID del host que quiero traer es el ID del link clickeado menos el "host-" del ppio
 			var hid = $(this).attr("href").split('-')[1];
 			// el nombre del host que quiero traer es el valor del link
@@ -190,7 +188,7 @@
 		// cuando se clickea un servicio carga todos los hosts que tienen ese servicio
 		$(document).on('click', 'a.service', function(e) {
 			e.preventDefault();
-			$(".seccion2").empty().prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
+			$(".iframe").empty().prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
 			// el nombre del servicio que quiero traer es el valor del link clickeado
 			var sname = $(this).text();
 			load_hosts_by_service(sname);
@@ -198,10 +196,11 @@
 		// comportamiento para "View all hosts"
 		$(document).on('click', 'a[href="load_all_hosts"]', function(e) {
 			e.preventDefault();
-			$(".seccion2").empty();
+			$(".iframe").empty();
 			load_all_hosts();
 		});
 	});
+}
 </script>
 </body>
 </html>

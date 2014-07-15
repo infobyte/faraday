@@ -32,6 +32,8 @@ class ModelObjectComposite(unittest.TestCase):
         host.addChild(inter.getID(), inter)
 
         self.assertIn(inter, host.childs.values(), 'Interface not in childs')
+        self.assertIn(inter, host.getAllInterfaces(), 'Interface not accessible')
+
 
 if __name__ == '__main__':
     unittest.main() 

@@ -107,12 +107,12 @@ class Host(ModelComposite):
 
 
     @updateLocalMetadata
-    def addInterface(self, newInterface, update=False, setparent=True):
+    def addInterface(self, newInterface, update=False, setparent=True): # Deprecated
         return self._addValue("_interfaces", newInterface,
                               setparent=setparent, update=update)
 
     @updateLocalMetadata
-    def delInterface(self, intID):
+    def delInterface(self, intID): # Deprecated
                                                                        
         interface = self.getInterface(intID)
         if interface is not None:
@@ -121,16 +121,11 @@ class Host(ModelComposite):
                                          
         return self._delValue("_interfaces", intID)
 
-    def addInterfaceFull(self, interface):
+    def addInterfaceFull(self, interface): # Deprecated
         self.addInterface(interface)
 
     def getAllInterfaces(self, mode = 0):
-        """
-        return all interfaces in this host
-        mode = 0 returns a list of interface objects
-        mode = 1 returns a dictionary of interface objects with their id as key
-        """
-        return self._getAllValues("_interfaces", mode)
+        return self.getChildsByType(Interface.__name__)
 
     def getInterface(self, value):
         """
@@ -154,12 +149,12 @@ class Host(ModelComposite):
         return service
 
     @updateLocalMetadata
-    def addApplication(self, newApp, update=False, setparent=True):
+    def addApplication(self, newApp, update=False, setparent=True): # Deprecated
         return self._addValue("_applications", newApp,
                               setparent=setparent, update=update)
 
     @updateLocalMetadata
-    def delApplication(self, appID):
+    def delApplication(self, appID): # Deprecated
                                          
         app = self.getApplication(appID)
         if app is not None:
@@ -168,10 +163,10 @@ class Host(ModelComposite):
                                         
         return self._delValue("_applications", appID)
 
-    def addApplicationFull(self, app):
+    def addApplicationFull(self, app): # Deprecated # Deprecated
         self.addApplication(app)
 
-    def getAllApplications(self, mode = 0):
+    def getAllApplications(self, mode = 0): # Deprecated
         """
         return all applications in this interface
         mode = 0 returns a list of service objects
@@ -179,7 +174,7 @@ class Host(ModelComposite):
         """
         return self._getAllValues("_applications", mode)
 
-    def getApplication(self, name):
+    def getApplication(self, name): # Deprecated
         """
         if name is found it returns the application object
         it returns None otherwise
@@ -398,24 +393,19 @@ class Interface(ModelComposite):
         return self.amount_ports_filtered
 
     @updateLocalMetadata
-    def addService(self, newService, update=False, setparent=True):
+    def addService(self, newService, update=False, setparent=True): # Deprecated
         res = self._addValue("_services", newService, setparent=setparent, update=update)    
         if res: newService.addInterface(self)
         return res
 
     @updateLocalMetadata
-    def delService(self, srvID, checkFullDelete=True):
+    def delService(self, srvID, checkFullDelete=True): # Deprecated
         res = True
         res = self._delValue("_services", srvID)
         return res
 
     def getAllServices(self, mode = 0):
-        """
-        return all services in this interface
-        mode = 0 returns a list of service objects
-        mode = 1 returns a dictionary of service objects with their id as key
-        """
-        return self._getAllValues("_services", mode)
+        return self.getChildsByType(Service.__name__)
 
     def getService(self, name):
         """
@@ -575,13 +565,13 @@ class Service(ModelComposite):
         if owned is not None:
             self.setOwned(owned) 
 
-    def addInterface(self, newInterface, update=False, setparent=False):
+    def addInterface(self, newInterface, update=False, setparent=False): # Deprecated
         res = self._addValue("_interfaces", newInterface, update=update, setparent=setparent)
                                                                                  
         if res: newInterface.addService(self)
         return res
 
-    def delInterface(self, intID, checkFullDelete=True):
+    def delInterface(self, intID, checkFullDelete=True): # Deprecated
         interface = self.getInterface(intID)
         res = self._delValue("_interfaces", intID)
         if res:
@@ -613,12 +603,12 @@ class Service(ModelComposite):
         """
         return self._getValueByID("_interfaces", value)
 
-    def addApplication(self, newApp, update=False):
+    def addApplication(self, newApp, update=False): # Deprecated
         res = self._addValue("_applications", newApp, update=update)
         if res: newApp.addService(self)
         return res
 
-    def delApplication(self, appID, checkFullDelete=True):
+    def delApplication(self, appID, checkFullDelete=True): # Deprecated
         app = self.getApplication(appID)
         res = self._delValue("_applications", appID)
         if res:
@@ -628,7 +618,7 @@ class Service(ModelComposite):
         if checkFullDelete: self._checkFullDelete()
         return res
 
-    def getAllApplications(self, mode = 0):
+    def getAllApplications(self, mode = 0): # Deprecated
         """
         return all applications in this service
         mode = 0 returns a list of applications objects
@@ -636,14 +626,14 @@ class Service(ModelComposite):
         """
         return self._getAllValues("_applications", mode)
 
-    def getApplication(self, name):
+    def getApplication(self, name): # Deprecated
         """
         if name is found it returns the application object
         it returns None otherwise
         """
         return self._getValueByID("_applications", name)
 
-class HostApplication(ModelComposite):
+class HostApplication(ModelComposite): # Deprecated
     """
     An application running in a host
     The application can be related to more than one service

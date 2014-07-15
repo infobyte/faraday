@@ -394,6 +394,12 @@ class ModelObject(object):
         # can be overriden if needed
         pass
 
+    def getChilds(self):
+        childs = {}
+        childs.update({vuln.getID(): vuln for vuln in self.getVulns()})
+        childs.update({note.getID(): note for note in self.getNotes()})
+        childs.update({cred.getID(): cred for cred in self.getCreds()})
+        return childs
 
     def setID(self, ID=None):
         if ID is None:
@@ -464,7 +470,7 @@ class ModelObject(object):
     def setOwner(self, owner=None):
         self.owner = owner
 
-    @save
+    #@save
     def setParent(self, parent):
         self._parent = parent
 
@@ -515,7 +521,7 @@ class ModelObject(object):
         except Exception:
             return False
 
-    @delete
+    #@delete
     def delete(self):
         del self
 
@@ -563,6 +569,9 @@ class ModelObject(object):
     def getNotes(self):
         return self._notes.values()
 
+    def setNotes(self, notes):
+        self._notes = notes
+
     def getNote(self, noteID):
         return self._getValueByID("_notes", noteID)
 
@@ -585,6 +594,9 @@ class ModelObject(object):
 
     def getVulns(self):
         return self._vulns.values()
+
+    def setVulns(self, vulns):
+        self._vulns = vulns
 
     def getVuln(self, vulnID):
         return self._getValueByID("_vulns", vulnID)
@@ -613,6 +625,9 @@ class ModelObject(object):
 
     def getCreds(self):
         return self._creds.values()
+
+    def setCreds(self, creds):
+        self._creds = creds
 
     def getCred(self, credID):
         return self._getValueByID("_creds", credID)
@@ -1021,7 +1036,7 @@ class ModelObjectNote(ModelObject):
 
     text = property(_getText, _setText)
 
-    @save
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, text=None):
         if name is not None:
@@ -1130,7 +1145,7 @@ class ModelObjectVuln(ModelObject):
     def _setDesc(self, desc):
         self._desc = desc
 
-    @save
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, desc=None, severity=None, refs=None):
         if name is not None:
@@ -1164,10 +1179,10 @@ class ModelObjectVuln(ModelObject):
         return self.refs
 
     def setRefs(self, refs):
-        if isinstance(ref, list):
-            self.refs.extend(ref)
+        if isinstance(refs, list):
+            self.refs.extend(refs)
         elif ref is not None:
-            self.refs.append(ref)
+            self.refs.append(refs)
 
     def __str__(self):
         return "vuln id:%s - %s" % (self.id, self.name)
@@ -1284,7 +1299,7 @@ class ModelObjectVulnWeb(ModelObjectVuln):
     def setCategory(self, category):
         self.category = category
 
-    @save
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, desc=None, website=None, path=None, refs=None, severity=None, request=None,
                         response=None, method=None, pname=None, params=None, query=None, category=None):
@@ -1401,7 +1416,7 @@ class ModelObjectCred(ModelObject):
     def setUsername(self, username):
         self.username = username
 
-    @save
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, username=None, password=None):
         if username is not None:

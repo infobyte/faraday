@@ -61,7 +61,12 @@ class Host(ModelObject):
         """ Accept method for visitor in the host leaf"""
         for ints in self.getAllInterfaces():
             ints.accept(visitor)
-        visitor.visit(self) 
+        visitor.visit(self)
+
+    def getChilds(self):
+        childs = super(Host, self).getChilds()
+        childs.update({iface.getID(): iface for iface in self.getAllInterfaces()})
+        return childs
 
     def getCategories(self):
         return self.categories
@@ -114,7 +119,7 @@ class Host(ModelObject):
         self._default_gateway = default_gateway
                                                                          
 
-    @save
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, description=None, os=None, owned=None):
         if name is not None:
@@ -125,10 +130,9 @@ class Host(ModelObject):
             self.setOS(os)
         if name is not None:
             self.setOwned(owned)
-    
-                                                              
-                                                               
-                                   
+
+    def setInterfaces(self, interfaces):
+        self._interfaces = interfaces
 
     @updateLocalMetadata
     def addInterface(self, newInterface, update=False, setparent=True):
@@ -137,12 +141,6 @@ class Host(ModelObject):
 
     @updateLocalMetadata
     def delInterface(self, intID):
-                                                                       
-        interface = self.getInterface(intID)
-        if interface is not None:
-            for srv in interface.getAllServices():
-                srv.delInterface(intID)
-                                         
         return self._delValue("_interfaces", intID)
 
     def addInterfaceFull(self, interface):
@@ -184,12 +182,6 @@ class Host(ModelObject):
 
     @updateLocalMetadata
     def delApplication(self, appID):
-                                         
-        app = self.getApplication(appID)
-        if app is not None:
-            for srv in app.getAllServices():
-                srv.delApplication(appID)
-                                        
         return self._delValue("_applications", appID)
 
     def addApplicationFull(self, app):
@@ -450,6 +442,11 @@ class Interface(ModelObject):
             return list(set(prop1))
         return None
 
+    def getChilds(self):
+        childs = super(Interface, self).getChilds()
+        childs.update({srv.getID(): srv for srv in self.getAllServices()})
+        return childs
+
     def updateID(self):
                                                                                                           
         self._id = get_hash([self.network_segment, self.ipv4["address"], self.ipv6["address"]])
@@ -559,7 +556,6 @@ class Interface(ModelObject):
 
     @updateLocalMetadata
     def delService(self, srvID, checkFullDelete=True):
-                                                   
         res = True
         res = self._delValue("_services", srvID)
         return res
@@ -579,6 +575,9 @@ class Interface(ModelObject):
         """
         return self._getValueByID("_services", name)
 
+    def setServices(self, services):
+        self._services = services
+
     def addHostname(self, hostname):
         if hostname not in self._hostnames:
             self._hostnames.append(hostname)
@@ -593,7 +592,7 @@ class Interface(ModelObject):
     def setHostnames(self, hostnames):
         self._hostnames = hostnames
 
-    @save
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, description=None, hostnames=None, mac=None, ipv4=None, ipv6=None,
                          network_segment=None, amount_ports_opened=None, amount_ports_closed=None,
@@ -813,7 +812,7 @@ class Service(ModelObject):
                                                                          
         self._id = get_hash([self._protocol, ":".join(str(self._ports))])
 
-    @save
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, description=None, protocol=None, ports=None, 
                           status=None, version=None, owned=None):
@@ -847,16 +846,7 @@ class Service(ModelObject):
         return res
 
     def delInterface(self, intID, checkFullDelete=True):
-        interface = self.getInterface(intID)
         res = self._delValue("_interfaces", intID)
-        if res:
-            if interface is not None:
-                                                  
-                                                                              
-                                 
-                interface.delService(self.getID(), checkFullDelete)
-
-        if checkFullDelete: self._checkFullDelete()
         return res
                                                                                    
                                                                                  
@@ -897,13 +887,7 @@ class Service(ModelObject):
         return res
 
     def delApplication(self, appID, checkFullDelete=True):
-        app = self.getApplication(appID)
         res = self._delValue("_applications", appID)
-        if res:
-            if app is not None:
-                app.delService(self.getID(), checkFullDelete)
-
-        if checkFullDelete: self._checkFullDelete()
         return res
 
     def getAllApplications(self, mode = 0):
@@ -1090,11 +1074,7 @@ class HostApplication(ModelObject):
 
     @updateLocalMetadata
     def delService(self, srvID, checkFullDelete=True):
-        srv = self.getService(srvID)
         res = self._delValue("_services", srvID)
-        if res:
-            if srv is not None:
-                srv.delApplication(self.getID(), checkFullDelete)
         return res
 
     def getAllServices(self, mode = 0):

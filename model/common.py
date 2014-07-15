@@ -384,7 +384,7 @@ class ModelObject(object):
         return True
 
     def getNotes(self):
-        return self.childs.values()
+        return self.getChildsByType(ModelObjectNote.__name__)
 
     def getNote(self, noteID):
         return self.findChild(noteID)
@@ -420,10 +420,10 @@ class ModelObject(object):
 
     #creds
     @updateLocalMetadata
-    def addCred(self, newCred, update=False, setparent=True):
-        return self._addValue("_creds", newCred, setparent=setparent, update=update)
+    def addCred(self, newCred, update=False, setparent=True): # Deprecated
+        return self.addChild(newCred.getID(), newCred)
 
-    def newCred(self, username, password):
+    def newCred(self, username, password): # Deprecated
         cred = ModelObjectCred(username, password, self)
         self.addCred(cred)
         
@@ -432,7 +432,7 @@ class ModelObject(object):
         return self._delValue("_creds", credID)
 
     def getCreds(self):
-        return self._creds.values()
+        return self.getChildsByType(ModelObjectCred.__name__)
 
     def getCred(self, credID):
         return self._getValueByID("_creds", credID)

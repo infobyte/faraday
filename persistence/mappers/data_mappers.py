@@ -8,11 +8,20 @@ See the file 'doc/LICENSE' for the license information
 from persistence.mappers.abstract_mapper import AbstractMapper
 from model.hosts import Host, Interface, Service
 from model.common import ModelObjectNote, ModelObjectVuln, ModelObjectVulnWeb, ModelObjectCred, Metadata
+from model.commands_history import CommandRunInformation
+from model.workspace import Workspace
 
 
-class ModeLObjectMapper(AbstractMapper):
-    def __init__(self, pmanager=None):
-        super(ModeLObjectMapper, self).__init__(pmanager)
+#Every mapper has to be registered in the dict at the end of the file
+
+
+class ModelObjectMapper(AbstractMapper):
+    mapped_class = None
+    dummy_args = []
+    dummy_kwargs = {}
+
+    def __init__(self, mmanager, pmanager=None):
+        super(ModelObjectMapper, self).__init__(mmanager, pmanager)
 
     def serialize(self, mobj):
         return {
@@ -26,25 +35,57 @@ class ModeLObjectMapper(AbstractMapper):
             "metadata": mobj.getMetadata().__dict__
         }
 
-    def populate(self, mobj, doc):
-        mobj.setID(doc.get("_id"))
+    def unserialize(self, mobj, doc):
         mobj.setName(doc.get("name"))
         mobj.setOwned(doc.get("owned"))
-        # WARNING: we need a fix for this! we're setting the id
-        # of the parent not the actual object
-        mobj.setParent(doc.get("parent"))
+        mobj.setParent(self.mapper_manager.find(doc.get("parent")))
         mobj.setOwner(doc.get("owner"))
         mobj.setDescription(doc.get("description"))
         mobj.setMetadata(Metadata(doc.get("metadata")))
+        self.setNotes(mobj)
+        self.setVulns(mobj)
+        self.setCreds(mobj)
         return mobj
 
-    def unserialize(self, doc):
-        raise NotImplementedError("ModelObjectMapper should not be used directly")
+    def setNotes(self, mobj):
+        notes = self.mapper_manager.getMapper(
+            ModelObjectNote.__name__).findForParent(mobj.getID())
+        notes_dict = {k: v for (k, v) in [(note.getID(), note) for note in notes]}
+        mobj.setNotes(notes_dict)
+
+    def delete(self, mobj_id):
+        mobj = self.mapper_manager.find(mobj_id)
+        for child in mobj.getChilds().values():
+            self.mapper_manager.remove(child.getID())
+        super(ModelObjectMapper, self).delete(mobj_id)
+
+    def setVulns(self, mobj):
+        vulns = self.mapper_manager.getMapper(
+            ModelObjectVuln.__name__).findForParent(mobj.getID())
+        vulns_dict = {k: v for (k, v) in [(vuln.getID(), vuln) for vuln in vulns]}
+        vulns_web = self.mapper_manager.getMapper(
+            ModelObjectVulnWeb.__name__).findForParent(mobj.getID())
+        vulns_web_dict = {k: v for (k, v) in [(vuln.getID(), vuln) for vuln in vulns_web]}
+        vulns_dict.update(vulns_web_dict)
+        mobj.setVulns(vulns_dict)
+
+    def setCreds(self, mobj):
+        creds = self.mapper_manager.getMapper(
+            ModelObjectCred.__name__).findForParent(mobj.getID())
+        creds_dict = {k: v for (k, v) in [(cred.getID(), cred) for cred in creds]}
+        mobj.setCreds(creds_dict)
+
+    def findForParent(self, obj_id):
+        return self.findByFilter(parent=obj_id, type=self.mapped_class.__name__)
 
 
-class HostMapper(ModeLObjectMapper):
-    def __init__(self, pmanager=None):
-        super(HostMapper, self).__init__(pmanager)
+class HostMapper(ModelObjectMapper):
+    mapped_class = Host
+    dummy_args = []
+    dummy_kwargs = {'name': 'dummy'}
+
+    def __init__(self, mmanager, pmanager=None):
+        super(HostMapper, self).__init__(mmanager, pmanager)
 
     def serialize(self, host):
         doc = super(HostMapper, self).serialize(host)
@@ -54,22 +95,30 @@ class HostMapper(ModeLObjectMapper):
         })
         return doc
 
-    def unserialize(self, doc):
-        if not doc or doc.get("type", "Undefined") == Host.__class__.__name__:
-            return None
-        host = Host(name="dummy")
-        self.populate(host, doc)
-        return host
-
-    def populate(self, host, doc):
-        super(HostMapper, self).populate(host, doc)
+    def unserialize(self, host, doc):
+        super(HostMapper, self).unserialize(host, doc)
         host.setOS(doc.get("os"))
         host.setDefaultGateway(doc.get("default_gateway"))
+        self.setInterfaces(host)
+        return host
+
+    def setInterfaces(self, host):
+        interfaces = self.mapper_manager.getMapper(
+            Interface.__name__).findForHost(host.getID())
+        ifaces_dict = {k: v for (k, v) in [(iface.getID(), iface) for iface in interfaces]}
+        host.setInterfaces(ifaces_dict)
+
+    def findForWorkspace(self, wname):
+        return self.findForParent(wname)
 
 
-class InterfaceMapper(ModeLObjectMapper):
-    def __init__(self, pmanager=None):
-        super(InterfaceMapper, self).__init__(pmanager)
+class InterfaceMapper(ModelObjectMapper):
+    mapped_class = Interface
+    dummy_args = []
+    dummy_kwargs = {'name': 'dummy'}
+
+    def __init__(self, mmanager, pmanager=None):
+        super(InterfaceMapper, self).__init__(mmanager, pmanager)
 
     def serialize(self, iface):
         doc = super(InterfaceMapper, self).serialize(iface)
@@ -87,15 +136,8 @@ class InterfaceMapper(ModeLObjectMapper):
         })
         return doc
 
-    def unserialize(self, doc):
-        if not doc or doc.get("type", "Undefined") == Interface.__class__.__name__:
-            return None
-        iface = Interface(name="dummy")
-        self.populate(iface, doc)
-        return iface
-
-    def populate(self, iface, doc):
-        super(InterfaceMapper, self).populate(iface, doc)
+    def unserialize(self, iface, doc):
+        super(InterfaceMapper, self).unserialize(iface, doc)
         iface.setMAC(doc.get("mac"))
         iface.setNetworkSegment(doc.get("network_segment"))
         for hostname in doc.get("hostnames"):
@@ -105,12 +147,26 @@ class InterfaceMapper(ModeLObjectMapper):
         iface.setPortsOpened(doc.get("ports").get("opened"))
         iface.setPortsClosed(doc.get("ports").get("closed"))
         iface.setPortsFiltered(doc.get("ports").get("filtered"))
+        self.setServices(iface)
         return iface
 
+    def setServices(self, iface):
+        services = self.mapper_manager.getMapper(
+            Service.__name__).findForInterface(iface.getID())
+        services_dict = {k: v for (k, v) in [(srv.getID(), srv) for srv in services]}
+        iface.setServices(services_dict)
 
-class ServiceMapper(ModeLObjectMapper):
-    def __init__(self, pmanager=None):
-        super(ServiceMapper, self).__init__(pmanager)
+    def findForHost(self, host_id):
+        return self.findForParent(host_id)
+
+
+class ServiceMapper(ModelObjectMapper):
+    mapped_class = Service
+    dummy_args = []
+    dummy_kwargs = {'name': 'dummy'}
+
+    def __init__(self, mmanager, pmanager=None):
+        super(ServiceMapper, self).__init__(mmanager, pmanager)
 
     def serialize(self, srv):
         doc = super(ServiceMapper, self).serialize(srv)
@@ -123,15 +179,8 @@ class ServiceMapper(ModeLObjectMapper):
         })
         return doc
 
-    def unserialize(self, doc):
-        if not doc or doc.get("type", "Undefined") == Service.__class__.__name__:
-            return None
-        srv = Service(name="dummy")
-        self.populate(srv, doc)
-        return srv
-
-    def populate(self, srv, doc):
-        super(ServiceMapper, self).populate(srv, doc)
+    def unserialize(self, srv, doc):
+        super(ServiceMapper, self).unserialize(srv, doc)
         srv.setProtocol(doc.get("protocol"))
         srv.setStatus(doc.get("status"))
         srv.setVersion(doc.get("version"))
@@ -139,10 +188,17 @@ class ServiceMapper(ModeLObjectMapper):
             srv.addPort(int(port))
         return srv
 
+    def findForInterface(self, iface_id):
+        return self.findForParent(iface_id)
 
-class NoteMapper(ModeLObjectMapper):
-    def __init__(self, pmanager=None):
-        super(NoteMapper, self).__init__(pmanager)
+
+class NoteMapper(ModelObjectMapper):
+    mapped_class = ModelObjectNote
+    dummy_args = []
+    dummy_kwargs = {'name': 'dummy'}
+
+    def __init__(self, mmanager, pmanager=None):
+        super(NoteMapper, self).__init__(mmanager, pmanager)
 
     def serialize(self, note):
         doc = super(NoteMapper, self).serialize(note)
@@ -151,21 +207,18 @@ class NoteMapper(ModeLObjectMapper):
         })
         return doc
 
-    def unserialize(self, doc):
-        if not doc or doc.get("type", "Undefined") == ModelObjectNote.__class__.__name__:
-            return None
-        note = ModelObjectNote(name="dummy")
-        self.populate(note, doc)
-        return note
-
-    def populate(self, note, doc):
-        super(NoteMapper, self).populate(note, doc)
+    def unserialize(self, note, doc):
+        super(NoteMapper, self).unserialize(note, doc)
         note.setText(doc.get("text"))
 
 
-class VulnMapper(ModeLObjectMapper):
-    def __init__(self, pmanager=None):
-        super(VulnMapper, self).__init__(pmanager)
+class VulnMapper(ModelObjectMapper):
+    mapped_class = ModelObjectVuln
+    dummy_args = []
+    dummy_kwargs = {'name': 'dummy'}
+
+    def __init__(self, mmanager, pmanager=None):
+        super(VulnMapper, self).__init__(mmanager, pmanager)
 
     def serialize(self, vuln):
         doc = super(VulnMapper, self).serialize(vuln)
@@ -176,23 +229,23 @@ class VulnMapper(ModeLObjectMapper):
         })
         return doc
 
-    def unserialize(self, doc):
-        if not doc or doc.get("type", "Undefined") == ModelObjectVuln.__class__.__name__:
-            return None
-        vuln = ModelObjectVuln(name="dummy")
-        self.populate(vuln, doc)
-        return vuln
-
-    def populate(self, vuln, doc):
-        super(VulnMapper, self).populate(vuln, doc)
+    def unserialize(self, vuln, doc):
+        super(VulnMapper, self).unserialize(vuln, doc)
         vuln.setDesc(doc.get("desc"))
-        vuln.setSeverityl(doc.get("severity"))
+        vuln.setSeverity(doc.get("severity"))
         vuln.setRefs(doc.get("refs"))
+
+    def findForParent(self, obj_id):
+        return self.findByFilter(parent=obj_id, type=self.mapped_class.__name__)
 
 
 class VulnWebMapper(VulnMapper):
-    def __init__(self, pmanager=None):
-        super(VulnWebMapper, self).__init__(pmanager)
+    mapped_class = ModelObjectVulnWeb
+    dummy_args = []
+    dummy_kwargs = {'name': 'dummy'}
+
+    def __init__(self, mmanager, pmanager=None):
+        super(VulnWebMapper, self).__init__(mmanager, pmanager)
 
     def serialize(self, vuln_web):
         doc = super(VulnWebMapper, self).serialize(vuln_web)
@@ -209,15 +262,8 @@ class VulnWebMapper(VulnMapper):
         })
         return doc
 
-    def unserialize(self, doc):
-        if not doc or doc.get("type", "Undefined") == ModelObjectVulnWeb.__class__.__name__:
-            return None
-        vuln_web = ModelObjectVulnWeb(name="dummy")
-        self.populate(vuln_web, doc)
-        return vuln_web
-
-    def populate(self, vuln_web, doc):
-        super(VulnWebMapper, self).populate(vuln_web, doc)
+    def unserialize(self, vuln_web, doc):
+        super(VulnWebMapper, self).unserialize(vuln_web, doc)
         vuln_web.getWebsite(doc.get("website"))
         vuln_web.getPath(doc.get("path"))
         vuln_web.getRequest(doc.get("request"))
@@ -228,10 +274,17 @@ class VulnWebMapper(VulnMapper):
         vuln_web.getQuery(doc.get("query"))
         vuln_web.getCategory(doc.get("category"))
 
+    def findForParent(self, obj_id):
+        return self.findByFilter(parent=obj_id, type=self.mapped_class.__name__)
 
-class CredMapper(ModeLObjectMapper):
-    def __init__(self, pmanager=None):
-        super(CredMapper, self).__init__(pmanager)
+
+class CredMapper(ModelObjectMapper):
+    mapped_class = ModelObjectCred
+    dummy_args = []
+    dummy_kwargs = {}
+
+    def __init__(self, mmanager, pmanager=None):
+        super(CredMapper, self).__init__(mmanager, pmanager)
 
     def serialize(self, cred):
         doc = super(CredMapper, self).serialize(cred)
@@ -241,14 +294,69 @@ class CredMapper(ModeLObjectMapper):
         })
         return doc
 
-    def unserialize(self, doc):
-        if not doc or doc.get("type", "Undefined") == ModelObjectCred.__class__.__name__:
-            return None
-        cred = ModelObjectCred(name="dummy")
-        self.populate(cred, doc)
-        return cred
-
-    def populate(self, cred, doc):
-        super(CredMapper, self).populate(cred, doc)
+    def unserialize(self, cred, doc):
+        super(CredMapper, self).unserialize(cred, doc)
         cred.setUsername(doc.get("username"))
         cred.setPassword(doc.get("password"))
+
+    def findForParent(self, obj_id):
+        return self.findByFilter(parent=obj_id, type=self.mapped_class.__name__)
+
+
+class CommandRunMapper(AbstractMapper):
+    mapped_class = CommandRunInformation
+    dummy_args = []
+    dummy_kwargs = {}
+
+    def __init__(self, mmanager, pmanager=None):
+        super(CommandRunMapper, self).__init__(mmanager, pmanager)
+
+    def serialize(self, obj):
+        return obj.__dict__
+
+    def unserialize(self, cmd, doc):
+        for k, v in doc.items():
+            setattr(cmd, k, v)
+
+    def findForWorkspace(self, wname):
+        return self.findByFilter(parent=wname, type=self.mapped_class.__name__)
+
+
+class WorkspaceMapper(AbstractMapper):
+    mapped_class = Workspace
+    dummy_args = []
+    dummy_kwargs = {'name': 'dummy'}
+
+    def __init__(self, mmanager, pmanager=None):
+        super(WorkspaceMapper, self).__init__(mmanager, pmanager)
+
+    def serialize(self, obj):
+        return {
+            "type": obj.__class__.__name__,
+            "_id": obj.getID(),
+            "name": obj.getName(),
+            "description": obj.getDescription(),
+            "customer": obj.getCustomer(),
+            "sdate": obj.getStartDate(),
+            "fdate": obj.getFinishDate()
+        }
+
+    def unserialize(self, workspace, doc):
+        workspace.setName(doc.get("name"))
+        workspace.setDescription(doc.get("description"))
+        workspace.setCustomer(doc.get("customer"))
+        workspace.setStartDate(doc.get("sdate"))
+        workspace.setFinishDate(doc.get("fdate"))
+
+
+Mappers = {
+    Host.__name__: HostMapper,
+    Interface.__name__: InterfaceMapper,
+    Service.__name__: ServiceMapper,
+    ModelObjectNote.__name__: NoteMapper,
+    ModelObjectVuln.__name__: VulnMapper,
+    ModelObjectVulnWeb.__name__: VulnWebMapper,
+    ModelObjectCred.__name__: CredMapper,
+    CommandRunInformation.__name__: CommandRunMapper,
+    Workspace.__name__: WorkspaceMapper
+}

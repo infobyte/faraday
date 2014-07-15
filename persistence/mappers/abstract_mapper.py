@@ -5,23 +5,33 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from managers.all import PersistenceManager
+from persistence.persistence_managers import DbConnector
 
 
-class NullPersistenceManager(PersistenceManager):
-    def saveDocument(self, db, document):
+class NullPersistenceManager(DbConnector):
+    def __init__(self):
+        super(NullPersistenceManager, self).__init__()
+
+    def saveDocument(self, document):
         pass
 
-    def get(self, db, documentId):
+    def getDocument(self, documentId):
         return None
 
-    def delete(self, db, documentId):
+    def remove(self, documentId):
         return True
+
+    def getDocsByFilter(self, parentId, type):
+        return []
 
 
 class AbstractMapper(object):
+    mapped_class = None
+    dummy_args = []
+    dummy_kwargs = {}
 
-    def __init__(self, pmanager=None):
+    def __init__(self, mmanager, pmanager=None):
+        self.mapper_manager = mmanager
         self.pmanager = pmanager if pmanager else NullPersistenceManager()
         self.object_map = {}
 
@@ -30,8 +40,8 @@ class AbstractMapper(object):
 
     def save(self, obj):
         #save the object first
-        obj = self.serialize(obj)
-        self.pmanager.saveDocument(obj)
+        doc = self.serialize(obj)
+        self.pmanager.saveDocument(doc)
 
         #then add it to the IdentityMap
         self.object_map[obj.getID()] = obj
@@ -46,10 +56,13 @@ class AbstractMapper(object):
     def load(self, id):
         if id in self.object_map.keys():
             return self.object_map.get(id)
-        doc = self.pmanager.get(id)
-        obj = self.unserialize(doc)
-        if obj:
-            self.object_map[obj.getID()] = obj
+        doc = self.pmanager.getDocument(id)
+        if not doc or not doc.get("type") == self.mapped_class.__name__:
+            return None
+        obj = self.mapped_class(*self.dummy_args, **self.dummy_kwargs)
+        obj.setID(doc.get("_id"))
+        self.object_map[obj.getID()] = obj
+        self.unserialize(obj, doc)
         return obj
 
     def update(self, obj):
@@ -58,7 +71,7 @@ class AbstractMapper(object):
 
     def delete(self, id):
         obj = None
-        self.pmanager.delete(id)
+        self.pmanager.remove(id)
         if id in self.object_map.keys():
             obj = self.object_map.get(id)
             del self.object_map[id]
@@ -68,3 +81,11 @@ class AbstractMapper(object):
         if self.object_map.get(id):
             return self.object_map.get(id)
         return self.load(id)
+
+    def findByFilter(self, parent, type):
+        result = []
+        ids = self.pmanager.getDocsByFilter(parent, type)
+        for id in ids:
+            obj = self.load(id)
+            result.append(obj)
+        return result

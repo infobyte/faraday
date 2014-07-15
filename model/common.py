@@ -404,7 +404,7 @@ class ModelObject(object):
         return True
 
     def getVulns(self):
-        return self.childs.values()
+        return self.getChildsByType(ModelObjectVuln.__name__)
 
     def getVuln(self, vulnID):
         return self.findChild(vulnID)
@@ -469,6 +469,10 @@ class ModelComposite(ModelObject):
     def addChild(self, iid, model_object):
         self.childs[iid] = model_object
         model_object.setParent(self)
+
+    def getChildsByType(self, signature):
+        return [c for c in self.childs.values() 
+                    if c.__class__.__name__ == signature]
 
     def deleteChild(self, iid):
         del self.childs[iid]

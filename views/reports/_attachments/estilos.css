@@ -288,6 +288,9 @@ aside {
 		.seccion article section {
 			padding: 13px;
 		}
+		.seccion2 p {
+			text-align: left;
+			}
 			.sin_padding {
 				padding: 0 !important;
 			}

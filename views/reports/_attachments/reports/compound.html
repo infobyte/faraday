@@ -1,4 +1,5 @@
 <!-- Faraday Penetration Test IDE &#45; Community Version -->
+<!-- Faraday Penetration Test IDE &#45; Community Version -->
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
 <!--<html>-->
@@ -30,7 +31,7 @@ function traer(workspace, view, design){
 		hosts		= get_obj(hurl);
 		interfaces	= get_obj(iurl, interfaces);
 		services	= get_obj(surl, services);
-		var table = "<div class='seccion2'><h2>Hosts report</h2>";
+		var table = "<div class='seccion2' id='hosts'><h2>Hosts report</h2>";
 		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+
@@ -54,89 +55,8 @@ function traer(workspace, view, design){
 				"<td>"+v.os+"</td>"+
 				"<td>"+v.owned+"</td></tr>";
 		});
-		table += "</tbody></table>";
+		table += "</tbody></table></div>";
 		return table;
-	}
-
-	function load_hosts_by_service(name) {
-		var services 	= get_obj_filter(workspace, "services", "byname", name);
-		var hids 	= [];
-		$.each(services, function(k, v) {
-			v = v['value'];
-			if($.inArray(v['hid'], hids) < 0) {
-				hids.push(v['hid']);
-			}
-		});
-		var hosts 	= get_obj_filter(workspace, "hosts", "hosts", hids);
-		var iurl	= "/" + workspace + "/_design/" + design + "/_view/byinterfacecount?group=true";
-		var interfaces	= new Object();
-		var surl	= "/" + workspace + "/_design/" + design + "/_view/byservicecount?group=true";
-		var scount	= new Object();
-
-		interfaces	= get_obj(iurl, interfaces);
-		scount		= get_obj(surl, services);
-	
-		var table = "<h3>Hosts with Service "+name+" ("+hids.length+" total)</h3>"+
-				"<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
-				"<th>Host</th>"+
-				"<th>Services</th>"+
-				"<th>Interfaces</th>"+
-				"<th>OS</th>"+
-				"<th>Owned</th>"+
-				"</tr></thead><tbody>";
-		$.each(hosts, function(k, v){
-			var id = v['id'];
-			v = v['value'];
-			if($.inArray(id, hids) > -1) {
-				table += "<tr id=\"host-"+id+"\">"+
-					"<td><a href=\"host-"+id+"\" class=\"host\">"+v['name']+"</a></td>"+
-					"<td>"+scount[id]+"</td>"+
-					"<td>"+interfaces[id]+"</td>"+
-					"<td>"+v['os']+"</td>"+
-					"<td>"+v['owned']+"</td></tr>";
-			}
-		});
-		table += "</tbody></table>";
-		$(".iframe").append(table);
-	}
-
-	function load_services(hid, hname) {
-		// el param design ya no es el recibido por GET, puesto que ahora estamos en services
-		var services = get_obj_filter(workspace, "services", "byhost", hid);
-		var table = "<h3>Services for Host "+hname+" ("+services.length+" total)</h3>"+
-			"<table id=\"services-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
-			"<th>Name</th>"+
-			"<th>Description</th>"+
-			"<th>Owned</th>"+
-			"<th>Ports</th>"+
-			"<th>Protocol</th>"+
-			"<th>Status</th></tr></thead><tbody>";
-		$.each(services, function(k, v){
-				var sid = v['id'];
-				v = v['value'];
-				var desc = (v['description'] === "") ? "n/a" : v['description'];
-				var ports = "";
-				if(v['ports'].length === 0) {
-					ports = "no ports available";
-				} else {
-					for(i=0; i < v['ports'].length; i++){
-						ports += v['ports'][i];
-						if(v['ports'].length != 1 && i != (v['ports'].length-1)) {
-							ports += ", ";
-						}
-					}
-				}
-				table += "<tr id=\"service-"+sid+"\">"+
-					"<td><a href=\"service-"+sid+"\" class=\"service\">"+v['name']+"</a></td>"+
-					"<td>"+desc+"</td>"+
-					"<td>"+v['owned']+"</td>"+
-					"<td>"+ports+"</td>"+
-					"<td>"+v['protocol']+"</td>"+
-					"<td>"+v['status']+"</td></tr>";
-		});
-		table += "</tbody></table>";
-		divs +="</div>";
-		$(".iframe").append(table);
 	}
 
 	function get_obj_filter(ws, design, view, key) {
@@ -167,39 +87,8 @@ function traer(workspace, view, design){
 		return ls;
 	}
 
-		var hosts = load_all_hosts();
-		return hosts;
-
-	$(document).ready(function() {
-		// inicialmente cargo todos los hosts disponibles
-		// jQuery 1.7++ usa on() para bindear eventos a elementos que existen ahora o en el futuro
-		// cuando se clickea un host carga todos los servicios para ese host
-		$(document).on('click', 'a.host', function(e) {
-			// no queremos que cargue nada
-			e.preventDefault();
-			// sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
-			$(".iframe").empty().prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
-			// el ID del host que quiero traer es el ID del link clickeado menos el "host-" del ppio
-			var hid = $(this).attr("href").split('-')[1];
-			// el nombre del host que quiero traer es el valor del link
-			var hname = $(this).text();
-			load_services(hid, hname);
-		});
-		// cuando se clickea un servicio carga todos los hosts que tienen ese servicio
-		$(document).on('click', 'a.service', function(e) {
-			e.preventDefault();
-			$(".iframe").empty().prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
-			// el nombre del servicio que quiero traer es el valor del link clickeado
-			var sname = $(this).text();
-			load_hosts_by_service(sname);
-		});
-		// comportamiento para "View all hosts"
-		$(document).on('click', 'a[href="load_all_hosts"]', function(e) {
-			e.preventDefault();
-			$(".iframe").empty();
-			load_all_hosts();
-		});
-	});
+	var hosts = load_all_hosts();
+	return hosts;
 }
 </script>
 </body>

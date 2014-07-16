@@ -520,13 +520,13 @@ class ModelController(threading.Thread):
         notifier.delHost(objId)
 
 
-    def delHostASYNC(self, host):
+    def delHostASYNC(self, hostId):
         """
         ASYNC API
         Adds an action to the ModelController actions queue indicating a
         particular host must be removed from the model
         """
-        self.__addPendingAction(modelactions.DELHOST, host)
+        self.__addPendingAction(modelactions.DELHOST, hostId)
 
     def delHostSYNC(self, host):
         """
@@ -597,13 +597,13 @@ class ModelController(threading.Thread):
         """
         self._processAction(modelactions.EDITHOST, [host, name, description, os, owned], sync=True)
 
-    def addInterfaceASYNC(self, host, interface, update=False):
+    def addInterfaceASYNC(self, hostid, interface, update=False):
         """
         ASYNC API
         Adds an action to the ModelController actions queue indicating a
         new interface must be added to a specific host
         """
-        self.__addPendingAction(modelactions.ADDINTERFACE, host, interface)
+        self.__addPendingAction(modelactions.ADDINTERFACE, interface, hostid)
 
     def addInterfaceSYNC(self, hostId, interface, update=False):
         """
@@ -612,13 +612,13 @@ class ModelController(threading.Thread):
         """
         self._processAction(modelactions.ADDINTERFACE, [interface, hostId], sync=True)
 
-    def delInterfaceASYNC(self, host, interface_name):
+    def delInterfaceASYNC(self, hostId, interfaceId):
         """
         ASYNC API
         Adds an action to the ModelController actions queue indicating a
         particular host must be removed from the model
         """
-        self.__addPendingAction(modelactions.DELINTERFACE, host, interface_name)
+        self.__addPendingAction(modelactions.DELINTERFACE, interfaceId, hostId)
 
     def delInterfaceSYNC(self, host, interface_id, *args):
         """
@@ -641,13 +641,13 @@ class ModelController(threading.Thread):
                              amount_ports_opened, amount_ports_closed,
                              amount_ports_filtered, owned], sync=True)
 
-    def addServiceToInterfaceASYNC(self, host, interface_name, newService):
+    def addServiceToInterfaceASYNC(self, host, interfaceId, newService):
         """
         ASYNC API
         Adds an action to the ModelController actions queue indicating a
         new services must be added to a specific host in a specific interface
         """
-        self.__addPendingAction(modelactions.ADDSERVICEINT, host, interface_name, newService)
+        self.__addPendingAction(modelactions.ADDSERVICEINT, newService, interfaceId)
 
     def addServiceToInterfaceSYNC(self, host_id, interface_id, newService):
         """
@@ -657,14 +657,14 @@ class ModelController(threading.Thread):
         """
         self._processAction(modelactions.ADDSERVICEINT, [newService, interface_id], sync=True)
 
-    def delServiceFromInterfaceASYNC(self, host, interface, service):
+    def delServiceFromInterfaceASYNC(self, host, interfaceId, serviceId):
         """
         ASYNC API
         Adds an action to the ModelController actions queue indicating a
         particular service in a host and interface must be removed from the
         model Interface parameter can be "ALL"
         """
-        self.__addPendingAction(modelactions.DELSERVICEINT, host, interface, service)
+        self.__addPendingAction(modelactions.DELSERVICEINT, serviceId, interfaceId)
 
     def delServiceFromInterfaceSYNC(self, host, interfaceId, serviceId):
         """
@@ -701,7 +701,7 @@ class ModelController(threading.Thread):
         ASYNC API
         Modifies a service from model
         """
-        self.__addPendingAction(modelactions.EDITSERVICE, [service, name, description, protocol, ports, status, version, owned])
+        self.__addPendingAction(modelactions.EDITSERVICE, service, name, description, protocol, ports, status, version, owned)
 
     def __editService(self, service, name=None, description=None,
                       protocol=None, ports=None, status=None,
@@ -713,8 +713,8 @@ class ModelController(threading.Thread):
             res = True
         return res
 
-    def addVulnToInterfaceASYNC(self, host, intname, newVuln):
-        self.__addPendingAction(modelactions.ADDVULNINT, host, intname, newVuln)
+    def addVulnToInterfaceASYNC(self, host, intId, newVuln):
+        self.__addPendingAction(modelactions.ADDVULNINT, newVuln, intId)
 
     def addVulnToInterfaceSYNC(self, host, intId, newVuln):
         self._processAction(modelactions.ADDVULNINT, [newVuln, intId], sync=True)
@@ -725,14 +725,14 @@ class ModelController(threading.Thread):
     def addVulnToApplicationSYNC(self, host, appname, newVuln):
         self._processAction(modelactions.ADDVULNAPP, [host, appname, newVuln], sync=True)
 
-    def addVulnToHostASYNC(self, host, newVuln):
-        self.__addPendingAction(modelactions.ADDVULNHOST, host, newVuln)
+    def addVulnToHostASYNC(self, hostId, newVuln):
+        self.__addPendingAction(modelactions.ADDVULNHOST, newVuln, hostId)
 
     def addVulnToHostSYNC(self, hostId, newVuln):
         self._processAction(modelactions.ADDVULNHOST, [newVuln, hostId], sync=True)
 
-    def addVulnToServiceASYNC(self, host, srvname, newVuln):
-        self.__addPendingAction(modelactions.ADDVULNSRV, host, srvname, newVuln)
+    def addVulnToServiceASYNC(self, host, srvId, newVuln):
+        self.__addPendingAction(modelactions.ADDVULNSRV, newVuln, srvId)
 
     def addVulnToServiceSYNC(self, host, srvId, newVuln):
         self._processAction(modelactions.ADDVULNSRV, [newVuln, srvId], sync=True)
@@ -758,14 +758,14 @@ class ModelController(threading.Thread):
     def delVulnFromInterfaceSYNC(self, hostname, intname, vuln):
         self._processAction(modelactions.DELVULNINT, [hostname,intname, vuln], sync=True)
 
-    def delVulnFromHostASYNC(self, hostname, vuln):
-        self.__addPendingAction(modelactions.DELVULNHOST, hostname, vuln)
+    def delVulnFromHostASYNC(self, hostId, vulnId):
+        self.__addPendingAction(modelactions.DELVULNHOST, vulnId)
 
     def delVulnFromHostSYNC(self, hostname, vulnId):
         self._processAction(modelactions.DELVULNHOST, [vulnId], sync=True)
 
-    def delVulnFromServiceASYNC(self, hostname, srvname, vuln):
-        self.__addPendingAction(modelactions.DELVULNSRV, hostname, srvname, vuln)
+    def delVulnFromServiceASYNC(self, hostname, srvname, vulnId):
+        self.__addPendingAction(modelactions.DELVULNSRV, vulnId)
 
     def delVulnFromServiceSYNC(self, hostname, srvname, vulnId):
         self._processAction(modelactions.DELVULNSRV, [vulnId], sync=True)
@@ -778,7 +778,7 @@ class ModelController(threading.Thread):
         self._processAction(modelactions.EDITVULN, [vuln, name, desc, severity, refs], sync=True)
 
     def editVulnASYNC(self, vuln, name, desc, severity, refs):
-        self.__addPendingAction(modelactions.EDITVULN, [vuln, name, desc, severity, refs])
+        self.__addPendingAction(modelactions.EDITVULN, vuln, name, desc, severity, refs)
 
     def editVulnWebSYNC(self, vuln, name, desc, website, path, refs, severity,
                         request, response, method, pname, params, query,
@@ -792,13 +792,13 @@ class ModelController(threading.Thread):
                          severity, request, response, method, pname,
                          params, query, category):
         self.__addPendingAction(modelactions.EDITVULN,
-                                [vuln, name, desc, website, path, refs,
+                                vuln, name, desc, website, path, refs,
                                  severity, request, response, method,
-                                 pname, params, query, category])
+                                 pname, params, query, category)
 
     # Note
-    def addNoteToInterfaceASYNC(self, host, intname, newNote):
-        self.__addPendingAction(modelactions.ADDNOTEINT, host, intname, newNote)
+    def addNoteToInterfaceASYNC(self, host, intId, newNote):
+        self.__addPendingAction(modelactions.ADDNOTEINT, newNote, intId)
 
     def addNoteToInterfaceSYNC(self, host, intId, newNote):
         self._processAction(modelactions.ADDNOTEINT, [newNote, intId], sync=True)
@@ -809,14 +809,14 @@ class ModelController(threading.Thread):
     def addNoteToApplicationSYNC(self, host, appname, newNote):
         self._processAction(modelactions.ADDNOTEAPP, [host, appname, newNote], sync=True)
 
-    def addNoteToHostASYNC(self, host, newNote):
-        self.__addPendingAction(modelactions.ADDNOTEHOST, host, newNote)
+    def addNoteToHostASYNC(self, hostId, newNote):
+        self.__addPendingAction(modelactions.ADDNOTEHOST, newNote, hostId)
 
     def addNoteToHostSYNC(self, hostId, newNote):
         self._processAction(modelactions.ADDNOTEHOST, [newNote, hostId], sync=True)
 
-    def addNoteToServiceASYNC(self, host, srvname, newNote):
-        self.__addPendingAction(modelactions.ADDNOTESRV, host, srvname, newNote)
+    def addNoteToServiceASYNC(self, host, srvId, newNote):
+        self.__addPendingAction(modelactions.ADDNOTESRV, newNote, srvId)
 
     def addNoteToNoteASYNC(self, host, srvname, note_id, newNote):
         self.__addPendingAction(modelactions.ADDNOTENOTE, host, srvname, note_id, newNote)
@@ -836,20 +836,20 @@ class ModelController(threading.Thread):
     def delNoteFromApplicationSYNC(self, hostname, appname, note):
         self._processAction(modelactions.DELNOTEAPP, [hostname, appname, note], sync=True)
 
-    def delNoteFromInterfaceASYNC(self, hostname, intname, note):
-        self.__addPendingAction(modelactions.DELNOTEINT, hostname, intname, note)
+    def delNoteFromInterfaceASYNC(self, hostname, intname, noteId):
+        self.__addPendingAction(modelactions.DELNOTEINT, noteId)
 
     def delNoteFromInterfaceSYNC(self, hostname, intname, noteId):
         self._processAction(modelactions.DELNOTEINT, [noteId], sync=True)
 
-    def delNoteFromHostASYNC(self, hostname, note):
-        self.__addPendingAction(modelactions.DELNOTEHOST, hostname, note)
+    def delNoteFromHostASYNC(self, hostId, noteId):
+        self.__addPendingAction(modelactions.DELNOTEHOST, noteId)
 
     def delNoteFromHostSYNC(self, hostname, noteId):
         self._processAction(modelactions.DELNOTEHOST, [noteId], sync=True)
 
-    def delNoteFromServiceASYNC(self, hostname, srvname, note):
-        self.__addPendingAction(modelactions.DELNOTESRV, hostname, srvname, note)
+    def delNoteFromServiceASYNC(self, hostId, srvId, noteId):
+        self.__addPendingAction(modelactions.DELNOTESRV, noteId)
 
     def delNoteFromServiceSYNC(self, hostname, srvname, noteId):
         self._processAction(modelactions.DELNOTESRV, [noteId], sync=True)
@@ -857,14 +857,14 @@ class ModelController(threading.Thread):
     def delNoteSYNC(self, model_object, note_id):
         self._processAction(modelactions.DELNOTE, [note_id], sync=True)
 
-    def addCredToServiceASYNC(self, host, srvname, newCred):
-        self.__addPendingAction(modelactions.ADDCREDSRV, host, srvname, newCred)
+    def addCredToServiceASYNC(self, host, srvId, newCred):
+        self.__addPendingAction(modelactions.ADDCREDSRV, newCred, srvId)
 
     def addCredToServiceSYNC(self, host, srvId, newCred):
         self._processAction(modelactions.ADDCREDSRV, [newCred, srvId], sync=True)
 
-    def delCredFromServiceASYNC(self, hostname, srvname, cred):
-        self.__addPendingAction(modelactions.DELCREDSRV, hostname, srvname, cred)
+    def delCredFromServiceASYNC(self, hostname, srvname, credId):
+        self.__addPendingAction(modelactions.DELCREDSRV, credId)
 
     def delCredFromServiceSYNC(self, hostname, srvname, credId):
         self._processAction(modelactions.DELCREDSRV, [credId], sync=True)
@@ -874,13 +874,13 @@ class ModelController(threading.Thread):
         self._processAction(modelactions.EDITNOTE, [note, name, text], sync=True)
 
     def editNoteASYNC(self, note, name, text):
-        self.__addPendingAction(modelactions.EDITNOTE, [note, name, text])
+        self.__addPendingAction(modelactions.EDITNOTE, note, name, text)
 
     def editCredSYNC(self, cred, username, password):
         self._processAction(modelactions.EDITCRED, [cred, username, password], sync=True)
 
     def editCredASYNC(self, cred, username, password):
-        self.__addPendingAction(modelactions.EDITCRED, [cred, username, password])
+        self.__addPendingAction(modelactions.EDITCRED, cred, username, password)
 
     def addCredSYNC(self, model_object_id, newCred):
         self._processAction(modelactions.ADDCRED, [newCred, model_object_id], sync=True)

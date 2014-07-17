@@ -17,7 +17,7 @@ from mockito import mock, when, any
 
 from model.hosts import Host, Interface, Service
 from model.workspace import Workspace
-from persistence.mappers.data_mappers import HostMapper, InterfaceMapper, ServiceMapper, WorkspaceMapper
+from persistence.mappers.data_mappers import WorkspaceMapper
 from persistence.mappers.abstract_mapper import NullPersistenceManager
 from persistence.mappers.mapper_manager import MapperManager
 
@@ -454,7 +454,9 @@ class ServiceMapperTestSuite(unittest.TestCase):
 
 class WorkspaceMapperTestSuite(unittest.TestCase):
     def setUp(self):
-        self.wmapper = WorkspaceMapper(MapperManager())
+        self.mapper_manager = MapperManager()
+        self.mapper_manager.createMappers(NullPersistenceManager())
+        self.wmapper = self.mapper_manager.getMapper(Workspace.__name__)
 
     def tearDown(self):
         pass

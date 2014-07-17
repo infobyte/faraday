@@ -49,7 +49,7 @@
 					<ul>
 						<li>
 							<a href="#"><img src="images/ico-settings.png" alt="Commercial version only"/></a>
-							<a href="http://127.0.0.1:5984/reports/_design/reports/d3.html#bersa" class="activo"><img src="images/ico-graph.png" alt=""/></a>
+							<a href="#" class="activo"><img src="images/ico-graph.png" alt=""/></a>
 							<a href="#"><img src="images/ico-stopwatch.png" alt="Commercial version only"/></a>
 						</li>
 					</ul>
@@ -93,6 +93,7 @@ $(document).ready(function() {
         	      counter +=1;
 	        });
 	        if(counter < 1) { 
+	        	$("#reportes").empty();
 	              $("#reportes").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
 		}
 		// seteo el WS actual
@@ -124,12 +125,12 @@ $(document).ready(function() {
 
 	$('.workspace').append("<div class='iframes'></div>");
 
-var byservices = "http://127.0.0.1:5984/reports/_design/reports/reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices";
-var summarized = "http://127.0.0.1:5984/reports/_design/reports/reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized";
-var vulns = "http://127.0.0.1:5984/reports/_design/reports/reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns";
-var commands = "http://127.0.0.1:5984/reports/_design/reports/reports/commands.html?workspace="+workspace+"&design=commands&view=list";
-var compound = "http://127.0.0.1:5984/reports/_design/reports/reports/compound.html?workspace="+workspace+"&design=hosts&view=compound";
-
+var byservices = "http://192.168.10.210:5984/reports/_design/reports/reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices";
+var summarized = "http://192.168.10.210:5984/reports/_design/reports/reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized";
+var vulns = "http://192.168.10.210:5984/reports/_design/reports/reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns";
+var commands = "http://192.168.10.210:5984/reports/_design/reports/reports/commands.html?workspace="+workspace+"&design=commands&view=list";
+var compound = "http://192.168.10.210:5984/reports/_design/reports/reports/compound.html?workspace="+workspace+"&design=hosts&view=compound";
+	
 	$('.iframes').load(compound, function (){
 	dominio = compound;
 
@@ -148,6 +149,7 @@ var compound = "http://127.0.0.1:5984/reports/_design/reports/reports/compound.h
 	$(".workspace").prepend(divs);
 	left = "<div class=\"left\"><h2>Viewing "+workspace+"</h2></div>";
 	$(".workspace").prepend(left);
+	});
 
 	$('.iframes').load(byservices, function (){
 	dominio = byservices;
@@ -183,6 +185,7 @@ var compound = "http://127.0.0.1:5984/reports/_design/reports/reports/compound.h
 	$("#reportes").append(divs);
 	});
 
+
 	$('.iframes').load(summarized, function (){
 	dominio = summarized;
 
@@ -213,9 +216,8 @@ var compound = "http://127.0.0.1:5984/reports/_design/reports/reports/compound.h
 
 	view = space[3];
 
-	div = traer(workspace, view, design);
-	$("#reportes").append(div);
-	});
+	var divv = traer(workspace, view, design);
+	$("#reportes").append(divv);
 	});
 });
 
@@ -262,7 +264,7 @@ function pasar_variables(workspace,view,design){
 				"<td>"+v.os+"</td>"+
 				"<td>"+v.owned+"</td></tr>";
 		});
-		table += "</tbody></table>";
+		table += "</tbody></table></div>";
 		return table;
 	}
 
@@ -304,7 +306,7 @@ function pasar_variables(workspace,view,design){
 					"<td>"+v['owned']+"</td></tr>";
 			}
 		});
-		table += "</tbody></table>";
+		table += "</tbody></table></div>";
 		return table;
 	}
 
@@ -342,7 +344,7 @@ function pasar_variables(workspace,view,design){
 					"<td>"+v['protocol']+"</td>"+
 					"<td>"+v['status']+"</td></tr>";
 		});
-		table += "</tbody></table>";
+		table += "</tbody></table></div>";
 		return table;
 	}
 

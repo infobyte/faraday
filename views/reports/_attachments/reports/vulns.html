@@ -6,23 +6,20 @@
 <script type="text/javascript">
 function traer(workspace, view,design){
 	json_url = "/" + workspace + "/_design/" + design + "/_view/" + view+"?group=true";
- 	console.log(json_url);
  var divs = "";
-  $.ajaxSetup({
+   $.ajaxSetup({
         async: false
     });
 	$.getJSON(json_url, function(data) {
 		var colores = ["gris3", "verde", "amarillo", "rojo", "violeta", "gris2"];
 		var nombres = ["info", "low", "medium", "high", "critical", "n/a"];
 		var i = 0;
-		var divs = "";
 		divs += "<div class='seccion2'><h2>Vulnerabilities Report</h2>";
 		$.each(data.rows, function(n, obj){
 			divs += "<div class=\"columna unsexto\"><article class=\"dato2 fondo-blanco\"><section><div class=\"nro texto-"+colores[obj.key]+"\">"+obj.value+"</div><div class=\"txt texto-negro\">"+nombres[obj.key]+"</div></section></article></div>";
 			i++;
 		});
 		divs +="</div>";
-		$(".iframe").append(divs);
 		return divs;
 	});
 	return divs;

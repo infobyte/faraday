@@ -17,7 +17,6 @@
 <script type="text/javascript">
 function traer(workspace, view,design){
 	json_url = "/" + workspace + "/_design/" + design + "/_view/" + view+"?group=true";
-	console.log(json_url);
   var divs = "";
   $.ajaxSetup({
         async: false
@@ -32,7 +31,6 @@ function traer(workspace, view,design){
 			i++;
 		});
 		divs +="</div>";
-		$(".iframe").append(divs);
 		return divs;
 	});
 	return divs;

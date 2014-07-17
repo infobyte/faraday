@@ -7,7 +7,6 @@
 function traer(workspace, view,design){
 
 	json_url = "/" + workspace + "/_design/" + design + "/_view/" + view;
-	console.log(json_url);
   var tabla = "";
   $.ajaxSetup({
         async: false
@@ -22,7 +21,6 @@ function traer(workspace, view,design){
                 });
             tabla += "</tbody></table>";
             tabla +="</div>";
-		$(".iframe").append(tabla);
 		return tabla;
 	});
 	return tabla;

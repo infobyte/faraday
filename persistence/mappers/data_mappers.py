@@ -210,6 +210,7 @@ class NoteMapper(ModelObjectMapper):
     def unserialize(self, note, doc):
         super(NoteMapper, self).unserialize(note, doc)
         note.setText(doc.get("text"))
+        return note
 
 
 class VulnMapper(ModelObjectMapper):
@@ -234,6 +235,7 @@ class VulnMapper(ModelObjectMapper):
         vuln.setDesc(doc.get("desc"))
         vuln.setSeverity(doc.get("severity"))
         vuln.setRefs(doc.get("refs"))
+        return vuln
 
     def findForParent(self, obj_id):
         return self.findByFilter(parent=obj_id, type=self.mapped_class.__name__)
@@ -264,15 +266,16 @@ class VulnWebMapper(VulnMapper):
 
     def unserialize(self, vuln_web, doc):
         super(VulnWebMapper, self).unserialize(vuln_web, doc)
-        vuln_web.getWebsite(doc.get("website"))
-        vuln_web.getPath(doc.get("path"))
-        vuln_web.getRequest(doc.get("request"))
-        vuln_web.getResponse(doc.get("response"))
-        vuln_web.getMethod(doc.get("method"))
-        vuln_web.getPname(doc.get("pname"))
-        vuln_web.getParams(doc.get("params"))
-        vuln_web.getQuery(doc.get("query"))
-        vuln_web.getCategory(doc.get("category"))
+        vuln_web.setWebsite(doc.get("website"))
+        vuln_web.setPath(doc.get("path"))
+        vuln_web.setRequest(doc.get("request"))
+        vuln_web.setResponse(doc.get("response"))
+        vuln_web.setMethod(doc.get("method"))
+        vuln_web.setPname(doc.get("pname"))
+        vuln_web.setParams(doc.get("params"))
+        vuln_web.setQuery(doc.get("query"))
+        vuln_web.setCategory(doc.get("category"))
+        return vuln_web
 
     def findForParent(self, obj_id):
         return self.findByFilter(parent=obj_id, type=self.mapped_class.__name__)
@@ -298,6 +301,7 @@ class CredMapper(ModelObjectMapper):
         super(CredMapper, self).unserialize(cred, doc)
         cred.setUsername(doc.get("username"))
         cred.setPassword(doc.get("password"))
+        return cred
 
     def findForParent(self, obj_id):
         return self.findByFilter(parent=obj_id, type=self.mapped_class.__name__)
@@ -317,6 +321,7 @@ class CommandRunMapper(AbstractMapper):
     def unserialize(self, cmd, doc):
         for k, v in doc.items():
             setattr(cmd, k, v)
+        return cmd
 
     def findForWorkspace(self, wname):
         return self.findByFilter(parent=wname, type=self.mapped_class.__name__)
@@ -347,6 +352,7 @@ class WorkspaceMapper(AbstractMapper):
         workspace.setCustomer(doc.get("customer"))
         workspace.setStartDate(doc.get("sdate"))
         workspace.setFinishDate(doc.get("fdate"))
+        return workspace
 
 
 Mappers = {

@@ -17,7 +17,6 @@ from mockito import mock, when, any
 
 from model.hosts import Host, Interface, Service
 from model.workspace import Workspace
-from persistence.mappers.data_mappers import WorkspaceMapper
 from persistence.mappers.abstract_mapper import NullPersistenceManager
 from persistence.mappers.mapper_manager import MapperManager
 

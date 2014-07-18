@@ -30,7 +30,7 @@ class Workspace(object):
     open a new one.
     """
 
-    def __init__(self, name, manager=None, shared=CONF.getAutoShareWorkspace()):
+    def __init__(self, name, desc, manager=None, shared=CONF.getAutoShareWorkspace()):
         self.name = name
         self.description = ""
         self.customer = ""

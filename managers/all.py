@@ -62,8 +62,12 @@ class PersistenceManagerFactory(object):
     def setInstance(manager):
         PersistenceManagerFactory.instance = manager 
 
+
 class PersistenceManager(object):
-    def waitForDBChange(self, db_name, since = 0, timeout = 15000):
+    def __init__(self, db_name):
+        self.db_name = db_name
+
+    def waitForDBChange(self, since=0, timeout=15000):
         time.sleep(timeout)
         return False
 
@@ -72,7 +76,8 @@ class PersistenceManager(object):
 
 class FSManager(PersistenceManager):
     """ This is a file system manager for the workspace, it will load from the provided FS"""
-    def __init__(self, path=CONF.getPersistencePath()):
+    def __init__(self, db_name, path=CONF.getPersistencePath()):
+        super(FSManager, self).__init__(db_name)
         self._path = path
         if not os.path.exists(self._path):
             os.mkdir(self._path)
@@ -92,14 +97,6 @@ class FSManager(PersistenceManager):
     def removeWorkspace(self, name):
         shutil.rmtree(os.path.join(self._path))
 
-    def removeObject(self, obj_id):
-        path = os.path.join(self._path, "%s.json" % obj_id)
-        if os.path.isfile(path):
-            os.remove(path)
-
-    def saveDocument(self, aWorkspaceName, aDocumentDict):
-        pass 
-
 
 class NoCouchDBError(Exception): pass
 
@@ -118,7 +115,8 @@ class NoConectionServer(object):
 class CouchdbManager(PersistenceManager):
     """ This is a couchdb manager for the workspace, it will load from the 
     couchdb databases"""
-    def __init__(self, uri):
+    def __init__(self, uri, db_name):
+        super(CouchdbManager, self).__init__(db_name)
         self._last_seq_ack = 0
         getLogger(self).debug("Initializing CouchDBManager for url [%s]" % uri)
         self._lostConnection = False
@@ -226,10 +224,10 @@ class CouchdbManager(PersistenceManager):
         self._getDb(aWorkspaceName)[documentId] = aDocument
 
     @trap_timeout
-    def saveDocument(self, aWorkspaceName, aDocument):
-        self.incrementSeqNumber(aWorkspaceName)
-        getLogger(self).debug("Saving document in remote workspace %s" % aWorkspaceName)
-        return self._getDb(aWorkspaceName).save_doc(aDocument, use_uuids = True, force_update = True)
+    def saveDocument(self, aDocument):
+        self.incrementSeqNumber(self.db_name)
+        getLogger(self).debug("Saving document in remote workspace %s" % self.db_name)
+        return self._getDb(self.db_name).save_doc(aDocument, use_uuids=True, force_update=True)
 
     def _getDb(self, aWorkspaceName):
         if not self.__dbs.has_key(aWorkspaceName):
@@ -250,9 +248,12 @@ class CouchdbManager(PersistenceManager):
         return workspacedb
 
     @trap_timeout
-    def getDocument(self, aWorkspaceName, documentId):
-        getLogger(self).debug("Getting document for workspace [%s]" % aWorkspaceName)
-        return self._getDb(aWorkspaceName).get(documentId)
+    def getDocument(self, documentId):
+        getLogger(self).debug("Getting document for workspace [%s]" % self.db_name)
+        try:
+            return self._getDb(self.db_name).get(documentId)
+        except ResourceNotFound:
+            return None
 
     @trap_timeout
     def getDeletedDocument(self, aWorkspaceName, documentId, documentRev):
@@ -347,9 +348,9 @@ class CouchdbManager(PersistenceManager):
         return self.__serv.delete_db(workspace_name)
 
     @trap_timeout
-    def remove(self, workspace, host_id):
-        self.incrementSeqNumber(workspace)
-        self.__dbs[workspace].delete_doc(host_id)
+    def remove(self, doc_id):
+        self.incrementSeqNumber(self.db_name)
+        self.__dbs[self.db_name].delete_doc(doc_id)
 
     @trap_timeout
     def compactDatabase(self, aWorkspaceName):
@@ -403,7 +404,6 @@ class ViewsManager(object):
     def addViewForFS(self, design_doc, workspaceDB):
         designer.fs.push(design_doc, workspaceDB, encode_attachments = False)
 
-
     def getAvailableViews(self):
         return self.vw.get_all_views()
 
@@ -415,6 +415,12 @@ class ViewsManager(object):
                 designdoc = workspaceDB.get(doc['id'])
                 views.update(designdoc.get("views", []))
         return views
+
+    def addViews(self, workspaceDB):
+        installed_views = self.getViews(workspaceDB)
+        for v in self.getAvailableViews():
+            if v not in installed_views:
+                self.addView(v, workspaceDB)
 
 class ViewsListObject(object):
     """ Representation of the FS Views """

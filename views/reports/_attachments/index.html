@@ -88,21 +88,15 @@ $(document).ready(function() {
                       $("#sec #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
 		      // navegación entre WSs
         	      if(window.location.hash === "" && counter === 0) {
-			window.location.hash = db;
-		      }
+        			window.location.hash = db;
+        		   }
         	      counter +=1;
 	        });
 	        if(counter < 1) { 
 	        	$("#reportes").empty();
 	              $("#reportes").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
 		}
-		// seteo el WS actual
-		//var current = window.location.hash.substr(1);
-		// armo los iframes que le corresponden
-        	//var iframes = get_iframes(current);
-		// los cargo
-		//$("#reportes").append(iframes);
-	      }
+      }
 	});
 	// navegacion entre WSs en el dropdown
 	$(document).on("click", "a.ws", function(e) {
@@ -115,6 +109,7 @@ $(document).ready(function() {
 		location.reload();
 	});
 
+//get workspace
 	dominio = location.href;
 	space = dominio.split("#");
 	workspace = space[1];
@@ -122,103 +117,93 @@ $(document).ready(function() {
 	var ret = "<div id=\"workspace-"+workspace+"\" class=\"workspace\"></div><!-- .workspace -->";
 
 	$('#reportes').append(ret);
+	$('.workspace').append("<div class='reports'></div>");
 
-	$('.workspace').append("<div class='iframes'></div>");
+    var byservices = "reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices";
+    var summarized = "reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized";
+    var vulns = "reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns";
+    var commands = "reports/commands.html?workspace="+workspace+"&design=commands&view=list";
+    var compound = "reports/compound.html?workspace="+workspace+"&design=hosts&view=compound";
 
-var byservices = "http://192.168.10.210:5984/reports/_design/reports/reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices";
-var summarized = "http://192.168.10.210:5984/reports/_design/reports/reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized";
-var vulns = "http://192.168.10.210:5984/reports/_design/reports/reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns";
-var commands = "http://192.168.10.210:5984/reports/_design/reports/reports/commands.html?workspace="+workspace+"&design=commands&view=list";
-var compound = "http://192.168.10.210:5984/reports/_design/reports/reports/compound.html?workspace="+workspace+"&design=hosts&view=compound";
-	
-	$('.iframes').load(compound, function (){
+
+
+	/*$('.reports').load(compound, function (){
 	dominio = compound;
-
+    //get the link parameters
 	space = dominio.split("=");
-
 	workspace = space[1].split("&");
 	workspace = workspace[0];
-
 	design = space[2].split("&");
 	design = design[0];
-
 	view = space[3];
 
-	var divs = traer(workspace, view, design);
-	var pasarVariables = pasar_variables(workspace, view, design); 
+	   var divs = get_report_div(workspace, view, design);
+	   var sendVariables = send_variables(workspace, view, design); 
 	$(".workspace").prepend(divs);
-	left = "<div class=\"left\"><h2>Viewing "+workspace+"</h2></div>";
+	   left = "<div class=\"left\"><h2>Viewing "+workspace+"</h2></div>";
 	$(".workspace").prepend(left);
 	});
 
-	$('.iframes').load(byservices, function (){
+	$('.reports').load(byservices, function (){
 	dominio = byservices;
 
+//get the link parameters
 	space = dominio.split("=");
-
 	workspace = space[1].split("&");
 	workspace = workspace[0];
-
 	design = space[2].split("&");
 	design = design[0];
-
 	view = space[3];
 
-	divs = traer(workspace, view, design);
+	divs = get_report_div(workspace, view, design);
 	$("#reportes").append(divs);
 	});
 
-	$('.iframes').load(commands, function (){
+	$('.reports').load(commands, function (){
 	dominio = commands;
 
+//get the link parameters
 	space = dominio.split("=");
-
 	workspace = space[1].split("&");
 	workspace = workspace[0];
-
 	design = space[2].split("&");
 	design = design[0];
-
 	view = space[3];
 
-	divs = traer(workspace, view, design);
+	divs = get_report_div(workspace, view, design);
 	$("#reportes").append(divs);
 	});
 
 
-	$('.iframes').load(summarized, function (){
+	$('.reports').load(summarized, function (){
 	dominio = summarized;
 
+//get the link parameters
 	space = dominio.split("=");
-
 	workspace = space[1].split("&");
 	workspace = workspace[0];
-
 	design = space[2].split("&");
 	design = design[0];
-
 	view = space[3];
 
-	divs = traer(workspace, view, design);
+	divs = get_report_div(workspace, view, design);
 	$("#reportes").append(divs);
 	});
 
-	$('.iframes').load(vulns, function (){
+	$('.reports').load(vulns, function (){
 	dominio = vulns;
 
+//get the link parameters
 	space = dominio.split("=");
-
 	workspace = space[1].split("&");
 	workspace = workspace[0];
-
 	design = space[2].split("&");
 	design = design[0];
-
 	view = space[3];
 
-	var divv = traer(workspace, view, design);
+	var divv = get_report_div(workspace, view, design);
 	$("#reportes").append(divv);
-	});
+	});*/
 });
 
 setTimeout(function() {
@@ -228,7 +213,7 @@ setTimeout(function() {
 </script>
 
 <script type="text/javascript">
-function pasar_variables(workspace,view,design){
+function send_variables(workspace,view,design){
 	function load_all_hosts() {
 		var iurl	= "/" + workspace + "/_design/" + design + "/_view/byinterfacecount?group=true";
 		var hurl	= "/" + workspace + "/_design/" + design + "/_view/hosts";
@@ -408,4 +393,4 @@ $(document).on('click', 'a.host', function(e) {
 }
 </script>
 </body>
-</html>
+</html>    

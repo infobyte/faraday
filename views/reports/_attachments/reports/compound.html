@@ -1,25 +1,13 @@
-<!-- Faraday Penetration Test IDE &#45; Community Version -->
-<!-- Faraday Penetration Test IDE &#45; Community Version -->
-<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
-<!-- See the file 'doc/LICENSE' for the license information -->
-<!--<html>-->
 <head>
-	<!--<title>By Host report</title>-->
 	<script type="text/javascript" src="../script/app.js"></script>
-	<script type="text/javascript" src="../script/couch.js"></script>
 	<script type="text/javascript" src="/_utils/script/json2.js"></script>
 	<script type="text/javascript" src="/_utils/script/jquery.js"></script>
 	<script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
-	<script src="../script/common.js"></script>
-	<link rel="stylesheet" type="text/css" href="../estilos.css" />
 </head>
-<!--<body style="background: #E8EFF0;">-->
 <div id="hosts-main">
-<div class="iframe">
-</div><!-- .seccion2 -->
 </div><!-- .hosts-main -->
 <script type="text/javascript">
-function traer(workspace, view, design){
+function get_report_div(workspace, view, design){
 	function load_all_hosts() {
 		var iurl	= "/" + workspace + "/_design/" + design + "/_view/byinterfacecount?group=true";
 		var hurl	= "/" + workspace + "/_design/" + design + "/_view/hosts";

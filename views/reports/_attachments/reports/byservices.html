@@ -1,10 +1,5 @@
-<!-- Faraday Penetration Test IDE &#45; Community Version -->
-<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
-<!-- See the file 'doc/LICENSE' for the license information -->
-<div class="iframe">
-</div>
 <script type="text/javascript">
-function traer(workspace, view,design){
+function get_report_div(workspace, view,design){
 	json_url = "/" + workspace + "/_design/" + design + "/_view/" + view+"?group=true";
  var divs = "";
   $.ajaxSetup({

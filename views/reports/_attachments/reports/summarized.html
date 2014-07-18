@@ -1,21 +1,5 @@
-<!-- Faraday Penetration Test IDE &#45; Community Version -->
-<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
-<!-- See the file 'doc/LICENSE' for the license information -->
-<!--<html>
-<head>
-	<title>Summarized report</title>
-	<script type="text/javascript" src="../script/app.js"></script>
-	<script type="text/javascript" src="/_utils/script/json2.js"></script>
-	<script type="text/javascript" src="/_utils/script/jquery.js"></script>
-	<script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
-	<script src="../script/common.js"></script>
-	<link rel="stylesheet" type="text/css" href="../estilos.css" />
-</head>
-<body style="background: #E8EFF0;">-->
-<div class="iframe">
-</div>
 <script type="text/javascript">
-function traer(workspace, view,design){
+function get_report_div(workspace, view,design){
 	json_url = "/" + workspace + "/_design/" + design + "/_view/" + view+"?group=true";
   var divs = "";
   $.ajaxSetup({
@@ -24,7 +8,6 @@ function traer(workspace, view,design){
 	$.getJSON(json_url, function(data) {
 		var colores = ["rojo", "negro"];
 		var i = 0;
-		//var divs = "";
 		divs += "<div class='seccion2'><h2>Workspace summarized report</h2>";
 		$.each(data.rows, function(n, obj){
 			divs += "<div class=\"columna unquinto\"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj.value+"</div><div class=\"txt texto-blanco\">"+obj.key+"</div></section></article></div>";

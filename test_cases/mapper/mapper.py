@@ -1162,6 +1162,74 @@ class CompositeMapperTestSuite(unittest.TestCase):
             None,
             "Service efgh shouldn't exist anymore")
 
+    def test_load_composite_one_workspace_two_hosts(self):
+
+        doc_ws = {
+            "type": "Workspace",
+            "_id": "test_ws",
+            "name": "test_ws",
+            "description": "some description",
+            "customer": "Infobyte",
+            "sdate": None,
+            "fdate": None
+        }
+
+        doc_host1 = {
+            "type": "Host",
+            "_id": "1234",
+            "name": "pepito",
+            "owned": False,
+            "parent": "test_ws",
+            "owner": None,
+            "description": "some description",
+            "metadata": None,
+            "os": "linux",
+            "default_gateway": None
+        }
+
+        doc_host2 = {
+            "type": "Host",
+            "_id": "5678",
+            "name": "coquito",
+            "owned": False,
+            "parent": "test_ws",
+            "owner": None,
+            "description": "some description",
+            "metadata": None,
+            "os": "windows",
+            "default_gateway": None
+        }
+
+        pmanager = mock(NullPersistenceManager)
+        when(pmanager).getDocument("test_ws").thenReturn(doc_ws)
+        when(pmanager).getDocument("1234").thenReturn(doc_host1)
+        when(pmanager).getDocument("5678").thenReturn(doc_host2)
+        when(pmanager).getDocsByFilter(any(str), any(str)).thenReturn([])
+        when(pmanager).getDocsByFilter("test_ws", "Host").thenReturn(["1234", "5678"])
+        self.mapper_manager.createMappers(pmanager)
+
+        ws = self.mapper_manager.find("test_ws")
+        self.assertNotEquals(
+            ws,
+            None,
+            "Existent Workspace shouldn't be None")
+
+        self.assertEquals(
+            len(ws.getHosts()),
+            2,
+            "Workspace should have two hosts")
+
+        hosts_ids = [host.getID() for host in ws.getHosts()]
+        self.assertIn(
+            "1234",
+            hosts_ids,
+            "Host '1234' should be one of the workspace's hosts")
+
+        self.assertIn(
+            "5678",
+            hosts_ids,
+            "Host '5678' should be one of the workspace's hosts")
+
 
 if __name__ == '__main__':
     unittest.main()

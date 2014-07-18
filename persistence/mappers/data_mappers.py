@@ -352,7 +352,14 @@ class WorkspaceMapper(AbstractMapper):
         workspace.setCustomer(doc.get("customer"))
         workspace.setStartDate(doc.get("sdate"))
         workspace.setFinishDate(doc.get("fdate"))
+        self.setHosts(workspace)
         return workspace
+
+    def setHosts(self, workspace):
+        hosts = self.mapper_manager.getMapper(
+            Host.__name__).findForWorkspace(workspace.getID())
+        hosts_dict = {k: v for (k, v) in [(host.getID(), host) for host in hosts]}
+        workspace.setHosts(hosts_dict)
 
 
 Mappers = {

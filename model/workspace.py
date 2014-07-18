@@ -10,26 +10,16 @@ import os
 import model.api
 import model
 import time
-import datetime
 from model.report import ReportManager
-from model.diff import HostDiff
-from model.container import ModelObjectContainer, CouchedModelObjectContainer
-from model.conflict import Conflict
-from model.hosts import Host
 from model.guiapi import notification_center as notifier
-
-
-import mockito
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
-import json
 import shutil
-
 from persistence.orm import WorkspacePersister
+from managers.all import PersistenceManagerFactory, FSManager
 
-from managers.all import PersistenceManagerFactory, CouchdbManager, FSManager
 
 class Workspace(object):
     """
@@ -38,38 +28,63 @@ class Workspace(object):
     history for all users working on the same workspace.
     It has a list with all existing workspaces just in case user wants to
     open a new one.
-    """ 
-    
-    def __init__(self, name, manager, shared=CONF.getAutoShareWorkspace()):
-        self.name                   = name
-        self.description            = ""
-        self.customer               = ""
-        self.start_date             = datetime.date(1,1,1)
-        self.finish_date            = datetime.date(1,1,1)
-        self.id                     = name                                                              
-        self._command_history       = None
-        self._model_controller      = None
-        self._workspace_manager     = manager
-        self.shared                 = shared                                      
+    """
 
-        self._path                  = os.path.join(CONF.getPersistencePath(), name)
-        self._persistence_excluded_filenames = ["categories.xml", "workspace.xml"]
+    def __init__(self, name, manager=None, shared=CONF.getAutoShareWorkspace()):
+        self.name = name
+        self.description = ""
+        self.customer = ""
+        self.start_date = time.time()
+        self.finish_date = time.time()
+        self._id = name
+        self._command_history = None
+        self.shared = shared
+        self.hosts = {}
 
-
-        self.container = ModelObjectContainer()
-        self.__conflicts            = []
-
-        self._object_factory = model.common.factory
-        self._object_factory.register(model.hosts.Host)
-        
         self._report_path = os.path.join(CONF.getReportPath(), name)
-        self._report_ppath = os.path.join(self._report_path,"process")
-        
+        self._report_ppath = os.path.join(self._report_path, "process")
+
         if not os.path.exists(self._report_path):
             os.mkdir(self._report_path)
-         
+
         if not os.path.exists(self._report_ppath):
             os.mkdir(self._report_ppath)
+
+    def getID(self):
+        return self._id
+
+    def setID(self, id):
+        self._id = id
+
+    def getName(self):
+        return self.name
+
+    def setName(self, name):
+        self.name = name
+
+    def getDescription(self):
+        return self.description
+
+    def setDescription(self, desc):
+        self.description = desc
+
+    def getCustomer(self):
+        return self.customer
+
+    def setCustomer(self, customer):
+        self.customer = customer
+
+    def getStartDate(self):
+        return self.start_date
+
+    def setStartDate(self, sdate):
+        self.start_date = sdate
+
+    def getFinishDate(self):
+        return self.finish_date
+
+    def setFinishDate(self, fdate):
+        self.finish_date = fdate
 
     def _notifyWorkspaceNoConnection(self):
         notifier.showPopup("Couchdb Connection lost. Defaulting to memory. Fix network and try again in 5 minutes.")
@@ -77,288 +92,38 @@ class Workspace(object):
     def getReportPath(self):
         return self._report_path
 
-    def saveObj(obj):raise NotImplementedError("Abstract method")
-    def delObj(obj):raise NotImplementedError("Abstract method")
-
-    def remove(self, host):
-        del self.container[host.getID()]
-        self.delObj(host)
-
-    def save(self): raise NotImplementedError("Abstract method")
-    def load(self): raise NotImplementedError("Abstract method")
-
-        
-    def setModelController(self, model_controller):
-        self._model_controller = model_controller
-
-    def getContainee(self):
-        return self.container
-
-
     def set_path(self, path):
         self._path = path
-    
+
     def get_path(self):
         return self._path
-    
 
     def set_report_path(self, path):
         self._report_path = path
         if not os.path.exists(self._report_path):
             os.mkdir(self._report_path)
-        self._workspace_manager.report_manager.path = self.report_path
+        #self._workspace_manager.report_manager.path = self.report_path
 
     def get_report_path(self):
         return self._report_path
-    
+
     path = property(get_path, set_path) 
     report_path = property(get_report_path, set_report_path)
-    
-                              
-            
-                                                           
-                                     
-            
-             
-     
-                                    
-            
-                                                           
-            
-             
-    
+
     def isActive(self):
         return self.name == self._workspace_manager.getActiveWorkspace().name
 
-    def getAllHosts(self):
-        return self._model_controller.getAllHosts()
+    def getHosts(self):
+        return self.hosts.values()
+
+    def setHosts(self, hosts):
+        self.hosts = hosts
 
     def getDeletedHosts(self):
         return self._model_controller.getDeletedHosts()
-    
+
     def cleanDeletedHosts(self):
         self._model_controller.cleanDeletedHosts()
-
-    def verifyConsistency(self):
-                                                        
-        hosts = self.getAllHosts()
-        hosts_counter = 0
-        for h1 in hosts[:-1]:
-            hosts_counter += 1
-            for h2 in hosts[hosts_counter:]:
-                if h1 == h2 :
-                    diff = HostDiff(h1, h2)
-                    if diff.existDiff():
-                        self.addConflict(Conflict(h1, h2))
-                                           
-                                                                     
-        return len(self.getConflicts())
-
-
-    def getDataManager(self):
-        return self._dmanager
-
-    def addConflict(self, conflict):
-        self.__conflicts.append(conflict)
-
-    def getConflicts(self):
-        return self.__conflicts
-
-    def clearConflicts(self):
-        self.__conflicts.clear()
-
-    def resolveConflicts(self):
-        pass
-
-    def conflictResolved(self, conflict):
-        self.__conflicts.remove(conflict)
-
-class WorkspaceOnFS(Workspace):
-
-    def __init__(self, name, manager, shared=CONF.getAutoShareWorkspace()):
-        Workspace.__init__(self, name, manager, shared) 
-        self._dmanager = FSManager(self._path)
-
-    @staticmethod
-    def isAvailable():
-        return True
-
-    def saveObj(self, obj):
-        host = obj.getHost()
-        try: 
-            model.api.devlog("Saving host to FileSystem")
-            model.api.devlog("Host, %s" % host.getID())
-            host_as_dict = host._toDict(full=True)
-            filepath = os.path.join(self._path, host.getID() + ".json")
-            with open(filepath, "w") as outfile:
-                json.dump(host_as_dict, outfile, indent = 2) 
-        except Exception:
-            model.api.devlog("Failed while persisting workspace to filesystem, enough perms and space?")
-
-    def delObj(self, obj):
-        if obj.class_signature == "Host":
-            self._dmanager.removeObject(obj.getID())
-            return
-        host = obj.getHost()
-        self.saveObj(host)
-
-    def syncFiles(self):
-        self.load()
-
-    def load(self):
-                                                       
-        files = os.listdir(self._path)
-        files = filter(lambda f: f.endswith(".json") and f not in
-                self._persistence_excluded_filenames, files)
-        modelobjectcontainer = self.getContainee()
-        for filename in files:
-            newHost = self.__loadHostFromFile(filename)
-            modelobjectcontainer[newHost.getID()] = newHost
-        notifier.workspaceLoad(self.getAllHosts())
-
-    def __loadHostFromFile(self, filename):
-        if os.path.basename(filename) in self._persistence_excluded_filenames:
-            model.api.devlog("skipping file %s" % filename)
-            return
-        else:
-            model.api.devlog("loading file %s" % filename)
-            
-        infilepath = os.path.join(self._path, filename)
-        host_dict = {}
-        try:
-            with open(infilepath) as infile: 
-                host_dict = json.load(infile) 
-        except Exception, e:
-            model.api.log("An error ocurred while parsing file %s\n%s" %
-                     (filename, str(e)), "ERROR")
-            return mockito.mock()
-        
-                                                                       
-                                                                     
-        try:
-            newHost = Host(name=None, dic=host_dict)
-                                        
-            return newHost
-        except Exception, e:
-            model.api.log("Could not load host from file %s" % filename, "ERROR")
-            model.api.devlog(str(e))
-            return None
-
-
-class WorkspaceOnCouch(Workspace):
-    """A Workspace that is syncronized in couchdb"""
-    def __init__(self, name, manager, *args):
-        super(WorkspaceOnCouch, self).__init__(name, manager)
-        self._is_replicated = replicated = CONF.getCouchIsReplicated()
-        self.cdm  = self._dmanager = manager.couchdbmanager
-            
-        if not self.cdm.workspaceExists(name):
-            self.cdm.addWorkspace(name)
-            if self.is_replicated():
-                self.cdm.replicate(self.name, *self.validate_replic_urls(CONF.getCouchReplics()), create_target = True)
-
-        self.cdm.syncWorkspaceViews(name)
-
-        self.container = CouchedModelObjectContainer(name, self.cdm)
-       
-
-    def syncFiles(self):
-        self.load()
-
-    @staticmethod
-    def isAvailable():
-        return CouchdbManager.testCouch(CONF.getCouchURI())
-
-    def is_replicated(self):
-        return self._is_replicated
-
-    def validate_replic_urls(self, urlsString):
-                                      
-        urls = urlsString.split(";") if urlsString is not None else ""
-                                                            
-        valid_replics = []
-        for url in urls:
-            try:
-                self.cdm.testCouchUrl(url)
-                valid_replics.append(url)
-            except:
-                pass
-
-        return valid_replics
-
-    def saveObj(self, obj):
-        self.cdm.saveDocument(self.name, obj._toDict())
-        self.cdm.compactDatabase(self.name)
-
-    def delObj(self, obj):
-        obj_id = obj.ancestors_path()
-        if self._dmanager.checkDocument(self.name, obj_id):
-            self._dmanager.remove(self.name, obj_id)
-  
-    def save(self): 
-        model.api.devlog("Saving workspaces")
-        for host in self.getContainee().itervalues():
-            host_as_dict = host.toDict()
-            for obj_dic in host_as_dict:
-                self.cdm.saveDocument(self.name, obj_dic)
-                                            
-
-    def load(self):
-        self._model_controller.setSavingModel(True)
-        hosts = {}
-
-        def find_leaf(path, sub_graph = hosts):
-            for i in path:
-                if len(path) > 1:
-                    return find_leaf(path[1:], sub_graph['subs'][i])
-                else:
-                    return sub_graph
-        try:
-            t = time.time()
-            model.api.devlog("load start: %s" % str(t))
-            docs = [i["doc"] for i in self.cdm.workspaceDocumentsIterator(self.name)]
-            model.api.devlog("time to get docs: %s" % str(time.time() - t))
-            t = time.time()
-            for d in docs:
-                id_path = d['_id'].split('.')
-                if d['type'] == "Host":
-                    hosts[d['_id']] = d
-                    subs = hosts.get('subs', {})
-                    subs[d['_id']] = d
-                    hosts['subs'] = subs
-                    continue
-
-                leaf = {}
-	        try:
-                    leaf = find_leaf(id_path)
-                except Exception as e:
-                    model.api.devlog('Object parent not found, skipping: %s' % '.'.join(id_path))
-                    continue
-
-                subs = leaf.get('subs', {})
-                subs[d['obj_id']] = d
-                leaf['subs'] = subs
-
-                key = "%s" % d['type']
-                key = key.lower()
-                sub = leaf.get(key, {})
-                sub[d['obj_id']] = d
-                leaf[key] = sub
-            model.api.devlog("time to reconstruct: %s" % str(time.time() - t))
-            t = time.time()
-
-            self.container.clear()
-            for k, v in hosts.items():
-                if k is not "subs":
-                    h = Host(name=None, dic=v)
-                    self.container[k] = h
-            model.api.devlog("time to fill container: %s" % str(time.time() - t))
-            t = time.time()
-        except Exception, e:
-            model.api.devlog("Exception during load: %s" % e)
-        finally:
-            self._model_controller.setSavingModel(False)
-            notifier.workspaceLoad(self.getAllHosts())
 
 
 class WorkspaceManager(object):

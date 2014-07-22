@@ -23,7 +23,7 @@ class WorkspaceManager(object):
 
     def createWorkspace(self, name, desc, dbtype):
         workspace = Workspace(name, desc)
-        dbConnector = self.dbManager.dbCreate(name, dbtype)
+        dbConnector = self.dbManager.createDb(name, dbtype)
         if dbConnector:
             self.mappersManager.createMappers(dbConnector)
             self.mappersManager.saveObj(workspace)
@@ -37,4 +37,8 @@ class WorkspaceManager(object):
             workspace = self.mappersManager.findObject(name)
             return workspace
         return False
+
+    def removeWorkspace(self, name):
+        pass
+
 

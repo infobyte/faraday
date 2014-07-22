@@ -26,11 +26,11 @@ class UnitTestWorkspaceManager(unittest.TestCase):
     def testCreateWorkspaceDBManagerInteract(self):
         dbManager = mock()
         dbConnector = mock()
-        when(dbManager).dbCreate('test_workspace', DBTYPE.FS).thenReturn(dbConnector)
+        when(dbManager).createDb('test_workspace', DBTYPE.FS).thenReturn(dbConnector)
         workspace_manager = WorkspaceManager(dbManager, mock())
         workspace_manager.createWorkspace('test_workspace', 'a test workspace',
                                         DBTYPE.FS)
-        verify(dbManager).dbCreate('test_workspace', DBTYPE.FS)
+        verify(dbManager).createDb('test_workspace', DBTYPE.FS)
 
     def testCreateWorkspaceCreateMappersAndWorkspace(self):
         dbManager = mock()
@@ -39,7 +39,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         mappers = mock()
 
         when(mappersManager).saveObj(any()).thenReturn(True) 
-        when(dbManager).dbCreate('test_workspace', DBTYPE.FS).thenReturn(dbConnector)
+        when(dbManager).createDb('test_workspace', DBTYPE.FS).thenReturn(dbConnector)
         when(mappersManager).createMappers(dbConnector).thenReturn(True) 
 
         workspace_manager = WorkspaceManager(dbManager, mappersManager)
@@ -60,14 +60,14 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         mappers = mock()
 
         when(mappersManager).saveObj(any()).thenReturn(True) 
-        when(dbManager).dbCreate('test_workspace', DBTYPE.FS).thenReturn(False)
+        when(dbManager).createDb('test_workspace', DBTYPE.FS).thenReturn(False)
         when(mappersManager).createMappers(dbConnector).thenReturn(True) 
 
         workspace_manager = WorkspaceManager(dbManager, mappersManager)
         workspace = workspace_manager.createWorkspace('test_workspace', 'a test workspace',
                                         DBTYPE.FS)
 
-        verify(dbManager).dbCreate('test_workspace', DBTYPE.FS)
+        verify(dbManager).createDb('test_workspace', DBTYPE.FS)
         verify(mappersManager, times=0).createMappers(dbConnector)
         verify(mappersManager, times=0).saveObj(any())
 
@@ -111,7 +111,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         self.assertFalse(opened_workspace, 'Workspace retrieved but non existing')
 
 
-    def testRemoveWorkspace(self):
+    def _testRemoveWorkspace(self):
         dbManager = mock()
         mappersManager = mock()
         dbConnector = mock()
@@ -124,8 +124,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         when(mappersManager).findObject('test_workspace').thenReturn(workspace)
 
         workspace_manager = WorkspaceManager(dbManager, mappersManager)
-
-        opened_workspace = workspace_manager.openWorkspace('test_workspace')
+        opened_workspace = workspace_manager.removeWorkspace('test_workspace')
 
         verify(dbManager).dbOpen('test_workspace')
         verify(mappersManager).createMappers(dbConnector)

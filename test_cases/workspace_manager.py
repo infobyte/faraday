@@ -111,7 +111,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         self.assertFalse(opened_workspace, 'Workspace retrieved but non existing')
 
 
-    def _testRemoveWorkspace(self):
+    def testRemoveWorkspace(self):
         dbManager = mock()
         mappersManager = mock()
         dbConnector = mock()
@@ -119,17 +119,13 @@ class UnitTestWorkspaceManager(unittest.TestCase):
 
         workspace = Workspace('test_workspace', 'a desc')
 
-        when(dbManager).dbOpen('test_workspace').thenReturn(dbConnector)
-        when(mappersManager).createMappers(dbConnector).thenReturn(True) 
-        when(mappersManager).findObject('test_workspace').thenReturn(workspace)
+        when(dbManager).removeDb('test_workspace').thenReturn(True)
 
         workspace_manager = WorkspaceManager(dbManager, mappersManager)
-        opened_workspace = workspace_manager.removeWorkspace('test_workspace')
+        remove_ret = workspace_manager.removeWorkspace('test_workspace')
 
-        verify(dbManager).dbOpen('test_workspace')
-        verify(mappersManager).createMappers(dbConnector)
-        verify(mappersManager).findObject('test_workspace')
-        self.assertEquals(opened_workspace.getName(), 'test_workspace')
+        verify(dbManager).removeDb('test_workspace')
+        self.assertTrue(remove_ret, 'bbdd not removed')
 
 
 if __name__ == '__main__':

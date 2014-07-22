@@ -39,6 +39,6 @@ class WorkspaceManager(object):
         return False
 
     def removeWorkspace(self, name):
-        pass
+        return self.dbManager.removeDb(name)
 
 

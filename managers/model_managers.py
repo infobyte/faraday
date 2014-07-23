@@ -17,15 +17,17 @@ class WorkspaceManager(object):
         * Workspace opening
         * Active Workspace switching"""
 
-    def __init__(self, dbManager, mappersManager, *args, **kwargs):
+    def __init__(self, dbManager, mappersManager, changesManager,*args, **kwargs):
         self.dbManager = dbManager
         self.mappersManager = mappersManager
+        self.changesManager = changesManager
 
     def createWorkspace(self, name, desc, dbtype):
         workspace = Workspace(name, desc)
         dbConnector = self.dbManager.createDb(name, dbtype)
         if dbConnector:
             self.mappersManager.createMappers(dbConnector)
+            dbConnector.setChangesCallback(self.changesManager)
             self.mappersManager.saveObj(workspace)
             return workspace
         return False
@@ -33,6 +35,7 @@ class WorkspaceManager(object):
     def openWorkspace(self, name):
         dbConnector = self.dbManager.dbOpen(name)
         if dbConnector:
+            dbConnector.setChangesCallback(self.changesManager)
             self.mappersManager.createMappers(dbConnector)
             workspace = self.mappersManager.findObject(name)
             return workspace

@@ -20,14 +20,16 @@ class UnitTestWorkspaceManager(unittest.TestCase):
     """ Unit tests for WorkspaceManager """
 
     def testCreateWorkspaceManager(self):
-        workspace_manager = WorkspaceManager(mock(), mock())
+        workspace_manager = WorkspaceManager(mock(), mock(), mock())
         self.assertIsNotNone(workspace_manager)
 
     def testCreateWorkspaceDBManagerInteract(self):
         dbManager = mock()
         dbConnector = mock()
+        changesManager = mock()
+
         when(dbManager).createDb('test_workspace', DBTYPE.FS).thenReturn(dbConnector)
-        workspace_manager = WorkspaceManager(dbManager, mock())
+        workspace_manager = WorkspaceManager(dbManager, mock(), changesManager)
         workspace_manager.createWorkspace('test_workspace', 'a test workspace',
                                         DBTYPE.FS)
         verify(dbManager).createDb('test_workspace', DBTYPE.FS)
@@ -37,12 +39,13 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         mappersManager = mock()
         dbConnector = mock()
         mappers = mock()
+        changesManager = mock()
 
         when(mappersManager).saveObj(any()).thenReturn(True) 
         when(dbManager).createDb('test_workspace', DBTYPE.FS).thenReturn(dbConnector)
         when(mappersManager).createMappers(dbConnector).thenReturn(True) 
 
-        workspace_manager = WorkspaceManager(dbManager, mappersManager)
+        workspace_manager = WorkspaceManager(dbManager, mappersManager, changesManager)
         workspace = workspace_manager.createWorkspace('test_workspace', 'a test workspace',
                                         DBTYPE.FS)
 
@@ -58,12 +61,13 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         mappersManager = mock()
         dbConnector = mock()
         mappers = mock()
+        changesManager = mock()
 
         when(mappersManager).saveObj(any()).thenReturn(True) 
         when(dbManager).createDb('test_workspace', DBTYPE.FS).thenReturn(False)
         when(mappersManager).createMappers(dbConnector).thenReturn(True) 
 
-        workspace_manager = WorkspaceManager(dbManager, mappersManager)
+        workspace_manager = WorkspaceManager(dbManager, mappersManager, changesManager)
         workspace = workspace_manager.createWorkspace('test_workspace', 'a test workspace',
                                         DBTYPE.FS)
 
@@ -76,6 +80,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         mappersManager = mock()
         dbConnector = mock()
         mappers = mock()
+        changesManager = mock()
 
         workspace = Workspace('test_workspace', 'a desc')
 
@@ -83,7 +88,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         when(mappersManager).createMappers(dbConnector).thenReturn(True)
         when(mappersManager).findObject('test_workspace').thenReturn(workspace)
 
-        workspace_manager = WorkspaceManager(dbManager, mappersManager)
+        workspace_manager = WorkspaceManager(dbManager, mappersManager, changesManager)
 
         opened_workspace = workspace_manager.openWorkspace('test_workspace')
 
@@ -92,16 +97,52 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         verify(mappersManager).findObject('test_workspace')
         self.assertEquals(opened_workspace.getName(), 'test_workspace')
 
+    def testOpenWorkspaceSetsChangesCallback(self):
+        dbManager = mock()
+        mappersManager = mock()
+        dbConnector = mock()
+        mappers = mock()
+        changesManager = mock()
+
+        workspace = Workspace('test_workspace', 'a desc')
+
+        when(dbManager).dbOpen('test_workspace').thenReturn(dbConnector)
+        when(mappersManager).createMappers(dbConnector).thenReturn(True)
+        when(mappersManager).findObject('test_workspace').thenReturn(workspace)
+
+        workspace_manager = WorkspaceManager(dbManager, mappersManager, changesManager) 
+        opened_workspace = workspace_manager.openWorkspace('test_workspace')
+
+        verify(dbConnector).setChangesCallback(changesManager)
+
+    def testCreateWorkspaceSetsChangesCallback(self):
+        dbManager = mock()
+        mappersManager = mock()
+        dbConnector = mock()
+        mappers = mock()
+        changesManager = mock()
+
+        when(mappersManager).saveObj(any()).thenReturn(True) 
+        when(dbManager).createDb('test_workspace', DBTYPE.FS).thenReturn(dbConnector)
+        when(mappersManager).createMappers(dbConnector).thenReturn(True) 
+
+        workspace_manager = WorkspaceManager(dbManager, mappersManager, changesManager)
+        workspace = workspace_manager.createWorkspace('test_workspace', 'a test workspace',
+                                        DBTYPE.FS)
+
+        verify(dbConnector).setChangesCallback(changesManager)
+
     def testOpenWorkspaceNoneExisting(self):
         dbManager = mock()
         mappersManager = mock()
         dbConnector = mock()
         mappers = mock()
+        changesManager = mock()
 
         workspace = Workspace('test_workspace', 'a desc') 
         when(dbManager).dbOpen('test_workspace').thenReturn(False)
 
-        workspace_manager = WorkspaceManager(dbManager, mappersManager)
+        workspace_manager = WorkspaceManager(dbManager, mappersManager, changesManager)
         opened_workspace = workspace_manager.openWorkspace('test_workspace')
 
         verify(dbManager).dbOpen('test_workspace')
@@ -110,23 +151,22 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         verify(mappersManager, times=0).findObject('test_workspace')
         self.assertFalse(opened_workspace, 'Workspace retrieved but non existing')
 
-
     def testRemoveWorkspace(self):
         dbManager = mock()
         mappersManager = mock()
         dbConnector = mock()
         mappers = mock()
+        changesManager = mock()
 
         workspace = Workspace('test_workspace', 'a desc')
 
         when(dbManager).removeDb('test_workspace').thenReturn(True)
 
-        workspace_manager = WorkspaceManager(dbManager, mappersManager)
+        workspace_manager = WorkspaceManager(dbManager, mappersManager, changesManager)
         remove_ret = workspace_manager.removeWorkspace('test_workspace')
 
         verify(dbManager).removeDb('test_workspace')
         self.assertTrue(remove_ret, 'bbdd not removed')
-
 
 if __name__ == '__main__':
     unittest.main()

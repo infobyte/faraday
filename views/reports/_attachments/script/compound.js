@@ -1,8 +1,3 @@
-<div id="hosts-main">
-</div><!-- .hosts-main -->
-<script type="text/javascript" src="script/compound.js"></script>
-<script type="text/javascript">
-function get_report_div(workspace, view, design){
 	function load_all_hosts() {
 		var iurl	= "/" + workspace + "/_design/" + design + "/_view/byinterfacecount?group=true";
 		var hurl	= "/" + workspace + "/_design/" + design + "/_view/hosts";
@@ -10,11 +5,11 @@ function get_report_div(workspace, view, design){
 		var hosts	= new Object();
 		var interfaces	= new Object();
 		var services	= new Object();
-
+		
 		hosts		= get_obj(hurl);
 		interfaces	= get_obj(iurl, interfaces);
 		services	= get_obj(surl, services);
-		var table = "<div class='seccion2' id='hosts'><h2>Hosts report</h2>";
+		var table = "<div class='seccion2'><h2>Hosts report</h2>";
 		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+
@@ -149,8 +144,34 @@ function get_report_div(workspace, view, design){
 		});
 		return ls;
 	}
+	
+function send_variables(workspace,view,design){
+	$(document).on('click', 'a.host', function(e) {
+            // no queremos que cargue nada
+            e.preventDefault();
+            // el ID del host que quiero traer es el ID del link clickeado menos el "host-" del ppio
+            var hid = $(this).attr("href").split('-')[1];
+            // el nombre del host que quiero traer es el valor del link
+            var hname = $(this).text();
+            var div = load_services(hid, hname);
+            $("#hosts").html(div);
+            // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
+            $("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
+});
+        // cuando se clickea un servicio carga todos los hosts que tienen ese servicio
+        $(document).on('click', 'a.service', function(e) {
+            e.preventDefault();
+            var sname = $(this).text();
+            var div = load_hosts_by_service(sname);
+            $("#hosts").html(div);
+            // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
+            $("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
+        });
 
-	var hosts = load_all_hosts();
-	return hosts;
+        // comportamiento para "View all hosts"
+        $(document).on('click', 'a[href="load_all_hosts"]', function(e) {
+            e.preventDefault();
+            var div = load_all_hosts();
+            $("#hosts").html(div);
+        });
 }
-</script>

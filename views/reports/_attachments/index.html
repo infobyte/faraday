@@ -8,116 +8,117 @@
 <!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
 <!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
 <head>
-	<meta charset="utf-8"/>
-	<!--[if IE]><![endif]-->
-	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
-	<title>Dashboard | Faraday</title>
-	<meta name="description" content=""/>
-	<meta name="keywords" content=""/>
-	<meta name="author" content=""/>
+    <meta charset="utf-8"/>
+    <!--[if IE]><![endif]-->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <title>Dashboard | Faraday</title>
+    <meta name="description" content=""/>
+    <meta name="keywords" content=""/>
+    <meta name="author" content=""/>
 
-	<!-- !CSS -->
-	<link rel="stylesheet" type="text/css" href="estilos.css" />
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
-	
-	<link href="favicon.ico" rel="shortcut icon">
-	<link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
-	<link href="images/site_preview.jpg" rel="image_src" />
+    <!-- !CSS -->
+    <link rel="stylesheet" type="text/css" href="estilos.css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+    
+    <link href="favicon.ico" rel="shortcut icon">
+    <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
+    <link href="images/site_preview.jpg" rel="image_src" />
 
-	<script type="text/javascript" src="script/couch.js"></script>
-	<script src="script/common.js"></script>
-	<script type="text/javascript" src="/_utils/script/sha1.js"></script>
-	<script type="text/javascript" src="script/app.js"></script>
-	<script type="text/javascript" src="script/reports_list.js"></script>
-	<script type="text/javascript" src="/_utils/script/json2.js"></script>
-	<script type="text/javascript" src="/_utils/script/jquery.js"></script>
-	<script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
-	<script type="text/javascript" src="script/jquery.tablesorter.min.js"></script>
-	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="script/couch.js"></script>
+    <script src="script/common.js"></script>
+    <script type="text/javascript" src="/_utils/script/sha1.js"></script>
+    <script type="text/javascript" src="script/app.js"></script>
+    <script type="text/javascript" src="script/reports_list.js"></script>
+    <script type="text/javascript" src="/_utils/script/json2.js"></script>
+    <script type="text/javascript" src="/_utils/script/jquery.js"></script>
+    <script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
+    <script type="text/javascript" src="script/jquery.tablesorter.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 </head>
 
 <body>
-	<div id="cont">
-		<div class="wrapper">
-			<header class="head">
-				<a href="#"><img class="logo" src="images/logo-faraday.png"/></a>
-			</header>
-			
-			<aside>
-				<nav>
-					<ul>
-						<li>
-							<a href="#"><img src="images/ico-settings.png" alt="Commercial version only"/></a>
-							<a href="#" class="activo"><img src="images/ico-graph.png" alt=""/></a>
-							<a href="#"><img src="images/ico-stopwatch.png" alt="Commercial version only"/></a>
-						</li>
-					</ul>
-				</nav>
-			</aside>
-			
-			<section id="main" class="seccion clearfix">
-				<div id="sec" class="btn-group">
-					<button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
-						<span class="glyphicon glyphicon-refresh"></span>
-					</button>
-					<button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
-						Change workspace <span class="caret"></span>
-					</button>
-					<ul id="nav" class="dropdown-menu" role="menu">
-					</ul><!-- navegacion de WS -->
-				</div>
-				<div id="reportes" class="fila clearfix">
-				</div><!-- fin fila -->
-			</section>
-			<footer>
-			</footer>
-		</div><!--!/#wrapper -->
+    <div id="cont">
+        <div class="wrapper">
+            <header class="head">
+                <a href="#"><img class="logo" src="images/logo-faraday.png"/></a>
+            </header>
+            
+            <aside>
+                <nav>
+                    <ul>
+                        <li>
+                            <a href="#"><img src="images/ico-settings.png" alt="Commercial version only"/></a>
+                            <a href="#" class="activo"><img src="images/ico-graph.png" alt=""/></a>
+                            <a href="#"><img src="images/ico-stopwatch.png" alt="Commercial version only"/></a>
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
+            
+            <section id="main" class="seccion clearfix">
+                <div id="sec" class="btn-group">
+                    <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                    <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                        Change workspace <span class="caret"></span>
+                    </button>
+                    <ul id="nav" class="dropdown-menu" role="menu">
+                    </ul><!-- navegacion de WS -->
+                </div>
+                <div id="reportes" class="fila clearfix">
+                </div><!-- fin fila -->
+            </section>
+            <footer>
+            </footer>
+        </div><!--!/#wrapper -->
     </div><!--!/#container -->
 <script type="text/javascript">
 $(document).ready(function() {
-	var counter = 0;
-	var h = 0;
-	$.couch.allDbs({
-      		success : function(dbs) {
+    var counter = 0;
+    var h = 0;
+    $.couch.allDbs({
+            success : function(dbs) {
 
-        	  dbs.filter(function(db_name){
-        	      return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
-        	  .forEach(function(db) {
-		      // armo la lista con todos los 
+              dbs.filter(function(db_name){
+                  return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
+              .forEach(function(db) {
+              // armo la lista con todos los 
                       $("#sec #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
-		      // navegación entre WSs
-        	      if(window.location.hash === "" && counter === 0) {
-        			window.location.hash = db;
-        		   }
-        	      counter +=1;
-	        });
-	        if(counter < 1) { 
-	        	$("#reportes").empty();
-	              $("#reportes").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
-		}
+              // navegación entre WSs
+                  if(window.location.hash === "" && counter === 0) {
+                    window.location.hash = db;
+                   }
+                  counter +=1;
+            });
+            if(counter < 1) { 
+                $("#reportes").empty();
+                  $("#reportes").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
+        }
       }
-	});
-	// navegacion entre WSs en el dropdown
-	$(document).on("click", "a.ws", function(e) {
-		e.preventDefault();
-		var hash = $(this).attr("href").substr(1);
-		window.location.hash = hash;
-		location.reload();
-	});
-	$(document).on("click", "#refresh", function() {
-		location.reload();
-	});
+    });
+    // navegacion entre WSs en el dropdown
+    $(document).on("click", "a.ws", function(e) {
+        e.preventDefault();
+        var hash = $(this).attr("href").substr(1);
+        window.location.hash = hash;
+        location.reload();
+    });
+    $(document).on("click", "#refresh", function() {
+$.ajax({   url: 'http://127.0.0.1:5984/bersa/_design/hosts/_view/hosts',   type: 'DELETE',   success: function(data) {alert(data);}});
+        location.reload();
+    });
 
 //get workspace
-	dominio = location.href;
-	space = dominio.split("#");
-	workspace = space[1];
+    dominio = location.href;
+    space = dominio.split("#");
+    workspace = space[1];
 
-	var ret = "<div id=\"workspace-"+workspace+"\" class=\"workspace\"></div><!-- .workspace -->";
+    var ret = "<div id=\"workspace-"+workspace+"\" class=\"workspace\"></div><!-- .workspace -->";
 
-	$('#reportes').append(ret);
-	$('.workspace').append("<div class='reports'></div>");
+    $('#reportes').append(ret);
+    $('.workspace').append("<div class='reports'></div>");
 
     var byservices = "reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices";
     var summarized = "reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized";
@@ -126,271 +127,89 @@ $(document).ready(function() {
     var compound = "reports/compound.html?workspace="+workspace+"&design=hosts&view=compound";
 
 
-
-	/*$('.reports').load(compound, function (){
-	dominio = compound;
+    $('.reports').load(compound, function (data){
+    dominio = compound;
     //get the link parameters
-	space = dominio.split("=");
-	workspace = space[1].split("&");
-	workspace = workspace[0];
-	design = space[2].split("&");
-	design = design[0];
-	view = space[3];
+    space = dominio.split("=");
+    workspace = space[1].split("&");
+    workspace = workspace[0];
+    design = space[2].split("&");
+    design = design[0];
+    view = space[3];
 
-	   var divs = get_report_div(workspace, view, design);
-	   var sendVariables = send_variables(workspace, view, design); 
-	$(".workspace").prepend(divs);
-	   left = "<div class=\"left\"><h2>Viewing "+workspace+"</h2></div>";
-	$(".workspace").prepend(left);
-	});
+       var divs = get_report_div(workspace, view, design);
+       var sendVariables = send_variables(workspace, view, design); 
+    $(".workspace").prepend(divs);
+       left = "<div class=\"left\"><h2>Viewing "+workspace+"</h2></div>";
+    $(".workspace").prepend(left);
+    });
 
-	$('.reports').load(byservices, function (){
-	dominio = byservices;
-
-//get the link parameters
-	space = dominio.split("=");
-	workspace = space[1].split("&");
-	workspace = workspace[0];
-	design = space[2].split("&");
-	design = design[0];
-	view = space[3];
-
-	divs = get_report_div(workspace, view, design);
-	$("#reportes").append(divs);
-	});
-
-	$('.reports').load(commands, function (){
-	dominio = commands;
+    $('.reports').load(byservices, function (){
+    dominio = byservices;
 
 //get the link parameters
-	space = dominio.split("=");
-	workspace = space[1].split("&");
-	workspace = workspace[0];
-	design = space[2].split("&");
-	design = design[0];
-	view = space[3];
+    space = dominio.split("=");
+    workspace = space[1].split("&");
+    workspace = workspace[0];
+    design = space[2].split("&");
+    design = design[0];
+    view = space[3];
 
-	divs = get_report_div(workspace, view, design);
-	$("#reportes").append(divs);
-	});
+    divs = get_report_div(workspace, view, design);
+    $("#reportes").append(divs);
+    });
 
-
-	$('.reports').load(summarized, function (){
-	dominio = summarized;
-
-//get the link parameters
-	space = dominio.split("=");
-	workspace = space[1].split("&");
-	workspace = workspace[0];
-	design = space[2].split("&");
-	design = design[0];
-	view = space[3];
-
-	divs = get_report_div(workspace, view, design);
-	$("#reportes").append(divs);
-	});
-
-	$('.reports').load(vulns, function (){
-	dominio = vulns;
+    $('.reports').load(commands, function (){
+    dominio = commands;
 
 //get the link parameters
-	space = dominio.split("=");
-	workspace = space[1].split("&");
-	workspace = workspace[0];
-	design = space[2].split("&");
-	design = design[0];
-	view = space[3];
+    space = dominio.split("=");
+    workspace = space[1].split("&");
+    workspace = workspace[0];
+    design = space[2].split("&");
+    design = design[0];
+    view = space[3];
 
-	var divv = get_report_div(workspace, view, design);
-	$("#reportes").append(divv);
-	});*/
+    divs = get_report_div(workspace, view, design);
+    $("#reportes").append(divs);
+    });
+
+
+    $('.reports').load(summarized, function (){
+    dominio = summarized;
+
+//get the link parameters
+    space = dominio.split("=");
+    workspace = space[1].split("&");
+    workspace = workspace[0];
+    design = space[2].split("&");
+    design = design[0];
+    view = space[3];
+
+    divs = get_report_div(workspace, view, design);
+    $("#reportes").append(divs);
+    });
+
+    $('.reports').load(vulns, function (){
+    dominio = vulns;
+
+//get the link parameters
+    space = dominio.split("=");
+    workspace = space[1].split("&");
+    workspace = workspace[0];
+    design = space[2].split("&");
+    design = design[0];
+    view = space[3];
+
+    var divv = get_report_div(workspace, view, design);
+    $("#reportes").append(divv);
+    });
 });
 
 setTimeout(function() {
-		// calculo la altura del sidebar
-       	$("aside").height($("#main").height()+40);
+        // calculo la altura del sidebar
+        $("aside").height($("#main").height()+40);
 }, 2000);
 </script>
-
-<script type="text/javascript">
-function send_variables(workspace,view,design){
-	function load_all_hosts() {
-		var iurl	= "/" + workspace + "/_design/" + design + "/_view/byinterfacecount?group=true";
-		var hurl	= "/" + workspace + "/_design/" + design + "/_view/hosts";
-		var surl	= "/" + workspace + "/_design/" + design + "/_view/byservicecount?group=true";
-		var hosts	= new Object();
-		var interfaces	= new Object();
-		var services	= new Object();
-
-		hosts		= get_obj(hurl);
-		interfaces	= get_obj(iurl, interfaces);
-		services	= get_obj(surl, services);
-		var table = "<div class='seccion2'><h2>Hosts report</h2>";
-		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
-				"<th>Host</th>"+
-				"<th>Services</th>"+
-				"<th>Interfaces</th>"+
-				"<th>OS</th>"+
-				"<th>Owned</th>"+
-				"</tr></thead><tbody>";
-		$.each(hosts, function(k, v){
-			var hname = "";
-			if(!services.hasOwnProperty(k)) {
-				services[k] = 0;
-				hname = v.name;
-			} else {
-				hname = "<a href=\"host-"+k+"\" class=\"host\">"+v.name+"</a>";
-			}
-			if(!interfaces.hasOwnProperty(k)) interfaces[k] = 0;
-			table += "<tr id=\"host-"+k+"\">"+
-				"<td>"+hname+"</td>"+
-				"<td>"+services[k]+"</td>"+
-				"<td>"+interfaces[k]+"</td>"+
-				"<td>"+v.os+"</td>"+
-				"<td>"+v.owned+"</td></tr>";
-		});
-		table += "</tbody></table></div>";
-		return table;
-	}
-
-	function load_hosts_by_service(name) {
-		var services 	= get_obj_filter(workspace, "services", "byname", name);
-		var hids 	= [];
-		$.each(services, function(k, v) {
-			v = v['value'];
-			if($.inArray(v['hid'], hids) < 0) {
-				hids.push(v['hid']);
-			}
-		});
-		var hosts 	= get_obj_filter(workspace, "hosts", "hosts", hids);
-		var iurl	= "/" + workspace + "/_design/" + design + "/_view/byinterfacecount?group=true";
-		var interfaces	= new Object();
-		var surl	= "/" + workspace + "/_design/" + design + "/_view/byservicecount?group=true";
-		var scount	= new Object();
-
-		interfaces	= get_obj(iurl, interfaces);
-		scount		= get_obj(surl, services);
-	
-		var table = "<h2>Hosts with Service "+name+" ("+hids.length+" total)</h2>"+
-				"<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
-				"<th>Host</th>"+
-				"<th>Services</th>"+
-				"<th>Interfaces</th>"+
-				"<th>OS</th>"+
-				"<th>Owned</th>"+
-				"</tr></thead><tbody>";
-		$.each(hosts, function(k, v){
-			var id = v['id'];
-			v = v['value'];
-			if($.inArray(id, hids) > -1) {
-				table += "<tr id=\"host-"+id+"\">"+
-					"<td><a href=\"host-"+id+"\" class=\"host\">"+v['name']+"</a></td>"+
-					"<td>"+scount[id]+"</td>"+
-					"<td>"+interfaces[id]+"</td>"+
-					"<td>"+v['os']+"</td>"+
-					"<td>"+v['owned']+"</td></tr>";
-			}
-		});
-		table += "</tbody></table></div>";
-		return table;
-	}
-
-	function load_services(hid, hname) {
-		// el param design ya no es el recibido por GET, puesto que ahora estamos en services
-		var services = get_obj_filter(workspace, "services", "byhost", hid);
-		var table = "<h2>Services for Host "+hname+" ("+services.length+" total)</h2>"+
-			"<table id=\"services-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
-			"<th>Name</th>"+
-			"<th>Description</th>"+
-			"<th>Owned</th>"+
-			"<th>Ports</th>"+
-			"<th>Protocol</th>"+
-			"<th>Status</th></tr></thead><tbody>";
-		$.each(services, function(k, v){
-				var sid = v['id'];
-				v = v['value'];
-				var desc = (v['description'] === "") ? "n/a" : v['description'];
-				var ports = "";
-				if(v['ports'].length === 0) {
-					ports = "no ports available";
-				} else {
-					for(i=0; i < v['ports'].length; i++){
-						ports += v['ports'][i];
-						if(v['ports'].length != 1 && i != (v['ports'].length-1)) {
-							ports += ", ";
-						}
-					}
-				}
-				table += "<tr id=\"service-"+sid+"\">"+
-					"<td><a href=\"service-"+sid+"\" class=\"service\">"+v['name']+"</a></td>"+
-					"<td>"+desc+"</td>"+
-					"<td>"+v['owned']+"</td>"+
-					"<td>"+ports+"</td>"+
-					"<td>"+v['protocol']+"</td>"+
-					"<td>"+v['status']+"</td></tr>";
-		});
-		table += "</tbody></table></div>";
-		return table;
-	}
-
-	function get_obj_filter(ws, design, view, key) {
-		var db = new CouchDB(ws);
-		var sview = design + "/" + view;
-		if(typeof key === 'undefined') {
-			var matches = db.view(sview);
-		} else if($.isArray(key)) {
-			var matches = db.view(sview, {keys: JSON.stringify(key)});
-		} else {
-			var matches = db.view(sview, {key: key});
-		}
-		return matches.rows;
-	}
-
-	function get_obj(ourl) {
-		var ls = {};
-		$.ajax({
-			dataType: "json",
-			url: ourl,
-			async: false,
-			success: function(data) {
-				$.each(data.rows, function(n, obj){
-					ls[obj.key] = obj.value;
-				});	
-			}
-		});
-		return ls;
-	}
-
-$(document).on('click', 'a.host', function(e) {
-			// no queremos que cargue nada
-			e.preventDefault();
-			// el ID del host que quiero traer es el ID del link clickeado menos el "host-" del ppio
-			var hid = $(this).attr("href").split('-')[1];
-			// el nombre del host que quiero traer es el valor del link
-			var hname = $(this).text();
-			var div = load_services(hid, hname);
-			$("#hosts").html(div);
-			// sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
-			$("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
-});
-
-		// cuando se clickea un servicio carga todos los hosts que tienen ese servicio
-		$(document).on('click', 'a.service', function(e) {
-			e.preventDefault();
-			var sname = $(this).text();
-			var div = load_hosts_by_service(sname);;
-			$("#hosts").html(div);
-			// sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
-			$("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
-		});
-
-		// comportamiento para "View all hosts"
-		$(document).on('click', 'a[href="load_all_hosts"]', function(e) {
-			e.preventDefault();
-			var div = load_all_hosts();
-			$("#hosts").html(div);
-		});
-}
-</script>
 </body>
-</html>    
+</html> 

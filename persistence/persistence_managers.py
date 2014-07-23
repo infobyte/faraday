@@ -10,6 +10,7 @@ import os
 import shutil
 import mockito
 import threading
+import time
 from urlparse import urlparse
 import traceback
 from couchdbkit import Server, ChangesStream, Database
@@ -18,6 +19,8 @@ from couchdbkit.resource import ResourceNotFound
 from utils.logs import getLogger
 from utils.decorators import trap_timeout
 from managers.all import ViewsManager
+
+#from persistence.change import change_factory
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -71,7 +74,25 @@ class DbManager(object):
 class DbConnector(object):
     def __init__(self):
         # it could be used to notifiy some observer about changes in the db
-        self.observers = []
+        self.changes_callback = None
+        self._stop = False
+        self.change_thread = threading.Thread(target=self.waitForDBChange)
+
+    def startChangeWatch(self):
+        if self.changes_callback:
+            self.change_thread.start()
+
+    def stopChangeWatch(self):
+        if self.change_thread.is_alive():
+            self.setChangesCallback(None)
+            self.change_thread.join()
+
+    def setChangesCallback(self, callback):
+        self.changes_callback = callback
+
+    def waitForDBChange(self, since=0, timeout=15000):
+        time.sleep(timeout)
+        return False
 
     def saveDocument(self, document):
         raise NotImplementedError("DbConnector should not be used directly")
@@ -168,6 +189,29 @@ class CouchDbConnector(DbConnector):
         self.mutex.acquire()
         self.seq_num += 1
         self.mutex.release()
+
+    def getSeqNumber(self):
+        return self.seq_num
+
+    def setSeqNumber(self, seq_num):
+        self.seq_num = seq_num
+
+    #@trap_timeout
+    def waitForDBChange(self, since=0, timeout=15000):
+        while not self._stop:
+            last_seq = max(self.getSeqNumber(), since)
+            with ChangesStream(self.db, feed="continuous", since=last_seq, timeout=timeout) as stream:
+                for change in stream:
+                    if self.changes_callback and not self.change.get('last_seq'):
+                        if change['seq'] > self.getSeqNumber():
+                            self.setSeqNumber(change['seq'])
+                            if not change['id'].startswith('_design'):
+                                getLogger(self).debug(
+                                    "Changes from another instance")
+                                deleted = bool(change.get('deleted', False))
+                                revision = change.get('rev')
+                                obj_id = change.get('id')
+                                self.changes_callback(obj_id, revision, deleted)
 
     #@trap_timeout
     def _compactDatabase(self):
@@ -295,10 +339,12 @@ class CouchDbManager(AbstractPersistenceManager):
             getLogger(self).warn("No route to couchdb server on: %s" % uri)
             getLogger(self).debug(traceback.format_exc())
 
+    #@trap_timeout
     def _create(self, name):
         db = self.__serv.create_db(name.lower())
         return CouchDbConnector(db)
 
+    #@trap_timeout
     def _delete(self, name):
         self.__serv.delete_db(name)
 
@@ -311,6 +357,7 @@ class CouchDbManager(AbstractPersistenceManager):
             seq = db.info()['update_seq']
             self.dbs[dbname] = CouchDbConnector(db, seq_num=seq)
 
+    #@trap_timeout
     def pushReports(self):
         vmanager = ViewsManager()
         reports = os.path.join(os.getcwd(), "views", "reports")
@@ -394,37 +441,3 @@ class CouchDbManager(AbstractPersistenceManager):
         self.__serv.replicate(workspace, dst, mutual = mutual, continuous  = continuous, create_target = ct)
         if mutual:
             self.__serv.replicate(dst, src, continuous = continuous, **kwargs)
-
-    # def getLastChangeSeq(self, workspaceName):
-    #     self.mutex.acquire()
-    #     seq = self.__seq_nums[workspaceName]
-    #     self.mutex.release()
-    #     return seq
-
-    # def setLastChangeSeq(self, workspaceName, seq_num):
-    #     self.mutex.acquire()
-    #     self.__seq_nums[workspaceName] = seq_num
-    #     self.mutex.release()
-
-
-    # #@trap_timeout
-    # def waitForDBChange(self, db_name, since = 0, timeout = 15000):
-    #     """ Be warned this will return after the database has a change, if
-    #     there was one before call it will return immediatly with the changes
-    #     done"""
-    #     changes = []
-    #     last_seq = max(self.getLastChangeSeq(db_name), since)
-    #     db = self._getDb(db_name)
-    #     with ChangesStream(db, feed="longpoll", since=last_seq, timeout=timeout) as stream:
-    #         for change in stream:
-    #             if change['seq'] > self.getLastChangeSeq(db_name):
-    #                 self.setLastChangeSeq(db_name, change['seq'])
-    #                 if not change['id'].startswith('_design'):
-    #                     #fake doc type for deleted objects
-    #                     doc = {'type': 'unknown', '_deleted': 'False', '_rev':[0]}
-    #                     if not change.get('deleted'):
-    #                         doc = self.getDocument(db_name, change['id'])
-    #                     changes.append(change_factory.create(doc))
-    #     if len(changes):
-    #         getLogger(self).debug("Changes from another instance")
-    #     return changes

@@ -14,7 +14,6 @@ import plugins.core as plcore
 from mockito import mock, verify, when, any
 from model import api
 from model.hosts import Host, Interface, Service
-from model.workspace import WorkspaceOnCouch, WorkspaceManager, WorkspaceOnFS
 from model.common import ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote, ModelComposite, ModelObjectCred
 from persistence.orm import WorkspacePersister
 import random
@@ -90,6 +89,29 @@ class ModelObjectComposite(unittest.TestCase):
         host.addChild(cred.getID(), cred)
         self.assertEquals(len(host.getCreds()), 1, "Creds added is not 1")
         self.assertIn(cred, host.getCreds(), "Cred not accessible")
+
+    def testInterfaceSetServices(self):
+        inter = Interface('coco')
+        services = []
+        for i in range(50, 60):
+            services.append(Service('cuca%s' % i,ports=[i]))
+        inter.setServices(services)
+
+        self.assertEquals(len(inter.getChildsByType(Service.__name__)), 10, "not all services added")
+        for s in services:
+            self.assertIn(s, inter.getChildsByType(Service.__name__), "what happened with services?")
+
+    def testHostSetInterfaces(self):
+        host = Host('coco')
+        interfaces = []
+        for i in range(50, 60):
+            interfaces.append(Interface('cuca%s' % i, ipv4_address="192.168.0.%d" % i))
+        host.setInterfaces(interfaces)
+
+        self.assertEquals(len(host.getChildsByType(Interface.__name__)), 10, "not all interfaces added")
+        for s in interfaces:
+            self.assertIn(s, host.getChildsByType(Interface.__name__), "what happened with interfaces?")
+
 
     def testHostWithCredentialsNewCredMethod(self):
         host = Host('coco')

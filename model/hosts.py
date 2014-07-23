@@ -91,9 +91,16 @@ class Host(ModelComposite):
     def getName(self):
         return self._name
     
-    name = property(getName, setName) 
+    name = property(getName, setName)
 
-    @save
+    def getDefaultGateway(self):
+        return self._default_gateway
+
+    def setDefaultGateway(self, default_gateway):
+        self._default_gateway = default_gateway
+                                                                         
+
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, description=None, os=None, owned=None):
         if name is not None:
@@ -105,6 +112,8 @@ class Host(ModelComposite):
         if name is not None:
             self.setOwned(owned)
 
+    def setInterfaces(self, interfaces):
+        [self.addChild(inter.getID(), inter) for inter in interfaces]
 
     @updateLocalMetadata
     def addInterface(self, newInterface, update=False, setparent=True): # Deprecated
@@ -185,9 +194,20 @@ class Host(ModelComposite):
         if isinstance(other_host, Host):
             if self._name == other_host.getName():
                 return True
-            else: 
+            else:
+                                    
                 ip_addr_this = self.getIPv4Addresses()
                 ip_addr_other = other_host.getIPv4Addresses()
+                                                                           
+                                                  
+                                
+                      
+                                                                                                          
+                                                                                                 
+                                                                                                              
+                                              
+                                                                                        
+                                        
                 for addr in ip_addr_this:
                     if addr in ip_addr_other and IPy.IP(addr).iptype() == "PUBLIC":
                         return True
@@ -308,8 +328,7 @@ class Interface(ModelComposite):
             return list(set(prop1))
         return None
 
-    def updateID(self):
-                                                                                                          
+    def updateID(self): 
         self._id = get_hash([self.network_segment, self.ipv4["address"], self.ipv6["address"]])
 
     def setName(self, name):
@@ -324,7 +343,7 @@ class Interface(ModelComposite):
         self.mac = mac
         
     def getMAC(self):
-        return self.mac 
+        return self.mac
     
     def setNetworkSegment(self, network_segment):
         self.network_segment = network_segment
@@ -333,10 +352,10 @@ class Interface(ModelComposite):
         return self.network_segment 
     
     def setIPv4(self, ipv4):
-        self.ipv4["address"] = ipv4["address"]
-        self.ipv4["mask"] = ipv4["mask"]
-        self.ipv4["gateway"] = ipv4["gateway"]
-        self.ipv4["DNS"] = ipv4["DNS"]
+        self.ipv4["address"] = ipv4.get("address", None)
+        self.ipv4["mask"] = ipv4.get("mask", None)
+        self.ipv4["gateway"] = ipv4.get("gateway", None)
+        self.ipv4["DNS"] = ipv4.get("DNS", None)
     
     def getIPv4(self):
         return self.ipv4
@@ -354,10 +373,10 @@ class Interface(ModelComposite):
         return self.ipv4["DNS"]
     
     def setIPv6(self, ipv6):
-        self.ipv6["address"] = ipv6["address"]
-        self.ipv6["prefix"] = ipv6["prefix"]
-        self.ipv6["gateway"] = ipv6["gateway"]
-        self.ipv6["DNS"] = ipv6["DNS"]
+        self.ipv6["address"] = ipv6.get("address", None)
+        self.ipv6["prefix"] = ipv6.get("prefix", None)
+        self.ipv6["gateway"] = ipv6.get("gateway", None)
+        self.ipv6["DNS"] = ipv6.get("DNS", None)
     
     def getIPv6(self):
         return self.ipv6
@@ -414,6 +433,9 @@ class Interface(ModelComposite):
         """
         return self._getValueByID("_services", name)
 
+    def setServices(self, services):
+        [self.addChild(s.getID(), s) for s in services]
+
     def addHostname(self, hostname):
         if hostname not in self._hostnames:
             self._hostnames.append(hostname)
@@ -428,7 +450,7 @@ class Interface(ModelComposite):
     def setHostnames(self, hostnames):
         self._hostnames = hostnames
 
-    @save
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, description=None, hostnames=None, mac=None, ipv4=None, ipv6=None,
                          network_segment=None, amount_ports_opened=None, amount_ports_closed=None,
@@ -530,7 +552,6 @@ class Service(ModelComposite):
             else:
                 api.devlog("ports must be a string, an int o a list of any of those types")
 
-
     def setStatus(self, status):
         self._status = status
 
@@ -546,7 +567,7 @@ class Service(ModelComposite):
     def updateID(self): 
         self._id = get_hash([self._protocol, ":".join(str(self._ports))])
 
-    @save
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, description=None, protocol=None, ports=None, 
                           status=None, version=None, owned=None):
@@ -754,7 +775,7 @@ __diff_dispatch_table = {
     Service: ServiceDiff    
 }
 
-                                                         
+
 def ModelObjectDiff(objLeft, objRight):
     """
     This is like a dispatcher. Based on the object class it call the corresponding

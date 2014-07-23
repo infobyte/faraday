@@ -13,7 +13,12 @@ import time
 import traceback
 import re
 import requests
-from persistence.utils import ET
+try:
+    import xml.etree.cElementTree as ET
+    
+except ImportError:
+    print "cElementTree could not be imported. Using ElementTree instead"
+    import xml.etree.ElementTree as ET
 from apis.rest.api import PluginControllerAPIClient
 
 from config.configuration import getInstanceConfiguration

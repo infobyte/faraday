@@ -224,6 +224,12 @@ class ModelObject(object):
         # can be overriden if needed
         pass
 
+    def getChilds(self):
+        childs = {}
+        childs.update({vuln.getID(): vuln for vuln in self.getVulns()})
+        childs.update({note.getID(): note for note in self.getNotes()})
+        childs.update({cred.getID(): cred for cred in self.getCreds()})
+        return childs
 
     def setID(self, ID=None):
         if ID is None:
@@ -247,7 +253,10 @@ class ModelObject(object):
     def getMetadata(self):
         """Returns the current metadata of the object"""
         return self._metadata
-    
+
+    def setMetadata(self, metadata):
+        self._metadata = metadata
+
     def getMetadataHistory(self):
         """Returns the current metadata of the object"""
         return self._metadataHistory
@@ -285,7 +294,13 @@ class ModelObject(object):
     def setOwned(self, owned=True):
         self._is_owned = owned
 
-    @save
+    def getOwner(self):
+        return self.owner
+
+    def setOwner(self, owner=None):
+        self.owner = owner
+
+    #@save
     def setParent(self, parent):
         self._parent = parent
 
@@ -336,7 +351,7 @@ class ModelObject(object):
         except Exception:
             return False
 
-    @delete
+    #@delete
     def delete(self):
         del self
 
@@ -386,6 +401,9 @@ class ModelObject(object):
     def getNotes(self):
         return self.getChildsByType(ModelObjectNote.__name__)
 
+    def setNotes(self, notes):
+        self._notes = notes
+
     def getNote(self, noteID):
         return self.findChild(noteID)
 
@@ -405,6 +423,9 @@ class ModelObject(object):
 
     def getVulns(self):
         return self.getChildsByType(ModelObjectVuln.__name__)
+
+    def setVulns(self, vulns):
+        self._vulns = vulns
 
     def getVuln(self, vulnID):
         return self.findChild(vulnID)
@@ -433,6 +454,9 @@ class ModelObject(object):
 
     def getCreds(self):
         return self.getChildsByType(ModelObjectCred.__name__)
+
+    def setCreds(self, creds):
+        self._creds = creds
 
     def getCred(self, credID):
         return self._getValueByID("_creds", credID)
@@ -792,9 +816,17 @@ class ModelObjectNote(ModelComposite):
 #        return self._text.getvalue()
         return self._text
 
+    def getText(self):
+#        return self._text.getvalue()
+        return self._text
+
+    def setText(self, text):
+#        return self._text.getvalue()
+        self._text = str(text)
+
     text = property(_getText, _setText)
 
-    @save
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, text=None):
         if name is not None:
@@ -869,7 +901,7 @@ class ModelObjectVuln(ModelLeaf):
     def _setDesc(self, desc):
         self._desc = desc
 
-    @save
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, desc=None, severity=None, refs=None):
         if name is not None:
@@ -886,6 +918,27 @@ class ModelObjectVuln(ModelLeaf):
         return self._desc
 
     desc = property(_getDesc, _setDesc)
+
+    def setDesc(self, desc):
+        self._desc = desc
+
+    def getDesc(self):
+        return self._desc
+
+    def getSeverity(self):
+        return self.severity
+
+    def setSeverity(self, severity):
+        self.severity = self.standarize(severity)
+
+    def getRefs(self):
+        return self.refs
+
+    def setRefs(self, refs):
+        if isinstance(refs, list):
+            self.refs.extend(refs)
+        elif ref is not None:
+            self.refs.append(refs)
 
     def __str__(self):
         return "vuln id:%s - %s" % (self.id, self.name)
@@ -924,7 +977,61 @@ class ModelObjectVulnWeb(ModelObjectVuln):
     def updateID(self):
         self._id = get_hash([self.name, self.website, self.path, self.desc ])
 
-    @save
+    def getPath(self):
+        return self.path
+
+    def setPath(self, path):
+        self.path = path
+
+    def getWebsite(self):
+        return self.website
+
+    def setWebsite(self, website):
+        self.website = website
+
+    def getRequest(self):
+        return self.request
+
+    def setRequest(self, request):
+        self.request = request
+
+    def getResponse(self):
+        return self.response
+
+    def setResponse(self, response):
+        self.response = response
+
+    def getMethod(self):
+        return self.method
+
+    def setMethod(self, method):
+        self.method = method
+
+    def getPname(self):
+        return self.pname
+
+    def setPname(self, pname):
+        self.pname = pname
+
+    def getParams(self):
+        return self.params
+
+    def setParams(self, params):
+        self.params = params
+
+    def getQuery(self):
+        return self.query
+
+    def setQuery(self, query):
+        self.query = query
+
+    def getCategory(self):
+        return self.category
+
+    def setCategory(self, category):
+        self.category = category
+
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, desc=None, website=None, path=None, refs=None, severity=None, request=None,
                         response=None, method=None, pname=None, params=None, query=None, category=None):
@@ -983,7 +1090,19 @@ class ModelObjectCred(ModelLeaf):
     def setUsername(self, username):
         self.username = str(username)
 
-    @save
+    def getPassword(self):
+        return self._password
+
+    def setPassword(self, password):
+        self._password = password
+
+    def getUsername(self):
+        return self.username
+
+    def setUsername(self, username):
+        self.username = username
+
+    #@save
     @updateLocalMetadata
     def updateAttributes(self, username=None, password=None):
         if username is not None:

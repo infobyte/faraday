@@ -47,5 +47,10 @@ class MapperManager(object):
             return True
         return False
 
+    def reload(self, obj_id):
+        obj = self.find(obj_id)
+        if obj:
+            self.mappers.get(obj.__class__.__name__).reload(obj)
+
     def getMapper(self, type):
         return self.mappers.get(type, None)

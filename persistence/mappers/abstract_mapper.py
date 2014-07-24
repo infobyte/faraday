@@ -65,6 +65,10 @@ class AbstractMapper(object):
         self.unserialize(obj, doc)
         return obj
 
+    def reload(self, obj):
+        doc = self.pmanager.getDocument(obj.getID())
+        self.unserialize(obj, doc)
+
     def update(self, obj):
         self.serialize(obj)
         self.pmanager.saveDocument(obj)

@@ -15,7 +15,6 @@ from mockito import mock, verify, when, any
 from model import api
 from model.hosts import Host, Interface, Service
 from model.common import ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote, ModelComposite, ModelObjectCred
-from persistence.orm import WorkspacePersister
 import random
 
 from model.visitor import VulnsLookupVisitor
@@ -92,24 +91,26 @@ class ModelObjectComposite(unittest.TestCase):
 
     def testInterfaceSetServices(self):
         inter = Interface('coco')
-        services = []
+        services = {}
         for i in range(50, 60):
-            services.append(Service('cuca%s' % i,ports=[i]))
+            serv = Service('cuca%s' % i, ports=[i])
+            services[serv.getID()] = serv
         inter.setServices(services)
 
         self.assertEquals(len(inter.getChildsByType(Service.__name__)), 10, "not all services added")
-        for s in services:
+        for s in services.values():
             self.assertIn(s, inter.getChildsByType(Service.__name__), "what happened with services?")
 
     def testHostSetInterfaces(self):
         host = Host('coco')
-        interfaces = []
+        interfaces = {}
         for i in range(50, 60):
-            interfaces.append(Interface('cuca%s' % i, ipv4_address="192.168.0.%d" % i))
+            inter = Interface('cuca%s' % i, ipv4_address="192.168.0.%d" % i)
+            interfaces[inter.getID()] = inter
         host.setInterfaces(interfaces)
 
         self.assertEquals(len(host.getChildsByType(Interface.__name__)), 10, "not all interfaces added")
-        for s in interfaces:
+        for s in interfaces.values():
             self.assertIn(s, host.getChildsByType(Interface.__name__), "what happened with interfaces?")
 
 

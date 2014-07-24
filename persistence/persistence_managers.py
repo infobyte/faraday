@@ -10,6 +10,7 @@ import os
 import shutil
 import mockito
 import threading
+from Queue import Queue
 import time
 from urlparse import urlparse
 import traceback
@@ -71,28 +72,44 @@ class DbManager(object):
         return False
 
 
+class ChangeWatcher(threading.Thread):
+    def __init__(self, watch_function):
+        threading.Thread.__init__(self)
+        self._function = watch_function
+        self._watcher = threading.Thread(target=self._function)
+        self._watcher.setDaemon(True)
+        self._stop_event = threading.Event()
+
+    def run(self):
+        self._watcher.start()
+        self._stop_event.wait()
+
+    def stop(self):
+        self._stop_event.set()
+
+
 class DbConnector(object):
     def __init__(self):
         # it could be used to notifiy some observer about changes in the db
         self.changes_callback = None
-        self._stop = False
-        self.change_thread = threading.Thread(target=self.waitForDBChange)
+        self.change_watcher = ChangeWatcher(self.waitForDBChange)
+        #self.change_thread = threading.Thread(target=self.waitForDBChange)
+        #self.change_thread.setDaemon(True)
 
     def startChangeWatch(self):
         if self.changes_callback:
-            self.change_thread.start()
+            self.change_watcher.start()
 
     def stopChangeWatch(self):
-        if self.change_thread.is_alive():
-            self.setChangesCallback(None)
-            self.change_thread.join()
+        if self.change_watcher.is_alive():
+            #self.setChangesCallback(None)
+            self.change_watcher.stop()
 
     def setChangesCallback(self, callback):
         self.changes_callback = callback
 
-    def waitForDBChange(self, since=0, timeout=15000):
-        time.sleep(timeout)
-        return False
+    def waitForDBChange(self):
+        pass
 
     def saveDocument(self, document):
         raise NotImplementedError("DbConnector should not be used directly")
@@ -197,21 +214,20 @@ class CouchDbConnector(DbConnector):
         self.seq_num = seq_num
 
     #@trap_timeout
-    def waitForDBChange(self, since=0, timeout=15000):
-        while not self._stop:
-            last_seq = max(self.getSeqNumber(), since)
-            with ChangesStream(self.db, feed="continuous", since=last_seq, timeout=timeout) as stream:
-                for change in stream:
-                    if self.changes_callback and not self.change.get('last_seq'):
-                        if change['seq'] > self.getSeqNumber():
-                            self.setSeqNumber(change['seq'])
-                            if not change['id'].startswith('_design'):
-                                getLogger(self).debug(
-                                    "Changes from another instance")
-                                deleted = bool(change.get('deleted', False))
-                                revision = change.get('rev')
-                                obj_id = change.get('id')
-                                self.changes_callback(obj_id, revision, deleted)
+    def waitForDBChange(self, since=0):
+        last_seq = max(self.getSeqNumber(), since)
+        with ChangesStream(self.db, feed="continuous", since=last_seq) as stream:
+            for change in stream:
+                if self.changes_callback and not change.get('last_seq'):
+                    if change['seq'] > self.getSeqNumber():
+                        self.setSeqNumber(change['seq'])
+                        if not change['id'].startswith('_design'):
+                            getLogger(self).debug(
+                                "Changes from another instance")
+                            deleted = bool(change.get('deleted', False))
+                            revision = change.get("changes")[-1].get('rev')
+                            obj_id = change.get('id')
+                            self.changes_callback(obj_id, revision, deleted)
 
     #@trap_timeout
     def _compactDatabase(self):

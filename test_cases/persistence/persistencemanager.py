@@ -30,7 +30,7 @@ class CouchDbManagerTestSuite(unittest.TestCase):
         self.dbname = new_random_workspace_name()
 
     def tearDown(self):
-        server = Server(uti=CONF.getCouchURI())
+        server = Server(uri=CONF.getCouchURI())
         if self.dbname in server.all_dbs():
             server.delete_db(self.dbname)
 

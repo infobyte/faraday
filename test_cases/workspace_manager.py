@@ -86,7 +86,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
 
         when(dbManager).dbOpen('test_workspace').thenReturn(dbConnector)
         when(mappersManager).createMappers(dbConnector).thenReturn(True)
-        when(mappersManager).findObject('test_workspace').thenReturn(workspace)
+        when(mappersManager).find('test_workspace').thenReturn(workspace)
 
         workspace_manager = WorkspaceManager(dbManager, mappersManager, changesManager)
 
@@ -94,7 +94,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
 
         verify(dbManager).dbOpen('test_workspace')
         verify(mappersManager).createMappers(dbConnector)
-        verify(mappersManager).findObject('test_workspace')
+        verify(mappersManager).find('test_workspace')
         self.assertEquals(opened_workspace.getName(), 'test_workspace')
 
     def testOpenWorkspaceSetsChangesCallback(self):
@@ -108,7 +108,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
 
         when(dbManager).dbOpen('test_workspace').thenReturn(dbConnector)
         when(mappersManager).createMappers(dbConnector).thenReturn(True)
-        when(mappersManager).findObject('test_workspace').thenReturn(workspace)
+        when(mappersManager).find('test_workspace').thenReturn(workspace)
 
         workspace_manager = WorkspaceManager(dbManager, mappersManager, changesManager) 
         opened_workspace = workspace_manager.openWorkspace('test_workspace')
@@ -148,7 +148,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         verify(dbManager).dbOpen('test_workspace')
 
         verify(mappersManager, times=0).createMappers(dbConnector)
-        verify(mappersManager, times=0).findObject('test_workspace')
+        verify(mappersManager, times=0).find('test_workspace')
         self.assertFalse(opened_workspace, 'Workspace retrieved but non existing')
 
     def testRemoveWorkspace(self):

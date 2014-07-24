@@ -37,7 +37,7 @@ class WorkspaceManager(object):
         if dbConnector:
             dbConnector.setChangesCallback(self.changesManager)
             self.mappersManager.createMappers(dbConnector)
-            workspace = self.mappersManager.findObject(name)
+            workspace = self.mappersManager.find(name)
             return workspace
         return False
 

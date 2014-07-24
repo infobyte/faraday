@@ -98,7 +98,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         when(mappersManager).getMapper(interface).thenReturn(objectMapper)
         when(objectMapper).saveObject(interface).thenReturn(True) 
-        when(mappersManager).findObject(host.getID()).thenReturn(host)
+        when(mappersManager).find(host.getID()).thenReturn(host)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
@@ -493,7 +493,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
     def createMapperMock(self):
         map_mock = mock()
-        when(map_mock).findObject(any()).thenReturn(mock())
+        when(map_mock).find(any()).thenReturn(mock())
         return map_mock
 
     def testAddCredGetsMapperDispatchSaveSYNC(self): 
@@ -726,7 +726,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         triemock = mock()
         when(mappersManager).getMapper(host.getID()).thenReturn(objectMapper)
         when(objectMapper).delObject(host.getID()).thenReturn(True)
-        when(mappersManager).findObject(host.getID()).thenReturn(host)
+        when(mappersManager).find(host.getID()).thenReturn(host)
         when(triemock).addWord(host.getName()).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager) 
@@ -742,7 +742,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         objectMapper = mock()
         triemock = mock()
         when(mappersManager).getMapper(obj2.getID()).thenReturn(objectMapper)
-        when(mappersManager).findObject(obj2.getID()).thenReturn(obj2)
+        when(mappersManager).find(obj2.getID()).thenReturn(obj2)
         when(objectMapper).delObject(obj2.getID()).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager) 
@@ -765,7 +765,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         mappersManager = self.createMapperMock()
         objectMapper = mock()
         triemock = mock()
-        when(mappersManager).findObject(host.getID()).thenReturn(host)
+        when(mappersManager).find(host.getID()).thenReturn(host)
         when(mappersManager).saveObject(host).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager) 
@@ -773,7 +773,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         model_controller.editHostSYNC(host.getID(), 'new_name', 'new_desc', 'new_os', True)
 
         verify(mappersManager).saveObject(host) 
-        verify(mappersManager).findObject(host.getID())
+        verify(mappersManager).find(host.getID())
 
         self.assertEquals(host.getName(), 'new_name', "Name not updated")
         self.assertEquals(host.getDescription(), 'new_desc', "Description not updated")
@@ -954,7 +954,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
     def genericEdit(self, obj, params, callback, process_pending=False): 
         mappersManager = self.createMapperMock()
         objId = obj.getID()
-        when(mappersManager).findObject(objId).thenReturn(obj)
+        when(mappersManager).find(objId).thenReturn(obj)
         when(mappersManager).saveObject(obj).thenReturn(True) 
         model_controller = controller.ModelController(mock(), mappersManager) 
         callback(model_controller, objId, *params) 
@@ -962,7 +962,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
             model_controller.processAllPendingActions()
 
         verify(mappersManager).saveObject(obj) 
-        verify(mappersManager).findObject(obj.getID())
+        verify(mappersManager).find(obj.getID())
 
 if __name__ == '__main__':
     unittest.main() 

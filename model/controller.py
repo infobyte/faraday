@@ -494,14 +494,14 @@ class ModelController(threading.Thread):
 
     def __add(self,  obj, parent_id=None, *args):
         dataMapper = self.mappers_manager.getMapper(obj)
-        object_parent = self.mappers_manager.findObject(parent_id)
+        object_parent = self.mappers_manager.find(parent_id)
         object_parent.addChild(obj.getID(), obj)
         dataMapper.saveObject(obj) 
         self.treeWordsTries.addWord(obj.getName())
         notifier.addHost(obj)
 
     def __edit(self, objId, *args, **kwargs):
-        obj = self.mappers_manager.findObject(objId)
+        obj = self.mappers_manager.find(objId)
         obj.updateAttributes(*args, **kwargs)
         self.mappers_manager.saveObject(obj) 
         # self.treeWordsTries.addWord(obj.getName())
@@ -509,7 +509,7 @@ class ModelController(threading.Thread):
 
     def __del(self,  objId, *args):
         dataMapper = self.mappers_manager.getMapper(objId) 
-        obj = self.mappers_manager.findObject(objId)
+        obj = self.mappers_manager.find(objId)
         obj_parent = obj.getParent() 
         if obj_parent:
             obj_parent.deleteChild(objId) 
@@ -836,7 +836,7 @@ class ModelController(threading.Thread):
 
     def getHost(self, name):
         hosts_mapper= self.mappers_manager.getHostsMapper()
-        return hosts_mapper.findObjectByName(name)
+        return hosts_mapper.findByName(name)
 
     def getHostsCount(self):
         return len(self._hosts)

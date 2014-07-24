@@ -14,7 +14,7 @@ import traceback
 import threading
 import SimpleXMLRPCServer
 import xmlrpclib
-from utils.decorators import updateLocalMetadata, save, delete
+from utils.decorators import updateLocalMetadata
 import json
 import model
 from conflict import ConflictUpdate

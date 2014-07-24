@@ -5,7 +5,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from persistence.orm import WorkspacePersister 
 import restkit.errors
 import model
 
@@ -65,20 +64,12 @@ def lockModel(func):
         return res
     return wrapper
 
-                                               
-@simple_decorator
-def save(func):
-    def wrapper(self, *args, **kwargs):
-        func(self, *args, **kwargs)
-        WorkspacePersister.save(self)
-    return wrapper
-
-
 @simple_decorator
 def trap_timeout(func):
     def wrapper(self, *args, **kwargs):
         try:
             if self._lostConnection:
+                # REFACTOR
                 WorkspacePersister.addPendingAction(self, func, args, kwargs)
             return func(self, *args, **kwargs)
         except restkit.errors.RequestError as req_error:
@@ -91,10 +82,3 @@ def trap_timeout(func):
     return wrapper
 
 
-                                                 
-@simple_decorator
-def delete(func):
-    def wrapper(self, *args, **kwargs):
-        func(self, *args, **kwargs)
-        WorkspacePersister.delete(self)
-    return wrapper

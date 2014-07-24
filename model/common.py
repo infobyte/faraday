@@ -14,7 +14,7 @@ import traceback
 import threading
 import SimpleXMLRPCServer
 import xmlrpclib
-from utils.decorators import updateLocalMetadata, save, delete
+from utils.decorators import updateLocalMetadata
 import json
 import model
 from conflict import ConflictUpdate
@@ -224,13 +224,6 @@ class ModelObject(object):
         # can be overriden if needed
         pass
 
-    def getChilds(self):
-        childs = {}
-        childs.update({vuln.getID(): vuln for vuln in self.getVulns()})
-        childs.update({note.getID(): note for note in self.getNotes()})
-        childs.update({cred.getID(): cred for cred in self.getCreds()})
-        return childs
-
     def setID(self, ID=None):
         if ID is None:
             self.updateID()
@@ -402,7 +395,7 @@ class ModelObject(object):
         return self.getChildsByType(ModelObjectNote.__name__)
 
     def setNotes(self, notes):
-        self._notes = notes
+        self._addChildsDict(notes)
 
     def getNote(self, noteID):
         return self.findChild(noteID)
@@ -425,7 +418,7 @@ class ModelObject(object):
         return self.getChildsByType(ModelObjectVuln.__name__)
 
     def setVulns(self, vulns):
-        self._vulns = vulns
+        self._addChildsDict(vulns)
 
     def getVuln(self, vulnID):
         return self.findChild(vulnID)
@@ -456,7 +449,7 @@ class ModelObject(object):
         return self.getChildsByType(ModelObjectCred.__name__)
 
     def setCreds(self, creds):
-        self._creds = creds
+        self._addChildsDict(creds)
 
     def getCred(self, credID):
         return self._getValueByID("_creds", credID)
@@ -483,6 +476,10 @@ class ModelObject(object):
                 return str(self.getID())
             return ".".join([self.getParent().ancestors_path()] + [str(self.getID())])
 
+    def _addChildsDict(self, dictt):
+        [self.addChild(k, v) for k, v in dictt.items()]
+
+
 class ModelComposite(ModelObject):
     """ Model Objects Composite Abstract Class """
 
@@ -493,6 +490,9 @@ class ModelComposite(ModelObject):
     def addChild(self, iid, model_object):
         self.childs[iid] = model_object
         model_object.setParent(self)
+
+    def getChilds(self):
+        return self.childs
 
     def getChildsByType(self, signature):
         return [c for c in self.childs.values() 

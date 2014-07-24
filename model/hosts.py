@@ -10,7 +10,7 @@ from config.configuration import getInstanceConfiguration
 from model.common import ModelObject, ModelObjectNote, ModelObjectVuln, ModelObjectVulnWeb, ModelObjectCred, ModelComposite, ModelLeaf
 from model.common import Metadata
 from utils.common import *  
-from utils.decorators import updateLocalMetadata, save, delete
+from utils.decorators import updateLocalMetadata
 
 import model.api as api
 try:
@@ -113,25 +113,7 @@ class Host(ModelComposite):
             self.setOwned(owned)
 
     def setInterfaces(self, interfaces):
-        [self.addChild(inter.getID(), inter) for inter in interfaces]
-
-    @updateLocalMetadata
-    def addInterface(self, newInterface, update=False, setparent=True): # Deprecated
-        return self._addValue("_interfaces", newInterface,
-                              setparent=setparent, update=update)
-
-    @updateLocalMetadata
-    def delInterface(self, intID): # Deprecated
-                                                                       
-        interface = self.getInterface(intID)
-        if interface is not None:
-            for srv in interface.getAllServices():
-                srv.delInterface(intID)
-                                         
-        return self._delValue("_interfaces", intID)
-
-    def addInterfaceFull(self, interface): # Deprecated
-        self.addInterface(interface)
+        self._addChildsDict(interfaces)
 
     def getAllInterfaces(self, mode = 0):
         return self.getChildsByType(Interface.__name__)
@@ -142,7 +124,7 @@ class Host(ModelComposite):
         if value is found it returns the interface objets
         it returns None otherwise
         """
-        return self._getValueByID("_interfaces", value)
+        return self.childs.get(value, None)
 
 
     def getService(self, name):
@@ -434,7 +416,7 @@ class Interface(ModelComposite):
         return self._getValueByID("_services", name)
 
     def setServices(self, services):
-        [self.addChild(s.getID(), s) for s in services]
+        self._addChildsDict(services)
 
     def addHostname(self, hostname):
         if hostname not in self._hostnames:
@@ -585,22 +567,6 @@ class Service(ModelComposite):
             self.setVersion(version)
         if owned is not None:
             self.setOwned(owned) 
-
-    def addInterface(self, newInterface, update=False, setparent=False): # Deprecated
-        res = self._addValue("_interfaces", newInterface, update=update, setparent=setparent)
-                                                                                 
-        if res: newInterface.addService(self)
-        return res
-
-    def delInterface(self, intID, checkFullDelete=True): # Deprecated
-        interface = self.getInterface(intID)
-        res = self._delValue("_interfaces", intID)
-        if res:
-            if interface is not None:
-                interface.delService(self.getID(), checkFullDelete)
-
-        if checkFullDelete: self._checkFullDelete()
-        return res
 
     def _checkFullDelete(self):
         api.devlog("Doing service checkFullDelete")

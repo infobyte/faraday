@@ -175,7 +175,6 @@ class InterfaceMapperTestSuite(unittest.TestCase):
         iface = Interface(name="192.168.10.168", mac="01:02:03:04:05:06")
         iface.setDescription("Some description")
         iface.setOwned(True)
-        iface.setNetworkSegment(None)
         iface.addHostname("www.test.com")
         iface.setIPv4({
             "address": "192.168.10.168",
@@ -222,7 +221,6 @@ class InterfaceMapperTestSuite(unittest.TestCase):
         iface = Interface(name="192.168.10.168", mac="01:02:03:04:05:06")
         iface.setDescription("Some description")
         iface.setOwned(True)
-        iface.setNetworkSegment(None)
         iface.addHostname("www.test.com")
         iface.setIPv4({
             "address": "192.168.10.168",
@@ -602,7 +600,6 @@ class CompositeMapperTestSuite(unittest.TestCase):
         iface = Interface(name="192.168.10.168", mac="01:02:03:04:05:06")
         iface.setDescription("Some description")
         iface.setOwned(True)
-        iface.setNetworkSegment(None)
         iface.addHostname("www.test.com")
         iface.setIPv4({
             "address": "192.168.10.168",
@@ -633,7 +630,7 @@ class CompositeMapperTestSuite(unittest.TestCase):
         self.mapper_manager.save(host)
         # add inteface
         interface = self.create_interface()
-        host.addInterface(interface)
+        host.addChild(interface.getID(), interface)
         self.mapper_manager.save(interface)
 
         h = self.mapper_manager.find(host.getID())
@@ -998,7 +995,7 @@ class CompositeMapperTestSuite(unittest.TestCase):
 
         doc_cred = {
             "type": "ModelObjectCred",
-            "_id": "vuln1",
+            "_id": "cred1",
             "name": "Vuln1",
             "owned": False,
             "parent": "1234",
@@ -1032,6 +1029,7 @@ class CompositeMapperTestSuite(unittest.TestCase):
             1,
             "Host should have one note")
 
+
         self.assertEquals(
             len(host.getVulns()),
             1,
@@ -1042,8 +1040,7 @@ class CompositeMapperTestSuite(unittest.TestCase):
             1,
             "Host should have one cred")
 
-    def test_delete_interface_from_composite_one_host_one_interface_two_services(self):
-
+    def test_delete_interface_from_composite_one_host_one_interface_two_services(self): 
         doc_host = {
             "type": "Host",
             "_id": "1234",
@@ -1129,7 +1126,7 @@ class CompositeMapperTestSuite(unittest.TestCase):
 
         #then remove the interface
         iface_id = host.getInterface("5678").getID()
-        host.delInterface(iface_id)
+        host.deleteChild(iface_id)
 
         def fake_remove(id):
             when(self.pmanager).getDocument(id).thenReturn(None)

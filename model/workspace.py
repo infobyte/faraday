@@ -17,7 +17,6 @@ from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 import shutil
-from persistence.orm import WorkspacePersister
 from managers.all import PersistenceManagerFactory, FSManager
 
 
@@ -30,7 +29,7 @@ class Workspace(object):
     open a new one.
     """
 
-    def __init__(self, name, desc, manager=None, shared=CONF.getAutoShareWorkspace()):
+    def __init__(self, name, desc=None, manager=None, shared=CONF.getAutoShareWorkspace()):
         self.name = name
         self.description = ""
         self.customer = ""
@@ -134,6 +133,7 @@ class WorkspaceManager(object):
     This class stores information in $HOME/.faraday/config/workspacemanager.xml file
     to keep track of created workspaces to be able to load them
     """
+    # REFACTOR
     def __init__(self, model_controller, plugin_controller):
         self.active_workspace = None
                                                                   

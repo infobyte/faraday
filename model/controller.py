@@ -535,60 +535,6 @@ class ModelController(threading.Thread):
         """
         self._processAction(modelactions.DELHOST, [host.getID()], sync=True)
 
-    def __clearHost(self, host):
-        self.__clearModelObject(host)
-        self.__delInterfaces(host)
-
-    def __clearInterface(self, interface):
-        self.__clearModelObject(interface)
-        self.__delServices(interface)
-
-    def __clearApplication(self, application):
-        self.__clearModelObject(application)
-        self.__delServices(application)
-
-    def __clearService(self, service):
-        self.__clearModelObject(service)
-
-    def __clearNote(self, note):
-        self.__clearModelObject(note)
-
-    def __clearVuln(self, vuln):
-        self.__clearModelObject(vuln)
-
-    def __clearCred(self, cred):
-        self.__clearModelObject(cred)
-
-    def __clearModelObject(self, modelObj):
-        self.removeConflictsByObject(modelObj)
-        self.__delNotes(modelObj)
-        self.__delVulns(modelObj)
-        self.__delCreds(modelObj)
-
-    def __delNotes(self, modelObj):
-        for note in list(modelObj.getNotes()):
-            self.__clearNote(note)
-            modelObj.delNote(note.getID())
-
-    def __delVulns(self, modelObj):
-        for vuln in list(modelObj.getVulns()):
-            self.__clearVuln(vuln)
-            modelObj.delVuln(vuln.getID())
-
-    def __delCreds(self, modelObj):
-        for cred in list(modelObj.getCreds()):
-            self.__clearCred(cred)
-            modelObj.delCred(cred.getID())
-
-    def __delInterfaces(self, modelObj):
-        for interface in list(modelObj.getAllInterfaces()):
-            self.__clearInterface(interface)
-            modelObj.delInterface(interface.getID())
-
-    def __delServices(self, modelObj):
-        for service in list(modelObj.getAllServices()):
-            self.__clearService(service)
-            modelObj.delService(service.getID())
 
     def editHostSYNC(self, host, name, description, os, owned):
         """

@@ -168,6 +168,43 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         verify(dbManager).removeDb('test_workspace')
         self.assertTrue(remove_ret, 'bbdd not removed')
 
+    def testSetActiveWorkspace(self):
+        work = Workspace('testname')
+        dbManager = mock()
+        mappersManager = mock()
+        changesManager = mock()
+        workspace_manager = WorkspaceManager(dbManager, mappersManager, changesManager)
+
+        workspace_manager.setActiveWorkspace(work)
+
+        self.assertEquals(workspace_manager.active_workspace, work,
+                'active workspace not set')
+        self.assertTrue(workspace_manager.isActive(work.getName()),
+                'could not retrive as active workspace')
+
+    def testGetWorkspaceTypeCouchDb(self):
+        work = Workspace('testname')
+        dbManager = mock()
+        mappersManager = mock()
+        changesManager = mock()
+        when(dbManager).getDbType('testname').thenReturn(DBTYPE.COUCHDB)
+        workspace_manager = WorkspaceManager(dbManager, mappersManager, changesManager)
+
+        wtype = workspace_manager.getWorkspaceType(work.getName())
+        self.assertEquals(wtype, 'CouchDB', 'Workspace type not returning correct value')
+
+    def testGetWorkspaceTypeFS(self):
+        work = Workspace('testname')
+        dbManager = mock()
+        mappersManager = mock()
+        changesManager = mock()
+        when(dbManager).getDbType('testname').thenReturn(DBTYPE.FS)
+        workspace_manager = WorkspaceManager(dbManager, mappersManager, changesManager)
+
+        wtype = workspace_manager.getWorkspaceType(work.getName())
+        self.assertEquals(wtype, 'FS', 'Workspace type not returning correct value')
+
+
 if __name__ == '__main__':
     unittest.main()
 

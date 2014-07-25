@@ -143,10 +143,16 @@ class FileSystemConnector(DbConnector):
 
     def getDocument(self, document_id):
         getLogger(self).debug(
-            "Getting document for local db %s" % self.path)
+            "Getting document %s for local db %s" % (document_id, self.path))
         path = os.path.join(self.path, "%s.json" % document_id)
-        document = open(path, "r")
-        return json.loads(document.read())
+        doc = None
+        try:
+            doc = open(path, "r")
+            doc = json.loads(doc.read())
+        except IOError:
+            doc = None
+        finally:
+            return doc
 
     def remove(self, document_id):
         path = os.path.join(self.path, "%s.json" % document_id)
@@ -184,7 +190,7 @@ class CouchDbConnector(DbConnector):
     #@trap_timeout
     def getDocument(self, document_id):
         getLogger(self).debug(
-            "Getting document for couch db %s" % self.db)
+            "Getting document %s for couch db %s" % (document_id, self.db))
         try:
             return self.db.get(document_id)
         except ResourceNotFound:

@@ -612,13 +612,6 @@ class CompositeMapperTestSuite(unittest.TestCase):
         iface.setPortsFiltered(4)
         return iface
 
-    def addInterfaceToHost(self, host_id, interface):
-        host = self.mapper_manager.find(host_id)
-        if host:
-            host.addInterface(interface)
-            self.mapper_manager.save(interface)
-        return self.mapper_manager.find(interface.getID())
-
     def test_find_composite_host(self):
         '''
         We are going to create a host, then save it.

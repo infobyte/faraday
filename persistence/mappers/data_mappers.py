@@ -38,7 +38,8 @@ class ModelObjectMapper(AbstractMapper):
     def unserialize(self, mobj, doc):
         mobj.setName(doc.get("name"))
         mobj.setOwned(doc.get("owned"))
-        mobj.setParent(self.mapper_manager.find(doc.get("parent")))
+        if doc.get("parent", None):
+            mobj.setParent(self.mapper_manager.find(doc.get("parent")))
         mobj.setOwner(doc.get("owner"))
         mobj.setDescription(doc.get("description"))
         mobj.setMetadata(Metadata(doc.get("metadata")))

@@ -513,23 +513,6 @@ def newApplication(name, status = "running", version = "unknown"):
 
 #-------------------------------------------------------------------------------
 
-
-#TODO: this api is used in the telnet plugin to get a host and change the
-# name by adding a host with update flag in True.
-# This may be risky because we are returning a reference to a host that
-# could be deleted or changed while another plugin is using it
-# A way to save this could be returning a copy of the object or
-# implement dirty flag (or a lock) on the objects
-def getHost(hostname):
-    """
-    THIS API WAS CREATED FOR DEMO WITH TELNET PLUGIN
-    It is useful but risky using it like this
-    """
-    return __model_controller._getValueByID("_hosts", hostname)
-
-
-#-------------------------------------------------------------------------------
-
 #exportWorskpace
 
 def exportWorskpace(workspace_path, export_path):
@@ -689,6 +672,6 @@ def getLocalDefaultGateway():
 
 
 #-------------------------------------------------------------------------------
-
+#REFACTOR
 def getActiveWorkspace():
     return __model_controller.getWorkspace()

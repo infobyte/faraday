@@ -5,24 +5,14 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from unittest import TestCase
 import unittest
 import sys
 sys.path.append('.')
 import model.controller as controller
-import plugins.core as plcore
 from mockito import mock, verify, when, any
-from model import api
 from model.hosts import Host, Interface, Service
-from model.workspace import WorkspaceOnCouch, WorkspaceManager, WorkspaceOnFS
-from model.common import ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote, ModelComposite, ModelObjectCred
-from persistence.orm import WorkspacePersister
-import random
+from model.common import ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote, ModelObjectCred
 
-from model.visitor import VulnsLookupVisitor
-import test_cases.common as test_utils
-
-from managers.all import CommandManager, CouchdbManager, PersistenceManagerFactory
 
 class ModelObjectControllerUnitTest(unittest.TestCase):
     # TODO: Notifier goes into mapper?
@@ -449,7 +439,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
-        model_controller.addNoteToNoteASYNC(note.getID(), note)
+        model_controller.addNoteToNoteASYNC(None, None, note.getID(), note)
         model_controller.processAllPendingActions()
 
         verify(mappersManager).getMapper(note)
@@ -940,13 +930,13 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         objectMapper = mock()
         when(mappersManager).getHostsMapper().thenReturn(objectMapper)
         when(objectMapper).getHost(host.getName()).thenReturn(host)
-        when(objectMapper).findObjectByName(host.getName()).thenReturn(host)
+        when(objectMapper).findByName(host.getName()).thenReturn(host)
 
         model_controller = controller.ModelController(mock(), mappersManager) 
 
         host_obt =  model_controller.getHost('coquito')
 
-        verify(objectMapper).findObjectByName(host.getName())
+        verify(objectMapper).findByName(host.getName())
         verify(mappersManager).getHostsMapper()
 
         self.assertEqual(host, host_obt)

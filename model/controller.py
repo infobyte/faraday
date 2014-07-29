@@ -8,24 +8,16 @@ import time
 import threading
 import Queue
 import traceback
-import datetime
 import model.common # this is to make sure the factory is created
 import model.hosts
 
 from config.configuration import getInstanceConfiguration
 from model.common import TreeWordsTries
-from model.container import ModelObjectContainer
 from utils.logs import getLogger
 import model.api as api
 #import model.guiapi as guiapi
 from model.guiapi import notification_center as notifier
 from gui.customevents import *
-
-from model.workspace import WorkspaceSyncronizer
-from utils.decorators import lockModel
-from utils.common import get_hash
-
-from model.conflict import Conflict, ConflictUpdate
 
 
 #XXX: consider re-writing this module! There's alot of repeated code
@@ -178,8 +170,6 @@ class ModelController(threading.Thread):
         self._actionDispatcher = None
         self._setupActionDispatcher()
 
-        self._workspace = None
-
         self.objects_with_updates = []
 
         #used to highligthing
@@ -187,47 +177,6 @@ class ModelController(threading.Thread):
 
     def __getattr__(self, name):
         getLogger(self).debug("ModelObject attribute to refactor: %s" % name)
-
-    def _getValueByID(self, attrName, ID):
-        """
-        attribute passed as a parameter MUST BE a dictionary indexed with a
-        string ID
-        if id is found as a part of a key it returns the object
-        it returns None otherwise
-        """
-        if ID:
-            hash_id = get_hash([ID])
-            ref = self.__getattribute__(attrName)
-            # we are assuming the value is unique inside the object ID's
-            #for key in ref:
-            for key in ref.keys():
-                #XXX: this way of checking the ids doesn't allow us to use a real hash as key
-                # because we are checking if "id" is part of the key... not a good way  of
-                # dealing with this...
-                if hash_id == key or ID == key:
-                    return ref[key]
-            # if id (hash) was not found then we try with element names
-            for element in ref.itervalues():
-                #if id in element.name:
-                if ID == element.name:
-                    return element
-        return None
-
-    def _addValue(self, attrName, newValue, setparent=False, update=False):
-        # attribute passed as a parameter MUST BE  the name
-        # of an internal attribute which is a dictionary indexed
-        # with a string ID
-        valID = newValue.getID()
-        ref = self.__getattribute__(attrName)
-        #if valID not in ref or update:
-        if valID not in ref or update:
-            #TODO: Is this necesary?
-            if setparent:
-                newValue.setParent(self)
-            ref[valID] = newValue
-            return True
-            #return not update
-        return False
 
     def __acquire_host_lock(self):
         self._saving_model_lock.acquire()
@@ -765,7 +714,7 @@ class ModelController(threading.Thread):
         self.__addPendingAction(modelactions.ADDNOTESRV, newNote, srvId)
 
     def addNoteToNoteASYNC(self, host, srvname, note_id, newNote):
-        self.__addPendingAction(modelactions.ADDNOTENOTE, host, srvname, note_id, newNote)
+        self.__addPendingAction(modelactions.ADDNOTENOTE, newNote, note_id)
 
     def addNoteToNoteSYNC(self, noteId, newNote):
         self._processAction(modelactions.ADDNOTENOTE, [newNote, noteId], sync=True)
@@ -846,13 +795,6 @@ class ModelController(threading.Thread):
         hosts = hosts_mapper.getAllHosts()
         return hosts
 
-    def setWorkspace(self, workspace):
-        self._workspace = workspace
-        self._hosts = self._workspace.getContainee()
-        self._workspace.load()
-        self.createIndex(self._hosts)
-        notifier.workspaceChanged(self._workspace)
-
     def createIndex(self, hosts):
         self.treeWordsTries = TreeWordsTries()
         self.treeWordsTries.clear()
@@ -871,28 +813,7 @@ class ModelController(threading.Thread):
                 for hostname in intr.getHostnames():
                     self.treeWordsTries.addWord(hostname)
 
-    def getWorkspace(self):
-        return self._workspace
-
     def checkPermissions(self, op):
         ## In order to use the decorator passPermissionsOrRaise
         ## The client should implement checkPermissions method.
         self.__sec.checkPermissions(op)
-
-    def getWorkspaceSyncronizer(self):
-        return WorkspaceSyncronizer(self.getWorkspace())
-
-    #@passPermissionsOrRaise
-    @lockModel
-    def syncActiveWorkspace(self):
-        if len(self.getWorkspace().getConflicts()):
-            #There are some conflicts
-            notifier.showPopup("Sync Failed! \nYou should check if there are some conflicts to resolve")
-            return False
-
-        ws = self.getWorkspaceSyncronizer()
-        if not ws.sync():
-            notifier.showPopup("Sync Failed! \nYou should check if there are some conflicts to resolve")
-            return False
-        notifier.workspaceLoad(self.getAllHosts())
-        return True

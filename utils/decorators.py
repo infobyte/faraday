@@ -54,15 +54,6 @@ def passPermissionsOrRaise(func):
         return func(self, *args, **kwargs)
     return wrapper
 
-                              
-@simple_decorator
-def lockModel(func):
-    def wrapper(self, *args, **kwargs):
-        self.setSavingModel(True)
-        res=func(self, *args, **kwargs)
-        self.setSavingModel(False)
-        return res
-    return wrapper
 
 @simple_decorator
 def trap_timeout(func):

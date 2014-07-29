@@ -20,10 +20,11 @@ class WorkspaceManager(object):
         * Workspace opening
         * Active Workspace switching"""
 
-    def __init__(self, dbManager, mappersManager, changesManager, *args, **kwargs):
+    def __init__(self, dbManager, mappersManager, changesManager, reportsManager, *args, **kwargs):
         self.dbManager = dbManager
         self.mappersManager = mappersManager
         self.changesManager = changesManager
+        self.reportsManager = reportsManager
         self.active_workspace = None
 
     def getWorkspacesNames(self):
@@ -51,6 +52,7 @@ class WorkspaceManager(object):
             self.setActiveWorkspace(workspace)
             notification_center.workspaceChanged(workspace)
             notification_center.workspaceLoad(workspace.getHosts())
+            self.reportsManager.watch(name)
             return workspace
         return None
 

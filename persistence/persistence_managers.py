@@ -35,7 +35,7 @@ class DBTYPE(object):
 class DbManager(object):
 
     def __init__(self):
-        self.couchmanager = CouchDbManager()
+        self.couchmanager = CouchDbManager(CONF.getCouchURI())
         self.fsmanager = FileSystemManager()
         self.dbs = {}
         self._loadDbs()

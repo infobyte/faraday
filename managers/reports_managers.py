@@ -24,9 +24,7 @@ from apis.rest.api import PluginControllerAPIClient
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
-"""
-
-"""
+class NoReportsWatchException(Exception): pass
                                                                                 
 class ReportManager(threading.Thread):
     def __init__(self, timer, plugin_controller, path=None):
@@ -36,6 +34,8 @@ class ReportManager(threading.Thread):
         self._stop = False
         self.path = path
         self.plugin_controller = plugin_controller
+        self._report_path = None
+        self._report_ppath = None
 
     def run(self):
         tmp_timer = 0
@@ -54,6 +54,20 @@ class ReportManager(threading.Thread):
     def stop(self):
         self._stop = True
         
+    def watch(self, name):
+        self._report_path = os.path.join(CONF.getReportPath(), name)
+        self._report_ppath = os.path.join(self._report_path, "process")
+
+        if not os.path.exists(self._report_path):
+            os.mkdir(self._report_path)
+
+        if not os.path.exists(self._report_ppath):
+            os.mkdir(self._report_ppath) 
+
+    def startWatch(self):
+        if not self._report_path:
+            raise NoReportsWatchException()
+        self.run()
       
     def syncReports(self):
         """

@@ -24,6 +24,7 @@ import model.log
 from utils.logs import getLogger
 import traceback
 from managers.all import PluginManager
+from managers.mappers_manager import MapperManager
 
 #from gui.qt3.mainwindow import MainWindow
 from utils.error_report import exception_handler
@@ -46,15 +47,21 @@ class MainApplication(object):
         self._configuration = CONF
 
         self._security_manager = SecurityManager()
+        self._mappers_manager = MapperManager()
+        self._changes_controller = ChangeController(self.mappers_manager) 
+        self._db_manager = DbManager()
 
         self._model_controller = model.controller.ModelController(
-            security_manager=self._security_manager)
+                                        security_manager=self._security_manager,
+                                        self._mappers_manager)
 
         self._plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(),
                                              "plugins"))
 
-        self._workspace_manager = WorkspaceManager(self._model_controller,
-                                                   self._plugin_manager.createController("ReportManager"))
+        self._reports_manager = ReportManager(10, self._plugin_manager)
+
+        self._workspace_manager = WorkspaceManager(self._db_manager, self._mappers_manager,
+                                                   self._changes_controller)
 
         self.gui_app = UiFactory.create(self._model_controller,
                                         self._plugin_manager,

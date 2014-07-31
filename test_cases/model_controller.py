@@ -484,6 +484,7 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
     def createMapperMock(self):
         map_mock = mock()
         when(map_mock).find(any()).thenReturn(mock())
+        when(map_mock).find(None).thenReturn(None)
         return map_mock
 
     def testAddCredGetsMapperDispatchSaveSYNC(self): 

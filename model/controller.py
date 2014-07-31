@@ -447,7 +447,10 @@ class ModelController(threading.Thread):
     def __add(self,  obj, parent_id=None, *args):
         dataMapper = self.mappers_manager.getMapper(obj)
         object_parent = self.mappers_manager.find(parent_id)
-        object_parent.addChild(obj.getID(), obj)
+        if object_parent:
+            object_parent.addChild(obj.getID(), obj)
+        # Dispatch conflict management routine
+        # ...  
         dataMapper.saveObject(obj) 
         self.treeWordsTries.addWord(obj.getName())
         notifier.addHost(obj)

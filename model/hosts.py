@@ -31,8 +31,8 @@ class Host(ModelComposite):
                                                
     class_signature = "Host"
 
-    def __init__(self, name, os = "Unknown", default_gateway=None, dic=None):
-        ModelComposite.__init__(self)
+    def __init__(self, name, os = "Unknown", default_gateway=None, dic=None, parent=None):
+        ModelComposite.__init__(self, parent)
         self._interfaces            = {}
         self._applications          = {}
         self.categories             = []
@@ -73,8 +73,12 @@ class Host(ModelComposite):
             pass
         return cat
 
-    def updateID(self): 
-        self._id = get_hash([self._name])
+    def updateID(self):
+        if self.parent:
+            self._id = '.'.join(
+                [self._parent.getID(), get_hash([self._name])])
+        else:
+            self._id = get_hash([self._name])
 
     def setOS(self, newOS): 
         self._operating_system = newOS
@@ -227,9 +231,9 @@ class Interface(ModelComposite):
                  ipv4_gateway = "0.0.0.0", ipv4_dns = [],
                  ipv6_address = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_prefix = "00",
                  ipv6_gateway = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns = [],
-                 network_segment = "", hostname_resolution = None):
+                 network_segment = "", hostname_resolution = None, parent=None):
 
-        ModelComposite.__init__(self)
+        ModelComposite.__init__(self, parent)
 
                               
         self._name         = name
@@ -310,8 +314,9 @@ class Interface(ModelComposite):
             return list(set(prop1))
         return None
 
-    def updateID(self): 
-        self._id = get_hash([self.network_segment, self.ipv4["address"], self.ipv6["address"]])
+    def updateID(self):
+        self._id = '.'.join(
+                [self._parent.getID(), get_hash([self.network_segment, self.ipv4["address"], self.ipv6["address"]])])
 
     def setName(self, name):
         self._name = name
@@ -472,8 +477,8 @@ class Service(ModelComposite):
     class_signature = "Service"
 
     def __init__(self, name, protocol="TCP", ports=None, status="running",
-                 version="unknown", description = ""):
-        ModelComposite.__init__(self)
+                 version="unknown", description = "", parent=None):
+        ModelComposite.__init__(self, parent)
 
         self._name          = name
         self.description    = description
@@ -544,10 +549,11 @@ class Service(ModelComposite):
         self._version = version
 
     def getVersion(self):
-        return self._version 
+        return self._version
 
-    def updateID(self): 
-        self._id = get_hash([self._protocol, ":".join(str(self._ports))])
+    def updateID(self):
+        self._id = '.'.join(
+            [self._parent.getID(), get_hash([self._protocol, ":".join(str(self._ports))])])
 
     #@save
     @updateLocalMetadata
@@ -661,8 +667,9 @@ class HostApplication(ModelComposite): # Deprecated
         return self._version
 
     def updateID(self):
-        self._id = get_hash([self._name, self._version])
-    
+        self._id = '.'.join(
+            [self._parent.getID(), get_hash([self._name, self._version])])
+
     @updateLocalMetadata
     def updateAttributes(self, name=None, description=None, status=None, version=None, owned=None):
         if name is not None:

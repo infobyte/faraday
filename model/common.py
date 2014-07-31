@@ -96,10 +96,10 @@ class ModelObject(object):
     # this static attribute used with a factory
     class_signature = "ModelObject"
 
-    def __init__(self):
+    def __init__(self, parent=None):
         self._name          = ""
         self._id            = None
-        self._parent        = None
+        self._parent        = parent
         
         self.owner          = api.getLoggedUser()
         self._metadata      = Metadata(self.owner)
@@ -483,8 +483,8 @@ class ModelObject(object):
 class ModelComposite(ModelObject):
     """ Model Objects Composite Abstract Class """
 
-    def __init__(self):
-        ModelObject.__init__(self)
+    def __init__(self, parent=None):
+        ModelObject.__init__(self, parent)
         self.childs = {}
 
     def addChild(self, iid, model_object):
@@ -505,8 +505,8 @@ class ModelComposite(ModelObject):
         return self.childs.get(iid)
 
 class ModelLeaf(ModelObject):
-    def __init__(self):
-        ModelObject.__init__(self)
+    def __init__(self, parent=None):
+        ModelObject.__init__(self, parent)
 
 #-------------------------------------------------------------------------------
 #TODO: refactor this class to make it generic so this can be used also for plugins
@@ -797,13 +797,13 @@ class ModelObjectNote(ModelComposite):
     class_signature = "Note"
     
     def __init__(self, name="", text="", parent=None):
-        ModelComposite.__init__(self)
+        ModelComposite.__init__(self, parent)
         self.name = str(name)
-        #self._parent = parent
         self._text = str(text)
 
     def updateID(self):
-        self._id = get_hash([self.name, self._text])
+        self._id = '.'.join(
+            [self._parent.getID(), get_hash([self.name, self._text])])
 
     def _setText(self, text):
         # clear buffer then write new text
@@ -853,8 +853,8 @@ class ModelObjectVuln(ModelLeaf):
         """
         The parameters refs can be a single value or a list with values
         """
-        ModelObject.__init__(self)
-        self.name = name
+        ModelLeaf.__init__(self, parent)
+        self.name = named
         self._desc = desc
         
         self.refs = []
@@ -896,8 +896,9 @@ class ModelObjectVuln(ModelLeaf):
         return severity
 
     def updateID(self):
-        self._id = get_hash([self.name, self._desc])
-        
+        self._id = '.'.join(
+            [self._parent.getID(), get_hash([self.name, self._desc])])
+
     def _setDesc(self, desc):
         self._desc = desc
 
@@ -959,7 +960,7 @@ class ModelObjectVulnWeb(ModelObjectVuln):
     class_signature = "VulnerabilityWeb"
     
     def __init__(self, name="",desc="", website="", path="", ref=None, severity="", parent=None, request="", response="",
-                method="",pname="", params="",query="",category=""):
+                method="",pname="", params="",query="",category="", parent=None):
         """
         The parameters ref can be a single value or a list with values
         """
@@ -975,7 +976,8 @@ class ModelObjectVulnWeb(ModelObjectVuln):
         self.category = category
         
     def updateID(self):
-        self._id = get_hash([self.name, self.website, self.path, self.desc ])
+        self._id = '.'.join(
+            [self._parent.getID(), get_hash([self.name, self.website, self.path, self.desc])])
 
     def getPath(self):
         return self.path
@@ -1070,13 +1072,13 @@ class ModelObjectCred(ModelLeaf):
     class_signature = "Cred"
     
     def __init__(self, username="", password="", parent=None):
-        ModelLeaf.__init__(self)
+        ModelLeaf.__init__(self, parent)
         self.username = str(username)
-        self._parent = parent
         self._password = str(password)
-    
+
     def updateID(self):
-        self._id = get_hash([self.username, self._password])
+        self._id = '.'.join(
+            [self._parent.getID(), get_hash([self.username, self.password])])
 
     def setPassword(self, password):
         self._password = str(password)

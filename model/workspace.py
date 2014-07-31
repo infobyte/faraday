@@ -8,16 +8,11 @@ See the file 'doc/LICENSE' for the license information
 
 import os
 import model.api
-import model
 import time
-from model.report import ReportManager
 from model.guiapi import notification_center as notifier
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
-
-import shutil
-from managers.all import PersistenceManagerFactory, FSManager
 
 
 class Workspace(object):

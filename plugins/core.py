@@ -617,7 +617,7 @@ class PluginBase(object):
 
     
     def createAndAddHost(self, name, os = "unknown", category = None, update = False, old_hostname = None):
-        host = model.api.newHost(name, os)
+        host = model.api.newHost(name, os, model.api.getActiveWorkspace.getName())
         self.__addPendingAction(modelactions.CADDHOST, name, os, category, update, old_hostname)
         return host.getID()
 
@@ -629,7 +629,7 @@ class PluginBase(object):
                  network_segment = "", hostname_resolution = []):
         interface = model.api.newInterface(name, mac, ipv4_address, ipv4_mask, ipv4_gateway,
             ipv4_dns, ipv6_address, ipv6_prefix, ipv6_gateway, ipv6_dns,
-            network_segment, hostname_resolution)
+            network_segment, hostname_resolution, parent_id=host_id)
         self.__addPendingAction(modelactions.CADDINTERFACE, host_id, name, mac, ipv4_address, 
             ipv4_mask, ipv4_gateway, ipv4_dns, ipv6_address, ipv6_prefix, ipv6_gateway, ipv6_dns,
             network_segment, hostname_resolution)
@@ -649,18 +649,18 @@ class PluginBase(object):
 
     def createAndAddServiceToInterface(self, host_id, interface_id, name, protocol = "tcp?", 
                 ports = [], status = "running", version = "unknown", description = ""):
-        service = model.api.newService(name, protocol, ports, status, version, description)
+        service = model.api.newService(name, protocol, ports, status, version, description, parent_id=interface_id)
         self.__addPendingAction(modelactions.CADDSERVICEINT, host_id, interface_id, name, protocol, 
                 ports, status, version, description)
         return service.getID()
 
     def createAndAddVulnToHost(self, host_id, name, desc="", ref=[], severity=""):
-        vuln = model.api.newVuln(name, desc, ref, severity)
+        vuln = model.api.newVuln(name, desc, ref, severity, parent_id=host_id)
         self.__addPendingAction(modelactions.CADDVULNHOST, host_id, name, desc, ref, severity)
         return vuln.getID()
 
     def createAndAddVulnToInterface(self, host_id, interface_id, name, desc="", ref=[], severity=""):
-        vuln = model.api.newVuln(name, desc, ref, severity)
+        vuln = model.api.newVuln(name, desc, ref, severity, parent_id=interface_id)
         self.__addPendingAction(modelactions.CADDVULNINT, host_id, interface_id, name, desc, ref, severity)
         return vuln.getID()
 
@@ -670,26 +670,26 @@ class PluginBase(object):
         return vuln.getID()
 
     def createAndAddVulnToService(self, host_id, service_id, name, desc="", ref=[], severity=""):
-        vuln = model.api.newVuln(name, desc, ref, severity)
+        vuln = model.api.newVuln(name, desc, ref, severity, parent_id=service_id)
         self.__addPendingAction(modelactions.CADDVULNSRV, host_id, service_id, name, desc, ref, severity)
         return vuln.getID()
 
     def createAndAddVulnWebToService(self, host_id, service_id, name, desc="", ref=[], severity="", website="", path="", request="",
                                   response="",method="",pname="", params="",query="",category=""):
         vuln = model.api.newVulnWeb(name, desc, ref, severity,website, path, request, response,
-                method,pname, params,query,category)
+                method,pname, params,query,category, parent_id=service_id)
         self.__addPendingAction(modelactions.CADDVULNWEBSRV, host_id, service_id, name, desc, ref, severity, website, path, request, response,
                 method,pname, params,query,category)
         return vuln.getID()
     
 
     def createAndAddNoteToHost(self, host_id, name, text):
-        note = model.api.newNote(name, text)
+        note = model.api.newNote(name, text, parent_id=host_id)
         self.__addPendingAction(modelactions.CADDNOTEHOST, host_id, name, text)
         return note.getID()
 
     def createAndAddNoteToInterface(self, host_id, interface_id, name, text):
-        note = model.api.newNote(name, text)
+        note = model.api.newNote(name, text, parent_id=interface_id)
         self.__addPendingAction(modelactions.CADDNOTEINT, host_id, interface_id, name, text)
         return note.getID()
 
@@ -699,17 +699,17 @@ class PluginBase(object):
         return note.getID()
 
     def createAndAddNoteToService(self, host_id, service_id, name, text):
-        note = model.api.newNote(name, text) 
+        note = model.api.newNote(name, text, parent_id=service_id) 
         self.__addPendingAction(modelactions.CADDNOTESRV, host_id, service_id, name, text)
         return note.getID()
     
     def createAndAddNoteToNote(self, host_id, service_id, note_id, name, text):
-        note = model.api.newNote(name, text)
+        note = model.api.newNote(name, text, parent=note_id)
         self.__addPendingAction(modelactions.CADDNOTENOTE, host_id, service_id, note_id, name, text)
         return note.getID()
     
     def createAndAddCredToService(self, host_id, service_id, username, password):
-        cred = model.api.newCred(username, password)
+        cred = model.api.newCred(username, password, parent_id=service_id)
         self.__addPendingAction(modelactions.CADDCREDSRV, host_id, service_id, username, password)
         return cred.getID()
 

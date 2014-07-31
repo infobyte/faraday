@@ -141,7 +141,7 @@ def createAndAddInterface(host_id, name = "", mac = "00:00:00:00:00:00",
     """
     interface = newInterface(name, mac, ipv4_address, ipv4_mask, ipv4_gateway,
                              ipv4_dns,ipv6_address,ipv6_prefix,ipv6_gateway,ipv6_dns,
-                             network_segment, hostname_resolution)
+                             network_segment, hostname_resolution, parent_id=host_id)
     if addInterface(host_id, interface):
         return interface.getID()
     return None
@@ -161,7 +161,7 @@ def createAndAddServiceToApplication(host_id, application_id, name, protocol = "
 
 def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?", 
                 ports = [], status = "running", version = "unknown", description = ""):
-    service = newService(name, protocol, ports, status, version, description)
+    service = newService(name, protocol, ports, status, version, description, parent_id=interface_id)
     if addServiceToInterface(host_id, interface_id, service):
         return service.getID()
     return None
@@ -169,13 +169,13 @@ def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?
 # Vulnerability
 
 def createAndAddVulnToHost(host_id, name, desc, ref, severity):
-    vuln = newVuln(name, desc, ref, severity)
+    vuln = newVuln(name, desc, ref, severity, parent_id=host_id)
     if addVulnToHost(host_id, vuln):
         return vuln.getID()
     return None
 
 def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref, severity):
-    vuln = newVuln(name, desc, ref, severity)
+    vuln = newVuln(name, desc, ref, severity, parent_id=interface_id)
     if addVulnToInterface(host_id, interface_id, vuln):
         return vuln.getID()
     return None
@@ -188,7 +188,7 @@ def createAndAddVulnToApplication(host_id, application_id, name, desc, ref, seve
 
 def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity):
     #we should give the interface_id or de application_id too? I think we should...
-    vuln = newVuln(name, desc, ref, severity)
+    vuln = newVuln(name, desc, ref, severity, parent_id=service_id)
     if addVulnToService(host_id, service_id, vuln):
         return vuln.getID()
     return None
@@ -199,7 +199,7 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity,
                 method,pname, params,query,category):
     #we should give the interface_id or de application_id too? I think we should...
     vuln = newVulnWeb(name, desc, ref, severity, website, path, request, response,
-                method,pname, params,query,category)
+                method,pname, params,query,category, parent_id=service_id)
     if addVulnWebToService(host_id, service_id, vuln):
         return vuln.getID()
     return None
@@ -207,13 +207,13 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity,
 # Note
  
 def createAndAddNoteToHost(host_id, name, text):
-    note = newNote(name, text)
+    note = newNote(name, text, parent_id=host_id)
     if addNoteToHost(host_id, note):
         return note.getID()
     return None
 
 def createAndAddNoteToInterface(host_id, interface_id, name, text):
-    note = newNote(name, text)
+    note = newNote(name, text, parent_id=interface_id)
     if addNoteToInterface(host_id, interface_id, note):
         return note.getID()
     return None
@@ -225,19 +225,19 @@ def createAndAddNoteToApplication(host_id, application_id, name, text):
     return None
 
 def createAndAddNoteToService(host_id, service_id, name, text):
-    note = newNote(name, text)
+    note = newNote(name, text, parent_id=service_id)
     if addNoteToService(host_id, service_id, note):
         return note.getID()
     return None
 
 def createAndAddNoteToNote(host_id, service_id, note_id, name, text):
-    note = newNote(name, text)
+    note = newNote(name, text, parent_id=note_id)
     if addNoteToNote(host_id, service_id, note_id, note):
         return note.getID()
     return None
 
 def createAndAddCredToService(host_id, service_id, username, password):
-    cred = newCred(username, password)
+    cred = newCred(username, password, parent_id=service_id)
     if addCredToService(host_id, service_id, cred):
         return cred.getID()
     return None
@@ -428,13 +428,19 @@ def delCredFromService(cred, hostname, srvname):
 #-------------------------------------------------------------------------------
 # CREATION APIS
 #-------------------------------------------------------------------------------
+
+
+def getParent(parent_id):
+    return __model_controller.find(parent_id)
+
+
 def newHost(name, os = "Unknown"):
     """
     It creates and returns a Host object.
     The object created is not added to the model.
     """
     # 'Host' is a class signature if that is changed we have to update this
-    return model.common.factory.createModelObject("Host", name, os=os)
+    return model.common.factory.createModelObject("Host", name, os=os, parent=getActiveWorkspace().getName())
 
 #-------------------------------------------------------------------------------
 def newInterface(name = "", mac = "00:00:00:00:00:00",
@@ -442,66 +448,72 @@ def newInterface(name = "", mac = "00:00:00:00:00:00",
                  ipv4_gateway = "0.0.0.0", ipv4_dns = [],
                  ipv6_address = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_prefix = "00",
                  ipv6_gateway = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns = [],
-                 network_segment = "", hostname_resolution = []):
+                 network_segment = "", hostname_resolution = [], parent_id=None):
     """
     It creates and returns an Interface object.
     The created object is not added to the model.
     """
+    parent = getParent(parent_id)
     return model.common.factory.createModelObject("Interface", name, mac = mac,
                  ipv4_address = ipv4_address , ipv4_mask = ipv4_mask,
                  ipv4_gateway = ipv4_gateway, ipv4_dns = ipv4_dns,
                  ipv6_address = ipv6_address , ipv6_prefix = ipv6_prefix,
                  ipv6_gateway = ipv6_gateway, ipv6_dns = ipv6_dns,
                  network_segment = network_segment,
-                 hostname_resolution = hostname_resolution)
+                 hostname_resolution = hostname_resolution, parent=parent)
 #-------------------------------------------------------------------------------
 def newService(name, protocol = "tcp?", ports = [], status = "running",
-               version = "unknown", description = ""):
+               version = "unknown", description = "", parent_id=None):
     """
     It creates and returns a Service object.
     The created object is not added to the model.
     """
+    parent = getParent(parent_id)
     return model.common.factory.createModelObject("Service",name,
                     protocol = protocol, ports = ports, status = status,
-                    version = version, description = description)
+                    version = version, description = description, parent=parent)
 #-------------------------------------------------------------------------------
 
-def newVuln(name, desc="", ref = None, severity=""):
+def newVuln(name, desc="", ref = None, severity="", parent_id=None):
     """
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
+    parent = getParent(parent_id)
     return model.common.factory.createModelObject("Vulnerability", name, desc=desc,
-                                                  ref=ref, severity=severity)
+                                                  ref=ref, severity=severity, parent=parent)
  
 #-------------------------------------------------------------------------------
 
 def newVulnWeb(name, desc="", ref = None, severity="", website="", path="", request="", response="",
-                method="",pname="", params="",query="",category=""):
+                method="",pname="", params="",query="",category="", parent_id=None):
     """
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
+    parent = getParent(parent_id)
     return model.common.factory.createModelObject("VulnerabilityWeb", name, desc=desc, ref=ref,severity=severity, website=website, path=path, request=request,
-                                                  response=response,method=method,pname=pname, params=params,query=query,category=category )
+                                                  response=response,method=method,pname=pname, params=params,query=query,category=category, parent=parent)
  
 #-------------------------------------------------------------------------------
    
-def newNote(name,text):
+def newNote(name,text, parent_id=None):
     
     """
     It creates and returns a Note object.
     The created object is not added to the model.
     """
-    return model.common.factory.createModelObject("Note", name, text=text)
+    parent = getParent(parent_id)
+    return model.common.factory.createModelObject("Note", name, text=text, parent=parent)
 
-def newCred(username,password):
+def newCred(username,password, parent_id=None):
     
     """
     It creates and returns a Cred object.
     The created object is not added to the model.
     """
-    return model.common.factory.createModelObject("Cred", username, password=password)
+    parent = getParent(parent_id)
+    return model.common.factory.createModelObject("Cred", username, password=password, parent=parent)
 
 
 #-------------------------------------------------------------------------------

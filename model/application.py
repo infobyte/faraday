@@ -25,7 +25,7 @@ import model.log
 from utils.logs import getLogger
 import traceback
 from managers.all import PluginManager
-from managers.mappers_manager import MapperManager
+from managers.mapper_manager import MapperManager
 from managers.reports_managers import ReportManager
 
 from utils.error_report import exception_handler

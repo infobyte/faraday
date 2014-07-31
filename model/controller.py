@@ -355,7 +355,7 @@ class ModelController(threading.Thread):
             # first we check if there is a sync api request
             # or if the model is being saved/sync'ed
             # or if we have pending duplicated hosts that need to be
-            # merged by the user
+            # merged by the userget
             if not self._sync_api_request and not self._saving_model_flag:
 
                 self.processAction()
@@ -425,6 +425,9 @@ class ModelController(threading.Thread):
             api.devlog("(%s).addUpdate(%s, %s) - failed" %
                       (self, old_object, new_object))
         return res
+
+    def find(self, obj_id):
+        return self.mappers_manager.find(obj_id)
 
     def addHostASYNC(self, host, category=None, update=False, old_hostname=None):
         """

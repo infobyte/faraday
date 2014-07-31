@@ -20,7 +20,6 @@ import random
 from model.visitor import VulnsLookupVisitor
 import test_cases.common as test_utils
 
-from managers.all import CommandManager, CouchdbManager, PersistenceManagerFactory
 
 class ModelObjectComposite(unittest.TestCase):
 

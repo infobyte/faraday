@@ -232,9 +232,12 @@ class ModelObject(object):
         return self._id
             
     def updateID(self):
-        # MUST be overriden
-        # if not overriden then name is the id
-        self._id = get_hash([self._name])
+        raise NotImplementedError("This should be overwritten")
+
+    def _prependParentId(self):
+        if self._parent:
+            self._id = '.'.join((self._parent.getID(), self.getID()))
+
 
     def getID(self):
         if self._id is None:
@@ -802,8 +805,8 @@ class ModelObjectNote(ModelComposite):
         self._text = str(text)
 
     def updateID(self):
-        self._id = '.'.join(
-            [self._parent.getID(), get_hash([self.name, self._text])])
+        self._id = get_hash([self.name, self._text])
+        self._prependParentId()
 
     def _setText(self, text):
         # clear buffer then write new text
@@ -854,7 +857,7 @@ class ModelObjectVuln(ModelLeaf):
         The parameters refs can be a single value or a list with values
         """
         ModelLeaf.__init__(self, parent)
-        self.name = named
+        self.name = name
         self._desc = desc
         
         self.refs = []
@@ -896,9 +899,9 @@ class ModelObjectVuln(ModelLeaf):
         return severity
 
     def updateID(self):
-        self._id = '.'.join(
-            [self._parent.getID(), get_hash([self.name, self._desc])])
-
+        self._id = get_hash([self.name, self._desc])
+        self._prependParentId()
+        
     def _setDesc(self, desc):
         self._desc = desc
 
@@ -976,8 +979,8 @@ class ModelObjectVulnWeb(ModelObjectVuln):
         self.category = category
         
     def updateID(self):
-        self._id = '.'.join(
-            [self._parent.getID(), get_hash([self.name, self.website, self.path, self.desc])])
+        self._id = get_hash([self.name, self.website, self.path, self.desc ])
+        self._prependParentId()
 
     def getPath(self):
         return self.path
@@ -1077,8 +1080,8 @@ class ModelObjectCred(ModelLeaf):
         self._password = str(password)
 
     def updateID(self):
-        self._id = '.'.join(
-            [self._parent.getID(), get_hash([self.username, self.password])])
+        self._id = get_hash([self.username, self._password])
+        self._prependParentId()
 
     def setPassword(self, password):
         self._password = str(password)

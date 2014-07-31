@@ -18,27 +18,30 @@ class WorkspaceManager(object):
         * Workspace opening
         * Active Workspace switching"""
 
-    def __init__(self, dbManager, mappersManager, changesManager,*args, **kwargs):
+    def __init__(self, dbManager, mappersManager, changesManager, *args, **kwargs):
         self.dbManager = dbManager
         self.mappersManager = mappersManager
         self.changesManager = changesManager
+        self.active_workspace = None
 
-    def createWorkspace(self, name, desc, dbtype):
+    def createWorkspace(self, name, desc, dbtype=DBTYPE.FS):
         workspace = Workspace(name, desc)
         dbConnector = self.dbManager.createDb(name, dbtype)
         if dbConnector:
             self.mappersManager.createMappers(dbConnector)
             dbConnector.setChangesCallback(self.changesManager)
             self.mappersManager.saveObj(workspace)
+            self.setActiveWorkspace(workspace)
             return workspace
         return False
 
     def openWorkspace(self, name):
-        dbConnector = self.dbManager.dbOpen(name)
+        dbConnector = self.dbManager.getConnector(name)
         if dbConnector:
             dbConnector.setChangesCallback(self.changesManager)
             self.mappersManager.createMappers(dbConnector)
             workspace = self.mappersManager.find(name)
+            self.setActiveWorkspace(workspace)
             return workspace
         return False
 
@@ -48,12 +51,17 @@ class WorkspaceManager(object):
     def setActiveWorkspace(self, workspace):
         self.active_workspace = workspace
 
+    def getActiveWorkspace(self):
+        return self.active_workspace
+
+    def workspaceExists(self, name):
+        return bool(self.dbManager.getConnector(name))
+
     def isActive(self, name):
         return self.active_workspace.getName() == name
 
-    def getWorkspaceType(self, name): 
+    def getWorkspaceType(self, name):
         if self.dbManager.getDbType(name) == DBTYPE.COUCHDB:
             return 'CouchDB'
         if self.dbManager.getDbType(name) == DBTYPE.FS:
-            return 'FS' 
-
+            return 'FS'

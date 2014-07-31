@@ -128,13 +128,13 @@ class PluginControllerBase(object):
     """
     TODO: Doc string.
     """
-    def __init__(self, id, available_plugins, command_manager):
+    def __init__(self, id, available_plugins, mapper_manager):
         self._plugins               = available_plugins
         self.id                     = id
         self._actionDispatcher      = None
         self._setupActionDispatcher()
 
-        self._command_manager = command_manager
+        self._mapper_manager = mapper_manager
 
     def _find_plugin(self, new_plugin_id):
         try:
@@ -230,11 +230,6 @@ class PluginControllerBase(object):
                 model.api.devlog("PluginController.onCommandFinished - new_elem_queue Exception- something strange happened... unhandled exception?")
                 model.api.devlog(traceback.format_exc())
                 break
-        
-        # Finally we register the recently executed command information
-        # self.last_command_information.duration = time() - self.last_command_information.itime
-        # workspace = model.api.getActiveWorkspace()
-        # self._command_manager.saveCommand(self.last_command_information, workspace)
 
     def _processAction(self, action, parameters):
         """
@@ -299,8 +294,8 @@ class PluginController(PluginControllerBase):
     """
     TODO: Doc string.
     """
-    def __init__(self, id, available_plugins, command_manager):
-        PluginControllerBase.__init__(self, id, available_plugins, command_manager)
+    def __init__(self, id, available_plugins, mapper_manager):
+        PluginControllerBase.__init__(self, id, available_plugins, mapper_manager)
         self._active_plugin = None
         self.last_command_information = None
         self._buffer = StringIO()
@@ -343,8 +338,7 @@ class PluginController(PluginControllerBase):
                     'itime': time(),
                     'command': command_string.split()[0],
                     'params': ' '.join(command_string.split()[1:])})
-            workspace = model.api.getActiveWorkspace()
-            self._command_manager.saveCommand(cmd_info, workspace)
+            self._mapper_manager.save(cmd_info)
 
             self.last_command_information = cmd_info
 
@@ -408,8 +402,7 @@ class PluginController(PluginControllerBase):
         """
         cmd_info = self.last_command_information
         cmd_info.duration = time() - cmd_info.itime
-        workspace = model.api.getActiveWorkspace()
-        self._command_manager.saveCommand(cmd_info, workspace)
+        self._mapper_manager.save(cmd_info)
 
         if self._active_plugin.has_custom_output():
             output_file = open(self._active_plugin.get_custom_file_path(), 'r')
@@ -430,8 +423,8 @@ class PluginController(PluginControllerBase):
 
 
 class PluginControllerForApi(PluginControllerBase):
-    def __init__(self, id, available_plugins, command_manager):
-        PluginControllerBase.__init__(self, id, available_plugins, command_manager)
+    def __init__(self, id, available_plugins, mapper_manager):
+        PluginControllerBase.__init__(self, id, available_plugins, mapper_manager)
         self._active_plugins = {}
 
     def processCommandInput(self, command_string):
@@ -447,8 +440,7 @@ class PluginControllerForApi(PluginControllerBase):
                         'itime': time(),
                         'command': command_string.split()[0],
                         'params': ' '.join(command_string.split()[1:])})
-                workspace = model.api.getActiveWorkspace()
-                self._command_manager.saveCommand(cmd_info, workspace)
+                self._mapper_manager.save(cmd_info)
 
                 self._active_plugins[command_string] = plugin, cmd_info
 
@@ -482,8 +474,7 @@ class PluginControllerForApi(PluginControllerBase):
 
         plugin, cmd_info = self._active_plugins.get(cmd)
         cmd_info.duration = time() - cmd_info.itime
-        workspace = model.api.getActiveWorkspace()
-        self._command_manager.saveCommand(cmd_info, workspace)
+        self._mapper_manager.save(cmd_info)
 
         self.processOutput(plugin, output)
 

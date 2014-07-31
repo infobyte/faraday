@@ -11,11 +11,18 @@ See the file 'doc/LICENSE' for the license information
 class CommandRunInformation(object):
     """Command Run information object containing:
         command, parameters, time, workspace, etc."""
+    class_signature = "CommandRunInformation"
 
     def __init__(self, **kwargs):
         self.type = self.__class__.__name__
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+    def getID(self):
+        return self._id
+
+    def setID(self, id):
+        return self._id
 
     def toDict(self):
         return self.__dict__

@@ -18,7 +18,6 @@ from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 
 from plugins.core import PluginControllerForApi
-from managers.all import CommandManager
 from model.visitor import VulnsLookupVisitor
 
 import utils.logs as logger
@@ -40,10 +39,10 @@ def stopServer():
         IOLoop.instance().stop()
 
 
-def startAPIs(plugin_manager, model_controller):
+def startAPIs(plugin_manager, model_controller, mapper_manager):
     global _rest_controllers
     global _http_server
-    _rest_controllers = [PluginControllerAPI(plugin_manager), ModelControllerAPI(model_controller)]
+    _rest_controllers = [PluginControllerAPI(plugin_manager, mapper_manager), ModelControllerAPI(model_controller)]
     #TODO: load API configuration from config file
     hostname = "localhost"
     port = 9977
@@ -168,8 +167,11 @@ class ModelControllerAPI(RESTApi):
         return self.ok("output successfully sent to plugin")
 
 class PluginControllerAPI(RESTApi):
-    def __init__(self, plugin_manager):
-        self.plugin_controller = PluginControllerForApi("PluginController", plugin_manager.getPlugins(), CommandManager())
+    def __init__(self, plugin_manager, mapper_manager):
+        self.plugin_controller = PluginControllerForApi(
+            "PluginController",
+            plugin_manager.getPlugins(),
+            mapper_manager)
 
     def getRoutes(self):
         routes = []

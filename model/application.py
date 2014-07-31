@@ -14,9 +14,10 @@ import signal
 # this module at the bottom of the list....
 from auth.manager import SecurityManager
 from auth.manager import codes
-from workspace import WorkspaceManager
-#from shell.controller.env import ShellEnvironment
-import model.controller
+from model.controller import ModelController
+from persistence.persistence_managers import DbManager
+from controllers.change import ChangeController
+from managers.model_managers import WorkspaceManager
 import model.api
 import model.guiapi
 import apis.rest.api as restapi
@@ -27,11 +28,9 @@ from managers.all import PluginManager
 from managers.mappers_manager import MapperManager
 from managers.reports_managers import ReportManager
 
-#from gui.qt3.mainwindow import MainWindow
 from utils.error_report import exception_handler
 from utils.error_report import installThreadExcepthook
 
-#from gui.gui_app import FaradayUi
 from gui.gui_app import UiFactory
 
 from config.configuration import getInstanceConfiguration
@@ -49,20 +48,23 @@ class MainApplication(object):
 
         self._security_manager = SecurityManager()
         self._mappers_manager = MapperManager()
-        self._changes_controller = ChangeController(self.mappers_manager) 
+        self._changes_controller = ChangeController(self._mappers_manager)
         self._db_manager = DbManager()
 
-        self._model_controller = model.controller.ModelController(
-                                        security_manager=self._security_manager,
-                                        self._mappers_manager)
+        self._model_controller = ModelController(
+            self._security_manager,
+            self._mappers_manager)
 
-        self._plugin_manager = PluginManager(os.path.join(CONF.getConfigPath(),
-                                             "plugins"))
+        self._plugin_manager = PluginManager(
+            os.path.join(CONF.getConfigPath(), "plugins"),
+            self._mappers_manager)
 
-        self._reports_manager = ReportManager(10, self._plugin_manager)
+        #self._reports_manager = ReportManager(10, self._plugin_manager.createController("ReportManager"))
 
-        self._workspace_manager = WorkspaceManager(self._db_manager, self._mappers_manager,
-                                                   self._changes_controller)
+        self._workspace_manager = WorkspaceManager(
+            self._db_manager,
+            self._mappers_manager,
+            self._changes_controller)
 
         self.gui_app = UiFactory.create(self._model_controller,
                                         self._plugin_manager,
@@ -71,9 +73,6 @@ class MainApplication(object):
 
         self.gui_app.setSplashImage(os.path.join(
             CONF.getImagePath(), "splash2.png"))
-
-        #self._splash_screen = qt.QSplashScreen(qt.QPixmap(os.path.join(CONF.getImagePath(),"splash2.png")),
-        #                                       qt.Qt.WStyle_StaysOnTop)
 
     def enableExceptHook(self):
         sys.excepthook = exception_handler
@@ -85,41 +84,9 @@ class MainApplication(object):
     def start(self):
         try:
 
-            #splash_timer = qt.QTimer.singleShot(1700, lambda *args:None)
-            #self._splash_screen.show()
             self.gui_app.startSplashScreen()
 
             signal.signal(signal.SIGINT, self.ctrlC)
-
-            #self._writeSplashMessage("Setting up remote API's...")
-
-            model.api.devlog("Starting application...")
-            model.api.devlog("Setting up remote API's...")
-
-            model.api.setUpAPIs(self._model_controller,
-                                CONF.getApiConInfoHost(),
-                                CONF.getApiConInfoPort())
-            model.guiapi.setUpGUIAPIs(self._model_controller)
-
-            #self._writeSplashMessage("Starting model controller daemon...")
-
-            model.api.devlog("Starting model controller daemon...")
-            self._model_controller.start()
-            model.api.startAPIServer()
-            restapi.startAPIs(self._plugin_manager, self._model_controller)
-
-            #self._writeSplashMessage("Setting up main GUI...")
-
-            #self._writeSplashMessage("Creating default shell...")
-
-            #self._main_window.createShellTab()
-
-            #self._writeSplashMessage("Ready...")
-            #self.logger.log("Faraday ready...")
-            model.api.devlog("Faraday ready...")
-
-            self.gui_app.stopSplashScreen()
-            #self._main_window.showAll()
 
             logged = True
 
@@ -135,21 +102,43 @@ class MainApplication(object):
                     break
 
             if logged:
-                #self._main_window.showLoggedUser(self._security_manager.current_user.display_name)
-                model.api.__current_logged_user = username
-
-                self._workspace_manager.loadWorkspaces()
+                model.api.devlog("Starting application...")
+                model.api.devlog("Setting up remote API's...")
+                # We need to create the last used workspace (or the default
+                # workspace) before we start the model controller and the
+                # report manager
 
                 last_workspace = CONF.getLastWorkspace()
-                w = self._workspace_manager.createWorkspace(last_workspace)
-                self._workspace_manager.setActiveWorkspace(w)
+                if not self._workspace_manager.workspaceExists(last_workspace):
+                    self._workspace_manager.createWorkspace(last_workspace)
+                else:
+                    self._workspace_manager.openWorkspace(last_workspace)
+
+                model.api.setUpAPIs(
+                    self._model_controller,
+                    self._workspace_manager,
+                    CONF.getApiConInfoHost(),
+                    CONF.getApiConInfoPort())
+                model.guiapi.setUpGUIAPIs(self._model_controller)
+
+                model.api.devlog("Starting model controller daemon...")
+
+                self._model_controller.start()
+                model.api.startAPIServer()
+                restapi.startAPIs(
+                    self._plugin_manager,
+                    self._model_controller,
+                    self._mappers_manager)
+                # Start report manager here
+
+                model.api.devlog("Faraday ready...")
+                model.api.__current_logged_user = username
 
                 self.gui_app.loadWorkspaces()
 
-                self._workspace_manager.startReportManager()
+            self.gui_app.stopSplashScreen()
 
         except Exception:
-
             print "There was an error while starting Faraday"
             print "-" * 50
             traceback.print_exc()
@@ -169,27 +158,21 @@ class MainApplication(object):
         Exits the application with the provided code.
         It also waits until all app threads end.
         """
-        self._workspace_manager.stopAutoLoader()
-        self._workspace_manager.stopReportManager()
-        #self._main_window.hide()
         model.api.devlog("Closing Faraday...")
-        self._workspace_manager.saveWorkspaces()
         model.api.devlog("stopping model controller thread...")
-        self._model_controller.stop()
-        model.api.devlog("stopping model controller thread...")
-        self.gui_app.quit()
-        model.api.devlog("Waiting for controller threads to end...")
-        self._model_controller.join()
         model.api.stopAPIServer()
         restapi.stopServer()
-
+        # we should stop the report manager here
+        self._model_controller.stop()
+        self._model_controller.join()
+        self.gui_app.quit()
+        model.api.devlog("Waiting for controller threads to end...")
         return exit_code
 
     def quit(self):
         """
         Redefined quit handler to nicely end up things
         """
-
         self.gui_app.quit()
 
     def ctrlC(self, signal, frame):
@@ -198,6 +181,3 @@ class MainApplication(object):
 
     def getWorkspaceManager(self):
         return self._workspace_manager
-
-    # def _writeSplashMessage(self, text):
-    #     self._splash_screen.message(text, qt.Qt.AlignRight | qt.Qt.AlignTop, qt.Qt.red)

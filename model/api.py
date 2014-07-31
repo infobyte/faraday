@@ -22,6 +22,7 @@ CONF = getInstanceConfiguration()
 # global reference only for this module to work with the model controller
 __model_controller = None
 
+__workspace_manager = None
 
 _xmlrpc_api_server = None
 _plugin_controller_api = None
@@ -35,9 +36,11 @@ _remote_sync_server_proxy = None
 __current_logged_user = ""
 
 
-def setUpAPIs(controller, hostname=None, port=None):
+def setUpAPIs(controller, workspace_manager, hostname=None, port=None):
     global __model_controller
     __model_controller = controller
+    global __workspace_manager
+    __workspace_manager = workspace_manager
     _setUpAPIServer(hostname, port)
 
 
@@ -668,10 +671,6 @@ def getLoggedUser():
 def getLocalDefaultGateway():    
     return gateway()
 
-#-------------------------------------------------------------------------------
 
-
-#-------------------------------------------------------------------------------
-#REFACTOR
 def getActiveWorkspace():
-    return __model_controller.getWorkspace()
+    return __workspace_manager.getActiveWorkspace()

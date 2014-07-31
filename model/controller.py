@@ -445,20 +445,20 @@ class ModelController(threading.Thread):
         self._processAction(modelactions.ADDHOST, [host, None], sync=True)
 
     def __add(self,  obj, parent_id=None, *args):
-        dataMapper = self.mappers_manager.getMapper(obj)
+        dataMapper = self.mappers_manager.getMapper(obj.__class__.__name__)
         object_parent = self.mappers_manager.find(parent_id)
         if object_parent:
             object_parent.addChild(obj.getID(), obj)
         # Dispatch conflict management routine
         # ...  
-        dataMapper.saveObject(obj) 
+        dataMapper.save(obj) 
         self.treeWordsTries.addWord(obj.getName())
         notifier.addHost(obj)
 
     def __edit(self, objId, *args, **kwargs):
         obj = self.mappers_manager.find(objId)
         obj.updateAttributes(*args, **kwargs)
-        self.mappers_manager.saveObject(obj) 
+        self.mappers_manager.save(obj) 
         # self.treeWordsTries.addWord(obj.getName())
         # notifier.addHost(obj)
 

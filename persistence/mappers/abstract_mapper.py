@@ -82,6 +82,8 @@ class AbstractMapper(object):
         return obj
 
     def find(self, id):
+        if not id:
+            return None
         if self.object_map.get(id):
             return self.object_map.get(id)
         return self.load(id)

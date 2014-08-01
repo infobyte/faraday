@@ -236,8 +236,6 @@ class WorkspaceTreeWindow(qt.QVBox):
         else:
             if len(selected_items) == 1:
                 if item.is_active:
-                    popup.insertItem('Save', self._saveWorkspace)
-                    popup.insertItem('Synchronize', self._syncWorkspace)
                     popup.insertItem('Close', 300)
                 else:
                     popup.insertItem('Open', lambda: self._openWorkspace(item))
@@ -278,12 +276,6 @@ class WorkspaceTreeWindow(qt.QVBox):
         api.devlog("Opening workspace %s selected on the Workspace Perspective" % item.objname)
         self._getMainApp().openWorkspace(item.objname) 
         self.loadAllWorkspaces()
-
-    def _saveWorkspace(self):
-        self._getMainApp().saveWorkspaces()
-        
-    def _syncWorkspace(self):
-        self._getMainApp().syncWorkspaces()
 
     def _getMainApp(self):
         return self.parent().parent().getMainApp()

@@ -339,7 +339,7 @@ class MainWindow(qt.QMainWindow):
         self.location_toolbar.addFilter(value)
 
     def showAll(self):
-                                       
+
         self.show()
                        
         self.main_toolbar.show()
@@ -703,23 +703,6 @@ class MainWindow(qt.QMainWindow):
         pixmap = qt.QPixmap.grabWidget(self)
         pixmap.save(os.path.join(CONF.getDefaultTempPath(), "fullscreen_capture_%s.png" % ts), "PNG")
         model.api.log("Screenshots taken")
-
-    def syncWorkspaces(self):
-                                                                   
-                                             
-                                                                                
-                  
-        self._model_controller.syncActiveWorkspace()
-
-    def saveWorkspaces(self):
-        """
-        Saves workspaces and it is done syncronically so GUI won't respond
-        until it finishes saving everything
-        """
-                                                   
-        model.api.log("Saving workspaces...")
-        self._main_app.saveWorkspaces()
-        model.api.log("Workspaces saved!")
         
     def createWorkspace(self):
                                                                            

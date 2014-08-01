@@ -49,7 +49,8 @@ class WorkspaceManager(object):
         return False
 
     def removeWorkspace(self, name):
-        return self.dbManager.removeDb(name)
+        self.mappersManager.remove(name)
+        self.dbManager.removeDb(name)
 
     def setActiveWorkspace(self, workspace):
         self.active_workspace = workspace

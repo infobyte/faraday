@@ -72,12 +72,10 @@ class DbManager(object):
     def getAllDbNames(self):
         return self.dbs.keys()
 
-    def removeDb(self, name, dbtype):
-        if self.getConnector(name, None):
-            self.managers[dbtype].removeDb(name)
-            del self.dbs[name]
-            return True
-        return False
+    def removeDb(self, name):
+        connector = self.getConnector(name) 
+        self._getManagerByType(connector.getType()).deleteDb(name)
+        del self.dbs[name]
 
     def getDbType(self, dbname):
         return self.getConnector(dbname).getType()

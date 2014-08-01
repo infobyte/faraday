@@ -99,18 +99,19 @@ class TestWorkspacesManagement(unittest.TestCase):
 
         # self.assertEquals(WorkspaceOnCouch.__name__, self.wm.getWorkspaceType(wname))
 
-    def _test_delete_couch_workspace(self):
+    def test_delete_couch_workspace(self):
         """
         Verifies the deletion of a couch workspace
         """
         wname = self.new_random_workspace_name()
-        self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnCouch)
+        self.wm.createWorkspace(wname, 'a desc', DBTYPE.COUCHDB)
 
-        self.assertTrue(self.cdm.existWorkspace(wname))
+        self.assertTrue(self.mappersManager.find(wname), "Workspace document not found")
 
         #Delete workspace
         self.wm.removeWorkspace(wname)
-        self.assertFalse(self.cdm.existWorkspace(wname))
+        self.assertIsNone(self.mappersManager.find(wname))
+        self.assertFalse(self.dbManager.connectorExists(wname))
 
     def _test_delete_fs_workspace(self):
         """

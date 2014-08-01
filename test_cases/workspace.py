@@ -67,19 +67,16 @@ class TestWorkspacesManagement(unittest.TestCase):
         except Exception as e:
             print e
 
-    def _test_create_fs_workspace(self):
+    def test_create_fs_workspace(self):
         """
         Verifies the creation of a filesystem workspace
         """
         wname = self.new_random_workspace_name()
         self._fs_workspaces.append(wname)
-        self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
-
-        self.assertFalse(self.cdm.existWorkspace(wname))
+        self.wm.createWorkspace(wname, 'desc', DBTYPE.FS)
 
         wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
         self.assertTrue(os.path.exists(wpath))
-        self.assertEquals(WorkspaceOnFS.__name__, self.wm.getWorkspaceType(wname))
 
     def test_create_couch_workspace(self):
         """
@@ -155,7 +152,6 @@ class TestWorkspacesManagement(unittest.TestCase):
 
         # Then
         self.assertIsNotNone(workspace, 'Workspace added should not be none')
-        import ipdb; ipdb.set_trace()
         self.assertEquals(workspace, added_workspace, 'Workspace created and added diffier')
 
     def _test_get_existent_couch_workspace(self):
@@ -184,10 +180,10 @@ class TestWorkspacesManagement(unittest.TestCase):
         # Then
         self.assertIsNotNone(added_workspace, 'Workspace added should not be none')
 
-    def _test_get_non_existent_workspace(self):
+    def test_get_non_existent_workspace(self):
         """ Retrieve a non existent workspace """
         
-        added_workspace = self.wm.getWorkspace('inventado')
+        added_workspace = self.wm.openWorkspace('inventado')
 
         # Then
         self.assertIsNone(added_workspace, 'Workspace added should not be none') 
@@ -210,34 +206,34 @@ class TestWorkspacesManagement(unittest.TestCase):
         self.assertTrue(self.wm.isActive(added_workspace.name),
                 'Workspace is active flag not set')
 
-    def _test_remove_fs_workspace(self):
+    def test_remove_fs_workspace(self):
         # First
         wname = self.new_random_workspace_name()
-        added_workspace = self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
+        added_workspace = self.wm.createWorkspace(wname, 'desc', DBTYPE.FS)
 
         # When
         self.wm.removeWorkspace(wname) 
 
         # Then
-        self.assertNotIn(wname, self.fsm.getWorkspacesNames())
+        self.assertNotIn(wname, self.wm.getWorkspacesNames())
+        wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
+        self.assertFalse(os.path.exists(wpath))
 
-    def _test_remove_couch_workspace(self):
+    def test_remove_couch_workspace(self):
         # First
         wname = self.new_random_workspace_name()
-        added_workspace = self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnCouch)
+        added_workspace = self.wm.createWorkspace(wname, 'desc', DBTYPE.COUCHDB)
 
         # When
         self.wm.removeWorkspace(wname) 
 
         # Then
-        self.assertNotIn(wname, self.cdm.getWorkspacesNames())
+        self.assertNotIn(wname, self.wm.getWorkspacesNames())
 
-    def _test_remove_non_existent_workspace(self):
+    def test_remove_non_existent_workspace(self):
         # When
         self.wm.removeWorkspace('invented') 
 
-        # Then
-        self.assertNotIn('invented', self.cdm.getWorkspacesNames())
 
 
 if __name__ == '__main__':

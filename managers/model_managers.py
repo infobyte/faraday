@@ -39,18 +39,19 @@ class WorkspaceManager(object):
         return False
 
     def openWorkspace(self, name):
-        dbConnector = self.dbManager.getConnector(name)
-        if dbConnector:
+        if name in self.getWorkspacesNames():
+            dbConnector = self.dbManager.getConnector(name)
             dbConnector.setChangesCallback(self.changesManager)
             self.mappersManager.createMappers(dbConnector)
             workspace = self.mappersManager.find(name)
             self.setActiveWorkspace(workspace)
             return workspace
-        return False
+        return None
 
     def removeWorkspace(self, name):
-        self.mappersManager.remove(name)
-        self.dbManager.removeDb(name)
+        if name in self.getWorkspacesNames():
+            self.mappersManager.remove(name)
+            self.dbManager.removeDb(name)
 
     def setActiveWorkspace(self, workspace):
         self.active_workspace = workspace

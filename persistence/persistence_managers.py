@@ -52,14 +52,22 @@ class DbManager(object):
         return manager
 
     def getConnector(self, name):
-        return self.dbs.get(name, None)
+        # This returns a method that creates a connector
+        # It's for lazy initalization in _loadDbs
+        return self.dbs.get(name)()
+
+    def connectorExists(self, name):
+        return self.dbs.has_key(name) 
 
     def createDb(self, name, dbtype):
-        if self.getConnector(name, None):
+        if self.connectorExists(name):
             return False
         manager = self._getManagerByType(dbtype)
-        self.dbs[name] = manager.createDb(name)
-        return True
+        self.addConnector(name, manager.createDb(name))
+        return self.getConnector(name)
+
+    def addConnector(self, name, connector):
+        self.dbs[name] = lambda : connector
 
     def getAllDbNames(self):
         return self.dbs.keys()
@@ -311,9 +319,11 @@ class FileSystemManager(AbstractPersistenceManager):
     def _loadDbs(self):
         for name in os.listdir(CONF.getPersistencePath()):
             if os.path.isdir(os.path.join(CONF.getPersistencePath(), name)):
-                #if os.path.exists(os.path.join(CONF.getPersistencePath(), name, "%s.json" % name)):
-                self.dbs[name] = FileSystemConnector(os.path.join(self._path,
-                                                                  name))
+                self.dbs[name] = lambda : self._loadDb(name)
+
+    def _loadDb(self, name):
+        self.dbs[name] = FileSystemConnector(os.path.join(self._path,
+                                              name))
 
 
 class NoCouchDBError(Exception):
@@ -381,10 +391,14 @@ class CouchDbManager(AbstractPersistenceManager):
     def _loadDbs(self):
         for dbname in filter(lambda x: not x.startswith("_"), self.__serv.all_dbs()):
             getLogger(self).debug(
-                "Asking couchdb for workspace [%s]" % dbname)
-            db = self.__serv.get_db(dbname)
-            seq = db.info()['update_seq']
-            self.dbs[dbname] = CouchDbConnector(db, seq_num=seq)
+                "Asking for dbname[%s], registering for lazy initialization" % dbname)
+            self.dbs[dbname] = lambda : self._loadDb(dbname)
+
+    def _loadDb(self, dbname):
+        db = self.__serv.get_db(dbname)
+        seq = db.info()['update_seq']
+        self.dbs[dbname] = CouchDbConnector(db, seq_num=seq) 
+
 
     #@trap_timeout
     def pushReports(self):

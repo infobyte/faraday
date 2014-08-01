@@ -617,7 +617,7 @@ class PluginBase(object):
 
     
     def createAndAddHost(self, name, os = "unknown", category = None, update = False, old_hostname = None):
-        host = model.api.newHost(name, os, model.api.getActiveWorkspace.getName())
+        host = model.api.newHost(name, os)
         self.__addPendingAction(modelactions.CADDHOST, name, os, category, update, old_hostname)
         return host.getID()
 

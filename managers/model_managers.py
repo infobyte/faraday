@@ -33,7 +33,7 @@ class WorkspaceManager(object):
         if dbConnector:
             self.mappersManager.createMappers(dbConnector)
             dbConnector.setChangesCallback(self.changesManager)
-            self.mappersManager.saveObj(workspace)
+            self.mappersManager.save(workspace)
             self.setActiveWorkspace(workspace)
             return workspace
         return False
@@ -58,7 +58,7 @@ class WorkspaceManager(object):
         return self.active_workspace
 
     def workspaceExists(self, name):
-        return bool(self.dbManager.getConnector(name))
+        return self.dbManager.connectorExists(name)
 
     def isActive(self, name):
         return self.active_workspace.getName() == name

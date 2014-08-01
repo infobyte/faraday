@@ -71,6 +71,9 @@ class DbManager(object):
             return True
         return False
 
+    def getDbType(self, dbname):
+        return self.getConnector(dbname).getType()
+
 
 class ChangeWatcher(threading.Thread):
     def __init__(self, watch_function):
@@ -89,12 +92,16 @@ class ChangeWatcher(threading.Thread):
 
 
 class DbConnector(object):
-    def __init__(self):
+    def __init__(self, type=None):
         # it could be used to notifiy some observer about changes in the db
         self.changes_callback = None
         self.change_watcher = ChangeWatcher(self.waitForDBChange)
+        self.type = type
         #self.change_thread = threading.Thread(target=self.waitForDBChange)
         #self.change_thread.setDaemon(True)
+
+    def getType(self):
+        return self.type
 
     def startChangeWatch(self):
         if self.changes_callback:
@@ -126,7 +133,7 @@ class DbConnector(object):
 
 class FileSystemConnector(DbConnector):
     def __init__(self, base_path):
-        super(FileSystemConnector, self).__init__()
+        super(FileSystemConnector, self).__init__(type=DBTYPE.FS)
         self.path = base_path
 
     def saveDocument(self, dic):
@@ -173,7 +180,7 @@ class FileSystemConnector(DbConnector):
 
 class CouchDbConnector(DbConnector):
     def __init__(self, db, seq_num=0):
-        super(CouchDbConnector, self).__init__()
+        super(CouchDbConnector, self).__init__(type=DBTYPE.COUCHDB)
         self.db = db
         self.seq_num = seq_num
         self.mutex = threading.Lock()

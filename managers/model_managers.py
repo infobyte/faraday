@@ -23,8 +23,9 @@ class WorkspaceManager(object):
         self.mappersManager = mappersManager
         self.changesManager = changesManager
         self.active_workspace = None
+
     def getWorkspacesNames(self):
-        return ['papa']
+        return self.dbManager.getAllDbNames()
 
     def createWorkspace(self, name, desc, dbtype=DBTYPE.FS):
         workspace = Workspace(name, desc)

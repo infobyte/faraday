@@ -127,37 +127,35 @@ class TestWorkspacesManagement(unittest.TestCase):
         self.wm.removeWorkspace(wname)
         self.assertFalse(os.path.exists(wpath))
 
-    def _test_list_workspaces(self):
+    def test_list_workspaces(self):
         """ Lists FS workspaces and Couch workspaces """
         # First create workspaces manually 
         wnamefs = self.new_random_workspace_name()
         wnamecouch = self.new_random_workspace_name() 
         # FS
-        self.fsm.addWorkspace(wnamefs)
+        self.wm.createWorkspace(wnamefs, 'a desc', DBTYPE.FS)
         # Couch
-        self.cdm.addWorkspace(wnamecouch)
-
-        # When  loading workspaces
-        self.wm.loadWorkspaces()
+        self.wm.createWorkspace(wnamecouch, 'a desc', DBTYPE.COUCHDB)
 
         self.assertIn(wnamefs, self.wm.getWorkspacesNames(), 'FS Workspace not loaded')
         self.assertIn(wnamecouch, self.wm.getWorkspacesNames(), 'Couch Workspace not loaded')
 
-        self.assertEquals(self.wm.getWorkspaceType(wnamefs), WorkspaceOnFS.__name__, 'Workspace type bad defined' )
-        self.assertEquals(self.wm.getWorkspaceType(wnamecouch), WorkspaceOnCouch.__name__, 'Workspace type bad defined') 
+        self.assertEquals(self.wm.getWorkspaceType(wnamecouch), 'CouchDB', 'Workspace type bad defined' )
+        self.assertEquals(self.wm.getWorkspaceType(wnamefs), 'FS', 'Workspace type bad defined') 
 
 
-    def _test_get_workspace(self):
+    def test_get_workspace(self):
         """ Create a workspace, now ask for it """
         
         # When
         wname = self.new_random_workspace_name()
-        workspace = self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
+        workspace = self.wm.createWorkspace(wname, 'a desc', DBTYPE.FS)
 
-        added_workspace = self.wm.getWorkspace(wname)
+        added_workspace = self.wm.openWorkspace(wname)
 
         # Then
         self.assertIsNotNone(workspace, 'Workspace added should not be none')
+        import ipdb; ipdb.set_trace()
         self.assertEquals(workspace, added_workspace, 'Workspace created and added diffier')
 
     def _test_get_existent_couch_workspace(self):

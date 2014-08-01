@@ -32,9 +32,7 @@ class MapperManager(object):
         return False
 
     def find(self, obj_id):
-        mappers = list(self.mappers.values())
-        while len(mappers):
-            mapper = mappers.pop()
+        for mapper in self.mappers.values():
             obj = mapper.find(obj_id)
             if obj:
                 return obj

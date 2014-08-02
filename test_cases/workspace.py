@@ -155,7 +155,6 @@ class TestWorkspacesManagement(unittest.TestCase):
 
         # Then
         self.assertIsNotNone(workspace, 'Workspace added should not be none')
-        import ipdb; ipdb.set_trace()
         self.assertEquals(workspace, added_workspace, 'Workspace created and added diffier')
 
     def _test_get_existent_couch_workspace(self):

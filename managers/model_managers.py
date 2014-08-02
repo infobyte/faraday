@@ -10,6 +10,8 @@ from utils.logs import getLogger
 from model.workspace import Workspace
 from persistence.persistence_managers import DBTYPE
 
+from model.guiapi import notification_center
+
 class WorkspaceManager(object):
     """Workspace Manager class
     It's responsabilities goes from:
@@ -45,6 +47,7 @@ class WorkspaceManager(object):
             self.mappersManager.createMappers(dbConnector)
             workspace = self.mappersManager.find(name)
             self.setActiveWorkspace(workspace)
+            notification_center.workspaceChanged(workspace)
             return workspace
         return False
 

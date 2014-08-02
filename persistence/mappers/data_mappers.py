@@ -110,7 +110,7 @@ class HostMapper(ModelObjectMapper):
         host.setInterfaces(ifaces_dict)
 
     def findForWorkspace(self, wname):
-        return self.findForParent(wname)
+        return self.findForParent(wname) + self.findForParent(None)
 
 
 class InterfaceMapper(ModelObjectMapper):
@@ -348,7 +348,7 @@ class WorkspaceMapper(AbstractMapper):
         }
 
     def unserialize(self, workspace, doc):
-        workspace.setName(doc.get("name"))
+        workspace.setName(doc.get("name", doc.get("_id")))
         workspace.setDescription(doc.get("description"))
         workspace.setCustomer(doc.get("customer"))
         workspace.setStartDate(doc.get("sdate"))

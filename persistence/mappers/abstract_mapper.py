@@ -81,12 +81,13 @@ class AbstractMapper(object):
             del self.object_map[id]
         return obj
 
-    def find(self, id):
+    def find(self, id, with_load=True):
         if not id:
             return None
         if self.object_map.get(id):
             return self.object_map.get(id)
         return self.load(id)
+
 
     def findByFilter(self, parent, type):
         result = []

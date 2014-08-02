@@ -1196,6 +1196,7 @@ class CompositeMapperTestSuite(unittest.TestCase):
         when(pmanager).getDocument("5678").thenReturn(doc_host2)
         when(pmanager).getDocsByFilter(any(str), any(str)).thenReturn([])
         when(pmanager).getDocsByFilter("test_ws", "Host").thenReturn(["1234", "5678"])
+        when(pmanager).getDocsByFilter(None, "Host").thenReturn([])
         self.mapper_manager.createMappers(pmanager)
 
         ws = self.mapper_manager.find("test_ws")

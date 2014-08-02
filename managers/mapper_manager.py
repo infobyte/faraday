@@ -32,8 +32,14 @@ class MapperManager(object):
         return False
 
     def find(self, obj_id):
+        obj = self._find(obj_id, with_load=False)
+        if not obj:
+            obj = self._find(obj_id, with_load=True)
+        return obj
+
+    def _find(self, obj_id, with_load=True):
         for mapper in self.mappers.values():
-            obj = mapper.find(obj_id)
+            obj = mapper.find(obj_id, with_load=with_load)
             if obj:
                 return obj
         return None

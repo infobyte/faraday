@@ -37,6 +37,8 @@ class WorkspaceManager(object):
             dbConnector.setChangesCallback(self.changesManager)
             self.mappersManager.save(workspace)
             self.setActiveWorkspace(workspace)
+            notification_center.workspaceChanged(workspace)
+            notification_center.workspaceLoad(workspace.getHosts())
             return workspace
         return False
 
@@ -45,9 +47,10 @@ class WorkspaceManager(object):
         if dbConnector:
             dbConnector.setChangesCallback(self.changesManager)
             self.mappersManager.createMappers(dbConnector)
-            workspace = self.mappersManager.find(name)
+            workspace = self.mappersManager.getMapper(Workspace.__name__).find(name)
             self.setActiveWorkspace(workspace)
             notification_center.workspaceChanged(workspace)
+            notification_center.workspaceLoad(workspace.getHosts())
             return workspace
         return False
 

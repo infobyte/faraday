@@ -236,6 +236,7 @@ class ModelObject(object):
 
     def _prependParentId(self):
         if self._parent:
+            print self._parent
             self._id = '.'.join((self._parent.getID(), self.getID()))
 
 

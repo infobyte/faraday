@@ -110,12 +110,12 @@ class TestWorkspacesManagement(unittest.TestCase):
         self.assertIsNone(self.mappersManager.find(wname))
         self.assertFalse(self.dbManager.connectorExists(wname))
 
-    def _test_delete_fs_workspace(self):
+    def test_delete_fs_workspace(self):
         """
         Verifies the deletion of a filesystem workspace
         """
         wname = self.new_random_workspace_name()
-        self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
+        self.wm.createWorkspace(wname, 'desc', DBTYPE.FS)
 
         wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
         self.assertTrue(os.path.exists(wpath))
@@ -154,20 +154,19 @@ class TestWorkspacesManagement(unittest.TestCase):
         self.assertIsNotNone(workspace, 'Workspace added should not be none')
         self.assertEquals(workspace, added_workspace, 'Workspace created and added diffier')
 
-    def _test_get_existent_couch_workspace(self):
+    def _test_get_existent_couch_workspace(self): # Deprecate
         """ Create a workspace in the backend, now ask for it """
         
         # When
         wname = self.new_random_workspace_name()
         workspace = self.cdm.addWorkspace(wname)
-        self.wm.loadWorkspaces()
 
         added_workspace = self.wm.getWorkspace(wname)
 
         # Then
         self.assertIsNotNone(added_workspace, 'Workspace added should not be none')
 
-    def _test_get_existent_fs_workspace(self):
+    def _test_get_existent_fs_workspace(self): # Deprecate
         """ Create a workspace in the backend, now ask for it """
         
         # When
@@ -188,22 +187,19 @@ class TestWorkspacesManagement(unittest.TestCase):
         # Then
         self.assertIsNone(added_workspace, 'Workspace added should not be none') 
 
-    def _test_set_active_workspace(self):
+    def test_set_active_workspace(self):
         ''' create a workspace through the backend, then set it as active '''
 
         wname = self.new_random_workspace_name()
-        workspace = self.fsm.addWorkspace(wname)
-        self.wm.loadWorkspaces()
-
-        added_workspace = self.wm.getWorkspace(wname)
+        workspace = self.wm.createWorkspace(wname, 'desc', DBTYPE.FS)
 
         # when
-        self.wm.setActiveWorkspace(added_workspace)
+        self.wm.setActiveWorkspace(workspace)
 
-        self.assertEquals(added_workspace, self.wm.getActiveWorkspace(),
+        self.assertEquals(workspace, self.wm.getActiveWorkspace(),
                     'Active workspace diffiers with expected workspace')
 
-        self.assertTrue(self.wm.isActive(added_workspace.name),
+        self.assertTrue(self.wm.isActive(workspace.name),
                 'Workspace is active flag not set')
 
     def test_remove_fs_workspace(self):

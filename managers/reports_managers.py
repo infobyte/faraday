@@ -67,7 +67,7 @@ class ReportManager(threading.Thread):
     def startWatch(self):
         if not self._report_path:
             raise NoReportsWatchException()
-        self.run()
+        self.start()
       
     def syncReports(self):
         """
@@ -75,53 +75,27 @@ class ReportManager(threading.Thread):
         We first make sure that all shared reports were added to the repo
         """
         
-        
-        self._xml_output_path = self.path
-        if self._xml_output_path is None:
-            return
-            
-        if not os.path.exists(self._xml_output_path):
-            return False
-        
-        for root, dirs, files in os.walk(self._xml_output_path,False):
+        for root, dirs, files in os.walk(self._report_path, False):
                             
-            if root == self._xml_output_path:
+            if root == self._report_path:
                 for name in files:
                     filename = os.path.join(root, name)
-                    
-                                                                          
-                    model.api.devlog( "Report file is %s" % filename)
-                    
+                    model.api.devlog( "Report file is %s" % filename) 
                                      
                     parser = ReportXmlParser(filename)
                     if (parser.report_type is not None):
                         #TODO: get host and port from config
                         client = PluginControllerAPIClient("127.0.0.1", 9977)
 
-                        #self._xml_output_path = filename
                         model.api.devlog("The file is %s, %s" % (filename,parser.report_type))
 
                         command_string = "./%s report" % parser.report_type.lower()
                         model.api.devlog("Executing %s" % (command_string))
                         
-                        # current_path =""
-  
-                        # new_cmd = self.plugin_controller.processCommandInput("", "",
-                        #                                                          current_path,
-                        #                                                          command_string,
-                        #                                                          False)
-                        new_cmd, output_file = client.send_cmd(command_string)
-                        
-                        #self.plugin_controller.storeCommandOutput(self._xml_output_path)
-                        client.send_output(command_string, filename)
-                        
-                        #self.plugin_controller.onCommandFinished()
-                        
-                        
-                                     
-                    os.rename(filename, os.path.join(root,"process", name))
-        
-                               
+                        new_cmd, output_file = client.send_cmd(command_string) 
+                        client.send_output(command_string, filename) 
+                    os.rename(filename, os.path.join(self._report_ppath, name)) 
+
         self.onlinePlugins()
 
                     

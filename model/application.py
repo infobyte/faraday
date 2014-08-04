@@ -59,12 +59,13 @@ class MainApplication(object):
             os.path.join(CONF.getConfigPath(), "plugins"),
             self._mappers_manager)
 
-        #self._reports_manager = ReportManager(10, self._plugin_manager.createController("ReportManager"))
+        self._reports_manager = ReportManager(10, self._plugin_manager.createController("ReportManager"))
 
         self._workspace_manager = WorkspaceManager(
             self._db_manager,
             self._mappers_manager,
-            self._changes_controller)
+            self._changes_controller,
+            self._reports_manager)
 
         self.gui_app = UiFactory.create(self._model_controller,
                                         self._plugin_manager,
@@ -130,6 +131,8 @@ class MainApplication(object):
                     self._model_controller,
                     self._mappers_manager)
                 # Start report manager here
+                getLogger(self).info("Starting Reports Manager Thread")
+                self._reports_manager.startWatch()
 
                 model.api.devlog("Faraday ready...")
                 model.api.__current_logged_user = username

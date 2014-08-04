@@ -845,12 +845,6 @@ class HostsBrowser(qt.QVBox):
             if i.type in ['Host','Service']:
                 guiapi.createAndAddCred(i.object,username,password)
 
-    def _saveWorkspace(self, item):
-        self.parent().parent().getMainApp().saveWorkspaces()
-
-    def _syncWorkspace(self, item):
-        self.parent().parent().getMainApp().syncWorkspaces()
-
     def _showWorkspaceProperties(self, item):
         if item.object is not None:
             api.log("Llege a showWorkspace", "ERROR")

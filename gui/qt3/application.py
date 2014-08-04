@@ -141,20 +141,6 @@ class GuiApp(qt.QApplication, FaradayUi):
         model.api.log("Removing Workspace: %s" % name)
         return self.getWorkspaceManager().removeWorkspace(name)
 
-    def syncWorkspaces(self):
-        try:
-            self.getWorkspaceManager().saveWorkspaces()
-        except Exception:
-            model.api.log("An exception was captured while synchronizing \
-                workspaces\n%s" % traceback.format_exc(), "ERROR")
-
-    def saveWorkspaces(self):
-        try:
-            self.getWorkspaceManager().saveWorkspaces()
-        except Exception:
-            model.api.log("An exception was captured while saving \
-                workspaces\n%s" % traceback.format_exc(), "ERROR")
-
     def createWorkspace(self, name, description="", w_type=""):
 
         if name in self.getWorkspaceManager().getWorkspacesNames():
@@ -180,10 +166,8 @@ class GuiApp(qt.QApplication, FaradayUi):
             self.getMainWindow().getWorkspaceTreeView().loadAllWorkspaces()
 
     def openWorkspace(self, name):
-        self.saveWorkspaces()
         try:
-            workspace = self.getWorkspaceManager().openWorkspace(name)
-            self.getModelController().setWorkspace(workspace)
+            self.getWorkspaceManager().openWorkspace(name)
         except Exception:
             model.api.log("An exception was captured while opening \
                 workspace %s\n%s" % (name, traceback.format_exc()), "ERROR")

@@ -440,7 +440,7 @@ def newHost(name, os = "Unknown"):
     The object created is not added to the model.
     """
     # 'Host' is a class signature if that is changed we have to update this
-    return model.common.factory.createModelObject("Host", name, os=os, parent=getActiveWorkspace().getName())
+    return model.common.factory.createModelObject("Host", name, os=os, parent=None)
 
 #-------------------------------------------------------------------------------
 def newInterface(name = "", mac = "00:00:00:00:00:00",

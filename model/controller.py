@@ -451,9 +451,9 @@ class ModelController(threading.Thread):
             object_parent.addChild(obj.getID(), obj)
         # Dispatch conflict management routine
         # ...  
-        dataMapper.save(obj) 
+        dataMapper.save(obj)
         self.treeWordsTries.addWord(obj.getName())
-        notifier.addHost(obj)
+        notifier.addHost(obj.getHost())
 
     def __edit(self, objId, *args, **kwargs):
         obj = self.mappers_manager.find(objId)
@@ -797,8 +797,7 @@ class ModelController(threading.Thread):
         return len(self._hosts)
 
     def getAllHosts(self, mode=0):
-        hosts_mapper = self.mappers_manager.getHostsMapper()
-        hosts = hosts_mapper.getAllHosts()
+        hosts = api.getActiveWorkspace().getHosts()
         return hosts
 
     def createIndex(self, hosts):

@@ -32,6 +32,21 @@ class DBTYPE(object):
     FS = 2
 
 
+class ConnectorContainer(object):
+    def __init__(self, name, connector, type):
+        self._connector = connector
+        self.type = type
+        self._name = name
+
+    def getType(self):
+        return self.type
+
+    def connector(self):
+        if self._connector.__class__.__name__ == 'function':
+            self._connector = self._connector(self._name)
+        return self._connector
+
+
 class DbManager(object):
 
     def __init__(self):
@@ -41,8 +56,10 @@ class DbManager(object):
         self._loadDbs()
 
     def _loadDbs(self):
-        self.dbs.update(self.fsmanager.getDbs())
-        self.dbs.update(self.couchmanager.getDbs())
+        for dbname, connector in self.fsmanager.getDbs().items():
+            self.dbs[dbname] = ConnectorContainer(dbname, connector, DBTYPE.FS)
+        for dbname, connector in self.couchmanager.getDbs().items():
+            self.dbs[dbname] = ConnectorContainer(dbname, connector, DBTYPE.COUCHDB)
 
     def _getManagerByType(self, dbtype):
         if dbtype == DBTYPE.COUCHDB:
@@ -54,31 +71,31 @@ class DbManager(object):
     def getConnector(self, name):
         # This returns a method that creates a connector
         # It's for lazy initalization in _loadDbs
-        return self.dbs.get(name)()
+        return self.dbs.get(name).connector()
 
     def connectorExists(self, name):
-        return self.dbs.has_key(name) 
+        return name in self.dbs.keys()
 
     def createDb(self, name, dbtype):
         if self.connectorExists(name):
             return False
         manager = self._getManagerByType(dbtype)
-        self.addConnector(name, manager.createDb(name))
+        self.addConnector(name, manager.createDb(name), dbtype)
         return self.getConnector(name)
 
-    def addConnector(self, name, connector):
-        self.dbs[name] = lambda : connector
+    def addConnector(self, name, connector, dbtype):
+        self.dbs[name] = ConnectorContainer(name, connector, dbtype)
 
     def getAllDbNames(self):
         return self.dbs.keys()
 
     def removeDb(self, name):
-        connector = self.getConnector(name) 
+        connector = self.getConnector(name)
         self._getManagerByType(connector.getType()).deleteDb(name)
         del self.dbs[name]
 
     def getDbType(self, dbname):
-        return self.getConnector(dbname).getType()
+        return self.dbs.get(dbname).getType()
 
 
 class ChangeWatcher(threading.Thread):
@@ -317,11 +334,12 @@ class FileSystemManager(AbstractPersistenceManager):
     def _loadDbs(self):
         for name in os.listdir(CONF.getPersistencePath()):
             if os.path.isdir(os.path.join(CONF.getPersistencePath(), name)):
-                self.dbs[name] = lambda : self._loadDb(name)
+                self.dbs[name] = lambda x: self._loadDb(x)
 
     def _loadDb(self, name):
         self.dbs[name] = FileSystemConnector(os.path.join(self._path,
                                               name))
+        return self.dbs[name]
 
 
 class NoCouchDBError(Exception):
@@ -390,12 +408,14 @@ class CouchDbManager(AbstractPersistenceManager):
         for dbname in filter(lambda x: not x.startswith("_"), self.__serv.all_dbs()):
             getLogger(self).debug(
                 "Asking for dbname[%s], registering for lazy initialization" % dbname)
-            self.dbs[dbname] = lambda : self._loadDb(dbname)
+            print dbname
+            self.dbs[dbname] = lambda x: self._loadDb(x)
 
     def _loadDb(self, dbname):
         db = self.__serv.get_db(dbname)
         seq = db.info()['update_seq']
         self.dbs[dbname] = CouchDbConnector(db, seq_num=seq) 
+        return self.dbs[dbname]
 
 
     #@trap_timeout

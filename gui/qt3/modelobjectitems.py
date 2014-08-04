@@ -236,8 +236,8 @@ class RootListViewItem(ModelObjectListViewItem):
 
 class WorkspaceListViewItem(ModelObjectListViewItem):
     type = "Workspace"
-    def __init__(self, qtparent, model_object=None):
-        ModelObjectListViewItem.__init__(self, qtparent, model_object.name)
+    def __init__(self, qtparent, workspace=None):
+        ModelObjectListViewItem.__init__(self, qtparent, workspace.name)
         self.nconflicts = 0
         self.setOpen(True)
         self.workspace_name = "%s" % self.name

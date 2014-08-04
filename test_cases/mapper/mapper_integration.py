@@ -14,7 +14,7 @@ import random
 sys.path.append(os.path.abspath(os.getcwd()))
 
 from persistence.persistence_managers import CouchDbManager, FileSystemManager
-from persistence.mappers.mapper_manager import MapperManager
+from managers.mapper_manager import MapperManager
 
 from model.hosts import Host, Interface
 

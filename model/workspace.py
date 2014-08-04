@@ -9,6 +9,7 @@ See the file 'doc/LICENSE' for the license information
 import os
 import model.api
 import time
+from managers.reports_managers import ReportManager
 from model.guiapi import notification_center as notifier
 
 from config.configuration import getInstanceConfiguration

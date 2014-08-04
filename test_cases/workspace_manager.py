@@ -23,6 +23,32 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         workspace_manager = WorkspaceManager(mock(), mock(), mock(), mock())
         self.assertIsNotNone(workspace_manager)
 
+    def testOpenWorkspaceReportManagerWatch(self):
+        reportManager = mock()
+
+        dbManager = mock()
+        mappersManager = mock()
+        dbConnector = mock()
+        mappers = mock()
+        changesController = mock()
+
+        workspace = Workspace('test_workspace', 'a desc')
+
+        when(dbManager).dbOpen('test_workspace').thenReturn(dbConnector)
+        when(mappersManager).createMappers(dbConnector).thenReturn(True)
+        when(mappersManager).find('test_workspace').thenReturn(workspace)
+
+        workspace_manager = WorkspaceManager(dbManager,
+                                mappersManager,
+                                changesController,
+                                reportManager)
+
+        opened_workspace = workspace_manager.openWorkspace('test_workspace')
+
+        verify(reportManager).watch('test_workspace')
+        self.assertEquals(opened_workspace.getName(), 'test_workspace')
+
+
     def testCreateWorkspaceDBManagerInteract(self):
         dbManager = mock()
         dbConnector = mock()

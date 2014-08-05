@@ -59,7 +59,7 @@ class WorkspaceManager(object):
     def removeWorkspace(self, name):
         if name in self.getWorkspacesNames():
             self.mappersManager.remove(name)
-            self.dbManager.removeDb(name)
+            return self.dbManager.removeDb(name)
 
     def setActiveWorkspace(self, workspace):
         self.active_workspace = workspace
@@ -74,7 +74,15 @@ class WorkspaceManager(object):
         return self.active_workspace.getName() == name
 
     def getWorkspaceType(self, name):
-        if self.dbManager.getDbType(name) == DBTYPE.COUCHDB:
+        return self._dbTypeToNamedType(self.dbManager.getDbType(name))
+
+    def _dbTypeToNamedType(self, dbtype):
+        if dbtype == DBTYPE.COUCHDB:
             return 'CouchDB'
-        if self.dbManager.getDbType(name) == DBTYPE.FS:
+        if dbtype == DBTYPE.FS:
             return 'FS'
+
+    def getAvailableWorkspaceTypes(self):
+        return [self._dbTypeToNamedType(dbtype) for \
+                dbtype in self.dbManager.getAvailableDBs()]
+

@@ -31,17 +31,21 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         dbConnector = mock()
         mappers = mock()
         changesController = mock()
+        workspaceMapper = mock()
 
         workspace = Workspace('test_workspace', 'a desc')
 
-        when(dbManager).dbOpen('test_workspace').thenReturn(dbConnector)
+        when(dbManager).getAllDbNames().thenReturn(['test_workspace'])
+        when(dbManager).getConnector('test_workspace').thenReturn(dbConnector)
         when(mappersManager).createMappers(dbConnector).thenReturn(True)
-        when(mappersManager).find('test_workspace').thenReturn(workspace)
+        when(mappersManager).getMapper(Workspace.__name__).thenReturn(workspaceMapper)
+        when(workspaceMapper).find('test_workspace').thenReturn(workspace)
 
         workspace_manager = WorkspaceManager(dbManager,
                                 mappersManager,
                                 changesController,
                                 reportManager)
+
 
         opened_workspace = workspace_manager.openWorkspace('test_workspace')
 
@@ -66,8 +70,10 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         dbConnector = mock()
         mappers = mock()
         changesController = mock()
+        workspaceMapper = mock()
 
-        when(mappersManager).saveObj(any()).thenReturn(True) 
+        when(mappersManager).getMapper(Workspace.__name__).thenReturn(workspaceMapper)
+        when(workspaceMapper).save(any()).thenReturn(True) 
         when(dbManager).createDb('test_workspace', DBTYPE.FS).thenReturn(dbConnector)
         when(mappersManager).createMappers(dbConnector).thenReturn(True) 
 
@@ -76,7 +82,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
                                         DBTYPE.FS)
 
         verify(mappersManager).createMappers(dbConnector)
-        verify(mappersManager).saveObj(any())
+        verify(workspaceMapper).save(any())
 
         self.assertTrue(workspace, 'workspace not instantiated')
         self.assertEquals(workspace.name, 'test_workspace',
@@ -89,7 +95,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         mappers = mock()
         changesController = mock()
 
-        when(mappersManager).saveObj(any()).thenReturn(True) 
+        when(mappersManager).save(any()).thenReturn(True) 
         when(dbManager).createDb('test_workspace', DBTYPE.FS).thenReturn(False)
         when(mappersManager).createMappers(dbConnector).thenReturn(True) 
 
@@ -99,7 +105,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
 
         verify(dbManager).createDb('test_workspace', DBTYPE.FS)
         verify(mappersManager, times=0).createMappers(dbConnector)
-        verify(mappersManager, times=0).saveObj(any())
+        verify(mappersManager, times=0).save(any())
 
     def testOpenWorkspace(self):
         dbManager = mock()
@@ -107,20 +113,23 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         dbConnector = mock()
         mappers = mock()
         changesController = mock()
+        workspaceMapper = mock()
 
         workspace = Workspace('test_workspace', 'a desc')
 
-        when(dbManager).dbOpen('test_workspace').thenReturn(dbConnector)
+        when(dbManager).getConnector('test_workspace').thenReturn(dbConnector)
+        when(mappersManager).getMapper(Workspace.__name__).thenReturn(workspaceMapper)
+        when(dbManager).getAllDbNames().thenReturn(['test_workspace'])
         when(mappersManager).createMappers(dbConnector).thenReturn(True)
-        when(mappersManager).find('test_workspace').thenReturn(workspace)
+        when(workspaceMapper).find('test_workspace').thenReturn(workspace)
 
         workspace_manager = WorkspaceManager(dbManager, mappersManager, changesController, mock())
 
         opened_workspace = workspace_manager.openWorkspace('test_workspace')
 
-        verify(dbManager).dbOpen('test_workspace')
+        verify(dbManager).getConnector('test_workspace')
         verify(mappersManager).createMappers(dbConnector)
-        verify(mappersManager).find('test_workspace')
+        verify(workspaceMapper).find('test_workspace')
         self.assertEquals(opened_workspace.getName(), 'test_workspace')
 
     def testOpenWorkspaceSetsChangesCallback(self):
@@ -129,14 +138,18 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         dbConnector = mock()
         mappers = mock()
         changesController = mock()
+        workspaceMapper = mock()
 
         workspace = Workspace('test_workspace', 'a desc')
 
-        when(dbManager).dbOpen('test_workspace').thenReturn(dbConnector)
+        when(dbManager).getConnector('test_workspace').thenReturn(dbConnector)
+        when(mappersManager).getMapper(Workspace.__name__).thenReturn(workspaceMapper)
+        when(dbManager).getAllDbNames().thenReturn(['test_workspace'])
         when(mappersManager).createMappers(dbConnector).thenReturn(True)
-        when(mappersManager).find('test_workspace').thenReturn(workspace)
+        when(workspaceMapper).find('test_workspace').thenReturn(workspace)
 
-        workspace_manager = WorkspaceManager(dbManager, mappersManager, changesController, mock()) 
+        workspace_manager = WorkspaceManager(dbManager, mappersManager, changesController, mock())
+
         opened_workspace = workspace_manager.openWorkspace('test_workspace')
 
         verify(dbConnector).setChangesCallback(changesController)
@@ -148,7 +161,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         mappers = mock()
         changesController = mock()
 
-        when(mappersManager).saveObj(any()).thenReturn(True) 
+        when(mappersManager).save(any()).thenReturn(True) 
         when(dbManager).createDb('test_workspace', DBTYPE.FS).thenReturn(dbConnector)
         when(mappersManager).createMappers(dbConnector).thenReturn(True) 
 
@@ -166,12 +179,11 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         changesController = mock()
 
         workspace = Workspace('test_workspace', 'a desc') 
-        when(dbManager).dbOpen('test_workspace').thenReturn(False)
+        when(dbManager).getAllDbNames().thenReturn([])
 
         workspace_manager = WorkspaceManager(dbManager, mappersManager, changesController, mock())
         opened_workspace = workspace_manager.openWorkspace('test_workspace')
 
-        verify(dbManager).dbOpen('test_workspace')
 
         verify(mappersManager, times=0).createMappers(dbConnector)
         verify(mappersManager, times=0).find('test_workspace')
@@ -185,8 +197,8 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         changesController = mock()
 
         workspace = Workspace('test_workspace', 'a desc')
-
         when(dbManager).removeDb('test_workspace').thenReturn(True)
+        when(dbManager).getAllDbNames().thenReturn(['test_workspace'])
 
         workspace_manager = WorkspaceManager(dbManager, mappersManager, changesController, mock())
         remove_ret = workspace_manager.removeWorkspace('test_workspace')
@@ -229,6 +241,19 @@ class UnitTestWorkspaceManager(unittest.TestCase):
 
         wtype = workspace_manager.getWorkspaceType(work.getName())
         self.assertEquals(wtype, 'FS', 'Workspace type not returning correct value')
+
+    def testGetAvailableWorkspaceTypes(self): 
+        dbManager = mock()
+        workspace_manager = WorkspaceManager(dbManager,
+                                                mock(),
+                                                mock(),
+                                                mock())
+        when(dbManager).getAvailableDBs().thenReturn([DBTYPE.COUCHDB, DBTYPE.FS])
+        retrievedTypes = workspace_manager.getAvailableWorkspaceTypes()
+
+        self.assertListEqual(['CouchDB', 'FS'], retrievedTypes, 
+                                    "Workspaces available Types not set")
+
 
 
 if __name__ == '__main__':

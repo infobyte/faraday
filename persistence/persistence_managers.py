@@ -52,8 +52,16 @@ class DbManager(object):
     def __init__(self):
         self.couchmanager = CouchDbManager(CONF.getCouchURI())
         self.fsmanager = FileSystemManager()
+        self.managers = {
+                            DBTYPE.COUCHDB: self.couchmanager, 
+                            DBTYPE.FS: self.fsmanager
+                        }
         self.dbs = {}
         self._loadDbs()
+
+    def getAvailableDBs(self):
+        return  [typ for typ, manag in self.managers.items()\
+                if manag.isAvailable()] 
 
     def _loadDbs(self):
         for dbname, connector in self.fsmanager.getDbs().items():
@@ -93,6 +101,7 @@ class DbManager(object):
         connector = self.getConnector(name)
         self._getManagerByType(connector.getType()).deleteDb(name)
         del self.dbs[name]
+        return True
 
     def getDbType(self, dbname):
         return self.dbs.get(dbname).getType()
@@ -153,11 +162,15 @@ class DbConnector(object):
     def getDocsByFilter(self, parentId, type):
         raise NotImplementedError("DbConnector should not be used directly")
 
+    def isAvailable(self):
+        return self._available
+
 
 class FileSystemConnector(DbConnector):
     def __init__(self, base_path):
         super(FileSystemConnector, self).__init__(type=DBTYPE.FS)
         self.path = base_path
+        self._available = True
 
     def saveDocument(self, dic):
         try:
@@ -425,9 +438,6 @@ class CouchDbManager(AbstractPersistenceManager):
         workspace = self.__serv.get_or_create_db("reports")
         vmanager.addView(reports, workspace)
         return self.__uri + "/reports/_design/reports/index.html"
-
-    def isAvailable(self):
-        return self._available
 
     def lostConnectionResolv(self):
         self._lostConnection = True

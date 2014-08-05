@@ -162,9 +162,6 @@ class DbConnector(object):
     def getDocsByFilter(self, parentId, type):
         raise NotImplementedError("DbConnector should not be used directly")
 
-    def isAvailable(self):
-        return self._available
-
 
 class FileSystemConnector(DbConnector):
     def __init__(self, base_path):
@@ -318,6 +315,10 @@ class AbstractPersistenceManager(object):
     def getDb(self, name):
         return self.dbs.get(name, None)
 
+    def isAvailable(self):
+        return self._available
+
+
 
 class FileSystemManager(AbstractPersistenceManager):
     """
@@ -332,6 +333,7 @@ class FileSystemManager(AbstractPersistenceManager):
         if not os.path.exists(self._path):
             os.mkdir(self._path)
         self._loadDbs()
+        self._available = True
 
     def _create(self, name):
         wpath = os.path.expanduser("~/.faraday/persistence/%s" % name)

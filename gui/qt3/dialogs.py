@@ -1041,7 +1041,7 @@ class WorkspacePropertiesDialog(BaseDialog):
                                                        
 class WorkspaceCreationDialog(BaseDialog):
 
-    def __init__(self, parent, text="", callback=None, workspace=None):
+    def __init__(self, parent, text="", callback=None, workspace=None, workspace_manager=None):
         BaseDialog.__init__(self, parent, "WorkspaceCreationDialog",
                             layout_margin=10, layout_spacing=15, modal=True)
         self._callback = callback
@@ -1065,11 +1065,11 @@ class WorkspaceCreationDialog(BaseDialog):
         self._type_label = qt.QLabel("Type", hbox3)
         self._type_combobox = qt.QComboBox(hbox3)
         self._type_combobox.setEditable(False)
-        for w in WorkspaceManager.getAvailableWorkspaceTypes():
+        for w in workspace_manager.getAvailableWorkspaceTypes():
             self._type_combobox.insertItem(w)
         self.layout.addWidget(hbox3)
 
-        if len(WorkspaceManager.getAvailableWorkspaceTypes()) <= 1:
+        if len(workspace_manager.getAvailableWorkspaceTypes()) <= 1:
             parent.showPopup("No Couch Configuration available. Config, more workpsaces flavors")
 
         self.__name_txt = self._name_edit.text()

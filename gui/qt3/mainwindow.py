@@ -706,7 +706,8 @@ class MainWindow(qt.QMainWindow):
         
     def createWorkspace(self):
                                                                            
-        wdialog = WorkspaceCreationDialog(self, callback=self._main_app.createWorkspace)
+        wdialog = WorkspaceCreationDialog(self, callback=self._main_app.createWorkspace, workspace_manager=self._main_app.getWorkspaceManager())
+        
         wdialog.exec_loop()
         
         

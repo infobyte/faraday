@@ -58,7 +58,6 @@ class WorkspaceManager(object):
 
     def removeWorkspace(self, name):
         if name in self.getWorkspacesNames():
-            self.mappersManager.remove(name)
             return self.dbManager.removeDb(name)
 
     def setActiveWorkspace(self, workspace):

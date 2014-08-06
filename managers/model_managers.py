@@ -82,6 +82,12 @@ class WorkspaceManager(object):
         if dbtype == DBTYPE.FS:
             return 'FS'
 
+    def namedTypeToDbType(self, name):
+        if name =='CouchDB':
+            return DBTYPE.COUCHDB
+        if name == 'FS':
+            return DBTYPE.FS
+
     def getAvailableWorkspaceTypes(self):
         return [self._dbTypeToNamedType(dbtype) for \
                 dbtype in self.dbManager.getAvailableDBs()]

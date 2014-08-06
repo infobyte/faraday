@@ -1,4 +1,4 @@
-	function load_all_hosts() {
+	function load_all_hosts(design) {
 		var iurl	= "/" + workspace + "/_design/" + design + "/_view/byinterfacecount?group=true";
 		var hurl	= "/" + workspace + "/_design/" + design + "/_view/hosts";
 		var surl	= "/" + workspace + "/_design/" + design + "/_view/byservicecount?group=true";
@@ -37,7 +37,7 @@
 		return table;
 	}
 
-	function load_hosts_by_service(name) {
+	function load_hosts_by_service(name,bolean) {
 		var services 	= get_obj_filter(workspace, "services", "byname", name);
 		var hids 	= [];
 		$.each(services, function(k, v) {
@@ -54,7 +54,7 @@
 
 		interfaces	= get_obj(iurl, interfaces);
 		scount		= get_obj(surl, services);
-	
+		if(!bolean){
 		var table = "<h2>Hosts with Service "+name+" ("+hids.length+" total)</h2>"+
 				"<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
@@ -76,6 +76,18 @@
 			}
 		});
 		table += "</tbody></table></div>";
+		}else{
+			var table = "<table><tbody>"; 
+			$.each(hosts, function(k, v){
+			var id = v['id'];
+			v = v['value'];
+			if($.inArray(id, hids) > -1) {
+				table += "<tr id=\"host-"+id+"\">"+
+					"<td><p>"+v['name']+"</p></td></tr>";
+			}
+		});
+		table += "</tbody></table>";
+		}
 		return table;
 	}
 
@@ -144,8 +156,8 @@
 		});
 		return ls;
 	}
-	
-function send_variables(workspace,view,design){
+
+$( document ).ready(function() {	
 	$(document).on('click', 'a.host', function(e) {
             // no queremos que cargue nada
             e.preventDefault();
@@ -171,7 +183,8 @@ function send_variables(workspace,view,design){
         // comportamiento para "View all hosts"
         $(document).on('click', 'a[href="load_all_hosts"]', function(e) {
             e.preventDefault();
-            var div = load_all_hosts();
+            design = "hosts";
+            var div = load_all_hosts(design);
             $("#hosts").html(div);
         });
-}
+});

@@ -20,7 +20,7 @@
     <link rel="stylesheet" type="text/css" href="estilos.css" />
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
-    
+	<link rel="stylesheet" type="text/css" href="script/jquery.qtip.min.css" />
     <link href="favicon.ico" rel="shortcut icon">
     <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
     <link href="images/site_preview.jpg" rel="image_src" />
@@ -106,7 +106,6 @@ $(document).ready(function() {
         location.reload();
     });
     $(document).on("click", "#refresh", function() {
-$.ajax({   url: 'http://127.0.0.1:5984/bersa/_design/hosts/_view/hosts',   type: 'DELETE',   success: function(data) {alert(data);}});
         location.reload();
     });
 
@@ -115,100 +114,58 @@ $.ajax({   url: 'http://127.0.0.1:5984/bersa/_design/hosts/_view/hosts',   type:
     space = dominio.split("#");
     workspace = space[1];
 
-    var ret = "<div id=\"workspace-"+workspace+"\" class=\"workspace\"></div><!-- .workspace -->";
+    var ret = "<div id=\"workspace-"+workspace+"\" class=\"workspace\"></div><!-- .workspace --><div class='left'><h2>Viewing "+workspace+"</h2></div>";
 
-    $('#reportes').append(ret);
+    $('#reportes').prepend(ret);
     $('.workspace').append("<div class='reports'></div>");
 
-    var byservices = "reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices";
-    var summarized = "reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized";
-    var vulns = "reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns";
-    var commands = "reports/commands.html?workspace="+workspace+"&design=commands&view=list";
-    var compound = "reports/compound.html?workspace="+workspace+"&design=hosts&view=compound";
+rutas = ["reports/compound.html?workspace="+workspace+"&design=hosts&view=compound","reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices","reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized","reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns","reports/commands.html?workspace="+workspace+"&design=commands&view=list"];
 
-
-    $('.reports').load(compound, function (data){
-    dominio = compound;
-    //get the link parameters
-    space = dominio.split("=");
-    workspace = space[1].split("&");
-    workspace = workspace[0];
-    design = space[2].split("&");
-    design = design[0];
-    view = space[3];
-
-       var divs = get_report_div(workspace, view, design);
-       var sendVariables = send_variables(workspace, view, design); 
-    $(".workspace").prepend(divs);
-       left = "<div class=\"left\"><h2>Viewing "+workspace+"</h2></div>";
-    $(".workspace").prepend(left);
-    });
-
-    $('.reports').load(byservices, function (){
-    dominio = byservices;
-
-//get the link parameters
-    space = dominio.split("=");
-    workspace = space[1].split("&");
-    workspace = workspace[0];
-    design = space[2].split("&");
-    design = design[0];
-    view = space[3];
-
-    divs = get_report_div(workspace, view, design);
-    $("#reportes").append(divs);
-    });
-
-    $('.reports').load(commands, function (){
-    dominio = commands;
-
-//get the link parameters
-    space = dominio.split("=");
-    workspace = space[1].split("&");
-    workspace = workspace[0];
-    design = space[2].split("&");
-    design = design[0];
-    view = space[3];
-
-    divs = get_report_div(workspace, view, design);
-    $("#reportes").append(divs);
-    });
-
-
-    $('.reports').load(summarized, function (){
-    dominio = summarized;
-
-//get the link parameters
-    space = dominio.split("=");
-    workspace = space[1].split("&");
-    workspace = workspace[0];
-    design = space[2].split("&");
-    design = design[0];
-    view = space[3];
-
-    divs = get_report_div(workspace, view, design);
-    $("#reportes").append(divs);
-    });
-
-    $('.reports').load(vulns, function (){
-    dominio = vulns;
-
-//get the link parameters
-    space = dominio.split("=");
-    workspace = space[1].split("&");
-    workspace = workspace[0];
-    design = space[2].split("&");
-    design = design[0];
-    view = space[3];
-
-    var divv = get_report_div(workspace, view, design);
-    $("#reportes").append(divv);
-    });
+for (i = 0; i < rutas.length; i++) { 
+	dominio = rutas[i];
+	var div = load(dominio);
+}
 });
 
+$("#reportes").append("<div id='compound'></div><div id='vulns'></div><div id='list'></div></div><div id='byservices'></div><div id='summarized'>");
+
+function load(dominio){
+    $(".reports").load(dominio, function(){
+    	var parametros = dominios(dominio);
+    		var div = get_report_div(parametros[0],parametros[1],parametros[2]);
+    		if(parametros[1] == "byservices"){
+    			$("#byservices").append(div);
+    		}
+    		if(parametros[1] == "summarized"){
+    			$("#summarized").append(div);
+    		}
+    		if(parametros[1] == "vulns"){
+    			$("#vulns").append(div);
+    		}
+    		if(parametros[1] == "list"){
+    			$("#list").append(div);
+    		}
+    		if(parametros[1] == "compound"){
+    			$("#compound").append(div);
+    		}
+    });
+}
+
+function dominios(dominio){
+//get the link parameters
+    space = dominio.split("=");
+    workspace = space[1].split("&");
+    workspace = workspace[0];
+    design = space[2].split("&");
+    design = design[0];
+    view = space[3];
+    parametros = [workspace, view, design];
+    return parametros;
+}
+
 setTimeout(function() {
-        // calculo la altura del sidebar
-        $("aside").height($("#main").height()+40);
+    // calculo la altura del sidebar
+    $("aside").height($("#main").height()+40);
 }, 2000);
 </script>
 </body>

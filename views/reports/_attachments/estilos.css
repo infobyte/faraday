@@ -250,7 +250,17 @@ aside {
 			-moz-transition: all .3s ease;
 			-webkit-transition: all .3s ease;
 	}
-		
+
+.load_service{
+	padding: 10px!important;
+}
+
+#load_service p{
+	margin: 0px!important;
+}
+	#load_service p::selection{
+		background: red;
+	}
 
 .seccion {
 	background: #E8EFF0;

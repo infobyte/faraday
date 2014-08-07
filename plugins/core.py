@@ -20,6 +20,8 @@ import Queue
 import traceback
 import model.common
 import errno
+from model.common import factory, ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote, ModelObjectCred
+from model.hosts import Host, Interface, Service
 
 from model.commands_history import CommandRunInformation
 
@@ -615,11 +617,9 @@ class PluginBase(object):
         """
         self._pending_actions.put(args)
 
-    
     def createAndAddHost(self, name, os = "unknown", category = None, update = False, old_hostname = None):
-        host = model.api.newHost(name, os)
         self.__addPendingAction(modelactions.CADDHOST, name, os, category, update, old_hostname)
-        return host.getID()
+        return factory.generateID(Host.__name__, name=name, os=os)
 
     def createAndAddInterface(self, host_id, name = "", mac = "00:00:00:00:00:00",
                  ipv4_address = "0.0.0.0", ipv4_mask = "0.0.0.0",
@@ -627,91 +627,88 @@ class PluginBase(object):
                  ipv6_address = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_prefix = "00",
                  ipv6_gateway = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns = [],
                  network_segment = "", hostname_resolution = []):
-        interface = model.api.newInterface(name, mac, ipv4_address, ipv4_mask, ipv4_gateway,
-            ipv4_dns, ipv6_address, ipv6_prefix, ipv6_gateway, ipv6_dns,
-            network_segment, hostname_resolution, parent_id=host_id)
         self.__addPendingAction(modelactions.CADDINTERFACE, host_id, name, mac, ipv4_address, 
             ipv4_mask, ipv4_gateway, ipv4_dns, ipv6_address, ipv6_prefix, ipv6_gateway, ipv6_dns,
             network_segment, hostname_resolution)
-        return interface.getID()
-
-    def createAndAddApplication(self, host_id, name, status = "running", version = "unknown"):
-        application = model.api.newApplication(name, status, version)
-        self.__addPendingAction(modelactions.CADDAPPLICATION, host_id, name, status, version)
-        return application.getID()
-
-    def createAndAddServiceToApplication(self, host_id, application_id, name, protocol = "tcp?", 
-                ports = [], status = "running", version = "unknown", description = ""):
-        service = model.api.newService(name, protocol, ports, status, version, description)
-        self.__addPendingAction(modelactions.CADDSERVICEAPP, host_id, application_id, name, protocol, 
-                ports, status, version, description)
-        return service.getID()
+        return factory.generateID(
+            Interface.__name__, parent_id=host_id, name=name, mac=mac,
+            ipv4_address=ipv4_address, ipv4_mask=ipv4_mask,
+            ipv4_gateway=ipv4_gateway, ipv4_dns=ipv4_dns,
+            ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
+            ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
+            network_segment=network_segment,
+            hostname_resolution=hostname_resolution)
 
     def createAndAddServiceToInterface(self, host_id, interface_id, name, protocol = "tcp?", 
                 ports = [], status = "running", version = "unknown", description = ""):
-        service = model.api.newService(name, protocol, ports, status, version, description, parent_id=interface_id)
         self.__addPendingAction(modelactions.CADDSERVICEINT, host_id, interface_id, name, protocol, 
                 ports, status, version, description)
-        return service.getID()
+        return factory.generateID(
+            Service.__name__,
+            name=name, protocol=protocol, ports=ports,
+            status=status, version=version, description=description, parent_id=interface_id)
 
     def createAndAddVulnToHost(self, host_id, name, desc="", ref=[], severity=""):
-        vuln = model.api.newVuln(name, desc, ref, severity, parent_id=host_id)
         self.__addPendingAction(modelactions.CADDVULNHOST, host_id, name, desc, ref, severity)
-        return vuln.getID()
+        return factory.generateID(
+            ModelObjectVuln.__name__,
+            name=name, desc=desc, ref=ref, severity=severity,
+            parent_id=host_id)
 
     def createAndAddVulnToInterface(self, host_id, interface_id, name, desc="", ref=[], severity=""):
-        vuln = model.api.newVuln(name, desc, ref, severity, parent_id=interface_id)
         self.__addPendingAction(modelactions.CADDVULNINT, host_id, interface_id, name, desc, ref, severity)
-        return vuln.getID()
-
-    def createAndAddVulnToApplication(self, host_id, application_id, name, desc="", ref=[], severity=""):
-        vuln = model.api.newVuln(name, desc, ref, severity)
-        self.__addPendingAction(modelactions.CADDVULNAPP, host_id, application_id, name, desc, ref, severity)
-        return vuln.getID()
+        return factory.generateID(
+            ModelObjectVuln.__name__,
+            name=name, desc=desc, ref=ref, severity=severity,
+            parent_id=interface_id)
 
     def createAndAddVulnToService(self, host_id, service_id, name, desc="", ref=[], severity=""):
-        vuln = model.api.newVuln(name, desc, ref, severity, parent_id=service_id)
         self.__addPendingAction(modelactions.CADDVULNSRV, host_id, service_id, name, desc, ref, severity)
-        return vuln.getID()
+        return factory.generateID(
+            ModelObjectVuln.__name__,
+            name=name, desc=desc, ref=ref, severity=severity,
+            parent_id=service_id)
 
     def createAndAddVulnWebToService(self, host_id, service_id, name, desc="", ref=[], severity="", website="", path="", request="",
                                   response="",method="",pname="", params="",query="",category=""):
-        vuln = model.api.newVulnWeb(name, desc, ref, severity,website, path, request, response,
-                method,pname, params,query,category, parent_id=service_id)
         self.__addPendingAction(modelactions.CADDVULNWEBSRV, host_id, service_id, name, desc, ref, severity, website, path, request, response,
                 method,pname, params,query,category)
-        return vuln.getID()
-    
+        return factory.generateID(
+            ModelObjectVulnWeb.__name__,
+            name=name, desc=desc, ref=ref, severity=severity,
+            website=website, path=path, request=request, response=response,
+            method=method, pname=pname, params=params, query=query,
+            category=category, parent_id=service_id)
 
     def createAndAddNoteToHost(self, host_id, name, text):
-        note = model.api.newNote(name, text, parent_id=host_id)
         self.__addPendingAction(modelactions.CADDNOTEHOST, host_id, name, text)
-        return note.getID()
+        return factory.generateID(
+            ModelObjectNote.__name__,
+            name=name, text=text, parent_id=host_id)
 
     def createAndAddNoteToInterface(self, host_id, interface_id, name, text):
-        note = model.api.newNote(name, text, parent_id=interface_id)
         self.__addPendingAction(modelactions.CADDNOTEINT, host_id, interface_id, name, text)
-        return note.getID()
-
-    def createAndAddNoteToApplication(self, host_id, application_id, name, text):
-        note = model.api.newNote(name, text)
-        self.__addPendingAction(modelactions.CADDNOTEAPP, host_id, application_id, name, text)
-        return note.getID()
+        return factory.generateID(
+            ModelObjectNote.__name__,
+            name=name, text=text, parent_id=interface_id)
 
     def createAndAddNoteToService(self, host_id, service_id, name, text):
-        note = model.api.newNote(name, text, parent_id=service_id) 
         self.__addPendingAction(modelactions.CADDNOTESRV, host_id, service_id, name, text)
-        return note.getID()
-    
+        return factory.generateID(
+            ModelObjectNote.__name__,
+            name=name, text=text, parent_id=service_id)
+
     def createAndAddNoteToNote(self, host_id, service_id, note_id, name, text):
-        note = model.api.newNote(name, text, parent=note_id)
         self.__addPendingAction(modelactions.CADDNOTENOTE, host_id, service_id, note_id, name, text)
-        return note.getID()
-    
+        return factory.generateID(
+            ModelObjectNote.__name__,
+            name=name, text=text, parent_id=note_id)
+
     def createAndAddCredToService(self, host_id, service_id, username, password):
-        cred = model.api.newCred(username, password, parent_id=service_id)
         self.__addPendingAction(modelactions.CADDCREDSRV, host_id, service_id, username, password)
-        return cred.getID()
+        return factory.generateID(
+            ModelObjectCred.__name__,
+            username=username, password=password, parent_id=service_id)
 
     def addHost(self, host, category=None,update=False, old_hostname=None):
         self.__addPendingAction(modelactions.ADDHOST, host, category, update, old_hostname)

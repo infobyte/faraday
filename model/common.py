@@ -545,6 +545,12 @@ class ModelObjectFactory(object):
         names.sort()
         return names
 
+    def generateID(self, classname, parent_id=None, **objargs):
+        tmpObj = self._registered_objects[classname](**objargs)
+        if parent_id:
+            return '.'.join([parent_id, tmpObj.getID()])
+        return tmpObj.getID()
+
     def createModelObject(self, classname, object_name=None, **objargs):
         if classname in self._registered_objects:
             if object_name is not None:

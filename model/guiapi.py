@@ -59,7 +59,7 @@ def deregisterWidget(widget):
 
 
 def createAndAddHost(name, os="Unknown", category=None, update=False, old_hostname=None):
-    host = model.api.newHost(name, os, parent=None)
+    host = model.api.newHost(name, os)
     if addHost(host, category, update, old_hostname):
         return host.getID()
     return None

@@ -418,7 +418,7 @@ class ModelObject(object):
         return True
 
     def getVulns(self):
-        return self.getChildsByType(ModelObjectVuln.__name__)
+        return self.getChildsByType(ModelObjectVuln.__name__) + self.getChildsByType(ModelObjectVulnWeb.__name__)
 
     def setVulns(self, vulns):
         self._addChildsDict(vulns)

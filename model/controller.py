@@ -215,7 +215,6 @@ class ModelController(threading.Thread):
             modelactions.ADDSERVICEINT: self.__add,
             modelactions.DELSERVICEINT: self.__del,
             modelactions.EDITSERVICE: self.__edit,
-            modelactions.EDITAPPLICATION: self.__editApplication,
             #Vulnerability
             modelactions.ADDVULNINT: self.__add,
             modelactions.DELVULNINT: self.__del,
@@ -876,8 +875,8 @@ class ModelController(threading.Thread):
             username, password=password, parent=parent)
 
     def getHost(self, name):
-        hosts_mapper= self.mappers_manager.getHostsMapper()
-        return hosts_mapper.findByName(name)
+        hosts_mapper = self.mappers_manager.getMapper(model.hosts.Host.__name__)
+        return hosts_mapper.find(name)
 
     def getHostsCount(self):
         return len(self._hosts)

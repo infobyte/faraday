@@ -619,7 +619,7 @@ class PluginBase(object):
 
     def createAndAddHost(self, name, os = "unknown", category = None, update = False, old_hostname = None):
         self.__addPendingAction(modelactions.CADDHOST, name, os, category, update, old_hostname)
-        return factory.generateID(Host.__name__, name=name, os=os)
+        return factory.generateID(Host.class_signature, name=name, os=os)
 
     def createAndAddInterface(self, host_id, name = "", mac = "00:00:00:00:00:00",
                  ipv4_address = "0.0.0.0", ipv4_mask = "0.0.0.0",
@@ -631,7 +631,7 @@ class PluginBase(object):
             ipv4_mask, ipv4_gateway, ipv4_dns, ipv6_address, ipv6_prefix, ipv6_gateway, ipv6_dns,
             network_segment, hostname_resolution)
         return factory.generateID(
-            Interface.__name__, parent_id=host_id, name=name, mac=mac,
+            Interface.class_signature, parent_id=host_id, name=name, mac=mac,
             ipv4_address=ipv4_address, ipv4_mask=ipv4_mask,
             ipv4_gateway=ipv4_gateway, ipv4_dns=ipv4_dns,
             ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
@@ -644,28 +644,28 @@ class PluginBase(object):
         self.__addPendingAction(modelactions.CADDSERVICEINT, host_id, interface_id, name, protocol, 
                 ports, status, version, description)
         return factory.generateID(
-            Service.__name__,
+            Service.class_signature,
             name=name, protocol=protocol, ports=ports,
             status=status, version=version, description=description, parent_id=interface_id)
 
     def createAndAddVulnToHost(self, host_id, name, desc="", ref=[], severity=""):
         self.__addPendingAction(modelactions.CADDVULNHOST, host_id, name, desc, ref, severity)
         return factory.generateID(
-            ModelObjectVuln.__name__,
+            ModelObjectVuln.class_signature,
             name=name, desc=desc, ref=ref, severity=severity,
             parent_id=host_id)
 
     def createAndAddVulnToInterface(self, host_id, interface_id, name, desc="", ref=[], severity=""):
         self.__addPendingAction(modelactions.CADDVULNINT, host_id, interface_id, name, desc, ref, severity)
         return factory.generateID(
-            ModelObjectVuln.__name__,
+            ModelObjectVuln.class_signature,
             name=name, desc=desc, ref=ref, severity=severity,
             parent_id=interface_id)
 
     def createAndAddVulnToService(self, host_id, service_id, name, desc="", ref=[], severity=""):
         self.__addPendingAction(modelactions.CADDVULNSRV, host_id, service_id, name, desc, ref, severity)
         return factory.generateID(
-            ModelObjectVuln.__name__,
+            ModelObjectVuln.class_signature,
             name=name, desc=desc, ref=ref, severity=severity,
             parent_id=service_id)
 
@@ -674,7 +674,7 @@ class PluginBase(object):
         self.__addPendingAction(modelactions.CADDVULNWEBSRV, host_id, service_id, name, desc, ref, severity, website, path, request, response,
                 method,pname, params,query,category)
         return factory.generateID(
-            ModelObjectVulnWeb.__name__,
+            ModelObjectVulnWeb.class_signature,
             name=name, desc=desc, ref=ref, severity=severity,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
@@ -683,31 +683,31 @@ class PluginBase(object):
     def createAndAddNoteToHost(self, host_id, name, text):
         self.__addPendingAction(modelactions.CADDNOTEHOST, host_id, name, text)
         return factory.generateID(
-            ModelObjectNote.__name__,
+            ModelObjectNote.class_signature,
             name=name, text=text, parent_id=host_id)
 
     def createAndAddNoteToInterface(self, host_id, interface_id, name, text):
         self.__addPendingAction(modelactions.CADDNOTEINT, host_id, interface_id, name, text)
         return factory.generateID(
-            ModelObjectNote.__name__,
+            ModelObjectNote.class_signature,
             name=name, text=text, parent_id=interface_id)
 
     def createAndAddNoteToService(self, host_id, service_id, name, text):
         self.__addPendingAction(modelactions.CADDNOTESRV, host_id, service_id, name, text)
         return factory.generateID(
-            ModelObjectNote.__name__,
+            ModelObjectNote.class_signature,
             name=name, text=text, parent_id=service_id)
 
     def createAndAddNoteToNote(self, host_id, service_id, note_id, name, text):
         self.__addPendingAction(modelactions.CADDNOTENOTE, host_id, service_id, note_id, name, text)
         return factory.generateID(
-            ModelObjectNote.__name__,
+            ModelObjectNote.class_signature,
             name=name, text=text, parent_id=note_id)
 
     def createAndAddCredToService(self, host_id, service_id, username, password):
         self.__addPendingAction(modelactions.CADDCREDSRV, host_id, service_id, username, password)
         return factory.generateID(
-            ModelObjectCred.__name__,
+            ModelObjectCred.class_signature,
             username=username, password=password, parent_id=service_id)
 
     def addHost(self, host, category=None,update=False, old_hostname=None):

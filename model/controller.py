@@ -804,7 +804,8 @@ class ModelController(threading.Thread):
 
     def newHost(self, name, os="Unknown"):
         return model.common.factory.createModelObject(
-            "Host", name, os=os, parent=None)
+            model.hosts.Host.class_signature,
+            name, os=os, parent=None)
 
     def newInterface(self, name, mac="00:00:00:00:00:00",
                      ipv4_address="0.0.0.0",
@@ -818,7 +819,8 @@ class ModelController(threading.Thread):
         if not parent:
             return None
         return model.common.factory.createModelObject(
-            "Interface", name, mac=mac, ipv4_address=ipv4_address,
+            model.hosts.Interface.class_signature,
+            name, mac=mac, ipv4_address=ipv4_address,
             ipv4_mask=ipv4_mask, ipv4_gateway=ipv4_gateway, ipv4_dns=ipv4_dns,
             ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
             ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
@@ -831,7 +833,8 @@ class ModelController(threading.Thread):
         if not parent:
             return None
         return model.common.factory.createModelObject(
-            "Service", name, protocol=protocol, ports=ports, status=status,
+            model.hosts.Service.class_signature,
+            name, protocol=protocol, ports=ports, status=status,
             version=version, description=description, parent=parent)
 
     def newVuln(self, name, desc="", ref=None, severity="", parent_id=None):
@@ -839,6 +842,7 @@ class ModelController(threading.Thread):
         if not parent:
             return None
         return model.common.factory.createModelObject(
+            model.common.ModelObjectVuln.class_signature,
             "Vulnerability", name, desc=desc, ref=ref, severity=severity,
             parent=parent)
 
@@ -849,7 +853,8 @@ class ModelController(threading.Thread):
         if not parent:
             return None
         return model.common.factory.createModelObject(
-            "VulnerabilityWeb", name, desc=desc, ref=ref, severity=severity,
+            model.common.ModelObjectVulnWeb.class_signature,
+            name, desc=desc, ref=ref, severity=severity,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
             category=category, parent=parent)
@@ -859,14 +864,16 @@ class ModelController(threading.Thread):
         if not parent:
             return None
         return model.common.factory.createModelObject(
-            "Note", name, text=text, parent=parent)
+            model.common.ModelObjectNote.class_signature,
+            name, text=text, parent=parent)
 
     def newCred(self, username, password, parent_id=None):
         parent = self.find(parent_id)
         if not parent:
             return None
         return model.common.factory.createModelObject(
-            "Cred", username, password=password, parent=parent)
+            model.common.ModelObjectCred.class_signature,
+            username, password=password, parent=parent)
 
     def getHost(self, name):
         hosts_mapper= self.mappers_manager.getHostsMapper()

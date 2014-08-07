@@ -218,14 +218,14 @@ class ModelController(threading.Thread):
             modelactions.EDITAPPLICATION: self.__editApplication,
             #Vulnerability
             modelactions.ADDVULNINT: self.__add,
-            modelactions.DELVULNINT: self._delVulnerabilityFromInterface,
+            modelactions.DELVULNINT: self.__del,
             modelactions.ADDVULNHOST: self.__add,
             modelactions.DELVULNHOST: self.__del,
             modelactions.ADDVULNSRV: self.__add,
             modelactions.DELVULNSRV: self.__del,
-            modelactions.ADDVULN: self.__addVulnToModelObject,
+            modelactions.ADDVULN: self.__add,
             modelactions.DELVULN: self.__del,
-            modelactions.ADDVULNWEBSRV: self.__addVulnerabilityToService,
+            modelactions.ADDVULNWEBSRV: self.__add,
             modelactions.EDITVULN: self.__edit,
             #Note
             modelactions.ADDNOTEINT: self.__add,
@@ -453,27 +453,40 @@ class ModelController(threading.Thread):
         # ...  
         dataMapper.save(obj)
         self.treeWordsTries.addWord(obj.getName())
-        notifier.addHost(obj.getHost())
 
-    def __edit(self, objId, *args, **kwargs):
-        obj = self.mappers_manager.find(objId)
+        if obj.__class__.__name__ == model.hosts.Host.__name__:
+            notifier.addHost(obj)
+        else:
+            notifier.editHost(obj.getHost())
+        return True
+
+    def __edit(self, obj, *args, **kwargs):
+        dataMapper = self.mappers_manager.getMapper(obj.__class__.__name__)
         obj.updateAttributes(*args, **kwargs)
-        self.mappers_manager.save(obj) 
+        dataMapper.save(obj)
         # self.treeWordsTries.addWord(obj.getName())
-        # notifier.addHost(obj)
+
+        if obj.__class__.__name__ == model.hosts.Host.__name__:
+            notifier.editHost(obj)
+        else:
+            notifier.editHost(obj.getHost())
+        return True
 
     def __del(self,  objId, *args):
-        dataMapper = self.mappers_manager.getMapper(objId) 
         obj = self.mappers_manager.find(objId)
-        obj_parent = obj.getParent() 
+        obj_parent = obj.getParent()
         if obj_parent:
-            obj_parent.deleteChild(objId) 
+            obj_parent.deleteChild(objId)
 
         self.treeWordsTries.removeWord(obj.getName())
 
-        dataMapper.delObject(objId) 
-        notifier.delHost(objId)
+        self.mappers_manager.remove(objId)
 
+        if obj.__class__.__name__ == model.hosts.Host.__name__:
+            notifier.delHost(objId)
+        else:
+            notifier.editHost(obj.getHost())
+        return True
 
     def delHostASYNC(self, hostId):
         """
@@ -483,12 +496,12 @@ class ModelController(threading.Thread):
         """
         self.__addPendingAction(modelactions.DELHOST, hostId)
 
-    def delHostSYNC(self, host):
+    def delHostSYNC(self, hostId):
         """
         SYNC API
         Deletes a host from model
         """
-        self._processAction(modelactions.DELHOST, [host.getID()], sync=True)
+        self._processAction(modelactions.DELHOST, [hostId], sync=True)
 
 
     def editHostSYNC(self, host, name, description, os, owned):
@@ -638,14 +651,14 @@ class ModelController(threading.Thread):
     def addVulnToServiceSYNC(self, host, srvId, newVuln):
         self._processAction(modelactions.ADDVULNSRV, [newVuln, srvId], sync=True)
 
-    def addVulnSYNC(self, model_object, newVuln):
-        self._processAction(modelactions.ADDVULN, [model_object, newVuln], sync=True)
+    def addVulnSYNC(self, modelObjectId, newVuln):
+        self._processAction(modelactions.ADDVULN, [newVuln, modelObjectId], sync=True)
 
-    def addVulnWebToServiceASYNC(self, host, srvname, newVuln):
-        self.__addPendingAction(modelactions.ADDVULNWEBSRV, host, srvname, newVuln)
+    def addVulnWebToServiceASYNC(self, host, srvId, newVuln):
+        self.__addPendingAction(modelactions.ADDVULNWEBSRV, newVuln, srvId)
 
-    def addVulnWebToServiceSYNC(self, host, srvname, newVuln):
-        self._processAction(modelactions.ADDVULNWEBSRV, [host, srvname, newVuln], sync=True)
+    def addVulnWebToServiceSYNC(self, host, srvId, newVuln):
+        self._processAction(modelactions.ADDVULNWEBSRV, [newVuln, srvId], sync=True)
 
     def delVulnFromApplicationASYNC(self, hostname, appname, vuln):
         self.__addPendingAction(modelactions.DELVULNAPP, hostname, appname, vuln)
@@ -788,6 +801,72 @@ class ModelController(threading.Thread):
 
     def delCredSYNC(self, model_object, cred_id):
         self._processAction(modelactions.DELCRED, [cred_id], sync=True)
+
+    def newHost(self, name, os="Unknown"):
+        return model.common.factory.createModelObject(
+            "Host", name, os=os, parent=None)
+
+    def newInterface(self, name, mac="00:00:00:00:00:00",
+                     ipv4_address="0.0.0.0",
+                     ipv4_mask="0.0.0.0", ipv4_gateway="0.0.0.0", ipv4_dns=[],
+                     ipv6_address="0000:0000:0000:0000:0000:0000:0000:0000",
+                     ipv6_prefix="00",
+                     ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000",
+                     ipv6_dns=[], network_segment="", hostname_resolution=[],
+                     parent_id=None):
+        parent = self.find(parent_id)
+        if not parent:
+            return None
+        return model.common.factory.createModelObject(
+            "Interface", name, mac=mac, ipv4_address=ipv4_address,
+            ipv4_mask=ipv4_mask, ipv4_gateway=ipv4_gateway, ipv4_dns=ipv4_dns,
+            ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
+            ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
+            network_segment=network_segment,
+            hostname_resolution=hostname_resolution, parent=parent)
+
+    def newService(self, name, protocol="tcp?", ports=[], status="running",
+                   version="unknown", description="", parent_id=None):
+        parent = self.find(parent_id)
+        if not parent:
+            return None
+        return model.common.factory.createModelObject(
+            "Service", name, protocol=protocol, ports=ports, status=status,
+            version=version, description=description, parent=parent)
+
+    def newVuln(self, name, desc="", ref=None, severity="", parent_id=None):
+        parent = self.find(parent_id)
+        if not parent:
+            return None
+        return model.common.factory.createModelObject(
+            "Vulnerability", name, desc=desc, ref=ref, severity=severity,
+            parent=parent)
+
+    def newVulnWeb(self, name, desc="", ref=None, severity="", website="",
+                   path="", request="", response="", method="", pname="",
+                   params="", query="", category="", parent_id=None):
+        parent = self.find(parent_id)
+        if not parent:
+            return None
+        return model.common.factory.createModelObject(
+            "VulnerabilityWeb", name, desc=desc, ref=ref, severity=severity,
+            website=website, path=path, request=request, response=response,
+            method=method, pname=pname, params=params, query=query,
+            category=category, parent=parent)
+
+    def newNote(self, name, text, parent_id=None):
+        parent = self.find(parent_id)
+        if not parent:
+            return None
+        return model.common.factory.createModelObject(
+            "Note", name, text=text, parent=parent)
+
+    def newCred(self, username, password, parent_id=None):
+        parent = self.find(parent_id)
+        if not parent:
+            return None
+        return model.common.factory.createModelObject(
+            "Cred", username, password=password, parent=parent)
 
     def getHost(self, name):
         hosts_mapper= self.mappers_manager.getHostsMapper()

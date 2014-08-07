@@ -430,19 +430,14 @@ def delCredFromService(cred, hostname, srvname):
 #-------------------------------------------------------------------------------
 
 
-def getParent(parent_id):
-    return __model_controller.find(parent_id)
-
-
 def newHost(name, os = "Unknown"):
     """
     It creates and returns a Host object.
     The object created is not added to the model.
     """
-    # 'Host' is a class signature if that is changed we have to update this
-    return model.common.factory.createModelObject("Host", name, os=os, parent=None)
+    return __model_controller.newHost(name, os)
 
-#-------------------------------------------------------------------------------
+
 def newInterface(name = "", mac = "00:00:00:00:00:00",
                  ipv4_address = "0.0.0.0", ipv4_mask = "0.0.0.0",
                  ipv4_gateway = "0.0.0.0", ipv4_dns = [],
@@ -453,37 +448,29 @@ def newInterface(name = "", mac = "00:00:00:00:00:00",
     It creates and returns an Interface object.
     The created object is not added to the model.
     """
-    parent = getParent(parent_id)
-    return model.common.factory.createModelObject("Interface", name, mac = mac,
-                 ipv4_address = ipv4_address , ipv4_mask = ipv4_mask,
-                 ipv4_gateway = ipv4_gateway, ipv4_dns = ipv4_dns,
-                 ipv6_address = ipv6_address , ipv6_prefix = ipv6_prefix,
-                 ipv6_gateway = ipv6_gateway, ipv6_dns = ipv6_dns,
-                 network_segment = network_segment,
-                 hostname_resolution = hostname_resolution, parent=parent)
-#-------------------------------------------------------------------------------
+    return __model_controller.newInterface(
+        name, mac, ipv4_address, ipv4_mask, ipv4_gateway, ipv4_dns,
+        ipv6_address, ipv6_prefix, ipv6_gateway, ipv6_dns, network_segment,
+        hostname_resolution, parent_id)
+
 def newService(name, protocol = "tcp?", ports = [], status = "running",
                version = "unknown", description = "", parent_id=None):
     """
     It creates and returns a Service object.
     The created object is not added to the model.
     """
-    parent = getParent(parent_id)
-    return model.common.factory.createModelObject("Service",name,
-                    protocol = protocol, ports = ports, status = status,
-                    version = version, description = description, parent=parent)
-#-------------------------------------------------------------------------------
+    return __model_controller.newService(
+        name, protocol, ports, status, version, description, parent_id)
+
 
 def newVuln(name, desc="", ref = None, severity="", parent_id=None):
     """
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
-    parent = getParent(parent_id)
-    return model.common.factory.createModelObject("Vulnerability", name, desc=desc,
-                                                  ref=ref, severity=severity, parent=parent)
- 
-#-------------------------------------------------------------------------------
+    return __model_controller.newVuln(
+        name, desc, ref, severity, parent_id)
+
 
 def newVulnWeb(name, desc="", ref = None, severity="", website="", path="", request="", response="",
                 method="",pname="", params="",query="",category="", parent_id=None):
@@ -491,29 +478,25 @@ def newVulnWeb(name, desc="", ref = None, severity="", website="", path="", requ
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
-    parent = getParent(parent_id)
-    return model.common.factory.createModelObject("VulnerabilityWeb", name, desc=desc, ref=ref,severity=severity, website=website, path=path, request=request,
-                                                  response=response,method=method,pname=pname, params=params,query=query,category=category, parent=parent)
- 
-#-------------------------------------------------------------------------------
-   
-def newNote(name,text, parent_id=None):
-    
+    return __model_controller.newVulnWeb(
+        name, desc, ref, severity, website, path, request, response,
+        method, pname, params, query, category, parent_id)
+
+
+def newNote(name, text, parent_id=None):
     """
     It creates and returns a Note object.
     The created object is not added to the model.
     """
-    parent = getParent(parent_id)
-    return model.common.factory.createModelObject("Note", name, text=text, parent=parent)
+    return __model_controller.newNote(name, text, parent_id)
 
-def newCred(username,password, parent_id=None):
-    
+
+def newCred(username, password, parent_id=None):
     """
     It creates and returns a Cred object.
     The created object is not added to the model.
     """
-    parent = getParent(parent_id)
-    return model.common.factory.createModelObject("Cred", username, password=password, parent=parent)
+    return __model_controller(username, password, parent_id)
 
 
 #-------------------------------------------------------------------------------

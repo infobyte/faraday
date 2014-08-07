@@ -236,7 +236,6 @@ class ModelObject(object):
 
     def _prependParentId(self):
         if self._parent:
-            print self._parent
             self._id = '.'.join((self._parent.getID(), self.getID()))
 
 
@@ -511,6 +510,12 @@ class ModelComposite(ModelObject):
 class ModelLeaf(ModelObject):
     def __init__(self, parent=None):
         ModelObject.__init__(self, parent)
+
+    def getChildsByType(self, signature):
+        return []
+
+    def getChilds(self):
+        return {}
 
 #-------------------------------------------------------------------------------
 #TODO: refactor this class to make it generic so this can be used also for plugins

@@ -476,7 +476,7 @@ class NotesDialog(ListableObjecttDialog):
         for item in self._selected_items: 
             if item.type == "Note":
                 note = item.getModelObject()
-                guiapi.delNote(note.getParent(), note.getID())
+                guiapi.delNote(note.getParent().getID(), note.getID())
         self.setListItems()
         self.edition_layout.clear()
                     
@@ -551,8 +551,6 @@ class VulnsDialog(ListableObjecttDialog):
         dialog.exec_loop()
     
     def __addValue(self, *args):
-                               
-                                                      
         obj = self.model_object
         if args[0]:
                      
@@ -565,7 +563,7 @@ class VulnsDialog(ListableObjecttDialog):
         for item in self._selected_items: 
             if item.type == "Vuln" or item.type == "VulnWeb":
                 vuln = item.getModelObject()
-                guiapi.delVuln(vuln.getParent(), vuln.getID())
+                guiapi.delVuln(vuln.getParent().getID(), vuln.getID())
         self.setListItems()
         self.edition_layout.clear()
 
@@ -615,7 +613,7 @@ class CredsDialog(ListableObjecttDialog):
         for item in self._selected_items: 
             if item.type == "Cred":
                 cred = item.getModelObject()
-                guiapi.delCred(cred.getParent(), cred.getID())
+                guiapi.delCred(cred.getParent().getID(), cred.getID())
         self.setListItems()
         self.edition_layout.clear()
                     

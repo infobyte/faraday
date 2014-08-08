@@ -496,7 +496,7 @@ def newCred(username, password, parent_id=None):
     It creates and returns a Cred object.
     The created object is not added to the model.
     """
-    return __model_controller(username, password, parent_id)
+    return __model_controller.newCred(username, password, parent_id)
 
 
 #-------------------------------------------------------------------------------

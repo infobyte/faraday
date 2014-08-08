@@ -448,8 +448,6 @@ class ModelController(threading.Thread):
         object_parent = self.mappers_manager.find(parent_id)
         if object_parent:
             object_parent.addChild(obj.getID(), obj)
-        # Dispatch conflict management routine
-        # ...  
         dataMapper.save(obj)
         self.treeWordsTries.addWord(obj.getName())
 
@@ -473,19 +471,22 @@ class ModelController(threading.Thread):
 
     def __del(self,  objId, *args):
         obj = self.mappers_manager.find(objId)
-        obj_parent = obj.getParent()
-        if obj_parent:
-            obj_parent.deleteChild(objId)
+        if obj:
+            obj_parent = obj.getParent()
+            if obj_parent:
+                obj_parent.deleteChild(objId)
 
-        self.treeWordsTries.removeWord(obj.getName())
+            if obj.getName():
+                self.treeWordsTries.removeWord(obj.getName())
 
-        self.mappers_manager.remove(objId)
+            self.mappers_manager.remove(objId)
 
-        if obj.__class__.__name__ == model.hosts.Host.__name__:
-            notifier.delHost(objId)
-        else:
-            notifier.editHost(obj.getHost())
-        return True
+            if obj.__class__.__name__ == model.hosts.Host.__name__:
+                notifier.delHost(objId)
+            else:
+                notifier.editHost(obj.getHost())
+            return True
+        return False
 
     def delHostASYNC(self, hostId):
         """
@@ -842,7 +843,7 @@ class ModelController(threading.Thread):
             return None
         return model.common.factory.createModelObject(
             model.common.ModelObjectVuln.class_signature,
-            "Vulnerability", name, desc=desc, ref=ref, severity=severity,
+            name, desc=desc, ref=ref, severity=severity,
             parent=parent)
 
     def newVulnWeb(self, name, desc="", ref=None, severity="", website="",

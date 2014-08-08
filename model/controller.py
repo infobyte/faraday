@@ -447,7 +447,7 @@ class ModelController(threading.Thread):
         dataMapper = self.mappers_manager.getMapper(obj.__class__.__name__)
         object_parent = self.mappers_manager.find(parent_id)
         if object_parent:
-            object_parent.addChild(obj.getID(), obj)
+            object_parent.addChild(obj)
         dataMapper.save(obj)
         self.treeWordsTries.addWord(obj.getName())
 
@@ -815,9 +815,6 @@ class ModelController(threading.Thread):
                      ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000",
                      ipv6_dns=[], network_segment="", hostname_resolution=[],
                      parent_id=None):
-        parent = self.find(parent_id)
-        if not parent:
-            return None
         return model.common.factory.createModelObject(
             model.hosts.Interface.class_signature,
             name, mac=mac, ipv4_address=ipv4_address,
@@ -825,55 +822,39 @@ class ModelController(threading.Thread):
             ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
             ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
             network_segment=network_segment,
-            hostname_resolution=hostname_resolution, parent=parent)
+            hostname_resolution=hostname_resolution)
 
     def newService(self, name, protocol="tcp?", ports=[], status="running",
                    version="unknown", description="", parent_id=None):
-        parent = self.find(parent_id)
-        if not parent:
-            return None
         return model.common.factory.createModelObject(
             model.hosts.Service.class_signature,
             name, protocol=protocol, ports=ports, status=status,
-            version=version, description=description, parent=parent)
+            version=version, description=description)
 
     def newVuln(self, name, desc="", ref=None, severity="", parent_id=None):
-        parent = self.find(parent_id)
-        if not parent:
-            return None
         return model.common.factory.createModelObject(
             model.common.ModelObjectVuln.class_signature,
-            name, desc=desc, ref=ref, severity=severity,
-            parent=parent)
+            name, desc=desc, ref=ref, severity=severity)
 
     def newVulnWeb(self, name, desc="", ref=None, severity="", website="",
                    path="", request="", response="", method="", pname="",
                    params="", query="", category="", parent_id=None):
-        parent = self.find(parent_id)
-        if not parent:
-            return None
         return model.common.factory.createModelObject(
             model.common.ModelObjectVulnWeb.class_signature,
             name, desc=desc, ref=ref, severity=severity,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
-            category=category, parent=parent)
+            category=category)
 
     def newNote(self, name, text, parent_id=None):
-        parent = self.find(parent_id)
-        if not parent:
-            return None
         return model.common.factory.createModelObject(
             model.common.ModelObjectNote.class_signature,
-            name, text=text, parent=parent)
+            name, text=text)
 
     def newCred(self, username, password, parent_id=None):
-        parent = self.find(parent_id)
-        if not parent:
-            return None
         return model.common.factory.createModelObject(
             model.common.ModelObjectCred.class_signature,
-            username, password=password, parent=parent)
+            username, password=password)
 
     def getHost(self, name):
         hosts_mapper = self.mappers_manager.getMapper(model.hosts.Host.__name__)

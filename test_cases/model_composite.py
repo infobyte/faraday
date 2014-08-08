@@ -26,7 +26,7 @@ class ModelObjectComposite(unittest.TestCase):
     def testAddInterfaceToHost(self): 
         host = Host('coco')
         inter = Interface('cuca')
-        host.addChild(inter.getID(), inter)
+        host.addChild(inter)
 
         self.assertIn(inter, host.childs.values(), 'Interface not in childs')
         self.assertIn(inter, host.getAllInterfaces(), 'Interface not accessible')
@@ -34,7 +34,7 @@ class ModelObjectComposite(unittest.TestCase):
     def testAddServiceToInterface(self):
         interface = Interface('coco')
         serv = Service('cuca')
-        interface.addChild(serv.getID(), serv)
+        interface.addChild(serv)
 
         self.assertIn(serv, interface.childs.values(), 'Service not in childs')
         self.assertIn(serv, interface.getAllServices(), 'Service not accessible')
@@ -42,7 +42,7 @@ class ModelObjectComposite(unittest.TestCase):
     def testAddVulnToInterface(self):
         serv = Service('cuca')
         vuln = ModelObjectVuln('vuln')
-        serv.addChild(vuln.getID(), vuln)
+        serv.addChild(vuln)
 
         self.assertIn(vuln, serv.childs.values(), 'Vuln not in childs')
         self.assertIn(vuln, serv.getVulns(), 'Vuln not accessible')
@@ -51,8 +51,8 @@ class ModelObjectComposite(unittest.TestCase):
         host = Host('coco')
         inter = Interface('cuca')
         vuln = ModelObjectVuln('vuln')
-        host.addChild(inter.getID(), inter) 
-        host.addChild(vuln.getID(), vuln)
+        host.addChild(inter) 
+        host.addChild(vuln)
 
         self.assertEquals(len(host.getVulns()), 1, "Vulns added is not 1")
         self.assertIn(vuln, host.getVulns(), "Vuln not accessible")
@@ -62,8 +62,8 @@ class ModelObjectComposite(unittest.TestCase):
         inter = Interface('coco')
         serv = Service('cuca')
         vuln = ModelObjectVuln('vuln')
-        inter.addChild(serv.getID(), serv) 
-        inter.addChild(vuln.getID(), vuln)
+        inter.addChild(serv) 
+        inter.addChild(vuln)
 
         self.assertEquals(len(inter.getVulns()), 1, "Vulns added is not 1")
         self.assertIn(vuln, inter.getVulns(), "Vuln not accessible")
@@ -73,8 +73,8 @@ class ModelObjectComposite(unittest.TestCase):
         serv = Service('cuca')
         vuln = ModelObjectVuln('vuln')
         note = ModelObjectNote('nota')
-        serv.addChild(note.getID(), note) 
-        serv.addChild(vuln.getID(), vuln)
+        serv.addChild(note) 
+        serv.addChild(vuln)
 
         self.assertEquals(len(serv.getVulns()), 1, "Vulns added is not 1")
         self.assertIn(vuln, serv.getVulns(), "Vuln not accessible")
@@ -84,7 +84,7 @@ class ModelObjectComposite(unittest.TestCase):
     def testHostWithCredentials(self):
         host = Host('coco')
         cred = ModelObjectCred('coco', 'coco123') 
-        host.addChild(cred.getID(), cred)
+        host.addChild(cred)
         self.assertEquals(len(host.getCreds()), 1, "Creds added is not 1")
         self.assertIn(cred, host.getCreds(), "Cred not accessible")
 

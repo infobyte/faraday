@@ -299,6 +299,7 @@ class ModelObject(object):
     #@save
     def setParent(self, parent):
         self._parent = parent
+        self.updateID()
 
     def getParent(self):
         return self._parent
@@ -382,7 +383,7 @@ class ModelObject(object):
     #notes
     @updateLocalMetadata
     def addNote(self, newNote, update=False, setparent=True):
-        self.addChild(newNote.getID(), newNote)
+        self.addChild(newNote)
         return True
 
     def newNote(self, name, text):
@@ -409,7 +410,7 @@ class ModelObject(object):
     #Vulnerability
     @updateLocalMetadata
     def addVuln(self, newVuln, update=False, setparent=True):
-        self.addChild(newVuln.getID(), newVuln)
+        self.addChild(newVuln)
         return True
 
     @updateLocalMetadata
@@ -438,7 +439,7 @@ class ModelObject(object):
     #creds
     @updateLocalMetadata
     def addCred(self, newCred, update=False, setparent=True): # Deprecated
-        return self.addChild(newCred.getID(), newCred)
+        return self.addChild(newCred)
 
     def newCred(self, username, password): # Deprecated
         cred = ModelObjectCred(username, password, self)
@@ -480,7 +481,7 @@ class ModelObject(object):
             return ".".join([self.getParent().ancestors_path()] + [str(self.getID())])
 
     def _addChildsDict(self, dictt):
-        [self.addChild(k, v) for k, v in dictt.items()]
+        [self.addChild(v) for k, v in dictt.items()]
 
 
 class ModelComposite(ModelObject):
@@ -490,9 +491,9 @@ class ModelComposite(ModelObject):
         ModelObject.__init__(self, parent)
         self.childs = {}
 
-    def addChild(self, iid, model_object):
-        self.childs[iid] = model_object
+    def addChild(self, model_object):
         model_object.setParent(self)
+        self.childs[model_object.getID()] = model_object
 
     def getChilds(self):
         return self.childs

@@ -1088,11 +1088,11 @@ class ModelObjectCred(ModelLeaf):
     
     def __init__(self, username="", password="", parent=None):
         ModelLeaf.__init__(self, parent)
-        self.username = str(username)
+        self._username = str(username)
         self._password = str(password)
 
     def updateID(self):
-        self._id = get_hash([self.username, self._password])
+        self._id = get_hash([self._username, self._password])
         self._prependParentId()
 
     def setPassword(self, password):
@@ -1102,28 +1102,20 @@ class ModelObjectCred(ModelLeaf):
         return self._password
 
     def getUsername(self):
-        return self.username
+        return self._username
 
     def setUsername(self, username):
-        self.username = str(username)
+        self._username = str(username)
 
-    def getPassword(self):
-        return self._password
+    password = property(getPassword, setPassword)
 
-    def setPassword(self, password):
-        self._password = password
-
-    def getUsername(self):
-        return self.username
-
-    def setUsername(self, username):
-        self.username = username
+    username = property(getUsername, setUsername)
 
     #@save
     @updateLocalMetadata
     def updateAttributes(self, username=None, password=None):
         if username is not None:
-            self.username = username
+            self.setUsername(username)
         if password is not None:
             self.setPassword(password)
 

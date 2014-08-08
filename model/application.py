@@ -165,7 +165,7 @@ class MainApplication(object):
         model.api.devlog("stopping model controller thread...")
         model.api.stopAPIServer()
         restapi.stopServer()
-        # we should stop the report manager here
+        self._reports_manager.stop()
         self._model_controller.stop()
         self._model_controller.join()
         self.gui_app.quit()

@@ -18,7 +18,7 @@ import shutil
 import argparse
 import subprocess
 import platform
-import colorama
+from colorama import Fore, Back, Style
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))) # Necessary?
 from config.configuration import getInstanceConfiguration
@@ -443,14 +443,34 @@ def checkFolder(folder):
         print "Creating %s" % folder
         os.mkdir(folder)
 
+def printBanner():
+    """Prints Faraday's ascii banner.
+
+    """
+    print (Fore.RED + """
+  _____                           .___
+_/ ____\_____  ____________     __| _/_____   ___.__.
+\   __\ \__  \ \_  __ \__  \   / __ | \__  \ <   |  |
+ |  |    / __ \_|  | \// __ \_/ /_/ |  / __ \_\___  |
+ |__|   (____  /|__|  (____  /\____ | (____  // ____|
+             \/            \/      \/      \/ \/
+    """)
+
+    print(Fore.WHITE + Back.RED + Style.BRIGHT + \
+    "[*[       Open Source Penetration Test IDE       ]*]")
+    print(Back.RESET + "            Where pwnage goes multiplayer")
+    print(Fore.RESET + Back.RESET + Style.RESET_ALL)
+    print "[+] Starting Faraday IDE."
+
+    
 def main():
     """Main.
 
     Main function for launcher.
 
-    TODO: Use this as launcher's _init_ method?
     """
 
+    printBanner()
     if checkDependencies():
         setConf()
         checkConfiguration()

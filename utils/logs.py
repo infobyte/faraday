@@ -9,9 +9,13 @@ See the file 'doc/LICENSE' for the license information
 '''
 import logging
 import logging.config
+import os
 
+logname = 'log.conf'
 
-logging.config.fileConfig('utils/log.conf')
+logpath = os.path.dirname(os.path.realpath(__file__))
+logfile = os.path.join(logpath, logname)
+logging.config.fileConfig(logfile)
 
 def getLogger(obj=None):
     # create logger

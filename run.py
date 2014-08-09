@@ -7,16 +7,17 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 # TODO:
-# - Make a launcher class and remove globals for attributes!
 # - Handle requirements dinamically.
 # - Additionally parse arguments from file.
-# - Colorize!
-# - Refactor the still remaining bash launcher
+# - Add logger.
+# - Colorize!?
 
 import os
 import sys
 import shutil
 import argparse
+import subprocess
+import platform
 import colorama
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))) # Necessary?
@@ -25,21 +26,56 @@ from model.application import MainApplication
 from utils.profilehooks import profile
 
 
-# Load constants from config file?
-REQUIREMENTS_FILE = 'requirements.txt'
-FARADAY_HOME_PATH = '~/.faraday'
-FARADAY_PLUGINS_PATH = "plugins"
-FARADAY_PLUGINS_REPO_PATH = "plugins/repo"
-FARADAY_FOLDER_LIST = [ "config", "data", "images", 
+# Load globals from config file?
+CONST_REQUIREMENTS_FILE = 'requirements.txt'
+CONST_FARADAY_HOME_PATH = '~/.faraday'
+CONST_FARADAY_PLUGINS_PATH = 'plugins'
+CONST_FARADAY_PLUGINS_REPO_PATH = 'plugins/repo'
+CONST_FARADAY_QTRC_PATH = 'deps/qtrc'
+CONST_FARADAY_FOLDER_LIST = [ "config", "data", "images", 
                         "persistence", "plugins",
                         "report", "temp", "zsh" ]
 
 
-faraday_user_home = os.path.expanduser(FARADAY_HOME_PATH)
+CONST_USER_QTRC_PATH = '~/.qt/qtrc'
+CONST_USER_QTRC_BACKUP = '~/.qt/.qtrc_original.bak'
+CONST_FARADAY_QTRC_BACKUP = '~/.qt/.qtrc_faraday.bak'
+CONST_FARADAY_ZSHRC = "zsh/.zshrc"
+CONST_FARADAY_ZSH_FARADAY = "zsh/faraday.zsh"
+CONST_FARADAY_ZSH_PLUGIN = "zsh/plugin_controller_client.py"
+CONST_FARADAY_BASE_CFG = "config/default.xml"
+CONST_FARADAY_USER_CFG = "config/config.xml"
+CONST_FARADAY_LIB_HELPERS = "shell/core/_helpers.so"
+
+CONST_USER_HOME = "~"
+CONST_USER_ZSHRC = "~/.zshrc"
+CONST_ZSH_PATH = "zsh"
+
+
+user_home = os.path.expanduser(CONST_USER_HOME)
 faraday_base = os.path.dirname(os.path.realpath(__file__))
-faraday_plugins_path = os.path.join(faraday_user_home, FARADAY_PLUGINS_PATH)
+
+faraday_user_home = os.path.expanduser(CONST_FARADAY_HOME_PATH)
+faraday_plugins_path = os.path.join(faraday_user_home, CONST_FARADAY_PLUGINS_PATH)
 faraday_plugins_basepath = os.path.join(faraday_base, 
-                            FARADAY_PLUGINS_REPO_PATH)
+                            CONST_FARADAY_PLUGINS_REPO_PATH)
+
+faraday_base_lib_helpers = os.path.join(faraday_base, CONST_FARADAY_LIB_HELPERS)
+faraday_user_config_xml = os.path.join(faraday_user_home, CONST_FARADAY_USER_CFG)
+faraday_base_config_xml = os.path.join(faraday_base, CONST_FARADAY_BASE_CFG)
+
+user_zshrc = os.path.expanduser(CONST_USER_ZSHRC)
+faraday_user_zshrc = os.path.join(faraday_user_home, CONST_FARADAY_ZSHRC)
+faraday_user_zsh_path = os.path.join(faraday_user_home, CONST_ZSH_PATH)
+faraday_base_zsh = os.path.join(faraday_base, CONST_FARADAY_ZSH_FARADAY)
+faraday_base_zsh_plugin = os.path.join(faraday_base, CONST_FARADAY_ZSH_PLUGIN)
+
+user_qtrc = os.path.expanduser(CONST_USER_QTRC_PATH)
+user_qtrcbak = os.path.expanduser(CONST_USER_QTRC_BACKUP)
+faraday_qtrc = os.path.join(faraday_base, CONST_FARADAY_QTRC_PATH)
+faraday_qtrcbak = os.path.expanduser(CONST_FARADAY_QTRC_BACKUP)
+
+
 
 
 def getParserArgs():
@@ -53,7 +89,6 @@ def getParserArgs():
 
     parser_connection = parser.add_argument_group('connection')
     parser_profile = parser.add_argument_group('profiling')
-    #parser_gui = parser.add_argument_group('gui')
     parser_gui_ex = parser.add_mutually_exclusive_group()
 
     parser_connection.add_argument('-n', '--hostname', action="store", 
@@ -154,7 +189,7 @@ def query_user_bool(question, default=True):
 
 
 def checkDependencies():
-    """Dependency resolver based on a previously specified REQUIREMENTS_FILE.
+    """Dependency resolver based on a previously specified CONST_REQUIREMENTS_FILE.
 
     Currently checks a list of dependencies from a file and asks for user
     confirmation on whether to install it with a specific version or not.
@@ -162,10 +197,10 @@ def checkDependencies():
     """
 
     modules = []
-    f = open(REQUIREMENTS_FILE)
+    f = open(CONST_REQUIREMENTS_FILE)
     for line in f:
         if line.find('#'):
-            modules.append([line[:line.index('=')], line[line.index('=')+2:]])
+            modules.append([line[:line.index('=')], (line[line.index('=')+2:]).strip()])
     f.close()
 
     for module in modules:
@@ -174,8 +209,10 @@ def checkDependencies():
         except ImportError:          
             if query_user_bool("Missing module %s." \
                 " Do you wish to install it?" % module[0]):
-                # TODO: Cambiarlo por un subprocess.
-                print "pip2 install %s==%s" % (module[0], module[1])
+                #print "pip2 install %s==%s" % (module[0], module[1])
+                subprocess.call(["pip2", "install", "%s==%s" %
+                                (module[0], module[1])])
+                
             else:
                 return False
     return True
@@ -189,7 +226,7 @@ def startProfiler(app, output, depth):
     TODO: Check if it's necessary to add a dummy in case o failed import.
 
     """
-    print "Faraday will be started with a profiler attached." \
+    print "[!] Faraday will be started with a profiler attached." \
     "Performance may be affected."
 
     start = profile(app,
@@ -221,6 +258,7 @@ def startFaraday():
     a profiler if requested.
 
     Returns application status.
+
     """
 
     #TODO: Handle args in CONF and send only necessary ones.
@@ -240,10 +278,11 @@ def startFaraday():
     # TODO: This should be outside setConf in order to retrieve exit status.
 
     exit_status = start()
+    restoreQtrc()
 
     return exit_status
 
-def checkPlugins(dev_mode=False):
+def setupPlugins(dev_mode=False):
     """Checks and handles Faraday's plugin status.
 
     When dev_mode is True, the user enters in development mode and the plugins 
@@ -254,6 +293,7 @@ def checkPlugins(dev_mode=False):
 
     TODO: When dependencies are not satisfied ask user if he wants to try and
     run faraday with a inestability warning.
+
     """
 
     if not dev_mode and os.path.isdir(faraday_plugins_path):
@@ -270,6 +310,108 @@ def checkPlugins(dev_mode=False):
         shutil.copytree(faraday_plugins_basepath, faraday_plugins_path)
         print "[*] Plugins succesfully loaded."
 
+def setupQtrc():
+    """Cheks and handles QT configuration file.
+
+    Existing qtrc files will be backed up and faraday qtrc will be set.
+
+    """
+    print "[*] QT configuration startup."
+    if os.path.isfile(user_qtrc):
+        print "[!] User QT config exists. Backing it up."
+        shutil.copy2(user_qtrc, user_qtrcbak)
+
+    if os.path.isfile(faraday_qtrcbak):
+        print "[+] Faraday QT config exists. Setting it up."
+        shutil.copy(faraday_qtrcbak, user_qtrc)
+    else:
+        print "[+] Setting up faraday's base QT config."
+        shutil.copy(faraday_qtrc, user_qtrc)
+
+    print "[*] QT configuration done."
+
+def restoreQtrc():
+    """Restores user qtrc.
+
+    After exiting faraday the original qtrc is restored.
+
+    """
+    print "[!] Backing up Faraday's QT config."
+    shutil.copy2(user_qtrc, faraday_qtrcbak)
+
+    if os.path.isfile(user_qtrcbak):
+        print "[!] Setting old user QT config."
+        shutil.copy(user_qtrcbak, user_qtrc)
+
+
+def setupZSH():
+    """Cheks and handles Faraday's integration with ZSH.
+
+    If the user has a .zshrc file, it gets copied and integrated with 
+    faraday's zsh plugin.
+
+    """
+
+    print "[*] Setting up ZSH."
+    if os.path.isfile(user_zshrc):
+        shutil.copy(user_zshrc, faraday_user_zshrc)
+    else:
+        subprocess.call['touch', faraday_user_zshrc]
+
+    subprocess.call(['sed', '-i', '1iZDOTDIR=$OLDZDOTDIR', faraday_user_zshrc])
+    with open(faraday_user_zshrc, "a") as f:
+        f.write("source %s" % faraday_base_zsh)
+    shutil.copy(faraday_base_zsh, faraday_user_zsh_path)
+    shutil.copy(faraday_base_zsh_plugin, faraday_user_zsh_path)
+
+def setupXMLConfig():
+    """Checks user configuration file status.
+
+    If there is no custom config the default one will be copied as a default.
+    """
+    if not os.path.isfile(faraday_user_config_xml):
+        print "[*] Copying default configuration from project"
+        print faraday_base_config_xml, faraday_user_config_xml
+        shutil.copy(faraday_base_config_xml, faraday_user_config_xml)
+    else:
+        print "[*] Using custom user configuration"
+
+def setupLibs():
+    """Checks ELF libraries status."
+
+    Right now it only looks for the right helpers.so from the base path based on
+    system platform and architecture, and creates a symbolic link to it inside
+    the same folder.
+
+    """
+    arch = platform.machine()
+    helpers = faraday_base_lib_helpers
+    print "[*] Setting _helpers.so"
+    if sys.platform == "linux" or sys.platform == "linux2":
+        if arch == "amd64" or arch == "x86_64":
+            print "[!] x86_64 linux detected."
+            helpers += ".amd64"
+        elif arch == "i686" or arch == "i386":
+            print "[!] i386/686 linux detected."
+            helpers += ".i386"
+        else:
+            print "[!] Linux arch could not be determined."
+            exit()
+    elif sys.platform == "darwin":
+        print "[!] OS X detected."
+        helpers += "darwin"
+    else:
+        print "[!] Seems like your platform is not supported yet."
+        exit()
+
+    if os.path.isfile(faraday_base_lib_helpers):
+        "[-] Removing old symbolic link in case faraday was moved."
+        os.remove(faraday_base_lib_helpers)
+
+    print "[+] Creating new symbolic link." 
+    subprocess.call(['ln', '-s', helpers, faraday_base_lib_helpers])
+    print "[*] _helpers.so setup succesful"
+
 def checkConfiguration():
     """Checks if the environment is ready to run Faraday.
 
@@ -277,14 +419,15 @@ def checkConfiguration():
     Faraday. This includes checking for plugin folders, libraries, QT 
     configuration and ZSH integration.
     """
-    checkPlugins(args.dev_mode)
-    #checkQtrc()
-    #restoreQtrc()
-    #checkZSH()
-    checkFolderList(FARADAY_FOLDER_LIST)
-    #checkHelpers()
 
-def checkFolderList(folderlist):
+    setupPlugins(args.dev_mode)
+    setupFolders(CONST_FARADAY_FOLDER_LIST)
+    setupQtrc()
+    setupZSH()
+    setupXMLConfig()
+    setupLibs()
+
+def setupFolders(folderlist):
     """Checks if a list of folders exists and creates them otherwise.
 
     """

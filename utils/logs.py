@@ -17,9 +17,12 @@ logpath = os.path.dirname(os.path.realpath(__file__))
 logfile = os.path.join(logpath, logname)
 logging.config.fileConfig(logfile)
 
-def getLogger(obj=None):
-    # create logger
-    name = obj.__class__.__name__ if obj else 'Default'
-    logger = logging.getLogger(name)
+def getLogger(obj):
+    """Creates a logger named by a string or an object's class name.
+     Allowing logger to additionally accept strings as names for non-class loggings.
+    """
+    if type(obj) is str:
+        logger = logging.getLogger(obj)
+    else:
+        logger = logging.getLogger(obj.__class__.__name__)
     return logger
-

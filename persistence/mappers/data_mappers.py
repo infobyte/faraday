@@ -97,9 +97,9 @@ class HostMapper(ModelObjectMapper):
         return doc
 
     def unserialize(self, host, doc):
-        super(HostMapper, self).unserialize(host, doc)
         host.setOS(doc.get("os"))
         host.setDefaultGateway(doc.get("default_gateway"))
+        super(HostMapper, self).unserialize(host, doc)
         self.setInterfaces(host)
         return host
 
@@ -138,7 +138,6 @@ class InterfaceMapper(ModelObjectMapper):
         return doc
 
     def unserialize(self, iface, doc):
-        super(InterfaceMapper, self).unserialize(iface, doc)
         iface.setMAC(doc.get("mac"))
         iface.setNetworkSegment(doc.get("network_segment"))
         for hostname in doc.get("hostnames"):
@@ -148,6 +147,7 @@ class InterfaceMapper(ModelObjectMapper):
         iface.setPortsOpened(doc.get("ports").get("opened"))
         iface.setPortsClosed(doc.get("ports").get("closed"))
         iface.setPortsFiltered(doc.get("ports").get("filtered"))
+        super(InterfaceMapper, self).unserialize(iface, doc)
         self.setServices(iface)
         return iface
 
@@ -181,12 +181,12 @@ class ServiceMapper(ModelObjectMapper):
         return doc
 
     def unserialize(self, srv, doc):
-        super(ServiceMapper, self).unserialize(srv, doc)
         srv.setProtocol(doc.get("protocol"))
         srv.setStatus(doc.get("status"))
         srv.setVersion(doc.get("version"))
         for port in doc.get("ports"):
             srv.addPort(int(port))
+        super(ServiceMapper, self).unserialize(srv, doc)
         return srv
 
     def findForInterface(self, iface_id):
@@ -209,8 +209,8 @@ class NoteMapper(ModelObjectMapper):
         return doc
 
     def unserialize(self, note, doc):
-        super(NoteMapper, self).unserialize(note, doc)
         note.setText(doc.get("text"))
+        super(NoteMapper, self).unserialize(note, doc)
         return note
 
 
@@ -232,10 +232,10 @@ class VulnMapper(ModelObjectMapper):
         return doc
 
     def unserialize(self, vuln, doc):
-        super(VulnMapper, self).unserialize(vuln, doc)
         vuln.setDesc(doc.get("desc"))
         vuln.setSeverity(doc.get("severity"))
         vuln.setRefs(doc.get("refs"))
+        super(VulnMapper, self).unserialize(vuln, doc)
         return vuln
 
     def findForParent(self, obj_id):
@@ -266,7 +266,6 @@ class VulnWebMapper(VulnMapper):
         return doc
 
     def unserialize(self, vuln_web, doc):
-        super(VulnWebMapper, self).unserialize(vuln_web, doc)
         vuln_web.setWebsite(doc.get("website"))
         vuln_web.setPath(doc.get("path"))
         vuln_web.setRequest(doc.get("request"))
@@ -276,6 +275,7 @@ class VulnWebMapper(VulnMapper):
         vuln_web.setParams(doc.get("params"))
         vuln_web.setQuery(doc.get("query"))
         vuln_web.setCategory(doc.get("category"))
+        super(VulnWebMapper, self).unserialize(vuln_web, doc)
         return vuln_web
 
     def findForParent(self, obj_id):
@@ -299,9 +299,9 @@ class CredMapper(ModelObjectMapper):
         return doc
 
     def unserialize(self, cred, doc):
-        super(CredMapper, self).unserialize(cred, doc)
         cred.setUsername(doc.get("username"))
         cred.setPassword(doc.get("password"))
+        super(CredMapper, self).unserialize(cred, doc)
         return cred
 
     def findForParent(self, obj_id):

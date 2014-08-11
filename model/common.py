@@ -851,10 +851,10 @@ class ModelObjectNote(ModelComposite):
             self.text = text
 
     def __str__(self):
-        return self.text
+        return "%s: %s" % (self.name, self.text)
 
     def __repr__(self):
-        return self.text
+        return "%s: %s" % (self.name, self.text)
 
 #-------------------------------------------------------------------------------
 class ModelObjectVuln(ModelLeaf):

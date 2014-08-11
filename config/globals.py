@@ -15,6 +15,7 @@ CONST_FARADAY_FOLDER_LIST = [ "config", "data", "images",
                         "report", "temp", "zsh" ]
 
 
+CONST_USER_QT_PATH = '~/.qt/'
 CONST_USER_QTRC_PATH = '~/.qt/qtrc'
 CONST_USER_QTRC_BACKUP = '~/.qt/.qtrc_original.bak'
 CONST_FARADAY_QTRC_BACKUP = '~/.qt/.qtrc_faraday.bak'

@@ -21,9 +21,9 @@ import subprocess
 from colorama import Fore, Back, Style
 from utils.logs import getLogger
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))) # Necessary?
-from config.globals import *
 from config.configuration import getInstanceConfiguration
 from model.application import MainApplication
+from config.globals import *
 from utils.profilehooks import profile
 
 
@@ -50,6 +50,7 @@ FARADAY_BASE_ZSH = os.path.join(FARADAY_BASE, CONST_FARADAY_ZSH_FARADAY)
 FARADAY_BASE_ZSH_PLUGIN = os.path.join(FARADAY_BASE, 
                             CONST_FARADAY_ZSH_PLUGIN)
 
+USER_QT = os.path.expanduser(CONST_USER_QT_PATH)
 USER_QTRC = os.path.expanduser(CONST_USER_QTRC_PATH)
 USER_QTRCBAK = os.path.expanduser(CONST_USER_QTRC_BACKUP)
 FARADAY_QTRC = os.path.join(FARADAY_BASE, CONST_FARADAY_QTRC_PATH)
@@ -312,7 +313,9 @@ def setupQtrc():
     if os.path.isfile(FARADAY_QTRCBAK):
         shutil.copy(FARADAY_QTRCBAK, USER_QTRC)
     else:
+        os.makedirs(USER_QT)
         shutil.copy(FARADAY_QTRC, USER_QTRC)
+        shutil.copy(FARADAY_QTRC, FARADAY_QTRCBAK)
 
 def restoreQtrc():
     """Restores user qtrc.
@@ -338,7 +341,7 @@ def setupZSH():
     if os.path.isfile(USER_ZSHRC):
         shutil.copy(USER_ZSHRC, FARADAY_USER_ZSHRC)
     else:
-        subprocess.call['touch', FARADAY_USER_ZSHRC]
+        subprocess.call(['touch', FARADAY_USER_ZSHRC])
 
     subprocess.call(['sed', '-i', '1iZDOTDIR=$OLDZDOTDIR', FARADAY_USER_ZSHRC])
     with open(FARADAY_USER_ZSHRC, "a") as f:
@@ -488,8 +491,8 @@ def main():
     printBanner()
     if checkDependencies():
         logger.info("Dependencies met.")
-        setConf()
         checkConfiguration()
+        setConf()
         startFaraday()
     else:
         logger.error("Dependencies not met. Unable to start Faraday.")

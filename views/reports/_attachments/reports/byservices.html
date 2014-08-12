@@ -1,9 +1,6 @@
-<script src="script/jquery.qtip.js"></script>
-<script src="script/imagesloaded.pkg.min.js"></script>
-<div class="hidden">
-</div>
 <script type="text/javascript">
 function get_report_div(workspace, view,design){
+    var arr = [];
 	json_url = "/" + workspace + "/_design/" + design + "/_view/" + view+"?group=true";
  var divs = "";
   $.ajaxSetup({
@@ -12,31 +9,66 @@ function get_report_div(workspace, view,design){
 	$.getJSON(json_url, function(data) {
 		var colores = ["negro", "rojo"];
 		var i = 0;
-		//var divs = "";
 		divs += "<div class='seccion2'><h2>Services report</h2>";
-		$.each(data.rows, function(n, obj){
-			divs += "<div class=\"columna unquinto services\" href='#'><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj.value+"</div><div class=\"txt texto-blanco\">"+obj.key+"</div></section></article></div>";
-			i++;
-		});
-		divs +="</div>";
+
+        var row = data.rows;
+        for (i = 0; i < row.length; i++) {
+            arr.push([row[i].value,row[i].key]);
+        }
+        obj = [];
+        var obj = arr.sort(function(a,b){   
+            if (a[0] === b[0]) {
+                return 0;
+            }
+            else {
+                return (a[0] > b[0]) ? -1 : 1;
+            }
+        });
+
+        for (i = 0; i < obj.length; i++) {
+			divs += "<div class=\"columna unquinto services\" href='#'><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj[i][0]+"</div><div class=\"txt texto-blanco\">"+obj[i][1]+"</div></section></article></div>";
+		}
+		divs +="</div><a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a>";
 		return divs
 	});
 	return divs
 }
+
+function seleccionar(){
+//selecciona las ips
+jQuery.fn.selectText = function(){
+    var doc = document;
+    var element = this[0];
+    if (doc.body.createTextRange) {
+        var range = document.body.createTextRange();
+        range.moveToElementText(element);
+        range.select();
+    } else if (window.getSelection) {
+        var selection = window.getSelection();        
+        var range = document.createRange();
+        range.selectNodeContents(element);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+};
+	var boton = $("#boton");
+    var selector = boton.data('selector');
+    $(selector).selectText();
+}
+
 $("body").append("<div id='load_service'></div>");
 $(document).on("mouseenter", ".services", function(){
 	var name = $(this)[0].innerText.split("\n")[1];
 	var pedido = load_hosts_by_service(name, true);
-	$("#load_service").html(pedido).addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
+	$("#load_service").html("<div id='contenido'>" + pedido +"</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px' id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
 	var elemento = $(this).position();
 	$("#load_service").css('top',elemento.top);
-	$("#load_service").css('left',elemento.left + 150);
+	$("#load_service").css('left',elemento.left + 108);
 });
 
 timer = null;
 bolean = false;
 wait = 1000;
-
     $(document).ready(function () {
         $('*').bind('mousemove keydown scroll', function () {
             clearTimeout(timer);
@@ -46,5 +78,5 @@ wait = 1000;
                 bolean = true; }, wait);
         });
         $("body").trigger("mousemove");
-    });
+});
 </script>

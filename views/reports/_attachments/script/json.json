@@ -1,0 +1,18 @@
+{
+    "person": {
+        "firstName": "Craig",
+        "lastName": "Thompson",
+        "gender": "Male",
+        "dob": "14/09/19??",
+        "country": "United Kingdom"
+    },
+    "job": {
+        "title": "Web Developer",
+        "company": "craigsworks",
+        "since": 2007
+    },
+    "specialities": [
+        "JavaScript", "jQuery", "CSS",
+        "(X)HTML", "PHP", "MySQL"
+    ]
+}

@@ -1,4 +1,5 @@
 	function load_all_hosts(design) {
+		design = "hosts";
 		var iurl	= "/" + workspace + "/_design/" + design + "/_view/byinterfacecount?group=true";
 		var hurl	= "/" + workspace + "/_design/" + design + "/_view/hosts";
 		var surl	= "/" + workspace + "/_design/" + design + "/_view/byservicecount?group=true";
@@ -38,6 +39,7 @@
 	}
 
 	function load_hosts_by_service(name,bolean) {
+		design = "hosts";
 		var services 	= get_obj_filter(workspace, "services", "byname", name);
 		var hids 	= [];
 		$.each(services, function(k, v) {
@@ -92,6 +94,7 @@
 	}
 
 	function load_services(hid, hname) {
+		design = "hosts";
 		// el param design ya no es el recibido por GET, puesto que ahora estamos en services
 		var services = get_obj_filter(workspace, "services", "byhost", hid);
 		var table = "<h2>Services for Host "+hname+" ("+services.length+" total)</h2>"+
@@ -157,6 +160,15 @@
 		return ls;
 	}
 
+	function back_to_services(hid,hname){
+		$(document).on('click', 'a#back_to_services', function(e) {
+			var div = load_services(hid, hname);
+			$("#hosts").html(div);
+            // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
+            $("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a></p>");
+		});
+	}
+
 $( document ).ready(function() {	
 	$(document).on('click', 'a.host', function(e) {
             // no queremos que cargue nada
@@ -166,9 +178,10 @@ $( document ).ready(function() {
             // el nombre del host que quiero traer es el valor del link
             var hname = $(this).text();
             var div = load_services(hid, hname);
+            back_to_services(hid,hname);
             $("#hosts").html(div);
             // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
-            $("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
+            $("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a></p>");
 });
         // cuando se clickea un servicio carga todos los hosts que tienen ese servicio
         $(document).on('click', 'a.service', function(e) {
@@ -177,14 +190,18 @@ $( document ).ready(function() {
             var div = load_hosts_by_service(sname);
             $("#hosts").html(div);
             // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
-            $("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a></p>");
+            $("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_services'>Back</a></p>");
         });
 
         // comportamiento para "View all hosts"
         $(document).on('click', 'a[href="load_all_hosts"]', function(e) {
             e.preventDefault();
-            design = "hosts";
-            var div = load_all_hosts(design);
+            var div = load_all_hosts();
+            $("#hosts").html(div);
+        });
+        $(document).on('click', 'a#back_to_host', function(e) {
+		    e.preventDefault();
+            var div = load_all_hosts();
             $("#hosts").html(div);
         });
 });

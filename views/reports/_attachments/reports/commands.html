@@ -15,7 +15,7 @@ function get_report_div(workspace, view,design){
                         tabla += "<tr><td>"+obj.key+"</td><td>"+d+"</td><td>"+obj.value[1]+"</td></tr>";
                 });
             tabla += "</tbody></table>";
-            tabla +="</div>";
+            tabla +="</div><a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a>";
 		return tabla;
 	});
 	return tabla;

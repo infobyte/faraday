@@ -14,7 +14,7 @@ function get_report_div(workspace, view,design){
 			divs += "<div class=\"columna unsexto\"><article class=\"dato2 fondo-blanco\"><section><div class=\"nro texto-"+colores[obj.key]+"\">"+obj.value+"</div><div class=\"txt texto-negro\">"+nombres[obj.key]+"</div></section></article></div>";
 			i++;
 		});
-		divs +="</div>";
+		divs +="</div><a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a>";
 		return divs;
 	});
 	return divs;

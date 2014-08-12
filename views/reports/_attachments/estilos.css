@@ -179,7 +179,7 @@ h2 {
 	.dostercios {width: 567px;}
 	.uncuarto {width: 200px;}
 	.trescuartos {width: 640px;}
-	.unquinto {width: 145px;}
+	.unquinto {width: 120px;}
 	.unsexto {width: 123px;}
 	.dosquintos {width: 332px;}
 	.tresquintos {width: 508px;}
@@ -273,12 +273,13 @@ aside {
 	float: left;
 	width: 800px;
 	overflow-y: auto;
-	height: 500px;
+	max-height: 500px;
 	margin-bottom: 6%;
 }
 	.seccion article {
 		background-color: #fff;
-		min-height: 125px;
+		min-height: 105px;
+		height: 105px;
 		font-size: 13px;
 		text-align: left;
 	}
@@ -296,7 +297,7 @@ aside {
 				line-height: 40px;
 			}
 		.seccion article section {
-			padding: 13px;
+			padding: 0px;
 		}
 		.seccion2 p {
 			text-align: left;

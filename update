@@ -6,5 +6,5 @@
 ###
 
 #faraday update v0.1
-find -name "*pyc" -delete
+find . -name \*.pyc -delete
 git pull

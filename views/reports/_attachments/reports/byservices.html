@@ -58,7 +58,7 @@ jQuery.fn.selectText = function(){
 
 $("body").append("<div id='load_service'></div>");
 $(document).on("mouseenter", ".services", function(){
-	var name = $(this)[0].innerText.split("\n")[1];
+    var name = $(this)[0].innerHTML.split(">")[5].split("<")[0];
 	var pedido = load_hosts_by_service(name, true);
 	$("#load_service").html("<div id='contenido'>" + pedido +"</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px' id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
 	var elemento = $(this).position();

@@ -275,6 +275,7 @@ aside {
 	overflow-y: auto;
 	max-height: 500px;
 	margin-bottom: 6%;
+	overflow-x: hidden;
 }
 	.seccion article {
 		background-color: #fff;

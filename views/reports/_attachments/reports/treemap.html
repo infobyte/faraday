@@ -2,14 +2,11 @@
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
 <!DOCTYPE html>
-
-<!DOCTYPE html>
 <html>
   <head>
     <title>Pruebas D3</title>
   </head>
   <body>
-
     <style>
           body {
           font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -23,7 +20,6 @@
           right: 10px;
           top: 10px;
           }
-
           .node {
           border: solid 1px white;
           font: 10px sans-serif;
@@ -34,8 +30,11 @@
           }
     </style>
     <center>
-      <script src='d3.v3.min.js'></script>
-      <script src='script/common.js'></script>
+    <form>
+      <label><input type="radio" name="mode" id="size" value="size" checked> Size</label>
+      <label><input type="radio" name="mode" id="count" value="count"> Count</label>
+    </form>
+      <script src='../././script/d3.min.js'></script>
       <script>
 
         var margin = {top: 40, right: 10, bottom: 10, left: 10},
@@ -47,7 +46,7 @@
         var treemap = d3.layout.treemap()
             .size([width, height])
             .sticky(true)
-            .value(function(d) { return d.size; });
+            .value(function(d) {return d.value});
 
         var div = d3.select("body").append("div")
             .style("position", "relative")
@@ -56,36 +55,44 @@
             .style("left", margin.left + "px")
             .style("top", margin.top + "px");
 
-        var workspace = getParameterByName("workspace");
-        var view = getParameterByName("view");
-        var design = getParameterByName("design");
-        json_url = "/" + workspace + "/_design/" + design + "/_view/" + view;
+        var workspace = getParameterByName('workspace');
+        var design = getParameterByName('design');
+        var view = getParameterByName('view');
+        
+        json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
         d3.json(json_url, function(error, root) {
-          // var dat = root["rows"];
+          
           var jotason = {};
-          jotason.children = [];
-          for(var v in root.rows){
-            jotason.children.push(root.rows[v].value);
-          }
+          jotason["children"] = root["rows"];
           var node = div.datum(jotason).selectAll(".node")
               .data(treemap.nodes)
             .enter().append("div")
               .attr("class", "node")
               .call(position)
-              .style("background", function(d) { return color(Math.floor(Math.random()*68)); })
-              .text(function(d) { return d.children ? null : d.name; });
+              .style("background", function(d) {return color(Math.floor(Math.random()*68)); })
+              .text(function(d) {return d.children ? null : d.key; });
+              
+          d3.select("#size").on("click", function() {
+             div.selectAll("div")
+                 .data(treemap.value(function(d) { return d.value - 10; }))
+               .transition()
+                 .duration(1500)
+                 .call(position);
+         
+             d3.select("#size").classed("active", true);
+             d3.select("#count").classed("active", false);
+           });
 
-          d3.selectAll("input").on("change", function change() {
-            var value = this.value === "count"
-                ? function() { return 1; }
-                : function(d) { return d.size; };
-
-            node
-                .data(treemap.value(value).nodes)
-              .transition()
-                .duration(1500)
-                .call(position);
-          });
+         d3.select("#count").on("click", function() {
+           div.selectAll("div")
+               .data(treemap.value(function(d) {return d.value + 10; }))
+             .transition()
+               .duration(1500)
+               .call(position);
+       
+           d3.select("#size").classed("active", false);
+           d3.select("#count").classed("active", true);
+         });
         });
 
         function position() {
@@ -95,11 +102,19 @@
               .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
         }
 
-
-
-      </script>
-    </center>
+            //function para traer parametros
+            function getParameterByName( name )
+              {
+                name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+                var regexS = "[\\?&]"+name+"=([^&#]*)";
+                var regex = new RegExp( regexS );
+                var results = regex.exec( window.location.href );
+                if( results == null )
+                  return "";
+                else
+                  return decodeURIComponent(results[1].replace(/\+/g, " "));
+              }
+      </script> 
+      </center>
   </body>
 </html>
-
-

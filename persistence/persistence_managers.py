@@ -106,23 +106,6 @@ class DbManager(object):
     def getDbType(self, dbname):
         return self.dbs.get(dbname).getType()
 
-
-class ChangeWatcher(threading.Thread):
-    def __init__(self, watch_function):
-        threading.Thread.__init__(self)
-        self._function = watch_function
-        self._watcher = threading.Thread(target=self._function)
-        self._watcher.setDaemon(True)
-        self._stop_event = threading.Event()
-
-    def run(self):
-        self._watcher.start()
-        self._stop_event.wait()
-
-    def stop(self):
-        self._stop_event.set()
-
-
 class DbConnector(object):
     def __init__(self, type=None):
         # it could be used to notifiy some observer about changes in the db
@@ -264,7 +247,9 @@ class CouchDbConnector(DbConnector):
         last_seq = max(self.getSeqNumber(), since)
         with ChangesStream(self.db, feed="continuous", since=last_seq) as stream:
             for change in stream:
-                if self.changes_callback and not change.get('last_seq'):
+                if not self.changes_callback:
+                    return
+                if not change.get('last_seq'):
                     if change['seq'] > self.getSeqNumber():
                         self.setSeqNumber(change['seq'])
                         if not change['id'].startswith('_design'):

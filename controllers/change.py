@@ -9,8 +9,9 @@ import model.guiapi
 
 
 class ChangeController(object):
-    def __init__(self, mapper_manager):
-        self.mapper_manager = mapper_manager
+    def __init__(self):
+        self.mapper_manager = None
+        self.changesWatcher = None
 
     def notify(self, changes):
         for change in changes:
@@ -24,3 +25,31 @@ class ChangeController(object):
         elif change.getChangeType() == CHANGETYPE.UPDATE:
             self.mapper_manager.reload(objid)
         model.guiapi.notification_center.changeFromInstance(change)
+
+    def watch(self, dbConnector):
+        self.changesWatcher = ChangeWatcher(dbConnector.waitForDBChange)
+        dbConnector.setChangesCallback(self.loadChange) 
+        self.changesWatcher.start()
+
+    def unwatch(self):
+        if self.changesWatcher:
+            dbConnector.setChangesCallback(None)
+            self.changesWatcher.join()
+
+
+class ChangeWatcher(threading.Thread):
+    def __init__(self, watch_function):
+        threading.Thread.__init__(self)
+
+        self._function = watch_function
+        self._watcher = threading.Thread(target=self._function)
+        self._watcher.setDaemon(True)
+        self._stop_event = threading.Event()
+
+    def run(self):
+        self._watcher.start()
+        self._stop_event.wait()
+
+    def stop(self):
+        self._stop_event.set()
+

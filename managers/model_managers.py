@@ -34,24 +34,27 @@ class WorkspaceManager(object):
         workspace = Workspace(name, desc)
         dbConnector = self.dbManager.createDb(name, dbtype)
         if dbConnector:
+            self.changesManager.unwatch()
             self.mappersManager.createMappers(dbConnector)
-            dbConnector.setChangesCallback(self.changesManager)
+            dbConnector.setChangesCallback(self.changesManager.loadChange)
             self.mappersManager.save(workspace)
             self.setActiveWorkspace(workspace)
             notification_center.workspaceChanged(workspace)
             notification_center.workspaceLoad(workspace.getHosts())
+            self.changesManager.watch(dbConnector)
             return workspace
         return False
 
     def openWorkspace(self, name):
         if name in self.getWorkspacesNames():
+            self.changesManager.unwatch()
             dbConnector = self.dbManager.getConnector(name)
-            dbConnector.setChangesCallback(self.changesManager)
             self.mappersManager.createMappers(dbConnector)
             workspace = self.mappersManager.getMapper(Workspace.__name__).find(name)
             self.setActiveWorkspace(workspace)
             notification_center.workspaceChanged(workspace)
             notification_center.workspaceLoad(workspace.getHosts())
+            self.changesManager.watch(dbConnector)
             self.reportsManager.watch(name)
             return workspace
         return None

@@ -268,12 +268,13 @@ aside {
 	width: 860px;
 	float: left;
 }
+
 .seccion2 {
 	background: #E8EFF0;
 	float: left;
 	width: 800px;
 	overflow-y: auto;
-	max-height: 500px;
+	max-height: 533px;
 	margin-bottom: 6%;
 	overflow-x: hidden;
 }

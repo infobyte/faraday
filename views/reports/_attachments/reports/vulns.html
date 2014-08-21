@@ -6,8 +6,8 @@ function get_report_div(workspace, view,design){
         async: false
     });
 	$.getJSON(json_url, function(data) {
-		var colores = {"info":"gris3", "low":"verde", "med":"amarillo", "high":"rojo", "critical":"violeta", "unclassified":"gris2"};
-		var nombres = ["info", "low", "med", "high", "critical", "n/a"];
+        var colores = ["gris3", "verde", "amarillo", "rojo", "violeta", "gris2"];
+        var nombres = ["info", "low", "medium", "high", "critical", "n/a"];
 		var i = 0;
 		divs += "<div class='seccion2'><h2>Vulnerabilities Report</h2>";
 		$.each(data.rows, function(n, obj){

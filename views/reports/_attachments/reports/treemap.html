@@ -61,7 +61,6 @@
         
         json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
         d3.json(json_url, function(error, root) {
-          
           var jotason = {};
           jotason["children"] = root["rows"];
           var node = div.datum(jotason).selectAll(".node")

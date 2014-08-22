@@ -10,10 +10,11 @@ var b = {
 
 // Mapping of step names to colors.
 var colors = {
-  "low": "#ffff00",
-  "med": "#ff8000",
+  "low": "#8DB600",
+  "med": "#ffff00",
   "critical": "#8B00FF",
-  "high": "#B80000"
+  "high": "#B80000",
+  "info": "#E8E8E8"
 };
 
 // Total size of all segments; we set this later, after loading the data.
@@ -42,8 +43,10 @@ var arc = d3.svg.arc()
 
     json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
     d3.json(json_url, function(error, root) {
+      console.log(root);
     var jotason = {};
     jotason["children"] = root["rows"];
+    console.log(jotason);
     var json_finish = get_low(jotason);
     createVisualization(json_finish);
   });
@@ -262,31 +265,35 @@ function toggleLegend() {
 }
 function get_low(jotason){
   var children = jotason["children"];
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < 5; i++) {
       jotason[i] = {};
       jotason[i].value = 0;
   }
-  jotason[0].key = "low";
-  jotason[1].key = "med";
-  jotason[2].key = "high";
-  jotason[3].key = "critical";
+  jotason[0].key = "info";
+  jotason[1].key = "low";
+  jotason[2].key = "med";
+  jotason[3].key = "high";
+  jotason[4].key = "critical";
 
   for(i = 0; i < children.length; i++){
-    if(children[i].key == 2 || children[i].key == "Low"){
+    if(children[i].key == 1 || children[i].key == "Information" || children[i].key == "info"){
       jotason[0].value += children[i].value;
     }
-    if(children[i].key == 3 || children[i].key == "Medium"){
+    if(children[i].key == 2 || children[i].key == "Low"){
       jotason[1].value += children[i].value;
     }
-    if(children[i].key == 4 || children[i].key == "High"){
+    if(children[i].key == 3 || children[i].key == "Medium"){
       jotason[2].value += children[i].value;
     }
-    if(children[i].key == 5 || children[i].key == "Critical"){
+    if(children[i].key == 4 || children[i].key == "High"){
       jotason[3].value += children[i].value;
+    }
+    if(children[i].key == 5 || children[i].key == "Critical"){
+      jotason[4].value += children[i].value;
     }
   }
   jotason["children"] = [];
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < 5; i++) {
       jotason["children"].push(jotason[i]);
   }
   return jotason;

@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
+#string{
+  display: block;
+  position: absolute;
+  left: 44%;
+  font-size: 21px;
+}
 
 .bar {
   fill: steelblue;
@@ -27,6 +33,7 @@
 
 </style>
 <body>
+<div id="string"></div>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script>
 
@@ -47,7 +54,7 @@ var xAxis = d3.svg.axis()
 var yAxis = d3.svg.axis()
     .scale(y)
     .orient("left")
-    .ticks(3);
+    .ticks(5);
 
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -89,8 +96,15 @@ console.log(data);
       .attr("x", function(d) { return x(d.key); })
       .attr("width", x.rangeBand())
       .attr("y", function(d) { return y(d.value); })
+      .on("mouseover", mouseover)
       .attr("height", function(d) { return height - y(d.value); });
 });
+
+function mouseover(d){
+  var string = d.value;
+  d3.select("#string")
+    .text("Valor: " + string);
+}
 
 function type(d) {
   d.value = +d.value;

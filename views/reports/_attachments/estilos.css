@@ -554,3 +554,51 @@ label {
 * { /* compatibilidad entre nuestros estilos y los de bootstrap */ 
 	-moz-box-sizing: content-box !important;
 }
+
+#treemap {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  position: relative;
+  width: 250px;
+  margin-top: 10%;
+}
+
+form {
+ position: absolute;
+ right: 10px;
+ top: 10px;
+}
+.node {
+ border: solid 1px white;
+ font: 10px sans-serif;
+ line-height: 12px;
+ overflow: hidden;
+ position: absolute;
+ text-indent: 2px;
+}
+
+.d3 li{
+	float: left;
+}
+
+.bar {
+  fill: steelblue;
+}
+
+.bar:hover {
+  opacity: 0.5;
+}
+
+.axis {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}

@@ -24,10 +24,12 @@
     <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
     <link href="images/site_preview.jpg" rel="image_src" />
 
+    <script src='././././script/d3.min.js'></script>
     <script type="text/javascript" src="script/couch.js"></script>
     <script src="script/common.js"></script>
     <script type="text/javascript" src="/_utils/script/sha1.js"></script>
     <script type="text/javascript" src="script/app.js"></script>
+    <script type="text/javascript" src="script/d3_summarized.js"></script>
     <script type="text/javascript" src="script/reports_list.js"></script>
     <script type="text/javascript" src="/_utils/script/json2.js"></script>
     <script type="text/javascript" src="/_utils/script/jquery.js"></script>
@@ -119,14 +121,28 @@ $(document).ready(function() {
     $('.workspace').append("<div class='reports'></div>");
 
 rutas = ["reports/compound.html?workspace="+workspace+"&design=hosts&view=compound","reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices","reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized","reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns","reports/commands.html?workspace="+workspace+"&design=commands&view=list"];
+var content_cake = "<div id='chart'><div id='explanation' style='visibility: hidden;''></div></div>";
+
+$("#reportes").append("<ul class='d3'><li><div id='treemap'><form>"+
+    "<label><input type='radio' name='mode' id='size' value='size' checked> Size</label>"+
+      "<label><input type='radio' name='mode' id='count' value='count'> Count</label>"+
+    "</form></div></li>"+
+    "<li><div id='bar'><div id='string'></div></div></li>"+
+    "<li><div id='cake'>"+ content_cake +"</div></li></ul>"+
+    "<div id='compound'></div><div id='vulns'></div><div id='list'></div></div><div id='byservices'></div><div id='summarized'>");
+design = "hosts";
+view = "byservices";
+treemap(workspace, design, view);
+view = "vulns";
+bar(workspace, design, view);
+cake(workspace, design, view);
 
 for (i = 0; i < rutas.length; i++) { 
-	dominio = rutas[i];
-	var div = load(dominio);
+    dominio = rutas[i];
+    var div = load(dominio);
 }
 });
 
-$("#reportes").append("<div id='compound'></div><div id='vulns'></div><div id='list'></div></div><div id='byservices'></div><div id='summarized'>");
 
 function load(dominio){
     $(".reports").load(dominio, function(){

@@ -197,6 +197,11 @@ class CouchDbConnector(DbConnector):
             "Saving document in couch db %s" % self.db)
         return self.db.save_doc(document, use_uuids=True, force_update=True)
 
+    def forceUpdate(self):
+        doc = self.getDocument(self.db.dbname) 
+        return self.db.save_doc(doc, use_uuids=True, force_update=True)
+
+
     #@trap_timeout
     def getDocument(self, document_id):
         getLogger(self).debug(
@@ -232,20 +237,20 @@ class CouchDbConnector(DbConnector):
     #@trap_timeout
     def waitForDBChange(self, since=0):
         last_seq = max(self.getSeqNumber(), since)
-        with ChangesStream(self.db, feed="continuous", since=last_seq) as stream:
-            for change in stream:
-                if not self.changes_callback:
-                    return
-                if not change.get('last_seq'):
-                    if change['seq'] > self.getSeqNumber():
-                        self.setSeqNumber(change['seq'])
-                        if not change['id'].startswith('_design'):
-                            getLogger(self).debug(
-                                "Changes from another instance")
-                            deleted = bool(change.get('deleted', False))
-                            revision = change.get("changes")[-1].get('rev')
-                            obj_id = change.get('id')
-                            self.changes_callback(obj_id, revision, deleted)
+        self.stream = ChangesStream(self.db, feed="continuous", since=last_seq)
+        for change in self.stream:
+            if not self.changes_callback:
+                return
+            if not change.get('last_seq'):
+                if change['seq'] > self.getSeqNumber():
+                    self.setSeqNumber(change['seq'])
+                    if not change['id'].startswith('_design'):
+                        getLogger(self).debug(
+                            "Changes from another instance")
+                        deleted = bool(change.get('deleted', False))
+                        revision = change.get("changes")[-1].get('rev')
+                        obj_id = change.get('id')
+                        self.changes_callback(obj_id, revision, deleted)
 
     #@trap_timeout
     def _compactDatabase(self):

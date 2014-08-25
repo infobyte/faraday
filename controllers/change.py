@@ -37,11 +37,14 @@ class ChangeController(object):
     def unwatch(self):
         if self.changesWatcher:
             self.dbConnector.setChangesCallback(None)
+            self.dbConnector.forceUpdate()
             self.changesWatcher.join()
 
     def stop(self):
         self.unwatch()
 
+    def isAlive(self):
+        return self.changesWatcher.isAlive()
 
 class ChangeWatcher(threading.Thread):
     def __init__(self, watch_function):
@@ -50,11 +53,9 @@ class ChangeWatcher(threading.Thread):
         self._function = watch_function
         self._watcher = threading.Thread(target=self._function)
         self._watcher.setDaemon(True)
-        self._stop_event = threading.Event()
 
     def run(self):
         self._watcher.start()
-        self._stop_event.wait()
 
     def stop(self):
         self._stop_event.set()

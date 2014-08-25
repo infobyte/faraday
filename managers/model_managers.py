@@ -41,7 +41,7 @@ class WorkspaceManager(object):
             self.setActiveWorkspace(workspace)
             notification_center.workspaceChanged(workspace)
             notification_center.workspaceLoad(workspace.getHosts())
-            self.changesManager.watch(dbConnector)
+            self.changesManager.watch(self.mappersManager, dbConnector)
             return workspace
         return False
 
@@ -54,7 +54,7 @@ class WorkspaceManager(object):
             self.setActiveWorkspace(workspace)
             notification_center.workspaceChanged(workspace)
             notification_center.workspaceLoad(workspace.getHosts())
-            self.changesManager.watch(dbConnector)
+            self.changesManager.watch(self.mappersManager, dbConnector)
             self.reportsManager.watch(name)
             return workspace
         return None

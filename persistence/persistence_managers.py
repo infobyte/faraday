@@ -108,24 +108,11 @@ class DbManager(object):
 
 class DbConnector(object):
     def __init__(self, type=None):
-        # it could be used to notifiy some observer about changes in the db
         self.changes_callback = None
-        self.change_watcher = ChangeWatcher(self.waitForDBChange)
         self.type = type
-        #self.change_thread = threading.Thread(target=self.waitForDBChange)
-        #self.change_thread.setDaemon(True)
 
     def getType(self):
         return self.type
-
-    def startChangeWatch(self):
-        if self.changes_callback:
-            self.change_watcher.start()
-
-    def stopChangeWatch(self):
-        if self.change_watcher.is_alive():
-            #self.setChangesCallback(None)
-            self.change_watcher.stop()
 
     def setChangesCallback(self, callback):
         self.changes_callback = callback

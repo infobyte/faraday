@@ -48,7 +48,7 @@ class MainApplication(object):
 
         self._security_manager = SecurityManager()
         self._mappers_manager = MapperManager()
-        self._changes_controller = ChangeController(self._mappers_manager)
+        self._changes_controller = ChangeController()
         self._db_manager = DbManager()
 
         self._model_controller = ModelController(
@@ -166,6 +166,7 @@ class MainApplication(object):
         model.api.stopAPIServer()
         restapi.stopServer()
         self._reports_manager.stop()
+        self._changes_controller.stop()
         self._model_controller.stop()
         self._model_controller.join()
         self.gui_app.quit()

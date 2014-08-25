@@ -49,7 +49,7 @@ class Change(object):
         self.change_type = change_type
         self.object = obj
         self.msg = "Change: Action: %s - Type: %s" % (
-            self.change_type, self.obj.class_signature)
+            self.change_type, self.object.class_signature)
 
     def getObject(self):
         return self.object
@@ -80,10 +80,10 @@ class ChangeCmd(Change):
         Change.__init__(self, obj, change_type)
         if self.change_type == CHANGETYPE.UPDATE:
             self.msg = "Command finished: %s %s" % (
-                self.object.get("command"), self.object.get("params"))
+                self.object.command, self.object.params)
         elif self.change_type == CHANGETYPE.ADD:
-            self.msg = "Command finished: %s %s" % (
-                self.object.get("command"), self.object.get("params"))
+            self.msg = "Command started: %s %s" % (
+                self.object.command, self.object.params)
 
 
 change_factory = ChangeFactory()

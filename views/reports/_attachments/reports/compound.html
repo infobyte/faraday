@@ -15,7 +15,7 @@ function get_report_div(workspace, view, design){
 		hosts		= get_obj(hurl);
 		interfaces	= get_obj(iurl, interfaces);
 		services	= get_obj(surl, services);
-		var table = "<div class='seccion2' id='hosts'><h2>Hosts report</h2>";
+		var table = "<div class='columna'><article><section class='sin_padding'><h2>Hosts report</h2>";
 		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+
@@ -39,7 +39,7 @@ function get_report_div(workspace, view, design){
 				"<td>"+v.os+"</td>"+
 				"<td>"+v.owned+"</td></tr>";
 		});
-		table += "</tbody></table></div><a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a>";
+		table += "</tbody></table><a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a></article></section></div>";
 		return table;
 	}
 

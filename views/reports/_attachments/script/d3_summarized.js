@@ -17,7 +17,6 @@ function treemap(workspace, design, view){
             .style("left", margin.left + "px")
             .style("top", margin.top + "px");
 
-      
         json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
         d3.json(json_url, function(error, root) {
           var sort_jotason = sorter_jotason(root);

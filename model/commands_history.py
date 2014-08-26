@@ -14,7 +14,6 @@ class CommandRunInformation(object):
     class_signature = "CommandRunInformation"
 
     def __init__(self, **kwargs):
-        self._id = None
         self.type = self.__class__.__name__
         for k, v in kwargs.items():
             setattr(self, k, v)

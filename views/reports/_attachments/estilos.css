@@ -303,6 +303,7 @@ aside {
 		}
 		.seccion2 p {
 			text-align: left;
+			margin-top: 15px;
 			}
 			.sin_padding {
 				padding: 0 !important;

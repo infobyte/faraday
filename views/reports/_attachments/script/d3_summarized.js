@@ -1,5 +1,5 @@
 function treemap(workspace, design, view){
-	        var margin = {top: 40, right: 10, bottom: 10, left: 10},
+	        var margin = {top: 28, right: 10, bottom: 10, left: 10},
             width = 250 - margin.left - margin.right,
             height = 200 - margin.top - margin.bottom;
 

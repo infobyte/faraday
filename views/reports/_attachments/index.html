@@ -43,15 +43,32 @@
         <div class="wrapper">
             <header class="head">
                 <a href="#"><img class="logo" src="images/logo-faraday.png"/></a>
+                <nav>
+                    <ul class="menu">
+                        <li>
+                            <a href="#">Opción 1</a>
+                        </li>
+                        <li>
+                            <a href="#">Opción 1</a>
+                        </li>
+                        <li>
+                            <a href="#" class="activo">Username</a>
+                            <ul>
+                                <li><a href="#">Sub opción 1</a></li>
+                                <li><a href="#">Sub opción 2</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </nav>
             </header>
             
             <aside>
                 <nav>
                     <ul>
                         <li>
-                            <a href="#"><img src="images/ico-settings.png" alt="Commercial version only"/></a>
+                            <a href="#"><img src="images/ico-settings.png" alt="Settings"/></a>
                             <a href="#" class="activo"><img src="images/ico-graph.png" alt=""/></a>
-                            <a href="#"><img src="images/ico-stopwatch.png" alt="Commercial version only"/></a>
+                            <a href="#"><img src="images/ico-stopwatch.png" alt=""/></a>
                         </li>
                     </ul>
                 </nav>
@@ -123,12 +140,12 @@ $(document).ready(function() {
 rutas = ["reports/compound.html?workspace="+workspace+"&design=hosts&view=compound","reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices","reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized","reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns","reports/commands.html?workspace="+workspace+"&design=commands&view=list"];
 var content_cake = "<div id='chart'><div id='explanation' style='visibility: hidden;''></div></div>";
 
-$("#reportes").append("<ul class='d3'><li><div id='treemap'><form>"+
+$("#reportes").append("<ul class='d3'><li><div class='columna untercio'><article id='treemap' style='height:20%'><header><h2>Treemap</h2><form>"+
     "<label><input type='radio' name='mode' id='size' value='size' checked> Size</label>"+
       "<label><input type='radio' name='mode' id='count' value='count'> Count</label>"+
-    "</form></div></li>"+
-    "<li><div id='bar'><div id='string'></div></div></li>"+
-    "<li><div id='cake'>"+ content_cake +"</div></li></ul>"+
+    "</form></article></header></div></li>"+
+    "<li><div class='columna untercio'><article id='bar' style='height:20%'><header><h2>Bar</h2><div id='string'></article></header></div></div></li>"+
+    "<li><div class='columna untercio'><article id='cake' style='height:20%'><header><h2>Chart</h2></header>"+ content_cake +"</article></div></li></ul>"+
     "<div id='compound'></div><div id='vulns'></div><div id='list'></div></div><div id='byservices'></div><div id='summarized'>");
 design = "hosts";
 view = "byservices";

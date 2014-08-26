@@ -60,7 +60,7 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
 
 body {
 	font:62.5%/1.5 'Ubuntu',Helvetica,Arial,sans-serif;
-	background: #fff;
+	background: #E8EFF0!important;
 	color: #2D2F31;
 }
 .abs {position:absolute}
@@ -173,6 +173,11 @@ h2 {
 	margin-top: 10px;
 	float: left;
 }
+#compound .columna{
+	height: 422px;
+	width: 492px;
+	overflow-y: scroll;
+}
 	.full {width: 860px;}
 	.unmedio, .doscuartos {width: 420px;}
 	.untercio {width: 273px;}
@@ -180,7 +185,7 @@ h2 {
 	.uncuarto {width: 200px;}
 	.trescuartos {width: 640px;}
 	.unquinto {width: 120px;}
-	.unsexto {width: 123px;}
+	.unsexto {width: 85px;}
 	.dosquintos {width: 332px;}
 	.tresquintos {width: 508px;}
 
@@ -189,11 +194,9 @@ ul {margin-bottom: 20px;}
 #cont {
 	width:100%;
 	text-align:center;
-	margin: 0 auto;
 }
 .wrapper {
-	width: 980px;
-	margin: 0 auto;
+	width: 100%;
 }
 header.head {
 	background: #000;
@@ -265,7 +268,7 @@ aside {
 .seccion {
 	background: #E8EFF0;
 	padding: 20px;
-	width: 860px;
+	width: 93%;
 	float: left;
 }
 
@@ -278,10 +281,13 @@ aside {
 	margin-bottom: 6%;
 	overflow-x: hidden;
 }
+.untercio article{
+	height: 20%;
+}
 	.seccion article {
 		background-color: #fff;
-		min-height: 105px;
-		height: 105px;
+		min-height: 85px;
+		height: 85px;
 		font-size: 13px;
 		text-align: left;
 	}
@@ -356,7 +362,7 @@ aside {
 	text-align: center;
 }
 	.dato2 .nro {
-		font-size: 56px;
+		font-size: 45px;
 		font-weight: 300;
 	}
 	.dato2 .txt {
@@ -560,7 +566,6 @@ label {
 #treemap {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   position: relative;
-  width: 250px;
 }
 form {
  position: absolute;

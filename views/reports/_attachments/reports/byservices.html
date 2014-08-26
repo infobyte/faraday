@@ -9,7 +9,7 @@ function get_report_div(workspace, view,design){
 	$.getJSON(json_url, function(data) {
 		var colores = ["negro", "rojo"];
 		var i = 0;
-		divs += "<div class='seccion2'><h2>Services report</h2>";
+		divs += "<div class='columna unmedio'><article class='unmedio'><header><h2>Services report</h2>";
 
         var row = data.rows;
         for (i = 0; i < row.length; i++) {
@@ -28,7 +28,7 @@ function get_report_div(workspace, view,design){
         for (i = 0; i < obj.length; i++) {
 			divs += "<div class=\"columna unquinto services\" href='#'><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj[i][0]+"</div><div class=\"txt texto-blanco\">"+obj[i][1]+"</div></section></article></div>";
 		}
-		divs +="</div><a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a>";
+		divs +="<a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a></article></header></div>";
 		return divs
 	});
 	return divs

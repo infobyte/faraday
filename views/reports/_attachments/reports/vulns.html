@@ -9,12 +9,12 @@ function get_report_div(workspace, view,design){
         var colores = ["gris3", "verde", "amarillo", "rojo", "violeta", "gris2"];
         var nombres = ["info", "low", "medium", "high", "critical", "n/a"];
 		var i = 0;
-		divs += "<div class='seccion2'><h2>Vulnerabilities Report</h2>";
+		divs += "<div class='columna'><article class='vulns'><header><h2>Vulnerabilities Report</h2></header>";
 		$.each(data.rows, function(n, obj){
-			divs += "<div class=\"columna unsexto\"><article class=\"dato2 fondo-blanco\"><section><div class=\"nro texto-"+colores[obj.key]+"\">"+obj.value+"</div><div class=\"txt texto-negro\">"+obj.key+"</div></section></article></div>";
+			divs += "<div class=\"columna unsexto\"><article class=\"dato2 fondo-blanco\"><section><div class=\"nro texto-"+colores[obj.key]+"\">"+obj.value+"</div><div class=\"txt texto-negro\">"+obj.key+"</div></article></div>";
 			i++;
 		});
-		divs +="</div><a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a>";
+		divs +="<a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a></article></section></div>";
 		return divs;
 	});
 	return divs;

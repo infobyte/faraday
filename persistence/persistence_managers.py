@@ -120,6 +120,9 @@ class DbConnector(object):
     def waitForDBChange(self):
         pass
 
+    def forceUpdate(self):
+        pass
+
     def saveDocument(self, document):
         raise NotImplementedError("DbConnector should not be used directly")
 

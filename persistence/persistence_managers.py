@@ -10,15 +10,12 @@ import os
 import shutil
 import mockito
 import threading
-from Queue import Queue
-import time
 from urlparse import urlparse
 import traceback
 from couchdbkit import Server, ChangesStream, Database
 from couchdbkit.resource import ResourceNotFound
 
 from utils.logs import getLogger
-from utils.decorators import trap_timeout
 from managers.all import ViewsManager
 
 #from persistence.change import change_factory
@@ -192,13 +189,29 @@ class CouchDbConnector(DbConnector):
         self.mutex = threading.Lock()
         vmanager = ViewsManager()
         vmanager.addViews(self.db)
+        self._docs = {}
+
+    def getDocs(self):
+        if len(self._docs.keys()) == 0:
+            for doc in self.getAllDocs():
+                self.addDoc(doc)
+        return self._docs
+
+    def addDoc(self, doc):
+        self._docs[doc["_id"]] = doc
+
+    def delDoc(self, doc_id):
+        del self._docs[doc_id]
 
     #@trap_timeout
     def saveDocument(self, document):
         self.incrementSeqNumber()
         getLogger(self).debug(
             "Saving document in couch db %s" % self.db)
-        return self.db.save_doc(document, use_uuids=True, force_update=True)
+        res = self.db.save_doc(document, use_uuids=True, force_update=True)
+        if res:
+            self.addDoc(document)
+        return res
 
     def forceUpdate(self):
         doc = self.getDocument(self.db.dbname) 
@@ -209,22 +222,32 @@ class CouchDbConnector(DbConnector):
     def getDocument(self, document_id):
         getLogger(self).debug(
             "Getting document %s for couch db %s" % (document_id, self.db))
-        try:
-            return self.db.get(document_id)
-        except ResourceNotFound:
-            return None
+        return self.getDocs().get(document_id, None)
+        #return self._docs.get(document_id, None)
+        # getLogger(self).debug(
+        #     "Getting document %s for couch db %s" % (document_id, self.db))
+        # try:
+        #     return self.db.get(document_id)
+        # except ResourceNotFound:
+        #     return None
 
     #@trap_timeout
     def remove(self, document_id):
         if self.db.doc_exist(document_id):
             self.incrementSeqNumber()
             self.db.delete_doc(document_id)
+            self.delDoc(document_id)
 
     #@trap_timeout
     def getDocsByFilter(self, parentId, type):
         key = ['%s' % parentId, '%s' % type]
         docs_ids = [doc.get("value") for doc in self.db.view('mapper/byparentandtype', key=key)]
         return docs_ids
+
+    #@trap_timeout
+    def getAllDocs(self):
+        docs = [doc.get("value") for doc in self.db.view('utils/docs')]
+        return docs
 
     def incrementSeqNumber(self):
         self.mutex.acquire()

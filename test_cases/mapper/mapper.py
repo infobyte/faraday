@@ -157,7 +157,7 @@ class HostMapperTestSuite(unittest.TestCase):
         self.hmapper.delete(h_id)
 
         self.assertEquals(
-            self.hmapper.load(h_id),
+            self.hmapper.find(h_id),
             None,
             "Host shouldn't exist anymore")
 
@@ -310,7 +310,7 @@ class InterfaceMapperTestSuite(unittest.TestCase):
         self.imapper.delete(i_id)
 
         self.assertEquals(
-            self.imapper.load(i_id),
+            self.imapper.find(i_id),
             None,
             "Inteface shouldn't exist anymore")
 
@@ -444,7 +444,7 @@ class ServiceMapperTestSuite(unittest.TestCase):
         self.smapper.delete(s_id)
 
         self.assertEquals(
-            self.smapper.load(s_id),
+            self.smapper.find(s_id),
             None,
             "Service shouldn't exist anymore")
 
@@ -550,7 +550,7 @@ class WorkspaceMapperTestSuite(unittest.TestCase):
         self.wmapper.delete(w_id)
 
         self.assertEquals(
-            self.wmapper.load(w_id),
+            self.wmapper.find(w_id),
             None,
             "Workspace shouldn't exist anymore")
 
@@ -623,7 +623,7 @@ class CompositeMapperTestSuite(unittest.TestCase):
         self.mapper_manager.save(host)
         # add inteface
         interface = self.create_interface()
-        host.addChild(interface.getID(), interface)
+        host.addChild(interface)
         self.mapper_manager.save(interface)
 
         h = self.mapper_manager.find(host.getID())

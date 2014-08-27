@@ -85,6 +85,7 @@ class Metadata(object):
             return "ModelControler." +  " ModelControler.".join(controller_funcallnames)
         return "No model controller call"
 
+
 class ModelObject(object):
     """
     This is the base class for every object we need to represent in the
@@ -96,10 +97,11 @@ class ModelObject(object):
     # this static attribute used with a factory
     class_signature = "ModelObject"
 
-    def __init__(self, parent=None):
+    def __init__(self, parent_id=None):
         self._name          = ""
-        self._id            = None
-        self._parent        = parent
+        self._id = None
+        self._parent_id = parent_id
+        self._parent = None
         
         self.owner          = api.getLoggedUser()
         self._metadata      = Metadata(self.owner)
@@ -235,9 +237,8 @@ class ModelObject(object):
         raise NotImplementedError("This should be overwritten")
 
     def _prependParentId(self):
-        if self._parent:
-            self._id = '.'.join((self._parent.getID(), self.getID()))
-
+        if self._parent_id:
+            self._id = '.'.join((self._parent_id, self.getID()))
 
     def getID(self):
         if self._id is None:
@@ -299,7 +300,6 @@ class ModelObject(object):
     #@save
     def setParent(self, parent):
         self._parent = parent
-        self.updateID()
 
     def getParent(self):
         return self._parent
@@ -487,8 +487,8 @@ class ModelObject(object):
 class ModelComposite(ModelObject):
     """ Model Objects Composite Abstract Class """
 
-    def __init__(self, parent=None):
-        ModelObject.__init__(self, parent)
+    def __init__(self, parent_id=None):
+        ModelObject.__init__(self, parent_id)
         self.childs = {}
 
     def addChild(self, model_object):
@@ -509,8 +509,8 @@ class ModelComposite(ModelObject):
         return self.childs.get(iid)
 
 class ModelLeaf(ModelObject):
-    def __init__(self, parent=None):
-        ModelObject.__init__(self, parent)
+    def __init__(self, parent_id=None):
+        ModelObject.__init__(self, parent_id)
 
     def getChildsByType(self, signature):
         return []
@@ -812,8 +812,8 @@ class ModelObjectNote(ModelComposite):
     """
     class_signature = "Note"
     
-    def __init__(self, name="", text="", parent=None):
-        ModelComposite.__init__(self, parent)
+    def __init__(self, name="", text="", parent_id=None):
+        ModelComposite.__init__(self, parent_id)
         self.name = str(name)
         self._text = str(text)
 
@@ -865,11 +865,11 @@ class ModelObjectVuln(ModelLeaf):
     """
     class_signature = "Vulnerability"
     
-    def __init__(self, name="",desc="", ref=None, severity="", parent=None):
+    def __init__(self, name="",desc="", ref=None, severity="", parent_id=None):
         """
         The parameters refs can be a single value or a list with values
         """
-        ModelLeaf.__init__(self, parent)
+        ModelLeaf.__init__(self, parent_id)
         self.name = name
         self._desc = desc
         
@@ -976,11 +976,11 @@ class ModelObjectVulnWeb(ModelObjectVuln):
     class_signature = "VulnerabilityWeb"
     
     def __init__(self, name="",desc="", website="", path="", ref=None, severity="", request="", response="",
-                method="",pname="", params="",query="",category="", parent=None):
+                method="",pname="", params="",query="",category="", parent_id=None):
         """
         The parameters ref can be a single value or a list with values
         """
-        ModelObjectVuln.__init__(self, name,desc, ref, severity, parent)
+        ModelObjectVuln.__init__(self, name,desc, ref, severity, parent_id)
         self.path = path
         self.website = website
         self.request = request
@@ -1087,8 +1087,8 @@ class ModelObjectCred(ModelLeaf):
     """
     class_signature = "Cred"
     
-    def __init__(self, username="", password="", parent=None):
-        ModelLeaf.__init__(self, parent)
+    def __init__(self, username="", password="", parent_id=None):
+        ModelLeaf.__init__(self, parent_id)
         self._username = str(username)
         self._password = str(password)
 

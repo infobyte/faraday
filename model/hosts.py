@@ -31,8 +31,8 @@ class Host(ModelComposite):
                                                
     class_signature = "Host"
 
-    def __init__(self, name, os = "Unknown", default_gateway=None, dic=None, parent=None):
-        ModelComposite.__init__(self, parent)
+    def __init__(self, name, os = "Unknown", default_gateway=None, dic=None, parent_id=None):
+        ModelComposite.__init__(self, parent_id)
         self._interfaces            = {}
         self._applications          = {}
         self.categories             = []
@@ -228,9 +228,9 @@ class Interface(ModelComposite):
                  ipv4_gateway = "0.0.0.0", ipv4_dns = [],
                  ipv6_address = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_prefix = "00",
                  ipv6_gateway = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns = [],
-                 network_segment = "", hostname_resolution = None, parent=None):
+                 network_segment = "", hostname_resolution = None, parent_id=None):
 
-        ModelComposite.__init__(self, parent)
+        ModelComposite.__init__(self, parent_id)
 
                               
         self._name         = name
@@ -474,8 +474,8 @@ class Service(ModelComposite):
     class_signature = "Service"
 
     def __init__(self, name, protocol="TCP", ports=None, status="running",
-                 version="unknown", description = "", parent=None):
-        ModelComposite.__init__(self, parent)
+                 version="unknown", description = "", parent_id=None):
+        ModelComposite.__init__(self, parent_id)
 
         self._name          = name
         self.description    = description

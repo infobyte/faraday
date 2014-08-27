@@ -9,55 +9,143 @@ See the file 'doc/LICENSE' for the license information
 import unittest
 import sys
 sys.path.append('.')
-import model.controller as controller
-import plugins.core as plcore
+import model.controller
+import managers.mapper_manager
 from mockito import mock
-from model import api
-from model.workspace import WorkspaceOnCouch, WorkspaceManager
-from persistence.orm import WorkspacePersister
+from persistence.mappers.abstract_mapper import NullPersistenceManager
 
 import test_cases.common as test_utils
 
 
 class UpdatesTests(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.model_controller = controller.ModelController(mock())
-        api.setUpAPIs(cls.model_controller)
-        cls.wm = WorkspaceManager(cls.model_controller,
-                                  mock(plcore.PluginController))
-        cls.temp_workspace = cls.wm.createWorkspace(
-            test_utils.new_random_workspace_name(),
-            workspaceClass=WorkspaceOnCouch)
-
-        cls.wm.setActiveWorkspace(cls.temp_workspace)
-        WorkspacePersister.stopThreads()
-
     def setUp(self):
-        pass
-
-    @classmethod
-    def tearDownClass(cls):
-        WorkspacePersister.stopThreads()
-        cls.wm.removeWorkspace(cls.temp_workspace.name)
+        self._mappers_manager = managers.mapper_manager.MapperManager()
+        self._persistence_manager = NullPersistenceManager()
+        self._mappers_manager.createMappers(self._persistence_manager)
+        self.model_controller = model.controller.ModelController(
+            mock(), self._mappers_manager)
 
     def tearDown(self):
         pass
 
-    def testAddHost(self):
-        """ This test case creates a host within the Model Controller context
-        then checks it's vality"""
+    def test_add_host_and_generate_solvable_update(self):
+        """
+        This test case creates a host within the Model Controller context
+        and then creates another with the same key elements, but different
+        non-key attributes with default value to generate an automatic
+        solvable update
+        """
         # When
         hostname = 'host'
-        test_utils.create_host(self, host_name=hostname, os='windows')
+        host1a = test_utils.create_host(self, host_name=hostname, os='windows')
+
+        host = self._mappers_manager.find(host1a.getID())
+        self.assertEquals(
+            host.getOS(),
+            'windows',
+            'Host\'s OS should be windows')
+
         # Then, we generate an update
-        test_utils.create_host(self, host_name=hostname, os='linux')
+        host1b = test_utils.create_host(self, host_name=hostname, os='unknown')
 
-        self.assertEquals(len(self.model_controller.getConflicts()), 1,
-                          'Update not generated')
+        self.assertEquals(
+            host1a.getID(),
+            host1b.getID(),
+            'Both hosts should have the same id')
 
-        conflict = self.model_controller.getConflicts()[0]
+        self.assertEquals(
+            len(self.model_controller.getConflicts()),
+            0,
+            'Update was generated')
+
+        host = self._mappers_manager.find(host1a.getID())
+
+        self.assertEquals(
+            host.getOS(),
+            'windows',
+            'Host\'s OS should still be windows')
+
+    def test_add_host_and_generate_solvable_update_with_edition(self):
+        """
+        This test case creates a host with a default value in a non-key
+        attrribute within the Model Controller context and then creates
+        another with the same key elements, but different non-key
+        attributes to generate an automatic solvable update
+        """
+        # When
+        hostname = 'host'
+        host1a = test_utils.create_host(self, host_name=hostname, os='unknown')
+
+        host = self._mappers_manager.find(host1a.getID())
+
+        self.assertEquals(
+            host.getOS(),
+            'unknown',
+            'Host\'s OS should be unknown')
+
+        # Then, we generate an update
+        host1b = test_utils.create_host(self, host_name=hostname, os='windows')
+
+        self.assertEquals(
+            host1a.getID(),
+            host1b.getID(),
+            'Both hosts should have the same id')
+
+        self.assertEquals(
+            len(self.model_controller.getConflicts()),
+            0,
+            'Update was generated')
+
+        host = self._mappers_manager.find(host1a.getID())
+
+        self.assertEquals(
+            host.getOS(),
+            'windows',
+            'Host\'s OS should now be windows')
+
+    def test_add_host_and_generate_unsolvable_update(self):
+        """
+        This test case creates a host within the Model Controller
+        context and then creates another with the same key elements,
+        but different non-key attributes to generate an update to
+        be resolved by the user
+        """
+        # When
+        hostname = 'host'
+        host1a = test_utils.create_host(self, host_name=hostname, os='windows')
+
+        host = self._mappers_manager.find(host1a.getID())
+
+        self.assertEquals(
+            host.getOS(),
+            'windows',
+            'Host\'s OS should be windows')
+
+        # Then, we generate an update
+        host1b = test_utils.create_host(self, host_name=hostname, os='linux')
+
+        self.assertEquals(
+            host1a.getID(),
+            host1b.getID(),
+            'Both hosts should have the same id')
+
+        self.assertEquals(
+            len(self.model_controller.getConflicts()),
+            1,
+            'Update was not generated')
+
+        host = self._mappers_manager.find(host1a.getID())
+
+        self.assertEquals(
+            host.getOS(),
+            'windows',
+            'Host\'s OS should still be windows')
+
+        self.assertEquals(
+            len(host.getUpdates()),
+            1,
+            'The host should have a pending update')
 
 
 if __name__ == '__main__':

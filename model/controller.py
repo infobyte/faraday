@@ -300,7 +300,8 @@ class ModelController(threading.Thread):
         notifier.conflictResolution(self.getConflicts())
 
     def resolveConflict(self, conflict, kwargs):
-        if conflict.resolve(kwargs):
+        if self.__edit(conflict.getFirstObject(), **kwargs):
+            conflict.getFirstObject().updateResolved(conflict)
             if conflict.getModelObjectType() == "Interface":
                 ipv4 = kwargs['ipv4']
                 ipv6 = kwargs['ipv6']
@@ -320,7 +321,7 @@ class ModelController(threading.Thread):
                         self.treeWordsTries.addWord(h)
 
             notifier.conflictUpdate(-1)
-            notifier.editHost(conflict.getFirstObject().getHost())
+            #notifier.editHost(conflict.getFirstObject().getHost())
             #self._notifyModelUpdated()
 
     def removeConflictsByObject(self, obj):
@@ -445,16 +446,23 @@ class ModelController(threading.Thread):
 
     def __add(self,  obj, parent_id=None, *args):
         dataMapper = self.mappers_manager.getMapper(obj.__class__.__name__)
-        object_parent = self.mappers_manager.find(parent_id)
-        if object_parent:
-            object_parent.addChild(obj)
-        dataMapper.save(obj)
-        self.treeWordsTries.addWord(obj.getName())
-
-        if obj.__class__.__name__ == model.hosts.Host.__name__:
-            notifier.addHost(obj)
+        old_obj = dataMapper.find(obj.getID())
+        if old_obj:
+            if not self.addUpdate(old_obj, obj):
+                return False
+            dataMapper.save(old_obj)
+            notifier.editHost(old_obj.getHost())
         else:
-            notifier.editHost(obj.getHost())
+            object_parent = self.mappers_manager.find(parent_id)
+            if object_parent:
+                object_parent.addChild(obj)
+            dataMapper.save(obj)
+            self.treeWordsTries.addWord(obj.getName())
+            if obj.__class__.__name__ == model.hosts.Host.__name__:
+                notifier.addHost(obj)
+            else:
+                notifier.editHost(obj.getHost())
+
         return True
 
     def __edit(self, obj, *args, **kwargs):
@@ -478,6 +486,8 @@ class ModelController(threading.Thread):
 
             if obj.getName():
                 self.treeWordsTries.removeWord(obj.getName())
+
+            self.removeConflictsByObject(obj)
 
             self.mappers_manager.remove(objId)
 
@@ -805,7 +815,7 @@ class ModelController(threading.Thread):
     def newHost(self, name, os="Unknown"):
         return model.common.factory.createModelObject(
             model.hosts.Host.class_signature,
-            name, os=os, parent=None)
+            name, os=os, parent_id=None)
 
     def newInterface(self, name, mac="00:00:00:00:00:00",
                      ipv4_address="0.0.0.0",
@@ -822,19 +832,19 @@ class ModelController(threading.Thread):
             ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
             ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
             network_segment=network_segment,
-            hostname_resolution=hostname_resolution)
+            hostname_resolution=hostname_resolution, parent_id=parent_id)
 
     def newService(self, name, protocol="tcp?", ports=[], status="running",
                    version="unknown", description="", parent_id=None):
         return model.common.factory.createModelObject(
             model.hosts.Service.class_signature,
             name, protocol=protocol, ports=ports, status=status,
-            version=version, description=description)
+            version=version, description=description, parent_id=parent_id)
 
     def newVuln(self, name, desc="", ref=None, severity="", parent_id=None):
         return model.common.factory.createModelObject(
             model.common.ModelObjectVuln.class_signature,
-            name, desc=desc, ref=ref, severity=severity)
+            name, desc=desc, ref=ref, severity=severity, parent_id=parent_id)
 
     def newVulnWeb(self, name, desc="", ref=None, severity="", website="",
                    path="", request="", response="", method="", pname="",
@@ -844,17 +854,17 @@ class ModelController(threading.Thread):
             name, desc=desc, ref=ref, severity=severity,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
-            category=category)
+            category=category, parent_id=parent_id)
 
     def newNote(self, name, text, parent_id=None):
         return model.common.factory.createModelObject(
             model.common.ModelObjectNote.class_signature,
-            name, text=text)
+            name, text=text, parent_id=parent_id)
 
     def newCred(self, username, password, parent_id=None):
         return model.common.factory.createModelObject(
             model.common.ModelObjectCred.class_signature,
-            username, password=password)
+            username, password=password, parent_id=parent_id)
 
     def getHost(self, name):
         hosts_mapper = self.mappers_manager.getMapper(model.hosts.Host.__name__)

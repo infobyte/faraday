@@ -1,7 +1,7 @@
 function treemap(workspace, design, view){
 	        var margin = {top: 28, right: 10, bottom: 10, left: 10},
-            width = 250 - margin.left - margin.right,
-            height = 200 - margin.top - margin.bottom;
+            width = 160 - margin.left - margin.right,
+            height = 150 - margin.top - margin.bottom;
 
         var color = d3.scale.category20c();
 
@@ -95,8 +95,8 @@ function bar(workspace, design, view){
 	};
 
 	var margin = {top: 20, right: 20, bottom: 30, left: 40},
-	    width = 250 - margin.left - margin.right,
-	    height = 200 - margin.top - margin.bottom;
+	    width = 160 - margin.left - margin.right,
+	    height = 149 - margin.top - margin.bottom;
 
 	var x = d3.scale.ordinal()
 	    .rangeRoundBands([0, width], .1);
@@ -151,9 +151,25 @@ function bar(workspace, design, view){
 	      .attr("width", x.rangeBand())
 	      .attr("y", function(d) { return y(d.value); })
 	      .style("fill", function(d) {return colors[d.key]; })
+      	  .on("mouseover", mouseover)
 	      .attr("height", function(d) { return height - y(d.value); });
 	});
 
+	  // Add the mouseleave handler to the bounding circle.
+	  d3.select("#bar").on("mouseleave", mouseleave);
+
+
+	  function mouseleave(d) {
+	  	  d3.select("#string")
+      		.style("visibility", "hidden");
+	  }
+
+	function mouseover(d){
+	  var string = d.value;
+	  d3.select("#string")
+        .style("visibility", "visible")
+	    .text("Valor: " + string);
+	}
 	function type(d) {
 	  d.value = +d.value;
 	  return d;
@@ -194,8 +210,8 @@ function bar(workspace, design, view){
 
 function cake(workspace, design, view){
 	// Dimensions of sunburst.
-	var width = 250;
-	var height = 200;
+	var width = 160;
+	var height = 149;
 	var radius = Math.min(width, height) / 2;
 
 	// Breadcrumb dimensions: width, height, spacing, width of tip/tail.
@@ -281,43 +297,52 @@ function cake(workspace, design, view){
 	function mouseover(d) {
 
 	  var percentage = (100 * d.value / totalSize).toPrecision(3);
-	  var percentageString = d.key +": "+ d.value + " " + percentage + "%";
+	  var percentageString = d.key +": "+ d.value + " perc:" + percentage + "%";
 	  if (percentage < 0.1) {
 	    percentageString = d.value;
 	  }
 
-	  var sequenceArray = getAncestors(d);
+	   d3.select("#percentage")
+      .text(percentageString);
 
-	  // Fade all the segments.
-	  d3.selectAll("path")
-	      .style("opacity", 0.7);
+  d3.select("#explanation")
+      .style("visibility", "");
 
-	  // Then highlight only those that are an ancestor of the current segment.
-	  vis.selectAll("path")
-	      .filter(function(node) {
-	                return (sequenceArray.indexOf(node) >= 0);
-	              })
-	      .style("opacity", 1);
+  var sequenceArray = getAncestors(d);
+  updateBreadcrumbs(sequenceArray, percentageString);
+
+  // Fade all the segments.
+  d3.selectAll("path")
+      .style("opacity", 0.3);
+
+  // Then highlight only those that are an ancestor of the current segment.
+  vis.selectAll("path")
+      .filter(function(node) {
+                return (sequenceArray.indexOf(node) >= 0);
+              })
+      .style("opacity", 1);
 	}
 
 	// Restore everything to full opacity when moving off the visualization.
 	function mouseleave(d) {
+  // Hide the breadcrumb trail
+  d3.select("#trail")
+      .style("visibility", "hidden");
 
-	  // Hide the breadcrumb trail
-	  d3.select("#trail")
-	      .style("visibility", "hidden");
+  // Deactivate all segments during transition.
+  d3.selectAll("path").on("mouseover", null);
 
-	  // Deactivate all segments during transition.
-	  d3.selectAll("path").on("mouseover", null);
+  // Transition each segment to full opacity and then reactivate it.
+  d3.selectAll("path")
+      .transition()
+      .duration(1000)
+      .style("opacity", 1)
+      .each("end", function() {
+              d3.select(this).on("mouseover", mouseover);
+            });
 
-	  // Transition each segment to full opacity and then reactivate it.
-	  d3.selectAll("path")
-	      .transition()
-	      .duration(1000)
-	      .style("opacity", 1);
-
-	  d3.select("#explanation")
-	      .style("visibility", "hidden");
+  d3.select("#explanation")
+      .style("visibility", "hidden");
 	}
 
 	// Given a node in a partition layout, return an array of all of its ancestor
@@ -390,7 +415,7 @@ function cake(workspace, design, view){
 
 	  // Now move and update the percentage at the end.
 	  d3.select("#trail").select("#endlabel")
-	      .attr("x", (nodeArray.length + 0.5) * (b.w + b.s + 10))
+	      .attr("x", (nodeArray.length) * (b.w + b.s + 70))
 	      .attr("y", b.h / 2)
 	      .attr("dy", "0.35em")
 	      .attr("text-anchor", "middle")

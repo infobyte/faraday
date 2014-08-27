@@ -75,7 +75,8 @@
             </aside>
             
             <section id="main" class="seccion clearfix">
-                <div id="sec" class="btn-group">
+                <div id="reportes" class="fila clearfix">
+                   <div id="sec" class="btn-group">
                     <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
                         <span class="glyphicon glyphicon-refresh"></span>
                     </button>
@@ -84,8 +85,7 @@
                     </button>
                     <ul id="nav" class="dropdown-menu" role="menu">
                     </ul><!-- navegacion de WS -->
-                </div>
-                <div id="reportes" class="fila clearfix">
+                   </div>
                 </div><!-- fin fila -->
             </section>
             <footer>
@@ -138,15 +138,15 @@ $(document).ready(function() {
     $('.workspace').append("<div class='reports'></div>");
 
 rutas = ["reports/compound.html?workspace="+workspace+"&design=hosts&view=compound","reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices","reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized","reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns","reports/commands.html?workspace="+workspace+"&design=commands&view=list"];
-var content_cake = "<div id='chart'><div id='explanation' style='visibility: hidden;''></div></div>";
+var content_cake = "<div id='sequence'></div><div id='chart'><div id='explanation' style='visibility: hidden;''></div></div>";
 
 $("#reportes").append("<ul class='d3'><li><div class='columna untercio'><article id='treemap' style='height:20%'><header><h2>Treemap</h2><form>"+
     "<label><input type='radio' name='mode' id='size' value='size' checked> Size</label>"+
       "<label><input type='radio' name='mode' id='count' value='count'> Count</label>"+
     "</form></article></header></div></li>"+
-    "<li><div class='columna untercio'><article id='bar' style='height:20%'><header><h2>Bar</h2><div id='string'></article></header></div></div></li>"+
+    "<li><div class='columna untercio'><article id='bar' style='height:20%'><div id='string'></div><header><h2>Bar</h2></header><div id='string'></article></div></div></li>"+
     "<li><div class='columna untercio'><article id='cake' style='height:20%'><header><h2>Chart</h2></header>"+ content_cake +"</article></div></li></ul>"+
-    "<div id='compound'></div><div id='vulns'></div><div id='list'></div></div><div id='byservices'></div><div id='summarized'>");
+    "<ul><li><div id='byservices'></div></li><li><div id='vulns'></div></li></ul><div id='compound'></div><div id='list'></div></div><div id='summarized'></div>");
 design = "hosts";
 view = "byservices";
 treemap(workspace, design, view);

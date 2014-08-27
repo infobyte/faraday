@@ -159,7 +159,6 @@ h2 {
 	font-size:17px!important;
 	font-weight: bold!important;
 	text-align: left;
-	margin-top:45px!important;
 }
 .oculto {display:none;}
 
@@ -184,11 +183,10 @@ h2 {
 	.dostercios {width: 567px;}
 	.uncuarto {width: 200px;}
 	.trescuartos {width: 640px;}
-	.unquinto {width: 120px;}
+	.unquinto {width: 85px;}
 	.unsexto {width: 85px;}
 	.dosquintos {width: 332px;}
 	.tresquintos {width: 508px;}
-
 ul {margin-bottom: 20px;}
 
 #cont {
@@ -271,7 +269,7 @@ aside {
 	width: 93%;
 	float: left;
 }
-
+.main{overflow-y: auto;height: 340px; width: 308px;}
 .seccion2 {
 	background: #E8EFF0;
 	float: left;
@@ -280,6 +278,10 @@ aside {
 	max-height: 533px;
 	margin-bottom: 6%;
 	overflow-x: hidden;
+}
+article.untercio{
+	width: 293px;
+	height: 380px;
 }
 .untercio article{
 	height: 20%;
@@ -558,6 +560,7 @@ label {
 }
 #sec {
 	float: right;
+	margin-top: -75px;
 }
 * { /* compatibilidad entre nuestros estilos y los de bootstrap */ 
 	-moz-box-sizing: content-box !important;
@@ -570,7 +573,7 @@ label {
 form {
  position: absolute;
  right: 10px;
- top: 10px;
+ top: 45px;
 }
 .node {
  border: solid 1px white;
@@ -580,6 +583,7 @@ form {
  position: absolute;
  text-indent: 2px;
 }
+ul.d3 .untercio{width: 200px;}
 
 .d3 li{
 	float: left;
@@ -606,4 +610,20 @@ form {
 
 .x.axis path {
   display: none;
+}
+
+#sequence { 
+  height: 0px;
+}
+#sequence text, #legend text {
+  font-weight: 600;
+  fill: #fff;
+}
+#string{position: absolute;margin-top: 40px;visibility: hidden;}
+#chart {
+  position: relative;
+}
+
+#chart path {
+  stroke: #fff;
 }

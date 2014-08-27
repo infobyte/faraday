@@ -128,31 +128,16 @@ function bar(workspace, design, view){
 	  x.domain(data.map(function(d) { return d.key; }));
 	  y.domain([0, d3.max(data, function(d) { return d.value; })]);
 
-	  svg.append("g")
-	      .attr("class", "x axis")
-	      .attr("transform", "translate(0," + height + ")")
-	      .call(xAxis);
-
-	  svg.append("g")
-	      .attr("class", "y axis")
-	      .call(yAxis)
-	    .append("text")
-	      .attr("transform", "rotate(-90)")
-	      .attr("y", 6)
-	      .attr("dy", ".71em")
-	      .style("text-anchor", "end")
-	      .text("Value");
-
 	  svg.selectAll(".bar")
 	      .data(data)
 	    .enter().append("rect")
 	      .attr("class", "bar")
 	      .attr("x", function(d) { return x(d.key); })
-	      .attr("width", x.rangeBand())
 	      .attr("y", function(d) { return y(d.value); })
 	      .style("fill", function(d) {return colors[d.key]; })
       	  .on("mouseover", mouseover)
-	      .attr("height", function(d) { return height - y(d.value); });
+	      .attr("height", function(d) { return height - y(d.value); })
+	      .attr("width", 20);
 	});
 
 	  // Add the mouseleave handler to the bounding circle.
@@ -160,15 +145,18 @@ function bar(workspace, design, view){
 
 
 	  function mouseleave(d) {
-	  	  d3.select("#string")
+	  	  d3.select("#load_service")
       		.style("visibility", "hidden");
 	  }
 
 	function mouseover(d){
-	  var string = d.value;
-	  d3.select("#string")
-        .style("visibility", "visible")
-	    .text("Valor: " + string);
+	$("body").append("<div id='load_service'></div>");
+	    var name = "http"
+		var pedido = load_hosts_by_service(name, true);
+		$("#load_service").html("<div id='contenido'>" + pedido +"</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px' id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
+		var elemento = $(this).position();
+		$("#load_service").css('top',elemento.top);
+		$("#load_service").css('left',elemento.left);
 	}
 	function type(d) {
 	  d.value = +d.value;
@@ -297,7 +285,7 @@ function cake(workspace, design, view){
 	function mouseover(d) {
 
 	  var percentage = (100 * d.value / totalSize).toPrecision(3);
-	  var percentageString = d.key +": "+ d.value + " perc:" + percentage + "%";
+	  var percentageString = d.value; 
 	  if (percentage < 0.1) {
 	    percentageString = d.value;
 	  }
@@ -373,7 +361,7 @@ function cake(workspace, design, view){
 	function breadcrumbPoints(d, i) {
 	  var points = [];
 	  points.push("0,0");
-	  points.push(b.w + ",0");
+	  points.push(b.w  + ",0");
 	  points.push(b.w + b.t + "," + (b.h / 2));
 	  points.push(b.w + "," + b.h);
 	  points.push("0," + b.h);
@@ -389,7 +377,7 @@ function cake(workspace, design, view){
 	  // Data join; key function combines name and depth (= position in sequence).
 	  var g = d3.select("#trail")
 	      .selectAll("g")
-	      .data(nodeArray, function(d) { return d.key + d.depth; });
+	      .data(nodeArray, function(d) { return d.key; });
 
 	  // Add breadcrumb and label for entering nodes.
 	  var entering = g.enter().append("svg:g");
@@ -415,7 +403,7 @@ function cake(workspace, design, view){
 
 	  // Now move and update the percentage at the end.
 	  d3.select("#trail").select("#endlabel")
-	      .attr("x", (nodeArray.length) * (b.w + b.s + 70))
+	      .attr("x", (nodeArray.length) * (b.w + b.s + 25))
 	      .attr("y", b.h / 2)
 	      .attr("dy", "0.35em")
 	      .attr("text-anchor", "middle")

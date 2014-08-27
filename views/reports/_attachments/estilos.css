@@ -176,6 +176,7 @@ h2 {
 	height: 422px;
 	width: 492px;
 	overflow-y: scroll;
+	margin-top: -185px;
 }
 	.full {width: 860px;}
 	.unmedio, .doscuartos {width: 420px;}
@@ -269,7 +270,7 @@ aside {
 	width: 93%;
 	float: left;
 }
-.main{overflow-y: auto;height: 340px; width: 308px;}
+.main{overflow-y: auto;height: 340px; width: 308px;overflow-x: hidden;}
 .seccion2 {
 	background: #E8EFF0;
 	float: left;
@@ -583,7 +584,7 @@ form {
  position: absolute;
  text-indent: 2px;
 }
-ul.d3 .untercio{width: 200px;}
+ul.d3 .untercio{width: 160px;}
 
 .d3 li{
 	float: left;

@@ -47,6 +47,9 @@ class ConnectorContainer(object):
 class DbManager(object):
 
     def __init__(self):
+        self.load()
+
+    def load(self): 
         self.couchmanager = CouchDbManager(CONF.getCouchURI())
         self.fsmanager = FileSystemManager()
         self.managers = {
@@ -61,6 +64,7 @@ class DbManager(object):
                 if manag.isAvailable()] 
 
     def _loadDbs(self):
+        self.dbs = {}
         for dbname, connector in self.fsmanager.getDbs().items():
             self.dbs[dbname] = ConnectorContainer(dbname, connector, DBTYPE.FS)
         for dbname, connector in self.couchmanager.getDbs().items():
@@ -102,6 +106,9 @@ class DbManager(object):
 
     def getDbType(self, dbname):
         return self.dbs.get(dbname).getType()
+
+    def reloadConfig(self):
+        self.load() 
 
 class DbConnector(object):
     def __init__(self, type=None):

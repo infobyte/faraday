@@ -18,6 +18,7 @@ from gui.qt3.toolbars import *
 from gui.qt3.customevents import *
 from gui.qt3.notification import NotificationsDialog
 from model.guiapi import notification_center as notifier
+from persistence.persistence_managers import CouchDbManager
 
 
 import model.api
@@ -523,11 +524,11 @@ class MainWindow(qt.QMainWindow):
             repourl, isReplicated, replics = repoconfig_dialog.getData()
             api.devlog("repourl = %s" % repourl)
             wm = self._main_app.getWorkspaceManager()
-            # if not CouchdbManager.testCouch(repourl):
-            #     self.showPopup("""
-            #     Repository URL Not valid, check if
-            #     service is available and that connection string is from
-            #     the form: http[s]://hostname:port""")
+            if not CouchDbManager.testCouch(repourl):
+                self.showPopup("""
+                Repository URL Not valid, check if
+                service is available and that connection string is from
+                the form: http[s]://hostname:port""")
             #     repourl, isReplicated, replics = "", False, ""
 
             CONF.setCouchUri(repourl)

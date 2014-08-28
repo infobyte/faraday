@@ -536,6 +536,8 @@ class MainWindow(qt.QMainWindow):
             CONF.setCouchReplics(replics)
             CONF.saveConfig()
 
+            wm.reloadConfig()
+
             mwin = self._main_app.getMainWindow()
             mwin.getWorkspaceTreeView().loadAllWorkspaces()
             mwin.getWorkspaceTreeView().setDefaultWorkspace()

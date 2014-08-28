@@ -73,7 +73,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         workspaceMapper = mock()
 
         when(mappersManager).getMapper(Workspace.__name__).thenReturn(workspaceMapper)
-        when(workspaceMapper).save(any()).thenReturn(True) 
+        when(mappersManager).save(any()).thenReturn(True) 
         when(dbManager).createDb('test_workspace', DBTYPE.FS).thenReturn(dbConnector)
         when(mappersManager).createMappers(dbConnector).thenReturn(True) 
 
@@ -82,7 +82,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
                                         DBTYPE.FS)
 
         verify(mappersManager).createMappers(dbConnector)
-        verify(workspaceMapper).save(any())
+        verify(mappersManager).save(any())
 
         self.assertTrue(workspace, 'workspace not instantiated')
         self.assertEquals(workspace.name, 'test_workspace',
@@ -152,7 +152,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
 
         opened_workspace = workspace_manager.openWorkspace('test_workspace')
 
-        verify(dbConnector).setChangesCallback(changesController)
+        verify(changesController).watch(mappersManager, dbConnector)
 
     def testCreateWorkspaceSetsChangesCallback(self):
         dbManager = mock()
@@ -169,7 +169,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         workspace = workspace_manager.createWorkspace('test_workspace', 'a test workspace',
                                         DBTYPE.FS)
 
-        verify(dbConnector).setChangesCallback(changesController)
+        verify(changesController).watch(mappersManager, dbConnector)
 
     def testOpenWorkspaceNoneExisting(self):
         dbManager = mock()
@@ -253,6 +253,38 @@ class UnitTestWorkspaceManager(unittest.TestCase):
 
         self.assertListEqual(['CouchDB', 'FS'], retrievedTypes, 
                                     "Workspaces available Types not set")
+
+    def testCloseWorkspace(self):
+        dbManager = mock()
+        mappersManager = mock()
+        changesController = mock()
+        reportManager = mock()
+
+
+        workspace_manager = WorkspaceManager(dbManager,
+                                                mappersManager,
+                                                changesController,
+                                                reportManager)
+
+        workspace_manager.closeWorkspace()
+        verify(changesController).unwatch()
+
+    def testResourceManager(self):
+        dbManager = mock()
+        mappersManager = mock()
+        changesController = mock()
+        reportManager = mock()
+
+
+        workspace_manager = WorkspaceManager(dbManager,
+                                                mappersManager,
+                                                changesController,
+                                                reportManager)
+
+        workspace_manager.resource()
+
+        verify(dbManager).reloadConfig()
+
 
 
 

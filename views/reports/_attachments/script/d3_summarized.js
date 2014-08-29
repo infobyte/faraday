@@ -1,7 +1,7 @@
 function treemap(workspace, design, view){
 	        var margin = {top: 28, right: 10, bottom: 10, left: 10},
             width = 160 - margin.left - margin.right,
-            height = 150 - margin.top - margin.bottom;
+            height = 155 - margin.top - margin.bottom;
 
         var color = d3.scale.category20c();
 
@@ -32,7 +32,7 @@ function treemap(workspace, design, view){
               
           d3.select("#size").on("click", function() {
              div.selectAll("div")
-                 .data(treemap.value(function(d) { return d.value - 10; }))
+                 .data(treemap.value(function(d) {return d.value - 10; }))
                .transition()
                  .duration(1500)
                  .call(position);
@@ -64,7 +64,7 @@ function treemap(workspace, design, view){
         	var arr = [];
 	        var row = root.rows;
 	        for (i = 0; i < row.length; i++) {
-	            arr.push(row[i].value,row[i].key);
+	            arr.push([row[i].value,row[i].key]);
 	        }
 	        obj = [];
 	        var obj = row.sort(function(a,b){ 
@@ -86,17 +86,12 @@ function treemap(workspace, design, view){
 
 function bar(workspace, design, view){
 	// Mapping of step names to colors.
-	var colors = {
-	  "low": "#A1CE31",
-	  "med": "#DFBF35",
-	  "critical": "#8B00FF",
-	  "high": "#B80000",
-	  "info": "#ddd"
-	};
 
 	var margin = {top: 20, right: 20, bottom: 30, left: 40},
 	    width = 160 - margin.left - margin.right,
 	    height = 149 - margin.top - margin.bottom;
+
+	var color = d3.scale.category20c();
 
 	var x = d3.scale.ordinal()
 	    .rangeRoundBands([0, width], .1);
@@ -118,30 +113,33 @@ function bar(workspace, design, view){
 	    .attr("height", height + margin.top + margin.bottom)
 	  .append("g")
 	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	var hurl	= "/" + workspace + "/_design/" + design + "/_view/hosts";
+	var surl = "/" + workspace + "/_design/" + design + "/_view/byservicecount?group=true";
 
-	json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
-	d3.json(json_url, function(error, root) {
-	    var jotason = [];
-	    jotason["children"] = root["rows"];
-	  var data = get_low(jotason);
+	var hosts	= new Object();
 
-	  x.domain(data.map(function(d) { return d.key; }));
-	  y.domain([0, d3.max(data, function(d) { return d.value; })]);
+	d3.json(surl, function(error, root) {
+          var sort_jotason = sorter_jotason(root);
+          var jotason = {};
+          jotason["children"] = sort_jotason;
+          var data = jotason["children"];
+
+	  x.domain(data.map(function(d) { return d[1]; }));
+	  y.domain([0, d3.max(data, function(d) { return d[0]; })]);
 
 	  svg.selectAll(".bar")
 	      .data(data)
 	    .enter().append("rect")
 	      .attr("class", "bar")
-	      .attr("x", function(d) { return x(d.key); })
-	      .attr("y", function(d) { return y(d.value); })
-	      .style("fill", function(d) {return colors[d.key]; })
+	      .attr("x", function(d) { return x(d[1]); })
+	      .attr("y", function(d) { return y(d[0] - 1); })
+	      .style("fill", function(d) { return color(Math.floor(Math.random()*68)); })
       	  .on("mouseover", mouseover)
-	      .attr("height", function(d) { return height - y(d.value); })
-	      .attr("width", 20);
+	      .attr("height", function(d) { return height - y(d[0]); })
+	      .attr("width", 30);
 	});
-
 	  // Add the mouseleave handler to the bounding circle.
-	  d3.select("#bar").on("mouseleave", mouseleave);
+	  d3.select(".columna").on("mouseleave", mouseleave);
 
 
 	  function mouseleave(d) {
@@ -150,50 +148,54 @@ function bar(workspace, design, view){
 	  }
 
 	function mouseover(d){
+		hosts	= get_obj(hurl);
+		var name = hosts[d[1]].name;
 	$("body").append("<div id='load_service'></div>");
-	    var name = "http"
-		var pedido = load_hosts_by_service(name, true);
-		$("#load_service").html("<div id='contenido'>" + pedido +"</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px' id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
+		$("#load_service").html("<div id='contenido'><p>"+ name +"</p><p><b>"+ d[0] +"</b></p></div>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
 		var elemento = $(this).position();
 		$("#load_service").css('top',elemento.top);
-		$("#load_service").css('left',elemento.left);
+		$("#load_service").css('left',elemento.left + 10);
 	}
 	function type(d) {
 	  d.value = +d.value;
 	  return d;
 	}
-	function get_low(jotason){
-	  var children = jotason["children"];
-	  for (i = 0; i < 5; i++) {
-	      jotason[i] = {};
-	      jotason[i].value = 0;
-	  }
-	  jotason[0].key = "info";
-	  jotason[1].key = "low";
-	  jotason[2].key = "med";
-	  jotason[3].key = "high";
-	  jotason[4].key = "critical";
-
-	  for(i = 0; i < children.length; i++){
-	    if(children[i].key == 1 || children[i].key == "Information" || children[i].key == "info"){
-	      jotason[0].value += children[i].value;
-	    }
-	    if(children[i].key == 2 || children[i].key == "Low"){
-	      jotason[1].value += children[i].value;
-	    }
-	    if(children[i].key == 3 || children[i].key == "Medium"){
-	      jotason[2].value += children[i].value;
-	    }
-	    if(children[i].key == 4 || children[i].key == "High"){
-	      jotason[3].value += children[i].value;
-	    }
-	    if(children[i].key == 5 || children[i].key == "Critical"){
-	      jotason[4].value += children[i].value;
-	    }
-	  }
-	  delete jotason["children"]
-	  return jotason;
-	}
+        function sorter_jotason(root){
+        	var arr = [];
+	        var row = root.rows;
+	        for (i = 0; i < row.length; i++) {
+	            arr.push([row[i].value,row[i].key]);
+	        }
+	        obj = [];
+	        var obj = arr.sort(function(a,b){ 
+	            if (a[0] === b[0]) {
+	                return 0;
+	            }
+	            else {
+	                return (a[0] > b[0]) ? -1 : 1;
+	            }
+	            return obj;
+	        });
+	        var objeto = [];
+	        for(i = 0; i < 3; i++){
+	        	objeto.push(obj[i]);
+	        }
+	        return objeto;
+        }
+        function get_obj(ourl) {
+		var ls = {};
+		$.ajax({
+			dataType: "json",
+			url: ourl,
+			async: false,
+			success: function(data) {
+				$.each(data.rows, function(n, obj){
+					ls[obj.key] = obj.value;
+				});	
+			}
+		});
+		return ls;
+		}	
 }
 
 function cake(workspace, design, view){
@@ -240,7 +242,7 @@ function cake(workspace, design, view){
 	    d3.json(json_url, function(error, root) {
 	    var jotason = {};
 	    jotason["children"] = root["rows"];
-	    var json_finish = get_low(jotason);
+	    var json_finish = group_vulns(jotason);
 	    createVisualization(json_finish);
 	  });
 
@@ -272,7 +274,7 @@ function cake(workspace, design, view){
 	      .style("fill", function(d) {return colors[d.key]; })
 	      .style("stroke-width", "0.5")
 	      .style("opacity", 1)
-	      .on("mouseover", mouseover);
+	      .on("mouseover", mouseover)
 
 	  // Add the mouseleave handler to the bounding circle.
 	  d3.select("#container").on("mouseleave", mouseleave);
@@ -285,7 +287,7 @@ function cake(workspace, design, view){
 	function mouseover(d) {
 
 	  var percentage = (100 * d.value / totalSize).toPrecision(3);
-	  var percentageString = d.value; 
+	   var percentageString = percentage + "%";
 	  if (percentage < 0.1) {
 	    percentageString = d.value;
 	  }
@@ -403,7 +405,7 @@ function cake(workspace, design, view){
 
 	  // Now move and update the percentage at the end.
 	  d3.select("#trail").select("#endlabel")
-	      .attr("x", (nodeArray.length) * (b.w + b.s + 25))
+	      .attr("x", (nodeArray.length) * (b.w + b.s + 30))
 	      .attr("y", b.h / 2)
 	      .attr("dy", "0.35em")
 	      .attr("text-anchor", "middle")
@@ -456,7 +458,7 @@ function cake(workspace, design, view){
 	    legend.style("visibility", "hidden");
 	  }
 	}
-	function get_low(jotason){
+	function group_vulns(jotason){
 	  var children = jotason["children"];
 	  for (i = 0; i < 5; i++) {
 	      jotason[i] = {};

@@ -3,9 +3,6 @@
 // See the file 'doc/LICENSE' for the license information
 
 function(doc) {
-    var parent = "None"
-    if (doc.parent) {
-        parent = doc.parent
-    }
-    emit([parent, doc.type], doc._id);
+    parent = doc.parent
+    emit(parent, {'_id': doc._id, 'type': doc.type});
 }

@@ -99,9 +99,8 @@ class HostMapperTestSuite(unittest.TestCase):
             "os": "linux",
             "default_gateway": None
         }
-        pmanager = mock(NullPersistenceManager)
-        when(pmanager).getDocument(any(str)).thenReturn(doc)
-        self.hmapper.setPersistenceManager(pmanager)
+
+        when(self.hmapper.pmanager).getDocument("1234").thenReturn(doc)
 
         host = self.hmapper.find("1234")
         self.assertNotEquals(
@@ -277,9 +276,7 @@ class InterfaceMapperTestSuite(unittest.TestCase):
                 "filtered": 4,
             }
         }
-        pmanager = mock(NullPersistenceManager)
-        when(pmanager).getDocument(any(str)).thenReturn(doc)
-        self.imapper.setPersistenceManager(pmanager)
+        when(self.imapper.pmanager).getDocument("1234").thenReturn(doc)
 
         iface = self.imapper.find("1234")
         self.assertNotEquals(
@@ -411,9 +408,7 @@ class ServiceMapperTestSuite(unittest.TestCase):
             "ports": [80],
             "version": "Apache 2.4"
         }
-        pmanager = mock(NullPersistenceManager)
-        when(pmanager).getDocument(any(str)).thenReturn(doc)
-        self.smapper.setPersistenceManager(pmanager)
+        when(self.smapper.pmanager).getDocument("1234").thenReturn(doc)
 
         srv = self.smapper.find("1234")
         self.assertNotEquals(
@@ -517,9 +512,7 @@ class WorkspaceMapperTestSuite(unittest.TestCase):
             "sdate": time(),
             "fdate": time()
         }
-        pmanager = mock(NullPersistenceManager)
-        when(pmanager).getDocument(any(str)).thenReturn(doc)
-        self.wmapper.setPersistenceManager(pmanager)
+        when(self.wmapper.pmanager).getDocument("workspace_test").thenReturn(doc)
 
         workspace = self.wmapper.find("workspace_test")
         self.assertNotEquals(
@@ -681,8 +674,8 @@ class CompositeMapperTestSuite(unittest.TestCase):
         pmanager = mock(NullPersistenceManager)
         when(pmanager).getDocument("1234").thenReturn(doc_host)
         when(pmanager).getDocument("5678").thenReturn(doc_interface)
-        when(pmanager).getDocsByFilter(any(str), any(str)).thenReturn([])
-        when(pmanager).getDocsByFilter("1234", "Interface").thenReturn(["5678"])
+        when(pmanager).getDocsByFilter(any(str), None).thenReturn([])
+        when(pmanager).getDocsByFilter("1234", None).thenReturn([{'_id': "5678", 'type': "Interface"}])
         self.mapper_manager.createMappers(pmanager)
 
         host = self.mapper_manager.find("1234")
@@ -783,8 +776,8 @@ class CompositeMapperTestSuite(unittest.TestCase):
         when(pmanager).getDocument("1234").thenReturn(doc_host)
         when(pmanager).getDocument("5678").thenReturn(doc_interface1)
         when(pmanager).getDocument("6789").thenReturn(doc_interface2)
-        when(pmanager).getDocsByFilter(any(str), any(str)).thenReturn([])
-        when(pmanager).getDocsByFilter("1234", "Interface").thenReturn(["5678", "6789"])
+        when(pmanager).getDocsByFilter(any(str), None).thenReturn([])
+        when(pmanager).getDocsByFilter("1234", None).thenReturn([{'_id': "5678", 'type': "Interface"}, {'_id': "6789", 'type': "Interface"}])
         self.mapper_manager.createMappers(pmanager)
 
         host = self.mapper_manager.find("1234")
@@ -906,9 +899,9 @@ class CompositeMapperTestSuite(unittest.TestCase):
         when(pmanager).getDocument("5678").thenReturn(doc_interface)
         when(pmanager).getDocument("abcd").thenReturn(doc_service1)
         when(pmanager).getDocument("efgh").thenReturn(doc_service2)
-        when(pmanager).getDocsByFilter(any(str), any(str)).thenReturn([])
-        when(pmanager).getDocsByFilter("1234", "Interface").thenReturn(["5678"])
-        when(pmanager).getDocsByFilter("5678", "Service").thenReturn(["abcd", "efgh"])
+        when(pmanager).getDocsByFilter(any(str), None).thenReturn([])
+        when(pmanager).getDocsByFilter("1234", None).thenReturn([{'_id': "5678", 'type': "Interface"}])
+        when(pmanager).getDocsByFilter("5678", None).thenReturn([{'_id': "abcd", 'type': "Service"}, {'_id': "efgh", 'type': "Service"}])
         self.mapper_manager.createMappers(pmanager)
 
         iface = self.mapper_manager.find("5678")
@@ -1004,10 +997,11 @@ class CompositeMapperTestSuite(unittest.TestCase):
         when(pmanager).getDocument("note1").thenReturn(doc_note)
         when(pmanager).getDocument("vuln1").thenReturn(doc_vuln)
         when(pmanager).getDocument("cred1").thenReturn(doc_cred)
-        when(pmanager).getDocsByFilter(any(str), any(str)).thenReturn([])
-        when(pmanager).getDocsByFilter("1234", "ModelObjectNote").thenReturn(["note1"])
-        when(pmanager).getDocsByFilter("1234", "ModelObjectVuln").thenReturn(["vuln1"])
-        when(pmanager).getDocsByFilter("1234", "ModelObjectCred").thenReturn(["cred1"])
+        when(pmanager).getDocsByFilter(any(str), None).thenReturn([])
+        when(pmanager).getDocsByFilter("1234", None).thenReturn(
+            [{'_id': "note1", 'type': "ModelObjectNote"},
+             {'_id': "vuln1", 'type': "ModelObjectVuln"},
+             {'_id': "cred1", 'type': "ModelObjectCred"}])
 
         self.mapper_manager.createMappers(pmanager)
 
@@ -1108,9 +1102,9 @@ class CompositeMapperTestSuite(unittest.TestCase):
         when(self.pmanager).getDocument("5678").thenReturn(doc_interface)
         when(self.pmanager).getDocument("abcd").thenReturn(doc_service1)
         when(self.pmanager).getDocument("efgh").thenReturn(doc_service2)
-        when(self.pmanager).getDocsByFilter(any(str), any(str)).thenReturn([])
-        when(self.pmanager).getDocsByFilter("1234", "Interface").thenReturn(["5678"])
-        when(self.pmanager).getDocsByFilter("5678", "Service").thenReturn(["abcd", "efgh"])
+        when(self.pmanager).getDocsByFilter(any(str), None).thenReturn([])
+        when(self.pmanager).getDocsByFilter("1234", None).thenReturn([{'_id': "5678", 'type': "Interface"}])
+        when(self.pmanager).getDocsByFilter("5678", None).thenReturn([{'_id': "abcd", 'type': "Service"}, {'_id': "efgh", 'type': "Service"}])
 
         self.mapper_manager.createMappers(self.pmanager)
 
@@ -1190,13 +1184,18 @@ class CompositeMapperTestSuite(unittest.TestCase):
             "default_gateway": None
         }
 
-        pmanager = mock(NullPersistenceManager)
+        pmanager = NullPersistenceManager()
         when(pmanager).getDocument("test_ws").thenReturn(doc_ws)
         when(pmanager).getDocument("1234").thenReturn(doc_host1)
         when(pmanager).getDocument("5678").thenReturn(doc_host2)
-        when(pmanager).getDocsByFilter(any(str), any(str)).thenReturn([])
-        when(pmanager).getDocsByFilter("test_ws", "Host").thenReturn(["1234", "5678"])
-        when(pmanager).getDocsByFilter(None, "Host").thenReturn([])
+        when(pmanager).getDocsByFilter(any, any).thenReturn([])
+        when(pmanager).getDocsByFilter(any(str), None).thenReturn([])
+        when(pmanager).getDocsByFilter(None, None).thenReturn([])
+        when(pmanager).getDocsByFilter("test_ws", None).thenReturn(
+            [{'_id': "1234", 'type': "Host"},
+             {'_id': "5678", 'type': "Host"}])
+        #when(pmanager).getDocsByFilter(None, "Host").thenReturn([])
+
         self.mapper_manager.createMappers(pmanager)
 
         ws = self.mapper_manager.find("test_ws")

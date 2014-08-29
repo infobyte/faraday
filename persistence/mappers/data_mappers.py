@@ -22,6 +22,12 @@ class ModelObjectMapper(AbstractMapper):
 
     def __init__(self, mmanager, pmanager=None):
         super(ModelObjectMapper, self).__init__(mmanager, pmanager)
+        self.children = []
+
+    def load(self, id):
+        self.children = self.findChildren(id)
+        mobj = super(ModelObjectMapper, self).load(id)
+        return mobj
 
     def serialize(self, mobj):
         return {
@@ -43,16 +49,11 @@ class ModelObjectMapper(AbstractMapper):
         mobj.setOwner(doc.get("owner"))
         mobj.setDescription(doc.get("description"))
         mobj.setMetadata(Metadata(doc.get("metadata")))
-        self.setNotes(mobj)
-        self.setVulns(mobj)
-        self.setCreds(mobj)
+        if self.children:
+            self.setNotes(mobj)
+            self.setVulns(mobj)
+            self.setCreds(mobj)
         return mobj
-
-    def setNotes(self, mobj):
-        notes = self.mapper_manager.getMapper(
-            ModelObjectNote.__name__).findForParent(mobj.getID())
-        notes_dict = {k: v for (k, v) in [(note.getID(), note) for note in notes]}
-        mobj.setNotes(notes_dict)
 
     def delete(self, mobj_id):
         mobj = self.mapper_manager.find(mobj_id)
@@ -60,24 +61,36 @@ class ModelObjectMapper(AbstractMapper):
             self.mapper_manager.remove(child.getID())
         super(ModelObjectMapper, self).delete(mobj_id)
 
+    def _loadChilds(self, type):
+        ids = [doc['_id']
+               for doc in self.children
+               if doc.get("type") == type]
+        mapper = self.mapper_manager.getMapper(type)
+        obj_dict = {}
+        for id in ids:
+            obj = mapper.load(id)
+            obj_dict[obj.getID()] = obj
+        return obj_dict
+
+    def setNotes(self, mobj):
+        mobj.setNotes(
+            self._loadChilds(ModelObjectNote.__name__))
+
     def setVulns(self, mobj):
-        vulns = self.mapper_manager.getMapper(
-            ModelObjectVuln.__name__).findForParent(mobj.getID())
-        vulns_dict = {k: v for (k, v) in [(vuln.getID(), vuln) for vuln in vulns]}
-        vulns_web = self.mapper_manager.getMapper(
-            ModelObjectVulnWeb.__name__).findForParent(mobj.getID())
-        vulns_web_dict = {k: v for (k, v) in [(vuln.getID(), vuln) for vuln in vulns_web]}
-        vulns_dict.update(vulns_web_dict)
-        mobj.setVulns(vulns_dict)
+        vulns = self._loadChilds(ModelObjectVuln.__name__)
+        vulns_web = self._loadChilds(ModelObjectVulnWeb.__name__)
+        vulns.update(vulns_web)
+        mobj.setVulns(vulns)
 
     def setCreds(self, mobj):
-        creds = self.mapper_manager.getMapper(
-            ModelObjectCred.__name__).findForParent(mobj.getID())
-        creds_dict = {k: v for (k, v) in [(cred.getID(), cred) for cred in creds]}
-        mobj.setCreds(creds_dict)
+        mobj.setCreds(
+            self._loadChilds(ModelObjectCred.__name__))
 
     def findForParent(self, obj_id):
         return self.findByFilter(parent=obj_id, type=self.mapped_class.__name__)
+
+    def findChildren(self, obj_id):
+        return self.findByFilter(parent=obj_id, type=None)
 
 
 class HostMapper(ModelObjectMapper):
@@ -104,13 +117,8 @@ class HostMapper(ModelObjectMapper):
         return host
 
     def setInterfaces(self, host):
-        interfaces = self.mapper_manager.getMapper(
-            Interface.__name__).findForHost(host.getID())
-        ifaces_dict = {k: v for (k, v) in [(iface.getID(), iface) for iface in interfaces]}
-        host.setInterfaces(ifaces_dict)
-
-    def findForWorkspace(self, wname):
-        return self.findForParent(wname) + self.findForParent(None)
+        host.setInterfaces(
+            self._loadChilds(Interface.__name__))
 
 
 class InterfaceMapper(ModelObjectMapper):
@@ -152,13 +160,8 @@ class InterfaceMapper(ModelObjectMapper):
         return iface
 
     def setServices(self, iface):
-        services = self.mapper_manager.getMapper(
-            Service.__name__).findForInterface(iface.getID())
-        services_dict = {k: v for (k, v) in [(srv.getID(), srv) for srv in services]}
-        iface.setServices(services_dict)
-
-    def findForHost(self, host_id):
-        return self.findForParent(host_id)
+        iface.setServices(
+            self._loadChilds(Service.__name__))
 
 
 class ServiceMapper(ModelObjectMapper):
@@ -188,9 +191,6 @@ class ServiceMapper(ModelObjectMapper):
             srv.addPort(int(port))
         super(ServiceMapper, self).unserialize(srv, doc)
         return srv
-
-    def findForInterface(self, iface_id):
-        return self.findForParent(iface_id)
 
 
 class NoteMapper(ModelObjectMapper):
@@ -238,9 +238,6 @@ class VulnMapper(ModelObjectMapper):
         super(VulnMapper, self).unserialize(vuln, doc)
         return vuln
 
-    def findForParent(self, obj_id):
-        return self.findByFilter(parent=obj_id, type=self.mapped_class.__name__)
-
 
 class VulnWebMapper(VulnMapper):
     mapped_class = ModelObjectVulnWeb
@@ -278,9 +275,6 @@ class VulnWebMapper(VulnMapper):
         super(VulnWebMapper, self).unserialize(vuln_web, doc)
         return vuln_web
 
-    def findForParent(self, obj_id):
-        return self.findByFilter(parent=obj_id, type=self.mapped_class.__name__)
-
 
 class CredMapper(ModelObjectMapper):
     mapped_class = ModelObjectCred
@@ -304,9 +298,6 @@ class CredMapper(ModelObjectMapper):
         super(CredMapper, self).unserialize(cred, doc)
         return cred
 
-    def findForParent(self, obj_id):
-        return self.findByFilter(parent=obj_id, type=self.mapped_class.__name__)
-
 
 class CommandRunMapper(AbstractMapper):
     mapped_class = CommandRunInformation
@@ -323,9 +314,6 @@ class CommandRunMapper(AbstractMapper):
         for k, v in doc.items():
             setattr(cmd, k, v)
         return cmd
-
-    def findForWorkspace(self, wname):
-        return self.findByFilter(parent=wname, type=self.mapped_class.__name__)
 
 
 class WorkspaceMapper(AbstractMapper):
@@ -347,20 +335,31 @@ class WorkspaceMapper(AbstractMapper):
             "fdate": obj.getFinishDate()
         }
 
+    def findChildren(self, obj_id):
+        return self.findByFilter(parent=obj_id, type=None)
+
     def unserialize(self, workspace, doc):
+        children = self.findChildren(
+            workspace.getID()) + self.findChildren(None)
         workspace.setName(doc.get("name", doc.get("_id")))
         workspace.setDescription(doc.get("description"))
         workspace.setCustomer(doc.get("customer"))
         workspace.setStartDate(doc.get("sdate"))
         workspace.setFinishDate(doc.get("fdate"))
-        self.setHosts(workspace)
+        self.setHosts(workspace, children)
         return workspace
 
-    def setHosts(self, workspace):
-        hosts = self.mapper_manager.getMapper(
-            Host.__name__).findForWorkspace(workspace.getID())
-        hosts_dict = {k: v for (k, v) in [(host.getID(), host) for host in hosts]}
-        workspace.setHosts(hosts_dict)
+    def setHosts(self, workspace, docs):
+        ids = [doc['_id']
+               for doc in docs
+               if doc.get("type") == Host.__name__]
+        mapper = self.mapper_manager.getMapper(Host.__name__)
+        host_dict = {}
+        for id in ids:
+            host = mapper.load(id)
+            host_dict[host.getID()] = host
+
+        workspace.setHosts(host_dict)
 
 
 Mappers = {

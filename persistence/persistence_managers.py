@@ -182,14 +182,24 @@ class FileSystemConnector(DbConnector):
 
 
 class CouchDbConnector(DbConnector):
+    # This ratio represents (db size / num of docs)
+    # to compact the database when the size is too high
+    MAXIMUM_RATIO_SIZE = 10000
+    # This value represents the number of maximum saves
+    # before we try to compact the db
+    MAXIMUM_SAVES = 1000
+
     def __init__(self, db, seq_num=0):
         super(CouchDbConnector, self).__init__(type=DBTYPE.COUCHDB)
         self.db = db
+        self.saves_counter = 0
         self.seq_num = seq_num
         self.mutex = threading.Lock()
         vmanager = ViewsManager()
         vmanager.addViews(self.db)
         self._docs = {}
+        self._compactDatabase()
+        # self._tree = self._createTree(self.getDocs())
 
     def getDocs(self):
         if len(self._docs.keys()) == 0:
@@ -203,6 +213,19 @@ class CouchDbConnector(DbConnector):
     def delDoc(self, doc_id):
         del self._docs[doc_id]
 
+    # def _createTree(self, docs):
+    #     def find_leaf(path, sub_graph = hosts):
+    #         if len(path) > 1:
+    #             return find_leaf(path[1:], sub_graph['subs'][path[0]])
+    #         else:
+    #             return sub_graph
+
+    #     for d in docs:
+    #         id_path = 
+
+    def _ratio(self):
+        return self.db.info()['disk_size'] / self.db.info()['doc_count']
+
     #@trap_timeout
     def saveDocument(self, document):
         self.incrementSeqNumber()
@@ -210,18 +233,21 @@ class CouchDbConnector(DbConnector):
             "Saving document in couch db %s" % self.db)
         res = self.db.save_doc(document, use_uuids=True, force_update=True)
         if res:
+            self.saves_counter += 1
             self.addDoc(document)
+        if self.saves_counter > self.MAXIMUM_SAVES:
+            self._compactDatabase()
+            self.saves_counter = 0
         return res
 
     def forceUpdate(self):
         doc = self.getDocument(self.db.dbname) 
         return self.db.save_doc(doc, use_uuids=True, force_update=True)
 
-
     #@trap_timeout
     def getDocument(self, document_id):
-        getLogger(self).debug(
-            "Getting document %s for couch db %s" % (document_id, self.db))
+        # getLogger(self).debug(
+        #     "Getting document %s for couch db %s" % (document_id, self.db))
         return self.getDocs().get(document_id, None)
         #return self._docs.get(document_id, None)
         # getLogger(self).debug(
@@ -240,9 +266,17 @@ class CouchDbConnector(DbConnector):
 
     #@trap_timeout
     def getDocsByFilter(self, parentId, type):
-        key = ['%s' % parentId, '%s' % type]
-        docs_ids = [doc.get("value") for doc in self.db.view('mapper/byparentandtype', key=key)]
-        return docs_ids
+        if not type:
+            key = None
+            if parentId:
+                key = '%s' % parentId
+            view = 'mapper/byparent'
+        else:
+            key = ['%s' % parentId, '%s' % type]
+            view = 'mapper/byparentandtype'
+
+        values = [doc.get("value") for doc in self.db.view(view, key=key)]
+        return values
 
     #@trap_timeout
     def getAllDocs(self):

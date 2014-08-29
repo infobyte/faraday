@@ -82,17 +82,12 @@ class AbstractMapper(object):
         return obj
 
     def find(self, id, with_load=True):
-        if not id:
+        if not id or id == "None":
             return None
         if self.object_map.get(id) or not with_load:
             return self.object_map.get(id)
         return self.load(id)
 
-
     def findByFilter(self, parent, type):
-        result = []
-        ids = self.pmanager.getDocsByFilter(parent, type)
-        for id in ids:
-            obj = self.load(id)
-            result.append(obj)
-        return result
+        res = self.pmanager.getDocsByFilter(parent, type)
+        return res

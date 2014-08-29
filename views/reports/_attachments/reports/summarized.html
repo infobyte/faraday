@@ -8,12 +8,12 @@ function get_report_div(workspace, view,design){
 	$.getJSON(json_url, function(data) {
 		var colores = ["rojo", "negro"];
 		var i = 0;
-		divs += "<div class='columna untercio' style='margin-left:5%'><article class='untercio' style='height:380px'><header><h2>Workspace summarized report</h2></header><div class='main'>";
+		divs += "<div class='columna untercio' style='margin-left:4%'><article class='untercio' style='height:380px;width:308px'><header><h2>Workspace summarized report</h2></header><div class='main' style='340px'>";
 		$.each(data.rows, function(n, obj){
 			divs += "<div class=\"columna unquinto\"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj.value+"</div><div class=\"txt texto-blanco\">"+obj.key+"</div></section></article></div>";
 			i++;
 		});
-		divs +="</div><a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a></article></section></div>";
+		divs +="</div></article></section></div>";
 		return divs;
 	});
 	return divs;

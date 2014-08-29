@@ -529,7 +529,7 @@ class MainWindow(qt.QMainWindow):
                 Repository URL Not valid, check if
                 service is available and that connection string is from
                 the form: http[s]://hostname:port""")
-            #     repourl, isReplicated, replics = "", False, ""
+                return
 
             CONF.setCouchUri(repourl)
             CONF.setCouchIsReplicated(isReplicated)

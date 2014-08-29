@@ -7,6 +7,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import uuid
 
 class CommandRunInformation(object):
     """Command Run information object containing:
@@ -14,6 +15,7 @@ class CommandRunInformation(object):
     class_signature = "CommandRunInformation"
 
     def __init__(self, **kwargs):
+        self._id = str(uuid.uuid4()).replace("-","")
         self.type = self.__class__.__name__
         for k, v in kwargs.items():
             setattr(self, k, v)

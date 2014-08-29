@@ -445,7 +445,7 @@ class ModelController(threading.Thread):
         self._processAction(modelactions.ADDHOST, [host, None], sync=True)
 
     def __add(self,  obj, parent_id=None, *args):
-        dataMapper = self.mappers_manager.getMapper(obj.__class__.__name__)
+        dataMapper = self.mappers_manager.getMapper(obj.class_signature)
         old_obj = dataMapper.find(obj.getID())
         if old_obj:
             if not self.addUpdate(old_obj, obj):
@@ -458,7 +458,7 @@ class ModelController(threading.Thread):
                 object_parent.addChild(obj)
             dataMapper.save(obj)
             self.treeWordsTries.addWord(obj.getName())
-            if obj.__class__.__name__ == model.hosts.Host.__name__:
+            if obj.class_signature == model.hosts.Host.class_signature:
                 notifier.addHost(obj)
             else:
                 notifier.editHost(obj.getHost())
@@ -466,12 +466,12 @@ class ModelController(threading.Thread):
         return True
 
     def __edit(self, obj, *args, **kwargs):
-        dataMapper = self.mappers_manager.getMapper(obj.__class__.__name__)
+        dataMapper = self.mappers_manager.getMapper(obj.class_signature)
         obj.updateAttributes(*args, **kwargs)
         dataMapper.save(obj)
         # self.treeWordsTries.addWord(obj.getName())
 
-        if obj.__class__.__name__ == model.hosts.Host.__name__:
+        if obj.class_signature == model.hosts.Host.class_signature:
             notifier.editHost(obj)
         else:
             notifier.editHost(obj.getHost())
@@ -491,7 +491,7 @@ class ModelController(threading.Thread):
 
             self.mappers_manager.remove(objId)
 
-            if obj.__class__.__name__ == model.hosts.Host.__name__:
+            if obj.class_signature == model.hosts.Host.class_signature:
                 notifier.delHost(objId)
             else:
                 notifier.editHost(obj.getHost())

@@ -6,11 +6,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import os
-import model.api
 import time
-from managers.reports_managers import ReportManager
-from model.guiapi import notification_center as notifier
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -24,6 +20,7 @@ class Workspace(object):
     It has a list with all existing workspaces just in case user wants to
     open a new one.
     """
+    class_signature = "Workspace"
 
     def __init__(self, name, desc=None, manager=None, shared=CONF.getAutoShareWorkspace()):
         self.name = name

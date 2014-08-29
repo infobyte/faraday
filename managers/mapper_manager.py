@@ -26,8 +26,8 @@ class MapperManager(object):
             self.mappers[tmapper] = mapper(self, dbconnector)
 
     def save(self, obj):
-        if self.mappers.get(obj.__class__.__name__, None):
-            self.mappers.get(obj.__class__.__name__).save(obj)
+        if self.mappers.get(obj.class_signature, None):
+            self.mappers.get(obj.class_signature).save(obj)
             return True
         return False
 
@@ -47,14 +47,14 @@ class MapperManager(object):
     def remove(self, obj_id):
         obj = self.find(obj_id)
         if obj:
-            self.mappers.get(obj.__class__.__name__).delete(obj_id)
+            self.mappers.get(obj.class_signature).delete(obj_id)
             return True
         return False
 
     def reload(self, obj_id):
         obj = self.find(obj_id)
         if obj:
-            self.mappers.get(obj.__class__.__name__).reload(obj)
+            self.mappers.get(obj.class_signature).reload(obj)
 
     def getMapper(self, type):
         return self.mappers.get(type, None)

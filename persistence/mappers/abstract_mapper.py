@@ -57,7 +57,7 @@ class AbstractMapper(object):
         if id in self.object_map.keys():
             return self.object_map.get(id)
         doc = self.pmanager.getDocument(id)
-        if not doc or not doc.get("type") == self.mapped_class.__name__:
+        if not doc or not doc.get("type") == self.mapped_class.class_signature:
             return None
         obj = self.mapped_class(*self.dummy_args, **self.dummy_kwargs)
         obj.setID(doc.get("_id"))

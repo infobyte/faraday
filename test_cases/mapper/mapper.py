@@ -954,7 +954,7 @@ class CompositeMapperTestSuite(unittest.TestCase):
         }
 
         doc_note = {
-            "type": "ModelObjectNote",
+            "type": "Note",
             "_id": "note1",
             "name": "Note1",
             "owned": False,
@@ -966,7 +966,7 @@ class CompositeMapperTestSuite(unittest.TestCase):
         }
 
         doc_vuln = {
-            "type": "ModelObjectVuln",
+            "type": "Vulnerability",
             "_id": "vuln1",
             "name": "Vuln1",
             "owned": False,
@@ -980,7 +980,7 @@ class CompositeMapperTestSuite(unittest.TestCase):
         }
 
         doc_cred = {
-            "type": "ModelObjectCred",
+            "type": "Cred",
             "_id": "cred1",
             "name": "Vuln1",
             "owned": False,
@@ -999,9 +999,9 @@ class CompositeMapperTestSuite(unittest.TestCase):
         when(pmanager).getDocument("cred1").thenReturn(doc_cred)
         when(pmanager).getDocsByFilter(any(str), None).thenReturn([])
         when(pmanager).getDocsByFilter("1234", None).thenReturn(
-            [{'_id': "note1", 'type': "ModelObjectNote"},
-             {'_id': "vuln1", 'type': "ModelObjectVuln"},
-             {'_id': "cred1", 'type': "ModelObjectCred"}])
+            [{'_id': "note1", 'type': "Note"},
+             {'_id': "vuln1", 'type': "Vulnerability"},
+             {'_id': "cred1", 'type': "Cred"}])
 
         self.mapper_manager.createMappers(pmanager)
 

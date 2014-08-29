@@ -31,7 +31,7 @@ class ModelObjectMapper(AbstractMapper):
 
     def serialize(self, mobj):
         return {
-            "type": mobj.__class__.__name__,
+            "type": mobj.class_signature,
             "_id": mobj.getID(),
             "name": mobj.getName(),
             "owned": mobj.isOwned(),
@@ -74,20 +74,20 @@ class ModelObjectMapper(AbstractMapper):
 
     def setNotes(self, mobj):
         mobj.setNotes(
-            self._loadChilds(ModelObjectNote.__name__))
+            self._loadChilds(ModelObjectNote.class_signature))
 
     def setVulns(self, mobj):
-        vulns = self._loadChilds(ModelObjectVuln.__name__)
-        vulns_web = self._loadChilds(ModelObjectVulnWeb.__name__)
+        vulns = self._loadChilds(ModelObjectVuln.class_signature)
+        vulns_web = self._loadChilds(ModelObjectVulnWeb.class_signature)
         vulns.update(vulns_web)
         mobj.setVulns(vulns)
 
     def setCreds(self, mobj):
         mobj.setCreds(
-            self._loadChilds(ModelObjectCred.__name__))
+            self._loadChilds(ModelObjectCred.class_signature))
 
     def findForParent(self, obj_id):
-        return self.findByFilter(parent=obj_id, type=self.mapped_class.__name__)
+        return self.findByFilter(parent=obj_id, type=self.mapped_class.class_signature)
 
     def findChildren(self, obj_id):
         return self.findByFilter(parent=obj_id, type=None)
@@ -118,7 +118,7 @@ class HostMapper(ModelObjectMapper):
 
     def setInterfaces(self, host):
         host.setInterfaces(
-            self._loadChilds(Interface.__name__))
+            self._loadChilds(Interface.class_signature))
 
 
 class InterfaceMapper(ModelObjectMapper):
@@ -161,7 +161,7 @@ class InterfaceMapper(ModelObjectMapper):
 
     def setServices(self, iface):
         iface.setServices(
-            self._loadChilds(Service.__name__))
+            self._loadChilds(Service.class_signature))
 
 
 class ServiceMapper(ModelObjectMapper):
@@ -326,7 +326,7 @@ class WorkspaceMapper(AbstractMapper):
 
     def serialize(self, obj):
         return {
-            "type": obj.__class__.__name__,
+            "type": obj.class_signature,
             "_id": obj.getID(),
             "name": obj.getName(),
             "description": obj.getDescription(),
@@ -352,8 +352,8 @@ class WorkspaceMapper(AbstractMapper):
     def setHosts(self, workspace, docs):
         ids = [doc['_id']
                for doc in docs
-               if doc.get("type") == Host.__name__]
-        mapper = self.mapper_manager.getMapper(Host.__name__)
+               if doc.get("type") == Host.class_signature]
+        mapper = self.mapper_manager.getMapper(Host.class_signature)
         host_dict = {}
         for id in ids:
             host = mapper.load(id)
@@ -363,13 +363,13 @@ class WorkspaceMapper(AbstractMapper):
 
 
 Mappers = {
-    Host.__name__: HostMapper,
-    Interface.__name__: InterfaceMapper,
-    Service.__name__: ServiceMapper,
-    ModelObjectNote.__name__: NoteMapper,
-    ModelObjectVuln.__name__: VulnMapper,
-    ModelObjectVulnWeb.__name__: VulnWebMapper,
-    ModelObjectCred.__name__: CredMapper,
-    CommandRunInformation.__name__: CommandRunMapper,
-    Workspace.__name__: WorkspaceMapper
+    Host.class_signature: HostMapper,
+    Interface.class_signature: InterfaceMapper,
+    Service.class_signature: ServiceMapper,
+    ModelObjectNote.class_signature: NoteMapper,
+    ModelObjectVuln.class_signature: VulnMapper,
+    ModelObjectVulnWeb.class_signature: VulnWebMapper,
+    ModelObjectCred.class_signature: CredMapper,
+    CommandRunInformation.class_signature: CommandRunMapper,
+    Workspace.class_signature: WorkspaceMapper
 }

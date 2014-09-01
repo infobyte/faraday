@@ -1,7 +1,7 @@
 function treemap(workspace, design, view){
 	        var margin = {top: 28, right: 10, bottom: 10, left: 10},
             width = 160 - margin.left - margin.right,
-            height = 155 - margin.top - margin.bottom;
+            height = 133 - margin.top - margin.bottom;
 
         var color = d3.scale.category20c();
 
@@ -27,30 +27,8 @@ function treemap(workspace, design, view){
             .enter().append("div")
               .attr("class", "node")
               .call(position)
-              .style("background", function(d) {return color(Math.floor(Math.random()*68)); })
-              .text(function(d) {return d.children ? null : d.key; });
-              
-          d3.select("#size").on("click", function() {
-             div.selectAll("div")
-                 .data(treemap.value(function(d) {return d.value - 10; }))
-               .transition()
-                 .duration(1500)
-                 .call(position);
-         
-             d3.select("#size").classed("active", true);
-             d3.select("#count").classed("active", false);
-           });
-
-         d3.select("#count").on("click", function() {
-           div.selectAll("div")
-               .data(treemap.value(function(d) {return d.value + 10; }))
-             .transition()
-               .duration(1500)
-               .call(position);
-       
-           d3.select("#size").classed("active", false);
-           d3.select("#count").classed("active", true);
-         });
+              .on("mouseover", mouseover)
+              .style("background", function(d) {return color(Math.floor(Math.random()*68)); });
         });
 
         function position() {
@@ -59,6 +37,14 @@ function treemap(workspace, design, view){
               .style("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
               .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
         }
+
+        	function mouseover(d){
+			$("body").append("<div id='load_service'></div>");
+				$("#load_service").html("<div id='contenido'><p>"+ d.key +"</p><p><b>"+ d.value +"</b></p></div>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
+				var elemento = $(this).position();
+				$("#load_service").css('top',elemento.top + 200);
+				$("#load_service").css('left',elemento.left + 150);
+			}
 
         function sorter_jotason(root){
         	var arr = [];

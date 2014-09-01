@@ -10,7 +10,7 @@
 		hosts		= get_obj(hurl);
 		interfaces	= get_obj(iurl, interfaces);
 		services	= get_obj(surl, services);
-		var table = "<h2>Hosts report</h2><div class='main' style='height:516px'>";
+		var table = "<h2>Hosts report</h2><div class='main' style='height:360px'>";
 		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+
@@ -57,7 +57,7 @@
 		interfaces	= get_obj(iurl, interfaces);
 		scount		= get_obj(surl, services);
 		if(!bolean){
-		var table = "<h2>Hosts with Service "+name+" ("+hids.length+" total)</h2>"+
+		var table = "<h2>Hosts with Service "+name+" ("+hids.length+" total)</h2><div class='main' style='height:338px'>"+
 				"<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+
@@ -97,7 +97,7 @@
 		design = "hosts";
 		// el param design ya no es el recibido por GET, puesto que ahora estamos en services
 		var services = get_obj_filter(workspace, "services", "byhost", hid);
-		var table = "<h2>Services for Host "+hname+" ("+services.length+" total)</h2>"+
+		var table = "<h2>Services for Host "+hname+" ("+services.length+" total)</h2><div class='main' style='height:338px'>"+
 			"<table id=\"services-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 			"<th>Name</th>"+
 			"<th>Description</th>"+

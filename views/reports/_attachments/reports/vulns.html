@@ -9,7 +9,7 @@ function get_report_div(workspace, view,design){
         var colores = ["gris3", "verde", "amarillo", "rojo", "violeta", "gris2"];
         var nombres = ["info", "low", "medium", "high", "critical", "n/a"];
 		var i = 0;
-		divs += "<div class='columna untercio' style='margin-left:2%'><article class='untercio' style='height:156px;width:185%'><header><h2>Vulnerabilities Report</h2></header><div class='main' style='width:505px;height:116px'>";
+		divs += "<div class='columna untercio'><article class='untercio'><header><h2>Vulnerabilities Report</h2></header><div class='main'>";
 		$.each(data.rows, function(n, obj){
 			divs += "<div class=\"columna unsexto\"><article class=\"dato2 fondo-blanco\"><section><div class=\"nro texto-"+colores[obj.key]+"\">"+obj.value+"</div><div class=\"txt texto-negro\">"+obj.key+"</div></article></div>";
 			i++;

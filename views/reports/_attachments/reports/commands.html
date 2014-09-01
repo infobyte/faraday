@@ -7,7 +7,7 @@ function get_report_div(workspace, view,design){
         async: false
     });
 	$.getJSON(json_url, function(data) {
-                tabla = "<div class='seccion2'><h2>Commands History</h2>";
+                tabla = "<div class='seccion2'><h2>Commands History</h2><div class='main'>";
                 tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr><th>Command Run</th><th>Start Date</th><th>Duration</th></tr></thead><tbody>";
                 $.each(data.rows, function(n, obj){
                         var d = new Date(0); 
@@ -15,7 +15,7 @@ function get_report_div(workspace, view,design){
                         tabla += "<tr><td>"+obj.key+"</td><td>"+d+"</td><td>"+obj.value[1]+"</td></tr>";
                 });
             tabla += "</tbody></table>";
-            tabla +="</div><!--<a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a>-->";
+            tabla +="</div></div><!--<a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a>-->";
 		return tabla;
 	});
 	return tabla;

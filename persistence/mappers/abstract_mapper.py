@@ -24,6 +24,9 @@ class NullPersistenceManager(DbConnector):
     def getDocsByFilter(self, parentId, type):
         return []
 
+    def getChildren(self, parentId):
+        return []
+
 
 class AbstractMapper(object):
     mapped_class = None
@@ -90,4 +93,8 @@ class AbstractMapper(object):
 
     def findByFilter(self, parent, type):
         res = self.pmanager.getDocsByFilter(parent, type)
+        return res
+
+    def getChildren(self, parent):
+        res = self.pmanager.getChildren(parent)
         return res

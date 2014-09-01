@@ -210,25 +210,40 @@ class CouchDbConnector(DbConnector):
 
     def getDocs(self):
         if len(self._docs.keys()) == 0:
+            # TODO: change this.
+            # backwards compatibility. ugly, but needed
+            self._docs["orphan"] = {}
+            self._docs["orphan"]["children"] = []
             for doc in self.getAllDocs():
                 self.addDoc(doc)
         return self._docs
 
     def addDoc(self, doc):
-        self._docs[doc["_id"]] = doc
+        id = doc["_id"]
+        doc["children"] = []
+        if self._docs.get(id, None):
+            doc["children"] = self._docs[id]["children"]
+        self._docs[id] = doc
+
+        parent_id = doc.get("parent", None)
+        # TODO: change this.
+        # backwards compatibility. ugly, but needed
+        if not parent_id or parent_id == "None":
+            parent_id = "orphan"
+        if parent_id in self._docs.keys():
+            self._docs[parent_id]["children"].append(
+                self._docs[doc["_id"]])
 
     def delDoc(self, doc_id):
+        doc = self._docs[doc_id]
+        parent_id = doc.get("parent", None)
+        # TODO: change this.
+        # backwards compatibility. ugly, but needed
+        if not parent_id or parent_id == "None":
+            parent_id == "orphan"
+        if parent_id in self._docs.keys():
+            self._docs[parent_id]["children"].remove(doc)
         del self._docs[doc_id]
-
-    # def _createTree(self, docs):
-    #     def find_leaf(path, sub_graph = hosts):
-    #         if len(path) > 1:
-    #             return find_leaf(path[1:], sub_graph['subs'][path[0]])
-    #         else:
-    #             return sub_graph
-
-    #     for d in docs:
-    #         id_path = 
 
     def _ratio(self):
         return self.db.info()['disk_size'] / self.db.info()['doc_count']
@@ -256,13 +271,6 @@ class CouchDbConnector(DbConnector):
         # getLogger(self).debug(
         #     "Getting document %s for couch db %s" % (document_id, self.db))
         return self.getDocs().get(document_id, None)
-        #return self._docs.get(document_id, None)
-        # getLogger(self).debug(
-        #     "Getting document %s for couch db %s" % (document_id, self.db))
-        # try:
-        #     return self.db.get(document_id)
-        # except ResourceNotFound:
-        #     return None
 
     #@trap_timeout
     def remove(self, document_id):
@@ -271,6 +279,9 @@ class CouchDbConnector(DbConnector):
             self.db.delete_doc(document_id)
             self.delDoc(document_id)
 
+    def getChildren(self, document_id):
+        return self._docs[document_id]["children"]
+
     #@trap_timeout
     def getDocsByFilter(self, parentId, type):
         if not type:
@@ -278,6 +289,7 @@ class CouchDbConnector(DbConnector):
             if parentId:
                 key = '%s' % parentId
             view = 'mapper/byparent'
+            #print "query: view -> %s, key -> %s" % (view, key)
         else:
             key = ['%s' % parentId, '%s' % type]
             view = 'mapper/byparentandtype'
@@ -327,7 +339,7 @@ class CouchDbConnector(DbConnector):
 class AbstractPersistenceManager(object):
     def __init__(self):
         self.dbs = {}
-
+ 
     def createDb(self, name):
         if not self.getDb(name):
             self.dbs[name] = self._create(name)

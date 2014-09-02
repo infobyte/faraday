@@ -18,8 +18,10 @@
 
     <!-- !CSS -->
     <link rel="stylesheet" type="text/css" href="../././estilos.css" />
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+    <link rel="stylesheet"
+    href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet"
+    href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
     <link href="favicon.ico" rel="shortcut icon">
     <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
     <link href="images/site_preview.jpg" rel="image_src" />
@@ -30,9 +32,11 @@
     <script type="text/javascript" src="/_utils/script/jquery.js"></script>
     <script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script type="text/javascript"
+    src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min.js"></script>
 </head>
 
-<body>
+<body ng-app="status-report">
     <div id="cont">
         <div class="wrapper">
             <header class="head">
@@ -80,12 +84,48 @@
                     <ul id="nav" class="dropdown-menu" role="menu">
                     </ul><!-- navegacion de WS -->
                    </div>
-                </div><!-- fin fila -->
+                   <div class="reports" ng-controller="vulnsCtrl">
+                       <table id="hosts" class="tablesorter">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Name</th>
+                                    <th>Target</th>
+                                    <th>Desc</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="v in vulns">
+                                    <td>{{v.date}}</td>
+                                    <td>{{v.status}}</td>
+                                    <td>{{v.name}}</td>
+                                    <td></td>
+                                    <td>{{v.desc}}</td>
+                                </tr>
+                            </tbody>
+                        </table><!-- #hosts -->
+                    </div><!-- .reports -->
+                </div><!-- #reportes -->
             </section>
             <footer>
             </footer>
         </div><!--!/#wrapper -->
     </div><!--!/#container -->
+
+    <script type="text/javascript">
+        var statusReport = angular.module('status-report', [])
+            .controller('vulnsCtrl', ['$scope', 'vulnsFact', function($scope, vulnsFact) {
+                $scope.vulns = vulnsFact;
+            }])
+            .factory('vulnsFact', function() {
+                // aca traigo el json de couch
+                var vulns = [
+                    {"date":"soy fecha", "status":"status", "name":"holanombre!", "desc":"yaay description!"}
+                ];
+                return vulns;
+            });
+    </script>
 <script type="text/javascript">
     $(document).ready(function() {
     var counter = 0;
@@ -128,6 +168,8 @@
     var ret = "<div id=\"workspace-"+workspace+"\" class=\"workspace\"></div><!-- .workspace --><div class='left'><h2>Viewing "+workspace+"</h2></div>";
 
     $('#reportes').prepend(ret);
+
+/*
     $('#reportes').append("<div class='reports'></div>");
     json_url = "/" + workspace + "/_design/vulns/_view/all";
         $.getJSON(json_url, function(data) {
@@ -151,7 +193,7 @@
             tabla +="</div></div></div>";
             $(".reports").append(tabla);
         });
-$('.tablesorter').jscroll();
+*/
     function get_obj(ourl) {
         var ls = {};
         $.ajax({
@@ -167,6 +209,9 @@ $('.tablesorter').jscroll();
         return ls;
     }
 });
+
+$('.tablesorter').jscroll();
+
 setTimeout(function() {
     // calculo la altura del sidebar
     $("aside").height($("#main").height() + 16);

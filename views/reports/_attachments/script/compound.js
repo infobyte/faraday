@@ -10,7 +10,7 @@
 		hosts		= get_obj(hurl);
 		interfaces	= get_obj(iurl, interfaces);
 		services	= get_obj(surl, services);
-		var table = "<h2>Hosts report</h2><div class='main' style='height:360px'>";
+		var table = "<h2>Hosts report</h2><div class='main'>";
 		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+

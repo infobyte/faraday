@@ -1,0 +1,176 @@
+<!-- Faraday Penetration Test IDE &#45; Community Version -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+<!DOCTYPE html>   
+<!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
+<head>
+    <meta charset="utf-8"/>
+    <!--[if IE]><![endif]-->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <title>Dashboard | Faraday</title>
+    <meta name="description" content=""/>
+    <meta name="keywords" content=""/>
+    <meta name="author" content=""/>
+
+    <!-- !CSS -->
+    <link rel="stylesheet" type="text/css" href="../././estilos.css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+    <link href="favicon.ico" rel="shortcut icon">
+    <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
+    <link href="images/site_preview.jpg" rel="image_src" />
+
+    <script type="text/javascript" src=".././././script/couch.js"></script>
+    <script type="text/javascript" src=".././././script/jquery.jscroll.js"></script>
+    <script type="text/javascript" src="/_utils/script/jquery.js"></script>
+    <script type="text/javascript" src="/_utils/script/jquery.js"></script>
+    <script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div id="cont">
+        <div class="wrapper">
+            <header class="head">
+                <a href="#"><img class="logo" src="../././images/logo-faraday.png"/></a>
+                <nav>
+                    <ul class="menu">
+                        <li>
+                            <a href="#">Opción 1</a>
+                        </li>
+                        <li>
+                            <a href="#">Opción 1</a>
+                        </li>
+                        <li>
+                            <a href="#" class="activo">Username</a>
+                            <ul>
+                                <li><a href="#">Sub opción 1</a></li>
+                                <li><a href="#">Sub opción 2</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </nav>
+            </header>
+            
+            <aside>
+                <nav>
+                    <ul>
+                        <li>
+                            <a href="#"><img src="../././images/ico-settings.png" alt="Settings"/></a>
+                            <a href="#" class="activo"><img src="../././images/ico-graph.png" alt=""/></a>
+                            <a href="#"><img src="../././images/ico-stopwatch.png" alt=""/></a>
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
+            
+            <section id="main" class="seccion clearfix">
+                <div id="reportes" class="fila clearfix">
+                   <div id="sec" class="btn-group">
+                    <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                    <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                        Change workspace <span class="caret"></span>
+                    </button>
+                    <ul id="nav" class="dropdown-menu" role="menu">
+                    </ul><!-- navegacion de WS -->
+                   </div>
+                </div><!-- fin fila -->
+            </section>
+            <footer>
+            </footer>
+        </div><!--!/#wrapper -->
+    </div><!--!/#container -->
+<script type="text/javascript">
+    $(document).ready(function() {
+    var counter = 0;
+    var h = 0;
+    $.couch.allDbs({
+            success : function(dbs) {
+
+              dbs.filter(function(db_name){
+                  return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
+              .forEach(function(db) {
+              // armo la lista con todos los 
+                      $("#sec #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
+              // navegación entre WSs
+                  if(window.location.hash === "" && counter === 0) {
+                    window.location.hash = db;
+                   }
+                  counter +=1;
+            });
+            if(counter < 1) { 
+                $("#reportes").empty();
+                  $("#reportes").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
+        }
+      }
+    });
+    // navegacion entre WSs en el dropdown
+    $(document).on("click", "a.ws", function(e) {
+        e.preventDefault();
+        var hash = $(this).attr("href").substr(1);
+        window.location.hash = hash;
+        location.reload();
+    });
+    $(document).on("click", "#refresh", function() {
+        location.reload();
+    });
+    //get workspace
+    dominio = location.href;
+    space = dominio.split("#");
+    workspace = space[1];
+
+    var ret = "<div id=\"workspace-"+workspace+"\" class=\"workspace\"></div><!-- .workspace --><div class='left'><h2>Viewing "+workspace+"</h2></div>";
+
+    $('#reportes').prepend(ret);
+    $('#reportes').append("<div class='reports'></div>");
+    json_url = "/" + workspace + "/_design/vulns/_view/all";
+        $.getJSON(json_url, function(data) {
+                    var hurl = "/" + workspace + "/_design/hosts/_view/hosts";
+                    var services = new Object();
+                    hosts = get_obj(hurl);
+                    console.log(hosts);
+                tabla = "<div class='status'><div class='seccion2'><h2>Status Report</h2><div class='main'>";
+                tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr><th>Date</th><th>Status</th><th>Name</th><th>Target</th><th>Desc</th></tr></thead><tbody>";
+                $.each(data.rows, function(n, obj){
+                        var d = new Date(0); 
+                        d.setUTCSeconds(obj.value.date);
+                        var desc = obj.value.desc.replace(/&/g, '&amp;')
+                                              .replace(/>/g, '&gt;')
+                                              .replace(/</g, '&lt;')
+                                              .replace(/"/g, '&quot;')
+                                              .replace(/'/g, '&apos;');
+                        tabla += "<tr><td>"+d+"</td><td>"+obj.value.status+"</td><td>"+obj.value.name+"</td><td></td><td>"+desc+"</td></tr>";
+                });
+            tabla += "</tbody></table>";
+            tabla +="</div></div></div>";
+            $(".reports").append(tabla);
+        });
+$('.tablesorter').jscroll();
+    function get_obj(ourl) {
+        var ls = {};
+        $.ajax({
+            dataType: "json",
+            url: ourl,
+            async: false,
+            success: function(data) {
+                $.each(data.rows, function(n, obj){
+                    ls[obj.key] = obj.value;
+                }); 
+            }
+        });
+        return ls;
+    }
+});
+setTimeout(function() {
+    // calculo la altura del sidebar
+    $("aside").height($("#main").height() + 16);
+}, 2000);
+</script>
+</body>
+</html> 

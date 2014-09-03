@@ -114,6 +114,12 @@
     </div><!--!/#container -->
 
     <script type="text/javascript">
+        //get workspace
+    dominio = location.href;
+    space = dominio.split("#");
+    workspace = space[1];
+
+    json_url = "/"+ workspace +"/_design/vulns/_view/all";
         var statusReport = angular.module('status-report', ["ngRoute"])
             .controller('vulnsCtrl', ['$scope', 'vulnsFact', function($scope, vulnsFact) {
                 $scope.vulns = vulnsFact;
@@ -124,7 +130,6 @@
                     async: false
                 });
                 // aca traigo el json de couch
-                json_url = "/bersa/_design/vulns/_view/all";
                 $.getJSON(json_url, function(data) {
                     $.each(data.rows, function(n, obj){
                             var d = new Date(0); 
@@ -173,50 +178,11 @@
     $(document).on("click", "#refresh", function() {
         location.reload();
     });
-    //get workspace
-    dominio = location.href;
-    space = dominio.split("#");
-    workspace = space[1];
 
     var ret = "<div id=\"workspace-"+workspace+"\" class=\"workspace\"></div><!-- .workspace --><div class='left'><h2>Viewing "+workspace+"</h2></div>";
 
     $('#reportes').prepend(ret);
 
-
- /*   $('#reportes').append("<div class='reports'></div>");
-
-                    var hurl = "/" + workspace + "/_design/hosts/_view/hosts";
-                    var services = new Object();
-                    hosts = get_obj(hurl);
-                    console.log(hosts);
-    json_url = "/" + workspace + "/_design/vulns/_view/all";
-        $.getJSON(json_url, function(data) {
-                tabla = "<div class='status'><div class='seccion2'><h2>Status Report</h2><div class='main'>";
-                tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr><th>Date</th><th>Status</th><th>Name</th><th>Target</th><th>Desc</th></tr></thead><tbody>";
-                $.each(data.rows, function(n, obj){
-                        var d = new Date(0); 
-                        d.setUTCSeconds(obj.value.date);
-                        var desc = obj.value.desc.replace(/&/g, '&amp;')
-                                              .replace(/>/g, '&gt;')
-                                              .replace(/</g, '&lt;')
-                                              .replace(/"/g, '&quot;')
-                                              .replace(/'/g, '&apos;');
-                        tabla += "<tr><td>"+d+"</td><td>"+obj.value.status+"</td><td>"+obj.value.name+"</td><td></td><td>"+desc+"</td></tr>";
-                });
-            tabla += "</tbody></table>";
-            tabla +="</div></div></div>";
-            $(".reports").append(tabla);
-        });
-*/
-              /*$http.get(json_url).success(function(data){
-                $scope.vulns = vulnsFact;
-                console.log(vulnsFact);
-              });*/
-            /*return $resource(json_url, //la url donde queremos consumir
-                {}, //aquí podemos pasar variables que queramos pasar a la consulta
-                //a la función get le decimos el método, y, si es un array lo que devuelve
-                //ponemos isArray en true
-                { get: { method: "GET", isArray: true }*/
     function get_obj(ourl) {
         var ls = {};
         $.ajax({

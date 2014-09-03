@@ -674,8 +674,8 @@ class CompositeMapperTestSuite(unittest.TestCase):
         pmanager = mock(NullPersistenceManager)
         when(pmanager).getDocument("1234").thenReturn(doc_host)
         when(pmanager).getDocument("5678").thenReturn(doc_interface)
-        when(pmanager).getDocsByFilter(any(str), None).thenReturn([])
-        when(pmanager).getDocsByFilter("1234", None).thenReturn([{'_id': "5678", 'type': "Interface"}])
+        when(pmanager).getChildren(any(str)).thenReturn([])
+        when(pmanager).getChildren("1234").thenReturn([{'_id': "5678", 'type': "Interface"}])
         self.mapper_manager.createMappers(pmanager)
 
         host = self.mapper_manager.find("1234")
@@ -776,8 +776,8 @@ class CompositeMapperTestSuite(unittest.TestCase):
         when(pmanager).getDocument("1234").thenReturn(doc_host)
         when(pmanager).getDocument("5678").thenReturn(doc_interface1)
         when(pmanager).getDocument("6789").thenReturn(doc_interface2)
-        when(pmanager).getDocsByFilter(any(str), None).thenReturn([])
-        when(pmanager).getDocsByFilter("1234", None).thenReturn([{'_id': "5678", 'type': "Interface"}, {'_id': "6789", 'type': "Interface"}])
+        when(pmanager).getChildren(any(str)).thenReturn([])
+        when(pmanager).getChildren("1234").thenReturn([{'_id': "5678", 'type': "Interface"}, {'_id': "6789", 'type': "Interface"}])
         self.mapper_manager.createMappers(pmanager)
 
         host = self.mapper_manager.find("1234")
@@ -899,9 +899,9 @@ class CompositeMapperTestSuite(unittest.TestCase):
         when(pmanager).getDocument("5678").thenReturn(doc_interface)
         when(pmanager).getDocument("abcd").thenReturn(doc_service1)
         when(pmanager).getDocument("efgh").thenReturn(doc_service2)
-        when(pmanager).getDocsByFilter(any(str), None).thenReturn([])
-        when(pmanager).getDocsByFilter("1234", None).thenReturn([{'_id': "5678", 'type': "Interface"}])
-        when(pmanager).getDocsByFilter("5678", None).thenReturn([{'_id': "abcd", 'type': "Service"}, {'_id': "efgh", 'type': "Service"}])
+        when(pmanager).getChildren(any(str)).thenReturn([])
+        when(pmanager).getChildren("1234").thenReturn([{'_id': "5678", 'type': "Interface"}])
+        when(pmanager).getChildren("5678").thenReturn([{'_id': "abcd", 'type': "Service"}, {'_id': "efgh", 'type': "Service"}])
         self.mapper_manager.createMappers(pmanager)
 
         iface = self.mapper_manager.find("5678")
@@ -997,8 +997,8 @@ class CompositeMapperTestSuite(unittest.TestCase):
         when(pmanager).getDocument("note1").thenReturn(doc_note)
         when(pmanager).getDocument("vuln1").thenReturn(doc_vuln)
         when(pmanager).getDocument("cred1").thenReturn(doc_cred)
-        when(pmanager).getDocsByFilter(any(str), None).thenReturn([])
-        when(pmanager).getDocsByFilter("1234", None).thenReturn(
+        when(pmanager).getChildren(any(str)).thenReturn([])
+        when(pmanager).getChildren("1234").thenReturn(
             [{'_id': "note1", 'type': "Note"},
              {'_id': "vuln1", 'type': "Vulnerability"},
              {'_id': "cred1", 'type': "Cred"}])
@@ -1102,9 +1102,9 @@ class CompositeMapperTestSuite(unittest.TestCase):
         when(self.pmanager).getDocument("5678").thenReturn(doc_interface)
         when(self.pmanager).getDocument("abcd").thenReturn(doc_service1)
         when(self.pmanager).getDocument("efgh").thenReturn(doc_service2)
-        when(self.pmanager).getDocsByFilter(any(str), None).thenReturn([])
-        when(self.pmanager).getDocsByFilter("1234", None).thenReturn([{'_id': "5678", 'type': "Interface"}])
-        when(self.pmanager).getDocsByFilter("5678", None).thenReturn([{'_id': "abcd", 'type': "Service"}, {'_id': "efgh", 'type': "Service"}])
+        when(self.pmanager).getChildren(any(str)).thenReturn([])
+        when(self.pmanager).getChildren("1234").thenReturn([{'_id': "5678", 'type': "Interface"}])
+        when(self.pmanager).getChildren("5678").thenReturn([{'_id': "abcd", 'type': "Service"}, {'_id': "efgh", 'type': "Service"}])
 
         self.mapper_manager.createMappers(self.pmanager)
 

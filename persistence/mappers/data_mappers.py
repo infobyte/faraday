@@ -24,11 +24,6 @@ class ModelObjectMapper(AbstractMapper):
         super(ModelObjectMapper, self).__init__(mmanager, pmanager)
         self.children = []
 
-    def load(self, id):
-        self.children = self.findChildren(id)
-        mobj = super(ModelObjectMapper, self).load(id)
-        return mobj
-
     def serialize(self, mobj):
         return {
             "type": mobj.class_signature,
@@ -42,6 +37,7 @@ class ModelObjectMapper(AbstractMapper):
         }
 
     def unserialize(self, mobj, doc):
+        self.children = self.findChildren(mobj.getID())
         mobj.setName(doc.get("name"))
         mobj.setOwned(doc.get("owned"))
         if doc.get("parent", None):
@@ -90,7 +86,8 @@ class ModelObjectMapper(AbstractMapper):
         return self.findByFilter(parent=obj_id, type=self.mapped_class.class_signature)
 
     def findChildren(self, obj_id):
-        return self.findByFilter(parent=obj_id, type=None)
+        return self.getChildren(obj_id)
+        #return self.findByFilter(parent=obj_id, type=None)
 
 
 class HostMapper(ModelObjectMapper):
@@ -340,7 +337,7 @@ class WorkspaceMapper(AbstractMapper):
 
     def unserialize(self, workspace, doc):
         children = self.findChildren(
-            workspace.getID()) + self.findChildren(None)
+            workspace.getID()) + self.findChildren(None) + self.findChildren("None")
         workspace.setName(doc.get("name", doc.get("_id")))
         workspace.setDescription(doc.get("description"))
         workspace.setCustomer(doc.get("customer"))

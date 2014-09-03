@@ -87,18 +87,24 @@
                     </ul><!-- navegacion de WS -->
                    </div>
                    <div class="reports" ng-controller="vulnsCtrl">
+                       <p>Filter by</p>
+                       <input id="filter" name="filter" ng-model="query" type="text"/>
                        <table id="hosts" class="tablesorter">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Name</th>
+                                    <th><a href="" ng-click="sortField = 'date';
+                                    reverse = !reverse">Date</a></th>
+                                    <th><a href="" ng-click="sortField = 'status';
+                                    reverse = !reverse">Status</a></th>
+                                    <th><a href="" ng-click="sortField = 'name';
+                                    reverse = !reverse">Name</a></th>
                                     <th>Target</th>
-                                    <th>Desc</th>
+                                    <th><a href="" ng-click="sortField = 'desc';
+                                    reverse = !reverse">Desc</a></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="v in vulns">
+                                <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse">
                                     <td>{{v.date}}</td>
                                     <td>{{v.status}}</td>
                                     <td>{{v.name}}</td>
@@ -123,6 +129,8 @@
         var statusReport = angular.module('status-report', ["ngRoute"])
             .controller('vulnsCtrl', ['$scope', 'vulnsFact', function($scope, vulnsFact) {
                 $scope.vulns = vulnsFact;
+                $scope.sortField = 'date';
+                $scope.reverse = true;
             }])
             .factory('vulnsFact', function() {
                 var vulns = [];

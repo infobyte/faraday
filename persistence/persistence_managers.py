@@ -283,7 +283,12 @@ class CouchDbConnector(DbConnector):
     def getDocument(self, document_id):
         # getLogger(self).debug(
         #     "Getting document %s for couch db %s" % (document_id, self.db))
-        return self.getDocs().get(document_id, None)
+        doc = self.getDocs().get(document_id, None)
+        if not doc:
+            if self.db.doc_exist(document_id):
+                doc = self.db.get(document_id)
+                self.addDoc(doc)
+        return doc
 
     #@trap_timeout
     def remove(self, document_id):

@@ -17,6 +17,7 @@ from mockito import mock, when, any
 
 from model.hosts import Host, Interface, Service
 from model.workspace import Workspace
+from model.commands_history import CommandRunInformation
 from persistence.mappers.abstract_mapper import NullPersistenceManager
 from managers.mapper_manager import MapperManager
 
@@ -190,7 +191,7 @@ class InterfaceMapperTestSuite(unittest.TestCase):
             iserialized,
             None,
             "Serialized interface shouldn't be None")
-        # we check the host attributes
+        # we check the interface attributes
         self.assertEquals(
             iserialized.get("_id"),
             iface.getID(),
@@ -335,7 +336,7 @@ class ServiceMapperTestSuite(unittest.TestCase):
             sserialized,
             None,
             "Serialized service shouldn't be None")
-        # we check the host attributes
+        # we check the service attributes
         self.assertEquals(
             sserialized.get("_id"),
             srv.getID(),
@@ -442,6 +443,116 @@ class ServiceMapperTestSuite(unittest.TestCase):
             self.smapper.find(s_id),
             None,
             "Service shouldn't exist anymore")
+
+
+class CommandRunInformationMapperTestSuite(unittest.TestCase):
+    def setUp(self):
+        self.mapper_manager = MapperManager()
+        self.mapper_manager.createMappers(NullPersistenceManager())
+        self.mapper = self.mapper_manager.getMapper(CommandRunInformation.__name__)
+
+    def tearDown(self):
+        pass
+
+    def test_cmd_serialization(self):
+        import time
+        cmd = CommandRunInformation(**{
+            'workspace': 'fakews',
+            'itime': time.time(),
+            'command': "ping",
+            'params': "127.0.0.1"})
+        cmdserialized = self.mapper.serialize(cmd)
+        # if serialization fails, returns None
+        self.assertNotEqual(
+            cmdserialized,
+            None,
+            "Serialized cmd shouldn't be None")
+        # we check the cmd attributes
+        self.assertEquals(
+            cmdserialized.get("_id"),
+            cmd.getID(),
+            "Serialized ID is not the same as cmd ID")
+        self.assertEquals(
+            cmdserialized.get("command"),
+            cmd.__getattribute__("command"),
+            "Serialized name is not the same as cmd command")
+        self.assertEquals(
+            cmdserialized.get("params"),
+            cmd.__getattribute__("params"),
+            "Serialized name is not the same as cmd params")
+
+    def test_cmd_creation(self):
+        import time
+        cmd = CommandRunInformation(**{
+            'workspace': 'fakews',
+            'itime': time.time(),
+            'command': "ping",
+            'params': "127.0.0.1"})
+
+        self.mapper.save(cmd)
+        c = self.mapper.find(cmd.getID())
+        self.assertEquals(
+            c,
+            cmd,
+            "Cmd retrieved should be the same as persisted")
+        self.assertEquals(
+            c.getID(),
+            cmd.getID(),
+            "Cmd retrieved's Id should be the same as persisted's Id")
+
+    def test_load_nonexistent_cmd(self):
+        self.assertEquals(
+            self.mapper.load("1234"),
+            None,
+            "Nonexistent cmd should return None")
+
+    def test_find_not_loaded_cmd(self):
+        # we need to mock the persistence manager first,
+        # so we can return a simulated doc
+        doc = {
+            "_id": "1234",
+            "itime": 1409856507.891718,
+            "command": "ping",
+            "workspace": "fakews",
+            "duration": 0.6570961475372314,
+            "params": "127.0.0.1",
+            "type": "CommandRunInformation",
+        }
+        when(self.mapper.pmanager).getDocument("1234").thenReturn(doc)
+
+        cmd = self.mapper.find("1234")
+        self.assertNotEquals(
+            cmd,
+            None,
+            "Existent cmd shouldn't return None")
+
+        self.assertEquals(
+            cmd.__getattribute__("command"),
+            "ping",
+            "Cmd command should be ping")
+
+    def test_cmd_create_and_delete(self):
+        import time
+        cmd = CommandRunInformation(**{
+            'workspace': 'fakews',
+            'itime': time.time(),
+            'command': "ping",
+            'params': "127.0.0.1"})
+
+        self.mapper.save(cmd)
+        cmd_id = cmd.getID()
+
+        self.assertNotEquals(
+            self.mapper.load(cmd_id),
+            None,
+            "Command should be saved")
+
+        self.mapper.delete(cmd_id)
+
+        self.assertEquals(
+            self.mapper.find(cmd_id),
+            None,
+            "Command shouldn't exist anymore")
 
 
 class WorkspaceMapperTestSuite(unittest.TestCase):

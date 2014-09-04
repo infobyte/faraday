@@ -32,10 +32,8 @@
     <script type="text/javascript" src="/_utils/script/jquery.js"></script>
     <script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-    <script type="text/javascript"
-    src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min.js"></script>
-    <script type="text/javascript"
-    src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular-route.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular-route.js"></script>
 </head>
 
 <body ng-app="status-report">
@@ -87,29 +85,29 @@
                     </ul><!-- navegacion de WS -->
                    </div>
                    <div class="reports" ng-controller="vulnsCtrl">
-                       <p>Filter by</p>
-                       <input id="filter" name="filter" ng-model="query" type="text"/>
+                       <div id="filter" class="form-group">
+                        <label for="filter">Filter by</p>
+                        <input id="filter" class="form-control" ng-model="query" type="text"/>
+                       </div>
                        <table id="hosts" class="tablesorter">
                             <thead>
                                 <tr>
-                                    <th><a href="" ng-click="sortField = 'date';
-                                    reverse = !reverse">Date</a></th>
-                                    <th><a href="" ng-click="sortField = 'status';
-                                    reverse = !reverse">Status</a></th>
-                                    <th><a href="" ng-click="sortField = 'name';
-                                    reverse = !reverse">Name</a></th>
+                                    <th><a href="" ng-click="sortField = 'date'; reverse = !reverse">Date</a></th>
+                                    <th><a href="" ng-click="sortField = 'status'; reverse = !reverse">Status</a></th>
+                                    <th><a href="" ng-click="sortField = 'severity'; reverse = !reverse">Severity</a></th>
+                                    <th><a href="" ng-click="sortField = 'name'; reverse = !reverse">Name</a></th>
                                     <th>Target</th>
-                                    <th><a href="" ng-click="sortField = 'desc';
-                                    reverse = !reverse">Desc</a></th>
+                                    <th><a href="" ng-click="sortField = 'desc'; reverse = !reverse">Desc</a></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse">
                                     <td>{{v.date}}</td>
                                     <td>{{v.status}}</td>
+                                    <td>{{v.severity}}</td>
                                     <td>{{v.name}}</td>
                                     <td></td>
-                                    <td>{{v.desc}}</td>
+                                    <td data-dd-collapse-text="200">{{v.desc}}</td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->
@@ -120,38 +118,96 @@
     </div><!--!/#container -->
 
     <script type="text/javascript">
-        //get workspace
     dominio = location.href;
     space = dominio.split("#");
     workspace = space[1];
 
-    json_url = "/"+ workspace +"/_design/vulns/_view/all";
-        var statusReport = angular.module('status-report', ["ngRoute"])
-            .controller('vulnsCtrl', ['$scope', 'vulnsFact', function($scope, vulnsFact) {
-                $scope.vulns = vulnsFact;
-                $scope.sortField = 'date';
-                $scope.reverse = true;
-            }])
-            .factory('vulnsFact', function() {
-                var vulns = [];
-                  $.ajaxSetup({
-                    async: false
-                });
-                // aca traigo el json de couch
-                $.getJSON(json_url, function(data) {
-                    $.each(data.rows, function(n, obj){
-                            var d = new Date(0); 
-                            d.setUTCSeconds(obj.value.date);
-                            var desc = obj.value.desc.replace(/&/g, '&amp;')
-                                                  .replace(/>/g, '&gt;')
-                                                  .replace(/</g, '&lt;')
-                                                  .replace(/"/g, '&quot;')
-                                                  .replace(/'/g, '&apos;');
-                            vulns.push({"date":d, "status": obj.value.status, "name": obj.value.name, "desc": desc});
-                    });
-                });
-                return vulns;
+    vulns_url = "/"+ workspace +"/_design/vulns/_view/all";
+    hosts_url = "/"+ workspace +"/_design/hosts/_view/hosts";
+    var statusReport = angular.module('status-report', ["ngRoute"])
+        .controller('vulnsCtrl', ['$scope', 'vulnsFact', function($scope, vulnsFact) {
+            $scope.vulns = vulnsFact;
+            $scope.sortField = 'date';
+            $scope.reverse = true;
+        }])
+        .factory('vulnsFact', function() {
+            var vulns = [];
+            var hosts = [];
+            var hosts_ids = [];
+            $.ajaxSetup({
+                async: false
             });
+            // trae json de vulns desde couch
+            $.getJSON(vulns_url, function(data) {
+                $.each(data.rows, function(n, obj){
+                        var d = new Date(0); 
+                        d.setUTCSeconds(obj.value.date);
+                        d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
+                        var desc = obj.value.desc.replace(/&/g, '&amp;')
+                                              .replace(/>/g, '&gt;')
+                                              .replace(/</g, '&lt;')
+                                              .replace(/"/g, '&quot;')
+                                              .replace(/'/g, '&apos;');
+                        vulns.push({
+                            "date":d, 
+                            "status": obj.value.status, 
+                            "name": obj.value.name, 
+                            "desc": desc, 
+                            "severity": obj.value.severity, 
+                            "parent": obj.value.parent});
+                        hosts_ids.push(obj.value.parent);
+                });
+            });
+            // trae json de hosts desde couch
+            $.getJSON(hosts_url, function(data) {
+                $.each(data.rows, function(n, obj) {
+                   hosts.push({"id": obj.id, "name": obj.value.name, "os": obj.value.os, "owned": obj.value.owned}); 
+                }); 
+            });
+            return vulns;
+        })
+        .directive('ddCollapseText', ['$compile', function($compile) {
+            return {
+                restrict: 'A',
+                replace: true,
+                link: function(scope, element, attrs) {
+
+                    // start collapsed
+                    scope.collapsed = false;
+
+                    // create the function to toggle the collapse
+                    scope.toggle = function() {
+                        scope.collapsed = !scope.collapsed;
+                    };
+
+                    // get the value of the dd-collapse-text attribute
+                    attrs.$observe('ddCollapseText', function(maxLength) {
+                        // get the contents of the element
+                        var text = element.text();
+
+                        if (text.length > maxLength) {
+                            // split the text in two parts, the first always showing
+                            var firstPart = String(text).substring(0, maxLength);
+                            var secondPart = String(text).substring(maxLength, text.length);
+
+                            // create some new html elements to hold the separate info
+                            var firstSpan = $compile('<span>' + firstPart + '</span>')(scope);
+                            var secondSpan = $compile('<span ng-if="collapsed">' + secondPart + '</span>')(scope);
+                            var moreIndicatorSpan = $compile('<span ng-if="!collapsed"> ...</span>')(scope);
+                            var toggleButton = $compile('<span class="collapse-text-toggle" ng-click="toggle()"> <a href="">{{collapsed ? "less" : "more"}}</a></span>')(scope);
+
+                            // remove the current contents of the element
+                            // and add the new ones we created
+                            element.empty();
+                            element.append(firstSpan);
+                            element.append(secondSpan);
+                            element.append(moreIndicatorSpan);
+                            element.append(toggleButton);
+                        }
+                    });
+                }
+            };
+        }]);
     </script>
 <script type="text/javascript">
     $(document).ready(function() {

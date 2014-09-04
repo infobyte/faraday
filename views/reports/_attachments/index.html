@@ -23,6 +23,7 @@
     <link href="favicon.ico" rel="shortcut icon">
     <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
     <link href="images/site_preview.jpg" rel="image_src" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css">
 
     <script src='././././script/d3.min.js'></script>
     <script type="text/javascript" src="script/couch.js"></script>
@@ -66,7 +67,7 @@
                 <nav>
                     <ul>
                         <li>
-                            <a href="#"><img src="images/ico-settings.png" alt="Settings"/></a>
+                            <a href="#" title="Status Report"><img src="images/ico-settings.png" alt="Status Report"/></a>
                             <a href="#" class="activo"><img src="images/ico-graph.png" alt=""/></a>
                             <a href="#"><img src="images/ico-stopwatch.png" alt=""/></a>
                         </li>
@@ -126,8 +127,14 @@ $(document).ready(function() {
     $(document).on("click", "#refresh", function() {
         location.reload();
     });
+    $("a[title='Status Report']").click(function() {
+      url = "../././reports/reports/status_report.html#" + workspace;
+      window.open(url, '_blank');
+      return false;
+   });
 
-//get workspace
+
+    //get workspace
     dominio = location.href;
     space = dominio.split("#");
     workspace = space[1];

@@ -13,13 +13,11 @@ function get_report_div(workspace, view, design){
 		hosts		= get_obj(hurl);
 		interfaces	= get_obj(iurl, interfaces);
 		services	= get_obj(surl, services);
-		var table = "<div class='columna'><article><section class='sin_padding' id='hosts'><h2>Hosts report</h2><div class='main'>";
+		var table = "<div class='columna'><article><p id='text'></p><section class='sin_padding' id='hosts'><h2>Hosts report</h2><div class='main'>";
 		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+
-				"<th>Interfaces</th>"+
 				"<th>OS</th>"+
-				"<th>Owned</th>"+
 				"</tr></thead><tbody>";
 		$.each(hosts, function(k, v){
 			var hname = "";
@@ -33,9 +31,7 @@ function get_report_div(workspace, view, design){
 			table += "<tr id=\"host-"+k+"\">"+
 				"<td>"+hname+"</td>"+
 				"<td>"+services[k]+"</td>"+
-				"<td>"+interfaces[k]+"</td>"+
-				"<td>"+v.os+"</td>"+
-				"<td>"+v.owned+"</td></tr>";
+				"<td><i id='"+v.os+"' class='glyphicon glyphicon-info-sign'></i></td></tr>";
 		});
 		table += "</tbody></table></article></section></div>";
 		return table;

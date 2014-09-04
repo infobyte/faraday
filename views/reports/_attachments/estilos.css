@@ -175,6 +175,7 @@ h2 {
 #compound .columna{
 	width: 492px;
 	margin-top: -42px;
+	position: relative;
 }
 	.full {width: 860px;}
 	.unmedio, .doscuartos {width: 420px;}
@@ -316,6 +317,7 @@ article.untercio{
 				padding: 0 !important;
 				background: #E8EFF0;
 			}
+				.sin_padding h2{padding-bottom: 8px;}
 
 /* ==== COLORES generales ==== */
 /* Fondos */
@@ -379,7 +381,7 @@ table.tablesorter {
 	margin:10px 0pt 15px;
 	font-size: 12px;
 	width: 100%;
-	text-align: left;
+	text-align: center;
 }
 table.tablesorter thead tr th, table.tablesorter tfoot tr th {
 	background-color: #3F464C;
@@ -390,7 +392,6 @@ table.tablesorter thead tr th, table.tablesorter tfoot tr th {
 }
 
 table.tablesorter thead tr .header {
-	background-image: url(images/bg.gif);
 	background-repeat: no-repeat;
 	background-position: center right;
 	cursor: pointer;
@@ -410,13 +411,13 @@ table.tablesorter thead tr .headerSortUp {
 table.tablesorter thead tr .headerSortDown {
 	background-image: url(images/desc.gif);
 }
+
 table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
-background-color: #8dbdd8;
 }
 
 table.tablesorter thead tr th:first-child,
 table.tablesorter tbody tr td:first-child {
-	padding-left: 20px;
+	padding-left: 5px;
 }
 /* === Forms === */
 .input {
@@ -489,6 +490,7 @@ label {
 	color: #2D333D;
 	font-size: 13px;
 }
+#text{top: 26px;position: absolute;left: 11px;font-weight: bold;}
 .left {
 	float: left;
 }

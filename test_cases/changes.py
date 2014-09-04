@@ -18,7 +18,7 @@ CONF = getInstanceConfiguration()
 from utils.logs import getLogger
 from couchdbkit import Server, ChangesStream, Database
 from controllers.change import ChangeController
-from persistence.persistence_managers import CouchDbConnector, CouchDbManager
+from persistence.persistence_managers import CouchDbConnector, CouchDbManager, FileSystemManager, DBTYPE, DbManager
 
 
 class ModelChanges(unittest.TestCase):
@@ -36,6 +36,23 @@ class ModelChanges(unittest.TestCase):
                                     'type':'workspace' })
 
         changes_controller.watch(mapper, dbCouchController)
+        self.assertTrue(changes_controller.isAlive())
+
+        changes_controller.unwatch()
+        self.assertFalse(changes_controller.isAlive())
+
+    def testThreadStopsInFS(self):
+        dbManagerClass = DbManager
+        dbManagerClass._loadDbs = lambda x: None
+        dbManager = DbManager()
+        changes_controller = ChangeController()
+        mapper = mock()
+        fsController = dbManager.createDb('testWkspc', DBTYPE.FS)
+        
+        fsController.saveDocument({'_id':'testwkspc',
+                                    'type':'workspace' })
+
+        changes_controller.watch(mapper, fsController)
         self.assertTrue(changes_controller.isAlive())
 
         changes_controller.unwatch()

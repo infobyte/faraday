@@ -343,8 +343,7 @@ class AbstractPersistenceManager(object):
     def createDb(self, name):
         if not self.getDb(name):
             self.dbs[name] = self._create(name)
-            return self.dbs[name]
-        return None
+        return self.dbs[name]
 
     def _loadDbs(self):
         raise NotImplementedError("AbstractPersistenceManager should not be used directly")

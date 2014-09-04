@@ -15,6 +15,7 @@ import shutil
 import json
 sys.path.append(os.path.abspath(os.getcwd()))
 from couchdbkit import Server, ResourceNotFound
+import time
 
 from persistence.persistence_managers import CouchDbConnector, FileSystemConnector
 import random
@@ -35,6 +36,7 @@ class DbConnectorCouchTestSuite(unittest.TestCase):
 
     def tearDown(self):
         self.couch_srv.delete_db(self.db_name)
+        time.sleep(3)
 
     def test_save_Document(self):
         couchConnector = CouchDbConnector(self.db)

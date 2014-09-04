@@ -139,6 +139,9 @@ class DbConnector(object):
     def getDocsByFilter(self, parentId, type):
         raise NotImplementedError("DbConnector should not be used directly")
 
+    def getChildren(self, document_id):
+        raise NotImplementedError("DbConnector should not be used directly")
+
 
 class FileSystemConnector(DbConnector):
     def __init__(self, base_path):
@@ -148,7 +151,7 @@ class FileSystemConnector(DbConnector):
 
     def saveDocument(self, dic):
         try:
-            filepath = os.path.join(self.path, "%s.json" % dic.get("_id"))
+            filepath = os.path.join(self.path, "%s.json" % dic.get("_id", ))
             getLogger(self).debug(
                 "Saving document in local db %s" % self.path)
             with open(filepath, "w") as outfile:
@@ -185,6 +188,16 @@ class FileSystemConnector(DbConnector):
             if data.get("parent", None) == parentId:
                 if data.get("type", None) == type:
                     result.append(name.split('.json')[0])
+        return result
+
+    def getChildren(self, document_id):
+        result = []
+        for name in os.listdir(self.path):
+            path = os.path.join(self.path, name)
+            document = open(path, "r")
+            data = json.loads(document.read())
+            if data.get("parent", None) == document_id:
+                result.append(data)
         return result
 
 
@@ -270,7 +283,12 @@ class CouchDbConnector(DbConnector):
     def getDocument(self, document_id):
         # getLogger(self).debug(
         #     "Getting document %s for couch db %s" % (document_id, self.db))
-        return self.getDocs().get(document_id, None)
+        doc = self.getDocs().get(document_id, None)
+        if not doc:
+            if self.db.doc_exist(document_id):
+                doc = self.db.get(document_id)
+                self.addDoc(doc)
+        return doc
 
     #@trap_timeout
     def remove(self, document_id):

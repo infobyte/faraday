@@ -10,8 +10,10 @@ function get_report_div(workspace, view,design){
 		var i = 0;
 		divs += "<div class='columna untercio'><article class='untercio'><header><h2>Workspace summarized report</h2></header><div class='main'>";
 		$.each(data.rows, function(n, obj){
-			divs += "<div class=\"columna unquinto\"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj.value+"</div><div class=\"txt texto-blanco\">"+obj.key+"</div></section></article></div>";
-			i++;
+			if (obj.key != "interfaces"){
+				divs += "<div class=\"columna unquinto\"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj.value+"</div><div class=\"txt texto-blanco\">"+obj.key+"</div></section></article></div>";
+				i++;
+			}
 		});
 		divs +="</div></article></section></div>";
 		return divs;

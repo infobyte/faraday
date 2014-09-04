@@ -14,9 +14,7 @@
 		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+
-				"<th>Interfaces</th>"+
 				"<th>OS</th>"+
-				"<th>Owned</th>"+
 				"</tr></thead><tbody>";
 		$.each(hosts, function(k, v){
 			var hname = "";
@@ -30,9 +28,7 @@
 			table += "<tr id=\"host-"+k+"\">"+
 				"<td>"+hname+"</td>"+
 				"<td>"+services[k]+"</td>"+
-				"<td>"+interfaces[k]+"</td>"+
-				"<td>"+v.os+"</td>"+
-				"<td>"+v.owned+"</td></tr>";
+				"<td><i id='"+v.os+"' class='glyphicon glyphicon-info-sign'></i></td></tr>";
 		});
 		table += "</tbody></table></div>";
 		return table;
@@ -61,9 +57,7 @@
 				"<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+
-				"<th>Interfaces</th>"+
 				"<th>OS</th>"+
-				"<th>Owned</th>"+
 				"</tr></thead><tbody>";
 		$.each(hosts, function(k, v){
 			var id = v['id'];
@@ -72,9 +66,7 @@
 				table += "<tr id=\"host-"+id+"\">"+
 					"<td><a href=\"host-"+id+"\" class=\"host\">"+v['name']+"</a></td>"+
 					"<td>"+scount[id]+"</td>"+
-					"<td>"+interfaces[id]+"</td>"+
-					"<td>"+v['os']+"</td>"+
-					"<td>"+v['owned']+"</td></tr>";
+					"<td><i id='"+v['os']+"'class='glyphicon glyphicon-info-sign'></i></td></tr>";
 			}
 		});
 		table += "</tbody></table></div>";
@@ -101,7 +93,6 @@
 			"<table id=\"services-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 			"<th>Name</th>"+
 			"<th>Description</th>"+
-			"<th>Owned</th>"+
 			"<th>Ports</th>"+
 			"<th>Protocol</th>"+
 			"<th>Status</th></tr></thead><tbody>";
@@ -123,7 +114,6 @@
 				table += "<tr id=\"service-"+sid+"\">"+
 					"<td><a href=\"service-"+sid+"\" class=\"service\">"+v['name']+"</a></td>"+
 					"<td>"+desc+"</td>"+
-					"<td>"+v['owned']+"</td>"+
 					"<td>"+ports+"</td>"+
 					"<td>"+v['protocol']+"</td>"+
 					"<td>"+v['status']+"</td></tr>";
@@ -164,12 +154,20 @@
 		$(document).on('click', 'a#back_to_services', function(e) {
 			var div = load_services(hid, hname);
 			$("#hosts").html(div);
-            // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
-            $("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a></p>");
+			$(".tablesorter").tablesorter({
+            	 sortList: [[2,0]] 
+            });
 		});
 	}
 
 $( document ).ready(function() {	
+	$(document).on("mouseenter", ".glyphicon-info-sign", function(){
+		console.log(this);
+		$("#load_service").html("<div id='contenido'>" + pedido +"</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px' id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
+		var elemento = $(this).position();
+		$("#load_service").css('top',elemento.top);
+		$("#load_service").css('left',elemento.left + 85);
+	});
 	$(document).on('click', 'a.host', function(e) {
             // no queremos que cargue nada
             e.preventDefault();
@@ -181,7 +179,10 @@ $( document ).ready(function() {
             back_to_services(hid,hname);
             $("#hosts").html(div);
             // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
-            $("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a></p>");
+            $("#text").html("<a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a>");
+            $(".tablesorter").tablesorter({
+            	 sortList: [[2,0]] 
+            });
 });
         // cuando se clickea un servicio carga todos los hosts que tienen ese servicio
         $(document).on('click', 'a.service', function(e) {
@@ -190,7 +191,7 @@ $( document ).ready(function() {
             var div = load_hosts_by_service(sname);
             $("#hosts").html(div);
             // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
-            $("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_services'>Back</a></p>");
+            $("#text").html("<a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_services'>Back</a>");
         });
 
         // comportamiento para "View all hosts"

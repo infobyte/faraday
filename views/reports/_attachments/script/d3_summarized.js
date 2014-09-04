@@ -16,7 +16,7 @@ function treemap(workspace, design, view){
             .style("height", (height + margin.top + margin.bottom) + "px")
             .style("left", margin.left + "px")
             .style("top", margin.top + "px");
-
+$("body").append("<div id='load_service'></div>");
         json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
         d3.json(json_url, function(error, root) {
           var sort_jotason = sorter_jotason(root);
@@ -28,7 +28,7 @@ function treemap(workspace, design, view){
               .attr("class", "node")
               .call(position)
               .on("mouseover", mouseover)
-              .style("background", function(d) {return color(Math.floor(Math.random()*68)); });
+              .style("background", function(d) {return color(Math.random()*11); });
         });
 
         function position() {
@@ -39,7 +39,6 @@ function treemap(workspace, design, view){
         }
 
         	function mouseover(d){
-			$("body").append("<div id='load_service'></div>");
 				$("#load_service").html("<div id='contenido'><p>"+ d.key +"</p><p><b>"+ d.value +"</b></p></div>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
 				var elemento = $(this).position();
 				$("#load_service").css('top',elemento.top + 200);
@@ -72,12 +71,12 @@ function treemap(workspace, design, view){
 
 function bar(workspace, design, view){
 	// Mapping of step names to colors.
-
+$("body").append("<div id='load_service'></div>");
 	var margin = {top: 20, right: 20, bottom: 30, left: 40},
 	    width = 160 - margin.left - margin.right,
 	    height = 149 - margin.top - margin.bottom;
 
-	var color = d3.scale.category20c();
+var color = d3.scale.category20b() 
 
 	var x = d3.scale.ordinal()
 	    .rangeRoundBands([0, width], .1);
@@ -119,7 +118,7 @@ function bar(workspace, design, view){
 	      .attr("class", "bar")
 	      .attr("x", function(d) { return x(d[1]); })
 	      .attr("y", function(d) { return y(d[0] - 1); })
-	      .style("fill", function(d) { return color(Math.floor(Math.random()*68)); })
+	      .style("fill", function(d) { return color(Math.random()*55); })
       	  .on("mouseover", mouseover)
 	      .attr("height", function(d) { return height - y(d[0]); })
 	      .attr("width", 30);
@@ -136,7 +135,6 @@ function bar(workspace, design, view){
 	function mouseover(d){
 		hosts	= get_obj(hurl);
 		var name = hosts[d[1]].name;
-	$("body").append("<div id='load_service'></div>");
 		$("#load_service").html("<div id='contenido'><p>"+ name +"</p><p><b>"+ d[0] +"</b></p></div>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
 		var elemento = $(this).position();
 		$("#load_service").css('top',elemento.top);

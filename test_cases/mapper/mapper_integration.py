@@ -12,6 +12,7 @@ import sys
 import os
 import random
 sys.path.append(os.path.abspath(os.getcwd()))
+import time
 
 from persistence.persistence_managers import CouchDbManager, FileSystemManager
 from managers.mapper_manager import MapperManager
@@ -38,6 +39,7 @@ class MapperWithCouchDbManagerInegrationTest(unittest.TestCase):
 
     def tearDown(self):
         self.couchdbmanager.deleteDb(self.db_name)
+        time.sleep(3)
 
     def test_host_saving(self):
         host = Host(name="pepito", os="linux")
@@ -150,7 +152,7 @@ class MapperWithCouchDbManagerInegrationTest(unittest.TestCase):
         iface.setPortsOpened(2)
         iface.setPortsClosed(3)
         iface.setPortsFiltered(4)
-        host.addChild(iface.getID(), iface)
+        host.addChild(iface)
         self.mapper_manager.save(iface)
 
         h = self.mapper_manager.find(host.getID())
@@ -185,7 +187,7 @@ class MapperWithCouchDbManagerInegrationTest(unittest.TestCase):
         iface.setPortsOpened(2)
         iface.setPortsClosed(3)
         iface.setPortsFiltered(4)
-        host.addChild(iface.getID(), iface)
+        host.addChild(iface)
         self.mapper_manager.save(iface)
 
         #create a set of mappers, so we have a clean map
@@ -333,7 +335,7 @@ class MapperWithFileSystemManagerInegrationTest(unittest.TestCase):
         iface.setPortsOpened(2)
         iface.setPortsClosed(3)
         iface.setPortsFiltered(4)
-        host.addChild(iface.getID(), iface)
+        host.addChild(iface)
         self.mapper_manager.save(iface)
 
         h = self.mapper_manager.find(host.getID())
@@ -368,7 +370,7 @@ class MapperWithFileSystemManagerInegrationTest(unittest.TestCase):
         iface.setPortsOpened(2)
         iface.setPortsClosed(3)
         iface.setPortsFiltered(4)
-        host.addChild(iface.getID(), iface)
+        host.addChild(iface)
         self.mapper_manager.save(iface)
 
         #create a set of mappers, so we have a clean map

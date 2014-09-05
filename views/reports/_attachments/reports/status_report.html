@@ -32,10 +32,9 @@
     <script type="text/javascript" src="/_utils/script/jquery.js"></script>
     <script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-    <script type="text/javascript"
-    src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min.js"></script>
-    <script type="text/javascript"
-    src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular-route.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular-route.js"></script>
+    <script type="text/javascript" src=".././././script/csv-export.js"></script>
 </head>
 
 <body ng-app="status-report">
@@ -75,143 +74,194 @@
             </aside>
             
             <section id="main" class="seccion clearfix">
-                <div id="reportes" class="fila clearfix">
-                   <div id="sec" class="btn-group">
-                    <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
-                        <span class="glyphicon glyphicon-refresh"></span>
-                    </button>
-                    <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
-                        Change workspace <span class="caret"></span>
-                    </button>
-                    <ul id="nav" class="dropdown-menu" role="menu">
-                    </ul><!-- navegacion de WS -->
-                   </div>
+                <div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <span id="ws-name" class="label label-default" title="Current workspace"></span><!-- WS name -->
+                        
+                        <div id="ws-control" class="btn-group">
+                            <button id="csv-export" type="button" class="btn btn-success" title="Download CSV for current workspace">
+                                <span class="glyphicon glyphicon-download"></span>
+                            </button>
+                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                                Change workspace <span class="caret"></span>
+                            </button>
+                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
+                            </ul><!-- WS navigation -->
+                        </div><!-- #ws-control -->
+                    </h2>
                    <div class="reports" ng-controller="vulnsCtrl">
-                       <p>Filter by</p>
-                       <input id="filter" name="filter" ng-model="query" type="text"/>
-                       <table id="hosts" class="tablesorter">
+                        <form class="form-inline" style="margin: 10px !important;" role="form">
+                            <div class="form-group">
+                                <label class="sr-only" for="filter-by">Filter by</label>
+                                <input type="text" class="form-control input-sm" id="filter-by" placeholder="Filter by" ng-model="query">
+                            </div>
+                        </form>
+                       <table id="hosts" class="csv-export tablesorter">
                             <thead>
                                 <tr>
-                                    <th><a href="" ng-click="sortField = 'date';
-                                    reverse = !reverse">Date</a></th>
-                                    <th><a href="" ng-click="sortField = 'status';
-                                    reverse = !reverse">Status</a></th>
-                                    <th><a href="" ng-click="sortField = 'name';
-                                    reverse = !reverse">Name</a></th>
+                                    <th><a href="" ng-click="sortField = 'date'; reverse = !reverse">Date</a></th>
+                                    <th><a href="" ng-click="sortField = 'status'; reverse = !reverse">Status</a></th>
+                                    <th><a href="" ng-click="sortField = 'severity'; reverse = !reverse">Severity</a></th>
+                                    <th><a href="" ng-click="sortField = 'name'; reverse = !reverse">Name</a></th>
                                     <th>Target</th>
-                                    <th><a href="" ng-click="sortField = 'desc';
-                                    reverse = !reverse">Desc</a></th>
+                                    <th><a href="" ng-click="sortField = 'desc'; reverse = !reverse">Desc</a></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse">
                                     <td>{{v.date}}</td>
                                     <td>{{v.status}}</td>
+                                    <td>{{v.severity}}</td>
                                     <td>{{v.name}}</td>
                                     <td></td>
-                                    <td>{{v.desc}}</td>
+                                    <td data-dd-collapse-text="200">{{v.desc}}</td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->
                     </div><!-- .reports -->
-                </div><!-- #reportes -->
+                </div><!-- #reports-main -->
             </section>
         </div><!--!/#wrapper -->
     </div><!--!/#container -->
 
     <script type="text/javascript">
-        //get workspace
     dominio = location.href;
     space = dominio.split("#");
     workspace = space[1];
 
-    json_url = "/"+ workspace +"/_design/vulns/_view/all";
-        var statusReport = angular.module('status-report', ["ngRoute"])
-            .controller('vulnsCtrl', ['$scope', 'vulnsFact', function($scope, vulnsFact) {
-                $scope.vulns = vulnsFact;
-                $scope.sortField = 'date';
-                $scope.reverse = true;
-            }])
-            .factory('vulnsFact', function() {
-                var vulns = [];
-                  $.ajaxSetup({
-                    async: false
-                });
-                // aca traigo el json de couch
-                $.getJSON(json_url, function(data) {
-                    $.each(data.rows, function(n, obj){
-                            var d = new Date(0); 
-                            d.setUTCSeconds(obj.value.date);
-                            var desc = obj.value.desc.replace(/&/g, '&amp;')
-                                                  .replace(/>/g, '&gt;')
-                                                  .replace(/</g, '&lt;')
-                                                  .replace(/"/g, '&quot;')
-                                                  .replace(/'/g, '&apos;');
-                            vulns.push({"date":d, "status": obj.value.status, "name": obj.value.name, "desc": desc});
-                    });
-                });
-                return vulns;
+    vulns_url = "/"+ workspace +"/_design/vulns/_view/all";
+    hosts_url = "/"+ workspace +"/_design/hosts/_view/hosts";
+    var statusReport = angular.module('status-report', ["ngRoute"])
+        .controller('vulnsCtrl', ['$scope', 'vulnsFact', function($scope, vulnsFact) {
+            $scope.vulns = vulnsFact;
+            $scope.sortField = 'date';
+            $scope.reverse = true;
+        }])
+        .factory('vulnsFact', function() {
+            var vulns = [];
+            var hosts = [];
+            var hosts_ids = [];
+            $.ajaxSetup({
+                async: false
             });
+            // gets vulns json from couch
+            $.getJSON(vulns_url, function(data) {
+                $.each(data.rows, function(n, obj){
+                        var d = new Date(0); 
+                        d.setUTCSeconds(obj.value.date);
+                        d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
+                        var desc = obj.value.desc.replace(/&/g, '&amp;')
+                                              .replace(/>/g, '&gt;')
+                                              .replace(/</g, '&lt;')
+                                              .replace(/"/g, '&quot;')
+                                              .replace(/'/g, '&apos;');
+                        vulns.push({
+                            "date":d, 
+                            "status": obj.value.status, 
+                            "name": obj.value.name, 
+                            "desc": desc, 
+                            "severity": obj.value.severity, 
+                            "parent": obj.value.parent});
+                        hosts_ids.push(obj.value.parent);
+                });
+            });
+            //gets hosts json from couch
+            $.getJSON(hosts_url, function(data) {
+                $.each(data.rows, function(n, obj) {
+                   hosts.push({"id": obj.id, "name": obj.value.name, "os": obj.value.os, "owned": obj.value.owned}); 
+                }); 
+            });
+            return vulns;
+        })
+        .directive('ddCollapseText', ['$compile', function($compile) {
+            return {
+                restrict: 'A',
+                replace: true,
+                link: function(scope, element, attrs) {
+
+                    // start collapsed
+                    scope.collapsed = false;
+
+                    // create the function to toggle the collapse
+                    scope.toggle = function() {
+                        scope.collapsed = !scope.collapsed;
+                    };
+
+                    // get the value of the dd-collapse-text attribute
+                    attrs.$observe('ddCollapseText', function(maxLength) {
+                        // get the contents of the element
+                        var text = element.text();
+
+                        if (text.length > maxLength) {
+                            // split the text in two parts, the first always showing
+                            var firstPart = String(text).substring(0, maxLength);
+                            var secondPart = String(text).substring(maxLength, text.length);
+
+                            // create some new html elements to hold the separate info
+                            var firstSpan = $compile('<span>' + firstPart + '</span>')(scope);
+                            var secondSpan = $compile('<span ng-if="collapsed">' + secondPart + '</span>')(scope);
+                            var moreIndicatorSpan = $compile('<span ng-if="!collapsed"> ...</span>')(scope);
+                            var toggleButton = $compile('<span class="collapse-text-toggle" ng-click="toggle()"> <a href="">{{collapsed ? "less" : "more"}}</a></span>')(scope);
+
+                            // remove the current contents of the element
+                            // and add the new ones we created
+                            element.empty();
+                            element.append(firstSpan);
+                            element.append(secondSpan);
+                            element.append(moreIndicatorSpan);
+                            element.append(toggleButton);
+                        }
+                    });
+                }
+            };
+        }]);
     </script>
 <script type="text/javascript">
     $(document).ready(function() {
-    var counter = 0;
-    var h = 0;
-    $.couch.allDbs({
-            success : function(dbs) {
-              dbs.filter(function(db_name){
-                  return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
-              .forEach(function(db) {
-              // armo la lista con todos los 
-                      $("#sec #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
-              // navegación entre WSs
-                  if(window.location.hash === "" && counter === 0) {
-                    window.location.hash = db;
-                   }
-                  counter +=1;
-            });
-            if(counter < 1) { 
-                $("#reportes").empty();
-                  $("#reportes").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
-        }
-      }
-    });
-    // navegacion entre WSs en el dropdown
-    $(document).on("click", "a.ws", function(e) {
-        e.preventDefault();
-        var hash = $(this).attr("href").substr(1);
-        window.location.hash = hash;
-        location.reload();
-    });
-    $(document).on("click", "#refresh", function() {
-        location.reload();
-    });
-
-    var ret = "<div id=\"workspace-"+workspace+"\" class=\"workspace\"></div><!-- .workspace --><div class='left'><h2>Viewing "+workspace+"</h2></div>";
-
-    $('#reportes').prepend(ret);
-
-    function get_obj(ourl) {
-        var ls = {};
-        $.ajax({
-            dataType: "json",
-            url: ourl,
-            async: false,
-            success: function(data) {
-                $.each(data.rows, function(n, obj){
-                    ls[obj.key] = obj.value;
-                }); 
+        $('table.csv-export').toCSV();
+        var counter = 0;
+        var h = 0;
+        $.couch.allDbs({
+                success : function(dbs) {
+                  dbs.filter(function(db_name){
+                      return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
+                  .forEach(function(db) {
+                        // WSs list
+                        $("#ws-control #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
+                        // navigation between WSs
+                      if(window.location.hash === "" && counter === 0) {
+                        window.location.hash = db;
+                       }
+                      counter +=1;
+                });
+                if(counter < 1) { 
+                    $("#reports-main").empty();
+                      $("#reports-main").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
             }
+          }
         });
-        return ls;
-    }
-});
-
-
-setTimeout(function() {
-    // calculo la altura del sidebar
-    $("aside").height($("#main").height() + 16);
-}, 2000);
+        // WSs dropdown navigation
+        $(document).on("click", "a.ws", function(e) {
+            e.preventDefault();
+            var hash = $(this).attr("href").substr(1);
+            window.location.hash = hash;
+            location.reload();
+        });
+        $(document).on("click", "#refresh", function() {
+            location.reload();
+        });
+    
+        var ret = "Viewing "+ workspace;
+        $('#reports-main .ws-label span#ws-name').text(ret);
+    });
+    
+    setTimeout(function() {
+        // sidebar height calc
+        $("aside").height($("#main").height() + 16);
+    }, 2000);
 </script>
 </body>
 </html> 

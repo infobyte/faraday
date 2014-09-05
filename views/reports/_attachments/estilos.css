@@ -156,7 +156,6 @@ h1 {
 	font-size:40px;
 }
 h2 {
-	font-size:17px!important;
 	font-weight: bold!important;
 	text-align: left;
 	margin: 10px 0 0 10px!important;
@@ -188,11 +187,12 @@ h2 {
 	.dosquintos {width: 332px;}
 	.tresquintos {width: 508px;}
 ul {margin-bottom: 20px;}
-
+/*
 #cont {
 	width:100%;
 	text-align:center;
 }
+*/
 .wrapper {
 	width: 100%;
 }
@@ -501,19 +501,17 @@ label {
 	float: right;
 	margin-top: -34px;
 }
-* { /* compatibilidad entre nuestros estilos y los de bootstrap */ 
-	-moz-box-sizing: content-box !important;
-}
-
 #treemap {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   position: relative;
 }
+/*
 form {
  position: absolute;
  right: 10px;
  top: 45px;
 }
+*/
 .node {
  border: solid 1px white;
  font: 10px sans-serif;
@@ -563,4 +561,19 @@ ul.d3 .untercio{width: 160px;}
 #chart path {
   stroke: #fff;
 }
-
+/* Custom Bootstrap Danger dropdown styles */
+.dropdown-menu-danger {
+    background-image: linear-gradient(to bottom, #d9534f 0px, #c12e2a 100%);
+    background-repeat: repeat-x;
+    border-color: #b92c28;
+}
+.dropdown-menu-danger li a {
+    color: #ffffff !important;
+    text-shadow: 0 1px 0 rgba(0,0,0,.5);
+    &:focus {
+        background-color: #000000 !important;
+        background-image: linear-gradient(to bottom, #000000 0px, #c12e2a 100%) !important;
+        background-repeat: repeat-x;
+        color: #000000 !important;
+    }
+}

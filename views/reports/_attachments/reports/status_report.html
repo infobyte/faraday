@@ -34,6 +34,7 @@
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min.js"></script>
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular-route.js"></script>
+    <script type="text/javascript" src=".././././script/csv-export.js"></script>
 </head>
 
 <body ng-app="status-report">
@@ -73,23 +74,32 @@
             </aside>
             
             <section id="main" class="seccion clearfix">
-                <div id="reportes" class="fila clearfix">
-                   <div id="sec" class="btn-group">
-                    <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
-                        <span class="glyphicon glyphicon-refresh"></span>
-                    </button>
-                    <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
-                        Change workspace <span class="caret"></span>
-                    </button>
-                    <ul id="nav" class="dropdown-menu" role="menu">
-                    </ul><!-- navegacion de WS -->
-                   </div>
+                <div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <span id="ws-name" class="label label-default" title="Current workspace"></span><!-- WS name -->
+                        
+                        <div id="ws-control" class="btn-group">
+                            <button id="csv-export" type="button" class="btn btn-success" title="Download CSV for current workspace">
+                                <span class="glyphicon glyphicon-download"></span>
+                            </button>
+                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                                Change workspace <span class="caret"></span>
+                            </button>
+                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
+                            </ul><!-- WS navigation -->
+                        </div><!-- #ws-control -->
+                    </h2>
                    <div class="reports" ng-controller="vulnsCtrl">
-                       <div id="filter" class="form-group">
-                        <label for="filter">Filter by</p>
-                        <input id="filter" class="form-control" ng-model="query" type="text"/>
-                       </div>
-                       <table id="hosts" class="tablesorter">
+                        <form class="form-inline" style="margin: 10px !important;" role="form">
+                            <div class="form-group">
+                                <label class="sr-only" for="filter-by">Filter by</label>
+                                <input type="text" class="form-control input-sm" id="filter-by" placeholder="Filter by" ng-model="query">
+                            </div>
+                        </form>
+                       <table id="hosts" class="csv-export tablesorter">
                             <thead>
                                 <tr>
                                     <th><a href="" ng-click="sortField = 'date'; reverse = !reverse">Date</a></th>
@@ -112,7 +122,7 @@
                             </tbody>
                         </table><!-- #hosts -->
                     </div><!-- .reports -->
-                </div><!-- #reportes -->
+                </div><!-- #reports-main -->
             </section>
         </div><!--!/#wrapper -->
     </div><!--!/#container -->
@@ -137,7 +147,7 @@
             $.ajaxSetup({
                 async: false
             });
-            // trae json de vulns desde couch
+            // gets vulns json from couch
             $.getJSON(vulns_url, function(data) {
                 $.each(data.rows, function(n, obj){
                         var d = new Date(0); 
@@ -158,7 +168,7 @@
                         hosts_ids.push(obj.value.parent);
                 });
             });
-            // trae json de hosts desde couch
+            //gets hosts json from couch
             $.getJSON(hosts_url, function(data) {
                 $.each(data.rows, function(n, obj) {
                    hosts.push({"id": obj.id, "name": obj.value.name, "os": obj.value.os, "owned": obj.value.owned}); 
@@ -211,63 +221,47 @@
     </script>
 <script type="text/javascript">
     $(document).ready(function() {
-    var counter = 0;
-    var h = 0;
-    $.couch.allDbs({
-            success : function(dbs) {
-              dbs.filter(function(db_name){
-                  return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
-              .forEach(function(db) {
-              // armo la lista con todos los 
-                      $("#sec #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
-              // navegación entre WSs
-                  if(window.location.hash === "" && counter === 0) {
-                    window.location.hash = db;
-                   }
-                  counter +=1;
-            });
-            if(counter < 1) { 
-                $("#reportes").empty();
-                  $("#reportes").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
-        }
-      }
-    });
-    // navegacion entre WSs en el dropdown
-    $(document).on("click", "a.ws", function(e) {
-        e.preventDefault();
-        var hash = $(this).attr("href").substr(1);
-        window.location.hash = hash;
-        location.reload();
-    });
-    $(document).on("click", "#refresh", function() {
-        location.reload();
-    });
-
-    var ret = "<div id=\"workspace-"+workspace+"\" class=\"workspace\"></div><!-- .workspace --><div class='left'><h2>Viewing "+workspace+"</h2></div>";
-
-    $('#reportes').prepend(ret);
-
-    function get_obj(ourl) {
-        var ls = {};
-        $.ajax({
-            dataType: "json",
-            url: ourl,
-            async: false,
-            success: function(data) {
-                $.each(data.rows, function(n, obj){
-                    ls[obj.key] = obj.value;
-                }); 
+        $('table.csv-export').toCSV();
+        var counter = 0;
+        var h = 0;
+        $.couch.allDbs({
+                success : function(dbs) {
+                  dbs.filter(function(db_name){
+                      return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
+                  .forEach(function(db) {
+                        // WSs list
+                        $("#ws-control #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
+                        // navigation between WSs
+                      if(window.location.hash === "" && counter === 0) {
+                        window.location.hash = db;
+                       }
+                      counter +=1;
+                });
+                if(counter < 1) { 
+                    $("#reports-main").empty();
+                      $("#reports-main").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
             }
+          }
         });
-        return ls;
-    }
-});
-
-
-setTimeout(function() {
-    // calculo la altura del sidebar
-    $("aside").height($("#main").height() + 16);
-}, 2000);
+        // WSs dropdown navigation
+        $(document).on("click", "a.ws", function(e) {
+            e.preventDefault();
+            var hash = $(this).attr("href").substr(1);
+            window.location.hash = hash;
+            location.reload();
+        });
+        $(document).on("click", "#refresh", function() {
+            location.reload();
+        });
+    
+        var ret = "Viewing "+ workspace;
+        $('#reports-main .ws-label span#ws-name').text(ret);
+    });
+    
+    setTimeout(function() {
+        // sidebar height calc
+        $("aside").height($("#main").height() + 16);
+    }, 2000);
 </script>
 </body>
 </html> 

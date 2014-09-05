@@ -58,18 +58,18 @@ jQuery.fn.selectText = function(){
 
 $("body").append("<div id='load_service'></div>");
 $(document).on("mouseenter", ".services", function(){
-    var name = $(this)[0].innerHTML.split(">")[5].split("<")[0];
-	var pedido = load_hosts_by_service(name, true);
-	$("#load_service").html("<div id='contenido'>" + pedido +"</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px' id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
-	var elemento = $(this).position();
-	$("#load_service").css('top',elemento.top);
-	$("#load_service").css('left',elemento.left + 85);
+        var name = $(this)[0].innerHTML.split(">")[5].split("<")[0];
+    	var pedido = load_hosts_by_service(name, true);
+    	$("#load_service").html("<div id='contenido'><b>Hosts:</b>" + pedido +"</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px' id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
+    	var elemento = $(this).position();
+    	$("#load_service").css('top',elemento.top);
+    	$("#load_service").css('left',elemento.left + 85);
 });
 timer = null;
 bolean = false;
-wait = 1300;
+wait = 1500;
     $(document).ready(function () {
-        $('*').bind('mousemove keydown scroll', function () {
+        $('*').bind('mousemove', function () {
             clearTimeout(timer);
             bolean = false;
             timer = setTimeout(function () { 
@@ -77,5 +77,14 @@ wait = 1300;
                 bolean = true; }, wait);
         });
         $("body").trigger("mousemove");
+        $('div:not(#load_service)').bind('scroll click', function () {
+            clearTimeout(timer);
+            bolean = false;
+
+                timer = setTimeout(function () { 
+                    $("#load_service").css("visibility","hidden");
+                    bolean = true;
+                });
+        });
 });
 </script>

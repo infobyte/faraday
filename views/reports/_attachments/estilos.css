@@ -151,6 +151,7 @@ a {
 	outline-style:none;
 	color: #DF3936!important;
 }
+a:hover{cursor: pointer;}
 p {margin-bottom: 1em;}
 h1 {
 	font-size:40px;
@@ -317,7 +318,7 @@ article.untercio{
 				padding: 0 !important;
 				background: #E8EFF0;
 			}
-				.sin_padding h2{padding-bottom: 8px;}
+				.sin_padding h2{padding-bottom: 16px;}
 
 /* ==== COLORES generales ==== */
 /* Fondos */
@@ -378,7 +379,7 @@ article.untercio{
 /* TABLAS - Table sorter*/
 table.tablesorter {
 	background-color: #CDCDCD;
-	margin:10px 0pt 15px;
+	margin:0px 0pt 15px;
 	font-size: 12px;
 	width: 100%;
 	text-align: center;
@@ -537,6 +538,7 @@ ul.d3 .untercio{width: 160px;}
 }
 #treemap, #bar, #cake{height:195px}
 #list .main{height:160px}
+#list .seccion2{padding-left: 20px;}
 #vulns .columna{margin-left:2%}
 #vulns .columna article.untercio{height:135px;width:185%}
 #vulns .main{width:505px;height:95px}
@@ -545,8 +547,9 @@ ul.d3 .untercio{width: 160px;}
 #summarized .main{height:197px}
 #byservices .columna article.untercio{height:237px;width:308px}
 #byservices .main{height:197px}
-#compound .main{height:360px}
+#compound .main{height:340px}
 .status .seccion2{width: 100%;}
+#contenido{text-align: left;}
 #sequence { 
   height: 0px;
 }

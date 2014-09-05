@@ -16,7 +16,8 @@ function treemap(workspace, design, view){
             .style("height", (height + margin.top + margin.bottom) + "px")
             .style("left", margin.left + "px")
             .style("top", margin.top + "px");
-$("body").append("<div id='load_service'></div>");
+
+		$("body").append("<div id='load_service'></div>");
         json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
         d3.json(json_url, function(error, root) {
           var sort_jotason = sorter_jotason(root);
@@ -37,12 +38,19 @@ $("body").append("<div id='load_service'></div>");
               .style("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
               .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
         }
+	  // Add the mouseleave handler to the bounding circle.
+	  d3.select(".columna").on("mouseleave", mouseleave);
+
+	  function mouseleave(d) {
+	  	  d3.select("#load_service")
+      		.style("visibility", "hidden");
+	  }
 
         	function mouseover(d){
-				$("#load_service").html("<div id='contenido'><p>"+ d.key +"</p><p><b>"+ d.value +"</b></p></div>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
+				$("#load_service").html("<div id='contenido'><p>Name: "+ d.key +"</p><p><b>Amount: "+ d.value +"</b></p></div>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
 				var elemento = $(this).position();
 				$("#load_service").css('top',elemento.top + 200);
-				$("#load_service").css('left',elemento.left + 150);
+				$("#load_service").css('left',elemento.left + 140);
 			}
 
         function sorter_jotason(root){
@@ -126,7 +134,6 @@ var color = d3.scale.category20b()
 	  // Add the mouseleave handler to the bounding circle.
 	  d3.select(".columna").on("mouseleave", mouseleave);
 
-
 	  function mouseleave(d) {
 	  	  d3.select("#load_service")
       		.style("visibility", "hidden");
@@ -135,7 +142,7 @@ var color = d3.scale.category20b()
 	function mouseover(d){
 		hosts	= get_obj(hurl);
 		var name = hosts[d[1]].name;
-		$("#load_service").html("<div id='contenido'><p>"+ name +"</p><p><b>"+ d[0] +"</b></p></div>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
+		$("#load_service").html("<div id='contenido'><p>Host: "+ name +"</p><p><b>Services: "+ d[0] +"</b></p></div>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
 		var elemento = $(this).position();
 		$("#load_service").css('top',elemento.top);
 		$("#load_service").css('left',elemento.left + 10);

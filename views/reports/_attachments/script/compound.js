@@ -154,19 +154,23 @@
 		$(document).on('click', 'a#back_to_services', function(e) {
 			var div = load_services(hid, hname);
 			$("#hosts").html(div);
-			$(".tablesorter").tablesorter({
-            	 sortList: [[2,0]] 
-            });
+			sorter(2);
 		});
+	}
+	//sortea la columna que vos le pasas, columna = numero 
+	function sorter(columna){
+		$(".tablesorter").tablesorter({
+          	 sortList: [[columna,0]] 
+        });
 	}
 
 $( document ).ready(function() {	
 	$(document).on("mouseenter", ".glyphicon-info-sign", function(){
-		console.log(this);
-		$("#load_service").html("<div id='contenido'>" + pedido +"</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px' id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
+		 var name = $(this).attr("id");
+		$("#load_service").html("<div id='contenido'><p>" + name +"</p></div>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
 		var elemento = $(this).position();
-		$("#load_service").css('top',elemento.top);
-		$("#load_service").css('left',elemento.left + 85);
+		$("#load_service").css('top',elemento.top + 270);
+		$("#load_service").css('left',elemento.left + 115);
 	});
 	$(document).on('click', 'a.host', function(e) {
             // no queremos que cargue nada
@@ -180,9 +184,7 @@ $( document ).ready(function() {
             $("#hosts").html(div);
             // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
             $("#text").html("<a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a>");
-            $(".tablesorter").tablesorter({
-            	 sortList: [[2,0]] 
-            });
+            sorter(2);
 });
         // cuando se clickea un servicio carga todos los hosts que tienen ese servicio
         $(document).on('click', 'a.service', function(e) {
@@ -192,6 +194,7 @@ $( document ).ready(function() {
             $("#hosts").html(div);
             // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
             $("#text").html("<a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_services'>Back</a>");
+            sorter(0);
         });
 
         // comportamiento para "View all hosts"
@@ -199,10 +202,12 @@ $( document ).ready(function() {
             e.preventDefault();
             var div = load_all_hosts();
             $("#hosts").html(div);
+            sorter(0);
         });
         $(document).on('click', 'a#back_to_host', function(e) {
 		    e.preventDefault();
             var div = load_all_hosts();
             $("#hosts").html(div);
+            sorter(0);
         });
 });

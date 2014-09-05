@@ -133,7 +133,6 @@ $(document).ready(function() {
       return false;
    });
 
-
     //get workspace
     dominio = location.href;
     space = dominio.split("#");
@@ -157,11 +156,11 @@ treemap(workspace, design, view);
 bar(workspace, design, view);
 view = "vulns";
 cake(workspace, design, view);
-
 for (i = 0; i < rutas.length; i++) { 
     dominio = rutas[i];
     var div = load(dominio);
 }
+$("aside").height(screen.height - 133);
 });
 
 
@@ -200,9 +199,9 @@ function dominios(dominio){
 }
 
 setTimeout(function() {
+    sorter(0);
     // calculo la altura del sidebar
-    $("aside").height($("#main").height() + 16);
-}, 2000);
+}, 1000);
 </script>
 </body>
 </html> 

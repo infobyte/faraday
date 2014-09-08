@@ -42,6 +42,7 @@
         <div class="wrapper">
             <header class="head">
                 <a href="#"><img class="logo" src="../././images/logo-faraday.png"/></a>
+                <!--
                 <nav>
                     <ul class="menu">
                         <li>
@@ -59,6 +60,7 @@
                         </li>
                     </ul>
                 </nav>
+                -->
             </header>
             
             <aside>
@@ -91,15 +93,15 @@
                             <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
                             </ul><!-- WS navigation -->
                         </div><!-- #ws-control -->
-                    </h2>
-                   <div class="reports" ng-controller="vulnsCtrl">
+                    </h2><!-- .ws-label -->
+                    <div class="reports" ng-controller="vulnsCtrl">
                         <form class="form-inline" style="margin: 10px !important;" role="form">
                             <div class="form-group">
                                 <label class="sr-only" for="filter-by">Filter by</label>
                                 <input type="text" class="form-control input-sm" id="filter-by" placeholder="Filter by" ng-model="query">
                             </div>
                         </form>
-                       <table id="hosts" class="csv-export tablesorter">
+                        <table id="hosts" class="csv-export tablesorter">
                             <thead>
                                 <tr>
                                     <th><a href="" ng-click="sortField = 'date'; reverse = !reverse">Date</a></th>

@@ -44,6 +44,7 @@
         <div class="wrapper">
             <header class="head">
                 <a href="#"><img class="logo" src="images/logo-faraday.png"/></a>
+                <!--
                 <nav>
                     <ul class="menu">
                         <li>
@@ -61,6 +62,7 @@
                         </li>
                     </ul>
                 </nav>
+                -->
             </header>
             
             <aside>
@@ -76,18 +78,24 @@
             </aside>
             
             <section id="main" class="seccion clearfix">
-                <div id="reportes" class="fila clearfix">
-                   <div id="sec" class="btn-group">
-                    <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
-                        <span class="glyphicon glyphicon-refresh"></span>
-                    </button>
-                    <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
-                        Change workspace <span class="caret"></span>
-                    </button>
-                    <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
-                    </ul><!-- navegacion de WS -->
-                   </div>
-                </div><!-- fin fila -->
+                <div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <span id="ws-name" class="label label-default" title="Current workspace"></span><!-- WS name -->
+                        
+                        <div id="ws-control" class="btn-group">
+                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                                Change workspace <span class="caret"></span>
+                            </button>
+                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
+                            </ul><!-- WS navigation -->
+                        </div><!-- #ws-control -->
+                    </h2><!-- .ws-label -->
+                    <div class="reports">
+                    </div><!-- .reports -->
+                </div><!-- #reports-main -->
             </section>
             <footer>
             </footer>
@@ -103,17 +111,17 @@ $(document).ready(function() {
               dbs.filter(function(db_name){
                   return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
               .forEach(function(db) {
-              // armo la lista con todos los 
-                      $("#sec #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
-              // navegación entre WSs
-                  if(window.location.hash === "" && counter === 0) {
-                    window.location.hash = db;
-                   }
-                  counter +=1;
+                    // WSs list
+                    $("#ws-control #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
+                    // navigation between WSs
+                    if(window.location.hash === "" && counter === 0) {
+                        window.location.hash = db;
+                    }
+                    counter +=1;
             });
             if(counter < 1) { 
-                $("#reportes").empty();
-                  $("#reportes").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
+                $("#reports-main").empty();
+                  $("#reports-main").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
         }
       }
     });
@@ -138,15 +146,13 @@ $(document).ready(function() {
     space = dominio.split("#");
     workspace = space[1];
 
-    var ret = "<div id=\"workspace-"+workspace+"\" class=\"workspace\"></div><!-- .workspace --><div class='left'><h2>Viewing "+workspace+"</h2></div>";
-
-    $('#reportes').prepend(ret);
-    $('.workspace').append("<div class='reports'></div>");
+    var ret = "Viewing "+ workspace;
+    $('#reports-main .ws-label span#ws-name').text(ret);
 
 rutas = ["reports/compound.html?workspace="+workspace+"&design=hosts&view=compound","reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices","reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized","reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns","reports/commands.html?workspace="+workspace+"&design=commands&view=list"];
 var content_cake = "<div id='sequence'></div><div id='chart'><div id='explanation' style='visibility: hidden;'></div></div>";
 
-$("#reportes").append("<ul class='d3'><li><div class='columna untercio'><article id='treemap'><header><h2>Top Services</h2></article></header></div></li>"+
+$("#reports-main").append("<ul class='d3'><li><div class='columna untercio'><article id='treemap'><header><h2>Top Services</h2></article></header></div></li>"+
     "<li><div class='columna untercio'><article id='bar'><header><h2>Top Hosts</h2></header></div></div></li>"+
     "<li><div class='columna untercio'><article id='cake'><header><h2>Vulnerabilities</h2></header>"+ content_cake +"</article></div></li></ul>"+
     "<ul><li><div id='byservices'></div></li><li><div id='summarized'></div></li></ul><div id='compound'></div><div id='vulns'></div><div id='list'></div></div>");

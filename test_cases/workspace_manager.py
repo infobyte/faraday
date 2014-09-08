@@ -23,7 +23,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
         workspace_manager = WorkspaceManager(mock(), mock(), mock(), mock())
         self.assertIsNotNone(workspace_manager)
 
-    def testOpenWorkspaceReportManagerWatch(self):
+    def testOpenWorkspaceChangesAndReportManagerWatch(self):
         reportManager = mock()
 
         dbManager = mock()
@@ -49,6 +49,7 @@ class UnitTestWorkspaceManager(unittest.TestCase):
 
         opened_workspace = workspace_manager.openWorkspace('test_workspace')
 
+        verify(changesController).watch()
         verify(reportManager).watch('test_workspace')
         self.assertEquals(opened_workspace.getName(), 'test_workspace')
 

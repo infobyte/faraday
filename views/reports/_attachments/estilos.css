@@ -157,6 +157,7 @@ h1 {
 	font-size:40px;
 }
 h2 {
+	font-size: 17px!important;
 	font-weight: bold!important;
 	text-align: left;
 	margin: 10px 0 0 10px!important;
@@ -580,3 +581,4 @@ ul.d3 .untercio{width: 160px;}
         color: #000000 !important;
     }
 }
+/* qTip */

@@ -28,7 +28,7 @@
 			table += "<tr id=\"host-"+k+"\">"+
 				"<td>"+hname+"</td>"+
 				"<td>"+services[k]+"</td>"+
-				"<td><i id='"+v.os+"' class='glyphicon glyphicon-info-sign'></i></td></tr>";
+				"<td><i id='"+v.os+"' class='glyphicon glyphicon-info-sign' onmouseover=\"tooltip.pop(this, '#load_os')\"></i></td></tr>";
 		});
 		table += "</tbody></table></div>";
 		return table;
@@ -53,23 +53,23 @@
 		interfaces	= get_obj(iurl, interfaces);
 		scount		= get_obj(surl, services);
 		if(!bolean){
-		var table = "<h2>Hosts with Service "+name+" ("+hids.length+" total)</h2><div class='main' style='height:338px'>"+
-				"<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
-				"<th>Host</th>"+
-				"<th>Services</th>"+
-				"<th>OS</th>"+
-				"</tr></thead><tbody>";
-		$.each(hosts, function(k, v){
-			var id = v['id'];
-			v = v['value'];
-			if($.inArray(id, hids) > -1) {
-				table += "<tr id=\"host-"+id+"\">"+
-					"<td><a href=\"host-"+id+"\" class=\"host\">"+v['name']+"</a></td>"+
-					"<td>"+scount[id]+"</td>"+
-					"<td><i id='"+v['os']+"'class='glyphicon glyphicon-info-sign'></i></td></tr>";
-			}
-		});
-		table += "</tbody></table></div>";
+			var table = "<h2>Hosts with Service "+name+" ("+hids.length+" total)</h2><div class='main' style='height:338px'>"+
+					"<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+					"<th>Host</th>"+
+					"<th>Services</th>"+
+					"<th>OS</th>"+
+					"</tr></thead><tbody>";
+			$.each(hosts, function(k, v){
+				var id = v['id'];
+				v = v['value'];
+				if($.inArray(id, hids) > -1) {
+					table += "<tr id=\"host-"+id+"\">"+
+						"<td><a href=\"host-"+id+"\" class=\"host\">"+v['name']+"</a></td>"+
+						"<td>"+scount[id]+"</td>"+
+						"<td><i id='"+v['os']+"'class='glyphicon glyphicon-info-sign' onmouseover=\"tooltip.pop(this, '#load_os')\"></i></td></tr>";
+				}
+			});
+			table += "</tbody></table></div>";
 		}else{
 			var table = "<table><tbody>"; 
 			$.each(hosts, function(k, v){
@@ -79,8 +79,8 @@
 				table += "<tr id=\"host-"+id+"\">"+
 					"<td><p>"+v['name']+"</p></td></tr>";
 			}
-		});
-		table += "</tbody></table>";
+			});
+			table += "</tbody></table>";
 		}
 		return table;
 	}
@@ -165,13 +165,26 @@
 	}
 
 $( document ).ready(function() {	
-	$(document).on("mouseenter", ".glyphicon-info-sign", function(){
-		 var name = $(this).attr("id");
-		$("#load_service").html("<div id='contenido'><p>" + name +"</p></div>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
-		var elemento = $(this).position();
-		$("#load_service").css('top',elemento.top + 270);
-		$("#load_service").css('left',elemento.left + 115);
-	});
+    $('#cont').on('mouseenter', '.glyphicon-info-sign', function (event) {
+        $(this).qtip({
+            overwrite: false, // Don't overwrite tooltips already bound
+            show: {
+                event: event.type, // Use the same event type as above
+                ready: true // Show immediately - important!
+            },
+            hide: {
+                fixed: true,
+                delay: 300
+            },
+            content:{
+                text: function(event, api) {
+                    var name = $(this).attr("id");
+                    var hosts = "<div id='contenido'>" +name+ "</div>";
+                    return hosts;
+                }
+            }
+        });
+    });
 	$(document).on('click', 'a.host', function(e) {
             // no queremos que cargue nada
             e.preventDefault();

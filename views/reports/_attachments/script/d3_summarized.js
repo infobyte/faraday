@@ -3,8 +3,6 @@ function treemap(workspace, design, view){
             width = 160 - margin.left - margin.right,
             height = 133 - margin.top - margin.bottom;
 
-        var color = d3.scale.category20c();
-
         var treemap = d3.layout.treemap()
             .size([width, height])
             .sticky(true)
@@ -17,7 +15,6 @@ function treemap(workspace, design, view){
             .style("left", margin.left + "px")
             .style("top", margin.top + "px");
 
-		$("body").append("<div id='load_service'></div>");
         json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
         d3.json(json_url, function(error, root) {
           var sort_jotason = sorter_jotason(root);
@@ -26,10 +23,9 @@ function treemap(workspace, design, view){
           var node = div.datum(jotason).selectAll(".node")
               .data(treemap.nodes)
             .enter().append("div")
-              .attr("class", "node")
+              .attr("class", "node treemap-tooltip")
               .call(position)
-              .on("mouseover", mouseover)
-              .style("background", function(d) {return color(Math.random()*11); });
+              .style("background", function(d) { return d.color; });
         });
 
         function position() {
@@ -38,20 +34,6 @@ function treemap(workspace, design, view){
               .style("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
               .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
         }
-	  // Add the mouseleave handler to the bounding circle.
-	  d3.select(".columna").on("mouseleave", mouseleave);
-
-	  function mouseleave(d) {
-	  	  d3.select("#load_service")
-      		.style("visibility", "hidden");
-	  }
-
-        	function mouseover(d){
-				$("#load_service").html("<div id='contenido'><p>Name: "+ d.key +"</p><p><b>Amount: "+ d.value +"</b></p></div>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
-				var elemento = $(this).position();
-				$("#load_service").css('top',elemento.top + 200);
-				$("#load_service").css('left',elemento.left + 140);
-			}
 
         function sorter_jotason(root){
         	var arr = [];
@@ -69,22 +51,46 @@ function treemap(workspace, design, view){
 	            }
 	            return obj;
 	        });
+	        var color = ["#FF3300", "#FFFF00", "#000099", "#009900", "#CC0000"];
 	        var objeto = [];
 	        for(i = 0; i < 5; i++){
+	        	obj[i].color = color[i];
 	        	objeto.push(obj[i]);
 	        }
 	        return objeto;
         }
+        $(document).ready(function() {
+		    $('#cont').on('mouseenter', '.treemap-tooltip', function (event) {
+		        $(this).qtip({
+		            overwrite: false, // Don't overwrite tooltips already bound
+		            show: {
+		                event: event.type, // Use the same event type as above
+		                ready: true // Show immediately - important!
+		            },
+		            hide: {
+		                fixed: true,
+		                delay: 300
+		            },
+		            content:{
+		                text: function(event, api) {
+		                    var key = this[0].__data__.key;
+		                    var value = this[0].__data__.value;
+		                    var hosts = "<div id='contenido'>Service: "+ key +"</br>Value: "+ value +"</div>";
+		                    return hosts;
+		                }
+		            }
+		        });
+		    });
+		});
 }
 
 function bar(workspace, design, view){
 	// Mapping of step names to colors.
-$("body").append("<div id='load_service'></div>");
 	var margin = {top: 20, right: 20, bottom: 30, left: 40},
 	    width = 160 - margin.left - margin.right,
 	    height = 149 - margin.top - margin.bottom;
 
-var color = d3.scale.category20b() 
+	var color = d3.scale.category20b();
 
 	var x = d3.scale.ordinal()
 	    .rangeRoundBands([0, width], .1);
@@ -100,7 +106,8 @@ var color = d3.scale.category20b()
 	    .scale(y)
 	    .orient("left")
 	    .ticks(5);
-
+	var hurl    = "/" + workspace + "/_design/" + design + "/_view/hosts";
+	$("body").append("<div id='load_service'></div>")
 	var svg = d3.select("#bar").append("svg")
 	    .attr("width", width + margin.left + margin.right)
 	    .attr("height", height + margin.top + margin.bottom)
@@ -119,34 +126,40 @@ var color = d3.scale.category20b()
 
 	  x.domain(data.map(function(d) { return d[1]; }));
 	  y.domain([0, d3.max(data, function(d) { return d[0]; })]);
-
+	
 	  svg.selectAll(".bar")
 	      .data(data)
 	    .enter().append("rect")
 	      .attr("class", "bar")
 	      .attr("x", function(d) { return x(d[1]); })
 	      .attr("y", function(d) { return y(d[0] - 1); })
+	      .on("mouseover", function(d){
+		        $(this).qtip({
+		            overwrite: false, // Don't overwrite tooltips already bound
+		            show: {
+		                event: event.type, // Use the same event type as above
+		                ready: true // Show immediately - important!
+		            },
+		            hide: {
+		                fixed: true,
+		                delay: 300
+		            },
+		            content:{
+		                text: function(event, api) {
+		                    hosts    = get_obj(hurl);
+					        var name = hosts[d[1]].name;
+		                    var value = this[0].__data__[0];
+		                    var hosts = "<div id='contenido'>Host: "+ name +"</br>Value: "+ value +"</div>";
+		                    return hosts;
+		                }
+		            }
+		        });
+	      })
 	      .style("fill", function(d) { return color(Math.random()*55); })
-      	  .on("mouseover", mouseover)
 	      .attr("height", function(d) { return height - y(d[0]); })
 	      .attr("width", 30);
 	});
-	  // Add the mouseleave handler to the bounding circle.
-	  d3.select(".columna").on("mouseleave", mouseleave);
 
-	  function mouseleave(d) {
-	  	  d3.select("#load_service")
-      		.style("visibility", "hidden");
-	  }
-
-	function mouseover(d){
-		hosts	= get_obj(hurl);
-		var name = hosts[d[1]].name;
-		$("#load_service").html("<div id='contenido'><p>Host: "+ name +"</p><p><b>Services: "+ d[0] +"</b></p></div>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
-		var elemento = $(this).position();
-		$("#load_service").css('top',elemento.top);
-		$("#load_service").css('left',elemento.left + 10);
-	}
 	function type(d) {
 	  d.value = +d.value;
 	  return d;
@@ -186,7 +199,7 @@ var color = d3.scale.category20b()
 			}
 		});
 		return ls;
-		}	
+		}
 }
 
 function cake(workspace, design, view){

@@ -2,14 +2,14 @@
 function get_report_div(workspace, view,design){
     var arr = [];
 	json_url = "/" + workspace + "/_design/" + design + "/_view/" + view+"?group=true";
- var divs = "";
-  $.ajaxSetup({
+    var divs = "";
+    $.ajaxSetup({
         async: false
     });
 	$.getJSON(json_url, function(data) {
 		var colores = ["negro", "rojo"];
 		var i = 0;
-		divs += "<div class='columna untercio'><article class='untercio'><header><h2>Services report</h2></header><div class='main'>";
+		divs += "<div class='columna untercio faraday-tooltips'><article class='untercio'><header><h2>Services report</h2></header><div class='main'>";
 
         var row = data.rows;
         for (i = 0; i < row.length; i++) {
@@ -26,65 +26,59 @@ function get_report_div(workspace, view,design){
         });
 
         for (i = 0; i < obj.length; i++) {
-			divs += "<div class=\"columna unquinto services\" href='#'><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj[i][0]+"</div><div class=\"txt texto-blanco\">"+obj[i][1]+"</div></section></article></div>";
+			divs += "<div class=\"columna unquinto services \"><a class=\"faraday-tooltip\" title='sakj' href=\"#\"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj[i][0]+"</div><div class=\"txt texto-blanco\">"+obj[i][1]+"</div></section></article></a></div>";
 		}
 		divs +="</article></div>";
-		return divs
+		return divs;
 	});
-	return divs
+	return divs;
 }
 
 function seleccionar(){
-//selecciona las ips
-jQuery.fn.selectText = function(){
-    var doc = document;
-    var element = this[0];
-    if (doc.body.createTextRange) {
-        var range = document.body.createTextRange();
-        range.moveToElementText(element);
-        range.select();
-    } else if (window.getSelection) {
-        var selection = window.getSelection();        
-        var range = document.createRange();
-        range.selectNodeContents(element);
-        selection.removeAllRanges();
-        selection.addRange(range);
-    }
-};
+    //selecciona las ips
+    jQuery.fn.selectText = function(){
+        var doc = document;
+        var element = this[0];
+        if (doc.body.createTextRange) {
+            var range = document.body.createTextRange();
+            range.moveToElementText(element);
+            range.select();
+        } else if (window.getSelection) {
+            var selection = window.getSelection();        
+            var range = document.createRange();
+            range.selectNodeContents(element);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+    };
 	var boton = $("#boton");
     var selector = boton.data('selector');
     $(selector).selectText();
 }
 
-$("body").append("<div id='load_service'></div>");
-$(document).on("mouseenter", ".services", function(){
-        var name = $(this)[0].innerHTML.split(">")[5].split("<")[0];
-    	var pedido = load_hosts_by_service(name, true);
-    	$("#load_service").html("<div id='contenido'><b>Hosts:</b>" + pedido +"</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px' id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>").addClass( "tooltip fade top in tooltip-inner load_service" ).css("visibility","visible");
-    	var elemento = $(this).position();
-    	$("#load_service").css('top',elemento.top);
-    	$("#load_service").css('left',elemento.left + 85);
-});
-timer = null;
-bolean = false;
-wait = 1500;
-    $(document).ready(function () {
-        $('*').bind('mousemove', function () {
-            clearTimeout(timer);
-            bolean = false;
-            timer = setTimeout(function () { 
-                $("#load_service").css("visibility","hidden");
-                bolean = true; }, wait);
+$(document).ready(function() {
+    $('#cont').on('mouseenter', 'a.faraday-tooltip[title]', function (event) {
+        $(this).qtip({
+            overwrite: false, // Don't overwrite tooltips already bound
+            show: {
+                event: event.type, // Use the same event type as above
+                ready: true // Show immediately - important!
+            },
+            hide: {
+                fixed: true,
+                delay: 300
+            },
+            content:{
+                text: function(event, api) {
+                    var name = $(this)[0].innerHTML.split(">")[5].split("<")[0];
+                    var hosts = "<div id='contenido'>Hosts:";
+                    hosts += load_hosts_by_service(name, true);
+                    hosts += "</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px' id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>";
+                    return hosts;
+                }
+            }
         });
-        $("body").trigger("mousemove");
-        $('div:not(#load_service)').bind('scroll click', function () {
-            clearTimeout(timer);
-            bolean = false;
+    });
+});
 
-                timer = setTimeout(function () { 
-                    $("#load_service").css("visibility","hidden");
-                    bolean = true;
-                });
-        });
-});
 </script>

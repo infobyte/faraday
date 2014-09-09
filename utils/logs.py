@@ -13,8 +13,9 @@ import logging.config
 
 logging.config.fileConfig('utils/log.conf')
 
-def getLogger(obj):
+def getLogger(obj=None):
     # create logger
-    logger = logging.getLogger(obj.__class__.__name__)
+    name = obj.__class__.__name__ if obj else 'Default'
+    logger = logging.getLogger(name)
     return logger
 

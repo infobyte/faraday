@@ -213,12 +213,13 @@ class CouchDbConnector(DbConnector):
         super(CouchDbConnector, self).__init__(type=DBTYPE.COUCHDB)
         self.db = db
         self.saves_counter = 0
-        self.seq_num = seq_num
+        #self.seq_num = seq_num
         self.mutex = threading.Lock()
         vmanager = ViewsManager()
         vmanager.addViews(self.db)
         self._docs = {}
         self._compactDatabase()
+        self.seq_num = self.db.info()['update_seq']
         # self._tree = self._createTree(self.getDocs())
 
     def getDocs(self):
@@ -333,12 +334,18 @@ class CouchDbConnector(DbConnector):
 
     #@trap_timeout
     def waitForDBChange(self, since=0):
+        getLogger(self).debug(
+            "Watching for changes")
         last_seq = max(self.getSeqNumber(), since)
-        self.stream = ChangesStream(self.db, feed="continuous", since=last_seq)
+        self.stream = ChangesStream(
+            self.db,
+            feed="continuous",
+            since=last_seq,
+            heartbeat=True)
         for change in self.stream:
             if not self.changes_callback:
                 return
-            if not change.get('last_seq'):
+            if not change.get('last_seq', None):
                 if change['seq'] > self.getSeqNumber():
                     self.setSeqNumber(change['seq'])
                     if not change['id'].startswith('_design'):

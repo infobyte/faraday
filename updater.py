@@ -12,11 +12,10 @@ import persistence.mappers.data_mappers as dm
 from utils.logs import getLogger
 logger = getLogger()
 
-
-logger.info('Preparing updates on Couchdbs')
-source_server = 'http://192.168.33.102:5984'
-serv = couchdbkit.Server(source_server)
-
+from config.configuration import getInstanceConfiguration
+CONF = getInstanceConfiguration()
+from utils.user_input import query_yes_no
+import sys
 
 def update_db(db_name):
     # Levanto los servidores 
@@ -71,16 +70,27 @@ def update_db(db_name):
 
     logger.info("Transformed %s objects" % str(types))
 
-dbs = filter(lambda x: not x.startswith("_") and 'backup' not in x, serv.all_dbs())
-processed = 0
-logger.info('About to upgrade %d dbs' % len(dbs))
-for db_name in dbs:
-    logger.info('Updating db %s' % db_name)
-    try:
-        update_db(db_name)
-        processed = processed + 1
-    except Exception as e:
-        logger.error(e) 
-    logger.info('Updated DB [%s]. %d remaining' % (db_name, len(dbs) - processed))
+if __name__ == '__main__':
+    source_server = CONF.getCouchURI()
+    serv = couchdbkit.Server(source_server)
 
-logger.info("Update process finish, be kind to review the process.\nBackuped databases won't be accesible")
+    logger.info('We are about to upgrade dbs in Server [%s]' % source_server)
+    dbs = filter(lambda x: not x.startswith("_") and 'backup' not in x, serv.all_dbs())
+    logger.info('Dbs to upgrade: %s' % (', '.join(dbs)))
+
+    if not query_yes_no('Proceed?', 'no'):
+        sys.exit(-1)
+
+    logger.info('Preparing updates on Couchdbs')
+    processed = 0
+    logger.info('About to upgrade %d dbs' % len(dbs))
+    for db_name in dbs:
+        logger.info('Updating db %s' % db_name)
+        try:
+            update_db(db_name)
+            processed = processed + 1
+        except Exception as e:
+            logger.error(e) 
+        logger.info('Updated DB [%s]. %d remaining' % (db_name, len(dbs) - processed)) 
+    logger.info("Update process finish, be kind to review the process.\nBackuped databases won't be accesible")
+

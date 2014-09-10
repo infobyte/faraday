@@ -153,15 +153,6 @@ a {
 }
 a:hover{cursor: pointer;}
 p {margin-bottom: 1em;}
-h1 {
-	font-size:40px;
-}
-h2 {
-	font-size: 17px!important;
-	font-weight: bold!important;
-	text-align: left;
-	margin: 10px 0 0 10px!important;
-}
 .oculto {display:none;}
 
 /* FILAS COLUMNAS */

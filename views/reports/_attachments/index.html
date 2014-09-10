@@ -45,7 +45,7 @@
     <div id="cont">
         <div class="wrapper">
             <header class="head">
-                <a href="#"><img class="logo" src="images/logo-faraday.png"/></a>
+                <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
                 <!--
                 <nav>
                     <ul class="menu">
@@ -71,9 +71,9 @@
                 <nav>
                     <ul>
                         <li>
+                            <a href="#" class="ws-dashboard" title="WS Dashboard"><img src="images/ico-graph.png" alt="WS Dashboard"/></a>
                             <a href="#" class="status-report" title="Status Report"><img src="images/ico-settings.png" alt="Status Report"/></a>
-                            <a href="#" class="activo"><img src="images/ico-graph.png" alt=""/></a>
-                            <a href="#"><img src="images/ico-stopwatch.png" alt=""/></a>
+                            <!--<a href="#"><img src="images/ico-stopwatch.png" alt=""/></a>-->
                         </li>
                     </ul>
                 </nav>
@@ -137,7 +137,7 @@ $(document).ready(function() {
     $(document).on("click", "#refresh", function() {
         location.reload();
     });
-    $(document).on("click", "a.index", function(e) {
+    $(document).on("click", "a.ws-dashboard", function(e) {
         e.preventDefault();
         var url = "../././reports/index.html#" + workspace;
         window.location.href = url;

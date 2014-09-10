@@ -17,6 +17,7 @@ import shutil
 import argparse
 import platform
 import subprocess
+import pip
 
 from colorama import Fore, Back, Style
 from utils.logs import getLogger
@@ -464,6 +465,7 @@ def update():
     if args.update:
         subprocess.call(['find', '.', '-name', '*.pyc', '-delete'])
         subprocess.call(['git', 'pull'])
+        pip.main(['install', '-r', 'requirements.txt', '--user'])
 
     
 def init():

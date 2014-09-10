@@ -71,7 +71,7 @@
                 <nav>
                     <ul>
                         <li>
-                            <a href="#" title="Status Report"><img src="images/ico-settings.png" alt="Status Report"/></a>
+                            <a href="#" class="status-report" title="Status Report"><img src="images/ico-settings.png" alt="Status Report"/></a>
                             <a href="#" class="activo"><img src="images/ico-graph.png" alt=""/></a>
                             <a href="#"><img src="images/ico-stopwatch.png" alt=""/></a>
                         </li>
@@ -137,11 +137,16 @@ $(document).ready(function() {
     $(document).on("click", "#refresh", function() {
         location.reload();
     });
-    $("a[title='Status Report']").click(function() {
-      url = "../././reports/reports/status_report.html#" + workspace;
-      window.open(url, '_blank');
-      return false;
-   });
+    $(document).on("click", "a.index", function(e) {
+        e.preventDefault();
+        var url = "../././reports/index.html#" + workspace;
+        window.location.href = url;
+    });
+    $(document).on("click", "a.status-report", function(e) {
+        e.preventDefault();
+        var url = "../././reports/reports/status_report.html#" + workspace;
+        window.location.href = url;
+    });
 
     //get workspace
     dominio = location.href;

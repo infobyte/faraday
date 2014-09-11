@@ -7,8 +7,13 @@ function get_report_div(workspace, view,design){
         async: false
     });
 	$.getJSON(json_url, function(data) {
-                tabla = "<div class='columna'><article><section class='sin_padding' id='hosts'><header><h2>Commands History</h2></header><div class='main'>";
-                tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr><th>Hosts</th><th>Command Run</th><th>Start Date</th><th>Duration</th></tr></thead><tbody>";
+                tabla = "<div class='columna'><article><section class=\"sin_padding\" id=\"hosts\">"+
+                            "<header><h2>Commands History </h2></header>"+
+                            "<span class=\"glyphicon glyphicon-info-sign\" title=\"Shows current WS' executed commands\"></span></h2>"+
+                            "<div class='main'>";
+                tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+                            "<th>Hosts</th><th>Command Run</th><th>Start Date</th><th>Duration</th>"+
+                            "</tr></thead><tbody>";
                 $.each(data.rows, function(n, obj){
                         var d = new Date(0);
                         d.setUTCSeconds(obj.value[0]);

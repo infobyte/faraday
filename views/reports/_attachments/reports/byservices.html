@@ -9,7 +9,9 @@ function get_report_div(workspace, view,design){
 	$.getJSON(json_url, function(data) {
 		var colores = ["negro", "rojo"];
 		var i = 0;
-		divs += "<div class='columna untercio'><article class='untercio'><header><h2>Services report</h2></header><div class='main'>";
+		divs += "<div class='columna untercio'><article class='untercio'><header><h2>Services report "+
+                    "<span class=\"glyphicon glyphicon-info-sign\" title=\"All services for current WS ordered by host amount\"></span></h2>"+
+                    "</header><div class='main'>";
 
         var row = data.rows;
         for (i = 0; i < row.length; i++) {

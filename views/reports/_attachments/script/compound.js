@@ -205,6 +205,13 @@ $( document ).ready(function() {
                     var hosts = "<div id='contenido'>" +name+ "</div>";
                     return hosts;
                 }
+            },
+            position:{
+                my: 'top center',
+                at: 'bottom center',
+                adjust: {
+                    method: 'shift'
+                }
             }
         });
     });

@@ -13,7 +13,12 @@ function get_report_div(workspace, view, design){
 		hosts		= get_obj(hurl);
 		interfaces	= get_obj(iurl, interfaces);
 		services	= get_obj(surl, services);
-		var table = "<div class='columna'><article><section class='sin_padding' id='hosts'><header><h2>Hosts report</h2></header><div class='main'>";
+		var table = "<div class='columna'><article><section class='sin_padding' id='hosts'>"+
+                        "<header><h2>Hosts report "+
+                        "<span class=\"glyphicon glyphicon-info-sign\" "+
+                        "title=\"All hosts, each one showing its service count and operating system. "+
+                        "By clicking on a host IP you can access a list with all of its services\"></span>"+
+			"</h2></header><div class='main'>";
 		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+

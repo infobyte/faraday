@@ -354,6 +354,10 @@ class CouchDbConnector(DbConnector):
                         deleted = bool(change.get('deleted', False))
                         revision = change.get("changes")[-1].get('rev')
                         obj_id = change.get('id')
+                        if not deleted:
+                            # update cache
+                            doc = self.db.get(obj_id)
+                            self.addDoc(doc)
                         self.changes_callback(obj_id, revision, deleted)
 
     #@trap_timeout

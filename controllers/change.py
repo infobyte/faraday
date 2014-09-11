@@ -4,7 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from persistence.change import change_factory, CHANGETYPE
+from persistence.change import change_factory, CHANGETYPE, ChangeModelObject
+import model
 import model.guiapi
 import threading
 from utils.logs import getLogger
@@ -23,14 +24,41 @@ class ChangeController(object):
         try:
             obj = self.mapper_manager.find(objid)
             change = change_factory.create(obj, revision, deleted)
+
             if change.getChangeType() == CHANGETYPE.DELETE:
+                # object deleted
+                if isinstance(change, ChangeModelObject):
+                    obj_parent = obj.getParent()
+                    if obj_parent:
+                        obj_parent.deleteChild(obj.getID())
                 self.mapper_manager.remove(objid)
             elif change.getChangeType() == CHANGETYPE.UPDATE:
+                # object edited
                 self.mapper_manager.reload(objid)
+            elif change.getChangeType() == CHANGETYPE.ADD:
+                if isinstance(change, ChangeModelObject):
+                    # The child has a parent, but the parent doesn't
+                    # have the child yet...
+                    if obj.getParent():
+                        obj.getParent().addChild(obj)
+
+            if isinstance(change, ChangeModelObject):
+                self._notify_model_object_change(change, obj)
             model.guiapi.notification_center.changeFromInstance(change)
         except:
             getLogger(self).debug(
                 "Change couldn't be processed")
+
+    def _notify_model_object_change(self, change, obj):
+        host = obj.getHost()
+        if (change.getChangeType() == CHANGETYPE.ADD and
+           obj.class_signature == model.hosts.Host.class_signature):
+            model.guiapi.notification_center.addHost(host)
+        elif (change.getChangeType() == CHANGETYPE.DELETE and
+              obj.class_signature == model.hosts.Host.class_signature):
+            model.guiapi.notification_center.delHost(host.getID())
+        elif (change.getChangeType() != CHANGETYPE.UNKNOWN):
+            model.guiapi.notification_center.editHost(host)
 
     def watch(self, mapper, dbConnector):
         self.mapper_manager = mapper

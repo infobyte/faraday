@@ -31,7 +31,7 @@ function get_report_div(workspace, view, design){
 			table += "<tr id=\"host-"+k+"\">"+
 				"<td>"+hname+"</td>"+
 				"<td>"+services[k]+"</td>"+
-				"<td><i id='"+v.os+"' class='glyphicon glyphicon-info-sign'></i></td></tr>";
+				"<td><i title='"+v.os+"' class='glyphicon glyphicon-info-sign'></i></td></tr>";
 		});
 		table += "</tbody></table></article></section></div>";
 		return table;

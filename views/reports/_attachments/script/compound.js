@@ -28,7 +28,7 @@
 			table += "<tr id=\"host-"+k+"\">"+
 				"<td>"+hname+"</td>"+
 				"<td>"+services[k]+"</td>"+
-				"<td><i id='"+v.os+"' class='glyphicon glyphicon-info-sign' onmouseover=\"tooltip.pop(this, '#load_os')\"></i></td></tr>";
+				"<td><i title='"+v.os+"' class='glyphicon glyphicon-info-sign' onmouseover=\"tooltip.pop(this, '#load_os')\"></i></td></tr>";
 		});
 		table += "</tbody></table></div>";
 		return table;
@@ -66,7 +66,7 @@
 					table += "<tr id=\"host-"+id+"\">"+
 						"<td><a href=\"host-"+id+"\" class=\"host\">"+v['name']+"</a></td>"+
 						"<td>"+scount[id]+"</td>"+
-						"<td><i id='"+v['os']+"'class='glyphicon glyphicon-info-sign' onmouseover=\"tooltip.pop(this, '#load_os')\"></i></td></tr>";
+						"<td><i title='"+v['os']+"'class='glyphicon glyphicon-info-sign' onmouseover=\"tooltip.pop(this, '#load_os')\"></i></td></tr>";
 				}
 			});
 			table += "</tbody></table></div>";
@@ -178,7 +178,7 @@ $( document ).ready(function() {
             },
             content:{
                 text: function(event, api) {
-                    var name = $(this).attr("id");
+                    var name = $(this).attr("title");
                     var hosts = "<div id='contenido'>" +name+ "</div>";
                     return hosts;
                 }

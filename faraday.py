@@ -314,7 +314,7 @@ def setupQtrc():
     if os.path.isfile(FARADAY_QTRCBAK):
         shutil.copy(FARADAY_QTRCBAK, USER_QTRC)
     else:
-        os.makedirs(USER_QT)
+        os.makedirs(USER_QT, exist_ok=True)
         shutil.copy(FARADAY_QTRC, USER_QTRC)
         shutil.copy(FARADAY_QTRC, FARADAY_QTRCBAK)
 
@@ -465,7 +465,7 @@ def update():
     if args.update:
         subprocess.call(['find', '.', '-name', '*.pyc', '-delete'])
         subprocess.call(['git', 'pull'])
-        pip.main(['install', '-r', 'requirements.txt', '--user'])
+        pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
 
     
 def init():

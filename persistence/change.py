@@ -79,10 +79,12 @@ class ChangeCmd(Change):
     def __init__(self, obj, change_type):
         Change.__init__(self, obj, change_type)
         if self.change_type == CHANGETYPE.UPDATE:
-            self.msg = "Command finished: %s %s" % (
+            self.msg = "Command finished: %s@%s: %s %s" % (
+                self.object.user, self.object.hostname,
                 self.object.command, self.object.params)
         elif self.change_type == CHANGETYPE.ADD:
-            self.msg = "Command started: %s %s" % (
+            self.msg = "Command started: %s@%s: %s %s" % (
+                self.object.user, self.object.hostname,
                 self.object.command, self.object.params)
 
 

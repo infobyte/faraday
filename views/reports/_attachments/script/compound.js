@@ -10,7 +10,7 @@
 		hosts		= get_obj(hurl);
 		interfaces	= get_obj(iurl, interfaces);
 		services	= get_obj(surl, services);
-		var table = "<h2>Hosts report</h2><div class='main'>";
+		var table = "<header><h2>Hosts report</h2></header><div class='main'>";
 		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+
@@ -25,10 +25,21 @@
 				hname = "<a href=\"host-"+k+"\" class=\"host\">"+v.name+"</a>";
 			}
 			if(!interfaces.hasOwnProperty(k)) interfaces[k] = 0;
+			var icon = "";
+			if(v.os.toLowerCase().indexOf("windows") > -1) icon = "windows";
+			if(v.os.toLowerCase().indexOf("osx") > -1) icon = "osx";
+			if(v.os.toLowerCase().indexOf("linux") > -1
+				|| v.os.toLowerCase().indexOf("unix") > -1) icon = "linux";
+			var os = "";
+			if(icon === "") {
+				os = "<span title=\""+v.os+"\">undefined</span>";
+			} else {
+				os = "<img src=\"../././reports/images/"+icon+".png\" title=\""+v.os+"\"/>";
+			}
 			table += "<tr id=\"host-"+k+"\">"+
 				"<td>"+hname+"</td>"+
 				"<td>"+services[k]+"</td>"+
-				"<td><i id='"+v.os+"' class='glyphicon glyphicon-info-sign' onmouseover=\"tooltip.pop(this, '#load_os')\"></i></td></tr>";
+				"<td>"+os+"</td></tr>";
 		});
 		table += "</tbody></table></div>";
 		return table;
@@ -53,7 +64,7 @@
 		interfaces	= get_obj(iurl, interfaces);
 		scount		= get_obj(surl, services);
 		if(!bolean){
-			var table = "<h2>Hosts with Service "+name+" ("+hids.length+" total)</h2><div class='main' style='height:338px'>"+
+			var table = "<header><h2>Hosts with Service "+name+" ("+hids.length+" total)</h2></header><header class='texto'><p id='text'></p></header><div class='main' style='height:338px'>"+
 					"<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 					"<th>Host</th>"+
 					"<th>Services</th>"+
@@ -62,11 +73,22 @@
 			$.each(hosts, function(k, v){
 				var id = v['id'];
 				v = v['value'];
+				var icon = "";
+				if(v.os.toLowerCase().indexOf("windows") > -1) icon = "windows";
+				if(v.os.toLowerCase().indexOf("osx") > -1) icon = "osx";
+				if(v.os.toLowerCase().indexOf("linux") > -1
+					|| v.os.toLowerCase().indexOf("unix") > -1) icon = "linux";
+				var os = "";
+				if(icon === "") {
+					os = "<span title=\""+v.os+"\">undefined</span>";
+				} else {
+					os = "<img src=\"../././reports/images/"+icon+".png\" title=\""+v.os+"\"/>";
+				}
 				if($.inArray(id, hids) > -1) {
 					table += "<tr id=\"host-"+id+"\">"+
 						"<td><a href=\"host-"+id+"\" class=\"host\">"+v['name']+"</a></td>"+
 						"<td>"+scount[id]+"</td>"+
-						"<td><i id='"+v['os']+"'class='glyphicon glyphicon-info-sign' onmouseover=\"tooltip.pop(this, '#load_os')\"></i></td></tr>";
+						"<td>"+os+"</td></tr>";
 				}
 			});
 			table += "</tbody></table></div>";
@@ -89,7 +111,7 @@
 		design = "hosts";
 		// el param design ya no es el recibido por GET, puesto que ahora estamos en services
 		var services = get_obj_filter(workspace, "services", "byhost", hid);
-		var table = "<h2>Services for Host "+hname+" ("+services.length+" total)</h2><div class='main' style='height:338px'>"+
+		var table = "<header><h2>Services for Host "+hname+" ("+services.length+" total)</h2></header><header class='texto'><p id='text'></p></header><div class='main' style='height:338px'>"+
 			"<table id=\"services-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 			"<th>Name</th>"+
 			"<th>Description</th>"+
@@ -154,6 +176,7 @@
 		$(document).on('click', 'a#back_to_services', function(e) {
 			var div = load_services(hid, hname);
 			$("#hosts").html(div);
+			$("#text").html("<a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a>");
 			sorter(2);
 		});
 	}
@@ -164,8 +187,8 @@
         });
 	}
 
-$( document ).ready(function() {	
-    $('#cont').on('mouseenter', '.glyphicon-info-sign', function (event) {
+$( document ).ready(function() {
+    $('#cont').on('mouseenter', 'img[title]', function (event) {
         $(this).qtip({
             overwrite: false, // Don't overwrite tooltips already bound
             show: {
@@ -178,7 +201,7 @@ $( document ).ready(function() {
             },
             content:{
                 text: function(event, api) {
-                    var name = $(this).attr("id");
+                    var name = $(this).attr("title");
                     var hosts = "<div id='contenido'>" +name+ "</div>";
                     return hosts;
                 }

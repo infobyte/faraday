@@ -7,15 +7,17 @@ function get_report_div(workspace, view,design){
         async: false
     });
 	$.getJSON(json_url, function(data) {
-                tabla = "<div class='seccion2'><h2>Commands History</h2><div class='main'>";
-                tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr><th>Command Run</th><th>Start Date</th><th>Duration</th></tr></thead><tbody>";
+                tabla = "<div class='columna'><article><section class='sin_padding' id='hosts'><header><h2>Commands History</h2></header><div class='main'>";
+                tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr><th>Hosts</th><th>Command Run</th><th>Start Date</th><th>Duration</th></tr></thead><tbody>";
                 $.each(data.rows, function(n, obj){
-                        var d = new Date(0); 
+                        var d = new Date(0);
                         d.setUTCSeconds(obj.value[0]);
-                        tabla += "<tr><td>"+obj.key+"</td><td>"+d+"</td><td>"+obj.value[1]+"</td></tr>";
+                        if(!obj.ip){obj.ip = "0.0.0.0";}
+                        if(!obj.is){obj.id = "uknown";}
+                        tabla += "<tr><td>"+obj.id+"@"+obj.ip+"</td><td>"+obj.key+"</td><td>"+d+"</td><td>"+obj.value[1].toFixed(3)+"</td></tr>";
                 });
             tabla += "</tbody></table>";
-            tabla +="</div></div><!--<a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a>-->";
+            tabla +="</article></section></div>";
 		return tabla;
 	});
 	return tabla;

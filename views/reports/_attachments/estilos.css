@@ -168,6 +168,7 @@ p {margin-bottom: 1em;}
 	width: 492px;
 	margin-top: -42px;
 	position: relative;
+	margin-top: -33px;
 }
 	.full {width: 860px;}
 	.unmedio, .doscuartos {width: 420px;}
@@ -483,7 +484,8 @@ label {
 	color: #2D333D;
 	font-size: 13px;
 }
-#text{top: 26px;position: absolute;left: 11px;font-weight: bold;}
+#text{font-weight: bold;line-height: 25px;margin:0 0 0 10px;}
+.texto{margin-bottom:-14px;border-top:1px solid #FFF}
 .left {
 	float: left;
 }
@@ -528,7 +530,7 @@ ul.d3 .untercio{width: 160px;}
 }
 #treemap, #bar, #cake{height:195px}
 #list .main{height:160px}
-#list .seccion2{padding-left: 20px;}
+#list .columna{float: right;width:52%;}
 #vulns .columna{margin-left:2%}
 #vulns .columna article.untercio{height:135px;width:185%}
 #vulns .main{width:505px;height:95px}

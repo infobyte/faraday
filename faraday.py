@@ -17,7 +17,10 @@ import shutil
 import argparse
 import platform
 import subprocess
+<<<<<<< HEAD
 import pip
+=======
+>>>>>>> cf7aff502d9c36c72716b50fbd8cf2f56a598298
 
 from colorama import Fore, Back, Style
 from utils.logs import getLogger
@@ -465,7 +468,10 @@ def update():
     if args.update:
         subprocess.call(['find', '.', '-name', '*.pyc', '-delete'])
         subprocess.call(['git', 'pull'])
+<<<<<<< HEAD
         pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
+=======
+>>>>>>> cf7aff502d9c36c72716b50fbd8cf2f56a598298
 
     
 def init():
@@ -501,4 +507,8 @@ def main():
 
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     main()
+=======
+    main()
+>>>>>>> cf7aff502d9c36c72716b50fbd8cf2f56a598298

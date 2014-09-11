@@ -159,10 +159,16 @@ $(document).ready(function() {
 rutas = ["reports/compound.html?workspace="+workspace+"&design=hosts&view=compound","reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices","reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized","reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns","reports/commands.html?workspace="+workspace+"&design=commands&view=list"];
 var content_cake = "<div id='sequence'></div><div id='chart'><div id='explanation' style='visibility: hidden;'></div></div>";
 
-$("#reports-main").append("<ul class='d3'><li><div class='columna untercio'><article id='treemap'><header><h2>Top Services</h2></article></header></div></li>"+
-    "<li><div class='columna untercio'><article id='bar'><header><h2>Top Hosts</h2></header></div></div></li>"+
-    "<li><div class='columna untercio'><article id='cake'><header><h2>Vulnerabilities</h2></header>"+ content_cake +"</article></div></li></ul>"+
-    "<ul><li><div id='byservices'></div></li><li><div id='summarized'></div></li></ul><div id='compound'></div><div id='vulns'></div><div id='list'></div></div>");
+$("#reports-main").append("<ul class='d3'><li><div class='columna untercio'><article id='treemap'><header>"+
+    "<h2>Top Services <span class=\"glyphicon glyphicon-info-sign\" title=\"Top 5 services with the largest quantity of hosts\"></span></h2>"+
+    "</article></header></div></li>"+
+    "<li><div class='columna untercio'><article id='bar'><header><h2>Top Hosts "+
+    "<span class=\"glyphicon glyphicon-info-sign\" title=\"Top 3 hosts with the largest quantity of services\"></span></h2></header></div></div></li>"+
+    "<li><div class='columna untercio'><article id='cake'><header><h2>Vulnerabilities "+
+    "<span class=\"glyphicon glyphicon-info-sign\" title=\"Vulnerabilty distribution for current WS\"></span></h2>"+
+    "</header>"+ content_cake +"</article></div></li></ul>"+
+    "<ul><li><div id='byservices'></div></li><li><div id='summarized'></div></li></ul>"+
+    "<div id='compound'></div><div id='vulns'></div><div id='list'></div></div>");
 design = "hosts";
 view = "byservices";
 treemap(workspace, design, view);

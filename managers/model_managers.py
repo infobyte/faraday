@@ -12,6 +12,10 @@ from persistence.persistence_managers import DBTYPE
 
 from model.guiapi import notification_center
 
+from config.configuration import getInstanceConfiguration
+CONF = getInstanceConfiguration()
+
+
 class WorkspaceManager(object):
     """Workspace Manager class
     It's responsabilities goes from:
@@ -52,6 +56,8 @@ class WorkspaceManager(object):
             self.mappersManager.createMappers(dbConnector)
             workspace = self.mappersManager.getMapper(Workspace.__name__).find(name)
             self.setActiveWorkspace(workspace)
+            CONF.setLastWorkspace(name)
+            CONF.saveConfig()
             notification_center.workspaceChanged(workspace)
             notification_center.workspaceLoad(workspace.getHosts())
             self.changesManager.watch(self.mappersManager, dbConnector)

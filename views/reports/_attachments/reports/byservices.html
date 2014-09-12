@@ -10,7 +10,7 @@ function get_report_div(workspace, view,design){
 		var colores = ["negro", "rojo"];
 		var i = 0;
 		divs += "<div class='columna untercio'><article class='untercio'><header><h2>Services report "+
-                    "<span class=\"glyphicon glyphicon-info-sign\" title=\"All services for current WS ordered by host amount\"></span></h2>"+
+                    "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"All services for current WS ordered by host amount\"></span></h2>"+
                     "</header><div class='main'>";
 
         var row = data.rows;
@@ -76,7 +76,8 @@ $(document).ready(function() {
                     var name = $(this)[0].innerHTML.split(">")[5].split("<")[0];
                     var hosts = "<div id='contenido'>Hosts:";
                     hosts += load_hosts_by_service(name, true);
-                    hosts += "</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px' id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>";
+                    hosts += "</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px'"+
+                                " id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>";
                     return hosts;
                 }
             }

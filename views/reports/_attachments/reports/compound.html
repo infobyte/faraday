@@ -15,7 +15,7 @@ function get_report_div(workspace, view, design){
 		services	= get_obj(surl, services);
 		var table = "<div class='columna'><article><section class='sin_padding' id='hosts'>"+
                         "<header><h2>Hosts report "+
-                        "<span class=\"glyphicon glyphicon-info-sign\" "+
+                        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" "+
                         "title=\"All hosts, each one showing its service count and operating system. "+
                         "By clicking on a host IP you can access a list with all of its services\"></span>"+
 			"</h2></header><div class='main'>";
@@ -40,9 +40,9 @@ function get_report_div(workspace, view, design){
 				|| v.os.toLowerCase().indexOf("unix") > -1) icon = "linux";
 			var os = "";
 			if(icon === "") {
-				os = "<span title=\""+v.os+"\">undefined</span>";
+				os = "<span>"+v.os+"</span>";
 			} else {
-				os = "<img src=\"../././reports/images/"+icon+".png\" title=\""+v.os+"\"/>";
+				os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+v.os+"\"/>";
 			}
 			table += "<tr id=\"host-"+k+"\">"+
 				"<td>"+hname+"</td>"+

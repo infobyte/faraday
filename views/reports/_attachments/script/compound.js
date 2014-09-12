@@ -32,9 +32,9 @@
 				|| v.os.toLowerCase().indexOf("unix") > -1) icon = "linux";
 			var os = "";
 			if(icon === "") {
-				os = "<span title=\""+v.os+"\">undefined</span>";
+				os = "<span>"+v.os+"</span>";
 			} else {
-				os = "<img src=\"../././reports/images/"+icon+".png\" title=\""+v.os+"\"/>";
+				os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+v.os+"\"/>";
 			}
 			table += "<tr id=\"host-"+k+"\">"+
 				"<td>"+hname+"</td>"+
@@ -80,9 +80,9 @@
 					|| v.os.toLowerCase().indexOf("unix") > -1) icon = "linux";
 				var os = "";
 				if(icon === "") {
-					os = "<span title=\""+v.os+"\">undefined</span>";
+					os = "<span>"+v.os+"</span>";
 				} else {
-					os = "<img src=\"../././reports/images/"+icon+".png\" title=\""+v.os+"\"/>";
+					os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+v.os+"\"/>";
 				}
 				if($.inArray(id, hids) > -1) {
 					table += "<tr id=\"host-"+id+"\">"+
@@ -188,6 +188,7 @@
 	}
 
 $( document ).ready(function() {
+    /*
     $('#cont').on('mouseenter', '.glyphicon-info-sign', function (event) {
         $(this).qtip({
             overwrite: false, // Don't overwrite tooltips already bound
@@ -201,9 +202,8 @@ $( document ).ready(function() {
             },
             content:{
                 text: function(event, api) {
-                    var name = $(this).attr("title");
-                    var hosts = "<div id='contenido'>" +name+ "</div>";
-                    return hosts;
+                    var res = "<div id=\"contenido\">"+$(this).attr("title")+"</div>";
+                    return res;
                 }
             },
             position:{
@@ -242,6 +242,7 @@ $( document ).ready(function() {
             }
         });
     });
+    */
 	$(document).on('click', 'a.host', function(e) {
             // no queremos que cargue nada
             e.preventDefault();

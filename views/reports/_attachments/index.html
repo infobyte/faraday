@@ -160,32 +160,66 @@ $(document).ready(function() {
     var ret = "Viewing "+ workspace;
     $('#reports-main .ws-label span#ws-name').text(ret);
 
-rutas = ["reports/compound.html?workspace="+workspace+"&design=hosts&view=compound","reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices","reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized","reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns","reports/commands.html?workspace="+workspace+"&design=commands&view=list"];
-var content_cake = "<div id='sequence'></div><div id='chart'><div id='explanation' style='visibility: hidden;'></div></div>";
+    rutas = [
+        "reports/compound.html?workspace="+workspace+"&design=hosts&view=compound",
+        "reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices",
+        "reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized",
+        "reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns",
+        "reports/commands.html?workspace="+workspace+"&design=commands&view=list"
+    ];
+    var content_cake = "<div id='sequence'></div><div id='chart'><div id='explanation' style='visibility: hidden;'></div></div>";
 
-$("#reports-main").append("<ul class='d3'><li><div class='columna untercio'><article id='treemap'><header>"+
-    "<h2><a href=\"\">Top Services</a> <span class=\"glyphicon glyphicon-info-sign\" title=\"Top 5 services with the largest quantity of hosts\">"+
-    "</span></h2></article></header></div></li>"+
-    "<li><div class='columna untercio'><article id='bar'><header><h2>Top Hosts "+
-    "<span class=\"glyphicon glyphicon-info-sign\" title=\"Top 3 hosts with the largest quantity of services\"></span></h2></header></div></div></li>"+
-    "<li><div class='columna untercio'><article id='cake'><header><h2>Vulnerabilities "+
-    "<span class=\"glyphicon glyphicon-info-sign\" title=\"Vulnerabilty distribution for current WS\"></span></h2>"+
-    "</header>"+ content_cake +"</article></div></li></ul>"+
-    "<ul><li><div id='byservices'></div></li><li><div id='summarized'></div></li></ul>"+
-    "<div id='compound'></div><div id='vulns'></div><div id='list'></div></div>");
-design = "hosts";
-view = "byservices";
-treemap(workspace, design, view);
-bar(workspace, design, view);
-view = "vulns";
-cake(workspace, design, view);
-for (i = 0; i < rutas.length; i++) { 
-    dominio = rutas[i];
-    var div = load(dominio);
-}
-$("aside").height(screen.height - 133);
+    $("#reports-main").append("<ul class='d3'><li><div class='columna untercio'><article id='treemap'><header>"+
+        "<h2><a href=\"\">Top Services</a> <span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 5 services with the largest quantity of hosts\">"+
+        "</span></h2></article></header></div></li>"+
+        "<li><div class='columna untercio'><article id='bar'><header><h2>Top Hosts "+
+        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 3 hosts with the largest quantity of services\"></span></h2></header></div></div></li>"+
+        "<li><div class='columna untercio'><article id='cake'><header><h2>Vulnerabilities "+
+        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Vulnerabilty distribution for current WS\"></span></h2>"+
+        "</header>"+ content_cake +"</article></div></li></ul>"+
+        "<ul><li><div id='byservices'></div></li><li><div id='summarized'></div></li></ul>"+
+        "<div id='compound'></div><div id='vulns'></div><div id='list'></div></div>");
+
+    design = "hosts";
+    view = "byservices";
+    treemap(workspace, design, view);
+    bar(workspace, design, view);
+    view = "vulns";
+    cake(workspace, design, view);
+    for (i = 0; i < rutas.length; i++) { 
+        dominio = rutas[i];
+        var div = load(dominio);
+    }
+    
+    $("aside").height(screen.height - 133);
+
+    $('#cont').on('mouseenter', '.faraday-qtips', function (event) {
+        $(this).qtip({
+            overwrite: false, // Don't overwrite tooltips already bound
+            show: {
+                event: event.type, // Use the same event type as above
+                ready: true // Show immediately - important!
+            },
+            hide: {
+                fixed: true,
+                delay: 300
+            },
+            content:{
+                text: function(event, api) {
+                    var res = "<div id=\"contenido\">"+$(this).attr("title")+"</div>";
+                    return res;
+                }
+            },
+            position:{
+                my: 'top center',
+                at: 'bottom center',
+                adjust: {
+                    method: 'shift'
+                }
+            }
+        });
+    });
 });
-
 
 function load(dominio){
     $(".reports").load(dominio, function(){

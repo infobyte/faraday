@@ -11,7 +11,7 @@
     <meta charset="utf-8"/>
     <!--[if IE]><![endif]-->
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
-    <title>Dashboard | Faraday</title>
+    <title>All services | Faraday</title>
     <meta name="description" content=""/>
     <meta name="keywords" content=""/>
     <meta name="author" content=""/>
@@ -147,7 +147,7 @@ $(document).ready(function() {
     });
     $(document).on("click", "a.status-report", function(e) {
         e.preventDefault();
-        var url = "../././reports/reports/status_report.html#" + workspace;
+        var url = "../././reports/status_report.html#" + workspace;
         window.location.href = url;
     });
 
@@ -174,7 +174,7 @@ $(document).ready(function() {
           <article id="chart">
             <header>
               <h2>All Services
-                <span class="glyphicon glyphicon-info-sign faraday-qtips" title="Top 5 services with the largest quantity of hosts"></span>
+                <span class="glyphicon glyphicon-info-sign faraday-qtips" title="All services ordered by host amount"></span>
               </h2>
             </header>
         </article>

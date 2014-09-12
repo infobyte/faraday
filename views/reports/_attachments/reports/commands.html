@@ -16,7 +16,8 @@ function get_report_div(workspace, view,design){
                             "</tr></thead><tbody>";
                 $.each(data.rows, function(n, obj){
                     var user = "unknown";
-                    var hostname = "0.0.0.0";
+                    var hostname = "unknown";
+                    var ip = "0.0.0.0";
                     var duration = "";
                     var d = new Date(0);
                     d.setUTCSeconds(obj.value.startdate);
@@ -28,7 +29,8 @@ function get_report_div(workspace, view,design){
                     }
                     if(obj.value.user && obj.value.user != "") user = obj.value.user;
                     if(obj.value.hostname && obj.value.hostname != "") hostname = obj.value.hostname;
-                    tabla += "<tr><td class=\"faraday-qtips\" title=\""+obj.value.ip+"\">"+user+"@"+hostname+"</td>"+
+                    if(obj.value.ip && obj.value.ip != "") ip = obj.value.ip;
+                    tabla += "<tr><td class=\"faraday-qtips\" title=\""+ip+"\">"+user+"@"+hostname+"</td>"+
                                 "<td>"+obj.key+"</td><td>"+d+"</td><td>"+duration+"s</td></tr>";
                 });
             tabla += "</tbody></table>";

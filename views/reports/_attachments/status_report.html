@@ -17,29 +17,30 @@
     <meta name="author" content=""/>
 
     <!-- !CSS -->
-    <link rel="stylesheet" type="text/css" href="../././estilos.css" />
-    <link rel="stylesheet" href=".././././script/bootstrap.min.css">
-    <link rel="stylesheet" href=".././././script/bootstrap-theme.min.css">
+    <link rel="stylesheet" type="text/css" href="estilos.css" />
+    <link rel="stylesheet" type="text/css" href="script/jquery.qtip.css" />
+    <link rel="stylesheet" href="script/bootstrap.min.css">
+    <link rel="stylesheet" href="script/bootstrap-theme.min.css">
     <link href="favicon.ico" rel="shortcut icon">
     <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
     <link href="images/site_preview.jpg" rel="image_src" />
 
-    <script type="text/javascript" src=".././././script/couch.js"></script>
-    <script type="text/javascript" src=".././././script/jquery.jscroll.js"></script>
-    <script type="text/javascript" src="/_utils/script/jquery.js"></script>
+    <script type="text/javascript" src="script/couch.js"></script>
+    <script type="text/javascript" src="script/common.js"></script>
     <script type="text/javascript" src="/_utils/script/jquery.js"></script>
     <script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
-    <script src=".././././script/bootstrap.min.js"></script>
-    <script type="text/javascript" src=".././././script/angular.js"></script>
-    <script type="text/javascript" src=".././././script/angular-route.js"></script>
-    <script type="text/javascript" src=".././././script/csv-export.js"></script>
+    <script type="text/javascript" src="script/bootstrap.min.js"></script>
+    <script type="text/javascript" src="script/angular.js"></script>
+    <script type="text/javascript" src="script/angular-route.js"></script>
+    <script type="text/javascript" src="script/csv-export.js"></script>
+    <script type="text/javascript" src="script/jquery.qtip.min.js"></script>
 </head>
 
 <body ng-app="status-report">
     <div id="cont">
         <div class="wrapper">
             <header class="head">
-                <a href="#" class="ws-dashboard"><img class="logo" src="../images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
+                <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
                 <!--
                 <nav>
                     <ul class="menu">
@@ -66,7 +67,7 @@
                     <ul>
                         <li>
                             <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
-                                <img src="../images/ico-graph.png" alt="WS Dashboard"/>
+                                <img src="images/ico-graph.png" alt="WS Dashboard"/>
                             </a>
                         </li>
                         <li>
@@ -271,12 +272,12 @@
         });
         $(document).on("click", "a.ws-dashboard", function(e) {
             e.preventDefault();
-            var url = "../././index.html#" + workspace;
+            var url = "../././reports/index.html#" + workspace;
             window.location.href = url;
         });
         $(document).on("click", "a.status-report", function(e) {
             e.preventDefault();
-            var url = "../././reports/reports/status_report.html#" + workspace;
+            var url = "../././reports/status_report.html#" + workspace;
             window.location.href = url;
         });
     

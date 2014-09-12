@@ -315,7 +315,8 @@ def setupQtrc():
     if os.path.isfile(FARADAY_QTRCBAK):
         shutil.copy(FARADAY_QTRCBAK, USER_QTRC)
     else:
-        os.makedirs(USER_QT, exist_ok=True)
+        if not os.path.exists(USER_QT):
+            os.makedirs(USER_QT)
         shutil.copy(FARADAY_QTRC, USER_QTRC)
         shutil.copy(FARADAY_QTRC, FARADAY_QTRCBAK)
 

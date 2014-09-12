@@ -85,6 +85,9 @@ class WorkspaceManager(object):
     def resource(self):
         self.dbManager.reloadConfig()
 
+    def reloadWorkspacesList(self):
+        pass
+
     def isActive(self, name):
         return self.active_workspace.getName() == name
 

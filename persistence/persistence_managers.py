@@ -96,7 +96,18 @@ class DbManager(object):
         self.dbs[name] = ConnectorContainer(name, connector, dbtype)
 
     def getAllDbNames(self):
+        self.refreshDbs()
         return self.dbs.keys()
+
+    def refreshDbs(self):
+        self.fsmanager.refreshDbs()
+        self.couchmanager.refreshDbs()
+        for dbname, connector in self.fsmanager.getDbs().items():
+            if dbname not in self.dbs.keys():
+                self.dbs[dbname] = ConnectorContainer(dbname, connector, DBTYPE.FS)
+        for dbname, connector in self.couchmanager.getDbs().items():
+            if dbname not in self.dbs.keys():
+                self.dbs[dbname] = ConnectorContainer(dbname, connector, DBTYPE.COUCHDB)
 
     def removeDb(self, name):
         connector = self.getConnector(name)
@@ -377,6 +388,9 @@ class AbstractPersistenceManager(object):
     def _loadDbs(self):
         raise NotImplementedError("AbstractPersistenceManager should not be used directly")
 
+    def refreshDbs(self):
+        self._loadDbs()
+
     def _create(self, name):
         raise NotImplementedError("AbstractPersistenceManager should not be used directly")
 
@@ -401,7 +415,6 @@ class AbstractPersistenceManager(object):
 
     def isAvailable(self):
         return self._available
-
 
 
 class FileSystemManager(AbstractPersistenceManager):
@@ -433,7 +446,8 @@ class FileSystemManager(AbstractPersistenceManager):
     def _loadDbs(self):
         for name in os.listdir(CONF.getPersistencePath()):
             if os.path.isdir(os.path.join(CONF.getPersistencePath(), name)):
-                self.dbs[name] = lambda x: self._loadDb(x)
+                if name not in self.dbs.keys():
+                    self.dbs[name] = lambda x: self._loadDb(x)
 
     def _loadDb(self, name):
         self.dbs[name] = FileSystemConnector(os.path.join(self._path,
@@ -505,10 +519,10 @@ class CouchDbManager(AbstractPersistenceManager):
     #@trap_timeout
     def _loadDbs(self):
         for dbname in filter(lambda x: not x.startswith("_"), self.__serv.all_dbs()):
-            getLogger(self).debug(
-                "Asking for dbname[%s], registering for lazy initialization" % dbname)
-            print dbname
-            self.dbs[dbname] = lambda x: self._loadDb(x)
+            if dbname not in self.dbs.keys():
+                getLogger(self).debug(
+                    "Asking for dbname[%s], registering for lazy initialization" % dbname)
+                self.dbs[dbname] = lambda x: self._loadDb(x)
 
     def _loadDb(self, dbname):
         db = self.__serv.get_db(dbname)

@@ -263,6 +263,10 @@ aside {
 	width: 90%;
 	float: left;
 }
+	.seccion.treemap{
+		width: 78%;
+		margin-left: 7%;
+	}
 .main{overflow-y: auto;height: 340px;overflow-x: hidden;}
 .seccion2 {
 	background: #E8EFF0;
@@ -553,6 +557,8 @@ ul.d3 .untercio{width: 160px;}
 #chart {
   position: relative;
   margin-top: 7%;
+  height: 101%;
+  margin-top: 1%;
 }
 
 #chart path {

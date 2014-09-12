@@ -11,36 +11,40 @@
     <meta charset="utf-8"/>
     <!--[if IE]><![endif]-->
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
-    <title>Treemap | Faraday</title>
+    <title>Dashboard | Faraday</title>
     <meta name="description" content=""/>
     <meta name="keywords" content=""/>
     <meta name="author" content=""/>
 
     <!-- !CSS -->
-    <link rel="stylesheet" type="text/css" href="../././estilos.css" />
-    <link rel="stylesheet" href="../././script/bootstrap.min.css">
-    <link rel="stylesheet" href="../././script/bootstrap-theme.min.css">
+    <link rel="stylesheet" type="text/css" href="estilos.css" />
+    <link rel="stylesheet" type="text/css" href="script/jquery.qtip.css" />
+    <link rel="stylesheet" href="././././script/bootstrap.min.css">
+    <link rel="stylesheet" href="././././script/bootstrap-theme.min.css">
     <link href="favicon.ico" rel="shortcut icon">
     <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
     <link href="images/site_preview.jpg" rel="image_src" />
 
-    <script src='../././script/d3.min.js'></script>
-    <script type="text/javascript" src="././././script/couch.js"></script>
+    <script src="./././script/d3.min.js"></script>
+    <script type="text/javascript" src="script/couch.js"></script>
     <script src="script/common.js"></script>
     <script type="text/javascript" src="/_utils/script/sha1.js"></script>
-    <script type="text/javascript" src="././././script/app.js"></script>
-    <script type="text/javascript" src="././././script/reports_list.js"></script>
+    <script type="text/javascript" src="script/app.js"></script>
+    <script type="text/javascript" src="script/d3_summarized.js"></script>
+    <script type="text/javascript" src="script/reports_list.js"></script>
     <script type="text/javascript" src="/_utils/script/json2.js"></script>
     <script type="text/javascript" src="/_utils/script/jquery.js"></script>
     <script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
-    <script src="../././script/bootstrap.min.js"></script>
+    <script type="text/javascript" src="script/jquery.tablesorter.min.js"></script>
+    <script src="././././script/bootstrap.min.js"></script>
+    <script src="script/jquery.qtip.min.js"></script>
 </head>
 
 <body>
     <div id="cont">
         <div class="wrapper">
             <header class="head">
-                <a href="#"><img class="logo" src="images/logo-faraday.png"/></a>
+                <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
                 <!--
                 <nav>
                     <ul class="menu">
@@ -66,9 +70,14 @@
                 <nav>
                     <ul>
                         <li>
-                            <a href="#" class="status-report" title="Status Report"><img src="../././images/ico-settings.png" alt="Status Report"/></a>
-                            <a href="#" class="activo"><img src="../././images/ico-graph.png" alt=""/></a>
-                            <a href="#"><img src="../././images/ico-stopwatch.png" alt=""/></a>
+                            <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
+                                <img src="images/ico-graph.png" alt="WS Dashboard"/>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="status-report" style="color: #ffffff !important" title="Status Report">
+                                <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
+                            </a>
                         </li>
                     </ul>
                 </nav>
@@ -111,9 +120,7 @@ $(document).ready(function() {
                     // WSs list
                     $("#ws-control #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
                     // navigation between WSs
-                    if(window.location.hash === "" && counter === 0) {
-                        window.location.hash = db;
-                    }
+
                     counter +=1;
             });
             if(counter < 1) { 
@@ -126,13 +133,14 @@ $(document).ready(function() {
     $(document).on("click", "a.ws", function(e) {
         e.preventDefault();
         var hash = $(this).attr("href").substr(1);
-        window.location.hash = hash;
-        location.reload();
+        var pathname = window.location.pathname;
+        var params = "?workspace="+ hash + "&design=hosts&view=byservices";
+        window.location.href = pathname + params + "#" + hash;        
     });
     $(document).on("click", "#refresh", function() {
         location.reload();
     });
-    $(document).on("click", "a.index", function(e) {
+    $(document).on("click", "a.ws-dashboard", function(e) {
         e.preventDefault();
         var url = "../././reports/index.html#" + workspace;
         window.location.href = url;
@@ -153,18 +161,6 @@ $(document).ready(function() {
 });
 </script>
     <style>
-          body {
-          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-          margin: auto;
-          position: relative;
-          width: 960px;
-          }
-
-          form {
-          position: absolute;
-          right: 10px;
-          top: 10px;
-          }
           .node {
           border: solid 1px white;
           font: 10px sans-serif;
@@ -174,15 +170,17 @@ $(document).ready(function() {
           text-indent: 2px;
           }
     </style>
-    <center>
-    <form>
-      <label><input type="radio" name="mode" id="size" value="size" checked> Size</label>
-      <label><input type="radio" name="mode" id="count" value="count"> Count</label>
-    </form>
-      <script src='../././script/d3.min.js'></script>
+      <div class="seccion treemap">
+          <article id="chart">
+            <header>
+              <h2>All Services
+                <span class="glyphicon glyphicon-info-sign faraday-qtips" title="Top 5 services with the largest quantity of hosts"></span>
+              </h2>
+            </header>
+        </article>
+      </div>
       <script>
-
-        var margin = {top: 40, right: 10, bottom: 10, left: 10},
+        var margin = {top: 10, right: 10, bottom: 10, left: 10},
             width = 960 - margin.left - margin.right,
             height = 500 - margin.top - margin.bottom;
 
@@ -193,7 +191,7 @@ $(document).ready(function() {
             .sticky(true)
             .value(function(d) {return d.value});
 
-        var div = d3.select("body").append("div")
+        var div = d3.select("#chart").append("div")
             .style("position", "relative")
             .style("width", (width + margin.left + margin.right) + "px")
             .style("height", (height + margin.top + margin.bottom) + "px")
@@ -215,28 +213,6 @@ $(document).ready(function() {
               .call(position)
               .style("background", function(d) {return color(Math.floor(Math.random()*68)); })
               .text(function(d) {return d.children ? null : d.key; });
-              
-          d3.select("#size").on("click", function() {
-             div.selectAll("div")
-                 .data(treemap.value(function(d) { return d.value - 10; }))
-               .transition()
-                 .duration(1500)
-                 .call(position);
-         
-             d3.select("#size").classed("active", true);
-             d3.select("#count").classed("active", false);
-           });
-
-         d3.select("#count").on("click", function() {
-           div.selectAll("div")
-               .data(treemap.value(function(d) {return d.value + 10; }))
-             .transition()
-               .duration(1500)
-               .call(position);
-       
-           d3.select("#size").classed("active", false);
-           d3.select("#count").classed("active", true);
-         });
         });
 
         function position() {
@@ -257,7 +233,34 @@ $(document).ready(function() {
                 else
                   return decodeURIComponent(results[1].replace(/\+/g, " "));
               }
+
+    $('.treemap').on('mouseenter', '.faraday-qtips', function (event) {
+        $(this).qtip({
+            overwrite: false, // Don't overwrite tooltips already bound
+            show: {
+                event: event.type, // Use the same event type as above
+                ready: true // Show immediately - important!
+            },
+            hide: {
+                fixed: true,
+                delay: 300
+            },
+            content:{
+                text: function(event, api) {
+                    var res = "<div id=\"contenido\">"+$(this).attr("title")+"</div>";
+                    return res;
+                }
+            },
+            position:{
+                my: 'top center',
+                at: 'bottom center',
+                adjust: {
+                    method: 'shift'
+                }
+            }
+        });
+    });
+      $("aside").height(screen.height);
       </script> 
-      </center>
   </body>
 </html>

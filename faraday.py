@@ -23,10 +23,8 @@ from colorama import Fore, Back, Style
 from utils.logs import getLogger
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))) # Necessary?
 from config.configuration import getInstanceConfiguration
-from model.application import MainApplication
 from config.globals import *
 from utils.profilehooks import profile
-from updates.updater import Updater
 
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
@@ -253,6 +251,7 @@ def startFaraday():
     Returns application status.
 
     """
+    from model.application import MainApplication
 
     logger.info("All done. Opening environment.")
     #TODO: Handle args in CONF and send only necessary ones.
@@ -465,6 +464,7 @@ def update():
     """
 
     if args.update:
+        from updates.updater import Updater
         Updater().doUpdates() 
         logger.info("Update process finished with no errors")
         logger.info("Faraday will start now.")

@@ -536,8 +536,9 @@ ul.d3 .untercio{width: 160px;}
 #list .main{height:160px}
 #list .columna{float: right;width:52%;}
 #vulns .columna{margin-left:2%}
-#vulns .columna article.untercio{height:145px;width:180%}
-#vulns .main{width:505px;height:95px}
+#vulns .columna article.untercio{height:145px;width:228%}
+#vulns .main{width:100%;height:95px}
+#vulns .columna.unsexto{margin-left: 5%;}
 #summarized .columna{margin-left:4%}
 #summarized .columna article.untercio{height:237px;width:308px}
 #summarized .main{height:197px}

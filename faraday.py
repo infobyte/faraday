@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))) # Necessary?
 from config.configuration import getInstanceConfiguration
 from config.globals import *
 from utils.profilehooks import profile
+<<<<<<< HEAD
 
 
 QTDIR='/usr/local/qt'
@@ -40,11 +41,6 @@ libs_exports =  {
 }
 
 os.environ.update(libs_exports)
-sys.path.append(QTDIR)
-os.system('ldconfig')
-
-
-
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 FARADAY_BASE = os.path.dirname(os.path.realpath(__file__))

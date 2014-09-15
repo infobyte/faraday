@@ -99,12 +99,17 @@
                             </ul><!-- WS navigation -->
                         </div><!-- #ws-control -->
                     </h2><!-- .ws-label -->
-                    <div class="reports">
-                    </div><!-- .reports -->
                 </div><!-- #reports-main -->
+                <div class="seccion treemap">
+                  <article id="chart">
+                    <header>
+                      <h2>All Services
+                        <span class="glyphicon glyphicon-info-sign faraday-qtips" title="All services ordered by host amount"></span>
+                      </h2>
+                    </header>
+                </article>
+              </div>
             </section>
-            <footer>
-            </footer>
         </div><!--!/#wrapper -->
     </div><!--!/#container -->
     <script type="text/javascript">
@@ -158,6 +163,7 @@ $(document).ready(function() {
 
     var ret = "Viewing "+ workspace;
     $('#reports-main .ws-label span#ws-name').text(ret);
+
 });
 </script>
     <style>
@@ -170,15 +176,6 @@ $(document).ready(function() {
           text-indent: 2px;
           }
     </style>
-      <div class="seccion treemap">
-          <article id="chart">
-            <header>
-              <h2>All Services
-                <span class="glyphicon glyphicon-info-sign faraday-qtips" title="All services ordered by host amount"></span>
-              </h2>
-            </header>
-        </article>
-      </div>
       <script>
         var margin = {top: 10, right: 10, bottom: 10, left: 10},
             width = 960 - margin.left - margin.right,
@@ -260,7 +257,6 @@ $(document).ready(function() {
             }
         });
     });
-      $("aside").height(screen.height);
       </script> 
   </body>
 </html>

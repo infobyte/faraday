@@ -195,8 +195,21 @@ $(document).ready(function() {
         dominio = rutas[i];
         var div = load(dominio);
     }
-    
-    $("aside").height(screen.height - 133);
+
+     var navegador = navigator.userAgent;
+      if (navigator.userAgent.indexOf('MSIE') !=-1) {
+            $("aside").height(679);
+            $(".seccion").height(644);
+      } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
+            $("aside").height(679);
+            $(".seccion").height(644);
+      } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
+            $("aside").height(712);
+            $(".seccion").height(677);
+      } else if (navigator.userAgent.indexOf('Opera') !=-1) {
+            $("aside").height(679);
+            $(".seccion").height(644);
+      }
 
     $('#cont').on('mouseenter', '.faraday-qtips', function (event) {
         $(this).qtip({

@@ -60,7 +60,6 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
 
 body {
 	font:62.5%/1.5 'Ubuntu',Helvetica,Arial,sans-serif;
-	background: #E8EFF0!important;
 	color: #2D2F31;
 }
 .abs {position:absolute}
@@ -188,12 +187,14 @@ ul {margin-bottom: 20px;}
 }
 */
 .wrapper {
-	width: 100%;
+	width: 1280px;
 }
 header.head {
 	background: #000;
 	height: 50px;
 	text-align: left;
+	width: 1280px;
+	position: absolute;
 }
 	header.head .logo {
 		margin: 15px 20px;
@@ -229,9 +230,11 @@ header.head {
 aside {
 	background: #3A3A3A;
 	width: 76px;
+	height: 662px;
 	border-right: 4px solid #DF3936;
 	float: left;
 }
+  aside nav{padding-top:63px;}
 	aside nav a {
 		display: block;
 		width: 56px;
@@ -259,8 +262,8 @@ aside {
 
 .seccion {
 	background: #E8EFF0;
-	padding: 0px 13px 0px;
-	width: 90%;
+	padding: 35px 13px 0px;
+	width: 94%;
 	float: left;
 }
 	.seccion.treemap{
@@ -533,7 +536,7 @@ ul.d3 .untercio{width: 160px;}
   opacity: 0.5;
 }
 #treemap, #bar, #cake{height:195px}
-#list .main{height:160px}
+#list .main{height:105px}
 #list .columna{float: right;width:52%;}
 #vulns .columna{margin-left:2%}
 #vulns .columna article.untercio{height:145px;width:228%}
@@ -582,3 +585,10 @@ ul.d3 .untercio{width: 160px;}
     }
 }
 /* qTip */
+
+@media screen and (min-width: 1290px) {
+	.wrapper{
+		margin:auto;margin-top:5%;
+	}
+	}
+}

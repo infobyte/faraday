@@ -10,6 +10,7 @@ CONST_FARADAY_HOME_PATH = '~/.faraday'
 CONST_FARADAY_PLUGINS_PATH = 'plugins'
 CONST_FARADAY_PLUGINS_REPO_PATH = 'plugins/repo'
 CONST_FARADAY_QTRC_PATH = 'deps/qtrc'
+CONST_FARADAY_IMAGES = 'images/'
 CONST_FARADAY_FOLDER_LIST = [ "config", "data", "images", 
                         "persistence", "plugins",
                         "report", "temp", "zsh" ]

@@ -400,7 +400,7 @@ def setupLibs():
     QTDIR='/usr/local/qt'
     PATH='%s/bin:%s'  %(QTDIR, os.environ['PATH'])
     MANPATH='%s/doc/man' % QTDIR
-    LD_LIBRARY_PATH='%s/lib:%s' % (QTDIR, LD_LIBRARY_PATH)
+    LD_LIBRARY_PATH='%s/lib:%s' % (QTDIR, os.environ['LD_LIBRARY_PATH'])
 
     libs_exports =  {
         'QTDIR': QTDIR,

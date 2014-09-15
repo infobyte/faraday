@@ -397,6 +397,20 @@ def setupLibs():
 
     subprocess.call(['ln', '-s', helpers, FARADAY_BASE_LIB_HELPERS])
 
+    QTDIR='/usr/local/qt'
+    PATH='%s/bin:%s'  %(QTDIR, os.environ['PATH'])
+    MANPATH='%s/doc/man' % QTDIR
+    LD_LIBRARY_PATH='%s/lib:%s' % (QTDIR, LD_LIBRARY_PATH)
+
+    libs_exports =  {
+        'QTDIR': QTDIR,
+        'PATH': PATH,
+        'MANPATH': MANPATH,
+        'LD_LIBRARY_PATH': LD_LIBRARY_PATH
+        }
+
+    os.environ.update(libs_exports)
+
 def checkConfiguration():
     """Checks if the environment is ready to run Faraday.
 

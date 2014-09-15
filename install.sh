@@ -73,6 +73,7 @@ if [ "$down" -eq 1 ]; then
             tar -xvzf lib-$version.tgz
             
             cp -R lib-$version/* /usr/local/
+            cp -R lib-$version/qt/lib/*so* /usr/local/lib
 
             cat deps/qtvars >> /etc/profile
             . /etc/profile            

@@ -23,10 +23,27 @@ from colorama import Fore, Back, Style
 from utils.logs import getLogger
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))) # Necessary?
 from config.configuration import getInstanceConfiguration
-from model.application import MainApplication
 from config.globals import *
 from utils.profilehooks import profile
-from updates.updater import Updater
+
+
+QTDIR='/usr/local/qt'
+PATH='%s/bin:%s'  %(QTDIR, os.environ['PATH'])
+MANPATH='%s/doc/man' % QTDIR
+LD_LIBRARY_PATH='%s/lib:%s' % (QTDIR, os.environ.get('LD_LIBRARY_PATH', ''))
+
+libs_exports =  {
+'QTDIR': QTDIR,
+'PATH': PATH,
+'MANPATH': MANPATH,
+'LD_LIBRARY_PATH': LD_LIBRARY_PATH
+}
+
+os.environ.update(libs_exports)
+sys.path.append(QTDIR)
+os.system('ldconfig')
+
+
 
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
@@ -253,6 +270,7 @@ def startFaraday():
     Returns application status.
 
     """
+    from model.application import MainApplication
 
     logger.info("All done. Opening environment.")
     #TODO: Handle args in CONF and send only necessary ones.
@@ -397,20 +415,6 @@ def setupLibs():
 
     subprocess.call(['ln', '-s', helpers, FARADAY_BASE_LIB_HELPERS])
 
-    QTDIR='/usr/local/qt'
-    PATH='%s/bin:%s'  %(QTDIR, os.environ['PATH'])
-    MANPATH='%s/doc/man' % QTDIR
-    LD_LIBRARY_PATH='%s/lib:%s' % (QTDIR, os.environ['LD_LIBRARY_PATH'])
-
-    libs_exports =  {
-        'QTDIR': QTDIR,
-        'PATH': PATH,
-        'MANPATH': MANPATH,
-        'LD_LIBRARY_PATH': LD_LIBRARY_PATH
-        }
-
-    os.environ.update(libs_exports)
-
 def checkConfiguration():
     """Checks if the environment is ready to run Faraday.
 
@@ -479,6 +483,7 @@ def update():
     """
 
     if args.update:
+        from updates.updater import Updater
         Updater().doUpdates() 
         logger.info("Update process finished with no errors")
         logger.info("Faraday will start now.")

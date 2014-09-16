@@ -32,7 +32,7 @@
 				|| v.os.toLowerCase().indexOf("unix") > -1) icon = "linux";
 			var os = "";
 			if(icon === "") {
-				os = "<span>"+v.os+"</span>";
+				os = "<span class=\"glyphicon glyphicon-question-sign faraday-qtips\" title="+v.os+"></span>";
 			} else {
 				os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+v.os+"\"/>";
 			}
@@ -80,7 +80,7 @@
 					|| v.os.toLowerCase().indexOf("unix") > -1) icon = "linux";
 				var os = "";
 				if(icon === "") {
-					os = "<span>"+v.os+"</span>";
+					os = "<span class=\"glyphicon glyphicon-question-sign faraday-qtips\" title="+v.os+"></span>";
 				} else {
 					os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+v.os+"\"/>";
 				}

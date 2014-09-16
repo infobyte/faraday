@@ -146,7 +146,18 @@
         space = dominio.split("#");
         workspace = space[1];
 
-        var statusReport = angular.module('status-report', ["ngRoute"])
+        var statusReport = angular.module('status-report', ['ngRoute'])
+            .config(function($routeProvider) {
+                $routeProvider.
+                    when('/', {
+                        template: {'<h1>todos putos</h1>'},
+                        controller: {'statusReportCtrl'}
+                    }).
+                    otherwise({
+                        template: {'<h1>todos genios</h1>'},
+                        controller: {'statusReportCtrl'}
+                    });
+            })
             .controller('statusReportCtrl', ['$scope', 'statusReportFact', function($scope, statusReport) {
                 $scope.vulns = statusReport;
                 $scope.sortField = 'date';

@@ -36,27 +36,6 @@ function get_report_div(workspace, view,design){
 	return divs;
 }
 
-function seleccionar(){
-    //selecciona las ips
-    jQuery.fn.selectText = function(){
-        var doc = document;
-        var element = this[0];
-        console.log(this[0].innerText);
-        if (window.getSelection) {
-            var selection = window.getSelection();
-            console.log(selection);
-            var range = document.createRange();
-            range.selectNodeContents(element);
-            console.log(range);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-    };
-	var boton = $("#boton");
-    var selector = boton.data('selector');
-    $(selector).selectText();
-}
-
 $(document).ready(function() {
     $('#cont').on('mouseenter', '.services', function (event) {
         $(this).qtip({
@@ -74,8 +53,7 @@ $(document).ready(function() {
                     var name = $(this)[0].innerHTML.split(">")[5].split("<")[0];
                     var hosts = "<div id='contenido'>Hosts:";
                     hosts += load_hosts_by_service(name, true);
-                    hosts += "</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px'"+
-                                " id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>";
+                    hosts += "</div>";
                     return hosts;
                 }
             }

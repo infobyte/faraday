@@ -17,6 +17,7 @@
     <meta name="author" content=""/>
 
     <!-- !CSS -->
+    <link rel="stylesheet" type="text/css" href="normalize.css" />
     <link rel="stylesheet" type="text/css" href="estilos.css" />
     <link rel="stylesheet" type="text/css" href="script/jquery.qtip.css" />
     <link rel="stylesheet" href="script/bootstrap.min.css">
@@ -203,6 +204,12 @@ $(document).ready(function() {
       } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
             $("aside").height(679);
             $(".seccion").height(644);
+      } else if (navigator.userAgent.indexOf('Chromium') !=-1) {
+            $("aside").height(679);
+            $("header.head").width(1265);
+            $("#list th.header:first-child").css("padding-right","111px");
+            $("#main.seccion").height(644)
+                              .width(1163);
       } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
             $("aside").height(712);
             $(".seccion").height(677);

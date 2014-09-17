@@ -267,8 +267,9 @@ aside {
 	float: left;
 }
 	.seccion.treemap{
-		width: 78%;
+		width: 983px;
 		margin-left: 7%;
+		height:611px;
 	}
 .main{overflow-y: auto;height: 340px;overflow-x: hidden;}
 .seccion2 {
@@ -317,6 +318,7 @@ article.untercio{
 			.sin_padding {
 				padding: 0 !important;
 				background: #E8EFF0;
+				position: relative;
 			}
 				.sin_padding h2{padding-bottom: 16px;}
 
@@ -324,14 +326,14 @@ article.untercio{
 /* Fondos */
 .fondo-rojo, .fondo-high {background-color: #DF3936 !important;}
 .fondo-negro {background-color: #000 !important;}
-.fondo-gris1, .fondo-unclassified {background-color: #2D2F31 !important;}
+.fondo-gris1, .fondo-unclassified {background-color: #8B00FF !important;}
 .fondo-gris2 {background-color: #858585 !important;}
 .fondo-gris3 {background-color: #ddd !important;}
 .fondo-blanco {background-color: #fff !important;}
-.fondo-celeste, .fondo-info {background-color: #2D97BD !important;}
-.fondo-naranja, .fondo-med {background-color: #DF7B36 !important;}
+.fondo-celeste, .fondo-info {background-color: #858585 !important;}
+.fondo-naranja, .fondo-med {background-color: #DFBF35 !important;}
 .fondo-verde {background-color: #A1CE31 !important;}
-.fondo-amarillo, .fondo-low {background-color: #DFBF35 !important;}
+.fondo-amarillo, .fondo-low {background-color: #A1CE31 !important;}
 .fondo-violeta {background-color: #8D2BB4 !important;}
 /* Textos*/
 .texto-rojo {color: #DF3936;}
@@ -384,6 +386,7 @@ table.tablesorter {
 	width: 100%;
 	text-align: center;
 }
+	.main thead tr{position: absolute;top:38px;}
 table.tablesorter thead tr th, table.tablesorter tfoot tr th {
 	background-color: #3F464C;
 	color: #fff;
@@ -391,6 +394,8 @@ table.tablesorter thead tr th, table.tablesorter tfoot tr th {
 	font-size: 14px;
 	padding: 5px;
 }
+	th.header:first-child{padding-right:278px}
+	th.header:last-child{padding-right:79px}
 
 table.tablesorter thead tr .header {
 	background-repeat: no-repeat;
@@ -459,7 +464,7 @@ table.tablesorter tbody tr td:first-child {
 	}
 .submit {
 	display: inline-block;
-	border-right: none;
+	borde<r-right: none;
 	border-left: none;
 	border-top: none;
 }
@@ -536,8 +541,12 @@ ul.d3 .untercio{width: 160px;}
   opacity: 0.5;
 }
 #treemap, #bar, #cake{height:195px}
-#list .main{height:105px}
-#list .columna{float: right;width:52%;}
+#list .main{height:88px}
+#list .columna{float: right;width:53%;margin-right: 25px;}
+	#list th.header:last-child{padding-right:36px;border-right:0px;}
+	#list th.header:nth-child(3){padding-right:81px}
+	#list th.header:nth-child(2){padding-right:101px}
+	#list th.header:first-child{padding-right:114px;border-left:0px;}
 #vulns .columna{margin-left:2%}
 #vulns .columna article.untercio{height:145px;width:228%}
 #vulns .main{width:100%;height:95px}
@@ -547,7 +556,8 @@ ul.d3 .untercio{width: 160px;}
 #summarized .main{height:197px}
 #byservices .columna article.untercio{height:237px;width:308px}
 #byservices .main{height:197px}
-#compound .main{height:310px}
+#compound .main{height:289px}
+	#compound header, #list header{min-height: 70px;}
 .status .seccion2{width: 100%;}
 #contenido{text-align: left;}
 #sequence { 
@@ -561,8 +571,8 @@ ul.d3 .untercio{width: 160px;}
 #chart {
   position: relative;
   margin-top: 7%;
-  height: 101%;
   margin-top: 1%;
+  height:538px;
 }
 
 #chart path {
@@ -589,6 +599,5 @@ ul.d3 .untercio{width: 160px;}
 @media screen and (min-width: 1290px) {
 	.wrapper{
 		margin:auto;margin-top:5%;
-	}
 	}
 }

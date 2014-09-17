@@ -134,6 +134,11 @@ $(document).ready(function() {
         }
       }
     });
+        //get workspace
+    dominio = location.href;
+    space = dominio.split("#");
+    workspace = space[1];
+
     // navegacion entre WSs en el dropdown
     $(document).on("click", "a.ws", function(e) {
         e.preventDefault();
@@ -156,14 +161,19 @@ $(document).ready(function() {
         window.location.href = url;
     });
 
-    //get workspace
-    dominio = location.href;
-    space = dominio.split("#");
-    workspace = space[1];
-
     var ret = "Viewing "+ workspace;
     $('#reports-main .ws-label span#ws-name').text(ret);
 
+     var navegador = navigator.userAgent;
+      if (navigator.userAgent.indexOf('MSIE') !=-1) {
+            $("aside").height(679);
+      } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
+            $("aside").height(679);
+      } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
+            $("aside").height(712);
+      } else if (navigator.userAgent.indexOf('Opera') !=-1) {
+            $("aside").height(679);
+      }
 });
 </script>
     <style>

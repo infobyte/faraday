@@ -42,14 +42,12 @@ function seleccionar(){
         var doc = document;
         var element = this[0];
         console.log(this[0].innerText);
-        if (doc.body.createTextRange) {
-            var range = document.body.createTextRange();
-            range.moveToElementText(element);
-            range.select();
-        } else if (window.getSelection) {
-            var selection = window.getSelection();        
+        if (window.getSelection) {
+            var selection = window.getSelection();
+            console.log(selection);
             var range = document.createRange();
             range.selectNodeContents(element);
+            console.log(range);
             selection.removeAllRanges();
             selection.addRange(range);
         }

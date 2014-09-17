@@ -218,8 +218,8 @@ function cake(workspace, design, view){
 	  "low": "#A1CE31",
 	  "med": "#DFBF35",
 	  "unclassified": "#8B00FF",
-	  "high": "#B80000",
-	  "info": "#ddd"
+	  "high": "#DF3936",
+	  "info": "#858585"
 	};
 
 	// Total size of all segments; we set this later, after loading the data.

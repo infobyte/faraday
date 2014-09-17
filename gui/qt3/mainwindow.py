@@ -18,7 +18,7 @@ from gui.qt3.toolbars import *
 from gui.qt3.customevents import *
 from gui.qt3.notification import NotificationsDialog
 from model.guiapi import notification_center as notifier
-from managers.all import PersistenceManagerFactory, CouchdbManager
+from persistence.persistence_managers import CouchDbManager
 
 
 import model.api
@@ -340,7 +340,7 @@ class MainWindow(qt.QMainWindow):
         self.location_toolbar.addFilter(value)
 
     def showAll(self):
-                                       
+
         self.show()
                        
         self.main_toolbar.show()
@@ -524,23 +524,22 @@ class MainWindow(qt.QMainWindow):
             repourl, isReplicated, replics = repoconfig_dialog.getData()
             api.devlog("repourl = %s" % repourl)
             wm = self._main_app.getWorkspaceManager()
-            if not CouchdbManager.testCouch(repourl):
+            if not CouchDbManager.testCouch(repourl):
                 self.showPopup("""
                 Repository URL Not valid, check if
                 service is available and that connection string is from
                 the form: http[s]://hostname:port""")
-                repourl, isReplicated, replics = "", False, ""
+            #     repourl, isReplicated, replics = "", False, ""
 
             CONF.setCouchUri(repourl)
             CONF.setCouchIsReplicated(isReplicated)
             CONF.setCouchReplics(replics)
             CONF.saveConfig()
-            
 
-            couchdbmanager = PersistenceManagerFactory().getInstance()
-            wm.setCouchManager(couchdbmanager)
+            wm.closeWorkspace()
+            wm.resource()
+            wm.openWorkspace('untitled')
 
-            wm.loadWorkspaces()
             mwin = self._main_app.getMainWindow()
             mwin.getWorkspaceTreeView().loadAllWorkspaces()
             mwin.getWorkspaceTreeView().setDefaultWorkspace()
@@ -709,27 +708,11 @@ class MainWindow(qt.QMainWindow):
         pixmap = qt.QPixmap.grabWidget(self)
         pixmap.save(os.path.join(CONF.getDefaultTempPath(), "fullscreen_capture_%s.png" % ts), "PNG")
         model.api.log("Screenshots taken")
-
-    def syncWorkspaces(self):
-                                                                   
-                                             
-                                                                                
-                  
-        self._model_controller.syncActiveWorkspace()
-
-    def saveWorkspaces(self):
-        """
-        Saves workspaces and it is done syncronically so GUI won't respond
-        until it finishes saving everything
-        """
-                                                   
-        model.api.log("Saving workspaces...")
-        self._main_app.saveWorkspaces()
-        model.api.log("Workspaces saved!")
         
     def createWorkspace(self):
                                                                            
-        wdialog = WorkspaceCreationDialog(self, callback=self._main_app.createWorkspace)
+        wdialog = WorkspaceCreationDialog(self, callback=self._main_app.createWorkspace, workspace_manager=self._main_app.getWorkspaceManager())
+        
         wdialog.exec_loop()
         
         

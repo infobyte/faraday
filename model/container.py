@@ -7,7 +7,6 @@ See the file 'doc/LICENSE' for the license information
 '''
 
                                                          
-from model.common import  ModelObjectDictAdapter
 from model.hosts import Host
 import model
 from mockito import mock

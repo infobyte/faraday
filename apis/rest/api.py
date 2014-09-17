@@ -18,7 +18,6 @@ from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 
 from plugins.core import PluginControllerForApi
-from managers.all import CommandManager
 from model.visitor import VulnsLookupVisitor
 
 import utils.logs as logger
@@ -38,12 +37,13 @@ def stopServer():
     global _http_server
     if _http_server is not None:
         IOLoop.instance().stop()
+        _http_server.stop()
 
 
-def startAPIs(plugin_manager, model_controller):
+def startAPIs(plugin_manager, model_controller, mapper_manager):
     global _rest_controllers
     global _http_server
-    _rest_controllers = [PluginControllerAPI(plugin_manager), ModelControllerAPI(model_controller)]
+    _rest_controllers = [PluginControllerAPI(plugin_manager, mapper_manager), ModelControllerAPI(model_controller)]
     #TODO: load API configuration from config file
     hostname = "localhost"
     port = 9977
@@ -88,6 +88,7 @@ class RESTApi(object):
         return jsonify(code=code,
                        message=message)
 
+
 class ModelControllerAPI(RESTApi):
     def __init__(self, model_controller):
         self.controller = model_controller
@@ -101,10 +102,36 @@ class ModelControllerAPI(RESTApi):
         routes.append(Route(path='/model/del/vulns',
                               view_func=self.deleteVuln,
                               methods=['DELETE']))
+
+        routes.append(Route(path='/model/host',
+                            view_func=self.createHost,
+                            methods=['PUT']))
+
+        routes.append(Route(path='/model/interface',
+                            view_func=self.createInterface,
+                            methods=['PUT']))
+
+        routes.append(Route(path='/model/service',
+                            view_func=self.createService,
+                            methods=['PUT']))
+
+        routes.append(Route(path='/model/vuln',
+                            view_func=self.createVuln,
+                            methods=['PUT']))
+
+        routes.append(Route(path='/model/vulnweb',
+                            view_func=self.createVulnWeb,
+                            methods=['PUT']))
+
+        routes.append(Route(path='/model/note',
+                            view_func=self.createNote,
+                            methods=['PUT']))
+
+        routes.append(Route(path='/model/cred',
+                            view_func=self.createCred,
+                            methods=['PUT']))
+
         return routes
-
-
-        return host
 
     def deleteVuln(self):
         json_data = request.get_json()
@@ -167,9 +194,69 @@ class ModelControllerAPI(RESTApi):
 
         return self.ok("output successfully sent to plugin")
 
+    def _create(self, creation_callback, params):
+        data = request.get_json()
+        if not 'name' in data:
+            return self.badRequest("name is mandatory")
+
+        kwargs = {}
+        for param in params:
+            kwargs[param] = data.get(param, None)
+        obj = creation_callback(**kwargs)
+
+        if obj:
+            return jsonify(code=200,
+                           id=obj.getID())
+        return self.badRequest("Object cannot be created")
+
+    def createHost(self):
+        return self._create(
+            self.controller.newHost,
+            ['name', 'os'])
+
+    def createInterface(self):
+        return self._create(
+            self.controller.newInterface,
+            ['name', 'mac', 'ipv6_address', 'ipv4_mask', 'ipv4_gateway',
+             'ipv4_dns', 'ipv6_address', 'ipv6_prefix', 'ipv6_gateway',
+             'ipv6_dns', 'network_segment', 'hostname_resolution',
+             'parent_id'])
+
+    def createService(self):
+        return self._create(
+            self.controller.newService,
+            ['name', 'protocol', 'ports', 'status',
+             'version', 'description', 'parent_id'])
+
+    def createVuln(self):
+        return self._create(
+            self.controller.newVuln,
+            ['name', 'desc', 'ref', 'severity', 'parent_id'])
+
+    def createVulnWeb(self):
+        return self._create(
+            self.controller.newVulnWeb,
+            ['name', 'desc', 'ref', 'severity', 'website',
+             'path', 'request', 'response', 'method', 'pname',
+             'params', 'query', 'category', 'parent_id'])
+
+    def createNote(self):
+        return self._create(
+            self.controller.newNote,
+            ['name', 'text', 'parent_id'])
+
+    def createCred(self):
+        return self._create(
+            self.controller.newCred,
+            ['username', 'password', 'parent_id'])
+
+
 class PluginControllerAPI(RESTApi):
-    def __init__(self, plugin_manager):
-        self.plugin_controller = PluginControllerForApi("PluginController", plugin_manager.getPlugins(), CommandManager())
+    def __init__(self, plugin_manager, mapper_manager):
+        self.plugin_controller = PluginControllerForApi(
+            "PluginController",
+            plugin_manager.getPlugins(),
+            mapper_manager)
 
     def getRoutes(self):
         routes = []

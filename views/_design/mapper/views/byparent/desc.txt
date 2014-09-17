@@ -1,0 +1,3 @@
+Get the documents grouped by parent.
+
+The mapper needs to get the documents owned by some parent

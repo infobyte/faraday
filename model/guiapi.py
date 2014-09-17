@@ -10,6 +10,7 @@ See the file 'doc/LICENSE' for the license information
 import model.common
 from gui.notifier import NotificationCenter
 from config.configuration import getInstanceConfiguration
+import model.api
 #from model.api import showDialog, showPopup
 
 CONF = getInstanceConfiguration()
@@ -57,12 +58,12 @@ def deregisterWidget(widget):
         notification_center.deregisterWidget(widget)
 
 
-def createAndAddHost(name, os = "Unknown", category=None, update = False, old_hostname = None ):
-
-    host = newHost(name, os)
+def createAndAddHost(name, os="Unknown", category=None, update=False, old_hostname=None):
+    host = model.api.newHost(name, os)
     if addHost(host, category, update, old_hostname):
         return host.getID()
     return None
+
 
 def createAndAddInterface(host_id, name = "", mac = "00:00:00:00:00:00",
                  ipv4_address = "0.0.0.0", ipv4_mask = "0.0.0.0",
@@ -76,138 +77,115 @@ def createAndAddInterface(host_id, name = "", mac = "00:00:00:00:00:00",
     If interface is successfuly created and the host exists, it returns the inteface id
     It returns None otherwise
     """
-    interface = newInterface(name, mac, ipv4_address, ipv4_mask, ipv4_gateway,
-                             ipv4_dns, network_segment, hostname_resolution)
+    interface = model.api.newInterface(name, mac, ipv4_address, ipv4_mask, ipv4_gateway,
+                             ipv4_dns, network_segment, hostname_resolution, parent_id=host_id)
     if addInterface(host_id, interface):
         return interface.getID()
     return None
 
-def createAndAddApplication(host_id, name, status = "running", version = "unknown"):
-    application = newApplication(name, status, version)
-    if addApplication(host_id, application):
-        return application.getID()
-    return None
-
-def createAndAddServiceToApplication(host_id, application_id, name, protocol = "tcp?", 
-                ports = [], status = "running", version = "unknown", description = ""):
-    service = newService(name, protocol, ports, status, version, description)
-    if addServiceToApplication(host_id, application_id, service):
-        return service.getID()
-    return None
 
 def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?", 
                 ports = [], status = "running", version = "unknown", description = ""):
-    service = newService(name, protocol, ports, status, version, description)
+    service = model.api.newService(name, protocol, ports, status, version, description, parent_id=interface_id)
     if addServiceToInterface(host_id, interface_id, service):
         return service.getID()
     return None
 
-               
 
 def createAndAddVulnToHost(host_id, name, desc, ref, severity="0"):
-    vuln = newVuln(name, desc, ref, severity)
+    vuln = model.api.newVuln(name, desc, ref, severity, parent_id=host_id)
     if addVulnToHost(host_id, vuln):
         return vuln.getID()
     return None
 
+
 def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref, severity="0"):
-    vuln = newVuln(name, desc, ref, severity)
+    vuln = model.api.newVuln(name, desc, ref, severity, parent_id=interface_id)
     if addVulnToInterface(host_id, interface_id, vuln):
         return vuln.getID()
     return None
-    
-def createAndAddVulnToApplication(host_id, application_id, name, desc, ref, severity="0"):
-    vuln = newVuln(name, desc, ref, severity)
-    if addVulnToApplication(host_id, application_id, vuln):
-        return vuln.getID()
-    return None
+
 
 def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity="0"):
-                                                                                   
-    vuln = newVuln(name, desc, ref, severity)
+    vuln = model.api.newVuln(name, desc, ref, severity, parent_id=service_id)
     if addVulnToService(host_id, service_id, vuln):
         return vuln.getID()
     return None
+
 
 def createAndAddVulnWebToService(host_id, service_id, name, desc, website, path, ref=None, severity="0", request=None, response=None,
                 method=None,pname=None, params=None,query=None,category=None):
-                                                                                   
-    vuln = newVulnWeb(name, desc, website, path, ref, severity, request, response,
-                method,pname, params,query,category)
-    
+    vuln = model.api.newVulnWeb(name, desc, website, path, ref, severity, request, response,
+                method,pname, params,query,category, parent_id=service_id)
     if addVulnToService(host_id, service_id, vuln):
         return vuln.getID()
     return None
 
+
 def createAndAddVuln(model_object, name, desc, ref=None, severity="0"):
-    vuln = newVuln(name, desc, ref, severity)
-    if addVuln(model_object, vuln):
+    vuln = model.api.newVuln(name, desc, ref, severity, parent_id=model_object.getID())
+    if addVuln(model_object.getID(), vuln):
         return vuln.getID()
     return None
+
 
 def createAndAddVulnWeb(model_object, name, desc, website, path, ref=None, severity="0", request=None, response=None,
                 method=None,pname=None, params=None,query=None,category=None):
-    vuln = newVulnWeb(name, desc, website, path, ref, severity, request, response,
-                method,pname, params,query,category)
-    if addVuln(model_object, vuln):
+    vuln = model.api.newVulnWeb(name, desc, ref, severity, website, path, request, response,
+                method, pname, params, query, category, parent_id=model_object.getID())
+    if addVuln(model_object.getID(), vuln):
         return vuln.getID()
     return None
 
-      
- 
+
 def createAndAddNoteToHost(host_id, name, text):
-    note = newNote(name, text)
+    note = model.api.newNote(name, text, parent_id=host_id)
     if addNoteToHost(host_id, note):
         return note.getID()
     return None
 
+
 def createAndAddNoteToInterface(host_id, interface_id, name, text):
-    note = newNote(name, text)
+    note = model.api.newNote(name, text, parent_id=interface_id)
     if addNoteToInterface(host_id, interface_id, note):
         return note.getID()
     return None
 
-def createAndAddNoteToApplication(host_id, application_id, name, text):
-    note = newNote(text)
-    if addNoteToApplication(host_id, application_id, note):
-        return note.getID()
-    return None
 
 def createAndAddNoteToService(host_id, service_id, name, text):
-    note = newNote(name, text)
+    note = model.api.newNote(name, text, parent_id=service_id)
     if addNoteToService(host_id, service_id, note):
         return note.getID()
     return None
 
+
 def createAndAddNote(model_object, name, text):
-    note = newNote(name, text)
-    if addNote(model_object, note):
+    note = model.api.newNote(name, text, parent_id=model_object.getID())
+    if addNote(model_object.getID(), note):
         return note.getID()
     return None
 
-      
+
 def createAndAddCred(model_object, username, password):
-    cred = newCred(username, password)
-    if addCred(model_object, cred):
+    cred = model.api.newCred(username, password, parent_id=model_object.getID())
+    if addCred(model_object.getID(), cred):
         return cred.getID()
     return None
 
+
 def createAndAddCredToHost(host_id, username, password):
-    cred = newCred(username, password)
+    cred = model.api.newCred(username, password, parent_id=host_id)
     if addCredToHost(host_id, cred):
         return cred.getID()
     return None
 
+
 def createAndAddCredToService(host_id, service_id, username, password):
-    cred = newCred(username, password)
+    cred = model.api.newCred(username, password, parent_id=service_id)
     if addCredToService(host_id, service_id, cred):
         return cred.getID()
     return None
-                                                                                
-                                                 
-                                                                                
 
-                                                                                             
 
 def addHost(host, category=None, update = False, old_hostname = None):
     if host is not None:
@@ -265,9 +243,9 @@ def addVulnToService(host_id, service_id, vuln):
         return True
     return False
 
-def addVuln(model_object, vuln):
+def addVuln(model_object_id, vuln):
     if vuln is not None:
-        __model_controller.addVulnSYNC(model_object, vuln)
+        __model_controller.addVulnSYNC(model_object_id, vuln)
         return True
     return False
 
@@ -297,16 +275,16 @@ def addNoteToService(host_id, service_id, note):
         return True
     return False
 
-def addNote(model_object, note):
+def addNote(model_object_id, note):
     if note is not None:
-        __model_controller.addNoteSYNC(model_object, note)
+        __model_controller.addNoteSYNC(model_object_id, note)
         return True
     return False
 
       
-def addCred(model_object, cred):
+def addCred(model_object_id, cred):
     if cred is not None:
-        __model_controller.addCredSYNC(model_object, cred)
+        __model_controller.addCredSYNC(model_object_id, cred)
         return True
     return False
 
@@ -322,10 +300,7 @@ def addCredToHost(host_id, cred):
         return True
     return False
 
-                                                                                
-                                  
-                                                                                
-                                         
+
 def delHost(host_id):
     __model_controller.delHostSYNC(host_id)
     return True
@@ -350,8 +325,8 @@ def delServiceFromApplication(host_id, application_id, service_id):
     __model_controller.delServiceFromApplicationSYNC(host_id, application_id, service_id)
     return True
 
-               
-                                                                                
+
+
 def delVulnFromApplication(vuln, hostname, appname):
     __model_controller.delVulnFromApplicationSYNC(hostname, appname, vuln)
     return True
@@ -369,8 +344,8 @@ def delVulnFromService(vuln, hostname, srvname):
     __model_controller.delVulnFromServiceSYNC(hostname,srvname, vuln)
     return True
 
-def delVuln(model_object, vuln_id):
-    __model_controller.delVulnSYNC(model_object, vuln_id)
+def delVuln(model_object_id, vuln_id):
+    __model_controller.delVulnSYNC(model_object_id, vuln_id)
     return True
 
        
@@ -392,13 +367,13 @@ def delNoteFromService(note, hostname, srvname):
     __model_controller.delNoteFromServiceSYNC(hostname,srvname, note)
     return True
 
-def delNote(model_object, note_id):
-    __model_controller.delNoteSYNC(model_object, note_id)
+def delNote(model_object_id, note_id):
+    __model_controller.delNoteSYNC(model_object_id, note_id)
     return True
 
      
-def delCred(model_object, cred_id):
-    __model_controller.delCredSYNC(model_object, cred_id)
+def delCred(model_object_id, cred_id):
+    __model_controller.delCredSYNC(model_object_id, cred_id)
     return True
 
 def delCredFromHost(cred, hostname):
@@ -450,104 +425,11 @@ def editCred(cred, username=None, password=None):
     __model_controller.editCredSYNC(cred, username, password)
     return True
 
-                                                                                
 
-                                                                                
-               
-                                                                                
-def newHost(name, os = "Unknown"):
-    """
-    It creates and returns a Host object.
-    The object created is not added to the model.
-    """
-                                                                           
-    return model.common.factory.createModelObject("Host", name, os=os)
-
-                                                                                
-def newInterface(name = "", mac = "00:00:00:00:00:00",
-                 ipv4_address = "0.0.0.0", ipv4_mask = "0.0.0.0",
-                 ipv4_gateway = "0.0.0.0", ipv4_dns = [],
-                 ipv6_address = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_prefix = "00",
-                 ipv6_gateway = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns = [],
-                 network_segment = "", hostname_resolution = []):
-    """
-    It creates and returns an Interface object.
-    The created object is not added to the model.
-    """
-    return model.common.factory.createModelObject("Interface", name, mac = mac,
-                 ipv4_address = ipv4_address , ipv4_mask = ipv4_mask,
-                 ipv4_gateway = ipv4_gateway, ipv4_dns = ipv4_dns,
-                 ipv6_address = ipv6_address , ipv6_prefix = ipv6_prefix,
-                 ipv6_gateway = ipv6_gateway, ipv6_dns = ipv6_dns,
-                 network_segment = network_segment,
-                 hostname_resolution = hostname_resolution)
-                                                                                
-def newService(name, protocol = "tcp?", ports = [], status = "running",
-               version = "unknown", description = ""):
-    """
-    It creates and returns a Service object.
-    The created object is not added to the model.
-    """
-    return model.common.factory.createModelObject("Service",name,
-                             protocol = protocol, ports = ports,
-                             status = status, version = version,
-                             description = description)
-                                                                                
-
-def newVuln(name, desc="", ref = None, severity=""):
-    """
-    It creates and returns a Vulnerability object.
-    The created object is not added to the model.
-    """
-    return model.common.factory.createModelObject("Vulnerability", name, desc=desc,
-                                                  ref=ref, severity=severity)
- 
-                                                                                
-
-def newVulnWeb(name, desc="", website="", path="", ref=None, severity="", request="", response="",
-                method="",pname="", params="",query="",category=""):
-    """
-    It creates and returns a Vulnerability object.
-    The created object is not added to the model.
-    """
-    return model.common.factory.createModelObject("VulnerabilityWeb", name, desc=desc, ref=ref,severity=severity, website=website, path=path, request=request,
-                                                  response=response,method=method,pname=pname, params=params,query=query,category=category )
- 
-                                                                                
-   
-def newNote(name,text):
-    
-    """
-    It creates and returns a Note object.
-    The created object is not added to the model.
-    """
-    return model.common.factory.createModelObject("Note", name, text=text)
+def getParent(parent_id):
+    return __model_controller.find(parent_id)
 
 
-   
-def newCred(username,password):
-    
-    """
-    It creates and returns a Cred object.
-    The created object is not added to the model.
-    """
-    return model.common.factory.createModelObject("Cred", username, password=password)
-
-
-                                                                                
-def newApplication(name, status = "running", version = "unknown"):
-    """
-    It creates and returns an Application object.
-    The created object is not added to the model.
-    """
-    return model.common.factory.createModelObject("HostApplication",name,
-                             status = status,
-                             version = version)
-
-                                                                                
-
-                     
-  
 def resolveConflicts():
     __model_controller.resolveConflicts()
 

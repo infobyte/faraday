@@ -110,7 +110,7 @@ class Host(ModelComposite):
             self.setDescription(description)
         if os is not None:
             self.setOS(os)
-        if name is not None:
+        if owned is not None:
             self.setOwned(owned)
 
     def setInterfaces(self, interfaces):

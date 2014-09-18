@@ -36,20 +36,10 @@ function treemap(workspace, design, view){
         }
 
         function sorter_jotason(root){
-        	var arr = [];
 	        var row = root.rows;
-	        for (i = 0; i < row.length; i++) {
-	            arr.push([row[i].value,row[i].key]);
-	        }
-	        obj = [];
-	        var obj = row.sort(function(a,b){ 
-	            if (a[0] === b[0]) {
-	                return 0;
-	            }
-	            else {
-	                return (a[0] > b[0]) ? -1 : 1;
-	            }
-	            return obj;
+	        obj = {};
+	        var obj = row.sort(function(a,b){
+	        	return (b.value - a.value);
 	        });
 	        var color = ["#FA5882", "#FF0040", "#B40431", "#610B21", "#2A0A1B"];
 	        var objeto = [];

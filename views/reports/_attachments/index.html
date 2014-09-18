@@ -6,7 +6,8 @@
 <!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
 <!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
 <!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
-<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> 
+<html id="no-overflow" lang="en" class="no-js"> <!--<![endif]-->
 <head>
     <meta charset="utf-8"/>
     <!--[if IE]><![endif]-->
@@ -206,10 +207,11 @@ $(document).ready(function() {
             $(".seccion").height(644);
       } else if (navigator.userAgent.indexOf('Chromium') !=-1) {
             $("aside").height(679);
-            $("header.head").width(1265);
-            $("#list th.header:first-child").css("padding-right","111px");
-            $("#main.seccion").height(644)
-                              .width(1163);
+            $("header.head").width(1280);
+            $("#main.seccion").height(644);
+                setTimeout(function() {
+                    $("#list th.header:first-child").css("padding-right","118px");
+                }, 1000);
       } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
             $("aside").height(712);
             $(".seccion").height(677);

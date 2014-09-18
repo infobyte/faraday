@@ -45,29 +45,29 @@ USER_HOME = os.path.expanduser(CONST_USER_HOME)
 FARADAY_BASE = os.path.dirname(os.path.realpath(__file__))
 
 FARADAY_USER_HOME = os.path.expanduser(CONST_FARADAY_HOME_PATH)
-FARADAY_PLUGINS_PATH = os.path.join(FARADAY_USER_HOME, 
+FARADAY_PLUGINS_PATH = os.path.join(FARADAY_USER_HOME,
                         CONST_FARADAY_PLUGINS_PATH)
-FARADAY_PLUGINS_BASEPATH = os.path.join(FARADAY_BASE, 
+FARADAY_PLUGINS_BASEPATH = os.path.join(FARADAY_BASE,
                             CONST_FARADAY_PLUGINS_REPO_PATH)
 
-FARADAY_BASE_LIB_HELPERS = os.path.join(FARADAY_BASE, 
+FARADAY_BASE_LIB_HELPERS = os.path.join(FARADAY_BASE,
                             CONST_FARADAY_LIB_HELPERS)
 
-FARADAY_BASE_IMAGES = os.path.join(FARADAY_BASE, "data", 
+FARADAY_BASE_IMAGES = os.path.join(FARADAY_BASE, "data",
                             CONST_FARADAY_IMAGES)
 
-FARADAY_USER_CONFIG_XML = os.path.join(FARADAY_USER_HOME, 
+FARADAY_USER_CONFIG_XML = os.path.join(FARADAY_USER_HOME,
                             CONST_FARADAY_USER_CFG)
-FARADAY_BASE_CONFIG_XML = os.path.join(FARADAY_BASE, 
+FARADAY_BASE_CONFIG_XML = os.path.join(FARADAY_BASE,
                             CONST_FARADAY_BASE_CFG)
 
 USER_ZSHRC = os.path.expanduser(CONST_USER_ZSHRC)
-FARADAY_USER_IMAGES = os.path.join(FARADAY_USER_HOME, 
+FARADAY_USER_IMAGES = os.path.join(FARADAY_USER_HOME,
                             CONST_FARADAY_IMAGES)
 FARADAY_USER_ZSHRC = os.path.join(FARADAY_USER_HOME, CONST_FARADAY_ZSHRC)
 FARADAY_USER_ZSH_PATH = os.path.join(FARADAY_USER_HOME, CONST_ZSH_PATH)
 FARADAY_BASE_ZSH = os.path.join(FARADAY_BASE, CONST_FARADAY_ZSH_FARADAY)
-FARADAY_BASE_ZSH_PLUGIN = os.path.join(FARADAY_BASE, 
+FARADAY_BASE_ZSH_PLUGIN = os.path.join(FARADAY_BASE,
                             CONST_FARADAY_ZSH_PLUGIN)
 
 USER_QT = os.path.expanduser(CONST_USER_QT_PATH)
@@ -82,61 +82,61 @@ def getParserArgs():
     """
 
     parser = argparse.ArgumentParser(
-        description="Faraday's launcher parser.", 
+        description="Faraday's launcher parser.",
         fromfile_prefix_chars='@')
 
     parser_connection = parser.add_argument_group('connection')
     parser_profile = parser.add_argument_group('profiling')
     parser_gui_ex = parser.add_mutually_exclusive_group()
 
-    parser_connection.add_argument('-n', '--hostname', action="store", 
-        dest="host", 
-        default="localhost", 
+    parser_connection.add_argument('-n', '--hostname', action="store",
+        dest="host",
+        default="localhost",
         help="The hostname where api XMLRPCServer will listen. \
         Default = localhost")
 
-    parser_connection.add_argument('-p', '--port', action="store", dest="port", 
+    parser_connection.add_argument('-p', '--port', action="store", dest="port",
         default=9876, type=int,
         help="Sets the port where api XMLRPCServer will listen. Default = 9876")
 
-    parser.add_argument('-d', '--debug', action="store_true", dest="debug", 
-        default=False, 
+    parser.add_argument('-d', '--debug', action="store_true", dest="debug",
+        default=False,
         help="Enables debug mode. Default = disabled")
 
-    parser_profile.add_argument('--profile', action="store_true", 
-        dest="profile", 
-        default=False, 
+    parser_profile.add_argument('--profile', action="store_true",
+        dest="profile",
+        default=False,
         help="Enables application profiling. When this option is used \
          --profile-output and --profile-depth can also be used. \
          Default = disabled")
 
     parser_profile.add_argument('--profile-output', action="store",
         dest="profile_output",
-        default=None, 
+        default=None,
         help="Sets the profile output filename. If no value is provided, \
         standard output will be used")
 
-    parser_profile.add_argument('--profile-depth', action="store", 
+    parser_profile.add_argument('--profile-depth', action="store",
         dest="profile_depth", type=int,
-        default=500, 
+        default=500,
         help="Sets the profile number of entries (depth). Default = 500")
 
-    parser.add_argument('--disable-excepthook', action="store_true", 
-        dest="disable_excepthook", 
-        default=False, 
+    parser.add_argument('--disable-excepthook', action="store_true",
+        dest="disable_excepthook",
+        default=False,
         help="Disable the application exception hook that allows to send error \
         reports to developers.")
 
-    parser.add_argument('--disable-login', action="store_true", 
-        dest="disable_login", 
-        default=False, 
+    parser.add_argument('--disable-login', action="store_true",
+        dest="disable_login",
+        default=False,
         help="Disable the auth splash screen.")
 
     parser.add_argument('--dev-mode', action="store_true", dest="dev_mode",
         default=False,
         help="Enable dev mode. This will reset config and plugin folders.")
 
-    parser.add_argument('--ignore-deps', action="store_true", 
+    parser.add_argument('--ignore-deps', action="store_true",
         dest="ignore_deps",
         default=False,
         help="Ignore python dependencies resolution.")
@@ -149,7 +149,7 @@ def getParserArgs():
         default="qt3",
         help="Select interface to start faraday. Default = qt3")
 
-    parser_gui_ex.add_argument('--cli', '--console', action="store_true", 
+    parser_gui_ex.add_argument('--cli', '--console', action="store_true",
         dest="cli",
         default="false",
         help="Set this flag to avoid gui and use faraday as a cli.")
@@ -216,12 +216,12 @@ def checkDependencies():
         for module in modules:
             try:
                 __import__(module[0])
-            except ImportError:          
+            except ImportError:
                 if query_user_bool("Missing module %s." \
                     " Do you wish to install it?" % module[0]):
                     subprocess.call(["pip2", "install", "%s==%s" %
                                     (module[0], module[1])])
-                    
+
                 else:
                     return False
 
@@ -284,8 +284,8 @@ def startFaraday():
     if args.profile:
         logger.info("Starting main application with profiler.")
         start = startProfiler(
-                main_app.start, 
-                args.profile_output, 
+                main_app.start,
+                args.profile_output,
                 args.profile_depth)
     else:
         logger.info("Starting main application.")
@@ -299,8 +299,8 @@ def startFaraday():
 def setupPlugins(dev_mode=False):
     """Checks and handles Faraday's plugin status.
 
-    When dev_mode is True, the user enters in development mode and the plugins 
-    will be replaced with the latest ones. 
+    When dev_mode is True, the user enters in development mode and the plugins
+    will be replaced with the latest ones.
 
     Otherwise, it checks if the plugin folders exists or not, and creates it
     with its content.
@@ -355,7 +355,7 @@ def restoreQtrc():
 def setupZSH():
     """Cheks and handles Faraday's integration with ZSH.
 
-    If the user has a .zshrc file, it gets copied and integrated with 
+    If the user has a .zshrc file, it gets copied and integrated with
     faraday's zsh plugin.
 
     """
@@ -417,8 +417,8 @@ def setupLibs():
     subprocess.call(['ln', '-s', helpers, FARADAY_BASE_LIB_HELPERS])
 
 def setupImages():
-    """ Copy png icons 
-    """ 
+    """ Copy png icons
+    """
     if os.path.exists(FARADAY_USER_IMAGES):
         shutil.rmtree(FARADAY_USER_IMAGES)
     shutil.copytree(FARADAY_BASE_IMAGES, FARADAY_USER_IMAGES)
@@ -427,7 +427,7 @@ def checkConfiguration():
     """Checks if the environment is ready to run Faraday.
 
     Checks different environment requirements and sets them before starting
-    Faraday. This includes checking for plugin folders, libraries, QT 
+    Faraday. This includes checking for plugin folders, libraries, QT
     configuration and ZSH integration.
     """
 
@@ -494,12 +494,12 @@ def update():
 
     if args.update:
         from updates.updater import Updater
-        Updater().doUpdates() 
+        Updater().doUpdates()
         logger.info("Update process finished with no errors")
         logger.info("Faraday will start now.")
-    
+
 def init():
-    """Initializes what is needed before starting. 
+    """Initializes what is needed before starting.
 
     For now we initialize logger and arguments setup.
 

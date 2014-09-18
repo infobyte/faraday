@@ -30,7 +30,10 @@ class Updater(object):
         if query_yes_no('Proceed?', 'yes'):
             subprocess.call(['git', 'pull'])
         logger.info('Checking qt3 libs')
-        for name in ['libqt.so', 'libqt.so.3', 'libqt.so.3.3', 'libqt.so.3.3.8']:
+        for name in ['libqt.so', 'libqt.so.3', 'libqt.so.3.3',
+                     'libqt.so.3.3.8', 'libqui.so', 'libqui.so.1',
+                     'libqui.so.1.0', 'libqui.so.1.0.0']:
+
             qt_path = '/usr/local/qt/lib/'
             lib_path = '/usr/local/lib/'
             if os.path.exists(os.path.join(qt_path, name)):
@@ -39,6 +42,7 @@ class Updater(object):
             else:
                 logger.error("You should run the install.sh first")
                 sys.exit(-1)
+        os.system('ldconfig')
         logger.info('Installing missing dependencies in pip')
         pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
         logger.info('Upgrading DBs to latest version')

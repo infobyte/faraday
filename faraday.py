@@ -219,8 +219,8 @@ def checkDependencies():
             except ImportError:
                 if query_user_bool("Missing module %s." \
                     " Do you wish to install it?" % module[0]):
-                    subprocess.call(["pip2", "install", "%s==%s" %
-                                    (module[0], module[1])])
+                    pip.main(['install', "%s==%s" %
+                             (module[0], module[1]), '--user'])
 
                 else:
                     return False

@@ -19,7 +19,6 @@ import platform
 import subprocess
 import pip
 
-from colorama import Fore, Back, Style
 from utils.logs import getLogger
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))) # Necessary?
 from config.configuration import getInstanceConfiguration
@@ -469,7 +468,7 @@ def printBanner():
     """Prints Faraday's ascii banner.
 
     """
-
+    from colorama import Fore, Back, Style
     print (Fore.RED + """
   _____                           .___
 _/ ____\_____  ____________     __| _/_____   ___.__.

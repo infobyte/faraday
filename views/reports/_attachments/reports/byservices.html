@@ -9,7 +9,9 @@ function get_report_div(workspace, view,design){
 	$.getJSON(json_url, function(data) {
 		var colores = ["negro", "rojo"];
 		var i = 0;
-		divs += "<div class='columna untercio faraday-tooltips'><article class='untercio'><header><h2>Services report</h2></header><div class='main'>";
+		divs += "<div class='columna untercio'><article class='untercio'><header><h2>Services report "+
+                    "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"All services for current WS ordered by host amount\"></span></h2>"+
+                    "</header><div class='main'>";
 
         var row = data.rows;
         for (i = 0; i < row.length; i++) {
@@ -26,7 +28,7 @@ function get_report_div(workspace, view,design){
         });
 
         for (i = 0; i < obj.length; i++) {
-			divs += "<div class=\"columna unquinto services \"><a class=\"faraday-tooltip\" title='sakj' href=\"#\"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj[i][0]+"</div><div class=\"txt texto-blanco\">"+obj[i][1]+"</div></section></article></a></div>";
+			divs += "<div class=\"columna unquinto services \"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj[i][0]+"</div><div class=\"txt texto-blanco\">"+obj[i][1]+"</div></section></article></div>";
 		}
 		divs +="</article></div>";
 		return divs;
@@ -34,30 +36,8 @@ function get_report_div(workspace, view,design){
 	return divs;
 }
 
-function seleccionar(){
-    //selecciona las ips
-    jQuery.fn.selectText = function(){
-        var doc = document;
-        var element = this[0];
-        if (doc.body.createTextRange) {
-            var range = document.body.createTextRange();
-            range.moveToElementText(element);
-            range.select();
-        } else if (window.getSelection) {
-            var selection = window.getSelection();        
-            var range = document.createRange();
-            range.selectNodeContents(element);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-    };
-	var boton = $("#boton");
-    var selector = boton.data('selector');
-    $(selector).selectText();
-}
-
 $(document).ready(function() {
-    $('#cont').on('mouseenter', 'a.faraday-tooltip[title]', function (event) {
+    $('#cont').on('mouseenter', '.services', function (event) {
         $(this).qtip({
             overwrite: false, // Don't overwrite tooltips already bound
             show: {
@@ -73,7 +53,7 @@ $(document).ready(function() {
                     var name = $(this)[0].innerHTML.split(">")[5].split("<")[0];
                     var hosts = "<div id='contenido'>Hosts:";
                     hosts += load_hosts_by_service(name, true);
-                    hosts += "</div><button class='btn btn-danger dropdown-toggle' style='height:25px;width:100px;line-height:10px' id='boton' onclick=\"seleccionar()\" data-selector=\"#contenido\">Select All</button>";
+                    hosts += "</div>";
                     return hosts;
                 }
             }

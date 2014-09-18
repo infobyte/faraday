@@ -36,22 +36,12 @@ function treemap(workspace, design, view){
         }
 
         function sorter_jotason(root){
-        	var arr = [];
 	        var row = root.rows;
-	        for (i = 0; i < row.length; i++) {
-	            arr.push([row[i].value,row[i].key]);
-	        }
-	        obj = [];
-	        var obj = row.sort(function(a,b){ 
-	            if (a[0] === b[0]) {
-	                return 0;
-	            }
-	            else {
-	                return (a[0] > b[0]) ? -1 : 1;
-	            }
-	            return obj;
+	        obj = {};
+	        var obj = row.sort(function(a,b){
+	        	return (b.value - a.value);
 	        });
-	        var color = ["#FF3300", "#FFFF00", "#000099", "#009900", "#CC0000"];
+	        var color = ["#FA5882", "#FF0040", "#B40431", "#610B21", "#2A0A1B"];
 	        var objeto = [];
 	        for(i = 0; i < 5; i++){
 	        	obj[i].color = color[i];
@@ -217,9 +207,9 @@ function cake(workspace, design, view){
 	var colors = {
 	  "low": "#A1CE31",
 	  "med": "#DFBF35",
-	  "critical": "#8B00FF",
-	  "high": "#B80000",
-	  "info": "#ddd"
+	  "unclassified": "#8B00FF",
+	  "high": "#DF3936",
+	  "info": "#858585"
 	};
 
 	// Total size of all segments; we set this later, after loading the data.
@@ -472,22 +462,22 @@ function cake(workspace, design, view){
 	  jotason[1].key = "low";
 	  jotason[2].key = "med";
 	  jotason[3].key = "high";
-	  jotason[4].key = "critical";
+	  jotason[4].key = "unclassified";
 
 	  for(i = 0; i < children.length; i++){
-	    if(children[i].key == 1 || children[i].key == "Information" || children[i].key == "info"){
+	    if(children[i].key == 1 || children[i].key == "info"){
 	      jotason[0].value += children[i].value;
 	    }
-	    if(children[i].key == 2 || children[i].key == "Low"){
+	    if(children[i].key == 2 || children[i].key == "low"){
 	      jotason[1].value += children[i].value;
 	    }
-	    if(children[i].key == 3 || children[i].key == "Medium"){
+	    if(children[i].key == 3 || children[i].key == "med"){
 	      jotason[2].value += children[i].value;
 	    }
-	    if(children[i].key == 4 || children[i].key == "High"){
+	    if(children[i].key == 4 || children[i].key == "high"){
 	      jotason[3].value += children[i].value;
 	    }
-	    if(children[i].key == 5 || children[i].key == "Critical"){
+	    if(children[i].key == 5 || children[i].key == "unclassified"){
 	      jotason[4].value += children[i].value;
 	    }
 	  }

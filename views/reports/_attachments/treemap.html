@@ -6,29 +6,28 @@
 <!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
 <!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
 <!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
-<!--[if (gt IE 9)|!(IE)]><!--> 
-<html id="no-overflow" lang="en" class="no-js"> <!--<![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
 <head>
     <meta charset="utf-8"/>
     <!--[if IE]><![endif]-->
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
-    <title>Dashboard | Faraday</title>
+    <title>All services | Faraday</title>
     <meta name="description" content=""/>
     <meta name="keywords" content=""/>
     <meta name="author" content=""/>
 
     <!-- !CSS -->
-    <link rel="stylesheet" type="text/css" href="normalize.css" />
     <link rel="stylesheet" type="text/css" href="estilos.css" />
     <link rel="stylesheet" type="text/css" href="script/jquery.qtip.css" />
-    <link rel="stylesheet" href="script/bootstrap.min.css">
-    <link rel="stylesheet" href="script/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="././././script/bootstrap.min.css">
+    <link rel="stylesheet" href="././././script/bootstrap-theme.min.css">
     <link href="favicon.ico" rel="shortcut icon">
     <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
     <link href="images/site_preview.jpg" rel="image_src" />
 
+    <script src="./././script/d3.min.js"></script>
     <script type="text/javascript" src="script/couch.js"></script>
-    <script type="text/javascript" src="script/common.js"></script>
+    <script src="script/common.js"></script>
     <script type="text/javascript" src="/_utils/script/sha1.js"></script>
     <script type="text/javascript" src="script/app.js"></script>
     <script type="text/javascript" src="script/d3_summarized.js"></script>
@@ -37,9 +36,8 @@
     <script type="text/javascript" src="/_utils/script/jquery.js"></script>
     <script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
     <script type="text/javascript" src="script/jquery.tablesorter.min.js"></script>
-    <script type="text/javascript" src="script/bootstrap.min.js"></script>
-    <script type="text/javascript" src="script/jquery.qtip.js"></script>
-    <script type="text/javascript" src="script/d3.min.js"></script>
+    <script src="././././script/bootstrap.min.js"></script>
+    <script src="script/jquery.qtip.min.js"></script>
 </head>
 
 <body>
@@ -101,15 +99,20 @@
                             </ul><!-- WS navigation -->
                         </div><!-- #ws-control -->
                     </h2><!-- .ws-label -->
-                    <div class="reports">
-                    </div><!-- .reports -->
                 </div><!-- #reports-main -->
+                <div class="seccion treemap">
+                  <article id="chart">
+                    <header>
+                      <h2>All Services
+                        <span class="glyphicon glyphicon-info-sign faraday-qtips" title="All services ordered by host amount"></span>
+                      </h2>
+                    </header>
+                </article>
+              </div>
             </section>
-            <footer>
-            </footer>
         </div><!--!/#wrapper -->
     </div><!--!/#container -->
-<script type="text/javascript">
+    <script type="text/javascript">
 $(document).ready(function() {
     var counter = 0;
     var h = 0;
@@ -122,9 +125,7 @@ $(document).ready(function() {
                     // WSs list
                     $("#ws-control #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
                     // navigation between WSs
-                    if(window.location.hash === "" && counter === 0) {
-                        window.location.hash = db;
-                    }
+
                     counter +=1;
             });
             if(counter < 1) { 
@@ -133,12 +134,18 @@ $(document).ready(function() {
         }
       }
     });
+        //get workspace
+    dominio = location.href;
+    space = dominio.split("#");
+    workspace = space[1];
+
     // navegacion entre WSs en el dropdown
     $(document).on("click", "a.ws", function(e) {
         e.preventDefault();
         var hash = $(this).attr("href").substr(1);
-        window.location.hash = hash;
-        location.reload();
+        var pathname = window.location.pathname;
+        var params = "?workspace="+ hash + "&design=hosts&view=byservices";
+        window.location.href = pathname + params + "#" + hash;        
     });
     $(document).on("click", "#refresh", function() {
         location.reload();
@@ -153,74 +160,88 @@ $(document).ready(function() {
         var url = "../././reports/status_report.html#" + workspace;
         window.location.href = url;
     });
-    $(document).on("click", "a.treemap-view", function(e) {
-        e.preventDefault();
-        var url = "../././reports/treemap.html?workspace=" + workspace +"&design=hosts&view=byservices#"+ workspace;
-        window.location.href = url;
-    });
-
-    //get workspace
-    dominio = location.href;
-    space = dominio.split("#");
-    workspace = space[1];
 
     var ret = "Viewing "+ workspace;
     $('#reports-main .ws-label span#ws-name').text(ret);
 
-    rutas = [
-        "reports/compound.html?workspace="+workspace+"&design=hosts&view=compound",
-        "reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices",
-        "reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized",
-        "reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns",
-        "reports/commands.html?workspace="+workspace+"&design=commands&view=list"
-    ];
-    var content_cake = "<div id='sequence'></div><div id='chart'><div id='explanation' style='visibility: hidden;'></div></div>";
-
-    $("#reports-main").append("<ul class='d3'><li><div class='columna untercio'><article id='treemap'><header>"+
-        "<h2><a class=\"treemap-view\" href=\"\">Top Services</a> <span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 5 services with the largest quantity of hosts\">"+
-        "</span></h2></article></header></div></li>"+
-        "<li><div class='columna untercio'><article id='bar'><header><h2>Top Hosts "+
-        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 3 hosts with the largest quantity of services\"></span></h2></header></div></div></li>"+
-        "<li><div class='columna untercio'><article id='cake'><header><h2>Vulnerabilities "+
-        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Vulnerabilty distribution for current WS\"></span></h2>"+
-        "</header>"+ content_cake +"</article></div></li></ul>"+
-        "<ul><li><div id='byservices'></div></li><li><div id='summarized'></div></li></ul>"+
-        "<div id='compound'></div><div id='vulns'></div><div id='list'></div></div>");
-
-    design = "hosts";
-    view = "byservices";
-    treemap(workspace, design, view);
-    bar(workspace, design, view);
-    view = "vulns";
-    cake(workspace, design, view);
-    for (i = 0; i < rutas.length; i++) { 
-        dominio = rutas[i];
-        var div = load(dominio);
-    }
-
      var navegador = navigator.userAgent;
       if (navigator.userAgent.indexOf('MSIE') !=-1) {
             $("aside").height(679);
-            $(".seccion").height(644);
       } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
             $("aside").height(679);
-            $(".seccion").height(644);
-      } else if (navigator.userAgent.indexOf('Chromium') !=-1) {
-            $("aside").height(679);
-            $("header.head").width(1280);
-            $("#main.seccion").height(644);
-                setTimeout(function() {
-                    $("#list th.header:first-child").css("padding-right","118px");
-                }, 1000);
       } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
             $("aside").height(712);
-            $(".seccion").height(677);
       } else if (navigator.userAgent.indexOf('Opera') !=-1) {
             $("aside").height(679);
-            $(".seccion").height(644);
       }
+});
+</script>
+    <style>
+          .node {
+          border: solid 1px white;
+          font: 10px sans-serif;
+          line-height: 12px;
+          overflow: hidden;
+          position: absolute;
+          text-indent: 2px;
+          }
+    </style>
+      <script>
+        var margin = {top: 10, right: 10, bottom: 10, left: 10},
+            width = 960 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
 
-    $('#cont').on('mouseenter', '.faraday-qtips', function (event) {
+        var color = d3.scale.category20c();
+
+        var treemap = d3.layout.treemap()
+            .size([width, height])
+            .sticky(true)
+            .value(function(d) {return d.value});
+
+        var div = d3.select("#chart").append("div")
+            .style("position", "relative")
+            .style("width", (width + margin.left + margin.right) + "px")
+            .style("height", (height + margin.top + margin.bottom) + "px")
+            .style("left", margin.left + "px")
+            .style("top", margin.top + "px");
+
+        var workspace = getParameterByName('workspace');
+        var design = getParameterByName('design');
+        var view = getParameterByName('view');
+        
+        json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
+        d3.json(json_url, function(error, root) {
+          var jotason = {};
+          jotason["children"] = root["rows"];
+          var node = div.datum(jotason).selectAll(".node")
+              .data(treemap.nodes)
+            .enter().append("div")
+              .attr("class", "node")
+              .call(position)
+              .style("background", function(d) {return color(Math.floor(Math.random()*68)); })
+              .text(function(d) {return d.children ? null : d.key; });
+        });
+
+        function position() {
+          this.style("left", function(d) { return d.x + "px"; })
+              .style("top", function(d) { return d.y + "px"; })
+              .style("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
+              .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
+        }
+
+            //function para traer parametros
+            function getParameterByName( name ){
+                name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+                var regexS = "[\\?&]"+name+"=([^&#]*)";
+                var regex = new RegExp( regexS );
+                var results = regex.exec( window.location.href );
+                if( results == null )
+                  return "";
+                else
+                  return decodeURIComponent(results[1].replace(/\+/g, " "));
+              }
+
+    $('.treemap').on('mouseenter', '.faraday-qtips', function (event) {
         $(this).qtip({
             overwrite: false, // Don't overwrite tooltips already bound
             show: {
@@ -246,46 +267,6 @@ $(document).ready(function() {
             }
         });
     });
-});
-
-function load(dominio){
-    $(".reports").load(dominio, function(){
-    	var parametros = dominios(dominio);
-    		var div = get_report_div(parametros[0],parametros[1],parametros[2]);
-    		if(parametros[1] == "byservices"){
-    			$("#byservices").append(div);
-    		}
-    		if(parametros[1] == "summarized"){
-    			$("#summarized").append(div);
-    		}
-    		if(parametros[1] == "vulns"){
-    			$("#vulns").append(div);
-    		}
-    		if(parametros[1] == "list"){
-    			$("#list").append(div);
-    		}
-    		if(parametros[1] == "compound"){
-    			$("#compound").append(div);
-    		}
-    });
-}
-
-function dominios(dominio){
-//get the link parameters
-    space = dominio.split("=");
-    workspace = space[1].split("&");
-    workspace = workspace[0];
-    design = space[2].split("&");
-    design = design[0];
-    view = space[3];
-    parametros = [workspace, view, design];
-    return parametros;
-}
-
-setTimeout(function() {
-    sorter(0);
-    // calculo la altura del sidebar
-}, 1000);
-</script>
-</body>
-</html> 
+      </script> 
+  </body>
+</html>

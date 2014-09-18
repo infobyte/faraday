@@ -11,35 +11,37 @@
     <meta charset="utf-8"/>
     <!--[if IE]><![endif]-->
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
-    <title>Dashboard | Faraday</title>
+    <title>Status Report | Faraday</title>
     <meta name="description" content=""/>
     <meta name="keywords" content=""/>
     <meta name="author" content=""/>
 
     <!-- !CSS -->
-    <link rel="stylesheet" type="text/css" href="../././estilos.css" />
-    <link rel="stylesheet" href=".././././script/bootstrap.min.css">
-    <link rel="stylesheet" href=".././././script/bootstrap-theme.min.css">
+    <link rel="stylesheet" type="text/css" href="normalize.css" />
+    <link rel="stylesheet" type="text/css" href="estilos.css" />
+    <link rel="stylesheet" type="text/css" href="script/jquery.qtip.css" />
+    <link rel="stylesheet" href="script/bootstrap.min.css">
+    <link rel="stylesheet" href="script/bootstrap-theme.min.css">
     <link href="favicon.ico" rel="shortcut icon">
     <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
     <link href="images/site_preview.jpg" rel="image_src" />
 
-    <script type="text/javascript" src=".././././script/couch.js"></script>
-    <script type="text/javascript" src=".././././script/jquery.jscroll.js"></script>
-    <script type="text/javascript" src="/_utils/script/jquery.js"></script>
+    <script type="text/javascript" src="script/couch.js"></script>
+    <script type="text/javascript" src="script/common.js"></script>
     <script type="text/javascript" src="/_utils/script/jquery.js"></script>
     <script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
-    <script src=".././././script/bootstrap.min.js"></script>
-    <script type="text/javascript" src=".././././script/angular.js"></script>
-    <script type="text/javascript" src=".././././script/angular-route.js"></script>
-    <script type="text/javascript" src=".././././script/csv-export.js"></script>
+    <script type="text/javascript" src="script/bootstrap.min.js"></script>
+    <script type="text/javascript" src="script/angular.js"></script>
+    <script type="text/javascript" src="script/angular-route.js"></script>
+    <script type="text/javascript" src="script/csv-export.js"></script>
+    <script type="text/javascript" src="script/jquery.qtip.js"></script>
 </head>
 
 <body ng-app="status-report">
     <div id="cont">
         <div class="wrapper">
             <header class="head">
-                <a href="#"><img class="logo" src="../././images/logo-faraday.png"/></a>
+                <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
                 <!--
                 <nav>
                     <ul class="menu">
@@ -65,9 +67,14 @@
                 <nav>
                     <ul>
                         <li>
-                            <a href="#"><img src="../././images/ico-settings.png" alt="Settings"/></a>
-                            <a href="#" class="activo"><img src="../././images/ico-graph.png" alt=""/></a>
-                            <a href="#"><img src="../././images/ico-stopwatch.png" alt=""/></a>
+                            <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
+                                <img src="images/ico-graph.png" alt="WS Dashboard"/>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="status-report" style="color: #ffffff !important" title="Status Report">
+                                <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
+                            </a>
                         </li>
                     </ul>
                 </nav>
@@ -140,7 +147,7 @@
         space = dominio.split("#");
         workspace = space[1];
 
-        var statusReport = angular.module('status-report', ["ngRoute"])
+        var statusReport = angular.module('status-report', ['ngRoute'])
             .controller('statusReportCtrl', ['$scope', 'statusReportFact', function($scope, statusReport) {
                 $scope.vulns = statusReport;
                 $scope.sortField = 'date';
@@ -263,6 +270,16 @@
         });
         $(document).on("click", "#refresh", function() {
             location.reload();
+        });
+        $(document).on("click", "a.ws-dashboard", function(e) {
+            e.preventDefault();
+            var url = "../././reports/index.html#" + workspace;
+            window.location.href = url;
+        });
+        $(document).on("click", "a.status-report", function(e) {
+            e.preventDefault();
+            var url = "../././reports/status_report.html#" + workspace;
+            window.location.href = url;
         });
     
         var ret = "Viewing "+ workspace;

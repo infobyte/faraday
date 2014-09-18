@@ -29,7 +29,7 @@ class Updater(object):
         logger.info('Pulling latest Github Master copy')
         if query_yes_no('Proceed?', 'yes'):
             subprocess.call(['git', 'pull'])
-        logger.info('Checking qt3 libs'):
+        logger.info('Checking qt3 libs')
         for name in ['libqt.so', 'libqt.so.3', 'libqt.so.3.3', 'libqt.so.3.3.8']:
             qt_path = '/usr/local/qt/lib/'
             lib_path = '/usr/local/lib/'

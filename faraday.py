@@ -519,8 +519,8 @@ def main():
 
     init()
     update()
-    printBanner()
     if checkDependencies():
+        printBanner()
         logger.info("Dependencies met.")
         checkConfiguration()
         setConf()

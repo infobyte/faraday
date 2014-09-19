@@ -12,7 +12,7 @@ function get_report_div(workspace, view,design){
                             "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Shows current WS' executed commands\"></span></h2>"+
                             "</h2></header><div class='main'>";
                 tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
-                            "<th>Hosts</th><th>Command Run</th><th>Start Date</th><th>Duration</th>"+
+                            "<th>By</th><th>Command</th><th>Start Date</th><th>Duration</th>"+
                             "</tr></thead><tbody>";
                 $.each(data.rows, function(n, obj){
                     var user = "unknown";

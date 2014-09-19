@@ -394,7 +394,7 @@ table.tablesorter thead tr th, table.tablesorter tfoot tr th {
 	font-size: 14px;
 	padding: 5px;
 }
-	th.header:first-child{padding-right:278px}
+	th.header:first-child{padding-right:282px}
 	th.header:last-child{padding-right:79px}
 
 table.tablesorter thead tr .header {
@@ -497,7 +497,7 @@ label {
 	font-size: 13px;
 }
 #text{font-weight: bold;line-height: 25px;margin:0 0 -45px 10px}
-.texto{margin-bottom:-14px;border-top:1px solid #FFF}
+.texto{margin-bottom:-45px;border-top:1px solid #FFF}
 .left {
 	float: left;
 }
@@ -543,10 +543,10 @@ ul.d3 .untercio{width: 160px;}
 #treemap, #bar, #cake{height:195px}
 #list .main{height:88px}
 #list .columna{float: right;width:53%;margin-right: 25px;}
-	#list th.header:last-child{padding-right:36px;border-right:0px;}
+	#list th.header:last-child{padding-right:38px;border-right:0px;}
 	#list th.header:nth-child(3){padding-right:81px}
 	#list th.header:nth-child(2){padding-right:101px}
-	#list th.header:first-child{padding-right:114px;border-left:0px;}
+	#list th.header:first-child{padding-right:164px;border-left:0px;}
 #vulns .columna{margin-left:2%}
 #vulns .columna article.untercio{height:145px;width:228%}
 #vulns .main{width:100%;height:95px}
@@ -600,4 +600,7 @@ ul.d3 .untercio{width: 160px;}
 	.wrapper{
 		margin:auto;
 	}
+}
+@media screen and (max-width:650px) {
+	#no-overflow{overflow: auto}
 }

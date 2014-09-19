@@ -64,7 +64,7 @@
 		interfaces	= get_obj(iurl, interfaces);
 		scount		= get_obj(surl, services);
 		if(!bolean){
-			var table = "<header><h2>Hosts with Service "+name+" ("+hids.length+" total)</h2></header><header class='texto'><p id='text'></p></header><div class='main' style='height:338px'>"+
+			var table = "<header><h2>Hosts with Service "+name+" ("+hids.length+" total)</h2></header><header class='texto'><p id='text'></p></header><div class='main' style='height:240px'>"+
 					"<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 					"<th>Host</th>"+
 					"<th>Services</th>"+
@@ -111,7 +111,7 @@
 		design = "hosts";
 		// el param design ya no es el recibido por GET, puesto que ahora estamos en services
 		var services = get_obj_filter(workspace, "services", "byhost", hid);
-		var table = "<header><h2>Services for Host "+hname+" ("+services.length+" total)</h2></header><header class='texto'><p id='text'></p></header><div class='main' style='height:338px'>"+
+		var table = "<header><h2>Services for Host "+hname+" ("+services.length+" total)</h2></header><header class='texto'><p id='text'></p></header><div class='main' style='height:240px'>"+
 			"<table id=\"services-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 			"<th>Name</th>"+
 			"<th>Description</th>"+
@@ -255,7 +255,9 @@ $( document ).ready(function() {
             $("#hosts").html(div);
             // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
             $("#text").html("<a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a>");
+            var selector = "#services-"+workspace+" th.header:first-child";
             sorter(2);
+            $(selector).css("padding-right","113px");
 });
         // cuando se clickea un servicio carga todos los hosts que tienen ese servicio
         $(document).on('click', 'a.service', function(e) {

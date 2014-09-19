@@ -285,10 +285,14 @@
         var ret = "Viewing "+ workspace;
         $('#reports-main .ws-label span#ws-name').text(ret);
     });
-    
+
     setTimeout(function() {
         // sidebar height calc
         $("aside").height($("#main").height() + 16);
+            if($("#reports-main").height() > 800){
+                $("header.head").css("width","1265px");
+                $("section#main").css("width","1189px");
+            }
     }, 2000);
 </script>
 </body>

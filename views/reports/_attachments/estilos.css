@@ -496,7 +496,7 @@ label {
 	color: #2D333D;
 	font-size: 13px;
 }
-#text{font-weight: bold;line-height: 25px;margin:0 0 0 10px;}
+#text{font-weight: bold;line-height: 25px;margin:0 0 -45px 10px}
 .texto{margin-bottom:-14px;border-top:1px solid #FFF}
 .left {
 	float: left;

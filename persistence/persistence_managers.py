@@ -518,7 +518,8 @@ class CouchDbManager(AbstractPersistenceManager):
 
     #@trap_timeout
     def _loadDbs(self):
-        for dbname in filter(lambda x: not x.startswith("_"), self.__serv.all_dbs()):
+        conditions = lambda x: not x.startswith("_") and x != 'reports'
+        for dbname in filter(conditions, self.__serv.all_dbs()):
             if dbname not in self.dbs.keys():
                 getLogger(self).debug(
                     "Asking for dbname[%s], registering for lazy initialization" % dbname)

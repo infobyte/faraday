@@ -61,21 +61,23 @@ class DB(Update):
     def update_db(self, db_name):
         if 'backup' in db_name:
             logger.info('Database [%s] is a backup, ignoring' % db_name)
+            return
             
         source_server = CONF.getCouchURI()
         # Levanto los servidores 
         db_source = couchdbkit.Database("/".join((source_server, db_name)))
+        if db_source.doc_exist(db_name): 
+            logger.info('DB: [%s] Already had suffer migration' % db_name)
+            return
 
         # Primero replico para no cagarla
         logger.info('Creating db backup: %s' % ('%s-backup' % db_name))
         db_source.server.replicate(db_name, '%s-backup' % db_name, create_target = True)
-        import time
-        time.sleep(1)
         db_bkp = couchdbkit.Database("/".join((source_server,
                                             '%s-backup' % db_name)))
-        if db_source.doc_exist(db_name): 
-            logger.info('DB: [%s] Already had suffer migration' % db_name)
-            return
+        import time
+        while db_source.info()['doc_count'] < db_bkp.info()['doc_count']:
+            time.sleep(1)
 
         # Crear documento 'workspace'
         logger.info('Creating workspace document')
@@ -107,7 +109,7 @@ class DB(Update):
                     l_parent = doc['_id'].split('.')[:-1]
                     parent = '.'.join(l_parent) 
                 doc['parent'] = parent
-                if doc['owned'] == '':
+                if doc['owned'] == '' or doc['owned'] is None:
                     doc['owned'] == False
                 else: 
                     doc['owned'] = eval(doc['owned'])
@@ -131,7 +133,7 @@ class DB(Update):
         serv = couchdbkit.Server(source_server)
 
         logger.info('We are about to upgrade dbs in Server [%s]' % source_server)
-        dbs = filter(lambda x: not x.startswith("_") and 'backup' not in x, serv.all_dbs())
+        dbs = filter(lambda x: not x.startswith("_") and 'backup' not in x and 'reports' not in x, serv.all_dbs())
         logger.info('Dbs to upgrade: %s' % (', '.join(dbs)))
 
         if not query_yes_no('Proceed?', 'no'):

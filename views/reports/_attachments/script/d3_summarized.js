@@ -127,7 +127,6 @@ function bar(workspace, design, view){
 		        $(this).qtip({
 		            overwrite: false, // Don't overwrite tooltips already bound
 		            show: {
-		                event: event.type, // Use the same event type as above
 		                ready: true // Show immediately - important!
 		            },
 		            hide: {

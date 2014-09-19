@@ -596,8 +596,8 @@ ul.d3 .untercio{width: 160px;}
 }
 /* qTip */
 
-@media screen and (min-width: 1290px) {
+@media screen and (min-width: 1380px) {
 	.wrapper{
-		margin:auto;margin-top:5%;
+		margin:auto;
 	}
 }

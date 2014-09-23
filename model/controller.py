@@ -873,8 +873,9 @@ class ModelController(threading.Thread):
     def getHostsCount(self):
         return len(self._hosts)
 
-    def getAllHosts(self, mode=0):
-        hosts = api.getActiveWorkspace().getHosts()
+    def getAllHosts(self):
+        hosts = self.mappers_manager.getMapper(
+            model.hosts.Host.__name__).getAll()
         return hosts
 
     def createIndex(self, hosts):

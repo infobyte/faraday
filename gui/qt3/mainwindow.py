@@ -665,20 +665,17 @@ class MainWindow(qt.QMainWindow):
         """
         runs script that builds the html for visutalizacion and opens a browser
         """
-
-        ret, url = self._main_app.getWorkspaceManager().createVisualizations()
-        if ret:
-            webbrowser.open_new(url)
-
-
-
-
-
+        uri = CONF.getCouchURI() + "/reports/_design/reports/index.html"
+        import requests
+        try:
+            response = requests.head(uri)
+            res = response.ok
+        except:
+            res = False
+        if res:
+            webbrowser.open_new(uri)
 
     def go2Website(self):
-
-
-
 
         webbrowser.open_new("https://www.faradaysec.com")
         model.api.log("Opening faraday's website")

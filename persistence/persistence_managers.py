@@ -347,29 +347,34 @@ class CouchDbConnector(DbConnector):
     def waitForDBChange(self, since=0):
         getLogger(self).debug(
             "Watching for changes")
-        last_seq = max(self.getSeqNumber(), since)
-        self.stream = ChangesStream(
-            self.db,
-            feed="continuous",
-            since=last_seq,
-            heartbeat=True)
-        for change in self.stream:
-            if not self.changes_callback:
-                return
-            if not change.get('last_seq', None):
-                if change['seq'] > self.getSeqNumber():
-                    self.setSeqNumber(change['seq'])
-                    if not change['id'].startswith('_design'):
-                        getLogger(self).debug(
-                            "Changes from another instance")
-                        deleted = bool(change.get('deleted', False))
-                        revision = change.get("changes")[-1].get('rev')
-                        obj_id = change.get('id')
-                        if not deleted:
-                            # update cache
-                            doc = self.db.get(obj_id)
-                            self.addDoc(doc)
-                        self.changes_callback(obj_id, revision, deleted)
+        while True:
+            last_seq = max(self.getSeqNumber(), since)
+            self.stream = ChangesStream(
+                self.db,
+                feed="continuous",
+                since=last_seq,
+                heartbeat=True)
+            try:
+                for change in self.stream:
+                    if not self.changes_callback:
+                        return
+                    if not change.get('last_seq', None):
+                        if change['seq'] > self.getSeqNumber():
+                            self.setSeqNumber(change['seq'])
+                            if not change['id'].startswith('_design'):
+                                getLogger(self).debug(
+                                    "Changes from another instance")
+                                deleted = bool(change.get('deleted', False))
+                                revision = change.get("changes")[-1].get('rev')
+                                obj_id = change.get('id')
+                                if not deleted:
+                                    # update cache
+                                    doc = self.db.get(obj_id)
+                                    self.addDoc(doc)
+                                self.changes_callback(obj_id, revision, deleted)
+            except Exception as e:
+                getLogger(self).info("Some exception happened while waiting for changes")
+                getLogger(self).info("  The exception was: %s" % e)
 
     #@trap_timeout
     def _compactDatabase(self):

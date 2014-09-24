@@ -98,3 +98,6 @@ class AbstractMapper(object):
     def getChildren(self, parent):
         res = self.pmanager.getChildren(parent)
         return res
+
+    def getAll(self):
+        return self.object_map.values()

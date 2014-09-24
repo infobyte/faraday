@@ -602,6 +602,6 @@ ul.d3 .untercio{width: 160px;}
 		margin:auto;
 	}
 }
-@media screen and (min-width:600px) {
+@media screen and (max-width:900px) {
 	#no-overflow{overflow: auto!important }
 }

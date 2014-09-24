@@ -17,7 +17,10 @@ function treemap(workspace, design, view){
 
         json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
         d3.json(json_url, function(error, root) {
-          if(root.rows.length < 5){$("#treemap").append("<p class=\"empty\">No enought data</p>");}
+          if(jQuery.isEmptyObject(root.rows) || root.rows.length < 5){
+          	$("#treemap").append("<p class=\"empty\">No enought data</p>");
+          	return
+          }
           var sort_jotason = sorter_jotason(root);
           var jotason = {};
           jotason["children"] = sort_jotason;
@@ -110,7 +113,10 @@ function bar(workspace, design, view){
 	var hosts	= new Object();
 
 	d3.json(surl, function(error, root) {
-		if(root.rows.length < 3){$("#bar").append("<p class=\"empty\">No enought data</p>");}
+			if(jQuery.isEmptyObject(root.rows) || root.rows.length < 3){
+				$("#bar").append("<p class=\"empty\">No enought data</p>");
+				return
+			}
           var sort_jotason = sorter_jotason(root);
           var jotason = {};
           jotason["children"] = sort_jotason;
@@ -236,7 +242,6 @@ function cake(workspace, design, view){
 	    json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
 	    d3.json(json_url, function(error, root) {
 	    if(jQuery.isEmptyObject(root.rows)){$("#cake").append("<p class=\"empty\">No enought data</p>");}
-	    console.log(root.rows.length);
 	    var jotason = {};
 	    jotason["children"] = root["rows"];
 	    var json_finish = group_vulns(jotason);

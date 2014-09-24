@@ -178,6 +178,8 @@
 			$("#hosts").html(div);
 			$("#text").html("<a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a>");
 			sorter(2);
+			var selector = "#services-"+workspace+" th.header:first-child";
+			$(selector).css("padding-right","111px");
 		});
 	}
 	//sortea la columna que vos le pasas, columna = numero 
@@ -257,7 +259,7 @@ $( document ).ready(function() {
             $("#text").html("<a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a>");
             var selector = "#services-"+workspace+" th.header:first-child";
             sorter(2);
-            $(selector).css("padding-right","113px");
+            $(selector).css("padding-right","111px");
 });
         // cuando se clickea un servicio carga todos los hosts que tienen ese servicio
         $(document).on('click', 'a.service', function(e) {

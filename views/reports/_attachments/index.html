@@ -209,9 +209,6 @@ $(document).ready(function() {
             $("aside").height(679);
             $("header.head").width(1280);
             $("#main.seccion").height(644);
-                setTimeout(function() {
-                    $("#list th.header:first-child").css("padding-right","114px");
-                }, 1000);
       } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
             $("aside").height(712);
             $(".seccion").height(677);
@@ -269,7 +266,7 @@ function load(dominio){
     		}
     });
 }
-console.log($(window).height());
+
 function dominios(dominio){
 //get the link parameters
     space = dominio.split("=");
@@ -283,8 +280,8 @@ function dominios(dominio){
 }
 
 setTimeout(function() {
+    //order of compound when reload
     sorter(0);
-    // calculo la altura del sidebar
 }, 1000);
 </script>
 </body>

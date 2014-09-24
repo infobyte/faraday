@@ -26,7 +26,7 @@ function get_report_div(workspace, view,design){
                 return (a[0] > b[0]) ? -1 : 1;
             }
         });
-
+        if(jQuery.isEmptyObject(obj)){divs += "There is not enough data";}
         for (i = 0; i < obj.length; i++) {
 			divs += "<div class=\"columna unquinto services \"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj[i][0]+"</div><div class=\"txt texto-blanco\">"+obj[i][1]+"</div></section></article></div>";
 		}

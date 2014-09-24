@@ -11,6 +11,7 @@ function get_report_div(workspace, view,design){
 		divs += "<div class='columna untercio'><article class='untercio'><header><h2>Workspace summarized report "+
                     "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"WS overview - hosts, notes, services and vulnerabilites counts\"></span>"+
                     "</h2></header><div class='main'>";
+		if(jQuery.isEmptyObject(data.rows) || data.rows[0].key == "interfaces"){divs += "There is not enough data";}
 		$.each(data.rows, function(n, obj){
 			if (obj.key != "interfaces"){
 				divs += "<div class=\"columna unquinto\"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj.value+"</div><div class=\"txt texto-blanco\">"+obj.key+"</div></section></article></div>";

@@ -598,10 +598,8 @@ ul.d3 .untercio{width: 160px;}
 /* qTip */
 
 @media screen and (min-width: 1380px) {
-	.wrapper{
-		margin:auto;
-	}
+	.wrapper{margin:auto;}
 }
-@media screen and (max-width:900px) {
+@media screen and (max-height:600px) {
 	#no-overflow{overflow: auto!important }
 }

@@ -289,6 +289,13 @@ def startFaraday():
     else:
         logger.info("Starting main application.")
         start = main_app.start
+    url = "http://192.168.10.215:5984/reports/_design/reports/index.html#fitbit"
+    from colorama import Fore, Back, Style
+    import string
+        logger.info("Faraday is ready", 53 - 6) + "]*]")
+    print(Fore.WHITE + Style.BRIGHT + \
+        """Point your browser to %s\nfor real time pentesting insight""" % url) 
+    print(Fore.RESET + Back.RESET + Style.RESET_ALL)
 
     exit_status = start()
     restoreQtrc()

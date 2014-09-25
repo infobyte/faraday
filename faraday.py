@@ -498,12 +498,25 @@ def update():
     Deletes every .pyc file and does a git pull to the official repository.
 
     """
-
     if args.update:
         from updates.updater import Updater
         Updater().doUpdates()
         logger.info("Update process finished with no errors")
         logger.info("Faraday will start now.")
+
+def checkUpdates(): 
+    import requests
+    uri = getInstanceConfiguration().getUpdatesUri() 
+    resp = ""
+    try:
+        resp = requests.get(uri, timeout=1, verify=True)
+    except Exception as e:
+        logger.error(e)
+    if resp:
+        logger.info("You have available updates. Run ./faraday.py --update to catchup!")
+    else:
+        logger.info("No updates available, enjoy Faraday")
+
 
 def init():
     """Initializes what is needed before starting.
@@ -532,6 +545,7 @@ def main():
         logger.info("Dependencies met.")
         checkConfiguration()
         setConf()
+        checkUpdates()
         startFaraday()
     else:
         logger.error("Dependencies not met. Unable to start Faraday.")

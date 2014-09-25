@@ -34,6 +34,7 @@
     <couch_is_replicated/>
     <couch_replics/>
 
+    <updates_uri>https://www.faradaysec.com/scripts/updates.php</tickets_uri>
     <tickets_uri>https://www.faradaysec.com/scripts/listener.php</tickets_uri>
     <tickets_template>{}</tickets_template>
     <tickets_api>{}</tickets_api>

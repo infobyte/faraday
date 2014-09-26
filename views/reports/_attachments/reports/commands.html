@@ -9,19 +9,27 @@ function get_report_div(workspace, view,design){
 	$.getJSON(json_url, function(data) {
         if(jQuery.isEmptyObject(data.rows)){
             tabla = "<div class='columna'><article><section class=\"sin_padding\" id=\"hosts\">"+
-                            "<header><h2>Commands History "+
-                            "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Shows current WS' executed commands\"></span></h2>"+
-                            "</h2></header><div class='main'>"+
-                            "<table class=\"tablesorter\"><tr><td>No commands run yet</td></tr></table>"+
-                    "</div></section>";
+                        "<header><h2>Commands History "+
+                        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\""+
+                        "title=\"Shows current WS' executed commands\"></span>"+
+                        "</h2></header><div class='main'>"+
+                        "<div class=\"alert alert-info alert-dismissible\">"+
+                        "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">"+
+                        "<span aria-hidden=\"true\">&times;</span>"+
+                        "<span class=\"sr-only\">Close</span>"+
+                        "</button>"+
+                        "<p>No services found yet</p>"+
+                        "</div>"+
+                        "</div></section>";
         }else{
-                tabla = "<div class='columna'><article><section class=\"sin_padding\" id=\"hosts\">"+
-                            "<header><h2>Commands History "+
-                            "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Shows current WS' executed commands\"></span></h2>"+
-                            "</h2></header><div class='main'>";
-                tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
-                            "<th>By</th><th>Command</th><th>Start Date</th><th>Duration</th>"+
-                            "</tr></thead><tbody>";
+            tabla = "<div class='columna'><article><section class=\"sin_padding\" id=\"hosts\">"+
+                        "<header><h2>Commands History "+
+                        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\""+
+                        "title=\"Shows current WS' executed commands\"></span></h2>"+
+                        "</h2></header><div class='main'>";
+            tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+                        "<th>By</th><th>Command</th><th>Start Date</th><th>Duration</th>"+
+                        "</tr></thead><tbody>";
                 $.each(data.rows, function(n, obj){
                     var user = "unknown";
                     var hostname = "unknown";

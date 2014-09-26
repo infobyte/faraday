@@ -513,12 +513,12 @@ def update():
 def checkUpdates(): 
     import requests
     uri = getInstanceConfiguration().getUpdatesUri() 
-    resp = ""
+    resp = u"OK"
     try:
         resp = requests.get(uri, timeout=1, verify=True)
+        resp = resp.text.strip()
     except Exception as e:
         logger.error(e)
-    resp = resp.text.strip()
     if not resp == u'OK':
         logger.info("You have available updates. Run ./faraday.py --update to catchup!")
     else:

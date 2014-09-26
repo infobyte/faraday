@@ -665,7 +665,8 @@ class MainWindow(qt.QMainWindow):
         """
         runs script that builds the html for visutalizacion and opens a browser
         """
-        uri = CONF.getCouchURI() + "/reports/_design/reports/index.html"
+        base_uri = str(CONF.getCouchURI())
+        uri = base_uri + "/reports/_design/reports/index.html"
         import requests
         try:
             response = requests.head(uri)

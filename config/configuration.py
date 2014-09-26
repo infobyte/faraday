@@ -45,6 +45,7 @@ CONST_REPO_USER = "repo_user"
 CONST_REPORT_PATH = "report_path"
 CONST_SHELL_MAXIMIZED = "shell_maximized"
 CONST_VERSION = "version"
+CONST_UPDATEURI = "updates_uri"
 CONST_TKTURI = "tickets_uri"
 CONST_TKTAPIPARAMS = "tickets_api"
 CONST_TKTTEMPLATE = "tickets_template"
@@ -149,6 +150,7 @@ class Configuration:
             self._last_workspace = self._getValue(tree, CONST_LAST_WORKSPACE, default = "untitled")
             self._plugin_settings = json.loads(self._getValue(tree, CONST_PLUGIN_SETTINGS, default = "{}"))
 
+            self._updates_uri = self._getValue(tree, CONST_UPDATEURI, default = "https://www.faradaysec.com/scripts/updates.php")
             self._tkts_uri = self._getValue(tree, CONST_TKTURI,default = "https://www.faradaysec.com/scripts/listener.php")
             self._tkt_api_params = self._getValue(tree, CONST_TKTAPIPARAMS,default ="{}")
             self._tkt_template = self._getValue(tree, CONST_TKTTEMPLATE,default ="{}")
@@ -253,6 +255,9 @@ class Configuration:
 
     def getPluginSettings(self):
         return self._plugin_settings
+
+    def getUpdatesUri(self):
+        return self._updates_uri
 
     def getTktPostUri(self):
         return self._tkts_uri
@@ -510,6 +515,10 @@ class Configuration:
         PLUGIN_SETTINGS = Element(CONST_PLUGIN_SETTINGS)
         PLUGIN_SETTINGS.text = json.dumps(self.getPluginSettings())
         ROOT.append(PLUGIN_SETTINGS)
+
+        UPDATE_URI = Element(CONST_UPDATEURI)
+        UPDATE_URI.text = self.getUpdatesUri()
+        ROOT.append(UPDATE_URI)
 
         TKT_URI = Element(CONST_TKTURI)
         TKT_URI.text = self.getTktPostUri()

@@ -289,6 +289,20 @@ def startFaraday():
     else:
         logger.info("Starting main application.")
         start = main_app.start
+    from colorama import Fore, Back, Style
+    import string
+    couchURL = getInstanceConfiguration().getCouchURI()
+    if couchURL:
+        url = "%s/reports/_design/reports/index.html" % couchURL
+        print(Fore.WHITE + Style.BRIGHT + \
+            "\n*" + string.center("faraday ui is ready", 53 - 6) )
+        print(Fore.WHITE + Style.BRIGHT + \
+                """Point your browser to: [%s]""" % url) 
+    else:
+        print(Fore.WHITE + Style.BRIGHT + \
+                """Please config Couchdb for fancy HTML5 Dashboard""") 
+
+    print(Fore.RESET + Back.RESET + Style.RESET_ALL)
 
     exit_status = start()
     restoreQtrc()
@@ -490,12 +504,25 @@ def update():
     Deletes every .pyc file and does a git pull to the official repository.
 
     """
-
     if args.update:
         from updates.updater import Updater
         Updater().doUpdates()
         logger.info("Update process finished with no errors")
         logger.info("Faraday will start now.")
+
+def checkUpdates(): 
+    import requests
+    uri = getInstanceConfiguration().getUpdatesUri() 
+    resp = ""
+    try:
+        resp = requests.get(uri, timeout=1, verify=True)
+    except Exception as e:
+        logger.error(e)
+    if resp:
+        logger.info("You have available updates. Run ./faraday.py --update to catchup!")
+    else:
+        logger.info("No updates available, enjoy Faraday")
+
 
 def init():
     """Initializes what is needed before starting.
@@ -524,6 +551,7 @@ def main():
         logger.info("Dependencies met.")
         checkConfiguration()
         setConf()
+        checkUpdates()
         startFaraday()
     else:
         logger.error("Dependencies not met. Unable to start Faraday.")

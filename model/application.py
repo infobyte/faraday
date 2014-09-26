@@ -132,7 +132,7 @@ class MainApplication(object):
                     self._model_controller,
                     self._mappers_manager)
                 # Start report manager here
-                getLogger(self).info("Starting Reports Manager Thread")
+                getLogger(self).debug("Starting Reports Manager Thread")
                 self._reports_manager.startWatch()
 
                 model.api.devlog("Faraday ready...")

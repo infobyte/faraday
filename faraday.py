@@ -291,11 +291,17 @@ def startFaraday():
         start = main_app.start
     from colorama import Fore, Back, Style
     import string
-    url = "%s/reports/_design/reports/index.html" % getInstanceConfiguration().getCouchURI()
-    print(Fore.WHITE + Style.BRIGHT + \
-        "\n*" + string.center("Faraday UI is ready", 53 - 6) )
-    print(Fore.WHITE + Style.BRIGHT + \
-            """Point your browser to: [%s]""" % url) 
+    couchURL = getInstanceConfiguration().getCouchURI()
+    if couchURL:
+        url = "%s/reports/_design/reports/index.html" % couchURL
+        print(Fore.WHITE + Style.BRIGHT + \
+            "\n*" + string.center("faraday ui is ready", 53 - 6) )
+        print(Fore.WHITE + Style.BRIGHT + \
+                """Point your browser to: [%s]""" % url) 
+    else:
+        print(Fore.WHITE + Style.BRIGHT + \
+                """Please config Couchdb for fancy HTML5 Dashboard""") 
+
     print(Fore.RESET + Back.RESET + Style.RESET_ALL)
 
     exit_status = start()

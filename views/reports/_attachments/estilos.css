@@ -152,7 +152,7 @@ a {
 }
 a:hover{cursor: pointer;}
 p {margin-bottom: 1em;}
-	p.empty{position: fixed;top:153px;}
+p.empty{padding: 10px;}
 .oculto {display:none;}
 
 /* FILAS COLUMNAS */
@@ -510,7 +510,7 @@ label {
 	margin-top: -34px;
 }
 #treemap {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /*font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;*/
   position: relative;
 }
 /*

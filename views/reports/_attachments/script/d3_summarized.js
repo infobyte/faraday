@@ -18,7 +18,13 @@ function treemap(workspace, design, view){
         json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
         d3.json(json_url, function(error, root) {
           if(jQuery.isEmptyObject(root.rows) || root.rows.length < 5){
-          	$("#treemap").append("<p class=\"empty\">No enought data</p>");
+				$("#treemap header").after("<div class=\"alert alert-info alert-dismissible\">"+
+                    "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">"+
+                    "<span aria-hidden=\"true\">&times;</span>"+
+                    "<span class=\"sr-only\">Close</span>"+
+                    "</button>"+
+                    "<p>At least 5 services needed to show this visualization</p>"+
+                    "</div>");
           	return
           }
           var sort_jotason = sorter_jotason(root);
@@ -114,7 +120,13 @@ function bar(workspace, design, view){
 
 	d3.json(surl, function(error, root) {
 			if(jQuery.isEmptyObject(root.rows) || root.rows.length < 3){
-				$("#bar").append("<p class=\"empty\">No enought data</p>");
+				$("#bar header").after("<div class=\"alert alert-info alert-dismissible\">"+
+                    "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">"+
+                    "<span aria-hidden=\"true\">&times;</span>"+
+                    "<span class=\"sr-only\">Close</span>"+
+                    "</button>"+
+                    "<p>At least 3 hosts needed to show this visualization</p>"+
+                    "</div>");
 				return
 			}
           var sort_jotason = sorter_jotason(root);
@@ -241,7 +253,15 @@ function cake(workspace, design, view){
 
 	    json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
 	    d3.json(json_url, function(error, root) {
-	    if(jQuery.isEmptyObject(root.rows)){$("#cake").append("<p class=\"empty\">No enought data</p>");}
+	    if(jQuery.isEmptyObject(root.rows)){
+            $("#cake header").after("<div class=\"alert alert-info alert-dismissible\">"+
+                "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">"+
+                "<span aria-hidden=\"true\">&times;</span>"+
+                "<span class=\"sr-only\">Close</span>"+
+                "</button>"+
+                "<p>No vulnerabilities found yet</p>"+
+                "</div>");
+        }
 	    var jotason = {};
 	    jotason["children"] = root["rows"];
 	    var json_finish = group_vulns(jotason);

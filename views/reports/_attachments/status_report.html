@@ -35,6 +35,13 @@
     <script type="text/javascript" src="script/angular-route.js"></script>
     <script type="text/javascript" src="script/csv-export.js"></script>
     <script type="text/javascript" src="script/jquery.qtip.js"></script>
+    <style>
+        .wrapper{width:auto;}
+        header.head{position: relative!important;width:auto;z-index:10000}
+        aside{position: fixed;top:0px;height: 100%}
+        .fila{width: 100%;padding-left:90px}
+        .seccion{width: 100%;padding: 0px}
+    </style>
 </head>
 
 <body ng-app="status-report">
@@ -63,24 +70,23 @@
                 -->
             </header>
             
-            <aside>
-                <nav>
-                    <ul>
-                        <li>
-                            <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
-                                <img src="images/ico-graph.png" alt="WS Dashboard"/>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="status-report" style="color: #ffffff !important" title="Status Report">
-                                <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            </aside>
-            
             <section id="main" class="seccion clearfix">
+                <aside>
+                    <nav>
+                        <ul>
+                            <li>
+                                <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
+                                    <img src="images/ico-graph.png" alt="WS Dashboard"/>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="status-report" style="color: #ffffff !important" title="Status Report">
+                                    <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
                 <div id="reports-main" class="fila clearfix">
                     <h2 class="ws-label">
                         <span id="ws-name" class="label label-default" title="Current workspace"></span><!-- WS name -->
@@ -284,16 +290,8 @@
     
         var ret = "Viewing "+ workspace;
         $('#reports-main .ws-label span#ws-name').text(ret);
-    });
 
-    setTimeout(function() {
-        // sidebar height calc
-        $("aside").height($("#main").height() + 16);
-            if($("#reports-main").height() > 800){
-                $("header.head").css("width","1265px");
-                $("section#main").css("width","1189px");
-            }
-    }, 2000);
+    });
 </script>
 </body>
 </html> 

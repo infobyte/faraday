@@ -78,6 +78,12 @@ class GuiApp(qt.QApplication, FaradayUi):
         splash_timer = qt.QTimer.singleShot(1700, lambda *args: None)
         self._splash_screen.show()
 
+    def splashMessage(self, message):
+        self._splash_screen.message(
+            message,
+            qt.Qt.AlignLeft | qt.Qt.AlignBottom,
+            qt.QColor(180, 0, 0))
+
     def stopSplashScreen(self):
         self._splash_screen.finish(self._main_window)
 

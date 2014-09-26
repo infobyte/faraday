@@ -46,6 +46,9 @@ class FaradayUi(object):
     def stopSplashScreen(self):
         pass
 
+    def splashMessage(self, message):
+        pass
+
     def loadWorkspaces(self):
         pass
 

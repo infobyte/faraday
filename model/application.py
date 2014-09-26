@@ -86,6 +86,7 @@ class MainApplication(object):
         try:
 
             self.gui_app.startSplashScreen()
+            self.gui_app.splashMessage("Starting Faraday")
 
             signal.signal(signal.SIGINT, self.ctrlC)
 
@@ -136,6 +137,8 @@ class MainApplication(object):
 
                 model.api.devlog("Faraday ready...")
                 model.api.__current_logged_user = username
+
+                self.gui_app.splashMessage("Loading workspace... Please wait.")
 
                 self.gui_app.loadWorkspaces()
 

@@ -88,7 +88,7 @@ class CreationModelObjectsApiRest(unittest.TestCase):
         interface = Interface(
             name, mac, ipv4_address, ipv4_mask, ipv4_gateway, ipv4_dns,
             ipv6_address, ipv6_prefix, ipv6_gateway, ipv6_dns, network_segment,
-            hostname_resolution, parent=host)
+            hostname_resolution, parent_id=host.getID())
 
         self.assertNotEquals(
             interface_id, None, "interface created shouldn't be None")
@@ -117,7 +117,7 @@ class CreationModelObjectsApiRest(unittest.TestCase):
         interface = Interface(
             name, mac, ipv4_address, ipv4_mask, ipv4_gateway, ipv4_dns,
             ipv6_address, ipv6_prefix, ipv6_gateway, ipv6_dns, network_segment,
-            hostname_resolution, parent=host)
+            hostname_resolution, parent_id=host.getID())
 
         when(self._model_controller).find(
             interface.getID()).thenReturn(interface)
@@ -134,7 +134,7 @@ class CreationModelObjectsApiRest(unittest.TestCase):
             interface.getID())
 
         service = Service(name, protocol, ports, status, version, description,
-                          parent=interface)
+                          parent_id=interface.getID())
 
         self.assertNotEquals(
             service_id, None, "service created shouldn't be None")

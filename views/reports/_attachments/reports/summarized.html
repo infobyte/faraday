@@ -8,12 +8,25 @@ function get_report_div(workspace, view,design){
 	$.getJSON(json_url, function(data) {
 		var colores = ["rojo", "negro"];
 		var i = 0;
-		divs += "<div class='seccion2'><h2>Workspace summarized report</h2>";
+		divs += "<div class='columna untercio'><article class='untercio'><header><h2>Workspace summarized report "+
+                    "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"WS overview - hosts, notes, services and vulnerabilites counts\"></span>"+
+                    "</h2></header><div class='main'>";
+		if(jQuery.isEmptyObject(data.rows) || data.rows[0].key == "interfaces") {
+            divs += "<div class=\"alert alert-info alert-dismissible\">"+
+                "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">"+
+                "<span aria-hidden=\"true\">&times;</span>"+
+                "<span class=\"sr-only\">Close</span>"+
+                "</button>"+
+                "<p>Not enough data to generate summarized report yet</p>"+
+                "</div>";
+        }
 		$.each(data.rows, function(n, obj){
-			divs += "<div class=\"columna unquinto\"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj.value+"</div><div class=\"txt texto-blanco\">"+obj.key+"</div></section></article></div>";
-			i++;
+			if (obj.key != "interfaces"){
+				divs += "<div class=\"columna unquinto\"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj.value+"</div><div class=\"txt texto-blanco\">"+obj.key+"</div></section></article></div>";
+				i++;
+			}
 		});
-		divs +="</div><a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a>";
+		divs +="</div></article></section></div>";
 		return divs;
 	});
 	return divs;

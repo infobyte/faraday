@@ -19,7 +19,6 @@ from gui.gui_app import FaradayUi
 from gui.qt3.mainwindow import MainWindow
 from gui.qt3.customevents import QtCustomEvent
 from shell.controller.env import ShellEnvironment
-from model.workspace import WorkspaceOnFS, WorkspaceOnCouch
 
 import model.guiapi
 import model.api
@@ -62,6 +61,13 @@ class GuiApp(qt.QApplication, FaradayUi):
         self._main_window.createShellTab()
         self.createLoggerWidget()
         self._main_window.showAll()
+        couchURL = CONF.getCouchURI()
+        if couchURL:
+            url = "%s/reports/_design/reports/index.html" % couchURL
+            model.api.log("Faraday ui is ready")
+            model.api.log("Point your browser to: [%s]" % url)
+        else:
+            model.api.log("Please configure Couchdb for fancy HTML5 Dashboard")
         exit_code = self.exec_loop()
         return exit_code
 
@@ -78,6 +84,12 @@ class GuiApp(qt.QApplication, FaradayUi):
     def startSplashScreen(self):
         splash_timer = qt.QTimer.singleShot(1700, lambda *args: None)
         self._splash_screen.show()
+
+    def splashMessage(self, message):
+        self._splash_screen.message(
+            message,
+            qt.Qt.AlignLeft | qt.Qt.AlignBottom,
+            qt.QColor(180, 0, 0))
 
     def stopSplashScreen(self):
         self._splash_screen.finish(self._main_window)
@@ -142,20 +154,6 @@ class GuiApp(qt.QApplication, FaradayUi):
         model.api.log("Removing Workspace: %s" % name)
         return self.getWorkspaceManager().removeWorkspace(name)
 
-    def syncWorkspaces(self):
-        try:
-            self.getWorkspaceManager().saveWorkspaces()
-        except Exception:
-            model.api.log("An exception was captured while synchronizing \
-                workspaces\n%s" % traceback.format_exc(), "ERROR")
-
-    def saveWorkspaces(self):
-        try:
-            self.getWorkspaceManager().saveWorkspaces()
-        except Exception:
-            model.api.log("An exception was captured while saving \
-                workspaces\n%s" % traceback.format_exc(), "ERROR")
-
     def createWorkspace(self, name, description="", w_type=""):
 
         if name in self.getWorkspaceManager().getWorkspacesNames():
@@ -167,24 +165,16 @@ class GuiApp(qt.QApplication, FaradayUi):
             model.api.devlog("Looking for the delegation class")
             manager = self.getWorkspaceManager()
 
-            workingClass = None
-            if w_type and w_type in globals(): 
-                # If set as argument, otherwise let creation delegate behaviour
-                workingClass = globals()[w_type]
-
-            w = manager.createWorkspace(name, description, workspaceClass=workingClass)
-            self.getWorkspaceManager().setActiveWorkspace(w)
-            self.getModelController().setWorkspace(w)
+            w = manager.createWorkspace(name, description,
+                                         manager.namedTypeToDbType(w_type))
 
             self.getMainWindow().refreshWorkspaceTreeView()
 
             self.getMainWindow().getWorkspaceTreeView().loadAllWorkspaces()
 
     def openWorkspace(self, name):
-        self.saveWorkspaces()
         try:
-            workspace = self.getWorkspaceManager().openWorkspace(name)
-            self.getModelController().setWorkspace(workspace)
+            self.getWorkspaceManager().openWorkspace(name)
         except Exception:
             model.api.log("An exception was captured while opening \
                 workspace %s\n%s" % (name, traceback.format_exc()), "ERROR")

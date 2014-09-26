@@ -24,7 +24,6 @@ import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from StringIO import StringIO
-from dateutil.parser import parse
 
 # List all nodes in a ReportItem object that can have multiple values
 MULTI_VALUED_ATTS = [

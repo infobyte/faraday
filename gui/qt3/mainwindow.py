@@ -18,7 +18,7 @@ from gui.qt3.toolbars import *
 from gui.qt3.customevents import *
 from gui.qt3.notification import NotificationsDialog
 from model.guiapi import notification_center as notifier
-from managers.all import PersistenceManagerFactory, CouchdbManager
+from persistence.persistence_managers import CouchDbManager
 
 
 import model.api
@@ -111,7 +111,7 @@ class MainWindow(qt.QMainWindow):
             if f_i == self.shell_font.pixelSize():
                 self._size=i
             i+=1
-        
+
 
     def setMainApp(self, mainapp):
        self._main_app = mainapp
@@ -123,90 +123,90 @@ class MainWindow(qt.QMainWindow):
         Actions are later added to different toolbars, for example in
         method _setupMainToolbar
         """
-                 
-                         
+
+
         a = self._actions["new_shell"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"newshell.png"))), "&New Shell", qt.Qt.CTRL + qt.Qt.SHIFT + qt.Qt.Key_T, self, "New Shell" )
         self.connect(a, qt.SIGNAL('activated()'), self.createShellTab)
 
-                   
+
         a = self._actions["close_shell"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"exit.png"))), "&Close Shell", qt.Qt.CTRL + qt.Qt.SHIFT +qt.Qt.Key_W, self, "New Shell" )
         self.connect(a, qt.SIGNAL('activated()'), self.destroyShellTab)
 
-                          
+
         a = self._actions["toggle-hosttree"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"HostTreeView.png"))), "Toggle Host Tree", 0, self, "Toggle Log Console" )
         a.setToggleAction(True)
-        a.toggle()                                                               
+        a.toggle()
         self.connect(a, qt.SIGNAL('activated()'), self.togglePerspectives)
 
-                        
+
         a = self._actions["toggle-logconsole"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"LogConsole.png"))), "Toggle Log Console", 0, self, "Toggle Log Console" )
         a.setToggleAction(True)
-        a.toggle()                                                             
+        a.toggle()
         self.connect(a, qt.SIGNAL('activated()'), self.toggleLogConsole)
 
-                               
+
         a = self._actions["maximize-shell"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"maximize.png"))), "Maximize Shell", 0, self, "Maximize Shell" )
         a.setToggleAction(True)
-                                                                                
+
         self.connect(a, qt.SIGNAL('activated()'), self.maximizeShell)
         self._tab_manager.tabBar().addAction("maximize", self.maximizeShell)
 
-                                  
-                                                                                                                                                                                
-                                
-                                                                                
-                                                                        
-                                                                                        
 
-                     
+
+
+
+
+
+
+
         #a = self._actions["test"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"donotpresstheredbutton.png"))), "Test", qt.Qt.CTRL + qt.Qt.Key_H, self, "Test" )
-                                                                
+
         #self.connect(a, qt.SIGNAL('activated()'), self.test)
 
         a = self._actions["screenshot"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"Screenshot.png"))), "Take Screenshot", 0, self, "Take Screenshot" )
         self.connect(a, qt.SIGNAL('activated()'), self.takeScreenshot)
 
-                         
+
         a = self._actions["clear-hosttree"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"clear.png"))), "Clear Host Tree", qt.Qt.CTRL + qt.Qt.Key_R, self, "Clear Host Tree" )
         self.connect(a, qt.SIGNAL('activated()'), self._hosts_treeview.clearTree)
 
-        
-                           
+
+
         a = self._actions["repo-config"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"connect.png"))), "Server Connection", 0, self, "Server Connection" )
         self.connect(a, qt.SIGNAL('activated()'), self._showRepositoryConfigDialog)
 
-                                  
+
         a = self._actions["visualization"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"visualize.png"))), "Visualize", 0, self, "Visualize" )
         self.connect(a, qt.SIGNAL('activated()'), self.runVisualization)
 
         a = self._actions["plugin"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"config.png"))), "Plugin", 0, self, "Plugin" )
         self.connect(a, qt.SIGNAL('activated()'), self.showPluginSettingsDialog)
 
-                       
+
         a = self._actions["documentation"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"Documentation.png"))), "Documentation", 0, self, "Documentation" )
         self.connect(a, qt.SIGNAL('activated()'), self.go2Website)
 
-                      
+
         a = self._actions["exit-faraday"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"exit.png"))), "Exit Faraday", 0, self, "Exit Faraday" )
         self.connect(a, qt.SIGNAL('activated()'), self.exitFaraday)
-        
-                               
-                                                                                                                                                                          
-                                                                       
-        
-                          
+
+
+
+
+
+
         a = self._actions["create-workspace"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"sync.png"))), "Create", 0, self, "Create" )
         self.connect(a, qt.SIGNAL('activated()'), self.createWorkspace)
-        
-                        
-                                                                                                                                                            
-                                                                       
-        
-                        
+
+
+
+
+
+
         # a = self._actions["open-workspace"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"sync.png"))), "Open", 0, self, "Open" )
         # self.connect(a, qt.SIGNAL('activated()'), self.openWorkspace)
 
-                        
+
         a = self._actions["reconnect"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"sync.png"))), "Reconnect", 0, self, "Reconnect" )
 
         self.connect(a, qt.SIGNAL('activated()'), self.reconnect)
@@ -216,7 +216,7 @@ class MainWindow(qt.QMainWindow):
 
         a = self._actions["sfont"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"fonts.png"))), "Small Font", 0, self, "Small Font" )
         self.connect(a, qt.SIGNAL('activated()'), self.setSfont)
-                      
+
         if CONF.getDebugStatus():
             a = self._actions["debug"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"debug.png"))), "Debug", 0, self, "Debug" )
             self.connect(a, qt.SIGNAL('activated()'), self.doDebug)
@@ -244,76 +244,76 @@ class MainWindow(qt.QMainWindow):
         """
         Configures all the main windows menues
         """
-                                                                                         
-                          
+
+
         self._menues["file"] = qt.QPopupMenu(self)
         self.menuBar().insertItem('&File',self._menues["file"])
-                                                                   
-                                                                    
-                                                                     
-        
-                                                               
-                                                                          
-                                                                          
+
+
+
+
+
+
+
         self._actions["exit-faraday"].addTo(self._menues["file"]);
         self.menuBar().insertSeparator()
 
-                          
+
         self._menues["shell"] = qt.QPopupMenu(self)
         self.menuBar().insertItem('&Shell',self._menues["shell"])
         self._actions["new_shell"].addTo(self._menues["shell"]);
         self._actions["close_shell"].addTo(self._menues["shell"]);
         self._actions["maximize-shell"].addTo(self._menues["shell"]);
-                                                                         
+
         self.menuBar().insertSeparator()
-                          
+
         self._menues["edit"] = qt.QPopupMenu(self)
         self.menuBar().insertItem('&Edit',self._menues["edit"])
         self._menues["edit"].insertItem('&Copy', self._copy)
         self._menues["edit"].insertItem('&Paste', self._paste)
-                                                                                
+
         self._actions["repo-config"].addTo(self._menues["edit"]);
-                                          
+
         self.menuBar().insertSeparator()
 
-                               
+
         self._menues["workspace"] = qt.QPopupMenu(self)
         self.menuBar().insertItem('&Workspace',self._menues["workspace"])
         # self._actions["open-workspace"].addTo(self._menues["workspace"])
         self._actions["create-workspace"].addTo(self._menues["workspace"])
-                                                                          
-                                                                          
-                                               
+
+
+
         self.menuBar().insertSeparator()
 
-                           
+
         self._menues["tools"] = qt.QPopupMenu(self)
         self.menuBar().insertItem('&Tools',self._menues["tools"])
         self._actions["visualization"].addTo(self._menues["tools"]);
-                                                                                     
+
         self._actions["plugin"].addTo(self._menues["tools"]);
         self._actions["screenshot"].addTo(self._menues["tools"]);
-                                                                                          
+
         self.menuBar().insertSeparator()
 
-                          
+
         self._menues["view"] = qt.QPopupMenu(self)
         self.menuBar().insertItem('&View',self._menues["view"])
         self._actions["toggle-hosttree"].addTo(self._menues["view"]);
         self._actions["toggle-logconsole"].addTo(self._menues["view"]);
         self._actions["maximize-shell"].addTo(self._menues["view"]);
-                                          
+
         self.menuBar().insertSeparator()
 
-                          
+
         self._menues["help"] = qt.QPopupMenu(self)
         self.menuBar().insertItem('&Help',self._menues["help"])
         self._menues["help"].insertItem('&About', self._showAboutDialog)
         self._actions["documentation"].addTo(self._menues["help"]);
-                                         
 
-                                             
-                                                                      
+
+
+
     def _setupMainToolbar(self):
         """
         Sets up the main toolbar
@@ -322,7 +322,7 @@ class MainWindow(qt.QMainWindow):
         self._actions["toggle-hosttree"].addTo(self.main_toolbar)
         self._actions["toggle-logconsole"].addTo(self.main_toolbar)
         self._actions["maximize-shell"].addTo(self.main_toolbar)
-                                                       
+
         self._actions["clear-hosttree"].addTo(self.main_toolbar)
         self._actions["repo-config"].addTo(self.main_toolbar)
         self._actions["visualization"].addTo(self.main_toolbar)
@@ -340,40 +340,40 @@ class MainWindow(qt.QMainWindow):
         self.location_toolbar.addFilter(value)
 
     def showAll(self):
-                                       
+
         self.show()
-                       
+
         self.main_toolbar.show()
         self.location_toolbar.show()
-                                     
+
         self._tab_manager.show()
 
         self._perspective_manager.show()
 
-                                    
+
         self._hosts_treeview.show()
-                                
+
         self._log_console.show()
-                                
+
         for shell_widget in self._shell_widgets:
             shell_widget.show()
 
     def addShell(self, shell_widget):
         self._shell_widgets.append(shell_widget)
-                                                       
-                                                
+
+
         self._tab_manager.addView(shell_widget)
         shell_widget.show()
         shell_widget.setFocus()
 
     def createShellTab(self):
-                                                         
+
         tab_name = "Shell-%d" % self._tab_manager.getNextId()
         self._main_app.createShellEnvironment(tab_name)
 
     def destroyShellTab(self):
-                                                              
-                                  
+
+
         tabmanager = self.getTabManager()
         if tabmanager.count() == 1:
             self.exitFaraday()
@@ -381,33 +381,33 @@ class MainWindow(qt.QMainWindow):
             index = tabmanager.currentPageIndex()
             name = tabmanager.label(index)
             self._main_app.deleteShellEnvironment(str(name))
-        
+
 
     def imIncomplete(self):
         model.api.log("This function is not implemented yet")
 
-    
-                                                                            
-                                                                   
-                                                                       
-                                                                                
-                                                                               
-                           
-    
-                                                                                               
+
+
+
+
+
+
+
+
+
     def _copy(self):
         None
 
     def _paste(self):
-                      
-                                
+
+
         text = qt.QApplication.clipboard().text()
         if not text.isEmpty():
             text.replace(qt.QRegExp("\n"), "\r")
         ev = qt.QKeyEvent(qt.QEvent.KeyPress, 0, -1, 0, text)
         shell = self.getShellWithFocus()
         if shell:
-            shell.myemit('keyPressedSignal', (ev,))                                     
+            shell.myemit('keyPressedSignal', (ev,))
             shell.myemit('clearSelectionSignal')
         qt.QApplication.clipboard().setSelectionMode(False)
 
@@ -415,7 +415,7 @@ class MainWindow(qt.QMainWindow):
         model.api.showPopup("Be careful that importing could overwrite existing files", level="Warning")
         wm = self._main_app.getWorkspaceManager()
         mwin = self._main_app.getMainWindow()
-            
+
         filename =  QFileDialog.getOpenFileName(
                     "$HOME/.faraday",
                     "Faraday export file  (*.faraday)",
@@ -424,16 +424,16 @@ class MainWindow(qt.QMainWindow):
                     "Choose a file to import" );
         if filename and filename is not None:
             model.api.log("Import function %s/ %s" % (CONF.getPersistencePath(),filename))
-            
-                                                                                                               
-                                                  
+
+
+
             api.importWorskpace("%s/" % CONF.getPersistencePath(), filename)
-            
+
             wm.loadWorkspaces()
             w = wm.getActiveWorkspace()
-            wm.setActiveWorkspace(w)                                      
-            
-                                                          
+            wm.setActiveWorkspace(w)
+
+
             mwin.getWorkspaceTreeView().loadAllWorkspaces()
 
     def _exportWorkspace(self):
@@ -446,23 +446,23 @@ class MainWindow(qt.QMainWindow):
         if filename and filename is not None:
             model.api.log("Export function %s" % filename)
             api.exportWorskpace("%s/" % CONF.getPersistencePath(), "%s.faraday" % filename)
-        
-        
+
+
     def getTabManager(self):
         return self._tab_manager
 
     def getLogConsole(self):
         return self._log_console
-    
+
     def getHostTreeView(self):
-        return self._hosts_treeview 
-    
+        return self._hosts_treeview
+
     def getWorkspaceTreeView(self):
         return self._workspaces_treeview
-    
+
     def refreshWorkspaceTreeView(self):
         self._workspaces_treeview.loadAllWorkspaces()
-        
+
     def _showAboutDialog(self):
         about = AboutDialog(self)
         about.exec_loop()
@@ -470,12 +470,12 @@ class MainWindow(qt.QMainWindow):
     def _showConfigDialog(self):
         config_dialog = ConfigDialog(self)
         config_dialog.exec_loop()
-    
-                    
-                                                                                                  
-                                                                          
-                             
-    
+
+
+
+
+
+
     def showExceptionDialog(self, text="", callback=None , excection_objects=None):
         exc_dialog = ExceptionDialog(self, text, callback, excection_objects)
         return exc_dialog.exec_loop()
@@ -499,12 +499,12 @@ class MainWindow(qt.QMainWindow):
         qt.QTimer.singleShot(4000, notification.closeNotification)
 
     def doLogin(self, callback=None):
-                                                              
-                                                                                     
+
+
         login_dialog = LoginDialog(self, callback)
         result_code = login_dialog.exec_loop()
-                                                           
-                                                                         
+
+
         if result_code == qt.QDialog.Rejected:
             return None,None
         else:
@@ -512,35 +512,34 @@ class MainWindow(qt.QMainWindow):
 
     def showLoggedUser(self, username):
         self._status_bar_widgets["username"].setText("Logged user: %s" % username)
-  
+
     def _showRepositoryConfigDialog(self):
-                                                                            
+
         repoconfig_dialog = RepositoryConfigDialog(self, CONF.getCouchURI(),
                                                    CONF.getCouchIsReplicated(),
                                                    CONF.getCouchReplics(),
-                                                   callback=None) 
-        result = repoconfig_dialog.exec_loop()        
+                                                   callback=None)
+        result = repoconfig_dialog.exec_loop()
         if result == qt.QDialog.Accepted:
             repourl, isReplicated, replics = repoconfig_dialog.getData()
             api.devlog("repourl = %s" % repourl)
             wm = self._main_app.getWorkspaceManager()
-            if not CouchdbManager.testCouch(repourl):
+            if not CouchDbManager.testCouch(repourl):
                 self.showPopup("""
                 Repository URL Not valid, check if
                 service is available and that connection string is from
                 the form: http[s]://hostname:port""")
-                repourl, isReplicated, replics = "", False, ""
+                return
 
             CONF.setCouchUri(repourl)
             CONF.setCouchIsReplicated(isReplicated)
             CONF.setCouchReplics(replics)
             CONF.saveConfig()
-            
 
-            couchdbmanager = PersistenceManagerFactory().getInstance()
-            wm.setCouchManager(couchdbmanager)
+            wm.closeWorkspace()
+            wm.resource()
+            wm.openWorkspace('untitled')
 
-            wm.loadWorkspaces()
             mwin = self._main_app.getMainWindow()
             mwin.getWorkspaceTreeView().loadAllWorkspaces()
             mwin.getWorkspaceTreeView().setDefaultWorkspace()
@@ -609,9 +608,9 @@ class MainWindow(qt.QMainWindow):
                 self._is_shell_maximized = False
 
     def maximizeShell(self):
-                                       
-                                                      
-                                                            
+
+
+
         if self._is_shell_maximized:
             self._is_shell_maximized = False
             if not self._log_console.isVisible():
@@ -636,7 +635,7 @@ class MainWindow(qt.QMainWindow):
             self.setShellFont()
             CONF.setFont(self.shell_font.rawName())
             CONF.saveConfig()
-    
+
     def setBfont(self):
         if (self._size+1) < len(self._sizes):
             self._size=self._size+1
@@ -646,7 +645,7 @@ class MainWindow(qt.QMainWindow):
         if (self._size-1) > -1:
             self._size=self._size-1
             self.setShellFont()
-            
+
     def getShellWithFocus(self):
         for shell in self._shell_widgets:
             if shell.hasFocus():
@@ -666,21 +665,19 @@ class MainWindow(qt.QMainWindow):
         """
         runs script that builds the html for visutalizacion and opens a browser
         """
-
-        ret, url = self._main_app.getWorkspaceManager().createVisualizations()
-        if ret:
-            webbrowser.open_new(url)
-
-                                                                                             
-                                                                                   
-                                                                                   
-                                                                                 
+        base_uri = str(CONF.getCouchURI())
+        uri = base_uri + "/reports/_design/reports/index.html"
+        import requests
+        try:
+            response = requests.head(uri)
+            res = response.ok
+        except:
+            res = False
+        if res:
+            webbrowser.open_new(uri)
 
     def go2Website(self):
-                                                                                                   
-                            
-                                                                                                
-                                                                               
+
         webbrowser.open_new("https://www.faradaysec.com")
         model.api.log("Opening faraday's website")
 
@@ -696,7 +693,7 @@ class MainWindow(qt.QMainWindow):
     def doDebug(self):
         exit_dialog = MessageDialog(self, self.__debug,"Debug", "Faraday use IPython for debuging, please switch to terminal\n where do you execute the framework, use Ctrl+D to exit debug.\nDo you want to continue?" )
         return exit_dialog.exec_loop()
-    
+
     def __debug(self, item=False):
         from utils import ipython_shell
         ipython_shell.embedd(locals(), globals())
@@ -710,40 +707,24 @@ class MainWindow(qt.QMainWindow):
         pixmap.save(os.path.join(CONF.getDefaultTempPath(), "fullscreen_capture_%s.png" % ts), "PNG")
         model.api.log("Screenshots taken")
 
-    def syncWorkspaces(self):
-                                                                   
-                                             
-                                                                                
-                  
-        self._model_controller.syncActiveWorkspace()
-
-    def saveWorkspaces(self):
-        """
-        Saves workspaces and it is done syncronically so GUI won't respond
-        until it finishes saving everything
-        """
-                                                   
-        model.api.log("Saving workspaces...")
-        self._main_app.saveWorkspaces()
-        model.api.log("Workspaces saved!")
-        
     def createWorkspace(self):
-                                                                           
-        wdialog = WorkspaceCreationDialog(self, callback=self._main_app.createWorkspace)
+
+        wdialog = WorkspaceCreationDialog(self, callback=self._main_app.createWorkspace, workspace_manager=self._main_app.getWorkspaceManager())
+
         wdialog.exec_loop()
-        
-        
+
+
     def openWorkspace(self):
-                                                                         
-                                           
+
+
         name = "Untitled"
         self._main_app.openWorkspace(name)
 
 
     def reconnect(self):
         wm = self._main_app.getWorkspaceManager()
-        wm.reconnect() 
-        
+        wm.reconnect()
+
     """
     #XXX: test ALT+r on console to delete line
     def test2(self):

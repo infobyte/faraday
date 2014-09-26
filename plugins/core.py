@@ -20,6 +20,8 @@ import Queue
 import traceback
 import model.common
 import errno
+from model.common import factory, ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote, ModelObjectCred
+from model.hosts import Host, Interface, Service
 
 from model.commands_history import CommandRunInformation
 
@@ -128,13 +130,13 @@ class PluginControllerBase(object):
     """
     TODO: Doc string.
     """
-    def __init__(self, id, available_plugins, command_manager):
+    def __init__(self, id, available_plugins, mapper_manager):
         self._plugins               = available_plugins
         self.id                     = id
         self._actionDispatcher      = None
         self._setupActionDispatcher()
 
-        self._command_manager = command_manager
+        self._mapper_manager = mapper_manager
 
     def _find_plugin(self, new_plugin_id):
         try:
@@ -230,11 +232,6 @@ class PluginControllerBase(object):
                 model.api.devlog("PluginController.onCommandFinished - new_elem_queue Exception- something strange happened... unhandled exception?")
                 model.api.devlog(traceback.format_exc())
                 break
-        
-        # Finally we register the recently executed command information
-        # self.last_command_information.duration = time() - self.last_command_information.itime
-        # workspace = model.api.getActiveWorkspace()
-        # self._command_manager.saveCommand(self.last_command_information, workspace)
 
     def _processAction(self, action, parameters):
         """
@@ -299,8 +296,8 @@ class PluginController(PluginControllerBase):
     """
     TODO: Doc string.
     """
-    def __init__(self, id, available_plugins, command_manager):
-        PluginControllerBase.__init__(self, id, available_plugins, command_manager)
+    def __init__(self, id, available_plugins, mapper_manager):
+        PluginControllerBase.__init__(self, id, available_plugins, mapper_manager)
         self._active_plugin = None
         self.last_command_information = None
         self._buffer = StringIO()
@@ -343,8 +340,7 @@ class PluginController(PluginControllerBase):
                     'itime': time(),
                     'command': command_string.split()[0],
                     'params': ' '.join(command_string.split()[1:])})
-            workspace = model.api.getActiveWorkspace()
-            self._command_manager.saveCommand(cmd_info, workspace)
+            self._mapper_manager.save(cmd_info)
 
             self.last_command_information = cmd_info
 
@@ -408,8 +404,7 @@ class PluginController(PluginControllerBase):
         """
         cmd_info = self.last_command_information
         cmd_info.duration = time() - cmd_info.itime
-        workspace = model.api.getActiveWorkspace()
-        self._command_manager.saveCommand(cmd_info, workspace)
+        self._mapper_manager.save(cmd_info)
 
         if self._active_plugin.has_custom_output():
             output_file = open(self._active_plugin.get_custom_file_path(), 'r')
@@ -430,8 +425,8 @@ class PluginController(PluginControllerBase):
 
 
 class PluginControllerForApi(PluginControllerBase):
-    def __init__(self, id, available_plugins, command_manager):
-        PluginControllerBase.__init__(self, id, available_plugins, command_manager)
+    def __init__(self, id, available_plugins, mapper_manager):
+        PluginControllerBase.__init__(self, id, available_plugins, mapper_manager)
         self._active_plugins = {}
 
     def processCommandInput(self, command_string):
@@ -447,8 +442,7 @@ class PluginControllerForApi(PluginControllerBase):
                         'itime': time(),
                         'command': command_string.split()[0],
                         'params': ' '.join(command_string.split()[1:])})
-                workspace = model.api.getActiveWorkspace()
-                self._command_manager.saveCommand(cmd_info, workspace)
+                self._mapper_manager.save(cmd_info)
 
                 self._active_plugins[command_string] = plugin, cmd_info
 
@@ -482,8 +476,7 @@ class PluginControllerForApi(PluginControllerBase):
 
         plugin, cmd_info = self._active_plugins.get(cmd)
         cmd_info.duration = time() - cmd_info.itime
-        workspace = model.api.getActiveWorkspace()
-        self._command_manager.saveCommand(cmd_info, workspace)
+        self._mapper_manager.save(cmd_info)
 
         self.processOutput(plugin, output)
 
@@ -624,11 +617,9 @@ class PluginBase(object):
         """
         self._pending_actions.put(args)
 
-    
     def createAndAddHost(self, name, os = "unknown", category = None, update = False, old_hostname = None):
-        host = model.api.newHost(name, os)
         self.__addPendingAction(modelactions.CADDHOST, name, os, category, update, old_hostname)
-        return host.getID()
+        return factory.generateID(Host.class_signature, name=name, os=os)
 
     def createAndAddInterface(self, host_id, name = "", mac = "00:00:00:00:00:00",
                  ipv4_address = "0.0.0.0", ipv4_mask = "0.0.0.0",
@@ -636,91 +627,88 @@ class PluginBase(object):
                  ipv6_address = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_prefix = "00",
                  ipv6_gateway = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns = [],
                  network_segment = "", hostname_resolution = []):
-        interface = model.api.newInterface(name, mac, ipv4_address, ipv4_mask, ipv4_gateway,
-            ipv4_dns, ipv6_address, ipv6_prefix, ipv6_gateway, ipv6_dns,
-            network_segment, hostname_resolution)
         self.__addPendingAction(modelactions.CADDINTERFACE, host_id, name, mac, ipv4_address, 
             ipv4_mask, ipv4_gateway, ipv4_dns, ipv6_address, ipv6_prefix, ipv6_gateway, ipv6_dns,
             network_segment, hostname_resolution)
-        return interface.getID()
-
-    def createAndAddApplication(self, host_id, name, status = "running", version = "unknown"):
-        application = model.api.newApplication(name, status, version)
-        self.__addPendingAction(modelactions.CADDAPPLICATION, host_id, name, status, version)
-        return application.getID()
-
-    def createAndAddServiceToApplication(self, host_id, application_id, name, protocol = "tcp?", 
-                ports = [], status = "running", version = "unknown", description = ""):
-        service = model.api.newService(name, protocol, ports, status, version, description)
-        self.__addPendingAction(modelactions.CADDSERVICEAPP, host_id, application_id, name, protocol, 
-                ports, status, version, description)
-        return service.getID()
+        return factory.generateID(
+            Interface.class_signature, parent_id=host_id, name=name, mac=mac,
+            ipv4_address=ipv4_address, ipv4_mask=ipv4_mask,
+            ipv4_gateway=ipv4_gateway, ipv4_dns=ipv4_dns,
+            ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
+            ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
+            network_segment=network_segment,
+            hostname_resolution=hostname_resolution)
 
     def createAndAddServiceToInterface(self, host_id, interface_id, name, protocol = "tcp?", 
                 ports = [], status = "running", version = "unknown", description = ""):
-        service = model.api.newService(name, protocol, ports, status, version, description)
         self.__addPendingAction(modelactions.CADDSERVICEINT, host_id, interface_id, name, protocol, 
                 ports, status, version, description)
-        return service.getID()
+        return factory.generateID(
+            Service.class_signature,
+            name=name, protocol=protocol, ports=ports,
+            status=status, version=version, description=description, parent_id=interface_id)
 
     def createAndAddVulnToHost(self, host_id, name, desc="", ref=[], severity=""):
-        vuln = model.api.newVuln(name, desc, ref, severity)
         self.__addPendingAction(modelactions.CADDVULNHOST, host_id, name, desc, ref, severity)
-        return vuln.getID()
+        return factory.generateID(
+            ModelObjectVuln.class_signature,
+            name=name, desc=desc, ref=ref, severity=severity,
+            parent_id=host_id)
 
     def createAndAddVulnToInterface(self, host_id, interface_id, name, desc="", ref=[], severity=""):
-        vuln = model.api.newVuln(name, desc, ref, severity)
         self.__addPendingAction(modelactions.CADDVULNINT, host_id, interface_id, name, desc, ref, severity)
-        return vuln.getID()
-
-    def createAndAddVulnToApplication(self, host_id, application_id, name, desc="", ref=[], severity=""):
-        vuln = model.api.newVuln(name, desc, ref, severity)
-        self.__addPendingAction(modelactions.CADDVULNAPP, host_id, application_id, name, desc, ref, severity)
-        return vuln.getID()
+        return factory.generateID(
+            ModelObjectVuln.class_signature,
+            name=name, desc=desc, ref=ref, severity=severity,
+            parent_id=interface_id)
 
     def createAndAddVulnToService(self, host_id, service_id, name, desc="", ref=[], severity=""):
-        vuln = model.api.newVuln(name, desc, ref, severity)
         self.__addPendingAction(modelactions.CADDVULNSRV, host_id, service_id, name, desc, ref, severity)
-        return vuln.getID()
+        return factory.generateID(
+            ModelObjectVuln.class_signature,
+            name=name, desc=desc, ref=ref, severity=severity,
+            parent_id=service_id)
 
     def createAndAddVulnWebToService(self, host_id, service_id, name, desc="", ref=[], severity="", website="", path="", request="",
                                   response="",method="",pname="", params="",query="",category=""):
-        vuln = model.api.newVulnWeb(name, desc, ref, severity,website, path, request, response,
-                method,pname, params,query,category)
         self.__addPendingAction(modelactions.CADDVULNWEBSRV, host_id, service_id, name, desc, ref, severity, website, path, request, response,
                 method,pname, params,query,category)
-        return vuln.getID()
-    
+        return factory.generateID(
+            ModelObjectVulnWeb.class_signature,
+            name=name, desc=desc, ref=ref, severity=severity,
+            website=website, path=path, request=request, response=response,
+            method=method, pname=pname, params=params, query=query,
+            category=category, parent_id=service_id)
 
     def createAndAddNoteToHost(self, host_id, name, text):
-        note = model.api.newNote(name, text)
         self.__addPendingAction(modelactions.CADDNOTEHOST, host_id, name, text)
-        return note.getID()
+        return factory.generateID(
+            ModelObjectNote.class_signature,
+            name=name, text=text, parent_id=host_id)
 
     def createAndAddNoteToInterface(self, host_id, interface_id, name, text):
-        note = model.api.newNote(name, text)
         self.__addPendingAction(modelactions.CADDNOTEINT, host_id, interface_id, name, text)
-        return note.getID()
-
-    def createAndAddNoteToApplication(self, host_id, application_id, name, text):
-        note = model.api.newNote(name, text)
-        self.__addPendingAction(modelactions.CADDNOTEAPP, host_id, application_id, name, text)
-        return note.getID()
+        return factory.generateID(
+            ModelObjectNote.class_signature,
+            name=name, text=text, parent_id=interface_id)
 
     def createAndAddNoteToService(self, host_id, service_id, name, text):
-        note = model.api.newNote(name, text) 
         self.__addPendingAction(modelactions.CADDNOTESRV, host_id, service_id, name, text)
-        return note.getID()
-    
+        return factory.generateID(
+            ModelObjectNote.class_signature,
+            name=name, text=text, parent_id=service_id)
+
     def createAndAddNoteToNote(self, host_id, service_id, note_id, name, text):
-        note = model.api.newNote(name, text)
         self.__addPendingAction(modelactions.CADDNOTENOTE, host_id, service_id, note_id, name, text)
-        return note.getID()
-    
+        return factory.generateID(
+            ModelObjectNote.class_signature,
+            name=name, text=text, parent_id=note_id)
+
     def createAndAddCredToService(self, host_id, service_id, username, password):
-        cred = model.api.newCred(username, password)
         self.__addPendingAction(modelactions.CADDCREDSRV, host_id, service_id, username, password)
-        return cred.getID()
+        return factory.generateID(
+            ModelObjectCred.class_signature,
+            username=username, password=password, parent_id=service_id)
 
     def addHost(self, host, category=None,update=False, old_hostname=None):
         self.__addPendingAction(modelactions.ADDHOST, host, category, update, old_hostname)

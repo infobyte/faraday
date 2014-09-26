@@ -12,7 +12,7 @@ import model.api as api
 import model.guiapi as guiapi
 import re
 import model.hosts as hosts
-from model.workspace import WorkspaceManager
+from managers.model_managers import WorkspaceManager
 from ui.plugin_settings import *
 from ui.vulnerabilities import *
 from ui.preferences import *
@@ -476,7 +476,7 @@ class NotesDialog(ListableObjecttDialog):
         for item in self._selected_items: 
             if item.type == "Note":
                 note = item.getModelObject()
-                guiapi.delNote(note.getParent(), note.getID())
+                guiapi.delNote(note.getParent().getID(), note.getID())
         self.setListItems()
         self.edition_layout.clear()
                     
@@ -551,8 +551,6 @@ class VulnsDialog(ListableObjecttDialog):
         dialog.exec_loop()
     
     def __addValue(self, *args):
-                               
-                                                      
         obj = self.model_object
         if args[0]:
                      
@@ -565,7 +563,7 @@ class VulnsDialog(ListableObjecttDialog):
         for item in self._selected_items: 
             if item.type == "Vuln" or item.type == "VulnWeb":
                 vuln = item.getModelObject()
-                guiapi.delVuln(vuln.getParent(), vuln.getID())
+                guiapi.delVuln(vuln.getParent().getID(), vuln.getID())
         self.setListItems()
         self.edition_layout.clear()
 
@@ -615,7 +613,7 @@ class CredsDialog(ListableObjecttDialog):
         for item in self._selected_items: 
             if item.type == "Cred":
                 cred = item.getModelObject()
-                guiapi.delCred(cred.getParent(), cred.getID())
+                guiapi.delCred(cred.getParent().getID(), cred.getID())
         self.setListItems()
         self.edition_layout.clear()
                     
@@ -1041,7 +1039,7 @@ class WorkspacePropertiesDialog(BaseDialog):
                                                        
 class WorkspaceCreationDialog(BaseDialog):
 
-    def __init__(self, parent, text="", callback=None, workspace=None):
+    def __init__(self, parent, text="", callback=None, workspace=None, workspace_manager=None):
         BaseDialog.__init__(self, parent, "WorkspaceCreationDialog",
                             layout_margin=10, layout_spacing=15, modal=True)
         self._callback = callback
@@ -1065,11 +1063,11 @@ class WorkspaceCreationDialog(BaseDialog):
         self._type_label = qt.QLabel("Type", hbox3)
         self._type_combobox = qt.QComboBox(hbox3)
         self._type_combobox.setEditable(False)
-        for w in WorkspaceManager.getAvailableWorkspaceTypes():
+        for w in workspace_manager.getAvailableWorkspaceTypes():
             self._type_combobox.insertItem(w)
         self.layout.addWidget(hbox3)
 
-        if len(WorkspaceManager.getAvailableWorkspaceTypes()) <= 1:
+        if len(workspace_manager.getAvailableWorkspaceTypes()) <= 1:
             parent.showPopup("No Couch Configuration available. Config, more workpsaces flavors")
 
         self.__name_txt = self._name_edit.text()

@@ -379,7 +379,7 @@ class ShellEnvironment(ModelObject):
             
             if search ==1 and cword !="":
                 #Busqueda de Hosts (ignore si el comando que escribi es blanco)
-                for h in self._model_controller._hosts.itervalues():
+                for h in self._model_controller.getAllHosts():
                     if re.search(str("^"+cword),h.name,flags=re.IGNORECASE):
                         if len(options) == 0:
                             options.append(cword)

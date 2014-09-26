@@ -7,15 +7,51 @@ function get_report_div(workspace, view,design){
         async: false
     });
 	$.getJSON(json_url, function(data) {
-                tabla = "<div class='seccion2'><h2>Commands History</h2>";
-                tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr><th>Command Run</th><th>Start Date</th><th>Duration</th></tr></thead><tbody>";
+        if(jQuery.isEmptyObject(data.rows)){
+            tabla = "<div class='columna'><article><section class=\"sin_padding\" id=\"hosts\">"+
+                        "<header><h2>Commands History "+
+                        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\""+
+                        "title=\"Shows current WS' executed commands\"></span>"+
+                        "</h2></header><div class='main'>"+
+                        "<div class=\"alert alert-info alert-dismissible\">"+
+                        "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">"+
+                        "<span aria-hidden=\"true\">&times;</span>"+
+                        "<span class=\"sr-only\">Close</span>"+
+                        "</button>"+
+                        "<p>No services found yet</p>"+
+                        "</div>"+
+                        "</div></section>";
+        }else{
+            tabla = "<div class='columna'><article><section class=\"sin_padding\" id=\"hosts\">"+
+                        "<header><h2>Commands History "+
+                        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\""+
+                        "title=\"Shows current WS' executed commands\"></span></h2>"+
+                        "</h2></header><div class='main'>";
+            tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+                        "<th>By</th><th>Command</th><th>Start Date</th><th>Duration</th>"+
+                        "</tr></thead><tbody>";
                 $.each(data.rows, function(n, obj){
-                        var d = new Date(0); 
-                        d.setUTCSeconds(obj.value[0]);
-                        tabla += "<tr><td>"+obj.key+"</td><td>"+d+"</td><td>"+obj.value[1]+"</td></tr>";
+                    var user = "unknown";
+                    var hostname = "unknown";
+                    var ip = "0.0.0.0";
+                    var duration = "";
+                    var d = new Date(0);
+                    d.setUTCSeconds(obj.value.startdate);
+                    d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear() + " - " + d.getHours() + ":" + d.getMinutes();
+                    if(obj.value.duration == "0") {
+                        duration = "In progress";
+                    } else {
+                        duration = obj.value.duration.toFixed(2);   
+                    }
+                    if(obj.value.user && obj.value.user != "") user = obj.value.user;
+                    if(obj.value.hostname && obj.value.hostname != "") hostname = obj.value.hostname;
+                    if(obj.value.ip && obj.value.ip != "") ip = obj.value.ip;
+                    tabla += "<tr><td class=\"faraday-qtips\" title=\""+ip+"\">"+user+"@"+hostname+"</td>"+
+                                "<td>"+obj.key+"</td><td>"+d+"</td><td>"+duration+"s</td></tr>";
                 });
             tabla += "</tbody></table>";
-            tabla +="</div><a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a>";
+            tabla +="</article></section></div>";
+        }
 		return tabla;
 	});
 	return tabla;

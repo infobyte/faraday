@@ -22,6 +22,7 @@ CONF = getInstanceConfiguration()
 # global reference only for this module to work with the model controller
 __model_controller = None
 
+__workspace_manager = None
 
 _xmlrpc_api_server = None
 _plugin_controller_api = None
@@ -35,9 +36,11 @@ _remote_sync_server_proxy = None
 __current_logged_user = ""
 
 
-def setUpAPIs(controller, hostname=None, port=None):
+def setUpAPIs(controller, workspace_manager, hostname=None, port=None):
     global __model_controller
     __model_controller = controller
+    global __workspace_manager
+    __workspace_manager = workspace_manager
     _setUpAPIServer(hostname, port)
 
 
@@ -121,7 +124,7 @@ def _setUpAPIServer(hostname=None, port=None):
 def createAndAddHost(name, os = "Unknown", category=None, update = False, old_hostname = None ):
     host = newHost(name, os)
     if addHost(host, category, update, old_hostname):
-        return host.getID()
+        return True
     return None
 
 def createAndAddInterface(host_id, name = "", mac = "00:00:00:00:00:00",
@@ -138,56 +141,56 @@ def createAndAddInterface(host_id, name = "", mac = "00:00:00:00:00:00",
     """
     interface = newInterface(name, mac, ipv4_address, ipv4_mask, ipv4_gateway,
                              ipv4_dns,ipv6_address,ipv6_prefix,ipv6_gateway,ipv6_dns,
-                             network_segment, hostname_resolution)
+                             network_segment, hostname_resolution, parent_id=host_id)
     if addInterface(host_id, interface):
-        return interface.getID()
+        return True
     return None
 
 def createAndAddApplication(host_id, name, status = "running", version = "unknown"):
     application = newApplication(name, status, version)
     if addApplication(host_id, application):
-        return application.getID()
+        return True
     return None
 
 def createAndAddServiceToApplication(host_id, application_id, name, protocol = "tcp?", 
                 ports = [], status = "running", version = "unknown", description = ""):
     service = newService(name, protocol, ports, status, version, description)
     if addServiceToApplication(host_id, application_id, service):
-        return service.getID()
+        return True
     return None
 
 def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?", 
                 ports = [], status = "running", version = "unknown", description = ""):
-    service = newService(name, protocol, ports, status, version, description)
+    service = newService(name, protocol, ports, status, version, description, parent_id=interface_id)
     if addServiceToInterface(host_id, interface_id, service):
-        return service.getID()
+        return True
     return None
 
 # Vulnerability
 
 def createAndAddVulnToHost(host_id, name, desc, ref, severity):
-    vuln = newVuln(name, desc, ref, severity)
+    vuln = newVuln(name, desc, ref, severity, parent_id=host_id)
     if addVulnToHost(host_id, vuln):
-        return vuln.getID()
+        return True
     return None
 
 def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref, severity):
-    vuln = newVuln(name, desc, ref, severity)
+    vuln = newVuln(name, desc, ref, severity, parent_id=interface_id)
     if addVulnToInterface(host_id, interface_id, vuln):
-        return vuln.getID()
+        return True
     return None
     
 def createAndAddVulnToApplication(host_id, application_id, name, desc, ref, severity):
     vuln = newVuln(name, desc, ref, severity)
     if addVulnToApplication(host_id, application_id, vuln):
-        return vuln.getID()
+        return True
     return None
 
 def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity):
     #we should give the interface_id or de application_id too? I think we should...
-    vuln = newVuln(name, desc, ref, severity)
+    vuln = newVuln(name, desc, ref, severity, parent_id=service_id)
     if addVulnToService(host_id, service_id, vuln):
-        return vuln.getID()
+        return True
     return None
 
 #WebVuln
@@ -196,47 +199,47 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity,
                 method,pname, params,query,category):
     #we should give the interface_id or de application_id too? I think we should...
     vuln = newVulnWeb(name, desc, ref, severity, website, path, request, response,
-                method,pname, params,query,category)
+                method,pname, params,query,category, parent_id=service_id)
     if addVulnWebToService(host_id, service_id, vuln):
-        return vuln.getID()
+        return True
     return None
 
 # Note
  
 def createAndAddNoteToHost(host_id, name, text):
-    note = newNote(name, text)
+    note = newNote(name, text, parent_id=host_id)
     if addNoteToHost(host_id, note):
-        return note.getID()
+        return True
     return None
 
 def createAndAddNoteToInterface(host_id, interface_id, name, text):
-    note = newNote(name, text)
+    note = newNote(name, text, parent_id=interface_id)
     if addNoteToInterface(host_id, interface_id, note):
-        return note.getID()
+        return True
     return None
 
 def createAndAddNoteToApplication(host_id, application_id, name, text):
     note = newNote(text)
     if addNoteToApplication(host_id, application_id, note):
-        return note.getID()
+        return True
     return None
 
 def createAndAddNoteToService(host_id, service_id, name, text):
-    note = newNote(name, text)
+    note = newNote(name, text, parent_id=service_id)
     if addNoteToService(host_id, service_id, note):
-        return note.getID()
+        return True
     return None
 
 def createAndAddNoteToNote(host_id, service_id, note_id, name, text):
-    note = newNote(name, text)
+    note = newNote(name, text, parent_id=note_id)
     if addNoteToNote(host_id, service_id, note_id, note):
-        return note.getID()
+        return True
     return None
 
 def createAndAddCredToService(host_id, service_id, username, password):
-    cred = newCred(username, password)
+    cred = newCred(username, password, parent_id=service_id)
     if addCredToService(host_id, service_id, cred):
-        return cred.getID()
+        return True
     return None
 
 #-------------------------------------------------------------------------------
@@ -425,80 +428,75 @@ def delCredFromService(cred, hostname, srvname):
 #-------------------------------------------------------------------------------
 # CREATION APIS
 #-------------------------------------------------------------------------------
+
+
 def newHost(name, os = "Unknown"):
     """
     It creates and returns a Host object.
     The object created is not added to the model.
     """
-    # 'Host' is a class signature if that is changed we have to update this
-    return model.common.factory.createModelObject("Host", name, os=os)
+    return __model_controller.newHost(name, os)
 
-#-------------------------------------------------------------------------------
+
 def newInterface(name = "", mac = "00:00:00:00:00:00",
                  ipv4_address = "0.0.0.0", ipv4_mask = "0.0.0.0",
                  ipv4_gateway = "0.0.0.0", ipv4_dns = [],
                  ipv6_address = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_prefix = "00",
                  ipv6_gateway = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns = [],
-                 network_segment = "", hostname_resolution = []):
+                 network_segment = "", hostname_resolution = [], parent_id=None):
     """
     It creates and returns an Interface object.
     The created object is not added to the model.
     """
-    return model.common.factory.createModelObject("Interface", name, mac = mac,
-                 ipv4_address = ipv4_address , ipv4_mask = ipv4_mask,
-                 ipv4_gateway = ipv4_gateway, ipv4_dns = ipv4_dns,
-                 ipv6_address = ipv6_address , ipv6_prefix = ipv6_prefix,
-                 ipv6_gateway = ipv6_gateway, ipv6_dns = ipv6_dns,
-                 network_segment = network_segment,
-                 hostname_resolution = hostname_resolution)
-#-------------------------------------------------------------------------------
+    return __model_controller.newInterface(
+        name, mac, ipv4_address, ipv4_mask, ipv4_gateway, ipv4_dns,
+        ipv6_address, ipv6_prefix, ipv6_gateway, ipv6_dns, network_segment,
+        hostname_resolution, parent_id)
+
 def newService(name, protocol = "tcp?", ports = [], status = "running",
-               version = "unknown", description = ""):
+               version = "unknown", description = "", parent_id=None):
     """
     It creates and returns a Service object.
     The created object is not added to the model.
     """
-    return model.common.factory.createModelObject("Service",name,
-                    protocol = protocol, ports = ports, status = status,
-                    version = version, description = description)
-#-------------------------------------------------------------------------------
+    return __model_controller.newService(
+        name, protocol, ports, status, version, description, parent_id)
 
-def newVuln(name, desc="", ref = None, severity=""):
+
+def newVuln(name, desc="", ref = None, severity="", parent_id=None):
     """
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
-    return model.common.factory.createModelObject("Vulnerability", name, desc=desc,
-                                                  ref=ref, severity=severity)
- 
-#-------------------------------------------------------------------------------
+    return __model_controller.newVuln(
+        name, desc, ref, severity, parent_id)
+
 
 def newVulnWeb(name, desc="", ref = None, severity="", website="", path="", request="", response="",
-                method="",pname="", params="",query="",category=""):
+                method="",pname="", params="",query="",category="", parent_id=None):
     """
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
-    return model.common.factory.createModelObject("VulnerabilityWeb", name, desc=desc, ref=ref,severity=severity, website=website, path=path, request=request,
-                                                  response=response,method=method,pname=pname, params=params,query=query,category=category )
- 
-#-------------------------------------------------------------------------------
-   
-def newNote(name,text):
-    
+    return __model_controller.newVulnWeb(
+        name, desc, ref, severity, website, path, request, response,
+        method, pname, params, query, category, parent_id)
+
+
+def newNote(name, text, parent_id=None):
     """
     It creates and returns a Note object.
     The created object is not added to the model.
     """
-    return model.common.factory.createModelObject("Note", name, text=text)
+    return __model_controller.newNote(name, text, parent_id)
 
-def newCred(username,password):
-    
+
+def newCred(username, password, parent_id=None):
     """
     It creates and returns a Cred object.
     The created object is not added to the model.
     """
-    return model.common.factory.createModelObject("Cred", username, password=password)
+    return __model_controller.newCred(username, password, parent_id)
 
 
 #-------------------------------------------------------------------------------
@@ -510,23 +508,6 @@ def newApplication(name, status = "running", version = "unknown"):
     return model.common.factory.createModelObject("HostApplication",name,
                                                   status = status,
                                                   version = version)
-
-#-------------------------------------------------------------------------------
-
-
-#TODO: this api is used in the telnet plugin to get a host and change the
-# name by adding a host with update flag in True.
-# This may be risky because we are returning a reference to a host that
-# could be deleted or changed while another plugin is using it
-# A way to save this could be returning a copy of the object or
-# implement dirty flag (or a lock) on the objects
-def getHost(hostname):
-    """
-    THIS API WAS CREATED FOR DEMO WITH TELNET PLUGIN
-    It is useful but risky using it like this
-    """
-    return __model_controller._getValueByID("_hosts", hostname)
-
 
 #-------------------------------------------------------------------------------
 
@@ -685,10 +666,6 @@ def getLoggedUser():
 def getLocalDefaultGateway():    
     return gateway()
 
-#-------------------------------------------------------------------------------
-
-
-#-------------------------------------------------------------------------------
 
 def getActiveWorkspace():
-    return __model_controller.getWorkspace()
+    return __workspace_manager.getActiveWorkspace()

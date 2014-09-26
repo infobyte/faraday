@@ -1,5 +1,3 @@
-<div id="hosts-main">
-</div><!-- .hosts-main -->
 <script type="text/javascript" src="script/compound.js"></script>
 <script type="text/javascript">
 function get_report_div(workspace, view, design){
@@ -15,31 +13,59 @@ function get_report_div(workspace, view, design){
 		hosts		= get_obj(hurl);
 		interfaces	= get_obj(iurl, interfaces);
 		services	= get_obj(surl, services);
-		var table = "<div class='seccion2' id='hosts'><h2>Hosts report</h2>";
-		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
-				"<th>Host</th>"+
-				"<th>Services</th>"+
-				"<th>Interfaces</th>"+
-				"<th>OS</th>"+
-				"<th>Owned</th>"+
-				"</tr></thead><tbody>";
-		$.each(hosts, function(k, v){
-			var hname = "";
-			if(!services.hasOwnProperty(k)) {
-				services[k] = 0;
-				hname = v.name;
-			} else {
-				hname = "<a href=\"host-"+k+"\" class=\"host\">"+v.name+"</a>";
-			}
-			if(!interfaces.hasOwnProperty(k)) interfaces[k] = 0;
-			table += "<tr id=\"host-"+k+"\">"+
-				"<td>"+hname+"</td>"+
-				"<td>"+services[k]+"</td>"+
-				"<td>"+interfaces[k]+"</td>"+
-				"<td>"+v.os+"</td>"+
-				"<td>"+v.owned+"</td></tr>";
-		});
-		table += "</tbody></table></div><a style='float:right;margin-right:20px;color:#FFF!important;padding:4px' class='btn btn-danger dropdown-toggle' onclick=\"document.body.scrollTop = document.documentElement.scrollTop = 0;\">Back To Top</a>";
+		if(jQuery.isEmptyObject(hosts)){
+            table = "<div class='columna'><article><section class=\"sin_padding\" id=\"hosts\">"+
+                        "<header><h2>Hosts report "+
+                        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\""+
+                        "title=\"Shows current WS' executed commands\"></span>"+
+                        "</h2></header>"+
+                        "<div class=\"alert alert-info alert-dismissible\">"+
+                        "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">"+
+                        "<span aria-hidden=\"true\">&times;</span>"+
+                        "<span class=\"sr-only\">Close</span>"+
+                        "</button>"+
+                        "<p>No services found yet</p>"+
+                        "</div>"+
+                        "</div></section>";
+        }else{
+			var table = "<div class='columna'><article><section class='sin_padding' id='hosts'>"+
+	                        "<header><h2>Hosts report "+
+	                        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" "+
+	                        "title=\"All hosts, each one showing its service count and operating system. "+
+	                        "By clicking on a host IP you can access a list with all of its services\"></span>"+
+				"</h2></header><div class='main'>";
+			table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+					"<th>Host</th>"+
+					"<th>Services</th>"+
+					"<th>OS</th>"+
+					"</tr></thead><tbody>";
+			$.each(hosts, function(k, v){
+				var hname = "";
+				if(!services.hasOwnProperty(k)) {
+					services[k] = 0;
+					hname = v.name;
+				} else {
+					hname = "<a href=\"host-"+k+"\" class=\"host\">"+v.name+"</a>";
+				}
+				if(!interfaces.hasOwnProperty(k)) interfaces[k] = 0;
+				var icon = "";
+				if(v.os.toLowerCase().indexOf("windows") > -1) icon = "windows";
+				if(v.os.toLowerCase().indexOf("osx") > -1) icon = "osx";
+				if(v.os.toLowerCase().indexOf("linux") > -1
+					|| v.os.toLowerCase().indexOf("unix") > -1) icon = "linux";
+				var os = "";
+				if(icon === "") {
+					os = "<span class=\"glyphicon glyphicon-question-sign faraday-qtips\" title="+v.os+"></span>";
+				} else {
+					os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+v.os+"\"/>";
+				}
+				table += "<tr id=\"host-"+k+"\">"+
+					"<td>"+hname+"</td>"+
+					"<td>"+services[k]+"</td>"+
+					"<td>"+os+"</td></tr>";
+			});
+			table += "</tbody></table></article></section></div>";
+		}
 		return table;
 	}
 

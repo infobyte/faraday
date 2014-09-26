@@ -600,3 +600,6 @@ ul.d3 .untercio{width: 160px;}
 @media screen and (max-height:600px) {
 	#no-overflow{overflow: auto!important }
 }
+@media screen and (min-width: 1380px){
+	.wrapper{margin:auto;}
+}

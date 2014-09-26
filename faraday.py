@@ -518,7 +518,8 @@ def checkUpdates():
         resp = requests.get(uri, timeout=1, verify=True)
     except Exception as e:
         logger.error(e)
-    if resp:
+    resp = resp.text.strip()
+    if not resp == u'OK':
         logger.info("You have available updates. Run ./faraday.py --update to catchup!")
     else:
         logger.info("No updates available, enjoy Faraday")

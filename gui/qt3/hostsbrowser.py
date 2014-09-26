@@ -232,14 +232,22 @@ class HostsBrowser(qt.QVBox):
                     self._delHostFromCategory(i.object, category_item.name)
 
     def redrawTree(self, hosts):
+        dialog = qt.QProgressDialog(self, "Loading workspace...", True)
+        dialog.setCaption("Please wait")
+        dialog.setLabelText("Loading workspace...")
+        dialog.setTotalSteps(len(hosts) + 1)
+        i = 1
         for host in hosts:
+            dialog.setProgress(i)
             category = host.getCurrentCategory()
             self._addCategory(category)
             self._addHostToCategory(host, category)
-
+            i += 1
         for ci in self._category_items.values():
             ci.setOpen(True)
+
         self.createIndex()
+        dialog.setProgress(i)
         self.filterTree(self._filter)
 
     def setReindex(self):

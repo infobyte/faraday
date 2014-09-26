@@ -61,6 +61,13 @@ class GuiApp(qt.QApplication, FaradayUi):
         self._main_window.createShellTab()
         self.createLoggerWidget()
         self._main_window.showAll()
+        couchURL = CONF.getCouchURI()
+        if couchURL:
+            url = "%s/reports/_design/reports/index.html" % couchURL
+            model.api.log("Faraday ui is ready")
+            model.api.log("Point your browser to: [%s]" % url)
+        else:
+            model.api.log("Please configure Couchdb for fancy HTML5 Dashboard")
         exit_code = self.exec_loop()
         return exit_code
 

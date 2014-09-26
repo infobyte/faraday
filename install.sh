@@ -40,7 +40,7 @@ echo "[+] Install $os $arch"
 down=0
 if [ "$os" = "Ubuntu 10.04.2 LTS" ]; then
     version="ubuntu10-04.02$arch"
-elif [ "$os/Debian Kali Linux" != "$os" ]; then
+elif [[ "$os" =~ .*Kali.* ]]; then
     version="kali-$arch"
     down=1
 elif [ "$os" = "Ubuntu 12.04.3 LTS" ]; then
@@ -73,6 +73,7 @@ if [ "$down" -eq 1 ]; then
             tar -xvzf lib-$version.tgz
             
             cp -R lib-$version/* /usr/local/
+            cp -R lib-$version/qt/lib/*so* /usr/local/lib
 
             cat deps/qtvars >> /etc/profile
             . /etc/profile            

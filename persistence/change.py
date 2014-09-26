@@ -10,81 +10,82 @@ from model.common import (ModelObjectNote, ModelObjectCred, ModelObjectVuln,
 from model.hosts import Host, Interface, Service
 
 
+class CHANGETYPE(object):
+    ADD = 1,
+    UPDATE = 2
+    DELETE = 3
+    UNKNOWN = 999
+
+
 class ChangeFactory(object):
     def __init__(self):
         pass
 
-    def create(self, dic):
-        _type = dic.get("type")
-        if _type in [Host.class_signature,
-                     Interface.class_signature,
-                     Service.class_signature,
-                     ModelObjectNote.class_signature,
-                     ModelObjectVuln.class_signature,
-                     ModelObjectVulnWeb.class_signature,
-                     ModelObjectCred.class_signature,
-                     'unknown']:
-            return ChangeModelObject(dic)
+    def create(self, obj, revision, deleted):
+        change_type = CHANGETYPE.UNKNOWN
+        if deleted:
+            change_type = CHANGETYPE.DELETE
+        elif int(revision[0]) > 1:
+            change_type = CHANGETYPE.UPDATE
         else:
-            return ChangeCmd(dic)
+            change_type = CHANGETYPE.ADD
+
+        obj_type = obj.class_signature
+        if obj_type in [Host.class_signature,
+                        Interface.class_signature,
+                        Service.class_signature,
+                        ModelObjectNote.class_signature,
+                        ModelObjectVuln.class_signature,
+                        ModelObjectVulnWeb.class_signature,
+                        ModelObjectCred.class_signature,
+                        'unknown']:
+            return ChangeModelObject(obj, change_type)
+        else:
+            return ChangeCmd(obj, change_type)
 
 
 class Change(object):
-    MODEL_OBJECT_ADDED = 1,
-    MODEL_OBJECT_MODIFIED = 2
-    MODEL_OBJECT_DELETED = 3
-    CMD_EXECUTED = 4
-    CMD_FINISHED = 5
-    UNKNOWN = 999
+    def __init__(self, obj, change_type):
+        self.change_type = change_type
+        self.object = obj
+        self.msg = "Change: Action: %s - Type: %s" % (
+            self.change_type, self.object.class_signature)
 
-    def __init__(self, doc):
-        self.type = doc.get("type")
-        self.action = self.UNKNOWN
-        self.msg = "Change: Action: %s - Type: %s" % (self.type, self.action)
+    def getObject(self):
+        return self.object
 
-    def getAction(self):
-        return self.action
-
-    def getType(self):
-        return self.type
+    def getChangeType(self):
+        return self.change_type
 
     def getMessage(self):
         return self.msg
 
 
 class ChangeModelObject(Change):
-    def __init__(self, doc):
-        Change.__init__(self, doc)
-        num_of_rev = int(doc.get("_rev")[0])
-        self.object_name = doc.get("name")
-        if doc.get("_deleted"):
-            self.action = self.MODEL_OBJECT_DELETED
-            self.msg = "Object deleted"
-        elif num_of_rev > 1:
-            self.action = self.MODEL_OBJECT_MODIFIED
-            self.msg = "%s %s modified" % (self.getType(),
-                                           self.getObjectName())
-        else:
-            self.action = self.MODEL_OBJECT_ADDED
-            self.msg = "%s %s added" % (self.getType(),
-                                        self.getObjectName())
-
-    def getObjectName(self):
-        return self.object_name
+    def __init__(self, obj, change_type):
+        Change.__init__(self, obj, change_type)
+        if self.change_type == CHANGETYPE.DELETE:
+            self.msg = "%s %s deleted" % (
+                self.object.class_signature, self.object.getName())
+        elif self.change_type == CHANGETYPE.UPDATE:
+            self.msg = "%s %s updated" % (
+                self.object.class_signature, self.object.getName())
+        elif self.change_type == CHANGETYPE.ADD:
+            self.msg = "%s %s added" % (
+                self.object.class_signature, self.object.getName())
 
 
 class ChangeCmd(Change):
-    def __init__(self, doc):
-        Change.__init__(self, doc)
-        self.cmd_info = doc.get('command') + " " + doc.get('params')
-        if doc.get("duration"):
-            self.action = self.CMD_FINISHED
-            self.msg = "Command finished: %s" % self.getCmdInfo()
-        else:
-            self.action = self.CMD_EXECUTED
-            self.msg = "Command executed: %s" % self.getCmdInfo()
+    def __init__(self, obj, change_type):
+        Change.__init__(self, obj, change_type)
+        if self.change_type == CHANGETYPE.UPDATE:
+            self.msg = "Command finished: %s@%s: %s %s" % (
+                self.object.user, self.object.hostname,
+                self.object.command, self.object.params)
+        elif self.change_type == CHANGETYPE.ADD:
+            self.msg = "Command started: %s@%s: %s %s" % (
+                self.object.user, self.object.hostname,
+                self.object.command, self.object.params)
 
-    def getCmdInfo(self):
-        return self.cmd_info
 
 change_factory = ChangeFactory()

@@ -10,13 +10,11 @@
 		hosts		= get_obj(hurl);
 		interfaces	= get_obj(iurl, interfaces);
 		services	= get_obj(surl, services);
-		var table = "<div class='seccion2'><h2>Hosts report</h2>";
+		var table = "<header><h2>Hosts report</h2></header><div class='main'>";
 		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+
-				"<th>Interfaces</th>"+
 				"<th>OS</th>"+
-				"<th>Owned</th>"+
 				"</tr></thead><tbody>";
 		$.each(hosts, function(k, v){
 			var hname = "";
@@ -27,12 +25,21 @@
 				hname = "<a href=\"host-"+k+"\" class=\"host\">"+v.name+"</a>";
 			}
 			if(!interfaces.hasOwnProperty(k)) interfaces[k] = 0;
+			var icon = "";
+			if(v.os.toLowerCase().indexOf("windows") > -1) icon = "windows";
+			if(v.os.toLowerCase().indexOf("osx") > -1) icon = "osx";
+			if(v.os.toLowerCase().indexOf("linux") > -1
+				|| v.os.toLowerCase().indexOf("unix") > -1) icon = "linux";
+			var os = "";
+			if(icon === "") {
+				os = "<span class=\"glyphicon glyphicon-question-sign faraday-qtips\" title="+v.os+"></span>";
+			} else {
+				os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+v.os+"\"/>";
+			}
 			table += "<tr id=\"host-"+k+"\">"+
 				"<td>"+hname+"</td>"+
 				"<td>"+services[k]+"</td>"+
-				"<td>"+interfaces[k]+"</td>"+
-				"<td>"+v.os+"</td>"+
-				"<td>"+v.owned+"</td></tr>";
+				"<td>"+os+"</td></tr>";
 		});
 		table += "</tbody></table></div>";
 		return table;
@@ -57,27 +64,34 @@
 		interfaces	= get_obj(iurl, interfaces);
 		scount		= get_obj(surl, services);
 		if(!bolean){
-		var table = "<h2>Hosts with Service "+name+" ("+hids.length+" total)</h2>"+
-				"<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
-				"<th>Host</th>"+
-				"<th>Services</th>"+
-				"<th>Interfaces</th>"+
-				"<th>OS</th>"+
-				"<th>Owned</th>"+
-				"</tr></thead><tbody>";
-		$.each(hosts, function(k, v){
-			var id = v['id'];
-			v = v['value'];
-			if($.inArray(id, hids) > -1) {
-				table += "<tr id=\"host-"+id+"\">"+
-					"<td><a href=\"host-"+id+"\" class=\"host\">"+v['name']+"</a></td>"+
-					"<td>"+scount[id]+"</td>"+
-					"<td>"+interfaces[id]+"</td>"+
-					"<td>"+v['os']+"</td>"+
-					"<td>"+v['owned']+"</td></tr>";
-			}
-		});
-		table += "</tbody></table></div>";
+			var table = "<header><h2>Hosts with Service "+name+" ("+hids.length+" total)</h2></header><header class='texto'><p id='text'></p></header><div class='main' style='height:240px'>"+
+					"<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+					"<th>Host</th>"+
+					"<th>Services</th>"+
+					"<th>OS</th>"+
+					"</tr></thead><tbody>";
+			$.each(hosts, function(k, v){
+				var id = v['id'];
+				v = v['value'];
+				var icon = "";
+				if(v.os.toLowerCase().indexOf("windows") > -1) icon = "windows";
+				if(v.os.toLowerCase().indexOf("osx") > -1) icon = "osx";
+				if(v.os.toLowerCase().indexOf("linux") > -1
+					|| v.os.toLowerCase().indexOf("unix") > -1) icon = "linux";
+				var os = "";
+				if(icon === "") {
+					os = "<span class=\"glyphicon glyphicon-question-sign faraday-qtips\" title="+v.os+"></span>";
+				} else {
+					os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+v.os+"\"/>";
+				}
+				if($.inArray(id, hids) > -1) {
+					table += "<tr id=\"host-"+id+"\">"+
+						"<td><a href=\"host-"+id+"\" class=\"host\">"+v['name']+"</a></td>"+
+						"<td>"+scount[id]+"</td>"+
+						"<td>"+os+"</td></tr>";
+				}
+			});
+			table += "</tbody></table></div>";
 		}else{
 			var table = "<table><tbody>"; 
 			$.each(hosts, function(k, v){
@@ -87,8 +101,8 @@
 				table += "<tr id=\"host-"+id+"\">"+
 					"<td><p>"+v['name']+"</p></td></tr>";
 			}
-		});
-		table += "</tbody></table>";
+			});
+			table += "</tbody></table>";
 		}
 		return table;
 	}
@@ -97,11 +111,10 @@
 		design = "hosts";
 		// el param design ya no es el recibido por GET, puesto que ahora estamos en services
 		var services = get_obj_filter(workspace, "services", "byhost", hid);
-		var table = "<h2>Services for Host "+hname+" ("+services.length+" total)</h2>"+
+		var table = "<header><h2>Services for Host "+hname+" ("+services.length+" total)</h2></header><header class='texto'><p id='text'></p></header><div class='main' style='height:240px'>"+
 			"<table id=\"services-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
 			"<th>Name</th>"+
 			"<th>Description</th>"+
-			"<th>Owned</th>"+
 			"<th>Ports</th>"+
 			"<th>Protocol</th>"+
 			"<th>Status</th></tr></thead><tbody>";
@@ -123,7 +136,6 @@
 				table += "<tr id=\"service-"+sid+"\">"+
 					"<td><a href=\"service-"+sid+"\" class=\"service\">"+v['name']+"</a></td>"+
 					"<td>"+desc+"</td>"+
-					"<td>"+v['owned']+"</td>"+
 					"<td>"+ports+"</td>"+
 					"<td>"+v['protocol']+"</td>"+
 					"<td>"+v['status']+"</td></tr>";
@@ -164,12 +176,75 @@
 		$(document).on('click', 'a#back_to_services', function(e) {
 			var div = load_services(hid, hname);
 			$("#hosts").html(div);
-            // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
-            $("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a></p>");
+			$("#text").html("<a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a>");
+			sorter(2);
+			var selector = "#services-"+workspace+" th.header:first-child";
+			$(selector).css("padding-right","111px");
 		});
 	}
+	//sortea la columna que vos le pasas, columna = numero 
+	function sorter(columna){
+		$(".tablesorter").tablesorter({
+          	 sortList: [[columna,0]] 
+        });
+	}
 
-$( document ).ready(function() {	
+$( document ).ready(function() {
+    /*
+    $('#cont').on('mouseenter', '.glyphicon-info-sign', function (event) {
+        $(this).qtip({
+            overwrite: false, // Don't overwrite tooltips already bound
+            show: {
+                event: event.type, // Use the same event type as above
+                ready: true // Show immediately - important!
+            },
+            hide: {
+                fixed: true,
+                delay: 300
+            },
+            content:{
+                text: function(event, api) {
+                    var res = "<div id=\"contenido\">"+$(this).attr("title")+"</div>";
+                    return res;
+                }
+            },
+            position:{
+                my: 'top center',
+                at: 'bottom center',
+                adjust: {
+                    method: 'shift'
+                }
+            }
+        });
+    });
+    $('#cont').on('mouseenter', 'img[title]', function (event) {
+        $(this).qtip({
+            overwrite: false, // Don't overwrite tooltips already bound
+            show: {
+                event: event.type, // Use the same event type as above
+                ready: true // Show immediately - important!
+            },
+            hide: {
+                fixed: true,
+                delay: 300
+            },
+            content:{
+                text: function(event, api) {
+                    var name = $(this).attr("title");
+                    var hosts = "<div id='contenido'>" +name+ "</div>";
+                    return hosts;
+                }
+            },
+            position:{
+                my: 'top center',
+                at: 'bottom center',
+                adjust: {
+                    method: 'shift'
+                }
+            }
+        });
+    });
+    */
 	$(document).on('click', 'a.host', function(e) {
             // no queremos que cargue nada
             e.preventDefault();
@@ -181,7 +256,10 @@ $( document ).ready(function() {
             back_to_services(hid,hname);
             $("#hosts").html(div);
             // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
-            $("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a></p>");
+            $("#text").html("<a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a>");
+            var selector = "#services-"+workspace+" th.header:first-child";
+            sorter(2);
+            $(selector).css("padding-right","111px");
 });
         // cuando se clickea un servicio carga todos los hosts que tienen ese servicio
         $(document).on('click', 'a.service', function(e) {
@@ -190,7 +268,8 @@ $( document ).ready(function() {
             var div = load_hosts_by_service(sname);
             $("#hosts").html(div);
             // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
-            $("#hosts").prepend("<p><a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_services'>Back</a></p>");
+            $("#text").html("<a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_services'>Back</a>");
+            sorter(0);
         });
 
         // comportamiento para "View all hosts"
@@ -198,10 +277,12 @@ $( document ).ready(function() {
             e.preventDefault();
             var div = load_all_hosts();
             $("#hosts").html(div);
+            sorter(0);
         });
         $(document).on('click', 'a#back_to_host', function(e) {
 		    e.preventDefault();
             var div = load_all_hosts();
             $("#hosts").html(div);
+            sorter(0);
         });
 });

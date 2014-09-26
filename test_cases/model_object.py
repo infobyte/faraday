@@ -15,7 +15,7 @@ from mockito import mock
 from model import api
 from model.hosts import Host, Interface, Service
 from model.workspace import WorkspaceOnCouch, WorkspaceManager, WorkspaceOnFS
-from model.common import ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote
+from model.common import ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote, ModelComposite
 from persistence.orm import WorkspacePersister
 import random
 
@@ -29,12 +29,13 @@ class ModelObjectCRUD(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.model_controller = controller.ModelController(mock())
+        cls.model_controller = controller.ModelController(mock(), mock())
         api.setUpAPIs(cls.model_controller)
 
     def setUp(self):
         self.wm = WorkspaceManager(self.model_controller,
                                     mock(plcore.PluginController))
+
         self.temp_workspace = self.wm.createWorkspace(
                                         test_utils.new_random_workspace_name(),
                                         workspaceClass=WorkspaceOnCouch)
@@ -115,8 +116,11 @@ class ModelObjectCRUD(unittest.TestCase):
         added_interface = added_host.getInterface(interface.getID())
         added_service = added_interface.getService(service.getID())
         vulns = added_service.getVulns()
+
         # Then
         self.assertIn(vuln, vulns, 'Vuln not added')
+        self.assertEquals(len(vulns), 1, 'More Vulns than supposed')
+        self.assertEquals(vuln, added_service.getVuln(vuln.getID()), 'Vuln not correctly recovered')
 
 
     def testAddVulnWebToHost(self):
@@ -152,10 +156,6 @@ class ModelObjectCRUD(unittest.TestCase):
         added_host = self.model_controller.getHost(host.getName())
         added_interface = added_host.getInterface(interface.getID())
         vulns = added_interface.getVulns()
-        self.assertIn(vuln, vulns, 'Vuln not added')
-
-        self.temp_workspace.load()
-
         # Then
         added_host = self.model_controller.getHost(host.getName())
         added_interface = added_host.getInterface(interface.getID())
@@ -200,6 +200,8 @@ class ModelObjectCRUD(unittest.TestCase):
         added_host = self.model_controller.getHost(h.getName())
         notes = added_host.getNotes()
         self.assertIn(note, notes, 'Note not added')
+        self.assertEquals(len(notes), 1, 'More Vulns than supposed')
+        self.assertEquals(note, h.getNote(note.getID()), 'Vuln not correctly recovered')
 
 
     def testAddNoteToInterface(self):

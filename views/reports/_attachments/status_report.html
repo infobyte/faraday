@@ -1,0 +1,297 @@
+<!-- Faraday Penetration Test IDE &#45; Community Version -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+<!DOCTYPE html>   
+<!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
+<head>
+    <meta charset="utf-8"/>
+    <!--[if IE]><![endif]-->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <title>Status Report | Faraday</title>
+    <meta name="description" content=""/>
+    <meta name="keywords" content=""/>
+    <meta name="author" content=""/>
+
+    <!-- !CSS -->
+    <link rel="stylesheet" type="text/css" href="normalize.css" />
+    <link rel="stylesheet" type="text/css" href="estilos.css" />
+    <link rel="stylesheet" type="text/css" href="script/jquery.qtip.css" />
+    <link rel="stylesheet" href="script/bootstrap.min.css">
+    <link rel="stylesheet" href="script/bootstrap-theme.min.css">
+    <link href="favicon.ico" rel="shortcut icon">
+    <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
+    <link href="images/site_preview.jpg" rel="image_src" />
+
+    <script type="text/javascript" src="script/couch.js"></script>
+    <script type="text/javascript" src="script/common.js"></script>
+    <script type="text/javascript" src="/_utils/script/jquery.js"></script>
+    <script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
+    <script type="text/javascript" src="script/bootstrap.min.js"></script>
+    <script type="text/javascript" src="script/angular.js"></script>
+    <script type="text/javascript" src="script/angular-route.js"></script>
+    <script type="text/javascript" src="script/csv-export.js"></script>
+    <script type="text/javascript" src="script/jquery.qtip.js"></script>
+    <style>
+        .wrapper{width:auto;}
+        header.head{position: fixed;width:100%;z-index:10000}
+        aside{position: fixed;top:0px;height: 100%}
+        .fila{width: 100%;padding:40px 0 0 90px}
+        .seccion{width: 100%;padding: 0px}
+    </style>
+</head>
+
+<body ng-app="status-report">
+    <div id="cont">
+        <div class="wrapper">
+            <header class="head">
+                <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
+                <!--
+                <nav>
+                    <ul class="menu">
+                        <li>
+                            <a href="#">Opción 1</a>
+                        </li>
+                        <li>
+                            <a href="#">Opción 1</a>
+                        </li>
+                        <li>
+                            <a href="#" class="activo">Username</a>
+                            <ul>
+                                <li><a href="#">Sub opción 1</a></li>
+                                <li><a href="#">Sub opción 2</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </nav>
+                -->
+            </header>
+            
+            <section id="main" class="seccion clearfix">
+                <aside>
+                    <nav>
+                        <ul>
+                            <li>
+                                <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
+                                    <img src="images/ico-graph.png" alt="WS Dashboard"/>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="status-report" style="color: #ffffff !important" title="Status Report">
+                                    <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+                <div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <span id="ws-name" class="label label-default" title="Current workspace"></span><!-- WS name -->
+                        
+                        <div id="ws-control" class="btn-group">
+                            <button id="csv-export" type="button" class="btn btn-success" title="Download CSV for current workspace">
+                                <span class="glyphicon glyphicon-download"></span>
+                            </button>
+                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                                Change workspace <span class="caret"></span>
+                            </button>
+                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
+                            </ul><!-- WS navigation -->
+                        </div><!-- #ws-control -->
+                    </h2><!-- .ws-label -->
+                    <div class="reports" ng-controller="statusReportCtrl">
+                        <form class="form-inline" style="margin: 10px !important;" role="form">
+                            <div class="form-group">
+                                <label class="sr-only" for="filter-by">Filter by</label>
+                                <input type="text" class="form-control input-sm" id="filter-by" placeholder="Filter by" ng-model="query">
+                            </div>
+                        </form>
+                        <table id="hosts" class="csv-export tablesorter">
+                            <thead>
+                                <tr>
+                                    <th><a href="" ng-click="sortField = 'date'; reverse = !reverse">Date</a></th>
+                                    <th><a href="" ng-click="sortField = 'web'; reverse = !reverse">Web</a></th>
+                                    <th><a href="" ng-click="sortField = 'status'; reverse = !reverse">Status</a></th>
+                                    <th><a href="" ng-click="sortField = 'severity'; reverse = !reverse">Severity</a></th>
+                                    <th><a href="" ng-click="sortField = 'name'; reverse = !reverse">Name</a></th>
+                                    <th><a href="" ng-click="sortField = 'target'; reverse = !reverse">Target</a></th>
+                                    <th><a href="" ng-click="sortField = 'desc'; reverse = !reverse">Desc</a></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse">
+                                    <td>{{v.date}}</td>
+                                    <td>
+                                        <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
+                                        <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>
+                                    </td>
+                                    <td>Vulnerable</td>
+                                    <td>{{v.severity}}</td>
+                                    <td>{{v.name}}</td>
+                                    <td>{{v.target}}</td>
+                                    <td data-dd-collapse-text="200">{{v.desc}}</td>
+                                </tr>
+                            </tbody>
+                        </table><!-- #hosts -->
+                    </div><!-- .reports -->
+                </div><!-- #reports-main -->
+            </section>
+        </div><!--!/#wrapper -->
+    </div><!--!/#container -->
+
+    <script type="text/javascript">
+        $.ajaxSetup({
+            async: false
+        });
+        dominio = location.href;
+        space = dominio.split("#");
+        workspace = space[1];
+
+        var statusReport = angular.module('status-report', ['ngRoute'])
+            .controller('statusReportCtrl', ['$scope', 'statusReportFact', function($scope, statusReport) {
+                $scope.vulns = statusReport;
+                $scope.sortField = 'date';
+                $scope.reverse = true;
+            }])
+            .factory('statusReportFact', ['vulnsFact', 'hostsFact', function(vulns, hosts) {
+                var res = [];
+                vulns.forEach(function(element, index, array) {
+                    element.target = hosts[element.parent].name;
+                });
+                return vulns;
+            }])
+            .factory('vulnsFact', function() {
+                var vulns = [];
+                vulns_url = "/"+ workspace +"/_design/vulns/_view/all";
+                // gets vulns json from couch
+                $.getJSON(vulns_url, function(data) {
+                    $.each(data.rows, function(n, obj){
+                            var d = new Date(0); 
+                            d.setUTCSeconds(obj.value.date);
+                            d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
+                            var web = false;
+                            if(obj.value.status.toLowerCase().indexOf("web") > -1) web = true;
+                            vulns.push({
+                                "date": d, 
+                                "status": obj.value.status, 
+                                "name": obj.value.name, 
+                                "desc": obj.value.desc, 
+                                "severity": obj.value.severity,
+                                "web": web,
+                                "parent": obj.key.substring(0, obj.key.indexOf('.'))});
+                    });
+                });
+                return vulns;
+            })
+            .factory('hostsFact', function() {
+                hosts_url = "/" + workspace + "/_design/hosts/_view/hosts";
+                var hosts = [];
+                //gets hosts json from couch
+                $.getJSON(hosts_url, function(data) {
+                    $.each(data.rows, function(n, obj) {
+                       hosts[obj.id] = {"name": obj.value.name, "os": obj.value.os, "owned": obj.value.owned};
+                    }); 
+                });
+                return hosts;
+            })
+            .directive('ddCollapseText', ['$compile', function($compile) {
+                return {
+                    restrict: 'A',
+                    replace: true,
+                    link: function(scope, element, attrs) {
+
+                        // start collapsed
+                        scope.collapsed = false;
+
+                        // create the function to toggle the collapse
+                        scope.toggle = function() {
+                            scope.collapsed = !scope.collapsed;
+                        };
+
+                        // get the value of the dd-collapse-text attribute
+                        attrs.$observe('ddCollapseText', function(maxLength) {
+                            // get the contents of the element
+                            var text = element.text();
+
+                            if (text.length > maxLength) {
+                                // split the text in two parts, the first always showing
+                                var firstPart = String(text).substring(0, maxLength);
+                                var secondPart = String(text).substring(maxLength, text.length);
+
+                                // create some new html elements to hold the separate info
+                                var firstSpan = $compile('<span>' + firstPart + '</span>')(scope);
+                                var secondSpan = $compile('<span ng-if="collapsed">' + secondPart + '</span>')(scope);
+                                var moreIndicatorSpan = $compile('<span ng-if="!collapsed"> ...</span>')(scope);
+                                var toggleButton = $compile('<span class="collapse-text-toggle" ng-click="toggle()"> <a href="">{{collapsed ? "less" : "more"}}</a></span>')(scope);
+
+                                // remove the current contents of the element
+                                // and add the new ones we created
+                                element.empty();
+                                element.append(firstSpan);
+                                element.append(secondSpan);
+                                element.append(moreIndicatorSpan);
+                                element.append(toggleButton);
+                            }
+                        });
+                    }
+                };
+            }]);
+    </script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('table.csv-export').toCSV();
+        var counter = 0;
+        var h = 0;
+        $.couch.allDbs({
+                success : function(dbs) {
+                  dbs.filter(function(db_name){
+                      return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
+                  .forEach(function(db) {
+                        // WSs list
+                        $("#ws-control #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
+                        // navigation between WSs
+                      if(window.location.hash === "" && counter === 0) {
+                        window.location.hash = db;
+                       }
+                      counter +=1;
+                });
+                if(counter < 1) { 
+                    $("#reports-main").empty();
+                      $("#reports-main").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
+            }
+          }
+        });
+        // WSs dropdown navigation
+        $(document).on("click", "a.ws", function(e) {
+            e.preventDefault();
+            var hash = $(this).attr("href").substr(1);
+            window.location.hash = hash;
+            location.reload();
+        });
+        $(document).on("click", "#refresh", function() {
+            location.reload();
+        });
+        $(document).on("click", "a.ws-dashboard", function(e) {
+            e.preventDefault();
+            var url = "../././reports/index.html#" + workspace;
+            window.location.href = url;
+        });
+        $(document).on("click", "a.status-report", function(e) {
+            e.preventDefault();
+            var url = "../././reports/status_report.html#" + workspace;
+            window.location.href = url;
+        });
+    
+        var ret = "Viewing "+ workspace;
+        $('#reports-main .ws-label span#ws-name').text(ret);
+
+    });
+</script>
+</body>
+</html> 

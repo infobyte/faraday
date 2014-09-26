@@ -10,8 +10,10 @@ import unittest
 import os
 import sys
 sys.path.append('.')
-from model.workspace import (FSManager, CouchdbManager, WorkspaceManager,
-                             WorkspaceOnCouch, WorkspaceOnFS)
+from managers.model_managers import WorkspaceManager
+from managers.mapper_manager import MapperManager
+from controllers.change import ChangeController
+from persistence.persistence_managers import DBTYPE, DbManager
 from model.controller import ModelController
 
 from plugins.core import PluginController
@@ -27,11 +29,16 @@ class TestWorkspacesManagement(unittest.TestCase):
 
     def setUp(self):
         self.couch_uri = CONF.getCouchURI()
-        self.cdm = CouchdbManager(uri=self.couch_uri)
+        # self.cdm = CouchdbManager(uri=self.couch_uri)
         wpath = os.path.expanduser("~/.faraday/persistence/" )
-        self.fsm = FSManager(wpath)
-        self.wm = WorkspaceManager(mock(ModelController),
-                                   mock(PluginController))
+        # self.fsm = FSManager(wpath)
+        
+        self.dbManager = DbManager()
+        self.mappersManager = MapperManager()
+        self.changesController = ChangeController(self.mappersManager)
+
+        self.wm = WorkspaceManager(self.dbManager, self.mappersManager,
+                                    self.changesController)
         self._fs_workspaces = []
         self._couchdb_workspaces = []
 
@@ -66,13 +73,10 @@ class TestWorkspacesManagement(unittest.TestCase):
         """
         wname = self.new_random_workspace_name()
         self._fs_workspaces.append(wname)
-        self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
-
-        self.assertFalse(self.cdm.existWorkspace(wname))
+        self.wm.createWorkspace(wname, 'desc', DBTYPE.FS)
 
         wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
         self.assertTrue(os.path.exists(wpath))
-        self.assertEquals(WorkspaceOnFS.__name__, self.wm.getWorkspaceType(wname))
 
     def test_create_couch_workspace(self):
         """
@@ -80,34 +84,38 @@ class TestWorkspacesManagement(unittest.TestCase):
         """
         wname = self.new_random_workspace_name()
         self._couchdb_workspaces.append(wname)
-        self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnCouch)
+        self.wm.createWorkspace(wname, 'a desc', DBTYPE.COUCHDB)
 
-        self.assertTrue(self.cdm.existWorkspace(wname))
+        res_connector = self.dbManager.getConnector(wname)
+        self.assertTrue(res_connector)
+        self.assertEquals(res_connector.getType(), DBTYPE.COUCHDB)
+        self.assertTrue(self.mappersManager.find(wname), "Workspace document not found")
 
         wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
         self.assertFalse(os.path.exists(wpath))
 
-        self.assertEquals(WorkspaceOnCouch.__name__, self.wm.getWorkspaceType(wname))
+        # self.assertEquals(WorkspaceOnCouch.__name__, self.wm.getWorkspaceType(wname))
 
     def test_delete_couch_workspace(self):
         """
         Verifies the deletion of a couch workspace
         """
         wname = self.new_random_workspace_name()
-        self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnCouch)
+        self.wm.createWorkspace(wname, 'a desc', DBTYPE.COUCHDB)
 
-        self.assertTrue(self.cdm.existWorkspace(wname))
+        self.assertTrue(self.mappersManager.find(wname), "Workspace document not found")
 
         #Delete workspace
         self.wm.removeWorkspace(wname)
-        self.assertFalse(self.cdm.existWorkspace(wname))
+        self.assertIsNone(self.mappersManager.find(wname))
+        self.assertFalse(self.dbManager.connectorExists(wname))
 
     def test_delete_fs_workspace(self):
         """
         Verifies the deletion of a filesystem workspace
         """
         wname = self.new_random_workspace_name()
-        self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
+        self.wm.createWorkspace(wname, 'desc', DBTYPE.FS)
 
         wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
         self.assertTrue(os.path.exists(wpath))
@@ -122,18 +130,15 @@ class TestWorkspacesManagement(unittest.TestCase):
         wnamefs = self.new_random_workspace_name()
         wnamecouch = self.new_random_workspace_name() 
         # FS
-        self.fsm.addWorkspace(wnamefs)
+        self.wm.createWorkspace(wnamefs, 'a desc', DBTYPE.FS)
         # Couch
-        self.cdm.addWorkspace(wnamecouch)
-
-        # When  loading workspaces
-        self.wm.loadWorkspaces()
+        self.wm.createWorkspace(wnamecouch, 'a desc', DBTYPE.COUCHDB)
 
         self.assertIn(wnamefs, self.wm.getWorkspacesNames(), 'FS Workspace not loaded')
         self.assertIn(wnamecouch, self.wm.getWorkspacesNames(), 'Couch Workspace not loaded')
 
-        self.assertEquals(self.wm.getWorkspaceType(wnamefs), WorkspaceOnFS.__name__, 'Workspace type bad defined' )
-        self.assertEquals(self.wm.getWorkspaceType(wnamecouch), WorkspaceOnCouch.__name__, 'Workspace type bad defined') 
+        self.assertEquals(self.wm.getWorkspaceType(wnamecouch), 'CouchDB', 'Workspace type bad defined' )
+        self.assertEquals(self.wm.getWorkspaceType(wnamefs), 'FS', 'Workspace type bad defined') 
 
 
     def test_get_workspace(self):
@@ -141,28 +146,27 @@ class TestWorkspacesManagement(unittest.TestCase):
         
         # When
         wname = self.new_random_workspace_name()
-        workspace = self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
+        workspace = self.wm.createWorkspace(wname, 'a desc', DBTYPE.FS)
 
-        added_workspace = self.wm.getWorkspace(wname)
+        added_workspace = self.wm.openWorkspace(wname)
 
         # Then
         self.assertIsNotNone(workspace, 'Workspace added should not be none')
         self.assertEquals(workspace, added_workspace, 'Workspace created and added diffier')
 
-    def test_get_existent_couch_workspace(self):
+    def _test_get_existent_couch_workspace(self): # Deprecate
         """ Create a workspace in the backend, now ask for it """
         
         # When
         wname = self.new_random_workspace_name()
         workspace = self.cdm.addWorkspace(wname)
-        self.wm.loadWorkspaces()
 
         added_workspace = self.wm.getWorkspace(wname)
 
         # Then
         self.assertIsNotNone(added_workspace, 'Workspace added should not be none')
 
-    def test_get_existent_fs_workspace(self):
+    def _test_get_existent_fs_workspace(self): # Deprecate
         """ Create a workspace in the backend, now ask for it """
         
         # When
@@ -178,7 +182,7 @@ class TestWorkspacesManagement(unittest.TestCase):
     def test_get_non_existent_workspace(self):
         """ Retrieve a non existent workspace """
         
-        added_workspace = self.wm.getWorkspace('inventado')
+        added_workspace = self.wm.openWorkspace('inventado')
 
         # Then
         self.assertIsNone(added_workspace, 'Workspace added should not be none') 
@@ -187,48 +191,45 @@ class TestWorkspacesManagement(unittest.TestCase):
         ''' create a workspace through the backend, then set it as active '''
 
         wname = self.new_random_workspace_name()
-        workspace = self.fsm.addWorkspace(wname)
-        self.wm.loadWorkspaces()
-
-        added_workspace = self.wm.getWorkspace(wname)
+        workspace = self.wm.createWorkspace(wname, 'desc', DBTYPE.FS)
 
         # when
-        self.wm.setActiveWorkspace(added_workspace)
+        self.wm.setActiveWorkspace(workspace)
 
-        self.assertEquals(added_workspace, self.wm.getActiveWorkspace(),
+        self.assertEquals(workspace, self.wm.getActiveWorkspace(),
                     'Active workspace diffiers with expected workspace')
 
-        self.assertTrue(self.wm.isActive(added_workspace.name),
+        self.assertTrue(self.wm.isActive(workspace.name),
                 'Workspace is active flag not set')
 
     def test_remove_fs_workspace(self):
         # First
         wname = self.new_random_workspace_name()
-        added_workspace = self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnFS)
+        added_workspace = self.wm.createWorkspace(wname, 'desc', DBTYPE.FS)
 
         # When
         self.wm.removeWorkspace(wname) 
 
         # Then
-        self.assertNotIn(wname, self.fsm.getWorkspacesNames())
+        self.assertNotIn(wname, self.wm.getWorkspacesNames())
+        wpath = os.path.expanduser("~/.faraday/persistence/%s" % wname)
+        self.assertFalse(os.path.exists(wpath))
 
     def test_remove_couch_workspace(self):
         # First
         wname = self.new_random_workspace_name()
-        added_workspace = self.wm.createWorkspace(wname, workspaceClass=WorkspaceOnCouch)
+        added_workspace = self.wm.createWorkspace(wname, 'desc', DBTYPE.COUCHDB)
 
         # When
         self.wm.removeWorkspace(wname) 
 
         # Then
-        self.assertNotIn(wname, self.cdm.getWorkspacesNames())
+        self.assertNotIn(wname, self.wm.getWorkspacesNames())
 
     def test_remove_non_existent_workspace(self):
         # When
         self.wm.removeWorkspace('invented') 
 
-        # Then
-        self.assertNotIn('invented', self.cdm.getWorkspacesNames())
 
 
 if __name__ == '__main__':

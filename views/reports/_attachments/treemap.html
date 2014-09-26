@@ -1,0 +1,272 @@
+<!-- Faraday Penetration Test IDE &#45; Community Version -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+<!DOCTYPE html>   
+<!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
+<head>
+    <meta charset="utf-8"/>
+    <!--[if IE]><![endif]-->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <title>All services | Faraday</title>
+    <meta name="description" content=""/>
+    <meta name="keywords" content=""/>
+    <meta name="author" content=""/>
+
+    <!-- !CSS -->
+    <link rel="stylesheet" type="text/css" href="estilos.css" />
+    <link rel="stylesheet" type="text/css" href="script/jquery.qtip.css" />
+    <link rel="stylesheet" href="././././script/bootstrap.min.css">
+    <link rel="stylesheet" href="././././script/bootstrap-theme.min.css">
+    <link href="favicon.ico" rel="shortcut icon">
+    <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
+    <link href="images/site_preview.jpg" rel="image_src" />
+
+    <script src="./././script/d3.min.js"></script>
+    <script type="text/javascript" src="script/couch.js"></script>
+    <script src="script/common.js"></script>
+    <script type="text/javascript" src="/_utils/script/sha1.js"></script>
+    <script type="text/javascript" src="script/app.js"></script>
+    <script type="text/javascript" src="script/d3_summarized.js"></script>
+    <script type="text/javascript" src="script/reports_list.js"></script>
+    <script type="text/javascript" src="/_utils/script/json2.js"></script>
+    <script type="text/javascript" src="/_utils/script/jquery.js"></script>
+    <script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
+    <script type="text/javascript" src="script/jquery.tablesorter.min.js"></script>
+    <script src="././././script/bootstrap.min.js"></script>
+    <script src="script/jquery.qtip.min.js"></script>
+</head>
+
+<body>
+    <div id="cont">
+        <div class="wrapper">
+            <header class="head">
+                <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
+                <!--
+                <nav>
+                    <ul class="menu">
+                        <li>
+                            <a href="#">Opción 1</a>
+                        </li>
+                        <li>
+                            <a href="#">Opción 1</a>
+                        </li>
+                        <li>
+                            <a href="#" class="activo">Username</a>
+                            <ul>
+                                <li><a href="#">Sub opción 1</a></li>
+                                <li><a href="#">Sub opción 2</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </nav>
+                -->
+            </header>
+            
+            <aside>
+                <nav>
+                    <ul>
+                        <li>
+                            <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
+                                <img src="images/ico-graph.png" alt="WS Dashboard"/>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="status-report" style="color: #ffffff !important" title="Status Report">
+                                <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
+            
+            <section id="main" class="seccion clearfix">
+                <div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <span id="ws-name" class="label label-default" title="Current workspace"></span><!-- WS name -->
+                        
+                        <div id="ws-control" class="btn-group">
+                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                                Change workspace <span class="caret"></span>
+                            </button>
+                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
+                            </ul><!-- WS navigation -->
+                        </div><!-- #ws-control -->
+                    </h2><!-- .ws-label -->
+                </div><!-- #reports-main -->
+                <div class="seccion treemap">
+                  <article id="chart">
+                    <header>
+                      <h2>All Services
+                        <span class="glyphicon glyphicon-info-sign faraday-qtips" title="All services ordered by host amount"></span>
+                      </h2>
+                    </header>
+                </article>
+              </div>
+            </section>
+        </div><!--!/#wrapper -->
+    </div><!--!/#container -->
+    <script type="text/javascript">
+$(document).ready(function() {
+    var counter = 0;
+    var h = 0;
+    $.couch.allDbs({
+            success : function(dbs) {
+
+              dbs.filter(function(db_name){
+                  return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
+              .forEach(function(db) {
+                    // WSs list
+                    $("#ws-control #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
+                    // navigation between WSs
+
+                    counter +=1;
+            });
+            if(counter < 1) { 
+                $("#reports-main").empty();
+                  $("#reports-main").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
+        }
+      }
+    });
+        //get workspace
+    dominio = location.href;
+    space = dominio.split("#");
+    workspace = space[1];
+
+    // navegacion entre WSs en el dropdown
+    $(document).on("click", "a.ws", function(e) {
+        e.preventDefault();
+        var hash = $(this).attr("href").substr(1);
+        var pathname = window.location.pathname;
+        var params = "?workspace="+ hash + "&design=hosts&view=byservices";
+        window.location.href = pathname + params + "#" + hash;        
+    });
+    $(document).on("click", "#refresh", function() {
+        location.reload();
+    });
+    $(document).on("click", "a.ws-dashboard", function(e) {
+        e.preventDefault();
+        var url = "../././reports/index.html#" + workspace;
+        window.location.href = url;
+    });
+    $(document).on("click", "a.status-report", function(e) {
+        e.preventDefault();
+        var url = "../././reports/status_report.html#" + workspace;
+        window.location.href = url;
+    });
+
+    var ret = "Viewing "+ workspace;
+    $('#reports-main .ws-label span#ws-name').text(ret);
+
+     var navegador = navigator.userAgent;
+      if (navigator.userAgent.indexOf('MSIE') !=-1) {
+            $("aside").height(679);
+      } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
+            $("aside").height(679);
+      } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
+            $("aside").height(712);
+      } else if (navigator.userAgent.indexOf('Opera') !=-1) {
+            $("aside").height(679);
+      }
+});
+</script>
+    <style>
+          .node {
+          border: solid 1px white;
+          font: 10px sans-serif;
+          line-height: 12px;
+          overflow: hidden;
+          position: absolute;
+          text-indent: 2px;
+          }
+    </style>
+      <script>
+        var margin = {top: 10, right: 10, bottom: 10, left: 10},
+            width = 960 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+        var color = d3.scale.category20c();
+
+        var treemap = d3.layout.treemap()
+            .size([width, height])
+            .sticky(true)
+            .value(function(d) {return d.value});
+
+        var div = d3.select("#chart").append("div")
+            .style("position", "relative")
+            .style("width", (width + margin.left + margin.right) + "px")
+            .style("height", (height + margin.top + margin.bottom) + "px")
+            .style("left", margin.left + "px")
+            .style("top", margin.top + "px");
+
+        var workspace = getParameterByName('workspace');
+        var design = getParameterByName('design');
+        var view = getParameterByName('view');
+        
+        json_url = "/" + workspace + "/_design/" + design + "/_view/" + view + "?group=true";
+        d3.json(json_url, function(error, root) {
+          var jotason = {};
+          jotason["children"] = root["rows"];
+          var node = div.datum(jotason).selectAll(".node")
+              .data(treemap.nodes)
+            .enter().append("div")
+              .attr("class", "node")
+              .call(position)
+              .style("background", function(d) {return color(Math.floor(Math.random()*68)); })
+              .text(function(d) {return d.children ? null : d.key; });
+        });
+
+        function position() {
+          this.style("left", function(d) { return d.x + "px"; })
+              .style("top", function(d) { return d.y + "px"; })
+              .style("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
+              .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
+        }
+
+            //function para traer parametros
+            function getParameterByName( name ){
+                name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+                var regexS = "[\\?&]"+name+"=([^&#]*)";
+                var regex = new RegExp( regexS );
+                var results = regex.exec( window.location.href );
+                if( results == null )
+                  return "";
+                else
+                  return decodeURIComponent(results[1].replace(/\+/g, " "));
+              }
+
+    $('.treemap').on('mouseenter', '.faraday-qtips', function (event) {
+        $(this).qtip({
+            overwrite: false, // Don't overwrite tooltips already bound
+            show: {
+                event: event.type, // Use the same event type as above
+                ready: true // Show immediately - important!
+            },
+            hide: {
+                fixed: true,
+                delay: 300
+            },
+            content:{
+                text: function(event, api) {
+                    var res = "<div id=\"contenido\">"+$(this).attr("title")+"</div>";
+                    return res;
+                }
+            },
+            position:{
+                my: 'top center',
+                at: 'bottom center',
+                adjust: {
+                    method: 'shift'
+                }
+            }
+        });
+    });
+      </script> 
+  </body>
+</html>

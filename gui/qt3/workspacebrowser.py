@@ -232,7 +232,7 @@ class WorkspaceTreeWindow(qt.QVBox):
 
         if not selected_items:
                                                       
-            popup.insertItem('Create Workspace', 100)
+            popup.insertItem('No action available', 100)
         else:
             if len(selected_items) == 1:
                 if item.is_active:

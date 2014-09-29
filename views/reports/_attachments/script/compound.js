@@ -190,61 +190,6 @@
 	}
 
 $( document ).ready(function() {
-    /*
-    $('#cont').on('mouseenter', '.glyphicon-info-sign', function (event) {
-        $(this).qtip({
-            overwrite: false, // Don't overwrite tooltips already bound
-            show: {
-                event: event.type, // Use the same event type as above
-                ready: true // Show immediately - important!
-            },
-            hide: {
-                fixed: true,
-                delay: 300
-            },
-            content:{
-                text: function(event, api) {
-                    var res = "<div id=\"contenido\">"+$(this).attr("title")+"</div>";
-                    return res;
-                }
-            },
-            position:{
-                my: 'top center',
-                at: 'bottom center',
-                adjust: {
-                    method: 'shift'
-                }
-            }
-        });
-    });
-    $('#cont').on('mouseenter', 'img[title]', function (event) {
-        $(this).qtip({
-            overwrite: false, // Don't overwrite tooltips already bound
-            show: {
-                event: event.type, // Use the same event type as above
-                ready: true // Show immediately - important!
-            },
-            hide: {
-                fixed: true,
-                delay: 300
-            },
-            content:{
-                text: function(event, api) {
-                    var name = $(this).attr("title");
-                    var hosts = "<div id='contenido'>" +name+ "</div>";
-                    return hosts;
-                }
-            },
-            position:{
-                my: 'top center',
-                at: 'bottom center',
-                adjust: {
-                    method: 'shift'
-                }
-            }
-        });
-    });
-    */
 	$(document).on('click', 'a.host', function(e) {
             // no queremos que cargue nada
             e.preventDefault();

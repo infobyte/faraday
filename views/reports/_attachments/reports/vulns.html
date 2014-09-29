@@ -17,9 +17,9 @@ function get_report_div(workspace, view,design){
         $.each(vulns, function(k, v) {
 			divs += "<div class=\"columna unsexto\"><article class=\"dato2 fondo-"+k+"\">"+
                         "<section><div class=\"nro texto-blanco\">"+v+"</div>"+
-                        "<div class=\"txt texto-blanco\">"+k+"</div></article></div>";
+                        "<div class=\"txt texto-blanco\">"+k+"</div></section></article></div>";
         });
-		divs +="</article></section></div>";
+		divs +="</div></article></div>";
 		return divs;
 	});
 	return divs;

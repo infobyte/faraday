@@ -11,14 +11,14 @@ function get_report_div(workspace, view,design){
             tabla = "<div class='columna'><article><section class=\"sin_padding\" id=\"hosts\">"+
                             "<header><h2>Commands History "+
                             "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Shows current WS' executed commands\"></span></h2>"+
-                            "</h2></header><div class='main'>"+
+                            "</header><div class='main'>"+
                             "<table class=\"tablesorter\"><tr><td>No commands run yet</td></tr></table>"+
-                    "</div></section>";
+                    "</div></section></article></div>";
         }else{
                 tabla = "<div class='columna'><article><section class=\"sin_padding\" id=\"hosts\">"+
                             "<header><h2>Commands History "+
                             "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Shows current WS' executed commands\"></span></h2>"+
-                            "</h2></header><div class='main'>";
+                            "</header><div class='main'>";
                 tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
                             "<th>By</th><th>Command</th><th>Start Date</th><th>Duration</th>"+
                             "</tr></thead><tbody>";
@@ -41,8 +41,8 @@ function get_report_div(workspace, view,design){
                     tabla += "<tr><td class=\"faraday-qtips\" title=\""+ip+"\">"+user+"@"+hostname+"</td>"+
                                 "<td>"+obj.key+"</td><td>"+d+"</td><td>"+duration+"s</td></tr>";
                 });
-            tabla += "</tbody></table>";
-            tabla +="</article></section></div>";
+            tabla += "</tbody></table></div>";
+            tabla +="</section></article></div>";
         }
 		return tabla;
 	});

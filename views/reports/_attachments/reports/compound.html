@@ -19,7 +19,7 @@ function get_report_div(workspace, view, design){
                             "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Shows current WS' executed commands\"></span></h2>"+
                             "</h2></header>"+
                             "<table class=\"tablesorter\"><tr><td>No found any host</td></tr></table>"+
-                    "</div></section>";
+                    "</div></article></section>";
         }else{
 			var table = "<div class='columna'><article><section class='sin_padding' id='hosts'>"+
 	                        "<header><h2>Hosts report "+
@@ -57,7 +57,7 @@ function get_report_div(workspace, view, design){
 					"<td>"+services[k]+"</td>"+
 					"<td>"+os+"</td></tr>";
 			});
-			table += "</tbody></table></article></section></div>";
+			table += "</tbody></table></div></article></section></div>";
 		}
 		return table;
 	}

@@ -41,6 +41,7 @@
         aside{position: fixed;top:0px;height: 100%}
         .fila{width: 100%;padding:40px 0 0 90px}
         .seccion{width: 100%;padding: 0px}
+        #merge, #delete{margin:5px;float:right;}
     </style>
 </head>
 
@@ -49,25 +50,6 @@
         <div class="wrapper">
             <header class="head">
                 <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
-                <!--
-                <nav>
-                    <ul class="menu">
-                        <li>
-                            <a href="#">Opción 1</a>
-                        </li>
-                        <li>
-                            <a href="#">Opción 1</a>
-                        </li>
-                        <li>
-                            <a href="#" class="activo">Username</a>
-                            <ul>
-                                <li><a href="#">Sub opción 1</a></li>
-                                <li><a href="#">Sub opción 2</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </nav>
-                -->
             </header>
             
             <section id="main" class="seccion clearfix">
@@ -104,6 +86,12 @@
                             <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
                             </ul><!-- WS navigation -->
                         </div><!-- #ws-control -->
+                    <button id="delete" type="button" class="btn btn-danger" title="Refresh current workspace">
+                                    Delete
+                    </button>
+                    <button id="merge" type="button" class="btn btn-danger" title="Refresh current workspace">
+                                    Merge
+                    </button>
                     </h2><!-- .ws-label -->
                     <div class="reports" ng-controller="statusReportCtrl">
                         <form class="form-inline" style="margin: 10px !important;" role="form">
@@ -122,6 +110,7 @@
                                     <th><a href="" ng-click="sortField = 'name'; reverse = !reverse">Name</a></th>
                                     <th><a href="" ng-click="sortField = 'target'; reverse = !reverse">Target</a></th>
                                     <th><a href="" ng-click="sortField = 'desc'; reverse = !reverse">Desc</a></th>
+                                    <th><input type="checkbox" id="selectAll"/></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -136,6 +125,7 @@
                                     <td>{{v.name}}</td>
                                     <td>{{v.target}}</td>
                                     <td data-dd-collapse-text="200">{{v.desc}}</td>
+                                    <td><form><input type="checkbox" name='{{v.id}}'/></form></td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->
@@ -178,6 +168,7 @@
                             var web = false;
                             if(obj.value.status.toLowerCase().indexOf("web") > -1) web = true;
                             vulns.push({
+                                "id" : obj.id,
                                 "date": d, 
                                 "status": obj.value.status, 
                                 "name": obj.value.name, 
@@ -287,7 +278,23 @@
             var url = "../././reports/status_report.html#" + workspace;
             window.location.href = url;
         });
-    
+        $(document).on("click", "#selectAll", function(){
+            if($("#selectAll").is(':checked')) {  
+                $("input[type=checkbox]").attr('checked', true);
+            } else {
+                $("input[type=checkbox]").attr('checked', false);
+            }
+        });
+        $(document).on("click", "#delete", function(){
+           $('input:checked').each(function(){
+            console.log($(this)[0].name);
+           });
+        });
+        $(document).on("click", "#merge", function(){
+           $('input:checked').each(function(){
+            console.log($(this)[0].name);
+           });
+        });
         var ret = "Viewing "+ workspace;
         $('#reports-main .ws-label span#ws-name').text(ret);
 

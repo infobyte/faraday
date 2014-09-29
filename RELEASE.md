@@ -12,12 +12,17 @@ Sep 26, 2014:
 ----
 * https://github.com/infobyte/faraday/commit/440858ec8172193ce401bbf6a5f4b3052edb6edb
 
-New Dashboard design with summarized information
-D3.js Fancy visualizations
-Vulnerability Status report
-Command run user/host identification
-Vulnerability Statistics
-Optimization Refactor
+New Dashboard design with summarized information.
+
+D3.js Fancy visualizations.
+
+Vulnerability Status report.
+
+Command run user/host identification.
+
+Vulnerability Statistics.
+
+Optimization Refactor.
 
 Jun 06, 2014:
 ----

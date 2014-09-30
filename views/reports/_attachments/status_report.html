@@ -287,7 +287,10 @@
         });
         $(document).on("click", "#delete", function(){
            $('input:checked').each(function(){
-            console.log($(this)[0].name);
+            var id = $(this)[0].name;
+            if(this.checked){
+                $(this).parents("tr").remove();
+            }
            });
         });
         $(document).on("click", "#merge", function(){

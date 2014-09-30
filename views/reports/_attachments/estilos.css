@@ -270,7 +270,8 @@ aside {
 	.seccion.treemap{
 		width: 983px;
 		margin-left: 7%;
-		height:611px;
+		height:577px;
+		padding-top: 1%;
 	}
 .main{overflow-y: auto;height: 340px;overflow-x: hidden;}
 .seccion2 {

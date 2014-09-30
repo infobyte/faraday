@@ -8,6 +8,7 @@ Design for simplicity, users should feel no difference between their own termina
 
 ![GUI - Web](https://raw.github.com/wiki/infobyte/faraday/images/GUI_Dashboard_new.png)
 
+
 ![GUI - QT](https://raw.github.com/wiki/infobyte/faraday/images/Faraday-Mainwindow.png)
 
 Please read the [RELEASE notes](https://github.com/infobyte/faraday/blob/master/RELEASE.md)!

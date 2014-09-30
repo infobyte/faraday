@@ -44,7 +44,7 @@ Usage
 
 To get started, simply execute faraday and use the new console to start working in the pentest: 
 
-       $ ./faraday
+       $ ./faraday.py
     
 
 Links

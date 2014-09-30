@@ -1,0 +1,91 @@
+                <div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <span id="ws-name" class="label label-default"
+                        title="Current workspace">Viewing {{ workspace }}</span><!-- WS name -->
+                        
+                        <div id="ws-control" class="btn-group">
+                            <button id="csv-export" type="button" class="btn btn-success" title="Download CSV for current workspace">
+                                <span class="glyphicon glyphicon-download"></span>
+                            </button>
+                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                                Change workspace <span class="caret"></span>
+                            </button>
+                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
+                            </ul><!-- WS navigation -->
+                        </div><!-- #ws-control -->
+                    <button id="delete" type="button" class="btn btn-danger" title="Refresh current workspace">
+                                    Delete
+                    </button>
+                    <button id="merge" type="button" class="btn btn-danger" title="Refresh current workspace">
+                                    Merge
+                    </button>
+                    </h2><!-- .ws-label -->
+                    <div class="reports">
+                        <form class="form-inline" style="margin: 10px !important;" role="form">
+                            <div class="form-group">
+                                <label class="sr-only" for="filter-by">Filter by</label>
+                                <input type="text" class="form-control input-sm" id="filter-by" placeholder="Filter by" ng-model="query">
+                            </div>
+                        </form>
+                        <table id="hosts" class="csv-export tablesorter">
+                            <thead>
+                                <tr>
+                                    <th><a href="" ng-click="sortField = 'date'; reverse = !reverse">Date</a></th>
+                                    <th><a href="" ng-click="sortField = 'web'; reverse = !reverse">Web</a></th>
+                                    <th><a href="" ng-click="sortField = 'status'; reverse = !reverse">Status</a></th>
+                                    <th><a href="" ng-click="sortField = 'severity'; reverse = !reverse">Severity</a></th>
+                                    <th><a href="" ng-click="sortField = 'name'; reverse = !reverse">Name</a></th>
+                                    <th><a href="" ng-click="sortField = 'target'; reverse = !reverse">Target</a></th>
+                                    <th><a href="" ng-click="sortField = 'desc'; reverse = !reverse">Desc</a></th>
+                                    <th><input type="checkbox" id="selectAll"/></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse">
+                                    <td>{{v.date}}</td>
+                                    <td>
+                                        <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
+                                        <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>
+                                    </td>
+                                    <td>Vulnerable</td>
+                                    <td>{{v.severity}}</td>
+                                    <td>{{v.name}}</td>
+                                    <td>{{v.target}}</td>
+                                    <td data-dd-collapse-text="200">{{v.desc}}</td>
+                                    <td><form><input type="checkbox" name='{{v.id}}'/></form></td>
+                                </tr>
+                            </tbody>
+                        </table><!-- #hosts -->
+                    </div><!-- .reports -->
+                </div><!-- #reports-main -->
+            <script type="text/javascript">
+                $(document).ready(function() {
+                    var counter = 0;
+                    var workspace = location.href.split("#")[1].split("/")[2];
+
+                    $.couch.allDbs({
+                        success : function(dbs) {
+                            dbs.filter(function(db_name){
+                                return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
+                            .forEach(function(db) {
+                                // WSs list
+                                $("#ws-control #nav").append('<li><a href="#/ws/'+db+'" class="ws" >'+db+'</a></li>');
+                                // navigation between WSs
+                                if(window.location.hash === "" && counter === 0) {
+                                    window.location.hash = db;
+                                }
+                                counter +=1;
+                            
+                            });
+                            
+                            if(counter < 1) { 
+                                $("#reports-main").empty();
+                                $("#reports-main").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
+                            }
+                        }
+                    });
+                });
+            </script>

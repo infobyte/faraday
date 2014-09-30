@@ -235,7 +235,7 @@ aside {
 	border-right: 4px solid #DF3936;
 	float: left;
 }
-  aside nav{padding-top:55px;}
+  aside nav.index{padding-top:55px;}
 	aside nav a {
 		display: block;
 		width: 56px;

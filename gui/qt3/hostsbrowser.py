@@ -691,23 +691,27 @@ class HostsBrowser(qt.QVBox):
 
     def _delCategoryCallback(self, item):
         api.devlog("delcallbackCategory %s " % (item.name))
-                                        
-                                        
-                                                
 
-    def _newVuln(self,item):
+    def _newVuln(self, item):
         api.devlog("newVuln")
         if item is not None and item.object is not None:
-            dialog = NewVulnDialog(self, callback=self._newVulnSelectedCallback, vuln_web_enabled=False)
-                                                                                        
+            vuln_web_enabled = False
+            if item.object.class_signature == "Service":
+                vuln_web_enabled = True
+            dialog = NewVulnDialog(
+                self,
+                callback=self._newVulnSelectedCallback,
+                vuln_web_enabled=vuln_web_enabled)
             dialog.exec_loop()
 
+    def _newVulnSelectedCallback(self, *args):
+        callback = guiapi.createAndAddVuln
+        if args[0]:
+            # vuln web
+            callback = guiapi.createAndAddVulnWeb
 
-    def _newVulnSelectedCallback(self, type, name, desc):
-
-        api.devlog("newVulnMulti (%s) (%s) " % (name, desc))
         for i in self.items_selected:
-            guiapi.createAndAddVuln(i.object, name, desc)
+            callback(i.object, *args[1:])
 
     def _listVulns(self,item):
         if item is not None and item.object is not None:

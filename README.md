@@ -39,6 +39,13 @@ Preferably, you can download faraday by cloning the [Git] (https://github.com/in
     $ cd faraday-dev
     $ ./install
     
+The following platform are supported - [More information] (https://github.com/infobyte/faraday/wiki/Installation) :
+
+![platform](https://raw.github.com/wiki/infobyte/faraday/images/platform/supported.png) 
+
+
+
+
 Usage 
 ----- 
 

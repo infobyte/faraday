@@ -16,12 +16,12 @@
                             <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
                             </ul><!-- WS navigation -->
                         </div><!-- #ws-control -->
-                    <button id="delete" type="button" class="btn btn-danger" title="Refresh current workspace">
-                                    Delete
-                    </button>
-                    <button id="merge" type="button" class="btn btn-danger" title="Refresh current workspace">
-                                    Merge
-                    </button>
+                        <button id="delete" type="button" class="btn btn-danger" title="Delete selected items" ng-click="remove()">
+                            Delete
+                        </button>
+                        <button id="merge" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="merge()">
+                            Merge
+                        </button>
                     </h2><!-- .ws-label -->
                     <div class="reports">
                         <form class="form-inline" style="margin: 10px !important;" role="form">
@@ -40,7 +40,7 @@
                                     <th><a href="" ng-click="sortField = 'name'; reverse = !reverse">Name</a></th>
                                     <th><a href="" ng-click="sortField = 'target'; reverse = !reverse">Target</a></th>
                                     <th><a href="" ng-click="sortField = 'desc'; reverse = !reverse">Desc</a></th>
-                                    <th><input type="checkbox" id="selectAll"/></th>
+                                    <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -55,12 +55,13 @@
                                     <td>{{v.name}}</td>
                                     <td>{{v.target}}</td>
                                     <td data-dd-collapse-text="200">{{v.desc}}</td>
-                                    <td><form><input type="checkbox" name='{{v.id}}'/></form></td>
+                                    <td><form><input type="checkbox" name="{{v.id}}" ng-model="v.selected"/></form></td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->
                     </div><!-- .reports -->
                 </div><!-- #reports-main -->
+
             <script type="text/javascript">
                 $(document).ready(function() {
                     var counter = 0;
@@ -85,6 +86,9 @@
                                 $("#reports-main").empty();
                                 $("#reports-main").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
                             }
+                        },
+                        error: function(status) {
+                            console.log(status);
                         }
                     });
                 });

@@ -100,6 +100,30 @@
                 $scope.sortField = 'date';
                 $scope.reverse = true;
                 $scope.workspace = ws;
+
+                $scope.remove = function() {
+                    var old = $scope.vulns;
+                    $scope.vulns = [];
+                    angular.forEach(old, function(v) {
+                        if(v.selected) {
+                            statusReport.remove(v);
+                        } else {
+                            $scope.vulns.push(v);
+                        }
+                    });
+                };
+
+                $scope.checkAll = function() {
+                    if(!$scope.selectall) {
+                        $scope.selectall = true;
+                    } else {
+                        $scope.selectall = false;
+                    }
+
+                    angular.forEach($scope.vulns, function(v) {
+                        v.selected = $scope.selectall;
+                    });
+                };
             }])
             .factory('statusReportFact', ['vulnsFact', 'hostsFact', function(vulnsFact, hostsFact) {
                 var statusReportFact = {};
@@ -112,6 +136,12 @@
                     });
                     return vulns;
                 }
+
+                statusReportFact.remove = function(vuln) {
+                    console.log("removing vuln ");
+                    console.log(vuln);
+                }
+
                 return statusReportFact;
             }])
             .factory('vulnsFact', function() {
@@ -129,13 +159,16 @@
                                 var web = false;
                                 if(obj.value.status.toLowerCase().indexOf("web") > -1) web = true;
                                 vulns.push({
+                                    "id": obj.id,
                                     "date": d, 
                                     "status": obj.value.status, 
                                     "name": obj.value.name, 
                                     "desc": obj.value.desc, 
                                     "severity": obj.value.severity,
                                     "web": web,
-                                    "parent": obj.key.substring(0, obj.key.indexOf('.'))});
+                                    "parent": obj.key.substring(0, obj.key.indexOf('.')),
+                                    "selected": false 
+                                });
                         });
                     });
                     return vulns;
@@ -226,35 +259,10 @@
             var url = "../././reports/index.html#" + workspace;
             window.location.href = url;
         });
-        $(document).on("click", "img.ws-dashboard", function (e) {
-            e.preventDefault();
-            var url = "../././reports/index.html#" + workspace;
-            window.location.href = url;
-        });
         $(document).on("click", "a.status-report", function(e) {
             e.preventDefault();
             var url = "../././reports/status_report.html#/ws/" + workspace;
             window.location.href = url;
-        });
-        $(document).on("click", "#selectAll", function(){
-            if($("#selectAll").is(':checked')) {  
-                $("input[type=checkbox]").attr('checked', true);
-            } else {
-                $("input[type=checkbox]").attr('checked', false);
-            }
-        });
-        $(document).on("click", "#delete", function(){
-           $('input:checked').each(function(){
-            var id = $(this)[0].name;
-            if(this.checked){
-                $(this).parents("tr").remove();
-            }
-           });
-        });
-        $(document).on("click", "#merge", function(){
-           $('input:checked').each(function(){
-            console.log($(this)[0].name);
-           });
         });
     });
 </script>

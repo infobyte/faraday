@@ -13,6 +13,12 @@ Design for simplicity, users should feel no difference between their own termina
 
 Please read the [RELEASE notes](https://github.com/infobyte/faraday/blob/master/RELEASE.md)!
 
+Plugins list:
+---
+Right now faraday has more that [40+ supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among them you will find: 
+![](https://raw.github.com/wiki/infobyte/faraday/images/plugins/Plugins.png)
+
+
 Installation
 ---
 

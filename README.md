@@ -13,23 +13,15 @@ Design for simplicity, users should feel no difference between their own termina
 
 Please read the [RELEASE notes](https://github.com/infobyte/faraday/blob/master/RELEASE.md)!
 
-Requirements
-----
-Modern Linux (Tested Debian / Ubuntu  * / Kali / Backtrack)
-* Python 2.6.x and 2.7.x
-* Qt3
-* CouchDB >= 1.2.0  
-* The following python libs:
-  * mockito 
-  * couchdbkit 
-  * whoosh 
-  * argparse 
-  * psycopg2
-  * IPy
-  * requests
-
 Installation
 ---
+
+The following platform are supported - [More information] (https://github.com/infobyte/faraday/wiki/Installation) :
+
+![platform](https://raw.github.com/wiki/infobyte/faraday/images/platform/supported.png) 
+
+
+Quick install:
 
 Download the latest tarball by clicking [here] (https://github.com/infobyte/faraday/tarball/master) 
 
@@ -39,11 +31,6 @@ Preferably, you can download faraday by cloning the [Git] (https://github.com/in
     $ cd faraday-dev
     $ ./install
     
-The following platform are supported - [More information] (https://github.com/infobyte/faraday/wiki/Installation) :
-
-![platform](https://raw.github.com/wiki/infobyte/faraday/images/platform/supported.png) 
-
-
 
 
 Usage 

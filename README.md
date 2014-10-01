@@ -4,7 +4,7 @@ Faraday introduces a new concept (IPE) Integrated Penetration-Test Environment a
 
 The main purpose of Faraday is to re-use the available tools in the community to take advantage of them in a multiuser way.
 
-Design for simplicity, users should feel no difference between their own terminal application and the one included in Faraday. Developed with a specialized set of functionalities that help users improve their own work. Do you remember yourself programming without an IDE? Well, Faraday does the same an IDE does for you when programming, but from the perspective of a penetration test.
+Designed for simplicity, users should notice no difference between their own terminal application and the one included in Faraday. Developed with a specialized set of functionalities that help users improve their own work. Do you remember yourself programming without an IDE? Well, Faraday does the same as an IDE does for you when programming, but from the perspective of a penetration test.
 
 ![GUI - Web](https://raw.github.com/wiki/infobyte/faraday/images/GUI_Dashboard_new.png)
 

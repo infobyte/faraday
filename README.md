@@ -15,7 +15,7 @@ Please read the [RELEASE notes](https://github.com/infobyte/faraday/blob/master/
 
 Plugins list:
 ---
-Right now faraday has more that [40+ supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among them you will find: 
+Right now faraday has more than [40+ supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among them you will find: 
 ![](https://raw.github.com/wiki/infobyte/faraday/images/plugins/Plugins.png)
 
 

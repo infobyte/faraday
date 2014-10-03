@@ -33,6 +33,7 @@
     <script type="text/javascript" src="script/bootstrap.min.js"></script>
     <script type="text/javascript" src="script/angular.js"></script>
     <script type="text/javascript" src="script/angular-route.js"></script>
+    <script type="text/javascript" src="script/angular-selection-model.js"></script>
     <script type="text/javascript" src="script/csv-export.js"></script>
     <script type="text/javascript" src="script/jquery.qtip.js"></script>
 
@@ -41,6 +42,26 @@
         .fila{width: 100%;padding:40px 0 0 90px}
         .seccion{width: 100%;padding: 0px}
         #merge, #delete{margin:5px;float:right;}
+        .left-nav {
+            position:fixed !important;
+            position:absolute;
+            top:50px;
+            right:0;
+            bottom:0;
+            left:0;
+        }
+        table.csv-export tbody tr:nth-child(even) {
+            background-color: #f1f1f1;
+        }
+        table.csv-export tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+        table.csv-export tbody tr:hover{
+            background-color: #ecebea;
+        }
+        .multi-selected {
+            background-color: #f2dede !important;
+        }
     </style>
 </head>
 
@@ -80,7 +101,7 @@
             async: false
         });
 
-        var statusReport = angular.module('status-report', ['ngRoute'])
+        var statusReport = angular.module('status-report', ['ngRoute', 'selectionModel'])
             .controller('statusReportCtrl', 
                             ['$scope', '$route', '$routeParams', 'statusReportFact', 
                             function($scope, $route, $routeParams, statusReport) {

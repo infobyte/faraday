@@ -384,7 +384,53 @@ article.untercio{
 
 /**/
 
-/* TABLAS - Table sorter*/
+/* TABLES - Table sorter for status report*/
+table.status-report {
+	background-color: #CDCDCD;
+	margin:0px 0pt 15px;
+	font-size: 12px;
+	width: 100%;
+	text-align: center;
+}
+	.main thead tr{position: absolute;top:38px;}
+table.status-report thead tr th, table.status-report tfoot tr th {
+	background-color: #3F464C;
+	color: #fff;
+	border: 1px solid #FFF;
+	font-size: 14px;
+	padding: 5px;
+}
+	th.header:first-child{padding-right:282px}
+	th.header:last-child{padding-right:79px}
+
+table.status-report thead tr .header {
+	background-repeat: no-repeat;
+	background-position: center right;
+	cursor: pointer;
+}
+table.status-report tbody td {
+	color: #3D3D3D;
+	padding: 5px;
+	vertical-align: top;
+}
+table.status-report tbody tr.odd td {
+	background-color:#F0F0F6;
+}
+table.status-report thead tr .headerSortUp {
+	background-image: url(images/asc.gif);
+}
+table.status-report thead tr .headerSortDown {
+	background-image: url(images/desc.gif);
+}
+
+table.status-report thead tr .headerSortDown, table.status-report thead tr .headerSortUp {
+}
+
+table.status-report thead tr th:first-child,
+table.status-report tbody tr td:first-child {
+	padding-left: 5px;
+}
+/* TABLES - Table sorter*/
 table.tablesorter {
 	font-size: 12px;
 	width: 100%;

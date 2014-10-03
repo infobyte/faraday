@@ -30,7 +30,7 @@
                                 <input type="text" class="form-control input-sm" id="filter-by" placeholder="Filter by" ng-model="query">
                             </div>
                         </form>
-                        <table id="hosts" class="csv-export tablesorter">
+                        <table id="hosts" class="csv-export status-report">
                             <thead>
                                 <tr>
                                     <th><a href="" ng-click="sortField = 'date'; reverse = !reverse">Date</a></th>
@@ -44,7 +44,10 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse">
+                                <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse"
+                                    selection-model selection-model-type="checkbox" 
+                                    selection-model-mode="multiple-additive" 
+                                    selection-model-selected-class="multi-selected">
                                     <td>{{v.date}}</td>
                                     <td>
                                         <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>

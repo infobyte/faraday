@@ -48,6 +48,9 @@ class NotificationCenter():
     def showPopup(self, msg):
         self._notifyWidgets(events.ShowPopupCustomEvent(msg))
 
+    def showDialog(self, msg, level="INFORMATION"):
+        self._notifyWidgets(events.ShowDialogCustomEvent(msg, level))
+
     def workspaceLoad(self, hosts):
         self._notifyWidgets(events.ModelObjectUpdateEvent(hosts))
 

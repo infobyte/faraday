@@ -51,9 +51,10 @@ class LogCustomEvent(CustomEvent):
 
 
 class ShowDialogCustomEvent(CustomEvent):
-    def __init__(self, text, type):
+    def __init__(self, text, level):
         CustomEvent.__init__(self, SHOWDIALOG_ID)
         self.text = text
+        self.level = level
 
 
 class ShowPopupCustomEvent(CustomEvent):

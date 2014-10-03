@@ -29,6 +29,7 @@ class ShowDialogCustomEvent(qt.QCustomEvent):
     def __init__(self, e):
         qt.QCustomEvent.__init__(self, e.type())
         self.text = e.text
+        self.level = e.level
 
 
 class ShowPopupCustomEvent(qt.QCustomEvent):

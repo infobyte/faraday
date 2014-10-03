@@ -55,6 +55,11 @@ class WorkspaceManager(object):
             dbConnector = self.dbManager.getConnector(name)
             self.mappersManager.createMappers(dbConnector)
             workspace = self.mappersManager.getMapper(Workspace.__name__).find(name)
+            if not workspace:
+                notification_center.showDialog(
+                    "Error loading workspace.\nYou should try opening faraday with the '--update' option",
+                    level="ERROR")
+                return self.openDefaultWorkspace()
             self.setActiveWorkspace(workspace)
             CONF.setLastWorkspace(name)
             CONF.saveConfig()
@@ -64,6 +69,20 @@ class WorkspaceManager(object):
             self.reportsManager.watch(name)
             return workspace
         return None
+
+    def openDefaultWorkspace(self):
+        #This method opens the default workspace called 'untitled'
+        if 'untitled' not in self.getWorkspacesNames():
+            #self.createWorkspace('untitled', 'default workspace')
+            workspace = Workspace('untitled', 'default workspace')
+            dbConnector = self.dbManager.createDb(
+                workspace.getName(), DBTYPE.FS)
+            if self.active_workspace:
+                self.closeWorkspace()
+            self.mappersManager.createMappers(dbConnector)
+            self.mappersManager.save(workspace)
+        return self.openWorkspace('untitled')
+
 
     def closeWorkspace(self):
         self.changesManager.unwatch()

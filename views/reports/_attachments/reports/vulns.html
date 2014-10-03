@@ -7,7 +7,7 @@ function get_report_div(workspace, view,design){
     });
 	$.getJSON(json_url, function(data) {
         var vulns = {"unclassified": 0, "high": 0, "med": 0, "low": 0, "info": 0};
-		divs += "<div class='columna untercio'><article class='untercio'><header>"+
+		divs += "<div class='col-lg-6'><article class='panel panel-default'><header>"+
                 "<h2><a href=\"#\" class=\"status-report\">Vulnerabilities</a> "+
                 "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Vulnerabilities count arranged by severity\"></span></h2>"+
                 "</header><div class='main'>";

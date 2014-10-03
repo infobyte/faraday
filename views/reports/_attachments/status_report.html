@@ -38,19 +38,9 @@
 
     <style>
         .wrapper{width:auto;}
-        header.head{position: fixed;width:100%;z-index:10000}
-        aside{position: fixed;top:0px;height: 100%}
         .fila{width: 100%;padding:40px 0 0 90px}
         .seccion{width: 100%;padding: 0px}
         #merge, #delete{margin:5px;float:right;}
-        .left-nav {
-            position:fixed !important;
-            position:absolute;
-            top:50px;
-            right:0;
-            bottom:0;
-            left:0;
-        }
     </style>
 </head>
 
@@ -78,7 +68,6 @@
                         </ul>
                     </nav>
                 </aside>
-
             <div class="right-main" ng-view>
             </div>
 
@@ -100,6 +89,8 @@
                 $scope.sortField = 'date';
                 $scope.reverse = true;
                 $scope.workspace = ws;
+                $scope.$on('LOAD',function(){$scope.loading=true});
+                $scope.$on('UNLOAD',function(){$scope.loading=false})
 
                 $scope.remove = function() {
                     var old = $scope.vulns;

@@ -10,7 +10,7 @@ function get_report_div(workspace, view,design){
 		var i = 0;
 		divs += "<div class='col-lg-3'><article class='panel panel-default'><header><h2>Workspace summarized report "+
                     "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"WS overview - hosts, notes, services and vulnerabilites counts\"></span>"+
-                    "</h2></header><div class='main'>";
+                    "</h2></header><div class='main'><div class='box'>";
 		if(jQuery.isEmptyObject(data.rows) || data.rows[0].key == "interfaces"){divs += "There is not enough data";}
 		$.each(data.rows, function(n, obj){
 			if (obj.key != "interfaces"){

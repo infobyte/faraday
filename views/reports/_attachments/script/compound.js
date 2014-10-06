@@ -10,8 +10,8 @@
 		hosts		= get_obj(hurl);
 		interfaces	= get_obj(iurl, interfaces);
 		services	= get_obj(surl, services);
-		var table = "<header><h2>Hosts report</h2></header><div class='main'>";
-		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+		var table = "<header><h2>Hosts report</h2></header>";
+		table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter table table-striped\"><thead><tr>"+
 				"<th>Host</th>"+
 				"<th>Services</th>"+
 				"<th>OS</th>"+
@@ -41,7 +41,7 @@
 				"<td>"+services[k]+"</td>"+
 				"<td>"+os+"</td></tr>";
 		});
-		table += "</tbody></table></div>";
+		table += "</tbody></table>";
 		return table;
 	}
 
@@ -64,8 +64,8 @@
 		interfaces	= get_obj(iurl, interfaces);
 		scount		= get_obj(surl, services);
 		if(!bolean){
-			var table = "<header><h2>Hosts with Service "+name+" ("+hids.length+" total)</h2></header><header class='texto'><p id='text'></p></header><div class='main' style='height:240px'>"+
-					"<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+			var table = "<header><h2>Hosts with Service "+name+" ("+hids.length+" total)</h2></header><div id='text'></div>"+
+					"<table id=\"hosts-"+workspace+"\" class=\"tablesorter table table-striped\"><thead><tr>"+
 					"<th>Host</th>"+
 					"<th>Services</th>"+
 					"<th>OS</th>"+
@@ -91,7 +91,7 @@
 						"<td>"+os+"</td></tr>";
 				}
 			});
-			table += "</tbody></table></div>";
+			table += "</tbody></table>";
 		}else{
 			var table = "<table><tbody>"; 
 			$.each(hosts, function(k, v){
@@ -111,8 +111,8 @@
 		design = "hosts";
 		// el param design ya no es el recibido por GET, puesto que ahora estamos en services
 		var services = get_obj_filter(workspace, "services", "byhost", hid);
-		var table = "<header><h2>Services for Host "+hname+" ("+services.length+" total)</h2></header><header class='texto'><p id='text'></p></header><div class='main' style='height:240px'>"+
-			"<table id=\"services-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+		var table = "<header><h2>Services for Host "+hname+" ("+services.length+" total)</h2></header><div id='text'></div>"+
+			"<table id=\"services-"+workspace+"\" class=\"tablesorter table table-striped\"><thead><tr>"+
 			"<th>Name</th>"+
 			"<th>Description</th>"+
 			"<th>Ports</th>"+
@@ -140,7 +140,7 @@
 					"<td>"+v['protocol']+"</td>"+
 					"<td>"+v['status']+"</td></tr>";
 		});
-		table += "</tbody></table></div>";
+		table += "</tbody></table>";
 		return table;
 	}
 
@@ -202,9 +202,8 @@ $( document ).ready(function() {
             $("#hosts").html(div);
             // sacamos la tabla de hosts y agregamos un link de navegacion para volverla a cargar
             $("#text").html("<a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a>");
-            var selector = "#services-"+workspace+" th.header:first-child";
             sorter(2);
-            $(selector).css("padding-right","123px");
+            $("#compound .tablesorter thead th, #compound .tablesorter tbody td").css("width","20%");
 });
         // cuando se clickea un servicio carga todos los hosts que tienen ese servicio
         $(document).on('click', 'a.service', function(e) {

@@ -160,8 +160,7 @@ p {margin-bottom: 1em;}
 	width: 100%;
 }
 .columna {
-	margin-left: 10px;
-	margin-top: 10px;
+	margin: 10px 5px 0px;
 	float: left;
 }
 #compound .columna{
@@ -387,7 +386,6 @@ article.untercio{
 
 /* TABLAS - Table sorter*/
 table.tablesorter {
-	background-color: #CDCDCD;
 	font-size: 12px;
 	width: 100%;
 	text-align: center;
@@ -497,7 +495,7 @@ label {
 	color: #2D333D;
 	font-size: 13px;
 }
-#text{font-weight: bold;line-height: 25px;margin:0 0 -45px 10px}
+#text{font-weight: bold;margin:-18px 3px -4px 0px;float: right;}
 .texto{margin-bottom:-45px;border-top:1px solid #FFF}
 .left {
 	float: left;
@@ -558,7 +556,7 @@ ul.d3 .untercio{width: 160px;}
 #byservices .columna article.untercio{height:237px;width:308px}
 #byservices .main{height:197px}
 #compound .main{height:289px}
-	#compound header, #list header{min-height: 70px;}
+	#compound header, #list header{min-height: 40px;}
 .status .seccion2{width: 100%;}
 #contenido{text-align: left;}
 #sequence { 
@@ -600,45 +598,58 @@ ul.d3 .untercio{width: 160px;}
 @media screen and (max-height:600px) {
 	#no-overflow{overflow: auto!important }
 }
-@media screen and (min-width: 1380px){
-	.wrapper{margin:auto;}
-}
 /*BOOTSTRAP*/
 #byservices .col-lg-3, #summarized .col-lg-3{width: 29%;margin:0px -2% 0px 4px;}
 section .col-lg-2{margin: 0px -2% 0px 2px;padding-left: 1.5%;padding-right: 20px;}
 #list .col-lg-6, #vulns .col-lg-6{width: 55%;}
-#compound .col-lg-6{width: 45%;margin-top: -3%;}
+#compound .col-lg-6{width: 45%;margin-top: -2%;}
 .col-lg-6 .panel{margin-bottom: 10px}
-table {
+table.tablesorter {
         width: 100%;
     }
 
 thead, tbody, tr, td, th { display: block; }
 
-tr:after {
+.tablesorter tr:after {
     content: ' ';
     display: block;
     visibility: hidden;
     clear: both;
 }
 
-thead th {
+.tablesorter thead th {
     height: 30px;
-
-    /*text-align: left;*/
+    border: 1px solid!important;
 }
 
-tbody {
-    height: 120px;
+.tablesorter tbody {
+    height: 95px;
     overflow-y: auto;
 }
-
-thead {
-    /* fallback */
-}
-
-
-tbody td, thead th {
-    width: 19.2%;
+#compound .tablesorter tbody{height:290px;}
+.tablesorter tbody td,.tablesorter thead th {
+    width: 33.33%;
     float: left;
+}
+#list .tablesorter thead th {
+	width: 24.59%;
+    float: left;
+    border:1px solid;
+}
+#list .tablesorter tbody td {width: 23.6%}
+#list .tablesorter tbody td:nth-child(2){width: 29%}
+.panel{margin-bottom: 7px!important}
+.box{   
+	display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+@media screen and (min-width: 1380px){
+	#vulns .columna.unsexto{margin-left:7%;}
+	#list .tablesorter thead th {width: 25%}
+	#bar svg{margin-left: 5%}
+	#chart{margin-top:2%;margin-left: 13%}
+	.treemap{margin-left:13%;}
 }

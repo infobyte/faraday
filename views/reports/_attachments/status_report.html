@@ -36,33 +36,6 @@
     <script type="text/javascript" src="script/angular-selection-model.js"></script>
     <script type="text/javascript" src="script/csv-export.js"></script>
     <script type="text/javascript" src="script/jquery.qtip.js"></script>
-
-    <style>
-        .wrapper{width:auto;}
-        .fila{width: 100%;padding:40px 0 0 90px}
-        .seccion{width: 100%;padding: 0px}
-        #merge, #delete{margin:5px;float:right;}
-        .left-nav {
-            position:fixed !important;
-            position:absolute;
-            top:50px;
-            right:0;
-            bottom:0;
-            left:0;
-        }
-        table.csv-export tbody tr:nth-child(even) {
-            background-color: #f1f1f1;
-        }
-        table.csv-export tbody tr:nth-child(odd) {
-            background-color: #ffffff;
-        }
-        table.csv-export tbody tr:hover{
-            background-color: #ecebea;
-        }
-        .multi-selected {
-            background-color: #f2dede !important;
-        }
-    </style>
 </head>
 
 <body ng-app="status-report">
@@ -103,8 +76,8 @@
 
         var statusReport = angular.module('status-report', ['ngRoute', 'selectionModel'])
             .controller('statusReportCtrl', 
-                            ['$scope', '$route', '$routeParams', 'statusReportFact', 
-                            function($scope, $route, $routeParams, statusReport) {
+                            ['$scope', '$filter', '$route', '$routeParams', 'statusReportFact', 
+                            function($scope, $filter, $route, $routeParams, statusReport) {
                 var ws = $routeParams.wsId;
                 $scope.vulns = statusReport.get(ws);
                 $scope.sortField = 'date';
@@ -126,13 +99,14 @@
                 };
 
                 $scope.checkAll = function() {
+                    console.log($scope.query);
                     if(!$scope.selectall) {
                         $scope.selectall = true;
                     } else {
                         $scope.selectall = false;
                     }
 
-                    angular.forEach($scope.vulns, function(v) {
+                    angular.forEach($filter('filter')($scope.vulns, $scope.query), function(v) {
                         v.selected = $scope.selectall;
                     });
                 };
@@ -178,8 +152,7 @@
                                     "desc": obj.value.desc, 
                                     "severity": obj.value.severity,
                                     "web": web,
-                                    "parent": obj.key.substring(0, obj.key.indexOf('.')),
-                                    "selected": false 
+                                    "parent": obj.key.substring(0, obj.key.indexOf('.'))
                                 });
                         });
                     });

@@ -28,13 +28,13 @@ function get_report_div(workspace, view, design){
                         "</div>"+
                         "</div></section>";
         }else{
-			var table = "<div class='columna'><article><section class='sin_padding' id='hosts'>"+
+			var table = "<div class='col-lg-6'><article><section class='sin_padding' id='hosts'>"+
 	                        "<header><h2>Hosts report "+
 	                        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" "+
 	                        "title=\"All hosts, each one showing its service count and operating system. "+
 	                        "By clicking on a host IP you can access a list with all of its services\"></span>"+
-				"</h2></header><div class='main'>";
-			table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+				"</h2></header>";
+			table += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter table table-striped\"><thead><tr>"+
 					"<th>Host</th>"+
 					"<th>Services</th>"+
 					"<th>OS</th>"+

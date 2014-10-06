@@ -9,6 +9,7 @@ function treemap(workspace, design, view){
             .value(function(d) {return d.value});
 
         var div = d3.select("#treemap").append("div")
+        	.attr("class", "treemap")
             .style("position", "relative")
             .style("width", (width + margin.left + margin.right) + "px")
             .style("height", (height + margin.top + margin.bottom) + "px")

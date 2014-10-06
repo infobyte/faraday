@@ -9,9 +9,9 @@ function get_report_div(workspace, view,design){
 	$.getJSON(json_url, function(data) {
 		var colores = ["negro", "rojo"];
 		var i = 0;
-		divs += "<div class='columna untercio'><article class='untercio'><header><h2>Services report "+
+		divs += "<div class='col-lg-3'><article class='panel panel-default'><header><h2>Services report "+
                     "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"All services for current WS ordered by host amount\"></span></h2>"+
-                    "</header><div class='main'>";
+                    "</header><div class='main'><div class='box'>";
 
         var row = data.rows;
         for (i = 0; i < row.length; i++) {
@@ -36,9 +36,9 @@ function get_report_div(workspace, view,design){
                 "</div>";
         }
         for (i = 0; i < obj.length; i++) {
-			divs += "<div class=\"columna unquinto services \"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj[i][0]+"</div><div class=\"txt texto-blanco\">"+obj[i][1]+"</div></section></article></div>";
+            divs += "<div class=\"columna unquinto services \"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj[i][0]+"</div><div class=\"txt texto-blanco\">"+obj[i][1]+"</div></section></article></div>";
 		}
-		divs +="</article></div>";
+		divs +="</article></div></div>";
 		return divs;
 	});
 	return divs;

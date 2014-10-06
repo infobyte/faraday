@@ -160,8 +160,7 @@ p.empty{padding: 10px;}
 	width: 100%;
 }
 .columna {
-	margin-left: 10px;
-	margin-top: 10px;
+	margin: 10px 5px 0px;
 	float: left;
 }
 #compound .columna{
@@ -187,15 +186,13 @@ ul {margin-bottom: 20px;}
 	text-align:center;
 }
 */
-.wrapper {
-	width: 1280px;
-}
 header.head {
 	background: #000;
 	height: 50px;
 	text-align: left;
-	width: 1280px;
-	position: absolute;
+	position: fixed;
+	width:100%;
+	z-index:10000;
 }
 	header.head .logo {
 		margin: 15px 20px;
@@ -233,9 +230,11 @@ aside {
 	width: 76px;
 	height: 662px;
 	border-right: 4px solid #DF3936;
-	float: left;
+	position: fixed;
+	top:0px;
+	height: 100%;
 }
-  aside nav{padding-top:55px;}
+  aside nav.index{padding-top:55px;}
 	aside nav a {
 		display: block;
 		width: 56px;
@@ -249,7 +248,13 @@ aside {
 			-moz-transition: all .3s ease;
 			-webkit-transition: all .3s ease;
 	}
-
+        .left-nav {
+            position:absolute;
+            top:50px;
+            right:0;
+            bottom:0;
+            left:0;
+        }
 .load_service{
 	padding: 10px!important;
 }
@@ -263,14 +268,15 @@ aside {
 
 .seccion {
 	background: #E8EFF0;
-	padding: 35px 13px 0px;
-	width: 94%;
+	padding: 37px 13px 5px 81px;
+	width: 100%;
 	float: left;
 }
 	.seccion.treemap{
 		width: 983px;
 		margin-left: 7%;
-		height:611px;
+		height:577px;
+		padding-top: 1%;
 	}
 .main{overflow-y: auto;height: 340px;overflow-x: hidden;}
 .seccion2 {
@@ -292,7 +298,6 @@ article.untercio{
 	.seccion article {
 		background-color: #fff;
 		min-height: 85px;
-		height: 85px;
 		font-size: 13px;
 		text-align: left;
 	}
@@ -381,22 +386,16 @@ article.untercio{
 
 /* TABLAS - Table sorter*/
 table.tablesorter {
-	background-color: #CDCDCD;
-	margin:0px 0pt 15px;
 	font-size: 12px;
 	width: 100%;
 	text-align: center;
 }
-	.main thead tr{position: absolute;top:38px;}
 table.tablesorter thead tr th, table.tablesorter tfoot tr th {
 	background-color: #3F464C;
 	color: #fff;
 	border: 1px solid #FFF;
 	font-size: 14px;
-	padding: 5px;
 }
-	th.header:first-child{padding-right:282px}
-	th.header:last-child{padding-right:79px}
 
 table.tablesorter thead tr .header {
 	background-repeat: no-repeat;
@@ -405,7 +404,6 @@ table.tablesorter thead tr .header {
 }
 table.tablesorter tbody td {
 	color: #3D3D3D;
-	padding: 5px;
 	background-color: #FFF;
 	vertical-align: top;
 }
@@ -497,7 +495,7 @@ label {
 	color: #2D333D;
 	font-size: 13px;
 }
-#text{font-weight: bold;line-height: 25px;margin:0 0 -45px 10px}
+#text{font-weight: bold;margin:-18px 3px -4px 0px;float: right;}
 .texto{margin-bottom:-45px;border-top:1px solid #FFF}
 .left {
 	float: left;
@@ -542,15 +540,15 @@ ul.d3 .untercio{width: 160px;}
   opacity: 0.5;
 }
 #treemap, #bar, #cake{height:195px}
-#list .main{height:88px}
+#list .main{height:105px}
 #list .columna{float: right;width:53%;margin-right: 25px;}
-	#list th.header:last-child{padding-right:38px;border-right:0px;}
+	#list th.header:last-child{padding-right:46px;border-right:0px;}
 	#list th.header:nth-child(3){padding-right:81px}
 	#list th.header:nth-child(2){padding-right:101px}
-	#list th.header:first-child{padding-right:164px;border-left:0px;}
+	#list th.header:first-child{padding-right:155px;border-left:0px;}
 #vulns .columna{margin-left:2%}
 #vulns .columna article.untercio{height:145px;width:228%}
-#vulns .main{width:100%;height:95px}
+#vulns .main{width:100%;height:105px}
 #vulns .columna.unsexto{margin-left: 5%;}
 #summarized .columna{margin-left:4%}
 #summarized .columna article.untercio{height:237px;width:308px}
@@ -558,7 +556,7 @@ ul.d3 .untercio{width: 160px;}
 #byservices .columna article.untercio{height:237px;width:308px}
 #byservices .main{height:197px}
 #compound .main{height:289px}
-	#compound header, #list header{min-height: 70px;}
+	#compound header, #list header{min-height: 40px;}
 .status .seccion2{width: 100%;}
 #contenido{text-align: left;}
 #sequence { 
@@ -600,6 +598,58 @@ ul.d3 .untercio{width: 160px;}
 @media screen and (max-height:600px) {
 	#no-overflow{overflow: auto!important }
 }
+/*BOOTSTRAP*/
+#byservices .col-lg-3, #summarized .col-lg-3{width: 29%;margin:0px -2% 0px 4px;}
+section .col-lg-2{margin: 0px -2% 0px 2px;padding-left: 1.5%;padding-right: 20px;}
+#list .col-lg-6, #vulns .col-lg-6{width: 55%;}
+#compound .col-lg-6{width: 45%;margin-top: -2%;}
+.col-lg-6 .panel{margin-bottom: 10px}
+table.tablesorter {
+        width: 100%;
+    }
+
+thead, tbody, tr, td, th { display: block; }
+
+.tablesorter tr:after {
+    content: ' ';
+    display: block;
+    visibility: hidden;
+    clear: both;
+}
+
+.tablesorter thead th {
+    height: 30px;
+    border: 1px solid!important;
+}
+
+.tablesorter tbody {
+    height: 95px;
+    overflow-y: auto;
+}
+#compound .tablesorter tbody{height:290px;}
+.tablesorter tbody td,.tablesorter thead th {
+    width: 33.33%;
+    float: left;
+}
+#list .tablesorter thead th {
+	width: 24.59%;
+    float: left;
+    border:1px solid;
+}
+#list .tablesorter tbody td {width: 23.6%}
+#list .tablesorter tbody td:nth-child(2){width: 29%}
+.panel{margin-bottom: 7px!important}
+.box{   
+	display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
 @media screen and (min-width: 1380px){
-	.wrapper{margin:auto;}
+	#vulns .columna.unsexto{margin-left:7%;}
+	#list .tablesorter thead th {width: 25%}
+	#bar svg{margin-left: 5%}
+	#chart{margin-top:2%;margin-left: 13%}
+	.treemap{margin-left:13%;}
 }

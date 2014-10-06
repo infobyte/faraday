@@ -113,11 +113,6 @@ class ModelObjectComposite(unittest.TestCase):
             self.assertIn(s, host.getChildsByType(Interface.__name__), "what happened with interfaces?")
 
 
-    def testHostWithCredentialsNewCredMethod(self):
-        host = Host('coco')
-        host.newCred('coco', 'coco123')
-        self.assertEquals(len(host.getCreds()), 1, "Creds added is not 1")
-
 if __name__ == '__main__':
     unittest.main() 
 

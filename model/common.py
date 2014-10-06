@@ -436,15 +436,6 @@ class ModelObject(object):
             d.append(vuln.toDictFull())
         return d
 
-    #creds
-    @updateLocalMetadata
-    def addCred(self, newCred, update=False, setparent=True): # Deprecated
-        return self.addChild(newCred)
-
-    def newCred(self, username, password): # Deprecated
-        cred = ModelObjectCred(username, password, self)
-        self.addCred(cred)
-        
     @updateLocalMetadata
     def delCred(self, credID):
         return self._delValue("_creds", credID)

@@ -432,6 +432,52 @@ table.status-report tbody tr td:first-child {
 }
 /* TABLES - Table sorter*/
 table.tablesorter {
+	background-color: #CDCDCD;
+	margin:0px 0pt 15px;
+	font-size: 12px;
+	width: 100%;
+	text-align: center;
+}
+	.main thead tr{position: absolute;top:38px;}
+table.status-report thead tr th, table.status-report tfoot tr th {
+	background-color: #3F464C;
+	color: #fff;
+	border: 1px solid #FFF;
+	font-size: 14px;
+	padding: 5px;
+}
+	th.header:first-child{padding-right:282px}
+	th.header:last-child{padding-right:79px}
+
+table.status-report thead tr .header {
+	background-repeat: no-repeat;
+	background-position: center right;
+	cursor: pointer;
+}
+table.status-report tbody td {
+	color: #3D3D3D;
+	padding: 5px;
+	vertical-align: top;
+}
+table.status-report tbody tr.odd td {
+	background-color:#F0F0F6;
+}
+table.status-report thead tr .headerSortUp {
+	background-image: url(images/asc.gif);
+}
+table.status-report thead tr .headerSortDown {
+	background-image: url(images/desc.gif);
+}
+
+table.status-report thead tr .headerSortDown, table.status-report thead tr .headerSortUp {
+}
+
+table.status-report thead tr th:first-child,
+table.status-report tbody tr td:first-child {
+	padding-left: 5px;
+}
+/* TABLES - Table sorter*/
+table.tablesorter {
 	font-size: 12px;
 	width: 100%;
 	text-align: center;
@@ -698,6 +744,32 @@ thead, tbody, tr, td, th { display: block; }
 	#bar svg{margin-left: 5%}
 	#chart{margin-top:2%;margin-left: 13%}
 	.treemap{margin-left:13%;}
+}
+.wrapper{width:auto;}
+header.head{position: fixed;width:100%;z-index:10000}
+aside{position: fixed;top:0px;height: 100%}
+.fila{width: 100%;padding:40px 0 0 90px}
+.seccion{width: 100%;padding: 0px}
+#merge, #delete{margin:5px;float:right;}
+.left-nav {
+    position:fixed !important;
+    position:absolute;
+    top:50px;
+    right:0;
+    bottom:0;
+    left:0;
+}
+table.csv-export tbody tr:nth-child(even) {
+    background-color: #f1f1f1;
+}
+table.csv-export tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+table.csv-export tbody tr:hover{
+    background-color: #ecebea;
+}
+.multi-selected {
+    background-color: #f2dede !important;
 }
 .wrapper{width:auto;}
 header.head{position: fixed;width:100%;z-index:10000}

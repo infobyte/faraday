@@ -650,3 +650,29 @@ ul.d3 .untercio{width: 160px;}
 @media screen and (min-width: 1380px){
 	.wrapper{margin:auto;}
 }
+.wrapper{width:auto;}
+header.head{position: fixed;width:100%;z-index:10000}
+aside{position: fixed;top:0px;height: 100%}
+.fila{width: 100%;padding:40px 0 0 90px}
+.seccion{width: 100%;padding: 0px}
+#merge, #delete{margin:5px;float:right;}
+.left-nav {
+    position:fixed !important;
+    position:absolute;
+    top:50px;
+    right:0;
+    bottom:0;
+    left:0;
+}
+table.csv-export tbody tr:nth-child(even) {
+    background-color: #f1f1f1;
+}
+table.csv-export tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+table.csv-export tbody tr:hover{
+    background-color: #ecebea;
+}
+.multi-selected {
+    background-color: #f2dede !important;
+}

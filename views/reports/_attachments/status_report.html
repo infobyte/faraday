@@ -91,7 +91,7 @@
                     $scope.vulns = [];
                     angular.forEach(old, function(v) {
                         if(v.selected) {
-                            statusReport.remove(v);
+                            statusReport.remove(ws, v);
                         } else {
                             $scope.vulns.push(v);
                         }
@@ -99,7 +99,6 @@
                 };
 
                 $scope.checkAll = function() {
-                    console.log($scope.query);
                     if(!$scope.selectall) {
                         $scope.selectall = true;
                     } else {
@@ -111,7 +110,7 @@
                     });
                 };
             }])
-            .factory('statusReportFact', ['vulnsFact', 'hostsFact', function(vulnsFact, hostsFact) {
+            .factory('statusReportFact', ['vulnsFact', 'hostsFact', '$http', function(vulnsFact, hostsFact, $http) {
                 var statusReportFact = {};
 
                 statusReportFact.get = function(ws) {
@@ -123,9 +122,11 @@
                     return vulns;
                 }
 
-                statusReportFact.remove = function(vuln) {
-                    console.log("removing vuln ");
-                    console.log(vuln);
+                statusReportFact.remove = function(ws, vuln) {
+                    var url = "http://localhost:5984/" + ws + "/" + vuln.id + "?rev=" + vuln.rev;
+                    $http.delete(url).success(function(d, s, h, c) {
+                        console.log(d);
+                    });
                 }
 
                 return statusReportFact;
@@ -139,22 +140,23 @@
                     // gets vulns json from couch
                     $.getJSON(vulns_url, function(data) {
                         $.each(data.rows, function(n, obj){
-                                var d = new Date(0); 
-                                d.setUTCSeconds(obj.value.date);
-                                d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
-                                var web = false;
-                                if(obj.value.status.toLowerCase().indexOf("web") > -1) web = true;
-                                vulns.push({
-                                    "id": obj.id,
-                                    "date": d, 
-                                    "status": obj.value.status, 
-                                    "name": obj.value.name, 
-                                    "desc": obj.value.desc, 
-                                    "severity": obj.value.severity,
-                                    "web": web,
-                                    "parent": obj.key.substring(0, obj.key.indexOf('.')),
-                                    "selected": false
-                                });
+                            var d = new Date(0); 
+                            d.setUTCSeconds(obj.value.date);
+                            d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
+                            var web = false;
+                            if(obj.value.status.toLowerCase().indexOf("web") > -1) web = true;
+                            vulns.push({
+                                "id": obj.id,
+                                "rev": obj.value.rev,
+                                "date": d, 
+                                "status": obj.value.status, 
+                                "name": obj.value.name, 
+                                "desc": obj.value.desc, 
+                                "severity": obj.value.severity,
+                                "web": web,
+                                "parent": obj.key.substring(0, obj.key.indexOf('.')),
+                                "selected": false
+                            });
                         });
                     });
                     return vulns;

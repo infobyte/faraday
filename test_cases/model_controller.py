@@ -22,30 +22,30 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(host).thenReturn(objectMapper)
-        when(objectMapper).saveObject(host).thenReturn(True)
+        when(mappersManager).getMapper(host.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(host).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addHostSYNC(host)
-        verify(mappersManager).getMapper(host)
-        verify(objectMapper).saveObject(host)
+        verify(mappersManager).getMapper(host.class_signature)
+        verify(objectMapper).save(host)
 
     def testAddHostGetsMapperDispatchSaveASYNC(self): 
         host = Host('coco')
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(host).thenReturn(objectMapper)
-        when(objectMapper).saveObject(host).thenReturn(True)
+        when(mappersManager).getMapper(host.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(host).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addHostASYNC(host)
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(host)
-        verify(objectMapper).saveObject(host)
+        verify(mappersManager).getMapper(host.class_signature)
+        verify(objectMapper).save(host)
 
     def testAddInterfaceGetsMapperDispatchSaveSYNC(self): 
         host = Host('coco')
@@ -53,14 +53,14 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(interface).thenReturn(objectMapper)
-        when(objectMapper).saveObject(interface).thenReturn(True)
+        when(mappersManager).getMapper(interface.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(interface).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addInterfaceSYNC(host.getID(), interface)
-        verify(mappersManager).getMapper(interface)
-        verify(objectMapper).saveObject(interface)
+        verify(mappersManager).getMapper(interface.class_signature)
+        verify(objectMapper).save(interface)
 
     def testAddInterfaceGetsMapperDispatchSaveASYNC(self): 
         host = Host('coco')
@@ -68,16 +68,16 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(interface).thenReturn(objectMapper)
-        when(objectMapper).saveObject(interface).thenReturn(True)
+        when(mappersManager).getMapper(interface.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(interface).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addInterfaceASYNC(host.getID(), interface)
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(interface)
-        verify(objectMapper).saveObject(interface)
+        verify(mappersManager).getMapper(interface.class_signature)
+        verify(objectMapper).save(interface)
 
     def testAddObjectSavesChildInParent(self): 
         host = Host('coco')
@@ -86,15 +86,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         mappersManager = self.createMapperMock()
         objectMapper = mock()
 
-        when(mappersManager).getMapper(interface).thenReturn(objectMapper)
-        when(objectMapper).saveObject(interface).thenReturn(True) 
+        when(mappersManager).getMapper(interface.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(interface).thenReturn(True) 
         when(mappersManager).find(host.getID()).thenReturn(host)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addInterfaceSYNC(host.getID(), interface)
-        verify(mappersManager).getMapper(interface)
-        verify(objectMapper).saveObject(interface)
+        verify(mappersManager).getMapper(interface.class_signature)
+        verify(objectMapper).save(interface)
 
         self.assertEquals(interface, host.findChild(interface.getID()), 
                 "Orphan child, what happen papi?")
@@ -105,15 +105,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(service).thenReturn(objectMapper)
-        when(objectMapper).saveObject(service).thenReturn(True)
+        when(mappersManager).getMapper(service.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(service).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addServiceToInterfaceSYNC(None, interface.getID(), service)
 
-        verify(mappersManager).getMapper(service)
-        verify(objectMapper).saveObject(service)
+        verify(mappersManager).getMapper(service.class_signature)
+        verify(objectMapper).save(service)
 
     def testAddServiceGetsMapperDispatchSaveASYNC(self): 
         interface = Interface("int_mock0") 
@@ -121,16 +121,16 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(service).thenReturn(objectMapper)
-        when(objectMapper).saveObject(service).thenReturn(True)
+        when(mappersManager).getMapper(service.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(service).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addServiceToInterfaceASYNC(None, interface.getID(), service)
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(service)
-        verify(objectMapper).saveObject(service)
+        verify(mappersManager).getMapper(service.class_signature)
+        verify(objectMapper).save(service)
 
     def testAddVulnToServiceGetsMapperDispatchSaveSYNC(self): 
         service = Service("servi")
@@ -138,15 +138,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(vuln).thenReturn(objectMapper)
-        when(objectMapper).saveObject(vuln).thenReturn(True)
+        when(mappersManager).getMapper(vuln.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(vuln).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addVulnToServiceSYNC(None, service.getID(), vuln)
 
-        verify(mappersManager).getMapper(vuln)
-        verify(objectMapper).saveObject(vuln)
+        verify(mappersManager).getMapper(vuln.class_signature)
+        verify(objectMapper).save(vuln)
 
     def testAddVulnToServiceGetsMapperDispatchSaveASYNC(self): 
         service = Service("servi")
@@ -154,16 +154,16 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(vuln).thenReturn(objectMapper)
-        when(objectMapper).saveObject(vuln).thenReturn(True)
+        when(mappersManager).getMapper(vuln.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(vuln).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addVulnToServiceASYNC(None, service.getID(), vuln)
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(vuln)
-        verify(objectMapper).saveObject(vuln)
+        verify(mappersManager).getMapper(vuln.class_signature)
+        verify(objectMapper).save(vuln)
 
     def testAddVulnToInterfaceGetsMapperDispatchSaveSYNC(self): 
         interface = Interface("int0")
@@ -171,15 +171,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(vuln).thenReturn(objectMapper)
-        when(objectMapper).saveObject(vuln).thenReturn(True)
+        when(mappersManager).getMapper(vuln.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(vuln).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addVulnToInterfaceSYNC(None, interface.getID(), vuln)
 
-        verify(mappersManager).getMapper(vuln)
-        verify(objectMapper).saveObject(vuln)
+        verify(mappersManager).getMapper(vuln.class_signature)
+        verify(objectMapper).save(vuln)
 
     def testAddVulnToInterfaceGetsMapperDispatchSaveASYNC(self): 
         interface = Interface("int0")
@@ -187,16 +187,16 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(vuln).thenReturn(objectMapper)
-        when(objectMapper).saveObject(vuln).thenReturn(True)
+        when(mappersManager).getMapper(vuln.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(vuln).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addVulnToInterfaceASYNC(None, interface.getID(), vuln) 
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(vuln)
-        verify(objectMapper).saveObject(vuln)
+        verify(mappersManager).getMapper(vuln.class_signature)
+        verify(objectMapper).save(vuln)
 
     def testAddVulnToHostGetsMapperDispatchSaveSYNC(self): 
         host = Host("pepito")
@@ -204,15 +204,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(vuln).thenReturn(objectMapper)
-        when(objectMapper).saveObject(vuln).thenReturn(True)
+        when(mappersManager).getMapper(vuln.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(vuln).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addVulnToHostSYNC(host.getID(), vuln)
 
-        verify(mappersManager).getMapper(vuln)
-        verify(objectMapper).saveObject(vuln)
+        verify(mappersManager).getMapper(vuln.class_signature)
+        verify(objectMapper).save(vuln)
 
     def testAddVulnToHostGetsMapperDispatchSaveASYNC(self): 
         host = Host("pepito")
@@ -220,16 +220,16 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(vuln).thenReturn(objectMapper)
-        when(objectMapper).saveObject(vuln).thenReturn(True)
+        when(mappersManager).getMapper(vuln.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(vuln).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addVulnToHostASYNC(host.getID(), vuln)
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(vuln)
-        verify(objectMapper).saveObject(vuln)
+        verify(mappersManager).getMapper(vuln.class_signature)
+        verify(objectMapper).save(vuln)
 
     def testAddNoteToServiceGetsMapperDispatchSaveSYNC(self): 
         service = Service("servi")
@@ -237,15 +237,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteToServiceSYNC(None, service.getID(), note)
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def testAddNoteToServiceGetsMapperDispatchSaveASYNC(self): 
         service = Service("servi")
@@ -253,16 +253,16 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteToServiceASYNC(None, service.getID(), note)
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def testAddNoteToVulnGetsMapperDispatchSave(self): 
         vuln = ModelObjectVuln('a vuln')
@@ -270,15 +270,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteToServiceSYNC(None, vuln.getID(), note)
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def testAddNoteToServiceGetsMapperDispatchSaveSYNC(self): 
         service = Service("servi")
@@ -286,15 +286,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteToServiceSYNC(None, service.getID(), note)
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def testAddNoteToServiceGetsMapperDispatchSaveASYNC(self): 
         service = Service("servi")
@@ -302,16 +302,16 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteToServiceASYNC(None, service.getID(), note)
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def testAddNoteToInterfaceGetsMapperDispatchSaveSYNC(self): 
         interface = Interface("int0")
@@ -319,15 +319,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteToServiceSYNC(None, interface.getID(), note)
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def testAddNoteToInterfaceGetsMapperDispatchSaveASYNC(self): 
         interface = Interface("int0")
@@ -335,16 +335,16 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteToServiceASYNC(None, interface.getID(), note)
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def testAddNoteToHostGetsMapperDispatchSaveSYNC(self): 
         host = Host("pepito")
@@ -352,15 +352,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteToHostSYNC(host.getID(), note)
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def testAddNoteToHostGetsMapperDispatchSaveASYNC(self): 
         host = Host("pepito")
@@ -368,16 +368,16 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteToHostASYNC(host.getID(), note)
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def testAddNoteToInterfaceGetsMapperDispatchSaveSYNC(self): 
         interface = Interface("pepito")
@@ -385,15 +385,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteToInterfaceSYNC(None, interface.getID(), note)
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def testAddNoteToInterfaceGetsMapperDispatchSaveASYNC(self): 
         interface = Interface("pepito")
@@ -401,16 +401,16 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteToInterfaceASYNC(None, interface.getID(), note) 
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def testAddNoteToNoteGetsMapperDispatchSaveSYNC(self): 
         host = Host("pepito")
@@ -418,15 +418,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteToNoteSYNC(note.getID(), note)
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def testAddNoteToNoteGetsMapperDispatchSaveASYNC(self): 
         host = Host("pepito")
@@ -434,16 +434,16 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteToNoteASYNC(None, None, note.getID(), note)
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def testAddSavesObjectNameInTrie(self):
         host = Host('coco')
@@ -452,8 +452,8 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         objectMapper = mock()
         triemock = mock()
 
-        when(mappersManager).getMapper(host).thenReturn(objectMapper)
-        when(objectMapper).saveObject(host).thenReturn(True)
+        when(mappersManager).getMapper(host.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(host).thenReturn(True)
         when(triemock).addWord(host.getName()).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
@@ -461,8 +461,8 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         model_controller.addHostSYNC(host)
 
-        verify(mappersManager).getMapper(host)
-        verify(objectMapper).saveObject(host)
+        verify(mappersManager).getMapper(host.class_signature)
+        verify(objectMapper).save(host)
         verify(triemock).addWord(host.getName())
 
     def testAddNoteToModelObjectSYNC(self): 
@@ -471,15 +471,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(note).thenReturn(objectMapper)
-        when(objectMapper).saveObject(note).thenReturn(True)
+        when(mappersManager).getMapper(note.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(note).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addNoteSYNC(host.getID(), note)
 
-        verify(mappersManager).getMapper(note)
-        verify(objectMapper).saveObject(note)
+        verify(mappersManager).getMapper(note.class_signature)
+        verify(objectMapper).save(note)
 
     def createMapperMock(self):
         map_mock = mock()
@@ -493,15 +493,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(cred).thenReturn(objectMapper)
-        when(objectMapper).saveObject(cred).thenReturn(True)
+        when(mappersManager).getMapper(cred.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(cred).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addCredSYNC(cred.getID(), cred)
 
-        verify(mappersManager).getMapper(cred)
-        verify(objectMapper).saveObject(cred)
+        verify(mappersManager).getMapper(cred.class_signature)
+        verify(objectMapper).save(cred)
 
 
     def testAddCredToServiceGetsMapperDispatchSaveSYNC(self): 
@@ -510,15 +510,15 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(cred).thenReturn(objectMapper)
-        when(objectMapper).saveObject(cred).thenReturn(True)
+        when(mappersManager).getMapper(cred.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(cred).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addCredToServiceSYNC(None, cred.getID(), cred)
 
-        verify(mappersManager).getMapper(cred)
-        verify(objectMapper).saveObject(cred)
+        verify(mappersManager).getMapper(cred.class_signature)
+        verify(objectMapper).save(cred)
 
     def testAddCredToServiceGetsMapperDispatchSaveASYNC(self): 
         service = Service("pepito")
@@ -526,44 +526,43 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(cred).thenReturn(objectMapper)
-        when(objectMapper).saveObject(cred).thenReturn(True)
+        when(mappersManager).getMapper(cred.class_signature).thenReturn(objectMapper)
+        when(objectMapper).save(cred).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager)
 
         model_controller.addCredToServiceASYNC(None, cred.getID(), cred)
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(cred)
-        verify(objectMapper).saveObject(cred)
+        verify(mappersManager).getMapper(cred.class_signature)
+        verify(objectMapper).save(cred)
 
     def testDeleteHostObjectDispatchRemoveSYNC(self):
         host = Host("coquito")
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(host.getID()).thenReturn(objectMapper)
-        when(objectMapper).delObject(host.getID()).thenReturn(True)
+        when(mappersManager).find(host.getID()).thenReturn(host)
+        when(mappersManager).remove(host.getID()).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager) 
-        model_controller.delHostSYNC(host) 
-        verify(mappersManager).getMapper(host.getID())
-        verify(objectMapper).delObject(host.getID())
+        model_controller.delHostSYNC(host.getID()) 
+        verify(mappersManager).remove(host.getID())
+        verify(mappersManager).find(host.getID())
 
     def testDeleteHostObjectDispatchRemoveASYNC(self):
         host = Host("coquito")
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getMapper(host.getID()).thenReturn(objectMapper)
-        when(objectMapper).delObject(host.getID()).thenReturn(True)
+        when(mappersManager).find(host.getID()).thenReturn(host)
+        when(mappersManager).remove(host.getID()).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager) 
         model_controller.delHostASYNC(host.getID()) 
         model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(host.getID())
-        verify(objectMapper).delObject(host.getID())
+        verify(mappersManager).remove(host.getID())
 
     def testDeleteModelObjectRemovesChildFromParentSYNC(self): 
         host = Host('coco')
@@ -581,58 +580,52 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         self.genericDelTest(host, interface,
                 controller.ModelController.delInterfaceSYNC)
 
-    def testInterfaceFromHostRemovedASYNC(self):
-        host = Host('coco')
-        interface = Interface("int_mock0") 
-        self.genericDelTest(host, interface,
-                controller.ModelController.delInterfaceASYNC, process_pending=True)
-
     def testInterfaceFromHostRemovedSYNC(self):
         service = Service('coco')
         interface = Interface("int_mock0") 
-        interface.addChild(service.getID(), service)
+        interface.addChild(service)
         self.genericDelTest(interface, service,
                 controller.ModelController.delServiceFromInterfaceSYNC)
 
     def testInterfaceFromHostRemovedASYNC(self):
         service = Service('coco')
         interface = Interface("int_mock0") 
-        interface.addChild(service.getID(), service)
+        interface.addChild(service)
         self.genericDelTest(interface, service,
                 controller.ModelController.delServiceFromInterfaceASYNC, process_pending=True)
 
     def testDelVulnFromHostSYNC(self):
         host = Host('coco')
         vuln = ModelObjectVuln("int_mock0") 
-        host.addChild(vuln.getID(), vuln)
+        host.addChild(vuln)
         self.genericDelTest(host, vuln,
                 controller.ModelController.delVulnFromHostSYNC)
 
     def testDelVulnFromHostASYNC(self):
         host = Host('coco')
         vuln = ModelObjectVuln("int_mock0") 
-        host.addChild(vuln.getID(), vuln)
+        host.addChild(vuln)
         self.genericDelTest(host, vuln,
                 controller.ModelController.delVulnFromHostASYNC, process_pending=True)
 
     def testDelVulnFromObjectSYNC(self):
         host = Host('coco')
         vuln = ModelObjectVuln("int_mock0") 
-        host.addChild(vuln.getID(), vuln)
+        host.addChild(vuln)
         self.genericDelTest(host, vuln,
                 controller.ModelController.delVulnSYNC)
 
     def testDelVulnFromServiceSYNC(self):
         service = Service('coco')
         vuln = ModelObjectVuln("int_mock0") 
-        service.addChild(vuln.getID(), vuln)
+        service.addChild(vuln)
         self.genericDelTest(service, vuln, 
                 controller.ModelController.delVulnFromServiceSYNC)
 
     def testDelVulnFromServiceASYNC(self):
         service = Service('coco')
         vuln = ModelObjectVuln("int_mock0") 
-        service.addChild(vuln.getID(), vuln)
+        service.addChild(vuln)
         self.genericDelTest(service, vuln, 
                 controller.ModelController.delVulnFromServiceASYNC, process_pending=True)
 
@@ -641,14 +634,14 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
     def testDelNoteFromInterfaceSYNC(self):
         interface = Interface('coco')
         note = ModelObjectNote("int_mock0") 
-        interface.addChild(note.getID(), note)
+        interface.addChild(note)
         self.genericDelTest(interface, note, 
                 controller.ModelController.delNoteFromInterfaceSYNC)
 
     def testDelNoteFromInterfaceASYNC(self):
         interface = Interface('coco')
         note = ModelObjectNote("int_mock0") 
-        interface.addChild(note.getID(), note)
+        interface.addChild(note)
         self.genericDelTest(interface, note, 
                 controller.ModelController.delNoteFromInterfaceASYNC, process_pending=True)
 
@@ -656,56 +649,56 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
     def testDelNoteFromServiceSYNC(self):
         service = Service('coco')
         note = ModelObjectNote("int_mock0") 
-        service.addChild(note.getID(), note)
+        service.addChild(note)
         self.genericDelTest(service, note, 
                 controller.ModelController.delNoteFromServiceSYNC)
 
     def testDelNoteFromServiceASYNC(self):
         service = Service('coco')
         note = ModelObjectNote("int_mock0") 
-        service.addChild(note.getID(), note)
+        service.addChild(note)
         self.genericDelTest(service, note, 
                 controller.ModelController.delNoteFromServiceASYNC, process_pending=True)
 
     def testDelNoteFromHostSYNC(self):
         host = Host('coco')
         note = ModelObjectNote("int_mock0") 
-        host.addChild(note.getID(), note)
+        host.addChild(note)
         self.genericDelTest(host, note, 
                 controller.ModelController.delNoteFromHostSYNC)
 
     def testDelNoteFromHostSYNC(self):
         host = Host('coco')
         note = ModelObjectNote("int_mock0") 
-        host.addChild(note.getID(), note)
+        host.addChild(note)
         self.genericDelTest(host, note, 
                 controller.ModelController.delNoteFromHostASYNC, process_pending=True)
 
     def testDelNoteFromModelObjectSYNC(self):
         host = Host('coco')
         note = ModelObjectNote("int_mock0") 
-        host.addChild(note.getID(), note)
+        host.addChild(note)
         self.genericDelTest(host, note, 
                 controller.ModelController.delNoteSYNC)
 
     def testDelCredentialFromServiceSYNC(self):
         service = Service('coco')
         cred = ModelObjectCred("int_mock0") 
-        service.addChild(cred.getID(), cred)
+        service.addChild(cred)
         self.genericDelTest(service, cred, 
                 controller.ModelController.delCredFromServiceSYNC)
 
     def testDelCredentialFromServiceASYNC(self):
         service = Service('coco')
         cred = ModelObjectCred("int_mock0") 
-        service.addChild(cred.getID(), cred)
+        service.addChild(cred)
         self.genericDelTest(service, cred, 
                 controller.ModelController.delCredFromServiceASYNC, process_pending=True)
 
     def testDelCredentialFromModelObjectSYNC(self):
         service = Service('coco')
         cred = ModelObjectCred("int_mock0") 
-        service.addChild(cred.getID(), cred)
+        service.addChild(cred)
         self.genericDelTest(service, cred, 
                 controller.ModelController.delCredSYNC)
 
@@ -715,16 +708,14 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         mappersManager = self.createMapperMock()
         objectMapper = mock()
         triemock = mock()
-        when(mappersManager).getMapper(host.getID()).thenReturn(objectMapper)
-        when(objectMapper).delObject(host.getID()).thenReturn(True)
+        when(mappersManager).getMapper(host.class_signature).thenReturn(objectMapper)
         when(mappersManager).find(host.getID()).thenReturn(host)
         when(triemock).addWord(host.getName()).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager) 
         model_controller.treeWordsTries = triemock
-        model_controller.delHostSYNC(host) 
-        verify(mappersManager).getMapper(host.getID())
-        verify(objectMapper).delObject(host.getID())
+        model_controller.delHostSYNC(host.getID()) 
+        verify(mappersManager).remove(host.getID())
 
         verify(triemock).removeWord(host.getName()) 
 
@@ -732,7 +723,6 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         mappersManager = self.createMapperMock() 
         objectMapper = mock()
         triemock = mock()
-        when(mappersManager).getMapper(obj2.getID()).thenReturn(objectMapper)
         when(mappersManager).find(obj2.getID()).thenReturn(obj2)
         when(objectMapper).delObject(obj2.getID()).thenReturn(True)
 
@@ -747,24 +737,24 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
         if process_pending: 
             model_controller.processAllPendingActions()
 
-        verify(mappersManager).getMapper(obj2.getID())
-        verify(objectMapper).delObject(obj2.getID())
+        verify(mappersManager).find(obj2.getID())
+        verify(mappersManager).remove(obj2.getID())
 
     def testEditHostSyncGetsMapperDispatchedSYNC(self):
         host = Host("coquito")
 
         mappersManager = self.createMapperMock()
+        dataMapper = mock()
         objectMapper = mock()
         triemock = mock()
-        when(mappersManager).find(host.getID()).thenReturn(host)
-        when(mappersManager).saveObject(host).thenReturn(True)
+        when(mappersManager).getMapper(host.class_signature).thenReturn(dataMapper)
+        when(dataMapper).save(host).thenReturn(True)
 
         model_controller = controller.ModelController(mock(), mappersManager) 
 
-        model_controller.editHostSYNC(host.getID(), 'new_name', 'new_desc', 'new_os', True)
+        model_controller.editHostSYNC(host, 'new_name', 'new_desc', 'new_os', True)
 
-        verify(mappersManager).saveObject(host) 
-        verify(mappersManager).find(host.getID())
+        verify(dataMapper).save(host) 
 
         self.assertEquals(host.getName(), 'new_name', "Name not updated")
         self.assertEquals(host.getDescription(), 'new_desc', "Description not updated")
@@ -914,13 +904,13 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getHostsMapper().thenReturn(objectMapper)
-        when(objectMapper).getAllHosts().thenReturn(hosts)
+        when(mappersManager).getMapper(Host.__name__).thenReturn(objectMapper)
+        when(objectMapper).getAll().thenReturn(hosts)
 
         model_controller = controller.ModelController(mock(), mappersManager) 
         hosts_obt =  model_controller.getAllHosts()
-        verify(objectMapper).getAllHosts()
-        verify(mappersManager).getHostsMapper()
+        verify(objectMapper).getAll()
+        verify(mappersManager).getMapper(Host.__name__)
 
         self.assertListEqual(hosts, hosts_obt)
 
@@ -929,31 +919,31 @@ class ModelObjectControllerUnitTest(unittest.TestCase):
 
         mappersManager = self.createMapperMock()
         objectMapper = mock()
-        when(mappersManager).getHostsMapper().thenReturn(objectMapper)
-        when(objectMapper).getHost(host.getName()).thenReturn(host)
-        when(objectMapper).findByName(host.getName()).thenReturn(host)
+        when(mappersManager).getMapper(host.__class__.__name__).thenReturn(objectMapper)
+        when(objectMapper).find(host.getName()).thenReturn(host)
 
         model_controller = controller.ModelController(mock(), mappersManager) 
 
         host_obt =  model_controller.getHost('coquito')
 
-        verify(objectMapper).findByName(host.getName())
-        verify(mappersManager).getHostsMapper()
+        verify(objectMapper).find(host.getName())
+        verify(mappersManager).getMapper(host.__class__.__name__)
 
         self.assertEqual(host, host_obt)
 
     def genericEdit(self, obj, params, callback, process_pending=False): 
         mappersManager = self.createMapperMock()
+        dataMapper = mock()
         objId = obj.getID()
+        when(mappersManager).getMapper(obj.class_signature).thenReturn(dataMapper)
+        when(dataMapper).save(obj).thenReturn(True)
         when(mappersManager).find(objId).thenReturn(obj)
-        when(mappersManager).saveObject(obj).thenReturn(True) 
+        when(mappersManager).save(obj).thenReturn(True) 
         model_controller = controller.ModelController(mock(), mappersManager) 
-        callback(model_controller, objId, *params) 
+        callback(model_controller, obj, *params) 
         if process_pending:
             model_controller.processAllPendingActions()
 
-        verify(mappersManager).saveObject(obj) 
-        verify(mappersManager).find(obj.getID())
 
 if __name__ == '__main__':
     unittest.main() 

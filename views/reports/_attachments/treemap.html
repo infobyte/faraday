@@ -68,7 +68,7 @@
             </header>
             
             <aside>
-                <nav>
+                <nav class="left-nav">
                     <ul>
                         <li>
                             <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
@@ -140,6 +140,19 @@ $(document).ready(function() {
     space = dominio.split("#");
     workspace = space[1];
 
+         var navegador = navigator.userAgent;
+      if (navigator.userAgent.indexOf('MSIE') !=-1) {
+            $("#main.seccion").height(screen.height);
+      } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
+            $("#main.seccion").height(screen.height - 5);
+      } else if (navigator.userAgent.indexOf('Chromium') !=-1) {
+            $("#main.seccion").height(screen.height);
+      } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
+            $("#main.seccion").height(screen.height);
+      } else if (navigator.userAgent.indexOf('Opera') !=-1) {
+            $("#main.seccion").height(screen.height);
+      }
+
     // navegacion entre WSs en el dropdown
     $(document).on("click", "a.ws", function(e) {
         e.preventDefault();
@@ -158,27 +171,12 @@ $(document).ready(function() {
     });
     $(document).on("click", "a.status-report", function(e) {
         e.preventDefault();
-        var url = "../././reports/status_report.html#" + workspace;
+        var url = "../././reports/status_report.html#/ws/" + workspace;
         window.location.href = url;
     });
 
     var ret = "Viewing "+ workspace;
     $('#reports-main .ws-label span#ws-name').text(ret);
-
-     var navegador = navigator.userAgent;
-      if (navigator.userAgent.indexOf('MSIE') !=-1) {
-            $("aside").height(679);
-      } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
-            $("aside").height(679);
-      } else if (navigator.userAgent.indexOf('Chromium') !=-1) {
-            $(".seccion.treemap").height(574);
-            $("aside").height(687);
-      } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
-            $("aside").height(712);
-            $(".seccion.treemap").height(599);
-      } else if (navigator.userAgent.indexOf('Opera') !=-1) {
-            $("aside").height(679);
-      }
 });
 </script>
     <style>
@@ -193,8 +191,8 @@ $(document).ready(function() {
     </style>
       <script>
         var margin = {top: 10, right: 10, bottom: 10, left: 10},
-            width = 960 - margin.left - margin.right,
-            height = 500 - margin.top - margin.bottom;
+            width = 960,
+            height = 500;
 
         var color = d3.scale.category20c();
 
@@ -205,8 +203,8 @@ $(document).ready(function() {
 
         var div = d3.select("#chart").append("div")
             .style("position", "relative")
-            .style("width", (width + margin.left + margin.right) + "px")
-            .style("height", (height + margin.top + margin.bottom) + "px")
+            .style("width", (width) + "px")
+            .style("height", (height) + "px")
             .style("left", margin.left + "px")
             .style("top", margin.top + "px");
 

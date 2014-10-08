@@ -257,7 +257,10 @@ def setConf():
 
     CONF = getInstanceConfiguration()
     CONF.setDebugStatus(args.debug)
-    CONF.setApiConInfo(args.host, args.port)
+    if args.host != 'localhost':
+        CONF.setApiConInfoHost(args.host)
+    if args.port != 9876:
+        CONF.setApiConInfoPort(args.port)
     CONF.setAuth(args.disable_login)
 
 

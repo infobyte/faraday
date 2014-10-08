@@ -34,6 +34,7 @@
     <script type="text/javascript" src="script/angular.js"></script>
     <script type="text/javascript" src="script/angular-route.js"></script>
     <script type="text/javascript" src="script/angular-selection-model.js"></script>
+    <script type="text/javascript" src="script/ui-bootstrap-tpls-0.11.2.min.js"></script>
     <script type="text/javascript" src="script/csv-export.js"></script>
     <script type="text/javascript" src="script/jquery.qtip.js"></script>
 </head>
@@ -74,17 +75,15 @@
             async: false
         });
 
-        var statusReport = angular.module('status-report', ['ngRoute', 'selectionModel'])
+        var statusReport = angular.module('status-report', ['ngRoute', 'selectionModel', 'ui.bootstrap'])
             .controller('statusReportCtrl', 
-                            ['$scope', '$filter', '$route', '$routeParams', 'statusReportFact', 
-                            function($scope, $filter, $route, $routeParams, statusReport) {
+                            ['$scope', '$filter', '$route', '$routeParams', '$modal', 'statusReportFact', 
+                            function($scope, $filter, $route, $routeParams, $modal, statusReport) {
                 var ws = $routeParams.wsId;
                 $scope.vulns = statusReport.get(ws);
                 $scope.sortField = 'date';
                 $scope.reverse = true;
                 $scope.workspace = ws;
-                $scope.$on('LOAD',function(){$scope.loading=true});
-                $scope.$on('UNLOAD',function(){$scope.loading=false})
 
                 $scope.remove = function() {
                     var old = $scope.vulns;
@@ -94,6 +93,19 @@
                             statusReport.remove(ws, v);
                         } else {
                             $scope.vulns.push(v);
+                        }
+                    });
+                };
+
+                $scope.edit = function() {
+                    var modal = $modal.open({
+                        templateUrl: 'partials/modal-edit.html',
+                        controller: 'modalEditCtrl',
+                        size: 'lg',
+                        resolve: {
+                            vulns: function() {
+                                return $scope.vulns;
+                            }
                         }
                     });
                 };
@@ -110,6 +122,14 @@
                     });
                 };
             }])
+            .controller('modalEditCtrl', function($scope, $modalInstance, vulns) {
+                $scope.vulns = vulns;
+
+                $scope.isChecked = function(i) {
+                    return i.selected;
+                };
+
+            })
             .factory('statusReportFact', ['vulnsFact', 'hostsFact', '$http', function(vulnsFact, hostsFact, $http) {
                 var statusReportFact = {};
 

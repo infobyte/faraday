@@ -180,16 +180,15 @@ $(document).ready(function() {
 
      var navegador = navigator.userAgent;
       if (navigator.userAgent.indexOf('MSIE') !=-1) {
-            $(".seccion").height(screen.height);
+            $("#main.seccion").height(screen.height);
       } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
-            $(".seccion").height(screen.height - 5);
-            $("th.header:first-child").css("padding-right", "294px");
+            $("#main.seccion").height(screen.height);
       } else if (navigator.userAgent.indexOf('Chromium') !=-1) {
             $("#main.seccion").height(screen.height);
       } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
-            $(".seccion").height(screen.height);
+            $("#main.seccion").height(screen.height);
       } else if (navigator.userAgent.indexOf('Opera') !=-1) {
-            $(".seccion").height(screen.height);
+            $("#main.seccion").height(screen.height);
       }
 
     $('#cont').on('mouseenter', '.faraday-qtips', function (event) {

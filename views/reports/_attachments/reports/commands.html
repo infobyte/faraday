@@ -8,11 +8,11 @@ function get_report_div(workspace, view,design){
     });
 	$.getJSON(json_url, function(data) {
         if(jQuery.isEmptyObject(data.rows)){
-            tabla = "<div class='columna'><article><section class=\"sin_padding\" id=\"hosts\">"+
+            tabla = "<div class='col-lg-6'><article><section class=\"sin_padding\" id=\"hosts\">"+
                         "<header><h2>Commands History "+
                         "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\""+
                         "title=\"Shows current WS' executed commands\"></span>"+
-                        "</h2></header><div class='main'>"+
+                        "</h2></header>"+
                         "<div class=\"alert alert-info alert-dismissible\">"+
                         "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">"+
                         "<span aria-hidden=\"true\">&times;</span>"+
@@ -22,12 +22,12 @@ function get_report_div(workspace, view,design){
                         "</div>"+
                         "</div></section>";
         }else{
-            tabla = "<div class='columna'><article><section class=\"sin_padding\" id=\"hosts\">"+
+            tabla = "<div class='col-lg-6'><article><section class=\"sin_padding\" id=\"hosts\">"+
                         "<header><h2>Commands History "+
                         "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\""+
                         "title=\"Shows current WS' executed commands\"></span></h2>"+
-                        "</h2></header><div class='main'>";
-            tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter\"><thead><tr>"+
+                        "</h2></header>";
+            tabla += "<table id=\"hosts-"+workspace+"\" class=\"tablesorter table table-striped\"><thead><tr>"+
                         "<th>By</th><th>Command</th><th>Start Date</th><th>Duration</th>"+
                         "</tr></thead><tbody>";
                 $.each(data.rows, function(n, obj){

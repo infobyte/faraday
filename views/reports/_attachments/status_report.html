@@ -79,18 +79,20 @@
             .controller('statusReportCtrl', 
                             ['$scope', '$filter', '$route', '$routeParams', '$modal', 'statusReportFact', 
                             function($scope, $filter, $route, $routeParams, $modal, statusReport) {
-                var ws = $routeParams.wsId;
-                $scope.vulns = statusReport.get(ws);
+                // current Workspace
+                $scope.workspace = $routeParams.wsId;
+
+                $scope.vulns = statusReport.get($scope.workspace);
                 $scope.sortField = 'date';
                 $scope.reverse = true;
-                $scope.workspace = ws;
 
                 $scope.remove = function() {
                     var old = $scope.vulns;
                     $scope.vulns = [];
-                    angular.forEach(old, function(v) {
+
+                    old.forEach(function(v) {
                         if(v.selected) {
-                            statusReport.remove(ws, v);
+                            statusReport.remove($scope.workspace, v);
                         } else {
                             $scope.vulns.push(v);
                         }
@@ -98,16 +100,34 @@
                 };
 
                 $scope.edit = function() {
-                    var modal = $modal.open({
-                        templateUrl: 'partials/modal-edit.html',
-                        controller: 'modalEditCtrl',
-                        size: 'lg',
-                        resolve: {
-                            vulns: function() {
-                                return $scope.vulns;
-                            }
-                        }
+                    var selected = false;
+
+                    $scope.vulns.forEach(function(v) {
+                        if(v.selected) selected = true;
                     });
+
+                    if(selected) {
+                        var modal = $modal.open({
+                            templateUrl: 'partials/modal-edit.html',
+                            controller: 'modalEditCtrl',
+                            size: 'lg',
+                            resolve: {
+                                vulns: function() {
+                                    return $scope.vulns;
+                                }
+                            }
+                        });
+                    } else {
+                        var modal = $modal.open({
+                            templateUrl: 'partials/modal-ko.html',
+                            controller: 'modalKoCtrl',
+                            resolve: {
+                                msg: function() {
+                                    return 'At least one vulnerabilty must be selected in order to edit';
+                                }
+                            }
+                        });
+                    }
                 };
 
                 $scope.checkAll = function() {
@@ -129,6 +149,9 @@
                     return i.selected;
                 };
 
+            })
+            .controller('modalKoCtrl', function($scope, $modalInstance, msg) {
+                $scope.msg = msg;
             })
             .factory('statusReportFact', ['vulnsFact', 'hostsFact', '$http', function(vulnsFact, hostsFact, $http) {
                 var statusReportFact = {};

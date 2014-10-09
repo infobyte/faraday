@@ -44,7 +44,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse"
+                                <tr ng-repeat="v in vulns | filter:query | orderBy:severityOrder:reverse | orderBy:sortField:reverse"
                                     selection-model selection-model-type="checkbox" 
                                     selection-model-mode="multiple-additive" 
                                     selection-model-selected-class="multi-selected">

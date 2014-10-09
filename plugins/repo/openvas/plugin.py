@@ -145,18 +145,28 @@ class Item(object):
 
         self.host = self.get_text_from_subnode('host')
         self.subnet = self.get_text_from_subnode('subnet')
+
+
+        if self.subnet  is '':
+            self.subnet = self.host
+
         self.description = self.get_text_from_subnode('description')
         self.port ="None"
         self.severity = self.get_text_from_subnode('threat')
         self.service=""
         self.protocol=""
         port = self.get_text_from_subnode('port')
-        
+       
         if (re.search("^general",port) is None):
             mregex = re.search("([\w]+) \(([\d]+)\/([\w]+)\)",port)
-            self.service = mregex.group(1)
-            self.port = mregex.group(2)
-            self.protocol = mregex.group(2)
+            if mregex is not None:
+                self.service = mregex.group(1)
+                self.port = mregex.group(2)
+                self.protocol = mregex.group(2)
+            else:
+                info = port.split("/")
+                self.port = info[0]
+                self.protocol = info[1]                
         else:
             info = port.split("/")
             self.service = info[0]
@@ -199,7 +209,7 @@ class OpenvasPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id              = "Openvas"
         self.name            = "Openvas XML Output Plugin"
-        self.plugin_version         = "0.0.1"
+        self.plugin_version         = "0.0.2"
         self.version   = "2.0"
         self.framework_version  = "1.0.0"
         self.options         = None
@@ -266,12 +276,15 @@ class OpenvasPlugin(core.PluginBase):
                                                        ref=ref)
                 else:
                     
-                                   
-                    web=True if re.search(r'^(www|http)',item.service) else False
+                    if item.service:
+                        web=True if re.search(r'^(www|http)',item.service) else False
+                    else:
+                        web=True if item.port in ('80','443','8080') else False
                     
                     if ids.has_key(item.subnet+"_"+item.subnet):
                         i_id=ids[item.subnet+"_"+item.subnet]
                     else:
+
                                         
                         if self._isIPV4(item.subnet):
                             i_id = self.createAndAddInterface(h_id, item.subnet, ipv4_address=item.subnet,hostname_resolution=item.host)

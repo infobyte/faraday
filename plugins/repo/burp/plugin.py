@@ -142,9 +142,9 @@ class Item(object):
         path = item_node.findall('path')[0]
         location = item_node.findall('location')[0]
         severity = item_node.findall('severity')[0]
-        requestresponse = item_node.findall('requestresponse')[0]
-        request = item_node.findall('./requestresponse/request')[0]
-        response = item_node.findall('./requestresponse/response')[0]
+        request = item_node.findall('./requestresponse/request')[0].text if len(item_node.findall('./requestresponse/request'))  >0  else ""
+        response = item_node.findall('./requestresponse/response')[0].text if len(item_node.findall('./requestresponse/response')) > 0 else ""
+
         detail = self.do_clean(item_node.findall('issueDetail'))
         remediation = self.do_clean(item_node.findall('remediationBackground'))
         
@@ -167,10 +167,10 @@ class Item(object):
         self.ip = host_node.get('ip')
         self.url = self.node.get('url')
         self.severity = severity.text
-        self.request = request.text
-        self.response = response.text
+        self.request = request
+        self.response = response
         self.detail = detail
-        self.remediation = remediation
+        self.remediation = remediation 
     
     
     def do_clean(self,value):
@@ -202,8 +202,8 @@ class BurpPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id              = "Burp"
         self.name            = "Burp XML Output Plugin"
-        self.plugin_version         = "0.0.1"
-        self.version   = "1.5.18 BurpPro"
+        self.plugin_version         = "0.0.2"
+        self.version   = "1.6.05 BurpPro"
         self.framework_version  = "1.0.0"
         self.options         = None
         self._current_output = None
@@ -235,6 +235,7 @@ class BurpPlugin(core.PluginBase):
             item.response=""
             desc=item.detail
             desc+="\nSolution: "+item.remediation if item.remediation else ""
+
             v_id = self.createAndAddVulnWebToService(h_id, s_id, item.name,
                                                      desc=desc,severity=item.severity,website=item.host,
                                                      path=item.path,request=item.request,response=item.response)

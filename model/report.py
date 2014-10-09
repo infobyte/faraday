@@ -187,6 +187,8 @@ class ReportXmlParser(object):
             return "nikto"
         elif "MetasploitV4" == tag:
             return "metasploit"
+        elif "MetasploitV5" == tag:
+            return "metasploit"
         elif "issues" == tag:
             return "burp"
         elif "OWASPZAPReport" == tag:

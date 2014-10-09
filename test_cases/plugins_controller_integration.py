@@ -14,29 +14,44 @@ from model.container import ModelObjectContainer
 import model.api as api
 #from model import controller
 #from model import api
+from managers.model_managers import WorkspaceManager
 from plugins.repo.nmap import plugin
 from plugins.core import PluginControllerForApi
-from mockito import mock, when
-from managers.all import CommandManager
+from mockito import mock, when, any
 
+from persistence.persistence_managers import DBTYPE
 
-class TestSequenceFunctions(unittest.TestCase):
+from managers.mapper_manager import MapperManager
+from managers.reports_managers import ReportManager
+from persistence.persistence_managers import DbManager
+
+class PluginsToModelControllerIntegration(unittest.TestCase):
 
     def setUp(self):
         """
         Generic test to verify that the object exists and can be
         instantiated without problems.
         """
-        self.model_controller = controller.ModelController(mock())
-        self.workspace = mock(Workspace)
-        when(self.workspace).getContainee().thenReturn(ModelObjectContainer())
-        self.cm = mock(CommandManager)
-        when(self.cm).saveCommand().thenReturn(True)
-        self.model_controller.setWorkspace(self.workspace)
-        self._plugin_controller = PluginControllerForApi("test", {"nmap": plugin.NmapPlugin()}, self.cm)
-        api.setUpAPIs(self.model_controller)
+        self.dbManager = mock()
+        self.changesController = mock()
+        self.reportManager = mock()
 
-    def test_ping_scan(self):
+        self.dbManager = DbManager()
+        self.mappersManager = MapperManager()
+
+        self.model_controller = controller.ModelController(mock(), self.mappersManager)
+        self.workspace_manager = WorkspaceManager(self.dbManager,
+                                             self.mappersManager,
+                                             self.changesController,
+                                             self.reportManager)
+        self.workspace_manager.createWorkspace('temp_workspace', 'desc', DBTYPE.FS)
+        self.workspace_manager.openWorkspace('temp_workspace')
+
+        self._plugin_controller = PluginControllerForApi("test", {"nmap": plugin.NmapPlugin()}, mock())
+
+        api.setUpAPIs(self.model_controller, self.workspace_manager)
+
+    def test_nmap_scan_saves_host(self):
         output_file = open(os.path.join(os.getcwd(), 'test_cases/data/nmap_plugin_with_api.xml'))
         output = output_file.read()
         self._plugin_controller.processCommandInput("nmap localhost")
@@ -44,6 +59,18 @@ class TestSequenceFunctions(unittest.TestCase):
         self.model_controller.processAllPendingActions()
         self.assertEquals(len(self.model_controller.getAllHosts()), 1,
                 "Not all hosts added to model")
+
+        host = self.model_controller.getAllHosts()[0]
+        self.assertEquals(len(host.getAllInterfaces()), 1,
+            "Not all interfaces added to model")
+
+        interface = host.getAllInterfaces()[0]
+        self.assertEquals(len(interface.getAllServices()), 3,
+            "Not all services added to model")
+
+        services = interface.getAllServices()
+        self.assertTrue(all( [ s.getStatus() == 'open' for s in services]),
+                "Port status not saved correctly")
 
 
 if __name__ == '__main__':

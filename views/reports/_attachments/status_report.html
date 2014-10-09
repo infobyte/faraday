@@ -110,7 +110,7 @@
                     });
                 };
 
-                $scope.severityOrder = function(data,field){
+                $scope.severityOrder = function(vuln){
                     var severity = {
                         "unclassified":0,
                         "high":1,
@@ -118,7 +118,7 @@
                         "low":3,
                         "info":4
                     };
-                    return severity[data.severity];
+                    return severity[vuln.severity];
                 }
             }])
             .factory('statusReportFact', ['vulnsFact', 'hostsFact', '$http', function(vulnsFact, hostsFact, $http) {

@@ -51,7 +51,10 @@ class PluginsToModelControllerIntegration(unittest.TestCase):
 
         api.setUpAPIs(self.model_controller, self.workspace_manager)
 
-    def test_nmap_scan_saves_host(self):
+    def tearDown(self): 
+        self.workspace_manager.removeWorkspace('temp_workspace')
+
+    def _test_nmap_scan_saves_host(self):
         output_file = open(os.path.join(os.getcwd(), 'test_cases/data/nmap_plugin_with_api.xml'))
         output = output_file.read()
         self._plugin_controller.processCommandInput("nmap localhost")
@@ -72,6 +75,15 @@ class PluginsToModelControllerIntegration(unittest.TestCase):
         self.assertTrue(all( [ s.getStatus() == 'open' for s in services]),
                 "Port status not saved correctly")
 
+
+    def test_nessus_scan_saves_host(self):
+        output_file = open(os.path.join(os.getcwd(), 'test_cases/data/nessus_plugin_with_api.nessus'))
+        output = output_file.read() 
+        self._plugin_controller.processCommandInput("./nessus report")
+        self._plugin_controller.onCommandFinished("./nessus report", output)
+        self.model_controller.processAllPendingActions()
+        self.assertEquals(len(self.model_controller.getAllHosts()), 7,
+                "Not all hosts added to model")
 
 if __name__ == '__main__':
     unittest.main()

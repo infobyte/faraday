@@ -102,6 +102,7 @@
 
                 // Updates all vulns with selected == true
                 $scope.update = function(vulns, severity, name, desc) {
+                    $scope.vulns = [];
                     vulns.forEach(function(v) {
                         v.severity = severity;
                         v.name = name;
@@ -111,7 +112,6 @@
                         }
                         $scope.vulns.push(v);
                     });
-
                 };
 
                 $scope.edit = function() {
@@ -133,8 +133,8 @@
                             }
                         });
 
-                        modal.result.then(function(vulns, severity, name, desc) {
-                            $scope.update(vulns, severity, name, desc);
+                        modal.result.then(function(data) {
+                            $scope.update(data.vulns, data.severity, data.name, data.desc);
                         });
                     } else {
                         var modal = $modal.open({
@@ -169,7 +169,12 @@
                 };
 
                 $scope.ok = function() {
-                    $modalInstance.close($scope.vulns, $scope.severity, $scope.name, $scope.desc);
+                    $modalInstance.close({
+                        "vulns":    $scope.vulns, 
+                        "severity": $scope.severity, 
+                        "name":     $scope.name, 
+                        "desc":     $scope.desc
+                    });
                 };
 
                 $scope.cancel = function() {
@@ -184,7 +189,7 @@
                     $modalInstance.close();
                 };
             })
-            .factory('statusReportFact', ['vulnsFact', 'hostsFact', '$http', function(vulnsFact, hostsFact, $http) {
+            .factory('statusReportFact', ['vulnsFact', 'hostsFact', function(vulnsFact, hostsFact) {
                 var statusReportFact = {};
 
                 statusReportFact.get = function(ws) {
@@ -197,7 +202,7 @@
                 }
 
                 statusReportFact.put = function(ws, vuln) {
-                    vulnsFact.setVuln(ws, vuln);
+                    vulnsFact.put(ws, vuln);
                 };
 
                 statusReportFact.remove = function(ws, vuln) {
@@ -206,7 +211,7 @@
 
                 return statusReportFact;
             }])
-            .factory('vulnsFact', function() {
+            .factory('vulnsFact', ['BASEURL', '$http', function(BASEURL, $http) {
                 var vulnsFact = {};
 
                 vulnsFact.get = function(ws) {
@@ -238,6 +243,34 @@
                 }
 
                 vulnsFact.put = function(ws, vuln) {
+                    var url = 'BASEURL' + ws + "/" + vuln.id;
+                    var severity = false;
+                    var severities = [
+                        "unclassified",
+                        "info",
+                        "low",
+                        "med",
+                        "high"
+                    ];
+                    severities.forEach(function(s) {
+                        if(vuln.severity == s) severity = true;
+                    });
+                    if(!severity) vuln.severity == "unclassified";
+                    var v = {
+                        "desc":         vuln.desc, 
+                        "metadata":     vuln.meta,
+                        "name":         vuln.name, 
+                        "obj_id":       vuln.oid,
+                        "owned":        vuln.owned,
+                        "owner":        vuln.owner,
+                        "parent":       vuln.parent, 
+                        "refs":         vuln.refs,
+                        "severity":     vuln.severity, 
+                        "type":         vuln.status
+                    };
+                    $http.put(url, v).success(function(d, s, h, c) {
+                        console.log(d);
+                    });
                 };
 
                 vulnsFact.remove = function(ws, vuln) {
@@ -248,8 +281,8 @@
                 };
 
                 return vulnsFact;
-            })
-            .factory('hostsFact', function() {
+            }])
+            .factory('hostsFact', ['BASEURL', function(BASEURL) {
                 var hostsFact = {};
 
                 hostsFact.get = function(ws) {
@@ -264,7 +297,7 @@
                     return hosts;
                 }
                 return hostsFact;
-            })
+            }])
             .directive('ddCollapseText', ['$compile', function($compile) {
                 return {
                     restrict: 'A',

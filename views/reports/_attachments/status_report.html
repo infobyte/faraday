@@ -76,6 +76,7 @@
         });
 
         var statusReport = angular.module('status-report', ['ngRoute', 'selectionModel', 'ui.bootstrap'])
+            .constant("BASEURL", "http://localhost:5984/")
             .controller('statusReportCtrl', 
                             ['$scope', '$filter', '$route', '$routeParams', '$modal', 'statusReportFact', 
                             function($scope, $filter, $route, $routeParams, $modal, statusReport) {
@@ -99,6 +100,20 @@
                     });
                 };
 
+                // Updates all vulns with selected == true
+                $scope.update = function(vulns, severity, name, desc) {
+                    vulns.forEach(function(v) {
+                        v.severity = severity;
+                        v.name = name;
+                        v.desc = desc;
+                        if(v.selected) {
+                            statusReport.put($scope.workspace, v);
+                        }
+                        $scope.vulns.push(v);
+                    });
+
+                };
+
                 $scope.edit = function() {
                     var selected = false;
 
@@ -116,6 +131,10 @@
                                     return $scope.vulns;
                                 }
                             }
+                        });
+
+                        modal.result.then(function(vulns, severity, name, desc) {
+                            $scope.update(vulns, severity, name, desc);
                         });
                     } else {
                         var modal = $modal.open({
@@ -149,27 +168,40 @@
                     return i.selected;
                 };
 
+                $scope.ok = function() {
+                    $modalInstance.close($scope.vulns, $scope.severity, $scope.name, $scope.desc);
+                };
+
+                $scope.cancel = function() {
+                    $modalInstance.dismiss('cancel');
+                };
+
             })
             .controller('modalKoCtrl', function($scope, $modalInstance, msg) {
                 $scope.msg = msg;
+
+                $scope.ok = function() {
+                    $modalInstance.close();
+                };
             })
             .factory('statusReportFact', ['vulnsFact', 'hostsFact', '$http', function(vulnsFact, hostsFact, $http) {
                 var statusReportFact = {};
 
                 statusReportFact.get = function(ws) {
-                    var vulns = vulnsFact.getVulns(ws);
-                    var hosts = hostsFact.getHosts(ws);
+                    var vulns = vulnsFact.get(ws);
+                    var hosts = hostsFact.get(ws);
                     vulns.forEach(function(element, index, array) {
                         element.target = hosts[element.parent].name;
                     });
                     return vulns;
                 }
 
+                statusReportFact.put = function(ws, vuln) {
+                    vulnsFact.setVuln(ws, vuln);
+                };
+
                 statusReportFact.remove = function(ws, vuln) {
-                    var url = "http://localhost:5984/" + ws + "/" + vuln.id + "?rev=" + vuln.rev;
-                    $http.delete(url).success(function(d, s, h, c) {
-                        console.log(d);
-                    });
+                    vulnsFact.remove(ws, vuln);
                 }
 
                 return statusReportFact;
@@ -177,9 +209,9 @@
             .factory('vulnsFact', function() {
                 var vulnsFact = {};
 
-                vulnsFact.getVulns = function(ws) {
+                vulnsFact.get = function(ws) {
                     var vulns = [];
-                    vulns_url = "/"+ ws +"/_design/vulns/_view/all";
+                    vulns_url = BASEURL + ws +"/_design/vulns/_view/all";
                     // gets vulns json from couch
                     $.getJSON(vulns_url, function(data) {
                         $.each(data.rows, function(n, obj){
@@ -204,13 +236,24 @@
                     });
                     return vulns;
                 }
+
+                vulnsFact.put = function(ws, vuln) {
+                };
+
+                vulnsFact.remove = function(ws, vuln) {
+                    var url = 'BASEURL' + ws + "/" + vuln.id + "?rev=" + vuln.rev;
+                    $http.delete(url).success(function(d, s, h, c) {
+                        console.log(d);
+                    });
+                };
+
                 return vulnsFact;
             })
             .factory('hostsFact', function() {
                 var hostsFact = {};
 
-                hostsFact.getHosts = function(ws) {
-                    hosts_url = "/"+ws+"/_design/hosts/_view/hosts";
+                hostsFact.get = function(ws) {
+                    hosts_url = BASEURL + ws + "/_design/hosts/_view/hosts";
                     var hosts = [];
                     //gets hosts json from couch
                     $.getJSON(hosts_url, function(data) {

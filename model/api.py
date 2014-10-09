@@ -124,7 +124,7 @@ def _setUpAPIServer(hostname=None, port=None):
 def createAndAddHost(name, os = "Unknown", category=None, update = False, old_hostname = None ):
     host = newHost(name, os)
     if addHost(host, category, update, old_hostname):
-        return True
+        return host.getID()
     return None
 
 def createAndAddInterface(host_id, name = "", mac = "00:00:00:00:00:00",
@@ -143,27 +143,27 @@ def createAndAddInterface(host_id, name = "", mac = "00:00:00:00:00:00",
                              ipv4_dns,ipv6_address,ipv6_prefix,ipv6_gateway,ipv6_dns,
                              network_segment, hostname_resolution, parent_id=host_id)
     if addInterface(host_id, interface):
-        return True
+        return interface.getID()
     return None
 
 def createAndAddApplication(host_id, name, status = "running", version = "unknown"):
     application = newApplication(name, status, version)
     if addApplication(host_id, application):
-        return True
+        return application.getID()
     return None
 
 def createAndAddServiceToApplication(host_id, application_id, name, protocol = "tcp?", 
                 ports = [], status = "running", version = "unknown", description = ""):
     service = newService(name, protocol, ports, status, version, description)
     if addServiceToApplication(host_id, application_id, service):
-        return True
+        return service.getID()
     return None
 
 def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?", 
                 ports = [], status = "running", version = "unknown", description = ""):
     service = newService(name, protocol, ports, status, version, description, parent_id=interface_id)
     if addServiceToInterface(host_id, interface_id, service):
-        return True
+        return service.getID()
     return None
 
 # Vulnerability
@@ -171,26 +171,26 @@ def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?
 def createAndAddVulnToHost(host_id, name, desc, ref, severity):
     vuln = newVuln(name, desc, ref, severity, parent_id=host_id)
     if addVulnToHost(host_id, vuln):
-        return True
+        return vuln.getID()
     return None
 
 def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref, severity):
     vuln = newVuln(name, desc, ref, severity, parent_id=interface_id)
     if addVulnToInterface(host_id, interface_id, vuln):
-        return True
+        return vuln.getID()
     return None
     
 def createAndAddVulnToApplication(host_id, application_id, name, desc, ref, severity):
     vuln = newVuln(name, desc, ref, severity)
     if addVulnToApplication(host_id, application_id, vuln):
-        return True
+        return vuln.getID()
     return None
 
 def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity):
     #we should give the interface_id or de application_id too? I think we should...
     vuln = newVuln(name, desc, ref, severity, parent_id=service_id)
     if addVulnToService(host_id, service_id, vuln):
-        return True
+        return vuln.getID()
     return None
 
 #WebVuln
@@ -201,7 +201,7 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity,
     vuln = newVulnWeb(name, desc, ref, severity, website, path, request, response,
                 method,pname, params,query,category, parent_id=service_id)
     if addVulnWebToService(host_id, service_id, vuln):
-        return True
+        return vuln.getID()
     return None
 
 # Note
@@ -209,37 +209,37 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity,
 def createAndAddNoteToHost(host_id, name, text):
     note = newNote(name, text, parent_id=host_id)
     if addNoteToHost(host_id, note):
-        return True
+        return note.getID()
     return None
 
 def createAndAddNoteToInterface(host_id, interface_id, name, text):
     note = newNote(name, text, parent_id=interface_id)
     if addNoteToInterface(host_id, interface_id, note):
-        return True
+        return note.getID()
     return None
 
 def createAndAddNoteToApplication(host_id, application_id, name, text):
     note = newNote(text)
     if addNoteToApplication(host_id, application_id, note):
-        return True
+        return note.getID()
     return None
 
 def createAndAddNoteToService(host_id, service_id, name, text):
     note = newNote(name, text, parent_id=service_id)
     if addNoteToService(host_id, service_id, note):
-        return True
+        return note.getID()
     return None
 
 def createAndAddNoteToNote(host_id, service_id, note_id, name, text):
     note = newNote(name, text, parent_id=note_id)
     if addNoteToNote(host_id, service_id, note_id, note):
-        return True
+        return note.getID()
     return None
 
 def createAndAddCredToService(host_id, service_id, username, password):
     cred = newCred(username, password, parent_id=service_id)
     if addCredToService(host_id, service_id, cred):
-        return True
+        return note.getID()
     return None
 
 #-------------------------------------------------------------------------------

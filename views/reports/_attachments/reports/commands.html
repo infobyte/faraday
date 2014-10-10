@@ -38,16 +38,18 @@ function get_report_div(workspace, view,design){
                     var d = new Date(0);
                     d.setUTCSeconds(obj.value.startdate);
                     d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear() + " - " + d.getHours() + ":" + d.getMinutes();
-                    if(obj.value.duration == "0") {
+                    if(obj.value.duration == "0" || obj.value.duration == "") {
                         duration = "In progress";
+                    } else if(!obj.value.duration){
+                           duration = "Undefined";
                     } else {
-                        duration = obj.value.duration.toFixed(2);   
+                        duration = obj.value.duration.toFixed(2) + "s";
                     }
                     if(obj.value.user && obj.value.user != "") user = obj.value.user;
                     if(obj.value.hostname && obj.value.hostname != "") hostname = obj.value.hostname;
                     if(obj.value.ip && obj.value.ip != "") ip = obj.value.ip;
                     tabla += "<tr><td class=\"faraday-qtips\" title=\""+ip+"\">"+user+"@"+hostname+"</td>"+
-                                "<td>"+obj.key+"</td><td>"+d+"</td><td>"+duration+"s</td></tr>";
+                                "<td>"+obj.key+"</td><td>"+d+"</td><td>"+duration+"</td></tr>";
                 });
             tabla += "</tbody></table>";
             tabla +="</section></article></div>";

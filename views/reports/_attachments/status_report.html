@@ -76,7 +76,10 @@
         });
 
         var statusReport = angular.module('status-report', ['ngRoute', 'selectionModel', 'ui.bootstrap'])
-            .constant("BASEURL", "http://localhost:5984/")
+            .constant("BASEURL", (function() {
+                var url = window.location.origin + "/";
+                return url;
+            })())
             .controller('statusReportCtrl', 
                             ['$scope', '$filter', '$route', '$routeParams', '$modal', 'statusReportFact', 
                             function($scope, $filter, $route, $routeParams, $modal, statusReport) {
@@ -179,11 +182,11 @@
 
                 $scope.severityOrder = function(vuln){
                     var severity = {
-                        "unclassified":0,
-                        "high":1,
-                        "med":2,
-                        "low":3,
-                        "info":4
+                        "unclassified": 0,
+                        "high":         1,
+                        "med":          2,
+                        "low":          3,
+                        "info":         4
                     };
                     return severity[vuln.severity];
                 }

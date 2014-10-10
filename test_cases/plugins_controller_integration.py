@@ -15,7 +15,8 @@ import model.api as api
 #from model import controller
 #from model import api
 from managers.model_managers import WorkspaceManager
-from plugins.repo.nmap import plugin
+from plugins.repo.nmap import plugin as nmap_plugin
+from plugins.repo.nessus import plugin as nessus_plugin
 from plugins.core import PluginControllerForApi
 from mockito import mock, when, any
 
@@ -47,14 +48,15 @@ class PluginsToModelControllerIntegration(unittest.TestCase):
         self.workspace_manager.createWorkspace('temp_workspace', 'desc', DBTYPE.FS)
         self.workspace_manager.openWorkspace('temp_workspace')
 
-        self._plugin_controller = PluginControllerForApi("test", {"nmap": plugin.NmapPlugin()}, mock())
+        self._plugin_controller = PluginControllerForApi("test", {"nmap": nmap_plugin.NmapPlugin(),
+                                                                    "nessus": nessus_plugin.NessusPlugin()}, mock())
 
         api.setUpAPIs(self.model_controller, self.workspace_manager)
 
     def tearDown(self): 
         self.workspace_manager.removeWorkspace('temp_workspace')
 
-    def _test_nmap_scan_saves_host(self):
+    def test_nmap_scan_saves_host(self):
         output_file = open(os.path.join(os.getcwd(), 'test_cases/data/nmap_plugin_with_api.xml'))
         output = output_file.read()
         self._plugin_controller.processCommandInput("nmap localhost")

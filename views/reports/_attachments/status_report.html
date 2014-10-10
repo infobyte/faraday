@@ -169,12 +169,25 @@
                 };
 
                 $scope.ok = function() {
-                    $modalInstance.close({
+                    var valid = false;
+                    var severities = [
+                        "unclassified",
+                        "info",
+                        "low",
+                        "med",
+                        "high"
+                    ];
+                    severities.forEach(function(s) {
+                        if($scope.severity == s) valid = true;
+                    });
+                    if(!valid) $scope.severity = "unclassified";
+                    var res = {
                         "vulns":    $scope.vulns, 
                         "severity": $scope.severity, 
                         "name":     $scope.name, 
                         "desc":     $scope.desc
-                    });
+                    };
+                    $modalInstance.close(res);
                 };
 
                 $scope.cancel = function() {
@@ -225,37 +238,33 @@
                             d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
                             var web = false;
                             if(obj.value.status.toLowerCase().indexOf("web") > -1) web = true;
-                            vulns.push({
-                                "id": obj.id,
-                                "rev": obj.value.rev,
-                                "date": d, 
-                                "status": obj.value.status, 
-                                "name": obj.value.name, 
-                                "desc": obj.value.desc, 
-                                "severity": obj.value.severity,
-                                "web": web,
-                                "parent": obj.key.substring(0, obj.key.indexOf('.')),
-                                "selected": false
-                            });
+                            var v = {
+                                "id":           obj.id,
+                                "rev":          obj.value.rev,
+                                "desc":         obj.value.desc, 
+                                "meta":         obj.value.meta,
+                                "date":         d, 
+                                "name":         obj.value.name, 
+                                "oid":          obj.value.oid,
+                                "owned":        obj.value.owned,
+                                "owner":        obj.value.owner,
+                                "parent":       obj.key.substring(0, obj.key.indexOf('.')),
+                                "couch_parent": obj.value.parent,
+                                "refs":         obj.value.refs,
+                                "severity":     obj.value.severity,
+                                "status":       obj.value.status, 
+                                "web":          web,
+                                "selected":     false,
+                                "delete":       false
+                            };
+                            vulns.push(v);
                         });
                     });
                     return vulns;
                 }
 
                 vulnsFact.put = function(ws, vuln) {
-                    var url = 'BASEURL' + ws + "/" + vuln.id;
-                    var severity = false;
-                    var severities = [
-                        "unclassified",
-                        "info",
-                        "low",
-                        "med",
-                        "high"
-                    ];
-                    severities.forEach(function(s) {
-                        if(vuln.severity == s) severity = true;
-                    });
-                    if(!severity) vuln.severity == "unclassified";
+                    var url = BASEURL + ws + "/" + vuln.id;
                     var v = {
                         "desc":         vuln.desc, 
                         "metadata":     vuln.meta,
@@ -263,7 +272,7 @@
                         "obj_id":       vuln.oid,
                         "owned":        vuln.owned,
                         "owner":        vuln.owner,
-                        "parent":       vuln.parent, 
+                        "parent":       vuln.couch_parent, 
                         "refs":         vuln.refs,
                         "severity":     vuln.severity, 
                         "type":         vuln.status

@@ -34,6 +34,7 @@
     <script type="text/javascript" src="script/angular.js"></script>
     <script type="text/javascript" src="script/angular-route.js"></script>
     <script type="text/javascript" src="script/angular-selection-model.js"></script>
+    <script type="text/javascript" src="script/ui-bootstrap-tpls-0.11.2.min.js"></script>
     <script type="text/javascript" src="script/csv-export.js"></script>
     <script type="text/javascript" src="script/jquery.qtip.js"></script>
 </head>
@@ -74,28 +75,94 @@
             async: false
         });
 
-        var statusReport = angular.module('status-report', ['ngRoute', 'selectionModel'])
+        var statusReport = angular.module('status-report', ['ngRoute', 'selectionModel', 'ui.bootstrap'])
+            .constant("BASEURL", "http://localhost:5984/")
             .controller('statusReportCtrl', 
-                            ['$scope', '$filter', '$route', '$routeParams', 'statusReportFact', 
-                            function($scope, $filter, $route, $routeParams, statusReport) {
-                var ws = $routeParams.wsId;
-                $scope.vulns = statusReport.get(ws);
+                            ['$scope', '$filter', '$route', '$routeParams', '$modal', 'statusReportFact', 
+                            function($scope, $filter, $route, $routeParams, $modal, statusReport) {
+                // current Workspace
+                $scope.workspace = $routeParams.wsId;
+
+                $scope.vulns = statusReport.get($scope.workspace);
                 $scope.sortField = 'date';
                 $scope.reverse = true;
-                $scope.workspace = ws;
-                $scope.$on('LOAD',function(){$scope.loading=true});
-                $scope.$on('UNLOAD',function(){$scope.loading=false})
 
                 $scope.remove = function() {
                     var old = $scope.vulns;
                     $scope.vulns = [];
-                    angular.forEach(old, function(v) {
+
+                    old.forEach(function(v) {
                         if(v.selected) {
-                            statusReport.remove(ws, v);
+                            statusReport.remove($scope.workspace, v);
                         } else {
                             $scope.vulns.push(v);
                         }
                     });
+                };
+
+                // Updates all vulns with selected == true
+                $scope.update = function(vulns, severity, name, desc) {
+                    $scope.vulns = [];
+                    var mod = false;
+                    if(typeof(severity) != "undefined") {
+                        mod = true;
+                        var valid = false;
+                        var severities = [
+                            "unclassified",
+                            "info",
+                            "low",
+                            "med",
+                            "high"
+                        ];
+                        severities.forEach(function(s) {
+                            if(severity == s) valid = true;
+                        });
+                        if(!valid) severity = "unclassified";
+                    }
+                    vulns.forEach(function(v) {
+                        if(v.selected) {
+                            if(mod) v.severity = severity;
+                            if(typeof(name) != "undefined") v.name = name;
+                            if(typeof(desc) != "undefined") v.desc = desc;
+                            statusReport.put($scope.workspace, v);
+                        }
+                        $scope.vulns.push(v);
+                    });
+                };
+
+                $scope.edit = function() {
+                    var selected = false;
+
+                    $scope.vulns.forEach(function(v) {
+                        if(v.selected) selected = true;
+                    });
+
+                    if(selected) {
+                        var modal = $modal.open({
+                            templateUrl: 'partials/modal-edit.html',
+                            controller: 'modalEditCtrl',
+                            size: 'lg',
+                            resolve: {
+                                vulns: function() {
+                                    return $scope.vulns;
+                                }
+                            }
+                        });
+
+                        modal.result.then(function(data) {
+                            $scope.update(data.vulns, data.severity, data.name, data.desc);
+                        });
+                    } else {
+                        var modal = $modal.open({
+                            templateUrl: 'partials/modal-ko.html',
+                            controller: 'modalKoCtrl',
+                            resolve: {
+                                msg: function() {
+                                    return 'At least one vulnerabilty must be selected in order to edit';
+                                }
+                            }
+                        });
+                    }
                 };
 
                 $scope.checkAll = function() {
@@ -121,33 +188,63 @@
                     return severity[vuln.severity];
                 }
             }])
-            .factory('statusReportFact', ['vulnsFact', 'hostsFact', '$http', function(vulnsFact, hostsFact, $http) {
+            .controller('modalEditCtrl', function($scope, $modalInstance, vulns) {
+                $scope.vulns = vulns;
+
+                $scope.isChecked = function(i) {
+                    return i.selected;
+                };
+
+                $scope.ok = function() {
+                    var res = {
+                        "vulns":    $scope.vulns, 
+                        "severity": $scope.severity, 
+                        "name":     $scope.name, 
+                        "desc":     $scope.desc
+                    };
+                    $modalInstance.close(res);
+                };
+
+                $scope.cancel = function() {
+                    $modalInstance.dismiss('cancel');
+                };
+
+            })
+            .controller('modalKoCtrl', function($scope, $modalInstance, msg) {
+                $scope.msg = msg;
+
+                $scope.ok = function() {
+                    $modalInstance.close();
+                };
+            })
+            .factory('statusReportFact', ['vulnsFact', 'hostsFact', function(vulnsFact, hostsFact) {
                 var statusReportFact = {};
 
                 statusReportFact.get = function(ws) {
-                    var vulns = vulnsFact.getVulns(ws);
-                    var hosts = hostsFact.getHosts(ws);
+                    var vulns = vulnsFact.get(ws);
+                    var hosts = hostsFact.get(ws);
                     vulns.forEach(function(element, index, array) {
                         element.target = hosts[element.parent].name;
                     });
                     return vulns;
                 }
 
+                statusReportFact.put = function(ws, vuln) {
+                    vulnsFact.put(ws, vuln);
+                };
+
                 statusReportFact.remove = function(ws, vuln) {
-                    var url = "http://localhost:5984/" + ws + "/" + vuln.id + "?rev=" + vuln.rev;
-                    $http.delete(url).success(function(d, s, h, c) {
-                        console.log(d);
-                    });
+                    vulnsFact.remove(ws, vuln);
                 }
 
                 return statusReportFact;
             }])
-            .factory('vulnsFact', function() {
+            .factory('vulnsFact', ['BASEURL', '$http', function(BASEURL, $http) {
                 var vulnsFact = {};
 
-                vulnsFact.getVulns = function(ws) {
+                vulnsFact.get = function(ws) {
                     var vulns = [];
-                    vulns_url = "/"+ ws +"/_design/vulns/_view/all";
+                    vulns_url = BASEURL + ws +"/_design/vulns/_view/all";
                     // gets vulns json from couch
                     $.getJSON(vulns_url, function(data) {
                         $.each(data.rows, function(n, obj){
@@ -156,29 +253,65 @@
                             d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
                             var web = false;
                             if(obj.value.status.toLowerCase().indexOf("web") > -1) web = true;
-                            vulns.push({
-                                "id": obj.id,
-                                "rev": obj.value.rev,
-                                "date": d, 
-                                "status": obj.value.status, 
-                                "name": obj.value.name, 
-                                "desc": obj.value.desc, 
-                                "severity": obj.value.severity,
-                                "web": web,
-                                "parent": obj.key.substring(0, obj.key.indexOf('.')),
-                                "selected": false
-                            });
+                            var v = {
+                                "id":           obj.id,
+                                "rev":          obj.value.rev,
+                                "desc":         obj.value.desc, 
+                                "meta":         obj.value.meta,
+                                "date":         d, 
+                                "name":         obj.value.name, 
+                                "oid":          obj.value.oid,
+                                "owned":        obj.value.owned,
+                                "owner":        obj.value.owner,
+                                "parent":       obj.key.substring(0, obj.key.indexOf('.')),
+                                "couch_parent": obj.value.parent,
+                                "refs":         obj.value.refs,
+                                "severity":     obj.value.severity,
+                                "status":       obj.value.status, 
+                                "web":          web,
+                                "selected":     false,
+                                "delete":       false
+                            };
+                            vulns.push(v);
                         });
                     });
                     return vulns;
                 }
+
+                vulnsFact.put = function(ws, vuln) {
+                    var url = BASEURL + ws + "/" + vuln.id;
+                    var v = {
+                        "_rev":         vuln.rev,
+                        "desc":         vuln.desc, 
+                        "metadata":     vuln.meta,
+                        "name":         vuln.name, 
+                        "obj_id":       vuln.oid,
+                        "owned":        vuln.owned,
+                        "owner":        vuln.owner,
+                        "parent":       vuln.couch_parent, 
+                        "refs":         vuln.refs,
+                        "severity":     vuln.severity, 
+                        "type":         vuln.status
+                    };
+                    $http.put(url, v).success(function(d, s, h, c) {
+                        console.log(d);
+                    });
+                };
+
+                vulnsFact.remove = function(ws, vuln) {
+                    var url = 'BASEURL' + ws + "/" + vuln.id + "?rev=" + vuln.rev;
+                    $http.delete(url).success(function(d, s, h, c) {
+                        console.log(d);
+                    });
+                };
+
                 return vulnsFact;
-            })
-            .factory('hostsFact', function() {
+            }])
+            .factory('hostsFact', ['BASEURL', function(BASEURL) {
                 var hostsFact = {};
 
-                hostsFact.getHosts = function(ws) {
-                    hosts_url = "/"+ws+"/_design/hosts/_view/hosts";
+                hostsFact.get = function(ws) {
+                    hosts_url = BASEURL + ws + "/_design/hosts/_view/hosts";
                     var hosts = [];
                     //gets hosts json from couch
                     $.getJSON(hosts_url, function(data) {
@@ -189,7 +322,7 @@
                     return hosts;
                 }
                 return hostsFact;
-            })
+            }])
             .directive('ddCollapseText', ['$compile', function($compile) {
                 return {
                     restrict: 'A',

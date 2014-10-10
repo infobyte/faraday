@@ -19,8 +19,8 @@
                         <button id="delete" type="button" class="btn btn-danger" title="Delete selected items" ng-click="remove()">
                             Delete
                         </button>
-                        <button id="merge" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="merge()">
-                            Merge
+                        <button id="merge" type="button" class="btn btn-danger" title="Edit selected vulns" ng-click="edit()">
+                            Edit
                         </button>
                     </h2><!-- .ws-label -->
                     <div class="reports">
@@ -30,7 +30,7 @@
                                 <input type="text" class="form-control input-sm" id="filter-by" placeholder="Filter by" ng-model="query">
                             </div>
                         </form>
-                        <table id="hosts" class="csv-export status-report">
+                        <table class="csv-export status-report">
                             <thead>
                                 <tr>
                                     <th><a href="" ng-click="sortField = 'date'; reverse = !reverse">Date</a></th>
@@ -58,7 +58,7 @@
                                     <td>{{v.name}}</td>
                                     <td>{{v.target}}</td>
                                     <td data-dd-collapse-text="200">{{v.desc}}</td>
-                                    <td><form><input type="checkbox" name="{{v.id}}"/></form></td>
+                                    <td><input type="checkbox" name="{{v.id}}"/></td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->

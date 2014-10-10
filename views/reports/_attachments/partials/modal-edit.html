@@ -1,0 +1,59 @@
+<div class="modal-header">
+    <h3 class="modal-title">Bulk edit</h3>
+    <h5>
+        Selected vulnerabilities will be updated
+    </h5>
+</div>
+<div class="modal-body">
+    <h5><small>
+        Please choose a severity, name and description
+    </small></h5>
+    <div class="form-inline">
+        <div class="form-group">
+            <label class="sr-only" for="vuln-severity">Vuln severity</label>
+            <input type="text" class="form-control" id="vuln-severity" placeholder="Severity" ng-model="severity"/>
+        </div>
+        <div class="form-group">
+            <label class="sr-only" for="vuln-name">Vuln name</label>
+            <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="name"/>
+        </div>
+        <div class="form-group">
+            <label class="sr-only" for="vuln-desc">Vuln description</label>
+            <input type="text" class="form-control" id="vuln-desc" placeholder="Description" ng-model="desc"/>
+        </div>
+    </div>
+    <h5><small>
+        Vulnerabilities to update
+    </small></h5>
+    <table class="csv-export status-report">
+        <thead>
+            <tr>
+                <th><a href="" ng-click="sortField = 'date'; reverse = !reverse">Date</a></th>
+                <th><a href="" ng-click="sortField = 'web'; reverse = !reverse">Web</a></th>
+                <th><a href="" ng-click="sortField = 'status'; reverse = !reverse">Status</a></th>
+                <th><a href="" ng-click="sortField = 'severity'; reverse = !reverse">Severity</a></th>
+                <th><a href="" ng-click="sortField = 'name'; reverse = !reverse">Name</a></th>
+                <th><a href="" ng-click="sortField = 'target'; reverse = !reverse">Target</a></th>
+                <th><a href="" ng-click="sortField = 'desc'; reverse = !reverse">Desc</a></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="v in vulns | filter:isChecked | orderBy:sortField:reverse">
+                <td>{{v.date}}</td>
+                <td>
+                    <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
+                    <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>
+                </td>
+                <td>Vulnerable</td>
+                <td>{{v.severity}}</td>
+                <td>{{v.name}}</td>
+                <td>{{v.target}}</td>
+                <td data-dd-collapse-text="50">{{v.desc}}</td>
+            </tr>
+        </tbody>
+    </table><!-- #hosts -->
+</div><!-- .modal-body -->
+<div class="modal-footer">
+    <button class="btn btn-success" ng-click="ok()">OK</button>
+    <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+</div>

@@ -103,11 +103,27 @@
                 // Updates all vulns with selected == true
                 $scope.update = function(vulns, severity, name, desc) {
                     $scope.vulns = [];
+                    var mod = false;
+                    if(typeof(severity) != "undefined") {
+                        mod = true;
+                        var valid = false;
+                        var severities = [
+                            "unclassified",
+                            "info",
+                            "low",
+                            "med",
+                            "high"
+                        ];
+                        severities.forEach(function(s) {
+                            if(severity == s) valid = true;
+                        });
+                        if(!valid) severity = "unclassified";
+                    }
                     vulns.forEach(function(v) {
-                        v.severity = severity;
-                        v.name = name;
-                        v.desc = desc;
                         if(v.selected) {
+                            if(mod) v.severity = severity;
+                            if(typeof(name) != "undefined") v.name = name;
+                            if(typeof(desc) != "undefined") v.desc = desc;
                             statusReport.put($scope.workspace, v);
                         }
                         $scope.vulns.push(v);
@@ -169,18 +185,6 @@
                 };
 
                 $scope.ok = function() {
-                    var valid = false;
-                    var severities = [
-                        "unclassified",
-                        "info",
-                        "low",
-                        "med",
-                        "high"
-                    ];
-                    severities.forEach(function(s) {
-                        if($scope.severity == s) valid = true;
-                    });
-                    if(!valid) $scope.severity = "unclassified";
                     var res = {
                         "vulns":    $scope.vulns, 
                         "severity": $scope.severity, 
@@ -266,6 +270,7 @@
                 vulnsFact.put = function(ws, vuln) {
                     var url = BASEURL + ws + "/" + vuln.id;
                     var v = {
+                        "_rev":         vuln.rev,
                         "desc":         vuln.desc, 
                         "metadata":     vuln.meta,
                         "name":         vuln.name, 

@@ -191,8 +191,7 @@ $(document).ready(function() {
     </style>
       <script>
     var margin = {top: 10, left: 10, bottom: 10, right: 10}
-      , width = parseInt(d3.select('#chart').style('width'))
-      , width = width - margin.left - margin.right
+      , width = screen.width / 1.5
       , mapRatio = .5
       , height = width * mapRatio;
 
@@ -204,6 +203,7 @@ $(document).ready(function() {
             .value(function(d) {return d.value});
 
         var div = d3.select("#chart").append("div")
+            .attr("class", "treemap-box")
             .style("position", "relative")
             .style("width", (width) + "px")
             .style("height", (height) + "px")
@@ -234,15 +234,6 @@ $(document).ready(function() {
               .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
         }
 
-        d3.select(window).on('resize', resize);
-
-            function resize() {
-                // adjust things when the window size changes
-                width = parseInt(d3.select('#chart').style('width'));
-                width = width - margin.left - margin.right;
-                height = width * mapRatio;
-            }
-
             //function para traer parametros
             function getParameterByName( name ){
                 name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
@@ -254,6 +245,9 @@ $(document).ready(function() {
                 else
                   return decodeURIComponent(results[1].replace(/\+/g, " "));
               }
+
+        $("#chart").width(screen.width / 1.47);
+        $("#chart").height((screen.width /1.45) * (mapRatio + .05));
 
     $('.treemap').on('mouseenter', '.faraday-qtips', function (event) {
         $(this).qtip({

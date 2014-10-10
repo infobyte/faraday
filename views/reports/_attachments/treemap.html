@@ -190,9 +190,11 @@ $(document).ready(function() {
           }
     </style>
       <script>
-        var margin = {top: 10, right: 10, bottom: 10, left: 10},
-            width = 960,
-            height = 500;
+    var margin = {top: 10, left: 10, bottom: 10, right: 10}
+      , width = parseInt(d3.select('#chart').style('width'))
+      , width = width - margin.left - margin.right
+      , mapRatio = .5
+      , height = width * mapRatio;
 
         var color = d3.scale.category20c();
 
@@ -231,6 +233,15 @@ $(document).ready(function() {
               .style("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
               .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
         }
+
+        d3.select(window).on('resize', resize);
+
+            function resize() {
+                // adjust things when the window size changes
+                width = parseInt(d3.select('#chart').style('width'));
+                width = width - margin.left - margin.right;
+                height = width * mapRatio;
+            }
 
             //function para traer parametros
             function getParameterByName( name ){

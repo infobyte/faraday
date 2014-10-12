@@ -206,11 +206,6 @@ class MainWindow(qt.QMainWindow):
         # a = self._actions["open-workspace"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"sync.png"))), "Open", 0, self, "Open" )
         # self.connect(a, qt.SIGNAL('activated()'), self.openWorkspace)
 
-
-        a = self._actions["reconnect"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"sync.png"))), "Reconnect", 0, self, "Reconnect" )
-
-        self.connect(a, qt.SIGNAL('activated()'), self.reconnect)
-
         a = self._actions["bfont"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"fontb.png"))), "Big Font", 0, self, "Big Font" )
         self.connect(a, qt.SIGNAL('activated()'), self.setBfont)
 
@@ -328,7 +323,6 @@ class MainWindow(qt.QMainWindow):
         self._actions["visualization"].addTo(self.main_toolbar)
         self._actions["plugin"].addTo(self.main_toolbar)
         self._actions["screenshot"].addTo(self.main_toolbar)
-        self._actions["reconnect"].addTo(self.main_toolbar)
         self._actions["sfont"].addTo(self.main_toolbar)
         self._actions["bfont"].addTo(self.main_toolbar)
         if CONF.getDebugStatus():
@@ -719,11 +713,6 @@ class MainWindow(qt.QMainWindow):
 
         name = "Untitled"
         self._main_app.openWorkspace(name)
-
-
-    def reconnect(self):
-        wm = self._main_app.getWorkspaceManager()
-        wm.reconnect()
 
     """
     #XXX: test ALT+r on console to delete line

@@ -218,6 +218,13 @@
             }])
             .controller('modalEditCtrl', function($scope, $modalInstance, vulns) {
                 $scope.vulns = vulns;
+                $scope.severities = [
+                    "unclassified",
+                    "info",
+                    "low",
+                    "med",
+                    "high"
+                ];
 
                 $scope.isChecked = function(i) {
                     return i.selected;

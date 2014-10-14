@@ -363,6 +363,12 @@ table.status-report tbody tr td:first-child {
 
 .table-striped tbody tr:nth-child(odd){background: #f9f9f9;}
 .table-striped tbody tr:nth-child(even){background: #FFF;}
+
+/* modal window */ /* collapse */
+.modal-content td{
+    max-width: 265px;
+    word-wrap: break-word;
+}
 /* End Table sorter*/
 
 /* D3 */

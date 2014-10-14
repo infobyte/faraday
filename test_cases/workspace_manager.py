@@ -49,8 +49,8 @@ class UnitTestWorkspaceManager(unittest.TestCase):
 
         opened_workspace = workspace_manager.openWorkspace('test_workspace')
 
-        verify(changesController).watch()
         verify(reportManager).watch('test_workspace')
+        verify(changesController).watch(mappersManager, dbConnector)
         self.assertEquals(opened_workspace.getName(), 'test_workspace')
 
 

@@ -43,10 +43,10 @@ class ViewsManager(object):
                 views.update(designdoc.get("views", []))
         return views
 
-    def addViews(self, workspaceDB):
+    def addViews(self, workspaceDB, force = False):
         installed_views = self.getViews(workspaceDB)
         for v in self.getAvailableViews():
-            if v not in installed_views:
+            if v not in installed_views or force:
                 self.addView(v, workspaceDB)
 
 

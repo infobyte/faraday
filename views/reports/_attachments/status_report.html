@@ -325,7 +325,7 @@
                 };
 
                 vulnsFact.remove = function(ws, vuln) {
-                    var url = 'BASEURL' + ws + "/" + vuln.id + "?rev=" + vuln.rev;
+                    var url = BASEURL + ws + "/" + vuln.id + "?rev=" + vuln.rev;
                     $http.delete(url).success(function(d, s, h, c) {
                         console.log(d);
                     });
@@ -469,8 +469,6 @@
     </script>
 <script type="text/javascript">
     $(document).ready(function() {
-        $('table.csv-export').toCSV();
-
         var dom = location.href;
         var workspace = dom.split("#")[1].split("/")[2];
         $(document).on("click", "#refresh", function() {

@@ -29,7 +29,21 @@ class Updater(object):
         logger.info('Pulling latest Github Master copy')
         if query_yes_no('Proceed?', 'yes'):
             subprocess.call(['git', 'pull'])
+
         logger.info('Checking qt3 libs')
+        QT().run()
+
+        logger.info('Installing missing dependencies in pip')
+        pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
+
+        logger.info('Upgrading DBs to latest version')
+        DB().run() 
+
+class Update(object):
+    pass
+
+class QT(Update):
+    def run(self): 
         try:
             import qt
         except:
@@ -46,13 +60,10 @@ class Updater(object):
                     logger.error("QT Dependencies not met. Have you run install.sh?")
                     sys.exit(-1)
             os.system('ldconfig')
-        logger.info('Installing missing dependencies in pip')
-        pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
-        logger.info('Upgrading DBs to latest version')
-        DB().run() 
 
-class Update(object):
-    pass
+class CouchViews(Update):
+    def run(self):
+        pass
 
 class DB(Update): 
     def __init__(self):

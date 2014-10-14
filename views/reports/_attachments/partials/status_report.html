@@ -4,7 +4,7 @@
                         title="Current workspace">Viewing {{ workspace }}</span><!-- WS name -->
                         
                         <div id="ws-control" class="btn-group">
-                            <button id="csv-export" type="button" class="btn btn-success" title="Download CSV for current workspace">
+                            <button download-csv="toCSV()" type="button" class="btn btn-success" title="Download CSV for current workspace">
                                 <span class="glyphicon glyphicon-download"></span>
                             </button>
                             <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
@@ -19,8 +19,8 @@
                         <button id="delete" type="button" class="btn btn-danger" title="Delete selected items" ng-click="remove()">
                             Delete
                         </button>
-                        <button id="merge" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="merge()">
-                            Merge
+                        <button id="merge" type="button" class="btn btn-danger" title="Edit selected vulns" ng-click="edit()">
+                            Edit
                         </button>
                     </h2><!-- .ws-label -->
                     <div class="reports">
@@ -30,7 +30,7 @@
                                 <input type="text" class="form-control input-sm" id="filter-by" placeholder="Filter by" ng-model="query">
                             </div>
                         </form>
-                        <table id="hosts" class="csv-export tablesorter">
+                        <table class="csv-export status-report">
                             <thead>
                                 <tr>
                                     <th><a href="" ng-click="sortField = 'date'; reverse = !reverse">Date</a></th>
@@ -44,7 +44,10 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse">
+                                <tr ng-repeat="v in vulns | filter:query | orderBy:severityOrder:reverse | orderBy:sortField:reverse"
+                                    selection-model selection-model-type="checkbox" 
+                                    selection-model-mode="multiple-additive" 
+                                    selection-model-selected-class="multi-selected">
                                     <td>{{v.date}}</td>
                                     <td>
                                         <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
@@ -55,7 +58,7 @@
                                     <td>{{v.name}}</td>
                                     <td>{{v.target}}</td>
                                     <td data-dd-collapse-text="200">{{v.desc}}</td>
-                                    <td><form><input type="checkbox" name="{{v.id}}" ng-model="v.selected"/></form></td>
+                                    <td><input type="checkbox" name="{{v.id}}"/></td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->

@@ -42,6 +42,8 @@ class WorkspaceManager(object):
             self.mappersManager.createMappers(dbConnector)
             self.mappersManager.save(workspace)
             self.setActiveWorkspace(workspace)
+            CONF.setLastWorkspace(name)
+            CONF.saveConfig()
             notification_center.workspaceChanged(workspace)
             notification_center.workspaceLoad(workspace.getHosts())
             self.changesManager.watch(self.mappersManager, dbConnector)
@@ -73,7 +75,6 @@ class WorkspaceManager(object):
     def openDefaultWorkspace(self):
         #This method opens the default workspace called 'untitled'
         if 'untitled' not in self.getWorkspacesNames():
-            #self.createWorkspace('untitled', 'default workspace')
             workspace = Workspace('untitled', 'default workspace')
             dbConnector = self.dbManager.createDb(
                 workspace.getName(), DBTYPE.FS)

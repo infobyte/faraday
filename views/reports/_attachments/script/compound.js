@@ -178,8 +178,7 @@
 			$("#hosts").html(div);
 			$("#text").html("<a href=\"load_all_hosts\">View all hosts</a> - <a id='back_to_host'>Back</a>");
 			sorter(2);
-			var selector = "#services-"+workspace+" th.header:first-child";
-			$(selector).css("padding-right","123px");
+			$("#compound .tablesorter tbody td, #compound .tablesorter thead th").css("width","20%");
 		});
 	}
 	//sortea la columna que vos le pasas, columna = numero 

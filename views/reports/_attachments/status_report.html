@@ -101,7 +101,7 @@
                             " \""+v.severity+"\","+
                             " \""+v.name+"\","+
                             " \""+v.target+"\","+
-                            " \""+v.desc+"\","+
+                            " \""+v.desc+"\""+
                             "\n";
                     });
 
@@ -150,7 +150,9 @@
                             if(mod) v.severity = severity;
                             if(typeof(name) != "undefined") v.name = name;
                             if(typeof(desc) != "undefined") v.desc = desc;
-                            statusReport.put($scope.workspace, v);
+                            statusReport.put($scope.workspace, v, function(rev) {
+                                v.rev = rev;
+                            });
                         }
                         $scope.vulns.push(v);
                     });
@@ -255,8 +257,8 @@
                     return vulns;
                 }
 
-                statusReportFact.put = function(ws, vuln) {
-                    vulnsFact.put(ws, vuln);
+                statusReportFact.put = function(ws, vuln, callback) {
+                    vulnsFact.put(ws, vuln, callback);
                 };
 
                 statusReportFact.remove = function(ws, vuln) {
@@ -304,7 +306,7 @@
                     return vulns;
                 }
 
-                vulnsFact.put = function(ws, vuln) {
+                vulnsFact.put = function(ws, vuln, callback) {
                     var url = BASEURL + ws + "/" + vuln.id;
                     var v = {
                         "_rev":         vuln.rev,
@@ -320,7 +322,7 @@
                         "type":         vuln.status
                     };
                     $http.put(url, v).success(function(d, s, h, c) {
-                        console.log(d);
+                        callback(d.rev);
                     });
                 };
 

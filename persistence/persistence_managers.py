@@ -197,8 +197,8 @@ class FileSystemConnector(DbConnector):
             document = open(path, "r")
             data = json.loads(document.read())
             if data.get("parent", None) == parentId:
-                if data.get("type", None) == type:
-                    result.append(name.split('.json')[0])
+                if data.get("type", None) == type or not type:
+                    result.append(data)
         return result
 
     def getChildren(self, document_id):

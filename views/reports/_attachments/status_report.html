@@ -101,7 +101,7 @@
                             " \""+v.severity+"\","+
                             " \""+v.name+"\","+
                             " \""+v.target+"\","+
-                            " \""+v.desc+"\""+
+                            " \""+v.desc.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'") +"\""+
                             "\n";
                     });
 

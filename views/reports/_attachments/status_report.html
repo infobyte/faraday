@@ -45,27 +45,9 @@
                 <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
             </header>
             
-            <section id="main" class="seccion clearfix">
-                <aside class="left-nav">
-                    <nav>
-                        <ul>
-                            <li>
-                                <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
-                                    <img class="ws-dashboard" src="images/ico-graph.png" alt="WS Dashboard"/>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" class="status-report" style="color: #ffffff !important" title="Status Report">
-                                    <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </aside>
-            <div class="right-main" ng-view>
+            <div ng-view>
             </div>
 
-            </section>
         </div><!--!/#wrapper -->
     </div><!--!/#container -->
 
@@ -86,6 +68,7 @@
                 $scope.reverse = true;
                 // current Workspace
                 $scope.workspace = $routeParams.wsId;
+                // load all vulnerabilities
                 $scope.vulns = statusReport.get($scope.workspace);
 
                 $scope.severities = [
@@ -478,24 +461,5 @@
                     });
             }]);
     </script>
-<script type="text/javascript">
-    $(document).ready(function() {
-        var dom = location.href;
-        var workspace = dom.split("#")[1].split("/")[2];
-        $(document).on("click", "#refresh", function() {
-            location.reload();
-        });
-        $(document).on("click", "a.ws-dashboard", function(e) {
-            e.preventDefault();
-            var url = "../././reports/index.html#" + workspace;
-            window.location.href = url;
-        });
-        $(document).on("click", "a.status-report", function(e) {
-            e.preventDefault();
-            var url = "../././reports/status_report.html#/ws/" + workspace;
-            window.location.href = url;
-        });
-    });
-</script>
 </body>
 </html> 

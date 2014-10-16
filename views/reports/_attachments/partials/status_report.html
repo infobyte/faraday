@@ -1,4 +1,22 @@
-                <div id="reports-main" class="fila clearfix">
+            <section id="main" class="seccion clearfix">
+                <aside class="left-nav">
+                    <nav>
+                        <ul>
+                            <li>
+                                <a href="../././reports/index.html#{{workspace}}" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
+                                    <img class="ws-dashboard" src="images/ico-graph.png" alt="WS Dashboard"/>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="../././reports/status_report.html#/ws/{{workspace}}" class="status-report" style="color: #ffffff !important" title="Status Report">
+                                    <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <div class="right-main"><div id="reports-main" class="fila clearfix">
                     <h2 class="ws-label">
                         <span id="ws-name" class="label label-default"
                         title="Current workspace">Viewing {{ workspace }}</span><!-- WS name -->
@@ -7,7 +25,7 @@
                             <button download-csv="toCSV()" type="button" class="btn btn-success" title="Download CSV for current workspace">
                                 <span class="glyphicon glyphicon-download"></span>
                             </button>
-                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
+                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
                                 <span class="glyphicon glyphicon-refresh"></span>
                             </button>
                             <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
@@ -63,7 +81,8 @@
                             </tbody>
                         </table><!-- #hosts -->
                     </div><!-- .reports -->
-                </div><!-- #reports-main -->
+                </div><!-- #reports-main --></div><!-- .right-main -->
+            </section>
 
             <script type="text/javascript">
                 $(document).ready(function() {

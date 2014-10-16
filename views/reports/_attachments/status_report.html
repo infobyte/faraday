@@ -61,6 +61,11 @@
                 var url = window.location.origin + "/";
                 return url;
             })())
+            .controller('workspacesCtrl', ['$scope', 'workspacesFact', function($scope, workspacesFact) {
+                workspacesFact.get(function(wss) {
+                    $scope.wss = wss;
+                });
+            }])
             .controller('statusReportCtrl', 
                             ['$scope', '$filter', '$route', '$routeParams', '$modal', 'statusReportFact', 
                             function($scope, $filter, $route, $routeParams, $modal, statusReport) {
@@ -235,6 +240,27 @@
                     $modalInstance.close();
                 };
             })
+            .factory('workspacesFact', ['BASEURL', '$http', function(BASEURL, $http) {
+                var workspacesFact = {};
+
+                workspacesFact.get = function(callback) {
+
+                    var url = BASEURL + "_all_dbs";
+                    $http.get(url).success(function(d, s, h, c) {
+                        callback(d);
+                    });
+
+                    var wss = [
+                        'WS1',
+                        'WS2',
+                        'WS3'
+                    ];
+            
+                    return wss;
+                };
+
+                return workspacesFact;
+            }])
             .factory('statusReportFact', ['vulnsFact', 'hostsFact', function(vulnsFact, hostsFact) {
                 var statusReportFact = {};
 
@@ -454,6 +480,10 @@
                     when('/ws/:wsId', {
                         templateUrl: 'partials/status_report.html',
                         controller: 'statusReportCtrl'
+                    }).
+                    when('/', {
+                        templateUrl: 'partials/workspaces.html',
+                        controller: 'workspacesCtrl'
                     }).
                     otherwise({
                         templateUrl: 'partials/status_report.html',

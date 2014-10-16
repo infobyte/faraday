@@ -1,0 +1,65 @@
+            <section id="main" class="seccion clearfix">
+                <aside class="left-nav">
+                    <nav>
+                        <ul>
+                            <li>
+                                <a href="../././reports/index.html#{{workspace}}" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
+                                    <img class="ws-dashboard" src="images/ico-graph.png" alt="WS Dashboard"/>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="../././reports/status_report.html#/ws/{{workspace}}" class="status-report" style="color: #ffffff !important" title="Status Report">
+                                    <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <div class="right-main"><div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <span id="ws-name" class="label label-default"
+                        title="Current workspace">All available workspaces</span><!-- WS name -->
+                        <div id="ws-control" class="btn-group">
+                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh" ng-click="location.reload()">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                        </div><!-- #ws-control -->
+                    </h2><!-- .ws-label -->
+                    <div class="reports">
+                        <h2 ng-repeat="ws in wss">{{ws}}</h2>
+                    </div><!-- .reports -->
+                </div><!-- #reports-main --></div><!-- .right-main -->
+            </section>
+
+            <script type="text/javascript">
+                $(document).ready(function() {
+                    var counter = 0;
+                    var workspace = location.href.split("#")[1].split("/")[2];
+
+                    $.couch.allDbs({
+                        success : function(dbs) {
+                            dbs.filter(function(db_name){
+                                return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
+                            .forEach(function(db) {
+                                // WSs list
+                                $("#ws-control #nav").append('<li><a href="#/ws/'+db+'" class="ws" >'+db+'</a></li>');
+                                // navigation between WSs
+                                if(window.location.hash === "" && counter === 0) {
+                                    window.location.hash = db;
+                                }
+                                counter +=1;
+                            
+                            });
+                            
+                            if(counter < 1) { 
+                                $("#reports-main").empty();
+                                $("#reports-main").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
+                            }
+                        },
+                        error: function(status) {
+                            console.log(status);
+                        }
+                    });
+                });
+            </script>

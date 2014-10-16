@@ -40,3 +40,4 @@ lib-ubuntu13-10-i686.tgz
 lib-ubuntu13-10-i686/
 views/reports/_attachments/reports/push.sh
 views/upload
+views/reports/_attachments/pushreports.py

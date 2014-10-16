@@ -21,6 +21,7 @@ from utils.user_input import query_yes_no
 import sys
 import os
 import shutil
+from managers.all import ViewsManager
 
 class Updater(object):
     def doUpdates(self):
@@ -29,7 +30,24 @@ class Updater(object):
         logger.info('Pulling latest Github Master copy')
         if query_yes_no('Proceed?', 'yes'):
             subprocess.call(['git', 'pull'])
+
         logger.info('Checking qt3 libs')
+        QT().run()
+
+        logger.info('Installing missing dependencies in pip')
+        pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
+
+        logger.info('Upgrading DBs to latest version')
+        DB().run() 
+
+        logger.info('Upgrading DBs to latest version')
+        CouchViews().run()
+
+class Update(object):
+    pass
+
+class QT(Update):
+    def run(self): 
         try:
             import qt
         except:
@@ -44,15 +62,37 @@ class Updater(object):
                         shutil.copy(os.path.join(qt_path, name), os.path.join(lib_path, name))
                 else:
                     logger.error("QT Dependencies not met. Have you run install.sh?")
-                    sys.exit(-1)
+                    logger.info("QT Module not installed. You will only be able to run --gui=no-ui.")
             os.system('ldconfig')
-        logger.info('Installing missing dependencies in pip')
-        pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
-        logger.info('Upgrading DBs to latest version')
-        DB().run() 
 
-class Update(object):
-    pass
+class CouchViews(Update):
+    def run(self):
+        source_server = CONF.getCouchURI()
+        if not source_server:
+            logger.info("""No DB configuration found.
+                    To upgrade your DB please configure a valid CouchDB URI in:
+                    ~/.faraday/config/user.xml configuration file.""")
+            return
+
+        serv = couchdbkit.Server(source_server)
+
+        logger.info('We are about to upload CouchdbViews in Server [%s]' % source_server)
+        if not query_yes_no("Faraday won't behave correctly with older versions, proceed?", 'no'):
+            return
+
+        dbs = filter(lambda x: not x.startswith("_") and 'backup' not in x and \
+                'reports' not in x, serv.all_dbs())
+        logger.info('Dbs to upgrade: %s' % (', '.join(dbs)))
+
+
+        logger.info('Preparing updates on Couchdbs')
+        processed = 0
+        views_uploader = ViewsManager()
+        for db_name in dbs:
+            db_source = couchdbkit.Database("/".
+                    join((source_server, db_name)))
+            views_uploader.addViews(db_source, force = True)
+
 
 class DB(Update): 
     def __init__(self):

@@ -6,7 +6,8 @@
 <!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
 <!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
 <!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
-<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> 
+<html id="no-overflow" lang="en" class="no-js"> <!--<![endif]-->
 <head>
     <meta charset="utf-8"/>
     <!--[if IE]><![endif]-->
@@ -67,7 +68,7 @@
             </header>
             
             <aside>
-                <nav>
+                <nav class="left-nav">
                     <ul>
                         <li>
                             <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
@@ -139,6 +140,19 @@ $(document).ready(function() {
     space = dominio.split("#");
     workspace = space[1];
 
+         var navegador = navigator.userAgent;
+      if (navigator.userAgent.indexOf('MSIE') !=-1) {
+            $("#main.seccion").height(screen.height);
+      } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
+            $("#main.seccion").height(screen.height - 5);
+      } else if (navigator.userAgent.indexOf('Chromium') !=-1) {
+            $("#main.seccion").height(screen.height);
+      } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
+            $("#main.seccion").height(screen.height);
+      } else if (navigator.userAgent.indexOf('Opera') !=-1) {
+            $("#main.seccion").height(screen.height);
+      }
+
     // navegacion entre WSs en el dropdown
     $(document).on("click", "a.ws", function(e) {
         e.preventDefault();
@@ -157,23 +171,12 @@ $(document).ready(function() {
     });
     $(document).on("click", "a.status-report", function(e) {
         e.preventDefault();
-        var url = "../././reports/status_report.html#" + workspace;
+        var url = "../././reports/status_report.html#/ws/" + workspace;
         window.location.href = url;
     });
 
     var ret = "Viewing "+ workspace;
     $('#reports-main .ws-label span#ws-name').text(ret);
-
-     var navegador = navigator.userAgent;
-      if (navigator.userAgent.indexOf('MSIE') !=-1) {
-            $("aside").height(679);
-      } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
-            $("aside").height(679);
-      } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
-            $("aside").height(712);
-      } else if (navigator.userAgent.indexOf('Opera') !=-1) {
-            $("aside").height(679);
-      }
 });
 </script>
     <style>
@@ -187,9 +190,10 @@ $(document).ready(function() {
           }
     </style>
       <script>
-        var margin = {top: 10, right: 10, bottom: 10, left: 10},
-            width = 960 - margin.left - margin.right,
-            height = 500 - margin.top - margin.bottom;
+    var margin = {top: 10, left: 10, bottom: 10, right: 10}
+      , width = screen.width / 1.5
+      , mapRatio = .5
+      , height = width * mapRatio;
 
         var color = d3.scale.category20c();
 
@@ -199,9 +203,10 @@ $(document).ready(function() {
             .value(function(d) {return d.value});
 
         var div = d3.select("#chart").append("div")
+            .attr("class", "treemap-box")
             .style("position", "relative")
-            .style("width", (width + margin.left + margin.right) + "px")
-            .style("height", (height + margin.top + margin.bottom) + "px")
+            .style("width", (width) + "px")
+            .style("height", (height) + "px")
             .style("left", margin.left + "px")
             .style("top", margin.top + "px");
 
@@ -240,6 +245,9 @@ $(document).ready(function() {
                 else
                   return decodeURIComponent(results[1].replace(/\+/g, " "));
               }
+
+        $("#chart").width(screen.width / 1.47);
+        $("#chart").height((screen.width /1.45) * (mapRatio + .05));
 
     $('.treemap').on('mouseenter', '.faraday-qtips', function (event) {
         $(this).qtip({

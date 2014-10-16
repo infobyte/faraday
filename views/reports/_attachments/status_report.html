@@ -33,15 +33,9 @@
     <script type="text/javascript" src="script/bootstrap.min.js"></script>
     <script type="text/javascript" src="script/angular.js"></script>
     <script type="text/javascript" src="script/angular-route.js"></script>
-    <script type="text/javascript" src="script/csv-export.js"></script>
+    <script type="text/javascript" src="script/angular-selection-model.js"></script>
+    <script type="text/javascript" src="script/ui-bootstrap-tpls-0.11.2.min.js"></script>
     <script type="text/javascript" src="script/jquery.qtip.js"></script>
-    <style>
-        .wrapper{width:auto;}
-        header.head{position: fixed;width:100%;z-index:10000}
-        aside{position: fixed;top:0px;height: 100%}
-        .fila{width: 100%;padding:40px 0 0 90px}
-        .seccion{width: 100%;padding: 0px}
-    </style>
 </head>
 
 <body ng-app="status-report">
@@ -49,99 +43,11 @@
         <div class="wrapper">
             <header class="head">
                 <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
-                <!--
-                <nav>
-                    <ul class="menu">
-                        <li>
-                            <a href="#">Opción 1</a>
-                        </li>
-                        <li>
-                            <a href="#">Opción 1</a>
-                        </li>
-                        <li>
-                            <a href="#" class="activo">Username</a>
-                            <ul>
-                                <li><a href="#">Sub opción 1</a></li>
-                                <li><a href="#">Sub opción 2</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </nav>
-                -->
             </header>
             
-            <section id="main" class="seccion clearfix">
-                <aside>
-                    <nav>
-                        <ul>
-                            <li>
-                                <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
-                                    <img src="images/ico-graph.png" alt="WS Dashboard"/>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" class="status-report" style="color: #ffffff !important" title="Status Report">
-                                    <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </aside>
-                <div id="reports-main" class="fila clearfix">
-                    <h2 class="ws-label">
-                        <span id="ws-name" class="label label-default" title="Current workspace"></span><!-- WS name -->
-                        
-                        <div id="ws-control" class="btn-group">
-                            <button id="csv-export" type="button" class="btn btn-success" title="Download CSV for current workspace">
-                                <span class="glyphicon glyphicon-download"></span>
-                            </button>
-                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
-                                <span class="glyphicon glyphicon-refresh"></span>
-                            </button>
-                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
-                                Change workspace <span class="caret"></span>
-                            </button>
-                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
-                            </ul><!-- WS navigation -->
-                        </div><!-- #ws-control -->
-                    </h2><!-- .ws-label -->
-                    <div class="reports" ng-controller="statusReportCtrl">
-                        <form class="form-inline" style="margin: 10px !important;" role="form">
-                            <div class="form-group">
-                                <label class="sr-only" for="filter-by">Filter by</label>
-                                <input type="text" class="form-control input-sm" id="filter-by" placeholder="Filter by" ng-model="query">
-                            </div>
-                        </form>
-                        <table id="hosts" class="csv-export tablesorter">
-                            <thead>
-                                <tr>
-                                    <th><a href="" ng-click="sortField = 'date'; reverse = !reverse">Date</a></th>
-                                    <th><a href="" ng-click="sortField = 'web'; reverse = !reverse">Web</a></th>
-                                    <th><a href="" ng-click="sortField = 'status'; reverse = !reverse">Status</a></th>
-                                    <th><a href="" ng-click="sortField = 'severity'; reverse = !reverse">Severity</a></th>
-                                    <th><a href="" ng-click="sortField = 'name'; reverse = !reverse">Name</a></th>
-                                    <th><a href="" ng-click="sortField = 'target'; reverse = !reverse">Target</a></th>
-                                    <th><a href="" ng-click="sortField = 'desc'; reverse = !reverse">Desc</a></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse">
-                                    <td>{{v.date}}</td>
-                                    <td>
-                                        <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
-                                        <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>
-                                    </td>
-                                    <td>Vulnerable</td>
-                                    <td>{{v.severity}}</td>
-                                    <td>{{v.name}}</td>
-                                    <td>{{v.target}}</td>
-                                    <td data-dd-collapse-text="200">{{v.desc}}</td>
-                                </tr>
-                            </tbody>
-                        </table><!-- #hosts -->
-                    </div><!-- .reports -->
-                </div><!-- #reports-main -->
-            </section>
+            <div ng-view>
+            </div>
+
         </div><!--!/#wrapper -->
     </div><!--!/#container -->
 
@@ -149,63 +55,350 @@
         $.ajaxSetup({
             async: false
         });
-        dominio = location.href;
-        space = dominio.split("#");
-        workspace = space[1];
 
-        var statusReport = angular.module('status-report', ['ngRoute'])
-            .controller('statusReportCtrl', ['$scope', 'statusReportFact', function($scope, statusReport) {
-                $scope.vulns = statusReport;
+        var statusReport = angular.module('status-report', ['ngRoute', 'selectionModel', 'ui.bootstrap'])
+            .constant("BASEURL", (function() {
+                var url = window.location.origin + "/";
+                return url;
+            })())
+            .controller('statusReportCtrl', 
+                            ['$scope', '$filter', '$route', '$routeParams', '$modal', 'statusReportFact', 
+                            function($scope, $filter, $route, $routeParams, $modal, statusReport) {
                 $scope.sortField = 'date';
                 $scope.reverse = true;
+                // current Workspace
+                $scope.workspace = $routeParams.wsId;
+                // load all vulnerabilities
+                $scope.vulns = statusReport.get($scope.workspace);
+
+                $scope.severities = [
+                    "unclassified",
+                    "info",
+                    "low",
+                    "med",
+                    "high"
+                ];
+
+                // returns scope vulns as CSV obj
+                $scope.toCSV = function() {
+                    var content = "\"Date\", \"Web\", \"Status\", \"Severity\", "+
+                        "\"Name\", \"Target\", \"Description\" \n";
+                    
+                    $scope.vulns.forEach(function(v) {
+                        content += "\""+v.date+"\","+
+                            " \""+v.web+"\","+
+                            " \"Vulnerable\","+
+                            " \""+v.severity+"\","+
+                            " \""+v.name+"\","+
+                            " \""+v.target+"\","+
+                            " \""+v.desc.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'") +"\""+
+                            "\n";
+                    });
+
+                    var obj = {
+                        "title":    "SR-" + $scope.workspace,
+                        "content":  content
+                    };
+                    
+                    return obj;
+                };
+
+                $scope.remove = function() {
+                    var old = $scope.vulns;
+                    $scope.vulns = [];
+
+                    old.forEach(function(v) {
+                        if(v.selected) {
+                            statusReport.remove($scope.workspace, v);
+                        } else {
+                            $scope.vulns.push(v);
+                        }
+                    });
+                };
+
+                // Updates all vulns with selected == true
+                $scope.update = function(vulns, severity, name, desc) {
+                    $scope.vulns = [];
+                    
+                    vulns.forEach(function(v) {
+                        if(v.selected) {
+                            if(typeof(severity) == "string") v.severity = severity;
+                            if(typeof(name) != "undefined") v.name = name;
+                            if(typeof(desc) != "undefined") v.desc = desc;
+
+                            statusReport.put($scope.workspace, v, function(rev) {
+                                v.rev = rev;
+                            });
+                            v.selected = false;
+                        }
+                        $scope.vulns.push(v);
+                    });
+                };
+
+                $scope.edit = function() {
+                    var selected = false;
+
+                    $scope.vulns.forEach(function(v) {
+                        if(v.selected) selected = true;
+                    });
+
+                    if(selected) {
+                        var modal = $modal.open({
+                            templateUrl: 'partials/modal-edit.html',
+                            controller: 'modalEditCtrl',
+                            size: 'lg',
+                            resolve: {
+                                severities: function() {
+                                    return $scope.severities;
+                                },
+                                vulns: function() {
+                                    return $scope.vulns;
+                                }
+                            }
+                        });
+
+                        modal.result.then(function(data) {
+                            $scope.update(data.vulns, data.severity, data.name, data.desc);
+                        });
+                    } else {
+                        var modal = $modal.open({
+                            templateUrl: 'partials/modal-ko.html',
+                            controller: 'modalKoCtrl',
+                            resolve: {
+                                msg: function() {
+                                    return 'At least one vulnerabilty must be selected in order to edit';
+                                }
+                            }
+                        });
+                    }
+                };
+
+                $scope.checkAll = function() {
+                    if(!$scope.selectall) {
+                        $scope.selectall = true;
+                    } else {
+                        $scope.selectall = false;
+                    }
+
+                    angular.forEach($filter('filter')($scope.vulns, $scope.query), function(v) {
+                        v.selected = $scope.selectall;
+                    });
+                };
+
+                $scope.severityOrder = function(vuln){
+                    var sev = {};
+                    $scope.severities.forEach(function(s, i, a) {
+                        sev.s = i;
+                    });
+                    return sev[vuln.severity];
+                }
             }])
-            .factory('statusReportFact', ['vulnsFact', 'hostsFact', function(vulns, hosts) {
-                var res = [];
-                vulns.forEach(function(element, index, array) {
-                    element.target = hosts[element.parent].name;
-                });
-                return vulns;
+            .controller('modalEditCtrl', function($scope, $modalInstance, severities, vulns) {
+                $scope.severities = severities;
+                $scope.vulns = vulns;
+
+                $scope.isChecked = function(i) {
+                    return i.selected;
+                };
+
+                $scope.ok = function() {
+                    var res = {
+                        "vulns":    $scope.vulns, 
+                        "severity": $scope.severitySelection, 
+                        "name":     $scope.name, 
+                        "desc":     $scope.desc
+                    };
+
+                    $modalInstance.close(res);
+                };
+
+                $scope.cancel = function() {
+                    $modalInstance.dismiss('cancel');
+                };
+
+            })
+            .controller('modalKoCtrl', function($scope, $modalInstance, msg) {
+                $scope.msg = msg;
+
+                $scope.ok = function() {
+                    $modalInstance.close();
+                };
+            })
+            .factory('statusReportFact', ['vulnsFact', 'hostsFact', function(vulnsFact, hostsFact) {
+                var statusReportFact = {};
+
+                statusReportFact.get = function(ws) {
+                    var vulns = vulnsFact.get(ws);
+                    var hosts = hostsFact.get(ws);
+                    vulns.forEach(function(element, index, array) {
+                        element.target = hosts[element.parent].name;
+                    });
+                    return vulns;
+                }
+
+                statusReportFact.put = function(ws, vuln, callback) {
+                    vulnsFact.put(ws, vuln, callback);
+                };
+
+                statusReportFact.remove = function(ws, vuln) {
+                    vulnsFact.remove(ws, vuln);
+                }
+
+                return statusReportFact;
             }])
-            .factory('vulnsFact', function() {
-                var vulns = [];
-                vulns_url = "/"+ workspace +"/_design/vulns/_view/all";
-                // gets vulns json from couch
-                $.getJSON(vulns_url, function(data) {
-                    $.each(data.rows, function(n, obj){
+            .factory('vulnsFact', ['BASEURL', '$http', function(BASEURL, $http) {
+                var vulnsFact = {};
+
+                vulnsFact.get = function(ws) {
+                    var vulns = [];
+                    vulns_url = BASEURL + ws +"/_design/vulns/_view/all";
+                    // gets vulns json from couch
+                    $.getJSON(vulns_url, function(data) {
+                        $.each(data.rows, function(n, obj){
                             var d = new Date(0); 
                             d.setUTCSeconds(obj.value.date);
                             d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
                             var web = false;
                             if(obj.value.status.toLowerCase().indexOf("web") > -1) web = true;
-                            vulns.push({
-                                "date": d, 
-                                "status": obj.value.status, 
-                                "name": obj.value.name, 
-                                "desc": obj.value.desc, 
-                                "severity": obj.value.severity,
-                                "web": web,
-                                "parent": obj.key.substring(0, obj.key.indexOf('.'))});
+                            var v = {
+                                "id":           obj.id,
+                                "rev":          obj.value.rev,
+                                "desc":         obj.value.desc, 
+                                "meta":         obj.value.meta,
+                                "date":         d, 
+                                "name":         obj.value.name, 
+                                "oid":          obj.value.oid,
+                                "owned":        obj.value.owned,
+                                "owner":        obj.value.owner,
+                                "parent":       obj.key.substring(0, obj.key.indexOf('.')),
+                                "couch_parent": obj.value.parent,
+                                "refs":         obj.value.refs,
+                                "severity":     obj.value.severity,
+                                "status":       obj.value.status, 
+                                "web":          web,
+                                "selected":     false,
+                                "delete":       false
+                            };
+                            vulns.push(v);
+                        });
                     });
-                });
-                return vulns;
+                    return vulns;
+                }
+
+                vulnsFact.put = function(ws, vuln, callback) {
+                    var url = BASEURL + ws + "/" + vuln.id;
+                    var v = {
+                        "_rev":         vuln.rev,
+                        "desc":         vuln.desc, 
+                        "metadata":     vuln.meta,
+                        "name":         vuln.name, 
+                        "obj_id":       vuln.oid,
+                        "owned":        vuln.owned,
+                        "owner":        vuln.owner,
+                        "parent":       vuln.couch_parent, 
+                        "refs":         vuln.refs,
+                        "severity":     vuln.severity, 
+                        "type":         vuln.status
+                    };
+                    $http.put(url, v).success(function(d, s, h, c) {
+                        callback(d.rev);
+                    });
+                };
+
+                vulnsFact.remove = function(ws, vuln) {
+                    var url = BASEURL + ws + "/" + vuln.id + "?rev=" + vuln.rev;
+                    $http.delete(url).success(function(d, s, h, c) {
+                        console.log(d);
+                    });
+                };
+
+                return vulnsFact;
+            }])
+            .factory('hostsFact', ['BASEURL', function(BASEURL) {
+                var hostsFact = {};
+
+                hostsFact.get = function(ws) {
+                    hosts_url = BASEURL + ws + "/_design/hosts/_view/hosts";
+                    var hosts = [];
+                    //gets hosts json from couch
+                    $.getJSON(hosts_url, function(data) {
+                        $.each(data.rows, function(n, obj) {
+                           hosts[obj.id] = {"name": obj.value.name, "os": obj.value.os, "owned": obj.value.owned};
+                        }); 
+                    });
+                    return hosts;
+                }
+                return hostsFact;
+            }])
+            // CSV export
+            .factory('$blob', function() {
+              return {
+                csvToURL: function(content) {
+                  var blob;
+                  blob = new Blob([content], {type: 'text/csv'});
+                  return (window.URL || window.webkitURL).createObjectURL(blob);
+                },
+                sanitizeCSVName: function(name) {
+                  if (/^[A-Za-z0-9]+\.csv$/.test(name)) {
+                    return name;
+                  }
+                  if (/^[A-Za-z0-9]+/.test(name)) {
+                    return name + ".csv";
+                  }
+                  throw new Error("Invalid title fo CSV file : " + name);
+                },
+                revoke: function(url) {
+                  return (window.URL || window.webkitURL).revokeObjectURL(url);
+                }
+              };
             })
-            .factory('hostsFact', function() {
-                hosts_url = "/" + workspace + "/_design/hosts/_view/hosts";
-                var hosts = [];
-                //gets hosts json from couch
-                $.getJSON(hosts_url, function(data) {
-                    $.each(data.rows, function(n, obj) {
-                       hosts[obj.id] = {"name": obj.value.name, "os": obj.value.os, "owned": obj.value.owned};
-                    }); 
-                });
-                return hosts;
+            // CSV export
+            .factory('$click', function() {
+              return {
+                on: function(element) {
+                  var e = document.createEvent("MouseEvent");
+                  e.initMouseEvent("click", false, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                  element.dispatchEvent(e);
+                }
+              };
             })
-            .directive('ddCollapseText', ['$compile', function($compile) {
+            // CSV export
+            .directive('downloadCsv', function($parse, $click, $blob, $log, $timeout) {
+              return {
+                compile: function($element, attr) {
+                  var fn = $parse(attr.downloadCsv);
+                   
+                  return function(scope, element, attr) {
+                     
+                    element.on('click', function(event) {
+                      var a_href, content, title, url, _ref;
+                      _ref = fn(scope), content = _ref.content, title = _ref.title;
+                       
+                      if (!(content != null) && !(title != null)) {
+                        $log.warn("Invalid content or title in download-csv : ", content, title);
+                        return;
+                      }
+                       
+                      title = $blob.sanitizeCSVName(title);
+                      url = $blob.csvToURL(content);
+                       
+                      element.append("<a download=\"" + title + "\" href=\"" + url + "\"></a>");
+                      a_href = element.find('a')[0];
+                       
+                      $click.on(a_href);
+                      $timeout(function() {$blob.revoke(url);});
+                       
+                      element[0].removeChild(a_href);
+                    });
+                  };
+                }
+              };
+            })
+            .directive('textCollapse', ['$compile', function($compile) {
                 return {
                     restrict: 'A',
                     replace: true,
                     link: function(scope, element, attrs) {
-
                         // start collapsed
                         scope.collapsed = false;
 
@@ -214,12 +407,12 @@
                             scope.collapsed = !scope.collapsed;
                         };
 
-                        // get the value of the dd-collapse-text attribute
-                        attrs.$observe('ddCollapseText', function(maxLength) {
-                            // get the contents of the element
-                            var text = element.text();
+                        // wait for changes on the text
+                        attrs.$observe('textCollapseText', function(text) {
+                            // and get the maxLength
+                            var maxLength = scope.$eval(attrs.textCollapseMaxLength);
 
-                            if (text.length > maxLength) {
+                            if(text.length > maxLength) {
                                 // split the text in two parts, the first always showing
                                 var firstPart = String(text).substring(0, maxLength);
                                 var secondPart = String(text).substring(maxLength, text.length);
@@ -227,8 +420,8 @@
                                 // create some new html elements to hold the separate info
                                 var firstSpan = $compile('<span>' + firstPart + '</span>')(scope);
                                 var secondSpan = $compile('<span ng-if="collapsed">' + secondPart + '</span>')(scope);
-                                var moreIndicatorSpan = $compile('<span ng-if="!collapsed"> ...</span>')(scope);
-                                var toggleButton = $compile('<span class="collapse-text-toggle" ng-click="toggle()"> <a href="">{{collapsed ? "less" : "more"}}</a></span>')(scope);
+                                var moreIndicatorSpan = $compile('<span ng-if="!collapsed">...</span>')(scope);
+                                var toggleButton = $compile('<span selection-model-ignore class="collapse-text-toggle" ng-click="toggle()"> <a href="" selection-model-ignore>{{collapsed ? "less" : "more"}}</a></span>')(scope);
 
                                 // remove the current contents of the element
                                 // and add the new ones we created
@@ -237,61 +430,25 @@
                                 element.append(secondSpan);
                                 element.append(moreIndicatorSpan);
                                 element.append(toggleButton);
+                            } else {
+                                element.empty();
+                                element.append(text);
                             }
                         });
                     }
                 };
             }]);
+            statusReport.config(['$routeProvider', function($routeProvider) {
+                $routeProvider.
+                    when('/ws/:wsId', {
+                        templateUrl: 'partials/status_report.html',
+                        controller: 'statusReportCtrl'
+                    }).
+                    otherwise({
+                        templateUrl: 'partials/status_report.html',
+                        controller: 'statusReportCtrl'
+                    });
+            }]);
     </script>
-<script type="text/javascript">
-    $(document).ready(function() {
-        $('table.csv-export').toCSV();
-        var counter = 0;
-        var h = 0;
-        $.couch.allDbs({
-                success : function(dbs) {
-                  dbs.filter(function(db_name){
-                      return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
-                  .forEach(function(db) {
-                        // WSs list
-                        $("#ws-control #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
-                        // navigation between WSs
-                      if(window.location.hash === "" && counter === 0) {
-                        window.location.hash = db;
-                       }
-                      counter +=1;
-                });
-                if(counter < 1) { 
-                    $("#reports-main").empty();
-                      $("#reports-main").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
-            }
-          }
-        });
-        // WSs dropdown navigation
-        $(document).on("click", "a.ws", function(e) {
-            e.preventDefault();
-            var hash = $(this).attr("href").substr(1);
-            window.location.hash = hash;
-            location.reload();
-        });
-        $(document).on("click", "#refresh", function() {
-            location.reload();
-        });
-        $(document).on("click", "a.ws-dashboard", function(e) {
-            e.preventDefault();
-            var url = "../././reports/index.html#" + workspace;
-            window.location.href = url;
-        });
-        $(document).on("click", "a.status-report", function(e) {
-            e.preventDefault();
-            var url = "../././reports/status_report.html#" + workspace;
-            window.location.href = url;
-        });
-    
-        var ret = "Viewing "+ workspace;
-        $('#reports-main .ws-label span#ws-name').text(ret);
-
-    });
-</script>
 </body>
 </html> 

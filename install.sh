@@ -51,6 +51,13 @@ elif [ "$os" = "Ubuntu 13.10" ]; then
 elif [ "$os" = "Ubuntu 13.04" ]; then
     version="ubuntu13-04-$arch"
     down=1
+elif [ "$os" = "Ubuntu 14.04 LTS" ]; then
+    version="ubuntu13-10-$arch"
+    down=1
+    # Install pip from github.
+    # Bug: https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1306991
+    wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
+    python get-pip.py
 else
     echo "[-] Could not find a install for $os ($arch $kernel)"
     exit
@@ -90,7 +97,7 @@ else
     apt-get -y install python-qt3
 fi
 
-apt-get -y install python-svn ipython python-pip python-dev couchdb libpq-dev
+apt-get -y install ipython python-pip python-dev couchdb libpq-dev
 pip install -r requirements.txt
 
 echo "You can now run Faraday, enjoy!"

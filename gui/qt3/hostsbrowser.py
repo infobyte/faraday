@@ -249,6 +249,10 @@ class HostsBrowser(qt.QVBox):
         self.createIndex()
         dialog.setProgress(i)
         self.filterTree(self._filter)
+        # we need to make sure that the dialog is closed
+        rem = dialog.totalSteps() - i
+        if rem > 0:
+            dialog.setProgress(i + rem)
 
     def setReindex(self):
         self.reindex_flag_lock.acquire()

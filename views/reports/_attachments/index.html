@@ -50,7 +50,7 @@
             </header>
             
             <aside>
-                <nav>
+                <nav class="left-nav">
                     <ul>
                         <li>
                             <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
@@ -78,8 +78,7 @@
                             <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
                                 Change workspace <span class="caret"></span>
                             </button>
-                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
-                            </ul><!-- WS navigation -->
+                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu"></ul><!-- WS navigation -->
                         </div><!-- #ws-control -->
                     </h2><!-- .ws-label -->
                     <div class="reports">
@@ -105,6 +104,7 @@ $(document).ready(function() {
                     // navigation between WSs
                     if(window.location.hash === "" && counter === 0) {
                         window.location.hash = db;
+                        location.reload();
                     }
                     counter +=1;
             });
@@ -131,7 +131,7 @@ $(document).ready(function() {
     });
     $(document).on("click", "a.status-report", function(e) {
         e.preventDefault();
-        var url = "../././reports/status_report.html#" + workspace;
+        var url = "../././reports/status_report.html#/ws/" + workspace;
         window.location.href = url;
     });
     $(document).on("click", "a.treemap-view", function(e) {
@@ -157,16 +157,16 @@ $(document).ready(function() {
     ];
     var content_cake = "<div id='sequence'></div><div id='chart'><div id='explanation' style='visibility: hidden;'></div></div>";
 
-    $("#reports-main").append("<ul class='d3'><li><div class='columna untercio'><article id='treemap'><header>"+
+    $("#reports-main").append("<div class='col-lg-2'><article id='treemap' class='panel panel-default'><header>"+
         "<h2><a class=\"treemap-view\" href=\"\">Top Services</a> <span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 5 services with the largest quantity of hosts\">"+
-        "</span></h2></article></header></div></li>"+
-        "<li><div class='columna untercio'><article id='bar'><header><h2>Top Hosts "+
-        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 3 hosts with the largest quantity of services\"></span></h2></header></div></div></li>"+
-        "<li><div class='columna untercio'><article id='cake'><header><h2>Vulnerabilities "+
+        "</span></h2></header></article></div>"+
+        "<div class='col-lg-2'><article id='bar' class='panel panel-default'><header><h2>Top Hosts "+
+        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 3 hosts with the largest quantity of services\"></span></h2></header></article></div>"+
+        "<div class='col-lg-2'><article id='cake' class='panel panel-default'><header><h2>Vulnerabilities "+
         "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Vulnerabilty distribution for current WS\"></span></h2>"+
-        "</header>"+ content_cake +"</article></div></li></ul>"+
-        "<ul><li><div id='byservices'></div></li><li><div id='summarized'></div></li></ul>"+
-        "<div id='compound'></div><div id='vulns'></div><div id='list'></div></div>");
+        "</header>"+ content_cake +"</article></div>"+
+        "<div id='byservices'></div><div id='summarized'></div>"+
+        "<div id='compound'></div><div id='vulns'></div><div id='list'></div>");
 
     design = "hosts";
     view = "byservices";
@@ -181,21 +181,15 @@ $(document).ready(function() {
 
      var navegador = navigator.userAgent;
       if (navigator.userAgent.indexOf('MSIE') !=-1) {
-            $("aside").height(679);
-            $(".seccion").height(644);
+            $("#main.seccion").height(screen.height);
       } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
-            $("aside").height(679);
-            $(".seccion").height(644);
+            $("#main.seccion").height(screen.height);
       } else if (navigator.userAgent.indexOf('Chromium') !=-1) {
-            $("aside").height(679);
-            $("header.head").width(1280);
-            $("#main.seccion").height(644);
+            $("#main.seccion").height(screen.height);
       } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
-            $("aside").height(712);
-            $(".seccion").height(677);
+            $("#main.seccion").height(screen.height);
       } else if (navigator.userAgent.indexOf('Opera') !=-1) {
-            $("aside").height(679);
-            $(".seccion").height(644);
+            $("#main.seccion").height(screen.height);
       }
 
     $('#cont').on('mouseenter', '.faraday-qtips', function (event) {

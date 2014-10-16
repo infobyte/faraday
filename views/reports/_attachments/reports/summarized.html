@@ -8,9 +8,9 @@ function get_report_div(workspace, view,design){
 	$.getJSON(json_url, function(data) {
 		var colores = ["rojo", "negro"];
 		var i = 0;
-		divs += "<div class='columna untercio'><article class='untercio'><header><h2>Workspace summarized report "+
+		divs += "<div class=\"col-lg-3\"><article class=\"panel panel-default\"><header><h2>Workspace summarized report "+
                     "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"WS overview - hosts, notes, services and vulnerabilites counts\"></span>"+
-                    "</h2></header><div class='main'>";
+                    "</h2></header><div class=\"main\"><div class=\"box\">";
 		if(jQuery.isEmptyObject(data.rows) || data.rows[0].key == "interfaces") {
             divs += "<div class=\"alert alert-info alert-dismissible\">"+
                 "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">"+
@@ -26,7 +26,7 @@ function get_report_div(workspace, view,design){
 				i++;
 			}
 		});
-		divs +="</div></article></section></div>";
+		divs +="</article></div></div>";
 		return divs;
 	});
 	return divs;

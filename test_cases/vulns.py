@@ -14,52 +14,14 @@ import plugins.core as plcore
 from mockito import mock
 from model import api
 from model.hosts import Host, Interface, Service
-from model.workspace import WorkspaceOnCouch, WorkspaceManager, WorkspaceOnFS
+from managers.model_managers import WorkspaceManager
 from model.common import ModelObjectVuln, ModelObjectVulnWeb
 from persistence.orm import WorkspacePersister
 import random
 from persistence.orm import WorkspacePersister
 
 
-from managers.all import CommandManager, CouchdbManager, PersistenceManagerFactory
-
-def new_random_workspace_name():
-    return ("aworkspace" + "".join(random.sample([chr(i) for i in range(65, 90)
-                                ], 10 ))).lower() 
-
-def create_host(self, host_name="pepito", os="linux"):
-    host = Host(host_name, os)
-    self.model_controller.addHostSYNC(host)
-    return host
-
-def create_interface(self, host, iname="coqiuto", mac="00:03:00:03:04:04"):
-    interface = Interface(name=iname, mac=mac)
-    self.model_controller.addInterfaceSYNC(host.getName(), interface)
-    return interface
-
-def create_service(self, host, interface, service_name = "coquito"):
-    service = Service(service_name)
-    self.model_controller.addServiceToInterfaceSYNC(host.getID(),
-                                interface.getID(), service)
-    return service
-
 class VulnerabilityCreationTests(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.model_controller = controller.ModelController(mock())
-        api.setUpAPIs(cls.model_controller)
-
-    def setUp(self):
-        self.wm = WorkspaceManager(self.model_controller, mock(plcore.PluginController))
-        self.temp_workspace = self.wm.createWorkspace(new_random_workspace_name(),
-                                        workspaceClass=WorkspaceOnCouch) 
-
-        self.wm.setActiveWorkspace(self.temp_workspace)
-        WorkspacePersister.stopThreads()
-
-    def tearDown(self):
-        self.wm.removeWorkspace(self.temp_workspace.name)
 
     def testStandarizeNumericVulnSeverity(self):
         """ Verifies numeric severity transformed into 'info, low, high,

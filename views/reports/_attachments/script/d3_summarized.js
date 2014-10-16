@@ -9,6 +9,7 @@ function treemap(workspace, design, view){
             .value(function(d) {return d.value});
 
         var div = d3.select("#treemap").append("div")
+        	.attr("class", "treemap")
             .style("position", "relative")
             .style("width", (width + margin.left + margin.right) + "px")
             .style("height", (height + margin.top + margin.bottom) + "px")
@@ -107,8 +108,9 @@ function bar(workspace, design, view){
 	    .orient("left")
 	    .ticks(5);
 	var hurl    = "/" + workspace + "/_design/" + design + "/_view/hosts";
-	$("body").append("<div id='load_service'></div>")
-	var svg = d3.select("#bar").append("svg")
+	var svg = d3.select("#bar").append("div")
+		.attr("class", "box")
+		.append("svg")
 	    .attr("width", width + margin.left + margin.right)
 	    .attr("height", height + margin.top + margin.bottom)
 	  .append("g")
@@ -234,7 +236,10 @@ function cake(workspace, design, view){
 	// Total size of all segments; we set this later, after loading the data.
 	var totalSize = 0; 
 
-	var vis = d3.select("#chart").append("svg:svg")
+	var vis = d3.select("#chart")
+		.attr("class", "box")
+	.append("svg:svg")
+		.attr("class", "box")
 	    .attr("width", width)
 	    .attr("height", height)
 	    .append("svg:g")

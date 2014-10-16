@@ -52,7 +52,7 @@ elif [ "$os" = "Ubuntu 13.04" ]; then
     version="ubuntu13-04-$arch"
     down=1
 elif [ "$os" = "Ubuntu 14.04 LTS" ]; then
-    version="ubuntu13-04-$arch"
+    version="ubuntu13-10-$arch"
     down=1
     # Install pip from github.
     # Bug: https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1306991

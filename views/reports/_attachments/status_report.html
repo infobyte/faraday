@@ -136,25 +136,13 @@
                 // Updates all vulns with selected == true
                 $scope.update = function(vulns, severity, name, desc) {
                     $scope.vulns = [];
-                    var mod = false;
-
-                    if(typeof(severity) != "undefined") {
-                        mod = true;
-                        var valid = false;
-                    
-                        $scope.severities.forEach(function(s) {
-                            if(severity == s) valid = true;
-                        });
-                        
-                        if(!valid) severity = "unclassified";
-                    }
                     
                     vulns.forEach(function(v) {
                         if(v.selected) {
-                            if(mod) v.severity = severity;
+                            if(typeof(severity) == "string") v.severity = severity;
                             if(typeof(name) != "undefined") v.name = name;
                             if(typeof(desc) != "undefined") v.desc = desc;
-                    
+
                             statusReport.put($scope.workspace, v, function(rev) {
                                 v.rev = rev;
                             });
@@ -232,10 +220,11 @@
                 $scope.ok = function() {
                     var res = {
                         "vulns":    $scope.vulns, 
-                        "severity": $scope.severity, 
+                        "severity": $scope.severitySelection, 
                         "name":     $scope.name, 
                         "desc":     $scope.desc
                     };
+
                     $modalInstance.close(res);
                 };
 

@@ -82,12 +82,19 @@
             .controller('statusReportCtrl', 
                             ['$scope', '$filter', '$route', '$routeParams', '$modal', 'statusReportFact', 
                             function($scope, $filter, $route, $routeParams, $modal, statusReport) {
-                // current Workspace
-                $scope.workspace = $routeParams.wsId;
-
-                $scope.vulns = statusReport.get($scope.workspace);
                 $scope.sortField = 'date';
                 $scope.reverse = true;
+                // current Workspace
+                $scope.workspace = $routeParams.wsId;
+                $scope.vulns = statusReport.get($scope.workspace);
+
+                $scope.severities = [
+                    "unclassified",
+                    "info",
+                    "low",
+                    "med",
+                    "high"
+                ];
 
                 // returns scope vulns as CSV obj
                 $scope.toCSV = function() {
@@ -130,26 +137,24 @@
                 $scope.update = function(vulns, severity, name, desc) {
                     $scope.vulns = [];
                     var mod = false;
+
                     if(typeof(severity) != "undefined") {
                         mod = true;
                         var valid = false;
-                        var severities = [
-                            "unclassified",
-                            "info",
-                            "low",
-                            "med",
-                            "high"
-                        ];
-                        severities.forEach(function(s) {
+                    
+                        $scope.severities.forEach(function(s) {
                             if(severity == s) valid = true;
                         });
+                        
                         if(!valid) severity = "unclassified";
                     }
+                    
                     vulns.forEach(function(v) {
                         if(v.selected) {
                             if(mod) v.severity = severity;
                             if(typeof(name) != "undefined") v.name = name;
                             if(typeof(desc) != "undefined") v.desc = desc;
+                    
                             statusReport.put($scope.workspace, v, function(rev) {
                                 v.rev = rev;
                             });
@@ -172,6 +177,9 @@
                             controller: 'modalEditCtrl',
                             size: 'lg',
                             resolve: {
+                                severities: function() {
+                                    return $scope.severities;
+                                },
                                 vulns: function() {
                                     return $scope.vulns;
                                 }
@@ -207,17 +215,15 @@
                 };
 
                 $scope.severityOrder = function(vuln){
-                    var severity = {
-                        "unclassified": 0,
-                        "high":         1,
-                        "med":          2,
-                        "low":          3,
-                        "info":         4
-                    };
-                    return severity[vuln.severity];
+                    var sev = {};
+                    $scope.severities.forEach(function(s, i, a) {
+                        sev.s = i;
+                    });
+                    return sev[vuln.severity];
                 }
             }])
-            .controller('modalEditCtrl', function($scope, $modalInstance, vulns) {
+            .controller('modalEditCtrl', function($scope, $modalInstance, severities, vulns) {
+                $scope.severities = severities;
                 $scope.vulns = vulns;
 
                 $scope.isChecked = function(i) {

@@ -10,8 +10,9 @@
     </small></h5>
     <div class="form-inline">
         <div class="form-group">
-            <label class="sr-only" for="vuln-severity">Vuln severity</label>
-            <input type="text" class="form-control" id="vuln-severity" placeholder="Severity" ng-model="severity"/>
+            <select>
+                <option value="{{$index}}" ng-repeat="s in severities">{{s}}</option>
+            </select>
         </div>
         <div class="form-group">
             <label class="sr-only" for="vuln-name">Vuln name</label>

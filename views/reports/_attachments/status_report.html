@@ -153,6 +153,7 @@
                             statusReport.put($scope.workspace, v, function(rev) {
                                 v.rev = rev;
                             });
+                            v.selected = false;
                         }
                         $scope.vulns.push(v);
                     });

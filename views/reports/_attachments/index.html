@@ -104,6 +104,7 @@ $(document).ready(function() {
                     // navigation between WSs
                     if(window.location.hash === "" && counter === 0) {
                         window.location.hash = db;
+                        location.reload();
                     }
                     counter +=1;
             });

@@ -35,7 +35,7 @@ class Updater(object):
         QT().run()
 
         logger.info('Installing missing dependencies in pip')
-        pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
+        pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, "--install-option='--prefix='", '--user'])
 
         logger.info('Upgrading DBs to latest version')
         DB().run() 

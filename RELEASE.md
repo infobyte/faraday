@@ -12,7 +12,7 @@ Oct 17, 2014:
 ----
 * https://github.com/infobyte/faraday/commit/a81c6376ed47a2f7b501c8f48f2179eb7c5d58b9
 
-Status report no have edition capabilities
+Status report now have edition capabilities
 Introducing batch vulnerability edition and deletion. Now you can edit your status report.
 
 Lots of bug fixes

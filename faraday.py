@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python2.7
 '''
 Faraday Penetration Test IDE - Community Version
 Copyright (C) 2014  Infobyte LLC (http://www.infobytesec.com/)

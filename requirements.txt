@@ -8,3 +8,4 @@ requests==1.2.3
 tornado==3.2
 flask==0.10.1
 colorama==0.3.2
+psycopg2==2.5.4

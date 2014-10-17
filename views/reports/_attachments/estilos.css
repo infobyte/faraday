@@ -54,7 +54,7 @@ p {margin-bottom: 1em;}
 /* FILAS COLUMNAS */
 .fila {
     width: 100%;
-    padding:40px 0 0 90px;
+    padding:40px 0 0 10px;
 }
 .columna {
     margin: 10px 5px 0px;
@@ -141,6 +141,14 @@ aside {
             bottom:0;
             left:0;
         }
+.right-main {
+    background: #E8EFF0;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 76px;
+}
 .seccion {
     background: #E8EFF0;
     padding: 0px;
@@ -473,3 +481,19 @@ table.status-report tbody tr td:first-child {
     }
 }
 /* End of media */
+/* Styles for WS list */
+.ws-name {
+    font: 250%/3 'Ubuntu',Helvetica,Arial,sans-serif !important;
+    font-size: 100%;
+    margin: 5px;
+}
+.ws-link {
+    float: left;
+    color: #ffffff;
+    text-decoration: none;
+}
+a.ws-link:hover {    
+    color: #ffffff;
+    text-decoration: none;
+}
+/* End of WS list */

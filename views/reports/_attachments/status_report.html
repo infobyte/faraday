@@ -26,8 +26,6 @@
     <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
     <link href="images/site_preview.jpg" rel="image_src" />
 
-    <script type="text/javascript" src="script/couch.js"></script>
-    <script type="text/javascript" src="script/common.js"></script>
     <script type="text/javascript" src="/_utils/script/jquery.js"></script>
     <script type="text/javascript" src="/_utils/script/jquery.couch.js"></script>
     <script type="text/javascript" src="script/bootstrap.min.js"></script>
@@ -247,16 +245,11 @@
 
                     var url = BASEURL + "_all_dbs";
                     $http.get(url).success(function(d, s, h, c) {
-                        callback(d);
+                        var wss = d.filter(function(ws) {
+                            return ws.search(/^_/) < 0 && ws.search("reports") < 0;
+                        });
+                        callback(wss);
                     });
-
-                    var wss = [
-                        'WS1',
-                        'WS2',
-                        'WS3'
-                    ];
-            
-                    return wss;
                 };
 
                 return workspacesFact;

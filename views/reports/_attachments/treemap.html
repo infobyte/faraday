@@ -67,50 +67,51 @@
                 -->
             </header>
             
-            <aside>
-                <nav class="left-nav">
-                    <ul>
-                        <li>
-                            <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
-                                <img src="images/ico-graph.png" alt="WS Dashboard"/>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="status-report" style="color: #ffffff !important" title="Status Report">
-                                <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            </aside>
-            
             <section id="main" class="seccion clearfix">
-                <div id="reports-main" class="fila clearfix">
-                    <h2 class="ws-label">
-                        <span id="ws-name" class="label label-default" title="Current workspace"></span><!-- WS name -->
-                        
-                        <div id="ws-control" class="btn-group">
-                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
-                                <span class="glyphicon glyphicon-refresh"></span>
-                            </button>
-                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
-                                Change workspace <span class="caret"></span>
-                            </button>
-                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
-                            </ul><!-- WS navigation -->
-                        </div><!-- #ws-control -->
-                    </h2><!-- .ws-label -->
-                </div><!-- #reports-main -->
-                <div class="seccion treemap">
-                  <article id="chart">
-                    <header>
-                      <h2>All Services
-                        <span class="glyphicon glyphicon-info-sign faraday-qtips" title="All services ordered by host amount"></span>
-                      </h2>
-                    </header>
-                </article>
-              </div>
-            </section>
+                <aside>
+                    <nav class="left-nav">
+                        <ul>
+                            <li>
+                                <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
+                                    <img src="images/ico-graph.png" alt="WS Dashboard"/>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="status-report" style="color: #ffffff !important" title="Status Report">
+                                    <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+                
+                <div class="right-main">
+                    <div id="reports-main" class="fila clearfix">
+                        <h2 class="ws-label">
+                            <span id="ws-name" class="label label-default" title="Current workspace"></span><!-- WS name -->
+                            
+                            <div id="ws-control" class="btn-group">
+                                <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
+                                    <span class="glyphicon glyphicon-refresh"></span>
+                                </button>
+                                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                                    Change workspace <span class="caret"></span>
+                                </button>
+                                <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu"></ul><!-- WS navigation -->
+                            </div><!-- #ws-control -->
+                        </h2><!-- .ws-label -->
+                    </div><!-- #reports-main -->
+                    <div class="seccion treemap">
+                      <article id="chart">
+                        <header>
+                          <h2>All Services
+                            <span class="glyphicon glyphicon-info-sign faraday-qtips" title="All services ordered by host amount"></span>
+                          </h2>
+                        </header>
+                    </article>
+                  </div>
+                </div><!-- .right-main -->
+            </section><!-- #main -->
         </div><!--!/#wrapper -->
     </div><!--!/#container -->
     <script type="text/javascript">

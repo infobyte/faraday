@@ -66,13 +66,17 @@
             }])
             .controller('statusReportCtrl', 
                             ['$scope', '$filter', '$route', '$routeParams', '$modal', 'statusReportFact', 
-                            function($scope, $filter, $route, $routeParams, $modal, statusReport) {
+                            function($scope, $filter, $route, $routeParams, $modal, statusReportFact) {
                 $scope.sortField = 'date';
                 $scope.reverse = true;
-                // current Workspace
+                // load all workspaces
+                statusReportFact.getWorkspaces(function(wss) {
+                    $scope.workspaces = wss;
+                });
+                // current workspace
                 $scope.workspace = $routeParams.wsId;
                 // load all vulnerabilities
-                $scope.vulns = statusReport.get($scope.workspace);
+                $scope.vulns = statusReportFact.getVulns($scope.workspace);
 
                 $scope.severities = [
                     "unclassified",
@@ -112,7 +116,7 @@
 
                     old.forEach(function(v) {
                         if(v.selected) {
-                            statusReport.remove($scope.workspace, v);
+                            statusReportFact.removeVulns($scope.workspace, v);
                         } else {
                             $scope.vulns.push(v);
                         }
@@ -141,7 +145,7 @@
                             if(typeof(name) != "undefined") v.name = name;
                             if(typeof(desc) != "undefined") v.desc = desc;
                     
-                            statusReport.put($scope.workspace, v, function(rev) {
+                            statusReportFact.putVulns($scope.workspace, v, function(rev) {
                                 v.rev = rev;
                             });
                             v.selected = false;
@@ -254,25 +258,29 @@
 
                 return workspacesFact;
             }])
-            .factory('statusReportFact', ['vulnsFact', 'hostsFact', function(vulnsFact, hostsFact) {
+            .factory('statusReportFact', ['vulnsFact', 'hostsFact', 'workspacesFact', function(vulnsFact, hostsFact, wsFact) {
                 var statusReportFact = {};
 
-                statusReportFact.get = function(ws) {
+                statusReportFact.getVulns = function(ws) {
                     var vulns = vulnsFact.get(ws);
                     var hosts = hostsFact.get(ws);
                     vulns.forEach(function(element, index, array) {
                         element.target = hosts[element.parent].name;
                     });
                     return vulns;
-                }
+                };
 
-                statusReportFact.put = function(ws, vuln, callback) {
+                statusReportFact.putVulns = function(ws, vuln, callback) {
                     vulnsFact.put(ws, vuln, callback);
                 };
 
-                statusReportFact.remove = function(ws, vuln) {
+                statusReportFact.removeVulns = function(ws, vuln) {
                     vulnsFact.remove(ws, vuln);
-                }
+                };
+
+                statusReportFact.getWorkspaces = function(callback) {
+                    wsFact.get(callback);
+                };
 
                 return statusReportFact;
             }])

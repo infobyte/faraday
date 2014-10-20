@@ -103,20 +103,39 @@
                     return obj;
                 };
 
+                // deletes all vulns with selected == true
                 $scope.remove = function() {
-                    var old = $scope.vulns;
-                    $scope.vulns = [];
+                    var selected = false;
 
-                    old.forEach(function(v) {
-                        if(v.selected) {
-                            statusReport.remove($scope.workspace, v);
-                        } else {
-                            $scope.vulns.push(v);
-                        }
+                    $scope.vulns.forEach(function(v) {
+                        if(v.selected) selected = true;
                     });
+
+                    if(selected) {
+                        var old = $scope.vulns;
+                        $scope.vulns = [];
+
+                        old.forEach(function(v) {
+                            if(v.selected) {
+                                statusReport.remove($scope.workspace, v);
+                            } else {
+                                $scope.vulns.push(v);
+                            }
+                        });
+                    } else {
+                        var modal = $modal.open({
+                            templateUrl: 'partials/modal-ko.html',
+                            controller: 'modalKoCtrl',
+                            resolve: {
+                                msg: function() {
+                                    return 'At least one vulnerabilty must be selected in order to delete';
+                                }
+                            }
+                        });
+                    }
                 };
 
-                // Updates all vulns with selected == true
+                // updates all vulns with selected == true
                 $scope.update = function(vulns, severity, name, desc) {
                     $scope.vulns = [];
                     

@@ -49,56 +49,59 @@
                 <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
             </header>
             
-            <aside>
-                <nav class="left-nav">
-                    <ul>
-                        <li>
-                            <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
-                                <img src="images/ico-graph.png" alt="WS Dashboard"/>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="status-report" style="color: #ffffff !important" title="Status Report">
-                                <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            </aside>
-            
             <section id="main" class="seccion clearfix">
-                <div id="reports-main" class="fila clearfix">
-                    <h2 class="ws-label">
-                        <span id="ws-name" class="label label-default" title="Current workspace"></span><!-- WS name -->
-                        
-                        <div id="ws-control" class="btn-group">
-                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
-                                <span class="glyphicon glyphicon-refresh"></span>
-                            </button>
-                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
-                                Change workspace <span class="caret"></span>
-                            </button>
-                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu"></ul><!-- WS navigation -->
-                        </div><!-- #ws-control -->
-                    </h2><!-- .ws-label -->
-                    <div class="reports">
-                    </div><!-- .reports -->
-                </div><!-- #reports-main -->
-            </section>
+                <aside>
+                    <nav class="left-nav">
+                        <ul>
+                            <li>
+                                <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
+                                    <img src="images/ico-graph.png" alt="WS Dashboard"/>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="status-report" style="color: #ffffff !important" title="Status Report">
+                                    <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+                
+                <div class="right-main">
+                    <div id="reports-main" class="fila clearfix">
+                        <h2 class="ws-label">
+                            <span id="ws-name" class="label label-default" title="Current workspace"></span><!-- WS name -->
+                            
+                            <div id="ws-control" class="btn-group">
+                                <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace">
+                                    <span class="glyphicon glyphicon-refresh"></span>
+                                </button>
+                                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                                    Change workspace <span class="caret"></span>
+                                </button>
+                                <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu"></ul><!-- WS navigation -->
+                            </div><!-- #ws-control -->
+                        </h2><!-- .ws-label -->
+                        <div class="reports">
+                        </div><!-- .reports -->
+                    </div><!-- #reports-main -->
+                </div><!-- .right-main -->
+            </section><!-- #main -->
             <footer>
             </footer>
         </div><!--!/#wrapper -->
     </div><!--!/#container -->
-<script type="text/javascript">
-$(document).ready(function() {
-    var counter = 0;
-    var h = 0;
-    $.couch.allDbs({
-            success : function(dbs) {
 
-              dbs.filter(function(db_name){
-                  return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
-              .forEach(function(db) {
+    <script type="text/javascript">
+    $(document).ready(function() {
+        var counter = 0;
+        var h = 0;
+        $.couch.allDbs({
+            success : function(dbs) {
+                dbs.filter(function(db_name){
+                    return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;
+                })
+                .forEach(function(db) {
                     // WSs list
                     $("#ws-control #nav").append('<li><a href="#'+db+'" class="ws" >'+db+'</a></li>');
                     // navigation between WSs
@@ -107,157 +110,157 @@ $(document).ready(function() {
                         location.reload();
                     }
                     counter +=1;
-            });
-            if(counter < 1) { 
-                $("#reports-main").empty();
-                  $("#reports-main").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
-        }
-      }
-    });
-    // navegacion entre WSs en el dropdown
-    $(document).on("click", "a.ws", function(e) {
-        e.preventDefault();
-        var hash = $(this).attr("href").substr(1);
-        window.location.hash = hash;
-        location.reload();
-    });
-    $(document).on("click", "#refresh", function() {
-        location.reload();
-    });
-    $(document).on("click", "a.ws-dashboard", function(e) {
-        e.preventDefault();
-        var url = "../././reports/index.html#" + workspace;
-        window.location.href = url;
-    });
-    $(document).on("click", "a.status-report", function(e) {
-        e.preventDefault();
-        var url = "../././reports/status_report.html#/ws/" + workspace;
-        window.location.href = url;
-    });
-    $(document).on("click", "a.treemap-view", function(e) {
-        e.preventDefault();
-        var url = "../././reports/treemap.html?workspace=" + workspace +"&design=hosts&view=byservices#"+ workspace;
-        window.location.href = url;
-    });
-
-    //get workspace
-    dominio = location.href;
-    space = dominio.split("#");
-    workspace = space[1];
-
-    var ret = "Viewing "+ workspace;
-    $('#reports-main .ws-label span#ws-name').text(ret);
-
-    rutas = [
-        "reports/compound.html?workspace="+workspace+"&design=hosts&view=compound",
-        "reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices",
-        "reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized",
-        "reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns",
-        "reports/commands.html?workspace="+workspace+"&design=commands&view=list"
-    ];
-    var content_cake = "<div id='sequence'></div><div id='chart'><div id='explanation' style='visibility: hidden;'></div></div>";
-
-    $("#reports-main").append("<div class='col-lg-2'><article id='treemap' class='panel panel-default'><header>"+
-        "<h2><a class=\"treemap-view\" href=\"\">Top Services</a> <span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 5 services with the largest quantity of hosts\">"+
-        "</span></h2></header></article></div>"+
-        "<div class='col-lg-2'><article id='bar' class='panel panel-default'><header><h2>Top Hosts "+
-        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 3 hosts with the largest quantity of services\"></span></h2></header></article></div>"+
-        "<div class='col-lg-2'><article id='cake' class='panel panel-default'><header><h2>Vulnerabilities "+
-        "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Vulnerabilty distribution for current WS\"></span></h2>"+
-        "</header>"+ content_cake +"</article></div>"+
-        "<div id='byservices'></div><div id='summarized'></div>"+
-        "<div id='compound'></div><div id='vulns'></div><div id='list'></div>");
-
-    design = "hosts";
-    view = "byservices";
-    treemap(workspace, design, view);
-    bar(workspace, design, view);
-    view = "vulns";
-    cake(workspace, design, view);
-    for (i = 0; i < rutas.length; i++) { 
-        dominio = rutas[i];
-        var div = load(dominio);
-    }
-
-     var navegador = navigator.userAgent;
-      if (navigator.userAgent.indexOf('MSIE') !=-1) {
-            $("#main.seccion").height(screen.height);
-      } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
-            $("#main.seccion").height(screen.height);
-      } else if (navigator.userAgent.indexOf('Chromium') !=-1) {
-            $("#main.seccion").height(screen.height);
-      } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
-            $("#main.seccion").height(screen.height);
-      } else if (navigator.userAgent.indexOf('Opera') !=-1) {
-            $("#main.seccion").height(screen.height);
-      }
-
-    $('#cont').on('mouseenter', '.faraday-qtips', function (event) {
-        $(this).qtip({
-            overwrite: false, // Don't overwrite tooltips already bound
-            show: {
-                event: event.type, // Use the same event type as above
-                ready: true // Show immediately - important!
-            },
-            hide: {
-                fixed: true,
-                delay: 300
-            },
-            content:{
-                text: function(event, api) {
-                    var res = "<div id=\"contenido\">"+$(this).attr("title")+"</div>";
-                    return res;
-                }
-            },
-            position:{
-                my: 'top center',
-                at: 'bottom center',
-                adjust: {
-                    method: 'shift'
+                });
+                if(counter < 1) { 
+                    $("#reports-main").empty();
+                    $("#reports-main").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
                 }
             }
         });
+        // navegacion entre WSs en el dropdown
+        $(document).on("click", "a.ws", function(e) {
+            e.preventDefault();
+            var hash = $(this).attr("href").substr(1);
+            window.location.hash = hash;
+            location.reload();
+        });
+        $(document).on("click", "#refresh", function() {
+            location.reload();
+        });
+        $(document).on("click", "a.ws-dashboard", function(e) {
+            e.preventDefault();
+            var url = "../././reports/index.html#" + workspace;
+            window.location.href = url;
+        });
+        $(document).on("click", "a.status-report", function(e) {
+            e.preventDefault();
+            var url = "../././reports/status_report.html#/ws/" + workspace;
+            window.location.href = url;
+        });
+        $(document).on("click", "a.treemap-view", function(e) {
+            e.preventDefault();
+            var url = "../././reports/treemap.html?workspace=" + workspace +"&design=hosts&view=byservices#"+ workspace;
+            window.location.href = url;
+        });
+
+        //get workspace
+        domain = location.href;
+        space = domain.split("#");
+        workspace = space[1];
+
+        var ret = "Viewing "+ workspace;
+        $('#reports-main .ws-label span#ws-name').text(ret);
+
+        rutas = [
+            "reports/compound.html?workspace="+workspace+"&design=hosts&view=compound",
+            "reports/byservices.html?workspace="+workspace+"&design=hosts&view=byservices",
+            "reports/summarized.html?workspace="+workspace+"&design=hosts&view=summarized",
+            "reports/vulns.html?workspace="+workspace+"&design=hosts&view=vulns",
+            "reports/commands.html?workspace="+workspace+"&design=commands&view=list"
+        ];
+        var content_cake = "<div id='sequence'></div><div id='chart'><div id='explanation' style='visibility: hidden;'></div></div>";
+
+        $("#reports-main").append("<div class='col-lg-2'><article id='treemap' class='panel panel-default'><header>"+
+            "<h2><a class=\"treemap-view\" href=\"\">Top Services</a> <span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 5 services with the largest quantity of hosts\">"+
+            "</span></h2></header></article></div>"+
+            "<div class='col-lg-2'><article id='bar' class='panel panel-default'><header><h2>Top Hosts "+
+            "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 3 hosts with the largest quantity of services\"></span></h2></header></article></div>"+
+            "<div class='col-lg-2'><article id='cake' class='panel panel-default'><header><h2>Vulnerabilities "+
+            "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Vulnerabilty distribution for current WS\"></span></h2>"+
+            "</header>"+ content_cake +"</article></div>"+
+            "<div id='byservices'></div><div id='summarized'></div>"+
+            "<div id='compound'></div><div id='vulns'></div><div id='list'></div>");
+
+        design = "hosts";
+        view = "byservices";
+        treemap(workspace, design, view);
+        bar(workspace, design, view);
+        view = "vulns";
+        cake(workspace, design, view);
+        for (i = 0; i < rutas.length; i++) { 
+            domain = rutas[i];
+            var div = load(domain);
+        }
+
+        var navegador = navigator.userAgent;
+        if (navigator.userAgent.indexOf('MSIE') !=-1) {
+            $("#main.seccion").height(screen.height);
+        } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
+            $("#main.seccion").height(screen.height);
+        } else if (navigator.userAgent.indexOf('Chromium') !=-1) {
+            $("#main.seccion").height(screen.height);
+        } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
+            $("#main.seccion").height(screen.height);
+        } else if (navigator.userAgent.indexOf('Opera') !=-1) {
+            $("#main.seccion").height(screen.height);
+        }
+
+        $('#cont').on('mouseenter', '.faraday-qtips', function (event) {
+            $(this).qtip({
+                overwrite: false, // Don't overwrite tooltips already bound
+                show: {
+                    event: event.type, // Use the same event type as above
+                    ready: true // Show immediately - important!
+                },
+                hide: {
+                    fixed: true,
+                    delay: 300
+                },
+                content:{
+                    text: function(event, api) {
+                        var res = "<div id=\"contenido\">"+$(this).attr("title")+"</div>";
+                        return res;
+                    }
+                },
+                position:{
+                    my: 'top center',
+                    at: 'bottom center',
+                    adjust: {
+                        method: 'shift'
+                    }
+                }
+            });
+        });
     });
-});
 
-function load(dominio){
-    $(".reports").load(dominio, function(){
-    	var parametros = dominios(dominio);
-    		var div = get_report_div(parametros[0],parametros[1],parametros[2]);
-    		if(parametros[1] == "byservices"){
-    			$("#byservices").append(div);
-    		}
-    		if(parametros[1] == "summarized"){
-    			$("#summarized").append(div);
-    		}
-    		if(parametros[1] == "vulns"){
-    			$("#vulns").append(div);
-    		}
-    		if(parametros[1] == "list"){
-    			$("#list").append(div);
-    		}
-    		if(parametros[1] == "compound"){
-    			$("#compound").append(div);
-    		}
-    });
-}
+    function load(domain){
+        $(".reports").load(domain, function(){
+            var parametros = domains(domain);
+                var div = get_report_div(parametros[0],parametros[1],parametros[2]);
+                if(parametros[1] == "byservices"){
+                    $("#byservices").append(div);
+                }
+                if(parametros[1] == "summarized"){
+                    $("#summarized").append(div);
+                }
+                if(parametros[1] == "vulns"){
+                    $("#vulns").append(div);
+                }
+                if(parametros[1] == "list"){
+                    $("#list").append(div);
+                }
+                if(parametros[1] == "compound"){
+                    $("#compound").append(div);
+                }
+        });
+    }
 
-function dominios(dominio){
-//get the link parameters
-    space = dominio.split("=");
-    workspace = space[1].split("&");
-    workspace = workspace[0];
-    design = space[2].split("&");
-    design = design[0];
-    view = space[3];
-    parametros = [workspace, view, design];
-    return parametros;
-}
+    function domains(domain){
+    //get the link parameters
+        space = domain.split("=");
+        workspace = space[1].split("&");
+        workspace = workspace[0];
+        design = space[2].split("&");
+        design = design[0];
+        view = space[3];
+        parametros = [workspace, view, design];
+        return parametros;
+    }
 
-setTimeout(function() {
-    //order of compound when reload
-    sorter(0);
-}, 1000);
-</script>
+    setTimeout(function() {
+        //order of compound when reload
+        sorter(0);
+    }, 1000);
+    </script>
 </body>
 </html> 

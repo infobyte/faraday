@@ -32,6 +32,7 @@
                                 Change workspace <span class="caret"></span>
                             </button>
                             <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
+                                <li ng-repeat="ws in workspaces"><a href="#/ws/{{ws}}" class="ws" >{{ws}}</a></li>
                             </ul><!-- WS navigation -->
                         </div><!-- #ws-control -->
                         <button id="delete" type="button" class="btn btn-danger" title="Delete selected items" ng-click="remove()">
@@ -82,36 +83,4 @@
                         </table><!-- #hosts -->
                     </div><!-- .reports -->
                 </div><!-- #reports-main --></div><!-- .right-main -->
-            </section>
-
-            <script type="text/javascript">
-                $(document).ready(function() {
-                    var counter = 0;
-                    var workspace = location.href.split("#")[1].split("/")[2];
-
-                    $.couch.allDbs({
-                        success : function(dbs) {
-                            dbs.filter(function(db_name){
-                                return db_name.search(/^_/) < 0 && db_name.search("reports") < 0;})
-                            .forEach(function(db) {
-                                // WSs list
-                                $("#ws-control #nav").append('<li><a href="#/ws/'+db+'" class="ws" >'+db+'</a></li>');
-                                // navigation between WSs
-                                if(window.location.hash === "" && counter === 0) {
-                                    window.location.hash = db;
-                                }
-                                counter +=1;
-                            
-                            });
-                            
-                            if(counter < 1) { 
-                                $("#reports-main").empty();
-                                $("#reports-main").append("<div id=\"no-workspace\" class=\"workspace\">No Workspaces installed, please start working to get some data</div><!-- .workspace -->");
-                            }
-                        },
-                        error: function(status) {
-                            console.log(status);
-                        }
-                    });
-                });
-            </script>
+            </section><!-- #main -->

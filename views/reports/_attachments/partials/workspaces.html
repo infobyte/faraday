@@ -1,0 +1,35 @@
+            <section id="main" class="seccion clearfix">
+                <aside class="left-nav">
+                    <nav>
+                        <ul>
+                            <li>
+                                <a href="../././reports/index.html#{{workspace}}" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
+                                    <img class="ws-dashboard" src="images/ico-graph.png" alt="WS Dashboard"/>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="../././reports/status_report.html#/ws/{{workspace}}" class="status-report" style="color: #ffffff !important" title="Status Report">
+                                    <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <div class="right-main"><div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <span id="ws-name" class="label label-default"
+                        title="Current workspace">All available workspaces</span><!-- WS name -->
+                        <div id="ws-control" class="btn-group">
+                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh" ng-click="location.reload()">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                        </div><!-- #ws-control -->
+                    </h2><!-- .ws-label -->
+                    <div class="reports">
+                        <div class="ws-list">
+                            <a href="#/ws/{{ws}}" class="ws-link" ng-repeat="ws in wss"><p class="label label-success ws-name">{{ws}}</p></a>
+                        </div><!-- .ws-list -->
+                    </div><!-- .reports -->
+                </div><!-- #reports-main --></div><!-- .right-main -->
+            </section>

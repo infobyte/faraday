@@ -65,8 +65,9 @@
                 });
             }])
             .controller('statusReportCtrl', 
-                            ['$scope', '$filter', '$route', '$routeParams', '$modal', 'statusReportFact', 
-                            function($scope, $filter, $route, $routeParams, $modal, statusReportFact) {
+                            ['$scope', '$filter', '$route', '$routeParams', '$modal', '$log', 'statusReportFact', 
+                            function($scope, $filter, $route, $routeParams, $modal, $log, statusReportFact) {
+                $scope.$log = $log;
                 $scope.sortField = 'date';
                 $scope.reverse = true;
                 // load all workspaces
@@ -77,6 +78,30 @@
                 $scope.workspace = $routeParams.wsId;
                 // load all vulnerabilities
                 $scope.vulns = statusReportFact.getVulns($scope.workspace);
+
+                // toggles column show property
+                $scope.toggleShow = function(column, show) {
+                    $scope.columns[column] = !show;
+                };
+                
+                // set columns to show and hide by default
+                $scope.columns = {
+                    "date":     true,
+                    "web":      false,
+                    "status":   true,
+                    "severity": true,
+                    "name":     true,
+                    "target":   true,
+                    "desc":     true,
+                    "method":   false,
+                    "params":   false,
+                    "path":     false,
+                    "pname":    false,
+                    "query":    false,
+                    "request":  false,
+                    "response": false,
+                    "website":  false
+                };
 
                 $scope.severities = [
                     "unclassified",

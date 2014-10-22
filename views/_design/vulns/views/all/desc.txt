@@ -1,1 +1,1 @@
-trae todas las vulnerabilidades del worksapce. Solo trae id, create_date, type, name , desc; las ultimas salvo id las trae en un object juntas.
+gets all vulns from workspace, regardless of their type (regular/web).

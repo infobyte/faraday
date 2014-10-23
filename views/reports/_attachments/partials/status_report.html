@@ -88,6 +88,10 @@
                                         <a href="" ng-click="toggleShow('desc', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="sortField = 'desc'; reverse = !reverse">Desc</a>
                                     </th>
+                                    <th ng-if="columns.data">
+                                        <a href="" ng-click="toggleShow('data', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                                        <a href="" ng-click="sortField = 'data'; reverse = !reverse">Data</a>
+                                    </th>
                                     <th ng-if="columns.method">
                                         <a href="" ng-click="toggleShow('method', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="sortField = 'method'; reverse = !reverse">Method</a>
@@ -137,7 +141,8 @@
                                     <td ng-if="columns.severity">{{v.severity}}</td>
                                     <td ng-if="columns.name">{{v.name}}</td>
                                     <td ng-if="columns.target">{{v.target}}</td>
-                                    <td ng-if="columns.desc" text-collapse text-collapse-max-length="200" text-collapse-text="{{v.desc}}"></td>
+                                    <td ng-if="columns.desc" text-collapse text-collapse-max-length="150" text-collapse-text="{{v.desc}}"></td>
+                                    <td ng-if="columns.data" text-collapse text-collapse-max-length="150" text-collapse-text="{{v.data}}"></td>
                                     <td ng-if="columns.method">{{v.method}}</td>
                                     <td ng-if="columns.path">{{v.path}}</td>
                                     <td ng-if="columns.pname">{{v.pname}}</td>

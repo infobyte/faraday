@@ -1,13 +1,18 @@
 <div class="modal-header">
     <h3 class="modal-title">Bulk edit</h3>
-    <h5>
-        Selected vulnerabilities will be updated
-    </h5>
 </div>
 <div class="modal-body">
-    <h5><small>
-        Please choose a severity, name and description
-    </small></h5>
+    <div ng-if="web">
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h5><strong>Hey!</strong> You have selected both vulnerabilities and web vulnerabilities. Please keep in mind that fields in red are specific for web vulnerabilities and these will not be added to regular vulnerabilities.</h5>
+        </div>
+    </div><!-- ng-if -->
+    <div ng-if="!web">
+        <h5><small>
+            Please choose a severity, name, description and data
+        </small></h5>
+    </div><!-- ng-if -->
     <div class="form-horizontal">
         <div class="form-group">
             <div class="col-md-3">
@@ -26,45 +31,51 @@
                 <textarea class="form-control" id="vuln-desc" placeholder="Description" ng-model="desc"></textarea>
             </div>
         </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
+                <label class="sr-only" for="vuln-data">Vuln data</label>
+                <textarea class="form-control" id="vuln-data" placeholder="Data" ng-model="data"></textarea>
+            </div>
+        </div><!-- .form-group -->
         <div ng-if="web">
             <div class="form-group">
-                <div class="col-md-4">
-                    <label class="sr-only" for="vuln-method">Method</label>
-                    <input type="text" class="form-control" id="vuln-method" placeholder="Method" ng-model="$parent.method"/>
+                <div class="col-md-4 has-error">
+                    <label class="sr-only control-label" for="vuln-method">Method</label>
+                    <input type="text" class="form-control input-error" id="vuln-method" placeholder="Method" ng-model="$parent.method"/>
                 </div>
-                <div class="col-md-3">
-                    <label class="sr-only" for="vuln-pname">Param Name</label>
-                    <input type="text" class="form-control" id="vuln-pname" placeholder="Param name" ng-model="$parent.pname"/>
+                <div class="col-md-3 has-error">
+                    <label class="sr-only control-label" for="vuln-pname">Param Name</label>
+                    <input type="text" class="form-control input-error" id="vuln-pname" placeholder="Param name" ng-model="$parent.pname"/>
                 </div>
-                <div class="col-md-5">
-                    <label class="sr-only" for="vuln-params">Params</label>
-                    <input type="text" class="form-control" id="vuln-params" placeholder="Params" ng-model="$parent.params"/>
-                </div>
-            </div><!-- .form-group -->
-            <div class="form-group">
-                <div class="col-md-4">
-                    <label class="sr-only" for="vuln-path">Path</label>
-                    <input type="text" class="form-control" id="vuln-path" placeholder="Path" ng-model="$parent.path"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="sr-only" for="vuln-query">Query</label>
-                    <input type="text" class="form-control" id="vuln-query" placeholder="Query" ng-model="$parent.query"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="sr-only" for="vuln-website">Website</label>
-                    <input type="text" class="form-control" id="vuln-website" placeholder="Website" ng-model="$parent.website"/>
+                <div class="col-md-5 has-error">
+                    <label class="sr-only control-label" for="vuln-params">Params</label>
+                    <input type="text" class="form-control input-error" id="vuln-params" placeholder="Params" ng-model="$parent.params"/>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
-                <div class="col-md-12">
-                    <label class="sr-only" for="vuln-request">Request</label>
-                    <textarea class="form-control" id="vuln-request" placeholder="Request" ng-model="$parent.request"></textarea>
+                <div class="col-md-4 has-error">
+                    <label class="sr-only control-label" for="vuln-path">Path</label>
+                    <input type="text" class="form-control input-error" id="vuln-path" placeholder="Path" ng-model="$parent.path"/>
+                </div>
+                <div class="col-md-4 has-error">
+                    <label class="sr-only control-label" for="vuln-query">Query</label>
+                    <input type="text" class="form-control input-error" id="vuln-query" placeholder="Query" ng-model="$parent.query"/>
+                </div>
+                <div class="col-md-4 has-error">
+                    <label class="sr-only control-label" for="vuln-website">Website</label>
+                    <input type="text" class="form-control input-error" id="vuln-website" placeholder="Website" ng-model="$parent.website"/>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
-                <div class="col-md-12">
-                    <label class="sr-only" for="vuln-response">Response</label>
-                    <textarea class="form-control" id="vuln-response" placeholder="Response" ng-model="$parent.response"></textarea>
+                <div class="col-md-12 has-error">
+                    <label class="sr-only control-label" for="vuln-request">Request</label>
+                    <textarea class="form-control input-error" id="vuln-request" placeholder="Request" ng-model="$parent.request"></textarea>
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-12 has-error">
+                    <label class="sr-only control-label" for="vuln-response">Response</label>
+                    <textarea class="form-control input-error" id="vuln-response" placeholder="Response" ng-model="$parent.response"></textarea>
                 </div>
             </div><!-- .form-group -->
         </div><!-- ng-if -->

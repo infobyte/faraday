@@ -43,9 +43,7 @@
                 <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
             </header>
             
-            <div ng-view>
-            </div>
-
+            <div ng-view></div>
         </div><!--!/#wrapper -->
     </div><!--!/#container -->
 
@@ -86,20 +84,21 @@
                 
                 // set columns to show and hide by default
                 $scope.columns = {
+                    "data":     false,
                     "date":     true,
-                    "web":      false,
-                    "status":   true,
-                    "severity": true,
-                    "name":     true,
-                    "target":   true,
                     "desc":     true,
                     "method":   false,
+                    "name":     true,
                     "params":   false,
                     "path":     false,
                     "pname":    false,
                     "query":    false,
                     "request":  false,
                     "response": false,
+                    "severity": true,
+                    "status":   true,
+                    "target":   true,
+                    "web":      false,
                     "website":  false
                 };
 
@@ -176,6 +175,7 @@
                             if(typeof(data.severity) == "string") v.severity = data.severity;
                             if(typeof(data.name) != "undefined") v.name = data.name;
                             if(typeof(data.desc) != "undefined") v.desc = data.desc;
+                            if(typeof(data.data) != "undefined") v.data = data.data;
                             if(v.web) {
                                 if(typeof(data.method) != "undefined") v.method = data.method;
                                 if(typeof(data.params) != "undefined") v.params = data.params;
@@ -264,25 +264,27 @@
 
                     if($scope.web) { 
                         res = {
-                            "vulns":    $scope.vulns, 
-                            "severity": $scope.severitySelection, 
-                            "name":     $scope.name, 
+                            "data":     $scope.data,
                             "desc":     $scope.desc,
                             "method":   $scope.method,
+                            "name":     $scope.name, 
                             "params":   $scope.params,
                             "path":     $scope.path,
                             "pname":    $scope.pname,
                             "query":    $scope.query,
                             "request":  $scope.request,
                             "response": $scope.response,
+                            "severity": $scope.severitySelection, 
+                            "vulns":    $scope.vulns, 
                             "website":  $scope.website
                         };    
                     } else {
                         res = {
-                            "vulns":    $scope.vulns, 
-                            "severity": $scope.severitySelection, 
+                            "data":     $scope.data,
+                            "desc":     $scope.desc,
                             "name":     $scope.name, 
-                            "desc":     $scope.desc
+                            "severity": $scope.severitySelection, 
+                            "vulns":    $scope.vulns 
                         };
                     }
 
@@ -317,17 +319,31 @@
 
                 return workspacesFact;
             }])
-            .factory('statusReportFact', ['vulnsFact', 'vulnsWebFact', 'hostsFact', 'workspacesFact', function(vulnsFact, vulnsWebFact, hostsFact, wsFact) {
+            .factory('statusReportFact', ['vulnsFact', 'vulnsWebFact', 'hostsFact', 'notesFact', 'workspacesFact', function(vulnsFact, vulnsWebFact, hostsFact, notesFact, wsFact) {
                 var statusReportFact = {};
 
                 statusReportFact.getVulns = function(ws) {
-                    var vulns = vulnsFact.get(ws);
-                    var vulnsWeb = vulnsWebFact.get(ws);
-                    var hosts = hostsFact.get(ws);
+                    var vulns       = vulnsFact.get(ws);
+                    var vulnsWeb    = vulnsWebFact.get(ws);
+                    var hosts       = hostsFact.get(ws);
                     vulns.forEach(function(element, index, array) {
+                        notesFact.getNotes(ws, element.id, function(notes) {
+                            notes.forEach(function(note) {
+                                if(note.name === "data") {
+                                    element.data = note.text;
+                                }
+                            });
+                        });
                         element.target = hosts[element.parent].name;
                     });
                     vulnsWeb.forEach(function(element, index, array) {
+                        notesFact.getNotes(ws, element.id, function(notes) {
+                            notes.forEach(function(note) {
+                                if(note.name === "data") {
+                                    element.data = note.text;
+                                }
+                            });
+                        });
                         element.target = hosts[element.parent].name;
                     });
                     return vulnsWeb.concat(vulns);
@@ -351,7 +367,7 @@
 
                 return statusReportFact;
             }])
-            .factory('vulnsFact', ['BASEURL', '$http', function(BASEURL, $http) {
+            .factory('vulnsFact', ['BASEURL', '$http', 'notesFact', function(BASEURL, $http, notesFact) {
                 var vulnsFact = {};
 
                 vulnsFact.get = function(ws) {
@@ -363,10 +379,12 @@
                             var d = new Date(0); 
                             d.setUTCSeconds(obj.value.date);
                             d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
+                            var note = notesFact.getNotes();
                             var v = {
                                 "id":           obj.id,
                                 "rev":          obj.value.rev,
-                                "desc":         obj.value.desc, 
+                                "desc":         obj.value.desc,
+                                "data":         note,
                                 "meta":         obj.value.meta,
                                 "date":         d, 
                                 "name":         obj.value.name, 
@@ -405,6 +423,8 @@
                     };
                     $http.put(url, v).success(function(d, s, h, c) {
                         callback(d.rev);
+                        notesFact.putNote(ws, "data", v.id, v.data, function(res) {
+                        });
                     });
                 };
 
@@ -417,7 +437,7 @@
 
                 return vulnsFact;
             }])
-            .factory('vulnsWebFact', ['BASEURL', '$http', function(BASEURL, $http) {
+            .factory('vulnsWebFact', ['BASEURL', '$http', 'notesFact', function(BASEURL, $http, notesFact) {
                 var vulnsWebFact = {};
 
                 vulnsWebFact.get = function(ws) {
@@ -429,12 +449,14 @@
                             var d = new Date(0); 
                             d.setUTCSeconds(obj.value.date);
                             d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
+                            var note = notesFact.getNotes();
                             var v = {
                                 "id":           obj.id,
                                 "rev":          obj.value.rev,
                                 "desc":         obj.value.desc, 
                                 "meta":         obj.value.meta,
                                 "date":         d, 
+                                "data":         note,
                                 "name":         obj.value.name, 
                                 "oid":          obj.value.oid,
                                 "owned":        obj.value.owned,
@@ -489,6 +511,8 @@
                     };
                     $http.put(url, v).success(function(d, s, h, c) {
                         callback(d.rev);
+                        notesFact.putNote(ws, "data", v.id, v.data, function(res) {
+                        });
                     });
                 };
 
@@ -516,6 +540,59 @@
                     return hosts;
                 }
                 return hostsFact;
+            }])
+            .factory('notesFact', ['BASEURL', '$http', '$filter', function(BASEURL, $http, $filter) {
+                var notesFact = {};
+
+                notesFact.getNotes = function(ws, parent, callback) {
+                    var lala = 0;
+                    var notes = [];
+                    var params = JSON.stringify([parent, "Note"]);
+                    var url = BASEURL + ws + "/_design/mapper/_view/byparentandtype?key=" + params;
+                    $.getJSON(url, function(data) {
+                        $.each(data.rows, function(o) {
+                            console.log(o);
+                            lala += 1;
+                        });
+                    });
+                    console.log(lala);
+                    return notes;
+                };
+
+                notesFact.putNote = function(ws, name, parent, text, callback) {
+                    notesFact.getNotes(ws, parent, function(res) {
+                        var notes = res;
+                        var url = BASEURL + ws;
+                        var exists = false;
+
+                        notes.forEach(function(note) {
+                            if(note.name == name) {
+                                exists = true;
+                                noteRev = note._rev;
+                                $.getJSON();
+                            }
+                        });
+
+                        if(!exists) {
+                            url += "/" + 
+                            var note = {
+                                "name": name,
+                                "parent": parent,
+                                "owned": false,
+                                "text": text,
+                                "type": "Note"
+                            };
+
+                            $http.put(url, note).success(function(d, s, h, c) {
+                                console.log(d);
+                                callback(d);
+                            });
+                        } else {
+                        }
+                    });
+                };
+
+                return notesFact;
             }])
             // CSV export
             .factory('$blob', function() {

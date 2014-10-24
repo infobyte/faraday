@@ -34,6 +34,7 @@
     <script type="text/javascript" src="script/angular-selection-model.js"></script>
     <script type="text/javascript" src="script/ui-bootstrap-tpls-0.11.2.min.js"></script>
     <script type="text/javascript" src="script/jquery.qtip.js"></script>
+    <script type="text/javascript" src="script/cryptojs-sha1.js"></script>
 </head>
 
 <body ng-app="status-report">
@@ -84,7 +85,7 @@
                 
                 // set columns to show and hide by default
                 $scope.columns = {
-                    "data":     false,
+                    "data":     true,
                     "date":     true,
                     "desc":     true,
                     "method":   false,
@@ -98,7 +99,7 @@
                     "severity": true,
                     "status":   true,
                     "target":   true,
-                    "web":      false,
+                    "web":      true,
                     "website":  false
                 };
 
@@ -175,7 +176,7 @@
                             if(typeof(data.severity) == "string") v.severity = data.severity;
                             if(typeof(data.name) != "undefined") v.name = data.name;
                             if(typeof(data.desc) != "undefined") v.desc = data.desc;
-                            if(typeof(data.data) != "undefined") v.data = data.data;
+                            if(typeof(data.datatext) != "undefined") v.data.text = data.datatext;
                             if(v.web) {
                                 if(typeof(data.method) != "undefined") v.method = data.method;
                                 if(typeof(data.params) != "undefined") v.params = data.params;
@@ -264,7 +265,7 @@
 
                     if($scope.web) { 
                         res = {
-                            "data":     $scope.data,
+                            "datatext": $scope.datatext,
                             "desc":     $scope.desc,
                             "method":   $scope.method,
                             "name":     $scope.name, 
@@ -280,7 +281,7 @@
                         };    
                     } else {
                         res = {
-                            "data":     $scope.data,
+                            "datatext": $scope.datatext,
                             "desc":     $scope.desc,
                             "name":     $scope.name, 
                             "severity": $scope.severitySelection, 
@@ -319,7 +320,7 @@
 
                 return workspacesFact;
             }])
-            .factory('statusReportFact', ['vulnsFact', 'vulnsWebFact', 'hostsFact', 'notesFact', 'workspacesFact', function(vulnsFact, vulnsWebFact, hostsFact, notesFact, wsFact) {
+            .factory('statusReportFact', ['vulnsFact', 'vulnsWebFact', 'hostsFact', 'workspacesFact', function(vulnsFact, vulnsWebFact, hostsFact, wsFact) {
                 var statusReportFact = {};
 
                 statusReportFact.getVulns = function(ws) {
@@ -327,23 +328,9 @@
                     var vulnsWeb    = vulnsWebFact.get(ws);
                     var hosts       = hostsFact.get(ws);
                     vulns.forEach(function(element, index, array) {
-                        notesFact.getNotes(ws, element.id, function(notes) {
-                            notes.forEach(function(note) {
-                                if(note.name === "data") {
-                                    element.data = note.text;
-                                }
-                            });
-                        });
                         element.target = hosts[element.parent].name;
                     });
                     vulnsWeb.forEach(function(element, index, array) {
-                        notesFact.getNotes(ws, element.id, function(notes) {
-                            notes.forEach(function(note) {
-                                if(note.name === "data") {
-                                    element.data = note.text;
-                                }
-                            });
-                        });
                         element.target = hosts[element.parent].name;
                     });
                     return vulnsWeb.concat(vulns);
@@ -372,6 +359,7 @@
 
                 vulnsFact.get = function(ws) {
                     var vulns = [];
+                    var note = {};
                     vulns_url = BASEURL + ws +"/_design/vulns/_view/vulns";
                     // gets vulns json from couch
                     $.getJSON(vulns_url, function(data) {
@@ -379,7 +367,10 @@
                             var d = new Date(0); 
                             d.setUTCSeconds(obj.value.date);
                             d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
-                            var note = notesFact.getNotes();
+                            var notes = notesFact.getNotes(ws, obj.id);
+                            notes.forEach(function(n) {
+                                if(n.name === "data") note = n;
+                            });
                             var v = {
                                 "id":           obj.id,
                                 "rev":          obj.value.rev,
@@ -423,8 +414,8 @@
                     };
                     $http.put(url, v).success(function(d, s, h, c) {
                         callback(d.rev);
-                        notesFact.putNote(ws, "data", v.id, v.data, function(res) {
-                        });
+                        console.log(vuln); 
+                        notesFact.putNote(ws, "data", vuln.id, vuln.data.text);
                     });
                 };
 
@@ -442,6 +433,7 @@
 
                 vulnsWebFact.get = function(ws) {
                     var vulns = [];
+                    var note = {};
                     vulns_url = BASEURL + ws +"/_design/vulns/_view/web";
                     // gets vulns json from couch
                     $.getJSON(vulns_url, function(data) {
@@ -449,7 +441,10 @@
                             var d = new Date(0); 
                             d.setUTCSeconds(obj.value.date);
                             d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
-                            var note = notesFact.getNotes();
+                            var notes = notesFact.getNotes(ws, obj.id);
+                            notes.forEach(function(n) {
+                                if(n.name === "data") note = n;
+                            });
                             var v = {
                                 "id":           obj.id,
                                 "rev":          obj.value.rev,
@@ -511,8 +506,7 @@
                     };
                     $http.put(url, v).success(function(d, s, h, c) {
                         callback(d.rev);
-                        notesFact.putNote(ws, "data", v.id, v.data, function(res) {
-                        });
+                        notesFact.putNote(ws, "data", vuln.id, vuln.data.text);
                     });
                 };
 
@@ -541,55 +535,82 @@
                 }
                 return hostsFact;
             }])
-            .factory('notesFact', ['BASEURL', '$http', '$filter', function(BASEURL, $http, $filter) {
+            .factory('notesFact', ['BASEURL', '$http', function(BASEURL, $http) {
                 var notesFact = {};
 
-                notesFact.getNotes = function(ws, parent, callback) {
-                    var lala = 0;
+                notesFact.getNotes = function(ws, parent) {
+                    var noteIds = [];
                     var notes = [];
+                    var note = {};
                     var params = JSON.stringify([parent, "Note"]);
                     var url = BASEURL + ws + "/_design/mapper/_view/byparentandtype?key=" + params;
                     $.getJSON(url, function(data) {
-                        $.each(data.rows, function(o) {
-                            console.log(o);
-                            lala += 1;
+                        $.each(data.rows, function(n, obj) {
+                            noteIds.push(obj.value);
                         });
                     });
-                    console.log(lala);
+                    noteIds.forEach(function(id) {
+                        url = BASEURL + ws + "/" + id;
+                        $.getJSON(url, function(data) {
+                            note = {
+                                "id":   data._id,
+                                "rev":  data._rev,
+                                "name": data.name,
+                                "text": data.text
+                            };
+                            notes.push(note);
+                        });
+                    });
                     return notes;
                 };
 
-                notesFact.putNote = function(ws, name, parent, text, callback) {
-                    notesFact.getNotes(ws, parent, function(res) {
-                        var notes = res;
-                        var url = BASEURL + ws;
-                        var exists = false;
+                // updates note if existing, creates otherwise
+                notesFact.putNote = function(ws, name, parent, text) {
+                    var notes   = notesFact.getNotes(ws, parent);
+                    var note    = {};
+                    var exists  = false;
+                    var url     = BASEURL + ws + "/";
+                    var id      = "";
+                    var rev     = "";
 
+                    // we need to check the name fits before updating
+                    if(notes.length) {
                         notes.forEach(function(note) {
-                            if(note.name == name) {
-                                exists = true;
-                                noteRev = note._rev;
-                                $.getJSON();
+                            if(note.name === name) {
+                                id      = note.id;
+                                rev     = note.rev;
+                                url     += note.id;
+                                exists  = true;
                             }
                         });
+                    }
 
-                        if(!exists) {
-                            url += "/" + 
-                            var note = {
-                                "name": name,
-                                "parent": parent,
-                                "owned": false,
-                                "text": text,
-                                "type": "Note"
-                            };
+                    if(!exists) {
+                        // insert
+                        id = parent + "." + CryptoJS.SHA1("Message").toString();
+                        url += id;
+                        note = {
+                            "name":     name,
+                            "parent":   parent,
+                            "owned":    false,
+                            "text":     text,
+                            "type":     "Note"
+                        };
+                    } else {
+                        // update
+                        note = {
+                            "_id":      id,
+                            "_rev":     rev,
+                            "name":     name,
+                            "parent":   parent,
+                            "owned":    false,
+                            "text":     text,
+                            "type":     "Note"
+                        };
+                    }
 
-                            $http.put(url, note).success(function(d, s, h, c) {
-                                console.log(d);
-                                callback(d);
-                            });
-                        } else {
-                        }
-                    });
+                    //$http.put(url, note).success(function(d, a, b, c) { console.log(d); });
+                    $http.put(url, note);
                 };
 
                 return notesFact;

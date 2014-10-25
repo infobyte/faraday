@@ -113,17 +113,63 @@
 
                 // returns scope vulns as CSV obj
                 $scope.toCSV = function() {
+                    var method      = "";
+                    var website     = "";
+                    var desc        = "";
+                    var text        = "";
+                    var path        = "";
+                    var pname       = "";
+                    var params      = "";
+                    var query       = "";
+                    var request     = "";
+                    var response    = "";
+
                     var content = "\"Date\", \"Web\", \"Status\", \"Severity\", "+
-                        "\"Name\", \"Target\", \"Description\" \n";
+                        "\"Name\", \"Target\", \"Description\", "+
+                        "\"Data\", \"Method\", \"Path\", \"Param Name\", \"Params\", "+
+                        "\"Query\", \"Request\", \"Response\", \"Website\" \n";
                     
                     $scope.vulns.forEach(function(v) {
+                        method      = "";
+                        website     = "";
+                        desc        = "";
+                        text        = "";
+                        path        = "";
+                        pname       = "";
+                        params      = "";
+                        query       = "";
+                        request     = "";
+                        response    = "";
+
+                        if(typeof(v.desc) != "undefined")       desc    = v.desc.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
+                        if(typeof(v.data.text) != "undefined")  text    = v.data.text.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
+                        if(v.type === "VulnerabilityWeb") {
+                            if(typeof(v.method) != "undefined")     method      = v.method;
+                            if(typeof(v.website) != "undefined")    website     = v.website;
+                            if(typeof(v.path) != "undefined")       path        = v.path.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
+                            if(typeof(v.pname) != "undefined")      pname       = v.pname.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
+                            if(typeof(v.params) != "undefined")     params      = v.params.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
+                            if(typeof(v.query) != "undefined")      query       = v.query.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
+                            if(typeof(v.request) != "undefined")    request     = v.request.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
+                            if(typeof(v.response) != "undefined")   response    = v.response.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
+                        }
+
                         content += "\""+v.date+"\","+
                             " \""+v.web+"\","+
                             " \"Vulnerable\","+
                             " \""+v.severity+"\","+
                             " \""+v.name+"\","+
                             " \""+v.target+"\","+
-                            " \""+v.desc.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'") +"\""+
+                            " \""+desc+"\","+
+                            " \""+text+"\","+
+                            " \""+method+"\","+
+                            " \""+path+"\","+
+                            " \""+pname+"\","+
+                            " \""+params+"\","+
+                            " \""+query+"\","+
+                            " \""+request+"\","+
+                            " \""+response+"\","+
+                            " \""+website+"\""+
                             "\n";
                     });
 

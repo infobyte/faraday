@@ -82,6 +82,22 @@
                 $scope.toggleShow = function(column, show) {
                     $scope.columns[column] = !show;
                 };
+
+                // toggles sort field and order
+                $scope.toggleSort = function(field) {
+                    $scope.toggleSortField(field);
+                    $scope.toggleReverse();
+                };
+
+                // toggles column sort field
+                $scope.toggleSortField = function(field) {
+                    $scope.sortField = field;
+                };
+
+                // toggle column sort order
+                $scope.toggleReverse = function() {
+                    $scope.reverse = !$scope.reverse;
+                }
                 
                 // set columns to show and hide by default
                 $scope.columns = {

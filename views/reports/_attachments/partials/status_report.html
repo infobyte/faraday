@@ -62,67 +62,67 @@
                                 <tr>
                                     <th ng-if="columns.date">
                                         <a href="" ng-click="toggleShow('date', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'date'; reverse = !reverse">Date</a>
+                                        <a href="" ng-click="toggleSort('date')">Date</a>
                                     </th>
                                     <th ng-if="columns.web">
                                         <a href="" ng-click="toggleShow('web', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'web'; reverse = !reverse">Web</a>
+                                        <a href="" ng-click="toggleSort('web')">Web</a>
                                     </th>
                                     <th ng-if="columns.status">
                                         <a href="" ng-click="toggleShow('status', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'status'; reverse = !reverse">Status</a>
+                                        <a href="" ng-click="toggleSort('status')">Status</a>
                                     </th>
                                     <th ng-if="columns.severity">
                                         <a href="" ng-click="toggleShow('severity', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'severity'; reverse = !reverse">Severity</a>
+                                        <a href="" ng-click="toggleSort('severity')">Severity</a>
                                     </th>
                                     <th ng-if="columns.name">
                                         <a href="" ng-click="toggleShow('name', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'name'; reverse = !reverse">Name</a>
+                                        <a href="" ng-click="toggleSort('name')">Name</a>
                                     </th>
                                     <th ng-if="columns.target">
                                         <a href="" ng-click="toggleShow('target', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'target'; reverse = !reverse">Target</a>
+                                        <a href="" ng-click="toggleSort('target')">Target</a>
                                     </th>
                                     <th ng-if="columns.desc">
                                         <a href="" ng-click="toggleShow('desc', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'desc'; reverse = !reverse">Desc</a>
+                                        <a href="" ng-click="toggleSort('desc')">Desc</a>
                                     </th>
                                     <th ng-if="columns.data">
                                         <a href="" ng-click="toggleShow('data', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'data'; reverse = !reverse">Data</a>
+                                        <a href="" ng-click="toggleSort('data')">Data</a>
                                     </th>
                                     <th ng-if="columns.method">
                                         <a href="" ng-click="toggleShow('method', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'method'; reverse = !reverse">Method</a>
+                                        <a href="" ng-click="toggleSort('method')">Method</a>
                                     </th>
                                     <th ng-if="columns.path">
                                         <a href="" ng-click="toggleShow('path', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'path'; reverse = !reverse">Path</a>
+                                        <a href="" ng-click="toggleSort('path')">Path</a>
                                     </th>
                                     <th ng-if="columns.pname">
                                         <a href="" ng-click="toggleShow('pname', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'pname'; reverse = !reverse">Param Name</a>
+                                        <a href="" ng-click="toggleSort('pname')">Param Name</a>
                                     </th>
                                     <th ng-if="columns.params">
                                         <a href="" ng-click="toggleShow('params', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'params'; reverse = !reverse">Params</a>
+                                        <a href="" ng-click="toggleSort('params')">Params</a>
                                     </th>
                                     <th ng-if="columns.query">
                                         <a href="" ng-click="toggleShow('query', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'query'; reverse = !reverse">Query</a>
+                                        <a href="" ng-click="toggleSort('query')">Query</a>
                                     </th>
                                     <th ng-if="columns.request">
                                         <a href="" ng-click="toggleShow('request', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'request'; reverse = !reverse">Request</a>
+                                        <a href="" ng-click="toggleSort('request')">Request</a>
                                     </th>
                                     <th ng-if="columns.response">
                                         <a href="" ng-click="toggleShow('response', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'response'; reverse = !reverse">Response</a>
+                                        <a href="" ng-click="toggleSort('response')">Response</a>
                                     </th>
                                     <th ng-if="columns.website">
                                         <a href="" ng-click="toggleShow('website', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="sortField = 'website'; reverse = !reverse">Website</a>
+                                        <a href="" ng-click="toggleSort('website')">Website</a>
                                     </th>
                                     <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
                                 </tr>

@@ -219,7 +219,7 @@ def checkDependencies():
                 if query_user_bool("Missing module %s." \
                     " Do you wish to install it?" % module[0]):
                     pip.main(['install', "%s==%s" %
-                             (module[0], module[1]), "--install-option='--prefix='", '--user'])
+                             (module[0], module[1]), '--user'])
 
                 else:
                     return False

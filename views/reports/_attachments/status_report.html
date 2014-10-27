@@ -199,34 +199,16 @@
 
                 // deletes all vulns with selected == true
                 $scope.remove = function() {
-                    var selected = false;
+                    var old = $scope.vulns;
+                    $scope.vulns = [];
 
-                    $scope.vulns.forEach(function(v) {
-                        if(v.selected) selected = true;
+                    old.forEach(function(v) {
+                        if(v.selected) {
+                            statusReportFact.removeVulns($scope.workspace, v);
+                        } else {
+                            $scope.vulns.push(v);
+                        }
                     });
-
-                    if(selected) {
-                        var old = $scope.vulns;
-                        $scope.vulns = [];
-
-                        old.forEach(function(v) {
-                            if(v.selected) {
-                                statusReportFact.removeVulns($scope.workspace, v);
-                            } else {
-                                $scope.vulns.push(v);
-                            }
-                        });
-                    } else {
-                        var modal = $modal.open({
-                            templateUrl: 'partials/modal-ko.html',
-                            controller: 'modalKoCtrl',
-                            resolve: {
-                                msg: function() {
-                                    return 'At least one vulnerabilty must be selected in order to delete';
-                                }
-                            }
-                        });
-                    }
                 };
 
                 // updates all vulns with selected == true
@@ -259,6 +241,47 @@
                     });
                 };
 
+                // action triggered from DELETE button
+                $scope.delete = function() {
+                    var selected = false;
+                    var i = 0;
+
+                    $scope.vulns.forEach(function(v) {
+                        if(v.selected) {
+                            selected = true;
+                            i++;
+                        }
+                    });
+
+                    if(selected) {
+                        var modal = $modal.open({
+                            templateUrl: 'partials/modal-delete.html',
+                            controller: 'modalDeleteCtrl',
+                            size: 'lg',
+                            resolve: {
+                                amount: function() {
+                                    return i;
+                                }
+                            }
+                        });
+
+                        modal.result.then(function() {
+                            $scope.remove();
+                        });
+                    } else {
+                        var modal = $modal.open({
+                            templateUrl: 'partials/modal-ko.html',
+                            controller: 'modalKoCtrl',
+                            resolve: {
+                                msg: function() {
+                                    return 'No vulnerabilities were selected to delete';
+                                }
+                            }
+                        });
+                    }
+                };
+
+                // action triggered from EDIT button
                 $scope.edit = function() {
                     var selected = false;
 
@@ -309,6 +332,22 @@
                     });
                 };
             }])
+            .controller('modalDeleteCtrl', function($scope, $modalInstance, amount) {
+                if(amount == 1) {
+                    $scope.message = "A vulnerability will be deleted.";
+                } else {
+                    $scope.message = amount + " vulnerabilities will be deleted.";
+                }
+                $scope.message += " This action cannot be undone. Are you sure you want to proceed?";
+
+                $scope.ok = function() {
+                    $modalInstance.close();
+                };
+
+                $scope.cancel = function() {
+                    $modalInstance.dismiss('cancel');
+                };
+            })
             .controller('modalEditCtrl', function($scope, $modalInstance, severities, vulns) {
                 $scope.severities = severities;
                 $scope.vulns = vulns;

@@ -17,12 +17,16 @@
 				"<th>OS</th>"+
 				"</tr></thead><tbody>";
 		$.each(hosts, function(k, v){
-			var hname = "";
+            var hname = v.name
+                        .replace(/&/g, '&amp;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/</g, '&lt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&apos;');
 			if(!services.hasOwnProperty(k)) {
 				services[k] = 0;
-				hname = v.name;
 			} else {
-				hname = "<a href=\"host-"+k+"\" class=\"host\">"+v.name+"</a>";
+				hname = "<a href=\"host-"+k+"\" class=\"host\">"+hname+"</a>";
 			}
 			if(!interfaces.hasOwnProperty(k)) interfaces[k] = 0;
 			var icon = "";
@@ -74,6 +78,7 @@
 				var id = v['id'];
 				v = v['value'];
 				var icon = "";
+                var tmp = "";
 				if(v.os.toLowerCase().indexOf("windows") > -1) icon = "windows";
 				if(v.os.toLowerCase().indexOf("osx") > -1) icon = "osx";
 				if(v.os.toLowerCase().indexOf("linux") > -1
@@ -84,9 +89,15 @@
 				} else {
 					os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+v.os+"\"/>";
 				}
+                tmp = v['name']
+                        .replace(/&/g, '&amp;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/</g, '&lt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&apos;');
 				if($.inArray(id, hids) > -1) {
 					table += "<tr id=\"host-"+id+"\">"+
-						"<td><a href=\"host-"+id+"\" class=\"host\">"+v['name']+"</a></td>"+
+						"<td><a href=\"host-"+id+"\" class=\"host\">"+tmp+"</a></td>"+
 						"<td>"+scount[id]+"</td>"+
 						"<td>"+os+"</td></tr>";
 				}
@@ -97,9 +108,15 @@
 			$.each(hosts, function(k, v){
 			var id = v['id'];
 			v = v['value'];
+            var tmp = v['name']
+                    .replace(/&/g, '&amp;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/</g, '&lt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&apos;');
 			if($.inArray(id, hids) > -1) {
 				table += "<tr id=\"host-"+id+"\">"+
-					"<td><p>"+v['name']+"</p></td></tr>";
+					"<td><p>"+tmp+"</p></td></tr>";
 			}
 			});
 			table += "</tbody></table>";
@@ -123,6 +140,7 @@
 				v = v['value'];
 				var desc = (v['description'] === "") ? "n/a" : v['description'];
 				var ports = "";
+                var sname = "";
 				if(v['ports'].length === 0) {
 					ports = "no ports available";
 				} else {
@@ -133,8 +151,14 @@
 						}
 					}
 				}
+                sname = v['name']
+                        .replace(/&/g, '&amp;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/</g, '&lt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&apos;');
 				table += "<tr id=\"service-"+sid+"\">"+
-					"<td><a href=\"service-"+sid+"\" class=\"service\">"+v['name']+"</a></td>"+
+					"<td><a href=\"service-"+sid+"\" class=\"service\">"+sname+"</a></td>"+
 					"<td>"+desc+"</td>"+
 					"<td>"+ports+"</td>"+
 					"<td>"+v['protocol']+"</td>"+

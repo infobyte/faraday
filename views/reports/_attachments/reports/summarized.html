@@ -8,6 +8,9 @@ function get_report_div(workspace, view,design){
 	$.getJSON(json_url, function(data) {
 		var colores = ["rojo", "negro"];
 		var i = 0;
+        var k = "";
+        var v = "";
+        
 		divs += "<div class=\"col-lg-3\"><article class=\"panel panel-default\"><header><h2>Workspace summarized report "+
                     "<span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"WS overview - hosts, notes, services and vulnerabilites counts\"></span>"+
                     "</h2></header><div class=\"main\"><div class=\"box\">";
@@ -21,8 +24,16 @@ function get_report_div(workspace, view,design){
                 "</div>";
         }
 		$.each(data.rows, function(n, obj){
-			if (obj.key != "interfaces"){
-				divs += "<div class=\"columna unquinto\"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj.value+"</div><div class=\"txt texto-blanco\">"+obj.key+"</div></section></article></div>";
+			if (obj.key != "interfaces") {
+                k = obj.key
+                    .replace(/&/g, '&amp;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/</g, '&lt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&apos;');
+				divs += "<div class=\"columna unquinto\"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section>"+
+                            "<div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj.value+"</div>"+
+                            "<div class=\"txt texto-blanco\">"+k+"</div></section></article></div>";
 				i++;
 			}
 		});

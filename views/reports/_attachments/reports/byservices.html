@@ -37,7 +37,18 @@ function get_report_div(workspace, view,design){
                 "</div>";
         }
         for (i = 0; i < obj.length; i++) {
-            divs += "<div class=\"columna unquinto services \"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section><div class=\"nro texto-"+colores[(i+1)%2]+"\">"+obj[i][0]+"</div><div class=\"txt texto-blanco\">"+obj[i][1]+"</div></section></article></div>";
+            var val = obj[i][1]
+                        .replace(/&/g, '&amp;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/</g, '&lt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&apos;');
+            divs += "<div class=\"columna unquinto services \"><article class=\"dato2 fondo-"+colores[i%2]+"\"><section>"+
+                        "<div class=\"nro texto-"+colores[(i+1)%2]+"\">"+
+                        obj[i][0]+
+                        "</div><div class=\"txt texto-blanco\">"+
+                        val+
+                        "</div></section></article></div>";
 		}
 		divs +="</article></div></div>";
 		return divs;

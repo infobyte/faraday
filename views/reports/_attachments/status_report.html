@@ -255,7 +255,7 @@
                             var v = {
                                 "id":           obj.id,
                                 "rev":          obj.value.rev,
-                                "desc":         obj.value.desc, 
+                                "desc":         obj.value.desc,
                                 "meta":         obj.value.meta,
                                 "date":         d, 
                                 "name":         obj.value.name, 
@@ -401,6 +401,12 @@
 
                         // wait for changes on the text
                         attrs.$observe('textCollapseText', function(text) {
+                            text = text
+                                .replace(/&/g, '&amp;')
+                                .replace(/>/g, '&gt;')
+                                .replace(/</g, '&lt;')
+                                .replace(/"/g, '&quot;')
+                                .replace(/'/g, '&apos;');
                             // and get the maxLength
                             var maxLength = scope.$eval(attrs.textCollapseMaxLength);
 

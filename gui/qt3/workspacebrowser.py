@@ -220,8 +220,11 @@ class WorkspaceTreeWindow(qt.QVBox):
             self._openWorkspace(first_child)
             
     def _itemDoubleClick(self, item, pos, val): 
-        if not self.manager.isActive(item.name):
-            self._openWorkspace(item)
+        try:
+            if not self.manager.isActive(item.name):
+                self._openWorkspace(item)
+        except Exception as err:
+            pass # Double click should be handled by the item.
         
     def _showContextMenu(self, item, pos, val):
         """Pop up a context menu when an item is right-clicked on the list view.""" 

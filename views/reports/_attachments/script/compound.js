@@ -221,6 +221,7 @@ function load_all_hosts(design) {
 	}
 
 	function load_hosts_by_service(name,bolean) {
+        name = htmlentities(name);
 		design = "hosts";
 		var services 	= get_obj_filter(workspace, "services", "byname", name);
 		var hids 	= [];
@@ -250,15 +251,16 @@ function load_all_hosts(design) {
 				v = v['value'];
 				var icon = "";
                 var tmp = "";
-				if(v.os.toLowerCase().indexOf("windows") > -1) icon = "windows";
-				if(v.os.toLowerCase().indexOf("osx") > -1) icon = "osx";
-				if(v.os.toLowerCase().indexOf("linux") > -1
-					|| v.os.toLowerCase().indexOf("unix") > -1) icon = "linux";
+                var cleanOs = htmlentities(v.os);
+				if(cleanOs.toLowerCase().indexOf("windows") > -1) icon = "windows";
+				if(cleanOs.toLowerCase().indexOf("osx") > -1) icon = "osx";
+				if(cleanOs.toLowerCase().indexOf("linux") > -1
+					|| cleanOs.toLowerCase().indexOf("unix") > -1) icon = "linux";
 				var os = "";
 				if(icon === "") {
-					os = "<span class=\"glyphicon glyphicon-question-sign faraday-qtips\" title="+v.os+"></span>";
+					os = "<span class=\"glyphicon glyphicon-question-sign faraday-qtips\" title="+cleanOs+"></span>";
 				} else {
-					os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+v.os+"\"/>";
+					os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+cleanOs+"\"/>";
 				}
                 tmp = htmlentities(v['name']);
 				if($.inArray(id, hids) > -1) {
@@ -286,6 +288,7 @@ function load_all_hosts(design) {
 	}
 
 	function load_services(hid, hname) {
+        hname = htmlentities(hname);
 		design = "hosts";
 		// el param design ya no es el recibido por GET, puesto que ahora estamos en services
 		var services = get_obj_filter(workspace, "services", "byhost", hid);
@@ -299,26 +302,28 @@ function load_all_hosts(design) {
 		$.each(services, function(k, v){
 				var sid = v['id'];
 				v = v['value'];
-				var desc = (v['description'] === "") ? "n/a" : v['description'];
+				var desc = (v['description'] === "") ? "n/a" : htmlentities(v['description']);
 				var ports = "";
                 var sname = "";
 				if(v['ports'].length === 0) {
 					ports = "no ports available";
 				} else {
 					for(i=0; i < v['ports'].length; i++){
-						ports += v['ports'][i];
+						ports += htmlentities(v['ports'][i]);
 						if(v['ports'].length != 1 && i != (v['ports'].length-1)) {
 							ports += ", ";
 						}
 					}
 				}
                 sname = htmlentities(v['name']);
+                protocol = htmlentities(v['protocol']);
+                status = htmlentities(v['status']);
 				table += "<tr id=\"service-"+sid+"\">"+
 					"<td><a href=\"service-"+sid+"\" class=\"service\">"+sname+"</a></td>"+
 					"<td>"+desc+"</td>"+
 					"<td>"+ports+"</td>"+
-					"<td>"+v['protocol']+"</td>"+
-					"<td>"+v['status']+"</td></tr>";
+					"<td>"+protocol+"</td>"+
+					"<td>"+status+"</td></tr>";
 		});
 		table += "</tbody></table>";
 		return table;

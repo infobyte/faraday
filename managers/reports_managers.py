@@ -104,7 +104,7 @@ class ReportManager(threading.Thread):
         Process online plugins
         """
         _pluginsOn={"MetasploitOn" : "./metasploiton online",}
-        _pluginsOn={"Beef" : "./beef online",}
+        _pluginsOn.update({"Beef" : "./beef online",})
         _psettings=CONF.getPluginSettings()
         
         for k,v in _pluginsOn.iteritems():

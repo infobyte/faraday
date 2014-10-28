@@ -300,7 +300,7 @@ def startFaraday():
         print(Fore.WHITE + Style.BRIGHT + \
             "\n*" + string.center("faraday ui is ready", 53 - 6) )
         print(Fore.WHITE + Style.BRIGHT + \
-                """Point your browser to: [%s]""" % url) 
+                """Make sure you got couchdb up and running.\nIf couchdb is up, point your browser to: \n[%s]""" % url) 
     else:
         print(Fore.WHITE + Style.BRIGHT + \
                 """Please config Couchdb for fancy HTML5 Dashboard""") 

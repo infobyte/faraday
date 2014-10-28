@@ -25,7 +25,7 @@ class ChangeFactory(object):
         change_type = CHANGETYPE.UNKNOWN
         if deleted:
             change_type = CHANGETYPE.DELETE
-        elif int(revision[0]) > 1:
+        elif int(revision.split('-')[0]) > 1:
             change_type = CHANGETYPE.UPDATE
         else:
             change_type = CHANGETYPE.ADD

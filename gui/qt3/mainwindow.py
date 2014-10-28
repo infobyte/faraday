@@ -19,7 +19,7 @@ from gui.qt3.customevents import *
 from gui.qt3.notification import NotificationsDialog
 from model.guiapi import notification_center as notifier
 from persistence.persistence_managers import CouchDbManager
-
+from model.guiapi import notification_center
 
 import model.api
 import webbrowser
@@ -667,6 +667,9 @@ class MainWindow(qt.QMainWindow):
             res = response.ok
         except:
             res = False
+            return notification_center.showDialog(
+                    "Error trying to connect couchdb.\nIn order to see the visualizations you should have couchdb started.",
+                    level="ERROR")
         if res:
             webbrowser.open_new(uri)
 

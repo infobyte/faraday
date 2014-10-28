@@ -36,6 +36,12 @@ function get_report_div(workspace, view,design){
                     var ip = "0.0.0.0";
                     var duration = "";
                     var d = new Date(0);
+                    var command = obj.key
+                        .replace(/&/g, '&amp;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/</g, '&lt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&apos;');
                     d.setUTCSeconds(obj.value.startdate);
                     d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear() + " - " + d.getHours() + ":" + d.getMinutes();
                     if(obj.value.duration == "0" || obj.value.duration == "") {
@@ -49,7 +55,7 @@ function get_report_div(workspace, view,design){
                     if(obj.value.hostname && obj.value.hostname != "") hostname = obj.value.hostname;
                     if(obj.value.ip && obj.value.ip != "") ip = obj.value.ip;
                     tabla += "<tr><td class=\"faraday-qtips\" title=\""+ip+"\">"+user+"@"+hostname+"</td>"+
-                                "<td>"+obj.key+"</td><td>"+d+"</td><td>"+duration+"</td></tr>";
+                                "<td>"+command+"</td><td>"+d+"</td><td>"+duration+"</td></tr>";
                 });
             tabla += "</tbody></table>";
             tabla +="</section></article></div>";

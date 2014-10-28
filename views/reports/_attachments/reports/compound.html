@@ -40,12 +40,16 @@ function get_report_div(workspace, view, design){
 					"<th>OS</th>"+
 					"</tr></thead><tbody>";
 			$.each(hosts, function(k, v){
-				var hname = "";
+				var hname = v.name
+                            .replace(/&/g, '&amp;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/</g, '&lt;')
+                            .replace(/"/g, '&quot;')
+                            .replace(/'/g, '&apos;');
 				if(!services.hasOwnProperty(k)) {
 					services[k] = 0;
-					hname = v.name;
 				} else {
-					hname = "<a href=\"host-"+k+"\" class=\"host\">"+v.name+"</a>";
+					hname = "<a href=\"host-"+k+"\" class=\"host\">"+hname+"</a>";
 				}
 				if(!interfaces.hasOwnProperty(k)) interfaces[k] = 0;
 				var icon = "";

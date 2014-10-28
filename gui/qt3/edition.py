@@ -434,7 +434,7 @@ class ListEditDialog(qt.QDialog):
         self.connect(self.remove_button, qt.SIGNAL('clicked()'), self.removeValue)
         self.close_button = qt.QPushButton("Close", self)
         self.close_button.setMaximumSize(qt.QSize(100, 100))
-        self.connect(self.close_button, qt.SIGNAL('clicked()'), self.close)
+        self.connect(self.close_button, qt.SIGNAL('clicked()'), self.accept)
         self.button_box.addWidget(self.add_button)
         self.button_box.addWidget(self.remove_button)
         self.button_box.addStretch(2)
@@ -475,9 +475,6 @@ class ListEditDialog(qt.QDialog):
         for item in items_selected:
             self.listview.takeItem(item)
             del item
-
-    def close(self):
-        self.accept()
 
     def sizeHint(self):
                                                                   
@@ -624,7 +621,7 @@ class InterfaceEditor():
                 'DNS' : self.widgets["ipv6_dns"].getValue(),    
             },
             "owned" : self.widgets["owned"].getValue(),
-            "hostnames" : self.widgets["hostanmes"].getValue()
+            "hostnames" : self.widgets["hostnames"].getValue()
         }
 
     def save(self):
@@ -640,7 +637,7 @@ class InterfaceEditor():
         self.widgets["name"] = qttable.addTextEdit("Name", self.interface.getName())
         self.widgets["description"] = qttable.addTextEdit("Description", self.interface.getDescription())
         self.widgets["mac"] = qttable.addTextEdit("MAC", self.interface.getMAC())
-        self.widgets["hostanmes"] = qttable.addListEdit("Hostnames", self.interface.getHostnames(), "Hostnames")
+        self.widgets["hostnames"] = qttable.addListEdit("Hostnames", self.interface.getHostnames(), "Hostnames")
         self.widgets["ipv4_address"] = qttable.addTextEdit("IPv4 Address", self.interface.getIPv4Address())
         self.widgets["ipv4_mask"] = qttable.addTextEdit("IPv4 Mask", self.interface.getIPv4Mask())
         self.widgets["ipv4_gateway"] = qttable.addTextEdit("IPv4 Gateway", self.interface.getIPv4Gateway())

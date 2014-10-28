@@ -222,8 +222,8 @@ function get_report_div(workspace, view,design){
                     } else {
                         duration = obj.value.duration.toFixed(2) + "s";
                     }
-                    if(obj.value.user && obj.value.user != "") user = obj.value.user;
-                    if(obj.value.hostname && obj.value.hostname != "") hostname = obj.value.hostname;
+                    if(obj.value.user && obj.value.user != "") user = htmlentities(obj.value.user);
+                    if(obj.value.hostname && obj.value.hostname != "") hostname = htmlentities(obj.value.hostname);
                     if(obj.value.ip && obj.value.ip != "") ip = obj.value.ip;
                     tabla += "<tr><td class=\"faraday-qtips\" title=\""+ip+"\">"+user+"@"+hostname+"</td>"+
                                 "<td>"+command+"</td><td>"+d+"</td><td>"+duration+"</td></tr>";

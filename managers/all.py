@@ -83,6 +83,7 @@ class PluginManager(object):
         plugs = self._instancePlugins()
         new_controller = plugins.core.PluginController(id, plugs, self._mapper_manager)
         self._controllers[new_controller.id] = new_controller
+        self.updateSettings(self._plugin_settings)
         return new_controller
 
     def _loadSettings(self):

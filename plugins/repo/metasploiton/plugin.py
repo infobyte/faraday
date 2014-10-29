@@ -48,8 +48,8 @@ class MetasploitOnPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id              = "MetasploitOn"
         self.name            = "Metasploit Online Service Plugin"
-        self.plugin_version         = "0.0.1"
-        self.version   = "Metasploit 4.7.2"
+        self.plugin_version         = "0.0.2"
+        self.version   = "Metasploit 4.10.0"
         self.framework_version  = "1.0.0"
         self.options         = None
         self._current_output = None
@@ -57,13 +57,14 @@ class MetasploitOnPlugin(core.PluginBase):
         self._command_regex  = re.compile(r'^(metasploiton|sudo metasploiton|\.\/metasploiton).*?')
 
         global current_path
-        self._output_file_path = os.path.join(self.data_path,
-                                             "metasploiton_output-%s.xml" % self._rid)
+#        self._output_file_path = os.path.join(self.data_path,
+#                                             "metasploiton_output-%s.xml" % self._rid)
                                   
         self.addSetting("Database", str, "msf3")
         self.addSetting("User", str, "msf3")
-        self.addSetting("Password", str, "ldoxy1qeJOkD7H515wKNgEbboCslTfyO")
+        self.addSetting("Password", str, "EKO-1919755b")
         self.addSetting("Server", str, "localhost")
+        self.addSetting("Port", str, "7337")
         self.addSetting("Wordspace", str, "%%")
         self.addSetting("Enable", str, "0")
         
@@ -82,22 +83,21 @@ class MetasploitOnPlugin(core.PluginBase):
         output being sent is valid.
         """
         try:
-            conn = psycopg2.connect("dbname='"  + self.getSetting("Database")+ "' user='"+self.getSetting("User")+"' password='"+self.getSetting("Password")+"' host='"+self.getSetting("Server")+"'")
+            conn = psycopg2.connect("dbname='"  + self.getSetting("Database")+ "' user='"+self.getSetting("User")+"' password='"+self.getSetting("Password")+"' host='"+self.getSetting("Server")+"' port='"+self.getSetting("Port")+"'")
             cur = conn.cursor()
-        except:
-            api.devlog ("Error Connection database")
+        except Exception as e:
+            print e
+            print "Error Connection database\n"
             return
         
         cur=self._doSql(cur,"select * from hosts inner join workspaces ON (hosts.workspace_id=workspaces.id) where workspaces.name like '"+ self.getSetting("Wordspace")+"';")
         if cur is None:
+            print "Error getting database data\n"
             return
         
-                       
+	                      
         self.path=self.data_path + "/"+api.getActiveWorkspace().name+ "_metasploit_last"
-        
-        
-                              
-                                                                                         
+                                                                         
         
         if os.path.isfile(self.path):
             f=open(self.path,"r")
@@ -256,7 +256,7 @@ class MetasploitOnPlugin(core.PluginBase):
             api.devlog("SQL:" + sql)
             db.execute(sql)
         except Exception, e:
-            api.devlog ("Error SQL[" + e.pgcode+"] - " + e.pgerror)
+            print ("Error SQL[" + e.pgcode+"] - " + e.pgerror)
             return None
         
         return db
@@ -289,7 +289,7 @@ class MetasploitOnPlugin(core.PluginBase):
                 f.close()
                 self._lsdate=rowdate
             except:
-                api.devlog ("Can't save metasploit lastupdate file")
+                print ("Can't save metasploit lastupdate file")
                 return
         
         return mret

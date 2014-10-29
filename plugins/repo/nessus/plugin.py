@@ -98,8 +98,7 @@ class NessusPlugin(core.PluginBase):
         NOTE: if 'debug' is true then it is being run from a test case and the
         output being sent is valid.
         """
-        p = dotnessus_v2.Report()
-              
+        p = dotnessus_v2.Report()              
         try:
             p.parse(output, from_string=True)
         except Exception as e:

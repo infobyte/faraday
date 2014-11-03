@@ -8,6 +8,35 @@ We made a big refactor in the latest iteration moving some code into a diferent 
 New features in the latest update
 =====================================
 
+Oct 17, 2014:
+----
+* https://github.com/infobyte/faraday/commit/a81c6376ed47a2f7b501c8f48f2179eb7c5d58b9
+
+Status report now have edition capabilities
+Introducing batch vulnerability edition and deletion. Now you can edit your status report.
+
+Lots of bug fixes
+
+Ubuntu 14.04 support fixes
+Mac support fixes
+
+
+Sep 26, 2014:
+----
+* https://github.com/infobyte/faraday/commit/440858ec8172193ce401bbf6a5f4b3052edb6edb
+
+New Dashboard design with summarized information.
+
+D3.js Fancy visualizations.
+
+Vulnerability Status report.
+
+Command run user/host identification.
+
+Vulnerability Statistics.
+
+Optimization Refactor.
+
 Jun 06, 2014:
 ----
 

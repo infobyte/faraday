@@ -65,7 +65,8 @@ class GuiApp(qt.QApplication, FaradayUi):
         if couchURL:
             url = "%s/reports/_design/reports/index.html" % couchURL
             model.api.log("Faraday ui is ready")
-            model.api.log("Point your browser to: [%s]" % url)
+            model.api.log("Make sure you have couchdb up and running if you want visualizations.")
+            model.api.log("If couchdb is up, point your browser to: [%s]" % url)
         else:
             model.api.log("Please configure Couchdb for fancy HTML5 Dashboard")
         exit_code = self.exec_loop()

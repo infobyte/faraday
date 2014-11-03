@@ -29,7 +29,7 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
   font-weight: 400;
   src: local('Ubuntu Italic'), local('Ubuntu-Italic'), url(/fonts/ubuntu/kbP_6ONYVgE-bLa9ZRbvvnYhjbSpvc47ee6xR_80Hnw.woff) format('woff');
 }
-html#no-overflow{overflow:hidden;}
+/* html#no-overflow{overflow:hidden;} */
 body {
     font:62.5%/1.5 'Ubuntu',Helvetica,Arial,sans-serif!important;
     color: #2D2F31;

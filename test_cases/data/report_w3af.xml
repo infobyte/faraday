@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<w3afrun start="1414516610" startstr="Tue Oct 28 13:16:50 2014" xmloutputversion="2.0">
+    <w3af-version>w3af - Web Application Attack and Audit Framework
+Version: 1.6.0.3
+Distribution: Kali Linux
+Author: Andres Riancho and the w3af team.</w3af-version>
+    <scaninfo target="http://localhost:5984/_utils">
+        <audit/>
+        <infrastructure>
+            <plugin name="allowed_methods"/>
+        </infrastructure>
+        <bruteforce/>
+        <grep/>
+        <evasion/>
+        <output>
+            <plugin name="xml_file"/>
+            <plugin name="console"/>
+        </output>
+        <mangle/>
+        <crawl/>
+        <auth/>
+    </scaninfo>
+    <information id="[32, 39, 52]" name="Allowed HTTP methods" plugin="allowed_methods" url="http://localhost:5984/">
+        <description>The URL &quot;http://localhost:5984/&quot; has the following enabled HTTP methods: GET, GET, HEAD, HEAD. This information was found in the requests with ids 32, 39 and 52.</description>
+        <http-transactions>
+            <http-transaction id="32">
+                <httprequest>
+                    <status>OPTIONS http://localhost:5984/ HTTP/1.1</status>
+                    <headers>
+                        <header content="localhost:5984" field="Host"/>
+                        <header content="gzip, deflate" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.org" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse id="32">
+                    <status>HTTP/1.1 405 Method Not Allowed</status>
+                    <headers>
+                        <header content="64" field="content-length"/>
+                        <header content="CouchDB/1.2.0 (Erlang OTP/R15B01)" field="server"/>
+                        <header content="GET,HEAD" field="allow"/>
+                        <header content="must-revalidate" field="cache-control"/>
+                        <header content="Tue, 28 Oct 2014 17:16:51 GMT" field="date"/>
+                        <header content="text/plain; charset=utf-8" field="content-type"/>
+                    </headers>
+                    <body content-encoding="text">{&quot;error&quot;:&quot;method_not_allowed&quot;,&quot;reason&quot;:&quot;Only GET,HEAD allowed&quot;}
+</body>
+                </httpresponse>
+            </http-transaction>
+            <http-transaction id="39">
+                <httprequest>
+                    <status>HEAD http://localhost:5984/ HTTP/1.1</status>
+                    <headers>
+                        <header content="localhost:5984" field="Host"/>
+                        <header content="gzip, deflate" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.org" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse id="39">
+                    <status>HTTP/1.1 200 OK</status>
+                    <headers>
+                        <header content="Tue, 28 Oct 2014 17:16:51 GMT" field="date"/>
+                        <header content="40" field="content-length"/>
+                        <header content="must-revalidate" field="cache-control"/>
+                        <header content="text/plain; charset=utf-8" field="content-type"/>
+                        <header content="CouchDB/1.2.0 (Erlang OTP/R15B01)" field="server"/>
+                    </headers>
+                </httpresponse>
+            </http-transaction>
+            <http-transaction id="52">
+                <httprequest>
+                    <status>GET http://localhost:5984/ HTTP/1.1</status>
+                    <headers>
+                        <header content="localhost:5984" field="Host"/>
+                        <header content="gzip, deflate" field="Accept-encoding"/>
+                        <header content="*/*" field="Accept"/>
+                        <header content="w3af.org" field="User-agent"/>
+                    </headers>
+                </httprequest>
+                <httpresponse id="52">
+                    <status>HTTP/1.1 200 OK</status>
+                    <headers>
+                        <header content="Tue, 28 Oct 2014 17:16:51 GMT" field="date"/>
+                        <header content="40" field="content-length"/>
+                        <header content="must-revalidate" field="cache-control"/>
+                        <header content="text/plain; charset=utf-8" field="content-type"/>
+                        <header content="CouchDB/1.2.0 (Erlang OTP/R15B01)" field="server"/>
+                    </headers>
+                    <body content-encoding="text">{&quot;couchdb&quot;:&quot;Welcome&quot;,&quot;version&quot;:&quot;1.2.0&quot;}
+</body>
+                </httpresponse>
+            </http-transaction>
+        </http-transactions>
+    </information>
+</w3afrun>

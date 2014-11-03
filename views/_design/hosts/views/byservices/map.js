@@ -3,9 +3,9 @@
 // See the file 'doc/LICENSE' for the license information
 function(doc) {
   if(doc.type=="Service"){
-    if(doc.parent != 'null') {
-      var hid =  doc._id.substring(0, doc._id.indexOf('.'));
-      emit(doc.name, 1); 
-    }
+      if(doc.parent != 'null' & (doc.status =='open' | doc.status =='running')) { 
+          var hid =  doc._id.substring(0, doc._id.indexOf('.'));
+          emit(doc.name, 1); 
+      }
   }
 }

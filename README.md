@@ -4,29 +4,30 @@ Faraday introduces a new concept (IPE) Integrated Penetration-Test Environment a
 
 The main purpose of Faraday is to re-use the available tools in the community to take advantage of them in a multiuser way.
 
-Design for simplicity, users should feel no difference between their own terminal application and the one included in Faraday. Developed with a specialized set of functionalities that help users improve their own work. Do you remember yourself programming without an IDE? Well, Faraday does the same an IDE does for you when programming, but from the perspective of a penetration test.
+Designed for simplicity, users should notice no difference between their own terminal application and the one included in Faraday. Developed with a specialized set of functionalities that help users improve their own work. Do you remember yourself programming without an IDE? Well, Faraday does the same as an IDE does for you when programming, but from the perspective of a penetration test.
 
-![Faraday Logo](https://raw.github.com/wiki/infobyte/faraday/images/Faraday-Mainwindow.png)
+![GUI - Web](https://raw.github.com/wiki/infobyte/faraday/images/GUI_Dashboard_new.png)
+
+
+![GUI - QT](https://raw.github.com/wiki/infobyte/faraday/images/Faraday-Mainwindow.png)
 
 Please read the [RELEASE notes](https://github.com/infobyte/faraday/blob/master/RELEASE.md)!
 
-Requirements
-----
-Modern Linux (Tested Debian / Ubuntu  * / Kali / Backtrack)
-* Python 2.6.x and 2.7.x
-* Qt3
-* CouchDB >= 1.2.0  
-* The following python libs:
-  * mockito 
-  * couchdbkit 
-  * whoosh 
-  * argparse 
-  * psycopg2
-  * IPy
-  * requests
+Plugins list:
+---
+Right now faraday has more than [40+ supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among them you will find: 
+![](https://raw.github.com/wiki/infobyte/faraday/images/plugins/Plugins.png)
+
 
 Installation
 ---
+
+The following platform are supported - [More information] (https://github.com/infobyte/faraday/wiki/Installation) :
+
+![platform](https://raw.github.com/wiki/infobyte/faraday/images/platform/supported.png) 
+
+
+Quick install:
 
 Download the latest tarball by clicking [here] (https://github.com/infobyte/faraday/tarball/master) 
 
@@ -36,12 +37,14 @@ Preferably, you can download faraday by cloning the [Git] (https://github.com/in
     $ cd faraday-dev
     $ ./install
     
+
+
 Usage 
 ----- 
 
 To get started, simply execute faraday and use the new console to start working in the pentest: 
 
-       $ ./faraday
+       $ ./faraday.py
     
 
 Links

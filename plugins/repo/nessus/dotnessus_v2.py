@@ -79,14 +79,14 @@ class Report(object):
 	def parse(self, xml_file, from_string=False):
 		"""Import .nessus file"""
 		# Parse XML file
-		getLogger(self).debug("Parsing report start")
+		#getLogger(self).debug("Parsing report start")
 		if from_string:
 			xml_file = StringIO(xml_file)
 				
 		# Iterate through each host scanned and create objects for each
 		for event, elem in ET.iterparse(xml_file):
 			
-			getLogger(self).debug("Parsing elemn %s" % elem[0:20])
+			#getLogger(self).debug("Parsing elemn %s" % elem[0:20])
 			# Grab the report name from the Report element
 			if event == 'end' and elem.tag == 'Report':
 				self.name = elem.attrib.get('name')
@@ -136,11 +136,14 @@ class ReportHost(object):
 		for n in xml_report_host.findall('HostProperties/tag'):
 			setattr(self, n.attrib.get('name'), n.text)
 
-		getLogger(self).debug("Parsing host start tag")
+		#getLogger(self).debug("Parsing host start tag")
+		tmp = Report()
 		# Convert scan dates and check for dead status
 		if self.get('HOST_START'):
-			self.host_start = parse(self.get('HOST_START'))
-			getLogger(self).debug("Host start found %s" % self.host_start)
+
+			self.host_start = self.get('HOST_START')
+			#getLogger(self).info("Host start found %s" % self.host_start)
+			
 			#self.host_start = datetime.strptime(self.get('HOST_START'), HOST_DATE_FORMAT)
 		else:
 			self.dead = True

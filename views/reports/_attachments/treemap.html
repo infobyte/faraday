@@ -183,9 +183,10 @@ $(document).ready(function() {
     <style>
           .node {
           border: solid 1px white;
-          font: 10px sans-serif;
+          font: 13px Ubuntu;
           line-height: 12px;
           overflow: hidden;
+          font-weight: bold;
           position: absolute;
           text-indent: 2px;
           }
@@ -225,9 +226,13 @@ $(document).ready(function() {
               .attr("class", "node")
               .call(position)
               .style("background", function(d) {return color(Math.floor(Math.random()*68)); })
-              .text(function(d) {return d.children ? null : d.key; });
+              .text(function(d, i) {
+                var total = d3.sum(jotason["children"], function(d){return d.value;});
+                return (d.key+ " ( " + d3.round(100* d.value / total, 1) + "% " + ")" ) ; 
+              });
         });
 
+//return d.children ? null : d.key; 
         function position() {
           this.style("left", function(d) { return d.x + "px"; })
               .style("top", function(d) { return d.y + "px"; })

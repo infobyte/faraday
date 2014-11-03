@@ -378,6 +378,7 @@ table.status-report tbody td:nth-child(5), .modal-content td{
     max-width: 265px;
     word-wrap: break-word;
 }
+div.modal-button{float:right;}
 /* select */
 select.ng-valid{
     font-size: 15px;

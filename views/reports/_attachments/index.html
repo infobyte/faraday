@@ -184,15 +184,15 @@
 
         var navegador = navigator.userAgent;
         if (navigator.userAgent.indexOf('MSIE') !=-1) {
-            $("#main.seccion").height(screen.height);
+            $("#main.seccion").height(screen.height - 100);
         } else if (navigator.userAgent.indexOf('Firefox') !=-1) {
-            $("#main.seccion").height(screen.height);
+            $("#main.seccion").height(screen.height - 100);
         } else if (navigator.userAgent.indexOf('Chromium') !=-1) {
-            $("#main.seccion").height(screen.height);
+            $("#main.seccion").height(screen.height - 100);
         } else if (navigator.userAgent.indexOf('Chrome') !=-1) {
-            $("#main.seccion").height(screen.height);
+            $("#main.seccion").height(screen.height - 100);
         } else if (navigator.userAgent.indexOf('Opera') !=-1) {
-            $("#main.seccion").height(screen.height);
+            $("#main.seccion").height(screen.height - 100);
         }
 
         $('#cont').on('mouseenter', '.faraday-qtips', function (event) {

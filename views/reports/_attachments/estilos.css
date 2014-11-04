@@ -29,10 +29,11 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
   font-weight: 400;
   src: local('Ubuntu Italic'), local('Ubuntu-Italic'), url(/fonts/ubuntu/kbP_6ONYVgE-bLa9ZRbvvnYhjbSpvc47ee6xR_80Hnw.woff) format('woff');
 }
-/* html#no-overflow{overflow:hidden;} */
+html#no-overflow{overflow-x:hidden;}
 body {
     font:62.5%/1.5 'Ubuntu',Helvetica,Arial,sans-serif!important;
     color: #2D2F31;
+    background: #E8EFF0!important;
 }
 ul{padding:0 0 0 0;margin-bottom: 20px;}
 a {
@@ -140,19 +141,18 @@ aside {
             right:0;
             bottom:0;
             left:0;
+            z-index: 1000;
         }
 .right-main {
-    background: #E8EFF0;
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
-    left: 76px;
+    left: 81px;
 }
 .seccion {
-    background: #E8EFF0;
     padding: 0px;
-    width: 100%;
+    width: 101%;
     float: left;
 }
     .seccion.treemap{
@@ -456,7 +456,7 @@ select.ng-valid{
         margin-top: -34px;
     }
 
-    #byservices .col-lg-3, #summarized .col-lg-3{width: 28%;margin:0px -2% 0px 1%;}
+    #byservices .col-lg-3, #summarized .col-lg-3{width: 29%;margin:0px -2% 0px 0%;}
     section .col-lg-2{margin: 0px -2% 0px 2px;padding-right: 1.9%;}
     .col-lg-6 .panel{margin-bottom: 10px}
     #list .col-lg-6, #vulns .col-lg-6{width: 55%;float: right;}
@@ -471,12 +471,13 @@ select.ng-valid{
         align-items: center;
     }
     #merge, #delete{margin:5px;float:right;}
-
+.input-sm{float: left;margin-bottom: 20px;}
 /* Media */
 @media screen and (min-width: 1380px){
     #list .tablesorter thead th {width: 25%}
     .treemap{margin-left:13%;}
     .seccion.treemap{margin-left: 20%}
+    #byservices .col-lg-3, #summarized .col-lg-3{width: 28%;margin: 0px -2% 0px 1%;}
 }
 @media screen and (max-width:1000px) {
     #no-overflow{overflow: auto!important }

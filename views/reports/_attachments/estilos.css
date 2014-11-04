@@ -367,7 +367,7 @@ table.status-report tbody tr td:first-child {
     border:1px solid;
 }
 #list .tablesorter tbody td {width: 23.6%}
-#list .tablesorter tbody td:nth-child(2){width: 29%}
+#list .tablesorter tbody td:nth-child(2){width: 29%;word-wrap: break-word;}
 #compound .tablesorter tbody{height:284px;}
 
 .table-striped tbody tr:nth-child(odd){background: #f9f9f9;}
@@ -378,6 +378,7 @@ table.status-report tbody td:nth-child(5), .modal-content td{
     max-width: 265px;
     word-wrap: break-word;
 }
+div.modal-button{float:right;}
 /* select */
 select.ng-valid{
     font-size: 15px;

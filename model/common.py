@@ -62,12 +62,12 @@ class Metadata(object):
         return self
 
 
-    def update(self, user, action = MetadataUpdateActions.UPDATE): 
+    def update(self, user, action = MetadataUpdateActions.UPDATE):
         """Update the local metadata giving a user and an action.
         Update time gets modified to the current system time"""
         self.update_user = user
         self.update_time = time()
-        self.update_action = action 
+        self.update_action = action
 
         self.update_controller_action = self.__getUpdateAction()
 
@@ -80,7 +80,7 @@ class Metadata(object):
 
         l_strace = traceback.extract_stack(limit = 10)
         controller_funcallnames = [ x[2] for x in l_strace if "controller" in x[0] ]
-        
+
         if controller_funcallnames:
             return "ModelControler." +  " ModelControler.".join(controller_funcallnames)
         return "No model controller call"
@@ -102,10 +102,10 @@ class ModelObject(object):
         self._id = None
         self._parent_id = parent_id
         self._parent = None
-        
+
         self.owner          = api.getLoggedUser()
         self._metadata      = Metadata(self.owner)
-        
+
         # indicates if object was owned somehow
         # we could use this property to put a different color on the GUI
         self._is_owned      = False
@@ -133,7 +133,7 @@ class ModelObject(object):
         self.updates = []
 
     def accept(self, visitor):
-        visitor.visit(self) 
+        visitor.visit(self)
 
     def defaultValues(self):
         return [-1, 0, '', 'unknown', None, [], {}]
@@ -146,13 +146,13 @@ class ModelObject(object):
         """ Breakes the conflict between two properties. If either of them
         is a default value returns the true and only.
         If neither returns the default value.
-        If conflicting returns a tuple with the values """ 
+        If conflicting returns a tuple with the values """
         if prop1 in self.defaultValues(): return prop2
         elif prop2 in self.defaultValues(): return prop1
         elif self.tieBreakable(key): return self.tieBreak(key, prop1, prop2)
         else: return (prop2, prop1)
 
-    def tieBreakable(self, key): 
+    def tieBreakable(self, key):
         return False
 
     def tieBreak(self, key, prop1, prop2):
@@ -160,14 +160,14 @@ class ModelObject(object):
 
     def addUpdate(self, newModelObject):
         conflict = False
-        diff = ModelObjectDiff(self, newModelObject) 
+        diff = ModelObjectDiff(self, newModelObject)
         for k, v in diff.getPropertiesDiff().items():
             attribute = self.__getAttribute(k)
             prop_update = self.propertyTieBreaker(attribute, *v)
             if isinstance(prop_update, tuple):
                 conflict = True
             else:
-                setattr(self, attribute, prop_update) 
+                setattr(self, attribute, prop_update)
         if conflict:
             self.updates.append(ConflictUpdate(self, newModelObject))
         return conflict
@@ -178,7 +178,7 @@ class ModelObject(object):
     def updateResolved(self, update):
         self.updates.remove(update)
 
-    
+
     # IMPORTANT: all delete methods are considered FULL delete
     # this means it will delete the reference from host and all
     # other objects containing them
@@ -221,7 +221,7 @@ class ModelObject(object):
             #return not update
         return False
 
-    
+
     def _updatePublicAttributes(self):
         # can be overriden if needed
         pass
@@ -232,7 +232,7 @@ class ModelObject(object):
         else:
             self._id = ID
         return self._id
-            
+
     def updateID(self):
         raise NotImplementedError("This should be overwritten")
 
@@ -246,7 +246,7 @@ class ModelObject(object):
         return self._id
 
     id = property(getID, setID)
-    
+
     def getMetadata(self):
         """Returns the current metadata of the object"""
         return self._metadata
@@ -262,7 +262,7 @@ class ModelObject(object):
         """ We are only saving the previous state so the newst is not available"""
         self.getMetadata().update(self.owner)
         # self.getMetadataHistory().pushMetadataForId(self.getID(), self.getMetadata())
-    
+
     def getHost(self):
         #recursive method to recover the Host root
         if self.class_signature == "Host":
@@ -276,15 +276,15 @@ class ModelObject(object):
         return self._name
 
     name = property(getName, setName)
-    
+
     def setDescription(self, description):
         self._description = description
 
     def getDescription(self):
         return self._description
-    
+
     description = property(getDescription, setDescription)
-    
+
     def isOwned(self):
         return self._is_owned
 
@@ -303,9 +303,9 @@ class ModelObject(object):
 
     def getParent(self):
         return self._parent
-    
+
     parent = property(getParent, setParent)
-    
+
     #TODO: this should be removed and we could use some class
     # based on dict to implement this
 
@@ -322,22 +322,22 @@ class ModelObject(object):
             del ref[valID]
             val.delete()
             return True
-        
+
         hash_id = get_hash([valID])
         if hash_id in ref:
             val = ref[hash_id]
             del ref[hash_id]
             val.delete()
             return True
-        
+
         for element in ref.itervalues():
             if valID == element.name:
                 val = ref[element.getID()]
                 del ref[element.getID()]
                 val.delete()
                 return True
-            
-        # none of the ids were found         
+
+        # none of the ids were found
         return False
 
     def _delAllValues(self, attrName):
@@ -389,7 +389,7 @@ class ModelObject(object):
     def newNote(self, name, text):
         note = ModelObjectNote(name, text, self)
         self.addNote(note)
-        
+
     @updateLocalMetadata
     def delNote(self, noteID):
         self.deleteChild(noteID)
@@ -406,7 +406,7 @@ class ModelObject(object):
 
     def notesCount(self):
         return len(self._notes.values())
-        
+
     #Vulnerability
     @updateLocalMetadata
     def addVuln(self, newVuln, update=False, setparent=True):
@@ -458,7 +458,7 @@ class ModelObject(object):
 
     def credsCount(self):
         return len(self._creds.values())
-    
+
     def __getClassname(self, val):
         supported = factory.listModelObjectTypes()
         return filter(lambda x: val.lower().replace('_', '')[:-1] in x.lower(), supported)[0]
@@ -490,7 +490,7 @@ class ModelComposite(ModelObject):
         return self.childs
 
     def getChildsByType(self, signature):
-        return [c for c in self.childs.values() 
+        return [c for c in self.childs.values()
                     if c.__class__.__name__ == signature]
 
     def deleteChild(self, iid):
@@ -802,7 +802,7 @@ class ModelObjectNote(ModelComposite):
         >>> note += " hello world!"
     """
     class_signature = "Note"
-    
+
     def __init__(self, name="", text="", parent_id=None):
         ModelComposite.__init__(self, parent_id)
         self.name = str(name)
@@ -848,38 +848,38 @@ class ModelObjectNote(ModelComposite):
         return "%s: %s" % (self.name, self.text)
 
 #-------------------------------------------------------------------------------
-class ModelObjectVuln(ModelLeaf):
+class ModelObjectVuln(ModelComposite):
     """
     Simple class to store vulnerability about any object.
     id will be used to number vulnerability (based on a counter on the object being commented)
-    parent will be a reference to the object being commented.   
+    parent will be a reference to the object being commented.
     """
     class_signature = "Vulnerability"
-    
+
     def __init__(self, name="",desc="", ref=None, severity="", parent_id=None):
         """
         The parameters refs can be a single value or a list with values
         """
-        ModelLeaf.__init__(self, parent_id)
+        ModelComposite.__init__(self, parent_id)
         self.name = name
         self._desc = desc
         self.data = ""
         
         self.refs = []
-        
+
         if isinstance(ref, list):
             self.refs.extend(ref)
         elif ref is not None:
             self.refs.append(ref)
 
-        # Severity Standarization 
+        # Severity Standarization
         self.severity = self.standarize(severity)
 
-    def standarize(self, severity): 
+    def standarize(self, severity):
         # Transform all severities into lower strings
         severity = str(severity).lower()
-        # If it has info, med, high, critical in it, standarized to it: 
-        
+        # If it has info, med, high, critical in it, standarized to it:
+
 
         def align_string_based_vulns(severity):
             severities = ['info','low', 'med', 'high', 'critical']
@@ -906,7 +906,7 @@ class ModelObjectVuln(ModelLeaf):
     def updateID(self):
         self._id = get_hash([self.name, self._desc])
         self._prependParentId()
-        
+
     def _setDesc(self, desc):
         self._desc = desc
 
@@ -970,10 +970,10 @@ class ModelObjectVulnWeb(ModelObjectVuln):
     """
     Simple class to store vulnerability web about any object.
     This Vuln support path, hostname, request and response
-    parent will be a reference to the ModelObjectVuln being commented.   
+    parent will be a reference to the ModelObjectVuln being commented.
     """
     class_signature = "VulnerabilityWeb"
-    
+
     def __init__(self, name="",desc="", website="", path="", ref=None, severity="", request="", response="",
                 method="",pname="", params="",query="",category="", parent_id=None):
         """
@@ -989,7 +989,7 @@ class ModelObjectVulnWeb(ModelObjectVuln):
         self.params = params
         self.query = query
         self.category = category
-        
+
     def updateID(self):
         self._id = get_hash([self.name, self.website, self.path, self.desc ])
         self._prependParentId()
@@ -1085,7 +1085,7 @@ class ModelObjectCred(ModelLeaf):
         >>> cred += " hello world!"
     """
     class_signature = "Cred"
-    
+
     def __init__(self, username="", password="", parent_id=None):
         ModelLeaf.__init__(self, parent_id)
         self._username = str(username)
@@ -1120,7 +1120,7 @@ class ModelObjectCred(ModelLeaf):
             self.setPassword(password)
 
 class TreeWordsTries(object):
-    instance = None       
+    instance = None
     END = '_end_'
     root = dict()
     FOUND = True
@@ -1176,7 +1176,7 @@ class TreeWordsTries(object):
             else:
                 return False
 
-    def __new__(cls, *args, **kargs): 
+    def __new__(cls, *args, **kargs):
         if cls.instance is None:
             cls.instance = object.__new__(cls, *args, **kargs)
         return cls.instance
@@ -1189,7 +1189,7 @@ class TreeWordsTries(object):
         if not self.isInTries(word):
             return
 
-        for letter in word: 
+        for letter in word:
             if letter in current_dict:
                 if not previous_dict:
                     previous_dict = current_dict

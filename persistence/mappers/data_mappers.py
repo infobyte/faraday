@@ -225,7 +225,7 @@ class VulnMapper(ModelObjectMapper):
             "desc": vuln.getDesc(),
             "severity": vuln.getSeverity(),
             "refs": vuln.getRefs(),
-	    "data": vuln.getData() 
+            "data": vuln.getData()
         })
         return doc
 

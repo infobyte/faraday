@@ -6,7 +6,7 @@
     <h3 class="modal-title">Bulk edit</h3>
 </div>
 <div class="modal-body">
-    <div ng-if="web">
+    <div ng-if="mixed">
         <div class="alert alert-danger alert-dismissible" role="alert">
             <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
             <h5><strong>Hey!</strong> You have selected both vulnerabilities and web vulnerabilities. Please keep in mind that fields in red are specific for web vulnerabilities and these will not be added to regular vulnerabilities.</h5>
@@ -37,8 +37,8 @@
         </div><!-- .form-group -->
         <div class="form-group">
             <div class="col-md-12">
-                <label class="sr-only" for="vuln-data-text">Vuln data</label>
-                <textarea class="form-control" id="vuln-data-text" placeholder="Data" ng-model="datatext"></textarea>
+                <label class="sr-only" for="vuln-data">Vuln data</label>
+                <textarea class="form-control" id="vuln-data" placeholder="Data" ng-model="data"></textarea>
             </div>
         </div><!-- .form-group -->
         <div ng-if="web">

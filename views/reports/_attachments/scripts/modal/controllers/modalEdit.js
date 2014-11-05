@@ -3,10 +3,21 @@ angular.module('faradayApp')
         $scope.severities = severities;
         $scope.vulns = vulns;
         $scope.web = false;
+        $scope.mixed = 0x00;
+        var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
 
         $scope.vulns.forEach(function(v) {
-            if(v.selected && v.type === "VulnerabilityWeb") $scope.web = true; 
+            if(v.selected && v.type === "VulnerabilityWeb") $scope.web = true;
+            if(v.selected) {
+                $scope.mixed = $scope.mixed | vuln_mask[v.type];
+            }
         });
+
+        if($scope.mixed == 0x11) {
+            $scope.mixed = true;
+        } else {
+            $scope.mixed = false;
+        }
 
         $scope.isChecked = function(i) {
             return i.selected;

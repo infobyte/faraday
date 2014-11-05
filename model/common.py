@@ -863,6 +863,7 @@ class ModelObjectVuln(ModelLeaf):
         ModelLeaf.__init__(self, parent_id)
         self.name = name
         self._desc = desc
+        self.data = ""
         
         self.refs = []
         
@@ -947,6 +948,13 @@ class ModelObjectVuln(ModelLeaf):
             self.refs.extend(refs)
         elif ref is not None:
             self.refs.append(refs)
+
+    def setData(self, data):
+        self.data = data
+
+    def getData(self):
+        return self.data
+
 
     def __str__(self):
         return "vuln id:%s - %s" % (self.id, self.name)

@@ -12,29 +12,25 @@ angular.module('faradayApp')
                     var d = new Date(0); 
                     d.setUTCSeconds(obj.value.date);
                     d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
-                    var notes = notesFact.getNotes(ws, obj.id);
-                    notes.forEach(function(n) {
-                        if(n.name === "data") note = n;
-                    });
                     var v = {
                         "id":           obj.id,
                         "rev":          obj.value.rev,
-                        "desc":         obj.value.desc,
-                        "data":         note,
-                        "meta":         obj.value.meta,
+                        "couch_parent": obj.value.parent,
+                        "data":         obj.value.data,
                         "date":         d, 
+                        "delete":       false,
+                        "desc":         obj.value.desc,
+                        "meta":         obj.value.meta,
                         "name":         obj.value.name, 
                         "oid":          obj.value.oid,
                         "owned":        obj.value.owned,
                         "owner":        obj.value.owner,
                         "parent":       obj.key.substring(0, obj.key.indexOf('.')),
-                        "couch_parent": obj.value.parent,
                         "refs":         obj.value.refs,
+                        "selected":     false,
                         "severity":     obj.value.severity,
                         "type":         obj.value.type, 
-                        "web":          false,
-                        "selected":     false,
-                        "delete":       false
+                        "web":          false
                     };
                     vulns.push(v);
                 });
@@ -46,6 +42,7 @@ angular.module('faradayApp')
             var url = BASEURL + ws + "/" + vuln.id;
             var v = {
                 "_rev":         vuln.rev,
+                "data":         vuln.data,
                 "desc":         vuln.desc, 
                 "metadata":     vuln.meta,
                 "name":         vuln.name, 
@@ -59,8 +56,6 @@ angular.module('faradayApp')
             };
             $http.put(url, v).success(function(d, s, h, c) {
                 callback(d.rev);
-                console.log(vuln); 
-                notesFact.putNote(ws, "data", vuln.id, vuln.data.text);
             });
         };
 

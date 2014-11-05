@@ -5,9 +5,10 @@ function(doc) {
     if(doc.type == "Vulnerability"){
         var obj = {
             "rev":      doc._rev,
+            "data":     doc.data,
+            "date":     doc.metadata.create_time, 
             "desc":     doc.desc, 
             "meta":     doc.metadata,
-            "date":     doc.metadata.create_time, 
             "name":     doc.name, 
             "oid":      doc.obj_id,
             "owned":    doc.owned,

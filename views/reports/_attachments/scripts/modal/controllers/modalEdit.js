@@ -17,7 +17,7 @@ angular.module('faradayApp')
 
             if($scope.web) { 
                 res = {
-                    "datatext": $scope.datatext,
+                    "data":     $scope.data,
                     "desc":     $scope.desc,
                     "method":   $scope.method,
                     "name":     $scope.name, 
@@ -33,7 +33,7 @@ angular.module('faradayApp')
                 };    
             } else {
                 res = {
-                    "datatext": $scope.datatext,
+                    "data":     $scope.data,
                     "desc":     $scope.desc,
                     "name":     $scope.name, 
                     "severity": $scope.severitySelection, 

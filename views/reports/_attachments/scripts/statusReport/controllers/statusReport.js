@@ -93,8 +93,8 @@ angular.module('faradayApp')
                 request     = "";
                 response    = "";
 
-                if(typeof(v.desc) != "undefined")       desc    = v.desc.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
-                if(typeof(v.data.text) != "undefined")  text    = v.data.text.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
+                if(typeof(v.desc) != "undefined")   desc    = v.desc.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
+                if(typeof(v.data) != "undefined")   text    = v.data.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
                 if(v.type === "VulnerabilityWeb") {
                     if(typeof(v.method) != "undefined")     method      = v.method;
                     if(typeof(v.website) != "undefined")    website     = v.website;
@@ -156,7 +156,7 @@ angular.module('faradayApp')
                     if(typeof(data.severity) == "string") v.severity = data.severity;
                     if(typeof(data.name) != "undefined") v.name = data.name;
                     if(typeof(data.desc) != "undefined") v.desc = data.desc;
-                    if(typeof(data.datatext) != "undefined") v.data.text = data.datatext;
+                    if(typeof(data.data) != "undefined") v.data = data.data;
                     if(v.web) {
                         if(typeof(data.method) != "undefined") v.method = data.method;
                         if(typeof(data.params) != "undefined") v.params = data.params;

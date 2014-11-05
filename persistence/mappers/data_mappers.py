@@ -224,7 +224,8 @@ class VulnMapper(ModelObjectMapper):
         doc.update({
             "desc": vuln.getDesc(),
             "severity": vuln.getSeverity(),
-            "refs": vuln.getRefs()
+            "refs": vuln.getRefs(),
+	    "data": vuln.getData() 
         })
         return doc
 
@@ -232,6 +233,7 @@ class VulnMapper(ModelObjectMapper):
         vuln.setDesc(doc.get("desc"))
         vuln.setSeverity(doc.get("severity"))
         vuln.setRefs(doc.get("refs"))
+        vuln.setData(doc.get("data", ""))
         super(VulnMapper, self).unserialize(vuln, doc)
         return vuln
 

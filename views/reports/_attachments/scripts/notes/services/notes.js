@@ -73,7 +73,6 @@ angular.module('faradayApp')
                 };
             }
 
-            //$http.put(url, note).success(function(d, a, b, c) { console.log(d); });
             $http.put(url, note);
         };
 

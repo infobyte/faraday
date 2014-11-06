@@ -1,10 +1,9 @@
 angular.module('faradayApp')
-    .factory('vulnsFact', ['BASEURL', '$http', 'notesFact', function(BASEURL, $http, notesFact) {
+    .factory('vulnsFact', ['BASEURL', '$http', function(BASEURL, $http) {
         var vulnsFact = {};
 
         vulnsFact.get = function(ws) {
             var vulns = [];
-            var note = {};
             vulns_url = BASEURL + ws +"/_design/vulns/_view/vulns";
             // gets vulns json from couch
             $.getJSON(vulns_url, function(data) {
@@ -61,9 +60,7 @@ angular.module('faradayApp')
 
         vulnsFact.remove = function(ws, vuln) {
             var url = BASEURL + ws + "/" + vuln.id + "?rev=" + vuln.rev;
-            $http.delete(url).success(function(d, s, h, c) {
-                console.log(d);
-            });
+            $http.delete(url).success(function(d, s, h, c) {});
         };
 
         return vulnsFact;

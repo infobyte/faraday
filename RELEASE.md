@@ -8,6 +8,21 @@ We made a big refactor in the latest iteration moving some code into a diferent 
 New features in the latest update
 =====================================
 
+Nov 7, 2014:
+---
+You can get the new version here:
+
+* https://github.com/infobyte/faraday/archive/v1.0.6.tar.gz
+
+Changes:
+
+* Status report modifications:
+* Web vulnerability edition support.
+* Variable columns in status report.
+* New field called "Data" with extra information about a vulnerability.
+* Bug fixes
+
+
 Oct 17, 2014:
 ----
 * https://github.com/infobyte/faraday/commit/a81c6376ed47a2f7b501c8f48f2179eb7c5d58b9

@@ -51,7 +51,7 @@ elif [ "$os" = "Ubuntu 13.10" ]; then
 elif [ "$os" = "Ubuntu 13.04" ]; then
     version="ubuntu13-04-$arch"
     down=1
-elif [ "$os" = "Ubuntu 14.04 LTS" ]; then
+elif [[ "$os2" =~ "Ubuntu 14.04".* ]]; then
     version="ubuntu13-10-$arch"
     down=1
     # Install pip from github.
@@ -69,7 +69,7 @@ if [ "$down" -eq 1 ]; then
         echo "[+] QT Libs already downloaded"
     else
         echo "[+] Download QT Libs"
-        wget "http://www.faradaysec.com/down/faraday/lib-$version.tgz" -O lib-$version.tgz
+        wget "https://www.faradaysec.com/down/faraday/lib-$version.tgz" -O lib-$version.tgz
     fi
     
     shav="sha_${version//-/_}"

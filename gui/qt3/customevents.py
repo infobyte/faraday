@@ -57,6 +57,7 @@ class WorkspaceChangedCustomEvent(qt.QCustomEvent):
     def __init__(self, e):
         qt.QCustomEvent.__init__(self, e.type())
         self.workspace = e.workspace
+        self.workspace_type = e.workspace_type
 
 
 class ConflictUpdatedCustomEvent(qt.QCustomEvent):

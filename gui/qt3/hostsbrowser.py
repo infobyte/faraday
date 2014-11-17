@@ -185,8 +185,8 @@ class HostsBrowser(qt.QVBox):
                               
                                                        
 
-    def load(self, workspace):
-        self.rootitem = WorkspaceListViewItem(self.listview, workspace)
+    def load(self, workspace, workspace_type):
+        self.rootitem = WorkspaceListViewItem(self.listview, workspace, workspace_type)
         self.listview.setSelected(self.rootitem, True)
 
     def update(self, hosts):
@@ -396,13 +396,13 @@ class HostsBrowser(qt.QVBox):
                                 self.listview.ensureItemVisible(host_item)
                                 break
 
-    def workspaceChanged(self, workspace):
+    def workspaceChanged(self, workspace, workspace_type):
         if self.rootitem:
             root = self.rootitem
             self.listview.takeItem(root)
             del root
         self.clearTree()
-        self.load(workspace)
+        self.load(workspace,workspace_type)
 
     def updateWorkspaceName(self, nconflicts):
         self.rootitem.updateName(nconflicts)
@@ -863,7 +863,6 @@ class HostsBrowser(qt.QVBox):
 
     def _showWorkspaceProperties(self, item):
         if item.object is not None:
-            api.log("Llege a showWorkspace", "ERROR")
             d = WorkspacePropertiesDialog(self, "Workspace Properties", workspace=item.object)
             d.exec_loop()
 
@@ -886,7 +885,7 @@ class HostsBrowser(qt.QVBox):
             self.clearTree()
 
         elif event.type() == WORKSPACE_CHANGED:
-            self.workspaceChanged(event.workspace)
+            self.workspaceChanged(event.workspace, event.workspace_type)
 
         elif event.type() == CONFLICT_UPDATE:
             self.updateWorkspaceName(event.nconflicts)

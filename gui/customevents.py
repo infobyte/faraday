@@ -79,9 +79,10 @@ class RenameHostsRootCustomEvent(CustomEvent):
 
 
 class WorkspaceChangedCustomEvent(CustomEvent):
-    def __init__(self, workspace):
+    def __init__(self, workspace,workspace_type):
         CustomEvent.__init__(self, WORKSPACE_CHANGED)
         self.workspace = workspace
+        self.workspace_type = workspace_type
 
 
 class ConflictUpdatedCustomEvent(CustomEvent):

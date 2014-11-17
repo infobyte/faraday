@@ -236,8 +236,8 @@ class RootListViewItem(ModelObjectListViewItem):
 
 class WorkspaceListViewItem(ModelObjectListViewItem):
     type = "Workspace"
-    def __init__(self, qtparent, workspace=None):
-        ModelObjectListViewItem.__init__(self, qtparent, workspace.name)
+    def __init__(self, qtparent, workspace=None, model_object=None):
+        ModelObjectListViewItem.__init__(self, qtparent, workspace.name, model_object)
         self.nconflicts = 0
         self.setOpen(True)
         self.workspace_name = "%s" % self.name
@@ -246,8 +246,7 @@ class WorkspaceListViewItem(ModelObjectListViewItem):
         pass
 
     def _setIcon(self):
-        
-        if self.object.__class__.__name__ == "WorkspaceOnCouch":
+        if self.object == "CouchDB":
             icon_name = "TreeRoot-20.png"
         else:
             icon_name = "TreeOffRoot-20.png"

@@ -1,17 +1,68 @@
 angular.module('faradayApp')
     .controller('modalEditCtrl', function($scope, $modalInstance, severities, vulns) {
+
+        $scope.pickVuln = function(v) {
+            $scope.p_name = v.name;
+            $scope.p_desc = v.desc;
+            $scope.p_data = v.data;
+            $scope.severitySelection = v.severity;
+            $scope.p_method = v.method;
+            $scope.p_pname = v.pname;
+            $scope.p_params = v.params;
+            $scope.p_path = v.path;
+            $scope.p_query = v.query;
+            $scope.p_website = v.website;
+            $scope.p_request = v.request;
+            $scope.p_response = v.response;
+            
+            $scope.name = $scope.p_name;
+            $scope.data = $scope.p_data;
+            $scope.desc = $scope.p_desc;
+            $scope.method = $scope.p_method;
+            $scope.params = $scope.p_params;
+            $scope.path = $scope.p_path;
+            $scope.pname = $scope.p_pname;
+            $scope.query = $scope.p_query;
+            $scope.request = $scope.p_request;
+            $scope.response = $scope.p_response;
+            $scope.website = $scope.p_website;
+        };
         $scope.severities = severities;
         $scope.vulns = vulns;
         $scope.web = false;
         $scope.mixed = 0x00;
+        
+        $scope.vulnc = 0;
         var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
 
         $scope.vulns.forEach(function(v) {
-            if(v.selected && v.type === "VulnerabilityWeb") $scope.web = true;
             if(v.selected) {
                 $scope.mixed = $scope.mixed | vuln_mask[v.type];
+                $scope.vulnc++;
+                $scope.pickVuln(v);
+                if (v.type === "VulnerabilityWeb") {
+                    $scope.web = true;
+                    //web
+                }
+                
             }
         });
+        
+        $scope.unit = $scope.vulnc == 1;
+        
+        if ($scope.vulnc > 1) {
+            $scope.p_name = "";
+            $scope.p_desc = "";
+            $scope.p_data = "";
+            $scope.p_method = "";
+            $scope.p_pname = "";
+            $scope.p_params = "";
+            $scope.p_path = "";
+            $scope.p_query = "";
+            $scope.p_website = "";
+            $scope.p_request = "";
+            $scope.p_response = "";
+        }
 
         if($scope.mixed == 0x11) {
             $scope.mixed = true;

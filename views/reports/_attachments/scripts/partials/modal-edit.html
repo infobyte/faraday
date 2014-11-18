@@ -26,60 +26,60 @@
             </div>
             <div class="col-md-9">
                 <label class="sr-only" for="vuln-name">Vuln name</label>
-                <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="name"/>
+                <input type="text" class="form-control" id="vuln-name" placeholder="Name" value="{{p_name}}" ng-model="name"/>
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
             <div class="col-md-12">
                 <label class="sr-only" for="vuln-desc">Vuln description</label>
-                <textarea class="form-control" id="vuln-desc" placeholder="Description" ng-model="desc"></textarea>
+                <textarea class="form-control" id="vuln-desc" placeholder="Description" value="{{p_desc}}" ng-model="desc"></textarea>
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
             <div class="col-md-12">
                 <label class="sr-only" for="vuln-data">Vuln data</label>
-                <textarea class="form-control" id="vuln-data" placeholder="Data" ng-model="data"></textarea>
+                <textarea class="form-control" id="vuln-data" placeholder="Data" value="{{p_data}}"  ng-model="data"></textarea>
             </div>
         </div><!-- .form-group -->
         <div ng-if="web">
             <div class="form-group">
                 <div class="col-md-4 has-error">
                     <label class="sr-only control-label" for="vuln-method">Method</label>
-                    <input type="text" class="form-control input-error" id="vuln-method" placeholder="Method" ng-model="$parent.method"/>
+                    <input type="text" class="form-control input-error" id="vuln-method" value="{{p_method}}" placeholder="Method" ng-model="$parent.method"/>
                 </div>
                 <div class="col-md-3 has-error">
                     <label class="sr-only control-label" for="vuln-pname">Param Name</label>
-                    <input type="text" class="form-control input-error" id="vuln-pname" placeholder="Param name" ng-model="$parent.pname"/>
+                    <input type="text" class="form-control input-error" id="vuln-pname" value="{{p_pname}}" placeholder="Param name" ng-model="$parent.pname"/>
                 </div>
                 <div class="col-md-5 has-error">
                     <label class="sr-only control-label" for="vuln-params">Params</label>
-                    <input type="text" class="form-control input-error" id="vuln-params" placeholder="Params" ng-model="$parent.params"/>
+                    <input type="text" class="form-control input-error" id="vuln-params" value="{{p_params}}" placeholder="Params" ng-model="$parent.params"/>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-4 has-error">
                     <label class="sr-only control-label" for="vuln-path">Path</label>
-                    <input type="text" class="form-control input-error" id="vuln-path" placeholder="Path" ng-model="$parent.path"/>
+                    <input type="text" class="form-control input-error" id="vuln-path" value="{{p_path}}" placeholder="Path" ng-model="$parent.path"/>
                 </div>
                 <div class="col-md-4 has-error">
                     <label class="sr-only control-label" for="vuln-query">Query</label>
-                    <input type="text" class="form-control input-error" id="vuln-query" placeholder="Query" ng-model="$parent.query"/>
+                    <input type="text" class="form-control input-error" id="vuln-query"  value="{{p_query}}"placeholder="Query" ng-model="$parent.query"/>
                 </div>
                 <div class="col-md-4 has-error">
                     <label class="sr-only control-label" for="vuln-website">Website</label>
-                    <input type="text" class="form-control input-error" id="vuln-website" placeholder="Website" ng-model="$parent.website"/>
+                    <input type="text" class="form-control input-error" id="vuln-website" value="{{p_website}}" placeholder="Website" ng-model="$parent.website"/>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12 has-error">
                     <label class="sr-only control-label" for="vuln-request">Request</label>
-                    <textarea class="form-control input-error" id="vuln-request" placeholder="Request" ng-model="$parent.request"></textarea>
+                    <textarea class="form-control input-error" id="vuln-request" value="{{p_request}}" placeholder="Request" ng-model="$parent.request"></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12 has-error">
                     <label class="sr-only control-label" for="vuln-response">Response</label>
-                    <textarea class="form-control input-error" id="vuln-response" placeholder="Response" ng-model="$parent.response"></textarea>
+                    <textarea class="form-control input-error" id="vuln-response" value="{{p_response}}" placeholder="Response" ng-model="$parent.response"></textarea>
                 </div>
             </div><!-- .form-group -->
         </div><!-- ng-if -->
@@ -100,7 +100,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr ng-repeat="v in vulns | filter:isChecked | orderBy:sortField:reverse">
+            <tr ng-click="pickVuln(v)" ng-repeat="v in vulns | filter:isChecked | orderBy:sortField:reverse">
                 <td>{{v.date}}</td>
                 <td>
                     <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>

@@ -13,7 +13,6 @@ angular.module('faradayApp')
         $scope.workspace = $routeParams.wsId;
         // load all vulnerabilities
         $scope.vulns = statusReportFact.getVulns($scope.workspace);
-
         // toggles column show property
         $scope.toggleShow = function(column, show) {
             $scope.columns[column] = !show;
@@ -254,6 +253,36 @@ angular.module('faradayApp')
                     }
                 });
             }
+        };
+
+        $scope.insert = function(vuln){
+            statusReportFact.putVulns($scope.workspace, vuln, function(rev) {
+                vuln.rev = rev;
+            });
+            $scope.vulns.push(vuln);
+        }
+
+        $scope.new = function(){
+                var modal = $modal.open({
+                    templateUrl: 'scripts/partials/modal-new.html',
+                    controller: 'modalNewCtrl',
+                    size: 'lg',
+                    resolve: {
+                        severities: function() {
+                            return $scope.severities;
+                        },
+                        vulns: function() {
+                            return $scope.vulns;
+                        },
+                        workspace: function() {
+                            return $scope.workspace;
+                        }
+                    }
+                 });
+
+                modal.result.then(function(data) {
+                    $scope.insert(data);
+                });
         };
 
         $scope.checkAll = function() {

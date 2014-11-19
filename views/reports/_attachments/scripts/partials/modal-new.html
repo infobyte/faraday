@@ -1,0 +1,110 @@
+<div class="modal-header">
+    <div class="modal-button">
+        <button class="btn btn-success" ng-click="ok()">OK</button>
+        <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+    </div>
+    <h3 class="modal-title">Bulk new</h3>
+</div>
+<div class="modal-body">
+    <div class="form-horizontal">
+        <div class="form-group">
+            <div class="col-md-12">
+              <accordion close-others="oneAtATime">
+                <accordion-group ng-repeat="host in servicesByHost track by $index" heading="{{host.name}}" selection-model selection-model-selected-class="foobar">
+                    <div class="panel-body" ng-repeat="service in host.services">
+                        <label for="response">{{service.name}}</label>
+                        <input type="radio" name="response" ng-model="$parent.$parent.$parent.$parent.target" />
+                  </div>
+                </accordion-group>
+              </accordion>
+            </div>
+        </div>
+    </div>
+    <div class="form-horizontal">
+        <div class="form-group">
+            <div class="col-md-6">
+                <select class="form-control" ng-model="selection" ng-options="t for t in type">
+                    <option value=""> </option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <input type="text" class="form-control" id="vuln-name" ng-model="date" READONLY/>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-3">
+                <select class="form-control" ng-model="severitySelection" ng-options="s as s for s in severities">
+                    <option value=""></option>
+                </select>
+            </div>
+            <div class="col-md-9">
+                <label class="sr-only" for="vuln-name">Vuln name</label>
+                <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="name"/>
+            </div>
+        </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
+                <label class="sr-only" for="vuln-desc">Vuln description</label>
+                <textarea class="form-control" id="vuln-desc" placeholder="Description" ng-model="desc"></textarea>
+            </div>
+        </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
+                <label class="sr-only" for="vuln-data">Vuln data</label>
+                <textarea class="form-control" id="vuln-data" placeholder="Data" ng-model="data"></textarea>
+            </div>
+        </div><!-- .form-group -->
+    </div>
+
+    <div class="animate-switch-container" ng-switch on="selection">
+        <div class="animate-switch" ng-switch-when="VulnerabilityWeb">
+        <div class="form-horizontal">
+            <div class="form-group">
+                <div class="col-md-4">
+                    <label class="sr-only control-label" for="vuln-method">Method</label>
+                    <input type="text" class="form-control" id="vuln-method" placeholder="Method" ng-model="$parent.method"/>
+                </div>
+                <div class="col-md-3">
+                    <label class="sr-only control-label" for="vuln-pname">Param Name</label>
+                    <input type="text" class="form-control" id="vuln-pname" placeholder="Param name" ng-model="$parent.pname"/>
+                </div>
+                <div class="col-md-5">
+                    <label class="sr-only control-label" for="vuln-params">Params</label>
+                    <input type="text" class="form-control" id="vuln-params" placeholder="Params" ng-model="$parent.params"/>
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-4">
+                    <label class="sr-only control-label" for="vuln-path">Path</label>
+                    <input type="text" class="form-control" id="vuln-path" placeholder="Path" ng-model="$parent.path"/>
+                </div>
+                <div class="col-md-4">
+                    <label class="sr-only control-label" for="vuln-query">Query</label>
+                    <input type="text" class="form-control" id="vuln-query" placeholder="Query" ng-model="$parent.query"/>
+                </div>
+                <div class="col-md-4">
+                    <label class="sr-only control-label" for="vuln-website">Website</label>
+                    <input type="text" class="form-control" id="vuln-website" placeholder="Website" ng-model="$parent.website"/>
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label class="sr-only control-label" for="vuln-request">Request</label>
+                    <textarea class="form-control" id="vuln-request" placeholder="Request" ng-model="$parent.request"></textarea>
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label class="sr-only control-label" for="vuln-response">Response</label>
+                    <textarea class="form-control" id="vuln-response" placeholder="Response" ng-model="$parent.response"></textarea>
+                </div>
+            </div><!-- .form-group -->
+        <div class="animate-switch" ng-switch-when="Vulnerability"></div>
+    </div>
+</div>
+</div><!-- ng-if -->
+</div><!-- .modal-body -->
+<div class="modal-footer">
+    <button class="btn btn-success" ng-disabled="isUnchanged(target)" ng-click="ok()">OK</button>
+    <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+</div>

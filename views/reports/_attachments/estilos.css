@@ -469,7 +469,7 @@ select.ng-valid{
         justify-content: center;
         align-items: center;
     }
-    #merge, #delete{margin:5px;float:right;}
+    #merge, #delete, #new{margin:5px;float:right;}
 .input-sm{float: left;margin-bottom: 20px;}
 /* Media */
 @media screen and (min-width: 1380px){
@@ -504,3 +504,5 @@ a.ws-link:hover {
     text-decoration: none;
 }
 /* End of WS list */
+/* New Modal*/
+div.panel-default .panel-body label{font-size: 15px}

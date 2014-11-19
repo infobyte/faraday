@@ -45,7 +45,6 @@ def startAPIs(plugin_manager, model_controller, mapper_manager):
     global _http_server
     _rest_controllers = [PluginControllerAPI(plugin_manager, mapper_manager), ModelControllerAPI(model_controller)]
     #TODO: load API configuration from config file
-    hostname = "localhost"
     port = 9977
     app = Flask('APISController')
 
@@ -107,6 +106,10 @@ class ModelControllerAPI(RESTApi):
                             view_func=self.createHost,
                             methods=['PUT']))
 
+        routes.append(Route(path='/model/webvulns',
+                            view_func=self.listWebVulns,
+                            methods=['GET']))
+
         routes.append(Route(path='/model/interface',
                             view_func=self.createInterface,
                             methods=['PUT']))
@@ -132,6 +135,11 @@ class ModelControllerAPI(RESTApi):
                             methods=['PUT']))
 
         return routes
+
+    def listWebVulns(self):
+        vulns = self.controller.getWebVulns()
+        j = [{'request': v.request, 'website': v.website, 'path': v.path, 'name': v.name, 'desc': v.desc, 'severity': v.severity} for v in vulns]
+        return self.ok(j)
 
     def deleteVuln(self):
         json_data = request.get_json()

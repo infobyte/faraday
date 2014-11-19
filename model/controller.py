@@ -877,6 +877,10 @@ class ModelController(threading.Thread):
         hosts = self.mappers_manager.getMapper(
             model.hosts.Host.__name__).getAll()
         return hosts
+    
+    def getWebVulns(self):
+        return self.mappers_manager.getMapper(
+            model.common.ModelObjectVulnWeb.class_signature).getAll()
 
     def createIndex(self, hosts):
         self.treeWordsTries = TreeWordsTries()

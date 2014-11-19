@@ -89,4 +89,10 @@ angular.module('faradayApp')
         $scope.cancel = function() {
             $modalInstance.dismiss('cancel');
         };
+
+                $scope.$parent.isopen = ($scope.$parent.default === $scope.item);
+ 
+                $scope.$watch('isopen', function (newvalue, oldvalue, $scope) {
+                    $scope.$parent.isopen = newvalue;
+                });
     }]);

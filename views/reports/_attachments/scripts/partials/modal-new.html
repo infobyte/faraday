@@ -9,8 +9,13 @@
     <div class="form-horizontal">
         <div class="form-group">
             <div class="col-md-12">
-              <accordion close-others="oneAtATime">
-                <accordion-group ng-repeat="host in servicesByHost track by $index" heading="{{host.name}}" selection-model selection-model-selected-class="foobar">
+              <accordion close-others="true">
+                <accordion-group is-open="isopen" ng-repeat="host in servicesByHost track by $index">
+                    <accordion-heading>
+                    {{host.name}}
+                      <i class="pull-right glyphicon"
+                            ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
+                    </accordion-heading>               
                     <div class="panel-body" ng-repeat="service in host.services">
                         <label for="response">{{service.name}}</label>
                         <input type="radio" name="response" ng-model="$parent.$parent.$parent.$parent.target" />

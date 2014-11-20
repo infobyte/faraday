@@ -22,7 +22,7 @@
                         title="Current workspace">Viewing {{ workspace }} ({{vulns.length}})</span><!-- WS name -->
                         
                         <div id="ws-control" class="btn-group">
-                            <button download-csv="toCSV()" type="button" class="btn btn-success" title="Download CSV for current workspace">
+                            <button file-exporter="toCSV()" type="button" class="btn btn-success" title="Download CSV for current workspace">
                                 <span class="glyphicon glyphicon-download"></span>
                             </button>
                             <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">

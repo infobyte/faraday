@@ -126,8 +126,10 @@ angular.module('faradayApp')
             });
 
             var obj = {
+                "content":  content,
+                "extension": "csv",
                 "title":    "SR-" + $scope.workspace,
-                "content":  content
+                "type": "text/csv"
             };
             
             return obj;

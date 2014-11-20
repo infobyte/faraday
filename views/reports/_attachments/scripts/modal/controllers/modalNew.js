@@ -8,7 +8,6 @@ angular.module('faradayApp')
         $scope.severities = severities;
         $scope.vulns = vulns;
         $scope.workspace = workspace;
-        $scope.target = "awante faraday";
 
         var myDate = new Date();
         var myEpoch = myDate.getTime()/1000.0;
@@ -31,8 +30,6 @@ angular.module('faradayApp')
         $scope.servicesByHost = hosts;
 
         $scope.ok = function() {
-            console.log($scope.target);
-            return false;
             var res = {};
             var id = $scope.target + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
             var sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
@@ -90,9 +87,19 @@ angular.module('faradayApp')
             $modalInstance.dismiss('cancel');
         };
 
-                $scope.$parent.isopen = ($scope.$parent.default === $scope.item);
+        $scope.$parent.isopen = ($scope.$parent.default === $scope.item);
  
-                $scope.$watch('isopen', function (newvalue, oldvalue, $scope) {
-                    $scope.$parent.isopen = newvalue;
-                });
+        $scope.$watch('isopen', function (newvalue, oldvalue, $scope) {
+            $scope.$parent.isopen = newvalue;
+        });
+
+        $scope.class = "red";
+        $scope.sent = function(dato){
+            $scope.target = dato;
+            if($scope.class === "red"){
+                $scope.class = "multi-selected";
+            }else{
+                $scope.class = "red";
+            }
+        }
     }]);

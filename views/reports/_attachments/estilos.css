@@ -357,7 +357,7 @@ table.status-report tbody tr td:first-child {
         background-color: #ecebea;
     }
     .multi-selected {
-        background-color: #f2dede !important;
+        background: #f2dede !important;
     }
 
 #list .tablesorter thead th {
@@ -507,3 +507,23 @@ a.ws-link:hover {
 /* New Modal*/
 div.panel-default .panel-body label{font-size: 15px}
 i.pull-right.glyphicon.ng-scope.glyphicon-plus-sign{color:green;}
+
+.accordion__container {
+    background: #eee;
+    border: 1px solid #ccc;
+    padding: 20px;
+}
+.accordion__tab {
+    background: #aaa;
+    color: #fff;
+    border-bottom: 1px solid white;
+}
+.accordion__tab-title {
+    background: #888;
+    padding: 5px;
+    cursor: pointer;
+}
+.accordion__tab-content {
+    background: #999;
+    padding: 20px;
+}

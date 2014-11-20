@@ -9,16 +9,15 @@
     <div class="form-horizontal">
         <div class="form-group">
             <div class="col-md-12">
-              <accordion close-others="true">
+             <accordion close-others="true">
                 <accordion-group is-open="isopen" ng-repeat="host in servicesByHost track by $index">
                     <accordion-heading>
-                    {{host.name}}
+                    <span ng-click="sent(host._id)">{{host.name}}</span>
                       <i class="pull-right glyphicon"
                             ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
-                    </accordion-heading>               
+                    </accordion-heading>
                     <div class="panel-body" ng-repeat="service in host.services">
-                        <label for="response">{{service.name}}</label>
-                        <input type="radio" name="response" ng-model="$parent.$parent.$parent.$parent.target" />
+                        <a ng-model="$parent.$parent.$parent.$parent.target" ng-class="class" ng-click="sent(service._id)">{{service.name}} {{class}}</a>
                   </div>
                 </accordion-group>
               </accordion>

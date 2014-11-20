@@ -18,6 +18,7 @@ angular.module('faradayApp')
                 var url = BASEURL + ws + "/_design/services/_view/byhost";
                 $.getJSON(url, function(data) {
                     $.each(data.rows, function(n, obj) {
+                        obj.value._id = obj.id;
                         services.push(obj.value);
                     });
                 });

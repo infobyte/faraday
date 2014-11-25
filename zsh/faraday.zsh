@@ -6,7 +6,8 @@
 #'''
 
 echo ">>> WELCOME TO FARADAY"
-PS1="%{${fg_bold[red]}%}[faraday]%{${reset_color}%} $PS1"
+WORKSPACE=`cat $HOME/.faraday/config/user.xml |  grep '<last_workspace' | cut -d '>' -f 2 | cut -d '<' -f 1`
+PS1="%{${fg_bold[red]}%}[faraday]($WORKSPACE)%{${reset_color}%} $PS1"
 
 setopt multios
 setopt histignorespace

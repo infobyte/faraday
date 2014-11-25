@@ -12,13 +12,15 @@
              <accordion close-others="true">
                 <accordion-group is-open="isopen" ng-repeat="host in servicesByHost track by $index">
                     <accordion-heading>
-                    <span ng-click="sent(host._id)">{{host.name}}</span>
+                    <a ng-click="selectedClick(host._id)">{{host.name}}</a>
                       <i class="pull-right glyphicon"
                             ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
                     </accordion-heading>
-                    <div class="panel-body" ng-repeat="service in host.services">
-                        <a ng-model="$parent.$parent.$parent.$parent.target" ng-class="class" ng-click="sent(service._id)">{{service.name}} {{class}}</a>
-                  </div>
+                    <table>
+                        <tr ng-repeat="service in host.services" ng-model="$parent.$parent.$parent.$parent.target" selection-model selection-model-type="checkbox" selection-model-selected-class="multi-selected" ng-class="{'nOpen' : isopen}">
+                        <td ng-click="selectedClick(service._id)">{{service.name}}</td>
+                        </tr>
+                    </table>
                 </accordion-group>
               </accordion>
             </div>

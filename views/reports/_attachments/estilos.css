@@ -508,22 +508,7 @@ a.ws-link:hover {
 div.panel-default .panel-body label{font-size: 15px}
 i.pull-right.glyphicon.ng-scope.glyphicon-plus-sign{color:green;}
 
-.accordion__container {
-    background: #eee;
-    border: 1px solid #ccc;
-    padding: 20px;
-}
-.accordion__tab {
-    background: #aaa;
-    color: #fff;
-    border-bottom: 1px solid white;
-}
-.accordion__tab-title {
-    background: #888;
-    padding: 5px;
-    cursor: pointer;
-}
-.accordion__tab-content {
-    background: #999;
-    padding: 20px;
-}
+div.panel-collapse .panel-body{padding:0px;}
+div.panel-body table{width: 100%}
+div.panel-body td{font-size: 15px; padding: 10px 20px; border-bottom: 1px solid #ECE9E9;}
+.nOpen{background: #FFF}

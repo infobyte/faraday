@@ -93,13 +93,7 @@ angular.module('faradayApp')
             $scope.$parent.isopen = newvalue;
         });
 
-        $scope.class = "red";
-        $scope.sent = function(dato){
-            $scope.target = dato;
-            if($scope.class === "red"){
-                $scope.class = "multi-selected";
-            }else{
-                $scope.class = "red";
-            }
+        $scope.selectedClick = function(id){
+            $scope.target = id;
         }
     }]);

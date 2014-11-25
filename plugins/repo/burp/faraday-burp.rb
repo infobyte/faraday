@@ -29,6 +29,7 @@ XMLRPC::Config.module_eval do
     const_set :ENABLE_NIL_PARSER, true
 end
 java_import 'burp.IBurpExtender'
+java_import 'burp.ITab'
 java_import 'burp.IHttpListener'
 java_import 'burp.IProxyListener'
 java_import 'burp.IScannerListener'
@@ -37,9 +38,12 @@ java_import 'burp.IExtensionHelpers'
 java_import 'burp.IContextMenuFactory'
 java_import 'java.net.InetAddress'
 java_import 'javax.swing.JMenuItem'
+java_import 'javax.swing.JCheckBox'
+java_import 'javax.swing.JPanel'
+java_import 'javax.swing.GroupLayout'
 
 class BurpExtender
-  include IBurpExtender, IHttpListener, IProxyListener, IScannerListener, IExtensionStateListener,IContextMenuFactory
+  include IBurpExtender, IHttpListener, IProxyListener, IScannerListener, IExtensionStateListener,IContextMenuFactory, ITab
     
   #
   # implement IBurpExtender
@@ -56,6 +60,28 @@ class BurpExtender
     
     # set our extension name
     callbacks.setExtensionName(PLUGINVERSION)
+
+    @checkbox = javax.swing.JCheckBox.new("test")
+    @tab = javax.swing.JPanel.new()
+
+    @layout = javax.swing.GroupLayout.new(@tab)
+    @tab.setLayout(@layout)
+    @layout.setAutoCreateGaps(true)
+    @layout.setAutoCreateContainerGaps(true)
+    @layout.setHorizontalGroup(
+        @layout.createSequentialGroup()
+        .addGroup(@layout.createParallelGroup()
+            .addComponent(@checkbox)
+        )
+    )
+    @layout.setVerticalGroup(
+        @layout.createSequentialGroup()
+        .addGroup(@layout.createParallelGroup()
+            .addComponent(@checkbox)
+        )
+    )
+
+    callbacks.addSuiteTab(self)
     
     # obtain our output stream
     @stdout = java.io.PrintWriter.new(callbacks.getStdout(), true)
@@ -132,7 +158,7 @@ class BurpExtender
     
     issuename="Analyzing: "
     severity="Information"
-    desc="This request was manual send it using burp"
+    desc="This request was manually sent using burp"
     
     if information == nil
       desc=issue.getIssueDetail().to_s
@@ -204,6 +230,14 @@ class BurpExtender
 
   def extensionUnloaded()
 
+  end
+
+  def getTabCaption()
+      return "Faraday"
+  end
+
+  def getUiComponent()
+      return @tab
   end
 
 end      

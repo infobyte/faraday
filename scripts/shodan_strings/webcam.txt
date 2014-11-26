@@ -1,0 +1,33 @@
+###
+## Faraday Penetration Test IDE - Community Version
+## Copyright (C) 2014  Infobyte LLC (http://www.infobytesec.com/)
+## See the file 'doc/LICENSE' for the license information
+###
+# Version 1.0.0
+Server:SQ-WEBCAM
+Basic realm="logitec"
+webcamxp
+Axis+camera
+Axis+video
+Grandstream
+IQinVision
+Mobotix
+Panasonic AVC Server
+Samsung camera
+TRENDnet
+Vivotek
+netcam
+axis-cgi/jpg
+view/index.shtml
+Boa+ipcam
+d-Link Internet Camera
+Server: GeoHttpServer
+imagiatek+ipcam
+title:"IP CAMERA Viewer" Content-Length: 703
+title:"DCS" camera
+LNE3003 Wireless IP Camera
+FlexiDome
+title:"RPi Cam Control"
+title:"WVC210 Wireless-G PTZ Internet Camera with Audio"
+title:"WV"+Camera
+airlive aircam

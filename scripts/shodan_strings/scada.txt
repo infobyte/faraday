@@ -1,0 +1,73 @@
+###
+## Faraday Penetration Test IDE - Community Version
+## Copyright (C) 2014  Infobyte LLC (http://www.infobytesec.com/)
+## See the file 'doc/LICENSE' for the license information
+###
+# Version 1.0.0
+title:scada 
+modicon
+VxWorks
+title:ISC Scada 
+flexim
+plc
+port:161 simatic
+Moxa
+Simatic+S7 
+Portal0000
+powered by SpiderControl TM
+niagara_audit -login
+AKCP
+schneider
+port:44818
+Z-World Rabbit 200 OK
+EIG Embedded Web Server
+iq3
+THUS plc
+title:phasefale
+Stulz GmbH Klimatechnik
+enteliTOUCH
+HMI, XP277
+title:adcon
+wince Content-Length:12581
+honeywell Excel
+honeywell BNA
+Console terminal type
+CLP
+GoAhead-Webs InitialPage.asp
+RuggedCom
+Bacnet
+200 OK  i.LON
+enterasys
+serverview
+IPC@CHIP title:Start
+Schleifenbauer
+SCHNEIDER TSX ETG3021
+Simatic -S7 HMI
+Simatic -S7 -HMI
+Jetty 3.1.8 (Windows 2000 5.0 x86)  200 OK 
+A850+Telemetry+Gateway
+ABB+Webmodule
+Allen-Bradley
+/BroadWeb/ 
+Cimetrics+Eplus+Web+Server 
+CIMPLICITY
+CitectSCADA 
+EIG+Embedded+Web+Server
+eiPortal 
+EnergyICT
+ioLogik
+Modbus+Bridge 
+ModbusGW 
+Modicon+M340+CPU 
+Niagara+Web+Server
+NovaTech+HTTPD
+Powerlink 
+Reliance+4+Control+Server
+RTS+Scada
+RTU560 
+SIMATIC+NET
+Simatic+S7
+SoftPLC 
+TAC/Xenta 
+WAGO 
+webSCADA-Modbus

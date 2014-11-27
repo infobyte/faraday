@@ -310,6 +310,22 @@ table.tablesorter thead tr .headerSortDown {
     background-image: url(images/desc.gif);
 }
 
+td.severity_critical {
+    background-color: #e500e5;
+}
+td.severity_low {
+    background-color: #00cc00;
+}
+td.severity_med {
+    background-color: #FF8000;
+}
+td.severity_high {
+    background-color: #F01414;
+}
+td.severity_info {
+    background-color: #4d4dff;
+}
+
 table.status-report {
     background-color: #CDCDCD;
     margin:0px 0pt 15px;
@@ -317,6 +333,7 @@ table.status-report {
     width: 100%;
     text-align: center;
 }
+
 
     
 table.status-report thead tr th, table.status-report tfoot tr th {
@@ -338,6 +355,7 @@ table.status-report tbody td {
     padding: 5px;
     vertical-align: top;
 }
+
 table.status-report tbody tr.odd td {
     background-color:#F0F0F6;
 }

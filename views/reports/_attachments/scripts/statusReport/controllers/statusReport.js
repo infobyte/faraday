@@ -49,9 +49,9 @@ angular.module('faradayApp')
             "request":  false,
             "response": false,
             "severity": true,
-            "status":   true,
+            "status":   false,
             "target":   true,
-            "web":      true,
+            "web":      false,
             "website":  false
         };
 

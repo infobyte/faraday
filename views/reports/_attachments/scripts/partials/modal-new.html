@@ -1,6 +1,7 @@
+<form name="form" novalidate>
 <div class="modal-header">
     <div class="modal-button">
-        <button class="btn btn-success" ng-click="ok()">OK</button>
+        <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
         <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
     </div>
     <h3 class="modal-title">Bulk new</h3>
@@ -12,15 +13,13 @@
              <accordion close-others="true">
                 <accordion-group is-open="isopen" ng-repeat="host in servicesByHost track by $index">
                     <accordion-heading>
-                    <a ng-click="selectedClick(host._id)">{{host.name}}</a>
+                    <a ng-click="selected($index, null)" ng-class="{'multi-selected': host.selected == true}">{{host.name}}</a>
                       <i class="pull-right glyphicon"
                             ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
                     </accordion-heading>
-                    <table>
-                        <tr ng-repeat="service in host.services" ng-model="$parent.$parent.$parent.$parent.target" selection-model selection-model-type="checkbox" selection-model-selected-class="multi-selected" ng-class="{'nOpen' : isopen}">
-                        <td ng-click="selectedClick(service._id)">{{service.name}}</td>
-                        </tr>
-                    </table>
+                    <div class="panel-body" ng-repeat="service in host.services">
+                        <a ng-model="$parent.$parent.$parent.$parent.target" ng-click="selected($parent.$index, $index)" ng-class="{'multi-selected': service.selected == true}">{{service.name}}</a>
+                  </div>
                 </accordion-group>
               </accordion>
             </div>
@@ -28,13 +27,10 @@
     </div>
     <div class="form-horizontal">
         <div class="form-group">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <select class="form-control" ng-model="selection" ng-options="t for t in type">
                     <option value=""> </option>
                 </select>
-            </div>
-            <div class="col-md-6">
-                <input type="text" class="form-control" id="vuln-name" ng-model="date" READONLY/>
             </div>
         </div>
         <div class="form-group">
@@ -45,13 +41,13 @@
             </div>
             <div class="col-md-9">
                 <label class="sr-only" for="vuln-name">Vuln name</label>
-                <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="name"/>
+                <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="name" required/>
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
             <div class="col-md-12">
                 <label class="sr-only" for="vuln-desc">Vuln description</label>
-                <textarea class="form-control" id="vuln-desc" placeholder="Description" ng-model="desc"></textarea>
+                <textarea class="form-control" id="vuln-desc" placeholder="Description" ng-model="desc" required></textarea>
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
@@ -111,6 +107,7 @@
 </div><!-- ng-if -->
 </div><!-- .modal-body -->
 <div class="modal-footer">
-    <button class="btn btn-success" ng-disabled="isUnchanged(target)" ng-click="ok()">OK</button>
+    <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
     <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
 </div>
+</form>

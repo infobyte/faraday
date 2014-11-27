@@ -8,6 +8,7 @@ angular.module('faradayApp')
         $scope.severities = severities;
         $scope.vulns = vulns;
         $scope.workspace = workspace;
+        $scope.target_selected = null;
 
         var myDate = new Date();
         var myEpoch = myDate.getTime()/1000.0;
@@ -22,16 +23,17 @@ angular.module('faradayApp')
         var services = targetFact.getTarget($scope.workspace, false);
         for(var i = 0; i < services.length; i++){
             var host = [];
-            var parent = services[i].hid.split(".")[0];
+            services[i].selected = false;
             host = d[services[i].hid];
             host.services.push(services[i]);
         }
         hosts.push(host);
+        hosts.pop();
         $scope.servicesByHost = hosts;
 
         $scope.ok = function() {
             var res = {};
-            var id = $scope.target + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
+            var id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
             var sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
 
             if($scope.selection == "VulnerabilityWeb") {
@@ -47,7 +49,7 @@ angular.module('faradayApp')
                     "owned":        false,
                     "owner":        "",
                     "params":       $scope.params,
-                    "couch_parent": $scope.target,
+                    "couch_parent": $scope.target_selected._id,
                     "path":         $scope.path,
                     "pname":        $scope.pname,
                     "query":        $scope.query,
@@ -71,7 +73,7 @@ angular.module('faradayApp')
                     "oid":          sha,
                     "owned":        false,
                     "owner":        "",
-                    "couch_parent": $scope.target,
+                    "couch_parent": $scope.target_selected._id,
                     "refs":         [],
                     "status":       $scope.selection,
                     "severity":     $scope.severitySelection,
@@ -93,7 +95,15 @@ angular.module('faradayApp')
             $scope.$parent.isopen = newvalue;
         });
 
-        $scope.selectedClick = function(id){
-            $scope.target = id;
+        $scope.selected = function(i, j){
+            if($scope.target_selected){
+                $scope.target_selected.selected = false;
+            }
+            if(j != null){
+                $scope.target_selected = $scope.servicesByHost[i].services[j];
+            }else{
+                $scope.target_selected = $scope.servicesByHost[i];
+            }
+            $scope.target_selected.selected = true;
         }
     }]);

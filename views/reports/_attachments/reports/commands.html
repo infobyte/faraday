@@ -214,7 +214,7 @@ function get_report_div(workspace, view,design){
                     var command = htmlentities(obj.key);
                     d.setUTCSeconds(obj.value.startdate);
                     var mins = (d.getMinutes()<10?'0':'') + d.getMinutes();
-                    d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear() + " - " + d.getHours() + ":" + mins;
+                    d = d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear() + " - " + d.getHours() + ":" + mins;
                     if(obj.value.duration == "0" || obj.value.duration == "") {
                         duration = "In progress";
                     } else if(!obj.value.duration){

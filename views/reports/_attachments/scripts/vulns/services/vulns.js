@@ -10,7 +10,7 @@ angular.module('faradayApp')
                 $.each(data.rows, function(n, obj){
                     var d = new Date(0); 
                     d.setUTCSeconds(obj.value.date);
-                    d = d.getDate() + "/" + d.getMonth() + "/" + d.getFullYear();
+                    d = d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear();
                     var v = {
                         "id":           obj.id,
                         "rev":          obj.value.rev,

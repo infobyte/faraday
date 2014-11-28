@@ -228,7 +228,7 @@ function cake(workspace, design, view){
 	var colors = {
 	  "low": "#A1CE31",
 	  "med": "#DFBF35",
-	  "unclassified": "#8B00FF",
+	  "critical": "#8B00FF",
 	  "high": "#DF3936",
 	  "info": "#858585"
 	};
@@ -495,7 +495,7 @@ function cake(workspace, design, view){
 	  jotason[1].key = "low";
 	  jotason[2].key = "med";
 	  jotason[3].key = "high";
-	  jotason[4].key = "unclassified";
+	  jotason[4].key = "critical";
 
 	  for(i = 0; i < children.length; i++){
 	    if(children[i].key == 1 || children[i].key == "info"){
@@ -510,7 +510,7 @@ function cake(workspace, design, view){
 	    if(children[i].key == 4 || children[i].key == "high"){
 	      jotason[3].value += children[i].value;
 	    }
-	    if(children[i].key == 5 || children[i].key == "unclassified"){
+	    if(children[i].key == 5 || children[i].key == "critical"){
 	      jotason[4].value += children[i].value;
 	    }
 	  }

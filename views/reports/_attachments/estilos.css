@@ -215,9 +215,10 @@ article.untercio{
 /* Fondos */
 .fondo-rojo, .fondo-high {background-color: #DF3936 !important;}
 .fondo-negro {background-color: #000 !important;}
-.fondo-gris1, .fondo-unclassified {background-color: #8B00FF !important;}
+.fondo-gris1, .fondo-critical {background-color: #8B00FF !important;}
+.fondo-gris1, .fondo-unclassified {background-color: #858585 !important;}
 .fondo-blanco {background-color: #fff !important;}
-.fondo-info {background-color: #858585 !important;}
+.fondo-info {background-color: #428bca !important;}
 .fondo-naranja, .fondo-med {background-color: #DFBF35 !important;}
 .fondo-amarillo, .fondo-low {background-color: #A1CE31 !important;}
 .fondo-violeta {background-color: #8D2BB4 !important;}
@@ -310,21 +311,6 @@ table.tablesorter thead tr .headerSortDown {
     background-image: url(images/desc.gif);
 }
 
-td.severity_critical {
-    background-color: #e500e5;
-}
-td.severity_low {
-    background-color: #00cc00;
-}
-td.severity_med {
-    background-color: #FF8000;
-}
-td.severity_high {
-    background-color: #F01414;
-}
-td.severity_info {
-    background-color: #4d4dff;
-}
 
 table.status-report {
     background-color: #CDCDCD;

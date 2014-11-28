@@ -172,6 +172,9 @@ class ModelObject(object):
             self.updates.append(ConflictUpdate(self, newModelObject))
         return conflict
 
+    def needs_merge(self, new_obj):
+        return ModelObjectDiff(self, new_obj).existDiff()
+
     def getUpdates(self):
         return self.updates
 

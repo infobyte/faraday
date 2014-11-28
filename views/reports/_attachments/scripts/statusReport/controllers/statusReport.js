@@ -56,11 +56,13 @@ angular.module('faradayApp')
         };
 
         $scope.severities = [
-            "unclassified",
-            "info",
-            "low",
+            "critical",
+            "high",
             "med",
-            "high"
+            "low",
+            "info",
+            "unclassified",
+
         ];
 
         // returns scope vulns as CSV obj

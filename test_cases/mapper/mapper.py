@@ -18,8 +18,10 @@ from mockito import mock, when, any
 from model.hosts import Host, Interface, Service
 from model.workspace import Workspace
 from model.commands_history import CommandRunInformation
+from model.common import Metadata, ModelObject
 from persistence.mappers.abstract_mapper import NullPersistenceManager
 from managers.mapper_manager import MapperManager
+from persistence.mappers.data_mappers import ModelObjectMapper, Mappers
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -443,6 +445,109 @@ class ServiceMapperTestSuite(unittest.TestCase):
             self.smapper.find(s_id),
             None,
             "Service shouldn't exist anymore")
+
+class ModelObjectMapperTestSuite(unittest.TestCase):
+    def setUp(self):
+        Mappers[ModelObject.class_signature] = ModelObjectMapper
+        self.mapper_manager = MapperManager()
+        self.mapper_manager.createMappers(NullPersistenceManager())
+        self.mapper = self.mapper_manager.getMapper(ModelObject.__name__)
+
+    def tearDown(self):
+        pass
+
+    def test_metadata_deserialization(self):
+        import time
+        modelobject = ModelObject()
+        modelobject.updateID = lambda *args : 'ModelObjectID'
+        # {'create_time': 1417205460.253131,
+        #          'creator': 'ninja_owner',
+        #           'owner': 'ninja_owner',
+        #            'update_time': 1417205460.253132,
+        #             'update_user': 'ninja_owner'}
+        modelobjectserialized = {'name': '',
+                             'parent': None,
+                             'owner': '',
+                             '_id': None,
+                             'type': 'ModelObject',
+                             'metadata': {'update_time': 1417207650.761777,
+                                     'update_user': '',
+                                     'update_action': 0,
+                                     'creator': '',
+                                     'create_time': 1417207650.761777,
+                                     'update_controller_action': 'No model controller call',
+                                     'owner': ''},
+                             'owned': False,
+                             'description': ''}
+        modelobject2 = self.mapper.unserialize(modelobject, modelobjectserialized)
+        metadata = modelobject2._metadata
+        metadataserialized = modelobjectserialized['metadata']
+        # if serialization fails, returns None
+        self.assertNotEqual(
+            modelobjectserialized,
+            None,
+            "Serialized ModelObejct shouldn't be None")
+        # we check the cmd attributes
+        self.assertEquals(
+            modelobjectserialized.get("_id"),
+            modelobject.getID(),
+            "Serialized ID is not the same as metadata ID")
+        import ipdb; ipdb.set_trace()
+        self.assertEquals(
+            metadataserialized.get("owner"),
+            metadata.__getattribute__("owner"),
+            "Serialized owner is not the same as metadata owner")
+        self.assertEquals(
+            metadataserialized.get("creator"),
+            metadata.__getattribute__("creator"),
+            "Serialized owner is not the same as metadata creator")
+
+        self.assertTrue(
+            isinstance(metadataserialized.get("create_time"), float),
+            "Serialized create_time is not int")
+        self.assertTrue(
+            isinstance(metadataserialized.get("update_time"), float),
+            "Serialized update_time is not int")
+
+    def test_metadata_serialization(self):
+        import time
+        modelobject = ModelObject()
+        modelobject.updateID = lambda *args : 'ModelObjectID'
+        metadata = Metadata('')
+        # {'create_time': 1417205460.253131,
+        #          'creator': 'ninja_owner',
+        #           'owner': 'ninja_owner',
+        #            'update_time': 1417205460.253132,
+        #             'update_user': 'ninja_owner'}
+
+        modelobjectserialized = self.mapper.serialize(modelobject)
+        metadataserialized = modelobjectserialized['metadata']
+        # if serialization fails, returns None
+        self.assertNotEqual(
+            modelobjectserialized,
+            None,
+            "Serialized ModelObejct shouldn't be None")
+        # we check the cmd attributes
+        self.assertEquals(
+            modelobjectserialized.get("_id"),
+            modelobject.getID(),
+            "Serialized ID is not the same as metadata ID")
+        self.assertEquals(
+            metadataserialized.get("creator"),
+            metadata.__getattribute__("creator"),
+            "Serialized owner is not the same as metadata creator")
+        self.assertEquals(
+            metadataserialized.get("owner"),
+            metadata.__getattribute__("owner"),
+            "Serialized owner is not the same as metadata owner")
+
+        self.assertTrue(
+            isinstance(metadataserialized.get("create_time"), float),
+            "Serialized create_time is not int")
+        self.assertTrue(
+            isinstance(metadataserialized.get("update_time"), float),
+            "Serialized update_time is not int")
+
 
 
 class CommandRunInformationMapperTestSuite(unittest.TestCase):

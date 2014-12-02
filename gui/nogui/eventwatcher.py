@@ -15,5 +15,5 @@ class EventWatcher(object):
 
     def update(self, event):
         if event.type() == CHANGEFROMINSTANCE:
-            getLogger(self).debug(
+            getLogger(self).info(
                 "[Update Received] " + event.change.getMessage())

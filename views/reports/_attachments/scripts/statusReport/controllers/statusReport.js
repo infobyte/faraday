@@ -271,9 +271,6 @@ angular.module('faradayApp')
                         severities: function() {
                             return $scope.severities;
                         },
-                        vulns: function() {
-                            return $scope.vulns;
-                        },
                         workspace: function() {
                             return $scope.workspace;
                         }

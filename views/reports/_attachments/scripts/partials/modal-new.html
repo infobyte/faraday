@@ -11,14 +11,14 @@
         <div class="form-group">
             <div class="col-md-12">
              <accordion close-others="true">
-                <accordion-group is-open="isopen" ng-repeat="host in servicesByHost track by $index">
+                <accordion-group is-open="isopen" ng-repeat="host in hosts_with_services">
                     <accordion-heading>
                     <a ng-click="selected($index, null)" ng-class="{'multi-selected': host.selected == true}">{{host.name}}</a>
                       <i class="pull-right glyphicon"
                             ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
                     </accordion-heading>
                     <div class="panel-body" ng-repeat="service in host.services">
-                        <a ng-model="$parent.$parent.$parent.$parent.target" ng-click="selected($parent.$index, $index)" ng-class="{'multi-selected': service.selected == true}">{{service.name}}</a>
+                        <a ng-model="service" ng-click="selected($parent.$index, $index)" ng-class="{'multi-selected': service.selected == true}">{{service.name}}</a>
                   </div>
                 </accordion-group>
               </accordion>

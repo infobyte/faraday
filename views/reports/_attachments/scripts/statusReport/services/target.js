@@ -2,8 +2,8 @@ angular.module('faradayApp')
     .factory('targetFact', ['BASEURL', '$http', function(BASEURL, $http) {
         var targetFact = {};
 
-        targetFact.getTarget = function(ws, boolean) {
-            if(boolean){
+        targetFact.getTarget = function(ws, need_hosts) {
+            if(need_hosts){
                 var hosts = [];
                 var url = BASEURL + ws + "/_design/hosts/_view/hosts";
                 $.getJSON(url, function(data) {

@@ -39,7 +39,6 @@ angular.module('faradayApp')
 
         vulnsFact.put = function(ws, vuln, callback) {
             var url = BASEURL + ws + "/" + vuln.id;
-            console.log(vuln);
             var v = {
                 "_rev":         vuln.rev,
                 "data":         vuln.data,
@@ -54,7 +53,6 @@ angular.module('faradayApp')
                 "severity":     vuln.severity, 
                 "type":         vuln.type
             };
-            if(vuln.now == vuln.meta.create_time) {v["status"] = vuln.status; }
             $http.put(url, v).success(function(d, s, h, c) {
                 callback(d.rev);
             });

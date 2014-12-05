@@ -515,3 +515,4 @@ div.panel-body td{font-size: 15px; padding: 10px 20px; border-bottom: 1px solid 
 a.ng-binding.ng-pristine, a.ng-binding.ng-scope{display: block; font-size: 15px; text-decoration: none; padding: 5px 15px}
     a.ng-binding.ng-scope{padding: 10px;}
 div.panel-heading a i.glyphicon{margin: -25px 10px;}
+div.modal-body .alert-danger.target_not_selected{font-size: 15px}

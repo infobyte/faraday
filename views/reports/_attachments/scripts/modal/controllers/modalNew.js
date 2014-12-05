@@ -8,6 +8,7 @@ angular.module('faradayApp')
         $scope.severities = severities;
         $scope.workspace = workspace;
         $scope.target_selected = null;
+        $scope.not_target_selected = false;
 
         var d = {};
         var hosts = targetFact.getTarget($scope.workspace, true);
@@ -99,5 +100,6 @@ angular.module('faradayApp')
                 $scope.target_selected = $scope.hosts_with_services[i];
             }
             $scope.target_selected.selected = true;
+            $scope.not_target_selected = true;
         }
     }]);

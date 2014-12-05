@@ -9,7 +9,9 @@ angular.module('faradayApp')
         $scope.workspace = workspace;
         $scope.target_selected = null;
         $scope.not_target_selected = false;
+        $scope.incompatible_vulnWeb = false;
 
+        var host_selected;
         var d = {};
         var hosts = targetFact.getTarget($scope.workspace, true);
         hosts.forEach(function(h) {
@@ -26,58 +28,62 @@ angular.module('faradayApp')
         $scope.hosts_with_services = hosts;
 
         $scope.ok = function() {
-            var res = {};
-            var id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
-            var sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
+            if($scope.selection == "VulnerabilityWeb" && host_selected == true){
+                $scope.incompatible_vulnWeb = true;
+            }else{
+                var res = {};
+                var id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
+                var sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
 
-            var myDate = new Date();
-            var myEpoch = myDate.getTime()/1000.0;
+                var myDate = new Date();
+                var myEpoch = myDate.getTime()/1000.0;
 
-            if($scope.selection == "VulnerabilityWeb") {
-                res = {
-                    "id":           id,
-                    "data":         $scope.data,
-                    "desc":         $scope.desc,
-                    "meta":         {'create_time': myEpoch},
-                    "method":       $scope.method,
-                    "name":         $scope.name, 
-                    "oid":          sha,
-                    "owned":        false,
-                    "owner":        "",
-                    "params":       $scope.params,
-                    "couch_parent": $scope.target_selected._id,
-                    "path":         $scope.path,
-                    "pname":        $scope.pname,
-                    "query":        $scope.query,
-                    "refs":         [],
-                    "request":      $scope.request,
-                    "response":     $scope.response,
-                    "severity":     $scope.severitySelection,
-                    "status":       $scope.selection,
-                    "type":         $scope.selection,
-                    "web":          true, 
-                    "website":      $scope.website
-                };
-            } else {
-                res = {
-                    "id":           id,
-                    "data":         $scope.data,
-                    "desc":         $scope.desc,
-                    "meta":         {"create_time": myEpoch},
-                    "name":         $scope.name,
-                    "oid":          sha,
-                    "owned":        false,
-                    "owner":        "",
-                    "couch_parent": $scope.target_selected._id,
-                    "refs":         [],
-                    "status":       $scope.selection,
-                    "severity":     $scope.severitySelection,
-                    "type":         $scope.selection,
-                    "web":          false
-                };
+                if($scope.selection == "VulnerabilityWeb") {
+                    res = {
+                        "id":           id,
+                        "data":         $scope.data,
+                        "desc":         $scope.desc,
+                        "meta":         {'create_time': myEpoch},
+                        "method":       $scope.method,
+                        "name":         $scope.name, 
+                        "oid":          sha,
+                        "owned":        false,
+                        "owner":        "",
+                        "params":       $scope.params,
+                        "couch_parent": $scope.target_selected._id,
+                        "path":         $scope.path,
+                        "pname":        $scope.pname,
+                        "query":        $scope.query,
+                        "refs":         [],
+                        "request":      $scope.request,
+                        "response":     $scope.response,
+                        "severity":     $scope.severitySelection,
+                        "status":       $scope.selection,
+                        "type":         $scope.selection,
+                        "web":          true, 
+                        "website":      $scope.website
+                    };
+                } else {
+                    res = {
+                        "id":           id,
+                        "data":         $scope.data,
+                        "desc":         $scope.desc,
+                        "meta":         {"create_time": myEpoch},
+                        "name":         $scope.name,
+                        "oid":          sha,
+                        "owned":        false,
+                        "owner":        "",
+                        "couch_parent": $scope.target_selected._id,
+                        "refs":         [],
+                        "status":       $scope.selection,
+                        "severity":     $scope.severitySelection,
+                        "type":         $scope.selection,
+                        "web":          false
+                    };
+                }
+
+                $modalInstance.close(res);
             }
-
-            $modalInstance.close(res);
         };
 
         $scope.cancel = function() {
@@ -95,8 +101,10 @@ angular.module('faradayApp')
                 $scope.target_selected.selected = false;
             }
             if(j != null){
+                host_selected = false;
                 $scope.target_selected = $scope.hosts_with_services[i].services[j];
             }else{
+                host_selected = true;
                 $scope.target_selected = $scope.hosts_with_services[i];
             }
             $scope.target_selected.selected = true;

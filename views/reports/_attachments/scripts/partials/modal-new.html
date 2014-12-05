@@ -29,7 +29,12 @@
     <div class="alert alert-danger target_not_selected" role="alert" ng-hide="not_target_selected">
       <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
       <span class="sr-only">Error:</span>
-      Is not any target selected
+      There is no target selected
+    </div>
+    <div class="alert alert-danger target_not_selected" role="alert" ng-show="incompatible_vulnWeb">
+      <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+      <span class="sr-only">Error:</span>
+      Vulnerability incompatible with host target, please select a service
     </div>
 
     <div class="form-horizontal">

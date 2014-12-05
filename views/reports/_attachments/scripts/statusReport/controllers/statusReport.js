@@ -13,6 +13,7 @@ angular.module('faradayApp')
         $scope.workspace = $routeParams.wsId;
         // load all vulnerabilities
         $scope.vulns = statusReportFact.getVulns($scope.workspace);
+
         // toggles column show property
         $scope.toggleShow = function(column, show) {
             $scope.columns[column] = !show;

@@ -40,15 +40,13 @@
     <div class="form-horizontal">
         <div class="form-group">
             <div class="col-md-12">
-                <select class="form-control" ng-model="selection" ng-options="t for t in type">
-                    <option value=""> </option>
+                <select class="form-control" ng-model="vuln_type" ng-options="option.value as option.name for option in typeOptions">
                 </select>
             </div>
         </div>
         <div class="form-group">
             <div class="col-md-3">
                 <select class="form-control" ng-model="severitySelection" ng-options="s as s for s in severities" required>
-                    <option value=""></option>
                 </select>
             </div>
             <div class="col-md-9">
@@ -70,7 +68,7 @@
         </div><!-- .form-group -->
     </div>
 
-    <div class="animate-switch-container" ng-switch on="selection">
+    <div class="animate-switch-container" ng-switch on="vuln_type">
         <div class="animate-switch" ng-switch-when="VulnerabilityWeb">
         <div class="form-horizontal">
             <div class="form-group">

@@ -3,8 +3,11 @@ angular.module('faradayApp')
         ['$scope', '$modalInstance','targetFact', 'severities', 'workspace',
         function($scope, $modalInstance,targetFact, severities, workspace) {
         
-        $scope.type = ['Vulnerability','VulnerabilityWeb'];
-        $scope.selection = $scope.type[0];
+        $scope.typeOptions = [
+            {name:'Vulnerability', value:'Vulnerability'},
+            {name:'VulnerabilityWeb',value:'VulnerabilityWeb'}
+        ];
+        $scope.vuln_type = $scope.typeOptions[0].value;
         $scope.severities = severities;
         $scope.workspace = workspace;
         $scope.target_selected = null;
@@ -28,7 +31,7 @@ angular.module('faradayApp')
         $scope.hosts_with_services = hosts;
 
         $scope.ok = function() {
-            if($scope.selection == "VulnerabilityWeb" && host_selected == true){
+            if($scope.vuln_type == "VulnerabilityWeb" && host_selected == true){
                 $scope.incompatible_vulnWeb = true;
             }else{
                 var res = {};
@@ -38,7 +41,7 @@ angular.module('faradayApp')
                 var myDate = new Date();
                 var myEpoch = myDate.getTime()/1000.0;
 
-                if($scope.selection == "VulnerabilityWeb") {
+                if($scope.vuln_type == "VulnerabilityWeb") {
                     res = {
                         "id":           id,
                         "data":         $scope.data,
@@ -58,8 +61,8 @@ angular.module('faradayApp')
                         "request":      $scope.request,
                         "response":     $scope.response,
                         "severity":     $scope.severitySelection,
-                        "status":       $scope.selection,
-                        "type":         $scope.selection,
+                        "status":       $scope.vuln_type,
+                        "type":         $scope.vuln_type,
                         "web":          true, 
                         "website":      $scope.website
                     };
@@ -75,9 +78,9 @@ angular.module('faradayApp')
                         "owner":        "",
                         "couch_parent": $scope.target_selected._id,
                         "refs":         [],
-                        "status":       $scope.selection,
+                        "status":       $scope.vuln_type,
                         "severity":     $scope.severitySelection,
-                        "type":         $scope.selection,
+                        "type":         $scope.vuln_type,
                         "web":          false
                     };
                 }

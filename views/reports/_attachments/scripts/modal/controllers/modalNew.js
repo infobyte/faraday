@@ -14,6 +14,7 @@ angular.module('faradayApp')
         $scope.not_target_selected = false;
         $scope.incompatible_vulnWeb = false;
 
+        var name_selected;
         var host_selected;
         var d = {};
         var hosts = targetFact.getTarget($scope.workspace, true);
@@ -45,6 +46,7 @@ angular.module('faradayApp')
                     res = {
                         "id":           id,
                         "data":         $scope.data,
+                        "date":         myEpoch,
                         "desc":         $scope.desc,
                         "meta":         {'create_time': myEpoch},
                         "method":       $scope.method,
@@ -62,6 +64,7 @@ angular.module('faradayApp')
                         "response":     $scope.response,
                         "severity":     $scope.severitySelection,
                         "status":       $scope.vuln_type,
+                        "target":       name_selected,
                         "type":         $scope.vuln_type,
                         "web":          true, 
                         "website":      $scope.website
@@ -70,6 +73,7 @@ angular.module('faradayApp')
                     res = {
                         "id":           id,
                         "data":         $scope.data,
+                        "date":         myEpoch,
                         "desc":         $scope.desc,
                         "meta":         {"create_time": myEpoch},
                         "name":         $scope.name,
@@ -80,6 +84,7 @@ angular.module('faradayApp')
                         "refs":         [],
                         "status":       $scope.vuln_type,
                         "severity":     $scope.severitySelection,
+                        "target":       name_selected,
                         "type":         $scope.vuln_type,
                         "web":          false
                     };
@@ -106,9 +111,11 @@ angular.module('faradayApp')
             if(j != null){
                 host_selected = false;
                 $scope.target_selected = $scope.hosts_with_services[i].services[j];
+                name_selected = $scope.hosts_with_services[i].name;
             }else{
                 host_selected = true;
                 $scope.target_selected = $scope.hosts_with_services[i];
+                name_selected = $scope.hosts_with_services[i].name;
             }
             $scope.target_selected.selected = true;
             $scope.not_target_selected = true;

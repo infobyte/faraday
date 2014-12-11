@@ -13,7 +13,6 @@ angular.module('faradayApp')
         $scope.workspace = $routeParams.wsId;
         // load all vulnerabilities
         $scope.vulns = statusReportFact.getVulns($scope.workspace);
-
         // toggles column show property
         $scope.toggleShow = function(column, show) {
             $scope.columns[column] = !show;
@@ -158,7 +157,7 @@ angular.module('faradayApp')
         // updates all vulns with selected == true
         $scope.update = function(data) {
             $scope.vulns = [];
-            
+
             data.vulns.forEach(function(v) {
                 if(v.selected) {
                     if(typeof(data.severity) == "string") v.severity = data.severity;
@@ -262,6 +261,38 @@ angular.module('faradayApp')
                     }
                 });
             }
+        };
+
+        $scope.insert = function(vuln){
+            statusReportFact.putVulns($scope.workspace, vuln, function(rev) {
+                vuln.rev = rev;
+            });
+            //formating the date
+            var d = new Date(0);
+            d.setUTCSeconds(vuln.date);
+            d = d.getDate() + "/" + (d.getMonth()+1) + "/" + d.getFullYear();
+            vuln.date = d;
+            $scope.vulns.push(vuln);
+        }
+
+        $scope.new = function(){
+                var modal = $modal.open({
+                    templateUrl: 'scripts/partials/modal-new.html',
+                    controller: 'modalNewCtrl',
+                    size: 'lg',
+                    resolve: {
+                        severities: function() {
+                            return $scope.severities;
+                        },
+                        workspace: function() {
+                            return $scope.workspace;
+                        }
+                    }
+                 });
+
+                modal.result.then(function(data) {
+                    $scope.insert(data);
+                });
         };
 
         $scope.checkAll = function() {

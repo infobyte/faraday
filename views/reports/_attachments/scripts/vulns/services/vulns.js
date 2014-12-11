@@ -8,7 +8,7 @@ angular.module('faradayApp')
             // gets vulns json from couch
             $.getJSON(vulns_url, function(data) {
                 $.each(data.rows, function(n, obj){
-                    var d = new Date(0); 
+                    var d = new Date(0);
                     d.setUTCSeconds(obj.value.date);
                     d = d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear();
                     var v = {
@@ -42,9 +42,9 @@ angular.module('faradayApp')
             var v = {
                 "_rev":         vuln.rev,
                 "data":         vuln.data,
-                "desc":         vuln.desc, 
+                "desc":         vuln.desc,
                 "metadata":     vuln.meta,
-                "name":         vuln.name, 
+                "name":         vuln.name,
                 "obj_id":       vuln.oid,
                 "owned":        vuln.owned,
                 "owner":        vuln.owner,

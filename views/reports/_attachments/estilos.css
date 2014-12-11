@@ -361,7 +361,7 @@ table.status-report tbody tr td:first-child {
         background-color: #ecebea;
     }
     .multi-selected {
-        background-color: #f2dede !important;
+        background: #f2dede !important;
     }
 
 #list .tablesorter thead th {
@@ -473,7 +473,7 @@ select.ng-valid{
         justify-content: center;
         align-items: center;
     }
-    #merge, #delete{margin:5px;float:right;}
+    #merge, #delete, #new{margin:5px;float:right;}
 .input-sm{float: left;margin-bottom: 20px;}
 /* Media */
 @media screen and (min-width: 1380px){
@@ -508,3 +508,15 @@ a.ws-link:hover {
     text-decoration: none;
 }
 /* End of WS list */
+/* New Modal*/
+div.panel-default .panel-body label{font-size: 15px}
+i.pull-right.glyphicon.ng-scope.glyphicon-plus-sign{color:green;}
+
+div.panel-collapse .panel-body{padding:0px;}
+div.panel.panel-default div.panel-heading{padding: 0px}
+div.panel-body table{width: 100%}
+div.panel-body td{font-size: 15px; padding: 10px 20px; border-bottom: 1px solid #ECE9E9;}
+a.ng-binding.ng-pristine, a.ng-binding.ng-scope{display: block; font-size: 15px; text-decoration: none; padding: 5px 15px}
+    a.ng-binding.ng-scope{padding: 10px;}
+div.panel-heading a i.glyphicon{margin: -25px 10px;}
+div.modal-body .alert-danger.target_not_selected{font-size: 15px}

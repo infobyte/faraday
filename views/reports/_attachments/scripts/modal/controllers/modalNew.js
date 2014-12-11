@@ -42,52 +42,52 @@ angular.module('faradayApp')
                 var myDate = new Date();
                 var myEpoch = myDate.getTime()/1000.0;
 
-                if($scope.vuln_type == "VulnerabilityWeb") {
-                    res = {
+                var res = {
                         "id":           id,
                         "data":         $scope.data,
                         "date":         myEpoch,
                         "desc":         $scope.desc,
-                        "meta":         {'create_time': myEpoch},
-                        "method":       $scope.method,
-                        "name":         $scope.name, 
-                        "oid":          sha,
-                        "owned":        false,
-                        "owner":        "",
-                        "params":       $scope.params,
-                        "couch_parent": $scope.target_selected._id,
-                        "path":         $scope.path,
-                        "pname":        $scope.pname,
-                        "query":        $scope.query,
-                        "refs":         [],
-                        "request":      $scope.request,
-                        "response":     $scope.response,
-                        "severity":     $scope.severitySelection,
-                        "status":       $scope.vuln_type,
-                        "target":       name_selected,
-                        "type":         $scope.vuln_type,
-                        "web":          true, 
-                        "website":      $scope.website
-                    };
-                } else {
-                    res = {
-                        "id":           id,
-                        "data":         $scope.data,
-                        "date":         myEpoch,
-                        "desc":         $scope.desc,
-                        "meta":         {"create_time": myEpoch},
+                        "meta":         {'create_time': myEpoch,
+                            "update_time": myEpoch,
+                            "update_user":  'UI Web',
+                            'update_action': 0,
+                            'creator': 'UI Web', 
+                            'create_time': myEpoch,
+                            'update_controller_action': 'UI Web New',
+                            'owner': 'anonymous'
+                        },
                         "name":         $scope.name,
                         "oid":          sha,
                         "owned":        false,
                         "owner":        "",
                         "couch_parent": $scope.target_selected._id,
+
                         "refs":         [],
                         "status":       $scope.vuln_type,
                         "severity":     $scope.severitySelection,
                         "target":       name_selected,
                         "type":         $scope.vuln_type,
+                    };
+                var extra_vulns_prop = {};
+
+                if($scope.vuln_type == "VulnerabilityWeb") {
+                    extra_vulns_prop = {
+                        "path":         $scope.path,
+                        "pname":        $scope.pname,
+                        "query":        $scope.query,
+                        "request":      $scope.request,
+                        "response":     $scope.response,
+                        "web":          true, 
+                        "website":      $scope.website
+                    };
+                } else {
+                    extra_vulns_prop = {
                         "web":          false
                     };
+                }
+
+                for (var key in extra_vulns_prop) {
+                    res[key] = extra_vulns_prop[key];
                 }
 
                 $modalInstance.close(res);

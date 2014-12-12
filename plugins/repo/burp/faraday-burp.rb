@@ -20,7 +20,7 @@ require "pp"
 
 #FARADAY CONF:
 RPCSERVER="http://127.0.0.1:9876/"
-IMPORTVULN=1 #1 if you like to import the current vulnerabilities, or 0 if you only want to import new vulns
+IMPORTVULN=0 #1 if you like to import the current vulnerabilities, or 0 if you only want to import new vulns
 PLUGINVERSION="Faraday v1.1 Ruby"
 #Tested: Burp Professional v1.5.18
 
@@ -120,12 +120,12 @@ class BurpExtender
 
       # Sitemap history, Proxy History will show menu item if selected by the user
       @stdout.println('Menu TYPE: %s\n' % ctx)
-      if ctx == 5 or ctx == 6
+      if ctx == 5 or ctx == 6 or ctx == 7
 
           faradayMenu = JMenuItem.new("Send to Faraday", nil)
 
           faradayMenu.addActionListener do |e|
-             eventScan(invocation)
+             eventScan(invocation, ctx)
           end
 
           menu.push(faradayMenu)
@@ -137,19 +137,20 @@ class BurpExtender
   #
   # event click function
   #
-  def eventScan(invocation)
+  def eventScan(invocation, ctx)
+
+      #invMessage = invocation.getSelectedIssues()
 
       invMessage = invocation.getSelectedMessages()
       invMessage.each do |m|
-        newScanIssue(m,1)
+        newScanIssue(m,ctx)
       end
   end
   
   #
   # implement IScannerListener
   #
-  def newScanIssue(issue, information=nil)
-
+  def newScanIssue(issue, ctx)
 
     host=issue.getHost()
     port=issue.getPort().to_s()
@@ -160,7 +161,7 @@ class BurpExtender
     severity="Information"
     desc="This request was manually sent using burp"
     
-    if information == nil
+    if ctx == 5 or ctx == 6 or ctx == 7
       desc=issue.getIssueDetail().to_s
       desc+="<br/>Resolution:" + issue.getIssueBackground().to_s
       severity=issue.getSeverity().to_s
@@ -183,7 +184,7 @@ class BurpExtender
       n_id = @server.call("createAndAddNoteToService",h_id,s_id,"website","")
       n2_id = @server.call("createAndAddNoteToNote",h_id,s_id,n_id,host,"")
 
-      if information
+      if ctx == 5 or ctx == 6 or ctx == 7
         #@stdout.println(issue.methods)
         req= @helpers.analyzeRequest(issue.getRequest())
 

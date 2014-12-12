@@ -755,14 +755,14 @@ class SimpleDialog(BaseDialog):
 
 
 class ExitDialog(BaseDialog):
-    def __init__(self, parent, callback=None):
+    def __init__(self, parent, callback=None,title="Exit", msg="Are you sure?"):
         BaseDialog.__init__(self, parent, "ExitDialog",
                             layout_margin=20, layout_spacing=15, modal=True)
-        self.setCaption("Exit")
+        self.setCaption(title)
                                         
         hbox1 = qt.QHBox(self)
         hbox1.setSpacing(5)
-        self._message_label = qt.QLabel("Are you sure?", hbox1)
+        self._message_label = qt.QLabel(msg, hbox1)
         self._message_label.setAlignment( qt.Qt.AlignHCenter | qt.Qt.AlignVCenter )
         self.layout.addWidget(hbox1)
         self.setupButtons({ "ok" : callback,

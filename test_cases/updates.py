@@ -13,8 +13,43 @@ import model.controller
 import managers.mapper_manager
 from mockito import mock
 from persistence.mappers.abstract_mapper import NullPersistenceManager
+from model.hosts import Host
+from model.diff import ModelObjectDiff
 
 import test_cases.common as test_utils
+
+
+class DiffTests(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_diff_between_equal_hosts(self):
+        """
+        This test case creates a host and the compares it
+        with another equal host using the ModelObjectDiff class
+        """
+        h1 = Host(name='host1', os='Windows')
+        h2 = Host(name='host1', os='Windows')
+
+        diff = ModelObjectDiff(h1, h2)
+
+        self.assertFalse(diff.existDiff())
+
+    def test_diff_between_different_hosts(self):
+        """
+        This test case creates a host and the compares it
+        with another different host using the ModelObjectDiff class
+        """
+        h1 = Host(name='host1', os='Windows')
+        h2 = Host(name='host1', os='Linux')
+
+        diff = ModelObjectDiff(h1, h2)
+
+        self.assertTrue(diff.existDiff())
 
 
 class UpdatesTests(unittest.TestCase):

@@ -1,5 +1,4 @@
 angular.module('faradayApp')
-    // CSV export
     .factory('$click', function() {
       return {
         on: function(element) {

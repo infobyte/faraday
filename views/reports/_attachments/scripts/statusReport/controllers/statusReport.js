@@ -13,7 +13,6 @@ angular.module('faradayApp')
         $scope.workspace = $routeParams.wsId;
         // load all vulnerabilities
         $scope.vulns = statusReportFact.getVulns($scope.workspace);
-
         // toggles column show property
         $scope.toggleShow = function(column, show) {
             $scope.columns[column] = !show;
@@ -49,21 +48,27 @@ angular.module('faradayApp')
             "request":  false,
             "response": false,
             "severity": true,
-            "status":   true,
+            "status":   false,
             "target":   true,
-            "web":      true,
+            "web":      false,
             "website":  false
         };
 
         $scope.severities = [
-            "unclassified",
-            "info",
-            "low",
+            "critical",
+            "high",
             "med",
-            "high"
+            "low",
+            "info",
+            "unclassified",
+
         ];
 
         // returns scope vulns as CSV obj
+        // toggles column sort field
+        $scope.cleanCSV = function(field) {
+            return field.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'").replace(/[\n\r]/g, "%20").replace(/[,]/g, "%2c");;
+        };
         $scope.toCSV = function() {
             var method      = "";
             var website     = "";
@@ -93,17 +98,17 @@ angular.module('faradayApp')
                 request     = "";
                 response    = "";
 
-                if(typeof(v.desc) != "undefined")   desc    = v.desc.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
-                if(typeof(v.data) != "undefined")   text    = v.data.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
+                if(typeof(v.desc) != "undefined")   desc    = $scope.cleanCSV(v.desc);
+                if(typeof(v.data) != "undefined")   text    = $scope.cleanCSV(v.data);
                 if(v.type === "VulnerabilityWeb") {
-                    if(typeof(v.method) != "undefined")     method      = v.method;
-                    if(typeof(v.website) != "undefined")    website     = v.website;
-                    if(typeof(v.path) != "undefined")       path        = v.path.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
-                    if(typeof(v.pname) != "undefined")      pname       = v.pname.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
-                    if(typeof(v.params) != "undefined")     params      = v.params.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
-                    if(typeof(v.query) != "undefined")      query       = v.query.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
-                    if(typeof(v.request) != "undefined")    request     = v.request.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
-                    if(typeof(v.response) != "undefined")   response    = v.response.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'");
+                    if(typeof(v.method) != "undefined")     method      = $scope.cleanCSV(v.method);
+                    if(typeof(v.website) != "undefined")    website     = $scope.cleanCSV(v.website);
+                    if(typeof(v.path) != "undefined")       path        = $scope.cleanCSV(v.path);
+                    if(typeof(v.pname) != "undefined")      pname       = $scope.cleanCSV(v.pname);
+                    if(typeof(v.params) != "undefined")     params      = $scope.cleanCSV(v.params);
+                    if(typeof(v.query) != "undefined")      query       = $scope.cleanCSV(v.query);
+                    if(typeof(v.request) != "undefined")    request     = $scope.cleanCSV(v.request);
+                    if(typeof(v.response) != "undefined")   response    = $scope.cleanCSV(v.response);
                 }
 
                 content += "\""+v.date+"\","+
@@ -126,8 +131,10 @@ angular.module('faradayApp')
             });
 
             var obj = {
+                "content":  content,
+                "extension": "csv",
                 "title":    "SR-" + $scope.workspace,
-                "content":  content
+                "type": "text/csv"
             };
             
             return obj;
@@ -150,7 +157,7 @@ angular.module('faradayApp')
         // updates all vulns with selected == true
         $scope.update = function(data) {
             $scope.vulns = [];
-            
+
             data.vulns.forEach(function(v) {
                 if(v.selected) {
                     if(typeof(data.severity) == "string") v.severity = data.severity;
@@ -254,6 +261,38 @@ angular.module('faradayApp')
                     }
                 });
             }
+        };
+
+        $scope.insert = function(vuln){
+            statusReportFact.putVulns($scope.workspace, vuln, function(rev) {
+                vuln.rev = rev;
+            });
+            //formating the date
+            var d = new Date(0);
+            d.setUTCSeconds(vuln.date);
+            d = d.getDate() + "/" + (d.getMonth()+1) + "/" + d.getFullYear();
+            vuln.date = d;
+            $scope.vulns.push(vuln);
+        }
+
+        $scope.new = function(){
+                var modal = $modal.open({
+                    templateUrl: 'scripts/partials/modal-new.html',
+                    controller: 'modalNewCtrl',
+                    size: 'lg',
+                    resolve: {
+                        severities: function() {
+                            return $scope.severities;
+                        },
+                        workspace: function() {
+                            return $scope.workspace;
+                        }
+                    }
+                 });
+
+                modal.result.then(function(data) {
+                    $scope.insert(data);
+                });
         };
 
         $scope.checkAll = function() {

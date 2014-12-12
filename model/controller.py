@@ -409,7 +409,6 @@ class ModelController(threading.Thread):
         new_action = args
         self._pending_actions.put(new_action)
 
-
     def addUpdate(self, old_object, new_object):
         # Returns True if the update was resolved without user interaction
         res = True
@@ -448,6 +447,10 @@ class ModelController(threading.Thread):
         dataMapper = self.mappers_manager.getMapper(obj.class_signature)
         old_obj = dataMapper.find(obj.getID())
         if old_obj:
+            if not old_obj.needs_merge(obj):
+                #the object is exactly the same,
+                # so return and do nothing
+                return True
             if not self.addUpdate(old_obj, obj):
                 return False
             dataMapper.save(old_obj)

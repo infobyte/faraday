@@ -44,7 +44,7 @@ class ModelObjectMapper(AbstractMapper):
             mobj.setParent(self.mapper_manager.find(doc.get("parent")))
         mobj.setOwner(doc.get("owner"))
         mobj.setDescription(doc.get("description"))
-        mobj.setMetadata(Metadata(doc.get("metadata")))
+        mobj.setMetadata( Metadata('').fromDict(mobj.getMetadata().__dict__))
         if self.children:
             self.setNotes(mobj)
             self.setVulns(mobj)

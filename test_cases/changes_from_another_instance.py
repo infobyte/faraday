@@ -18,12 +18,9 @@ import model.guiapi
 import time
 from model import api
 from gui.notifier import NotificationCenter
-from model.workspace import WorkspaceOnCouch, WorkspaceManager
 import plugins.core as plcore
 import model.controller as controller
-from managers.all import CouchdbManager
 from persistence.change import ChangeModelObject, ChangeCmd, Change
-from persistence.orm import WorkspacePersister
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -39,9 +36,10 @@ class ChangesTestSuite(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.model_controller = mock(controller.ModelController)
-        api.setUpAPIs(cls.model_controller)
+        cls.workspace_manager = mock()
+        api.setUpAPIs(cls.model_controller, cls.workspace_manager)
         cls.couch_uri = CONF.getCouchURI()
-        cls.cdm = CouchdbManager(uri=cls.couch_uri)
+        # cls.cdm = CouchdbManager(uri=cls.couch_uri)
 
         class NotificationTest(NotificationCenter):
             def __init__(self, ui):
@@ -67,15 +65,15 @@ class ChangesTestSuite(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         WorkspacePersister.stopThreads()
-        cls.cleanCouchDatabases()
+        # cls.cleanCouchDatabases()
 
-    @classmethod
-    def cleanCouchDatabases(cls):
-        try:
-            for wname in cls._couchdb_workspaces:
-                cls.cdm.removeWorkspace(wname)
-        except Exception as e:
-            print(e)
+    # @classmethod
+    # def cleanCouchDatabases(cls):
+    #     try:
+    #         for wname in cls._couchdb_workspaces:
+    #             cls.cdm.removeWorkspace(wname)
+    #     except Exception as e:
+    #         print(e)
 
     def test_model_objects_added(self):
         d1 = {

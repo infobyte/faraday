@@ -215,9 +215,10 @@ article.untercio{
 /* Fondos */
 .fondo-rojo, .fondo-high {background-color: #DF3936 !important;}
 .fondo-negro {background-color: #000 !important;}
-.fondo-gris1, .fondo-unclassified {background-color: #8B00FF !important;}
+.fondo-gris1, .fondo-critical {background-color: #8B00FF !important;}
+.fondo-gris1, .fondo-unclassified {background-color: #858585 !important;}
 .fondo-blanco {background-color: #fff !important;}
-.fondo-info {background-color: #858585 !important;}
+.fondo-info {background-color: #428bca !important;}
 .fondo-naranja, .fondo-med {background-color: #DFBF35 !important;}
 .fondo-amarillo, .fondo-low {background-color: #A1CE31 !important;}
 .fondo-violeta {background-color: #8D2BB4 !important;}
@@ -310,6 +311,7 @@ table.tablesorter thead tr .headerSortDown {
     background-image: url(images/desc.gif);
 }
 
+
 table.status-report {
     background-color: #CDCDCD;
     margin:0px 0pt 15px;
@@ -317,6 +319,7 @@ table.status-report {
     width: 100%;
     text-align: center;
 }
+
 
     
 table.status-report thead tr th, table.status-report tfoot tr th {
@@ -338,6 +341,7 @@ table.status-report tbody td {
     padding: 5px;
     vertical-align: top;
 }
+
 table.status-report tbody tr.odd td {
     background-color:#F0F0F6;
 }
@@ -347,18 +351,18 @@ table.status-report thead tr th:first-child,
 table.status-report tbody tr td:first-child {
     padding-left: 5px;
 }
-    table.csv-export tbody tr:nth-child(even) {
-        background-color: #f1f1f1;
-    }
-    table.csv-export tbody tr:nth-child(odd) {
-        background-color: #ffffff;
-    }
-    table.csv-export tbody tr:hover{
-        background-color: #ecebea;
-    }
-    .multi-selected {
-        background-color: #f2dede !important;
-    }
+table.csv-export tbody tr:nth-child(even) {
+    background-color: #f1f1f1;
+}
+table.csv-export tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+table.csv-export tbody tr:hover{
+    background-color: #ecebea;
+}
+.multi-selected {
+    background: #f2dede !important;
+}
 
 #list .tablesorter thead th {
     width: 25%;
@@ -469,7 +473,7 @@ select.ng-valid{
         justify-content: center;
         align-items: center;
     }
-    #merge, #delete{margin:5px;float:right;}
+    #merge, #delete, #new{margin:5px;float:right;}
 .input-sm{float: left;margin-bottom: 20px;}
 /* Media */
 @media screen and (min-width: 1380px){
@@ -504,3 +508,15 @@ a.ws-link:hover {
     text-decoration: none;
 }
 /* End of WS list */
+/* New Modal*/
+div.panel-default .panel-body label{font-size: 15px}
+i.pull-right.glyphicon.ng-scope.glyphicon-plus-sign{color:green;}
+
+div.panel-collapse .panel-body{padding:0px;}
+div.panel.panel-default div.panel-heading{padding: 0px}
+div.panel-body table{width: 100%}
+div.panel-body td{font-size: 15px; padding: 10px 20px; border-bottom: 1px solid #ECE9E9;}
+a.ng-binding.ng-pristine, a.ng-binding.ng-scope{display: block; font-size: 15px; text-decoration: none; padding: 5px 15px}
+    a.ng-binding.ng-scope{padding: 10px;}
+div.panel-heading a i.glyphicon{margin: -25px 10px;}
+div.modal-body .alert-danger.target_not_selected{font-size: 15px}

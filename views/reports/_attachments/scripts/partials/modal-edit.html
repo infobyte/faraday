@@ -1,6 +1,7 @@
+<form name="formEdit" novalidate>
 <div class="modal-header">
     <div class="modal-button">
-        <button class="btn btn-success" ng-click="ok()">OK</button>
+        <button class="btn btn-success" ng-click="ok()" ng-disabled="formEdit.$invalid">OK</button>
         <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
     </div>
     <h3 class="modal-title">Bulk edit</h3>
@@ -26,13 +27,13 @@
             </div>
             <div class="col-md-9">
                 <label class="sr-only" for="vuln-name">Vuln name</label>
-                <input type="text" class="form-control" id="vuln-name" placeholder="Name" value="{{p_name}}" ng-model="name"/>
+                <input type="text" class="form-control" id="vuln-name" placeholder="Name" value="{{p_name}}" ng-model="name" required/>
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
             <div class="col-md-12">
                 <label class="sr-only" for="vuln-desc">Vuln description</label>
-                <textarea class="form-control" id="vuln-desc" placeholder="Description" value="{{p_desc}}" ng-model="desc"></textarea>
+                <textarea class="form-control" id="vuln-desc" placeholder="Description" value="{{p_desc}}" ng-model="desc" required></textarea>
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
@@ -116,6 +117,7 @@
     </table><!-- #hosts -->
 </div><!-- .modal-body -->
 <div class="modal-footer">
-    <button class="btn btn-success" ng-click="ok()">OK</button>
+    <button class="btn btn-success" ng-click="ok()" ng-disabled="formEdit.$invalid">OK</button>
     <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
 </div>
+</form>

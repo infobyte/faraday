@@ -8,7 +8,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="../././reports/status_report.html#/ws/{{workspace}}" class="status-report" style="color: #ffffff !important" title="Status Report">
+                                <a href="../././reports/faraday.html#/status/ws/{{workspace}}" class="status-report" style="color: #ffffff !important" title="Status Report">
                                     <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
                                 </a>
                             </li>
@@ -22,7 +22,7 @@
                         title="Current workspace">Viewing {{ workspace }} ({{vulns.length}})</span><!-- WS name -->
                         
                         <div id="ws-control" class="btn-group">
-                            <button download-csv="toCSV()" type="button" class="btn btn-success" title="Download CSV for current workspace">
+                            <button file-exporter="toCSV()" type="button" class="btn btn-success" title="Download CSV for current workspace">
                                 <span class="glyphicon glyphicon-download"></span>
                             </button>
                             <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
@@ -32,7 +32,7 @@
                                 Change workspace <span class="caret"></span>
                             </button>
                             <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
-                                <li ng-repeat="ws in workspaces"><a href="#/ws/{{ws}}" class="ws" >{{ws}}</a></li>
+                                <li ng-repeat="ws in workspaces"><a href="#/status/ws/{{ws}}" class="ws" >{{ws}}</a></li>
                             </ul><!-- WS navigation -->
                         </div><!-- #ws-control -->
                         <button id="delete" type="button" class="btn btn-danger" title="Delete selected items" ng-click="delete()">
@@ -40,6 +40,9 @@
                         </button>
                         <button id="merge" type="button" class="btn btn-danger" title="Edit selected vulns" ng-click="edit()">
                             Edit
+                        </button>
+                        <button id="new" type="button" class="btn btn-success" title="New Vulns" ng-click="new()">
+                            New
                         </button>
                     </h2><!-- .ws-label -->
                     <div class="reports">
@@ -64,9 +67,9 @@
                                         <a href="" ng-click="toggleShow('date', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="toggleSort('date')">Date</a>
                                     </th>
-                                    <th ng-if="columns.web">
-                                        <a href="" ng-click="toggleShow('web', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="toggleSort('web')">Web</a>
+                                    <th ng-if="columns.target">
+                                        <a href="" ng-click="toggleShow('target', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                                        <a href="" ng-click="toggleSort('target')">Target</a>
                                     </th>
                                     <th ng-if="columns.status">
                                         <a href="" ng-click="toggleShow('status', true)"><span class="glyphicon glyphicon-remove"></span></a>
@@ -79,10 +82,6 @@
                                     <th ng-if="columns.name">
                                         <a href="" ng-click="toggleShow('name', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="toggleSort('name')">Name</a>
-                                    </th>
-                                    <th ng-if="columns.target">
-                                        <a href="" ng-click="toggleShow('target', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="toggleSort('target')">Target</a>
                                     </th>
                                     <th ng-if="columns.desc">
                                         <a href="" ng-click="toggleShow('desc', true)"><span class="glyphicon glyphicon-remove"></span></a>
@@ -120,6 +119,10 @@
                                         <a href="" ng-click="toggleShow('response', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="toggleSort('response')">Response</a>
                                     </th>
+                                    <th ng-if="columns.web">
+                                        <a href="" ng-click="toggleShow('web', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                                        <a href="" ng-click="toggleSort('web')">Web</a>
+                                    </th>
                                     <th ng-if="columns.website">
                                         <a href="" ng-click="toggleShow('website', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="toggleSort('website')">Website</a>
@@ -133,14 +136,10 @@
                                     selection-model-mode="multiple-additive" 
                                     selection-model-selected-class="multi-selected">
                                     <td ng-if="columns.date">{{v.date}}</td>
-                                    <td ng-if="columns.web">
-                                        <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
-                                        <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>
-                                    </td>
-                                    <td ng-if="columns.status">Vulnerable</td>
-                                    <td ng-if="columns.severity">{{v.severity}}</td>
-                                    <td ng-if="columns.name">{{v.name}}</td>
                                     <td ng-if="columns.target">{{v.target}}</td>
+                                    <td ng-if="columns.status">Vulnerable</td>
+                                    <td ng-if="columns.severity" class="fondo-{{v.severity}}">{{v.severity}}</td>
+                                    <td ng-if="columns.name">{{v.name}}</td>
                                     <td ng-if="columns.desc" text-collapse text-collapse-max-length="150" text-collapse-text="{{v.desc}}"></td>
                                     <td ng-if="columns.data" text-collapse text-collapse-max-length="150" text-collapse-text="{{v.data}}"></td>
                                     <td ng-if="columns.method">{{v.method}}</td>
@@ -150,6 +149,10 @@
                                     <td ng-if="columns.query">{{v.query}}</td>
                                     <td ng-if="columns.request" text-collapse text-collapse-max-length="100" text-collapse-text="{{v.request}}"></td>
                                     <td ng-if="columns.response" text-collapse text-collapse-max-length="100" text-collapse-text="{{v.response}}"></td>
+                                    <td ng-if="columns.web">
+                                        <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
+                                        <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>
+                                    </td>
                                     <td ng-if="columns.website">{{v.website}}</td>
                                     <td><input type="checkbox" name="{{v.id}}"/></td>
                                 </tr>

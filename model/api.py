@@ -511,6 +511,12 @@ def newApplication(name, status = "running", version = "unknown"):
 
 #-------------------------------------------------------------------------------
 
+#getConflicts: get the current conflicts
+def getConflicts():
+    return __model_controller.getConflicts()
+
+#-------------------------------------------------------------------------------
+
 #exportWorskpace
 
 def exportWorskpace(workspace_path, export_path):

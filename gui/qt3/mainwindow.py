@@ -685,7 +685,12 @@ class MainWindow(qt.QMainWindow):
             e.accept()
 
     def exitFaraday(self):
-        exit_dialog = ExitDialog(self, self._main_app.quit)
+        result = model.api.getConflicts()
+        msg = "Are you sure?"
+        if result:
+            msg = "You have pending conflicts\nAre you sure you want to exit and discard them ?"
+
+        exit_dialog = ExitDialog(self, self._main_app.quit, msg=msg)
         return exit_dialog.exec_loop()
 
     def doDebug(self):

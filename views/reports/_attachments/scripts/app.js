@@ -21,7 +21,7 @@ faradayApp.config(['$routeProvider', function($routeProvider) {
             controller: 'workspacesCtrl'
         }).
         otherwise({
-            templateUrl: 'scripts/partials/status_report.html',
+            templateUrl: 'scripts/partials/home.html',
             controller: 'statusReportCtrl'
         });
 }]);

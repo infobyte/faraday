@@ -23,6 +23,7 @@
     <link rel="stylesheet" type="text/css" href="script/jquery.qtip.css" />
     <link rel="stylesheet" href="script/bootstrap.min.css">
     <link rel="stylesheet" href="script/bootstrap-theme.min.css">
+    <link rel="stylesheet" type="text/css" href="styles/font-awesome.css" />
     <link href="favicon.ico" rel="shortcut icon">
     <link href="favicon.ico" type="image/vnd.microsoft.icon" rel="icon" />
     <link href="images/site_preview.jpg" rel="image_src" />
@@ -55,12 +56,12 @@
                         <ul>
                             <li>
                                 <a href="#" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
-                                    <img src="images/ico-graph.png" alt="WS Dashboard"/>
+                                    <h2><span class="fa fa-pie-chart" title="Dashboard"></span></h2>
                                 </a>
                             </li>
                             <li>
                                 <a href="#" class="status-report" style="color: #ffffff !important" title="Status Report">
-                                    <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
+                                    <h2><span class="fa fa-list" title="Status Report"></span></h2>
                                 </a>
                             </li>
                         </ul>
@@ -148,7 +149,7 @@
         space = domain.split("#");
         workspace = space[1];
 
-        var ret = "Viewing "+ workspace;
+        var ret = "Dashboard for "+ workspace;
         $('#reports-main .ws-label span#ws-name').text(ret);
 
         rutas = [

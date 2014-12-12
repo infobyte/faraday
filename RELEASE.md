@@ -4,9 +4,40 @@ IMPORTANT
 Please be kind to remove all your pyc files before running faraday if you are updating this piece of software.  
 We made a big refactor in the latest iteration moving some code into a diferent package.
 
+Please run ./faraday.py --update
+
 
 New features in the latest update
 =====================================
+
+Dec 12, 2014:
+---
+You can get the new version here:
+
+* https://github.com/infobyte/faraday/archive/v1.0.7.tar.gz
+
+Changes:
+
+* Improved Vulnerability Edition usability, selecting a vuln will load it's content.
+* ZSH UI now is showing notifications.
+* ZSH UI now is showing active workspace.
+* Faraday now asks confirmation on exit, If you have pending conflicts to solve it will show the number of each.
+* Vulnerability creation is now suported in the status report.
+* Introducing SSLCheck, a tool for verify bugs in SSL/TLS Certificates on remote hosts. This is integrated with Faraday with a plugin.
+* Shodan Plugin is now working with the new API.
+* Some cosmetic changes in the status report.
+
+Bugfixes:
+
+* Sorting collumns in the Status Report now is working.
+* Workspace icon is based on the type of the workspace.
+* Opening the reports in QT UI now opens the active workspace.
+* UI Web dates fixes, we were showing dates with a off-by-one error.
+* Vulnerability edition was missing 'critical' severity.
+* Objects merge bugfixing
+* Metadata recursive save fix
+
+
 
 Nov 7, 2014:
 ---

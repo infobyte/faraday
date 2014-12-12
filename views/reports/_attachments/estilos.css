@@ -351,18 +351,18 @@ table.status-report thead tr th:first-child,
 table.status-report tbody tr td:first-child {
     padding-left: 5px;
 }
-    table.csv-export tbody tr:nth-child(even) {
-        background-color: #f1f1f1;
-    }
-    table.csv-export tbody tr:nth-child(odd) {
-        background-color: #ffffff;
-    }
-    table.csv-export tbody tr:hover{
-        background-color: #ecebea;
-    }
-    .multi-selected {
-        background: #f2dede !important;
-    }
+table.csv-export tbody tr:nth-child(even) {
+    background-color: #f1f1f1;
+}
+table.csv-export tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+table.csv-export tbody tr:hover{
+    background-color: #ecebea;
+}
+.multi-selected {
+    background: #f2dede !important;
+}
 
 #list .tablesorter thead th {
     width: 25%;

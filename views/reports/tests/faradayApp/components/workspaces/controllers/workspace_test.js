@@ -2,33 +2,27 @@ describe('workspacesCtrl', function() {
     var $controller,
         $scope;
 
-    var workspaceFact,
-    workspaceFactMock;
+    var $workspacesFact,
+    workspacesFactMock;
 
     beforeEach(function () { 
-        workspaceFactMock = {
+        workspacesFactMock = {
             get: function(callback) {
-                return ['ws1', 'ws2'];
+                callback(['ws1', 'ws2']);
             }
         };
         module('faradayApp');
         module(function($provide){
-            $provide.factory('workspacesFact', workspaceFactMock);
+            $provide.value('workspacesFact', workspacesFactMock);
         });
 
-        inject(function(_$rootScope_, _$controller_){
+        inject(function(_$rootScope_, _$controller_, _workspacesFact_){
             // The injector unwraps the underscores (_) from around the parameter names when matching
             $scope = _$rootScope_.$new();
-            $controller = _$controller_('workspacesCtrl', { $scope: $scope,
-                workspacesFact: workspaceFactMock});
+            $controller = _$controller_('workspacesCtrl', { $scope: $scope, workspacesFact: _workspacesFact_});
         });
     });
 
-
-    // beforeEach(
-    //     module('workspacesCtrl', function ($provide) {
-    //         $provide.value('workspacesFact', mockWorkspaceFact);
-    //     });
 
 
     describe('$scope.wss', function() {

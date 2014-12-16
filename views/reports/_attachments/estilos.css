@@ -361,7 +361,7 @@ table.csv-export tbody tr:hover{
     background-color: #ecebea;
 }
 .multi-selected {
-    background: #f2dede !important;
+    background-color: #f2dede !important;
 }
 
 #list .tablesorter thead th {

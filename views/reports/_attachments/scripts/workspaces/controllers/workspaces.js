@@ -6,6 +6,7 @@ angular.module('faradayApp')
         });
         
         $scope.insert = function(workspace){
+            workspacesFact.put(workspace);
             $scope.wss.push(workspace.name);
         };
     }]);

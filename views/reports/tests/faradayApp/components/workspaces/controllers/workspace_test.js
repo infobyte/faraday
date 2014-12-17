@@ -5,11 +5,17 @@ describe('workspacesCtrl', function() {
     var $workspacesFact,
     workspacesFactMock;
 
+    var spyOnPutFactory;
+
+    spyOnPutFactory = jasmine.createSpy('Put Workspace Factory Spy');
+
+
     beforeEach(function () { 
         workspacesFactMock = {
             get: function(callback) {
                 callback(['ws1', 'ws2']);
-            }
+            },
+            put: spyOnPutFactory
         };
         module('faradayApp');
         module(function($provide){
@@ -46,8 +52,11 @@ describe('workspacesCtrl', function() {
                 "description": ""
             };
             $scope.insert(workspace);
+
             // http://jasmine.github.io/1.3/introduction.html#section-Matchers
             expect($scope.wss).toContain(workspace_name);
+            expect($scope.wss.length).toEqual(3);
+            expect(spyOnPutFactory).toHaveBeenCalledWith(workspace);
         });
     });
 });

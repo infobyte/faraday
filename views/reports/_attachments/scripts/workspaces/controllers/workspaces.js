@@ -11,6 +11,7 @@ angular.module('faradayApp')
         };
 
         $scope.remove = function(workspace_name){
+            workspacesFact.delete(workspace_name);
             delete $scope.wss[$scope.wss.indexOf(workspace_name)]; 
         };
     }]);

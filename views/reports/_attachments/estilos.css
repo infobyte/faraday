@@ -520,3 +520,6 @@ a.ng-binding.ng-pristine, a.ng-binding.ng-scope{display: block; font-size: 15px;
     a.ng-binding.ng-scope{padding: 10px;}
 div.panel-heading a i.glyphicon{margin: -25px 10px;}
 div.modal-body .alert-danger.target_not_selected{font-size: 15px}
+/* Pagination Modal New */
+div.modal-body ul.pagination{font-size: 15px}
+/* End */

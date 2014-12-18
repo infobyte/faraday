@@ -36,6 +36,7 @@ describe('workspacesCtrl', function() {
             expect($scope.wss).toEqual(['ws1', 'ws2']);
         });
     });
+
     describe('Workspaces inserts in $scope.wss', function() { 
         it('tests if wss is updated properly', function() {
             workspace_name = 'test_workspace';
@@ -57,6 +58,12 @@ describe('workspacesCtrl', function() {
             expect($scope.wss).toContain(workspace_name);
             expect($scope.wss.length).toEqual(3);
             expect(spyOnPutFactory).toHaveBeenCalledWith(workspace);
+        });
+    });
+    describe('Workspaces removal in $scope.wss', function() { 
+        it('tests if workspaces in scope.wss are removed ', function() {
+            $scope.remove('ws1');
+            expect($scope.wss).not.toContain('ws1');
         });
     });
 });

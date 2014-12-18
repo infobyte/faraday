@@ -9,6 +9,11 @@ describe('workspacesCtrl', function() {
 
     spyOnPutFactory = jasmine.createSpy('Put Workspace Factory Spy');
     spyOnDeleteFactory = jasmine.createSpy('Delete Workspace Factory Spy');
+    spyOnExistsFactory = jasmine.createSpy('Delete Workspace Factory Spy');
+    spyOnExistsFactory('test_workspace', function(){
+        return false;
+    });
+            
 
 
     beforeEach(function () { 
@@ -17,7 +22,10 @@ describe('workspacesCtrl', function() {
                 callback(['ws1', 'ws2']);
             },
             put: spyOnPutFactory,
-            delete: spyOnDeleteFactory
+            delete: spyOnDeleteFactory,
+            exists: function(workspace_name){
+                return false; }
+
         };
         module('faradayApp');
         module(function($provide){
@@ -40,6 +48,29 @@ describe('workspacesCtrl', function() {
     });
 
     describe('Workspaces inserts in $scope.wss', function() { 
+        it('tests if duplicated inserts are avoided', function() {
+            // Replace the mock exists function
+            // to return that the workspace 'tuvieja' exists
+            workspacesFactMock.exists = function(workspace_name){ return true;};
+            workspace_name = 'tuvieja';
+            workspace = {
+                "_id": workspace_name,
+                "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
+                "customer": "",
+                "sdate": 1410832741.48194,
+                "name": workspace_name,
+                "fdate": 1410832741.48194,
+                "type": "Workspace",
+                "children": [
+                ],
+                "description": ""
+            };
+            $scope.insert(workspace);
+
+            expect($scope.wss).not.toContain(workspace_name);
+            expect($scope.wss.length).toEqual(2);
+            expect(spyOnPutFactory).not.toHaveBeenCalledWith(workspace);
+        });
         it('tests if wss is updated properly', function() {
             workspace_name = 'test_workspace';
             workspace = {

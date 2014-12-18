@@ -8,6 +8,7 @@ describe('workspacesCtrl', function() {
     var spyOnPutFactory;
 
     spyOnPutFactory = jasmine.createSpy('Put Workspace Factory Spy');
+    spyOnDeleteFactory = jasmine.createSpy('Delete Workspace Factory Spy');
 
 
     beforeEach(function () { 
@@ -15,7 +16,8 @@ describe('workspacesCtrl', function() {
             get: function(callback) {
                 callback(['ws1', 'ws2']);
             },
-            put: spyOnPutFactory
+            put: spyOnPutFactory,
+            delete: spyOnDeleteFactory
         };
         module('faradayApp');
         module(function($provide){
@@ -63,6 +65,7 @@ describe('workspacesCtrl', function() {
     describe('Workspaces removal in $scope.wss', function() { 
         it('tests if workspaces in scope.wss are removed ', function() {
             $scope.remove('ws1');
+            expect(spyOnDeleteFactory).toHaveBeenCalledWith('ws1');
             expect($scope.wss).not.toContain('ws1');
         });
     });

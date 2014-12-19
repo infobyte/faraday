@@ -135,4 +135,10 @@ angular.module('faradayApp')
             $scope.target_selected.selected = true;
             $scope.not_target_selected = true;
         }
+
+        $scope.go = function(){
+            if($scope.go_page < $scope.numberOfPages()+2 && $scope.go_page > -1){
+                $scope.currentPage = $scope.go_page;
+            }
+        }
     }]);

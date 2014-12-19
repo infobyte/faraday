@@ -46,11 +46,6 @@ angular.module('faradayApp')
             return Math.ceil(filteredData.length/$scope.pagination);
         }
 
-        $scope.arrayOfPages = [];
-        for(i = 0; i < $scope.numberOfPages()+2; i++){
-            $scope.arrayOfPages.push(i);
-        }
-
         $scope.ok = function() {
             if($scope.vuln_type == "VulnerabilityWeb" && host_selected == true){
                 $scope.incompatible_vulnWeb = true;

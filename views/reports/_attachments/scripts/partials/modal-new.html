@@ -10,7 +10,7 @@
     <div class="form-horizontal">
         <div class="form-group">
             <div class="col-md-12">
-             <input type="text" ng-model="search_notes" class="form-control input-sm" placeholder="Search">
+             <input type="text" ng-model="search_notes" class="form-control input-sm" placeholder="Search" ng-change="currentPage = 0">
              <accordion close-others="true">
                 <accordion-group is-open="isopen" ng-repeat="host in hosts_with_services | filter:search_notes | startFrom:currentPage*pageSize | limitTo:pageSize">
                     <accordion-heading>
@@ -27,7 +27,6 @@
                     <ul class="pagination">
                         <li><a ng-hide="currentPage == 0" ng-click="currentPage=currentPage-1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
                         <li><a href="#">{{currentPage}}/{{numberOfPages()+1}}</a></li>
-                        <li ng-repeat="lit in arrayOfPages"><a ng-click="currentPage=currentPage+lit">{{lit}}</a></li>
                         <li><a ng-hide="currentPage >= numberOfPages()+1" ng-click="currentPage=currentPage+1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
                     </ul>
                 </div>

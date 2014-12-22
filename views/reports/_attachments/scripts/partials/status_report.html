@@ -57,7 +57,7 @@
                         <form style="margin: 10px !important;" role="form">
                             <div class="form-group">
                                 <label class="sr-only" for="filter-by">Filter by</label>
-                                <input type="text" class="form-control input-sm" id="filter-by" placeholder="Filter by" ng-model="query">
+                                <input type="text" class="form-control input-sm" id="filter-by" placeholder="Filter by" ng-model="query" ng-change="currentPage = 0">
                             </div>
                         </form>
                         <table class="csv-export status-report">
@@ -131,8 +131,8 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse"
-                                    selection-model selection-model-type="checkbox" 
+                                <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
+                                    selection-model selection-model-type="checkbox"
                                     selection-model-mode="multiple-additive" 
                                     selection-model-selected-class="multi-selected">
                                     <td ng-if="columns.date">{{v.date}}</td>
@@ -158,6 +158,21 @@
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->
+                        <div class="showPagination" ng-show="showPagination">
+                            <div class="form-group">
+                                <ul class="pagination">
+                                    <li><a ng-hide="currentPage == 0" ng-click="currentPage=currentPage-1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                                    <li><a>{{currentPage}}/{{numberOfPages()}}</a></li>
+                                    <li><a ng-hide="currentPage >= numberOfPages()" ng-click="currentPage=currentPage+1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                                </ul>
+                                <form name="goToPage" id="goToPageStatus">
+                                    <div class="col-md-2">
+                                        <input type="number" min="0" max="{{numberOfPages()}}" class="form-control" ng-model="go_page" placeholder="Go to page"/>
+                                    </div>
+                                    <button class="btn btn-primary" ng-click="go()">GO</button>
+                                </form>
+                            </div>
+                        </div>
                     </div><!-- .reports -->
                 </div><!-- #reports-main --></div><!-- .right-main -->
             </section><!-- #main -->

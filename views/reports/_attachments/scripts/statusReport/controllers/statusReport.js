@@ -313,18 +313,22 @@ angular.module('faradayApp')
         $scope.pagination = 10;
 
         $scope.numberOfPages=function(){
-            var filteredData = $filter('filter')($scope.vulns,$scope.query);
-            if (filteredData.length <= 10){
+            $scope.filteredData = $filter('filter')($scope.vulns,$scope.query);
+            if ($scope.filteredData.length <= 10){
                 $scope.showPagination = 0;
             } else {
                 $scope.showPagination = 1;
             };
-            return parseInt(filteredData.length/$scope.pagination);
+            return parseInt($scope.filteredData.length/$scope.pageSize);
         }
 
         $scope.go = function(){
             if($scope.go_page < $scope.numberOfPages()+1 && $scope.go_page > -1){
                 $scope.currentPage = $scope.go_page;
+            }
+            $scope.pageSize = $scope.pagination;
+            if($scope.go_page > $scope.numberOfPages()){
+                $scope.currentPage = 0;
             }
         }
     }]);

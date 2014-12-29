@@ -98,17 +98,17 @@ angular.module('faradayApp')
                 request     = "";
                 response    = "";
 
-                if(typeof(v.desc) != "undefined" && typeof(v.desc) != "null")   desc    = $scope.cleanCSV(v.desc);
-                if(typeof(v.data) != "undefined" && typeof(v.data) != "null")   text    = $scope.cleanCSV(v.data);
+                if(typeof(v.desc) != "undefined" && v.desc != null)   desc    = $scope.cleanCSV(v.desc);
+                if(typeof(v.data) != "undefined" && v.data != null)   text    = $scope.cleanCSV(v.data);
                 if(v.type === "VulnerabilityWeb") {
-                    if(typeof(v.method) != "undefined" && typeof(v.method) != "null")       method      = $scope.cleanCSV(v.method);
-                    if(typeof(v.website) != "undefined" && typeof(v.website) != "null")     website     = $scope.cleanCSV(v.website);
-                    if(typeof(v.path) != "undefined" && typeof(v.path) != "null")           path        = $scope.cleanCSV(v.path);
-                    if(typeof(v.pname) != "undefined" && typeof(v.pname) != "null")         pname       = $scope.cleanCSV(v.pname);
-                    if(typeof(v.params) != "undefined" && typeof(v.params) != "null")       params      = $scope.cleanCSV(v.params);
-                    if(typeof(v.query) != "undefined" && typeof(v.query) != "null")         query       = $scope.cleanCSV(v.query);
-                    if(typeof(v.request) != "undefined" && typeof(v.request) != "null")     request     = $scope.cleanCSV(v.request);
-                    if(typeof(v.response) != "undefined" && typeof(v.response) != "null")   response    = $scope.cleanCSV(v.response);
+                    if(typeof(v.method) != "undefined" && v.method != null)       method      = $scope.cleanCSV(v.method);
+                    if(typeof(v.website) != "undefined" && v.website != null)     website     = $scope.cleanCSV(v.website);
+                    if(typeof(v.path) != "undefined" && v.path != null)           path        = $scope.cleanCSV(v.path);
+                    if(typeof(v.pname) != "undefined" && v.pname != null)         pname       = $scope.cleanCSV(v.pname);
+                    if(typeof(v.params) != "undefined" && v.params != null)       params      = $scope.cleanCSV(v.params);
+                    if(typeof(v.query) != "undefined" && v.query != null)         query       = $scope.cleanCSV(v.query);
+                    if(typeof(v.request) != "undefined" && v.request != null)     request     = $scope.cleanCSV(v.request);
+                    if(typeof(v.response) != "undefined" && v.response != null)   response    = $scope.cleanCSV(v.response);
                 }
 
                 content += "\""+v.date+"\","+

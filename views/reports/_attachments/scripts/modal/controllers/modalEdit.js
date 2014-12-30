@@ -12,6 +12,7 @@ angular.module('faradayApp')
             $scope.p_path = v.path;
             $scope.p_query = v.query;
             $scope.p_website = v.website;
+            $scope.p_refs = v.refs;
             $scope.p_request = v.request;
             $scope.p_response = v.response;
             
@@ -23,6 +24,7 @@ angular.module('faradayApp')
             $scope.path = $scope.p_path;
             $scope.pname = $scope.p_pname;
             $scope.query = $scope.p_query;
+            $scope.refs = $scope.p_refs;
             $scope.request = $scope.p_request;
             $scope.response = $scope.p_response;
             $scope.website = $scope.p_website;
@@ -60,6 +62,7 @@ angular.module('faradayApp')
             $scope.p_path = "";
             $scope.p_query = "";
             $scope.p_website = "";
+            $scope.p_refs = "";
             $scope.p_request = "";
             $scope.p_response = "";
         }
@@ -76,7 +79,6 @@ angular.module('faradayApp')
 
         $scope.ok = function() {
             var res = {};
-
             if($scope.web) { 
                 res = {
                     "data":     $scope.data,
@@ -87,6 +89,7 @@ angular.module('faradayApp')
                     "path":     $scope.path,
                     "pname":    $scope.pname,
                     "query":    $scope.query,
+                    "refs":     $scope.refs,
                     "request":  $scope.request,
                     "response": $scope.response,
                     "severity": $scope.severitySelection, 

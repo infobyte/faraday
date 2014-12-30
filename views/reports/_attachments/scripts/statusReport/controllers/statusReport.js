@@ -45,6 +45,7 @@ angular.module('faradayApp')
             "path":     false,
             "pname":    false,
             "query":    false,
+            "refs":     true,
             "request":  false,
             "response": false,
             "severity": true,
@@ -78,13 +79,14 @@ angular.module('faradayApp')
             var pname       = "";
             var params      = "";
             var query       = "";
+            var refs        = "";
             var request     = "";
             var response    = "";
 
             var content = "\"Date\", \"Web\", \"Status\", \"Severity\", "+
                 "\"Name\", \"Target\", \"Description\", "+
                 "\"Data\", \"Method\", \"Path\", \"Param Name\", \"Params\", "+
-                "\"Query\", \"Request\", \"Response\", \"Website\" \n";
+                "\"Query\", \"References\", \"Request\", \"Response\", \"Website\" \n";
             
             $scope.vulns.forEach(function(v) {
                 method      = "";
@@ -95,6 +97,7 @@ angular.module('faradayApp')
                 pname       = "";
                 params      = "";
                 query       = "";
+                refs        = "";
                 request     = "";
                 response    = "";
 
@@ -107,6 +110,7 @@ angular.module('faradayApp')
                     if(typeof(v.pname) != "undefined" && v.pname != null)         pname       = $scope.cleanCSV(v.pname);
                     if(typeof(v.params) != "undefined" && v.params != null)       params      = $scope.cleanCSV(v.params);
                     if(typeof(v.query) != "undefined" && v.query != null)         query       = $scope.cleanCSV(v.query);
+                    if(typeof(v.refs) != "undefined" && v.refs != null)           refs     = $scope.cleanCSV(v.refs);
                     if(typeof(v.request) != "undefined" && v.request != null)     request     = $scope.cleanCSV(v.request);
                     if(typeof(v.response) != "undefined" && v.response != null)   response    = $scope.cleanCSV(v.response);
                 }
@@ -124,6 +128,7 @@ angular.module('faradayApp')
                     " \""+pname+"\","+
                     " \""+params+"\","+
                     " \""+query+"\","+
+                    " \""+refs+"\","+
                     " \""+request+"\","+
                     " \""+response+"\","+
                     " \""+website+"\""+
@@ -170,6 +175,7 @@ angular.module('faradayApp')
                         if(typeof(data.path) != "undefined") v.path = data.path;
                         if(typeof(data.pname) != "undefined") v.pname = data.pname;
                         if(typeof(data.query) != "undefined") v.query = data.query;
+                        if(typeof(data.refs) != "undefined") v.refs = data.refs;
                         if(typeof(data.request) != "undefined") v.request = data.request;
                         if(typeof(data.response) != "undefined") v.response = data.response;
                         if(typeof(data.website) != "undefined") v.website = data.website;

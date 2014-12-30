@@ -42,6 +42,12 @@
                 <textarea class="form-control" id="vuln-data" placeholder="Data" value="{{p_data}}"  ng-model="data"></textarea>
             </div>
         </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
+                <label class="sr-only" for="vuln-refs">References</label>
+                <textarea class="form-control" id="vuln-refs" placeholder="References" value="{{p_refs}}" ng-model="$parent.refs" tooltip="One line per reference" tooltip-placement="top"></textarea>
+            </div>
+        </div><!-- .form-group -->
         <div ng-if="web">
             <div class="form-group">
                 <div class="col-md-4 has-error">
@@ -74,7 +80,7 @@
             <div class="form-group">
                 <div class="col-md-12 has-error">
                     <label class="sr-only control-label" for="vuln-request">Request</label>
-                    <textarea class="form-control input-error" id="vuln-request" value="{{p_request}}" placeholder="Request" ng-model="$parent.request"></textarea>
+                    <textarea class="form-control input-error" id="vuln-request" value="{{p_request | newlines}}" placeholder="Request" ng-model="$parent.request"></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
@@ -121,3 +127,8 @@
     <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
 </div>
 </form>
+<script type="text/javascript">
+$(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();   
+});
+</script>

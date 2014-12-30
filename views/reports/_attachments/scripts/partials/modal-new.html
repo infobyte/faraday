@@ -82,6 +82,12 @@
                 <textarea class="form-control" id="vuln-data" placeholder="Data" ng-model="data"></textarea>
             </div>
         </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
+                <label class="sr-only" for="vuln-refs">References</label>
+                <textarea class="form-control" id="vuln-refs" placeholder="References" ng-model="$parent.refs" tooltip="One line per reference"></textarea>
+            </div>
+        </div><!-- .form-group -->
     </div>
 
     <div class="animate-switch-container" ng-switch on="vuln_type">

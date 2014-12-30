@@ -53,6 +53,7 @@ angular.module('faradayApp')
                 var res = {};
                 var id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
                 var sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
+                $scope.refs = $scope.refs.split("\n");
 
                 var myDate = new Date();
                 var myEpoch = myDate.getTime()/1000.0;
@@ -77,7 +78,7 @@ angular.module('faradayApp')
                         "owner":        "",
                         "couch_parent": $scope.target_selected._id,
 
-                        "refs":         [],
+                        "refs":         $scope.refs,
                         "status":       $scope.vuln_type,
                         "severity":     $scope.severitySelection,
                         "target":       name_selected,

@@ -13,5 +13,17 @@ angular.module('faradayApp')
             });
         };
 
+        workspacesFact.exists = function(workspace_name) {
+            var request = {
+                method: 'HEAD',
+                url: BASEURL + workspace_name
+            };
+            var exists = false;
+            return $http(request).success(function(data) {
+                exists = true;
+            });
+            return exists;
+        };
+
         return workspacesFact;
     }]);

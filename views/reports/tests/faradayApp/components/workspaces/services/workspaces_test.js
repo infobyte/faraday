@@ -10,7 +10,8 @@ describe('workspacesFact', function() {
         var $workspacesFact = $injector.get('workspacesFact');
 
         createFactory = function() {
-            return $('workspacesFact', {'BASEURL' : 'http://localhost:5984/'});
+            return $injector.get('workspacesFact', {'BASEURL' : 'http://localhost:9876/',
+                                    '$http': $httpBackend});
         };
     }));
 
@@ -23,6 +24,16 @@ describe('workspacesFact', function() {
    describe('Workspaces Service CRUD', function() {
        it('Tests if factory is well created', function() {
            fact = createFactory(); 
+       });
+
+       it('Tests if existence is well asked', function() {
+           $httpBackend.when('HEAD', 'http://localhost:9876/tuvieja')
+                                           .respond(200, '');
+
+           $httpBackend.expectHEAD('http://localhost:9876/tuvieja');
+           fact = createFactory();
+           fact.exists('tuvieja');
+           $httpBackend.flush();
        });
    }); 
 

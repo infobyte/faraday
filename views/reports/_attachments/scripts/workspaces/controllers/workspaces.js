@@ -1,9 +1,21 @@
 angular.module('faradayApp')
     .controller('workspacesCtrl', ['$scope', 'workspacesFact',
             function($scope, workspacesFact) {
-        workspacesFact.get(function(wss) {
+        $scope.workspaces = [];
+        $scope.wss = [];
+
+        $scope.onSuccessGet = function(workspace){
+            $scope.workspaces.push(workspace);
+        };
+
+        workspacesFact.list(function(wss) {
             $scope.wss = wss;
+            $scope.wss.forEach(function(w){
+                console.log('GET' + w);
+                workspacesFact.get(w, $scope.onSuccessGet);
+            });
         });
+
         
         $scope.insert = function(workspace){
             workspacesFact.put(workspace, $scope.onSuccessInsert);

@@ -18,8 +18,23 @@ describe('workspacesCtrl', function() {
 
     beforeEach(function () { 
         workspacesFactMock = {
-            get: function(callback) {
+            list: function(callback) {
                 callback(['ws1', 'ws2']);
+            },
+            get: function(workspace_name, onSuccess){
+                workspace = {
+                    "_id": workspace_name,
+                    "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
+                    "customer": "",
+                    "sdate": 1410832741.48194,
+                    "name": workspace_name,
+                    "fdate": 1410832741.48194,
+                    "type": "Workspace",
+                    "children": [
+                    ],
+                    "description": ""
+                };
+                onSuccess(workspace); 
             },
             put: spyOnPutFactory,
             delete: spyOnDeleteFactory,
@@ -44,6 +59,7 @@ describe('workspacesCtrl', function() {
     describe('Workspaces load in $scope.wss', function() {
         it('tests if wss is loaded properly', function() {
             expect($scope.wss).toEqual(['ws1', 'ws2']);
+            expect($scope.workspaces.length).toEqual(2);
         });
     });
 

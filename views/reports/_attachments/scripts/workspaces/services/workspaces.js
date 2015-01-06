@@ -18,11 +18,22 @@ angular.module('faradayApp')
                 method: 'HEAD',
                 url: BASEURL + workspace_name
             };
-            var exists = false;
+            var exists_workspace = false;
             return $http(request).success(function(data) {
-                exists = true;
+                exists_workspace = true;
             });
-            return exists;
+            return exists_workspace;
+        };
+
+        workspacesFact.put = function(workspace, onSuccess) {
+            var request = {
+                method: 'PUT',
+                url: BASEURL + workspace.name,
+                data: workspace
+            };
+            return $http(request).success(function(data) {
+                onSuccess();
+            });
         };
 
         return workspacesFact;

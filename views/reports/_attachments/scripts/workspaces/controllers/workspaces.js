@@ -6,14 +6,15 @@ angular.module('faradayApp')
         });
         
         $scope.insert = function(workspace){
-            if(workspacesFact.exists(workspace.name) == false){
-                workspacesFact.put(workspace);
-                $scope.wss.push(workspace.name);
-            };
+            workspacesFact.put(workspace, $scope.onSuccessInsert);
         };
 
         $scope.remove = function(workspace_name){
             workspacesFact.delete(workspace_name);
             delete $scope.wss[$scope.wss.indexOf(workspace_name)]; 
+        };
+
+        $scope.onSuccessInsert = function(name){
+            $scope.wss.push(name); 
         };
     }]);

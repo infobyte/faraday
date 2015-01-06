@@ -32,8 +32,35 @@ describe('workspacesFact', function() {
 
            $httpBackend.expectHEAD('http://localhost:9876/tuvieja');
            fact = createFactory();
-           fact.exists('tuvieja');
+           workspace_exists = fact.exists('tuvieja');
+           expect(workspace_exists).toBe(true);
            $httpBackend.flush();
+       });
+
+       it('Tests if OK Inserts are well done', function() {
+
+           var workspace =  {
+               "_id": "test_workspace",
+               "customer": "",
+               "sdate": 1415901244.040532,
+               "name": "test_workspace",
+               "fdate": 1415901244.040532,
+               "type": "Workspace",
+               "children": [
+               ],
+               "description": ""
+           };
+
+           $httpBackend.expectPUT('http://localhost:9876/test_workspace',
+                   workspace).respond(200, {"ok": true});
+
+           fact = createFactory();
+           var workspace_exists = false;
+           onSuccess = function(){ workspace_exists = true;};
+
+           workspace_exists = fact.put(workspace, onSuccess); 
+           $httpBackend.flush();
+           expect(workspace_exists).toBe(true);
        });
    }); 
 

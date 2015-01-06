@@ -88,9 +88,7 @@ describe('workspacesCtrl', function() {
             $scope.insert(workspace);
 
             // http://jasmine.github.io/1.3/introduction.html#section-Matchers
-            expect($scope.wss).toContain(workspace_name);
-            expect($scope.wss.length).toEqual(3);
-            expect(spyOnPutFactory).toHaveBeenCalledWith(workspace);
+            expect(spyOnPutFactory).toHaveBeenCalledWith(workspace, $scope.onSuccessInsert);
         });
     });
     describe('Workspaces removal in $scope.wss', function() { 

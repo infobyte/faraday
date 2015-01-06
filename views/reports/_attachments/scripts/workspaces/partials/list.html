@@ -1,0 +1,68 @@
+            <section id="main" class="seccion clearfix">
+                <aside class="left-nav">
+                    <nav>
+                        <ul>
+                            <li>
+                                <a href="../././reports/index.html" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
+                                    <h2><span class="fa fa-pie-chart" title="Dashboard"></span></h2>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="../././reports/faraday.html#/status" class="status-report" style="color: #ffffff !important" title="Status Report">
+                                    <h2><span class="fa fa-list" title="Status Report"></span></h2>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#/workspaces" class="workspaces" style="color: #ffffff !important" title="Workspaces">
+                                    <h2><span class="fa fa-folder-open-o" title="Workspaces"></span></h2>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <div class="right-main"><div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <span id="ws-name" class="label label-default"
+                        title="Workspaces">Workspaces</span><!-- WS name -->
+                        <button id="delete" type="button" class="btn btn-danger" title="Delete selected Workspaces" ng-click="delete()">
+                            Delete
+                        </button>
+                        <button id="merge" type="button" class="btn btn-danger" title="Edit selected Workspaces" ng-click="edit()">
+                            Edit
+                        </button>
+                        <button id="merge" type="button" class="btn btn-danger" title="New Workspace" ng-click="new()">
+                            New
+                        </button>
+                    </h2><!-- .ws-label -->
+                    <div class="reports">
+                        <table class="status-report">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('name')">Name</a>
+                                    </th>
+                                    <th>
+                                        <a href="" ng-click="description">Description</a>
+                                    </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('sdate')">Creation Date</a>
+                                    </th>
+                                    <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="w in workspaces | filter:query | orderBy:sortField:reverse"
+                                    selection-model selection-model-type="checkbox" 
+                                    selection-model-mode="multiple-additive" 
+                                    selection-model-selected-class="multi-selected">
+                                    <td>{{w.name}}</td>
+                                    <td>{{w.description}}</td>
+                                    <td>{{u.sdate}}</td>
+                                    <td><input type="checkbox" name="{{w._id}}"/></td>
+                                </tr>
+                            </tbody>
+                        </table><!-- #hosts -->
+                    </div><!-- .reports -->
+                </div><!-- #reports-main --></div><!-- .right-main -->
+            </section><!-- #main -->

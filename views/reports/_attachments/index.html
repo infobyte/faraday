@@ -64,6 +64,11 @@
                                     <h2><span class="fa fa-list" title="Status Report"></span></h2>
                                 </a>
                             </li>
+                            <li>
+                                <a href="#" class="workspaces" style="color: #ffffff !important" title="Workspaces">
+                                    <h2><span class="fa fa-folder-open-o" title="Workspaces"></span></h2>
+                                </a>
+                            </li>
                         </ul>
                     </nav>
                 </aside>
@@ -136,6 +141,11 @@
         $(document).on("click", "a.status-report", function(e) {
             e.preventDefault();
             var url = "../././reports/faraday.html#/status/ws/" + workspace;
+            window.location.href = url;
+        });
+        $(document).on("click", "a.workspaces", function(e) {
+            e.preventDefault();
+            var url = "../././reports/faraday.html#/workspaces";
             window.location.href = url;
         });
         $(document).on("click", "a.treemap-view", function(e) {

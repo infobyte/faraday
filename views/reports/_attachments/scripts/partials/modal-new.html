@@ -83,9 +83,13 @@
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
-            <div class="col-md-12">
-                <label class="sr-only" for="vuln-refs">References</label>
-                <textarea class="form-control" id="vuln-refs" placeholder="References" ng-model="$parent.refs" tooltip="One line per reference"></textarea>
+            <div class="col-md-12 reference" ng-repeat="reference in refs">
+                <div class="input-group margin-bottom-sm">
+                    <label class="sr-only" for="vuln-refs">References</label>
+                    <input type="text" class="form-control" id="vuln-refs" placeholder="Refecence" ng-model="reference.ref"/>
+                    <span class="input-group-addon" ng-click="newReference($event)"><i class="fa fa-plus-circle"></i></span>
+                    <span class="input-group-addon" ng-click="refs.splice($index, 1)" ng-hide="refs.length == 1"><i class="fa fa-minus-circle"></i></span>
+                </div>
             </div>
         </div><!-- .form-group -->
     </div>

@@ -110,7 +110,7 @@ angular.module('faradayApp')
                     if(typeof(v.pname) != "undefined" && v.pname != null)         pname       = $scope.cleanCSV(v.pname);
                     if(typeof(v.params) != "undefined" && v.params != null)       params      = $scope.cleanCSV(v.params);
                     if(typeof(v.query) != "undefined" && v.query != null)         query       = $scope.cleanCSV(v.query);
-                    if(typeof(v.refs) != "undefined" && v.refs != null)           refs     = $scope.cleanCSV(v.refs);
+                    if(typeof(v.refs) != "undefined" && v.refs != null)           refs        = $scope.cleanCSV(v.refs);
                     if(typeof(v.request) != "undefined" && v.request != null)     request     = $scope.cleanCSV(v.request);
                     if(typeof(v.response) != "undefined" && v.response != null)   response    = $scope.cleanCSV(v.response);
                 }
@@ -169,6 +169,7 @@ angular.module('faradayApp')
                     if(typeof(data.name) != "undefined") v.name = data.name;
                     if(typeof(data.desc) != "undefined") v.desc = data.desc;
                     if(typeof(data.data) != "undefined") v.data = data.data;
+                    if(typeof(data.refs) != "undefined") v.refs = data.refs;
                     if(v.web) {
                         if(typeof(data.method) != "undefined") v.method = data.method;
                         if(typeof(data.params) != "undefined") v.params = data.params;

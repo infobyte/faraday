@@ -43,9 +43,13 @@
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
-            <div class="col-md-12">
-                <label class="sr-only" for="vuln-refs">References</label>
-                <textarea class="form-control" id="vuln-refs" placeholder="References" value="{{p_refs}}" ng-model="$parent.refs" tooltip="One line per reference" tooltip-placement="top"></textarea>
+            <div class="col-md-12 reference" ng-repeat="reference in refs">
+                <div class="input-group margin-bottom-sm">
+                    <label class="sr-only" for="vuln-refs">References</label>
+                    <input type="text" class="form-control" id="vuln-refs" placeholder="Refecence" ng-model="reference.ref"/>
+                    <span class="input-group-addon" ng-click="newReference($event)"><i class="fa fa-plus-circle"></i></span>
+                    <span class="input-group-addon" ng-click="refs.splice($index, 1)" ng-hide="refs.length == 1"><i class="fa fa-minus-circle"></i></span>
+                </div>
             </div>
         </div><!-- .form-group -->
         <div ng-if="web">
@@ -80,7 +84,7 @@
             <div class="form-group">
                 <div class="col-md-12 has-error">
                     <label class="sr-only control-label" for="vuln-request">Request</label>
-                    <textarea class="form-control input-error" id="vuln-request" value="{{p_request | newlines}}" placeholder="Request" ng-model="$parent.request"></textarea>
+                    <textarea class="form-control input-error" id="vuln-request" value="{{p_request}}" placeholder="Request" ng-model="$parent.request"></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">

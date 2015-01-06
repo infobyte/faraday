@@ -33,7 +33,7 @@ angular.module('faradayApp')
         $scope.vulns = vulns;
         $scope.web = false;
         $scope.mixed = 0x00;
-        
+
         $scope.vulnc = 0;
         var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
 
@@ -79,6 +79,11 @@ angular.module('faradayApp')
 
         $scope.ok = function() {
             var res = {};
+            var arrayReferences = [];
+            $scope.refs.forEach(function(r){
+                arrayReferences.push(r.ref);
+            });
+            arrayReferences.filter(Boolean);
             if($scope.web) { 
                 res = {
                     "data":     $scope.data,
@@ -89,7 +94,7 @@ angular.module('faradayApp')
                     "path":     $scope.path,
                     "pname":    $scope.pname,
                     "query":    $scope.query,
-                    "refs":     $scope.refs,
+                    "refs":     arrayReferences,
                     "request":  $scope.request,
                     "response": $scope.response,
                     "severity": $scope.severitySelection, 
@@ -101,6 +106,7 @@ angular.module('faradayApp')
                     "data":     $scope.data,
                     "desc":     $scope.desc,
                     "name":     $scope.name, 
+                    "refs":     arrayReferences,
                     "severity": $scope.severitySelection, 
                     "vulns":    $scope.vulns 
                 };
@@ -113,4 +119,14 @@ angular.module('faradayApp')
             $modalInstance.dismiss('cancel');
         };
 
+        var refArray = [];
+        $scope.refs.forEach(function(r){
+            refArray.push({ref:r});
+        });
+        $scope.refs = refArray;
+
+        $scope.newReference = function($event){
+            $scope.refs.push({ref:''});
+            $event.preventDefault();
+        }
     });

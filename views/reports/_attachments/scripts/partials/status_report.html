@@ -119,6 +119,10 @@
                                         <a href="" ng-click="toggleShow('response', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="toggleSort('response')">Response</a>
                                     </th>
+                                    <th ng-if="columns.resolution">
+                                        <a href="" ng-click="toggleShow('resolution', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                                        <a href="" ng-click="toggleSort('resolution')">Resolution</a>
+                                    </th>
                                     <th ng-if="columns.web">
                                         <a href="" ng-click="toggleShow('web', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="toggleSort('web')">Web</a>
@@ -153,6 +157,7 @@
                                     <td ng-if="columns.query">{{v.query}}</td>
                                     <td ng-if="columns.request" text-collapse text-collapse-max-length="100" text-collapse-text="{{v.request}}"></td>
                                     <td ng-if="columns.response" text-collapse text-collapse-max-length="100" text-collapse-text="{{v.response}}"></td>
+                                    <td ng-if="columns.resolution">{{v.resolution}}</td>
                                     <td ng-if="columns.web">
                                         <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
                                         <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>

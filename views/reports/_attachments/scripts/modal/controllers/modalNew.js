@@ -63,7 +63,7 @@ angular.module('faradayApp')
                 
                 var myDate = new Date();
                 var myEpoch = myDate.getTime()/1000.0;
-
+                
                 var res = {
                         "id":           id,
                         "data":         $scope.data,
@@ -85,6 +85,7 @@ angular.module('faradayApp')
                         "couch_parent": $scope.target_selected._id,
 
                         "refs":         arrayReferences,
+                        "resolution":   $scope.resolution,
                         "status":       $scope.vuln_type,
                         "severity":     $scope.severitySelection,
                         "target":       name_selected,
@@ -98,6 +99,7 @@ angular.module('faradayApp')
                         "pname":        $scope.pname,
                         "query":        $scope.query,
                         "request":      $scope.request,
+                        "resolution":   $scope.resolution,
                         "response":     $scope.response,
                         "web":          true, 
                         "website":      $scope.website

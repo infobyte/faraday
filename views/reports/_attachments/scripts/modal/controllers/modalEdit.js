@@ -15,6 +15,7 @@ angular.module('faradayApp')
             $scope.p_refs = v.refs;
             $scope.p_request = v.request;
             $scope.p_response = v.response;
+            $scope.p_resolution = v.resolution;
             
             $scope.name = $scope.p_name;
             $scope.data = $scope.p_data;
@@ -27,6 +28,7 @@ angular.module('faradayApp')
             $scope.refs = $scope.p_refs;
             $scope.request = $scope.p_request;
             $scope.response = $scope.p_response;
+            $scope.resolution = $scope.p_resolution;
             $scope.website = $scope.p_website;
         };
         $scope.severities = severities;
@@ -65,6 +67,7 @@ angular.module('faradayApp')
             $scope.p_refs = "";
             $scope.p_request = "";
             $scope.p_response = "";
+            $scope.p_resolution = "";
         }
 
         if($scope.mixed == 0x11) {
@@ -86,29 +89,31 @@ angular.module('faradayApp')
             arrayReferences.filter(Boolean);
             if($scope.web) { 
                 res = {
-                    "data":     $scope.data,
-                    "desc":     $scope.desc,
-                    "method":   $scope.method,
-                    "name":     $scope.name, 
-                    "params":   $scope.params,
-                    "path":     $scope.path,
-                    "pname":    $scope.pname,
-                    "query":    $scope.query,
-                    "refs":     arrayReferences,
-                    "request":  $scope.request,
-                    "response": $scope.response,
-                    "severity": $scope.severitySelection, 
-                    "vulns":    $scope.vulns, 
-                    "website":  $scope.website
+                    "data":         $scope.data,
+                    "desc":         $scope.desc,
+                    "method":       $scope.method,
+                    "name":         $scope.name, 
+                    "params":       $scope.params,
+                    "path":         $scope.path,
+                    "pname":        $scope.pname,
+                    "query":        $scope.query,
+                    "refs":         arrayReferences,
+                    "request":      $scope.request,
+                    "response":     $scope.response,
+                    "resolution":   $scope.resolution,
+                    "severity":     $scope.severitySelection, 
+                    "vulns":        $scope.vulns, 
+                    "website":      $scope.website
                 };    
             } else {
                 res = {
-                    "data":     $scope.data,
-                    "desc":     $scope.desc,
-                    "name":     $scope.name, 
-                    "refs":     arrayReferences,
-                    "severity": $scope.severitySelection, 
-                    "vulns":    $scope.vulns 
+                    "data":         $scope.data,
+                    "desc":         $scope.desc,
+                    "name":         $scope.name, 
+                    "refs":         arrayReferences,
+                    "resolution":   $scope.resolution,
+                    "severity":     $scope.severitySelection, 
+                    "vulns":        $scope.vulns 
                 };
             }
 

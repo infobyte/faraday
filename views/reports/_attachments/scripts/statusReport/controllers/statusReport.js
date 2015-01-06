@@ -36,23 +36,24 @@ angular.module('faradayApp')
         
         // set columns to show and hide by default
         $scope.columns = {
-            "data":     true,
-            "date":     true,
-            "desc":     true,
-            "method":   false,
-            "name":     true,
-            "params":   false,
-            "path":     false,
-            "pname":    false,
-            "query":    false,
-            "refs":     true,
-            "request":  false,
-            "response": false,
-            "severity": true,
-            "status":   false,
-            "target":   true,
-            "web":      false,
-            "website":  false
+            "data":         true,
+            "date":         true,
+            "desc":         true,
+            "method":       false,
+            "name":         true,
+            "params":       false,
+            "path":         false,
+            "pname":        false,
+            "query":        false,
+            "refs":         true,
+            "request":      false,
+            "response":     false,
+            "resolution":   false,
+            "severity":     true,
+            "status":       false,
+            "target":       true,
+            "web":          false,
+            "website":      false
         };
 
         $scope.severities = [
@@ -82,11 +83,12 @@ angular.module('faradayApp')
             var refs        = "";
             var request     = "";
             var response    = "";
+            var resolution  = "";
 
             var content = "\"Date\", \"Web\", \"Status\", \"Severity\", "+
                 "\"Name\", \"Target\", \"Description\", "+
                 "\"Data\", \"Method\", \"Path\", \"Param Name\", \"Params\", "+
-                "\"Query\", \"References\", \"Request\", \"Response\", \"Website\" \n";
+                "\"Query\", \"References\", \"Request\", \"Response\", \"Resolution\",\"Website\" \n";
             
             $scope.vulns.forEach(function(v) {
                 method      = "";
@@ -100,19 +102,22 @@ angular.module('faradayApp')
                 refs        = "";
                 request     = "";
                 response    = "";
+                resolution  = "";
 
-                if(typeof(v.desc) != "undefined" && v.desc != null)   desc    = $scope.cleanCSV(v.desc);
-                if(typeof(v.data) != "undefined" && v.data != null)   text    = $scope.cleanCSV(v.data);
+                if(typeof(v.desc) != "undefined" && v.desc != null)                 desc          = $scope.cleanCSV(v.desc);
+                if(typeof(v.data) != "undefined" && v.data != null)                 text          = $scope.cleanCSV(v.data);
+                if(typeof(v.resolution) != "undefined" && v.resolution != null)     resolution    = $scope.cleanCSV(v.resolution);
                 if(v.type === "VulnerabilityWeb") {
-                    if(typeof(v.method) != "undefined" && v.method != null)       method      = $scope.cleanCSV(v.method);
-                    if(typeof(v.website) != "undefined" && v.website != null)     website     = $scope.cleanCSV(v.website);
-                    if(typeof(v.path) != "undefined" && v.path != null)           path        = $scope.cleanCSV(v.path);
-                    if(typeof(v.pname) != "undefined" && v.pname != null)         pname       = $scope.cleanCSV(v.pname);
-                    if(typeof(v.params) != "undefined" && v.params != null)       params      = $scope.cleanCSV(v.params);
-                    if(typeof(v.query) != "undefined" && v.query != null)         query       = $scope.cleanCSV(v.query);
-                    if(typeof(v.refs) != "undefined" && v.refs != null)           refs        = $scope.cleanCSV(v.refs);
-                    if(typeof(v.request) != "undefined" && v.request != null)     request     = $scope.cleanCSV(v.request);
-                    if(typeof(v.response) != "undefined" && v.response != null)   response    = $scope.cleanCSV(v.response);
+                    if(typeof(v.method) != "undefined" && v.method != null)         method      = $scope.cleanCSV(v.method);
+                    if(typeof(v.website) != "undefined" && v.website != null)       website     = $scope.cleanCSV(v.website);
+                    if(typeof(v.path) != "undefined" && v.path != null)             path        = $scope.cleanCSV(v.path);
+                    if(typeof(v.pname) != "undefined" && v.pname != null)           pname       = $scope.cleanCSV(v.pname);
+                    if(typeof(v.params) != "undefined" && v.params != null)         params      = $scope.cleanCSV(v.params);
+                    if(typeof(v.query) != "undefined" && v.query != null)           query       = $scope.cleanCSV(v.query);
+                    if(typeof(v.refs) != "undefined" && v.refs != null)             refs        = $scope.cleanCSV(v.refs);
+                    if(typeof(v.request) != "undefined" && v.request != null)       request     = $scope.cleanCSV(v.request);
+                    if(typeof(v.response) != "undefined" && v.response != null)     response    = $scope.cleanCSV(v.response);
+                    if(typeof(v.resolution) != "undefined" && v.resolution != null) resolution    = $scope.cleanCSV(v.resolution);
                 }
 
                 content += "\""+v.date+"\","+
@@ -131,6 +136,7 @@ angular.module('faradayApp')
                     " \""+refs+"\","+
                     " \""+request+"\","+
                     " \""+response+"\","+
+                    " \""+resolution+"\","+
                     " \""+website+"\""+
                     "\n";
             });
@@ -170,6 +176,7 @@ angular.module('faradayApp')
                     if(typeof(data.desc) != "undefined") v.desc = data.desc;
                     if(typeof(data.data) != "undefined") v.data = data.data;
                     if(typeof(data.refs) != "undefined") v.refs = data.refs;
+                    if(typeof(data.resolution) != "undefined") v.resolution = data.resolution;
                     if(v.web) {
                         if(typeof(data.method) != "undefined") v.method = data.method;
                         if(typeof(data.params) != "undefined") v.params = data.params;
@@ -179,6 +186,7 @@ angular.module('faradayApp')
                         if(typeof(data.refs) != "undefined") v.refs = data.refs;
                         if(typeof(data.request) != "undefined") v.request = data.request;
                         if(typeof(data.response) != "undefined") v.response = data.response;
+                        if(typeof(data.resolution) != "undefined") v.resolution = data.resolution;
                         if(typeof(data.website) != "undefined") v.website = data.website;
                     }
             

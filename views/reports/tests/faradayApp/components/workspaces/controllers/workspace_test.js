@@ -105,7 +105,7 @@ describe('workspacesCtrl', function() {
 
             // http://jasmine.github.io/1.3/introduction.html#section-Matchers
             expect(spyOnPutFactory).toHaveBeenCalledWith(workspace, $scope.onSuccessInsert);
-        });
+       });
     });
     describe('Workspaces removal in $scope.wss', function() { 
         it('tests if workspaces in scope.wss are removed ', function() {

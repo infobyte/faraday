@@ -14,6 +14,20 @@ angular.module('faradayApp')
             $scope.workspaces.push(workspace); 
         };
 
+        $scope.onSuccessDelete = function(workspace_name){ 
+            remove =  function(arr, item) {
+                for(var i = arr.length; i--;) {
+                    if(arr[i] === item) {
+                        arr.splice(i, 1);
+                    }
+                }
+            };
+
+            $scope.wss = remove($scope.wss, workspace_name); 
+
+            delete $scope.workspaces[workspace]; 
+        };
+
 
         workspacesFact.list(function(wss) {
             $scope.wss = wss;
@@ -28,8 +42,7 @@ angular.module('faradayApp')
         };
 
         $scope.remove = function(workspace_name){
-            workspacesFact.delete(workspace_name);
-            delete $scope.wss[$scope.wss.indexOf(workspace_name)]; 
+            workspacesFact.delete(workspace_name, $scope.onSuccessDelete);
         };
 
         $scope.new = function(){ 

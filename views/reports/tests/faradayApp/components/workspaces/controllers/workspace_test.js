@@ -8,7 +8,7 @@ describe('workspacesCtrl', function() {
     var spyOnPutFactory;
 
     spyOnPutFactory = jasmine.createSpy('Put Workspace Factory Spy');
-    spyOnDeleteFactory = jasmine.createSpy('Delete Workspace Factory Spy');
+    spyOnDeleteFactory = jasmine.createSpy('Delete Workspace Factory Spy'); 
     spyOnExistsFactory = jasmine.createSpy('Delete Workspace Factory Spy');
     spyOnExistsFactory('test_workspace', function(){
         return false;
@@ -37,7 +37,9 @@ describe('workspacesCtrl', function() {
                 onSuccess(workspace); 
             },
             put: spyOnPutFactory,
-            delete: spyOnDeleteFactory,
+            delete: function(workspace, onSuccess) {
+                    onSuccess(workspace);
+            },
             exists: function(workspace_name){
                 return false; }
 
@@ -109,9 +111,10 @@ describe('workspacesCtrl', function() {
     });
     describe('Workspaces removal in $scope.wss', function() { 
         it('tests if workspaces in scope.wss are removed ', function() {
+
             $scope.remove('ws1');
-            expect(spyOnDeleteFactory).toHaveBeenCalledWith('ws1');
             expect($scope.wss).not.toContain('ws1');
+            expect($scope.workspaces['ws1']).not.toBeDefined(); 
         });
     });
 

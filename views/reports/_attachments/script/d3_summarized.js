@@ -230,7 +230,7 @@ function cake(workspace, design, view){
 	  "med": "#DFBF35",
 	  "critical": "#8B00FF",
 	  "high": "#DF3936",
-	  "info": "#858585"
+	  "info": "#428BCA"
 	};
 
 	// Total size of all segments; we set this later, after loading the data.

@@ -54,6 +54,9 @@ describe('workspacesFact', function() {
            $httpBackend.expectPUT('http://localhost:9876/test_workspace',
                    workspace).respond(200, {"ok": true});
 
+           $httpBackend.expectPUT('http://localhost:9876/test_workspace/test_workspace',
+                   workspace).respond(200, {"ok": true});
+
            fact = createFactory();
            var workspace_exists = false;
            onSuccess = function(){ workspace_exists = true;};

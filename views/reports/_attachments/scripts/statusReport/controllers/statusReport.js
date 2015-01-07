@@ -69,7 +69,7 @@ angular.module('faradayApp')
         // returns scope vulns as CSV obj
         // toggles column sort field
         $scope.cleanCSV = function(field) {
-            return field.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'").replace(/[\n\r]/g, "%20").replace(/[,]/g, "%2c");
+            return field.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'").replace(/[\n\r]/g, "%0A").replace(/[,]/g, "%2c");
         };
         $scope.ToString = function(array){
             return array.toString();

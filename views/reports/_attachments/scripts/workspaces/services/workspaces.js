@@ -45,5 +45,14 @@ angular.module('faradayApp')
             });
         };
 
+        workspacesFact.delete = function(workspace_name, onSuccess) {
+            var request = {
+                method: 'DELETE',
+                url: BASEURL + workspace_name,
+            };
+            return $http(request).success(function(data) {
+                onSuccess(workspace_name);
+            });
+        };
         return workspacesFact;
     }]);

@@ -37,8 +37,7 @@ describe('workspacesFact', function() {
            $httpBackend.flush();
        });
 
-       it('Tests if OK Inserts are well done', function() {
-
+       it('Tests if OK Inserts are well done', function() { 
            var workspace =  {
                "_id": "test_workspace",
                "customer": "",
@@ -61,9 +60,22 @@ describe('workspacesFact', function() {
            var workspace_exists = false;
            onSuccess = function(){ workspace_exists = true;};
 
-           workspace_exists = fact.put(workspace, onSuccess); 
+           fact.put(workspace, onSuccess); 
            $httpBackend.flush();
            expect(workspace_exists).toBe(true);
+       });
+
+       it('Tests if OK Delete are well done', function() { 
+           $httpBackend.expectDELETE('http://localhost:9876/test_workspace').
+               respond(200, {"ok": true});
+
+           fact = createFactory();
+           var workspace_exists = true;
+           onSuccess = function(){ workspace_exists = false;};
+
+           workspace_exists = fact.delete('test_workspace', onSuccess); 
+           $httpBackend.flush();
+           expect(workspace_exists).toBe(false);
        });
    }); 
 

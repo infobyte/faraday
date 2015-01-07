@@ -1,17 +1,23 @@
 <div class="modal-header">
     <div class="modal-button">
-        <button class="btn btn-success" ng-click="ok()">OK</button>
+        <button class="btn btn-success" ng-click="okNew()">Save</button>
         <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
     </div>
-    <h3 class="modal-title">Bulk edit</h3>
+    <h3 class="modal-title">New Workspace</h3>
 </div>
 <div class="modal-body">
     <div class="form-horizontal">
         <div class="form-group">
+            <div class="col-md-12">
+                <label class="sr-only" for="wsp-name">Workspace Name</label>
+                <input type="text" class="form-control" id="vuln-name" placeholder="Workspace Name" ng-model="newworkspace.name" required/>
+            </div>
+        </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
+                <label class="sr-only" for="vuln-desc">Workspacedescription</label>
+                <textarea class="form-control" id="vuln-desc" placeholder="Description" ng-model="newworkspace.description" required></textarea>
+            </div>
         </div><!-- .form-group -->
     </div><!-- .form-horizontal -->
 </div><!-- .modal-body -->
-<div class="modal-footer">
-    <button class="btn btn-success" ng-click="ok()">OK</button>
-    <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
-</div>

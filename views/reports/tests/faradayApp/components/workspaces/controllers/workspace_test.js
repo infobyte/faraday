@@ -114,5 +114,24 @@ describe('workspacesCtrl', function() {
             expect($scope.wss).not.toContain('ws1');
         });
     });
+
+    describe('Workspaces object creation ', function() { 
+        it('tests if workspaces create object is consistent', function() {
+            workspace = $scope.create('wname','wdesc');
+            workspace_properties = Object.keys(workspace);
+            expect(workspace_properties).toContain('_id');
+            expect(workspace_properties).toContain('name');
+            expect(workspace_properties).toContain('description');
+            expect(workspace_properties).toContain('customer');
+            expect(workspace_properties).toContain('sdate');
+            expect(workspace_properties).toContain('fdate');
+            expect(workspace_properties).toContain('type');
+            expect(workspace_properties).toContain('children');
+
+            expect(workspace.name).toEqual('wname');
+            expect(workspace._id).toEqual('wname');
+            expect(workspace.description).toEqual('wdesc'); 
+        });
+    });
 });
 

@@ -38,7 +38,10 @@ angular.module('faradayApp')
                 data: workspace
             };
             return $http(request).success(function(data) {
-                onSuccess();
+                return $http.put(BASEURL + workspace.name + '/' + workspace.name, workspace).success(function(data)
+                {
+                    onSuccess(workspace);
+                });
             });
         };
 

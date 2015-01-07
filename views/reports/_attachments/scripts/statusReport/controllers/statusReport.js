@@ -71,6 +71,9 @@ angular.module('faradayApp')
         $scope.cleanCSV = function(field) {
             return field.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'").replace(/[\n\r]/g, "%20").replace(/[,]/g, "%2c");
         };
+        $scope.ToString = function(array){
+            return array.toString();
+        };
         $scope.toCSV = function() {
             var method      = "";
             var website     = "";
@@ -103,10 +106,15 @@ angular.module('faradayApp')
                 request     = "";
                 response    = "";
                 resolution  = "";
+                refs = $scope.ToString(v.refs);
 
                 if(typeof(v.desc) != "undefined" && v.desc != null)                 desc          = $scope.cleanCSV(v.desc);
                 if(typeof(v.data) != "undefined" && v.data != null)                 text          = $scope.cleanCSV(v.data);
                 if(typeof(v.resolution) != "undefined" && v.resolution != null)     resolution    = $scope.cleanCSV(v.resolution);
+                if(typeof(refs) != "undefined" && refs != null){
+                    refs = $scope.cleanCSV(refs);
+                    refs = refs.replace(/%2c/g,"%0A");
+                }
                 if(v.type === "VulnerabilityWeb") {
                     if(typeof(v.method) != "undefined" && v.method != null)         method      = $scope.cleanCSV(v.method);
                     if(typeof(v.website) != "undefined" && v.website != null)       website     = $scope.cleanCSV(v.website);
@@ -114,10 +122,13 @@ angular.module('faradayApp')
                     if(typeof(v.pname) != "undefined" && v.pname != null)           pname       = $scope.cleanCSV(v.pname);
                     if(typeof(v.params) != "undefined" && v.params != null)         params      = $scope.cleanCSV(v.params);
                     if(typeof(v.query) != "undefined" && v.query != null)           query       = $scope.cleanCSV(v.query);
-                    if(typeof(v.refs) != "undefined" && v.refs != null)             refs        = $scope.cleanCSV(v.refs);
+                    if(typeof(refs) != "undefined" && refs != null){
+                        refs = $scope.cleanCSV(refs);
+                        refs = refs.replace(/%2c/g,"%0A");
+                    }
                     if(typeof(v.request) != "undefined" && v.request != null)       request     = $scope.cleanCSV(v.request);
                     if(typeof(v.response) != "undefined" && v.response != null)     response    = $scope.cleanCSV(v.response);
-                    if(typeof(v.resolution) != "undefined" && v.resolution != null) resolution    = $scope.cleanCSV(v.resolution);
+                    if(typeof(v.resolution) != "undefined" && v.resolution != null) resolution  = $scope.cleanCSV(v.resolution);
                 }
 
                 content += "\""+v.date+"\","+

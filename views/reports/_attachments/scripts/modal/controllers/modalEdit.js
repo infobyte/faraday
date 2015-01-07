@@ -12,8 +12,10 @@ angular.module('faradayApp')
             $scope.p_path = v.path;
             $scope.p_query = v.query;
             $scope.p_website = v.website;
+            $scope.p_refs = v.refs;
             $scope.p_request = v.request;
             $scope.p_response = v.response;
+            $scope.p_resolution = v.resolution;
             
             $scope.name = $scope.p_name;
             $scope.data = $scope.p_data;
@@ -23,15 +25,17 @@ angular.module('faradayApp')
             $scope.path = $scope.p_path;
             $scope.pname = $scope.p_pname;
             $scope.query = $scope.p_query;
+            $scope.refs = $scope.p_refs;
             $scope.request = $scope.p_request;
             $scope.response = $scope.p_response;
+            $scope.resolution = $scope.p_resolution;
             $scope.website = $scope.p_website;
         };
         $scope.severities = severities;
         $scope.vulns = vulns;
         $scope.web = false;
         $scope.mixed = 0x00;
-        
+
         $scope.vulnc = 0;
         var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
 
@@ -60,8 +64,10 @@ angular.module('faradayApp')
             $scope.p_path = "";
             $scope.p_query = "";
             $scope.p_website = "";
+            $scope.p_refs = "";
             $scope.p_request = "";
             $scope.p_response = "";
+            $scope.p_resolution = "";
         }
 
         if($scope.mixed == 0x11) {
@@ -76,30 +82,38 @@ angular.module('faradayApp')
 
         $scope.ok = function() {
             var res = {};
-
+            var arrayReferences = [];
+            $scope.refs.forEach(function(r){
+                arrayReferences.push(r.ref);
+            });
+            arrayReferences.filter(Boolean);
             if($scope.web) { 
                 res = {
-                    "data":     $scope.data,
-                    "desc":     $scope.desc,
-                    "method":   $scope.method,
-                    "name":     $scope.name, 
-                    "params":   $scope.params,
-                    "path":     $scope.path,
-                    "pname":    $scope.pname,
-                    "query":    $scope.query,
-                    "request":  $scope.request,
-                    "response": $scope.response,
-                    "severity": $scope.severitySelection, 
-                    "vulns":    $scope.vulns, 
-                    "website":  $scope.website
+                    "data":         $scope.data,
+                    "desc":         $scope.desc,
+                    "method":       $scope.method,
+                    "name":         $scope.name, 
+                    "params":       $scope.params,
+                    "path":         $scope.path,
+                    "pname":        $scope.pname,
+                    "query":        $scope.query,
+                    "refs":         arrayReferences,
+                    "request":      $scope.request,
+                    "response":     $scope.response,
+                    "resolution":   $scope.resolution,
+                    "severity":     $scope.severitySelection, 
+                    "vulns":        $scope.vulns, 
+                    "website":      $scope.website
                 };    
             } else {
                 res = {
-                    "data":     $scope.data,
-                    "desc":     $scope.desc,
-                    "name":     $scope.name, 
-                    "severity": $scope.severitySelection, 
-                    "vulns":    $scope.vulns 
+                    "data":         $scope.data,
+                    "desc":         $scope.desc,
+                    "name":         $scope.name, 
+                    "refs":         arrayReferences,
+                    "resolution":   $scope.resolution,
+                    "severity":     $scope.severitySelection, 
+                    "vulns":        $scope.vulns 
                 };
             }
 
@@ -110,4 +124,14 @@ angular.module('faradayApp')
             $modalInstance.dismiss('cancel');
         };
 
+        var refArray = [];
+        $scope.refs.forEach(function(r){
+            refArray.push({ref:r});
+        });
+        $scope.refs = refArray;
+
+        $scope.newReference = function($event){
+            $scope.refs.push({ref:''});
+            $event.preventDefault();
+        }
     });

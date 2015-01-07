@@ -13,6 +13,7 @@ angular.module('faradayApp')
         $scope.target_selected = null;
         $scope.not_target_selected = false;
         $scope.incompatible_vulnWeb = false;
+        $scope.refs = [{ref:''}];
 
         var name_selected;
         var host_selected;
@@ -54,9 +55,15 @@ angular.module('faradayApp')
                 var id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
                 var sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
 
+                var arrayReferences = [];
+                $scope.refs.forEach(function(r){
+                    arrayReferences.push(r.ref);
+                });
+                arrayReferences.filter(Boolean);
+                
                 var myDate = new Date();
                 var myEpoch = myDate.getTime()/1000.0;
-
+                
                 var res = {
                         "id":           id,
                         "data":         $scope.data,
@@ -77,7 +84,8 @@ angular.module('faradayApp')
                         "owner":        "",
                         "couch_parent": $scope.target_selected._id,
 
-                        "refs":         [],
+                        "refs":         arrayReferences,
+                        "resolution":   $scope.resolution,
                         "status":       $scope.vuln_type,
                         "severity":     $scope.severitySelection,
                         "target":       name_selected,
@@ -91,6 +99,7 @@ angular.module('faradayApp')
                         "pname":        $scope.pname,
                         "query":        $scope.query,
                         "request":      $scope.request,
+                        "resolution":   $scope.resolution,
                         "response":     $scope.response,
                         "web":          true, 
                         "website":      $scope.website
@@ -140,5 +149,10 @@ angular.module('faradayApp')
             if($scope.go_page < $scope.numberOfPages()+2 && $scope.go_page > -1){
                 $scope.currentPage = $scope.go_page;
             }
+        }
+
+        $scope.newReference = function($event){
+            $scope.refs.push({ref:''});
+            $event.preventDefault();
         }
     }]);

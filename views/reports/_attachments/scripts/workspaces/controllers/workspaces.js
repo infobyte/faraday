@@ -21,11 +21,17 @@ angular.module('faradayApp')
                         arr.splice(i, 1);
                     }
                 }
+                return arr;
             };
 
             $scope.wss = remove($scope.wss, workspace_name); 
-
-            delete $scope.workspaces[workspace]; 
+            for(var i = 0; i < $scope.workspaces.length; i++) {
+                if($scope.workspaces[i].name == workspace_name){
+                    $scope.workspaces.splice(i, 1);
+                    break;
+                }
+            };
+            console.log($scope.workspaces);
         };
 
 
@@ -45,6 +51,7 @@ angular.module('faradayApp')
             workspacesFact.delete(workspace_name, $scope.onSuccessDelete);
         };
 
+        // Modals methods
         $scope.new = function(){ 
             $scope.modal = $modal.open({
                 templateUrl: 'scripts/workspaces/partials/modal-new.html',
@@ -61,9 +68,29 @@ angular.module('faradayApp')
 
         };
 
-        // This is in the modal context only
         $scope.okNew = function(){
             $scope.modal.close($scope.newworkspace);
+        };
+
+        $scope.delete = function(){ 
+            $scope.modal = $modal.open({
+                templateUrl: 'scripts/workspaces/partials/modal-delete.html',
+                controller: 'workspacesCtrl',
+                scope: $scope,
+                size: 'lg'
+            });
+
+            $scope.modal.result.then(function() {
+                $scope.workspaces.forEach(function(w){
+                    if(w.selected == true)
+                        $scope.remove(w.name); 
+                });
+            });
+
+        };
+        // This is in the modal context only
+        $scope.okDelete = function(){
+            $scope.modal.close();
         };
         // end of modal context
 

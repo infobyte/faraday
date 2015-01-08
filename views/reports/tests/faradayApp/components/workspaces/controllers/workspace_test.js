@@ -41,7 +41,8 @@ describe('workspacesCtrl', function() {
                     onSuccess(workspace);
             },
             exists: function(workspace_name){
-                return false; }
+                return false; 
+            }
 
         };
         module('faradayApp');

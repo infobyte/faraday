@@ -1,10 +1,10 @@
 <div class="modal-header">
-    <h3 class="modal-title">Bulk deletion</h3>
+    <h3 class="modal-title">Workspace Delete</h3>
 </div>
 <div class="modal-body">
-    <h5>{{msg}}</h5>
+    <h5>You are about to remove {{workspacesCtrl.selectedItems.length}} Workspaces. Proceed?</h5>
 </div><!-- .modal-body -->
 <div class="modal-footer">
-    <button class="btn btn-success" ng-click="ok()">OK</button>
+    <button class="btn btn-success" ng-click="okDelete()">OK</button>
     <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
 </div>

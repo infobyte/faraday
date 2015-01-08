@@ -1,21 +1,5 @@
             <section id="main" class="seccion clearfix">
-                <aside class="left-nav">
-                    <nav>
-                        <ul>
-                            <li>
-                                <a href="../././reports/index.html#{{workspace}}" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
-                                    <img class="ws-dashboard" src="images/ico-graph.png" alt="WS Dashboard"/>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="../././reports/faraday.html#/status/ws/{{workspace}}" class="status-report" style="color: #ffffff !important" title="Status Report">
-                                    <h2><span class="glyphicon glyphicon-list" title="Status Report"></span></h2>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </aside>
-
+            <div ng-include="'scripts/partials/leftBar.html'"></div>
                 <div class="right-main"><div id="reports-main" class="fila clearfix">
                     <h2 class="ws-label">
                         <span id="ws-name" class="label label-default"

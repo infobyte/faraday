@@ -1,7 +1,7 @@
 angular.module('faradayApp')
     .controller('modalNewCtrl',
-        ['$scope', '$modalInstance','targetFact', 'severities', 'workspace',
-        function($scope, $modalInstance,targetFact, severities, workspace) {
+        ['$scope', '$modalInstance', '$upload', 'targetFact', 'severities', 'workspace',
+        function($scope, $modalInstance, $upload, targetFact, severities, workspace) {
         
         $scope.typeOptions = [
             {name:'Vulnerability', value:'Vulnerability'},
@@ -30,6 +30,11 @@ angular.module('faradayApp')
             host.services.push(services[i]);
         }
         $scope.hosts_with_services = hosts;
+
+        $scope.selectedFiles = function(files, e) {
+            console.log(files);
+            console.log(e);
+        }
 
         $scope.ok = function() {
             if($scope.vuln_type == "VulnerabilityWeb" && host_selected == true){

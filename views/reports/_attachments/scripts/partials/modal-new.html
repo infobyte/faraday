@@ -70,51 +70,59 @@
 
     <div class="animate-switch-container" ng-switch on="vuln_type">
         <div class="animate-switch" ng-switch-when="VulnerabilityWeb">
-        <div class="form-horizontal">
-            <div class="form-group">
-                <div class="col-md-4">
-                    <label class="sr-only control-label" for="vuln-method">Method</label>
-                    <input type="text" class="form-control" id="vuln-method" placeholder="Method" ng-model="$parent.method"/>
-                </div>
-                <div class="col-md-3">
-                    <label class="sr-only control-label" for="vuln-pname">Param Name</label>
-                    <input type="text" class="form-control" id="vuln-pname" placeholder="Param name" ng-model="$parent.pname"/>
-                </div>
-                <div class="col-md-5">
-                    <label class="sr-only control-label" for="vuln-params">Params</label>
-                    <input type="text" class="form-control" id="vuln-params" placeholder="Params" ng-model="$parent.params"/>
-                </div>
-            </div><!-- .form-group -->
-            <div class="form-group">
-                <div class="col-md-4">
-                    <label class="sr-only control-label" for="vuln-path">Path</label>
-                    <input type="text" class="form-control" id="vuln-path" placeholder="Path" ng-model="$parent.path"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="sr-only control-label" for="vuln-query">Query</label>
-                    <input type="text" class="form-control" id="vuln-query" placeholder="Query" ng-model="$parent.query"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="sr-only control-label" for="vuln-website">Website</label>
-                    <input type="text" class="form-control" id="vuln-website" placeholder="Website" ng-model="$parent.website"/>
-                </div>
-            </div><!-- .form-group -->
-            <div class="form-group">
-                <div class="col-md-12">
-                    <label class="sr-only control-label" for="vuln-request">Request</label>
-                    <textarea class="form-control" id="vuln-request" placeholder="Request" ng-model="$parent.request"></textarea>
-                </div>
-            </div><!-- .form-group -->
-            <div class="form-group">
-                <div class="col-md-12">
-                    <label class="sr-only control-label" for="vuln-response">Response</label>
-                    <textarea class="form-control" id="vuln-response" placeholder="Response" ng-model="$parent.response"></textarea>
-                </div>
-            </div><!-- .form-group -->
+            <div class="form-horizontal">
+                <div class="form-group">
+                    <div class="col-md-4">
+                        <label class="sr-only control-label" for="vuln-method">Method</label>
+                        <input type="text" class="form-control" id="vuln-method" placeholder="Method" ng-model="$parent.method"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="sr-only control-label" for="vuln-pname">Param Name</label>
+                        <input type="text" class="form-control" id="vuln-pname" placeholder="Param name" ng-model="$parent.pname"/>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="sr-only control-label" for="vuln-params">Params</label>
+                        <input type="text" class="form-control" id="vuln-params" placeholder="Params" ng-model="$parent.params"/>
+                    </div>
+                </div><!-- .form-group -->
+                <div class="form-group">
+                    <div class="col-md-4">
+                        <label class="sr-only control-label" for="vuln-path">Path</label>
+                        <input type="text" class="form-control" id="vuln-path" placeholder="Path" ng-model="$parent.path"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="sr-only control-label" for="vuln-query">Query</label>
+                        <input type="text" class="form-control" id="vuln-query" placeholder="Query" ng-model="$parent.query"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="sr-only control-label" for="vuln-website">Website</label>
+                        <input type="text" class="form-control" id="vuln-website" placeholder="Website" ng-model="$parent.website"/>
+                    </div>
+                </div><!-- .form-group -->
+                <div class="form-group">
+                    <div class="col-md-12">
+                        <label class="sr-only control-label" for="vuln-request">Request</label>
+                        <textarea class="form-control" id="vuln-request" placeholder="Request" ng-model="$parent.request"></textarea>
+                    </div>
+                </div><!-- .form-group -->
+                <div class="form-group">
+                    <div class="col-md-12">
+                        <label class="sr-only control-label" for="vuln-response">Response</label>
+                        <textarea class="form-control" id="vuln-response" placeholder="Response" ng-model="$parent.response"></textarea>
+                    </div>
+                </div><!-- .form-group -->
+            </div><!-- .form-horizontal -->
+        </div><!-- .animate-switch -->
         <div class="animate-switch" ng-switch-when="Vulnerability"></div>
-    </div>
-</div>
-</div><!-- ng-if -->
+    </div><!-- .animate-switch-container -->
+
+    <form>
+        <div class="form-group normal-size">
+            <label for="evidence">Evidence</label>
+            <input type="file" id="evidence" ng-file-select ng-model="evidence" ng-multiple="true" ng-file-change="selectedFiles($files, $event)"/>
+            <p class="help-block">Multiple files are allowed.</p>
+        </div><!-- .form-group -->
+    </form>
 </div><!-- .modal-body -->
 <div class="modal-footer">
     <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>

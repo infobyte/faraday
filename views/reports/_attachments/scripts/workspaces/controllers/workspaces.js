@@ -60,7 +60,6 @@ angular.module('faradayApp')
                 size: 'lg'
             });
 
-            // modal.then = 
             $scope.modal.result.then(function(workspace) {
                 workspace = $scope.create(workspace.name, workspace.description);
                 $scope.insert(workspace); 
@@ -70,6 +69,10 @@ angular.module('faradayApp')
 
         $scope.okNew = function(){
             $scope.modal.close($scope.newworkspace);
+        };
+
+        $scope.cancel = function(){
+            $scope.modal.close();
         };
 
         $scope.delete = function(){ 

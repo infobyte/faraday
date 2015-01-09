@@ -3,7 +3,7 @@ angular.module('faradayApp')
             function($modal, $scope, workspacesFact) {
         $scope.workspaces = [];
         $scope.wss = [];
-        $scope.newworkspace = {};
+        // $scope.newworkspace = {};
 
         $scope.onSuccessGet = function(workspace){
             $scope.workspaces.push(workspace);
@@ -12,6 +12,15 @@ angular.module('faradayApp')
         $scope.onSuccessInsert = function(workspace){
             $scope.wss.push(workspace.name); 
             $scope.workspaces.push(workspace); 
+        };
+
+        $scope.onSuccessEdit = function(workspace){
+            for(var i = 0; i < $scope.workspaces.length; i++) {
+                if($scope.workspaces[i].name == workspace.name){
+                    $scope.workspaces[i].description = workspace.description;
+                    break;
+                }
+            };
         };
 
         $scope.onSuccessDelete = function(workspace_name){ 
@@ -47,6 +56,10 @@ angular.module('faradayApp')
             workspacesFact.put(workspace, $scope.onSuccessInsert);
         };
 
+        $scope.update = function(workspace){
+            workspacesFact.update(workspace, $scope.onSuccessEdit);
+        };
+
         $scope.remove = function(workspace_name){
             workspacesFact.delete(workspace_name, $scope.onSuccessDelete);
         };
@@ -70,6 +83,32 @@ angular.module('faradayApp')
         $scope.okNew = function(){
             $scope.modal.close($scope.newworkspace);
         };
+
+        $scope.edit = function(){ 
+            console.log('editing');
+            $scope.workspaces.forEach(function(w){
+                if(w.selected){
+                    console.log('found workspace');
+                    $scope.newworkspace = w;
+                } 
+            });
+            $scope.modal = $modal.open({
+                templateUrl: 'scripts/workspaces/partials/modal-edit.html',
+                controller: 'workspacesCtrl',
+                scope: $scope,
+                size: 'lg'
+            });
+
+            $scope.modal.result.then(function(workspace) {
+                $scope.update(workspace); 
+            });
+
+        };
+
+        $scope.okEdit = function(){
+            $scope.modal.close($scope.newworkspace);
+        };
+
 
         $scope.cancel = function(){
             $scope.modal.close();

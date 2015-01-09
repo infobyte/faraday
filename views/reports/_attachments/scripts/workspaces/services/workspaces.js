@@ -40,8 +40,17 @@ angular.module('faradayApp')
             return $http(request).success(function(data) {
                 return $http.put(BASEURL + workspace.name + '/' + workspace.name, workspace).success(function(data)
                 {
+                    workspace._rev = data.rev;
                     onSuccess(workspace);
                 });
+            });
+        };
+
+        workspacesFact.update = function(workspace, onSuccess) {
+            document_url = BASEURL + workspace.name + '/' + workspace.name + '?rev=' + workspace._rev;
+            return $http.put(document_url, workspace).success(function(data){
+                workspace._rev = data.rev;
+                onSuccess(workspace);
             });
         };
 

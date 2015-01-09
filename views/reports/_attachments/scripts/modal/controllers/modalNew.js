@@ -32,6 +32,20 @@ angular.module('faradayApp')
         $scope.hosts_with_services = hosts;
 
         $scope.selectedFiles = function(files, e) {
+            files.forEach(function(f) {
+                console.log(f.type);
+                if(f.type.toLowerCase() == "application/pdf") {
+                    f.icon = "fa-file-pdf-o";
+                } else if(f.type.toLowerCase().split("/")[0] == "image") {
+                    f.icon = "fa-file-image-o";
+                } else if(f.type.toLowerCase().split("/")[0] == "video") {
+                    f.icon = "fa-file-video-o";
+                } else if(f.type.toLowerCase() == "application/msword" || f.type.toLowerCase() == "text/plain") {
+                    f.icon = "fa-file-text-o";
+                } else {
+                    f.icon = "fa-file-o";
+                }
+            });
             $scope.evidence = files;
         }
 

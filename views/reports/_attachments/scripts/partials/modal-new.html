@@ -128,7 +128,7 @@
             <li ng-repeat="e in evidence">
                 <div class="btn-group">
                     <button type="button" class="btn btn-default">
-                        <span class="fa fa-file-o" title="Evidence {{e.name}}"></span> {{e.name}}
+                        <span class="fa {{e.icon}}" title="Evidence {{e.name}}"></span> {{e.name}}
                     </button><!-- ng-repeat -->
                     <button type="button" class="btn btn-danger" ng-click="removeEvidence($index)">
                         <span class="glyphicon glyphicon-trash">

@@ -1,7 +1,7 @@
 angular.module('faradayApp')
     .controller('modalNewCtrl',
-        ['$scope', '$modalInstance','targetFact', 'severities', 'workspace',
-        function($scope, $modalInstance,targetFact, severities, workspace) {
+        ['$scope', '$modalInstance', '$filter','targetFact', 'severities', 'workspace',
+        function($scope, $modalInstance, $filter,targetFact, severities, workspace) {
         
         $scope.typeOptions = [
             {name:'Vulnerability', value:'Vulnerability'},
@@ -13,6 +13,7 @@ angular.module('faradayApp')
         $scope.target_selected = null;
         $scope.not_target_selected = false;
         $scope.incompatible_vulnWeb = false;
+        $scope.refs = [{ref:''}];
 
         var name_selected;
         var host_selected;
@@ -30,6 +31,21 @@ angular.module('faradayApp')
             host.services.push(services[i]);
         }
         $scope.hosts_with_services = hosts;
+        $scope.showPagination = 1;
+        $scope.currentPage = 0;
+        $scope.pageSize = 5;
+        $scope.pagination = 10;
+
+        $scope.numberOfPages=function(){
+            var filteredData = $filter('filter')($scope.hosts_with_services,$scope.search_notes);
+            if (filteredData.length <= 10){
+                $scope.showPagination = 0;
+            } else {            
+                $scope.showPagination = 1;
+            };
+            
+            return Math.ceil(filteredData.length/$scope.pagination);
+        }
 
         $scope.ok = function() {
             if($scope.vuln_type == "VulnerabilityWeb" && host_selected == true){
@@ -39,9 +55,15 @@ angular.module('faradayApp')
                 var id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
                 var sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
 
+                var arrayReferences = [];
+                $scope.refs.forEach(function(r){
+                    arrayReferences.push(r.ref);
+                });
+                arrayReferences.filter(Boolean);
+                
                 var myDate = new Date();
                 var myEpoch = myDate.getTime()/1000.0;
-
+                
                 var res = {
                         "id":           id,
                         "data":         $scope.data,
@@ -62,7 +84,8 @@ angular.module('faradayApp')
                         "owner":        "",
                         "couch_parent": $scope.target_selected._id,
 
-                        "refs":         [],
+                        "refs":         arrayReferences,
+                        "resolution":   $scope.resolution,
                         "status":       $scope.vuln_type,
                         "severity":     $scope.severitySelection,
                         "target":       name_selected,
@@ -76,6 +99,7 @@ angular.module('faradayApp')
                         "pname":        $scope.pname,
                         "query":        $scope.query,
                         "request":      $scope.request,
+                        "resolution":   $scope.resolution,
                         "response":     $scope.response,
                         "web":          true, 
                         "website":      $scope.website
@@ -104,20 +128,31 @@ angular.module('faradayApp')
             $scope.$parent.isopen = newvalue;
         });
 
-        $scope.selected = function(i, j){
+        $scope.selected = function(i,j){
             if($scope.target_selected){
                 $scope.target_selected.selected = false;
             }
             if(j != null){
                 host_selected = false;
-                $scope.target_selected = $scope.hosts_with_services[i].services[j];
-                name_selected = $scope.hosts_with_services[i].name;
+                $scope.target_selected = j;
+                name_selected = i.name;
             }else{
                 host_selected = true;
-                $scope.target_selected = $scope.hosts_with_services[i];
-                name_selected = $scope.hosts_with_services[i].name;
+                $scope.target_selected = i;
+                name_selected = i.name;
             }
             $scope.target_selected.selected = true;
             $scope.not_target_selected = true;
+        }
+
+        $scope.go = function(){
+            if($scope.go_page < $scope.numberOfPages()+2 && $scope.go_page > -1){
+                $scope.currentPage = $scope.go_page;
+            }
+        }
+
+        $scope.newReference = function($event){
+            $scope.refs.push({ref:''});
+            $event.preventDefault();
         }
     }]);

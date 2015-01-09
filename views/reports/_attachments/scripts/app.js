@@ -4,7 +4,7 @@ $.ajaxSetup({
     async: false
 });
 
-var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap'])
+var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'filter'])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;

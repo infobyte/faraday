@@ -48,6 +48,8 @@
                 <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
             </header>
             
+            <div ng-controller="navigationCtrl" ng-include="'scripts/navigation/partials/leftBar.html'"></div>
+
             <div ng-view></div>
         </div><!--!/#wrapper -->
     </div><!--!/#container -->
@@ -57,10 +59,12 @@
     <script type="text/javascript" src="scripts/fileExporter/services/blob.js"></script>
     <script type="text/javascript" src="scripts/fileExporter/services/click.js"></script>
     <script type="text/javascript" src="scripts/hosts/services/hosts.js"></script>
+    <script type="text/javascript" src="scripts/modal/filter/Filter.js"></script>
     <script type="text/javascript" src="scripts/modal/controllers/modalDelete.js"></script>
     <script type="text/javascript" src="scripts/modal/controllers/modalEdit.js"></script>
     <script type="text/javascript" src="scripts/modal/controllers/modalNew.js"></script>
     <script type="text/javascript" src="scripts/modal/controllers/modalKO.js"></script>
+    <script type="text/javascript" src="scripts/navigation/controllers/navigationCtrl.js"></script>
     <script type="text/javascript" src="scripts/notes/services/notes.js"></script>
     <script type="text/javascript" src="scripts/statusReport/controllers/statusReport.js"></script>
     <script type="text/javascript" src="scripts/statusReport/directives/textCollapse.js"></script>

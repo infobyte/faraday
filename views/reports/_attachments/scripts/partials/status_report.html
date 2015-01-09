@@ -1,21 +1,4 @@
             <section id="main" class="seccion clearfix">
-                <aside class="left-nav">
-                    <nav>
-                        <ul>
-                            <li>
-                                <a href="../././reports/index.html#{{workspace}}" class="ws-dashboard" style="color: #ffffff !important" title="WS Dashboard">
-                                    <h2><span class="fa fa-pie-chart" title="Dashboard"></span></h2>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="../././reports/faraday.html#/status/ws/{{workspace}}" class="status-report" style="color: #ffffff !important" title="Status Report">
-                                    <h2><span class="fa fa-list" title="Status Report"></span></h2>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </aside>
-
                 <div class="right-main"><div id="reports-main" class="fila clearfix">
                     <h2 class="ws-label">
                         <span id="ws-name" class="label label-default"
@@ -57,7 +40,7 @@
                         <form style="margin: 10px !important;" role="form">
                             <div class="form-group">
                                 <label class="sr-only" for="filter-by">Filter by</label>
-                                <input type="text" class="form-control input-sm" id="filter-by" placeholder="Filter by" ng-model="query">
+                                <input type="text" class="form-control input-sm" id="filter-by" placeholder="Filter by" ng-model="query" ng-change="currentPage = 0">
                             </div>
                         </form>
                         <table class="csv-export status-report">
@@ -119,6 +102,10 @@
                                         <a href="" ng-click="toggleShow('response', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="toggleSort('response')">Response</a>
                                     </th>
+                                    <th ng-if="columns.resolution">
+                                        <a href="" ng-click="toggleShow('resolution', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                                        <a href="" ng-click="toggleSort('resolution')">Resolution</a>
+                                    </th>
                                     <th ng-if="columns.web">
                                         <a href="" ng-click="toggleShow('web', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="toggleSort('web')">Web</a>
@@ -127,12 +114,16 @@
                                         <a href="" ng-click="toggleShow('website', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="toggleSort('website')">Website</a>
                                     </th>
+                                    <th ng-if="columns.refs">
+                                        <a href="" ng-click="toggleShow('refs', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                                        <a href="" ng-click="toggleSort('refs')">References</a>
+                                    </th>
                                     <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse"
-                                    selection-model selection-model-type="checkbox" 
+                                <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
+                                    selection-model selection-model-type="checkbox"
                                     selection-model-mode="multiple-additive" 
                                     selection-model-selected-class="multi-selected">
                                     <td ng-if="columns.date">{{v.date}}</td>
@@ -149,15 +140,33 @@
                                     <td ng-if="columns.query">{{v.query}}</td>
                                     <td ng-if="columns.request" text-collapse text-collapse-max-length="100" text-collapse-text="{{v.request}}"></td>
                                     <td ng-if="columns.response" text-collapse text-collapse-max-length="100" text-collapse-text="{{v.response}}"></td>
+                                    <td ng-if="columns.resolution">{{v.resolution}}</td>
                                     <td ng-if="columns.web">
                                         <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
                                         <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>
                                     </td>
                                     <td ng-if="columns.website">{{v.website}}</td>
+                                    <td ng-if="columns.refs"><p ng-repeat="refs in v.refs">{{refs}}</p></td>
                                     <td><input type="checkbox" name="{{v.id}}"/></td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->
+                        <div class="showPagination" ng-show="showPagination">
+                            <div class="form-group">
+                                <ul class="pagination">
+                                    <li><a ng-hide="currentPage == 0" ng-click="currentPage=currentPage-1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                                    <li><a>{{currentPage}}/{{numberOfPages()}}</a></li>
+                                    <li><a ng-hide="currentPage >= numberOfPages()" ng-click="currentPage=currentPage+1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                                </ul>
+                                <form name="goToPage" id="goToPageStatus">
+                                    <div class="col-md-2">
+                                        <input type="number" min="0" max="{{numberOfPages()}}" class="form-control" ng-model="go_page" placeholder="Go to page"/>
+                                    </div>
+                                    <button class="btn btn-danger" ng-click="go()">GO</button>
+                                    <input type="number" min="0" class="form-control vuln_per_page" ng-model="pagination" placeholder="Numbre page" />
+                                </form>
+                            </div>
+                        </div>
                     </div><!-- .reports -->
                 </div><!-- #reports-main --></div><!-- .right-main -->
             </section><!-- #main -->

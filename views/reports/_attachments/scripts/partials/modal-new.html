@@ -119,10 +119,24 @@
     <form>
         <div class="form-group normal-size">
             <label for="evidence">Evidence</label>
-            <input type="file" id="evidence" ng-file-select ng-model="evidence" ng-multiple="true" ng-file-change="selectedFiles($files, $event)"/>
+            <input type="file" id="evidence" ng-file-select ng-multiple="true" resetOnClick="false" ng-file-change="selectedFiles($files, $event)"/>
             <p class="help-block">Multiple files are allowed.</p>
         </div><!-- .form-group -->
     </form>
+    <div id="evidenceFiles" class="normal-size" ng-if="evidence">
+        <ul>
+            <li ng-repeat="e in evidence">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-default">
+                        <span class="fa fa-file-o" title="Evidence {{e.name}}"></span> {{e.name}} | {{$index}}
+                    </button><!-- ng-repeat -->
+                    <button type="button" class="btn btn-danger" ng-click="removeEvidence($index)">
+                        <span class="glyphicon glyphicon-trash">
+                    </button>
+                </div>
+            </li>
+        </ul>
+    </div><!-- #evidenceFiles -->
 </div><!-- .modal-body -->
 <div class="modal-footer">
     <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>

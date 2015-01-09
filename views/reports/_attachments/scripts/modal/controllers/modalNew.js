@@ -32,8 +32,11 @@ angular.module('faradayApp')
         $scope.hosts_with_services = hosts;
 
         $scope.selectedFiles = function(files, e) {
-            console.log(files);
-            console.log(e);
+            $scope.evidence = files;
+        }
+
+        $scope.removeEvidence = function(index) {
+            $scope.evidence.splice(index, 1);
         }
 
         $scope.ok = function() {
@@ -52,6 +55,7 @@ angular.module('faradayApp')
                         "data":         $scope.data,
                         "date":         myEpoch,
                         "desc":         $scope.desc,
+                        "evidence":     $scope.evidence,
                         "meta":         {'create_time': myEpoch,
                             "update_time": myEpoch,
                             "update_user":  'UI Web',
@@ -66,12 +70,11 @@ angular.module('faradayApp')
                         "owned":        false,
                         "owner":        "",
                         "couch_parent": $scope.target_selected._id,
-
                         "refs":         [],
                         "status":       $scope.vuln_type,
                         "severity":     $scope.severitySelection,
                         "target":       name_selected,
-                        "type":         $scope.vuln_type,
+                        "type":         $scope.vuln_type
                     };
                 var extra_vulns_prop = {};
 

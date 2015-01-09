@@ -60,7 +60,7 @@
                                     <!-- selection&#45;model&#45;selected&#45;class="multi&#45;selected"> -->
                                     <td>{{w.name}}</td>
                                     <td>{{w.description}}</td>
-                                    <td>{{w.sdate}}</td>
+                                    <td>{{w.sdate | date:'dd/MM/yyyy' }}</td>
                                     <td><input type="checkbox" name="{{w._id}}"/></td>
                                 </tr>
                             </tbody>

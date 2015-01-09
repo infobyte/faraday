@@ -48,7 +48,7 @@
                 <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
             </header>
             
-            <div ng-controller="updateChatCtrl" ng-include="'scripts/navegation/partials/leftBar.html'"></div>
+            <div ng-controller="navigationCtrl" ng-include="'scripts/navigation/partials/leftBar.html'"></div>
 
             <div ng-view></div>
         </div><!--!/#wrapper -->
@@ -64,7 +64,7 @@
     <script type="text/javascript" src="scripts/modal/controllers/modalEdit.js"></script>
     <script type="text/javascript" src="scripts/modal/controllers/modalNew.js"></script>
     <script type="text/javascript" src="scripts/modal/controllers/modalKO.js"></script>
-    <script type="text/javascript" src="scripts/navegation/controllers/updateChat.js"></script>
+    <script type="text/javascript" src="scripts/navigation/controllers/navigationCtrl.js"></script>
     <script type="text/javascript" src="scripts/notes/services/notes.js"></script>
     <script type="text/javascript" src="scripts/statusReport/controllers/statusReport.js"></script>
     <script type="text/javascript" src="scripts/statusReport/directives/textCollapse.js"></script>

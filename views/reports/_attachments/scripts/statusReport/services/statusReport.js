@@ -28,7 +28,7 @@ angular.module('faradayApp')
         };
 
         statusReportFact.getWorkspaces = function(callback) {
-            wsFact.get(callback);
+            wsFact.list(callback);
         };
 
         return statusReportFact;

@@ -33,7 +33,6 @@ angular.module('faradayApp')
 
         $scope.selectedFiles = function(files, e) {
             files.forEach(function(f) {
-                console.log(f.type);
                 if(f.type.toLowerCase() == "application/pdf") {
                     f.icon = "fa-file-pdf-o";
                 } else if(f.type.toLowerCase().split("/")[0] == "image") {

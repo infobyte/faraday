@@ -39,17 +39,20 @@ angular.module('faradayApp')
 
         vulnsFact.put = function(ws, vuln, callback) {
             var url = BASEURL + ws + "/" + vuln.id;
-            console.log(vuln.evidence);
             if(typeof(vuln.evidence) != undefined && vuln.evidence != undefined) {
-                console.log(vuln.evidence);
-                delete vuln.evidence.icon;
+                //delete vuln.evidence.icon;
+                evidence = vuln.evidence[0];
                 var filename = encodeURIComponent(evidence.name);
                 var filetype = evidence.type;
                 var fileReader = new FileReader();
                 //$http.defaults.headers.put = {'Content-Type': filetype};
-                fileReader.readAsArrayBuffer(vuln.evidence[0]);
-                fileReader.onload = function (readerEvent) {
-                    $http.put(url, readerEvent.target.result, {'Content-Type': filetype}).success(function(d, s, h, c) {
+                fileReader.readAsDataURL(evidence);
+                fileReader.onloadend = function (readerEvent) {
+                    var id = "036407e058a0233cb06160ca711b17d5544cc5b0";
+                    var rev = "4-380afedb7650ceb16867dd546d36a723";
+                    url = BASEURL + ws + "/" + id + "/attachment?rev=" + rev;
+                    var result = readerEvent.target.result.replace('data:image/jpeg;base64,', '');
+                    $http.put(url, result, {'headers': {'Content-Type': filetype}}).success(function(d, s, h, c) {
                         callback(d);
                         callback(s);
                         callback(h);

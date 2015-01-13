@@ -32,7 +32,7 @@ angular.module('faradayApp')
         $scope.hosts_with_services = hosts;
 
         $scope.selectedFiles = function(files, e) {
-            files.forEach(function(f) {
+/*            files.forEach(function(f) {
                 if(f.type.toLowerCase() == "application/pdf") {
                     f.icon = "fa-file-pdf-o";
                 } else if(f.type.toLowerCase().split("/")[0] == "image") {
@@ -45,6 +45,7 @@ angular.module('faradayApp')
                     f.icon = "fa-file-o";
                 }
             });
+*/
             $scope.evidence = files;
         }
 

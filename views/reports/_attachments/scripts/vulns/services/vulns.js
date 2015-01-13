@@ -39,23 +39,43 @@ angular.module('faradayApp')
 
         vulnsFact.put = function(ws, vuln, callback) {
             var url = BASEURL + ws + "/" + vuln.id;
-            var v = {
-                "_rev":         vuln.rev,
-                "data":         vuln.data,
-                "desc":         vuln.desc,
-                "metadata":     vuln.meta,
-                "name":         vuln.name,
-                "obj_id":       vuln.oid,
-                "owned":        vuln.owned,
-                "owner":        vuln.owner,
-                "parent":       vuln.couch_parent, 
-                "refs":         vuln.refs,
-                "severity":     vuln.severity, 
-                "type":         vuln.type
-            };
-            $http.put(url, v).success(function(d, s, h, c) {
-                callback(d.rev);
-            });
+            console.log(vuln.evidence);
+            if(typeof(vuln.evidence) != undefined && vuln.evidence != undefined) {
+                console.log(vuln.evidence);
+                delete vuln.evidence.icon;
+                var filename = encodeURIComponent(evidence.name);
+                var filetype = evidence.type;
+                var fileReader = new FileReader();
+                //$http.defaults.headers.put = {'Content-Type': filetype};
+                fileReader.readAsArrayBuffer(vuln.evidence[0]);
+                fileReader.onload = function (readerEvent) {
+                    $http.put(url, readerEvent.target.result, {'Content-Type': filetype}).success(function(d, s, h, c) {
+                        callback(d);
+                        callback(s);
+                        callback(h);
+                        callback(c);
+                    });
+                };
+            } else {
+                var v = {
+                    "_rev":         vuln.rev,
+                    "data":         vuln.data,
+                    "desc":         vuln.desc,
+                    "metadata":     vuln.meta,
+                    "name":         vuln.name,
+                    "obj_id":       vuln.oid,
+                    "owned":        vuln.owned,
+                    "owner":        vuln.owner,
+                    "parent":       vuln.couch_parent, 
+                    "refs":         vuln.refs,
+                    "severity":     vuln.severity, 
+                    "type":         vuln.type
+                };
+                $http.put(url, v).success(function(d, s, h, c) {
+                    callback(d.rev);
+                });
+            }
+
         };
 
         vulnsFact.remove = function(ws, vuln) {

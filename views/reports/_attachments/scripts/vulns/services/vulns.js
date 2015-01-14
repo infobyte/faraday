@@ -46,13 +46,34 @@ angular.module('faradayApp')
                 var filetype = evidence.type;
                 var fileReader = new FileReader();
                 //$http.defaults.headers.put = {'Content-Type': filetype};
+                //fileReader.readAsDataURL(evidence);
                 fileReader.readAsDataURL(evidence);
                 fileReader.onloadend = function (readerEvent) {
+                    /*
                     var id = "036407e058a0233cb06160ca711b17d5544cc5b0";
-                    var rev = "4-380afedb7650ceb16867dd546d36a723";
+                    var rev = "12-ccd6b8013f4f16cb3e91f290dfa4344e";
                     url = BASEURL + ws + "/" + id + "/attachment?rev=" + rev;
-                    var result = readerEvent.target.result.replace('data:image/jpeg;base64,', '');
-                    $http.put(url, result, {'headers': {'Content-Type': filetype}}).success(function(d, s, h, c) {
+                    */
+                    var result = readerEvent.target.result.replace('data:image/jpeg;base64', '');
+                    //var result = readerEvent.target.result;
+
+                    var docid = "andalaconchadetumadre";
+                    url = BASEURL + "zzz_tuvieja/" + docid; 
+                    result = {
+                        "_id": docid,
+                        "field1": "lala",
+                        "_attachments": {
+                            "titulo.jpg": {
+                                "content_type": "image/jpeg",
+                                "data": readerEvent.target.result.replace('data:image/jpeg;base64,', '')
+                                //"data": "VGhpcyBpcyBhIGJhc2U2NCBlbmNvZGVkIHRleHQ="
+                            }
+                        }
+                    };
+                    //JSON.stringify(result);
+
+                    //$http.put(url, result, {'headers': {'Content-Type': filetype}}).success(function(d, s, h, c) {
+                    $http.put(url, result).success(function(d, s, h, c) {
                         callback(d);
                         callback(s);
                         callback(h);

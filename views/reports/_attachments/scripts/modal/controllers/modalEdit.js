@@ -1,7 +1,7 @@
 angular.module('faradayApp')
     .controller('modalEditCtrl', 
-        ['$scope', '$modalInstance', 'severities', 'vulns', 'conversor',
-        function($scope, $modalInstance, severities, vulns, conversor) {
+        ['$scope', '$modalInstance', 'severities', 'vulns', 'commons',
+        function($scope, $modalInstance, severities, vulns, commons) {
 
         $scope.pickVuln = function(v) {
             $scope.p_name = v.name;
@@ -35,7 +35,7 @@ angular.module('faradayApp')
         };
 
         $scope.call = function(){
-            $scope.refs = conversor.arrayToObject($scope.refs);
+            $scope.refs = commons.arrayToObject($scope.refs);
         }
 
         $scope.severities = severities;
@@ -88,7 +88,7 @@ angular.module('faradayApp')
         };
 
         $scope.ok = function() {
-            $scope.refs = conversor.objectToArray($scope.refs);
+            $scope.refs = commons.objectToArray($scope.refs);
             if($scope.web) { 
                 res = {
                     "data":         $scope.data,
@@ -126,7 +126,7 @@ angular.module('faradayApp')
             $modalInstance.dismiss('cancel');
         };
         
-        $scope.refs = conversor.arrayToObject($scope.refs);
+        $scope.refs = commons.arrayToObject($scope.refs);
 
         $scope.newReference = function($event){
             $scope.refs.push({ref:''});

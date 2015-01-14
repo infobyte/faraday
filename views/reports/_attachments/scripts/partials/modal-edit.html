@@ -42,9 +42,10 @@
                 <textarea class="form-control" id="vuln-data" placeholder="Data" value="{{p_data}}"  ng-model="data"></textarea>
             </div>
         </div><!-- .form-group -->
-        <div class="form-group plus">
+        <div class="form-group">
             <div class="col-md-12">
-                <span class="input-group-addon" ng-click="newReference($event)"><i class="fa fa-plus-circle"></i></span>
+                <h4>References</h4>
+                <span class="input-group-addon add-reference" ng-click="newReference($event)">Add Reference</span>
             </div>
             <div class="col-md-12 reference" ng-repeat="reference in refs">
                 <div class="input-group margin-bottom-sm">

@@ -2,6 +2,24 @@ angular.module('faradayApp')
     .factory('commons', function() {
         var commons = {};
 
+        commons.arrayToObject = function(array){
+            var refArray = [];
+           array.forEach(function(r){
+                refArray.push({ref:r});
+            });
+            return refArray;
+        }
+
+        commons.objectToArray = function(object){
+            var res = {};
+            var arrayReferences = [];
+            object.forEach(function(r){
+                arrayReferences.push(r.ref);
+            });
+            arrayReferences = arrayReferences.filter(Boolean);
+            return arrayReferences;
+        }
+
         commons.htmlentities = function(string, quote_style, charset, double_encode) {
             var hash_map = commons.translationtable('HTML_ENTITIES', quote_style), symbol = '';
             string = string == null ? '' : string + '';

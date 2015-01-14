@@ -528,5 +528,11 @@ input.form-control.vuln_per_page{width: 10%;margin: auto}
 /* End */
 div.col-md-12.reference{margin-top: 5px;}
 input#vuln-refs{border-radius: 5px 0 0 5px}
-i.fa.fa-plus-circle{color: green;cursor: pointer;}
+i.fa.fa-plus-circle{color: green;}
 i.fa.fa-minus-circle{color: red;cursor: pointer;}
+span.input-group-addon.add-reference{
+    border-radius: 4px;
+    border-left: 1px solid #ccc;
+    width: 20px;
+    cursor: pointer;
+}

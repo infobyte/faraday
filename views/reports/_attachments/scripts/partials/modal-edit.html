@@ -42,13 +42,15 @@
                 <textarea class="form-control" id="vuln-data" placeholder="Data" value="{{p_data}}"  ng-model="data"></textarea>
             </div>
         </div><!-- .form-group -->
-        <div class="form-group">
+        <div class="form-group plus">
+            <div class="col-md-12">
+                <span class="input-group-addon" ng-click="newReference($event)"><i class="fa fa-plus-circle"></i></span>
+            </div>
             <div class="col-md-12 reference" ng-repeat="reference in refs">
                 <div class="input-group margin-bottom-sm">
                     <label class="sr-only" for="vuln-refs">References</label>
                     <input type="text" class="form-control" id="vuln-refs" placeholder="Refecence" ng-model="reference.ref"/>
-                    <span class="input-group-addon" ng-click="newReference($event)"><i class="fa fa-plus-circle"></i></span>
-                    <span class="input-group-addon" ng-click="refs.splice($index, 1)" ng-hide="refs.length == 1"><i class="fa fa-minus-circle"></i></span>
+                    <span class="input-group-addon" ng-click="refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                 </div>
             </div>
         </div><!-- .form-group -->
@@ -117,7 +119,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr ng-click="pickVuln(v)" ng-repeat="v in vulns | filter:isChecked | orderBy:sortField:reverse">
+            <tr ng-click="pickVuln(v);call();" ng-repeat="v in vulns | filter:isChecked | orderBy:sortField:reverse">
                 <td>{{v.date}}</td>
                 <td>
                     <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>

@@ -1,5 +1,7 @@
 angular.module('faradayApp')
-    .controller('modalEditCtrl', function($scope, $modalInstance, severities, vulns) {
+    .controller('modalEditCtrl', 
+        ['$scope', '$modalInstance', 'severities', 'vulns', 'conversor',
+        function($scope, $modalInstance, severities, vulns, conversor) {
 
         $scope.pickVuln = function(v) {
             $scope.p_name = v.name;
@@ -31,6 +33,11 @@ angular.module('faradayApp')
             $scope.resolution = $scope.p_resolution;
             $scope.website = $scope.p_website;
         };
+
+        $scope.call = function(){
+            $scope.refs = conversor.arrayToObject($scope.refs);
+        }
+
         $scope.severities = severities;
         $scope.vulns = vulns;
         $scope.web = false;
@@ -81,12 +88,7 @@ angular.module('faradayApp')
         };
 
         $scope.ok = function() {
-            var res = {};
-            var arrayReferences = [];
-            $scope.refs.forEach(function(r){
-                arrayReferences.push(r.ref);
-            });
-            arrayReferences.filter(Boolean);
+            $scope.refs = conversor.objectToArray($scope.refs);
             if($scope.web) { 
                 res = {
                     "data":         $scope.data,
@@ -97,7 +99,7 @@ angular.module('faradayApp')
                     "path":         $scope.path,
                     "pname":        $scope.pname,
                     "query":        $scope.query,
-                    "refs":         arrayReferences,
+                    "refs":         $scope.refs,
                     "request":      $scope.request,
                     "response":     $scope.response,
                     "resolution":   $scope.resolution,
@@ -110,7 +112,7 @@ angular.module('faradayApp')
                     "data":         $scope.data,
                     "desc":         $scope.desc,
                     "name":         $scope.name, 
-                    "refs":         arrayReferences,
+                    "refs":         $scope.refs,
                     "resolution":   $scope.resolution,
                     "severity":     $scope.severitySelection, 
                     "vulns":        $scope.vulns 
@@ -123,15 +125,10 @@ angular.module('faradayApp')
         $scope.cancel = function() {
             $modalInstance.dismiss('cancel');
         };
-
-        var refArray = [];
-        $scope.refs.forEach(function(r){
-            refArray.push({ref:r});
-        });
-        $scope.refs = refArray;
+        
+        $scope.refs = conversor.arrayToObject($scope.refs);
 
         $scope.newReference = function($event){
             $scope.refs.push({ref:''});
-            $event.preventDefault();
-        }
-    });
+        };
+    }]);

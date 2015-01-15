@@ -1,5 +1,5 @@
 angular.module('faradayApp')
-    .factory('vulnsFact', ['BASEURL', '$http', function(BASEURL, $http) {
+    .factory('vulnsFact', ['BASEURL', '$http', '$q', function(BASEURL, $http, $q) {
         var vulnsFact = {};
 
         vulnsFact.get = function(ws) {
@@ -38,68 +38,62 @@ angular.module('faradayApp')
         }
 
         vulnsFact.put = function(ws, vuln, callback) {
-            var url = BASEURL + ws + "/" + vuln.id;
+            var url = BASEURL + ws + "/" + vuln.id, 
+            v = {
+                "_rev":         vuln.rev,
+                "data":         vuln.data,
+                "desc":         vuln.desc,
+                "metadata":     vuln.meta,
+                "name":         vuln.name,
+                "obj_id":       vuln.oid,
+                "owned":        vuln.owned,
+                "owner":        vuln.owner,
+                "parent":       vuln.couch_parent, 
+                "refs":         vuln.refs,
+                "severity":     vuln.severity, 
+                "type":         vuln.type
+            };
             if(typeof(vuln.evidence) != undefined && vuln.evidence != undefined) {
-                //delete vuln.evidence.icon;
-                evidence = vuln.evidence[0];
-                var filename = encodeURIComponent(evidence.name);
-                var filetype = evidence.type;
-                var fileReader = new FileReader();
-                //$http.defaults.headers.put = {'Content-Type': filetype};
-                //fileReader.readAsDataURL(evidence);
-                fileReader.readAsDataURL(evidence);
-                fileReader.onloadend = function (readerEvent) {
-                    /*
-                    var id = "036407e058a0233cb06160ca711b17d5544cc5b0";
-                    var rev = "12-ccd6b8013f4f16cb3e91f290dfa4344e";
-                    url = BASEURL + ws + "/" + id + "/attachment?rev=" + rev;
-                    */
-                    var result = readerEvent.target.result.replace('data:image/jpeg;base64', '');
-                    //var result = readerEvent.target.result;
-
-                    var docid = "andalaconchadetumadre";
-                    url = BASEURL + "zzz_tuvieja/" + docid; 
-                    result = {
-                        "_id": docid,
-                        "field1": "lala",
-                        "_attachments": {
-                            "titulo.jpg": {
-                                "content_type": "image/jpeg",
-                                "data": readerEvent.target.result.replace('data:image/jpeg;base64,', '')
-                                //"data": "VGhpcyBpcyBhIGJhc2U2NCBlbmNvZGVkIHRleHQ="
-                            }
-                        }
-                    };
-                    //JSON.stringify(result);
-
-                    //$http.put(url, result, {'headers': {'Content-Type': filetype}}).success(function(d, s, h, c) {
-                    $http.put(url, result).success(function(d, s, h, c) {
-                        callback(d);
-                        callback(s);
-                        callback(h);
-                        callback(c);
+                vulnsFact.loadAttachments(vuln.evidence).then(function(result) {
+                    var attachments = {};
+                    result.forEach(function(attachment) {
+                        attachments[attachment.filename] = attachment.value;
                     });
-                };
-            } else {
-                var v = {
-                    "_rev":         vuln.rev,
-                    "data":         vuln.data,
-                    "desc":         vuln.desc,
-                    "metadata":     vuln.meta,
-                    "name":         vuln.name,
-                    "obj_id":       vuln.oid,
-                    "owned":        vuln.owned,
-                    "owner":        vuln.owner,
-                    "parent":       vuln.couch_parent, 
-                    "refs":         vuln.refs,
-                    "severity":     vuln.severity, 
-                    "type":         vuln.type
-                };
-                $http.put(url, v).success(function(d, s, h, c) {
-                    callback(d.rev);
+                    
+                    v._attachments = attachments;
+                    $http.put(url, v).success(function(d, s, h, c) {
+                        callback(d.rev);
+                    });
                 });
             }
+        };
 
+        vulnsFact.loadAttachments = function(attachments) {
+            var deferred = $q.defer(),
+            promises = [];
+            attachments.forEach(function(attachment) {
+                promises.push(vulnsFact.loadAttachment(attachment));
+            });
+            $q.all(promises).then(function(items) {
+                deferred.resolve(items);
+            });
+
+            return deferred.promise;
+        };
+
+        vulnsFact.loadAttachment = function(attachment) {
+            var deferred = $q.defer(),
+            filename = encodeURIComponent(attachment.name),
+            filetype = attachment.type.replace("/", "\/"),
+            fileReader = new FileReader();
+            fileReader.readAsDataURL(attachment);
+            fileReader.onloadend = function (readerEvent) {
+                result = readerEvent.target.result;
+                result = result.slice(result.indexOf(',')+1);
+                deferred.resolve({"filename": filename, "value": {"content_type": filetype, "data": result}});
+            };
+
+            return deferred.promise;
         };
 
         vulnsFact.remove = function(ws, vuln) {

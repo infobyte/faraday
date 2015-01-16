@@ -85,6 +85,29 @@
             </div><!-- .form-group -->
         </div><!-- ng-if -->
     </div><!-- .form-horizontal -->
+
+    <form>
+        <div class="form-group normal-size">
+            <label for="evidence">Evidence</label>
+            <input type="file" id="evidence" ng-file-select ng-multiple="true" resetOnClick="false" ng-file-change="selectedFiles($files, $event)"/>
+            <p class="help-block">Multiple files are allowed.</p>
+        </div><!-- .form-group -->
+    </form>
+    <div id="evidenceFiles" class="normal-size" ng-if="evidence">
+        <ul>
+            <li ng-repeat="e in evidence">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-default">
+                        <span class="fa {{icons[$index]}}" title="Evidence {{e.name}}"></span> {{e.name}}
+                    </button><!-- ng-repeat -->
+                    <button type="button" class="btn btn-danger" ng-click="removeEvidence($index)">
+                        <span class="glyphicon glyphicon-trash">
+                    </button>
+                </div>
+            </li>
+        </ul>
+    </div><!-- #evidenceFiles -->
+
     <h5><small>
         Vulnerabilities to update
     </small></h5>

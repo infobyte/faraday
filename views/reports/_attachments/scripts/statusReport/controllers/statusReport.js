@@ -265,8 +265,7 @@ angular.module('faradayApp')
 
         $scope.insert = function(vuln){
             statusReportFact.putVulns($scope.workspace, vuln, function(rev) {
-                console.log(rev);
-                //vuln.rev = rev;
+                vuln.rev = rev;
             });
             //formating the date
             var d = new Date(0);

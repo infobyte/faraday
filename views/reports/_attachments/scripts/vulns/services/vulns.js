@@ -68,25 +68,25 @@ angular.module('faradayApp')
             }
         };
 
-        vulnsFact.loadAttachments = function(attachments) {
+        vulnsFact.loadAttachments = function(files) {
             var deferred = $q.defer(),
             promises = [];
-            attachments.forEach(function(attachment) {
-                promises.push(vulnsFact.loadAttachment(attachment));
+            files.forEach(function(file) {
+                promises.push(vulnsFact.loadAttachment(file));
             });
-            $q.all(promises).then(function(items) {
-                deferred.resolve(items);
+            $q.all(promises).then(function(attachments) {
+                deferred.resolve(attachments);
             });
 
             return deferred.promise;
         };
 
-        vulnsFact.loadAttachment = function(attachment) {
+        vulnsFact.loadAttachment = function(file) {
             var deferred = $q.defer(),
-            filename = encodeURIComponent(attachment.name),
-            filetype = attachment.type.replace("/", "\/"),
+            filename = encodeURIComponent(file.name),
+            filetype = file.type.replace("/", "\/"),
             fileReader = new FileReader();
-            fileReader.readAsDataURL(attachment);
+            fileReader.readAsDataURL(file);
             fileReader.onloadend = function (readerEvent) {
                 result = readerEvent.target.result;
                 result = result.slice(result.indexOf(',')+1);

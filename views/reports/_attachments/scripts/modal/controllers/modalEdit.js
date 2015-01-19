@@ -1,5 +1,6 @@
 angular.module('faradayApp')
     .controller('modalEditCtrl', function($scope, $modalInstance, severities, vulns) {
+        $scope.evidence = [];
 
         $scope.pickVuln = function(v) {
             $scope.p_name = v.name;
@@ -37,6 +38,7 @@ angular.module('faradayApp')
 
         $scope.vulns.forEach(function(v) {
             if(v.selected) {
+                $scope.evidence = v.evidence;
                 $scope.mixed = $scope.mixed | vuln_mask[v.type];
                 $scope.vulnc++;
                 $scope.pickVuln(v);
@@ -81,6 +83,7 @@ angular.module('faradayApp')
                 res = {
                     "data":     $scope.data,
                     "desc":     $scope.desc,
+                    "evidence": $scope.evidence,
                     "method":   $scope.method,
                     "name":     $scope.name, 
                     "params":   $scope.params,

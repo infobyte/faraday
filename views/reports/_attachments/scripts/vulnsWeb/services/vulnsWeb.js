@@ -1,5 +1,5 @@
 angular.module('faradayApp')
-    .factory('vulnsWebFact', ['BASEURL', '$http', function(BASEURL, $http) {
+    .factory('vulnsWebFact', ['BASEURL', '$http', 'attachmentsFact', function(BASEURL, $http, attachmentsFact) {
         var vulnsWebFact = {};
 
         vulnsWebFact.get = function(ws) {
@@ -71,9 +71,23 @@ angular.module('faradayApp')
                 "response":     vuln.response,
                 "website":      vuln.website
             };
-            $http.put(url, v).success(function(d, s, h, c) {
-                callback(d.rev);
-            });
+            if(typeof(vuln.evidence) != undefined && vuln.evidence != undefined) {
+                attachmentsFact.loadAttachments(vuln.evidence).then(function(result) {
+                    var attachments = {};
+                    result.forEach(function(attachment) {
+                        attachments[attachment.filename] = attachment.value;
+                    });
+                    
+                    v._attachments = attachments;
+                    $http.put(url, v).success(function(d, s, h, c) {
+                        callback(d.rev);
+                    });
+                });
+            } else {
+                $http.put(url, v).success(function(d, s, h, c) {
+                    callback(d.rev);
+                });
+            }
         };
 
         vulnsWebFact.remove = function(ws, vuln) {

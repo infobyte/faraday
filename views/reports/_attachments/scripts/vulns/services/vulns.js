@@ -1,5 +1,5 @@
 angular.module('faradayApp')
-    .factory('vulnsFact', ['BASEURL', '$http', '$q', function(BASEURL, $http, $q) {
+    .factory('vulnsFact', ['BASEURL', '$http', 'attachmentsFact', function(BASEURL, $http, attachmentsFact) {
         var vulnsFact = {};
 
         vulnsFact.get = function(ws) {
@@ -54,7 +54,7 @@ angular.module('faradayApp')
                 "type":         vuln.type
             };
             if(typeof(vuln.evidence) != undefined && vuln.evidence != undefined) {
-                vulnsFact.loadAttachments(vuln.evidence).then(function(result) {
+                attachmentsFact.loadAttachments(vuln.evidence).then(function(result) {
                     var attachments = {};
                     result.forEach(function(attachment) {
                         attachments[attachment.filename] = attachment.value;
@@ -65,35 +65,11 @@ angular.module('faradayApp')
                         callback(d.rev);
                     });
                 });
+            } else {
+                $http.put(url, v).success(function(d, s, h, c) {
+                    callback(d.rev);
+                });
             }
-        };
-
-        vulnsFact.loadAttachments = function(files) {
-            var deferred = $q.defer(),
-            promises = [];
-            files.forEach(function(file) {
-                promises.push(vulnsFact.loadAttachment(file));
-            });
-            $q.all(promises).then(function(attachments) {
-                deferred.resolve(attachments);
-            });
-
-            return deferred.promise;
-        };
-
-        vulnsFact.loadAttachment = function(file) {
-            var deferred = $q.defer(),
-            filename = encodeURIComponent(file.name),
-            filetype = file.type.replace("/", "\/"),
-            fileReader = new FileReader();
-            fileReader.readAsDataURL(file);
-            fileReader.onloadend = function (readerEvent) {
-                result = readerEvent.target.result;
-                result = result.slice(result.indexOf(',')+1);
-                deferred.resolve({"filename": filename, "value": {"content_type": filetype, "data": result}});
-            };
-
-            return deferred.promise;
         };
 
         vulnsFact.remove = function(ws, vuln) {

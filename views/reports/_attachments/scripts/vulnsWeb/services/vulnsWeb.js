@@ -14,6 +14,7 @@ angular.module('faradayApp')
                     var v = {
                         "id":           obj.id,
                         "rev":          obj.value.rev,
+                        "attachments":  obj.value.attachments,
                         "couch_parent": obj.value.parent,
                         "data":         obj.value.data,
                         "date":         d, 

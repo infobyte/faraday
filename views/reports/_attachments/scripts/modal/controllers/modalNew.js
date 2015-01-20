@@ -1,7 +1,7 @@
 angular.module('faradayApp')
     .controller('modalNewCtrl',
-        ['$scope', '$modalInstance', '$upload', 'targetFact', 'severities', 'workspace',
-        function($scope, $modalInstance, $upload, targetFact, severities, workspace) {
+        ['$scope', '$modalInstance', '$upload', 'targetFact', 'commonsFact', 'severities', 'workspace',
+        function($scope, $modalInstance, $upload, targetFact, commons, severities, workspace) {
         
         $scope.typeOptions = [
             {name:'Vulnerability', value:'Vulnerability'},
@@ -33,21 +33,7 @@ angular.module('faradayApp')
         $scope.icons = [];
 
         $scope.selectedFiles = function(files, e) {
-            var tmp = [];
-            files.forEach(function(file, index) {
-                tmp[index] = file.type;
-                if(file.type.toLowerCase() == "application/pdf") {
-                    $scope.icons[index] = "fa-file-pdf-o";
-                } else if(file.type.toLowerCase().split("/")[0] == "image") {
-                    $scope.icons[index] = "fa-file-image-o";
-                } else if(file.type.toLowerCase().split("/")[0] == "video") {
-                    $scope.icons[index] = "fa-file-video-o";
-                } else if(file.type.toLowerCase() == "application/msword" || file.type.toLowerCase() == "text/plain") {
-                    $scope.icons[index] = "fa-file-text-o";
-                } else {
-                    $scope.icons[index] = "fa-file-o";
-                }
-            });
+            $scope.icons = commons.loadIcons(files); 
             $scope.evidence = files;
         }
 

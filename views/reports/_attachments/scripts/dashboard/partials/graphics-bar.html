@@ -6,7 +6,7 @@
                 <span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 5 services with the largest quantity of hosts\"></span>
             </h2>
         </header>
-        <div class="treemap" style="position:relative;width:160px;height:133px;left:10px;top=28px" ng-controller="graphicsBarCtrl">
+        <div class="treemap" style="position:relative;width:160px;height:133px;left:10px;top=28px">
         </div>
     </article>
 </div>
@@ -17,7 +17,14 @@
                 <span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 3 hosts with the largest quantity of services\"></span>
             </h2>
         </header>
-        <div class="box" ng-controller="graphicsBarCtrl">
+        <div ng-if="barData.length < 3" class="alert alert-info alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+            </button>
+            <p>At least 3 hosts needed to show this visualization</p>
+        </div>
+        <div class="box">
             <d3-bars data="barData"></d3-bars>
         </div>
     </article>

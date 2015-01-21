@@ -4,14 +4,16 @@ angular.module('faradayApp')
         function($scope, $route, $routeParams, dashboardSrv) {
             //current workspace
             var workspace = $routeParams.wsId;
+            $scope.barData = [];
 
             if (workspace != undefined){
                 dashboardSrv.getHostsByServicesCount(workspace).then(function(res){
-                    console.log(res);
-                    var a = res.sort(function(a, b){
-                        return b.value-a.value;
-                    })
-                    $scope.barData = res.slice(0, 3);
+                    if (res.length > 2) {
+                        var a = res.sort(function(a, b){
+                            return b.value-a.value;
+                        })
+                        $scope.barData = res.slice(0, 3);
+                    }
                 });
                 
             }

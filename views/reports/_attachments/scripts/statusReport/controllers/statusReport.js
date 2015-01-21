@@ -164,6 +164,7 @@ angular.module('faradayApp')
                     if(typeof(data.name) != "undefined") v.name = data.name;
                     if(typeof(data.desc) != "undefined") v.desc = data.desc;
                     if(typeof(data.data) != "undefined") v.data = data.data;
+                    v.evidence = data.evidence;
                     if(v.web) {
                         if(typeof(data.method) != "undefined") v.method = data.method;
                         if(typeof(data.params) != "undefined") v.params = data.params;

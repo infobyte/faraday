@@ -14,7 +14,6 @@ angular.module('faradayApp')
         $scope.target_selected = null;
         $scope.not_target_selected = false;
         $scope.incompatible_vulnWeb = false;
-        $scope.hosts_with_services = hosts;
         $scope.icons = [];
 
         var name_selected,
@@ -27,6 +26,7 @@ angular.module('faradayApp')
             h.services = [];  
             d[h._id] = h;
         });
+        $scope.hosts_with_services = hosts;
 
         for(var i = 0; i < services.length; i++){
             var host = [];

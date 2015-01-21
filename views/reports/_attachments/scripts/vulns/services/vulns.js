@@ -59,15 +59,35 @@ angular.module('faradayApp')
                 "type":         vuln.type
             };
             if(typeof(vuln.evidence) != undefined && vuln.evidence != undefined) {
-                attachmentsFact.loadAttachments(vuln.evidence).then(function(result) {
-                    var attachments = {};
+                // the list of evidence may have mixed objects, some of them before edit, some of them new
+                // new attachments are of File type and need to be processed by attachmentsFact.loadAttachments 
+                // old attachments are of type Object and need to be processed by attachmentsFact.attachmentsArrayToObj
+                var attachments = {},
+                objects = [],
+                files = [],
+                name = "";
+                v._attachments = {};
+                vuln.evidence.forEach(function(attachment) {
+                    if(attachment instanceof File) {
+                        files.push(attachment);
+                    } else if(attachment instanceof Object) {
+                        objects.push(attachment);
+                    }
+                });
+                objects = attachmentsFact.attachmentsArrayToObj(objects);
+                angular.extend(v._attachments, objects);
+                attachmentsFact.loadAttachments(files).then(function(result) {
                     result.forEach(function(attachment) {
                         attachments[attachment.filename] = attachment.value;
                     });
                     
-                    v._attachments = attachments;
+                    angular.extend(v._attachments, attachments);
                     $http.put(url, v).success(function(d, s, h, c) {
                         callback(d.rev);
+                    });
+                    // finally, let's get the final array of attachments and save it to the vuln
+                    $http.get(url).success(function(d, s, h, c) {
+                        vuln.evidence = attachmentsFact.attachmentsObjToArray(d._attachments);
                     });
                 });
             } else {

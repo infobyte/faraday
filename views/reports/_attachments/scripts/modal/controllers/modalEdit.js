@@ -105,6 +105,7 @@ angular.module('faradayApp')
                 res = {
                     "data":     $scope.data,
                     "desc":     $scope.desc,
+                    "evidence": $scope.evidence,
                     "name":     $scope.name, 
                     "severity": $scope.severitySelection, 
                     "vulns":    $scope.vulns 

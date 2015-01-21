@@ -1,8 +1,15 @@
 angular.module('faradayApp')
     .controller('modalEditCtrl', ['$scope', '$modalInstance', 'commonsFact', 'severities', 'vulns', 
         function($scope, $modalInstance, commons, severities, vulns) {
+
         $scope.evidence = [];
         $scope.icons = [];
+        $scope.severities = severities;
+        $scope.vulns = vulns;
+        $scope.web = false;
+        $scope.mixed = 0x00;
+        $scope.vulnc = 0;
+        var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
 
         $scope.pickVuln = function(v) {
             $scope.p_name = v.name;
@@ -30,13 +37,6 @@ angular.module('faradayApp')
             $scope.response = $scope.p_response;
             $scope.website = $scope.p_website;
         };
-        $scope.severities = severities;
-        $scope.vulns = vulns;
-        $scope.web = false;
-        $scope.mixed = 0x00;
-        
-        $scope.vulnc = 0;
-        var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
 
         $scope.vulns.forEach(function(v) {
             if(v.selected) {
@@ -118,4 +118,13 @@ angular.module('faradayApp')
             $modalInstance.dismiss('cancel');
         };
 
+        $scope.selectedFiles = function(files, e) {
+            $scope.evidence = $scope.evidence.concat(files);
+            $scope.icons = commons.loadIcons($scope.evidence); 
+        }
+
+        $scope.removeEvidence = function(index) {
+            $scope.evidence.splice(index, 1);
+            $scope.icons.splice(index, 1);
+        }
     }]);

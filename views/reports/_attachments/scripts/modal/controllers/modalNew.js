@@ -7,78 +7,81 @@ angular.module('faradayApp')
             {name:'Vulnerability', value:'Vulnerability'},
             {name:'VulnerabilityWeb',value:'VulnerabilityWeb'}
         ];
+
         $scope.vuln_type = $scope.typeOptions[0].value;
         $scope.severities = severities;
         $scope.workspace = workspace;
         $scope.target_selected = null;
         $scope.not_target_selected = false;
         $scope.incompatible_vulnWeb = false;
+        $scope.hosts_with_services = hosts;
+        $scope.icons = [];
 
-        var name_selected;
-        var host_selected;
-        var d = {};
-        var hosts = targetFact.getTarget($scope.workspace, true);
+        var name_selected,
+        host_selected,
+        services = targetFact.getTarget($scope.workspace, false),
+        d = {},
+        hosts = targetFact.getTarget($scope.workspace, true);
+
         hosts.forEach(function(h) {
             h.services = [];  
             d[h._id] = h;
         });
-        var services = targetFact.getTarget($scope.workspace, false);
+
         for(var i = 0; i < services.length; i++){
             var host = [];
             services[i].selected = false;
             host = d[services[i].hid];
             host.services.push(services[i]);
         }
-        $scope.hosts_with_services = hosts;
-        $scope.icons = [];
 
         $scope.selectedFiles = function(files, e) {
-            $scope.icons = commons.loadIcons(files); 
             $scope.evidence = files;
+            $scope.icons = commons.loadIcons($scope.evidence); 
         }
 
         $scope.removeEvidence = function(index) {
             $scope.evidence.splice(index, 1);
+            $scope.icons.splice(index, 1);
         }
 
         $scope.ok = function() {
             if($scope.vuln_type == "VulnerabilityWeb" && host_selected == true){
                 $scope.incompatible_vulnWeb = true;
-            }else{
-                var res = {};
-                var id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
-                var sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
-
-                var myDate = new Date();
-                var myEpoch = myDate.getTime()/1000.0;
-
-                var res = {
-                        "id":           id,
-                        "data":         $scope.data,
-                        "date":         myEpoch,
-                        "desc":         $scope.desc,
-                        "evidence":     $scope.evidence,
-                        "meta":         {'create_time': myEpoch,
-                            "update_time": myEpoch,
-                            "update_user":  'UI Web',
-                            'update_action': 0,
-                            'creator': 'UI Web', 
-                            'create_time': myEpoch,
-                            'update_controller_action': 'UI Web New',
-                            'owner': 'anonymous'
-                        },
-                        "name":         $scope.name,
-                        "oid":          sha,
-                        "owned":        false,
-                        "owner":        "",
-                        "couch_parent": $scope.target_selected._id,
-                        "refs":         [],
-                        "status":       $scope.vuln_type,
-                        "severity":     $scope.severitySelection,
-                        "target":       name_selected,
-                        "type":         $scope.vuln_type
-                    };
-                var extra_vulns_prop = {};
+            } else {
+                var res = {},
+                id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString(),
+                sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString(),
+                myDate = new Date(),
+                myEpoch = myDate.getTime()/1000.0,
+                extra_vulns_prop = {},
+                res = {
+                    "id":           id,
+                    "data":         $scope.data,
+                    "date":         myEpoch,
+                    "desc":         $scope.desc,
+                    "evidence":     $scope.evidence,
+                    "meta":         {
+                        'create_time': myEpoch,
+                        "update_time": myEpoch,
+                        "update_user":  'UI Web',
+                        'update_action': 0,
+                        'creator': 'UI Web', 
+                        'create_time': myEpoch,
+                        'update_controller_action': 'UI Web New',
+                        'owner': 'anonymous'
+                    },
+                    "name":         $scope.name,
+                    "oid":          sha,
+                    "owned":        false,
+                    "owner":        "",
+                    "couch_parent": $scope.target_selected._id,
+                    "refs":         [],
+                    "status":       $scope.vuln_type,
+                    "severity":     $scope.severitySelection,
+                    "target":       name_selected,
+                    "type":         $scope.vuln_type
+                };
 
                 if($scope.vuln_type == "VulnerabilityWeb") {
                     extra_vulns_prop = {
@@ -96,7 +99,7 @@ angular.module('faradayApp')
                     };
                 }
 
-                for (var key in extra_vulns_prop) {
+                for(var key in extra_vulns_prop) {
                     res[key] = extra_vulns_prop[key];
                 }
 

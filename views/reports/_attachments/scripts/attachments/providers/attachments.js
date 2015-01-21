@@ -34,5 +34,31 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        // receives an object containing attachments (such as the one CouchDB returns)
+        // returns an array containing the attachments object including a "name" property
+        attachmentsFact.attachmentsObjToArray = function(obj) {
+            var array = [];
+            for(var attachment in obj) {
+                obj[attachment].name = decodeURI(attachment);
+                array.push(obj[attachment]);
+            }
+
+            return array;
+        };
+
+        // receives an array containing attachments
+        // returns an object containing the attachments (such as the one CouchDB expects)
+        attachmentsFact.attachmentsArrayToObj = function(array) {
+            var obj = {},
+            name = "";
+            array.forEach(function(attachment) {
+                name = encodeURI(attachment.name);
+                delete attachment.name;
+                obj[name] = attachment;
+            });
+
+            return obj;
+        };
+
         return attachmentsFact;
     }]);

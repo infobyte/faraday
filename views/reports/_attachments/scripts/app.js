@@ -12,6 +12,10 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
 
 faradayApp.config(['$routeProvider', function($routeProvider) {
     $routeProvider.
+        when('/dashboard/ws/:wsId', {
+            templateUrl: 'scripts/dashboard/partials/dashboard.html',
+            controller: 'dashboardCtrl'
+        }).
         when('/status/ws/:wsId', {
             templateUrl: 'scripts/partials/status_report.html',
             controller: 'statusReportCtrl'

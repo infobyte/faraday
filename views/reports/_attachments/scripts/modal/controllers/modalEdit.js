@@ -2,14 +2,20 @@ angular.module('faradayApp')
     .controller('modalEditCtrl', ['$scope', '$modalInstance', 'commonsFact', 'severities', 'vulns', 
         function($scope, $modalInstance, commons, severities, vulns) {
 
-        $scope.evidence = [];
-        $scope.icons = [];
+        $scope.evidence = {};
+        $scope.icons = {};
         $scope.severities = severities;
         $scope.vulns = vulns;
         $scope.web = false;
         $scope.mixed = 0x00;
         $scope.vulnc = 0;
         var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
+
+        // ERASEME
+        $scope.logEvidence = function() {
+            console.log($scope.icons);
+            console.log($scope.evidence);
+        };
 
         $scope.pickVuln = function(v) {
             $scope.p_name = v.name;
@@ -41,7 +47,9 @@ angular.module('faradayApp')
         $scope.vulns.forEach(function(v) {
             if(v.selected) {
                 if(typeof(v.attachments) != undefined && v.attachments != undefined) {
-                    $scope.evidence = v.attachments;
+                    v.attachments.forEach(function(name) {
+                        $scope.evidence[name] = {"name": name};
+                    });
                     $scope.icons = commons.loadIcons($scope.evidence); 
                 }
                 $scope.mixed = $scope.mixed | vuln_mask[v.type];
@@ -82,7 +90,16 @@ angular.module('faradayApp')
         };
 
         $scope.ok = function() {
-            var res = {};
+            var res = {},
+            evidence = [];
+
+            for(var key in $scope.evidence) {
+                if(Object.keys($scope.evidence[key]).length == 1) {
+                    evidence.push(key);
+                } else {
+                    evidence.push($scope.evidence[key]);
+                }
+            }
 
             if($scope.web) { 
                 res = {
@@ -120,12 +137,14 @@ angular.module('faradayApp')
         };
 
         $scope.selectedFiles = function(files, e) {
-            $scope.evidence = $scope.evidence.concat(files);
+            files.forEach(function(file) {
+                $scope.evidence[file.name] = file;
+            });
             $scope.icons = commons.loadIcons($scope.evidence); 
         }
 
-        $scope.removeEvidence = function(index) {
-            $scope.evidence.splice(index, 1);
-            $scope.icons.splice(index, 1);
+        $scope.removeEvidence = function(name) {
+            delete $scope.evidence[name];
+            delete $scope.icons[name];
         }
     }]);

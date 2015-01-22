@@ -6,12 +6,16 @@ angular.module('faradayApp')
         // returns an array of promises
         attachmentsFact.loadAttachments = function(files) {
             var deferred = $q.defer(),
-            promises = [];
+            promises = [],
+            tmp = {};
             files.forEach(function(file) {
                 promises.push(attachmentsFact.loadAttachment(file));
             });
             $q.all(promises).then(function(attachments) {
-                deferred.resolve(attachments);
+                attachments.forEach(function(attachment) {
+                    tmp[attachment.filename] = attachment;
+                });
+                deferred.resolve(tmp);
             });
 
             return deferred.promise;
@@ -34,30 +38,21 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        // receives an object containing attachments (such as the one CouchDB returns)
-        // returns an array containing the attachments object including a "name" property
-        attachmentsFact.attachmentsObjToArray = function(obj) {
-            var array = [];
-            for(var attachment in obj) {
-                obj[attachment].name = decodeURI(attachment);
-                array.push(obj[attachment]);
-            }
+        attachmentsFact.getStubs = function(ws, vid, names) {
+            var url = BASEURL + ws + "/" + vid, 
+            stubs = {},
+            deferred = $q.defer();
 
-            return array;
-        };
-
-        // receives an array containing attachments
-        // returns an object containing the attachments (such as the one CouchDB expects)
-        attachmentsFact.attachmentsArrayToObj = function(array) {
-            var obj = {},
-            name = "";
-            array.forEach(function(attachment) {
-                name = encodeURI(attachment.name);
-                delete attachment.name;
-                obj[name] = attachment;
+            $http.get(url).success(function(result) {
+                for(var attachment in result._attachments) {
+                    if(names.indexOf(attachment) >= 0) {
+                        stubs[attachment] = result._attachments[attachment];
+                    }
+                }
+                deferred.resolve(stubs);
             });
 
-            return obj;
+            return deferred.promise;
         };
 
         return attachmentsFact;

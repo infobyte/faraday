@@ -1,5 +1,5 @@
 angular.module('faradayApp')
-    .factory('vulnsFact', ['BASEURL', '$http', 'attachmentsFact', function(BASEURL, $http, attachmentsFact) {
+    .factory('vulnsFact', ['BASEURL', '$http', '$q', 'attachmentsFact', function(BASEURL, $http, $q, attachmentsFact) {
         var vulnsFact = {};
 
         vulnsFact.get = function(ws) {
@@ -13,7 +13,9 @@ angular.module('faradayApp')
                     d.setUTCSeconds(obj.value.date);
                     d = d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear();
                     if(typeof(obj.value.attachments) != undefined && obj.value.attachments != undefined) {
-                        evidence = attachmentsFact.attachmentsObjToArray(obj.value.attachments);
+                        for(var attachment in obj.value.attachments) {
+                            evidence.push(attachment);
+                        };
                     }
                     var v = {
                         "id":           obj.id,
@@ -59,36 +61,40 @@ angular.module('faradayApp')
                 "type":         vuln.type
             };
             if(typeof(vuln.evidence) != undefined && vuln.evidence != undefined) {
-                // the list of evidence may have mixed objects, some of them before edit, some of them new
+                // the list of evidence may have mixed objects, some of them already in CouchDB, some of them new
                 // new attachments are of File type and need to be processed by attachmentsFact.loadAttachments 
-                // old attachments are of type Object and need to be processed by attachmentsFact.attachmentsArrayToObj
-                var attachments = {},
-                objects = [],
+                // old attachments are of type String (file name) and need to be processed by attachmentsFact.getStubs
+                var stubs = [],
                 files = [],
-                name = "";
+                promises = [];
                 v._attachments = {};
-                vuln.evidence.forEach(function(attachment) {
-                    if(attachment instanceof File) {
-                        files.push(attachment);
-                    } else if(attachment instanceof Object) {
-                        objects.push(attachment);
+
+                for(var name in vuln.evidence) {
+                    if(vuln.evidence[name] instanceof File) {
+                        files.push(vuln.evidence[name]);
+                    } else {
+                        stubs.push(name);
                     }
-                });
-                objects = attachmentsFact.attachmentsArrayToObj(objects);
-                angular.extend(v._attachments, objects);
-                attachmentsFact.loadAttachments(files).then(function(result) {
-                    result.forEach(function(attachment) {
-                        attachments[attachment.filename] = attachment.value;
+                }
+
+                if(stubs.length > 0) promises.push(attachmentsFact.getStubs(ws, vuln.id, stubs));
+                if(files.length > 0) promises.push(attachmentsFact.loadAttachments(files));
+
+                $q.all(promises).then(function(result) {
+                    result.forEach(function(atts) {
+                        for(var name in atts) {
+                            v._attachments[name] = atts[name];
+                        }
                     });
-                    
-                    angular.extend(v._attachments, attachments);
                     $http.put(url, v).success(function(d, s, h, c) {
                         callback(d.rev);
                     });
+                    /*
                     // finally, let's get the final array of attachments and save it to the vuln
                     $http.get(url).success(function(d, s, h, c) {
                         vuln.evidence = attachmentsFact.attachmentsObjToArray(d._attachments);
                     });
+                    */
                 });
             } else {
                 $http.put(url, v).success(function(d, s, h, c) {

@@ -87,6 +87,7 @@
     </div><!-- .form-horizontal -->
 
     <div ng-if="vulnc == 1">
+        <button type="button" class="btn btn-default" ng-click="logEvidence()">Log</button>
         <h4>Evidence</h4>
         <form>
             <div class="form-group normal-size">
@@ -96,12 +97,12 @@
         </form>
         <div id="evidenceFiles" class="normal-size" ng-if="evidence">
             <ul>
-                <li ng-repeat="e in evidence">
+                <li ng-repeat="(key, value) in evidence">
                     <div class="btn-group">
                         <button type="button" class="btn btn-default">
-                            <span class="fa {{icons[$index]}}" title="Evidence {{e.name}}"></span> {{e.name}}
+                            <span class="fa {{icons[key]}}" title="Evidence {{key}}"></span> {{key}}
                         </button><!-- ng-repeat -->
-                        <button type="button" class="btn btn-danger" ng-click="removeEvidence($index)">
+                        <button type="button" class="btn btn-danger" ng-click="removeEvidence(key)">
                             <span class="glyphicon glyphicon-trash">
                         </button>
                     </div>

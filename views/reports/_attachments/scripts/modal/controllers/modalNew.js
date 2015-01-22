@@ -14,7 +14,8 @@ angular.module('faradayApp')
         $scope.target_selected = null;
         $scope.not_target_selected = false;
         $scope.incompatible_vulnWeb = false;
-        $scope.icons = [];
+        $scope.evidence = {};
+        $scope.icons = {};
 
         var name_selected,
         host_selected,
@@ -36,13 +37,15 @@ angular.module('faradayApp')
         }
 
         $scope.selectedFiles = function(files, e) {
-            $scope.evidence = files;
+            files.forEach(function(file) {
+                $scope.evidence[file.name] = file;
+            });
             $scope.icons = commons.loadIcons($scope.evidence); 
         }
 
-        $scope.removeEvidence = function(index) {
-            $scope.evidence.splice(index, 1);
-            $scope.icons.splice(index, 1);
+        $scope.removeEvidence = function(name) {
+            delete $scope.evidence[name];
+            delete $scope.icons[name];
         }
 
         $scope.ok = function() {

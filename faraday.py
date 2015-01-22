@@ -332,8 +332,11 @@ def setupQtrc():
 
     """
     from ctypes import cdll
-    cdll.LoadLibrary(os.join(QTDIR, 'lib', 'libqui.so')
-    cdll.LoadLibrary(os.join(QTDIR, 'lib', 'libqt.so')
+    try:
+        import qt
+    except:
+        cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqui.so'))
+        cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqt.so'))
 
 def restoreQtrc():
     """Restores user qtrc.

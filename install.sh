@@ -78,7 +78,7 @@ if [ "$down" -eq 1 ]; then
         if [ "`echo ${!shav}`" = "`sha256sum lib-$version.tgz | awk -F\" \" \{'print $1'\}`" ]; then
             echo "[+] SHA256 ok"
             tar -xvzf lib-$version.tgz 
-            mv -R lib-$version/ external_libs
+            mv lib-$version/ external_libs
         else
             echo "[-] SHA256 file corrupt"
             exit

@@ -15,7 +15,7 @@ angular.module('faradayApp')
                     if(typeof(obj.value.attachments) != undefined && obj.value.attachments != undefined) {
                         for(var attachment in obj.value.attachments) {
                             evidence.push(attachment);
-                        };
+                        }
                     }
                     var v = {
                         "id":           obj.id,

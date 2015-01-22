@@ -127,6 +127,10 @@
                                         <a href="" ng-click="toggleShow('website', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="toggleSort('website')">Website</a>
                                     </th>
+                                    <th ng-if="columns.evidence">
+                                        <a href="" ng-click="toggleShow('evidence', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                                        <a href="" ng-click="toggleSort('Evidence')">Evidence</a>
+                                    </th>
                                     <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
                                 </tr>
                             </thead>
@@ -154,6 +158,11 @@
                                         <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>
                                     </td>
                                     <td ng-if="columns.website">{{v.website}}</td>
+                                    <td ng-if="columns.evidence">
+                                        <div ng-repeat="e in v.attachments track by $index">
+                                            <a href="{{baseurl + workspace}}/{{ v.id}}/{{e}}" target="_blank">{{e}}</a>
+                                        </div>
+                                    </td>
                                     <td><input type="checkbox" name="{{v.id}}"/></td>
                                 </tr>
                             </tbody>

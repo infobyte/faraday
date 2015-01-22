@@ -1,17 +1,22 @@
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$modal', 'statusReportFact', 
-                    function($scope, $filter, $route, $routeParams, $modal, statusReportFact) {
+                    ['$scope', '$filter', '$route', '$routeParams', '$modal', 'BASEURL', 'statusReportFact', 
+                    function($scope, $filter, $route, $routeParams, $modal, BASEURL, statusReportFact) {
+        $scope.baseurl = BASEURL;
         $scope.sortField = 'date';
         $scope.reverse = true;
+
         // load all workspaces
         statusReportFact.getWorkspaces(function(wss) {
             $scope.workspaces = wss;
         });
+
         // current workspace
         $scope.workspace = $routeParams.wsId;
+
         // load all vulnerabilities
         $scope.vulns = statusReportFact.getVulns($scope.workspace);
+
         // toggles column show property
         $scope.toggleShow = function(column, show) {
             $scope.columns[column] = !show;
@@ -38,6 +43,7 @@ angular.module('faradayApp')
             "data":     true,
             "date":     true,
             "desc":     true,
+            "evidence": false,
             "method":   false,
             "name":     true,
             "params":   false,
@@ -68,6 +74,7 @@ angular.module('faradayApp')
         $scope.cleanCSV = function(field) {
             return field.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'").replace(/[\n\r]/g, "%20").replace(/[,]/g, "%2c");;
         };
+
         $scope.toCSV = function() {
             var method      = "";
             var website     = "";

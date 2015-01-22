@@ -66,6 +66,7 @@ angular.module('faradayApp')
                 // old attachments are of type String (file name) and need to be processed by attachmentsFact.getStubs
                 var stubs = [],
                 files = [],
+                names = [],
                 promises = [];
                 v._attachments = {};
 
@@ -84,21 +85,16 @@ angular.module('faradayApp')
                     result.forEach(function(atts) {
                         for(var name in atts) {
                             v._attachments[name] = atts[name];
+                            names.push(name);
                         }
                     });
                     $http.put(url, v).success(function(d, s, h, c) {
-                        callback(d.rev);
+                        callback(d.rev, names);
                     });
-                    /*
-                    // finally, let's get the final array of attachments and save it to the vuln
-                    $http.get(url).success(function(d, s, h, c) {
-                        vuln.evidence = attachmentsFact.attachmentsObjToArray(d._attachments);
-                    });
-                    */
                 });
             } else {
                 $http.put(url, v).success(function(d, s, h, c) {
-                    callback(d.rev);
+                    callback(d.rev, []);
                 });
             }
         };

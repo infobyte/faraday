@@ -11,12 +11,6 @@ angular.module('faradayApp')
         $scope.vulnc = 0;
         var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
 
-        // ERASEME
-        $scope.logEvidence = function() {
-            console.log($scope.icons);
-            console.log($scope.evidence);
-        };
-
         $scope.pickVuln = function(v) {
             $scope.p_name = v.name;
             $scope.p_desc = v.desc;
@@ -138,7 +132,7 @@ angular.module('faradayApp')
 
         $scope.selectedFiles = function(files, e) {
             files.forEach(function(file) {
-                $scope.evidence[file.name] = file;
+                if(!$scope.evidence.hasOwnProperty(file)) $scope.evidence[file.name] = file;
             });
             $scope.icons = commons.loadIcons($scope.evidence); 
         }

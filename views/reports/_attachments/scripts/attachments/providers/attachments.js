@@ -13,7 +13,7 @@ angular.module('faradayApp')
             });
             $q.all(promises).then(function(attachments) {
                 attachments.forEach(function(attachment) {
-                    tmp[attachment.filename] = attachment;
+                    tmp[attachment.filename] = attachment.value;
                 });
                 deferred.resolve(tmp);
             });

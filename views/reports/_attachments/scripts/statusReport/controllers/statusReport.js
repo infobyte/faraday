@@ -1,8 +1,7 @@
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$modal', '$log', 'statusReportFact', 
-                    function($scope, $filter, $route, $routeParams, $modal, $log, statusReportFact) {
-        $scope.$log = $log;
+                    ['$scope', '$filter', '$route', '$routeParams', '$modal', 'statusReportFact', 
+                    function($scope, $filter, $route, $routeParams, $modal, statusReportFact) {
         $scope.sortField = 'date';
         $scope.reverse = true;
         // load all workspaces
@@ -176,8 +175,9 @@ angular.module('faradayApp')
                         if(typeof(data.website) != "undefined") v.website = data.website;
                     }
             
-                    statusReportFact.putVulns($scope.workspace, v, function(rev) {
+                    statusReportFact.putVulns($scope.workspace, v, function(rev, evidence) {
                         v.rev = rev;
+                        v.attachments = evidence;
                     });
                     v.selected = false;
                 }
@@ -265,8 +265,9 @@ angular.module('faradayApp')
         };
 
         $scope.insert = function(vuln){
-            statusReportFact.putVulns($scope.workspace, vuln, function(rev) {
+            statusReportFact.putVulns($scope.workspace, vuln, function(rev, evidence) {
                 vuln.rev = rev;
+                vuln.attachments = evidence;
             });
             //formating the date
             var d = new Date(0);

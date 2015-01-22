@@ -38,7 +38,7 @@ angular.module('faradayApp')
 
         $scope.selectedFiles = function(files, e) {
             files.forEach(function(file) {
-                $scope.evidence[file.name] = file;
+                if(!$scope.evidence.hasOwnProperty(file)) $scope.evidence[file.name] = file;
             });
             $scope.icons = commons.loadIcons($scope.evidence); 
         }

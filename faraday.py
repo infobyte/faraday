@@ -296,7 +296,6 @@ def startFaraday():
     print(Fore.RESET + Back.RESET + Style.RESET_ALL)
 
     exit_status = start()
-    restoreQtrc()
 
     return exit_status
 
@@ -337,20 +336,6 @@ def setupQtrc():
     except:
         cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqui.so'))
         cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqt.so'))
-
-def restoreQtrc():
-    """Restores user qtrc.
-
-    After exiting faraday the original qtrc is restored.
-
-    """
-    pass
-
-    # logger.info("Restoring user Qt configuration.")
-    # shutil.copy2(USER_QTRC, FARADAY_QTRCBAK)
-    # if os.path.isfile(USER_QTRCBAK):
-    #     shutil.copy(USER_QTRCBAK, USER_QTRC)
-
 
 def setupZSH():
     """Cheks and handles Faraday's integration with ZSH.

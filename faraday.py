@@ -334,8 +334,11 @@ def setupQtrc():
     try:
         import qt
     except:
-        cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqui.so'))
-        cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqt.so'))
+        try:
+            cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqui.so'))
+            cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqt.so'))
+        except:
+            pass
 
 def setupZSH():
     """Cheks and handles Faraday's integration with ZSH.

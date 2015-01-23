@@ -26,22 +26,10 @@ from config.globals import *
 from utils.profilehooks import profile
 
 
-QTDIR='/usr/local/qt'
-PATH='%s/bin:%s'  %(QTDIR, os.environ['PATH'])
-MANPATH='%s/doc/man' % QTDIR
-LD_LIBRARY_PATH='%s/lib:%s' % (QTDIR, os.environ.get('LD_LIBRARY_PATH', ''))
-
-libs_exports =  {
-'QTDIR': QTDIR,
-'PATH': PATH,
-'MANPATH': MANPATH,
-'LD_LIBRARY_PATH': LD_LIBRARY_PATH
-}
-
-os.environ.update(libs_exports)
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 FARADAY_BASE = os.path.dirname(os.path.realpath(__file__))
+QTDIR=os.path.join(FARADAY_BASE, 'external_libs', 'qt')
 
 FARADAY_USER_HOME = os.path.expanduser(CONST_FARADAY_HOME_PATH)
 FARADAY_PLUGINS_PATH = os.path.join(FARADAY_USER_HOME,
@@ -343,17 +331,9 @@ def setupQtrc():
     Existing qtrc files will be backed up and faraday qtrc will be set.
 
     """
-
-    if os.path.isfile(USER_QTRC):
-        shutil.copy2(USER_QTRC, USER_QTRCBAK)
-
-    if os.path.isfile(FARADAY_QTRCBAK):
-        shutil.copy(FARADAY_QTRCBAK, USER_QTRC)
-    else:
-        if not os.path.exists(USER_QT):
-            os.makedirs(USER_QT)
-        shutil.copy(FARADAY_QTRC, USER_QTRC)
-        shutil.copy(FARADAY_QTRC, FARADAY_QTRCBAK)
+    from ctypes import cdll
+    cdll.LoadLibrary(os.join(QTDIR, 'lib', 'libqui.so')
+    cdll.LoadLibrary(os.join(QTDIR, 'lib', 'libqt.so')
 
 def restoreQtrc():
     """Restores user qtrc.
@@ -361,11 +341,12 @@ def restoreQtrc():
     After exiting faraday the original qtrc is restored.
 
     """
+    pass
 
-    logger.info("Restoring user Qt configuration.")
-    shutil.copy2(USER_QTRC, FARADAY_QTRCBAK)
-    if os.path.isfile(USER_QTRCBAK):
-        shutil.copy(USER_QTRCBAK, USER_QTRC)
+    # logger.info("Restoring user Qt configuration.")
+    # shutil.copy2(USER_QTRC, FARADAY_QTRCBAK)
+    # if os.path.isfile(USER_QTRCBAK):
+    #     shutil.copy(USER_QTRCBAK, USER_QTRC)
 
 
 def setupZSH():

@@ -77,14 +77,8 @@ if [ "$down" -eq 1 ]; then
     if [ -e lib-$version.tgz ]; then
         if [ "`echo ${!shav}`" = "`sha256sum lib-$version.tgz | awk -F\" \" \{'print $1'\}`" ]; then
             echo "[+] SHA256 ok"
-            tar -xvzf lib-$version.tgz
-            
-            cp -R lib-$version/* /usr/local/
-            cp -R lib-$version/qt/lib/*so* /usr/local/lib
-
-            cat deps/qtvars >> /etc/profile
-            . /etc/profile            
-            ldconfig
+            tar -xvzf lib-$version.tgz 
+            mv -R lib-$version/ external_libs
         else
             echo "[-] SHA256 file corrupt"
             exit

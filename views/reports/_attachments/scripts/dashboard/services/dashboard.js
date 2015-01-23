@@ -16,5 +16,19 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        dashboardSrv.getHostname = function(id){
+            var deferred = $q.defer();
+            url = BASEURL + "/" + ws + "/" + id;
+
+            $http.get(url).then(function(response){
+                res = response.data.name;
+                deferred.resolve(res);
+            }, function(){
+                deferred.reject();
+            });
+
+            return deferred.promise;
+        }
+
         return dashboardSrv;
     }]);

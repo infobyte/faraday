@@ -17,4 +17,14 @@ angular.module('faradayApp')
                 });
                 
             }
+
+            // $scope.barOnMouseOver = function(item){
+            //     $scope.barTooltip = "lala";
+            //     $scope.$apply(function() {
+            //         dashboardSrv.getHostName(item.value).then(function(hostname){
+            //             $scope.barTooltip = "Host: " + hostname + "Value: " + item.key;
+            //         })
+            //     }); 
+            // }
+
     }]);

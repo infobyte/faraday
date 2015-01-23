@@ -1,12 +1,13 @@
 angular.module('faradayApp')
     .controller('modalNewCtrl',
-        ['$scope', '$modalInstance', '$filter','targetFact', 'severities', 'workspace',
-        function($scope, $modalInstance, $filter,targetFact, severities, workspace) {
+        ['$scope', '$modalInstance', '$filter', '$upload', 'targetFact', 'commonsFact', 'severities', 'workspace',
+        function($scope, $modalInstance, $filter, $upload, targetFact, commons, severities, workspace) {
         
         $scope.typeOptions = [
             {name:'Vulnerability', value:'Vulnerability'},
             {name:'VulnerabilityWeb',value:'VulnerabilityWeb'}
         ];
+
         $scope.vuln_type = $scope.typeOptions[0].value;
         $scope.severities = severities;
         $scope.workspace = workspace;
@@ -14,27 +15,33 @@ angular.module('faradayApp')
         $scope.not_target_selected = false;
         $scope.incompatible_vulnWeb = false;
         $scope.refs = [{ref:''}];
+        $scope.evidence = {};
+        $scope.icons = {};
+        $scope.showPagination = 1;
+        $scope.currentPage = 0;
+        $scope.pageSize = 5;
+        $scope.pagination = 10;
 
-        var name_selected;
-        var host_selected;
-        var d = {};
-        var hosts = targetFact.getTarget($scope.workspace, true);
+        var name_selected,
+        host_selected,
+        d = {},
+        hosts = targetFact.getTarget($scope.workspace, true);
+
         hosts.forEach(function(h) {
             h.services = [];  
             d[h._id] = h;
         });
+
         var services = targetFact.getTarget($scope.workspace, false);
+
         for(var i = 0; i < services.length; i++){
             var host = [];
             services[i].selected = false;
             host = d[services[i].hid];
             host.services.push(services[i]);
         }
+
         $scope.hosts_with_services = hosts;
-        $scope.showPagination = 1;
-        $scope.currentPage = 0;
-        $scope.pageSize = 5;
-        $scope.pagination = 10;
 
         $scope.numberOfPages=function(){
             var filteredData = $filter('filter')($scope.hosts_with_services,$scope.search_notes);
@@ -47,51 +54,64 @@ angular.module('faradayApp')
             return Math.ceil(filteredData.length/$scope.pagination);
         }
 
+        $scope.selectedFiles = function(files, e) {
+            files.forEach(function(file) {
+                if(!$scope.evidence.hasOwnProperty(file)) $scope.evidence[file.name] = file;
+            });
+            $scope.icons = commons.loadIcons($scope.evidence); 
+        }
+
+        $scope.removeEvidence = function(name) {
+            delete $scope.evidence[name];
+            delete $scope.icons[name];
+        }
+
         $scope.ok = function() {
             if($scope.vuln_type == "VulnerabilityWeb" && host_selected == true){
                 $scope.incompatible_vulnWeb = true;
-            }else{
-                var res = {};
-                var id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
-                var sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
+            } else {
+                var res = {},
+                id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString(),
+                sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString(),
+                myDate = new Date(),
+                myEpoch = myDate.getTime()/1000.0,
+                extra_vulns_prop = {},
+                arrayReferences = [];
 
-                var arrayReferences = [];
                 $scope.refs.forEach(function(r){
                     arrayReferences.push(r.ref);
                 });
+                
                 arrayReferences.filter(Boolean);
-                
-                var myDate = new Date();
-                var myEpoch = myDate.getTime()/1000.0;
-                
-                var res = {
-                        "id":           id,
-                        "data":         $scope.data,
-                        "date":         myEpoch,
-                        "desc":         $scope.desc,
-                        "meta":         {'create_time': myEpoch,
-                            "update_time": myEpoch,
-                            "update_user":  'UI Web',
-                            'update_action': 0,
-                            'creator': 'UI Web', 
-                            'create_time': myEpoch,
-                            'update_controller_action': 'UI Web New',
-                            'owner': 'anonymous'
-                        },
-                        "name":         $scope.name,
-                        "oid":          sha,
-                        "owned":        false,
-                        "owner":        "",
-                        "couch_parent": $scope.target_selected._id,
 
-                        "refs":         arrayReferences,
-                        "resolution":   $scope.resolution,
-                        "status":       $scope.vuln_type,
-                        "severity":     $scope.severitySelection,
-                        "target":       name_selected,
-                        "type":         $scope.vuln_type,
-                    };
-                var extra_vulns_prop = {};
+                var res = {
+                    "id":           id,
+                    "data":         $scope.data,
+                    "date":         myEpoch,
+                    "desc":         $scope.desc,
+                    "evidence":     $scope.evidence,
+                    "meta":         {
+                        'create_time': myEpoch,
+                        "update_time": myEpoch,
+                        "update_user":  'UI Web',
+                        'update_action': 0,
+                        'creator': 'UI Web', 
+                        'create_time': myEpoch,
+                        'update_controller_action': 'UI Web New',
+                        'owner': 'anonymous'
+                    },
+                    "name":         $scope.name,
+                    "oid":          sha,
+                    "owned":        false,
+                    "owner":        "",
+                    "couch_parent": $scope.target_selected._id,
+                    "refs":         arrayReferences,
+                    "resolution":   $scope.resolution,
+                    "status":       $scope.vuln_type,
+                    "severity":     $scope.severitySelection,
+                    "target":       name_selected,
+                    "type":         $scope.vuln_type
+                }
 
                 if($scope.vuln_type == "VulnerabilityWeb") {
                     extra_vulns_prop = {
@@ -110,7 +130,7 @@ angular.module('faradayApp')
                     };
                 }
 
-                for (var key in extra_vulns_prop) {
+                for(var key in extra_vulns_prop) {
                     res[key] = extra_vulns_prop[key];
                 }
 

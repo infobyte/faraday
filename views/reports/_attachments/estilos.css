@@ -536,3 +536,6 @@ span.input-group-addon.add-reference{
     width: 20px;
     cursor: pointer;
 }
+.normal-size {
+    font-size: 14px !important;
+}

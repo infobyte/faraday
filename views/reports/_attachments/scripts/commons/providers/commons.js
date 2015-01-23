@@ -1,8 +1,35 @@
 angular.module('faradayApp')
-    .factory('commons', function() {
-        var commons = {};
+    .factory('commonsFact', function() {
+        var commonsFact = {};
 
-        commons.arrayToObject = function(array){
+        // receives a dictionary of files whose keys are names
+        // returns a dictionary whose keys are names and values are strings - the names of the icons
+        commonsFact.loadIcons = function(files) {
+            var icons = {},
+            type = "";
+            
+            for(var name in files) {
+                // first lets load the type prop
+                if(files[name].hasOwnProperty("type")) {
+                    type = files[name].type.toLowerCase();
+                } else {
+                    type = name.slice(-3);
+                }
+                if(type == "application/pdf" || type == "pdf") {
+                    icons[name] = "fa-file-pdf-o";
+                } else if(type.split("/")[0] == "image" || type == "jpg" || type == "peg" || type == "png") {
+                    icons[name] = "fa-file-image-o";
+                } else if(type == "application/msword" || type == "text/plain" || type == "txt" || type == "doc") {
+                    icons[name] = "fa-file-text-o";
+                } else {
+                    icons[name] = "fa-file-o";
+                }
+            };
+
+            return icons;
+        };
+
+        commonsFact.arrayToObject = function(array){
             var refArray = [];
            array.forEach(function(r){
                 refArray.push({ref:r});
@@ -10,7 +37,7 @@ angular.module('faradayApp')
             return refArray;
         }
 
-        commons.objectToArray = function(object){
+        commonsFact.objectToArray = function(object){
             var res = {};
             var arrayReferences = [];
             object.forEach(function(r){
@@ -20,8 +47,8 @@ angular.module('faradayApp')
             return arrayReferences;
         }
 
-        commons.htmlentities = function(string, quote_style, charset, double_encode) {
-            var hash_map = commons.translationtable('HTML_ENTITIES', quote_style), symbol = '';
+        commonsFact.htmlentities = function(string, quote_style, charset, double_encode) {
+            var hash_map = commonsFact.translationtable('HTML_ENTITIES', quote_style), symbol = '';
             string = string == null ? '' : string + '';
 
             if (!hash_map) {
@@ -53,7 +80,7 @@ angular.module('faradayApp')
             return string;
         };
 
-        commons.translationtable = function(table, quote_style) {
+        commonsFact.translationtable = function(table, quote_style) {
             var entities = {},
                 hash_map = {},
                 decimal;
@@ -196,5 +223,5 @@ angular.module('faradayApp')
             return hash_map;
         }
 
-        return commons;
+        return commonsFact;
     });

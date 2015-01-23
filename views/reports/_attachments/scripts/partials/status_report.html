@@ -117,6 +117,9 @@
                                     <th ng-if="columns.refs">
                                         <a href="" ng-click="toggleShow('refs', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="toggleSort('refs')">References</a>
+                                    <th ng-if="columns.evidence">
+                                        <a href="" ng-click="toggleShow('evidence', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                                        <a href="" ng-click="toggleSort('Evidence')">Evidence</a>
                                     </th>
                                     <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
                                 </tr>
@@ -147,6 +150,11 @@
                                     </td>
                                     <td ng-if="columns.website">{{v.website}}</td>
                                     <td ng-if="columns.refs"><p ng-repeat="refs in v.refs">{{refs}}</p></td>
+                                    <td ng-if="columns.evidence">
+                                        <div ng-repeat="e in v.attachments track by $index">
+                                            <a href="{{baseurl + workspace}}/{{ v.id}}/{{e}}" target="_blank">{{e}}</a>
+                                        </div>
+                                    </td>
                                     <td><input type="checkbox" name="{{v.id}}"/></td>
                                 </tr>
                             </tbody>

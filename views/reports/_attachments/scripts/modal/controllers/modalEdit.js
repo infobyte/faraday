@@ -1,7 +1,15 @@
 angular.module('faradayApp')
-    .controller('modalEditCtrl', 
-        ['$scope', '$modalInstance', 'severities', 'vulns', 'commons',
-        function($scope, $modalInstance, severities, vulns, commons) {
+    .controller('modalEditCtrl', ['$scope', '$modalInstance', 'commonsFact', 'severities', 'vulns', 
+        function($scope, $modalInstance, commons, severities, vulns) {
+
+        $scope.evidence = {};
+        $scope.icons = {};
+        $scope.severities = severities;
+        $scope.vulns = vulns;
+        $scope.web = false;
+        $scope.mixed = 0x00;
+        $scope.vulnc = 0;
+        var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
 
         $scope.pickVuln = function(v) {
             $scope.p_name = v.name;
@@ -38,16 +46,14 @@ angular.module('faradayApp')
             $scope.refs = commons.arrayToObject($scope.refs);
         }
 
-        $scope.severities = severities;
-        $scope.vulns = vulns;
-        $scope.web = false;
-        $scope.mixed = 0x00;
-
-        $scope.vulnc = 0;
-        var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
-
         $scope.vulns.forEach(function(v) {
             if(v.selected) {
+                if(typeof(v.attachments) != undefined && v.attachments != undefined) {
+                    v.attachments.forEach(function(name) {
+                        $scope.evidence[name] = {"name": name};
+                    });
+                    $scope.icons = commons.loadIcons($scope.evidence); 
+                }
                 $scope.mixed = $scope.mixed | vuln_mask[v.type];
                 $scope.vulnc++;
                 $scope.pickVuln(v);
@@ -88,11 +94,22 @@ angular.module('faradayApp')
         };
 
         $scope.ok = function() {
+            var res = {},
+            evidence = [];
+
+            for(var key in $scope.evidence) {
+                if(Object.keys($scope.evidence[key]).length == 1) {
+                    evidence.push(key);
+                } else {
+                    evidence.push($scope.evidence[key]);
+                }
+            }
             $scope.refs = commons.objectToArray($scope.refs);
             if($scope.web) { 
                 res = {
                     "data":         $scope.data,
                     "desc":         $scope.desc,
+                    "evidence":     $scope.evidence,
                     "method":       $scope.method,
                     "name":         $scope.name, 
                     "params":       $scope.params,
@@ -111,6 +128,7 @@ angular.module('faradayApp')
                 res = {
                     "data":         $scope.data,
                     "desc":         $scope.desc,
+                    "evidence":     $scope.evidence,
                     "name":         $scope.name, 
                     "refs":         $scope.refs,
                     "resolution":   $scope.resolution,
@@ -131,4 +149,16 @@ angular.module('faradayApp')
         $scope.newReference = function($event){
             $scope.refs.push({ref:''});
         };
+
+        $scope.selectedFiles = function(files, e) {
+            files.forEach(function(file) {
+                if(!$scope.evidence.hasOwnProperty(file)) $scope.evidence[file.name] = file;
+            });
+            $scope.icons = commons.loadIcons($scope.evidence); 
+        }
+
+        $scope.removeEvidence = function(name) {
+            delete $scope.evidence[name];
+            delete $scope.icons[name];
+        }
     }]);

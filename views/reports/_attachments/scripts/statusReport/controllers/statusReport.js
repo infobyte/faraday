@@ -1,18 +1,22 @@
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$modal', '$log', 'statusReportFact', 
-                    function($scope, $filter, $route, $routeParams, $modal, $log, statusReportFact) {
-        $scope.$log = $log;
+                    ['$scope', '$filter', '$route', '$routeParams', '$modal', 'BASEURL', 'statusReportFact', 
+                    function($scope, $filter, $route, $routeParams, $modal, BASEURL, statusReportFact) {
+        $scope.baseurl = BASEURL;
         $scope.sortField = 'date';
         $scope.reverse = true;
+
         // load all workspaces
         statusReportFact.getWorkspaces(function(wss) {
             $scope.workspaces = wss;
         });
+
         // current workspace
         $scope.workspace = $routeParams.wsId;
+
         // load all vulnerabilities
         $scope.vulns = statusReportFact.getVulns($scope.workspace);
+
         // toggles column show property
         $scope.toggleShow = function(column, show) {
             $scope.columns[column] = !show;
@@ -39,6 +43,7 @@ angular.module('faradayApp')
             "data":         true,
             "date":         true,
             "desc":         true,
+            "evidence":     false,
             "method":       false,
             "name":         true,
             "params":       false,
@@ -74,6 +79,7 @@ angular.module('faradayApp')
         $scope.ToString = function(array){
             return array.toString();
         };
+
         $scope.toCSV = function() {
             var method      = "";
             var website     = "";
@@ -188,6 +194,7 @@ angular.module('faradayApp')
                     if(typeof(data.data) != "undefined") v.data = data.data;
                     if(typeof(data.refs) != "undefined") v.refs = data.refs;
                     if(typeof(data.resolution) != "undefined") v.resolution = data.resolution;
+                    v.evidence = data.evidence;
                     if(v.web) {
                         if(typeof(data.method) != "undefined") v.method = data.method;
                         if(typeof(data.params) != "undefined") v.params = data.params;
@@ -201,8 +208,9 @@ angular.module('faradayApp')
                         if(typeof(data.website) != "undefined") v.website = data.website;
                     }
             
-                    statusReportFact.putVulns($scope.workspace, v, function(rev) {
+                    statusReportFact.putVulns($scope.workspace, v, function(rev, evidence) {
                         v.rev = rev;
+                        v.attachments = evidence;
                     });
                     v.selected = false;
                 }
@@ -290,8 +298,9 @@ angular.module('faradayApp')
         };
 
         $scope.insert = function(vuln){
-            statusReportFact.putVulns($scope.workspace, vuln, function(rev) {
+            statusReportFact.putVulns($scope.workspace, vuln, function(rev, evidence) {
                 vuln.rev = rev;
+                vuln.attachments = evidence;
             });
             //formating the date
             var d = new Date(0);

@@ -1,91 +1,70 @@
 angular.module('faradayApp')
-  .directive('d3Treemap', ['$window', '$timeout', 'd3Service', 
-  function($window, $timeout, d3Service) {
+  .directive('d3Treemap', ['d3Service', 
+  function(d3Service) {
     return {
       restrict: 'EA',
       scope: {
-        data: '=',
-        label: '@',
-        onClick: '&'
+        data: '='
       },
       link: function(scope, ele, attrs) {
         d3Service.d3().then(function(d3) {
  
-          var renderTimeout;
-          var margin = parseInt(attrs.margin) || 20,
-              barHeight = parseInt(attrs.barHeight) || 20,
-              barPadding = parseInt(attrs.barPadding) || 5;
- 
-          var svg = d3.select(ele[0])
-            .append('svg')
-            .style('width', '100%');
- 
-          $window.onresize = function() {
-            scope.$apply();
-          };
- 
-          scope.$watch(function() {
-            return angular.element($window)[0].innerWidth;
-          }, function() {
-            scope.render(scope.data);
-          });
- 
+          var margin = {
+            "top": parseInt(attrs.marginTop) || 28,
+            "right": parseInt(attrs.marginRight) || 10,
+            "bottom": parseInt(attrs.marginBottom) || 10,
+            "left": parseInt(attrs.marginLeft) || 10,
+          }
+
+          var width = parseInt(attrs.treemapWitdh) || 160,
+            height = parseInt(attrs.treemapHeight) || 133;
+
+          function position() {
+            this.style("left", function(d) { return d.x + "px"; })
+              .style("top", function(d) { return d.y + "px"; })
+              .style("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
+              .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
+          }
+
           scope.$watch('data', function(newData) {
             scope.render(newData);
           }, true);
  
           scope.render = function(data) {
-            svg.selectAll('*').remove();
+
+            // remove existing treemap container, if any
+            d3.select("#treemap_container").remove();
  
-            if (!data) return;
-            if (renderTimeout) clearTimeout(renderTimeout);
- 
-            renderTimeout = $timeout(function() {
-              var width = d3.select(ele[0])[0][0].offsetWidth - margin,
-                  height = scope.data.length * (barHeight + barPadding),
-                  color = d3.scale.category20(),
-                  xScale = d3.scale.linear()
-                    .domain([0, d3.max(data, function(d) {
-                      return d.score;
-                    })])
-                    .range([0, width]);
- 
-              svg.attr('height', height);
- 
-              svg.selectAll('rect')
-                .data(data)
-                .enter()
-                  .append('rect')
-                  .on('click', function(d,i) {
-                    return scope.onClick({item: d});
-                  })
-                  .attr('height', barHeight)
-                  .attr('width', 140)
-                  .attr('x', Math.round(margin/2))
-                  .attr('y', function(d,i) {
-                    return i * (barHeight + barPadding);
-                  })
-                  .attr('fill', function(d) {
-                    return color(d.score);
-                  })
-                  .transition()
-                    .duration(1000)
-                    .attr('width', function(d) {
-                      return xScale(d.score);
-                    });
-              svg.selectAll('text')
-                .data(data)
-                .enter()
-                  .append('text')
-                  .attr('fill', '#fff')
-                  .attr('y', function(d,i) {
-                    return i * (barHeight + barPadding) + 15;
-                  })
-                  .attr('x', 15)
-                  .text(function(d) {
-                    return d.name + " (scored: " + d.score + ")";
-                  });
-            }, 200);
+            if (!data || data.length == 0) return;
+
+            var div = d3.select(ele[0])
+              .append("div")
+              .attr("class", "treemap")
+              .attr("id", "treemap_container")
+              .style("position", "relative")
+              .style("width", width + "px")
+              .style("height", height + "px")
+              .style("left", margin.left + "px")
+              .style("top", margin.top + "px");
+
+            // we need to make a copy of the data, because the treemap is going to change it
+            // and we have a watcher for that data to re-render the treemap, so we can enter
+            // in a recursion loop
+            var data_cp = {};
+            angular.copy(data, data_cp);
+
+            var treemap = d3.layout.treemap()
+              .size([width - margin.left - margin.right, height - margin.top - margin.bottom])
+              .sticky(true)
+              .value(function(d) {return d.value});
+
+            var node = div.datum(data_cp).selectAll(".node")
+              .data(treemap.nodes)
+            .enter().append("div")
+              .attr("class", "node treemap-tooltip")
+              .call(position)
+              .style("background", function(d) { return d.color; });
+        
           };
         });
       }}

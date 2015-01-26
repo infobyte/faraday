@@ -6,8 +6,14 @@
                 <span class=\"glyphicon glyphicon-info-sign faraday-qtips\" title=\"Top 5 services with the largest quantity of hosts\"></span>
             </h2>
         </header>
-        <div class="treemap" style="position:relative;width:160px;height:133px;left:10px;top=28px">
+        <div ng-if="treemapData.length < 5" class="alert alert-info alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+            </button>
+            <p>At least 5 services needed to show this visualization</p>
         </div>
+        <d3-treemap data="treemapData"></d3-treemap>
     </article>
 </div>
 <div class='col-lg-2'>
@@ -24,9 +30,7 @@
             </button>
             <p>At least 3 hosts needed to show this visualization</p>
         </div>
-        <div class="box">
-            <d3-bars data="barData"></d3-bars>
-        </div>
+        <d3-bars data="barData"></d3-bars>
     </article>
 </div>
 <div class='col-lg-2'>

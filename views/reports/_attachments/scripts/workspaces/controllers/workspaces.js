@@ -61,6 +61,7 @@ angular.module('faradayApp')
 
         
         $scope.insert = function(workspace){
+            delete workspace.selected;
             workspacesFact.put(workspace, $scope.onSuccessInsert);
         };
 

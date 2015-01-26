@@ -6,6 +6,7 @@ angular.module('faradayApp')
             var workspace = $routeParams.wsId;
             $scope.barData = [];
             $scope.treemapData = [];
+            $scope.cakeData = [];
 
             if (workspace != undefined){
                 dashboardSrv.getHostsByServicesCount(workspace).then(function(res){
@@ -29,6 +30,50 @@ angular.module('faradayApp')
                             tmp.push(srv);
                         });
                         $scope.treemapData = {"children": tmp};
+                    }
+                });
+
+                dashboardSrv.getVulnerabilitiesCount(workspace).then(function(res){
+                    if (res.length > 0) {
+                        // Mapping of step names to colors.
+                        var colors = {
+                            "low": "#A1CE31",
+                            "med": "#DFBF35",
+                            "critical": "#8B00FF",
+                            "high": "#DF3936",
+                            "info": "#428BCA"
+                        };
+
+                        var tmp = [
+                            {"key": "low", "value": 0, "color": "#A1CE31"},
+                            {"key": "med", "value": 0, "color": "#DFBF35"},
+                            {"key": "high", "value": 0, "color": "#DF3936"},
+                            {"key": "critical", "value": 0, "color": "#8B00FF"},
+                            {"key": "info", "value": 0, "color": "#428BCA"}
+                        ];
+
+                        function accumulate(_array, key, value){
+                            _array.forEach(function(obj){
+                                if (obj.key == key){
+                                    obj.value += value;
+                                }
+                            });
+                        }
+                        
+                        res.forEach(function(tvuln){
+                            if (tvuln.key == 1 || tvuln.key == "info"){
+                                accumulate(tmp, "info", tvuln.value);
+                            } else if (tvuln.key == 2 || tvuln.key == "low") {
+                                accumulate(tmp, "low", tvuln.value);
+                            } else if (tvuln.key == 3 || tvuln.key == "med") {
+                                accumulate(tmp, "med", tvuln.value);
+                            } else if (tvuln.key == 4 || tvuln.key == "high") {
+                                accumulate(tmp, "high", tvuln.value);
+                            } else if (tvuln.key == 5 || tvuln.key == "critical") {
+                                accumulate(tmp, "critical", tvuln.value);
+                            }
+                        });
+                        $scope.cakeData = {"children": tmp};
                     }
                 });
             }

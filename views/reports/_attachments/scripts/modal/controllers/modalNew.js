@@ -21,6 +21,7 @@ angular.module('faradayApp')
         $scope.currentPage = 0;
         $scope.pageSize = 5;
         $scope.pagination = 10;
+        $scope.file_name_error = false;
 
         var name_selected,
         host_selected,
@@ -56,7 +57,11 @@ angular.module('faradayApp')
 
         $scope.selectedFiles = function(files, e) {
             files.forEach(function(file) {
-                if(!$scope.evidence.hasOwnProperty(file)) $scope.evidence[file.name] = file;
+                if(file.name.charAt(0) != "_") {
+                    if(!$scope.evidence.hasOwnProperty(file)) $scope.evidence[file.name] = file;
+                } else {
+                    $scope.file_name_error = true;
+                }
             });
             $scope.icons = commons.loadIcons($scope.evidence); 
         }

@@ -9,6 +9,7 @@ angular.module('faradayApp')
         $scope.web = false;
         $scope.mixed = 0x00;
         $scope.vulnc = 0;
+        $scope.file_name_error = false;
         var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
 
         $scope.pickVuln = function(v) {
@@ -152,7 +153,11 @@ angular.module('faradayApp')
 
         $scope.selectedFiles = function(files, e) {
             files.forEach(function(file) {
-                if(!$scope.evidence.hasOwnProperty(file)) $scope.evidence[file.name] = file;
+                if(file.name.charAt(0) != "_") {
+                    if(!$scope.evidence.hasOwnProperty(file)) $scope.evidence[file.name] = file;
+                } else {
+                    $scope.file_name_error = true;
+                }
             });
             $scope.icons = commons.loadIcons($scope.evidence); 
         }

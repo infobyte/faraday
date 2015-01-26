@@ -108,6 +108,11 @@
     <div ng-if="vulnc == 1">
         <h4>Evidence</h4>
         <form>
+            <div class="alert alert-danger normal-size" role="alert" ng-if="file_name_error">
+              <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+              <span class="sr-only">Error:</span>
+              Cannot upload evidence starting with underscore, please choose a different name for the file.
+            </div>
             <div class="form-group normal-size">
                 <input type="file" id="evidence" ng-file-select ng-multiple="true" resetOnClick="false" ng-file-change="selectedFiles($files, $event)"/>
                 <p class="help-block">Multiple files are allowed.</p>

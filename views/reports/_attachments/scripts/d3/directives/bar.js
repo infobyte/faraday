@@ -1,12 +1,10 @@
 angular.module('faradayApp')
-  .directive('d3Bars', ['$window', '$timeout', 'd3Service', 
-  function($window, $timeout, d3Service) {
+  .directive('d3Bars', ['d3Service', 
+  function(d3Service) {
     return {
       restrict: 'EA',
       scope: {
-        data: '=',
-        label: '@',
-        onClick: '&'
+        data: '='
       },
       link: function(scope, ele, attrs) {
         d3Service.d3().then(function(d3) {

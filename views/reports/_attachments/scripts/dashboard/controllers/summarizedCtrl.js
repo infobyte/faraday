@@ -1,5 +1,5 @@
 angular.module('faradayApp')
-    .controller('sumarizedCtrl', 
+    .controller('summarizedCtrl', 
         ['$scope', '$route', '$routeParams', 'dashboardSrv',
         function($scope, $route, $routeParams, dashboardSrv) {
             //current workspace

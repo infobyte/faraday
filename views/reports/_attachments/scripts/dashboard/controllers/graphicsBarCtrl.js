@@ -35,15 +35,6 @@ angular.module('faradayApp')
 
                 dashboardSrv.getVulnerabilitiesCount(workspace).then(function(res){
                     if (res.length > 0) {
-                        // Mapping of step names to colors.
-                        var colors = {
-                            "low": "#A1CE31",
-                            "med": "#DFBF35",
-                            "critical": "#8B00FF",
-                            "high": "#DF3936",
-                            "info": "#428BCA"
-                        };
-
                         var tmp = [
                             {"key": "low", "value": 0, "color": "#A1CE31"},
                             {"key": "med", "value": 0, "color": "#DFBF35"},

@@ -1,0 +1,34 @@
+<div id='byservices'>
+    <div class='col-lg-3'>
+        <article class='panel panel-default'>
+            <header>
+                <h2>Services report
+                    <span class="glyphicon glyphicon-info-sign faraday-qtips" tooltip="All services for current WS ordered by host amount"></span>
+                </h2>
+            </header>
+            <div ng-if="servicesCount.length == 0" class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <p>No services found yet</p>
+            </div>
+            <div class='main'>
+                <div class='box'>
+                    <div ng-repeat="srv in servicesCount" class="columna unquinto services">
+                        <article class="dato2 fondo-negro">
+                            <section>
+                                <div class="nro texto-rojo">{{srv.value}}</div>
+                                <div class="txt texto-blanco">{{srv.key}}</div>
+                            </section>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+</div>
+<div id='summarized'></div>
+<!-- <div id='compound'></div> -->
+<div id='vulns'></div>
+<div id='list'></div>

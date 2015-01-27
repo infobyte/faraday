@@ -9,9 +9,6 @@
                 <span id="ws-name" class="label label-default"
                         title="Current workspace">Dashboard for {{ workspace }}</span><!-- WS name -->
                 <div id="ws-control" class="btn-group">
-                    <button file-exporter="toCSV()" type="button" class="btn btn-success" title="Download CSV for current workspace">
-                        <span class="glyphicon glyphicon-download"></span>
-                    </button>
                     <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
                         <span class="glyphicon glyphicon-refresh"></span>
                     </button>
@@ -26,6 +23,8 @@
             <div class="reports">
             </div><!-- .reports -->
             <div ng-controller="graphicsBarCtrl" ng-include="'scripts/dashboard/partials/graphics-bar.html'"></div>
+            <div ng-controller="sumarizedCtrl" ng-include="'scripts/dashboard/partials/sumarized.html'"></div>
+
         </div><!-- #reports-main -->
     </div><!-- .right-main -->
 </section>

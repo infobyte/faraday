@@ -40,7 +40,6 @@ angular.module('faradayApp')
                     break;
                 }
             };
-            console.log($scope.workspaces);
         };
 
 
@@ -75,6 +74,7 @@ angular.module('faradayApp')
 
         // Modals methods
         $scope.new = function(){ 
+
             $scope.modal = $modal.open({
                 templateUrl: 'scripts/workspaces/partials/modal-new.html',
                 controller: 'workspacesCtrl',
@@ -94,23 +94,41 @@ angular.module('faradayApp')
         };
 
         $scope.edit = function(){ 
-            console.log('editing');
-            $scope.workspaces.forEach(function(w){
-                if(w.selected){
-                    console.log('found workspace');
-                    $scope.newworkspace = w;
-                } 
-            });
-            $scope.modal = $modal.open({
-                templateUrl: 'scripts/workspaces/partials/modal-edit.html',
-                controller: 'workspacesCtrl',
-                scope: $scope,
-                size: 'lg'
+            var selected = false;
+            $scope.workspaces.forEach(function(w) {
+                if(w.selected) {
+                    selected = true;
+                    return;
+                }
             });
 
-            $scope.modal.result.then(function(workspace) {
-                $scope.update(workspace); 
-            });
+            if(selected){
+                $scope.workspaces.forEach(function(w){
+                    if(w.selected){
+                        $scope.newworkspace = w;
+                    } 
+                });
+                $scope.modal = $modal.open({
+                    templateUrl: 'scripts/workspaces/partials/modal-edit.html',
+                    controller: 'workspacesCtrl',
+                    scope: $scope,
+                    size: 'lg'
+                });
+
+                $scope.modal.result.then(function(workspace) {
+                    $scope.update(workspace); 
+                });
+            } else {
+                var modal = $modal.open({
+                    templateUrl: 'scripts/partials/modal-ko.html',
+                    controller: 'modalKoCtrl',
+                    resolve: {
+                        msg: function() {
+                            return 'No workspaces were selected to edit';
+                        }
+                    }
+                });
+            }
 
         };
 
@@ -124,20 +142,40 @@ angular.module('faradayApp')
         };
 
         $scope.delete = function(){ 
-            $scope.modal = $modal.open({
-                templateUrl: 'scripts/workspaces/partials/modal-delete.html',
-                controller: 'workspacesCtrl',
-                scope: $scope,
-                size: 'lg'
+            var selected = false;
+
+            $scope.workspaces.forEach(function(w) {
+                if(w.selected) {
+                    selected = true;
+                    return;
+                }
             });
 
-            $scope.modal.result.then(function() {
-                $scope.workspaces.forEach(function(w){
-                    if(w.selected == true)
-                        $scope.remove(w.name); 
+            if(selected){
+                $scope.modal = $modal.open({
+                    templateUrl: 'scripts/workspaces/partials/modal-delete.html',
+                    controller: 'workspacesCtrl',
+                    scope: $scope,
+                    size: 'lg'
                 });
-            });
 
+                $scope.modal.result.then(function() {
+                    $scope.workspaces.forEach(function(w){
+                        if(w.selected == true)
+                            $scope.remove(w.name); 
+                    });
+                });
+            } else {
+                var modal = $modal.open({
+                    templateUrl: 'scripts/partials/modal-ko.html',
+                    controller: 'modalKoCtrl',
+                    resolve: {
+                        msg: function() {
+                            return 'No workspaces were selected to delete';
+                        }
+                    }
+                });
+            }
         };
         // This is in the modal context only
         $scope.okDelete = function(){

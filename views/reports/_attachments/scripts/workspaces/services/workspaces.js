@@ -32,18 +32,21 @@ angular.module('faradayApp')
         };
 
         workspacesFact.put = function(workspace, onSuccess) {
-            var request = {
-                method: 'PUT',
-                url: BASEURL + workspace.name,
-                data: workspace
-            };
-            return $http(request).success(function(data) {
-                return $http.put(BASEURL + workspace.name + '/' + workspace.name, workspace).success(function(data)
-                {
-                    workspace._rev = data.rev;
-                    onSuccess(workspace);
-                });
-            });
+            createDatabase(workspace).
+                then(function(resp){ createWorkspaceDoc(resp, workspace);} ).
+                then(onSuccess(workspace)); 
+        };
+
+        createDatabase = function(workspace){
+            return $http.put(BASEURL + workspace.name, workspace); 
+
+        };
+
+        createWorkspaceDoc = function(response, workspace){
+            return ($http.put(BASEURL + workspace.name + '/' + workspace.name, workspace).
+                success(function(data){ 
+                    workspace._rev = response.data.rev;
+                }));
         };
 
         workspacesFact.update = function(workspace, onSuccess) {

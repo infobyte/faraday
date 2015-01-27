@@ -36,7 +36,6 @@ angular.module('faradayApp')
             d3.select("#sequence").remove();
  
             if (!data || data.length == 0) return;
-            console.log(data);
 
             // we need to make a copy of the data, because the treemap is going to change it
             // and we have a watcher for that data to re-render the treemap, so we can enter

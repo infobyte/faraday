@@ -11,7 +11,7 @@ angular.module('faradayApp')
             if (workspace != undefined){
                 dashboardSrv.getHostsByServicesCount(workspace).then(function(res){
                     if (res.length > 2) {
-                        var a = res.sort(function(a, b){
+                        res.sort(function(a, b){
                             return b.value-a.value;
                         });
                         $scope.barData = res.slice(0, 3);
@@ -20,7 +20,7 @@ angular.module('faradayApp')
                 
                 dashboardSrv.getServicesCount(workspace).then(function(res){
                     if (res.length > 4) {
-                        var a = res.sort(function(a, b){
+                        res.sort(function(a, b){
                             return b.value - a.value;
                         });
                         colors = ["#FA5882", "#FF0040", "#B40431", "#610B21", "#2A0A1B"];

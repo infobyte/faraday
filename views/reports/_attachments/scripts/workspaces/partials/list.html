@@ -27,20 +27,14 @@
                                     <th>
                                         <a href="" ng-click="toggleSort('sdate')">Creation Date</a>
                                     </th>
-                                    <th>
-                                        <input type="checkbox" ng-model="selectall" ng-click="checkAll()"/>
-                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr ng-repeat="w in workspaces | filter:query | orderBy:sortField:reverse"
-                                    selection-model selection-model-type="checkbox" >
-                                    <!-- selection&#45;model&#45;mode="multiple&#45;additive"  -->
-                                    <!-- selection&#45;model&#45;selected&#45;class="multi&#45;selected"> -->
+                                    selection-model selection-model-selected-class="multi-selected"> 
                                     <td>{{w.name}}</td>
                                     <td>{{w.description}}</td>
                                     <td>{{w.sdate | date:'dd/MM/yyyy' }}</td>
-                                    <td><input type="checkbox" name="{{w._id}}"/></td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->

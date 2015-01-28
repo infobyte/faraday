@@ -13,6 +13,18 @@ angular.module('faradayApp')
             $scope.wss.push(workspace.name); 
             $scope.workspaces.push(workspace); 
         };
+        
+        $scope.onFailInsert = function(error){
+            var modal = $modal.open({
+                templateUrl: 'scripts/partials/modal-ko.html',
+                controller: 'modalKoCtrl',
+                resolve: {
+                    msg: function() {
+                        return error;
+                    }
+                }
+            }); 
+        };
 
         $scope.onSuccessEdit = function(workspace){
             for(var i = 0; i < $scope.workspaces.length; i++) {
@@ -61,7 +73,10 @@ angular.module('faradayApp')
         
         $scope.insert = function(workspace){
             delete workspace.selected;
-            workspacesFact.put(workspace, $scope.onSuccessInsert);
+            workspacesFact.put(workspace).then(function(resp){
+                $scope.onSuccessInsert(workspace)
+            },
+            $scope.onFailInsert);
         };
 
         $scope.update = function(workspace){

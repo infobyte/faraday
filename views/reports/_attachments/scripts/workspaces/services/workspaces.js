@@ -1,5 +1,5 @@
 angular.module('faradayApp')
-    .factory('workspacesFact', ['BASEURL', '$http', function(BASEURL, $http) {
+    .factory('workspacesFact', ['BASEURL', '$http', '$q', function(BASEURL, $http, $q) {
         var workspacesFact = {};
 
         workspacesFact.list = function(callback) { 
@@ -31,22 +31,24 @@ angular.module('faradayApp')
             return exists_workspace;
         };
 
-        workspacesFact.put = function(workspace, onSuccess) {
-            createDatabase(workspace).
-                then(function(resp){ createWorkspaceDoc(resp, workspace);} ).
-                then(onSuccess(workspace)); 
+        errorHandler = function(response) {
+            return $q.reject(response.data.reason.replace("file", "workspace")); 
+        };
+
+        workspacesFact.put = function(workspace) {
+            return createDatabase(workspace).
+                then(function(resp){ createWorkspaceDoc(resp, workspace);}, errorHandler);
         };
 
         createDatabase = function(workspace){
-            return $http.put(BASEURL + workspace.name, workspace); 
-
+            return $http.put(BASEURL + workspace.name, workspace);
         };
 
         createWorkspaceDoc = function(response, workspace){
-            return ($http.put(BASEURL + workspace.name + '/' + workspace.name, workspace).
-                success(function(data){ 
-                    workspace._rev = response.data.rev;
-                }));
+            return ($http.put(BASEURL + workspace.name + '/' + workspace.name,
+                        workspace). success(function(data){ 
+                workspace._rev = response.data.rev;
+            }));
         };
 
         workspacesFact.update = function(workspace, onSuccess) {

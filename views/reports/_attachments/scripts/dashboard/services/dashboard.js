@@ -30,6 +30,11 @@ angular.module('faradayApp')
             return dashboardSrv._getView(url);
         };
 
+        dashboardSrv.getObjectsCount = function(ws) {
+            var url = BASEURL + "/" + ws + "/_design/hosts/_view/summarized?group=true";
+            return dashboardSrv._getView(url);
+        };
+
         dashboardSrv.getHostname = function(id){
             var deferred = $q.defer();
             url = BASEURL + "/" + ws + "/" + id;

@@ -3,7 +3,7 @@
         <article class='panel panel-default'>
             <header>
                 <h2>Services report
-                    <span class="glyphicon glyphicon-info-sign faraday-qtips" tooltip="All services for current WS ordered by host amount"></span>
+                    <span class="glyphicon glyphicon-info-sign" tooltip="All services for current WS ordered by host amount"></span>
                 </h2>
             </header>
             <div ng-if="servicesCount.length == 0" class="alert alert-info alert-dismissible">
@@ -28,7 +28,64 @@
         </article>
     </div>
 </div>
-<div id='summarized'></div>
+<div id='summarized'>
+    <div class='col-lg-3'>
+        <article class='panel panel-default'>
+            <header>
+                <h2>Workspace summarized report
+                    <span class="glyphicon glyphicon-info-sign" tooltip="WS overview - hosts, notes, services and vulnerabilites counts"></span>
+                </h2>
+            </header>
+            <div ng-if="objectsCount.length == 0" class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <p>Not enough data to generate summarized report yet</p>
+            </div>
+            <div class='main'>
+                <div class='box'>
+                    <div ng-repeat="obj in objectsCount" class="columna unquinto">
+                        <article class="dato2 fondo-negro">
+                            <section>
+                                <div class="nro texto-rojo">{{obj.value}}</div>
+                                <div class="txt texto-blanco">{{obj.key}}</div>
+                            </section>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+</div>
 <!-- <div id='compound'></div> -->
-<div id='vulns'></div>
+<div id='vulns'>
+    <div class='col-lg-6'>
+        <article class='panel panel-default'>
+            <header>
+                <h2>
+                    <a href="../././reports/faraday.html#/status/ws/{{workspace}}" class="status-report">Vulnerabilities</a>
+                    <span class="glyphicon glyphicon-info-sign" tooltip="Vulnerabilities count arranged by severity"></span>
+                </h2>
+            </header>
+            <div ng-if="vulnsCount.length == 0" class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <p>No vulnerabilities found yet.</p>
+            </div>
+            <div class='main box'>
+                <div ng-repeat="vuln in vulnsCount" class="columna unsexto">
+                    <article class="dato2 fondo-{{vuln.key}}">
+                        <section>
+                            <div class="nro texto-blanco">{{vuln.value}}</div>
+                            <div class="txt texto-blanco">{{vuln.key}}</div>
+                        </section>
+                    </article>
+                </div>
+            </div>
+        </article>
+    </div>
+</div>
 <div id='list'></div>

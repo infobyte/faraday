@@ -7,6 +7,26 @@ angular.module('faradayApp')
             $scope.servicesCount = [];
             $scope.objectsCount = [];
             $scope.vulnsCount = [];
+            $scope.commands = [];
+
+            // cmd table sorting
+            $scope.cmdSortField = 'date';
+            $scope.cmdSortReverse = true;
+            // toggles sort field and order
+            $scope.cmdToggleSort = function(field) {
+                $scope.cmdToggleSortField(field);
+                $scope.cmdToggleReverse();
+            };
+
+            // toggles column sort field
+            $scope.cmdToggleSortField = function(field) {
+                $scope.cmdSortField = field;
+            };
+
+            // toggle column sort order
+            $scope.cmdToggleReverse = function() {
+                $scope.cmdSortReverse = !$scope.cmdSortReverse;
+            }
 
             if (workspace != undefined){
                 dashboardSrv.getServicesCount(workspace).then(function(res){
@@ -27,11 +47,12 @@ angular.module('faradayApp')
                 dashboardSrv.getVulnerabilitiesCount(workspace).then(function(res){
                     if (res.length > 0) {
                         var tmp = [
-                            {"key": "critical", "value": 0, "color": "#8B00FF"},
-                            {"key": "high", "value": 0, "color": "#DF3936"},
-                            {"key": "med", "value": 0, "color": "#DFBF35"},
-                            {"key": "low", "value": 0, "color": "#A1CE31"},
-                            {"key": "info", "value": 0, "color": "#428BCA"}
+                            {"key": "critical", "value": 0},
+                            {"key": "high", "value": 0},
+                            {"key": "med", "value": 0},
+                            {"key": "low", "value": 0},
+                            {"key": "info", "value": 0},
+                            {"key": "unclassified", "value": 0}
                         ];
 
                         function accumulate(_array, key, value){
@@ -57,6 +78,26 @@ angular.module('faradayApp')
                         });
                         $scope.vulnsCount = tmp;
                     }
+                });
+                dashboardSrv.getCommands(workspace).then(function(res){
+                    res.forEach(function(cmd){
+                        cmd.user = cmd.user || "unknown";
+                        cmd.hostname = cmd.hostname || "unknown";
+                        cmd.ip = cmd.id || "0.0.0.0";
+                        if(cmd.duration == "0" || cmd.duration == "") {
+                            cmd.duration = "In progress";
+                        } else if (cmd.duration != undefined) {
+                            cmd.duration = cmd.duration.toFixed(2) + "s";
+                        } else {
+                            cmd.duration = "undefined";
+                        }
+                        var d = new Date(0);
+                        d.setUTCSeconds(cmd.startdate);
+                        var mins = (d.getMinutes()<10?'0':'') + d.getMinutes();
+                        d = d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear() + " - " + d.getHours() + ":" + mins;
+                        cmd.date = d;
+                    });
+                    $scope.commands = res;
                 });
             }
 

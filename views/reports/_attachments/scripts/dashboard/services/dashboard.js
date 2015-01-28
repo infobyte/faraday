@@ -35,6 +35,23 @@ angular.module('faradayApp')
             return dashboardSrv._getView(url);
         };
 
+        dashboardSrv.getCommands = function(ws) {
+            var deferred = $q.defer();
+            var url = BASEURL + "/" + ws + "/_design/commands/_view/list";
+            dashboardSrv._getView(url).then(function(res){
+                var tmp = [];
+                res.forEach(function(cmd){
+                    var _cmd = cmd.value;
+                    _cmd["command"] = cmd.key;
+                    tmp.push(_cmd);
+                });
+                deferred.resolve(tmp);
+            }, function(){
+                deferred.reject();
+            });
+            return deferred.promise;
+        };
+
         dashboardSrv.getHostname = function(id){
             var deferred = $q.defer();
             url = BASEURL + "/" + ws + "/" + id;

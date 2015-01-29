@@ -12,7 +12,10 @@ module.exports = function(config){
       '../_attachments/script/*bootstrap*.js',
       '../_attachments/scripts/app.js',
       '../_attachments/scripts/**/*.js',
-      '../tests/faradayApp/components/**/*.js' 
+      '../tests/faradayApp/components/**/*.js',
+      '../_attachments/script/angular-file-upload-shim.js',
+      '../_attachments/script/angular-file-upload.js'
+
     ],
 
     autoWatch : true,

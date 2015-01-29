@@ -4,9 +4,9 @@ module.exports = function(config){
     basePath : './',
 
     files : [ 
-      '../_attachments/script/jquery-1.11.1.min.js',
+      '../_attachments/script/jquery-1.11.2.js',
       '../_attachments/script/angular.js',
-      '../_attachments/script/angular-mocks.js',
+      // '../_attachments/script/angular-mocks.js',
       '../_attachments/script/angular-route.js',
       '../_attachments/script/angular-selection-model.js',
       '../_attachments/script/*bootstrap*.js',

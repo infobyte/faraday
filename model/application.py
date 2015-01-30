@@ -132,7 +132,9 @@ class MainApplication(object):
                 restapi.startAPIs(
                     self._plugin_manager,
                     self._model_controller,
-                    self._mappers_manager)
+                    self._mappers_manager,
+                    CONF.getApiConInfoHost(),
+                    CONF.getApiRestfulConInfoPort())
                 # Start report manager here
                 getLogger(self).debug("Starting Reports Manager Thread")
                 self._reports_manager.startWatch()

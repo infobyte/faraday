@@ -21,6 +21,8 @@ from plugins.core import PluginControllerForApi
 from model.visitor import VulnsLookupVisitor
 
 import utils.logs as logger
+from config.configuration import getInstanceConfiguration
+CONF = getInstanceConfiguration()
 
 
 _plugin_controller_api = None
@@ -40,16 +42,24 @@ def stopServer():
         _http_server.stop()
 
 
-def startAPIs(plugin_manager, model_controller, mapper_manager):
+def startAPIs(plugin_manager, model_controller, mapper_manager, hostname=None, port=None):
     global _rest_controllers
     global _http_server
     _rest_controllers = [PluginControllerAPI(plugin_manager, mapper_manager), ModelControllerAPI(model_controller)]
-    #TODO: load API configuration from config file
-    port = 9977
+
+    #TODO: some way to get defaults.. from config?
+    if str(hostname) == "None":
+        hostname = "localhost"
+    if str(port) == "None":
+        port = 9977
+
+    if CONF.getApiRestfulConInfo() is None:
+        CONF.setApiRestfulConInfo(hostname, port)
+
     app = Flask('APISController')
 
     _http_server = HTTPServer(WSGIContainer(app))
-    _http_server.listen(port) 
+    _http_server.listen(port,address=hostname) 
 
     routes = [r for c in _rest_controllers for r in c.getRoutes()]
 

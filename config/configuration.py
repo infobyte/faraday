@@ -18,6 +18,7 @@ the_config = None
 CONST_API_CON_INFO = "api_con_info"
 CONST_API_CON_INFO_HOST = "api_con_info_host"
 CONST_API_CON_INFO_PORT = "api_con_info_port"
+CONST_API_RESTFUL_CON_INFO_PORT = "api_restful_con_info_port"
 CONST_APPNAME = "appname"
 CONST_AUTH = "auth"
 CONST_AUTO_SHARE_WORKSPACE = "auto_share_workspace"
@@ -119,6 +120,7 @@ class Configuration:
         if tree:                                                          
             self._api_con_info_host = self._getValue(tree, CONST_API_CON_INFO_HOST)
             self._api_con_info_port = self._getValue(tree, CONST_API_CON_INFO_PORT)
+            self._api_restful_con_info_port = self._getValue(tree, CONST_API_RESTFUL_CON_INFO_PORT)
             self._api_con_info = self._getValue(tree, CONST_API_CON_INFO)
             self._appname = self._getValue(tree, CONST_APPNAME)
             self._auth = self._getValue(tree, CONST_AUTH)
@@ -161,14 +163,21 @@ class Configuration:
         if str(self._api_con_info_host) == "None" or str(self._api_con_info_port) == "None":
             return None
         return self._api_con_info_host, int(self._api_con_info_port)
+
+    def getApiRestfulConInfo(self):
+        if str(self._api_con_info_host) == "None" or str(self._api_restful_con_info_port) == "None":
+            return None
+        return self._api_con_info_host, int(self._api_restful_con_info_port)        
                                   
-    
     def getApiConInfoHost(self):
         return self._api_con_info_host
     
     def getApiConInfoPort(self):
         return self._api_con_info_port
     
+    def getApiRestfulConInfoPort(self):
+        return self._api_restful_con_info_port
+
     def getAppname(self):
         return self._appname
 
@@ -277,6 +286,11 @@ class Configuration:
         self._api_con_info = val1, val2
         self.setApiConInfoHost(val1)
         self.setApiConInfoPort(val2)
+
+    def setApiRestfulConInfo(self, val1, val2):
+        self._api_con_info = val1, val2
+        self.setApiConInfoHost(val1)
+        self.setApiRestfulConInfoPort(val2)        
         
     def setApiConInfoHost(self, val):
         self._api_con_info_host = val
@@ -284,6 +298,9 @@ class Configuration:
     def setApiConInfoPort(self, val):
         self._api_con_info_port = str(val)
     
+    def setApiRestfulConInfoPort(self, val):
+        self._api_restful_con_info_port = str(val)
+
     def setAppname(self, val):
         self._appname = val
 
@@ -398,6 +415,10 @@ class Configuration:
         API_CON_INFO_PORT = Element(CONST_API_CON_INFO_PORT)
         API_CON_INFO_PORT.text = str(self.getApiConInfoPort())
         ROOT.append(API_CON_INFO_PORT)
+
+        API_RESTFUL_CON_INFO_PORT = Element(CONST_API_RESTFUL_CON_INFO_PORT)
+        API_RESTFUL_CON_INFO_PORT.text = str(self.getApiRestfulConInfoPort())
+        ROOT.append(API_RESTFUL_CON_INFO_PORT)        
         
         APPNAME = Element(CONST_APPNAME)
         APPNAME.text = self.getAppname()

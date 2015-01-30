@@ -15,8 +15,11 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        dashboardSrv.getHostsByServicesCount = function(ws) {
+        dashboardSrv.getHostsByServicesCount = function(ws, id) {
             var url = BASEURL + "/" + ws + "/_design/hosts/_view/byservicecount?group=true";
+            if (id != undefined){
+                url += "&key=\"" + id + "\"";
+            }
             return dashboardSrv._getView(url);
         };
 
@@ -44,6 +47,23 @@ angular.module('faradayApp')
                     var _cmd = cmd.value;
                     _cmd["command"] = cmd.key;
                     tmp.push(_cmd);
+                });
+                deferred.resolve(tmp);
+            }, function(){
+                deferred.reject();
+            });
+            return deferred.promise;
+        };
+
+        dashboardSrv.getHosts = function(ws) {
+            var deferred = $q.defer();
+            var url = BASEURL + "/" + ws + "/_design/hosts/_view/hosts";
+            dashboardSrv._getView(url).then(function(res){
+                var tmp = [];
+                res.forEach(function(host){
+                    var _host = host.value;
+                    _host["id"] = host.key;
+                    tmp.push(_host);
                 });
                 deferred.resolve(tmp);
             }, function(){

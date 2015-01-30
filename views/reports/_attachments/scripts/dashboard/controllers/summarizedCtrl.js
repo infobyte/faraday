@@ -8,6 +8,7 @@ angular.module('faradayApp')
             $scope.objectsCount = [];
             $scope.vulnsCount = [];
             $scope.commands = [];
+            $scope.hosts = [];
 
             // cmd table sorting
             $scope.cmdSortField = 'date';
@@ -28,7 +29,27 @@ angular.module('faradayApp')
                 $scope.cmdSortReverse = !$scope.cmdSortReverse;
             }
 
+            // host table sorting
+            $scope.hostSortField = 'name';
+            $scope.hostSortReverse = true;
+            // toggles sort field and order
+            $scope.hostToggleSort = function(field) {
+                $scope.hostToggleSortField(field);
+                $scope.hostToggleReverse();
+            };
+
+            // toggles column sort field
+            $scope.hostToggleSortField = function(field) {
+                $scope.hostSortField = field;
+            };
+
+            // toggle column sort order
+            $scope.hostToggleReverse = function() {
+                $scope.hostSortReverse = !$scope.hostSortReverse;
+            }
+
             if (workspace != undefined){
+                $scope.workspace = workspace;
                 dashboardSrv.getServicesCount(workspace).then(function(res){
                     res.sort(function(a, b){
                         return b.value - a.value;
@@ -99,6 +120,30 @@ angular.module('faradayApp')
                     });
                     $scope.commands = res;
                 });
-            }
+                dashboardSrv.getHosts(workspace).then(function(res){
+                    res.forEach(function(host){
+                        // Maybe this part should be in the view somehow
+                        // or, even better, in CSS file
+                        oss = ["windows", "cisco", "router", "osx", "linux", "unix"];
+                        oss.forEach(function(os){
+                            if (host.os.toLowerCase().indexOf(os) != -1) {
+                                host.icon = os;
+                                if (os == "unix") {
+                                    host.icon = "linux";
+                                }
+                            }
+                        });
 
+                        host.servicesCount = "undefined";
+                        dashboardSrv.getHostsByServicesCount(workspace, host.id).then(function(res){
+                            if (res.length == 1) {
+                                if (res[0].key == host.id){
+                                    host.servicesCount = res[0].value;
+                                }
+                            }
+                            $scope.hosts.push(host);
+                        });
+                    });
+                });
+            }
     }]);

@@ -58,7 +58,43 @@
         </article>
     </div>
 </div>
-<!-- <div id='compound'></div> -->
+<div id='compound'>
+    <div class='col-lg-6'>
+        <article class='panel panel-default'>
+            <header>
+                <h2>Hosts
+                    <span class="glyphicon glyphicon-info-sign" tooltip="All hosts, each one showing its service count and operating system. By clicking on a host IP you can access a list with all of its services"></span>
+                </h2>
+            </header>
+            <div ng-if="hosts.length == 0" class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <p>No hosts found yet.</p>
+            </div>
+            <table id="hosts" ng-if="hosts.length > 0" class="tablesorter table table-striped">
+                <thead>
+                    <tr>
+                        <th><a href="" ng-click="hostToggleSort('name')">Host</a></th>
+                        <th><a href="" ng-click="hostToggleSort('servicesCount')">Services</a></th>
+                        <th><a href="" ng-click="hostToggleSort('os')">OS</a></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="host in hosts | orderBy:hostSortField:hostSortReverse">
+                        <td><a href="" class="host">{{host.name}}</a></td>
+                        <td>{{host.servicesCount}}</td>
+                        <td>
+                            <img ng-if="host.icon != undefined" src="../././reports/images/{{host.icon}}.png" tooltip="{{host.os}}"/>
+                            <span ng-if="host.icon == undefined" class="glyphicon glyphicon-question-sign" tooltip="{{host.os}}"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </article>
+    </div>
+</div>
 <div id='vulns'>
     <div class='col-lg-6'>
         <article class='panel panel-default'>
@@ -103,7 +139,7 @@
                 </button>
                 <p>No commands found yet.</p>
             </div>
-            <table id="hosts-{{workspace}}" ng-if="commands.length > 0" class="tablesorter table table-striped">
+            <table id="commands" ng-if="commands.length > 0" class="tablesorter table table-striped">
                 <thead>
                     <tr>
                         <th><a href="" ng-click="cmdToggleSort('By')">By</a></th>
@@ -113,8 +149,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="cmd in commands | orderBy:cmdSortField:reverse">
-                        <td tooltip="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">{{cmd.user}}@{{cmd.hostname}}</td>
+                    <tr ng-repeat="cmd in commands | orderBy:cmdSortField:cmdSortReverse">
+                        <td tooltip="{{cmd.ip}}">{{cmd.user}}@{{cmd.hostname}}</td>
                         <td>{{cmd.command}}</td>
                         <td>{{cmd.date}}</td>
                         <td>{{cmd.duration}}</td>

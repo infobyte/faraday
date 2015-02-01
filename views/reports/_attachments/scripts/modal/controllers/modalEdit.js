@@ -57,7 +57,7 @@ angular.module('faradayApp')
                 }
                 $scope.mixed = $scope.mixed | vuln_mask[v.type];
                 $scope.vulnc++;
-                $scope.pickVuln(v);
+                //$scope.pickVuln(v);
                 if (v.type === "VulnerabilityWeb") {
                     $scope.web = true;
                     //web

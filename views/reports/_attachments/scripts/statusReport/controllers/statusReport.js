@@ -185,7 +185,7 @@ angular.module('faradayApp')
         // updates all vulns with selected == true
         $scope.update = function(data) {
             $scope.vulns = [];
-
+           
             data.vulns.forEach(function(v) {
                 if(v.selected) {
                     if(typeof(data.severity) == "string") v.severity = data.severity;

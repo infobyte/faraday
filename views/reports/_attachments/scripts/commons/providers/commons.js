@@ -31,9 +31,11 @@ angular.module('faradayApp')
 
         commonsFact.arrayToObject = function(array){
             var refArray = [];
-           array.forEach(function(r){
-                refArray.push({ref:r});
-            });
+            if (array != undefined){
+                array.forEach(function(r){
+                    refArray.push({ref:r});
+                });
+            }
             return refArray;
         }
 

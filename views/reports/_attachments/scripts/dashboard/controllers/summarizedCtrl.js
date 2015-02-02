@@ -1,7 +1,7 @@
 angular.module('faradayApp')
     .controller('summarizedCtrl', 
-        ['$scope', '$route', '$routeParams', 'dashboardSrv',
-        function($scope, $route, $routeParams, dashboardSrv) {
+        ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv',
+        function($scope, $route, $routeParams, $modal, dashboardSrv) {
             //current workspace
             var workspace = $routeParams.wsId;
             $scope.servicesCount = [];
@@ -146,4 +146,59 @@ angular.module('faradayApp')
                     });
                 });
             }
+
+            $scope.showServices = function(host_id) {
+                if ($scope.workspace != undefined){
+                    var modal = $modal.open({
+                        templateUrl: 'scripts/dashboard/partials/modal-services-by-host.html',
+                        controller: 'summarizedCtrlServicesModal',
+                        size: 'lg',
+                        resolve: {
+                            host_id: function(){
+                                return host_id
+                            },
+                            workspace: function(){
+                                return $scope.workspace;
+                            }
+                        }
+                     });
+                }
+            }
+    }]);
+
+angular.module('faradayApp')
+    .controller('summarizedCtrlServicesModal', 
+        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'host_id',
+        function($scope, $modalInstance, dashboardSrv, workspace, host_id) {
+
+            $scope.sortField = 'port';
+            $scope.sortReverse = false;
+            
+            // toggles sort field and order
+            $scope.toggleSort = function(field) {
+                $scope.toggleSortField(field);
+                $scope.toggleReverse();
+            };
+
+            // toggles column sort field
+            $scope.toggleSortField = function(field) {
+                $scope.sortField = field;
+            };
+
+            // toggle column sort order
+            $scope.toggleReverse = function() {
+                $scope.sortReverse = !$scope.sortReverse;
+            }
+
+            dashboardSrv.getServicesByHost(workspace, host_id).then(function(services){
+                dashboardSrv.getName(workspace, host_id).then(function(name){
+                    $scope.name = name;
+                    $scope.services = services;
+                })
+            });
+
+            $scope.ok = function(){
+                $modalInstance.close();
+            }
+
     }]);

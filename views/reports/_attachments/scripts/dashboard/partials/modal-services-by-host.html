@@ -1,0 +1,30 @@
+<div class="modal-header">
+    <h3>Services for {{name}} ({{services.length}} total)</h3>
+</div>
+
+<div class="modal-body">
+    <table class="status-report">
+        <thead>
+            <tr>
+                <th><a href="" ng-click="toggleSort('name')">Name</a></th>
+                <th><a href="" ng-click="toggleSort('description')">Description</a></th>
+                <th><a href="" ng-click="toggleSort('port')">Port</a></th>
+                <th><a href="" ng-click="toggleSort('protocol')">Protocol</a></th>
+                <th><a href="" ng-click="toggleSort('status')">Status</a></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="srv in services | orderBy:sortField:sortReverse">
+                <td>{{srv.name}}</a></td>
+                <td>{{srv.description}}</td>
+                <td>{{srv.port}}</td>
+                <td>{{srv.protocol}}</td>
+                <td>{{srv.status}}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="modal-footer">
+    <button class="btn btn-success" ng-click="ok()">OK</button>
+</div>

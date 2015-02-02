@@ -72,7 +72,25 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        dashboardSrv.getHostname = function(id){
+        dashboardSrv.getServicesByHost = function(ws, host_id) {
+            var deferred = $q.defer();
+            var url = BASEURL + "/" + ws + "/_design/services/_view/byhost?key=\"" + host_id + "\"";
+            dashboardSrv._getView(url).then(function(res){
+                var tmp = [];
+                res.forEach(function(service){
+                    var _service = service.value;
+                    _service["id"] = service.id;
+                    _service["port"] = _service.ports[0];
+                    tmp.push(_service);
+                });
+                deferred.resolve(tmp);
+            }, function(){
+                deferred.reject();
+            });
+            return deferred.promise;
+        }
+
+        dashboardSrv.getName = function(ws, id){
             var deferred = $q.defer();
             url = BASEURL + "/" + ws + "/" + id;
 

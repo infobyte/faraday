@@ -1,0 +1,26 @@
+<div class="modal-header">
+    <h3>Services for {{name}} ({{hosts.length}} total)</h3>
+</div>
+
+<div class="modal-body">
+    <table class="status-report">
+        <thead>
+            <tr>
+                <th><a href="" ng-click="toggleSort('name')">Name</a></th>
+                <th><a href="" ng-click="toggleSort('os')">OS</a></th>
+                <th><a href="" ng-click="toggleSort('owned')">Owned</a></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="host in hosts | orderBy:sortField:sortReverse">
+                <td>{{host.name}}</a></td>
+                <td>{{host.os}}</td>
+                <td><input disabled type="checkbox" ng-model="host.owned"/></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="modal-footer">
+    <button class="btn btn-success" ng-click="ok()">OK</button>
+</div>

@@ -17,10 +17,12 @@
                 <div class='box'>
                     <div ng-repeat="srv in servicesCount" class="columna unquinto services">
                         <article class="dato2 fondo-negro">
-                            <section>
-                                <div class="nro texto-rojo">{{srv.value}}</div>
-                                <div class="txt texto-blanco">{{srv.key}}</div>
-                            </section>
+                            <a href="" ng-click="showHosts(srv.key)">
+                                <section>
+                                    <div class="nro texto-rojo">{{srv.value}}</div>
+                                    <div class="txt texto-blanco">{{srv.key}}</div>
+                                </section>
+                            </a>
                         </article>
                     </div>
                 </div>

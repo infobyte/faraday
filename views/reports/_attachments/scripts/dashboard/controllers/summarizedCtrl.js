@@ -164,6 +164,24 @@ angular.module('faradayApp')
                      });
                 }
             }
+
+            $scope.showHosts = function(srv_name) {
+                if ($scope.workspace != undefined){
+                    var modal = $modal.open({
+                        templateUrl: 'scripts/dashboard/partials/modal-hosts-by-service.html',
+                        controller: 'summarizedCtrlHostsModal',
+                        size: 'lg',
+                        resolve: {
+                            srv_name: function(){
+                                return srv_name
+                            },
+                            workspace: function(){
+                                return $scope.workspace;
+                            }
+                        }
+                     });
+                }
+            }
     }]);
 
 angular.module('faradayApp')
@@ -195,6 +213,41 @@ angular.module('faradayApp')
                     $scope.name = name;
                     $scope.services = services;
                 })
+            });
+
+            $scope.ok = function(){
+                $modalInstance.close();
+            }
+
+    }]);
+
+angular.module('faradayApp')
+    .controller('summarizedCtrlHostsModal', 
+        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'srv_name',
+        function($scope, $modalInstance, dashboardSrv, workspace, srv_name) {
+
+            $scope.sortField = 'name';
+            $scope.sortReverse = false;
+            
+            // toggles sort field and order
+            $scope.toggleSort = function(field) {
+                $scope.toggleSortField(field);
+                $scope.toggleReverse();
+            };
+
+            // toggles column sort field
+            $scope.toggleSortField = function(field) {
+                $scope.sortField = field;
+            };
+
+            // toggle column sort order
+            $scope.toggleReverse = function() {
+                $scope.sortReverse = !$scope.sortReverse;
+            }
+
+            dashboardSrv.getHostsByServicesName(workspace, srv_name).then(function(hosts){
+                $scope.name = srv_name;
+                $scope.hosts = hosts;
             });
 
             $scope.ok = function(){

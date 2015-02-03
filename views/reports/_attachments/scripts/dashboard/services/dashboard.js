@@ -72,6 +72,17 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        dashboardSrv.getHost = function(ws, host_id) {
+            var deferred = $q.defer();
+            var url = BASEURL + "/" + ws + "/" + host_id;
+            $http.get(url).then(function(res){
+                deferred.resolve(res.data);
+            }, function(){
+                deferred.reject();
+            });
+            return deferred.promise;
+        };
+
         dashboardSrv.getServicesByHost = function(ws, host_id) {
             var deferred = $q.defer();
             var url = BASEURL + "/" + ws + "/_design/services/_view/byhost?key=\"" + host_id + "\"";
@@ -89,6 +100,35 @@ angular.module('faradayApp')
             });
             return deferred.promise;
         }
+
+        dashboardSrv.getHostsByServicesName = function(ws, srv_name) {
+            var deferred = $q.defer();
+            var url = BASEURL + "/" + ws + "/_design/services/_view/byname?key=\"" + srv_name + "\"";
+            dashboardSrv._getView(url).then(function(res){
+                var dict = {};
+                var tmp = [];
+                res.forEach(function(srv){
+                    tmp.push(dashboardSrv.getHost(ws, srv.value.hid));
+                });
+                $q.all(tmp).then(function(hosts){
+                    var res = [];
+                    hosts.sort(function(a, b){
+                        if(a.name < b.name) return -1;
+                        if(a.name > b.name) return 1;
+                        return 0;
+                    });
+                    for (var i = 0; i < hosts.length - 1; i++){
+                        if (res.length == 0 || hosts[i].name != res[res.length - 1].name) {
+                            res.push(hosts[i]);
+                        }
+                    }
+                    deferred.resolve(res);
+                });
+            }, function(){
+                deferred.reject();
+            });
+            return deferred.promise;
+        };
 
         dashboardSrv.getName = function(ws, id){
             var deferred = $q.defer();

@@ -7,7 +7,7 @@
 #__author__     = "Francisco Amato"
 #__copyright__  = "Copyright (c) 2014, Infobyte LLC"
 #__credits__    = ["Francisco Amato"]
-#__version__    = "1.1.0"
+#__version__    = "1.2.0"
 #__maintainer__ = "Francisco Amato"
 #__email__      = "famato@infobytesec.com"
 #__status__     = "Development"
@@ -21,8 +21,9 @@ require "pp"
 #FARADAY CONF:
 RPCSERVER="http://127.0.0.1:9876/"
 IMPORTVULN=0 #1 if you like to import the current vulnerabilities, or 0 if you only want to import new vulns
-PLUGINVERSION="Faraday v1.1 Ruby"
-#Tested: Burp Professional v1.5.18
+IMPORTNEW=0 #1 if you like to import the new vulnerabilities detected, or 0 if you only want to import new vulns
+PLUGINVERSION="Faraday v1.2 Ruby"
+#Tested: Burp Professional v1.6.09
 
 XMLRPC::Config.module_eval do
     remove_const :ENABLE_NIL_PARSER
@@ -49,7 +50,7 @@ class BurpExtender
   # implement IBurpExtender
   #
   
-  def	registerExtenderCallbacks(callbacks)
+  def registerExtenderCallbacks(callbacks)
       
     # keep a reference to our callbacks object
     @callbacks = callbacks
@@ -90,7 +91,7 @@ class BurpExtender
     if IMPORTVULN == 1
       param = @server.call("devlog", "[BURP] Importing issues")
       callbacks.getScanIssues(nil).each do |issue|
-        newScanIssue(issue)
+        newScanIssue(issue, 1)
       end
     end 
 
@@ -103,8 +104,25 @@ class BurpExtender
     # register ourselves as an extension state listener
     callbacks.registerExtensionStateListener(self)
 
+
+    @stdout.println(PLUGINVERSION + " Loaded.")
+    @stdout.println("RPCServer: " + RPCSERVER)
+    @stdout.println("Import vulnerability database (IMPORTVULN): " + boolString(IMPORTVULN))
+    @stdout.println("Import new vulnerabilities detected (IMPORTNEW): " + boolString(IMPORTNEW))
+
   end
   
+  #
+  # convert integer to string
+  #
+  def boolString(value)
+    if value == 0
+      return "false"
+    else
+      return "true"
+    end
+  end
+
 
   #
   # implement menu
@@ -118,9 +136,9 @@ class BurpExtender
       # Which part of the interface the user selects
       ctx = invocation.getInvocationContext()
 
-      # Sitemap history, Proxy History will show menu item if selected by the user
-      @stdout.println('Menu TYPE: %s\n' % ctx)
-      if ctx == 5 or ctx == 6 or ctx == 7
+      # Sitemap history, Proxy History, Request views, and Scanner will show menu item if selected by the user
+      #@stdout.println('Menu TYPE: %s\n' % ctx)
+      if ctx == 5 or ctx == 6 or ctx == 2 or ctx == 7
 
           faradayMenu = JMenuItem.new("Send to Faraday", nil)
 
@@ -135,33 +153,51 @@ class BurpExtender
   end
 
   #
+
   # event click function
   #
   def eventScan(invocation, ctx)
 
-      #invMessage = invocation.getSelectedIssues()
-
-      invMessage = invocation.getSelectedMessages()
-      invMessage.each do |m|
-        newScanIssue(m,ctx)
+      #Scanner click
+      if ctx == 7
+        invMessage = invocation.getSelectedIssues()
+        invMessage.each do |m|
+          newScanIssue(m,ctx,true)
+        end
+      else
+        #Others
+        invMessage = invocation.getSelectedMessages()
+        invMessage.each do |m|
+          newScanIssue(m,ctx,true)
+        end
       end
   end
   
   #
   # implement IScannerListener
   #
-  def newScanIssue(issue, ctx)
+  def newScanIssue(issue, ctx=nil, import=nil)
+
+    if import == nil && IMPORTNEW == 0
+      #ignore new issues
+      return
+    end
 
     host=issue.getHost()
     port=issue.getPort().to_s()
     url = issue.getUrl()
-    ip=InetAddress.getByName(issue.getHttpService().getHost()).getHostAddress()
+
+    begin
+      ip=InetAddress.getByName(issue.getHttpService().getHost()).getHostAddress()
+    rescue  Exception => e
+      ip=host
+    end
     
-    issuename="Analyzing: "
-    severity="Information"
-    desc="This request was manually sent using burp"
-    
-    if ctx == 5 or ctx == 6 or ctx == 7
+    if ctx == 5 or ctx == 6 or ctx == 2
+      issuename="Analyzing: "
+      severity="Information"
+      desc="This request was manually sent using burp"
+    else
       desc=issue.getIssueDetail().to_s
       desc+="<br/>Resolution:" + issue.getIssueBackground().to_s
       severity=issue.getSeverity().to_s
@@ -184,8 +220,10 @@ class BurpExtender
       n_id = @server.call("createAndAddNoteToService",h_id,s_id,"website","")
       n2_id = @server.call("createAndAddNoteToNote",h_id,s_id,n_id,host,"")
 
-      if ctx == 5 or ctx == 6 or ctx == 7
+      if ctx == 5 or ctx == 6 or ctx == 2
         #@stdout.println(issue.methods)
+        @stdout.println("[**] issue host: " +host +",name:"+ issuename +",IP:" + ip)
+
         req= @helpers.analyzeRequest(issue.getRequest())
 
         #TODO: Actually Get all parameters, cookies, jason, url, maybe we should get only url,get/post parameters

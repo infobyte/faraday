@@ -117,7 +117,7 @@ angular.module('faradayApp')
                         if(a.name > b.name) return 1;
                         return 0;
                     });
-                    for (var i = 0; i < hosts.length - 1; i++){
+                    for (var i = 0; i < hosts.length; i++){
                         if (res.length == 0 || hosts[i].name != res[res.length - 1].name) {
                             res.push(hosts[i]);
                         }

@@ -86,12 +86,19 @@ class BurpExtender
     
     # obtain our output stream
     @stdout = java.io.PrintWriter.new(callbacks.getStdout(), true)
+
+
+    @stdout.println(PLUGINVERSION + " Loaded.")
+    @stdout.println("RPCServer: " + RPCSERVER)
+    @stdout.println("Import vulnerability database (IMPORTVULN): " + boolString(IMPORTVULN))
+    @stdout.println("Import new vulnerabilities detected (IMPORTNEW): " + boolString(IMPORTNEW))    
+    @stdout.println("------")
     
     # Get current vulnerabilities
     if IMPORTVULN == 1
-      param = @server.call("devlog", "[BURP] Importing issues")
+      rt = @server.call("devlog", "[BURP] Importing issues")
       callbacks.getScanIssues(nil).each do |issue|
-        newScanIssue(issue, 1)
+        newScanIssue(issue, 1,true)
       end
     end 
 
@@ -104,23 +111,6 @@ class BurpExtender
     # register ourselves as an extension state listener
     callbacks.registerExtensionStateListener(self)
 
-
-    @stdout.println(PLUGINVERSION + " Loaded.")
-    @stdout.println("RPCServer: " + RPCSERVER)
-    @stdout.println("Import vulnerability database (IMPORTVULN): " + boolString(IMPORTVULN))
-    @stdout.println("Import new vulnerabilities detected (IMPORTNEW): " + boolString(IMPORTNEW))
-
-  end
-  
-  #
-  # convert integer to string
-  #
-  def boolString(value)
-    if value == 0
-      return "false"
-    else
-      return "true"
-    end
   end
 
 
@@ -183,14 +173,14 @@ class BurpExtender
       return
     end
 
-    host=issue.getHost()
-    port=issue.getPort().to_s()
+    host = issue.getHost()
+    port = issue.getPort().to_s()
     url = issue.getUrl()
 
     begin
-      ip=InetAddress.getByName(issue.getHttpService().getHost()).getHostAddress()
+      ip = InetAddress.getByName(issue.getHttpService().getHost()).getHostAddress()
     rescue  Exception => e
-      ip=host
+      ip = host
     end
     
     if ctx == 5 or ctx == 6 or ctx == 2
@@ -207,7 +197,7 @@ class BurpExtender
     @stdout.println("New scan issue host: " +host +",name:"+ issuename +",IP:" + ip)
 
     begin
-      param = @server.call("devlog", "[BURP] New issue generation")
+      rt = @server.call("devlog", "[BURP] New issue generation")
 
       h_id = @server.call("createAndAddHost",ip, "unknown")
       i_id = @server.call("createAndAddInterface",h_id, ip,"00:00:00:00:00:00", ip, "0.0.0.0", "0.0.0.0",[],
@@ -220,53 +210,59 @@ class BurpExtender
       n_id = @server.call("createAndAddNoteToService",h_id,s_id,"website","")
       n2_id = @server.call("createAndAddNoteToNote",h_id,s_id,n_id,host,"")
 
+      path = ""
+      response = ""
+      request = ""
+      method = ""
+      param = ""
+
+      #Menu action
       if ctx == 5 or ctx == 6 or ctx == 2
-        #@stdout.println(issue.methods)
-        @stdout.println("[**] issue host: " +host +",name:"+ issuename +",IP:" + ip)
+        req = @helpers.analyzeRequest(issue.getRequest())
 
-        req= @helpers.analyzeRequest(issue.getRequest())
+        param = getParam(req)
+        issuename += "("+issue.getUrl().getPath()[0,20]+")"
+        path = issue.getUrl().to_s
+        request = issue.getRequest().to_s
+        method = req.getMethod().to_s         
 
-        #TODO: Actually Get all parameters, cookies, jason, url, maybe we should get only url,get/post parameters
-        #TODO: We don't send response because queue bug in faraday.
-        param=""
-        req.getParameters().each { |p| param += "%s" % p.getType() +":"+p.getName()+"="+p.getValue()+","}
-
-        issuename+= "("+issue.getUrl().getPath()[0,20]+")"
-        v_id = @server.call("createAndAddVulnWebToService",h_id, s_id, issuename,
-               desc,[],severity,host,issue.getUrl().to_s,issue.getRequest().to_s,
-               "response",req.getMethod().to_s,"",param,"","")
-      else
+      else #Scan event or Menu scan tab
         unless issue.getHttpMessages().nil? #issues with request #IHttpRequestResponse
-          @stdout.println("[**] issue host: " +host +",name:"+ issuename +",IP:" + ip)
-          c=0
+          c = 0
           issue.getHttpMessages().each do |m|
-            req= @helpers.analyzeRequest(m.getRequest())
+            if c == 0
+              req = @helpers.analyzeRequest(m.getRequest())
+              path = m.getUrl().to_s
+              request = m.getRequest().to_s
+              method = req.getMethod().to_s            
 
-            #TODO: Actually Get all parameters, cookies, jason, url, maybe we should get only url,get/post parameters
-            param=""
-            req.getParameters().each { |p| param += "%s" % p.getType() +":"+p.getName()+"="+p.getValue()+","}
+              param = getParam(req)
+            else
+              desc += "<br/>Request (" + c.to_s + "): " + m.getUrl().to_s
+            end
 
-            v_id = @server.call("createAndAddVulnWebToService",h_id, s_id, issuename,
-                   desc,[],severity,host,m.getUrl().to_s,m.getRequest().to_s,
-                   "response",req.getMethod().to_s,"",param,"","")
-            c=c+1
+            c = c + 1
           end
-          if c==0
-            v_id = @server.call("createAndAddVulnWebToService",h_id, s_id, issuename.to_s,
-                   desc,[],severity,host,issue.getUrl().to_s,"",
-                   "response","","","/","","")
-            
+
+          if c == 0
+            path = issue.getUrl().to_s
           end
+
         end
       end
+
+      v_id = @server.call("createAndAddVulnWebToService",h_id, s_id, issuename,
+             desc,[],severity,host,path,request,
+             response,method,"",param,"","")
+
       
     rescue XMLRPC::FaultException => e
-      puts "-----\nError:"
+      puts "Error:"
       puts e.faultCode
       puts e.faultString
     end
   end
-
+  
   def extensionUnloaded()
 
   end
@@ -277,6 +273,31 @@ class BurpExtender
 
   def getUiComponent()
       return @tab
+  end
+
+  #
+  # convert integer to string
+  #
+  def boolString(value)
+    if value == 0
+      return "false"
+    else
+      return "true"
+    end
+  end
+
+  #
+  # get param for one url
+  #
+  def getParam(value)
+    param = ""
+    value.getParameters().each do |p|
+      #TODO: Actually Get all parameters, cookies, jason, url, maybe we should get only url,get/post parameters
+      #http://portswigger.net/burp/extender/api/constant-values.html#burp.IParameter.PARAM_BODY
+      param += "%s" % p.getType() + ":" + p.getName() + "=" + p.getValue() + ","
+    end
+    return param
+
   end
 
 end      

@@ -53,6 +53,11 @@ We have 3 kind of plugins:
  * Plugins that import file reports (you have to copy the report to $HOME/.faraday/report/[workspacename] and faraday will automatically detect the report, process and added to the HostTree.
  * Plugins connectors or online (BeEF, Metasploit, Burp) connect directly with external API or database or connect with Faraday RPC API.   
 
+Get it now!
+---
+[![Download Tarball](https://raw.github.com/wiki/infobyte/faraday/images/download.png)]
+(https://github.com/infobyte/faraday/tarball/master)
+
 Links
 ---
 

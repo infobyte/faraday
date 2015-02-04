@@ -16,6 +16,10 @@ faradayApp.config(['$routeProvider', function($routeProvider) {
             templateUrl: 'scripts/dashboard/partials/dashboard.html',
             controller: 'dashboardCtrl'
         }).
+        when('/dashboard', {
+            templateUrl: 'scripts/partials/workspaces.html',
+            controller: 'workspacesCtrl'
+        }).
         when('/status/ws/:wsId', {
             templateUrl: 'scripts/partials/status_report.html',
             controller: 'statusReportCtrl'

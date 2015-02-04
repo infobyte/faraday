@@ -119,7 +119,15 @@
                                         <a href="" ng-click="toggleSort('refs')">References</a>
                                     <th ng-if="columns.evidence">
                                         <a href="" ng-click="toggleShow('evidence', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="toggleSort('Evidence')">Evidence</a>
+                                        <a href="" ng-click="toggleSort('evidence')">Evidence</a>
+                                    </th>
+                                    <th ng-if="columns.impact">
+                                        <a href="" ng-click="toggleShow('impact', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                                        <a href="" ng-click="toggleSort('impact')">Impact</a>
+                                    </th>
+                                    <th ng-if="columns.easeofresolution">
+                                        <a href="" ng-click="toggleShow('easeofresolution', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                                        <a href="" ng-click="toggleSort('easeofresolution')">Ease of Resolution</a>
                                     </th>
                                     <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
                                 </tr>
@@ -155,6 +163,12 @@
                                             <a href="{{baseurl + workspace}}/{{ v.id}}/{{e}}" target="_blank">{{e}}</a>
                                         </div>
                                     </td>
+                                    <td ng-if="columns.impact">
+                                        <div ng-repeat="(impact, rating) in v.impact">
+                                            <p ng-if="rating > 0">{{impact}}</p>
+                                        </div>
+                                    </td>
+                                    <td ng-if="columns.easeofresolution">{{v.easeofresolution}}</td>
                                     <td><input type="checkbox" name="{{v.id}}"/></td>
                                 </tr>
                             </tbody>

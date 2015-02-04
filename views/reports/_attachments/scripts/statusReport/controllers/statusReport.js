@@ -1,10 +1,16 @@
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$modal', 'BASEURL', 'statusReportFact', 
-                    function($scope, $filter, $route, $routeParams, $modal, BASEURL, statusReportFact) {
+                    ['$scope', '$filter', '$route', '$routeParams', '$modal', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
+                    function($scope, $filter, $route, $routeParams, $modal, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
         $scope.baseurl = BASEURL;
+        $scope.severities = SEVERITIES;
+
         $scope.sortField = 'date';
         $scope.reverse = true;
+        $scope.showPagination = 1;
+        $scope.currentPage = 0;
+        $scope.pageSize = 10;
+        $scope.pagination = 10;
 
         // load all workspaces
         statusReportFact.getWorkspaces(function(wss) {
@@ -40,36 +46,28 @@ angular.module('faradayApp')
         
         // set columns to show and hide by default
         $scope.columns = {
-            "data":         true,
-            "date":         true,
-            "desc":         true,
-            "evidence":     false,
-            "method":       false,
-            "name":         true,
-            "params":       false,
-            "path":         false,
-            "pname":        false,
-            "query":        false,
-            "refs":         true,
-            "request":      false,
-            "response":     false,
-            "resolution":   false,
-            "severity":     true,
-            "status":       false,
-            "target":       true,
-            "web":          false,
-            "website":      false
+            "data":             true,
+            "date":             true,
+            "desc":             true,
+            "easeofresolution": false,
+            "evidence":         false,
+            "impact":           false,
+            "method":           false,
+            "name":             true,
+            "params":           false,
+            "path":             false,
+            "pname":            false,
+            "query":            false,
+            "refs":             true,
+            "request":          false,
+            "response":         false,
+            "resolution":       false,
+            "severity":         true,
+            "status":           false,
+            "target":           true,
+            "web":              false,
+            "website":          false
         };
-
-        $scope.severities = [
-            "critical",
-            "high",
-            "med",
-            "low",
-            "info",
-            "unclassified",
-
-        ];
 
         // returns scope vulns as CSV obj
         // toggles column sort field
@@ -81,28 +79,32 @@ angular.module('faradayApp')
         };
 
         $scope.toCSV = function() {
-            var method      = "";
-            var website     = "";
-            var desc        = "";
-            var text        = "";
-            var path        = "";
-            var pname       = "";
-            var params      = "";
-            var query       = "";
-            var refs        = "";
-            var request     = "";
-            var response    = "";
-            var resolution  = "";
-
-            var content = "\"Date\", \"Web\", \"Status\", \"Severity\", "+
+            var method  = "",
+            website     = "",
+            desc        = "",
+            easeofres   = "",
+            impact      = "",
+            text        = "",
+            path        = "",
+            pname       = "",
+            params      = "",
+            query       = "",
+            refs        = "",
+            request     = "",
+            response    = "",
+            resolution  = "",
+            content     = "\"Date\", \"Web\", \"Status\", \"Severity\", "+
                 "\"Name\", \"Target\", \"Description\", "+
                 "\"Data\", \"Method\", \"Path\", \"Param Name\", \"Params\", "+
-                "\"Query\", \"References\", \"Request\", \"Response\", \"Resolution\",\"Website\" \n";
+                "\"Query\", \"References\", \"Request\", \"Response\", \"Resolution\",\"Website\""+
+                "\"Ease of Resolution\", \"Impact\"\n";
             
             $scope.vulns.forEach(function(v) {
                 method      = "";
                 website     = "";
                 desc        = "";
+                easeofres   = "",
+                impact      = JSON.stringify(v.impact),
                 text        = "";
                 path        = "";
                 pname       = "";
@@ -112,7 +114,7 @@ angular.module('faradayApp')
                 request     = "";
                 response    = "";
                 resolution  = "";
-                refs = $scope.ToString(v.refs);
+                refs        = $scope.ToString(v.refs);
 
                 if(typeof(v.desc) != "undefined" && v.desc != null)                 desc          = $scope.cleanCSV(v.desc);
                 if(typeof(v.data) != "undefined" && v.data != null)                 text          = $scope.cleanCSV(v.data);
@@ -120,6 +122,10 @@ angular.module('faradayApp')
                 if(typeof(refs) != "undefined" && refs != null){
                     refs = $scope.cleanCSV(refs);
                     refs = refs.replace(/%2c/g,"%0A");
+                }
+                if(typeof(impact) != "undefined" && impact != null){
+                    impact = $scope.cleanCSV(impact);
+                    impact = impact.replace(/%2c/g,"%0A");
                 }
                 if(v.type === "VulnerabilityWeb") {
                     if(typeof(v.method) != "undefined" && v.method != null)         method      = $scope.cleanCSV(v.method);
@@ -155,6 +161,8 @@ angular.module('faradayApp')
                     " \""+response+"\","+
                     " \""+resolution+"\","+
                     " \""+website+"\""+
+                    " \""+impact+"\""+
+                    " \""+easeofres+"\""+
                     "\n";
             });
 
@@ -342,12 +350,7 @@ angular.module('faradayApp')
             });
         };
 
-        $scope.showPagination = 1;
-        $scope.currentPage = 0;
-        $scope.pageSize = 10;
-        $scope.pagination = 10;
-
-        $scope.numberOfPages=function(){
+        $scope.numberOfPages = function() {
             $scope.filteredData = $filter('filter')($scope.vulns,$scope.query);
             if ($scope.filteredData.length <= 10){
                 $scope.showPagination = 0;

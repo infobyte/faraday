@@ -49,18 +49,20 @@ angular.module('faradayApp')
         vulnsFact.put = function(ws, vuln, callback) {
             var url = BASEURL + ws + "/" + vuln.id, 
             v = {
-                "_rev":         vuln.rev,
-                "data":         vuln.data,
-                "desc":         vuln.desc,
-                "metadata":     vuln.meta,
-                "name":         vuln.name,
-                "obj_id":       vuln.oid,
-                "owned":        vuln.owned,
-                "owner":        vuln.owner,
-                "parent":       vuln.couch_parent, 
-                "refs":         vuln.refs,
-                "severity":     vuln.severity, 
-                "type":         vuln.type
+                "_rev":             vuln.rev,
+                "data":             vuln.data,
+                "desc":             vuln.desc,
+                "easeofresolution": vuln.easeofresolution,
+                "impact":           vuln.value.impact,
+                "metadata":         vuln.meta,
+                "name":             vuln.name,
+                "obj_id":           vuln.oid,
+                "owned":            vuln.owned,
+                "owner":            vuln.owner,
+                "parent":           vuln.couch_parent, 
+                "refs":             vuln.refs,
+                "severity":         vuln.severity, 
+                "type":             vuln.type
             };
             if(typeof(vuln.evidence) != undefined && vuln.evidence != undefined) {
                 // the list of evidence may have mixed objects, some of them already in CouchDB, some of them new

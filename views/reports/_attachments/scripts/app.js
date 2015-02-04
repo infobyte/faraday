@@ -8,6 +8,27 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;
+    })())
+    .constant("EASEOFRESOLUTION", (function() {
+        var resolutions = [
+            "trivial",
+            "simple",
+            "moderate",
+            "difficult",
+            "infeasible"
+        ];
+        return resolutions;
+    })())
+    .constant("SEVERITIES", (function() {
+        var severities = [
+            "unclassified",
+            "info",
+            "low",
+            "med",
+            "high",
+            "critical"
+        ];
+        return severities;
     })());
 
 faradayApp.config(['$routeProvider', function($routeProvider) {

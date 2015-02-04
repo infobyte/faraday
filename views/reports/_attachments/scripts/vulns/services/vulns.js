@@ -18,25 +18,27 @@ angular.module('faradayApp')
                         }
                     }
                     var v = {
-                        "id":           obj.id,
-                        "rev":          obj.value.rev,
-                        "attachments":  evidence,
-                        "couch_parent": obj.value.parent,
-                        "data":         obj.value.data,
-                        "date":         d, 
-                        "delete":       false,
-                        "desc":         obj.value.desc,
-                        "meta":         obj.value.meta,
-                        "name":         obj.value.name, 
-                        "oid":          obj.value.oid,
-                        "owned":        obj.value.owned,
-                        "owner":        obj.value.owner,
-                        "parent":       obj.key.substring(0, obj.key.indexOf('.')),
-                        "refs":         obj.value.refs,
-                        "selected":     false,
-                        "severity":     obj.value.severity,
-                        "type":         obj.value.type, 
-                        "web":          false
+                        "id":               obj.id,
+                        "rev":              obj.value.rev,
+                        "attachments":      evidence,
+                        "couch_parent":     obj.value.parent,
+                        "data":             obj.value.data,
+                        "date":             d, 
+                        "delete":           false,
+                        "desc":             obj.value.desc,
+                        "easeofresolution": obj.value.easeofresolution,
+                        "impact":           obj.value.impact,
+                        "meta":             obj.value.meta,
+                        "name":             obj.value.name, 
+                        "oid":              obj.value.oid,
+                        "owned":            obj.value.owned,
+                        "owner":            obj.value.owner,
+                        "parent":           obj.key.substring(0, obj.key.indexOf('.')),
+                        "refs":             obj.value.refs,
+                        "selected":         false,
+                        "severity":         obj.value.severity,
+                        "type":             obj.value.type, 
+                        "web":              false
                     };
                     vulns.push(v);
                 });

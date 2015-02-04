@@ -197,10 +197,12 @@ angular.module('faradayApp')
             data.vulns.forEach(function(v) {
                 if(v.selected) {
                     if(typeof(data.severity) == "string") v.severity = data.severity;
+                    if(typeof(data.easeofresolution) == "string") v.easeofresolution = data.easeofresolution;
                     if(typeof(data.name) != "undefined") v.name = data.name;
                     if(typeof(data.desc) != "undefined") v.desc = data.desc;
                     if(typeof(data.data) != "undefined") v.data = data.data;
                     if(typeof(data.refs) != "undefined") v.refs = data.refs;
+                    if(typeof(data.impact) != "undefined") v.impact = data.impact;
                     if(typeof(data.resolution) != "undefined") v.resolution = data.resolution;
                     v.evidence = data.evidence;
                     if(v.web) {

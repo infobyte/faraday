@@ -25,7 +25,12 @@
                     <option value=""></option>
                 </select>
             </div>
-            <div class="col-md-9">
+            <div class="col-md-3">
+                <select class="form-control" ng-model="easeOfResolutionSelection" ng-options="e as e for e in easeofresolution">
+                    <option value=""></option>
+                </select>
+            </div>
+            <div class="col-md-6">
                 <label class="sr-only" for="vuln-name">Vuln name</label>
                 <input type="text" class="form-control" id="vuln-name" placeholder="Name" value="{{p_name}}" ng-model="name"/>
             </div>

@@ -62,7 +62,7 @@ angular.module('faradayApp')
                 "data":             vuln.data,
                 "desc":             vuln.desc,
                 "easeofresolution": vuln.easeofresolution,
-                "impact":           vuln.value.impact,
+                "impact":           vuln.impact,
                 "metadata":         vuln.meta,
                 "name":             vuln.name,
                 "obj_id":           vuln.oid,

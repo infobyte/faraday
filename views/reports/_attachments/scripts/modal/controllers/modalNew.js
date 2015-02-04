@@ -1,13 +1,14 @@
 angular.module('faradayApp')
     .controller('modalNewCtrl',
-        ['$scope', '$modalInstance', '$filter', '$upload', 'targetFact', 'commonsFact', 'severities', 'workspace',
-        function($scope, $modalInstance, $filter, $upload, targetFact, commons, severities, workspace) {
+        ['$scope', '$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'targetFact', 'commonsFact', 'severities', 'workspace',
+        function($scope, $modalInstance, $filter, $upload, EASEOFRESOLUTION, targetFact, commons, severities, workspace) {
         
         $scope.typeOptions = [
             {name:'Vulnerability', value:'Vulnerability'},
             {name:'VulnerabilityWeb',value:'VulnerabilityWeb'}
         ];
 
+        $scope.easeofresolution = EASEOFRESOLUTION;
         $scope.vuln_type = $scope.typeOptions[0].value;
         $scope.severities = severities;
         $scope.workspace = workspace;
@@ -90,11 +91,13 @@ angular.module('faradayApp')
                 arrayReferences.filter(Boolean);
 
                 var res = {
-                    "id":           id,
-                    "data":         $scope.data,
-                    "date":         myEpoch,
-                    "desc":         $scope.desc,
-                    "evidence":     $scope.evidence,
+                    "id":               id,
+                    "data":             $scope.data,
+                    "date":             myEpoch,
+                    "desc":             $scope.desc,
+                    "easeofresolution": $scope.easeOfResolutionSelection,
+                    "evidence":         $scope.evidence,
+                    "impact":           $scope.impact,
                     "meta":         {
                         'create_time': myEpoch,
                         "update_time": myEpoch,
@@ -105,17 +108,17 @@ angular.module('faradayApp')
                         'update_controller_action': 'UI Web New',
                         'owner': 'anonymous'
                     },
-                    "name":         $scope.name,
-                    "oid":          sha,
-                    "owned":        false,
-                    "owner":        "",
-                    "couch_parent": $scope.target_selected._id,
-                    "refs":         arrayReferences,
-                    "resolution":   $scope.resolution,
-                    "status":       $scope.vuln_type,
-                    "severity":     $scope.severitySelection,
-                    "target":       name_selected,
-                    "type":         $scope.vuln_type
+                    "name":             $scope.name,
+                    "oid":              sha,
+                    "owned":            false,
+                    "owner":            "",
+                    "couch_parent":     $scope.target_selected._id,
+                    "refs":             arrayReferences,
+                    "resolution":       $scope.resolution,
+                    "status":           $scope.vuln_type,
+                    "severity":         $scope.severitySelection,
+                    "target":           name_selected,
+                    "type":             $scope.vuln_type
                 }
 
                 if($scope.vuln_type == "VulnerabilityWeb") {

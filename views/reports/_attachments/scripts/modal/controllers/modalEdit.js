@@ -1,7 +1,7 @@
 angular.module('faradayApp')
-    .controller('modalEditCtrl', ['$scope', '$modalInstance', 'commonsFact', 'severities', 'vulns', 
-        function($scope, $modalInstance, commons, severities, vulns) {
-
+    .controller('modalEditCtrl', ['$scope', '$modalInstance', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'vulns', 
+        function($scope, $modalInstance, EASEOFRESOLUTION, commons, severities, vulns) {
+        $scope.easeofresolution = EASEOFRESOLUTION;
         $scope.evidence = {};
         $scope.icons = {};
         $scope.severities = severities;
@@ -12,11 +12,16 @@ angular.module('faradayApp')
         $scope.file_name_error = false;
         var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
 
+        $scope.log = function() {
+            console.log($scope.easeOfResolutionSelection);
+        };
+
         $scope.pickVuln = function(v) {
             $scope.p_name = v.name;
             $scope.p_desc = v.desc;
             $scope.p_data = v.data;
             $scope.severitySelection = v.severity;
+            $scope.easeOfResolutionSelection = v.easeofresolution;
             $scope.p_method = v.method;
             $scope.p_pname = v.pname;
             $scope.p_params = v.params;
@@ -27,10 +32,12 @@ angular.module('faradayApp')
             $scope.p_request = v.request;
             $scope.p_response = v.response;
             $scope.p_resolution = v.resolution;
+            $scope.p_impact = v.impact;
             
             $scope.name = $scope.p_name;
             $scope.data = $scope.p_data;
             $scope.desc = $scope.p_desc;
+            $scope.impact = $scope.p_impact;
             $scope.method = $scope.p_method;
             $scope.params = $scope.p_params;
             $scope.path = $scope.p_path;
@@ -108,28 +115,32 @@ angular.module('faradayApp')
             $scope.refs = commons.objectToArray($scope.refs);
             if($scope.web) { 
                 res = {
-                    "data":         $scope.data,
-                    "desc":         $scope.desc,
-                    "evidence":     $scope.evidence,
-                    "method":       $scope.method,
-                    "name":         $scope.name, 
-                    "params":       $scope.params,
-                    "path":         $scope.path,
-                    "pname":        $scope.pname,
-                    "query":        $scope.query,
-                    "refs":         $scope.refs,
-                    "request":      $scope.request,
-                    "response":     $scope.response,
-                    "resolution":   $scope.resolution,
-                    "severity":     $scope.severitySelection, 
-                    "vulns":        $scope.vulns, 
-                    "website":      $scope.website
+                    "data":             $scope.data,
+                    "desc":             $scope.desc,
+                    "easeofresolution": $scope.easeOfResolutionSelection,
+                    "evidence":         $scope.evidence,
+                    "impact":           $scope.impact,
+                    "method":           $scope.method,
+                    "name":             $scope.name, 
+                    "params":           $scope.params,
+                    "path":             $scope.path,
+                    "pname":            $scope.pname,
+                    "query":            $scope.query,
+                    "refs":             $scope.refs,
+                    "request":          $scope.request,
+                    "response":         $scope.response,
+                    "resolution":       $scope.resolution,
+                    "severity":         $scope.severitySelection, 
+                    "vulns":            $scope.vulns, 
+                    "website":          $scope.website
                 };    
             } else {
                 res = {
                     "data":         $scope.data,
                     "desc":         $scope.desc,
+                    "easeofresolution": $scope.easeOfResolutionSelection,
                     "evidence":     $scope.evidence,
+                    "impact":       $scope.impact,
                     "name":         $scope.name, 
                     "refs":         $scope.refs,
                     "resolution":   $scope.resolution,

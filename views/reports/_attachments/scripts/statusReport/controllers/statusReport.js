@@ -4,6 +4,7 @@ angular.module('faradayApp')
                     function($scope, $filter, $route, $routeParams, $modal, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
         $scope.baseurl = BASEURL;
         $scope.severities = SEVERITIES;
+        $scope.easeofresolution = EASEOFRESOLUTION;
 
         $scope.sortField = 'date';
         $scope.reverse = true;

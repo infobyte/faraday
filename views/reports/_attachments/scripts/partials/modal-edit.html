@@ -20,19 +20,22 @@
     </div><!-- ng-if -->
     <div class="form-horizontal">
         <div class="form-group">
-            <div class="col-md-3">
-                <select class="form-control" ng-model="severitySelection" ng-options="s as s for s in severities">
-                    <option value=""></option>
+            <div class="col-md-6">
+                <h5>Severity</h5>
+                <select class="form-control" ng-model="severitySelection" ng-options="s as s for s in severities" required>
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-6">
+                <h5>Ease of Resolution</h5>
                 <select class="form-control" ng-model="easeOfResolutionSelection" ng-options="e as e for e in easeofresolution">
                     <option value=""></option>
                 </select>
             </div>
-            <div class="col-md-6">
+        </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
                 <label class="sr-only" for="vuln-name">Vuln name</label>
-                <input type="text" class="form-control" id="vuln-name" placeholder="Name" value="{{p_name}}" ng-model="name"/>
+                <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="name" required/>
             </div>
         </div><!-- .form-group -->
         <div class="form-group">

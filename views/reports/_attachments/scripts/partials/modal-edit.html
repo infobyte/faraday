@@ -55,7 +55,7 @@
             <div class="col-md-12 reference" ng-repeat="reference in refs">
                 <div class="input-group margin-bottom-sm">
                     <label class="sr-only" for="vuln-refs">References</label>
-                    <input type="text" class="form-control" id="vuln-refs" placeholder="Refecence" ng-model="reference.ref"/>
+                    <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.ref"/>
                     <span class="input-group-addon" ng-click="refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                 </div>
             </div>
@@ -109,6 +109,11 @@
             </div><!-- .form-group -->
         </div><!-- ng-if -->
     </div><!-- .form-horizontal -->
+
+    <h4>Impact</h4>
+    <div ng-repeat="(key, value) in impact" class="normal-size" style="cursor: pointer;">
+        <h4><span ng-class="{'label label-default': !value, 'label label-success': value}" ng-click="toggleImpact(key)">{{key}}</span></h4>
+    </div><!-- .normal-size -->
 
     <div ng-if="vulnc == 1">
         <h4>Evidence</h4>

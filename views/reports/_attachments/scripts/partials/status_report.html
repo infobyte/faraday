@@ -165,7 +165,7 @@
                                     </td>
                                     <td ng-if="columns.impact">
                                         <div ng-repeat="(impact, rating) in v.impact">
-                                            <p ng-if="rating > 0">{{impact}}</p>
+                                            <p ng-if="rating">{{impact}}</p>
                                         </div>
                                     </td>
                                     <td ng-if="columns.easeofresolution">{{v.easeofresolution}}</td>

@@ -4,7 +4,7 @@
         <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
         <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
     </div>
-    <h3 class="modal-title">Bulk new</h3>
+    <h3 class="modal-title">Vulnerability creation</h3>
 </div>
 <div class="modal-body">
     <div class="form-horizontal">
@@ -55,22 +55,25 @@
 
     <div class="form-horizontal">
         <div class="form-group">
-            <div class="col-md-12">
+            <div class="col-md-4">
+                <h5>Type</h5>
                 <select class="form-control" ng-model="vuln_type" ng-options="option.value as option.name for option in typeOptions">
                 </select>
             </div>
-        </div>
-        <div class="form-group">
-            <div class="col-md-3">
+            <div class="col-md-4">
+                <h5>Severity</h5>
                 <select class="form-control" ng-model="severitySelection" ng-options="s as s for s in severities" required>
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
+                <h5>Ease of Resolution</h5>
                 <select class="form-control" ng-model="easeOfResolutionSelection" ng-options="e as e for e in easeofresolution">
                     <option value=""></option>
                 </select>
             </div>
-            <div class="col-md-6">
+        </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
                 <label class="sr-only" for="vuln-name">Vuln name</label>
                 <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="name" required/>
             </div>
@@ -91,7 +94,7 @@
             <div class="col-md-12 reference" ng-repeat="reference in refs">
                 <div class="input-group margin-bottom-sm">
                     <label class="sr-only" for="vuln-refs">References</label>
-                    <input type="text" class="form-control" id="vuln-refs" placeholder="Refecence" ng-model="reference.ref"/>
+                    <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.ref"/>
                     <span class="input-group-addon" ng-click="newReference($event)"><i class="fa fa-plus-circle"></i></span>
                     <span class="input-group-addon" ng-click="refs.splice($index, 1)" ng-hide="refs.length == 1"><i class="fa fa-minus-circle"></i></span>
                 </div>
@@ -152,6 +155,11 @@
         </div><!-- .animate-switch -->
         <div class="animate-switch" ng-switch-when="Vulnerability"></div>
     </div><!-- .animate-switch-container -->
+
+    <h4>Impact</h4>
+    <div ng-repeat="(key, value) in impact" class="normal-size" style="cursor: pointer;">
+        <h4><span ng-class="{'label label-default': !value, 'label label-success': value}" ng-click="toggleImpact(key)">{{key}}</span></h4>
+    </div><!-- .normal-size -->
 
     <h4>Evidence</h4>
     <form>

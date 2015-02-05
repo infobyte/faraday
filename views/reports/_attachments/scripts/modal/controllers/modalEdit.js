@@ -10,11 +10,19 @@ angular.module('faradayApp')
         $scope.mixed = 0x00;
         $scope.vulnc = 0;
         $scope.file_name_error = false;
-        var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
-
-        $scope.log = function() {
-            console.log($scope.easeOfResolutionSelection);
+        $scope.p_impact = {
+            "accountability": false,
+            "availability": false,
+            "confidentiality": false,
+            "integrity": false
         };
+        $scope.impact = {
+            "accountability": false,
+            "availability": false,
+            "confidentiality": false,
+            "integrity": false
+        };
+        var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
 
         $scope.pickVuln = function(v) {
             $scope.p_name = v.name;
@@ -32,12 +40,10 @@ angular.module('faradayApp')
             $scope.p_request = v.request;
             $scope.p_response = v.response;
             $scope.p_resolution = v.resolution;
-            $scope.p_impact = v.impact;
             
             $scope.name = $scope.p_name;
             $scope.data = $scope.p_data;
             $scope.desc = $scope.p_desc;
-            $scope.impact = $scope.p_impact;
             $scope.method = $scope.p_method;
             $scope.params = $scope.p_params;
             $scope.path = $scope.p_path;
@@ -48,11 +54,21 @@ angular.module('faradayApp')
             $scope.response = $scope.p_response;
             $scope.resolution = $scope.p_resolution;
             $scope.website = $scope.p_website;
+
+            for(var key in v.impact) {
+                $scope.impact[key] = v.impact[key];
+                $scope.p_impact[key] = v.impact[key];
+            }
+
+        };
+
+        $scope.toggleImpact = function(key) {
+            $scope.impact[key] = !$scope.impact[key];
         };
 
         $scope.call = function(){
             $scope.refs = commons.arrayToObject($scope.refs);
-        }
+        };
 
         $scope.vulns.forEach(function(v) {
             if(v.selected) {
@@ -105,6 +121,10 @@ angular.module('faradayApp')
             var res = {},
             evidence = [];
 
+            for(var key in $scope.impact) {
+                $scope.impact[key] = Boolean($scope.impact[key]);
+            }
+
             for(var key in $scope.evidence) {
                 if(Object.keys($scope.evidence[key]).length == 1) {
                     evidence.push(key);
@@ -112,7 +132,9 @@ angular.module('faradayApp')
                     evidence.push($scope.evidence[key]);
                 }
             }
+
             $scope.refs = commons.objectToArray($scope.refs);
+
             if($scope.web) { 
                 res = {
                     "data":             $scope.data,

@@ -23,6 +23,12 @@ angular.module('faradayApp')
         $scope.pageSize = 5;
         $scope.pagination = 10;
         $scope.file_name_error = false;
+        $scope.impact = {
+            "accountability": false,
+            "availability": false,
+            "confidentiality": false,
+            "integrity": false
+        };
 
         var name_selected,
         host_selected,
@@ -45,7 +51,7 @@ angular.module('faradayApp')
 
         $scope.hosts_with_services = hosts;
 
-        $scope.numberOfPages=function(){
+        $scope.numberOfPages = function() {
             var filteredData = $filter('filter')($scope.hosts_with_services,$scope.search_notes);
             if (filteredData.length <= 10){
                 $scope.showPagination = 0;
@@ -54,7 +60,7 @@ angular.module('faradayApp')
             };
             
             return Math.ceil(filteredData.length/$scope.pagination);
-        }
+        };
 
         $scope.selectedFiles = function(files, e) {
             files.forEach(function(file) {
@@ -65,12 +71,16 @@ angular.module('faradayApp')
                 }
             });
             $scope.icons = commons.loadIcons($scope.evidence); 
-        }
+        };
 
         $scope.removeEvidence = function(name) {
             delete $scope.evidence[name];
             delete $scope.icons[name];
-        }
+        };
+
+        $scope.toggleImpact = function(key) {
+            $scope.impact[key] = !$scope.impact[key];
+        };
 
         $scope.ok = function() {
             if($scope.vuln_type == "VulnerabilityWeb" && host_selected == true){
@@ -83,6 +93,10 @@ angular.module('faradayApp')
                 myEpoch = myDate.getTime()/1000.0,
                 extra_vulns_prop = {},
                 arrayReferences = [];
+
+                for(var key in $scope.impact) {
+                    $scope.impact[key] = Boolean($scope.impact[key]);
+                }
 
                 $scope.refs.forEach(function(r){
                     arrayReferences.push(r.ref);

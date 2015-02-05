@@ -4,19 +4,21 @@
 function(doc) {
     if(doc.type == "Vulnerability" || doc.type == "VulnerabilityWeb"){
         var obj = {
-            "rev":          doc._rev,
-            "attachments":  doc._attachments,
-            "desc":         doc.desc, 
-            "meta":         doc.metadata,
-            "date":         doc.metadata.create_time, 
-            "name":         doc.name, 
-            "oid":          doc.obj_id,
-            "owned":        doc.owned,
-            "owner":        doc.owner,
-            "parent":       doc.parent, 
-            "refs":         doc.refs,
-            "severity":     doc.severity, 
-            "status":       doc.type 
+            "rev":              doc._rev,
+            "attachments":      doc._attachments,
+            "desc":             doc.desc, 
+            "easeofresolution": doc.easeofresolution,
+            "impact":           doc.impact,
+            "meta":             doc.metadata,
+            "date":             doc.metadata.create_time, 
+            "name":             doc.name, 
+            "oid":              doc.obj_id,
+            "owned":            doc.owned,
+            "owner":            doc.owner,
+            "parent":           doc.parent, 
+            "refs":             doc.refs,
+            "severity":         doc.severity, 
+            "status":           doc.type 
         };
         emit(doc._id, obj);
     }

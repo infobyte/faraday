@@ -20,14 +20,22 @@
     </div><!-- ng-if -->
     <div class="form-horizontal">
         <div class="form-group">
-            <div class="col-md-3">
-                <select class="form-control" ng-model="severitySelection" ng-options="s as s for s in severities">
+            <div class="col-md-6">
+                <h5>Severity</h5>
+                <select class="form-control" ng-model="severitySelection" ng-options="s as s for s in severities" required>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <h5>Ease of Resolution</h5>
+                <select class="form-control" ng-model="easeOfResolutionSelection" ng-options="e as e for e in easeofresolution">
                     <option value=""></option>
                 </select>
             </div>
-            <div class="col-md-9">
+        </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
                 <label class="sr-only" for="vuln-name">Vuln name</label>
-                <input type="text" class="form-control" id="vuln-name" placeholder="Name" value="{{p_name}}" ng-model="name"/>
+                <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="name" required/>
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
@@ -50,7 +58,7 @@
             <div class="col-md-12 reference" ng-repeat="reference in refs">
                 <div class="input-group margin-bottom-sm">
                     <label class="sr-only" for="vuln-refs">References</label>
-                    <input type="text" class="form-control" id="vuln-refs" placeholder="Refecence" ng-model="reference.ref"/>
+                    <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.ref"/>
                     <span class="input-group-addon" ng-click="refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                 </div>
             </div>
@@ -104,6 +112,11 @@
             </div><!-- .form-group -->
         </div><!-- ng-if -->
     </div><!-- .form-horizontal -->
+
+    <h4>Impact</h4>
+    <div ng-repeat="(key, value) in impact" class="normal-size" style="cursor: pointer;">
+        <h4><span ng-class="{'label label-default': !value, 'label label-success': value}" ng-click="toggleImpact(key)">{{key}}</span></h4>
+    </div><!-- .normal-size -->
 
     <div ng-if="vulnc == 1">
         <h4>Evidence</h4>

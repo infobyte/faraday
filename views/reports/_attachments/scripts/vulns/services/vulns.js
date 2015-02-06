@@ -35,6 +35,7 @@ angular.module('faradayApp')
                         "owner":            obj.value.owner,
                         "parent":           obj.key.substring(0, obj.key.indexOf('.')),
                         "refs":             obj.value.refs,
+                        "resolution":       obj.value.resolution,
                         "selected":         false,
                         "severity":         obj.value.severity,
                         "type":             obj.value.type, 
@@ -61,6 +62,7 @@ angular.module('faradayApp')
                 "owner":            vuln.owner,
                 "parent":           vuln.couch_parent, 
                 "refs":             vuln.refs,
+                "resolution":       vuln.resolution,
                 "severity":         vuln.severity, 
                 "type":             vuln.type
             };

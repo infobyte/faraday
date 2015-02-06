@@ -3,6 +3,30 @@
 // See the file 'doc/LICENSE' for the license information
 function(doc) {
     if(doc.type == "VulnerabilityWeb"){
+        var easeofresolution = "",
+        impact = "",
+        resolution = "";
+        if(doc.easeofresolution == "undefined" || typeof(doc.easeofresolution) == "undefined") {
+            easeofresolution = "trivial";
+        } else {
+            easeofresolution = doc.easeofresolution;
+        }
+        if(doc.impact == "undefined" || typeof(doc.impact) == "undefined") {
+            impact = {
+                "accountability": 0,
+                "availability": 0,
+                "confidentiality": 0,
+                "integrity": 0
+            };
+        } else {
+            impact = doc.impact;
+        }
+        if(doc.resolution == "undefined" || typeof(doc.resolution) == "undefined") {
+            resolution = "";
+        } else {
+            resolution = doc.resolution;
+        }
+
         var obj = {
             "rev":          	doc._rev,
             "attachments":  	doc._attachments,
@@ -18,6 +42,7 @@ function(doc) {
             "owner":        	doc.owner,
             "parent":       	doc.parent, 
             "refs":         	doc.refs,
+            "resolution":       doc.resolution,
             "severity":     	doc.severity, 
             "type":         	doc.type,
             /*** specific fields of web vulns ***/

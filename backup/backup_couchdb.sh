@@ -15,10 +15,13 @@
 
 
 # What to backup. 
-backup_files="/etc/couchdb /var/lib/couchdb /var/log/couchdb"
+#backup_files="/etc/couchdb /var/lib/couchdb /var/log/couchdb"
+backup_files=$1
+
 
 # Where to backup to.
 dest="/mnt/backup"
+dest=$2
 
 # Create archive filename.
 day=$(date +%d_%b_%Y)

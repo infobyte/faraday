@@ -9,6 +9,7 @@ angular.module('faradayApp')
         $scope.web = false;
         $scope.mixed = 0x00;
         $scope.vulnc = 0;
+        $scope.vulnid = 0;
         $scope.file_name_error = false;
         $scope.p_impact = {
             "accountability": false,
@@ -69,7 +70,7 @@ angular.module('faradayApp')
         $scope.call = function(){
             $scope.refs = commons.arrayToObject($scope.refs);
         };
-
+        vulnid_count=0
         $scope.vulns.forEach(function(v) {
             if(v.selected) {
                 if(typeof(v.attachments) != undefined && v.attachments != undefined) {
@@ -80,14 +81,21 @@ angular.module('faradayApp')
                 }
                 $scope.mixed = $scope.mixed | vuln_mask[v.type];
                 $scope.vulnc++;
-                //$scope.pickVuln(v);
+                $scope.vulnid = vulnid_count;
                 if (v.type === "VulnerabilityWeb") {
                     $scope.web = true;
                     //web
                 }
                 
             }
+            vulnid_count++;
+            
+
         });
+
+        if ($scope.vulnc == 1) {
+            $scope.pickVuln($scope.vulns[$scope.vulnid]);
+        }
         
         $scope.unit = $scope.vulnc == 1;
         

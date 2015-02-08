@@ -22,7 +22,7 @@
         <div class="form-group">
             <div class="col-md-6">
                 <h5>Severity</h5>
-                <select class="form-control" ng-model="severitySelection" ng-options="s as s for s in severities" required>
+                <select class="form-control" ng-model="severitySelection" ng-options="s as s for s in severities">
                 </select>
             </div>
             <div class="col-md-6">
@@ -35,7 +35,7 @@
         <div class="form-group">
             <div class="col-md-12">
                 <label class="sr-only" for="vuln-name">Vuln name</label>
-                <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="name" required/>
+                <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="name"/>
             </div>
         </div><!-- .form-group -->
         <div class="form-group">

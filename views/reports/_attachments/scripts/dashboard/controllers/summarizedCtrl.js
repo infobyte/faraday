@@ -104,7 +104,7 @@ angular.module('faradayApp')
                     res.forEach(function(cmd){
                         cmd.user = cmd.user || "unknown";
                         cmd.hostname = cmd.hostname || "unknown";
-                        cmd.ip = cmd.id || "0.0.0.0";
+                        cmd.ip = cmd.ip || "0.0.0.0";
                         if(cmd.duration == "0" || cmd.duration == "") {
                             cmd.duration = "In progress";
                         } else if (cmd.duration != undefined) {

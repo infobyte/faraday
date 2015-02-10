@@ -20,7 +20,7 @@ import subprocess
 import pip
 
 from utils.logs import getLogger
-sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))) # Necessary?
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/external_libs/lib/python2.7/dist-packages')
 from config.configuration import getInstanceConfiguration
 from config.globals import *
 from utils.profilehooks import profile
@@ -340,8 +340,8 @@ def setupQtrc():
         import qt
     except:
         try:
-            cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqui.so'))
             cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqt.so'))
+            cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqui.so'))
         except:
             pass
 

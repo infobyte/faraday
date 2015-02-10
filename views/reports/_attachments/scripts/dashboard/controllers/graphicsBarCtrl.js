@@ -1,7 +1,7 @@
 angular.module('faradayApp')
     .controller('graphicsBarCtrl', 
-        ['$scope', '$route', '$routeParams', 'dashboardSrv',
-        function($scope, $route, $routeParams, dashboardSrv) {
+        ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv',
+        function($scope, $route, $routeParams, $modal, dashboardSrv) {
             //current workspace
             var workspace = $routeParams.wsId;
             $scope.barData = [];
@@ -68,5 +68,17 @@ angular.module('faradayApp')
                     }
                 });
             }
+
+            $scope.treemap = function(){
+                    var modal = $modal.open({
+                        templateUrl: 'scripts/dashboard/partials/modal-treemap.html',
+                        controller: 'graphicsBarCtrl',
+                        size: 'lg'
+                     });
+
+                    modal.result.then(function(data) {
+                        $scope.insert(data);
+                    });
+            };
 
     }]);

@@ -45,20 +45,6 @@ angular.module('faradayApp')
 
             var totalSize = 0;
 
-            // Add the svg area.
-            var trail = d3.select(ele[0])
-              .append("div")
-              .attr("id", "sequence")
-              .append("svg:svg")
-                .attr("width", width)
-                .attr("height", 50)
-                .attr("id", "trail");
-            
-            // Add the label at the end, for the percentage.
-            trail.append("svg:text")
-              .attr("id", "endlabel")
-              .style("fill", "#000");
-
             var vis = d3.select(ele[0])
               .append("div")
               .attr("class", "box")

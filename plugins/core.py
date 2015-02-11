@@ -648,34 +648,36 @@ class PluginBase(object):
             name=name, protocol=protocol, ports=ports,
             status=status, version=version, description=description, parent_id=interface_id)
 
-    def createAndAddVulnToHost(self, host_id, name, desc="", ref=[], severity=""):
-        self.__addPendingAction(modelactions.CADDVULNHOST, host_id, name, desc, ref, severity)
+    def createAndAddVulnToHost(self, host_id, name, desc="", ref=[], severity="", resolution=""):
+        self.__addPendingAction(modelactions.CADDVULNHOST, host_id, name, desc, ref, severity, resolution)
         return factory.generateID(
             ModelObjectVuln.class_signature,
             name=name, desc=desc, ref=ref, severity=severity,
-            parent_id=host_id)
+            resolution=resolution, parent_id=host_id)
 
-    def createAndAddVulnToInterface(self, host_id, interface_id, name, desc="", ref=[], severity=""):
-        self.__addPendingAction(modelactions.CADDVULNINT, host_id, interface_id, name, desc, ref, severity)
+    def createAndAddVulnToInterface(self, host_id, interface_id, name, desc="", ref=[], severity="", resolution=""):
+        self.__addPendingAction(modelactions.CADDVULNINT, host_id, interface_id, name, desc, ref, severity, resolution)
         return factory.generateID(
             ModelObjectVuln.class_signature,
             name=name, desc=desc, ref=ref, severity=severity,
-            parent_id=interface_id)
+            resolution=resolution, parent_id=interface_id)
 
-    def createAndAddVulnToService(self, host_id, service_id, name, desc="", ref=[], severity=""):
-        self.__addPendingAction(modelactions.CADDVULNSRV, host_id, service_id, name, desc, ref, severity)
+    def createAndAddVulnToService(self, host_id, service_id, name, desc="", ref=[], severity="", resolution=""):
+        self.__addPendingAction(modelactions.CADDVULNSRV, host_id, service_id, name, desc, ref, severity, resolution)
         return factory.generateID(
             ModelObjectVuln.class_signature,
             name=name, desc=desc, ref=ref, severity=severity,
-            parent_id=service_id)
+            resolution=resolution, parent_id=service_id)
 
-    def createAndAddVulnWebToService(self, host_id, service_id, name, desc="", ref=[], severity="", website="", path="", request="",
-                                  response="",method="",pname="", params="",query="",category=""):
-        self.__addPendingAction(modelactions.CADDVULNWEBSRV, host_id, service_id, name, desc, ref, severity, website, path, request, response,
-                method,pname, params,query,category)
+    def createAndAddVulnWebToService(self, host_id, service_id, name, desc="", ref=[],
+                                    severity="", resolution="", website="", path="", request="",
+                                    response="",method="",pname="", params="",query="",category=""):
+        self.__addPendingAction(modelactions.CADDVULNWEBSRV, host_id, service_id, name, desc, ref,
+                                severity, resolution, website, path, request, response,
+                                method, pname, params, query,category)
         return factory.generateID(
             ModelObjectVulnWeb.class_signature,
-            name=name, desc=desc, ref=ref, severity=severity,
+            name=name, desc=desc, ref=ref, severity=severity, resolution=resolution, 
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
             category=category, parent_id=service_id)

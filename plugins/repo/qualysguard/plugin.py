@@ -130,7 +130,6 @@ class Results():
         self.result=self.get_text_from_subnode("RESULT")
         self.desc = self.diagnosis
         self.desc += "\nResult: " +self.result if self.result else ""
-        self.desc += "\nSolution: " +self.solution if self.solution else ""
         
         self.ref=[]
         for r in issue_node.findall("CVE_ID_LIST/CVE_ID"):
@@ -183,7 +182,7 @@ class QualysguardPlugin(core.PluginBase):
             
             for v in item.vulns:
                 if v.port is None:
-                    v_id=self.createAndAddVulnToHost(h_id,v.title,ref=v.ref,severity=v.severity,desc=v.desc)
+                    v_id=self.createAndAddVulnToHost(h_id,v.title,ref=v.ref,severity=v.severity,resolution=v.solution,desc=v.desc)
                 else:
                     web=False
                     s_id = self.createAndAddServiceToInterface(h_id, i_id, v.port,
@@ -197,11 +196,11 @@ class QualysguardPlugin(core.PluginBase):
                         web=False
                     
                     if web:
-                        v_id=self.createAndAddVulnWebToService(h_id, s_id,v.title,ref=v.ref,website=item.ip,severity=v.severity,desc=v.desc)
+                        v_id=self.createAndAddVulnWebToService(h_id, s_id,v.title,ref=v.ref,website=item.ip,severity=v.severity,desc=v.desc,resolution=v.solution)
                         n_id = self.createAndAddNoteToService(h_id,s_id,"website","")
                         n2_id = self.createAndAddNoteToNote(h_id,s_id,n_id,item.ip,"")
                     else:
-                        v_id=self.createAndAddVulnToService(h_id, s_id,v.title,ref=v.ref,severity=v.severity,desc=v.desc)
+                        v_id=self.createAndAddVulnToService(h_id, s_id,v.title,ref=v.ref,severity=v.severity,desc=v.desc,resolution=v.solution)
                                   
                        
                           

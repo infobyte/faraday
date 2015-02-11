@@ -224,6 +224,7 @@ class VulnMapper(ModelObjectMapper):
         doc.update({
             "desc": vuln.getDesc(),
             "severity": vuln.getSeverity(),
+            "resolution": vuln.getResolution(),
             "refs": vuln.getRefs(),
             "data": vuln.getData()
         })
@@ -232,6 +233,7 @@ class VulnMapper(ModelObjectMapper):
     def unserialize(self, vuln, doc):
         vuln.setDesc(doc.get("desc"))
         vuln.setSeverity(doc.get("severity"))
+        vuln.setResolution(doc.get("resolution"))
         vuln.setRefs(doc.get("refs"))
         vuln.setData(doc.get("data", ""))
         super(VulnMapper, self).unserialize(vuln, doc)

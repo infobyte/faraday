@@ -92,46 +92,48 @@ def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?
     return None
 
 
-def createAndAddVulnToHost(host_id, name, desc, ref, severity="0"):
-    vuln = model.api.newVuln(name, desc, ref, severity, parent_id=host_id)
+def createAndAddVulnToHost(host_id, name, desc, ref, severity="0", resolution=""):
+    vuln = model.api.newVuln(name, desc, ref, severity, resolution, parent_id=host_id)
     if addVulnToHost(host_id, vuln):
         return vuln.getID()
     return None
 
 
-def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref, severity="0"):
-    vuln = model.api.newVuln(name, desc, ref, severity, parent_id=interface_id)
+def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref, severity="0", resolution=""):
+    vuln = model.api.newVuln(name, desc, ref, severity, resolution, parent_id=interface_id)
     if addVulnToInterface(host_id, interface_id, vuln):
         return vuln.getID()
     return None
 
 
-def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity="0"):
-    vuln = model.api.newVuln(name, desc, ref, severity, parent_id=service_id)
+def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity="0", resolution=""):
+    vuln = model.api.newVuln(name, desc, ref, severity, resolution, parent_id=service_id)
     if addVulnToService(host_id, service_id, vuln):
         return vuln.getID()
     return None
 
 
-def createAndAddVulnWebToService(host_id, service_id, name, desc, website, path, ref=None, severity="0", request=None, response=None,
-                method=None,pname=None, params=None,query=None,category=None):
-    vuln = model.api.newVulnWeb(name, desc, website, path, ref, severity, request, response,
-                method,pname, params,query,category, parent_id=service_id)
+def createAndAddVulnWebToService(host_id, service_id, name, desc, website, path, ref=None,
+                                severity="0", resolution="", request=None, response=None,
+                                method=None,pname=None, params=None,query=None,category=None):
+    vuln = model.api.newVulnWeb(name, desc, website, path, ref, severity, resolution, request, response,
+                method, pname, params, query, category, parent_id=service_id)
     if addVulnToService(host_id, service_id, vuln):
         return vuln.getID()
     return None
 
 
-def createAndAddVuln(model_object, name, desc, ref=None, severity="0"):
-    vuln = model.api.newVuln(name, desc, ref, severity, parent_id=model_object.getID())
+def createAndAddVuln(model_object, name, desc, ref=None, severity="0", resolution=""):
+    vuln = model.api.newVuln(name, desc, ref, severity, resolution, parent_id=model_object.getID())
     if addVuln(model_object.getID(), vuln):
         return vuln.getID()
     return None
 
 
-def createAndAddVulnWeb(model_object, name, desc, website, path, ref=None, severity="0", request=None, response=None,
-                method=None,pname=None, params=None,query=None,category=None):
-    vuln = model.api.newVulnWeb(name, desc, ref, severity, website, path, request, response,
+def createAndAddVulnWeb(model_object, name, desc, website, path, ref=None, severity="0", resolution="",
+                        request=None, response=None, method=None, pname=None, params=None, query=None,
+                        category=None):
+    vuln = model.api.newVulnWeb(name, desc, ref, severity, resolution, website, path, request, response,
                 method, pname, params, query, category, parent_id=model_object.getID())
     if addVuln(model_object.getID(), vuln):
         return vuln.getID()
@@ -411,14 +413,14 @@ def editNote(note, name=None, text=None):
     __model_controller.editNoteSYNC(note, name, text)
     return True
 
-def editVuln(vuln, name=None, desc=None, severity=None, refs=None):
-    __model_controller.editVulnSYNC(vuln, name, desc, severity, refs)
+def editVuln(vuln, name=None, desc=None, severity=None, resolution=None, refs=None):
+    __model_controller.editVulnSYNC(vuln, name, desc, severity, resolution, refs)
     return True
 
-def editVulnWeb(vuln, name=None, desc=None, website=None, path=None, refs=None, severity=None, request=None, response=None,
-                method=None,pname=None, params=None,query=None,category=None):
-    __model_controller.editVulnWebSYNC(vuln, name, desc, website, path, refs, severity, request, response,
-                method,pname, params,query,category)
+def editVulnWeb(vuln, name=None, desc=None, website=None, path=None, refs=None, severity=None, resolution=None,
+                request=None, response=None, method=None, pname=None, params=None, query=None, category=None):
+    __model_controller.editVulnWebSYNC(vuln, name, desc, website, path, refs, severity, resolution,
+                                        request, response, method, pname, params, query, category)
     return True
 
 def editCred(cred, username=None, password=None):

@@ -165,7 +165,7 @@ class Item(object):
                                                                      
         self.severity = self.get_text_from_subnode('riskcode')
         self.desc = self.get_text_from_subnode('desc')
-        self.desc += "\nSolution: " + self.get_text_from_subnode('solution') if self.get_text_from_subnode('solution')  else ""
+        self.resolution = self.get_text_from_subnode('solution') if self.get_text_from_subnode('solution')  else ""
         self.desc += "\nReference: " + self.get_text_from_subnode('reference') if self.get_text_from_subnode('reference') else ""
         self.ref=[]
         if self.get_text_from_subnode('cweid'):
@@ -254,7 +254,7 @@ class ZapPlugin(core.PluginBase):
                 v_id = self.createAndAddVulnWebToService(h_id, s_id, item.name,
                                                          item.desc, website=site.host, severity=item.severity,
                                                          path=item.items[0]['uri'],params=item.items[0]['param'],
-                                                         request=item.requests,ref=item.ref)
+                                                         request=item.requests,ref=item.ref, resolution=item.resolution)
 
         del parser
         

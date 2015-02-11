@@ -148,7 +148,8 @@ class ModelControllerAPI(RESTApi):
 
     def listWebVulns(self):
         vulns = self.controller.getWebVulns()
-        j = [{'request': v.request, 'website': v.website, 'path': v.path, 'name': v.name, 'desc': v.desc, 'severity': v.severity} for v in vulns]
+        j = [{'request': v.request, 'website': v.website, 'path': v.path, 'name': v.name,
+            'desc': v.desc, 'severity': v.severity, 'resolution': v.resolution} for v in vulns]
         return self.ok(j)
 
     def deleteVuln(self):
@@ -204,11 +205,12 @@ class ModelControllerAPI(RESTApi):
         name = json_data.get('name', None)
         desc = json_data.get('desc', None)
         severity = json_data.get('severity', None)
+        resolution = json_data.get('resolution', None)
         refs = json_data.get('refs', None)
 
         # forward to controller 
         for vuln in visitor.vulns: 
-            self.controller.editVulnSYNC(vuln, name, desc, severity, refs) 
+            self.controller.editVulnSYNC(vuln, name, desc, severity, resolution, refs) 
 
         return self.ok("output successfully sent to plugin")
 
@@ -249,12 +251,12 @@ class ModelControllerAPI(RESTApi):
     def createVuln(self):
         return self._create(
             self.controller.newVuln,
-            ['name', 'desc', 'ref', 'severity', 'parent_id'])
+            ['name', 'desc', 'ref', 'severity', 'resolution', 'parent_id'])
 
     def createVulnWeb(self):
         return self._create(
             self.controller.newVulnWeb,
-            ['name', 'desc', 'ref', 'severity', 'website',
+            ['name', 'desc', 'ref', 'severity', 'resolution', 'website',
              'path', 'request', 'response', 'method', 'pname',
              'params', 'query', 'category', 'parent_id'])
 

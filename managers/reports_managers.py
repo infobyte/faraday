@@ -193,6 +193,8 @@ class ReportXmlParser(object):
             return "acunetix"
         elif "session" == tag:
             return "x1"
+        elif "landscapePolicy" == tag:
+            return "x1"
         elif "entities" == tag:
             return "impact"
         elif "NeXposeSimpleXML" == tag:

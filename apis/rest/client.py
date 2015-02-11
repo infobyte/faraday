@@ -61,18 +61,18 @@ class ModelRestApiClient(RestApiClient):
             status=status, version=version, description=description,
             parent_id=parent_id)
 
-    def createVuln(self, name, desc, ref, severity, parent_id):
+    def createVuln(self, name, desc, ref, severity, resolution, parent_id):
         return self._create(
             "vuln", name=name, desc=desc, ref=ref, severity=severity,
-            parent_id=parent_id)
+            resolution=resolution, parent_id=parent_id)
 
-    def createVulnWeb(self, name, desc, ref, severity, website, path, request,
-                      response, method, pname, params, query, category,
+    def createVulnWeb(self, name, desc, ref, severity, resolution, website, path,
+                      request, response, method, pname, params, query, category,
                       parent_id):
         return self._create(
             "vulnweb", name=name, desc=desc, ref=ref, severity=severity,
-            website=website, path=path, request=request, response=response,
-            method=method, pname=pname, params=params, query=query,
+            resolution=resolution, website=website, path=path, request=request,
+            response=response, method=method, pname=pname, params=params, query=query,
             category=category, parent_id=parent_id)
 
     def createNote(self, name, text, parent_id):

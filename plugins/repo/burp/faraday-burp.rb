@@ -62,7 +62,7 @@ class BurpExtender
     # set our extension name
     callbacks.setExtensionName(PLUGINVERSION)
 
-    @checkbox = javax.swing.JCheckBox.new("test")
+    @checkbox = javax.swing.JCheckBox.new("Faraday")
     @tab = javax.swing.JPanel.new()
 
     @layout = javax.swing.GroupLayout.new(@tab)
@@ -176,6 +176,7 @@ class BurpExtender
     host = issue.getHost()
     port = issue.getPort().to_s()
     url = issue.getUrl()
+    resolution = ""
 
     begin
       ip = InetAddress.getByName(issue.getHttpService().getHost()).getHostAddress()
@@ -192,6 +193,7 @@ class BurpExtender
       desc+="<br/>Resolution:" + issue.getIssueBackground().to_s
       severity=issue.getSeverity().to_s
       issuename=issue.getIssueName().to_s
+      resolution=issue.getRemediationBackground().to_s
     end
 
     @stdout.println("New scan issue host: " +host +",name:"+ issuename +",IP:" + ip)
@@ -224,7 +226,7 @@ class BurpExtender
         issuename += "("+issue.getUrl().getPath()[0,20]+")"
         path = issue.getUrl().to_s
         request = issue.getRequest().to_s
-        method = req.getMethod().to_s         
+        method = req.getMethod().to_s
 
       else #Scan event or Menu scan tab
         unless issue.getHttpMessages().nil? #issues with request #IHttpRequestResponse
@@ -251,8 +253,9 @@ class BurpExtender
         end
       end
 
+      #createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity, resolution, website, path, request, response,method,pname, params,query,category):
       v_id = @server.call("createAndAddVulnWebToService",h_id, s_id, issuename,
-             desc,[],severity,host,path,request,
+             desc,[],severity,resolution,host,path,request,
              response,method,"",param,"","")
 
       

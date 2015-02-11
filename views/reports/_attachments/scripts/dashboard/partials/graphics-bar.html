@@ -6,6 +6,7 @@
                 <span class="glyphicon glyphicon-info-sign" tooltip="Top 5 services with the largest quantity of hosts"></span>
             </h2>
         </header>
+        <span id="treemapText"></span>
         <div ng-if="treemapData.length < 5" class="alert alert-info alert-dismissible">
             <button type="button" class="close" data-dismiss="alert">
                 <span aria-hidden="true">&times;</span>
@@ -23,7 +24,7 @@
                 <span class="glyphicon glyphicon-info-sign" tooltip="Top 3 hosts with the largest quantity of services"></span>
             </h2>
         </header>
-        <p id="cakee"></p>
+        <span id="barText"></span>
         <div ng-if="barData.length < 3" class="alert alert-info alert-dismissible">
             <button type="button" class="close" data-dismiss="alert">
                 <span aria-hidden="true">&times;</span>
@@ -41,6 +42,7 @@
                 <span class="glyphicon glyphicon-info-sign" tooltip="Vulnerabilty distribution for current WS"></span>
             </h2>
         </header>
+        <span id="cakeText"></span>
         <div ng-if="cakeData.length == 0" class="alert alert-info alert-dismissible">
             <button type="button" class="close" data-dismiss="alert">
                 <span aria-hidden="true">&times;</span>

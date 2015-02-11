@@ -75,10 +75,10 @@ angular.module('faradayApp')
                   var hurl    = "/" + workspace + "/_design/hosts/_view/hosts";
                   hosts    = get_obj(hurl);
                   var name = hosts[d.key].name;
-                  document.getElementById("cakee").innerHTML = "Host: " + name + "Value: " + d.value;
+                  document.getElementById("barText").innerHTML = "Host: " + name + "Value: " + d.value;
                 })
                 .on('mouseleave', function(){
-                  document.getElementById("cakee").innerHTML = "";
+                  document.getElementById("barText").innerHTML = "";
                 });
 
                 function get_obj(ourl) {

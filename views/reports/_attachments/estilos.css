@@ -467,6 +467,20 @@ select.ng-valid{
     #compound .col-lg-6{width: 45%;margin-top: -2%;}
 
     .panel{margin-bottom: 1%!important}
+        article.panel > span{
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+        }
+        article.panel > span > div{
+            display: block;
+            float: left;
+            text-align: center;
+            width: 50%;
+            border-radius: 10px;
+            color: #FFF;
+        }
     .box{   
         display: flex;
         flex-direction: row;
@@ -539,7 +553,8 @@ span.input-group-addon.add-reference{
     width: 20px;
     cursor: pointer;
 }
+    span#barText{text-align: left}
+    span#cakeText{width: 95%}
 .normal-size {
     font-size: 14px !important;
 }
-p#cake{position: absolute;}

@@ -26,7 +26,7 @@ angular.module('faradayApp')
           }, true);
  
           scope.render = function(data) {
-            
+
             // remove existing treemap container, if any
             d3.select("#bar_container").remove();
  
@@ -75,7 +75,8 @@ angular.module('faradayApp')
                   var hurl    = "/" + workspace + "/_design/hosts/_view/hosts";
                   hosts    = get_obj(hurl);
                   var name = hosts[d.key].name;
-                  document.getElementById("barText").innerHTML = "Host: " + name + "Value: " + d.value;
+                  document.getElementById("barText").innerHTML =  "<div style='background-color:" + d.color + "'><b>" + name + '</b></div>' + d.value;
+
                 })
                 .on('mouseleave', function(){
                   document.getElementById("barText").innerHTML = "";

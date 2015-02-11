@@ -4,7 +4,7 @@ $.ajaxSetup({
     async: false
 });
 
-var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload', 'filter'])
+var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload', 'filter', 'ngClipboard'])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;
@@ -57,4 +57,8 @@ faradayApp.config(['$routeProvider', function($routeProvider) {
             templateUrl: 'scripts/partials/home.html',
             controller: 'statusReportCtrl'
         });
+}]);
+
+faradayApp.config(['ngClipProvider', function(ngClipProvider) {
+    ngClipProvider.setPath("//cdnjs.cloudflare.com/ajax/libs/zeroclipboard/2.1.6/ZeroClipboard.swf");
 }]);

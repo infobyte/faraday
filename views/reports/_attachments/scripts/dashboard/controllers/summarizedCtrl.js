@@ -228,6 +228,7 @@ angular.module('faradayApp')
 
             $scope.sortField = 'name';
             $scope.sortReverse = false;
+            $scope.clipText = "Copy to Clipboard";
             
             // toggles sort field and order
             $scope.toggleSort = function(field) {
@@ -248,7 +249,15 @@ angular.module('faradayApp')
             dashboardSrv.getHostsByServicesName(workspace, srv_name).then(function(hosts){
                 $scope.name = srv_name;
                 $scope.hosts = hosts;
+                $scope.clip = "";
+                $scope.hosts.forEach(function(h){
+                    $scope.clip += h.name + " ";
+                });
             });
+
+            $scope.messageCopied = function(){
+                $scope.clipText = "Copied!";
+            }
 
             $scope.ok = function(){
                 $modalInstance.close();

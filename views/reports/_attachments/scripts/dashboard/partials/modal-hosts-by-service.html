@@ -13,12 +13,15 @@
         </thead>
         <tbody>
             <tr ng-repeat="host in hosts | orderBy:sortField:sortReverse">
-                <td>{{host.name}}</a></td>
+                <td>{{host.name}}</td>
                 <td>{{host.os}}</td>
                 <td><input disabled type="checkbox" ng-model="host.owned"/></td>
             </tr>
         </tbody>
     </table>
+    <div class="form-group">
+        <button class="btn btn-danger" clip-copy="clip" clip-click="messageCopied()">{{clipText}}</button>
+    </div>
 </div>
 
 <div class="modal-footer">

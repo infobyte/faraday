@@ -14,7 +14,13 @@ angular.module('faradayApp')
                         res.sort(function(a, b){
                             return b.value-a.value;
                         });
-                        $scope.barData = res.slice(0, 3);
+                        colors = ["rgb(57, 59, 121)","rgb(82, 84, 163)","rgb(107, 110, 207)"];
+                        var tmp = [];
+                        res.slice(0, 3).forEach(function(srv){
+                            srv.color = colors.shift();
+                            tmp.push(srv);
+                        });
+                        $scope.barData = tmp;
                     }
                 });
                 

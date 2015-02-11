@@ -553,7 +553,6 @@ span.input-group-addon.add-reference{
     width: 20px;
     cursor: pointer;
 }
-    span#barText{text-align: left}
     span#cakeText{width: 95%}
 .normal-size {
     font-size: 14px !important;

@@ -124,12 +124,14 @@ angular.module('faradayApp')
                     res.forEach(function(host){
                         // Maybe this part should be in the view somehow
                         // or, even better, in CSS file
-                        oss = ["windows", "cisco", "router", "osx", "linux", "unix"];
+                        oss = ["windows", "cisco", "router", "osx", "apple","linux", "unix"];
                         oss.forEach(function(os){
                             if (host.os.toLowerCase().indexOf(os) != -1) {
                                 host.icon = os;
                                 if (os == "unix") {
                                     host.icon = "linux";
+                                }else if (os == "apple") {
+                                    host.icon = "osx";
                                 }
                             }
                         });

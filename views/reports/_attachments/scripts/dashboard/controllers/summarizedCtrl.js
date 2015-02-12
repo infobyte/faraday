@@ -251,7 +251,7 @@ angular.module('faradayApp')
                 $scope.hosts = hosts;
                 $scope.clip = "";
                 $scope.hosts.forEach(function(h){
-                    $scope.clip += h.name + " ";
+                    $scope.clip += h.name + "\n";
                 });
             });
 

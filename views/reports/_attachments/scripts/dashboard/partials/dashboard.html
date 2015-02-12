@@ -28,12 +28,3 @@
         </div><!-- #reports-main -->
     </div><!-- .right-main -->
 </section>
-<script type="text/javascript">
-$(document).ready(function() {
-    $(document).on("click", "a.treemap-view", function(e) {
-        e.preventDefault();
-        var url = "../././reports/treemap.html?workspace=" + workspace +"&design=hosts&view=byservices#"+ workspace;
-        window.location.href = url;
-    });
-});
-</script>

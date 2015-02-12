@@ -170,7 +170,6 @@ article.untercio{
     height: 20%;
 }
     .seccion article {
-        background-color: #fff;
         min-height: 85px;
         font-size: 13px;
         text-align: left;
@@ -250,7 +249,9 @@ article.untercio{
         font-size: 11px;
         font-weight: 700;
     }
-
+    .dato2 span{
+        cursor: pointer;
+    }
 
 /* TABLES - Table sorter for status report*/
 table.tablesorter {
@@ -466,6 +467,20 @@ select.ng-valid{
     #compound .col-lg-6{width: 45%;margin-top: -2%;}
 
     .panel{margin-bottom: 1%!important}
+        article.panel > span{
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+        }
+        article.panel > span > div{
+            display: block;
+            float: left;
+            text-align: center;
+            width: 50%;
+            border-radius: 10px;
+            color: #FFF;
+        }
     .box{   
         display: flex;
         flex-direction: row;
@@ -473,6 +488,8 @@ select.ng-valid{
         justify-content: center;
         align-items: center;
     }
+        div.box div.columna:nth-child(even){background-color: #DF3936; color: #000!important;}
+        div.box div.columna:nth-child(odd){background-color: #000; color: #DF3936!important;}
     #merge, #delete, #new{margin:5px;float:right;}
 .input-sm{float: left;margin-bottom: 20px;}
 /* Media */
@@ -536,6 +553,9 @@ span.input-group-addon.add-reference{
     width: 20px;
     cursor: pointer;
 }
+    span#cakeText{width: 95%}
+    span#treemapTextModel{font-size: 14px}
 .normal-size {
     font-size: 14px !important;
 }
+div#treemap_container{margin: 5% auto 0}

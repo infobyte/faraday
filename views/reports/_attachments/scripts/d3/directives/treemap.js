@@ -8,16 +8,13 @@ angular.module('faradayApp')
       },
       link: function(scope, ele, attrs) {
         d3Service.d3().then(function(d3) {
- 
+
           var margin = {
             "top": parseInt(attrs.marginTop) || 28,
             "right": parseInt(attrs.marginRight) || 10,
             "bottom": parseInt(attrs.marginBottom) || 10,
             "left": parseInt(attrs.marginLeft) || 10,
           }
-
-          var width = parseInt(attrs.treemapWitdh) || 160,
-            height = parseInt(attrs.treemapHeight) || 133;
 
           function position() {
             this.style("left", function(d) { return d.x + "px"; })
@@ -31,10 +28,9 @@ angular.module('faradayApp')
           }, true);
  
           scope.render = function(data) {
+          var width = data.width || 160,
+            height = data.height || 133;
 
-            // remove existing treemap container, if any
-            d3.select("#treemap_container").remove();
- 
             if (!data || data.length == 0) return;
 
             var div = d3.select(ele[0])
@@ -63,8 +59,18 @@ angular.module('faradayApp')
             .enter().append("div")
               .attr("class", "node treemap-tooltip")
               .call(position)
-              .style("background", function(d) { return d.color; });
-        
+              .style("background", function(d) { return d.color; })
+              .on('mouseover', function(d){
+                if (!data.width){
+                  document.getElementById("treemapText").innerHTML = "<div style='background-color:" + d.color + "'>" + d.key + '</div>' + d.value;
+                }else{
+                  document.getElementById("treemapTextModel").innerHTML = "<div style='background-color:" + d.color + "'>" + d.key + '</div>' + d.value;
+                }
+              })
+              .on('mouseleave', function(){
+                document.getElementById("treemapText").innerHTML = "";
+              });
+
           };
         });
       }}

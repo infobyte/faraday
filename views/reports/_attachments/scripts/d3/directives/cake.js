@@ -45,20 +45,6 @@ angular.module('faradayApp')
 
             var totalSize = 0;
 
-            // Add the svg area.
-            var trail = d3.select(ele[0])
-              .append("div")
-              .attr("id", "sequence")
-              .append("svg:svg")
-                .attr("width", width)
-                .attr("height", 50)
-                .attr("id", "trail");
-            
-            // Add the label at the end, for the percentage.
-            trail.append("svg:text")
-              .attr("id", "endlabel")
-              .style("fill", "#000");
-
             var vis = d3.select(ele[0])
               .append("div")
               .attr("class", "box")
@@ -102,6 +88,12 @@ angular.module('faradayApp')
                 .style("fill", function(d) {return d.color; })
                 .style("stroke-width", "0.5")
                 .style("opacity", 1)
+                .on('mouseover', function(d){
+                  document.getElementById("cakeText").innerHTML = "<div style='background-color:" + d.color + "'><b>" + d.key + '</b></div>' + d.value;
+                })
+                .on('mouseleave', function(){
+                  document.getElementById("cakeText").innerHTML = "";
+                });
 
             // Get total size of the tree = value of root node from partition.
             totalSize = path.node().__data__.value;

@@ -104,7 +104,7 @@ angular.module('faradayApp')
                     res.forEach(function(cmd){
                         cmd.user = cmd.user || "unknown";
                         cmd.hostname = cmd.hostname || "unknown";
-                        cmd.ip = cmd.id || "0.0.0.0";
+                        cmd.ip = cmd.ip || "0.0.0.0";
                         if(cmd.duration == "0" || cmd.duration == "") {
                             cmd.duration = "In progress";
                         } else if (cmd.duration != undefined) {
@@ -228,6 +228,7 @@ angular.module('faradayApp')
 
             $scope.sortField = 'name';
             $scope.sortReverse = false;
+            $scope.clipText = "Copy to Clipboard";
             
             // toggles sort field and order
             $scope.toggleSort = function(field) {
@@ -248,7 +249,15 @@ angular.module('faradayApp')
             dashboardSrv.getHostsByServicesName(workspace, srv_name).then(function(hosts){
                 $scope.name = srv_name;
                 $scope.hosts = hosts;
+                $scope.clip = "";
+                $scope.hosts.forEach(function(h){
+                    $scope.clip += h.name + " ";
+                });
             });
+
+            $scope.messageCopied = function(){
+                $scope.clipText = "Copied!";
+            }
 
             $scope.ok = function(){
                 $modalInstance.close();

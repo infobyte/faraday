@@ -1,6 +1,6 @@
 angular.module('faradayApp')
-  .directive('d3Bars', ['d3Service', 
-  function(d3Service) {
+  .directive('d3Bars', ['d3Service', '$routeParams',
+  function(d3Service, $routeParams) {
     return {
       restrict: 'EA',
       scope: {
@@ -26,7 +26,7 @@ angular.module('faradayApp')
           }, true);
  
           scope.render = function(data) {
-            
+
             // remove existing treemap container, if any
             d3.select("#bar_container").remove();
  
@@ -69,7 +69,33 @@ angular.module('faradayApp')
                 .attr("y", function(d) { return y(d.value - 1); })
                 .style("fill", function(d) { return color(Math.random()*55); })
                 .attr("height", function(d) { return height - margin.top - margin.bottom - y(d.value); })
-                .attr("width", 30);
+                .attr("width", 30)
+                .on('mouseover', function(d){
+                  workspace = $routeParams.wsId;
+                  var hurl    = "/" + workspace + "/_design/hosts/_view/hosts";
+                  hosts    = get_obj(hurl);
+                  var name = hosts[d.key].name;
+                  document.getElementById("barText").innerHTML =  "<div style='background-color:" + d.color + "'><b>" + name + '</b></div>' + d.value;
+
+                })
+                .on('mouseleave', function(){
+                  document.getElementById("barText").innerHTML = "";
+                });
+
+                function get_obj(ourl) {
+                  var ls = {};
+                  $.ajax({
+                      dataType: "json",
+                      url: ourl,
+                      async: false,
+                      success: function(data) {
+                          $.each(data.rows, function(n, obj){
+                              ls[obj.key] = obj.value;
+                          });
+                      }
+                  });
+                  return ls;
+                  }
           };
         });
       }}

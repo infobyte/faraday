@@ -16,13 +16,13 @@
             <div class='main'>
                 <div class='box'>
                     <div ng-repeat="srv in servicesCount" class="columna unquinto services">
-                        <article class="dato2 fondo-negro">
-                            <a href="" ng-click="showHosts(srv.key)">
+                        <article class="dato2">
+                            <span href="" ng-click="showHosts(srv.key)">
                                 <section>
-                                    <div class="nro texto-rojo">{{srv.value}}</div>
+                                    <div class="nro">{{srv.value}}</div>
                                     <div class="txt texto-blanco">{{srv.key}}</div>
                                 </section>
-                            </a>
+                            </span>
                         </article>
                     </div>
                 </div>
@@ -48,9 +48,9 @@
             <div class='main'>
                 <div class='box'>
                     <div ng-repeat="obj in objectsCount" class="columna unquinto">
-                        <article class="dato2 fondo-negro">
+                        <article class="dato2">
                             <section>
-                                <div class="nro texto-rojo">{{obj.value}}</div>
+                                <div class="nro">{{obj.value}}</div>
                                 <div class="txt texto-blanco">{{obj.key}}</div>
                             </section>
                         </article>

@@ -78,13 +78,44 @@ angular.module('faradayApp')
             $scope.treemap = function(){
                     var modal = $modal.open({
                         templateUrl: 'scripts/dashboard/partials/modal-treemap.html',
-                        controller: 'graphicsBarCtrl',
-                        size: 'lg'
+                        controller: 'summarizedCtrlBarModal',
+                        size: 'lg',
+                        resolve: {
+                            workspace: function(){
+                                return $scope.workspace;
+                            }
+                        }
                      });
 
                     modal.result.then(function(data) {
                         $scope.insert(data);
                     });
             };
+
+    }]);
+
+angular.module('faradayApp')
+    .controller('summarizedCtrlBarModal', 
+        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace',
+        function($scope, $modalInstance, dashboardSrv, workspace){
+
+            dashboardSrv.getServicesCount(workspace).then(function(res){
+                if (res.length > 4) {
+                    res.sort(function(a, b){
+                        return b.value - a.value;
+                    });
+                    colors = ["#FA5882", "#FF0040", "#B40431", "#610B21", "#2A0A1B"];
+                    var tmp = [];
+                    res.slice(0, 5).forEach(function(srv){
+                        srv.color = colors.shift();
+                        tmp.push(srv);
+                    });
+                    $scope.treemapDataModel = {"children": tmp, "height":300, "width": 500};
+                }
+            });
+
+            $scope.ok = function(){
+                $modalInstance.close();
+            }
 
     }]);

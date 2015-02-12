@@ -554,6 +554,8 @@ span.input-group-addon.add-reference{
     cursor: pointer;
 }
     span#cakeText{width: 95%}
+    span#treemapTextModel{font-size: 14px}
 .normal-size {
     font-size: 14px !important;
 }
+div#treemap_container{margin: 5% auto 0}

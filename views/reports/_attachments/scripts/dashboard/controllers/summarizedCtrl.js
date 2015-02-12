@@ -136,7 +136,7 @@ angular.module('faradayApp')
                             }
                         });
 
-                        host.servicesCount = "undefined";
+                        host.servicesCount = 0;
                         dashboardSrv.getHostsByServicesCount(workspace, host.id).then(function(res){
                             if (res.length == 1) {
                                 if (res[0].key == host.id){

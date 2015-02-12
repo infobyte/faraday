@@ -28,10 +28,11 @@ angular.module('faradayApp')
           }, true);
  
           scope.render = function(data) {
-          var width = data.width || 160,
-            height = data.height || 133;
 
             if (!data || data.length == 0) return;
+
+          var width = data.width || 160,
+            height = data.height || 133;
 
             var div = d3.select(ele[0])
               .append("div")
@@ -60,6 +61,12 @@ angular.module('faradayApp')
               .attr("class", "node treemap-tooltip")
               .call(position)
               .style("background", function(d) { return d.color; })
+              .text(function(d, i) {
+                if(data.width){
+                  var total = d3.sum(data.children, function(d){return d.value;});
+                  return (d.key+ " ( " + d3.round(100* d.value / total, 1) + "% " + ")" ) ; 
+                }
+              })
               .on('mouseover', function(d){
                 if (!data.width){
                   document.getElementById("treemapText").innerHTML = "<div style='background-color:" + d.color + "'>" + d.key + '</div>' + d.value;

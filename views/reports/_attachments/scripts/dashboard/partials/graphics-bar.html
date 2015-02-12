@@ -2,7 +2,7 @@
     <article id='treemap' class='panel panel-default'>
         <header>
             <h2>
-                <a class="treemap-view" href="" ng-click="treemap()">Top Services</a>
+                <a class="treemap-view" href="" ng-disabled="{{nodata}}" ng-click="treemap()">Top Services</a>
                 <span class="glyphicon glyphicon-info-sign" tooltip="Top 5 services with the largest quantity of hosts"></span>
             </h2>
         </header>

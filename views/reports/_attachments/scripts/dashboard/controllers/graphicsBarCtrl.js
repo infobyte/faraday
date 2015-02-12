@@ -76,6 +76,7 @@ angular.module('faradayApp')
             }
 
             $scope.treemap = function(){
+                if($scope.treemapData.children){
                     var modal = $modal.open({
                         templateUrl: 'scripts/dashboard/partials/modal-treemap.html',
                         controller: 'summarizedCtrlBarModal',
@@ -90,6 +91,7 @@ angular.module('faradayApp')
                     modal.result.then(function(data) {
                         $scope.insert(data);
                     });
+                }
             };
 
     }]);

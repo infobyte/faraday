@@ -53,13 +53,28 @@ class BurpExtender
     # set our extension name
     callbacks.setExtensionName(PLUGINVERSION)
 
+    # obtain our output stream
+    @stdout = java.io.PrintWriter.new(callbacks.getStdout(), true)
+
     # create the tab
 
     @import_current_vulns = javax.swing.JCheckBox.new("Import current vulnerabilities")
     @import_new_vulns = javax.swing.JCheckBox.new("Import new vulnerabilities")
     @rpc_server_label = javax.swing.JLabel.new("Faraday RPC server:")
-    @rpc_server = javax.swing.JTextField.new("http://127.0.0.1:9876/")
+    @rpc_server = javax.swing.JTextField.new()
     @rpc_server_label.setLabelFor(@rpc_server)
+    @restore_btn = javax.swing.JButton.new("Restore configuration")
+    @save_btn = javax.swing.JButton.new("Save configuration")
+
+    @restore_btn.addActionListener do |e|
+        restoreConfig()
+    end
+    @save_btn.addActionListener do |e|
+        saveConfig()
+    end
+
+
+    restoreConfig()
 
     @tab = javax.swing.JPanel.new()
 
@@ -73,6 +88,8 @@ class BurpExtender
             .addComponent(@import_new_vulns)
             .addComponent(@rpc_server_label)
             .addComponent(@rpc_server)
+            .addComponent(@restore_btn)
+            .addComponent(@save_btn)
     )
     @layout.setVerticalGroup(
         @layout.createSequentialGroup()
@@ -80,14 +97,13 @@ class BurpExtender
             .addComponent(@import_new_vulns)
             .addComponent(@rpc_server_label)
             .addComponent(@rpc_server)
+            .addComponent(@restore_btn)
+            .addComponent(@save_btn)
     )
     @layout.linkSize(javax.swing.SwingConstants.VERTICAL, @import_new_vulns, @rpc_server)
 
     callbacks.addSuiteTab(self)
     
-    # obtain our output stream
-    @stdout = java.io.PrintWriter.new(callbacks.getStdout(), true)
-
     #Connect Rpc server
     @server = XMLRPC::Client.new2(@rpc_server.getText())
     @helpers = callbacks.getHelpers()
@@ -305,6 +321,23 @@ class BurpExtender
     end
     return param
 
+  end
+
+  def restoreConfig(e=nil)
+      @import_current_vulns.setSelected(@callbacks.loadExtensionSetting("import_current_vulns") == "1")
+      @import_new_vulns.setSelected(@callbacks.loadExtensionSetting("import_new_vulns") == "1")
+      @rpc_server.setText(@callbacks.loadExtensionSetting("rpc_server"))
+      if @rpc_server.getText().strip == ""
+          @rpc_server.setText("http://127.0.0.1:9876/")
+      end
+      @stdout.println("Config restored.")
+  end
+
+  def saveConfig(e=nil)
+      @callbacks.saveExtensionSetting("import_current_vulns", @import_current_vulns.isSelected() ? "1" : "0")
+      @callbacks.saveExtensionSetting("import_new_vulns", @import_new_vulns.isSelected() ? "1" : "0")
+      @callbacks.saveExtensionSetting("rpc_server", @rpc_server.getText())
+      @stdout.println("Config saved.")
   end
 
 end      

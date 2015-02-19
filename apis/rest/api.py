@@ -144,6 +144,11 @@ class ModelControllerAPI(RESTApi):
                             view_func=self.createCred,
                             methods=['PUT']))
 
+        routes.append(Route(path='/status/check',
+                            view_func=self.statusCheck,
+                            methods=['GET']))
+
+
         return routes
 
     def listWebVulns(self):
@@ -269,6 +274,9 @@ class ModelControllerAPI(RESTApi):
         return self._create(
             self.controller.newCred,
             ['username', 'password', 'parent_id'])
+
+    def statusCheck(self):
+        return self.ok("Faraday API Status: OK")
 
 
 class PluginControllerAPI(RESTApi):

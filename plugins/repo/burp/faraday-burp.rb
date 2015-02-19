@@ -17,11 +17,6 @@ require "xmlrpc/client"
 require "pp"
 
 
-
-#FARADAY CONF:
-RPCSERVER="http://127.0.0.1:9876/"
-IMPORTVULN=0 #1 if you like to import the current vulnerabilities, or 0 if you only want to import new vulns
-IMPORTNEW=0 #1 if you like to import the new vulnerabilities detected, or 0 if you only want to import new vulns
 PLUGINVERSION="Faraday v1.2 Ruby"
 #Tested: Burp Professional v1.6.09
 
@@ -55,14 +50,17 @@ class BurpExtender
     # keep a reference to our callbacks object
     @callbacks = callbacks
 
-    #Connect Rpc server
-    @server = XMLRPC::Client.new2(RPCSERVER)
-    @helpers = callbacks.getHelpers()
-    
     # set our extension name
     callbacks.setExtensionName(PLUGINVERSION)
 
-    @checkbox = javax.swing.JCheckBox.new("Faraday")
+    # create the tab
+
+    @import_current_vulns = javax.swing.JCheckBox.new("Import current vulnerabilities")
+    @import_new_vulns = javax.swing.JCheckBox.new("Import new vulnerabilities")
+    @rpc_server_label = javax.swing.JLabel.new("Faraday RPC server:")
+    @rpc_server = javax.swing.JTextField.new("http://127.0.0.1:9876/")
+    @rpc_server_label.setLabelFor(@rpc_server)
+
     @tab = javax.swing.JPanel.new()
 
     @layout = javax.swing.GroupLayout.new(@tab)
@@ -70,32 +68,38 @@ class BurpExtender
     @layout.setAutoCreateGaps(true)
     @layout.setAutoCreateContainerGaps(true)
     @layout.setHorizontalGroup(
-        @layout.createSequentialGroup()
-        .addGroup(@layout.createParallelGroup()
-            .addComponent(@checkbox)
-        )
+        @layout.createParallelGroup()
+            .addComponent(@import_current_vulns)
+            .addComponent(@import_new_vulns)
+            .addComponent(@rpc_server_label)
+            .addComponent(@rpc_server)
     )
     @layout.setVerticalGroup(
         @layout.createSequentialGroup()
-        .addGroup(@layout.createParallelGroup()
-            .addComponent(@checkbox)
-        )
+            .addComponent(@import_current_vulns)
+            .addComponent(@import_new_vulns)
+            .addComponent(@rpc_server_label)
+            .addComponent(@rpc_server)
     )
+    @layout.linkSize(javax.swing.SwingConstants.VERTICAL, @import_new_vulns, @rpc_server)
 
     callbacks.addSuiteTab(self)
     
     # obtain our output stream
     @stdout = java.io.PrintWriter.new(callbacks.getStdout(), true)
 
+    #Connect Rpc server
+    @server = XMLRPC::Client.new2(@rpc_server.getText())
+    @helpers = callbacks.getHelpers()
 
     @stdout.println(PLUGINVERSION + " Loaded.")
-    @stdout.println("RPCServer: " + RPCSERVER)
-    @stdout.println("Import vulnerability database (IMPORTVULN): " + boolString(IMPORTVULN))
-    @stdout.println("Import new vulnerabilities detected (IMPORTNEW): " + boolString(IMPORTNEW))    
+    @stdout.println("RPCServer: " + @rpc_server.getText())
+    @stdout.println("Import vulnerability database: " + boolString(@import_current_vulns.isSelected()))
+    @stdout.println("Import new vulnerabilities detected: " + boolString(@import_new_vulns.isSelected()))
     @stdout.println("------")
     
     # Get current vulnerabilities
-    if IMPORTVULN == 1
+    if @import_current_vulns.isSelected()
       rt = @server.call("devlog", "[BURP] Importing issues")
       callbacks.getScanIssues(nil).each do |issue|
         newScanIssue(issue, 1,true)
@@ -168,7 +172,7 @@ class BurpExtender
   #
   def newScanIssue(issue, ctx=nil, import=nil)
 
-    if import == nil && IMPORTNEW == 0
+    if import == nil && @import_new_vulns.isSelected() == 0
       #ignore new issues
       return
     end

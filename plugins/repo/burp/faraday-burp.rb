@@ -58,7 +58,7 @@ class BurpExtender
 
     # create the tab
 
-    @import_current_vulns = javax.swing.JCheckBox.new("Import current vulnerabilities")
+    @import_current_vulns = javax.swing.JButton.new("Import current vulnerabilities")
     @import_new_vulns = javax.swing.JCheckBox.new("Import new vulnerabilities")
     @rpc_server_label = javax.swing.JLabel.new("Faraday RPC server:")
     @rpc_server = javax.swing.JTextField.new()
@@ -72,7 +72,9 @@ class BurpExtender
     @save_btn.addActionListener do |e|
         saveConfig()
     end
-
+    @import_current_vulns.addActionListener do |e|
+        importVulns()
+    end
 
     restoreConfig()
 
@@ -104,24 +106,13 @@ class BurpExtender
 
     callbacks.addSuiteTab(self)
     
-    #Connect Rpc server
-    @server = XMLRPC::Client.new2(@rpc_server.getText())
     @helpers = callbacks.getHelpers()
 
     @stdout.println(PLUGINVERSION + " Loaded.")
     @stdout.println("RPCServer: " + @rpc_server.getText())
-    @stdout.println("Import vulnerability database: " + boolString(@import_current_vulns.isSelected()))
     @stdout.println("Import new vulnerabilities detected: " + boolString(@import_new_vulns.isSelected()))
     @stdout.println("------")
     
-    # Get current vulnerabilities
-    if @import_current_vulns.isSelected()
-      rt = @server.call("devlog", "[BURP] Importing issues")
-      callbacks.getScanIssues(nil).each do |issue|
-        newScanIssue(issue, 1,true)
-      end
-    end 
-
     # Register a factory for custom context menu items
     callbacks.registerContextMenuFactory(self)
 
@@ -324,20 +315,37 @@ class BurpExtender
   end
 
   def restoreConfig(e=nil)
-      @import_current_vulns.setSelected(@callbacks.loadExtensionSetting("import_current_vulns") == "1")
       @import_new_vulns.setSelected(@callbacks.loadExtensionSetting("import_new_vulns") == "1")
       @rpc_server.setText(@callbacks.loadExtensionSetting("rpc_server"))
       if @rpc_server.getText().strip == ""
           @rpc_server.setText("http://127.0.0.1:9876/")
       end
+
+      #Connect Rpc server
+      @server = XMLRPC::Client.new2(@rpc_server.getText())
+
       @stdout.println("Config restored.")
   end
 
   def saveConfig(e=nil)
-      @callbacks.saveExtensionSetting("import_current_vulns", @import_current_vulns.isSelected() ? "1" : "0")
       @callbacks.saveExtensionSetting("import_new_vulns", @import_new_vulns.isSelected() ? "1" : "0")
       @callbacks.saveExtensionSetting("rpc_server", @rpc_server.getText())
+
+      #Connect Rpc server
+      @server = XMLRPC::Client.new2(@rpc_server.getText())
+
       @stdout.println("Config saved.")
   end
+
+
+  def importVulns()
+    # Get current vulnerabilities
+      @stdout.println("Importing vulns.")
+      rt = @server.call("devlog", "[BURP] Importing issues")
+      callbacks.getScanIssues(nil).each do |issue|
+        newScanIssue(issue, 1,true)
+      end 
+  end
+
 
 end      

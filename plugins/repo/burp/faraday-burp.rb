@@ -37,6 +37,26 @@ java_import 'javax.swing.JMenuItem'
 java_import 'javax.swing.JCheckBox'
 java_import 'javax.swing.JPanel'
 java_import 'javax.swing.GroupLayout'
+java_import 'javax.swing.event.DocumentListener'
+ 
+class SimpleDocumentListener
+ 
+  # This is how we declare that this class implements the Java
+  # DocumentListener interface in JRuby:
+  include DocumentListener
+ 
+  attr_accessor :behavior
+ 
+  def initialize(&behavior)
+    self.behavior = behavior
+  end
+ 
+  def changedUpdate(event);  behavior.call event; end
+  def insertUpdate(event);   behavior.call event; end
+  def removeUpdate(event);   behavior.call event; end
+ 
+end
+
 
 class BurpExtender
   include IBurpExtender, IHttpListener, IProxyListener, IScannerListener, IExtensionStateListener,IContextMenuFactory, ITab
@@ -65,6 +85,11 @@ class BurpExtender
     @rpc_server_label.setLabelFor(@rpc_server)
     @restore_btn = javax.swing.JButton.new("Restore configuration")
     @save_btn = javax.swing.JButton.new("Save configuration")
+
+    @rpc_server.getDocument.addDocumentListener(
+        SimpleDocumentListener.new do
+            @server = XMLRPC::Client.new2(@rpc_server.getText())
+    end)
 
     @restore_btn.addActionListener do |e|
         restoreConfig()
@@ -330,10 +355,6 @@ class BurpExtender
   def saveConfig(e=nil)
       @callbacks.saveExtensionSetting("import_new_vulns", @import_new_vulns.isSelected() ? "1" : "0")
       @callbacks.saveExtensionSetting("rpc_server", @rpc_server.getText())
-
-      #Connect Rpc server
-      @server = XMLRPC::Client.new2(@rpc_server.getText())
-
       @stdout.println("Config saved.")
   end
 
@@ -342,8 +363,8 @@ class BurpExtender
     # Get current vulnerabilities
       @stdout.println("Importing vulns.")
       rt = @server.call("devlog", "[BURP] Importing issues")
-      callbacks.getScanIssues(nil).each do |issue|
-        newScanIssue(issue, 1,true)
+      @callbacks.getScanIssues(nil).each do |issue|
+        newScanIssue(issue, 1, true)
       end 
   end
 

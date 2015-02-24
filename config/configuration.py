@@ -233,7 +233,10 @@ class Configuration:
         return self._perspective_view
 
     def getCouchURI(self):
-        return self._couch_uri
+        if self._couch_uri.endswith('/'):
+            return self._couch_uri[:-1]
+        else:
+            return self._couch_uri
 
     def getCouchReplics(self):
         return self._couch_replics

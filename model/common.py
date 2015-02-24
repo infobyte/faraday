@@ -940,6 +940,12 @@ class ModelObjectVuln(ModelComposite):
     def getDesc(self):
         return self._desc
 
+    def getDescription(self):
+        return self.getDesc()
+
+    def setDescription(self, desc):
+        self.setDesc(desc)
+
     def setResolution(self, resolution):
         self.resolution = resolution
 

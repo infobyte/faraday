@@ -373,6 +373,7 @@ table.csv-export tbody tr:hover{
 #list .tablesorter tbody td {width: 23.6%}
 #list .tablesorter tbody td:nth-child(2){width: 29%;word-wrap: break-word;}
 #compound .tablesorter tbody{height:284px;}
+    #compound .col-lg-6 article.panel{height: 93px}
 
 .table-striped tbody tr:nth-child(odd){background: #f9f9f9;}
 .table-striped tbody tr:nth-child(even){background: #FFF;}

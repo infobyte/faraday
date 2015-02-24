@@ -9,6 +9,8 @@ angular.module('faradayApp')
             $scope.vulnsCount = [];
             $scope.commands = [];
             $scope.hosts = [];
+            $scope.currentPage = 1;
+            $scope.numPerPage = 10;
 
             // cmd table sorting
             $scope.cmdSortField = 'date';
@@ -144,10 +146,19 @@ angular.module('faradayApp')
                                 }
                             }
                             $scope.hosts.push(host);
+                            $scope.totalHosts = $scope.hosts.length;
+                            $scope.setPage($scope.currentPage);
                         });
                     });
                 });
             }
+
+            $scope.setPage = function (pageNo) {
+                $scope.currentPage = pageNo;
+                var begin = (($scope.currentPage - 1) * $scope.numPerPage),
+                    end = begin + $scope.numPerPage;
+                $scope.hostPagination = $scope.hosts.slice(begin, end);
+            };
 
             $scope.showServices = function(host_id) {
                 if ($scope.workspace != undefined){

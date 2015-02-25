@@ -264,7 +264,7 @@ table.tablesorter {
     border: 1px solid!important;
 }
 .tablesorter tbody {
-    height: 95px;
+    height: 205px;
     overflow-y: auto;
 }
 .main thead tr{position: absolute;top:38px;}
@@ -299,10 +299,6 @@ table.tablesorter tbody tr td:first-child {
     display: block;
     visibility: hidden;
     clear: both;
-}
-.tablesorter tbody td,.tablesorter thead th {
-    width: 33.33%;
-    float: left;
 }
 
 table.tablesorter thead tr .headerSortUp {
@@ -370,9 +366,11 @@ table.csv-export tbody tr:hover{
     float: left;
     border:1px solid;
 }
+#list tbody{display: block}
 #list .tablesorter tbody td {width: 23.6%}
 #list .tablesorter tbody td:nth-child(2){width: 29%;word-wrap: break-word;}
 #compound .tablesorter tbody{height:284px;}
+    #compound .col-lg-6 article.panel{height: 93px}
 
 .table-striped tbody tr:nth-child(odd){background: #f9f9f9;}
 .table-striped tbody tr:nth-child(even){background: #FFF;}

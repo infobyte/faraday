@@ -84,7 +84,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="host in hosts | orderBy:hostSortField:hostSortReverse">
+                    <tr ng-repeat="host in hostPagination | orderBy:hostSortField:hostSortReverse">
                         <td><a href="" class="host" ng-click="showServices(host.id)">{{host.name}}</a></td>
                         <td>{{host.servicesCount}}</td>
                         <td>
@@ -94,6 +94,7 @@
                     </tr>
                 </tbody>
             </table>
+            <pagination total-items='totalHosts' ng-model="currentPage" ng-change="setPage(currentPage)"></pagination>
         </article>
     </div>
 </div>

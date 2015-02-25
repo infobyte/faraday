@@ -5,20 +5,12 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from unittest import TestCase
 import unittest
 import sys
-sys.path.append('.')
-import model.controller as controller
-import plugins.core as plcore
-from mockito import mock
-from model import api
-from model.hosts import Host, Interface, Service
-from managers.model_managers import WorkspaceManager
-from model.common import ModelObjectVuln, ModelObjectVulnWeb
-from persistence.orm import WorkspacePersister
-import random
-from persistence.orm import WorkspacePersister
+import os
+sys.path.append(os.path.abspath(os.getcwd()))
+
+from model.common import ModelObjectVuln
 
 
 class VulnerabilityCreationTests(unittest.TestCase):
@@ -115,6 +107,45 @@ class VulnerabilityCreationTests(unittest.TestCase):
         self.assertEquals(vuln.severity, 'high',
                 'Vulnerability severity not transformed correctly')
 
+
+class VulnerabiltyEdtionTests(unittest.TestCase):
+    def testChangeVulnDescription(self):
+        """
+        Until we have a single attribute to store the vuln's descrption
+        we need to make sure we're always accessing the valid one (_desc)
+        """
+        vuln = ModelObjectVuln(
+            name='VulnTest', desc='TestDescription', severity='info')
+
+        self.assertEquals(vuln._desc, 'TestDescription',
+            'Vulnerability desc should be the given during creation')
+
+        vuln.setDescription("new description")
+
+        self.assertEquals(vuln.getDescription(), 'new description',
+            'Vulnerability desc wasn\'t updated correctly')
+
+        self.assertEquals(vuln._desc, 'new description',
+            'Vulnerability desc wasn\'t updated correctly')
+
+    def testChangeVulnDescriptionUsingUpdateAttributesMethod(self):
+        """
+        Until we have a single attribute to store the vuln's descrption
+        we need to make sure we're always accessing the valid one (_desc)
+        """
+        vuln = ModelObjectVuln(
+            name='VulnTest', desc='TestDescription', severity='info')
+
+        self.assertEquals(vuln._desc, 'TestDescription',
+            'Vulnerability desc should be the given during creation')
+
+        vuln.updateAttributes(desc="new description")
+
+        self.assertEquals(vuln.getDescription(), 'new description',
+            'Vulnerability desc wasn\'t updated correctly')
+
+        self.assertEquals(vuln._desc, 'new description',
+            'Vulnerability desc wasn\'t updated correctly')
 
 
 if __name__ == '__main__':

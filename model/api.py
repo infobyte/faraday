@@ -239,7 +239,7 @@ def createAndAddNoteToNote(host_id, service_id, note_id, name, text):
 def createAndAddCredToService(host_id, service_id, username, password):
     cred = newCred(username, password, parent_id=service_id)
     if addCredToService(host_id, service_id, cred):
-        return note.getID()
+        return cred.getID()
     return None
 
 #-------------------------------------------------------------------------------

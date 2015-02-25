@@ -10,10 +10,6 @@ See the file 'doc/LICENSE' for the license information
 from __future__ import with_statement
 import sys
 import os
-# lastpwd = os.getcwd()
-# sys.path.append("/root/tools/sqlmap/")
-# os.chdir('/root/tools/sqlmap/')
-# from lib.core.common import hashDBRetrieve
 
 from plugins import core
 from model import api
@@ -60,7 +56,7 @@ class Database(object):
 
 
     def connect(self, who="server"):
-        print "Db" + self.database
+        # print "Db" + self.database
         self.connection = sqlite3.connect(self.database, timeout=3, isolation_level=None)
         self.cursor = self.connection.cursor()
 
@@ -308,7 +304,7 @@ class SqlmapPlugin(core.PluginBase):
         retVal=""
         
         hash_ = self.hashKey(key)
-        print "hash_" + str(hash_) + "key=" + key
+        # print "hash_" + str(hash_) + "key=" + key
         if not retVal:
             while True:
                 try:
@@ -422,10 +418,10 @@ class SqlmapPlugin(core.PluginBase):
         # print users
         dbs = self.getdbs(output)
         
-        print "webserver = " + webserver
-        print "dbs = " + str(dbs)
-        print "users = " + str(users)
-        print "password = " + str(password)
+        # print "webserver = " + webserver
+        # print "dbs = " + str(dbs)
+        # print "users = " + str(users)
+        # print "password = " + str(password)
                                          
 
         db = Database(self._output_path)
@@ -493,7 +489,7 @@ class SqlmapPlugin(core.PluginBase):
             dbname = self.hashDBRetrieve("None"+self.xmlvalue(dbms,"current_db"), False, db)
             hostname = self.hashDBRetrieve("None"+self.xmlvalue(dbms,"hostname"), False, db)
 
-            print "username = " + user
+            # print "username = " + user
             
             if user:
                 n_id2 = self.createAndAddNoteToService(h_id,s_id2,"db.user",user)

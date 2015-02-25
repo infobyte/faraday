@@ -511,6 +511,7 @@ class SqlmapPlugin(core.PluginBase):
                                                         "\nParam type:" + str(self.ptype[inj.ptype]),
                                                          ref=[],                
                                                          pname=inj.parameter,
+                                                         severity="high",
                                                          method=inj.place,
                                                          params=self.params,
                                                          path=self.fullpath)

@@ -1,9 +1,12 @@
 angular.module('faradayApp')
-    .controller('navigationCtrl', ['$scope', '$route', '$routeParams',
-        function($scope, $route, $routeParams) {
+    .controller('navigationCtrl', ['$scope', '$route', '$routeParams', '$cookieStore', '$location',
+        function($scope, $route, $routeParams, $cookieStore, $location) {
 
             $scope.$on('$routeChangeSuccess', function(){
-                $scope.workspace = $routeParams.wsId;
+                if($routeParams.wsId != undefined) {
+                    $scope.workspace = $routeParams.wsId;
+                    $cookieStore.put('currentUrl', $location.path());
+                }
             });
 
 	}]);

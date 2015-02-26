@@ -62,6 +62,7 @@ USER_QTRC = os.path.expanduser(CONST_USER_QTRC_PATH)
 USER_QTRCBAK = os.path.expanduser(CONST_USER_QTRC_BACKUP)
 FARADAY_QTRC = os.path.join(FARADAY_BASE, CONST_FARADAY_QTRC_PATH)
 FARADAY_QTRCBAK = os.path.expanduser(CONST_FARADAY_QTRC_BACKUP)
+CONST_VERSION_FILE = os.path.join(FARADAY_BASE,"VERSION")
 
 def getParserArgs():
     """Parser setup for faraday launcher arguments.
@@ -494,7 +495,10 @@ def checkUpdates():
     uri = getInstanceConfiguration().getUpdatesUri() 
     resp = u"OK"
     try:
-        resp = requests.get(uri, timeout=1, verify=True)
+        f = open(CONST_VERSION_FILE)
+        parameter = {"version": f.read().strip()}
+        f.close
+        resp = requests.get(uri, params=parameter, timeout=1, verify=True)
         resp = resp.text.strip()
     except Exception as e:
         logger.error(e)

@@ -44,3 +44,6 @@ views/reports/_attachments/pushreports.py
 
 # Tests nodejs
 node_modules
+
+# Couch
+.couchadmin

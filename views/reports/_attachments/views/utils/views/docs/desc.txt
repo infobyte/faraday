@@ -1,0 +1,1 @@
+retrieve all docs except design docs

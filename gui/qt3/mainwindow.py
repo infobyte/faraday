@@ -661,7 +661,7 @@ class MainWindow(qt.QMainWindow):
         """
         base_uri = str(CONF.getCouchURI())
         current_workspace = str(CONF.getLastWorkspace())
-        uri = base_uri + "/reports/_design/reports/index.html#"+current_workspace
+        uri = base_uri + "/reports/_design/reports/index.html#/dashboard/ws/"+current_workspace
         import requests
         try:
             response = requests.head(uri)

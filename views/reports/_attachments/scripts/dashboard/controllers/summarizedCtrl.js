@@ -9,8 +9,10 @@ angular.module('faradayApp')
             $scope.vulnsCount = [];
             $scope.commands = [];
             $scope.hosts = [];
-            $scope.currentPage = 1;
-            $scope.numPerPage = 10;
+            $scope.showPagination = 1;
+            $scope.currentPage = 0;
+            $scope.pageSize = 10;
+            $scope.pagination = 10;
 
             // cmd table sorting
             $scope.cmdSortField = 'date';
@@ -146,19 +148,30 @@ angular.module('faradayApp')
                                 }
                             }
                             $scope.hosts.push(host);
-                            $scope.totalHosts = $scope.hosts.length;
-                            $scope.setPage($scope.currentPage);
                         });
                     });
                 });
             }
 
-            $scope.setPage = function (pageNo) {
-                $scope.currentPage = pageNo;
-                var begin = (($scope.currentPage - 1) * $scope.numPerPage),
-                    end = begin + $scope.numPerPage;
-                $scope.hostPagination = $scope.hosts.slice(begin, end);
-            };
+            $scope.numberOfPages = function() {
+                $scope.filteredData = $scope.hosts;
+                if ($scope.filteredData.length <= 10){
+                    $scope.showPagination = 0;
+                } else {
+                    $scope.showPagination = 1;
+                };
+                return parseInt($scope.filteredData.length/$scope.pageSize);
+            }
+
+            $scope.go = function(page,pagination){
+                if(this.go_page < $scope.numberOfPages()+1 && this.go_page > -1){
+                    $scope.currentPage = this.go_page;
+                }
+                $scope.pageSize = this.pagination;
+                if(this.go_page > $scope.numberOfPages()){
+                    $scope.currentPage = 0;
+                }
+            }
 
             $scope.showServices = function(host_id) {
                 if ($scope.workspace != undefined){

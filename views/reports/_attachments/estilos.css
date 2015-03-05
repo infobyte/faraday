@@ -559,3 +559,5 @@ span.input-group-addon.add-reference{
     font-size: 14px !important;
 }
 div#treemap_container{margin: 5% auto 0}
+div#compound .showPagination input.form-control{width: 68px;}
+div#compound .showPagination div.form-group{margin-top: 10px;}

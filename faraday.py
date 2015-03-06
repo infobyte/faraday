@@ -122,7 +122,7 @@ def getParserArgs():
 
     parser.add_argument('--dev-mode', action="store_true", dest="dev_mode",
         default=False,
-        help="Enable dev mode. This will reset config and plugin folders.")
+        help="Enable dev mode. This will use the user config and plugin folder.")
 
     parser.add_argument('--ignore-deps', action="store_true",
         dest="ignore_deps",
@@ -318,14 +318,15 @@ def setupPlugins(dev_mode=False):
 
     """
 
-    if not dev_mode and os.path.isdir(FARADAY_PLUGINS_PATH):
-        logger.info("Plugins already in place.")
+    if dev_mode:
+        logger.warning("Running under plugin development mode!")
+        logger.warning("Using user plugins folder")
     else:
-        if dev_mode:
-            logger.warning("Running under plugin development mode!")
+        if os.path.isdir(FARADAY_PLUGINS_PATH):
+            logger.info("Removing old plugins folder")
             shutil.rmtree(FARADAY_PLUGINS_PATH)
         else:
-            logger.warning("No plugins folder detected. Creating new one.")
+            logger.info("No plugins folder detected. Creating new one.")
 
         shutil.copytree(FARADAY_PLUGINS_BASEPATH, FARADAY_PLUGINS_PATH)
 

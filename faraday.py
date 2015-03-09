@@ -197,10 +197,11 @@ def checkDependencies():
         modules = []
         f = open(CONST_REQUIREMENTS_FILE)
         for line in f:
-            if line.find('#'):
+            if not line.find('#'):
+                break
+            else:
                 modules.append([line[:line.index('=')], (line[line.index('=')+2:]).strip()])
         f.close()
-
         for module in modules:
             try:
                 __import__(module[0])

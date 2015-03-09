@@ -156,9 +156,10 @@ class PluginManager(object):
                     sys.path.append(module_path)
                     module_filename = os.path.join(module_path, "plugin.py")
                     self._plugin_modules[name] = imp.load_source(name, module_filename)
-                except Exception:
+                except Exception as e:
                     msg = "An error ocurred while loading plugin %s.\n%s" % (module_filename, traceback.format_exc())
-                    getLogger(self).error(msg)
+                    getLogger(self).debug(msg)
+                    getLogger(self).warn(e)
             else:
                 pass
 

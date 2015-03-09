@@ -13,7 +13,13 @@ from model import api
 import re
 import os
 import sys
-import psycopg2
+
+try:
+    import psycopg2
+except ImportError:
+    raise Exception("Please install psycopg2 to use plugin: MetasploitOn")
+
+
 import time
 
 try:

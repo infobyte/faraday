@@ -12,6 +12,7 @@ if [ $EUID -ne 0 ]; then
  exit 1
 fi
 
+update=0
 #protection
 sha_kali_i686=f071539d8d64ad9b30c7214daf5b890a94b0e6d68f13bdcc34c2453c99afe9c4
 sha_kali_x86_64=02a050372fb30ede1454e1dd99d97e0fe0963ce2bd36c45efe90eec78df11d04
@@ -25,7 +26,9 @@ arch=$(uname -m)
 kernel=$(uname -r)
 if [ -f /etc/lsb-release ]; then
 	if [ ! -f /usr/bin/lsb_release ] ; then
-		apt-get -y install lsb-release
+           apt-get update
+           update=1
+	   apt-get -y install lsb-release
         fi
         os=$(lsb_release -s -d)
 elif [ -f /etc/debian_version ]; then
@@ -43,7 +46,7 @@ if [ "$os" = "Ubuntu 10.04.2 LTS" ]; then
 elif [[ "$os" =~ .*Kali.* ]]; then
     version="kali-$arch"
     down=1
-elif [ "$os" = "Ubuntu 12.04.3 LTS" ]; then
+elif [[ "$os" =~ "Ubuntu 12.04".* ]]; then
     version="ubuntu12-$arch"
 elif [ "$os" = "Ubuntu 13.10" ]; then
     version="ubuntu13-10-$arch"
@@ -51,13 +54,23 @@ elif [ "$os" = "Ubuntu 13.10" ]; then
 elif [ "$os" = "Ubuntu 13.04" ]; then
     version="ubuntu13-04-$arch"
     down=1
-elif [[ "$os" =~ "Ubuntu 14.04".* ]]; then
+elif [[ "$os" =~ "Ubuntu 14.04".*|"Ubuntu 14.10".*|"Ubuntu Vivid Vervet (development branch)"|"Debian 8.0".* ]]; then
     version="ubuntu13-10-$arch"
     down=1
     # Install pip from github.
     # Bug: https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1306991
     wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
     python get-pip.py
+elif [[ "$os" =~ "Debian 7".* ]]; then
+    version="ubuntu13-10-$arch"
+    down=1
+    echo "deb http://ftp.debian.org/debian experimental main" >> /etc/apt/sources.list
+    echo "deb http://ftp.debian.org/debian sid main" >> /etc/apt/sources.list
+    apt-get update
+    apt-get -t experimental -y install libc6-dev
+    sed -i 's/deb http:\/\/ftp.debian.org\/debian experimental main//' /etc/apt/sources.list
+    sed -i 's/deb http:\/\/ftp.debian.org\/debian sid main//' /etc/apt/sources.list
+    apt-get update
 else
     echo "[-] Could not find a install for $os ($arch $kernel)"
     exit
@@ -80,7 +93,8 @@ if [ "$down" -eq 1 ]; then
             tar -xvzf lib-$version.tgz 
             mv lib-$version/ external_libs
         else
-            echo "[-] SHA256 file corrupt"
+            rm lib-$version.tgz
+            echo "[-] SHA256 file corrupt, deleted run again ./$0"
             exit
         fi
     else

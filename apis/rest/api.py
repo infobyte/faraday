@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Faraday Penetration Test IDE - Community Version
+Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
@@ -21,6 +21,8 @@ from plugins.core import PluginControllerForApi
 from model.visitor import VulnsLookupVisitor
 
 import utils.logs as logger
+from config.configuration import getInstanceConfiguration
+CONF = getInstanceConfiguration()
 
 
 _plugin_controller_api = None
@@ -40,16 +42,24 @@ def stopServer():
         _http_server.stop()
 
 
-def startAPIs(plugin_manager, model_controller, mapper_manager):
+def startAPIs(plugin_manager, model_controller, mapper_manager, hostname=None, port=None):
     global _rest_controllers
     global _http_server
     _rest_controllers = [PluginControllerAPI(plugin_manager, mapper_manager), ModelControllerAPI(model_controller)]
-    #TODO: load API configuration from config file
-    port = 9977
+
+    #TODO: some way to get defaults.. from config?
+    if str(hostname) == "None":
+        hostname = "localhost"
+    if str(port) == "None":
+        port = 9977
+
+    if CONF.getApiRestfulConInfo() is None:
+        CONF.setApiRestfulConInfo(hostname, port)
+
     app = Flask('APISController')
 
     _http_server = HTTPServer(WSGIContainer(app))
-    _http_server.listen(port) 
+    _http_server.listen(port,address=hostname) 
 
     routes = [r for c in _rest_controllers for r in c.getRoutes()]
 
@@ -134,11 +144,17 @@ class ModelControllerAPI(RESTApi):
                             view_func=self.createCred,
                             methods=['PUT']))
 
+        routes.append(Route(path='/status/check',
+                            view_func=self.statusCheck,
+                            methods=['GET']))
+
+
         return routes
 
     def listWebVulns(self):
         vulns = self.controller.getWebVulns()
-        j = [{'request': v.request, 'website': v.website, 'path': v.path, 'name': v.name, 'desc': v.desc, 'severity': v.severity} for v in vulns]
+        j = [{'request': v.request, 'website': v.website, 'path': v.path, 'name': v.name,
+            'desc': v.desc, 'severity': v.severity, 'resolution': v.resolution} for v in vulns]
         return self.ok(j)
 
     def deleteVuln(self):
@@ -194,11 +210,12 @@ class ModelControllerAPI(RESTApi):
         name = json_data.get('name', None)
         desc = json_data.get('desc', None)
         severity = json_data.get('severity', None)
+        resolution = json_data.get('resolution', None)
         refs = json_data.get('refs', None)
 
         # forward to controller 
         for vuln in visitor.vulns: 
-            self.controller.editVulnSYNC(vuln, name, desc, severity, refs) 
+            self.controller.editVulnSYNC(vuln, name, desc, severity, resolution, refs) 
 
         return self.ok("output successfully sent to plugin")
 
@@ -239,12 +256,12 @@ class ModelControllerAPI(RESTApi):
     def createVuln(self):
         return self._create(
             self.controller.newVuln,
-            ['name', 'desc', 'ref', 'severity', 'parent_id'])
+            ['name', 'desc', 'ref', 'severity', 'resolution', 'parent_id'])
 
     def createVulnWeb(self):
         return self._create(
             self.controller.newVulnWeb,
-            ['name', 'desc', 'ref', 'severity', 'website',
+            ['name', 'desc', 'ref', 'severity', 'resolution', 'website',
              'path', 'request', 'response', 'method', 'pname',
              'params', 'query', 'category', 'parent_id'])
 
@@ -257,6 +274,9 @@ class ModelControllerAPI(RESTApi):
         return self._create(
             self.controller.newCred,
             ['username', 'password', 'parent_id'])
+
+    def statusCheck(self):
+        return self.ok("Faraday API Status: OK")
 
 
 class PluginControllerAPI(RESTApi):

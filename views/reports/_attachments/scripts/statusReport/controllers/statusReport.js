@@ -1,18 +1,29 @@
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$modal', '$log', 'statusReportFact', 
-                    function($scope, $filter, $route, $routeParams, $modal, $log, statusReportFact) {
-        $scope.$log = $log;
+                    ['$scope', '$filter', '$route', '$routeParams', '$modal', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
+                    function($scope, $filter, $route, $routeParams, $modal, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
+        $scope.baseurl = BASEURL;
+        $scope.severities = SEVERITIES;
+        $scope.easeofresolution = EASEOFRESOLUTION;
+
         $scope.sortField = 'date';
         $scope.reverse = true;
+        $scope.showPagination = 1;
+        $scope.currentPage = 0;
+        $scope.pageSize = 10;
+        $scope.pagination = 10;
+
         // load all workspaces
         statusReportFact.getWorkspaces(function(wss) {
             $scope.workspaces = wss;
         });
+
         // current workspace
         $scope.workspace = $routeParams.wsId;
+
         // load all vulnerabilities
         $scope.vulns = statusReportFact.getVulns($scope.workspace);
+
         // toggles column show property
         $scope.toggleShow = function(column, show) {
             $scope.columns[column] = !show;
@@ -36,79 +47,101 @@ angular.module('faradayApp')
         
         // set columns to show and hide by default
         $scope.columns = {
-            "data":     true,
-            "date":     true,
-            "desc":     true,
-            "method":   false,
-            "name":     true,
-            "params":   false,
-            "path":     false,
-            "pname":    false,
-            "query":    false,
-            "request":  false,
-            "response": false,
-            "severity": true,
-            "status":   false,
-            "target":   true,
-            "web":      false,
-            "website":  false
+            "data":             true,
+            "date":             true,
+            "desc":             true,
+            "easeofresolution": false,
+            "evidence":         false,
+            "impact":           false,
+            "method":           false,
+            "name":             true,
+            "params":           false,
+            "path":             false,
+            "pname":            false,
+            "query":            false,
+            "refs":             true,
+            "request":          false,
+            "response":         false,
+            "resolution":       false,
+            "severity":         true,
+            "status":           false,
+            "target":           true,
+            "web":              false,
+            "website":          false
         };
-
-        $scope.severities = [
-            "critical",
-            "high",
-            "med",
-            "low",
-            "info",
-            "unclassified",
-
-        ];
 
         // returns scope vulns as CSV obj
         // toggles column sort field
         $scope.cleanCSV = function(field) {
-            return field.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'").replace(/[\n\r]/g, "%20").replace(/[,]/g, "%2c");;
+            return field.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'").replace(/[\n\r]/g, "%0A").replace(/[,]/g, "%2c");
         };
-        $scope.toCSV = function() {
-            var method      = "";
-            var website     = "";
-            var desc        = "";
-            var text        = "";
-            var path        = "";
-            var pname       = "";
-            var params      = "";
-            var query       = "";
-            var request     = "";
-            var response    = "";
+        $scope.ToString = function(array){
+            return array.toString();
+        };
 
-            var content = "\"Date\", \"Web\", \"Status\", \"Severity\", "+
+        $scope.toCSV = function() {
+            var method  = "",
+            website     = "",
+            desc        = "",
+            easeofres   = "",
+            impact      = "",
+            text        = "",
+            path        = "",
+            pname       = "",
+            params      = "",
+            query       = "",
+            refs        = "",
+            request     = "",
+            response    = "",
+            resolution  = "",
+            content     = "\"Date\", \"Web\", \"Status\", \"Severity\", "+
                 "\"Name\", \"Target\", \"Description\", "+
                 "\"Data\", \"Method\", \"Path\", \"Param Name\", \"Params\", "+
-                "\"Query\", \"Request\", \"Response\", \"Website\" \n";
+                "\"Query\", \"References\", \"Request\", \"Response\", \"Resolution\",\"Website\""+
+                "\"Ease of Resolution\", \"Impact\"\n";
             
             $scope.vulns.forEach(function(v) {
                 method      = "";
                 website     = "";
                 desc        = "";
+                easeofres   = "",
+                impact      = JSON.stringify(v.impact),
                 text        = "";
                 path        = "";
                 pname       = "";
                 params      = "";
                 query       = "";
+                refs        = "";
                 request     = "";
                 response    = "";
+                resolution  = "";
+                refs        = $scope.ToString(v.refs);
 
-                if(typeof(v.desc) != "undefined")   desc    = $scope.cleanCSV(v.desc);
-                if(typeof(v.data) != "undefined")   text    = $scope.cleanCSV(v.data);
+                if(typeof(v.desc) != "undefined" && v.desc != null)                 desc          = $scope.cleanCSV(v.desc);
+                if(typeof(v.data) != "undefined" && v.data != null)                 text          = $scope.cleanCSV(v.data);
+                if(typeof(v.resolution) != "undefined" && v.resolution != null)     resolution    = $scope.cleanCSV(v.resolution);
+                if(typeof(refs) != "undefined" && refs != null){
+                    refs = $scope.cleanCSV(refs);
+                    refs = refs.replace(/%2c/g,"%0A");
+                }
+                if(typeof(impact) != "undefined" && impact != null){
+                    impact = $scope.cleanCSV(impact);
+                    impact = impact.replace(/%2c/g,"%0A");
+                }
                 if(v.type === "VulnerabilityWeb") {
-                    if(typeof(v.method) != "undefined")     method      = $scope.cleanCSV(v.method);
-                    if(typeof(v.website) != "undefined")    website     = $scope.cleanCSV(v.website);
-                    if(typeof(v.path) != "undefined")       path        = $scope.cleanCSV(v.path);
-                    if(typeof(v.pname) != "undefined")      pname       = $scope.cleanCSV(v.pname);
-                    if(typeof(v.params) != "undefined")     params      = $scope.cleanCSV(v.params);
-                    if(typeof(v.query) != "undefined")      query       = $scope.cleanCSV(v.query);
-                    if(typeof(v.request) != "undefined")    request     = $scope.cleanCSV(v.request);
-                    if(typeof(v.response) != "undefined")   response    = $scope.cleanCSV(v.response);
+                    if(typeof(v.method) != "undefined" && v.method != null)         method      = $scope.cleanCSV(v.method);
+                    if(typeof(v.website) != "undefined" && v.website != null)       website     = $scope.cleanCSV(v.website);
+                    if(typeof(v.path) != "undefined" && v.path != null)             path        = $scope.cleanCSV(v.path);
+                    if(typeof(v.pname) != "undefined" && v.pname != null)           pname       = $scope.cleanCSV(v.pname);
+                    if(typeof(v.params) != "undefined" && v.params != null)         params      = $scope.cleanCSV(v.params);
+                    if(typeof(v.query) != "undefined" && v.query != null)           query       = $scope.cleanCSV(v.query);
+                    if(typeof(refs) != "undefined" && refs != null){
+                        refs = $scope.cleanCSV(refs);
+                        refs = refs.replace(/%2c/g,"%0A");
+                    }
+                    if(typeof(v.request) != "undefined" && v.request != null)       request     = $scope.cleanCSV(v.request);
+                    if(typeof(v.response) != "undefined" && v.response != null)     response    = $scope.cleanCSV(v.response);
+                    if(typeof(v.resolution) != "undefined" && v.resolution != null) resolution  = $scope.cleanCSV(v.resolution);
                 }
 
                 content += "\""+v.date+"\","+
@@ -124,9 +157,13 @@ angular.module('faradayApp')
                     " \""+pname+"\","+
                     " \""+params+"\","+
                     " \""+query+"\","+
+                    " \""+refs+"\","+
                     " \""+request+"\","+
                     " \""+response+"\","+
+                    " \""+resolution+"\","+
                     " \""+website+"\""+
+                    " \""+impact+"\""+
+                    " \""+easeofres+"\""+
                     "\n";
             });
 
@@ -157,26 +194,34 @@ angular.module('faradayApp')
         // updates all vulns with selected == true
         $scope.update = function(data) {
             $scope.vulns = [];
-
+           
             data.vulns.forEach(function(v) {
                 if(v.selected) {
                     if(typeof(data.severity) == "string") v.severity = data.severity;
+                    if(typeof(data.easeofresolution) == "string") v.easeofresolution = data.easeofresolution;
                     if(typeof(data.name) != "undefined") v.name = data.name;
                     if(typeof(data.desc) != "undefined") v.desc = data.desc;
                     if(typeof(data.data) != "undefined") v.data = data.data;
+                    if(typeof(data.refs) != "undefined") v.refs = data.refs;
+                    if(typeof(data.impact) != "undefined") v.impact = data.impact;
+                    if(typeof(data.resolution) != "undefined") v.resolution = data.resolution;
+                    v.evidence = data.evidence;
                     if(v.web) {
                         if(typeof(data.method) != "undefined") v.method = data.method;
                         if(typeof(data.params) != "undefined") v.params = data.params;
                         if(typeof(data.path) != "undefined") v.path = data.path;
                         if(typeof(data.pname) != "undefined") v.pname = data.pname;
                         if(typeof(data.query) != "undefined") v.query = data.query;
+                        if(typeof(data.refs) != "undefined") v.refs = data.refs;
                         if(typeof(data.request) != "undefined") v.request = data.request;
                         if(typeof(data.response) != "undefined") v.response = data.response;
+                        if(typeof(data.resolution) != "undefined") v.resolution = data.resolution;
                         if(typeof(data.website) != "undefined") v.website = data.website;
                     }
             
-                    statusReportFact.putVulns($scope.workspace, v, function(rev) {
+                    statusReportFact.putVulns($scope.workspace, v, function(rev, evidence) {
                         v.rev = rev;
+                        v.attachments = evidence;
                     });
                     v.selected = false;
                 }
@@ -264,8 +309,9 @@ angular.module('faradayApp')
         };
 
         $scope.insert = function(vuln){
-            statusReportFact.putVulns($scope.workspace, vuln, function(rev) {
+            statusReportFact.putVulns($scope.workspace, vuln, function(rev, evidence) {
                 vuln.rev = rev;
+                vuln.attachments = evidence;
             });
             //formating the date
             var d = new Date(0);
@@ -306,4 +352,24 @@ angular.module('faradayApp')
                 v.selected = $scope.selectall;
             });
         };
+
+        $scope.numberOfPages = function() {
+            $scope.filteredData = $filter('filter')($scope.vulns,$scope.query);
+            if ($scope.filteredData.length <= 10){
+                $scope.showPagination = 0;
+            } else {
+                $scope.showPagination = 1;
+            };
+            return parseInt($scope.filteredData.length/$scope.pageSize);
+        }
+
+        $scope.go = function(){
+            if($scope.go_page < $scope.numberOfPages()+1 && $scope.go_page > -1){
+                $scope.currentPage = $scope.go_page;
+            }
+            $scope.pageSize = $scope.pagination;
+            if($scope.go_page > $scope.numberOfPages()){
+                $scope.currentPage = 0;
+            }
+        }
     }]);

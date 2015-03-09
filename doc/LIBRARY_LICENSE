@@ -1,0 +1,40 @@
+MIT:
+- AngularJS - (https://angularjs.org/)
+- Bootstrap - (http://getbootstrap.com/)
+- jQuery - (http://jquery.com/)
+- normalize.css
+- font awesome code
+- jQuery Qtip (http://qtip2.com)
+- jQuery Tablesorter (http://tablesorter.com)
+- Angular-route
+- Angular-selection-model (https://github.com/jtrussell/angular-selection-model)
+- ui-bootstrap-tpls (http://angular-ui.github.io/bootstrap/)
+- cryptojs-sha1 (https://code.google.com/p/crypto-js/)
+
+SIL OFL 1.1:
+- font awesome fonts (http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL)
+
+BSD:
+- views/reports/_attachments/script/cryptojs-sha1.js 
+
+BSD 3-clause:
+- D3 - (http://d3js.org)
+
+Public Domain:
+- json2
+
+Apache 2.0:
+- views/reports/_attachments/script/couch.js
+- jquery couch
+
+CeCILL-V2:
+- pyqonsole - (http://www.logilab.fr/)
+
+GPL-3:
+- Qt3
+- Sip
+
+GPL-2:
+- dotnessus_v2.py - (http://code.google.com/p/pynessus/)
+
+

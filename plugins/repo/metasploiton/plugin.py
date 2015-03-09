@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Faraday Penetration Test IDE - Community Version
+Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
@@ -13,7 +13,13 @@ from model import api
 import re
 import os
 import sys
-import psycopg2
+
+try:
+    import psycopg2
+except ImportError:
+    raise Exception("Please install psycopg2 to use plugin: MetasploitOn")
+
+
 import time
 
 try:

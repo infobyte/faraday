@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Faraday Penetration Test IDE - Community Version
+Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
@@ -151,7 +151,7 @@ class Results():
                 self.port = val[1]
             
         self.desc = self.get_text_from_subnode('description')
-        self.desc += "\nSolution: " +self.solution if self.solution else ""
+        self.solution = self.solution if self.solution else ""
         self.desc += "\nExploit: " +self.exploit if self.exploit else ""
         self.desc += "\ncvssScore: " +self.cvssScore if self.cvssScore else ""
         self.desc += "\nContext: " +self.context if self.context else ""
@@ -225,14 +225,14 @@ class RetinaPlugin(core.PluginBase):
                             web=False
                         
                         if web:
-                            v_id=self.createAndAddVulnWebToService(h_id, s_id,v.name.encode("utf-8"),ref=v.ref,website=hostname,severity=v.severity,desc=v.desc.encode("utf-8"))
+                            v_id=self.createAndAddVulnWebToService(h_id, s_id,v.name.encode("utf-8"),ref=v.ref,website=hostname,severity=v.severity,resolution=v.solution.encode("utf-8"),desc=v.desc.encode("utf-8"))
                             n_id = self.createAndAddNoteToService(h_id,s_id,"website","")
                             n2_id = self.createAndAddNoteToNote(h_id,s_id,n_id,hostname,"")
                         else:
-                            v_id=self.createAndAddVulnToService(h_id, s_id,v.name.encode("utf-8"),ref=v.ref,severity=v.severity,desc=v.desc.encode("utf-8"))
+                            v_id=self.createAndAddVulnToService(h_id, s_id,v.name.encode("utf-8"),ref=v.ref,severity=v.severity,resolution=v.solution.encode("utf-8"),desc=v.desc.encode("utf-8"))
                 else:
                     for v in vulns:
-                        v_id=self.createAndAddVulnToHost(h_id,v.name.encode("utf-8"),ref=v.ref,severity=v.severity,desc=v.desc.encode("utf-8"))
+                        v_id=self.createAndAddVulnToHost(h_id,v.name.encode("utf-8"),ref=v.ref,severity=v.severity,resolution=v.solution.encode("utf-8"),desc=v.desc.encode("utf-8"))
         del parser
         
     def processCommandString(self, username, current_path, command_string):

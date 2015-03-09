@@ -1,5 +1,5 @@
 '''
-Faraday Penetration Test IDE - Community Version
+Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
@@ -701,26 +701,25 @@ class ModelController(threading.Thread):
         self._processAction(modelactions.DELVULN, [vuln_id], sync=True)
 
 
-    def editVulnSYNC(self, vuln, name, desc, severity, refs):
-        self._processAction(modelactions.EDITVULN, [vuln, name, desc, severity, refs], sync=True)
+    def editVulnSYNC(self, vuln, name, desc, severity, resolution, refs):
+        self._processAction(modelactions.EDITVULN, [vuln, name, desc, severity, resolution, refs], sync=True)
 
-    def editVulnASYNC(self, vuln, name, desc, severity, refs):
-        self.__addPendingAction(modelactions.EDITVULN, vuln, name, desc, severity, refs)
+    def editVulnASYNC(self, vuln, name, desc, severity, resolution, refs):
+        self.__addPendingAction(modelactions.EDITVULN, vuln, name, desc, severity, resolution, refs)
 
-    def editVulnWebSYNC(self, vuln, name, desc, website, path, refs, severity,
+    def editVulnWebSYNC(self, vuln, name, desc, website, path, refs, severity, resolution,
                         request, response, method, pname, params, query,
                         category):
         self._processAction(modelactions.EDITVULN,
-                            [vuln, name, desc, website, path, refs, severity,
-                             request, response, method, pname, params, query,
-                             category], sync=True)
+                            [vuln, name, desc, website, path, refs, severity, resolution,
+                             request, response, method, pname, params, query, category], sync=True)
 
     def editVulnWebASYNC(self, vuln, name, desc, website, path, refs,
-                         severity, request, response, method, pname,
+                         severity, resolution, request, response, method, pname,
                          params, query, category):
         self.__addPendingAction(modelactions.EDITVULN,
                                 vuln, name, desc, website, path, refs,
-                                 severity, request, response, method,
+                                 severity, resolution, request, response, method,
                                  pname, params, query, category)
 
     # Note
@@ -844,17 +843,17 @@ class ModelController(threading.Thread):
             name, protocol=protocol, ports=ports, status=status,
             version=version, description=description, parent_id=parent_id)
 
-    def newVuln(self, name, desc="", ref=None, severity="", parent_id=None):
+    def newVuln(self, name, desc="", ref=None, severity="", resolution="", parent_id=None):
         return model.common.factory.createModelObject(
             model.common.ModelObjectVuln.class_signature,
-            name, desc=desc, ref=ref, severity=severity, parent_id=parent_id)
+            name, desc=desc, ref=ref, severity=severity, resolution=resolution, parent_id=parent_id)
 
-    def newVulnWeb(self, name, desc="", ref=None, severity="", website="",
+    def newVulnWeb(self, name, desc="", ref=None, severity="", resolution="", website="",
                    path="", request="", response="", method="", pname="",
                    params="", query="", category="", parent_id=None):
         return model.common.factory.createModelObject(
             model.common.ModelObjectVulnWeb.class_signature,
-            name, desc=desc, ref=ref, severity=severity,
+            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
             category=category, parent_id=parent_id)

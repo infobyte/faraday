@@ -2,18 +2,20 @@
 # -*- coding: utf-8 -*-
 
 '''
-Faraday Penetration Test IDE - Community Version
+Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import with_statement
+import sys
+import os
+
 from plugins import core
 from model import api
 import re
 import os
 import pprint
-import sys
 import json
 import pickle
 import sqlite3
@@ -25,8 +27,6 @@ from BaseHTTPServer import BaseHTTPRequestHandler
 from StringIO import StringIO
 
                                                  
-sys.path.append("/usr/share/sqlmap/")
-
 try:
     import xml.etree.cElementTree as ET
     import xml.etree.ElementTree as ET_ORIG
@@ -39,18 +39,6 @@ ETREE_VERSION = [int(i) for i in ETREE_VERSION.split(".")]
 
 current_path = os.path.abspath(os.getcwd())
 
-class HASHDB_KEYS:
-    DBMS = "DBMS"
-    CONF_TMP_PATH = "CONF_TMP_PATH"
-    KB_ABS_FILE_PATHS = "KB_ABS_FILE_PATHS"
-    KB_BRUTE_COLUMNS = "KB_BRUTE_COLUMNS"
-    KB_BRUTE_TABLES = "KB_BRUTE_TABLES"
-    KB_CHARS = "KB_CHARS"
-    KB_DYNAMIC_MARKINGS = "KB_DYNAMIC_MARKINGS"
-    KB_INJECTIONS = "KB_INJECTIONS"
-    KB_XP_CMDSHELL_AVAILABLE = "KB_XP_CMDSHELL_AVAILABLE"
-    OS = "OS" 
-
 __author__     = "Francisco Amato"
 __copyright__  = "Copyright (c) 2013, Infobyte LLC"
 __credits__    = ["Francisco Amato"]
@@ -60,9 +48,6 @@ __maintainer__ = "Francisco Amato"
 __email__      = "famato@infobytesec.com"
 __status__     = "Development"
 
-UNICODE_ENCODING = "utf8"
-HASHDB_MILESTONE_VALUE = "cAWxkLYCQT"
-
 
 class Database(object):
 
@@ -71,7 +56,7 @@ class Database(object):
 
 
     def connect(self, who="server"):
-        print "Db" + self.database
+        # print "Db" + self.database
         self.connection = sqlite3.connect(self.database, timeout=3, isolation_level=None)
         self.cursor = self.connection.cursor()
 
@@ -99,8 +84,8 @@ class SqlmapPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id              = "Sqlmap"
         self.name            = "Sqlmap"
-        self.plugin_version         = "0.0.1"
-        self.version   = "sqlmap/1.0-dev"
+        self.plugin_version         = "0.0.2"
+        self.version   = "1.0-dev-6bcc95"
         self.framework_version  = "1.0.0"
         self._current_output = None
         self.url = ""
@@ -110,6 +95,8 @@ class SqlmapPlugin(core.PluginBase):
         self.params=""
         self.fullpath=""
         self.path=""
+
+        self.addSetting("Sqlmap path", str, "/root/tools/sqlmap")
         
         self.db_port = { "MySQL" : 3306, "PostgreSQL":"", "Microsoft SQL Server" : 1433,
                  "Oracle" : 1521, "Firebird" : 3050,"SAP MaxDB":7210, "Sybase" : 5000,
@@ -302,23 +289,22 @@ class SqlmapPlugin(core.PluginBase):
         def send_error(self, code, message):
             self.error_code = code
             self.error_message = message
-        
-    def hashKey(self,key):
-        key = key.encode(UNICODE_ENCODING)                                             
-        print "otra Key:" + str(key)
-        retVal = int(hashlib.md5(key).hexdigest()[:8], 16)
+
+    def hashKey(self, key):
+        key = key.encode(self.UNICODE_ENCODING)
+        retVal = int(hashlib.md5(key).hexdigest()[:12], 16)
         return retVal
-    
+
     def hashDBRetrieve(self,key, unserialize=False, db=False):
         """
         Helper function for restoring session data from HashDB
         """
     
-        key = "%s%s%s" % (self.url or "%s%s" % (self.hostname, self.port), key, HASHDB_MILESTONE_VALUE)
+        key = "%s%s%s" % (self.url or "%s%s" % (self.hostname, self.port), key, self.HASHDB_MILESTONE_VALUE)
         retVal=""
         
         hash_ = self.hashKey(key)
-        print "hash_" + str(hash_) + "key=" + key
+        # print "hash_" + str(hash_) + "key=" + key
         if not retVal:
             while True:
                 try:
@@ -329,9 +315,8 @@ class SqlmapPlugin(core.PluginBase):
                         raise
                 else:
                     break
-        return retVal if not unserialize else self.base64unpickle(retVal)    
-    
-    
+        return retVal if not unserialize else self.base64unpickle(retVal)
+
     def base64decode(self,value):
         """
         Decodes string value from Base64 to plain format
@@ -415,30 +400,40 @@ class SqlmapPlugin(core.PluginBase):
         NOTE: if 'debug' is true then it is being run from a test case and the
         output being sent is valid.
         """
-            
+        
+        sys.path.append(self.getSetting("Sqlmap path"))
+
+        from lib.core.settings import HASHDB_MILESTONE_VALUE
+        from lib.core.enums import HASHDB_KEYS
+        from lib.core.settings import UNICODE_ENCODING
+        self.HASHDB_MILESTONE_VALUE = HASHDB_MILESTONE_VALUE
+        self.HASHDB_KEYS = HASHDB_KEYS
+        self.UNICODE_ENCODING = UNICODE_ENCODING
                                                                           
         password = self.getpassword(output)
         webserver = re.search("web application technology: (.*?)\n",output)
         if webserver:
             webserver=webserver.group(1)
         users = self.getuser(output)
-        print users
+        # print users
         dbs = self.getdbs(output)
         
+        # print "webserver = " + webserver
+        # print "dbs = " + str(dbs)
+        # print "users = " + str(users)
+        # print "password = " + str(password)
                                          
 
         db = Database(self._output_path)
-        db.connect()
-        
-                                                                    
+        db.connect()                                                        
                                                                                          
-        absFilePaths = self.hashDBRetrieve(HASHDB_KEYS.KB_ABS_FILE_PATHS, True, db)
-        tables = self.hashDBRetrieve(HASHDB_KEYS.KB_BRUTE_TABLES, True, db)
-        columns = self.hashDBRetrieve(HASHDB_KEYS.KB_BRUTE_COLUMNS, True, db)
-        xpCmdshellAvailable = self.hashDBRetrieve(HASHDB_KEYS.KB_XP_CMDSHELL_AVAILABLE, True, db)
-        dbms_version = self.hashDBRetrieve(HASHDB_KEYS.DBMS, False, db)        
+        absFilePaths = self.hashDBRetrieve(self.HASHDB_KEYS.KB_ABS_FILE_PATHS, True, db)
+        tables = self.hashDBRetrieve(self.HASHDB_KEYS.KB_BRUTE_TABLES, True, db)
+        columns = self.hashDBRetrieve(self.HASHDB_KEYS.KB_BRUTE_COLUMNS, True, db)
+        xpCmdshellAvailable = self.hashDBRetrieve(self.HASHDB_KEYS.KB_XP_CMDSHELL_AVAILABLE, True, db)
+        dbms_version = self.hashDBRetrieve(self.HASHDB_KEYS.DBMS, False, db)        
         
-        os = self.hashDBRetrieve(HASHDB_KEYS.OS, False, db)           
+        os = self.hashDBRetrieve(self.HASHDB_KEYS.OS, False, db)           
         
         self.ip=self.getAddress(self.hostname)
 
@@ -481,18 +476,20 @@ class SqlmapPlugin(core.PluginBase):
         if xpCmdshellAvailable:
             n_id2 = self.createAndAddNoteToService(h_id,s_id2,"sqlmap.xpCmdshellAvailable",str(xpCmdshellAvailable))
             
-        for inj in self.hashDBRetrieve(HASHDB_KEYS.KB_INJECTIONS, True,db) or []:
-            print inj
-            print inj.dbms    
-            print inj.dbms_version           
-            print inj.place        
-            print inj.os       
-            print inj.parameter                
+        for inj in self.hashDBRetrieve(self.HASHDB_KEYS.KB_INJECTIONS, True,db) or []:
+            # print inj
+            # print inj.dbms    
+            # print inj.dbms_version           
+            # print inj.place        
+            # print inj.os       
+            # print inj.parameter                
             
-            dbversion = self.hashDBRetrieve(self.xmlvalue(dbms,"banner"), False, db)
-            user = self.hashDBRetrieve(self.xmlvalue(dbms,"current_user"), False, db)
-            dbname = self.hashDBRetrieve(self.xmlvalue(dbms,"current_db"), False, db)
-            hostname = self.hashDBRetrieve(self.xmlvalue(dbms,"hostname"), False, db)
+            dbversion = self.hashDBRetrieve("None"+self.xmlvalue(dbms,"banner"), False, db)
+            user = self.hashDBRetrieve("None"+self.xmlvalue(dbms,"current_user"), False, db)
+            dbname = self.hashDBRetrieve("None"+self.xmlvalue(dbms,"current_db"), False, db)
+            hostname = self.hashDBRetrieve("None"+self.xmlvalue(dbms,"hostname"), False, db)
+
+            # print "username = " + user
             
             if user:
                 n_id2 = self.createAndAddNoteToService(h_id,s_id2,"db.user",user)
@@ -514,6 +511,7 @@ class SqlmapPlugin(core.PluginBase):
                                                         "\nParam type:" + str(self.ptype[inj.ptype]),
                                                          ref=[],                
                                                          pname=inj.parameter,
+                                                         severity="high",
                                                          method=inj.place,
                                                          params=self.params,
                                                          path=self.fullpath)

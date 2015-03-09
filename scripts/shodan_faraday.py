@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Faraday Penetration Test IDE - Community Version
+Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
@@ -15,19 +15,24 @@ __author__     = "Francisco Amato"
 __copyright__  = "Copyright 2014, Faraday Project"
 __credits__    = ["Francisco Amato"]
 __license__    = ""
-__version__    = "1.0.1"
+__version__    = "1.0.2"
 __maintainer__ = "Francisco Amato"
 __email__      = "famato@infobytesec.com"
 __status__     = "Development"
 
 # Configuration
-SHODAN_API_KEY = "INSERT SHODAN KEY HERE"
+SHODAN_API_KEY = "INSERT YOUR SHODAN KEY HERE"
+
+def strip_non_ascii(string):
+    ''' Returns the string without non ASCII characters'''
+    stripped = (c for c in string if 0 < ord(c) < 127)
+    return ''.join(stripped)
 
 def send_faraday(result):
     print 'IP: %s' % result['ip_str']    
 
     if result['data'] is not None:
-        result['data'] = base64.b64encode(str(result['data'])) #fix: to avoid non ascii caracters
+        result['data'] = base64.b64encode(strip_non_ascii(str(result['data']))) #fix: to avoid non ascii caracters
 
     if args.debug == "1":
     	print '==============='
@@ -96,5 +101,6 @@ except Exception as e:
     print "Unexpected error:", sys.exc_info()[0]
     print e.__dict__
     raise
+
 
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 '''
-Faraday Penetration Test IDE - Community Version
+Faraday Penetration Test IDE
 Copyright (C) 2014  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
@@ -20,28 +20,16 @@ import subprocess
 import pip
 
 from utils.logs import getLogger
-sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))) # Necessary?
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/external_libs/lib/python2.7/dist-packages')
 from config.configuration import getInstanceConfiguration
 from config.globals import *
 from utils.profilehooks import profile
 
 
-QTDIR='/usr/local/qt'
-PATH='%s/bin:%s'  %(QTDIR, os.environ['PATH'])
-MANPATH='%s/doc/man' % QTDIR
-LD_LIBRARY_PATH='%s/lib:%s' % (QTDIR, os.environ.get('LD_LIBRARY_PATH', ''))
-
-libs_exports =  {
-'QTDIR': QTDIR,
-'PATH': PATH,
-'MANPATH': MANPATH,
-'LD_LIBRARY_PATH': LD_LIBRARY_PATH
-}
-
-os.environ.update(libs_exports)
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 FARADAY_BASE = os.path.dirname(os.path.realpath(__file__))
+QTDIR=os.path.join(FARADAY_BASE, 'external_libs', 'qt')
 
 FARADAY_USER_HOME = os.path.expanduser(CONST_FARADAY_HOME_PATH)
 FARADAY_PLUGINS_PATH = os.path.join(FARADAY_USER_HOME,
@@ -74,6 +62,7 @@ USER_QTRC = os.path.expanduser(CONST_USER_QTRC_PATH)
 USER_QTRCBAK = os.path.expanduser(CONST_USER_QTRC_BACKUP)
 FARADAY_QTRC = os.path.join(FARADAY_BASE, CONST_FARADAY_QTRC_PATH)
 FARADAY_QTRCBAK = os.path.expanduser(CONST_FARADAY_QTRC_BACKUP)
+CONST_VERSION_FILE = os.path.join(FARADAY_BASE,"VERSION")
 
 def getParserArgs():
     """Parser setup for faraday launcher arguments.
@@ -133,7 +122,7 @@ def getParserArgs():
 
     parser.add_argument('--dev-mode', action="store_true", dest="dev_mode",
         default=False,
-        help="Enable dev mode. This will reset config and plugin folders.")
+        help="Enable dev mode. This will use the user config and plugin folder.")
 
     parser.add_argument('--ignore-deps', action="store_true",
         dest="ignore_deps",
@@ -208,10 +197,11 @@ def checkDependencies():
         modules = []
         f = open(CONST_REQUIREMENTS_FILE)
         for line in f:
-            if line.find('#'):
+            if not line.find('#'):
+                break
+            else:
                 modules.append([line[:line.index('=')], (line[line.index('=')+2:]).strip()])
         f.close()
-
         for module in modules:
             try:
                 __import__(module[0])
@@ -277,6 +267,10 @@ def startFaraday():
 
     logger.info("All done. Opening environment.")
     #TODO: Handle args in CONF and send only necessary ones.
+    # Force OSX to run no gui
+    if sys.platform == "darwin":
+        args.gui = "no-gui"
+
     main_app = MainApplication(args)
 
     if not args.disable_excepthook:
@@ -308,7 +302,6 @@ def startFaraday():
     print(Fore.RESET + Back.RESET + Style.RESET_ALL)
 
     exit_status = start()
-    restoreQtrc()
 
     return exit_status
 
@@ -326,14 +319,15 @@ def setupPlugins(dev_mode=False):
 
     """
 
-    if not dev_mode and os.path.isdir(FARADAY_PLUGINS_PATH):
-        logger.info("Plugins already in place.")
+    if dev_mode:
+        logger.warning("Running under plugin development mode!")
+        logger.warning("Using user plugins folder")
     else:
-        if dev_mode:
-            logger.warning("Running under plugin development mode!")
+        if os.path.isdir(FARADAY_PLUGINS_PATH):
+            logger.info("Removing old plugins folder")
             shutil.rmtree(FARADAY_PLUGINS_PATH)
         else:
-            logger.warning("No plugins folder detected. Creating new one.")
+            logger.info("No plugins folder detected. Creating new one.")
 
         shutil.copytree(FARADAY_PLUGINS_BASEPATH, FARADAY_PLUGINS_PATH)
 
@@ -343,30 +337,15 @@ def setupQtrc():
     Existing qtrc files will be backed up and faraday qtrc will be set.
 
     """
-
-    if os.path.isfile(USER_QTRC):
-        shutil.copy2(USER_QTRC, USER_QTRCBAK)
-
-    if os.path.isfile(FARADAY_QTRCBAK):
-        shutil.copy(FARADAY_QTRCBAK, USER_QTRC)
-    else:
-        if not os.path.exists(USER_QT):
-            os.makedirs(USER_QT)
-        shutil.copy(FARADAY_QTRC, USER_QTRC)
-        shutil.copy(FARADAY_QTRC, FARADAY_QTRCBAK)
-
-def restoreQtrc():
-    """Restores user qtrc.
-
-    After exiting faraday the original qtrc is restored.
-
-    """
-
-    logger.info("Restoring user Qt configuration.")
-    shutil.copy2(USER_QTRC, FARADAY_QTRCBAK)
-    if os.path.isfile(USER_QTRCBAK):
-        shutil.copy(USER_QTRCBAK, USER_QTRC)
-
+    from ctypes import cdll
+    try:
+        import qt
+    except:
+        try:
+            cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqt.so'))
+            cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqui.so'))
+        except:
+            pass
 
 def setupZSH():
     """Cheks and handles Faraday's integration with ZSH.
@@ -422,7 +401,7 @@ def setupLibs():
             exit()
     elif sys.platform == "darwin":
         logger.info("OS X detected.")
-        helpers += "darwin"
+        helpers += ".darwin"
     else:
         logger.fatal("Plaftorm not supported yet.")
         exit()
@@ -518,7 +497,10 @@ def checkUpdates():
     uri = getInstanceConfiguration().getUpdatesUri() 
     resp = u"OK"
     try:
-        resp = requests.get(uri, timeout=1, verify=True)
+        f = open(CONST_VERSION_FILE)
+        parameter = {"version": f.read().strip()}
+        f.close
+        resp = requests.get(uri, params=parameter, timeout=1, verify=True)
         resp = resp.text.strip()
     except Exception as e:
         logger.error(e)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Faraday Penetration Test IDE - Community Version
+Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
@@ -232,11 +232,12 @@ class BurpPlugin(core.PluginBase):
                                
             item.response=""
             desc=item.detail
-            desc+="\nSolution: "+item.remediation if item.remediation else ""
+            resolution=item.remediation if item.remediation else ""
 
             v_id = self.createAndAddVulnWebToService(h_id, s_id, item.name,
                                                      desc=desc,severity=item.severity,website=item.host,
-                                                     path=item.path,request=item.request,response=item.response)
+                                                     path=item.path,request=item.request,response=item.response,
+                                                     resolution=resolution)
 
         del parser
         

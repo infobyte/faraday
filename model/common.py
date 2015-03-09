@@ -1,5 +1,5 @@
 '''
-Faraday Penetration Test IDE - Community Version
+Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
@@ -859,7 +859,7 @@ class ModelObjectVuln(ModelComposite):
     """
     class_signature = "Vulnerability"
 
-    def __init__(self, name="",desc="", ref=None, severity="", parent_id=None):
+    def __init__(self, name="",desc="", ref=None, severity="", resolution="", parent_id=None):
         """
         The parameters refs can be a single value or a list with values
         """
@@ -877,6 +877,7 @@ class ModelObjectVuln(ModelComposite):
 
         # Severity Standarization
         self.severity = self.standarize(severity)
+        self.resolution = resolution
 
     def standarize(self, severity):
         # Transform all severities into lower strings
@@ -915,11 +916,13 @@ class ModelObjectVuln(ModelComposite):
 
     #@save
     @updateLocalMetadata
-    def updateAttributes(self, name=None, desc=None, severity=None, refs=None):
+    def updateAttributes(self, name=None, desc=None, severity=None, resolution=None, refs=None):
         if name is not None:
             self.setName(name)
         if desc is not None:
             self.setDescription(desc)
+        if resolution is not None:
+            self.setResolution(resolution)
         if severity is not None:
             self.severity = self.standarize(severity)
         if refs is not None:
@@ -936,6 +939,18 @@ class ModelObjectVuln(ModelComposite):
 
     def getDesc(self):
         return self._desc
+
+    def getDescription(self):
+        return self.getDesc()
+
+    def setDescription(self, desc):
+        self.setDesc(desc)
+
+    def setResolution(self, resolution):
+        self.resolution = resolution
+
+    def getResolution(self):
+        return self.resolution        
 
     def getSeverity(self):
         return self.severity
@@ -977,12 +992,12 @@ class ModelObjectVulnWeb(ModelObjectVuln):
     """
     class_signature = "VulnerabilityWeb"
 
-    def __init__(self, name="",desc="", website="", path="", ref=None, severity="", request="", response="",
+    def __init__(self, name="",desc="", website="", path="", ref=None, severity="", resolution="", request="", response="",
                 method="",pname="", params="",query="",category="", parent_id=None):
         """
         The parameters ref can be a single value or a list with values
         """
-        ModelObjectVuln.__init__(self, name,desc, ref, severity, parent_id)
+        ModelObjectVuln.__init__(self, name,desc, ref, severity, resolution, parent_id)
         self.path = path
         self.website = website
         self.request = request
@@ -1053,9 +1068,10 @@ class ModelObjectVulnWeb(ModelObjectVuln):
 
     #@save
     @updateLocalMetadata
-    def updateAttributes(self, name=None, desc=None, website=None, path=None, refs=None, severity=None, request=None,
-                        response=None, method=None, pname=None, params=None, query=None, category=None):
-        super(ModelObjectVulnWeb, self).updateAttributes(name, desc, severity, refs)
+    def updateAttributes(self, name=None, desc=None, website=None, path=None, refs=None, 
+                        severity=None, resolution=None, request=None,response=None, method=None,
+                        pname=None, params=None, query=None, category=None):
+        super(ModelObjectVulnWeb, self).updateAttributes(name, desc, severity, resolution, refs)
         if website is not None:
             self.website = website
         if path is not None:

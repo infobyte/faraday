@@ -1,0 +1,44 @@
+<form novalidate>
+    <section id="main" class="seccion clearfix">
+                <div class="right-main"><div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <span id="ws-name" class="label label-default"
+                        title="Workspaces">Workspaces</span><!-- WS name -->
+                        <button id="delete" type="button" class="btn btn-danger" title="Delete selected Workspaces" ng-click="delete()">
+                            Delete
+                        </button>
+                        <button id="merge" type="button" class="btn btn-danger" title="Edit selected Workspaces" ng-click="edit()">
+                            Edit
+                        </button>
+                        <button id="merge" type="button" class="btn btn-danger" title="New Workspace" ng-click="new()">
+                            New
+                        </button>
+                    </h2><!-- .ws-label -->
+                    <div class="reports">
+                        <table class="status-report">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('name')">Name</a>
+                                    </th>
+                                    <th>
+                                        <a href="" ng-click="description">Description</a>
+                                    </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('sdate')">Creation Date</a>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="w in workspaces | filter:query | orderBy:sortField:reverse"
+                                    selection-model selection-model-selected-class="multi-selected"> 
+                                    <td>{{w.name}}</td>
+                                    <td>{{w.description}}</td>
+                                    <td>{{w.sdate | date:'dd/MM/yyyy' }}</td>
+                                </tr>
+                            </tbody>
+                        </table><!-- #hosts -->
+                    </div><!-- .reports -->
+                </div><!-- #reports-main --></div><!-- .right-main -->
+            </section><!-- #main -->
+</form>

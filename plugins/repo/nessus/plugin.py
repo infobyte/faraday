@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Faraday Penetration Test IDE - Community Version
+Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
@@ -130,7 +130,8 @@ class NessusPlugin(core.PluginBase):
                                                                                                    
                 desc=""
                 desc+=v.get('description') if v.get('description') else ""
-                desc+="\nSolution: "+ v.get('solution') if v.get('solution') else ""
+                resolution = ""
+                resolution = v.get('solution') if v.get('solution') else ""
                 desc+="\nOutput: "+v.get('plugin_output') if v.get('plugin_output') else ""
                 ref=[]
                 if v.get('cve'):
@@ -141,7 +142,7 @@ class NessusPlugin(core.PluginBase):
                     ref.append(", ".join(v.get('xref')))
                 if v.get('svc_name') == "general":
                     v_id = self.createAndAddVulnToHost(h_id, v.get('plugin_name'),
-                                                   desc,ref,severity=v.get('severity'))
+                                                   desc,ref,severity=v.get('severity'), resolution=resolution)
                 else:
 
                     s_id = self.createAndAddServiceToInterface(h_id, i_id, v.get('svc_name'),
@@ -158,11 +159,12 @@ class NessusPlugin(core.PluginBase):
                     
                     if web:
                         v_id = self.createAndAddVulnWebToService(h_id, s_id, v.get('plugin_name'),
-                                                desc,website=host, severity=v.get('severity'),ref=ref)
+                                                desc,website=host, severity=v.get('severity'), 
+                                                resolution=resolution,ref=ref)
                     else:
                         v_id = self.createAndAddVulnToService(h_id, s_id, v.get('plugin_name'),
-                                                       desc,
-                                                       severity=v.get('severity'),ref = ref)
+                                                              desc, severity=v.get('severity'), resolution=resolution,
+                                                              ref = ref)
                         
     
     def _isIPV4(self, ip):

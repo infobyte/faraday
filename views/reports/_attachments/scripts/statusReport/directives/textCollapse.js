@@ -1,5 +1,5 @@
 angular.module('faradayApp')
-    .directive('textCollapse', ['$compile', 'commons', function($compile, commons) {
+    .directive('textCollapse', ['$compile', 'commonsFact', function($compile, commons) {
         return {
             restrict: 'A',
             replace: true,

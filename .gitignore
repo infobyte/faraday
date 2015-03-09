@@ -41,3 +41,9 @@ lib-ubuntu13-10-i686/
 views/reports/_attachments/reports/push.sh
 views/upload
 views/reports/_attachments/pushreports.py
+
+# Tests nodejs
+node_modules
+
+# Couch
+.couchadmin

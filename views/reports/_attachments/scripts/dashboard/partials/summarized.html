@@ -1,0 +1,181 @@
+<div id='byservices'>
+    <div class='col-lg-3'>
+        <article class='panel panel-default'>
+            <header>
+                <h2>Services report
+                    <span class="glyphicon glyphicon-info-sign" tooltip="All services for current WS ordered by host amount"></span>
+                </h2>
+            </header>
+            <div ng-if="servicesCount.length == 0" class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <p>No services found yet</p>
+            </div>
+            <div class='main'>
+                <div class='box'>
+                    <div ng-repeat="srv in servicesCount" class="columna unquinto services">
+                        <article class="dato2">
+                            <span href="" ng-click="showHosts(srv.key)">
+                                <section>
+                                    <div class="nro">{{srv.value}}</div>
+                                    <div class="txt texto-blanco">{{srv.key}}</div>
+                                </section>
+                            </span>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+</div>
+<div id='summarized'>
+    <div class='col-lg-3'>
+        <article class='panel panel-default'>
+            <header>
+                <h2>Workspace summarized report
+                    <span class="glyphicon glyphicon-info-sign" tooltip="WS overview - hosts, notes, services and vulnerabilites counts"></span>
+                </h2>
+            </header>
+            <div ng-if="objectsCount.length == 0" class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <p>Not enough data to generate summarized report yet</p>
+            </div>
+            <div class='main'>
+                <div class='box'>
+                    <div ng-repeat="obj in objectsCount" class="columna unquinto">
+                        <article class="dato2">
+                            <section>
+                                <div class="nro">{{obj.value}}</div>
+                                <div class="txt texto-blanco">{{obj.key}}</div>
+                            </section>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+</div>
+<div id='compound'>
+    <div class='col-lg-6'>
+        <article class='panel panel-default'>
+            <header>
+                <h2>Hosts
+                    <span class="glyphicon glyphicon-info-sign" tooltip="All hosts, each one showing its service count and operating system. By clicking on a host IP you can access a list with all of its services"></span>
+                </h2>
+            </header>
+            <div ng-if="hosts.length == 0" class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <p>No hosts found yet.</p>
+            </div>
+            <table id="hosts" ng-if="hosts.length > 0" class="tablesorter table table-striped">
+                <thead>
+                    <tr>
+                        <th><a href="" ng-click="hostToggleSort('name')">Host</a></th>
+                        <th><a href="" ng-click="hostToggleSort('servicesCount')">Services</a></th>
+                        <th><a href="" ng-click="hostToggleSort('os')">OS</a></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="host in hosts | orderBy:hostSortField:hostSortReverse |
+                    startFrom:currentPage*pageSize | limitTo:pageSize">
+                        <td><a href="" class="host" ng-click="showServices(host.id)">{{host.name}}</a></td>
+                        <td>{{host.servicesCount}}</td>
+                        <td>
+                            <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" tooltip="{{host.os}}"/>
+                            <span ng-if="host.icon == undefined" class="glyphicon glyphicon-question-sign" tooltip="{{host.os}}"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="showPagination" ng-show="showPagination">
+                <div class="form-group">
+                    <ul class="pagination">
+                        <li><a ng-hide="currentPage == 0" ng-click="currentPage=currentPage-1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                        <li><a>{{currentPage}}/{{numberOfPages()}}</a></li>
+                        <li><a ng-hide="currentPage >= numberOfPages()" ng-click="currentPage=currentPage+1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                    </ul>
+                    <form name="goToPage" id="goToPageStatus">
+                        <div class="col-md-2">
+                            <input type="number" min="0" max="{{numberOfPages()}}" class="form-control" ng-model="go_page" placeholder="Go to page"/>
+                        </div>
+                        <button class="btn btn-danger" ng-click="go()">GO</button>
+                        <input type="number" min="0" class="form-control vuln_per_page" ng-model="pagination" placeholder="Numbre page" />
+                    </form>
+                </div>
+            </div>
+        </article>
+    </div>
+</div>
+<div id='vulns'>
+    <div class='col-lg-6'>
+        <article class='panel panel-default'>
+            <header>
+                <h2>
+                    <a href="../././reports/index.html#/status/ws/{{workspace}}" class="status-report">Vulnerabilities</a>
+                    <span class="glyphicon glyphicon-info-sign" tooltip="Vulnerabilities count arranged by severity"></span>
+                </h2>
+            </header>
+            <div ng-if="vulnsCount.length == 0" class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <p>No vulnerabilities found yet.</p>
+            </div>
+            <div class='main box'>
+                <div ng-repeat="vuln in vulnsCount" class="columna unsexto">
+                    <article class="dato2 fondo-{{vuln.key}}">
+                        <section>
+                            <div class="nro texto-blanco">{{vuln.value}}</div>
+                            <div class="txt texto-blanco">{{vuln.key}}</div>
+                        </section>
+                    </article>
+                </div>
+            </div>
+        </article>
+    </div>
+</div>
+<div id='list'>
+    <div class='col-lg-6'>
+        <article class='panel panel-default'>
+            <header>
+                <h2>Commands History
+                    <span class="glyphicon glyphicon-info-sign" tooltip="Shows current WS' executed commands"></span>
+                </h2>
+            </header>
+            <div ng-if="commands.length == 0" class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <p>No commands found yet.</p>
+            </div>
+            <table id="commands" ng-if="commands.length > 0" class="tablesorter table table-striped">
+                <thead>
+                    <tr>
+                        <th><a href="" ng-click="cmdToggleSort('By')">By</a></th>
+                        <th><a href="" ng-click="cmdToggleSort('command')">Command</a></th>
+                        <th><a href="" ng-click="cmdToggleSort('date')">Start Date</a></th>
+                        <th><a href="" ng-click="cmdToggleSort('duration')">Duration</a></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="cmd in commands | orderBy:cmdSortField:cmdSortReverse">
+                        <td tooltip="{{cmd.ip}}">{{cmd.user}}@{{cmd.hostname}}</td>
+                        <td>{{cmd.command}}</td>
+                        <td>{{cmd.date}}</td>
+                        <td>{{cmd.duration}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </article>
+    </div>
+</div>

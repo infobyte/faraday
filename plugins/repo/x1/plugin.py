@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Faraday Penetration Test IDE - Community Version
+Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
@@ -177,7 +177,8 @@ class X1Plugin(core.PluginBase):
 
     def parseOutputString(self, output, debug = False):
         
-                                                                   
+
+        print "X1 testing"                                                                   
         parser = X1XmlParser(output)
         for item in parser.items:
             h_id = self.createAndAddHost(item.host,item.name)
@@ -188,15 +189,13 @@ class X1Plugin(core.PluginBase):
                                                 status = "open")                        
             for v in item.results:
                 desc=v.description
-                desc+="\nSolution: "+v.resolution if v.resolution else ""
                 v_id=self.createAndAddVulnToService(h_id, s_id,v.name,desc=desc,
-                                                    ref=v.ref,severity=v.risk)
+                                                    ref=v.ref,severity=v.risk, resolution=v.resolution)
 
             for v in item.cresults:
                 desc=v.description
-                desc+="\nSolution: "+v.resolution if v.resolution else ""
                 v_id=self.createAndAddVulnToService(h_id, s_id,v.name,desc=desc,
-                                                    ref=v.ref,severity=v.risk)
+                                                    ref=v.ref,severity=v.risk, resolution=v.resolution)
             
         del parser
         

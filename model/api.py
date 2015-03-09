@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Faraday Penetration Test IDE - Community Version
+Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
@@ -168,38 +168,38 @@ def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?
 
 # Vulnerability
 
-def createAndAddVulnToHost(host_id, name, desc, ref, severity):
-    vuln = newVuln(name, desc, ref, severity, parent_id=host_id)
+def createAndAddVulnToHost(host_id, name, desc, ref, severity, resolution):
+    vuln = newVuln(name, desc, ref, severity, resolution, parent_id=host_id)
     if addVulnToHost(host_id, vuln):
         return vuln.getID()
     return None
 
-def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref, severity):
-    vuln = newVuln(name, desc, ref, severity, parent_id=interface_id)
+def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref, severity, resolution):
+    vuln = newVuln(name, desc, ref, severity, resolution, parent_id=interface_id)
     if addVulnToInterface(host_id, interface_id, vuln):
         return vuln.getID()
     return None
     
-def createAndAddVulnToApplication(host_id, application_id, name, desc, ref, severity):
-    vuln = newVuln(name, desc, ref, severity)
+def createAndAddVulnToApplication(host_id, application_id, name, desc, ref, severity, resolution):
+    vuln = newVuln(name, desc, ref, severity, resolution)
     if addVulnToApplication(host_id, application_id, vuln):
         return vuln.getID()
     return None
 
-def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity):
+def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity, resolution):
     #we should give the interface_id or de application_id too? I think we should...
-    vuln = newVuln(name, desc, ref, severity, parent_id=service_id)
+    vuln = newVuln(name, desc, ref, severity, resolution, parent_id=service_id)
     if addVulnToService(host_id, service_id, vuln):
         return vuln.getID()
     return None
 
 #WebVuln
 
-def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity, website, path, request, response,
+def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity, resolution, website, path, request, response,
                 method,pname, params,query,category):
     #we should give the interface_id or de application_id too? I think we should...
-    vuln = newVulnWeb(name, desc, ref, severity, website, path, request, response,
-                method,pname, params,query,category, parent_id=service_id)
+    vuln = newVulnWeb(name, desc, ref, severity, resolution, website, path, request, response,
+                method,pname, params, query, category, parent_id=service_id)
     if addVulnWebToService(host_id, service_id, vuln):
         return vuln.getID()
     return None
@@ -239,7 +239,7 @@ def createAndAddNoteToNote(host_id, service_id, note_id, name, text):
 def createAndAddCredToService(host_id, service_id, username, password):
     cred = newCred(username, password, parent_id=service_id)
     if addCredToService(host_id, service_id, cred):
-        return note.getID()
+        return cred.getID()
     return None
 
 #-------------------------------------------------------------------------------
@@ -463,23 +463,23 @@ def newService(name, protocol = "tcp?", ports = [], status = "running",
         name, protocol, ports, status, version, description, parent_id)
 
 
-def newVuln(name, desc="", ref = None, severity="", parent_id=None):
+def newVuln(name, desc="", ref = None, severity="", resolution="", parent_id=None):
     """
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
     return __model_controller.newVuln(
-        name, desc, ref, severity, parent_id)
+        name, desc, ref, severity, resolution, parent_id)
 
 
-def newVulnWeb(name, desc="", ref = None, severity="", website="", path="", request="", response="",
+def newVulnWeb(name, desc="", ref = None, severity="", resolution="", website="", path="", request="", response="",
                 method="",pname="", params="",query="",category="", parent_id=None):
     """
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
     return __model_controller.newVulnWeb(
-        name, desc, ref, severity, website, path, request, response,
+        name, desc, ref, severity, resolution, website, path, request, response,
         method, pname, params, query, category, parent_id)
 
 

@@ -10,6 +10,33 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+Mar 9, 2015:
+---
+You can get the new version here:
+
+* https://github.com/infobyte/faraday/archive/v1.0.8.tar.gz
+
+Changes:
+*WcScan script and plugin (scripts/wcscan.py)
+*New Dashboard D3 with AngularJS
+*Easy access to Vulnerability pages in the Status Report
+*Easy access to the Host pages on the dashboard
+*Creation and Editing capabilities for the Workspace from the UI Web
+*Support installation for the latest version of Debian/Ubuntu/Kali 
+*sqlmap version 1.0-dev authorized
+*API Status Check in both ZSH & QT GUI
+*Field added for resolution of vulnerabilities classification with plug-ins updated to support the new function. 
+*Field added for rating "easiness of  resolution" for vulnerabilities
+*Adjustments for Resolution field
+
+*New Faraday plugin for Burp. Version 1.2
+ -Corrections for the vulnerabilities duplication for the burp plugin
+ -New tab section to configure the new Vulnerabilities downloads for Faraday
+
+*Automated backup for couch database
+*Ability to upload evidence of a vulnerabilty (as an attachment)
+*Ability to assign Vulnerability Impact (confidenciality, integrity, availability).
+
 Dec 12, 2014:
 ---
 You can get the new version here:

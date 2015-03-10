@@ -35,8 +35,8 @@ Changes:
  -New tab section to configure the new Vulnerabilities downloads for Faraday
 
 * Automated backup for couch database
-* Ability to upload evidence of a vulnerabilty (as an attachment)
-* Ability to assign Vulnerability Impact (confidenciality, integrity, availability).
+* Ability to upload evidence of a vulnerability (as an attachment)
+* Ability to assign Vulnerability Impact (confidentiality, integrity, availability).
 
 Dec 12, 2014:
 ---

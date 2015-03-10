@@ -24,10 +24,10 @@ Changes:
 * Easy access to the Host pages on the dashboard
 * Creation and Editing capabilities for the Workspace from the UI Web
 * Support installation for the latest version of Debian/Ubuntu/Kali 
-* sqlmap version 1.0-dev authorized
+* sqlmap version 1.0-dev support updated
 * API Status Check in both ZSH & QT GUI
 * Field added for resolution of vulnerabilities classification with plug-ins updated to support the new function. 
-* Field added for rating "easiness of  resolution" for vulnerabilities
+* Field added for rating "ease of resolution" for vulnerabilities
 * Adjustments for Resolution field
 
 * New Faraday plugin for Burp. Version 1.2

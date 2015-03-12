@@ -61,6 +61,7 @@ angular.module('faradayApp')
               .attr("class", "node treemap-tooltip")
               .call(position)
               .style("background", function(d) { return d.color; })
+              .style('opacity', 0)
               .text(function(d, i) {
                 if(data.width){
                   var total = d3.sum(data.children, function(d){return d.value;});
@@ -76,7 +77,10 @@ angular.module('faradayApp')
               })
               .on('mouseleave', function(){
                 document.getElementById("treemapText").innerHTML = "";
-              });
+              })
+              .transition()
+                  .duration(1250)
+                  .style('opacity', 1);
 
           };
         });

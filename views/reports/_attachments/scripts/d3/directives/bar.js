@@ -66,10 +66,11 @@ angular.module('faradayApp')
                 .append('rect')
                 .attr("class", "bar")
                 .attr("x", function(d) { return x(d.key); })
-                .attr("y", function(d) { return y(d.value - 1); })
+                .attr("y", function(d) { return y(d.value - 0.5); })
                 .style("fill", function(d) { return color(Math.random()*55); })
                 .attr("height", function(d) { return height - margin.top - margin.bottom - y(d.value); })
                 .attr("width", 30)
+                .style('opacity', 0)
                 .on('mouseover', function(d){
                   workspace = $routeParams.wsId;
                   var hurl    = "/" + workspace + "/_design/hosts/_view/hosts";
@@ -80,7 +81,10 @@ angular.module('faradayApp')
                 })
                 .on('mouseleave', function(){
                   document.getElementById("barText").innerHTML = "";
-                });
+                })
+                .transition()
+                    .duration(1250)
+                    .style('opacity', 1);
 
                 function get_obj(ourl) {
                   var ls = {};

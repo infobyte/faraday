@@ -19,7 +19,7 @@ import platform
 import subprocess
 import pip
 
-from utils.logs import getLogger
+from utils.logs import getLogger, setUpLogger
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/external_libs/lib/python2.7/dist-packages')
 from config.configuration import getInstanceConfiguration
 from config.globals import *
@@ -537,6 +537,7 @@ def main():
         logger.info("Dependencies met.")
         checkConfiguration()
         setConf()
+        setUpLogger()
         checkUpdates()
         startFaraday()
     else:

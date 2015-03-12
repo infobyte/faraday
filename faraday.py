@@ -531,13 +531,13 @@ def main():
     """
 
     init()
-    update()
     if checkDependencies():
         printBanner()
         logger.info("Dependencies met.")
         checkConfiguration()
         setConf()
         setUpLogger()
+        update()
         checkUpdates()
         startFaraday()
     else:

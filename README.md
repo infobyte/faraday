@@ -35,7 +35,7 @@ Preferably, you can download faraday by cloning the [Git] (https://github.com/in
 
     $ git clone https://github.com/infobyte/faraday.git faraday-dev
     $ cd faraday-dev
-    $ ./install
+    $ ./install.sh
     
 
 

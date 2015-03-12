@@ -38,7 +38,7 @@ angular.module('faradayApp')
         workspacesFact.put = function(workspace) {
             return createDatabase(workspace).
                 then(function(resp) { createWorkspaceDoc(resp, workspace); }, errorHandler).
-                then(function(resp) { uploadViews(workspace); }, errorHandler);
+                then(function(resp) { uploadViews(workspace.name); }, errorHandler);
         };
 
         createDatabase = function(workspace){
@@ -56,28 +56,9 @@ angular.module('faradayApp')
         };
 
         uploadViews = function(workspace) {
-            /*
-            //curl -vX POST http://localhost:5984/aaaaaaa123123/_bulk_docs -d "{"docs":[{"_id":"0","integer":0,"string":"0"},{"_id":"1","integer":1,"string":"1"},{"_id":"2","integer":2,"string":"2"}]}"
-
-            var data = {
-                "docs": [
-                    {"_id": "0", "integer": 0, "string": "0"},
-                    {"_id": "1", "integer": 1, "string": "1"},
-                    {"_id": "2", "integer": 2, "string": "2"},
-                    {"_id": "3", "integer": 3, "string": "3"}
-                ]
-            };
-
-            $http.post('http://localhost:5984/aaaaaaa123123/_bulk_docs', JSON.stringify(data)).
-                then(function(lala) {
-                    console.log(lala);
-                });
-            */
-
-            var bulk = {"docs": []},
+            var bulk = {docs:[]},
             paths = {},
-            reports = BASEURL + 'reports/_design/reports',
-            tree = {};
+            reports = BASEURL + 'reports/_design/reports';
             $http.get(reports).
                 success(function(data) {
                     var attachments = data._attachments;
@@ -98,22 +79,30 @@ angular.module('faradayApp')
                                 name = parts[3], 
                                 file = parts[4].split(".")[0],
                                 fileObj = Object(),
-                                nameObj = Object();
+                                nameObj = Object(),
+                                viewObj = Object(),
+                                docIndex = indexOfDocument(bulk.docs, "_design/"+component);
 
-                                if(tree.hasOwnProperty(component)) {
-                                    if(tree[component].hasOwnProperty(name)) {
-                                        tree[component][name][file] = resp[path]["data"]; 
+                                if(docIndex > -1) {
+                                    if(bulk.docs[docIndex].views.hasOwnProperty(name)) {
+                                        bulk.docs[docIndex].views[name][file] = resp[path]["data"]; 
                                     } else {
                                         fileObj[file] = resp[path]["data"];
-                                        tree[component][name] = fileObj;
+                                        bulk.docs[docIndex].views[name] = fileObj;
                                     }
                                 } else {
                                     fileObj[file] = resp[path].data;
                                     nameObj[name] = fileObj;
-                                    tree[component] = nameObj;
+                                    viewObj = {
+                                        _id: "_design/"+component,
+                                        language: "javascript",
+                                        views: nameObj
+                                    };
+                                    bulk.docs.push(viewObj);
                                 }
                             }
                         }
+                        $http.post(BASEURL + workspace + "/_bulk_docs", JSON.stringify(bulk));
                     }, errorHandler);
                 }).
                 error(function(data) {
@@ -121,11 +110,11 @@ angular.module('faradayApp')
                 });
         };
 
-        hasDocument = function(list, name) {
-            var ret = false;
-            list.forEach(function(item) {
+        indexOfDocument = function(list, name) {
+            var ret = -1;
+            list.forEach(function(item, index) {
                 if(item._id == name) {
-                    ret = true;
+                    ret = index;
                 }
             });
             return ret;

@@ -78,28 +78,22 @@ angular.module('faradayApp')
                                 component = parts[1], 
                                 name = parts[3], 
                                 file = parts[4].split(".")[0],
-                                fileObj = Object(),
-                                nameObj = Object(),
-                                viewObj = Object(),
                                 docIndex = indexOfDocument(bulk.docs, "_design/"+component);
 
-                                if(docIndex > -1) {
-                                    if(bulk.docs[docIndex].views.hasOwnProperty(name)) {
-                                        bulk.docs[docIndex].views[name][file] = resp[path]["data"]; 
-                                    } else {
-                                        fileObj[file] = resp[path]["data"];
-                                        bulk.docs[docIndex].views[name] = fileObj;
-                                    }
-                                } else {
-                                    fileObj[file] = resp[path].data;
-                                    nameObj[name] = fileObj;
-                                    viewObj = {
+                                if(docIndex == -1) {
+                                    bulk.docs.push({
                                         _id: "_design/"+component,
                                         language: "javascript",
-                                        views: nameObj
-                                    };
-                                    bulk.docs.push(viewObj);
+                                        views: {}
+                                    });
+                                    docIndex = bulk.docs.length - 1;
                                 }
+
+                                if(!bulk["docs"][docIndex]["views"].hasOwnProperty(name)) {
+                                    bulk["docs"][docIndex]["views"][name] = {};
+                                }
+
+                                bulk["docs"][docIndex]["views"][name][file] = resp[path]["data"];
                             }
                         }
                         $http.post(BASEURL + workspace + "/_bulk_docs", JSON.stringify(bulk));

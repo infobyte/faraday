@@ -11,9 +11,10 @@ CONST_FARADAY_PLUGINS_PATH = 'plugins'
 CONST_FARADAY_PLUGINS_REPO_PATH = 'plugins/repo'
 CONST_FARADAY_QTRC_PATH = 'deps/qtrc'
 CONST_FARADAY_IMAGES = 'images/'
+CONST_FARADAY_LOGS_PATH = 'logs/'
 CONST_FARADAY_FOLDER_LIST = [ "config", "data", "images", 
                         "persistence", "plugins",
-                        "report", "temp", "zsh" ]
+                        "report", "temp", "zsh", "logs" ]
 
 
 CONST_USER_QT_PATH = '~/.qt/'

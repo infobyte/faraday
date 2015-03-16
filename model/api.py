@@ -649,9 +649,10 @@ def devlog(msg):
     """
     If DEBUG is set it will print information directly to stdout
     """
+    import logging
     if CONF.getDebugStatus():
-        print "[DEBUG] - %s" % msg
-        model.log.getLogger().log(msg,"DEBUG")
+        logging.getLogger('faraday.model.api').debug(msg)
+        model.log.getLogger().log(msg, "DEBUG")
 
 def showDialog(msg, level="Information"):
     return model.log.getNotifier().showDialog(msg, level)

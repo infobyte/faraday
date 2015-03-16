@@ -161,8 +161,8 @@ angular.module('faradayApp')
                     " \""+request+"\","+
                     " \""+response+"\","+
                     " \""+resolution+"\","+
-                    " \""+website+"\""+
-                    " \""+impact+"\""+
+                    " \""+website+"\","+
+                    " \""+impact+"\","+
                     " \""+easeofres+"\""+
                     "\n";
             });

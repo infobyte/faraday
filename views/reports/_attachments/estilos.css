@@ -528,7 +528,7 @@ a.ws-link:hover {
 /* New Modal*/
 div.panel-default .panel-body label{font-size: 15px}
 i.pull-right.glyphicon.ng-scope.glyphicon-plus-sign{color:green;}
-
+i.fa.fa-copy.copy-icon.fa-lg{margin-top: 10px;cursor: pointer;}
 div.panel-collapse .panel-body{padding:0px;}
 div.panel.panel-default div.panel-heading{padding: 0px}
 div.panel-body table{width: 100%}

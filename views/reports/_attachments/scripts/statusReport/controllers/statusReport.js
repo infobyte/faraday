@@ -97,7 +97,7 @@ angular.module('faradayApp')
             content     = "\"Date\", \"Web\", \"Status\", \"Severity\", "+
                 "\"Name\", \"Target\", \"Description\", "+
                 "\"Data\", \"Method\", \"Path\", \"Param Name\", \"Params\", "+
-                "\"Query\", \"References\", \"Request\", \"Response\", \"Resolution\",\"Website\""+
+                "\"Query\", \"References\", \"Request\", \"Response\", \"Resolution\",\"Website\", "+
                 "\"Ease of Resolution\", \"Impact\"\n";
             
             $scope.vulns.forEach(function(v) {

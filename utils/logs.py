@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import logging
+import logging.handlers
 import os
 from config.globals import *
 
@@ -38,7 +39,6 @@ def setUpLogger():
         level = logging.DEBUG
 
     logger.setLevel(level)
-
     fh = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=5*1024*1024, backupCount=5)
     fh.setFormatter(formatter)
     logger.addHandler(fh)

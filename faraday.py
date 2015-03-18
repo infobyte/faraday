@@ -202,17 +202,21 @@ def checkDependencies():
             else:
                 modules.append([line[:line.index('=')], (line[line.index('=')+2:]).strip()])
         f.close()
-        for module in modules:
-            try:
-                __import__(module[0])
-            except ImportError:
-                if query_user_bool("Missing module %s." \
-                    " Do you wish to install it?" % module[0]):
-                    pip.main(['install', "%s==%s" %
-                             (module[0], module[1]), '--user'])
 
-                else:
-                    return False
+        pip_dist = [dist.project_name.lower() for dist in pip.get_installed_distributions()]
+
+        for module in modules:
+            if module[0].lower() not in pip_dist:
+                try:
+                    __import__(module[0])
+                except ImportError:
+                    if query_user_bool("Missing module %s." \
+                        " Do you wish to install it?" % module[0]):
+                        pip.main(['install', "%s==%s" %
+                                 (module[0], module[1]), '--user'])
+
+                    else:
+                        return False
 
     return True
 

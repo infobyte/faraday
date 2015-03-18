@@ -358,7 +358,7 @@ def setupZSH():
     if os.path.isfile(USER_ZSHRC):
         shutil.copy(USER_ZSHRC, FARADAY_USER_ZSHRC)
     else:
-        subprocess.call(['touch', FARADAY_USER_ZSHRC])
+        open(FARADAY_USER_ZSHRC, 'w').close()
 
     subprocess.call(['sed', '-i', '1iZDOTDIR=$OLDZDOTDIR', FARADAY_USER_ZSHRC])
     with open(FARADAY_USER_ZSHRC, "a") as f:

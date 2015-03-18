@@ -407,6 +407,9 @@ class PluginController(PluginControllerBase):
         self._mapper_manager.save(cmd_info)
 
         if self._active_plugin.has_custom_output():
+            if not os.path.isfile(self._active_plugin.get_custom_file_path()):
+                model.api.devlog("PluginController output file (%s) not created" % self._active_plugin.get_custom_file_path())
+                return False
             output_file = open(self._active_plugin.get_custom_file_path(), 'r')
             output = output_file.read()
             self._buffer.seek(0)

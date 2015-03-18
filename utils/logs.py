@@ -12,8 +12,6 @@ import logging.handlers
 import os
 from config.globals import *
 
-from config.configuration import getInstanceConfiguration
-CONF = getInstanceConfiguration()
 
 FARADAY_USER_HOME = os.path.expanduser(CONST_FARADAY_HOME_PATH)
 LOG_FILE = os.path.join(FARADAY_USER_HOME, CONST_FARADAY_LOGS_PATH, 'faraday.log')
@@ -32,6 +30,8 @@ logger.addHandler(ch)
 
 
 def setUpLogger():
+    from config.configuration import getInstanceConfiguration
+    CONF = getInstanceConfiguration()
     logger = logging.getLogger('faraday')
 
     level = logging.INFO

@@ -659,7 +659,7 @@ class RepositoryConfigDialog(BaseDialog):
 
         hbox1 = qt.QHBox(self)
         hbox1.setSpacing(10)
-        self._repourl_label = qt.QLabel("CouchDB URL", hbox1)
+        self._repourl_label = qt.QLabel("CouchDB (http://127.0.0.1:5984)", hbox1)
         self._repourl_edit = qt.QLineEdit(hbox1)
         if url: self._repourl_edit.setText(url)
         self.layout.addWidget(hbox1)

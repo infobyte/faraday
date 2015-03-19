@@ -364,7 +364,10 @@ def setupZSH():
     else:
         open(FARADAY_USER_ZSHRC, 'w').close()
 
-    subprocess.call(['sed', '-i', '1iZDOTDIR=$OLDZDOTDIR', FARADAY_USER_ZSHRC])
+    with open(FARADAY_USER_ZSHRC, "r+") as f:
+        content = f.read()
+        f.seek(0, 0)
+        f.write('ZDOTDIR=$OLDZDOTDIR' + '\n' + content)
     with open(FARADAY_USER_ZSHRC, "a") as f:
         f.write("source %s" % FARADAY_BASE_ZSH)
     shutil.copy(FARADAY_BASE_ZSH, FARADAY_USER_ZSH_PATH)

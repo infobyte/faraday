@@ -40,11 +40,13 @@ function(doc) {
             "oid":              doc.obj_id,
             "owned":            doc.owned,
             "owner":            doc.owner,
+            "path":             doc.path,
             "parent":           doc.parent, 
             "refs":             doc.refs,
             "resolution":       resolution,
             "severity":         doc.severity, 
-            "status":           doc.type 
+            "status":           doc.type,
+            "website":          doc.website
         };
         emit(doc._id, obj);
     }

@@ -171,7 +171,7 @@
                     <tr ng-repeat="cmd in commands | orderBy:cmdSortField:cmdSortReverse">
                         <td tooltip="{{cmd.ip}}">{{cmd.user}}@{{cmd.hostname}}</td>
                         <td>{{cmd.command}}</td>
-                        <td>{{cmd.date}}</td>
+                        <td>{{cmd.date | date:"MM/dd/yyyy 'at' h:mma"}}</td>
                         <td>{{cmd.duration}}</td>
                     </tr>
                 </tbody>

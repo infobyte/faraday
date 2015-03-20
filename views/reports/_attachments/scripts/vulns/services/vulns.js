@@ -8,10 +8,8 @@ angular.module('faradayApp')
             // gets vulns json from couch
             $.getJSON(vulns_url, function(data) {
                 $.each(data.rows, function(n, obj){
-                    var d = new Date(0),
-                    evidence = [];
-                    d.setUTCSeconds(obj.value.date);
-                    d = d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear();
+                    var evidence = [],
+                    date = obj.value.date * 1000;
                     if(typeof(obj.value.attachments) != undefined && obj.value.attachments != undefined) {
                         for(var attachment in obj.value.attachments) {
                             evidence.push(attachment);
@@ -23,7 +21,7 @@ angular.module('faradayApp')
                         "attachments":      evidence,
                         "couch_parent":     obj.value.parent,
                         "data":             obj.value.data,
-                        "date":             d, 
+                        "date":             date, 
                         "delete":           false,
                         "desc":             obj.value.desc,
                         "easeofresolution": obj.value.easeofresolution,

@@ -137,7 +137,7 @@
                                     selection-model selection-model-type="checkbox"
                                     selection-model-mode="multiple-additive" 
                                     selection-model-selected-class="multi-selected">
-                                    <td ng-if="columns.date">{{v.date}}</td>
+                                    <td ng-if="columns.date">{{v.date | date:'MM/dd/yyyy'}}</td>
                                     <td ng-if="columns.target">{{v.target}}</td>
                                     <td ng-if="columns.status">Vulnerable</td>
                                     <td ng-if="columns.severity" class="fondo-{{v.severity}}">{{v.severity}}</td>

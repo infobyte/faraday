@@ -6,10 +6,12 @@ angular.module('faradayApp')
         // $scope.newworkspace = {};
 
         $scope.onSuccessGet = function(workspace){
+            if(workspace.sdate.toString().indexOf(".") != -1) workspace.sdate = workspace.sdate * 1000;
             $scope.workspaces.push(workspace);
         };
 
         $scope.onSuccessInsert = function(workspace){
+            workspace.sdate = workspace.sdate * 1000;
             $scope.wss.push(workspace.name); 
             $scope.workspaces.push(workspace); 
         };

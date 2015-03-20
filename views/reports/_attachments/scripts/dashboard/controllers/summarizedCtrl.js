@@ -116,11 +116,7 @@ angular.module('faradayApp')
                         } else {
                             cmd.duration = "undefined";
                         }
-                        var d = new Date(0);
-                        d.setUTCSeconds(cmd.startdate);
-                        var mins = (d.getMinutes()<10?'0':'') + d.getMinutes();
-                        d = d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear() + " - " + d.getHours() + ":" + mins;
-                        cmd.date = d;
+                        cmd.date = cmd.startdate * 1000;
                     });
                     $scope.commands = res;
                 });

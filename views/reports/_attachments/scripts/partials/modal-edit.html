@@ -133,13 +133,13 @@
         </form>
         <div id="evidenceFiles" class="normal-size" ng-if="evidence">
             <ul>
-                <li ng-repeat="(key, value) in evidence">
+                <li ng-repeat="e in evidence | orderObjectBy:'name':true | orderBy:'name'">
                     <div class="btn-group">
                         <button type="button" class="btn btn-default">
-                            <span class="fa {{icons[key]}}" title="Evidence {{key}}"></span> {{key}}
+                            <span class="fa {{icons[e.name]}}" title="Evidence {{e.name}}"></span> {{e.name}}
                         </button><!-- ng-repeat -->
-                        <button type="button" class="btn btn-danger" ng-click="removeEvidence(key)">
-                        <span class="glyphicon glyphicon-trash"></span>
+                        <button type="button" class="btn btn-danger" ng-click="removeEvidence(e.name)">
+                            <span class="glyphicon glyphicon-trash"></span>
                         </button>
                     </div>
                 </li>

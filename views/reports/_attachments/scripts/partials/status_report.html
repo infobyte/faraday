@@ -119,7 +119,7 @@
                                         <a href="" ng-click="toggleSort('refs')">References</a>
                                     <th ng-if="columns.evidence">
                                         <a href="" ng-click="toggleShow('evidence', true)"><span class="glyphicon glyphicon-remove"></span></a>
-                                        <a href="" ng-click="toggleSort('evidence')">Evidence</a>
+                                        <a href="" ng-click="toggleSort('attachments')">Evidence</a>
                                     </th>
                                     <th ng-if="columns.impact">
                                         <a href="" ng-click="toggleShow('impact', true)"><span class="glyphicon glyphicon-remove"></span></a>
@@ -133,7 +133,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="v in vulns | filter:query | orderBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
+                                <tr ng-repeat="v in vulns | filter:query | orderObjectBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
                                     selection-model selection-model-type="checkbox"
                                     selection-model-mode="multiple-additive" 
                                     selection-model-selected-class="multi-selected">

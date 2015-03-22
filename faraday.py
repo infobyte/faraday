@@ -505,7 +505,10 @@ def checkUpdates():
     resp = u"OK"
     try:
         f = open(CONST_VERSION_FILE)
-        parameter = {"version": f.read().strip()}
+
+        getInstanceConfiguration().setVersion(f.read().strip())
+        parameter = {"version": getInstanceConfiguration().getVersion()}
+
         f.close
         resp = requests.get(uri, params=parameter, timeout=1, verify=True)
         resp = resp.text.strip()

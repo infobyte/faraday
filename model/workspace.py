@@ -24,10 +24,10 @@ class Workspace(object):
 
     def __init__(self, name, desc=None, manager=None, shared=CONF.getAutoShareWorkspace()):
         self.name = name
-        self.description = ""
+        self.description = desc
         self.customer = ""
-        self.start_date = time.time()
-        self.finish_date = time.time()
+        self.start_date = int(time.time() * 1000)
+        self.finish_date = int(time.time() * 1000)
         self._id = name
         self._command_history = None
         self.shared = shared

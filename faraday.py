@@ -507,6 +507,7 @@ def checkUpdates():
         f = open(CONST_VERSION_FILE)
 
         getInstanceConfiguration().setVersion(f.read().strip())
+        getInstanceConfiguration().setAppname("Faraday - Penetration Test IDE Community")
         parameter = {"version": getInstanceConfiguration().getVersion()}
 
         f.close

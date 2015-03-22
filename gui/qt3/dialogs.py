@@ -634,9 +634,8 @@ class AboutDialog(BaseDialog):
         self.logolabel.setPixmap( self.logo )
         self.logolabel.setAlignment( qt.Qt.AlignHCenter | qt.Qt.AlignVCenter )
                                                                            
-                                                              
-
         self._about_text = u"""%s v%s""" % (CONF.getAppname(),CONF.getVersion())
+        self._about_text += "\nInfobyte LLC. All rights reserved"
 
         self.text = qt.QLabel( self._about_text, self )
         self.text.setAlignment( qt.Qt.AlignHCenter | qt.Qt.AlignVCenter )

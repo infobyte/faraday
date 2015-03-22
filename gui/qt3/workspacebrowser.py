@@ -239,12 +239,12 @@ class WorkspaceTreeWindow(qt.QVBox):
         else:
             if len(selected_items) == 1:
                 if item.is_active:
-                    popup.insertItem('Close', 300)
+                    popup.insertItem('No action available', 100)
                 else:
                     popup.insertItem('Open', lambda: self._openWorkspace(item))
                     popup.insertItem('Delete', lambda: self._deleteWorkspace(item))
             
-                popup.insertItem('Properties', lambda: self._showWorkspaceProperties(item))
+                # popup.insertItem('Properties', lambda: self._showWorkspaceProperties(item))
 
             elif len(selected_items) > 1: 
                 popup.insertItem('Delete', lambda: self._deleteWorkspaces(selected_items))

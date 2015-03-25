@@ -60,8 +60,7 @@ angular.module('faradayApp')
         };
 
         uploadDocs = function(workspace) {
-            var bulk = {docs:[]},
-            paths = {},
+            var paths = {},
             reports = BASEURL + 'reports/_design/reports';
             $http.get(reports).
                 success(function(data) {
@@ -75,21 +74,22 @@ angular.module('faradayApp')
                             }
                         }
                     }
-                    uploadViews(paths);
+                    uploadViews(paths, workspace);
                 }).
                 error(function(data) {
                     errorHandler;
                 });
         };
 
-        uploadViews = function(files) {
-            $q.all(paths).then(function(resp) {
-                for(var path in paths) {
-                    if(paths.hasOwnProperty(path)) {
-                        var parts = path.split("/"), 
+        uploadViews = function(files, workspace) {
+            $q.all(files).then(function(resp) {
+                var bulk = {docs:[]};
+                for(var file in files) {
+                    if(files.hasOwnProperty(file)) {
+                        var parts = file.split("/"), 
                         component = parts[1], 
                         name = parts[3], 
-                        file = parts[4].split(".")[0],
+                        filename = parts[4].split(".")[0],
                         docIndex = indexOfDocument(bulk.docs, "_design/"+component);
 
                         if(parts[2] == "views") {
@@ -106,7 +106,7 @@ angular.module('faradayApp')
                                 bulk["docs"][docIndex]["views"][name] = {};
                             }
 
-                            bulk["docs"][docIndex]["views"][name][file] = resp[path]["data"];
+                            bulk["docs"][docIndex]["views"][name][filename] = resp[file]["data"];
                         }
                     }
                 }

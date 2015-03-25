@@ -362,13 +362,14 @@ table.csv-export tbody tr:hover{
 }
 
 #list .tablesorter thead th {
-    width: 25%;
+    width: 27%;
     float: left;
     border:1px solid;
 }
 #list tbody{display: block}
-#list .tablesorter tbody td {width: 23.6%}
-#list .tablesorter tbody td:nth-child(2){width: 29%;word-wrap: break-word;}
+#list .tablesorter tbody td {width: 25.6%}
+#list .tablesorter tbody td:nth-child(2){width: 32%;word-break: break-all;}
+#list .tablesorter thead th:last-child{width: 19%}
 #compound .tablesorter tbody{height:284px;}
     #compound .col-lg-6 article.panel{height: 93px}
 

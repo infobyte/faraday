@@ -117,8 +117,6 @@ angular.module('faradayApp')
                             cmd.duration = "In progress";
                         } else if (cmd.duration != undefined) {
                             cmd.duration = cmd.duration.toFixed(2) + "s";
-                        } else {
-                            cmd.duration = "undefined";
                         }
                         cmd.date = cmd.startdate * 1000;
                     });

@@ -165,18 +165,18 @@
             <table id="commands" ng-if="commands.length > 0" class="tablesorter table table-striped">
                 <thead>
                     <tr>
-                        <th><a href="" ng-click="cmdToggleSort('By')">By</a></th>
+                        <th><a href="" ng-click="cmdToggleSort('user')">By</a></th>
                         <th><a href="" ng-click="cmdToggleSort('command')">Command</a></th>
                         <th><a href="" ng-click="cmdToggleSort('date')">Start Date</a></th>
                         <th><a href="" ng-click="cmdToggleSort('duration')">Duration</a></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="cmd in commands | orderBy:cmdSortField:cmdSortReverse">
-                        <td tooltip="{{cmd.ip}}">{{cmd.user}}@{{cmd.hostname}}</td>
+                    <tr ng-repeat="cmd in commands | orderObjectBy:cmdSortField:cmdSortReverse">
+                        <td><p tooltip="{{cmd.ip}}">{{cmd.user}}@{{cmd.hostname}}</p></td>
                         <td>{{cmd.command}}</td>
                         <td>{{cmd.date | date:"MM/dd/yyyy 'at' h:mma"}}</td>
-                        <td>{{cmd.duration}}</td>
+                        <td ng-bind="cmd.duration || 'undefined'"></td>
                     </tr>
                 </tbody>
             </table>

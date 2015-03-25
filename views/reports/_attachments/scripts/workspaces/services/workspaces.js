@@ -88,11 +88,12 @@ angular.module('faradayApp')
                     if(files.hasOwnProperty(file)) {
                         var parts = file.split("/"), 
                         component = parts[1], 
+                        type = parts[2],
                         name = parts[3], 
                         filename = parts[4].split(".")[0],
                         docIndex = indexOfDocument(bulk.docs, "_design/"+component);
 
-                        if(parts[2] == "views") {
+                        if(type == "views") {
                             if(docIndex == -1) {
                                 bulk.docs.push({
                                     _id: "_design/"+component,

@@ -17,7 +17,7 @@ angular.module('faradayApp')
             "top": parseInt(attrs.marginTop) || 28,
             "right": parseInt(attrs.marginRight) || 10,
             "bottom": parseInt(attrs.marginBottom) || 10,
-            "left": parseInt(attrs.marginLeft) || 10,
+            "left": parseInt(attrs.marginLeft) || 10
           }
 
           function position() {

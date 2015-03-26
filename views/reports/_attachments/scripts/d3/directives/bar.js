@@ -17,7 +17,7 @@ angular.module('faradayApp')
             "top": parseInt(attrs.marginTop) || 20,
             "right": parseInt(attrs.marginRight) || 20,
             "bottom": parseInt(attrs.marginBottom) || 30,
-            "left": parseInt(attrs.marginLeft) || 40,
+            "left": parseInt(attrs.marginLeft) || 40
           }
 
           var barHeight = parseInt(attrs.barHeight) || 20,

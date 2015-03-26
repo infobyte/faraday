@@ -60,7 +60,7 @@ angular.module('faradayApp')
         };
 
         uploadDocs = function(workspace) {
-            var paths = {},
+            var files = {},
             reports = BASEURL + 'reports/_design/reports';
             $http.get(reports).
                 success(function(data) {
@@ -69,50 +69,45 @@ angular.module('faradayApp')
                         for(var prop in attachments) {
                             if(attachments.hasOwnProperty(prop)) {
                                 if(prop.indexOf("views/") > -1) {
-                                    paths[prop] = $http.get(reports + "/" + prop);
+                                    files[prop] = $http.get(reports + "/" + prop);
                                 }
                             }
                         }
                     }
-                    uploadViews(paths, workspace);
+                    $q.all(files).then(function(resp) {
+                        var bulk = {docs:[]};
+                        for(var file in files) {
+                            if(files.hasOwnProperty(file)) {
+                                var views = [],
+                                parts = file.split("/"), 
+                                component = parts[1], 
+                                type = parts[2],
+                                name = parts[3], 
+                                filename = parts[4].split(".")[0],
+                                docIndex = indexOfDocument(bulk.docs, "_design/"+component);
+
+                                if(docIndex == -1) {
+                                    bulk.docs.push({
+                                        _id: "_design/"+component,
+                                        language: "javascript",
+                                        views: {}
+                                    });
+                                    docIndex = bulk.docs.length - 1;
+                                }
+
+                                if(!bulk["docs"][docIndex]["views"].hasOwnProperty(name)) {
+                                    bulk["docs"][docIndex]["views"][name] = {};
+                                }
+
+                                bulk["docs"][docIndex]["views"][name][filename] = resp[file]["data"];
+                            }
+                        }
+                        $http.post(BASEURL + workspace + "/_bulk_docs", JSON.stringify(bulk));
+                    }, errorHandler);
                 }).
                 error(function(data) {
                     errorHandler;
                 });
-        };
-
-        uploadViews = function(files, workspace) {
-            $q.all(files).then(function(resp) {
-                var bulk = {docs:[]};
-                for(var file in files) {
-                    if(files.hasOwnProperty(file)) {
-                        var parts = file.split("/"), 
-                        component = parts[1], 
-                        type = parts[2],
-                        name = parts[3], 
-                        filename = parts[4].split(".")[0],
-                        docIndex = indexOfDocument(bulk.docs, "_design/"+component);
-
-                        if(type == "views") {
-                            if(docIndex == -1) {
-                                bulk.docs.push({
-                                    _id: "_design/"+component,
-                                    language: "javascript",
-                                    views: {}
-                                });
-                                docIndex = bulk.docs.length - 1;
-                            }
-
-                            if(!bulk["docs"][docIndex]["views"].hasOwnProperty(name)) {
-                                bulk["docs"][docIndex]["views"][name] = {};
-                            }
-
-                            bulk["docs"][docIndex]["views"][name][filename] = resp[file]["data"];
-                        }
-                    }
-                }
-                $http.post(BASEURL + workspace + "/_bulk_docs", JSON.stringify(bulk));
-            }, errorHandler);
         };
 
         indexOfDocument = function(list, name) {

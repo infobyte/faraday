@@ -4,7 +4,9 @@
 
 angular.module('faradayApp')
     // file export
-    .directive('fileExporter', function($parse, $click, $blob, $log, $timeout) {
+    .directive('fileExporter', 
+        ['$parse', '$click', '$blob', '$log', '$timeout', 
+        function($parse, $click, $blob, $log, $timeout) {
       return {
         compile: function($element, attr) {
           var fn = $parse(attr.fileExporter);
@@ -35,4 +37,4 @@ angular.module('faradayApp')
           };
         }
       };
-    });
+    }]);

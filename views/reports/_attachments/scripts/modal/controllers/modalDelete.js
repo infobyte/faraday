@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalDeleteCtrl', function($scope, $modalInstance, amount) {
+    .controller('modalDeleteCtrl', ['$scope', '$modalInstance', 'amount', function($scope, $modalInstance, amount) {
         if(amount == 1) {
             $scope.message = "A vulnerability will be deleted.";
         } else {
@@ -18,4 +18,4 @@ angular.module('faradayApp')
         $scope.cancel = function() {
             $modalInstance.dismiss('cancel');
         };
-    });
+    }]);

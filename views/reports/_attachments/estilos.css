@@ -264,7 +264,7 @@ table.tablesorter {
     border: 1px solid!important;
 }
 .tablesorter tbody {
-    height: 205px;
+    max-height: 205px;
     overflow-y: auto;
 }
 .main thead tr{position: absolute;top:38px;}
@@ -370,7 +370,17 @@ table.csv-export tbody tr:hover{
 #list .tablesorter tbody td {width: 25.6%}
 #list .tablesorter tbody td:nth-child(2){width: 32%;word-break: break-all;}
 #list .tablesorter thead th:last-child{width: 19%}
-#compound .tablesorter tbody{height:284px;}
+#compound tbody{display: block;max-height: 370px}
+#compound .tablesorter tbody td:first-child{width: 57%}
+#compound .tablesorter tbody td {width: 25.6%}
+#compound .tablesorter tbody td:nth-child(2){width: 18%}
+#compound .tablesorter thead th:first-child{width: 54%}
+#compound .tablesorter thead th {
+    width: 27%;
+    float: left;
+    border:1px solid;
+}
+#compound .tablesorter thead th:last-child{width: 19%}
     #compound .col-lg-6 article.panel{height: 93px}
 
 .table-striped tbody tr:nth-child(odd){background: #f9f9f9;}
@@ -560,5 +570,7 @@ span.input-group-addon.add-reference{
     font-size: 14px !important;
 }
 div#treemap_container{margin: 5% auto 0}
-div#compound .showPagination input.form-control{width: 68px;}
+div#compound .showPagination input.form-control{width:110px;}
 div#compound .showPagination div.form-group{margin-top: 10px;}
+div#compound article.panel-default input{width: 90px;float: right}
+div#compound .showPagination input#vuln-per-page{width: 75px!important;margin-right: 15%}

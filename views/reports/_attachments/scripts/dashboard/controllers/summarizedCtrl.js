@@ -138,6 +138,7 @@ angular.module('faradayApp')
                                     }
                                 }
                             });
+                            host.servicesCount = 0;
                             servicesCount.forEach(function(count){
                                 if (count.key == host.id) {
                                     host.servicesCount = count.value;

@@ -61,7 +61,7 @@ angular.module('faradayApp')
         };
 
 
-        workspacesFact.list(function(wss) {
+        workspacesFact.list().then(function(wss) {
             $scope.wss = wss;
             $scope.wss.forEach(function(w){
                 workspacesFact.get(w, $scope.onSuccessGet);

@@ -6,14 +6,18 @@ angular.module('faradayApp')
     .factory('workspacesFact', ['BASEURL', '$http', '$q', function(BASEURL, $http, $q) {
         var workspacesFact = {};
 
-        workspacesFact.list = function(callback) { 
+        workspacesFact.list = function() { 
             var url = BASEURL + "_all_dbs";
-            $http.get(url).success(function(d, s, h, c) {
-                var wss = d.filter(function(ws) {
-                    return ws.search(/^_/) < 0 && ws.search("cwe") < 0 && ws.search("reports") < 0;
-                });
-                callback(wss);
-            });
+            return $http.get(url).
+                then(filterReservedWorkspaces, errorHandler);
+        };
+
+        filterReservedWorkspaces = function(data) {
+            var deferred = $q.defer();
+            deferred.resolve(data.data.filter(function(ws) {
+                return ws.search(/^_/) < 0 && ws.search("cwe") < 0 && ws.search("reports") < 0;
+            }));
+            return deferred.promise;
         };
 
         workspacesFact.get = function(workspace_name, onSuccess) {
@@ -32,7 +36,6 @@ angular.module('faradayApp')
             return $http(request).success(function(data) {
                 exists_workspace = true;
             });
-            return exists_workspace;
         };
 
         errorHandler = function(response) {

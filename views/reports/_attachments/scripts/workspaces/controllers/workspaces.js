@@ -60,7 +60,6 @@ angular.module('faradayApp')
             };
         };
 
-
         workspacesFact.list().then(function(wss) {
             $scope.wss = wss;
             $scope.wss.forEach(function(w){

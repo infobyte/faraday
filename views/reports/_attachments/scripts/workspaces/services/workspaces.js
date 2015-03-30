@@ -6,17 +6,39 @@ angular.module('faradayApp')
     .factory('workspacesFact', ['BASEURL', '$http', '$q', function(BASEURL, $http, $q) {
         var workspacesFact = {};
 
-        workspacesFact.list = function() { 
-            var url = BASEURL + "_all_dbs";
-            return $http.get(url).
-                then(filterReservedWorkspaces, errorHandler);
+        workspacesFact.list = function() {
+            var url = BASEURL + "_all_dbs",
+            deferred = $q.defer();
+            deferred.resolve(
+                $http.get(url).
+                    then(filterReservedWorkspaces, errorHandler).
+                    then(filterInaccesibleWorkspaces, errorHandler)
+            );
+            return deferred.promise;
         };
 
-        filterReservedWorkspaces = function(data) {
+        filterReservedWorkspaces = function(wss) {
             var deferred = $q.defer();
-            deferred.resolve(data.data.filter(function(ws) {
+            deferred.resolve(wss.data.filter(function(ws) {
                 return ws.search(/^_/) < 0 && ws.search("cwe") < 0 && ws.search("reports") < 0;
             }));
+            return deferred.promise;
+        };
+
+        filterInaccesibleWorkspaces = function(wss) {
+            var workspaces = [],
+            deferred = $q.defer();
+            wss.forEach(function(ws) {
+                $http.get(BASEURL + ws).
+                    then(function(stat) {
+                        workspaces.push(stat.status);
+                    }, errorHandler);
+            });
+            $q.all(workspaces).then(function(resp) {
+                deferred.resolve(wss.filter(function(ws, index) {
+                    return resp[index] == 200;
+                }));
+            });
             return deferred.promise;
         };
 

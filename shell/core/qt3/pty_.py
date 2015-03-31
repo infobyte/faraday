@@ -213,8 +213,8 @@ class PtyProcess(signalable.Signalable, qt.QObject):
         try:
             buf = os.read(fd, 4096)
         except OSError:
-            import traceback
-            traceback.print_exc()
+            # import traceback
+            # traceback.print_exc()
             return
         lenlist[0] = len(buf)
         if not buf:

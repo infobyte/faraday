@@ -18,7 +18,7 @@ angular.module('faradayApp')
         $scope.pagination = 10;
 
         // load all workspaces
-        statusReportFact.getWorkspaces(function(wss) {
+        statusReportFact.getWorkspaces().then(function(wss) {
             $scope.workspaces = wss;
         });
 

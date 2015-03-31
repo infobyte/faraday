@@ -29,10 +29,7 @@ angular.module('faradayApp')
             var workspaces = [],
             deferred = $q.defer();
             wss.forEach(function(ws) {
-                $http.get(BASEURL + ws).
-                    then(function(stat) {
-                        workspaces.push(stat.status);
-                    }, errorHandler);
+                workspaces.push($http.get(BASEURL + ws).then(returnStatus, returnStatus));
             });
             $q.all(workspaces).then(function(resp) {
                 deferred.resolve(wss.filter(function(ws, index) {
@@ -40,6 +37,10 @@ angular.module('faradayApp')
                 }));
             });
             return deferred.promise;
+        };
+
+        returnStatus = function(data) {
+            return $q.when(data.status);
         };
 
         workspacesFact.get = function(workspace_name, onSuccess) {

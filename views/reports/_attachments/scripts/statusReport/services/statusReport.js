@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('statusReportFact', ['vulnsFact', 'vulnsWebFact', 'hostsFact', 'workspacesFact', function(vulnsFact, vulnsWebFact, hostsFact, wsFact) {
+    .factory('statusReportFact', ['vulnsFact', 'vulnsWebFact', 'hostsFact', 'workspacesFact', function(vulnsFact, vulnsWebFact, hostsFact, workspacesFact) {
         var statusReportFact = {};
 
         statusReportFact.getVulns = function(ws) {
@@ -31,8 +31,8 @@ angular.module('faradayApp')
             vulnsFact.remove(ws, vuln);
         };
 
-        statusReportFact.getWorkspaces = function(callback) {
-            wsFact.list(callback);
+        statusReportFact.getWorkspaces = function() {
+            return workspacesFact.list();
         };
 
         return statusReportFact;

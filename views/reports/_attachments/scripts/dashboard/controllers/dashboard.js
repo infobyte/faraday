@@ -10,7 +10,7 @@ angular.module('faradayApp')
             $scope.workspace = $routeParams.wsId;
             $scope.workspaces = [];
 
-            statusReportFact.getWorkspaces(function(wss) {
+            statusReportFact.getWorkspaces().then(function(wss) {
                 $scope.workspaces = wss;
             });
     }]);

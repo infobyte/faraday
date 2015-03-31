@@ -6,14 +6,41 @@ angular.module('faradayApp')
     .factory('workspacesFact', ['BASEURL', '$http', '$q', function(BASEURL, $http, $q) {
         var workspacesFact = {};
 
-        workspacesFact.list = function(callback) { 
-            var url = BASEURL + "_all_dbs";
-            $http.get(url).success(function(d, s, h, c) {
-                var wss = d.filter(function(ws) {
-                    return ws.search(/^_/) < 0 && ws.search("cwe") < 0 && ws.search("reports") < 0;
-                });
-                callback(wss);
+        workspacesFact.list = function() {
+            var url = BASEURL + "_all_dbs",
+            deferred = $q.defer();
+            deferred.resolve(
+                $http.get(url).
+                    then(filterReservedWorkspaces, errorHandler).
+                    then(filterInaccesibleWorkspaces, errorHandler)
+            );
+            return deferred.promise;
+        };
+
+        filterReservedWorkspaces = function(wss) {
+            var deferred = $q.defer();
+            deferred.resolve(wss.data.filter(function(ws) {
+                return ws.search(/^_/) < 0 && ws.search("cwe") < 0 && ws.search("reports") < 0;
+            }));
+            return deferred.promise;
+        };
+
+        filterInaccesibleWorkspaces = function(wss) {
+            var workspaces = [],
+            deferred = $q.defer();
+            wss.forEach(function(ws) {
+                workspaces.push($http.get(BASEURL + ws).then(returnStatus, returnStatus));
             });
+            $q.all(workspaces).then(function(resp) {
+                deferred.resolve(wss.filter(function(ws, index) {
+                    return resp[index] == 200;
+                }));
+            });
+            return deferred.promise;
+        };
+
+        returnStatus = function(data) {
+            return $q.when(data.status);
         };
 
         workspacesFact.get = function(workspace_name, onSuccess) {
@@ -32,7 +59,6 @@ angular.module('faradayApp')
             return $http(request).success(function(data) {
                 exists_workspace = true;
             });
-            return exists_workspace;
         };
 
         errorHandler = function(response) {

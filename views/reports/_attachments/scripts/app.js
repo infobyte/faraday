@@ -40,37 +40,38 @@ faradayApp.config(['$routeProvider', function($routeProvider) {
         when('/dashboard/ws/:wsId', {
             templateUrl: 'scripts/dashboard/partials/dashboard.html',
             controller: 'dashboardCtrl',
-            title: 'Dashboard'
+            title: 'Dashboard | '
         }).
         when('/dashboard', {
             templateUrl: 'scripts/partials/workspaces.html',
             controller: 'workspacesCtrl',
-            title: 'Dashboard'
+            title: 'Dashboard | '
         }).
         when('/status/ws/:wsId', {
             templateUrl: 'scripts/partials/status_report.html',
             controller: 'statusReportCtrl',
-            title: 'Status Report'
+            title: 'Status Report | '
         }).
         when('/workspaces', {
             templateUrl: 'scripts/workspaces/partials/list.html',
             controller: 'workspacesCtrl',
-            title: 'Workspaces'
+            title: 'Workspaces | '
         }).
         when('/status', {
             templateUrl: 'scripts/partials/workspaces.html',
             controller: 'workspacesCtrl',
-            title: 'Status Report'
+            title: 'Status Report | '
         }).
         otherwise({
             templateUrl: 'scripts/partials/home.html',
-            controller: 'statusReportCtrl',
-            title: 'Web UI'
+            controller: 'statusReportCtrl'
         });
 }]);
 
 faradayApp.run(['$location', '$rootScope', function($location, $rootScope) {
     $rootScope.$on('$routeChangeSuccess', function(event, current, previous) {
-        $rootScope.title = current.$$route.title;
+        if(current.hasOwnProperty('$$route')) {
+            $rootScope.title = current.$$route.title;
+        }
     });
 }]);

@@ -362,13 +362,13 @@ table.csv-export tbody tr:hover{
 }
 
 #list .tablesorter thead th {
-    width: 27%;
-    float: left;
+    width: 45%;
     border:1px solid;
 }
 #list tbody{display: block}
-#list .tablesorter tbody td {width: 25.6%}
-#list .tablesorter tbody td:nth-child(2){width: 32%;word-break: break-all;}
+#list .tablesorter tr {display: block;}
+#list .tablesorter tbody td {width: 51.6%}
+#list .tablesorter tbody td:nth-child(2){width: 51%;word-break: break-all;}
 #list .tablesorter thead th:last-child{width: 19%}
 #compound tbody{display: block;max-height: 370px}
 #compound .tablesorter tr {display: table-row;}
@@ -509,6 +509,7 @@ select.ng-valid{
     .seccion.treemap{margin-left: 20%}
     #byservices .col-lg-3, #summarized .col-lg-3{width: 28%;margin: 0px -2% 0px 1%;}
     #compound .tablesorter tbody td span, #compound .tablesorter tbody td img{margin-right: 50px}
+    #list .tablesorter tbody td:nth-child(2){width: 34%}
 }
 @media screen and (max-width:1000px) {
     #no-overflow{overflow: auto!important }

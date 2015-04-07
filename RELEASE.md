@@ -10,6 +10,19 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+
+Apr 7, 2015:
+---
+You can get the new version here:
+* https://github.com/infobyte/faraday/archive/v1.0.9.tar.gz
+
+Changes:
+
+* Performance improvment in the dahsboard
+* Fix bug OSX install
+* Bug fixes
+
+
 Mar 9, 2015:
 ---
 You can get the new version here:

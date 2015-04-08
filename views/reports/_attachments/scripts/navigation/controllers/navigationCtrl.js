@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('navigationCtrl', ['$scope', '$route', '$routeParams', '$cookies', '$location',
-        function($scope, $route, $routeParams, $cookies, $location) {
+    .controller('navigationCtrl', ['$scope', '$http','$route', '$routeParams', '$cookies', '$location',
+        function($scope, $http, $route, $routeParams, $cookies, $location) {
 
         $scope.workspace = "";
 
@@ -31,4 +31,8 @@ angular.module('faradayApp')
 
         $scope.loadCurrentWorkspace();
 
+        if(navigator.userAgent.toLowerCase().indexOf('iceweasel') > -1) {
+             $scope.isIceweasel = "Your browser is not supported, please use Firefox or Chrome";
+        }
+        
 	}]);

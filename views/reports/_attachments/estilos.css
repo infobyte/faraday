@@ -574,3 +574,9 @@ div#compound .showPagination input.form-control{width:110px;}
 div#compound .showPagination div.form-group{margin-top: 10px;}
 div#compound article.panel-default input{width: 90px;float: right}
 div#compound .showPagination input#vuln-per-page{width: 75px!important;margin-right: 15%}
+header .alert.alert-danger.alert-dismissible{
+    position: fixed;
+    top: 45%;
+    left: 30%;
+    font-size: 15px;
+}

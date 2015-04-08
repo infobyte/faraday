@@ -49,8 +49,16 @@
 <body>
     <div id="cont">
         <div class="wrapper">
-            <header class="head">
+            <header class="head" ng-controller="indexCtrl">
                 <a href="#" class="ws-dashboard"><img class="logo" src="images/logo-faraday.png" alt="Faraday home | WS Dashboard"/></a>
+                <div ng-show="isIceweasel" class="alert alert-danger alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span aria-hidden="true">&times;</span>
+                        <span class="sr-only">Close</span>
+                    </button>
+                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                    <span>Your browser is not supported, please use Firefox or Chrome</span>
+                </div>
             </header>
             
             <div ng-controller="navigationCtrl" ng-include="'scripts/navigation/partials/leftBar.html'"></div>
@@ -67,6 +75,7 @@
     <script type="text/javascript" src="scripts/fileExporter/services/blob.js"></script>
     <script type="text/javascript" src="scripts/fileExporter/services/click.js"></script>
     <script type="text/javascript" src="scripts/hosts/services/hosts.js"></script>
+    <script type="text/javascript" src="scripts/index/controllers/indexCtrl.js"></script>
     <script type="text/javascript" src="scripts/modal/filter/Filter.js"></script>
     <script type="text/javascript" src="scripts/modal/controllers/modalDelete.js"></script>
     <script type="text/javascript" src="scripts/modal/controllers/modalEdit.js"></script>

@@ -11,10 +11,14 @@ angular.module('faradayApp')
             var vulnsWeb    = vulnsWebFact.get(ws);
             var hosts       = hostsFact.get(ws);
             vulns.forEach(function(element, index, array) {
-                element.target = hosts[element.parent].name;
+                if (element.parent in hosts) {
+                    element.target = hosts[element.parent].name;
+                }
             });
             vulnsWeb.forEach(function(element, index, array) {
-                element.target = hosts[element.parent].name;
+                if (element.parent in hosts) {
+                    element.target = hosts[element.parent].name;
+                }
             });
             return vulnsWeb.concat(vulns);
         };

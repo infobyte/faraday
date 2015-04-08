@@ -31,4 +31,8 @@ angular.module('faradayApp')
 
         $scope.loadCurrentWorkspace();
 
+        if(navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+            $scope.isIceweasel = "Your browser is not supported, please use Firefox or Chrome";
+        }
+
 	}]);

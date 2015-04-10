@@ -80,12 +80,13 @@ angular.module('faradayApp')
                 });
             });
             $q.all(allServices).then(function(all) {
+                var i = 0;
                 all.forEach(function(services, sindex) {
-                    var i = 0;
                     services.forEach(function(service) {
-                        i += service.value;
+                        i = i + service.value;
                     });
                     $scope.services[sindex] = i;
+                    i = 0;
                 });
             });
             $q.all(allHosts).then(function(all) {

@@ -3,10 +3,13 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('workspacesCtrl', ['$modal', '$scope', 'workspacesFact',
-            function($modal, $scope, workspacesFact) {
+    .controller('workspacesCtrl', ['$modal', '$scope', '$q', 'workspacesFact', 'dashboardSrv',
+            function($modal, $scope, $q, workspacesFact, dashboardSrv) {
         $scope.workspaces = [];
         $scope.wss = [];
+        $scope.services = [];
+        $scope.vulnerabilities = [];
+        $scope.hosts = [];
         // $scope.newworkspace = {};
 
         $scope.onSuccessGet = function(workspace){
@@ -60,12 +63,43 @@ angular.module('faradayApp')
             };
         };
 
+        // todo: refactor the following code
         workspacesFact.list().then(function(wss) {
             $scope.wss = wss;
-            $scope.wss.forEach(function(w){
-                workspacesFact.get(w, $scope.onSuccessGet);
+            var allServices = [],
+            allHosts = [];
+            $scope.wss.forEach(function(ws, index){
+                workspacesFact.get(ws, $scope.onSuccessGet);
+                $scope.vulnerabilities[index] = dashboardSrv.getVulnerabilitiesCount(ws);
+                allServices[index] = dashboardSrv.getServicesCount(ws);
+                allHosts[index] = dashboardSrv.getObjectsCount(ws);
+            });
+            $q.all($scope.vulnerabilities).then(function(vulns) {
+                vulns.forEach(function(vuln, index) {
+                    $scope.vulnerabilities[index] = vuln.length;
+                });
+            });
+            $q.all(allServices).then(function(all) {
+                all.forEach(function(services, sindex) {
+                    var i = 0;
+                    services.forEach(function(service) {
+                        i += service.value;
+                    });
+                    $scope.services[sindex] = i;
+                });
+            });
+            $q.all(allHosts).then(function(all) {
+                all.forEach(function(hosts, hsindex) {
+                    hosts.forEach(function(host, hindex) {
+                        if(host.key === "hosts") {
+                            allHosts[hsindex] = host.value;
+                        }
+                    });
+                });
+                $scope.hosts = allHosts;
             });
         });
+
         var hash_tmp = window.location.hash.split("/")[1];
         switch (hash_tmp){
             case "status":

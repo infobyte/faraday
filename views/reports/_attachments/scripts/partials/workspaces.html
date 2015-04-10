@@ -12,11 +12,17 @@
                 <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Vulns</th>
+                        <th>Hosts</th>
+                        <th>Services</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr ng-repeat="ws in wss">
                         <td><a href="#/{{hash}}/ws/{{ws}}"><span ng-class-even="'label label-unclassified'" ng-class-odd="'label label-high'">{{ws}}</span></a></td>
+                        <td ng-bind="vulnerabilities[$index]"></td>
+                        <td ng-bind="hosts[$index]"></td>
+                        <td ng-bind="services[$index]"></td>
                     </tr>
                 </tbody>
             </table>

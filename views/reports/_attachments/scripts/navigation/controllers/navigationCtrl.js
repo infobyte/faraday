@@ -7,13 +7,32 @@ angular.module('faradayApp')
         function($scope, $http, $route, $routeParams, $cookies, $location) {
 
         $scope.workspace = "";
+        $scope.component = "";
 
-        $scope.$on('$routeChangeSuccess', function(){
+        $scope.$on('$routeChangeSuccess', function() {
+            $scope.updateWorkspace();
+            $scope.updateComponent();
+        });
+
+        $scope.updateWorkspace = function() {
             if($routeParams.wsId != undefined) {
                 $scope.workspace = $routeParams.wsId;
                 $cookies.currentUrl = $location.path();
             }
-        });
+        };
+
+        $scope.updateComponent = function() {
+            if($location.path() == "") {
+                $scope.component = "home";
+            } else {
+                $scope.component = $location.path().split("/")[1];
+            }
+            $cookies.currentComponent = $scope.component;
+        };
+
+        $scope.showNavigation = function() {
+            return $scope.component != "home";
+        };
 
         $scope.loadCurrentWorkspace = function() {
             var pos = -1;

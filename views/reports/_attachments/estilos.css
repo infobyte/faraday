@@ -582,3 +582,95 @@ aside .alert.alert-danger.alert-dismissible{
     font-size: 15px;
     z-index: 1000;
 }
+
+
+.label-unclassified { 
+      color: #FFFFFF; 
+        background-color: #444147; 
+          border-color: #444147; 
+} 
+ 
+ .label-unclassified:hover, 
+ .label-unclassified:focus, 
+ .label-unclassified:active, 
+ .label-unclassified.active, 
+ .open .dropdown-toggle.label-unclassified { 
+       color: #FFFFFF; 
+         background-color: #111012; 
+           border-color: #444147; 
+ } 
+  
+  .label-unclassified:active, 
+  .label-unclassified.active, 
+  .open .dropdown-toggle.label-unclassified { 
+        background-image: none; 
+  } 
+   
+   .label-unclassified.disabled, 
+   .label-unclassified[disabled], 
+   fieldset[disabled] .label-unclassified, 
+   .label-unclassified.disabled:hover, 
+   .label-unclassified[disabled]:hover, 
+   fieldset[disabled] .label-unclassified:hover, 
+   .label-unclassified.disabled:focus, 
+   .label-unclassified[disabled]:focus, 
+   fieldset[disabled] .label-unclassified:focus, 
+   .label-unclassified.disabled:active, 
+   .label-unclassified[disabled]:active, 
+   fieldset[disabled] .label-unclassified:active, 
+   .label-unclassified.disabled.active, 
+   .label-unclassified[disabled].active, 
+   fieldset[disabled] .label-unclassified.active { 
+         background-color: #444147; 
+           border-color: #444147; 
+   } 
+    
+    .label-unclassified .badge { 
+          color: #444147; 
+            background-color: #FFFFFF; 
+    }
+.label-high { 
+      color: #ffffff; 
+        background-color: #DF3936; 
+          border-color: #DF3936; 
+} 
+ 
+ .label-high:hover, 
+ .label-high:focus, 
+ .label-high:active, 
+ .label-high.active, 
+ .open .dropdown-toggle.label-high { 
+       color: #ffffff; 
+         background-color: #992826; 
+           border-color: #DF3936; 
+ } 
+  
+  .label-high:active, 
+  .label-high.active, 
+  .open .dropdown-toggle.label-high { 
+        background-image: none; 
+  } 
+   
+   .label-high.disabled, 
+   .label-high[disabled], 
+   fieldset[disabled] .label-high, 
+   .label-high.disabled:hover, 
+   .label-high[disabled]:hover, 
+   fieldset[disabled] .label-high:hover, 
+   .label-high.disabled:focus, 
+   .label-high[disabled]:focus, 
+   fieldset[disabled] .label-high:focus, 
+   .label-high.disabled:active, 
+   .label-high[disabled]:active, 
+   fieldset[disabled] .label-high:active, 
+   .label-high.disabled.active, 
+   .label-high[disabled].active, 
+   fieldset[disabled] .label-high.active { 
+         background-color: #DF3936; 
+           border-color: #DF3936; 
+   } 
+    
+    .label-high .badge { 
+          color: #DF3936; 
+            background-color: #ffffff; 
+    }

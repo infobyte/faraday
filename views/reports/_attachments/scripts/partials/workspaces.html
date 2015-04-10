@@ -1,17 +1,25 @@
 <!-- Faraday Penetration Test IDE -->
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
-
-            <section id="main" class="seccion clearfix">
-                <div class="right-main"><div id="reports-main" class="fila clearfix">
-                    <h2 class="ws-label">
-                        <span id="ws-name" class="label label-default"
-                        title="Current workspace">All available sections</span><!-- WS name -->
-                    </h2><!-- .ws-label -->
-                    <div class="reports">
-                        <div class="ws-list">
-                            <a href="#/{{hash}}/ws/{{ws}}" class="ws-link" ng-repeat="ws in wss"><p class="label label-success ws-name">{{ws}}</p></a>
-                        </div><!-- .ws-list -->
-                    </div><!-- .reports -->
-                </div><!-- #reports-main --></div><!-- .right-main -->
-            </section>
+<section id="main" class="seccion clearfix">
+    <div class="right-main"><div id="reports-main" class="fila clearfix">
+        <div class="jumbotron">
+            <h1><b>Welcome!</b></h1>
+            <p>These are your available workspaces</p>
+        </div><!-- .jumbotron -->
+        <div class="reports normal-size">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="ws in wss">
+                        <td><a href="#/{{hash}}/ws/{{ws}}"><span ng-class-even="'label label-unclassified'" ng-class-odd="'label label-high'">{{ws}}</span></a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div><!-- .reports -->
+    </div><!-- #reports-main --></div><!-- .right-main -->
+</section>

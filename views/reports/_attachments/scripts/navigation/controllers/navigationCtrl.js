@@ -31,7 +31,8 @@ angular.module('faradayApp')
         };
 
         $scope.showNavigation = function() {
-            return $scope.component != "home";
+            var noNav = ["home", "index"];
+            return noNav.indexOf($scope.component) < 0;
         };
 
         $scope.loadCurrentWorkspace = function() {

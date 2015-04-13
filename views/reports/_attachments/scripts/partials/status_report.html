@@ -50,6 +50,7 @@
                         <table class="csv-export status-report">
                             <thead>
                                 <tr>
+                                    <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
                                     <th ng-if="columns.date">
                                         <a href="" ng-click="toggleShow('date', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="toggleSort('date')">Date</a>
@@ -133,7 +134,6 @@
                                         <a href="" ng-click="toggleShow('easeofresolution', true)"><span class="glyphicon glyphicon-remove"></span></a>
                                         <a href="" ng-click="toggleSort('easeofresolution')">Ease of Resolution</a>
                                     </th>
-                                    <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -141,6 +141,7 @@
                                     selection-model selection-model-type="checkbox"
                                     selection-model-mode="multiple-additive" 
                                     selection-model-selected-class="multi-selected">
+                                    <td><input type="checkbox" name="{{v.id}}"/></td>
                                     <td ng-if="columns.date">{{v.date | date:'MM/dd/yyyy'}}</td>
                                     <td ng-if="columns.target">{{v.target}}</td>
                                     <td ng-if="columns.status">Vulnerable</td>
@@ -173,7 +174,6 @@
                                         </div>
                                     </td>
                                     <td ng-if="columns.easeofresolution">{{v.easeofresolution}}</td>
-                                    <td><input type="checkbox" name="{{v.id}}"/></td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->

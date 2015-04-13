@@ -169,7 +169,7 @@
         </thead>
         <tbody>
             <tr ng-repeat="v in vulns | filter:isChecked | orderBy:sortField:reverse">
-                <td>{{v.date}}</td>
+                <td>{{v.date | date:'MM/dd/yyyy'}}</td>
                 <td>
                     <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
                     <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>

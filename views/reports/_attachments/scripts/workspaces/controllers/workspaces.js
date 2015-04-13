@@ -3,10 +3,11 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('workspacesCtrl', ['$modal', '$scope', 'workspacesFact',
-            function($modal, $scope, workspacesFact) {
+    .controller('workspacesCtrl', ['$modal', '$scope', '$q', 'workspacesFact', 'dashboardSrv',
+            function($modal, $scope, $q, workspacesFact, dashboardSrv) {
         $scope.workspaces = [];
         $scope.wss = [];
+        $scope.objects = {};
         // $scope.newworkspace = {};
 
         $scope.onSuccessGet = function(workspace){
@@ -60,12 +61,30 @@ angular.module('faradayApp')
             };
         };
 
+        // todo: refactor the following code
         workspacesFact.list().then(function(wss) {
             $scope.wss = wss;
-            $scope.wss.forEach(function(w){
-                workspacesFact.get(w, $scope.onSuccessGet);
+            var objects = {};
+            $scope.wss.forEach(function(ws){
+                workspacesFact.get(ws, $scope.onSuccessGet);
+                objects[ws] = dashboardSrv.getObjectsCount(ws);
+            });
+            $q.all(objects).then(function(os) {
+                for(var workspace in os) {
+                    if(os.hasOwnProperty(workspace)) {
+                        $scope.objects[workspace] = {
+                            "total vulns": "-",
+                            "hosts": "-",
+                            "services": "-"
+                        };
+                        os[workspace].forEach(function(o) {
+                            $scope.objects[workspace][o.key] = o.value;
+                        });
+                    }
+                }
             });
         });
+
         var hash_tmp = window.location.hash.split("/")[1];
         switch (hash_tmp){
             case "status":

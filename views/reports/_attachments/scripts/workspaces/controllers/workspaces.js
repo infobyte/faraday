@@ -7,9 +7,7 @@ angular.module('faradayApp')
             function($modal, $scope, $q, workspacesFact, dashboardSrv) {
         $scope.workspaces = [];
         $scope.wss = [];
-        $scope.services = [];
-        $scope.vulnerabilities = [];
-        $scope.hosts = [];
+        $scope.objects = {};
         // $scope.newworkspace = {};
 
         $scope.onSuccessGet = function(workspace){
@@ -66,38 +64,24 @@ angular.module('faradayApp')
         // todo: refactor the following code
         workspacesFact.list().then(function(wss) {
             $scope.wss = wss;
-            var allServices = [],
-            allHosts = [];
-            $scope.wss.forEach(function(ws, index){
+            var objects = {};
+            $scope.wss.forEach(function(ws){
                 workspacesFact.get(ws, $scope.onSuccessGet);
-                $scope.vulnerabilities[index] = dashboardSrv.getVulnerabilitiesCount(ws);
-                allServices[index] = dashboardSrv.getServicesCount(ws);
-                allHosts[index] = dashboardSrv.getObjectsCount(ws);
+                objects[ws] = dashboardSrv.getObjectsCount(ws);
             });
-            $q.all($scope.vulnerabilities).then(function(vulns) {
-                vulns.forEach(function(vuln, index) {
-                    $scope.vulnerabilities[index] = vuln.length;
-                });
-            });
-            $q.all(allServices).then(function(all) {
-                var i = 0;
-                all.forEach(function(services, sindex) {
-                    services.forEach(function(service) {
-                        i = i + service.value;
-                    });
-                    $scope.services[sindex] = i;
-                    i = 0;
-                });
-            });
-            $q.all(allHosts).then(function(all) {
-                all.forEach(function(hosts, hsindex) {
-                    hosts.forEach(function(host, hindex) {
-                        if(host.key === "hosts") {
-                            allHosts[hsindex] = host.value;
-                        }
-                    });
-                });
-                $scope.hosts = allHosts;
+            $q.all(objects).then(function(os) {
+                for(var workspace in os) {
+                    if(os.hasOwnProperty(workspace)) {
+                        $scope.objects[workspace] = {
+                            "total vulns": "-",
+                            "hosts": "-",
+                            "services": "-"
+                        };
+                        os[workspace].forEach(function(o) {
+                            $scope.objects[workspace][o.key] = o.value;
+                        });
+                    }
+                }
             });
         });
 

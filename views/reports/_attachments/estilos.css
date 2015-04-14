@@ -124,7 +124,7 @@ aside {
   aside nav.index{padding-top:55px;}
     aside nav a {
         display: block;
-        padding: 12px 0px;
+        padding: 12px 0;
         color: #fff;
         text-align: center;
         transition: all .3s ease;
@@ -407,23 +407,40 @@ table.tablesorter thead tr .headerSortDown {
     background-image: url(images/desc.gif);
 }
 
-
-table.status-report {
-    background-color: #CDCDCD;
-    margin:0px 0pt 15px;
-    font-size: 12px;
-    width: 100%;
-    text-align: center;
+div.modal-body .col-md-6.vuln_table{width: 63%}
+div.modal-footer button.btn{bottom: 1%;right: 1%;}
+div.modal-footer button.btn.btn-success{right: 10%}
+div.modal-footer button.btn-footer{position: absolute;}
+.modal-content table.csv-export.status-report{ 
+    width: 60%;
 }
 
-
-    
-table.status-report thead tr th, table.status-report tfoot tr th {
-    background-color: #3F464C;
-    color: #fff;
-    border: 1px solid #FFF;
+/* Table Status Report */
+table.status-report {
+	/* background-color: #CDCDCD; */
+    margin:0 0 15px;
+    font-size: 12px;
+    width: 100%;
+}
+	table.status-report thead th {
+		white-space: nowrap;
+	}
+		table.status-report thead th a {
+			color: #3a3a3a;
+			text-shadow: 0 1px 0 #fff;
+		}   
+table.status-report thead tr th, table.status-report tfoot tr th {   
+    background-image: linear-gradient(to bottom,#E8EFF0 0,#DDDDDD 100%);
+		background-image: -webkit-linear-gradient(top,#E8EFF0 0,#DDDDDD 100%);
+		filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#E8EFF0', endColorstr='#DDDDDD', GradientType=0);
+		filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+		background-repeat: repeat-x;
+    border: none;
     font-size: 14px;
-    padding: 5px;
+    padding: 10px 5px;
+    letter-spacing: -.05em;
+	font-weight: normal;
+	text-transform: uppercase;
 }
 
 table.status-report thead tr .header {
@@ -723,6 +740,7 @@ span.input-group-addon.add-reference{
     font-size: 14px !important;
 }
 div#treemap_container{margin: 5% auto 0}
+div#compound div.showPagination{margin-bottom: 30px}
 div#compound .showPagination input.form-control{width:110px;}
 div#compound .showPagination div.form-group{margin-top: 10px;}
 div#compound article.panel-default input{width: 90px;float: right}

@@ -551,7 +551,7 @@ div.panel-heading a i.glyphicon{margin: -25px 10px;}
 div.modal-body .alert-danger.target_not_selected{font-size: 15px}
 /* Pagination Modal New */
 .showPagination ul.pagination{font-size: 15px;margin:auto;padding-left: 2%}
-div.showPagination .col-md-2, div.showPagination .btn.btn-danger{float:right;}
+div.showPagination .col-md-2, div.showPagination .btn.btn-default{float:right;}
 div.showPagination form#goToPageStatus{margin-top:-40px;}
 input.form-control.vuln_per_page{width: 10%;margin: auto}
 /* End */

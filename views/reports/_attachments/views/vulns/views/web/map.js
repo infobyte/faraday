@@ -3,28 +3,26 @@
 // See the file 'doc/LICENSE' for the license information
 function(doc) {
     if(doc.type == "VulnerabilityWeb"){
-        var easeofresolution = "",
-        impact = "",
-        resolution = "";
-        if(doc.easeofresolution == "undefined" || typeof(doc.easeofresolution) == "undefined") {
-            easeofresolution = "trivial";
-        } else {
+        var easeofresolution = "trivial",
+        impact = {
+            "accountability": 0,
+            "availability": 0,
+            "confidentiality": 0,
+            "integrity": 0
+        },
+        resolution = "",
+        tags = [];
+        if(doc.easeofresolution != "undefined" && typeof(doc.easeofresolution) != "undefined") {
             easeofresolution = doc.easeofresolution;
         }
-        if(doc.impact == "undefined" || typeof(doc.impact) == "undefined") {
-            impact = {
-                "accountability": 0,
-                "availability": 0,
-                "confidentiality": 0,
-                "integrity": 0
-            };
-        } else {
+        if(doc.impact != "undefined" && typeof(doc.impact) != "undefined") {
             impact = doc.impact;
         }
-        if(doc.resolution == "undefined" || typeof(doc.resolution) == "undefined") {
-            resolution = "";
-        } else {
+        if(doc.resolution != "undefined" && typeof(doc.resolution) != "undefined") {
             resolution = doc.resolution;
+        }
+        if(typeof(doc.tags) != "undefined") {
+            tags = doc.tags;
         }
 
         var obj = {
@@ -43,7 +41,8 @@ function(doc) {
             "parent":       	doc.parent, 
             "refs":         	doc.refs,
             "resolution":       resolution,
-            "severity":     	doc.severity, 
+            "severity":     	doc.severity,
+            "tags":             tags,
             "type":         	doc.type,
             /*** specific fields of web vulns ***/
             "method":       	doc.method,

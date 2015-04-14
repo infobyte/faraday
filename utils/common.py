@@ -10,14 +10,15 @@ import time
 import socket
 import struct
 import sys
+import requests
 
 def get_hash(parts):
-                                     
+
     return hashlib.sha1("._.".join(parts)).hexdigest()
 
 def new_id():
     return uuid.uuid4()
-    
+
 def get_macaddress(host):
     if sys.platform in ['linux','linux2']:
         with open("/proc/net/arp") as fh:
@@ -27,7 +28,7 @@ def get_macaddress(host):
                     return fields[3]
     else:
         return None
-    
+
 def gateway():
     ip=""
     if sys.platform in ['linux','linux2']:
@@ -40,10 +41,20 @@ def gateway():
                 mac=get_macaddress(ip)
                 return [str(ip),str(mac)]
     elif sys.platform in ['darwin']:
-                                    
+
         return None
     else:
         return None
-    
 
-                                                       
+
+def checkSSL(uri):
+    """
+    This method checks SSL validation
+    It only returns True if the certificate is valid
+    and the http server returned a 200 OK
+    """
+    try:
+        res = requests.get(uri, timeout=5)
+        return res.ok
+    except Exception:
+        return False

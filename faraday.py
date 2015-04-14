@@ -525,6 +525,22 @@ def checkUpdates():
         logger.info("No updates available, enjoy Faraday")
 
 
+def checkCouchUrl():
+    import requests
+    try:
+        requests.get(getInstanceConfiguration().getCouchURI(), timeout=5)
+    except requests.exceptions.SSLError:
+        print """
+        SSL certificate validation failed.
+        You can use the --cert option in Faraday
+        to set the path of the cert
+        """
+        sys.exit(-1)
+    except Exception as e:
+        # Non fatal error
+        pass
+
+
 def init():
     """Initializes what is needed before starting.
 
@@ -553,6 +569,7 @@ def main():
             os.environ['REQUESTS_CA_BUNDLE'] = args.cert_path
         checkConfiguration()
         setConf()
+        checkCouchUrl()
         setUpLogger()
         update()
         checkUpdates()

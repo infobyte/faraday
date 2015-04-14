@@ -133,6 +133,10 @@ def getParserArgs():
         default=False,
         help="Update Faraday IDE.")
 
+    parser.add_argument('--cert', action="store", dest="cert_path",
+        default=None,
+        help="Path to the valid CouchDB certificate")
+
     parser_gui_ex.add_argument('--gui', action="store", dest="gui",
         default="qt3",
         help="Select interface to start faraday. Default = qt3")
@@ -298,10 +302,10 @@ def startFaraday():
         print(Fore.WHITE + Style.BRIGHT + \
             "\n*" + string.center("faraday ui is ready", 53 - 6) )
         print(Fore.WHITE + Style.BRIGHT + \
-                """Make sure you got couchdb up and running.\nIf couchdb is up, point your browser to: \n[%s]""" % url) 
+                """Make sure you got couchdb up and running.\nIf couchdb is up, point your browser to: \n[%s]""" % url)
     else:
         print(Fore.WHITE + Style.BRIGHT + \
-                """Please config Couchdb for fancy HTML5 Dashboard""") 
+                """Please config Couchdb for fancy HTML5 Dashboard""")
 
     print(Fore.RESET + Back.RESET + Style.RESET_ALL)
 
@@ -499,9 +503,9 @@ def update():
         logger.info("Update process finished with no errors")
         logger.info("Faraday will start now.")
 
-def checkUpdates(): 
+def checkUpdates():
     import requests
-    uri = getInstanceConfiguration().getUpdatesUri() 
+    uri = getInstanceConfiguration().getUpdatesUri()
     resp = u"OK"
     try:
         f = open(CONST_VERSION_FILE)
@@ -545,6 +549,8 @@ def main():
     if checkDependencies():
         printBanner()
         logger.info("Dependencies met.")
+        if args.cert_path:
+            os.environ['REQUESTS_CA_BUNDLE'] = args.cert_path
         checkConfiguration()
         setConf()
         setUpLogger()

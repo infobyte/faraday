@@ -342,7 +342,7 @@ table.status-report tbody td {
 table.status-report tbody tr.odd td {
     background-color:#F0F0F6;
 }
-table.status-report th:last-child{text-align: center}
+table.status-report th:first-child{text-align: center}
 
 table.status-report thead tr th:first-child,
 table.status-report tbody tr td:first-child {

@@ -525,14 +525,15 @@ class MainWindow(qt.QMainWindow):
                 service is available and that connection string is from
                 the form: http[s]://hostname:port""")
                 return
-            if checkSSL(repourl):
-                self.showPopup(
-                    """
-                    SSL certificate validation failed.
-                    You can use the --cert option in Faraday
-                    to set the path of the cert
-                    """)
-                return
+            if repourl.startswith("https://"):
+                if not checkSSL(repourl):
+                    self.showPopup(
+                        """
+                        SSL certificate validation failed.
+                        You can use the --cert option in Faraday
+                        to set the path of the cert
+                        """)
+                    return
 
             CONF.setCouchUri(repourl)
             CONF.setCouchIsReplicated(isReplicated)

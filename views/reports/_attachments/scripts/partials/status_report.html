@@ -8,7 +8,7 @@
                         <h2><span id="ws-name" class="label label-default"
                         title="Current workspace">Status report for {{ workspace }} ({{vulns.length}} vulns)</span></h2><!-- WS name -->
 		        </div><!-- .ws-label -->
-		        <div id="ws-control" class="btn-group col-md-6 col-sm-6 col-xs-12">
+		        <div id="ws-control" class="btn-group">
 		            <button file-exporter="toCSV()" type="button" class="btn btn-success" title="Download CSV for current workspace">
 		                <span class="glyphicon glyphicon-download"></span>
 		            </button>
@@ -23,7 +23,7 @@
 		            </ul><!-- WS navigation -->
 		        </div><!-- #ws-control -->
 		        
-		        <div class="col-md-6 col-sm-6 col-xs-12">
+		        <div class="button-control col-md-6 col-sm-6 col-xs-12">
 	                        <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="delete()">
                                 <span class="glyphicon glyphicon-trash"></span> 
 	                            Delete
@@ -39,15 +39,15 @@
 			</div><!-- .col-md-6 .col-sm-6 .col-xs-12 -->
                     <div class="reports">
                     	<div class="row">
-							<div class="col-md-3 col-sm-3 col-xs-11">
-								<form style="margin: 10px !important;" role="form">
+							<div class="col-md-12 col-sm-3 col-xs-11">
+								<form role="form">
 		                            <div class="form-group">
 		                            	<h4><span class="label label-default " title="Filter by">Filter by</span></h4>
 		                                <input type="text" class="form-control input-sm" id="filter-by" placeholder="enter keywords..." ng-model="query" ng-change="currentPage = 0">
 		                            </div>
 		                        </form>  
 							</div>
-                    		<div class="col-md-9 col-sm-9 col-xs-12">
+                    		<div class="col-md-12 col-sm-9 col-xs-12">
 								<h4><span class="label label-default" title="Add columns">Add columns</span></h4>
 								<ul class="label-list">
 									<li ng-repeat="(column, show) in columns">

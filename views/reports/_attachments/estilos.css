@@ -334,8 +334,6 @@ article.untercio{
 ul.label-list {
 	list-style-type:none;
     white-space:nowrap;
-    overflow-x:scroll;
-    background: #fff;
 }
 	ul.label-list li {
 		display: inline;
@@ -632,6 +630,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
     }
     /* Workspaces list - Open*/
     div#ws-control.open>.dropdown-menu {display: table; left: 90px;}
+    div.button-control.col-md-6.col-sm-6.col-xs-12 {display: block; float: right}
     #sec {
         float: right;
         margin-top: -34px;

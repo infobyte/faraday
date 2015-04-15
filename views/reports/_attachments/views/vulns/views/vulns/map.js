@@ -10,8 +10,7 @@ function(doc) {
             "confidentiality": 0,
             "integrity": 0
         },
-        resolution = "",
-        tags = [];
+        resolution = "";
         if(doc.easeofresolution != "undefined" && typeof(doc.easeofresolution) != "undefined") {
             easeofresolution = doc.easeofresolution;
         }
@@ -20,9 +19,6 @@ function(doc) {
         }
         if(doc.resolution != "undefined" && typeof(doc.resolution) != "undefined") {
             resolution = doc.resolution;
-        }
-        if(typeof(doc.tags) != "undefined") {
-            tags = doc.tags;
         }
 
         var obj = {
@@ -42,7 +38,6 @@ function(doc) {
             "refs":             doc.refs,
             "resolution":       resolution,
             "severity":         doc.severity, 
-            "tags":             tags,
             "type":             doc.type 
         };
         emit(doc._id, obj);

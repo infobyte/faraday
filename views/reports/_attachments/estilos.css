@@ -467,13 +467,13 @@ table.status-report span.label {
 	text-transform:uppercase;
 	font-weight:normal
 }
-table.csv-export tbody tr:nth-child(even) {
+table.table tbody tr:nth-child(even) {
     background-color: #f1f1f1;
 }
-table.csv-export tbody tr:nth-child(odd) {
-    background-color: #ffffff;
+table.table tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
 }
-table.csv-export tbody tr:hover{
+table.table tbody tr:hover{
     background-color: #ecebea;
 }
 .multi-selected {
@@ -630,6 +630,8 @@ text.host-name{font-size: 13px;font-weight:bold;}
             color: #000000 !important;
         }
     }
+    /* Workspaces list - Open*/
+    div#ws-control.open>.dropdown-menu {display: table; left: 90px;}
     #sec {
         float: right;
         margin-top: -34px;

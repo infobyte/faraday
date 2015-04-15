@@ -31,7 +31,7 @@ angular.module('faradayApp')
         };
 
         $scope.showNavigation = function() {
-            var noNav = ["home", "index"];
+            var noNav = ["home", "index", ""];
             return noNav.indexOf($scope.component) < 0;
         };
 

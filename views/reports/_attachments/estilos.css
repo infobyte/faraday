@@ -334,8 +334,6 @@ article.untercio{
 ul.label-list {
 	list-style-type:none;
     white-space:nowrap;
-    overflow-x:scroll;
-    background: #fff;
 }
 	ul.label-list li {
 		display: inline;
@@ -467,13 +465,13 @@ table.status-report span.label {
 	text-transform:uppercase;
 	font-weight:normal
 }
-table.csv-export tbody tr:nth-child(even) {
+table.table tbody tr:nth-child(even) {
     background-color: #f1f1f1;
 }
-table.csv-export tbody tr:nth-child(odd) {
-    background-color: #ffffff;
+table.table tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
 }
-table.csv-export tbody tr:hover{
+table.table tbody tr:hover{
     background-color: #ecebea;
 }
 .multi-selected {
@@ -630,6 +628,8 @@ text.host-name{font-size: 13px;font-weight:bold;}
             color: #000000 !important;
         }
     }
+    /* Workspaces list - Open*/
+    div.button-control.col-md-6.col-sm-6.col-xs-12 {display: block; float: right}
     #sec {
         float: right;
         margin-top: -34px;

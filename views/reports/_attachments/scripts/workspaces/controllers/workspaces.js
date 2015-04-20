@@ -116,6 +116,7 @@ angular.module('faradayApp')
 
         // Modals methods
         $scope.new = function(){ 
+            $scope.newworkspace = {};
 
             $scope.modal = $modal.open({
                 templateUrl: 'scripts/workspaces/partials/modal-new.html',

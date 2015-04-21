@@ -19,5 +19,35 @@
                     ng-model="newworkspace.description" required></textarea>
             </div>
         </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-6">
+                <label class="sr-only" for="work-start">Start Date</label>
+                <p class="input-group">
+                  <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="newworkspace.duration.start" is-open="openedStart" min-date="minDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="Start Date"/>
+                  <span class="input-group-btn">
+                    <button type="button" class="btn btn-default" ng-click="open($event,true)"><i class="glyphicon glyphicon-calendar"></i></button>
+                  </span>
+                </p>
+            </div>
+            <div class="col-md-6">
+                <label class="sr-only" for="work-end">End Date</label>
+                <p class="input-group">
+                  <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="newworkspace.duration.end" is-open="openedEnd" min-date="minDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="End Date"/>
+                  <span class="input-group-btn">
+                    <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                  </span>
+                </p>
+            </div>
+
+        </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
+                <label class="sr-only" for="work-scope">Scope</label>
+                <textarea class="form-control" id="work-scope"
+                                               placeholder="Scope" ng-model="newworkspace.scope"
+                                                                         >
+                </textarea>
+            </div>
+        </div><!-- .form-group -->
     </div><!-- .form-horizontal -->
 </div><!-- .modal-body -->

@@ -126,7 +126,7 @@ angular.module('faradayApp')
             });
 
             $scope.modal.result.then(function(workspace) {
-                workspace = $scope.create(workspace.name, workspace.description);
+                workspace = $scope.create(workspace.name, workspace.description, workspace.end, workspace.scope);
                 $scope.insert(workspace); 
             });
 
@@ -226,7 +226,8 @@ angular.module('faradayApp')
         };
         // end of modal context
 
-        $scope.create = function(wname, wdesc){
+        $scope.create = function(wname, wdesc, end, scope){
+            end = end.getTime();
             workspace = {
                 "_id": wname,
                 "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
@@ -237,9 +238,41 @@ angular.module('faradayApp')
                 "type": "Workspace",
                 "children": [
                 ],
+                "duration": {"start": (new Date).getTime(), "end": end},
+                "scope": scope,
                 "description": wdesc
             };
             return(workspace);
 
         };
+
+        //DATE PICKER        
+        $scope.today = function() {
+            $scope.dt = new Date();
+        };
+        $scope.today();
+
+        $scope.clear = function () {
+            $scope.dt = null;
+        };
+
+        // Disable weekend selection
+        $scope.disabled = function(date, mode) {
+            return ( mode === 'day' && ( date.getDay() === 0 || date.getDay() === 6 ) );
+        };
+
+        $scope.minDate = new Date();
+
+        $scope.open = function($event, isStart) {
+            $event.preventDefault();
+            $event.stopPropagation();
+
+            if(isStart) $scope.openedStart = true; else $scope.openedEnd = true;
+        };
+
+        $scope.dateOptions = {
+            formatYear: 'yy',
+            startingDay: 1
+        };
+
     }]);

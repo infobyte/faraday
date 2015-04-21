@@ -4,14 +4,16 @@
 function(doc) {
     if(doc.type=="Host"){
         emit(doc._id, {
-           "categories": doc.categories,
-           "default_gateway": doc.default_gateway,
-           "description": doc.description,
-           "metadata": doc.metadata,
-           "name": doc.name,
-           "os": doc.os,
-           "owned": doc.owned,
-           "owner": doc.owner
+            "_id": doc._id,
+            "_rev": doc._rev,
+            "categories": doc.categories,
+            "default_gateway": doc.default_gateway,
+            "description": doc.description,
+            "metadata": doc.metadata,
+            "name": doc.name,
+            "os": doc.os,
+            "owned": doc.owned,
+            "owner": doc.owner
         });
     }
 }

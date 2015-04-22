@@ -78,7 +78,7 @@ angular.module('faradayApp')
         createWorkspaceDoc = function(response, workspace){
             $http.put(BASEURL + workspace.name + '/' + workspace.name, workspace).
                 success(function(data){ 
-                    workspace._rev = response.data.rev;
+                    workspace._rev = data.rev;
                 }).
                 error(function(data) {
                     errorHandler;

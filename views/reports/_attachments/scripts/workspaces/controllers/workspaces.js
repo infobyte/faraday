@@ -126,7 +126,7 @@ angular.module('faradayApp')
             });
 
             $scope.modal.result.then(function(workspace) {
-                workspace = $scope.create(workspace.name, workspace.description, workspace.end, workspace.scope);
+                workspace = $scope.create(workspace.name, workspace.description, workspace.start, workspace.end, workspace.scope);
                 $scope.insert(workspace); 
             });
 
@@ -226,8 +226,9 @@ angular.module('faradayApp')
         };
         // end of modal context
 
-        $scope.create = function(wname, wdesc, end, scope){
-            end = end.getTime();
+        $scope.create = function(wname, wdesc, start, end, scope){
+            if(end) end = end.getTime();
+            if(start) start = start.getTime();
             workspace = {
                 "_id": wname,
                 "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
@@ -238,7 +239,7 @@ angular.module('faradayApp')
                 "type": "Workspace",
                 "children": [
                 ],
-                "duration": {"start": (new Date).getTime(), "end": end},
+                "duration": {"start": start, "end": end},
                 "scope": scope,
                 "description": wdesc
             };

@@ -227,8 +227,8 @@ angular.module('faradayApp')
         // end of modal context
 
         $scope.create = function(wname, wdesc, start, end, scope){
-            if(end) end = end.getTime();
-            if(start) start = start.getTime();
+            if(end) end = end.getTime(); else end = "";
+            if(start) start = start.getTime(); else start = "";
             workspace = {
                 "_id": wname,
                 "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",

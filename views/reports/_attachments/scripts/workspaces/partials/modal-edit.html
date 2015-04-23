@@ -24,7 +24,7 @@
                 <h5>Start Date</h5>
                 <label class="sr-only" for="work-start">Start Date</label>
                 <p class="input-group">
-                  <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="newworkspace.duration.start" is-open="openedStart" min-date="minDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="Start Date"/>
+                  <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="newworkspace.duration.startDate" is-open="openedStart" min-date="minDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="Start Date"/>
                   <span class="input-group-btn">
                     <button type="button" class="btn btn-default" ng-click="open($event,true)"><i class="glyphicon glyphicon-calendar"></i></button>
                   </span>
@@ -34,7 +34,7 @@
                 <h5>End Date</h5>
                 <label class="sr-only" for="work-end">End Date</label>
                 <p class="input-group">
-                  <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="newworkspace.duration.end" is-open="openedEnd" min-date="minDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="End Date"/>
+                  <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="newworkspace.duration.endDate" is-open="openedEnd" min-date="minDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="End Date"/>
                   <span class="input-group-btn">
                     <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
                   </span>

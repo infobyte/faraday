@@ -113,16 +113,18 @@ angular.module('faradayApp')
 
             this.getHosts(ws).then(function(hosts) {
                 var host = new Host(hostData);
-                self.getHost(host._id).then(function() {
+                self.getHost(host._id, ws).then(function() {
                     deferred.reject("Host already exists");
                 }, function() {
                     // host doesn't exist, good to go
-                    host.save().then(function(){
-                        host = self.getHost(host._id);
+                    host.save(ws).then(function(){
+                        host = self.getHost(host._id, ws);
                         deferred.resolve(host);
+                        console.log("host saved");
                     }, function(){
                         // host couldn't be saved
                         deferred.reject("Error: host couldn't be saved");
+                        console.log("host couldnt be saved");
                     })
                 });
             });
@@ -133,7 +135,7 @@ angular.module('faradayApp')
         hostsManager.updateHost = function(host, hostData, ws) {
             var deferred = $q.defer();
             var self = this;
-            this.getHost(host._id).then(function(resp) {
+            this.getHost(host._id, ws).then(function(resp) {
                 resp.update(hostData).then(function() {
                     // we need to reload the host in order
                     // to update _rev

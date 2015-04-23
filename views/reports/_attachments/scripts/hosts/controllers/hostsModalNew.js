@@ -4,29 +4,19 @@
 
 angular.module('faradayApp')
     .controller('hostsModalNew',
-        ['$scope', '$modalInstance', 'usersManager',
-        function($scope, $modalInstance, usersManager) {
+        ['$scope', '$modalInstance', 'hostsManager',
+        function($scope, $modalInstance, hostsManager) {
 
-        $scope.userdata = {};
-        $scope.password_repeat;
-        $scope.role = null;
-        $scope.roles = [
-            {name: 'Admin', value:'admin'},
-            {name: 'Pentester', value:'pentester'},
-            {name: 'Client', value:'client'}
-        ]
-        $scope.error_message = null;
+        $scope.hostdata = {};
 
         $scope.ok = function() {
-            if ($scope.userdata.password != $scope.password_repeat){
-                $scope.error_message = "Passwords must match";
-            } else {
-                if ($scope.role != null){
-                    $scope.userdata.roles = [$scope.role];
-                    $modalInstance.close($scope.userdata);
-                }
-                $scope.error_message = "A role is needed";
-            }
+            if($scope.hostdata.default_gateway == undefined) $scope.hostdata.default_gateway = "";
+            if($scope.hostdata.os == undefined) $scope.hostdata.os = "";
+            if($scope.hostdata.owned == undefined) $scope.hostdata.owned = false;
+            if($scope.hostdata.owner == undefined) $scope.hostdata.owner = "";
+            if($scope.hostdata.parent == undefined) $scope.hostdata.parent = null;
+
+            $modalInstance.close($scope.hostdata);
         };
 
         $scope.cancel = function() {

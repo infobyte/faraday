@@ -12,7 +12,7 @@ angular.module('faradayApp')
 
         Host.prototype = {
             // TODO: instead of using angular.extend, we should check
-            // the attributes we're assigning to the user
+            // the attributes we're assigning to the host
             set: function(data) {
                 // if there's no ID, we need to generate it based on the host name
                 if(data._id === undefined){

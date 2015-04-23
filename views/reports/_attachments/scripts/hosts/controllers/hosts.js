@@ -20,21 +20,25 @@ angular.module('faradayApp')
 
             hostsManager.getHosts($scope.workspace).then(function(hosts) {
                 $scope.hosts = hosts;
-                $scope.hosts.forEach(function(host) {
-                    // load icons into object for HTML
-                    // maybe this part should be directly in the view somehow
-                    // or, even better, in a CSS file
-                    oss = ["windows", "cisco", "router", "osx", "apple","linux", "unix"];
-                    oss.forEach(function(os){
-                        if(host.os.toLowerCase().indexOf(os) != -1) {
-                            host.icon = os;
-                            if(os == "unix") {
-                                host.icon = "linux";
-                            } else if(os == "apple") {
-                                host.icon = "osx";
-                            }
+                $scope.loadIcons();
+            });
+        };
+
+        $scope.loadIcons = function() {
+            $scope.hosts.forEach(function(host) {
+                // load icons into object for HTML
+                // maybe this part should be directly in the view somehow
+                // or, even better, in a CSS file
+                oss = ["windows", "cisco", "router", "osx", "apple","linux", "unix"];
+                oss.forEach(function(os){
+                    if(host.os.toLowerCase().indexOf(os) != -1) {
+                        host.icon = os;
+                        if(os == "unix") {
+                            host.icon = "linux";
+                        } else if(os == "apple") {
+                            host.icon = "osx";
                         }
-                    });
+                    }
                 });
             });
         };
@@ -102,6 +106,7 @@ angular.module('faradayApp')
         $scope.insert = function(hostdata) {
             hostsManager.createHost(hostdata, $scope.workspace).then(function(host) {
                 $scope.hosts.push(host);
+                $scope.loadIcons();
             }, function(message) {
                 $modal.open(config = {
                     templateUrl: 'scripts/commons/partials/modalKO.html',
@@ -132,7 +137,8 @@ angular.module('faradayApp')
         $scope.update = function(host, hostdata) {
             delete host.selected;
             hostsManager.updateHost(host, hostdata, $scope.workspace).then(function() {
-                // if updated correctly, do nothing
+                // load icons in case an operating system changed
+                $scope.loadIcons();
             }, function(message){
                 console.log(message);
             });

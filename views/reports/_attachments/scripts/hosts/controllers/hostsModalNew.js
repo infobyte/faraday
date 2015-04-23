@@ -18,6 +18,17 @@ angular.module('faradayApp')
             if($scope.hostdata.parent == undefined) $scope.hostdata.parent = null;
             
             $scope.hostdata.default_gateway = [$scope.hostdata.default_gateway.ip, $scope.hostdata.default_gateway.mac];
+            var date = new Date(),
+            timestamp = date.getTime()/1000.0;
+            $scope.hostdata.meta = {
+                "update_time": timestamp,
+                "update_user":  "UI Web",
+                "update_action": 0,
+                "creator": "UI Web", 
+                "create_time": timestamp,
+                "update_controller_action": "UI Web New",
+                "owner": ""
+            };
 
             $modalInstance.close($scope.hostdata);
         };

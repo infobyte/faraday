@@ -120,11 +120,9 @@ angular.module('faradayApp')
                     host.save(ws).then(function(){
                         host = self.getHost(host._id, ws);
                         deferred.resolve(host);
-                        console.log("host saved");
                     }, function(){
                         // host couldn't be saved
                         deferred.reject("Error: host couldn't be saved");
-                        console.log("host couldnt be saved");
                     })
                 });
             });

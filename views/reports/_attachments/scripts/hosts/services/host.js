@@ -37,7 +37,6 @@ angular.module('faradayApp')
                 var self = this;
                 return ($http.put(BASEURL + ws + '/' + self._id, self).success(function(data){
                     self._rev = data.rev;
-                    console.log(data);
                 }));
             }
         }

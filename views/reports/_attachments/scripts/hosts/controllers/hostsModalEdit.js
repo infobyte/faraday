@@ -4,32 +4,30 @@
 
 angular.module('faradayApp')
     .controller('hostsModalEdit',
-        ['$scope', '$modalInstance', 'usersManager', 'user',
-        function($scope, $modalInstance, usersManager, user) {
+        ['$scope', '$modalInstance', 'hostsManager', 'host',
+        function($scope, $modalInstance, hostsManager, host) {
 
-        $scope.userdata = {};
-
-        $scope.user = user;
-
-        $scope.roles = [
-            {name: 'Admin', value:'admin'},
-            {name: 'Pentester', value:'pentester'},
-            {name: 'Client', value:'client'}
-        ]
-        $scope.error_message = null;
-
-        $scope.role = $scope.user.roles[0];
+        $scope.hostdata = {};
+        $scope.host = {
+            "description": host.description,
+            "default_gateway": host.default_gateway,
+            "metadata": host.metadata,
+            "name": host.name,
+            "os": host.os,
+            "owner": host.owner,
+            "owned": host.owned,
+            "parent": host.parent
+        };
 
         $scope.ok = function() {
-            if ($scope.userdata.password != $scope.password_repeat){
-                $scope.error_message = "Passwords must match";
-            } else {
-                if ($scope.role != null){
-                    $scope.userdata.roles = [$scope.role];
-                    $modalInstance.close($scope.userdata);
-                }
-                $scope.error_message = "A role is needed";
-            }
+            var date = new Date(),
+            timestamp = date.getTime()/1000.0;
+
+            $scope.hostdata = $scope.host;
+            $scope.hostdata.metadata['update_time'] = timestamp;
+            $scope.hostdata.metadata['update_user'] = "UI Web";
+
+            $modalInstance.close($scope.hostdata);
         };
 
         $scope.cancel = function() {

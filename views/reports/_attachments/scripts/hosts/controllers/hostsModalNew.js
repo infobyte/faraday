@@ -7,20 +7,22 @@ angular.module('faradayApp')
         ['$scope', '$modalInstance', 'hostsManager',
         function($scope, $modalInstance, hostsManager) {
 
-        $scope.hostdata = {};
+        $scope.hostdata = {
+            "name": "",
+            "description": "",
+            "default_gateway": ["", ""],
+            "os": "",
+            "owned": false,
+            "owner": ""
+        };
 
         $scope.ok = function() {
-            if($scope.hostdata.default_gateway.ip == undefined) $scope.hostdata.default_gateway.ip = "";
-            if($scope.hostdata.default_gateway.mac == undefined) $scope.hostdata.default_gateway.mac = "";
-            if($scope.hostdata.os == undefined) $scope.hostdata.os = "";
-            if($scope.hostdata.owned == undefined) $scope.hostdata.owned = false;
-            if($scope.hostdata.owner == undefined) $scope.hostdata.owner = "";
-            if($scope.hostdata.parent == undefined) $scope.hostdata.parent = null;
-            
-            $scope.hostdata.default_gateway = [$scope.hostdata.default_gateway.ip, $scope.hostdata.default_gateway.mac];
             var date = new Date(),
             timestamp = date.getTime()/1000.0;
-            $scope.hostdata.meta = {
+
+            if($scope.hostdata.parent == undefined) $scope.hostdata.parent = null;
+            
+            $scope.hostdata.metadata = {
                 "update_time": timestamp,
                 "update_user":  "UI Web",
                 "update_action": 0,

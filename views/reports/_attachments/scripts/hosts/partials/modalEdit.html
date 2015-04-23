@@ -8,39 +8,67 @@
         <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
         <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
     </div>
-    <h3 class="modal-title">Edit user {{user.name}}</h3>
+    <h3 class="modal-title">Edit host</h3>
 </div>
 <div class="modal-body">
     <div class="form-horizontal">
-        <div ng-if="error_message">
-            <div class="alert alert-danger alert-dismissible" role="alert">
-                <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h5>{{error_message}}</h5>
-            </div> <!-- .alert -->
-        </div> <!-- ng-if -->
         <div class="form-group">
             <div class="col-md-12">
-                <select ng-model="role" ng-options="role.value as role.name for role in roles" ng-disabled="role == 'admin'"></select>
+                <label class="sr-only" for="name">Name</label>
+                <input type="text" class="form-control" id="name" placeholder="Name" ng-model="host.name" required/>
+                <span class="help-block normal-size">
+                    Example: 192.168.0.1
+                </span>
+            </div>
+        </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
+                <label class="sr-only" for="description">Description</label>
+                <textarea class="form-control" id="description" placeholder="Description" ng-model="host.description" required></textarea>
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
             <div class="col-md-6">
-                <label class="sr-only" for="user-pass">Password</label>
-                <input type="password" class="form-control" id="user-pass" placeholder="Password" ng-model="userdata.password" ng-pattern="/^.*(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*[\d\W]).*$/" required/>
+                <label class="sr-only" for="default_gateway.ip">Default Gateway</label>
+                <input type="text" class="form-control" id="default_gateway.ip" placeholder="Default Gateway IP" ng-model="host.default_gateway[0]"/>
+                <span class="help-block normal-size">
+                    Example: 192.168.10.1
+                </span>
             </div>
             <div class="col-md-6">
-                <label class="sr-only" for="user-pass-repeat">Repeat password</label>
-                <input type="password" class="form-control" id="user-pass-repeat" placeholder="Repeat password" ng-model="password_repeat" required/>
+                <label class="sr-only" for="default_gateway.mac">Default Gateway</label>
+                <input type="text" class="form-control" id="default_gateway.mac" placeholder="Default Gateway MAC" ng-model="host.default_gateway[1]"/>
+                <span class="help-block normal-size">
+                    Example: a1:b2:c3:d4:e5:f7
+                </span>
             </div>
-        </div>
-        <div ng-if="form.$invalid">
-            <div class="alert alert-danger target_not_selected" role="alert" ng-hide="">
-                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                <span class="sr-only">Error:</span>
-                <button type="button" class="close" data-dismiss="alert"><span area-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                Password must be at least 8 characters long. It must contain at least one uppercase letter and one of the following: numbers (0-9) or special characters ( ~!@#$%^&*_-+=`|\(){}[]:;"'<>,.?/ )
+        </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-6">
+                <label class="sr-only" for="owner">Owner</label>
+                <input type="text" class="form-control" id="owner" placeholder="Owner" ng-model="host.owner"/>
+                <span class="help-block normal-size">
+                    Example: faraday
+                </span>
             </div>
-        </div>
+            <div class="col-md-6">
+                <label class="sr-only" for="os">Operating System</label>
+                <input type="text" class="form-control" id="os" placeholder="Operating System" ng-model="host.os"/>
+                <span class="help-block normal-size">
+                    Example: Linux 3.18.6-1-ARCH
+                </span>
+            </div>
+        </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" id="owned" ng-model="host.owned"/>
+                        <span class="normal-size">Owned</span>
+                    </label>
+                </div><!-- .checkbox -->
+            </div>
+        </div><!-- .form-group -->
     </div>
 </div><!-- .modal-body -->
 <div class="modal-footer">

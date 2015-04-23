@@ -134,7 +134,7 @@ angular.module('faradayApp')
             var deferred = $q.defer();
             var self = this;
             this.getHost(host._id, ws).then(function(resp) {
-                resp.update(hostData).then(function() {
+                resp.update(hostData, ws).then(function() {
                     // we need to reload the host in order
                     // to update _rev
                     host = self.getHost(host._id, ws, true);

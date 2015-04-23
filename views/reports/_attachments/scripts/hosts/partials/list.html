@@ -1,0 +1,77 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+            <section id="main" class="seccion clearfix">
+
+                <div class="right-main"><div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <span id="ws-name" class="label label-default"
+                        title="Hosts">Hosts for {{workspace}} ({{hosts.length}})</span><!-- WS name -->
+                        <!--
+                        <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                            Change workspace <span class="caret"></span>
+                        </button>
+                        <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
+                            <li ng-repeat="ws in workspaces"><a href="#/hosts/ws/{{ws}}" class="ws" >{{ws}}</a></li>
+                        </ul>
+                        -->
+                        <button id="delete" type="button" class="btn btn-default" title="Delete selected hosts" ng-click="delete()">
+                            <span class="glyphicon glyphicon-trash"></span>
+                            Delete
+                        </button>
+                        <button id="merge" type="button" class="btn btn-default" title="Edit selected hosts" ng-click="edit()">
+                            <span class="glyphicon glyphicon-pencil"></span>
+                            Edit
+                        </button>
+                        <button id="merge" type="button" class="btn btn-success" title="New host" ng-click="new()">
+                            <span class="glyphicon glyphicon-plus-sign"></span>
+                            New
+                        </button>
+                    </h2><!-- .ws-label -->
+                    <div class="reports col-md-9 col-sm-9 col-xs-12">
+                        <table class="status-report hosts-list table table-responsive">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('name')">Name</a>
+                                    </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('description')">Description</a>
+                                    </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('default_gateway')">Default Gateway</a>
+                                    </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('os')">OS</a>
+                                    </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('owner')">Owner</a>
+                                    </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('owned')">Owned</a>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="host in hosts | filter:query | orderBy:sortField:reverse"
+                                    selection-model selection-model-type="checkbox" 
+                                    selection-model-mode="multiple-additive" 
+                                    selection-model-selected-class="multi-selected">
+                                    <td><input type="checkbox" name="{{host._id}}"/></td>
+                                    <td ng-bind="host.name"></td>
+                                    <td ng-bind="host.description || '-'"></td>
+                                    <td ng-bind="host.default_gateway"></td>
+                                    <td>
+                                        <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" tooltip="{{host.os}}"/>
+                                        <span ng-if="host.icon == undefined" class="glyphicon glyphicon-question-sign" tooltip="{{host.os}}"></span>
+                                    </td>
+                                    <td ng-bind="host.owner || '-'"></td>
+                                    <td ng-bind="host.owned"></td>
+                                </tr>
+                            </tbody>
+                        </table><!-- #hosts -->
+                    </div><!-- .reports -->
+                </div><!-- #reports-main --></div><!-- .right-main -->
+            </section><!-- #main -->

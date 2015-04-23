@@ -3,13 +3,13 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('statusReportFact', ['vulnsFact', 'vulnsWebFact', 'hostsFact', 'workspacesFact', function(vulnsFact, vulnsWebFact, hostsFact, workspacesFact) {
+    .factory('statusReportFact', ['vulnsFact', 'vulnsWebFact', 'hostsManager', 'workspacesFact', function(vulnsFact, vulnsWebFact, hostsManager, workspacesFact) {
         var statusReportFact = {};
 
         statusReportFact.getVulns = function(ws) {
             var vulns       = vulnsFact.get(ws);
             var vulnsWeb    = vulnsWebFact.get(ws);
-            var hosts       = hostsFact.get(ws);
+            var hosts       = hostsManager.get(ws);
             vulns.forEach(function(element, index, array) {
                 if (element.parent in hosts) {
                     element.target = hosts[element.parent].name;

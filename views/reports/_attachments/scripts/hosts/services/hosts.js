@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('hostsManager', ['BASEURL', '$http', '$q', 'Host', 'configSrv', function(BASEURL, $http, $q, Host, configSrv) {
+    .factory('hostsManager', ['BASEURL', '$http', '$q', 'Host', function(BASEURL, $http, $q, Host) {
         var hostsManager = {};
 
         hostsManager._objects = {};
@@ -56,7 +56,7 @@ angular.module('faradayApp')
                 .success(function(hostsArray){
                     var hosts = [];
                     hostsArray.rows.forEach(function(hostData){
-                        var host = self._get(hostData.doc._id, hostData.doc);
+                        var host = self._get(hostData.value._id, hostData.value);
                         hosts.push(host);
                     });
                     deferred.resolve(hosts);
@@ -68,7 +68,7 @@ angular.module('faradayApp')
         }
 
         // sync method - still used in statusReportFact
-        hostsFact.get = function(ws) {
+        hostsManager.get = function(ws) {
             hosts_url = BASEURL + ws + "/_design/hosts/_view/hosts";
             var hosts = [];
             //gets hosts json from couch
@@ -107,7 +107,7 @@ angular.module('faradayApp')
             return deferred.promise;
         }
 
-        hostsManager.createHost = function(hostData) {
+        hostsManager.createHost = function(hostData, ws) {
             var deferred = $q.defer();
             var self = this;
 

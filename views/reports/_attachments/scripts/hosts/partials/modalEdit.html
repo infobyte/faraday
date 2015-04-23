@@ -1,0 +1,50 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<form name="form" novalidate>
+<div class="modal-header">
+    <div class="modal-button">
+        <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+        <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
+    </div>
+    <h3 class="modal-title">Edit user {{user.name}}</h3>
+</div>
+<div class="modal-body">
+    <div class="form-horizontal">
+        <div ng-if="error_message">
+            <div class="alert alert-danger alert-dismissible" role="alert">
+                <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h5>{{error_message}}</h5>
+            </div> <!-- .alert -->
+        </div> <!-- ng-if -->
+        <div class="form-group">
+            <div class="col-md-12">
+                <select ng-model="role" ng-options="role.value as role.name for role in roles" ng-disabled="role == 'admin'"></select>
+            </div>
+        </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-6">
+                <label class="sr-only" for="user-pass">Password</label>
+                <input type="password" class="form-control" id="user-pass" placeholder="Password" ng-model="userdata.password" ng-pattern="/^.*(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*[\d\W]).*$/" required/>
+            </div>
+            <div class="col-md-6">
+                <label class="sr-only" for="user-pass-repeat">Repeat password</label>
+                <input type="password" class="form-control" id="user-pass-repeat" placeholder="Repeat password" ng-model="password_repeat" required/>
+            </div>
+        </div>
+        <div ng-if="form.$invalid">
+            <div class="alert alert-danger target_not_selected" role="alert" ng-hide="">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                <span class="sr-only">Error:</span>
+                <button type="button" class="close" data-dismiss="alert"><span area-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                Password must be at least 8 characters long. It must contain at least one uppercase letter and one of the following: numbers (0-9) or special characters ( ~!@#$%^&*_-+=`|\(){}[]:;"'<>,.?/ )
+            </div>
+        </div>
+    </div>
+</div><!-- .modal-body -->
+<div class="modal-footer">
+    <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+    <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
+</div>
+</form>

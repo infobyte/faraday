@@ -28,11 +28,18 @@
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
-            <div class="col-md-6">
-                <label class="sr-only" for="default_gateway">Default Gateway</label>
-                <input type="text" class="form-control" id="default_gateway" placeholder="Default Gateway" ng-model="hostdata.default_gateway"/>
+            <div class="col-md-3">
+                <label class="sr-only" for="default_gateway.ip">Default Gateway</label>
+                <input type="text" class="form-control" id="default_gateway.ip" placeholder="Default Gateway IP" ng-model="hostdata.default_gateway.ip"/>
                 <span class="help-block normal-size">
-                    Example: 192.168.10.1, a1:b2:c3:d4:e5:f7
+                    Example: 192.168.10.1
+                </span>
+            </div>
+            <div class="col-md-3">
+                <label class="sr-only" for="default_gateway.mac">Default Gateway</label>
+                <input type="text" class="form-control" id="default_gateway.mac" placeholder="Default Gateway MAC" ng-model="hostdata.default_gateway.mac"/>
+                <span class="help-block normal-size">
+                    Example: a1:b2:c3:d4:e5:f7
                 </span>
             </div>
             <div class="col-md-6">

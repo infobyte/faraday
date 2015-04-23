@@ -10,11 +10,14 @@ angular.module('faradayApp')
         $scope.hostdata = {};
 
         $scope.ok = function() {
-            if($scope.hostdata.default_gateway == undefined) $scope.hostdata.default_gateway = "";
+            if($scope.hostdata.default_gateway.ip == undefined) $scope.hostdata.default_gateway.ip = "";
+            if($scope.hostdata.default_gateway.mac == undefined) $scope.hostdata.default_gateway.mac = "";
             if($scope.hostdata.os == undefined) $scope.hostdata.os = "";
             if($scope.hostdata.owned == undefined) $scope.hostdata.owned = false;
             if($scope.hostdata.owner == undefined) $scope.hostdata.owner = "";
             if($scope.hostdata.parent == undefined) $scope.hostdata.parent = null;
+            
+            $scope.hostdata.default_gateway = [$scope.hostdata.default_gateway.ip, $scope.hostdata.default_gateway.mac];
 
             $modalInstance.close($scope.hostdata);
         };

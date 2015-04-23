@@ -93,7 +93,7 @@ angular.module('faradayApp')
             var deferred = $q.defer();
             var self = this;
             this.getHost(id, ws).then(function(host) {
-                host.delete().success(function() {
+                host.delete(ws).success(function() {
                     delete self._objects[id];
                     deferred.resolve();
                 }).error(function(){

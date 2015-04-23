@@ -8,14 +8,17 @@
                     <h2 class="ws-label">
                         <span id="ws-name" class="label label-default"
                         title="Hosts">Hosts for {{workspace}} ({{hosts.length}})</span><!-- WS name -->
-                        <!--
-                        <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
-                            Change workspace <span class="caret"></span>
-                        </button>
-                        <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
-                            <li ng-repeat="ws in workspaces"><a href="#/hosts/ws/{{ws}}" class="ws" >{{ws}}</a></li>
-                        </ul>
-                        -->
+                        <div id="ws-control" class="btn-group">
+                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                                Change workspace <span class="caret"></span>
+                            </button>
+                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
+                                <li ng-repeat="ws in workspaces"><a href="#/hosts/ws/{{ws}}" class="ws" >{{ws}}</a></li>
+                            </ul><!-- WS navigation -->
+                        </div><!-- #ws-control -->
                         <button id="delete" type="button" class="btn btn-default" title="Delete selected hosts" ng-click="delete()">
                             <span class="glyphicon glyphicon-trash"></span>
                             Delete

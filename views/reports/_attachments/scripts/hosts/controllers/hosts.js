@@ -84,8 +84,9 @@ angular.module('faradayApp')
             } else {
                 var message = "A host will be deleted";
                 if(selected.length > 1) {
-                    var message = selected.length  + " hosts will be deleted.";
+                    message = selected.length  + " hosts will be deleted";
                 }
+                message = message.concat(" along with all of its children. This operation cannot be undone. Are you sure you want to proceed?");
                 $modal.open(config = {
                     templateUrl: 'scripts/commons/partials/modalDelete.html',
                     controller: 'commonsModalDelete',

@@ -22,8 +22,19 @@ angular.module('faradayApp')
                 angular.extend(this, data);
             },
             delete: function(ws) {
-                var self = this;
-                return ($http.delete(BASEURL + ws + '/' + self._id + "?rev=" + self._rev));
+                var self = this,
+                bulk = {docs:[]};
+                return $http.get(BASEURL + ws + '/_all_docs?startkey="' + self._id + '"&endkey="' + self._id + '.z"').then(function(all) {
+                    all.data.rows.forEach(function(row) {
+                        bulk.docs.push({
+                            "_id": row.id,
+                            "_rev": row.value.rev,
+                            "_deleted": true
+                        });
+                    });
+
+                    return $http.post(BASEURL + ws + "/_bulk_docs", JSON.stringify(bulk));
+                });
             },
             update: function(data, ws) {
                 var self = this;

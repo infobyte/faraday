@@ -114,12 +114,12 @@ angular.module('faradayApp')
                 start = workspace.duration.startDate;
             } else if(workspace.duration.startDate) {
                 start = workspace.duration.startDate.getTime(); 
-            } else {start = "-";}
+            } else {start = "";}
             if(typeof(workspace.duration.endDate) == "number") {
                 end = workspace.duration.endDate;
             } else if(workspace.duration.endDate) {
                 end = workspace.duration.endDate.getTime();
-            } else {end = "-";}
+            } else {end = "";}
             duration = {'start': start, 'end': end};
             workspace = {
                 "_id":          workspace._id,
@@ -175,8 +175,10 @@ angular.module('faradayApp')
                 $scope.workspaces.forEach(function(w){
                     if(w.selected){
                         $scope.newworkspace = w;
-                        $scope.newworkspace.duration.startDate = w.duration.start;
-                        $scope.newworkspace.duration.endDate = w.duration.end;
+                        if($scope.newworkspace.duration){
+                            $scope.newworkspace.duration.startDate = w.duration.start;
+                            $scope.newworkspace.duration.endDate = w.duration.end;
+                        }
                     } 
                 });
                 $scope.modal = $modal.open({

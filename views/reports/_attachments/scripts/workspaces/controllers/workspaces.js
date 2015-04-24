@@ -12,6 +12,7 @@ angular.module('faradayApp')
 
         $scope.onSuccessGet = function(workspace){
             if(workspace.sdate.toString().indexOf(".") != -1) workspace.sdate = workspace.sdate * 1000;
+            workspace.selected = false;
             $scope.workspaces.push(workspace);
         };
 
@@ -36,7 +37,10 @@ angular.module('faradayApp')
         $scope.onSuccessEdit = function(workspace){
             for(var i = 0; i < $scope.workspaces.length; i++) {
                 if($scope.workspaces[i].name == workspace.name){
+                    $scope.workspaces[i]._rev = workspace._rev;
                     $scope.workspaces[i].description = workspace.description;
+                    $scope.workspaces[i].duration.start = workspace.duration.start;
+                    $scope.workspaces[i].duration.end = workspace.duration.end;
                     break;
                 }
             };
@@ -107,6 +111,29 @@ angular.module('faradayApp')
         };
 
         $scope.update = function(workspace){
+            if(typeof(workspace.duration.startDate) == "number") {
+                start = workspace.duration.startDate;
+            } else if(workspace.duration.startDate) {
+                start = workspace.duration.startDate.getTime(); 
+            } else {start = "";}
+            if(typeof(workspace.duration.endDate) == "number") {
+                end = workspace.duration.endDate;
+            } else if(workspace.duration.endDate) {
+                end = workspace.duration.endDate.getTime();
+            } else {end = "";}
+            duration = {'start': start, 'end': end};
+            workspace = {
+                "_id":          workspace._id,
+                "_rev":         workspace._rev,
+                "children":     workspace.children,
+                "customer":     workspace.customer,
+                "description":  workspace.description,
+                "duration":     duration,
+                "name":         workspace.name,
+                "sdate":        workspace.sdate,
+                "selected":     workspace.selected,
+                "type":         workspace.type
+            };
             workspacesFact.update(workspace, $scope.onSuccessEdit);
         };
 
@@ -149,6 +176,10 @@ angular.module('faradayApp')
                 $scope.workspaces.forEach(function(w){
                     if(w.selected){
                         $scope.newworkspace = w;
+                        if($scope.newworkspace.duration){
+                            $scope.newworkspace.duration.startDate = w.duration.start;
+                            $scope.newworkspace.duration.endDate = w.duration.end;
+                        }
                     } 
                 });
                 $scope.modal = $modal.open({

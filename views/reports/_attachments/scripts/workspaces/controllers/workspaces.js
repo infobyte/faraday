@@ -37,6 +37,7 @@ angular.module('faradayApp')
         $scope.onSuccessEdit = function(workspace){
             for(var i = 0; i < $scope.workspaces.length; i++) {
                 if($scope.workspaces[i].name == workspace.name){
+                    $scope.workspaces[i]._rev = workspace._rev;
                     $scope.workspaces[i].description = workspace.description;
                     $scope.workspaces[i].duration.start = workspace.duration.start;
                     $scope.workspaces[i].duration.end = workspace.duration.end;

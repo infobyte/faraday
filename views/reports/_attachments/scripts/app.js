@@ -47,20 +47,30 @@ faradayApp.config(['$routeProvider', function($routeProvider) {
             controller: 'workspacesCtrl',
             title: 'Dashboard | '
         }).
+        when('/hosts/ws/:wsId', {
+            templateUrl: 'scripts/hosts/partials/list.html',
+            controller: 'hostsCtrl',
+            title: 'Hosts | '
+        }).
+        when('/hosts', {
+            templateUrl: 'scripts/partials/workspaces.html',
+            controller: 'workspacesCtrl',
+            title: 'Hosts | '
+        }).
         when('/status/ws/:wsId', {
             templateUrl: 'scripts/partials/status_report.html',
             controller: 'statusReportCtrl',
+            title: 'Status Report | '
+        }).
+        when('/status', {
+            templateUrl: 'scripts/partials/workspaces.html',
+            controller: 'workspacesCtrl',
             title: 'Status Report | '
         }).
         when('/workspaces', {
             templateUrl: 'scripts/workspaces/partials/list.html',
             controller: 'workspacesCtrl',
             title: 'Workspaces | '
-        }).
-        when('/status', {
-            templateUrl: 'scripts/partials/workspaces.html',
-            controller: 'workspacesCtrl',
-            title: 'Status Report | '
         }).
         otherwise({
             templateUrl: 'scripts/partials/home.html',

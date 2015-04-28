@@ -10,11 +10,11 @@ angular.module('faradayApp')
         $scope.hostdata = {};
         $scope.host = {
             "description": host.description,
-            "default_gateway": host.default_gateway,
+            "default_gateway": "None",
             "metadata": host.metadata,
             "name": host.name,
             "os": host.os,
-            "owner": host.owner,
+            "owner": "",
             "owned": host.owned,
             "parent": host.parent
         };

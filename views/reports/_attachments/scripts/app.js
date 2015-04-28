@@ -42,6 +42,11 @@ faradayApp.config(['$routeProvider', function($routeProvider) {
             controller: 'dashboardCtrl',
             title: 'Dashboard | '
         }).
+        when('/dashboard/ws', {
+            templateUrl: 'scripts/partials/workspaces.html',
+            controller: 'workspacesCtrl',
+            title: 'Dashboard | '
+        }).
         when('/dashboard', {
             templateUrl: 'scripts/partials/workspaces.html',
             controller: 'workspacesCtrl',
@@ -52,6 +57,11 @@ faradayApp.config(['$routeProvider', function($routeProvider) {
             controller: 'hostsCtrl',
             title: 'Hosts | '
         }).
+        when('/hosts/ws', {
+            templateUrl: 'scripts/partials/workspaces.html',
+            controller: 'workspacesCtrl',
+            title: 'Hosts | '
+        }).
         when('/hosts', {
             templateUrl: 'scripts/partials/workspaces.html',
             controller: 'workspacesCtrl',
@@ -60,6 +70,11 @@ faradayApp.config(['$routeProvider', function($routeProvider) {
         when('/status/ws/:wsId', {
             templateUrl: 'scripts/partials/status_report.html',
             controller: 'statusReportCtrl',
+            title: 'Status Report | '
+        }).
+        when('/status/ws', {
+            templateUrl: 'scripts/partials/workspaces.html',
+            controller: 'workspacesCtrl',
             title: 'Status Report | '
         }).
         when('/status', {

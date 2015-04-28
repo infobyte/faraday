@@ -97,6 +97,9 @@ angular.module('faradayApp')
             case "dashboard":
                 $scope.hash = "dashboard";
                 break;
+            case "hosts":
+                $scope.hash = "hosts";
+                break;
             default:
                 $scope.hash = "";
         }

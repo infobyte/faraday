@@ -149,7 +149,7 @@ angular.module('faradayApp')
             $scope.newworkspace = {};
 
             $scope.modal = $modal.open({
-                templateUrl: 'scripts/workspaces/partials/modal-new.html',
+                templateUrl: 'scripts/workspaces/partials/modalNew.html',
                 controller: 'workspacesCtrl',
                 scope: $scope,
                 size: 'lg'
@@ -186,7 +186,7 @@ angular.module('faradayApp')
                     } 
                 });
                 $scope.modal = $modal.open({
-                    templateUrl: 'scripts/workspaces/partials/modal-edit.html',
+                    templateUrl: 'scripts/workspaces/partials/modalEdit.html',
                     controller: 'workspacesCtrl',
                     scope: $scope,
                     size: 'lg'
@@ -230,7 +230,7 @@ angular.module('faradayApp')
 
             if(selected){
                 $scope.modal = $modal.open({
-                    templateUrl: 'scripts/workspaces/partials/modal-delete.html',
+                    templateUrl: 'scripts/workspaces/partials/modalDelete.html',
                     controller: 'workspacesCtrl',
                     scope: $scope,
                     size: 'lg'

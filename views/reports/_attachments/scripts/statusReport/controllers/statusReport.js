@@ -247,12 +247,19 @@ angular.module('faradayApp')
 
             if(selected) {
                 var modal = $modal.open({
-                    templateUrl: 'scripts/partials/modal-delete.html',
-                    controller: 'modalDeleteCtrl',
+                    templateUrl: 'scripts/commons/partials/modalDelete.html',
+                    controller: 'commonsModalDelete',
                     size: 'lg',
                     resolve: {
-                        amount: function() {
-                            return i;
+                        msg: function() {
+                            var msg = "";
+                            if(i == 1) {
+                                msg = "A vulnerability will be deleted.";
+                            } else {
+                                msg = i + " vulnerabilities will be deleted.";
+                            }
+                            msg += " This action cannot be undone. Are you sure you want to proceed?";
+                            return msg;
                         }
                     }
                 });

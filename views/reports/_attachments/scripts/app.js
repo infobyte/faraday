@@ -43,12 +43,12 @@ faradayApp.config(['$routeProvider', function($routeProvider) {
             title: 'Dashboard | '
         }).
         when('/dashboard/ws', {
-            templateUrl: 'scripts/partials/workspaces.html',
+            templateUrl: 'scripts/commons/partials/workspaces.html',
             controller: 'workspacesCtrl',
             title: 'Dashboard | '
         }).
         when('/dashboard', {
-            templateUrl: 'scripts/partials/workspaces.html',
+            templateUrl: 'scripts/commons/partials/workspaces.html',
             controller: 'workspacesCtrl',
             title: 'Dashboard | '
         }).
@@ -58,27 +58,27 @@ faradayApp.config(['$routeProvider', function($routeProvider) {
             title: 'Hosts | '
         }).
         when('/hosts/ws', {
-            templateUrl: 'scripts/partials/workspaces.html',
+            templateUrl: 'scripts/commons/partials/workspaces.html',
             controller: 'workspacesCtrl',
             title: 'Hosts | '
         }).
         when('/hosts', {
-            templateUrl: 'scripts/partials/workspaces.html',
+            templateUrl: 'scripts/commons/partials/workspaces.html',
             controller: 'workspacesCtrl',
             title: 'Hosts | '
         }).
         when('/status/ws/:wsId', {
-            templateUrl: 'scripts/partials/status_report.html',
+            templateUrl: 'scripts/statusReport/partials/status_report.html',
             controller: 'statusReportCtrl',
             title: 'Status Report | '
         }).
         when('/status/ws', {
-            templateUrl: 'scripts/partials/workspaces.html',
+            templateUrl: 'scripts/commons/partials/workspaces.html',
             controller: 'workspacesCtrl',
             title: 'Status Report | '
         }).
         when('/status', {
-            templateUrl: 'scripts/partials/workspaces.html',
+            templateUrl: 'scripts/commons/partials/workspaces.html',
             controller: 'workspacesCtrl',
             title: 'Status Report | '
         }).
@@ -88,7 +88,7 @@ faradayApp.config(['$routeProvider', function($routeProvider) {
             title: 'Workspaces | '
         }).
         otherwise({
-            templateUrl: 'scripts/partials/home.html',
+            templateUrl: 'scripts/commons/partials/home.html',
             controller: 'statusReportCtrl'
         });
 }]);

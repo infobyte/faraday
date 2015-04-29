@@ -4,7 +4,6 @@
 
 angular.module('faradayApp')
     .controller('commonsModalDelete', ['$scope', '$modalInstance', 'msg', function($scope, $modalInstance, msg) {
-        
         $scope.msg = msg;
 
         $scope.ok = function() {

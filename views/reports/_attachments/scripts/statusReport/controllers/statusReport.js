@@ -269,8 +269,8 @@ angular.module('faradayApp')
                 });
             } else {
                 var modal = $modal.open({
-                    templateUrl: 'scripts/partials/modal-ko.html',
-                    controller: 'modalKoCtrl',
+                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    controller: 'commonsModalKoCtrl',
                     resolve: {
                         msg: function() {
                             return 'No vulnerabilities were selected to delete';
@@ -308,8 +308,8 @@ angular.module('faradayApp')
                 });
             } else {
                 var modal = $modal.open({
-                    templateUrl: 'scripts/partials/modal-ko.html',
-                    controller: 'modalKoCtrl',
+                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    controller: 'commonsModalKoCtrl',
                     resolve: {
                         msg: function() {
                             return 'At least one vulnerabilty must be selected in order to edit';

@@ -24,8 +24,8 @@ angular.module('faradayApp')
         
         $scope.onFailInsert = function(error){
             var modal = $modal.open({
-                templateUrl: 'scripts/partials/modal-ko.html',
-                controller: 'modalKoCtrl',
+                templateUrl: 'scripts/commons/partials/modalKO.html',
+                controller: 'commonsModalKoCtrl',
                 resolve: {
                     msg: function() {
                         return error;
@@ -197,8 +197,8 @@ angular.module('faradayApp')
                 });
             } else {
                 var modal = $modal.open({
-                    templateUrl: 'scripts/partials/modal-ko.html',
-                    controller: 'modalKoCtrl',
+                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    controller: 'commonsModalKoCtrl',
                     resolve: {
                         msg: function() {
                             return 'No workspaces were selected to edit';
@@ -244,8 +244,8 @@ angular.module('faradayApp')
                 });
             } else {
                 var modal = $modal.open({
-                    templateUrl: 'scripts/partials/modal-ko.html',
-                    controller: 'modalKoCtrl',
+                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    controller: 'commonsModalKoCtrl',
                     resolve: {
                         msg: function() {
                             return 'No workspaces were selected to delete';

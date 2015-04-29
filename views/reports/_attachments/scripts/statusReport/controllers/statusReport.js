@@ -290,7 +290,7 @@ angular.module('faradayApp')
 
             if(selected) {
                 var modal = $modal.open({
-                    templateUrl: 'scripts/partials/modal-edit.html',
+                    templateUrl: 'scripts/statusReport/partials/modalEdit.html',
                     controller: 'modalEditCtrl',
                     size: 'lg',
                     resolve: {
@@ -334,7 +334,7 @@ angular.module('faradayApp')
 
         $scope.new = function(){
                 var modal = $modal.open({
-                    templateUrl: 'scripts/partials/modal-new.html',
+                    templateUrl: 'scripts/statusReport/partials/modalNew.html',
                     controller: 'modalNewCtrl',
                     size: 'lg',
                     resolve: {

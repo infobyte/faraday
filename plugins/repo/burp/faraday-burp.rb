@@ -4,13 +4,13 @@
 ## Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 ## See the file 'doc/LICENSE' for the license information
 ###
-#__author__     = "Francisco Amato"
-#__copyright__  = "Copyright (c) 2014, Infobyte LLC"
-#__credits__    = ["Francisco Amato"]
-#__version__    = "1.2.0"
+#__author__	= "Francisco Amato"
+#__copyright__	= "Copyright (c) 2014, Infobyte LLC"
+#__credits__	= ["Francisco Amato"]
+#__version__	= "1.2.0"
 #__maintainer__ = "Francisco Amato"
-#__email__      = "famato@infobytesec.com"
-#__status__     = "Development"
+#__email__	= "famato@infobytesec.com"
+#__status__	= "Development"
 
 require 'java'
 require "xmlrpc/client"
@@ -38,35 +38,35 @@ java_import 'javax.swing.JCheckBox'
 java_import 'javax.swing.JPanel'
 java_import 'javax.swing.GroupLayout'
 java_import 'javax.swing.event.DocumentListener'
- 
+
 class SimpleDocumentListener
- 
+
   # This is how we declare that this class implements the Java
   # DocumentListener interface in JRuby:
   include DocumentListener
- 
+
   attr_accessor :behavior
- 
+
   def initialize(&behavior)
     self.behavior = behavior
   end
- 
+
   def changedUpdate(event);  behavior.call event; end
   def insertUpdate(event);   behavior.call event; end
   def removeUpdate(event);   behavior.call event; end
- 
+
 end
 
 
 class BurpExtender
   include IBurpExtender, IHttpListener, IProxyListener, IScannerListener, IExtensionStateListener,IContextMenuFactory, ITab
-    
+
   #
   # implement IBurpExtender
   #
-  
+
   def registerExtenderCallbacks(callbacks)
-      
+
     # keep a reference to our callbacks object
     @callbacks = callbacks
 
@@ -87,18 +87,18 @@ class BurpExtender
     @save_btn = javax.swing.JButton.new("Save configuration")
 
     @rpc_server.getDocument.addDocumentListener(
-        SimpleDocumentListener.new do
-            @server = XMLRPC::Client.new2(@rpc_server.getText())
+	SimpleDocumentListener.new do
+	    @server = XMLRPC::Client.new2(@rpc_server.getText())
     end)
 
     @restore_btn.addActionListener do |e|
-        restoreConfig()
+	restoreConfig()
     end
     @save_btn.addActionListener do |e|
-        saveConfig()
+	saveConfig()
     end
     @import_current_vulns.addActionListener do |e|
-        importVulns()
+	importVulns()
     end
 
     restoreConfig()
@@ -110,40 +110,40 @@ class BurpExtender
     @layout.setAutoCreateGaps(true)
     @layout.setAutoCreateContainerGaps(true)
     @layout.setHorizontalGroup(
-        @layout.createParallelGroup()
-            .addComponent(@import_current_vulns)
-            .addComponent(@import_new_vulns)
-            .addComponent(@rpc_server_label)
-            .addComponent(@rpc_server)
-            .addComponent(@restore_btn)
-            .addComponent(@save_btn)
+	@layout.createParallelGroup()
+	    .addComponent(@import_current_vulns)
+	    .addComponent(@import_new_vulns)
+	    .addComponent(@rpc_server_label)
+	    .addComponent(@rpc_server)
+	    .addComponent(@restore_btn)
+	    .addComponent(@save_btn)
     )
     @layout.setVerticalGroup(
-        @layout.createSequentialGroup()
-            .addComponent(@import_current_vulns)
-            .addComponent(@import_new_vulns)
-            .addComponent(@rpc_server_label)
-            .addComponent(@rpc_server)
-            .addComponent(@restore_btn)
-            .addComponent(@save_btn)
+	@layout.createSequentialGroup()
+	    .addComponent(@import_current_vulns)
+	    .addComponent(@import_new_vulns)
+	    .addComponent(@rpc_server_label)
+	    .addComponent(@rpc_server)
+	    .addComponent(@restore_btn)
+	    .addComponent(@save_btn)
     )
     @layout.linkSize(javax.swing.SwingConstants.VERTICAL, @import_new_vulns, @rpc_server)
 
     callbacks.addSuiteTab(self)
-    
+
     @helpers = callbacks.getHelpers()
 
     @stdout.println(PLUGINVERSION + " Loaded.")
     @stdout.println("RPCServer: " + @rpc_server.getText())
-    @stdout.println("Import new vulnerabilities detected: " + boolString(@import_new_vulns.isSelected()))
+    @stdout.println("Import new vulnerabilities detected: " + boolString(@callbacks.loadExtensionSetting("import_new_vulns")))
     @stdout.println("------")
-    
+
     # Register a factory for custom context menu items
     callbacks.registerContextMenuFactory(self)
 
     # register ourselves as a Scanner listener
     callbacks.registerScannerListener(self)
-    
+
     # register ourselves as an extension state listener
     callbacks.registerExtensionStateListener(self)
 
@@ -153,10 +153,10 @@ class BurpExtender
   #
   # implement menu
   #
- 
+
   # Create a menu item if the appropriate section of the UI is selected
   def createMenuItems(invocation)
-      
+
       menu = []
 
       # Which part of the interface the user selects
@@ -166,15 +166,15 @@ class BurpExtender
       #@stdout.println('Menu TYPE: %s\n' % ctx)
       if ctx == 5 or ctx == 6 or ctx == 2 or ctx == 7
 
-          faradayMenu = JMenuItem.new("Send to Faraday", nil)
+	  faradayMenu = JMenuItem.new("Send to Faraday", nil)
 
-          faradayMenu.addActionListener do |e|
-             eventScan(invocation, ctx)
-          end
+	  faradayMenu.addActionListener do |e|
+	     eventScan(invocation, ctx)
+	  end
 
-          menu.push(faradayMenu)
+	  menu.push(faradayMenu)
       end
-      
+
       return menu
   end
 
@@ -186,19 +186,19 @@ class BurpExtender
 
       #Scanner click
       if ctx == 7
-        invMessage = invocation.getSelectedIssues()
-        invMessage.each do |m|
-          newScanIssue(m,ctx,true)
-        end
+	invMessage = invocation.getSelectedIssues()
+	invMessage.each do |m|
+	  newScanIssue(m,ctx,true)
+	end
       else
-        #Others
-        invMessage = invocation.getSelectedMessages()
-        invMessage.each do |m|
-          newScanIssue(m,ctx,true)
-        end
+	#Others
+	invMessage = invocation.getSelectedMessages()
+	invMessage.each do |m|
+	  newScanIssue(m,ctx,true)
+	end
       end
   end
-  
+
   #
   # implement IScannerListener
   #
@@ -219,7 +219,7 @@ class BurpExtender
     rescue  Exception => e
       ip = host
     end
-    
+
     if ctx == 5 or ctx == 6 or ctx == 2
       issuename="Analyzing: "
       severity="Information"
@@ -239,8 +239,8 @@ class BurpExtender
 
       h_id = @server.call("createAndAddHost",ip, "unknown")
       i_id = @server.call("createAndAddInterface",h_id, ip,"00:00:00:00:00:00", ip, "0.0.0.0", "0.0.0.0",[],
-                          "0000:0000:0000:0000:0000:0000:0000:0000","00","0000:0000:0000:0000:0000:0000:0000:0000",
-                          [],"",host)
+			  "0000:0000:0000:0000:0000:0000:0000:0000","00","0000:0000:0000:0000:0000:0000:0000:0000",
+			  [],"",host)
 
       s_id = @server.call("createAndAddServiceToInterface",h_id, i_id, issue.getProtocol(),"tcp",[port],"open")
 
@@ -256,52 +256,52 @@ class BurpExtender
 
       #Menu action
       if ctx == 5 or ctx == 6 or ctx == 2
-        req = @helpers.analyzeRequest(issue.getRequest())
+	req = @helpers.analyzeRequest(issue.getRequest())
 
-        param = getParam(req)
-        issuename += "("+issue.getUrl().getPath()[0,20]+")"
-        path = issue.getUrl().to_s
-        request = issue.getRequest().to_s
-        method = req.getMethod().to_s
+	param = getParam(req)
+	issuename += "("+issue.getUrl().getPath()[0,20]+")"
+	path = issue.getUrl().to_s
+	request = issue.getRequest().to_s
+	method = req.getMethod().to_s
 
       else #Scan event or Menu scan tab
-        unless issue.getHttpMessages().nil? #issues with request #IHttpRequestResponse
-          c = 0
-          issue.getHttpMessages().each do |m|
-            if c == 0
-              req = @helpers.analyzeRequest(m.getRequest())
-              path = m.getUrl().to_s
-              request = m.getRequest().to_s
-              method = req.getMethod().to_s            
+	unless issue.getHttpMessages().nil? #issues with request #IHttpRequestResponse
+	  c = 0
+	  issue.getHttpMessages().each do |m|
+	    if c == 0
+	      req = @helpers.analyzeRequest(m.getRequest())
+	      path = m.getUrl().to_s
+	      request = m.getRequest().to_s
+	      method = req.getMethod().to_s
 
-              param = getParam(req)
-            else
-              desc += "<br/>Request (" + c.to_s + "): " + m.getUrl().to_s
-            end
+	      param = getParam(req)
+	    else
+	      desc += "<br/>Request (" + c.to_s + "): " + m.getUrl().to_s
+	    end
 
-            c = c + 1
-          end
+	    c = c + 1
+	  end
 
-          if c == 0
-            path = issue.getUrl().to_s
-          end
+	  if c == 0
+	    path = issue.getUrl().to_s
+	  end
 
-        end
+	end
       end
 
       #createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity, resolution, website, path, request, response,method,pname, params,query,category):
       v_id = @server.call("createAndAddVulnWebToService",h_id, s_id, issuename,
-             desc,[],severity,resolution,host,path,request,
-             response,method,"",param,"","")
+	     desc,[],severity,resolution,host,path,request,
+	     response,method,"",param,"","")
 
-      
+
     rescue XMLRPC::FaultException => e
       puts "Error:"
       puts e.faultCode
       puts e.faultString
     end
   end
-  
+
   def extensionUnloaded()
 
   end
@@ -318,7 +318,7 @@ class BurpExtender
   # convert integer to string
   #
   def boolString(value)
-    if value == 0
+    if value == "0"
       return "false"
     else
       return "true"
@@ -343,7 +343,7 @@ class BurpExtender
       @import_new_vulns.setSelected(@callbacks.loadExtensionSetting("import_new_vulns") == "1")
       @rpc_server.setText(@callbacks.loadExtensionSetting("rpc_server"))
       if @rpc_server.getText().strip == ""
-          @rpc_server.setText("http://127.0.0.1:9876/")
+	  @rpc_server.setText("http://127.0.0.1:9876/")
       end
 
       #Connect Rpc server
@@ -364,9 +364,9 @@ class BurpExtender
       @stdout.println("Importing vulns.")
       rt = @server.call("devlog", "[BURP] Importing issues")
       @callbacks.getScanIssues(nil).each do |issue|
-        newScanIssue(issue, 1, true)
-      end 
+	newScanIssue(issue, 1, true)
+      end
   end
 
 
-end      
+end

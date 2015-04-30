@@ -54,7 +54,7 @@ class ViewsListObject(object):
     """ Representation of the FS Views """
     def __init__(self):
         self.views_path = os.path.join(os.getcwd(), "views")
-        self.designs_path = os.path.join(self.views_path, "_design") 
+        self.designs_path = os.path.join(self.views_path, "reports", "_attachments", "views")
 
     def _listPath(self, path):
         flist = filter(lambda x: not x.startswith('.'), os.listdir(path))

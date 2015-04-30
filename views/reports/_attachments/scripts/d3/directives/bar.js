@@ -1,3 +1,7 @@
+// Faraday Penetration Test IDE
+// Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+// See the file 'doc/LICENSE' for the license information
+
 angular.module('faradayApp')
   .directive('d3Bars', ['d3Service', '$routeParams',
   function(d3Service, $routeParams) {
@@ -13,7 +17,7 @@ angular.module('faradayApp')
             "top": parseInt(attrs.marginTop) || 20,
             "right": parseInt(attrs.marginRight) || 20,
             "bottom": parseInt(attrs.marginBottom) || 30,
-            "left": parseInt(attrs.marginLeft) || 40,
+            "left": parseInt(attrs.marginLeft) || 40
           }
 
           var barHeight = parseInt(attrs.barHeight) || 20,
@@ -66,10 +70,11 @@ angular.module('faradayApp')
                 .append('rect')
                 .attr("class", "bar")
                 .attr("x", function(d) { return x(d.key); })
-                .attr("y", function(d) { return y(d.value - 1); })
+                .attr("y", function(d) { return y(d.value - 0.5); })
                 .style("fill", function(d) { return color(Math.random()*55); })
                 .attr("height", function(d) { return height - margin.top - margin.bottom - y(d.value); })
                 .attr("width", 30)
+                .style('opacity', 0)
                 .on('mouseover', function(d){
                   workspace = $routeParams.wsId;
                   var hurl    = "/" + workspace + "/_design/hosts/_view/hosts";
@@ -80,7 +85,10 @@ angular.module('faradayApp')
                 })
                 .on('mouseleave', function(){
                   document.getElementById("barText").innerHTML = "";
-                });
+                })
+                .transition()
+                    .duration(1250)
+                    .style('opacity', 1);
 
                 function get_obj(ourl) {
                   var ls = {};

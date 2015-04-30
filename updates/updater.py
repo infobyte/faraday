@@ -77,8 +77,8 @@ class CouchViews(Update):
         serv = couchdbkit.Server(source_server)
 
         logger.info('We are about to upload CouchdbViews in Server [%s]' % source_server)
-        if not query_yes_no("Faraday won't behave correctly with older versions, proceed?", 'no'):
-            return
+        # if not query_yes_no("Faraday won't behave correctly with older versions, proceed?", 'no'):
+        #     return
 
         dbs = filter(lambda x: not x.startswith("_") and 'backup' not in x and \
                 'reports' not in x, serv.all_dbs())

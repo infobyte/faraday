@@ -1,8 +1,12 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
 <form name="form" novalidate>
 <div class="modal-header">
     <div class="modal-button">
-        <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
         <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+        <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
     </div>
     <h3 class="modal-title">Vulnerability creation</h3>
 </div>
@@ -175,13 +179,13 @@
     </form>
     <div id="evidenceFiles" class="normal-size" ng-if="evidence">
         <ul>
-            <li ng-repeat="(key, value) in evidence">
+            <li ng-repeat="e in evidence | orderObjectBy:'name':true | orderBy:'name'">
                 <div class="btn-group">
                     <button type="button" class="btn btn-default">
-                        <span class="fa {{icons[key]}}" title="Evidence {{key}}"></span> {{key}}
+                        <span class="fa {{icons[e.name]}}" title="Evidence {{e.name}}"></span> {{e.name}}
                     </button><!-- ng-repeat -->
-                    <button type="button" class="btn btn-danger" ng-click="removeEvidence(key)">
-                        <span class="glyphicon glyphicon-trash">
+                    <button type="button" class="btn btn-danger" ng-click="removeEvidence(e.name)">
+                        <span class="glyphicon glyphicon-trash"></span>
                     </button>
                 </div>
             </li>
@@ -189,7 +193,7 @@
     </div><!-- #evidenceFiles -->
 </div><!-- .modal-body -->
 <div class="modal-footer">
-    <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
     <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+    <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
 </div>
 </form>

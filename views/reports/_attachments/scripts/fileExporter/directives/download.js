@@ -1,6 +1,12 @@
+// Faraday Penetration Test IDE
+// Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+// See the file 'doc/LICENSE' for the license information
+
 angular.module('faradayApp')
     // file export
-    .directive('fileExporter', function($parse, $click, $blob, $log, $timeout) {
+    .directive('fileExporter', 
+        ['$parse', '$click', '$blob', '$log', '$timeout', 
+        function($parse, $click, $blob, $log, $timeout) {
       return {
         compile: function($element, attr) {
           var fn = $parse(attr.fileExporter);
@@ -31,4 +37,4 @@ angular.module('faradayApp')
           };
         }
       };
-    });
+    }]);

@@ -1,3 +1,7 @@
+// Faraday Penetration Test IDE
+// Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+// See the file 'doc/LICENSE' for the license information
+
 function htmlentities(string, quote_style, charset, double_encode) {
     var hash_map = translationtable('HTML_ENTITIES', quote_style), symbol = '';
     string = string == null ? '' : string + '';

@@ -19,7 +19,7 @@ import platform
 import subprocess
 import pip
 
-from utils.logs import getLogger
+from utils.logs import getLogger, setUpLogger
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/external_libs/lib/python2.7/dist-packages')
 from config.configuration import getInstanceConfiguration
 from config.globals import *
@@ -133,6 +133,10 @@ def getParserArgs():
         default=False,
         help="Update Faraday IDE.")
 
+    parser.add_argument('--cert', action="store", dest="cert_path",
+        default=None,
+        help="Path to the valid CouchDB certificate")
+
     parser_gui_ex.add_argument('--gui', action="store", dest="gui",
         default="qt3",
         help="Select interface to start faraday. Default = qt3")
@@ -202,17 +206,21 @@ def checkDependencies():
             else:
                 modules.append([line[:line.index('=')], (line[line.index('=')+2:]).strip()])
         f.close()
-        for module in modules:
-            try:
-                __import__(module[0])
-            except ImportError:
-                if query_user_bool("Missing module %s." \
-                    " Do you wish to install it?" % module[0]):
-                    pip.main(['install', "%s==%s" %
-                             (module[0], module[1]), '--user'])
 
-                else:
-                    return False
+        pip_dist = [dist.project_name.lower() for dist in pip.get_installed_distributions()]
+
+        for module in modules:
+            if module[0].lower() not in pip_dist:
+                try:
+                    __import__(module[0])
+                except ImportError:
+                    if query_user_bool("Missing module %s." \
+                        " Do you wish to install it?" % module[0]):
+                        pip.main(['install', "%s==%s" %
+                                 (module[0], module[1]), '--user'])
+
+                    else:
+                        return False
 
     return True
 
@@ -294,10 +302,10 @@ def startFaraday():
         print(Fore.WHITE + Style.BRIGHT + \
             "\n*" + string.center("faraday ui is ready", 53 - 6) )
         print(Fore.WHITE + Style.BRIGHT + \
-                """Make sure you got couchdb up and running.\nIf couchdb is up, point your browser to: \n[%s]""" % url) 
+                """Make sure you got couchdb up and running.\nIf couchdb is up, point your browser to: \n[%s]""" % url)
     else:
         print(Fore.WHITE + Style.BRIGHT + \
-                """Please config Couchdb for fancy HTML5 Dashboard""") 
+                """Please config Couchdb for fancy HTML5 Dashboard""")
 
     print(Fore.RESET + Back.RESET + Style.RESET_ALL)
 
@@ -358,9 +366,12 @@ def setupZSH():
     if os.path.isfile(USER_ZSHRC):
         shutil.copy(USER_ZSHRC, FARADAY_USER_ZSHRC)
     else:
-        subprocess.call(['touch', FARADAY_USER_ZSHRC])
+        open(FARADAY_USER_ZSHRC, 'w').close()
 
-    subprocess.call(['sed', '-i', '1iZDOTDIR=$OLDZDOTDIR', FARADAY_USER_ZSHRC])
+    with open(FARADAY_USER_ZSHRC, "r+") as f:
+        content = f.read()
+        f.seek(0, 0)
+        f.write('ZDOTDIR=$OLDZDOTDIR' + '\n' + content)
     with open(FARADAY_USER_ZSHRC, "a") as f:
         f.write("source %s" % FARADAY_BASE_ZSH)
     shutil.copy(FARADAY_BASE_ZSH, FARADAY_USER_ZSH_PATH)
@@ -492,13 +503,17 @@ def update():
         logger.info("Update process finished with no errors")
         logger.info("Faraday will start now.")
 
-def checkUpdates(): 
+def checkUpdates():
     import requests
-    uri = getInstanceConfiguration().getUpdatesUri() 
+    uri = getInstanceConfiguration().getUpdatesUri()
     resp = u"OK"
     try:
         f = open(CONST_VERSION_FILE)
-        parameter = {"version": f.read().strip()}
+
+        getInstanceConfiguration().setVersion(f.read().strip())
+        getInstanceConfiguration().setAppname("Faraday - Penetration Test IDE Community")
+        parameter = {"version": getInstanceConfiguration().getVersion()}
+
         f.close
         resp = requests.get(uri, params=parameter, timeout=1, verify=True)
         resp = resp.text.strip()
@@ -508,6 +523,22 @@ def checkUpdates():
         logger.info("You have available updates. Run ./faraday.py --update to catchup!")
     else:
         logger.info("No updates available, enjoy Faraday")
+
+
+def checkCouchUrl():
+    import requests
+    try:
+        requests.get(getInstanceConfiguration().getCouchURI(), timeout=5)
+    except requests.exceptions.SSLError:
+        print """
+        SSL certificate validation failed.
+        You can use the --cert option in Faraday
+        to set the path of the cert
+        """
+        sys.exit(-1)
+    except Exception as e:
+        # Non fatal error
+        pass
 
 
 def init():
@@ -531,12 +562,16 @@ def main():
     """
 
     init()
-    update()
     if checkDependencies():
         printBanner()
         logger.info("Dependencies met.")
+        if args.cert_path:
+            os.environ['REQUESTS_CA_BUNDLE'] = args.cert_path
         checkConfiguration()
         setConf()
+        checkCouchUrl()
+        setUpLogger()
+        update()
         checkUpdates()
         startFaraday()
     else:

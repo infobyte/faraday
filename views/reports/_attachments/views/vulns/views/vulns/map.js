@@ -3,27 +3,21 @@
 // See the file 'doc/LICENSE' for the license information
 function(doc) {
     if(doc.type == "Vulnerability"){
-        var easeofresolution = "",
-        impact = "",
+        var easeofresolution = "trivial",
+        impact = {
+            "accountability": 0,
+            "availability": 0,
+            "confidentiality": 0,
+            "integrity": 0
+        },
         resolution = "";
-        if(doc.easeofresolution == "undefined" || typeof(doc.easeofresolution) == "undefined") {
-            easeofresolution = "trivial";
-        } else {
+        if(doc.easeofresolution != "undefined" && typeof(doc.easeofresolution) != "undefined") {
             easeofresolution = doc.easeofresolution;
         }
-        if(doc.impact == "undefined" || typeof(doc.impact) == "undefined") {
-            impact = {
-                "accountability": 0,
-                "availability": 0,
-                "confidentiality": 0,
-                "integrity": 0
-            };
-        } else {
+        if(doc.impact != "undefined" && typeof(doc.impact) != "undefined") {
             impact = doc.impact;
         }
-        if(doc.resolution == "undefined" || typeof(doc.resolution) == "undefined") {
-            resolution = "";
-        } else {
+        if(doc.resolution != "undefined" && typeof(doc.resolution) != "undefined") {
             resolution = doc.resolution;
         }
 
@@ -33,8 +27,8 @@ function(doc) {
             "data":             doc.data,
             "date":             doc.metadata.create_time, 
             "desc":             doc.desc, 
-            "easeofresolution": doc.easeofresolution,
-            "impact":           doc.impact,
+            "easeofresolution": easeofresolution,
+            "impact":           impact,
             "meta":             doc.metadata,
             "name":             doc.name, 
             "oid":              doc.obj_id,
@@ -42,7 +36,7 @@ function(doc) {
             "owner":            doc.owner,
             "parent":           doc.parent, 
             "refs":             doc.refs,
-            "resolution":       doc.resolution,
+            "resolution":       resolution,
             "severity":         doc.severity, 
             "type":             doc.type 
         };

@@ -1,5 +1,9 @@
+// Faraday Penetration Test IDE
+// Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+// See the file 'doc/LICENSE' for the license information
+
 angular.module('faradayApp')
-    .factory('statusReportFact', ['vulnsFact', 'vulnsWebFact', 'hostsFact', 'workspacesFact', function(vulnsFact, vulnsWebFact, hostsFact, wsFact) {
+    .factory('statusReportFact', ['vulnsFact', 'vulnsWebFact', 'hostsFact', 'workspacesFact', function(vulnsFact, vulnsWebFact, hostsFact, workspacesFact) {
         var statusReportFact = {};
 
         statusReportFact.getVulns = function(ws) {
@@ -7,10 +11,14 @@ angular.module('faradayApp')
             var vulnsWeb    = vulnsWebFact.get(ws);
             var hosts       = hostsFact.get(ws);
             vulns.forEach(function(element, index, array) {
-                element.target = hosts[element.parent].name;
+                if (element.parent in hosts) {
+                    element.target = hosts[element.parent].name;
+                }
             });
             vulnsWeb.forEach(function(element, index, array) {
-                element.target = hosts[element.parent].name;
+                if (element.parent in hosts) {
+                    element.target = hosts[element.parent].name;
+                }
             });
             return vulnsWeb.concat(vulns);
         };
@@ -27,8 +35,8 @@ angular.module('faradayApp')
             vulnsFact.remove(ws, vuln);
         };
 
-        statusReportFact.getWorkspaces = function(callback) {
-            wsFact.list(callback);
+        statusReportFact.getWorkspaces = function() {
+            return workspacesFact.list();
         };
 
         return statusReportFact;

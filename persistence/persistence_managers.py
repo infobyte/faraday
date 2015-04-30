@@ -49,11 +49,11 @@ class DbManager(object):
     def __init__(self):
         self.load()
 
-    def load(self): 
+    def load(self):
         self.couchmanager = CouchDbManager(CONF.getCouchURI())
         self.fsmanager = FileSystemManager()
         self.managers = {
-                            DBTYPE.COUCHDB: self.couchmanager, 
+                            DBTYPE.COUCHDB: self.couchmanager,
                             DBTYPE.FS: self.fsmanager
                         }
         self.dbs = {}
@@ -61,7 +61,7 @@ class DbManager(object):
 
     def getAvailableDBs(self):
         return  [typ for typ, manag in self.managers.items()\
-                if manag.isAvailable()] 
+                if manag.isAvailable()]
 
     def _loadDbs(self):
         self.dbs = {}
@@ -119,7 +119,7 @@ class DbManager(object):
         return self.dbs.get(dbname).getType()
 
     def reloadConfig(self):
-        self.load() 
+        self.load()
 
 class DbConnector(object):
     def __init__(self, type=None):
@@ -288,7 +288,7 @@ class CouchDbConnector(DbConnector):
         return res
 
     def forceUpdate(self):
-        doc = self.getDocument(self.db.dbname) 
+        doc = self.getDocument(self.db.dbname)
         return self.db.save_doc(doc, use_uuids=True, force_update=True)
 
     #@trap_timeout
@@ -384,7 +384,7 @@ class CouchDbConnector(DbConnector):
 class AbstractPersistenceManager(object):
     def __init__(self):
         self.dbs = {}
- 
+
     def createDb(self, name):
         if not self.getDb(name):
             self.dbs[name] = self._create(name)
@@ -533,7 +533,7 @@ class CouchDbManager(AbstractPersistenceManager):
     def _loadDb(self, dbname):
         db = self.__serv.get_db(dbname)
         seq = db.info()['update_seq']
-        self.dbs[dbname] = CouchDbConnector(db, seq_num=seq) 
+        self.dbs[dbname] = CouchDbConnector(db, seq_num=seq)
         return self.dbs[dbname]
 
 
@@ -608,7 +608,7 @@ class CouchDbManager(AbstractPersistenceManager):
                 raise e
             except Exception as e:
                 getLogger(self).error(e)
-                raise 
+                raise
 
     def __peerReplication(self, workspace, src, dst, **kwargs):
         mutual = kwargs.get("mutual", True)

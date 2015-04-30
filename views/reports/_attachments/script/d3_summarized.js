@@ -1,3 +1,7 @@
+// Faraday Penetration Test IDE
+// Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+// See the file 'doc/LICENSE' for the license information
+
 function treemap(workspace, design, view){
 	        var margin = {top: 28, right: 10, bottom: 10, left: 10},
             width = 160 - margin.left - margin.right,

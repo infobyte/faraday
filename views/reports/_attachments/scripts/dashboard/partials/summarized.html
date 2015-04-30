@@ -1,3 +1,7 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
 <div id='byservices'>
     <div class='col-lg-3'>
         <article class='panel panel-default'>
@@ -103,11 +107,9 @@
                         <li><a ng-hide="currentPage >= numberOfPages()" ng-click="currentPage=currentPage+1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
                     </ul>
                     <form name="goToPage" id="goToPageStatus">
-                        <div class="col-md-2">
-                            <input type="number" min="0" max="{{numberOfPages()}}" class="form-control" ng-model="go_page" placeholder="Go to page"/>
-                        </div>
-                        <button class="btn btn-danger" ng-click="go()">GO</button>
-                        <input type="number" min="0" class="form-control vuln_per_page" ng-model="pagination" placeholder="Numbre page" />
+                        <input type="number" min="0" max="{{numberOfPages()}}" class="form-control" ng-model="go_page" placeholder="Go to page"/>
+                        <button class="btn btn-default" ng-click="go()">GO</button>
+                        <input id="vuln-per-page" type="number" min="0" class="form-control vuln_per_page" ng-model="pagination" placeholder="Numbre page" />
                     </form>
                 </div>
             </div>
@@ -161,18 +163,18 @@
             <table id="commands" ng-if="commands.length > 0" class="tablesorter table table-striped">
                 <thead>
                     <tr>
-                        <th><a href="" ng-click="cmdToggleSort('By')">By</a></th>
+                        <th><a href="" ng-click="cmdToggleSort('user')">By</a></th>
                         <th><a href="" ng-click="cmdToggleSort('command')">Command</a></th>
                         <th><a href="" ng-click="cmdToggleSort('date')">Start Date</a></th>
                         <th><a href="" ng-click="cmdToggleSort('duration')">Duration</a></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="cmd in commands | orderBy:cmdSortField:cmdSortReverse">
-                        <td tooltip="{{cmd.ip}}">{{cmd.user}}@{{cmd.hostname}}</td>
+                    <tr ng-repeat="cmd in commands | orderObjectBy:cmdSortField:cmdSortReverse">
+                        <td><p tooltip="{{cmd.ip}}">{{cmd.user}}@{{cmd.hostname}}</p></td>
                         <td>{{cmd.command}}</td>
-                        <td>{{cmd.date}}</td>
-                        <td>{{cmd.duration}}</td>
+                        <td>{{cmd.date | date:"MM/dd/yyyy 'at' h:mma"}}</td>
+                        <td ng-bind="cmd.duration || 'undefined'"></td>
                     </tr>
                 </tbody>
             </table>

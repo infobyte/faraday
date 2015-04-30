@@ -1,15 +1,39 @@
+// Faraday Penetration Test IDE
+// Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+// See the file 'doc/LICENSE' for the license information
+
 angular.module('faradayApp')
-    .controller('navigationCtrl', ['$scope', '$route', '$routeParams', '$cookies', '$location',
-        function($scope, $route, $routeParams, $cookies, $location) {
+    .controller('navigationCtrl', ['$scope', '$http','$route', '$routeParams', '$cookies', '$location',
+        function($scope, $http, $route, $routeParams, $cookies, $location) {
 
         $scope.workspace = "";
+        $scope.component = "";
 
-        $scope.$on('$routeChangeSuccess', function(){
+        $scope.$on('$routeChangeSuccess', function() {
+            $scope.updateWorkspace();
+            $scope.updateComponent();
+        });
+
+        $scope.updateWorkspace = function() {
             if($routeParams.wsId != undefined) {
                 $scope.workspace = $routeParams.wsId;
                 $cookies.currentUrl = $location.path();
             }
-        });
+        };
+
+        $scope.updateComponent = function() {
+            if($location.path() == "") {
+                $scope.component = "home";
+            } else {
+                $scope.component = $location.path().split("/")[1];
+            }
+            $cookies.currentComponent = $scope.component;
+        };
+
+        $scope.showNavigation = function() {
+            var noNav = ["home", "index", ""];
+            return noNav.indexOf($scope.component) < 0;
+        };
 
         $scope.loadCurrentWorkspace = function() {
             var pos = -1;
@@ -27,4 +51,8 @@ angular.module('faradayApp')
 
         $scope.loadCurrentWorkspace();
 
+        if(navigator.userAgent.toLowerCase().indexOf('iceweasel') > -1) {
+             $scope.isIceweasel = "Your browser is not supported, please use Firefox or Chrome";
+        }
+        
 	}]);

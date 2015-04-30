@@ -1,3 +1,7 @@
+// Faraday Penetration Test IDE
+// Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+// See the file 'doc/LICENSE' for the license information
+
 angular.module('faradayApp')
     .controller('summarizedCtrl', 
         ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv',
@@ -113,40 +117,34 @@ angular.module('faradayApp')
                             cmd.duration = "In progress";
                         } else if (cmd.duration != undefined) {
                             cmd.duration = cmd.duration.toFixed(2) + "s";
-                        } else {
-                            cmd.duration = "undefined";
                         }
-                        var d = new Date(0);
-                        d.setUTCSeconds(cmd.startdate);
-                        var mins = (d.getMinutes()<10?'0':'') + d.getMinutes();
-                        d = d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear() + " - " + d.getHours() + ":" + mins;
-                        cmd.date = d;
+                        cmd.date = cmd.startdate * 1000;
                     });
                     $scope.commands = res;
                 });
                 dashboardSrv.getHosts(workspace).then(function(res){
-                    res.forEach(function(host){
-                        // Maybe this part should be in the view somehow
-                        // or, even better, in CSS file
-                        oss = ["windows", "cisco", "router", "osx", "apple","linux", "unix"];
-                        oss.forEach(function(os){
-                            if (host.os.toLowerCase().indexOf(os) != -1) {
-                                host.icon = os;
-                                if (os == "unix") {
-                                    host.icon = "linux";
-                                }else if (os == "apple") {
-                                    host.icon = "osx";
+                    dashboardSrv.getHostsByServicesCount(workspace).then(function(servicesCount){
+                        res.forEach(function(host){
+                            // Maybe this part should be in the view somehow
+                            // or, even better, in CSS file
+                            oss = ["windows", "cisco", "router", "osx", "apple","linux", "unix"];
+                            oss.forEach(function(os){
+                                if (host.os.toLowerCase().indexOf(os) != -1) {
+                                    host.icon = os;
+                                    if (os == "unix") {
+                                        host.icon = "linux";
+                                    }else if (os == "apple") {
+                                        host.icon = "osx";
+                                    }
                                 }
-                            }
-                        });
-
-                        host.servicesCount = 0;
-                        dashboardSrv.getHostsByServicesCount(workspace, host.id).then(function(res){
-                            if (res.length == 1) {
-                                if (res[0].key == host.id){
-                                    host.servicesCount = res[0].value;
+                            });
+                            host.servicesCount = 0;
+                            servicesCount.forEach(function(count){
+                                if (count.key == host.id) {
+                                    host.servicesCount = count.value;
+                                    return
                                 }
-                            }
+                            })
                             $scope.hosts.push(host);
                         });
                     });

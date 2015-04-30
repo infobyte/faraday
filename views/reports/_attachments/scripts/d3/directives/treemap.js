@@ -1,3 +1,7 @@
+// Faraday Penetration Test IDE
+// Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+// See the file 'doc/LICENSE' for the license information
+
 angular.module('faradayApp')
   .directive('d3Treemap', ['d3Service', 
   function(d3Service) {
@@ -13,7 +17,7 @@ angular.module('faradayApp')
             "top": parseInt(attrs.marginTop) || 28,
             "right": parseInt(attrs.marginRight) || 10,
             "bottom": parseInt(attrs.marginBottom) || 10,
-            "left": parseInt(attrs.marginLeft) || 10,
+            "left": parseInt(attrs.marginLeft) || 10
           }
 
           function position() {
@@ -61,6 +65,7 @@ angular.module('faradayApp')
               .attr("class", "node treemap-tooltip")
               .call(position)
               .style("background", function(d) { return d.color; })
+              .style('opacity', 0)
               .text(function(d, i) {
                 if(data.width){
                   var total = d3.sum(data.children, function(d){return d.value;});
@@ -76,7 +81,10 @@ angular.module('faradayApp')
               })
               .on('mouseleave', function(){
                 document.getElementById("treemapText").innerHTML = "";
-              });
+              })
+              .transition()
+                  .duration(1250)
+                  .style('opacity', 1);
 
           };
         });

@@ -1,8 +1,12 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
 <form name="formEdit" novalidate>
 <div class="modal-header">
     <div class="modal-button">
-        <button class="btn btn-success" ng-click="ok()" ng-disabled="formEdit.$invalid">OK</button>
         <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+        <button class="btn btn-success" ng-click="ok()" ng-disabled="formEdit.$invalid">OK</button>
     </div>
     <h3 class="modal-title">Bulk edit</h3>
 </div>
@@ -133,13 +137,13 @@
         </form>
         <div id="evidenceFiles" class="normal-size" ng-if="evidence">
             <ul>
-                <li ng-repeat="(key, value) in evidence">
+                <li ng-repeat="e in evidence | orderObjectBy:'name':true | orderBy:'name'">
                     <div class="btn-group">
                         <button type="button" class="btn btn-default">
-                            <span class="fa {{icons[key]}}" title="Evidence {{key}}"></span> {{key}}
+                            <span class="fa {{icons[e.name]}}" title="Evidence {{e.name}}"></span> {{e.name}}
                         </button><!-- ng-repeat -->
-                        <button type="button" class="btn btn-danger" ng-click="removeEvidence(key)">
-                            <span class="glyphicon glyphicon-trash">
+                        <button type="button" class="btn btn-danger" ng-click="removeEvidence(e.name)">
+                            <span class="glyphicon glyphicon-trash"></span>
                         </button>
                     </div>
                 </li>
@@ -160,11 +164,12 @@
                 <th><a href="" ng-click="sortField = 'name'; reverse = !reverse">Name</a></th>
                 <th><a href="" ng-click="sortField = 'target'; reverse = !reverse">Target</a></th>
                 <th><a href="" ng-click="sortField = 'desc'; reverse = !reverse">Desc</a></th>
+                <th><a href="">Copy</a></th>
             </tr>
         </thead>
         <tbody>
-            <tr ng-click="pickVuln(v);call();" ng-repeat="v in vulns | filter:isChecked | orderBy:sortField:reverse">
-                <td>{{v.date}}</td>
+            <tr ng-repeat="v in vulns | filter:isChecked | orderBy:sortField:reverse">
+                <td>{{v.date | date:'MM/dd/yyyy'}}</td>
                 <td>
                     <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
                     <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>
@@ -174,12 +179,13 @@
                 <td>{{v.name}}</td>
                 <td>{{v.target}}</td>
                 <td text-collapse text-collapse-max-length="50" text-collapse-text="{{v.desc}}"></td>
+                <td><i class="fa fa-copy copy-icon fa-lg" ng-click="pickVuln(v);call();"></i></td>
             </tr>
         </tbody>
     </table><!-- #hosts -->
 </div><!-- .modal-body -->
 <div class="modal-footer">
-    <button class="btn btn-success" ng-click="ok()" ng-disabled="formEdit.$invalid">OK</button>
     <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+    <button class="btn btn-success" ng-click="ok()" ng-disabled="formEdit.$invalid">OK</button>
 </div>
 </form>

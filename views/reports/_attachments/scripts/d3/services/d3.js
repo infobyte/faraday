@@ -1,6 +1,10 @@
+// Faraday Penetration Test IDE
+// Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+// See the file 'doc/LICENSE' for the license information
+
 angular.module('faradayApp')
-    .factory('d3Service', ['$document', '$q', '$rootScope',
-    function($document, $q, $rootScope) {
+    .factory('d3Service', ['BASEURL', '$document', '$q', '$rootScope',
+    function(BASEURL, $document, $q, $rootScope) {
         var d = $q.defer();
         function onScriptLoad() {
             // Load client in the browser
@@ -12,7 +16,7 @@ angular.module('faradayApp')
         var scriptTag = $document[0].createElement('script');
         scriptTag.type = 'text/javascript'; 
         scriptTag.async = true;
-        scriptTag.src = 'http://d3js.org/d3.v3.min.js';
+        scriptTag.src = 'script/d3.v3.min.js';
         scriptTag.onreadystatechange = function () {
             if (this.readyState == 'complete') onScriptLoad();
         }

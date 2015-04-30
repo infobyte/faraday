@@ -1,3 +1,7 @@
+// Faraday Penetration Test IDE
+// Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+// See the file 'doc/LICENSE' for the license information
+
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
                     ['$scope', '$filter', '$route', '$routeParams', '$modal', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
@@ -14,7 +18,7 @@ angular.module('faradayApp')
         $scope.pagination = 10;
 
         // load all workspaces
-        statusReportFact.getWorkspaces(function(wss) {
+        statusReportFact.getWorkspaces().then(function(wss) {
             $scope.workspaces = wss;
         });
 
@@ -97,7 +101,7 @@ angular.module('faradayApp')
             content     = "\"Date\", \"Web\", \"Status\", \"Severity\", "+
                 "\"Name\", \"Target\", \"Description\", "+
                 "\"Data\", \"Method\", \"Path\", \"Param Name\", \"Params\", "+
-                "\"Query\", \"References\", \"Request\", \"Response\", \"Resolution\",\"Website\""+
+                "\"Query\", \"References\", \"Request\", \"Response\", \"Resolution\",\"Website\", "+
                 "\"Ease of Resolution\", \"Impact\"\n";
             
             $scope.vulns.forEach(function(v) {
@@ -161,8 +165,8 @@ angular.module('faradayApp')
                     " \""+request+"\","+
                     " \""+response+"\","+
                     " \""+resolution+"\","+
-                    " \""+website+"\""+
-                    " \""+impact+"\""+
+                    " \""+website+"\","+
+                    " \""+impact+"\","+
                     " \""+easeofres+"\""+
                     "\n";
             });

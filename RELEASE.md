@@ -12,7 +12,7 @@ New features in the latest update
 
 
 
-Apr 17, 215:
+Apr 17, 2015:
 ---
 * You can get the new version here:
 * https://github.com/infobyte/faraday/archive/v1.0.10.tar.gz
@@ -33,7 +33,7 @@ You can get the new version here:
 
 Changes:
 
-* Performance improvment in the dahsboard
+* Performance improvement in the dashboard
 * Fix bug OSX install
 * Bug fixes
 

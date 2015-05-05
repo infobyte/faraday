@@ -34,23 +34,23 @@ angular.module('faradayApp')
         };
 
         commonsFact.arrayToObject = function(array){
-            var refArray = [];
+            var arrayOfObjects = [];
             if (array != undefined){
                 array.forEach(function(r){
-                    refArray.push({ref:r});
+                    arrayOfObjects.push({key:r});
                 });
             }
-            return refArray;
+            return arrayOfObjects;
         }
 
         commonsFact.objectToArray = function(object){
             var res = {};
-            var arrayReferences = [];
+            var array = [];
             object.forEach(function(r){
-                arrayReferences.push(r.ref);
+                array.push(r.key);
             });
-            arrayReferences = arrayReferences.filter(Boolean);
-            return arrayReferences;
+            array = array.filter(Boolean);
+            return array;
         }
 
         commonsFact.htmlentities = function(string, quote_style, charset, double_encode) {

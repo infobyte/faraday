@@ -19,7 +19,7 @@ angular.module('faradayApp')
         $scope.target_selected = null;
         $scope.not_target_selected = false;
         $scope.incompatible_vulnWeb = false;
-        $scope.refs = [{ref:''}];
+        $scope.refs = [{key:''}];
         $scope.evidence = {};
         $scope.icons = {};
         $scope.showPagination = 1;
@@ -103,7 +103,7 @@ angular.module('faradayApp')
                 }
 
                 $scope.refs.forEach(function(r){
-                    arrayReferences.push(r.ref);
+                    arrayReferences.push(r.key);
                 });
                 
                 arrayReferences.filter(Boolean);
@@ -198,7 +198,7 @@ angular.module('faradayApp')
         }
 
         $scope.newReference = function($event){
-            $scope.refs.push({ref:''});
+            $scope.refs.push({key:''});
             $event.preventDefault();
         }
     }]);

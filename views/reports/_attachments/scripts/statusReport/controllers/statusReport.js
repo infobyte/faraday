@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$modal', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
-                    function($scope, $filter, $route, $routeParams, $modal, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
+                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
+                    function($scope, $filter, $route, $routeParams, $location, $modal, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
         init = function() {
             $scope.baseurl = BASEURL;
             $scope.severities = SEVERITIES;
@@ -387,6 +387,16 @@ angular.module('faradayApp')
             if($scope.go_page > $scope.numberOfPages()){
                 $scope.currentPage = 0;
             }
+        };
+
+        $scope.searchFor = function(params, search) {
+            var url = "/status/ws/" + $routeParams.wsId;
+
+            if(search) {
+                url += "/search/" + params;
+            }
+
+            $location.path(url);
         };
 
         init();

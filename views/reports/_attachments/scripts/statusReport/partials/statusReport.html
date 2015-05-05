@@ -39,15 +39,17 @@
 			</div><!-- .col-md-6 .col-sm-6 .col-xs-12 -->
                     <div class="reports">
                     	<div class="row">
-							<div class="col-md-6 col-sm-3 col-xs-11">
+                            <div class="col-md-12 col-sm-6 col-xs-3" ng-if="search">
+                                <h4><span class="label label-default">Filtering by "{{search}}" <a href="" ng-click="searchFor('',false)"><span class="glyphicon glyphicon-remove"></span></a></span></h4>
+                            </div><!-- .col-md-12 -->
+							<div class="col-md-4 col-sm-3 col-xs-11">
 								<form role="form">
 		                            <div class="form-group">
                                         <div class="input-group">
-                                            <input type="text" class="form-control" id="filter-by" placeholder="enter keywords..." ng-model="search" ng-change="currentPage = 0">
+                                            <input type="text" class="form-control input-sm" id="filter-by" placeholder="enter keywords..." ng-model="searchParams" ng-change="currentPage = 0">
                                             <span class="input-group-btn">
-                                                <button class="btn btn-default" type="button">
-                                                    <!--<span class="glyphicon glyphicon-search"></span>-->
-                                                    Hola
+                                                <button class="btn btn-default input-sm" type="button" ng-click="searchFor(searchParams, true)">
+                                                    <span class="glyphicon glyphicon-search"></span>
                                                 </button>
                                             </span>
 		                                </div>

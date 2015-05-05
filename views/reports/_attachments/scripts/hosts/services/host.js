@@ -36,19 +36,27 @@ angular.module('faradayApp')
                     return $http.post(BASEURL + ws + "/_bulk_docs", JSON.stringify(bulk));
                 });
             },
-            update: function(data, ws) {
+            update: function(data, interfaceData, ws) {
                 var self = this;
-                angular.extend(this, data);
-
-                return ($http.put(BASEURL + ws + '/' + self._id + "?rev=" + self._rev, self).success(function(data) {
-                    self._rev = data.rev;
-                }));
+                bulk = {docs:[data,interfaceData]};
+                return $http.post(BASEURL + ws + "/_bulk_docs", JSON.stringify(bulk)).success(function(data){
+                    if(data.id == self._id){
+                        self._rev = data.rev;
+                    } else {
+                        interfaceData._rev = data.rev;
+                    }
+                });
             },
-            save: function(ws) {
+            save: function(ws, interfaceData) {
                 var self = this;
-                return ($http.put(BASEURL + ws + '/' + self._id, self).success(function(data){
-                    self._rev = data.rev;
-                }));
+                bulk = {docs:[self,interfaceData]};
+                return $http.post(BASEURL + ws + "/_bulk_docs", JSON.stringify(bulk)).success(function(data){
+                    if(data.id == self._id){
+                        self._rev = data.rev;
+                    } else {
+                        interfaceData._rev = data.rev;
+                    }
+                });
             }
         }
 

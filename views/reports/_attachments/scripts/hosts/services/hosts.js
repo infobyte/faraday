@@ -107,7 +107,7 @@ angular.module('faradayApp')
             return deferred.promise;
         }
 
-        hostsManager.createHost = function(hostData, ws) {
+        hostsManager.createHost = function(hostData, interfaceData, ws) {
             var deferred = $q.defer();
             var self = this;
 
@@ -117,7 +117,7 @@ angular.module('faradayApp')
                     deferred.reject("Host already exists");
                 }, function() {
                     // host doesn't exist, good to go
-                    host.save(ws).then(function(){
+                    host.save(ws, interfaceData).then(function(){
                         host = self.getHost(host._id, ws);
                         deferred.resolve(host);
                     }, function(){
@@ -130,11 +130,12 @@ angular.module('faradayApp')
             return deferred.promise;
         }
 
-        hostsManager.updateHost = function(host, hostData, ws) {
+        hostsManager.updateHost = function(host, hostData, interfaceData, ws) {
             var deferred = $q.defer();
             var self = this;
+
             this.getHost(host._id, ws).then(function(resp) {
-                resp.update(hostData, ws).then(function() {
+                resp.update(hostData, interfaceData, ws).then(function() {
                     // we need to reload the host in order
                     // to update _rev
                     host = self.getHost(host._id, ws, true);
@@ -144,6 +145,20 @@ angular.module('faradayApp')
                 // host doesn't exist
                 deferred.reject("Host doesn't exist");
             });
+            return deferred.promise;
+        }
+
+        hostsManager.getInterfaces = function(ws){
+            var deferred = $q.defer();
+            var self = this;
+            $http.get(BASEURL + '/' + ws + '/_design/interface/_view/interface')
+                .success(function(interfaceArray){
+                    var interfaces = interfaceArray.rows;
+                    deferred.resolve(interfaces);
+                })
+                .error(function(){
+                    deferred.reject();
+                })
             return deferred.promise;
         }
 

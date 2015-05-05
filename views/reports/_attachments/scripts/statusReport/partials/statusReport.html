@@ -39,12 +39,19 @@
 			</div><!-- .col-md-6 .col-sm-6 .col-xs-12 -->
                     <div class="reports">
                     	<div class="row">
-							<div class="col-md-12 col-sm-3 col-xs-11">
+							<div class="col-md-6 col-sm-3 col-xs-11">
 								<form role="form">
 		                            <div class="form-group">
-		                            	<h4><span class="label label-default " title="Filter by">Filter by</span></h4>
-		                                <input type="text" class="form-control input-sm" id="filter-by" placeholder="enter keywords..." ng-model="query" ng-change="currentPage = 0">
-		                            </div>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="filter-by" placeholder="enter keywords..." ng-model="search" ng-change="currentPage = 0">
+                                            <span class="input-group-btn">
+                                                <button class="btn btn-default" type="button">
+                                                    <!--<span class="glyphicon glyphicon-search"></span>-->
+                                                    Hola
+                                                </button>
+                                            </span>
+		                                </div>
+                                    </div>
 		                        </form>  
 							</div>
                     		<div class="col-md-12 col-sm-9 col-xs-12">
@@ -149,7 +156,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="v in vulns | filter:query | orderObjectBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
+                                <tr ng-repeat="v in vulns | filter:search | orderObjectBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
                                     selection-model selection-model-type="checkbox"
                                     selection-model-mode="multiple-additive" 
                                     selection-model-selected-class="multi-selected">

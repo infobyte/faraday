@@ -6,72 +6,77 @@ angular.module('faradayApp')
     .controller('statusReportCtrl', 
                     ['$scope', '$filter', '$route', '$routeParams', '$modal', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
                     function($scope, $filter, $route, $routeParams, $modal, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
-        $scope.baseurl = BASEURL;
-        $scope.severities = SEVERITIES;
-        $scope.easeofresolution = EASEOFRESOLUTION;
+        init = function() {
+            $scope.baseurl = BASEURL;
+            $scope.severities = SEVERITIES;
+            $scope.easeofresolution = EASEOFRESOLUTION;
 
-        $scope.sortField = 'date';
-        $scope.reverse = true;
-        $scope.showPagination = 1;
-        $scope.currentPage = 0;
-        $scope.pageSize = 10;
-        $scope.pagination = 10;
+            $scope.sortField = 'date';
+            $scope.reverse = true;
+            $scope.showPagination = 1;
+            $scope.currentPage = 0;
+            $scope.pageSize = 10;
+            $scope.pagination = 10;
 
-        // load all workspaces
-        statusReportFact.getWorkspaces().then(function(wss) {
-            $scope.workspaces = wss;
-        });
+            // load all workspaces
+            statusReportFact.getWorkspaces().then(function(wss) {
+                $scope.workspaces = wss;
+            });
 
-        // current workspace
-        $scope.workspace = $routeParams.wsId;
+            // current workspace
+            $scope.workspace = $routeParams.wsId;
 
-        // load all vulnerabilities
-        $scope.vulns = statusReportFact.getVulns($scope.workspace);
+            // current search
+            $scope.search = $routeParams.search;
 
-        // toggles column show property
-        $scope.toggleShow = function(column, show) {
-            $scope.columns[column] = !show;
-        };
+            // load all vulnerabilities
+            $scope.vulns = statusReportFact.getVulns($scope.workspace);
 
-        // toggles sort field and order
-        $scope.toggleSort = function(field) {
-            $scope.toggleSortField(field);
-            $scope.toggleReverse();
-        };
+            // toggles column show property
+            $scope.toggleShow = function(column, show) {
+                $scope.columns[column] = !show;
+            };
 
-        // toggles column sort field
-        $scope.toggleSortField = function(field) {
-            $scope.sortField = field;
-        };
+            // toggles sort field and order
+            $scope.toggleSort = function(field) {
+                $scope.toggleSortField(field);
+                $scope.toggleReverse();
+            };
 
-        // toggle column sort order
-        $scope.toggleReverse = function() {
-            $scope.reverse = !$scope.reverse;
-        }
-        
-        // set columns to show and hide by default
-        $scope.columns = {
-            "data":             true,
-            "date":             true,
-            "desc":             true,
-            "easeofresolution": false,
-            "evidence":         false,
-            "impact":           false,
-            "method":           false,
-            "name":             true,
-            "params":           false,
-            "path":             false,
-            "pname":            false,
-            "query":            false,
-            "refs":             true,
-            "request":          false,
-            "response":         false,
-            "resolution":       false,
-            "severity":         true,
-            "status":           false,
-            "target":           true,
-            "web":              false,
-            "website":          false
+            // toggles column sort field
+            $scope.toggleSortField = function(field) {
+                $scope.sortField = field;
+            };
+
+            // toggle column sort order
+            $scope.toggleReverse = function() {
+                $scope.reverse = !$scope.reverse;
+            }
+            
+            // set columns to show and hide by default
+            $scope.columns = {
+                "data":             true,
+                "date":             true,
+                "desc":             true,
+                "easeofresolution": false,
+                "evidence":         false,
+                "impact":           false,
+                "method":           false,
+                "name":             true,
+                "params":           false,
+                "path":             false,
+                "pname":            false,
+                "query":            false,
+                "refs":             true,
+                "request":          false,
+                "response":         false,
+                "resolution":       false,
+                "severity":         true,
+                "status":           false,
+                "target":           true,
+                "web":              false,
+                "website":          false
+            };
         };
 
         // returns scope vulns as CSV obj
@@ -319,7 +324,7 @@ angular.module('faradayApp')
             }
         };
 
-        $scope.insert = function(vuln){
+        $scope.insert = function(vuln) {
             statusReportFact.putVulns($scope.workspace, vuln, function(rev, evidence) {
                 vuln.rev = rev;
                 vuln.attachments = evidence;
@@ -330,9 +335,9 @@ angular.module('faradayApp')
             d = d.getDate() + "/" + (d.getMonth()+1) + "/" + d.getFullYear();
             vuln.date = d;
             $scope.vulns.push(vuln);
-        }
+        };
 
-        $scope.new = function(){
+        $scope.new = function() {
                 var modal = $modal.open({
                     templateUrl: 'scripts/statusReport/partials/modalNew.html',
                     controller: 'modalNewCtrl',
@@ -359,22 +364,22 @@ angular.module('faradayApp')
                 $scope.selectall = false;
             }
 
-            angular.forEach($filter('filter')($scope.vulns, $scope.query), function(v) {
+            angular.forEach($filter('filter')($scope.vulns, $scope.search), function(v) {
                 v.selected = $scope.selectall;
             });
         };
 
         $scope.numberOfPages = function() {
-            $scope.filteredData = $filter('filter')($scope.vulns,$scope.query);
+            $scope.filteredData = $filter('filter')($scope.vulns,$scope.search);
             if ($scope.filteredData.length <= 10){
                 $scope.showPagination = 0;
             } else {
                 $scope.showPagination = 1;
             };
             return parseInt($scope.filteredData.length/$scope.pageSize);
-        }
+        };
 
-        $scope.go = function(){
+        $scope.go = function() {
             if($scope.go_page < $scope.numberOfPages()+1 && $scope.go_page > -1){
                 $scope.currentPage = $scope.go_page;
             }
@@ -382,5 +387,7 @@ angular.module('faradayApp')
             if($scope.go_page > $scope.numberOfPages()){
                 $scope.currentPage = 0;
             }
-        }
+        };
+
+        init();
     }]);

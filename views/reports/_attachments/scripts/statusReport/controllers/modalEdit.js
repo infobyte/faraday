@@ -193,7 +193,7 @@ angular.module('faradayApp')
         $scope.refs = commons.arrayToObject($scope.refs);
 
         $scope.newReference = function($event){
-            $scope.refs.push({ref:''});
+            $scope.refs.push({key:''});
         };
 
         $scope.selectedFiles = function(files, e) {

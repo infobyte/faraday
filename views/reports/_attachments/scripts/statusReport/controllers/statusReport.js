@@ -28,6 +28,7 @@ angular.module('faradayApp')
 
             // current search
             $scope.search = $routeParams.search;
+            $scope.searchParams = $routeParams.search;
 
             // load all vulnerabilities
             $scope.vulns = statusReportFact.getVulns($scope.workspace);

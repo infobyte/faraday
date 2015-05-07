@@ -10,9 +10,12 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+TBA:
+---
 
+* Fix ubuntu 15.04 installation bug 
 
-Apr 17, 215:
+Apr 17, 2015:
 ---
 * You can get the new version here:
 * https://github.com/infobyte/faraday/archive/v1.0.10.tar.gz

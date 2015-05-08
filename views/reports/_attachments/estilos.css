@@ -846,3 +846,6 @@ aside .alert.alert-danger.alert-dismissible{
 #ws-control {
     margin-bottom: 15px;
 }
+.glyphicon-btn {
+    top: 0 !important;
+}

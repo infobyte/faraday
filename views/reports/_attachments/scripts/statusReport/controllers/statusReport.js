@@ -28,10 +28,16 @@ angular.module('faradayApp')
 
             // current search
             $scope.search = $routeParams.search;
-            $scope.searchParams = $routeParams.search;
+            $scope.expression = {};
+            if($scope.search != "" && $scope.search != undefined) {
+                // search expression for filter
+                $scope.expression = $scope.decodeSearch($scope.search);
+                // search params for search field, which shouldn't be used for filtering
+                $scope.searchParams = $scope.stringSearch($scope.expression);
+            }
 
             // load all vulnerabilities
-            $scope.vulns = statusReportFact.getVulns($scope.workspace);
+            $scope.vulns = $filter('filter')(statusReportFact.getVulns($scope.workspace), $scope.expression);
 
             // toggles column show property
             $scope.toggleShow = function(column, show) {
@@ -390,11 +396,84 @@ angular.module('faradayApp')
             }
         };
 
-        $scope.searchFor = function(params, search) {
+        // encodes search string in order to send it through URL
+        $scope.encodeSearch = function(search) {
+            var i = -1,
+            encode = "",
+            params = search.split(" "),
+            chunks = {};
+
+            params.forEach(function(chunk) {
+                i = chunk.indexOf(":");
+                if(i > 0) {
+                    chunks[chunk.slice(0, i)] = chunk.slice(i+1);
+                } else {
+                    if(!chunks.hasOwnProperty("free")) {
+                        chunks.free = "";
+                    }
+                    chunks.free += " ".concat(chunk);
+                }
+            });
+
+            if(chunks.hasOwnProperty("free")) {
+                chunks.free = chunks.free.slice(1);
+            }
+
+            for(var prop in chunks) {
+                if(chunks.hasOwnProperty(prop)) {
+                    if(chunks.prop != "") {
+                        encode += "&" + prop + "=" + chunks[prop];
+                    }
+                }
+            }
+            return encodeURI(encode.slice(1));
+        };
+
+        // decodes search parameters to object in order to use in filter
+        $scope.decodeSearch = function(search) {
+            var i = -1,
+            decode = {},
+            params = decodeURI(search).split("&");
+
+            params.forEach(function(param) {
+                i = param.indexOf("=");
+                decode[param.slice(0,i)] = param.slice(i+1);
+            });
+
+            if(decode.hasOwnProperty("free")) {
+                decode['$'] = decode.free;
+                delete decode.free;
+            }
+
+            return decode;
+        };
+
+        // converts current search object to string to be displayed in search field
+        $scope.stringSearch = function(obj) {
+            var search = "";
+
+            for(var prop in obj) {
+                if(obj.hasOwnProperty(prop)) {
+                    if(search != "") {
+                        search += " ";
+                    }
+                    if(prop == "$") {
+                        search += obj[prop];
+                    } else {
+                        search += prop + ":" + obj[prop];
+                    }
+                }
+            }
+
+            return search;
+        };
+
+        // changes the URL according to search params
+        $scope.searchFor = function(search, params) {
             var url = "/status/ws/" + $routeParams.wsId;
 
-            if(search) {
-                url += "/search/" + params;
+            if(search && params != undefined) {
+                url += "/search/" + $scope.encodeSearch(params);
             }
 
             $location.path(url);

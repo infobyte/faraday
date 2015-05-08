@@ -28,8 +28,9 @@ angular.module('faradayApp')
 
             // current search
             $scope.search = $routeParams.search;
+            $scope.searchParams = "";
             $scope.expression = {};
-            if($scope.search != "" && $scope.search != undefined) {
+            if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
                 // search expression for filter
                 $scope.expression = $scope.decodeSearch($scope.search);
                 // search params for search field, which shouldn't be used for filtering
@@ -472,7 +473,7 @@ angular.module('faradayApp')
         $scope.searchFor = function(search, params) {
             var url = "/status/ws/" + $routeParams.wsId;
 
-            if(search && params != undefined) {
+            if(search && params != "" && params != undefined) {
                 url += "/search/" + $scope.encodeSearch(params);
             }
 

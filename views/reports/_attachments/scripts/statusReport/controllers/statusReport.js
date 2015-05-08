@@ -4,74 +4,87 @@
 
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$modal', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
-                    function($scope, $filter, $route, $routeParams, $modal, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
-        $scope.baseurl = BASEURL;
-        $scope.severities = SEVERITIES;
-        $scope.easeofresolution = EASEOFRESOLUTION;
+                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
+                    function($scope, $filter, $route, $routeParams, $location, $modal, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
+        init = function() {
+            $scope.baseurl = BASEURL;
+            $scope.severities = SEVERITIES;
+            $scope.easeofresolution = EASEOFRESOLUTION;
 
-        $scope.sortField = 'date';
-        $scope.reverse = true;
-        $scope.showPagination = 1;
-        $scope.currentPage = 0;
-        $scope.pageSize = 10;
-        $scope.pagination = 10;
+            $scope.sortField = 'date';
+            $scope.reverse = true;
+            $scope.showPagination = 1;
+            $scope.currentPage = 0;
+            $scope.pageSize = 10;
+            $scope.pagination = 10;
 
-        // load all workspaces
-        statusReportFact.getWorkspaces().then(function(wss) {
-            $scope.workspaces = wss;
-        });
+            // load all workspaces
+            statusReportFact.getWorkspaces().then(function(wss) {
+                $scope.workspaces = wss;
+            });
 
-        // current workspace
-        $scope.workspace = $routeParams.wsId;
+            // current workspace
+            $scope.workspace = $routeParams.wsId;
 
-        // load all vulnerabilities
-        $scope.vulns = statusReportFact.getVulns($scope.workspace);
+            // current search
+            $scope.search = $routeParams.search;
+            $scope.searchParams = "";
+            $scope.expression = {};
+            if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
+                // search expression for filter
+                $scope.expression = $scope.decodeSearch($scope.search);
+                // search params for search field, which shouldn't be used for filtering
+                $scope.searchParams = $scope.stringSearch($scope.expression);
+            }
 
-        // toggles column show property
-        $scope.toggleShow = function(column, show) {
-            $scope.columns[column] = !show;
-        };
+            // load all vulnerabilities
+            $scope.vulns = $filter('filter')(statusReportFact.getVulns($scope.workspace), $scope.expression);
 
-        // toggles sort field and order
-        $scope.toggleSort = function(field) {
-            $scope.toggleSortField(field);
-            $scope.toggleReverse();
-        };
+            // toggles column show property
+            $scope.toggleShow = function(column, show) {
+                $scope.columns[column] = !show;
+            };
 
-        // toggles column sort field
-        $scope.toggleSortField = function(field) {
-            $scope.sortField = field;
-        };
+            // toggles sort field and order
+            $scope.toggleSort = function(field) {
+                $scope.toggleSortField(field);
+                $scope.toggleReverse();
+            };
 
-        // toggle column sort order
-        $scope.toggleReverse = function() {
-            $scope.reverse = !$scope.reverse;
-        }
-        
-        // set columns to show and hide by default
-        $scope.columns = {
-            "data":             true,
-            "date":             true,
-            "desc":             true,
-            "easeofresolution": false,
-            "evidence":         false,
-            "impact":           false,
-            "method":           false,
-            "name":             true,
-            "params":           false,
-            "path":             false,
-            "pname":            false,
-            "query":            false,
-            "refs":             true,
-            "request":          false,
-            "response":         false,
-            "resolution":       false,
-            "severity":         true,
-            "status":           false,
-            "target":           true,
-            "web":              false,
-            "website":          false
+            // toggles column sort field
+            $scope.toggleSortField = function(field) {
+                $scope.sortField = field;
+            };
+
+            // toggle column sort order
+            $scope.toggleReverse = function() {
+                $scope.reverse = !$scope.reverse;
+            }
+            
+            // set columns to show and hide by default
+            $scope.columns = {
+                "data":             true,
+                "date":             true,
+                "desc":             true,
+                "easeofresolution": false,
+                "evidence":         false,
+                "impact":           false,
+                "method":           false,
+                "name":             true,
+                "params":           false,
+                "path":             false,
+                "pname":            false,
+                "query":            false,
+                "refs":             true,
+                "request":          false,
+                "response":         false,
+                "resolution":       false,
+                "severity":         true,
+                "status":           false,
+                "target":           true,
+                "web":              false,
+                "website":          false
+            };
         };
 
         // returns scope vulns as CSV obj
@@ -319,7 +332,7 @@ angular.module('faradayApp')
             }
         };
 
-        $scope.insert = function(vuln){
+        $scope.insert = function(vuln) {
             statusReportFact.putVulns($scope.workspace, vuln, function(rev, evidence) {
                 vuln.rev = rev;
                 vuln.attachments = evidence;
@@ -330,9 +343,9 @@ angular.module('faradayApp')
             d = d.getDate() + "/" + (d.getMonth()+1) + "/" + d.getFullYear();
             vuln.date = d;
             $scope.vulns.push(vuln);
-        }
+        };
 
-        $scope.new = function(){
+        $scope.new = function() {
                 var modal = $modal.open({
                     templateUrl: 'scripts/statusReport/partials/modalNew.html',
                     controller: 'modalNewCtrl',
@@ -359,22 +372,22 @@ angular.module('faradayApp')
                 $scope.selectall = false;
             }
 
-            angular.forEach($filter('filter')($scope.vulns, $scope.query), function(v) {
+            angular.forEach($filter('filter')($scope.vulns, $scope.search), function(v) {
                 v.selected = $scope.selectall;
             });
         };
 
         $scope.numberOfPages = function() {
-            $scope.filteredData = $filter('filter')($scope.vulns,$scope.query);
+            $scope.filteredData = $filter('filter')($scope.vulns,$scope.search);
             if ($scope.filteredData.length <= 10){
                 $scope.showPagination = 0;
             } else {
                 $scope.showPagination = 1;
             };
             return parseInt($scope.filteredData.length/$scope.pageSize);
-        }
+        };
 
-        $scope.go = function(){
+        $scope.go = function() {
             if($scope.go_page < $scope.numberOfPages()+1 && $scope.go_page > -1){
                 $scope.currentPage = $scope.go_page;
             }
@@ -382,5 +395,90 @@ angular.module('faradayApp')
             if($scope.go_page > $scope.numberOfPages()){
                 $scope.currentPage = 0;
             }
-        }
+        };
+
+        // encodes search string in order to send it through URL
+        $scope.encodeSearch = function(search) {
+            var i = -1,
+            encode = "",
+            params = search.split(" "),
+            chunks = {};
+
+            params.forEach(function(chunk) {
+                i = chunk.indexOf(":");
+                if(i > 0) {
+                    chunks[chunk.slice(0, i)] = chunk.slice(i+1);
+                } else {
+                    if(!chunks.hasOwnProperty("free")) {
+                        chunks.free = "";
+                    }
+                    chunks.free += " ".concat(chunk);
+                }
+            });
+
+            if(chunks.hasOwnProperty("free")) {
+                chunks.free = chunks.free.slice(1);
+            }
+
+            for(var prop in chunks) {
+                if(chunks.hasOwnProperty(prop)) {
+                    if(chunks.prop != "") {
+                        encode += "&" + prop + "=" + chunks[prop];
+                    }
+                }
+            }
+            return encodeURI(encode.slice(1));
+        };
+
+        // decodes search parameters to object in order to use in filter
+        $scope.decodeSearch = function(search) {
+            var i = -1,
+            decode = {},
+            params = decodeURI(search).split("&");
+
+            params.forEach(function(param) {
+                i = param.indexOf("=");
+                decode[param.slice(0,i)] = param.slice(i+1);
+            });
+
+            if(decode.hasOwnProperty("free")) {
+                decode['$'] = decode.free;
+                delete decode.free;
+            }
+
+            return decode;
+        };
+
+        // converts current search object to string to be displayed in search field
+        $scope.stringSearch = function(obj) {
+            var search = "";
+
+            for(var prop in obj) {
+                if(obj.hasOwnProperty(prop)) {
+                    if(search != "") {
+                        search += " ";
+                    }
+                    if(prop == "$") {
+                        search += obj[prop];
+                    } else {
+                        search += prop + ":" + obj[prop];
+                    }
+                }
+            }
+
+            return search;
+        };
+
+        // changes the URL according to search params
+        $scope.searchFor = function(search, params) {
+            var url = "/status/ws/" + $routeParams.wsId;
+
+            if(search && params != "" && params != undefined) {
+                url += "/search/" + $scope.encodeSearch(params);
+            }
+
+            $location.path(url);
+        };
+
+        init();
     }]);

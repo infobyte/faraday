@@ -843,3 +843,9 @@ aside .alert.alert-danger.alert-dismissible{
           color: #DF3936; 
             background-color: #ffffff; 
     }
+#ws-control {
+    margin-bottom: 15px;
+}
+.glyphicon-btn {
+    top: 0 !important;
+}

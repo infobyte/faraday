@@ -35,71 +35,72 @@
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
-            <div class="col-md-12">
+            <div class="col-md-3">
                 <h5>Ports</h5>
                 <span class="input-group-addon add-reference" ng-click="newPort($event)">Add Port</span>
-            </div>
-            <div class="col-md-12" ng-repeat="port in service.ports">
-                <div class="input-group margin-bottom-sm">
-                    <label class="sr-only" for="port">Ports</label>
-                    <input type="number" class="form-control" id="port" placeholder="Port" ng-model="port.key"/>
-                    <span class="input-group-addon" ng-click="service.ports.splice($index, 1)" ng-hide="service.ports.length == 1"><i class="fa fa-minus-circle"></i></span>
+                <div class="ports" ng-repeat="port in service.ports">
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="port">Ports</label>
+                        <input type="number" class="form-control" id="port" placeholder="Port" ng-model="port.key"/>
+                        <span class="input-group-addon" ng-click="service.ports.splice($index, 1)" ng-hide="service.ports.length == 1"><i class="fa fa-minus-circle"></i></span>
+                    </div>
                 </div>
             </div>
-        </div><!-- .form-group -->
-        <div class="form-group">
-            <div class="col-md-12">
+            <div class="col-md-3 protocol">
+                <h5>Protocol</h5>
                 <label class="sr-only" for="protocol">Protocol</label>
                 <input type="text" class="form-control" id="protocol" placeholder="Protocol" ng-model="service.protocol"/>
             </div>
-        </div><!-- .form-group -->
-        <div class="form-group">
-            <div class="col-md-6">
-                <label class="sr-only" for="status">Status</label>
-                <input type="text" class="form-control" id="status" placeholder="Status" ng-model="service.status"/>
-            </div>
-            <div class="col-md-6">
+            <div class="col-md-3">
+                <h5>Version</h5>
                 <label class="sr-only" for="version">Version</label>
                 <input type="text" class="form-control" id="version" placeholder="Version" ng-model="service.version"/>
             </div>
+            <div class="col-md-3">
+                <h5>Status</h5>
+                <label class="sr-only" for="status">Status</label>
+                <input type="text" class="form-control" id="status" placeholder="Status" ng-model="service.status"/>
+            </div>
         </div><!-- .form-group -->
-    </div>
-    <h5><small>
-        Services to update
-    </small></h5>
-    <div class="reports col-md-9 col-sm-9 col-xs-12" ng-if="services_selected">
-        <table class="status-report hosts-list table table-responsive">
-            <thead>
-                <tr>
-                    <th>
-                        <a href="" ng-click="toggleSort('name')">Name</a>
-                    </th>
-                    <th>
-                        <a href="" ng-click="toggleSort('description')">Description</a>
-                    </th>
-                    <th>
-                        <a href="" ng-click="toggleSort('ports')">Ports</a>
-                    </th>
-                    <th>
-                        <a href="" ng-click="toggleSort('protocol')">Protocol</a>
-                    </th>
-                    <th>
-                        <a href="" ng-click="toggleSort('status')">Status</a>
-                    </th>
-                    <th>Copy</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr ng-repeat="service in services_selected | filter:query | orderBy:sortField:reverse">
-                    <td ng-bind="service.name"></td>
-                    <td ng-bind="service.description || '-'"></td>
-                    <td ng-bind="service.ports"></td>
-                    <td ng-bind="service.protocol"></td>
-                    <td ng-bind="service.status"></td>
-                    <td><i class="fa fa-copy copy-icon fa-lg" ng-click="call(service);"></i></td>
-                </tr>
-            </tbody>
-        </table><!-- #hosts -->
+        <div class="form-group">
+            <div class="reports col-md-12 col-sm-12 col-xs-12" ng-if="services_selected">
+                <h5><small>
+                    Services to update
+                </small></h5>
+                <table class="status-report hosts-list table table-responsive">
+                    <thead>
+                        <tr>
+                            <th>
+                                <a href="" ng-click="toggleSort('name')">Name</a>
+                            </th>
+                            <th>
+                                <a href="" ng-click="toggleSort('description')">Description</a>
+                            </th>
+                            <th>
+                                <a href="" ng-click="toggleSort('ports')">Ports</a>
+                            </th>
+                            <th>
+                                <a href="" ng-click="toggleSort('protocol')">Protocol</a>
+                            </th>
+                            <th>
+                                <a href="" ng-click="toggleSort('status')">Status</a>
+                            </th>
+                            <th>Copy</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="service in services_selected | filter:query | orderBy:sortField:reverse">
+                            <td ng-bind="service.name"></td>
+                            <td ng-bind="service.description || '-'"></td>
+                            <td ng-bind="service.ports"></td>
+                            <td ng-bind="service.protocol"></td>
+                            <td ng-bind="service.status"></td>
+                            <td><i class="fa fa-copy copy-icon fa-lg" ng-click="call(service);"></i></td>
+                        </tr>
+                    </tbody>
+                </table><!-- #hosts -->
+            </div>
+        </div>
     </div>
 </div><!-- .modal-body -->
 <div class="modal-footer">

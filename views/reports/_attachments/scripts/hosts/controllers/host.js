@@ -88,7 +88,7 @@ angular.module('faradayApp')
                 }
             });
 
-            if(selected_service.length == 1) {
+            if(selected_service.length > 0) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/services/partials/modalEdit.html',
                     controller: 'serviceModalEdit',

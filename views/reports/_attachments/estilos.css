@@ -729,16 +729,19 @@ input#vuln-refs{border-radius: 5px 0 0 5px}
 i.fa.fa-plus-circle{color: green;}
 i.fa.fa-minus-circle{color: red;cursor: pointer;}
 span.input-group-addon.add-reference{
-    border-radius: 4px;
+    border-radius: 4px!important;
     border-left: 1px solid #ccc;
     width: 20px;
     cursor: pointer;
 }
+    input#port
     span#cakeText{width: 95%}
     span#treemapTextModel{font-size: 14px}
 .normal-size {
     font-size: 14px !important;
 }
+div.ports{margin: 4px 0;}
+div.col-md-8.protocol input#protocol{margin-top: 35px}
 div#treemap_container{margin: 5% auto 0}
 div#compound div.showPagination{margin-bottom: 30px}
 div#compound .showPagination input.form-control{width:110px;}

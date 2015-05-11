@@ -10,6 +10,10 @@ angular.module('faradayApp')
         init = function(){
             // current Workspace
             var ws = $routeParams.wsId;
+            // default scope (service)
+            $scope.service = {
+                "ports": []
+            };
 
             if(service.length == 1){
                 $scope.service = {

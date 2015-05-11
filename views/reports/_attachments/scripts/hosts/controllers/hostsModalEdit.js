@@ -9,14 +9,9 @@ angular.module('faradayApp')
 
         var ws = $routeParams.wsId; 
         $scope.hostdata = {};
-        hostsManager.getInterfaces(ws).then(function(resp){
-            resp.forEach(function(r){
-                if(r.value.parent == host._id){
-                    $scope.interface = r.value;
-                    $scope.interface.hostnames = commons.arrayToObject($scope.interface.hostnames);
-                    return;
-                }
-            });
+        hostsManager.getInterfacesByHost(ws, host._id).then(function(resp){
+            $scope.interface = resp[0].value;
+            $scope.interface.hostnames = commons.arrayToObject($scope.interface.hostnames);
         });
 
         $scope.host = {

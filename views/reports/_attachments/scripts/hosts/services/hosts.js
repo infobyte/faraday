@@ -133,12 +133,11 @@ angular.module('faradayApp')
         hostsManager.updateHost = function(host, hostData, interfaceData, ws) {
             var deferred = $q.defer();
             var self = this;
-
             this.getHost(host._id, ws).then(function(resp) {
                 resp.update(hostData, interfaceData, ws).then(function() {
                     // we need to reload the host in order
                     // to update _rev
-                    host = self.getHost(host._id, ws, true);
+                    host = self._load(host._id, ws, deferred);
                     deferred.resolve(host);
                 })
             }, function(){
@@ -148,10 +147,10 @@ angular.module('faradayApp')
             return deferred.promise;
         }
 
-        hostsManager.getInterfaces = function(ws){
+        hostsManager.getInterfacesByHost = function(ws, hostId){
             var deferred = $q.defer();
             var self = this;
-            $http.get(BASEURL + '/' + ws + '/_design/interface/_view/interface')
+            $http.get(BASEURL + '/' + ws + '/_design/interface/_view/interface?key=\"' + hostId + '\"')
                 .success(function(interfaceArray){
                     var interfaces = interfaceArray.rows;
                     deferred.resolve(interfaces);

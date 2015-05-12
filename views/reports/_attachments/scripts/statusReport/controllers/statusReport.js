@@ -378,21 +378,20 @@ angular.module('faradayApp')
         };
 
         $scope.numberOfPages = function() {
-            $scope.filteredData = $filter('filter')($scope.vulns,$scope.search);
-            if ($scope.filteredData.length <= 10){
+            if($scope.vulns.length <= 10) {
                 $scope.showPagination = 0;
             } else {
                 $scope.showPagination = 1;
-            };
-            return parseInt($scope.filteredData.length/$scope.pageSize);
+            }
+            return parseInt($scope.vulns.length/$scope.pageSize);
         };
 
         $scope.go = function() {
-            if($scope.go_page < $scope.numberOfPages()+1 && $scope.go_page > -1){
+            if($scope.go_page < $scope.numberOfPages()+1 && $scope.go_page > -1) {
                 $scope.currentPage = $scope.go_page;
             }
             $scope.pageSize = $scope.pagination;
-            if($scope.go_page > $scope.numberOfPages()){
+            if($scope.go_page > $scope.numberOfPages()) {
                 $scope.currentPage = 0;
             }
         };

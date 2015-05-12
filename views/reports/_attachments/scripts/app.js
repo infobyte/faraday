@@ -67,6 +67,11 @@ faradayApp.config(['$routeProvider', function($routeProvider) {
             controller: 'workspacesCtrl',
             title: 'Hosts | '
         }).
+        when('/host/ws/:wsId/hid/:hidId', {
+            templateUrl: 'scripts/services/partials/list.html',
+            controller: 'hostCtrl',
+            title: 'Services | '
+        }).
         when('/status/ws/:wsId/search/:search', {
             templateUrl: 'scripts/statusReport/partials/statusReport.html',
             controller: 'statusReportCtrl',

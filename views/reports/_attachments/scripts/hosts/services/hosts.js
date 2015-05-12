@@ -107,7 +107,7 @@ angular.module('faradayApp')
             return deferred.promise;
         }
 
-        hostsManager.createHost = function(hostData, ws) {
+        hostsManager.createHost = function(hostData, interfaceData, ws) {
             var deferred = $q.defer();
             var self = this;
 
@@ -117,7 +117,7 @@ angular.module('faradayApp')
                     deferred.reject("Host already exists");
                 }, function() {
                     // host doesn't exist, good to go
-                    host.save(ws).then(function(){
+                    host.save(ws, interfaceData).then(function(){
                         host = self.getHost(host._id, ws);
                         deferred.resolve(host);
                     }, function(){
@@ -130,20 +130,34 @@ angular.module('faradayApp')
             return deferred.promise;
         }
 
-        hostsManager.updateHost = function(host, hostData, ws) {
+        hostsManager.updateHost = function(host, hostData, interfaceData, ws) {
             var deferred = $q.defer();
             var self = this;
             this.getHost(host._id, ws).then(function(resp) {
-                resp.update(hostData, ws).then(function() {
+                resp.update(hostData, interfaceData, ws).then(function() {
                     // we need to reload the host in order
                     // to update _rev
-                    host = self.getHost(host._id, ws, true);
+                    host = self._load(host._id, ws, deferred);
                     deferred.resolve(host);
                 })
             }, function(){
                 // host doesn't exist
                 deferred.reject("Host doesn't exist");
             });
+            return deferred.promise;
+        }
+
+        hostsManager.getInterfacesByHost = function(ws, hostId){
+            var deferred = $q.defer();
+            var self = this;
+            $http.get(BASEURL + '/' + ws + '/_design/interface/_view/interface?key=\"' + hostId + '\"')
+                .success(function(interfaceArray){
+                    var interfaces = interfaceArray.rows;
+                    deferred.resolve(interfaces);
+                })
+                .error(function(){
+                    deferred.reject();
+                })
             return deferred.promise;
         }
 

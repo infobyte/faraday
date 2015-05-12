@@ -104,8 +104,9 @@ angular.module('faradayApp')
             }
         };
 
-        $scope.insert = function(hostdata) {
-            hostsManager.createHost(hostdata, $scope.workspace).then(function(host) {
+        $scope.insert = function(hostdata, interfaceData) {
+            var interfaceData = $scope.createInterface(hostdata, interfaceData);
+            hostsManager.createHost(hostdata, interfaceData, $scope.workspace).then(function(host) {
                 $scope.hosts.push(host);
                 $scope.loadIcons();
             }, function(message) {
@@ -131,13 +132,15 @@ angular.module('faradayApp')
              });
 
             modal.result.then(function(data) {
-                $scope.insert(data);
+                hostdata = data[0];
+                interfaceData = data[1];
+                $scope.insert(hostdata, interfaceData);
             });
         };
 
-        $scope.update = function(host, hostdata) {
+        $scope.update = function(host, hostdata, interfaceData) {
             delete host.selected;
-            hostsManager.updateHost(host, hostdata, $scope.workspace).then(function() {
+            hostsManager.updateHost(host, hostdata, interfaceData, $scope.workspace).then(function() {
                 // load icons in case an operating system changed
                 $scope.loadIcons();
             }, function(message){
@@ -169,7 +172,9 @@ angular.module('faradayApp')
                  });
 
                 modal.result.then(function(data) {
-                    $scope.update(selected_host, data);
+                    hostdata = data[0];
+                    interfaceData = data[1];
+                    $scope.update(selected_host, hostdata, interfaceData);
                 });
             } else {
                 $modal.open(config = {
@@ -183,6 +188,51 @@ angular.module('faradayApp')
                     }
                 });
             }
+        };
+
+        $scope.createInterface = function (hostData, interfaceData){
+            if(typeof(hostData.ipv4) == "undefined") hostData.ipv4 = "";
+            if(typeof(hostData.ipv6) == "undefined") hostData.ipv6 = "";
+            var interfaceData = {
+                "_id": CryptoJS.SHA1(hostData.name).toString() + "." + CryptoJS.SHA1("" + "._." + interfaceData.ipv4 + "._." + interfaceData.ipv6).toString(),
+                "description": "",
+                "hostnames": interfaceData.hostnames,
+                "ipv4": {
+                    "mask": "0.0.0.0",
+                    "gateway": "0.0.0.0",
+                    "DNS": [],
+                    "address": interfaceData.ipv4
+                },
+                "ipv6": {
+                    "prefix": "00",
+                    "gateway": "0000.0000.0000.0000",
+                    "DNS": [],
+                    "address": interfaceData.ipv6
+                },
+                "mac": interfaceData.mac,
+                "metadata": {
+                    "update_time": new Date().getTime(),
+                    "update_user": "",
+                    "update_action": 0,
+                    "creator": "",
+                    "create_time": new Date().getTime(),
+                    "update_controller_action": "",
+                    "owner": "",
+
+                },
+                "name": hostData.name,
+                "network_segment": "",
+                "owned": false,
+                "owner": "",
+                "parent": CryptoJS.SHA1(hostData.name).toString(),
+                "ports": {
+                   "filtered": 0,
+                   "opened": 0,
+                   "closed": 0
+                },
+                "type": "Interface"
+            };
+            return interfaceData;
         };
 
         $scope.checkAll = function() {

@@ -3,22 +3,23 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('Host', ['BASEURL', '$http', function(BASEURL, $http) {
-        Host = function(data){
+    .factory('Service', ['BASEURL', '$http', function(BASEURL, $http) {
+        Service = function(data){
             if(data) {
                 this.set(data);
             }
         };
 
-        Host.prototype = {
+        Service.prototype = {
             // TODO: instead of using angular.extend, we should check
-            // the attributes we're assigning to the host
+            // the attributes we're assigning to the Service
             set: function(data) {
-                // if there's no ID, we need to generate it based on the host name
+                // if there's no ID, we need to generate it based on the Service name
                 if(data._id === undefined){
-                    data['_id'] = CryptoJS.SHA1(data.name).toString();
+                    var ports = data.ports.toString().replace(/,/g,":");
+                    data['_id'] = data.parent + "." + CryptoJS.SHA1(data.protocol+ "._." + ports).toString();
                 }
-                data.type = "Host";
+                data.type = "Service";
                 angular.extend(this, data);
             },
             delete: function(ws) {
@@ -36,29 +37,21 @@ angular.module('faradayApp')
                     return $http.post(BASEURL + ws + "/_bulk_docs", JSON.stringify(bulk));
                 });
             },
-            update: function(data, interfaceData, ws) {
+            update: function(data, ws) {
+                angular.extend(this, data);
                 var self = this;
-                bulk = {docs:[data,interfaceData]};
-                return $http.post(BASEURL + ws + "/_bulk_docs", JSON.stringify(bulk)).success(function(data){
-                    if(data.id == self._id){
-                        self._rev = data.rev;
-                    } else {
-                        interfaceData._rev = data.rev;
-                    }
-                });
+
+                return ($http.put(BASEURL + ws + '/' + self._id + "?rev=" + self._rev, self).success(function(data) {
+                    self._rev = data.rev;
+                }));
             },
-            save: function(ws, interfaceData) {
+            save: function(ws) {
                 var self = this;
-                bulk = {docs:[self,interfaceData]};
-                return $http.post(BASEURL + ws + "/_bulk_docs", JSON.stringify(bulk)).success(function(data){
-                    if(data.id == self._id){
-                        self._rev = data.rev;
-                    } else {
-                        interfaceData._rev = data.rev;
-                    }
-                });
+                return ($http.put(BASEURL + ws + '/' + self._id, self).success(function(data){
+                    self._rev = data.rev;
+                }));
             }
         }
 
-        return Host;
+        return Service;
     }]);

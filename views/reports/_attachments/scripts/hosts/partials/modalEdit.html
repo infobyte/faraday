@@ -46,6 +46,35 @@
                 </div><!-- .checkbox -->
             </div>
         </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
+                <h5>Hostnames</h5>
+                <span class="input-group-addon add-reference" ng-click="newHostnames($event)">Add Hostnames</span>
+            </div>
+            <div class="col-md-12 reference" ng-repeat="i in interface.hostnames">
+                <div class="input-group margin-bottom-sm">
+                    <label class="sr-only" for="hostsnames">References</label>
+                    <input type="text" class="form-control" id="hostsnames" placeholder="Hostnames" ng-model="i.key"/>
+                    <span class="input-group-addon" ng-click="interface.hostnames.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+                </div>
+            </div>
+        </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-6">
+                <label class="sr-only" for="ipv6">IP v6</label>
+                <input type="text" class="form-control" id="ipv6" placeholder="IP v6" ng-model="interface.ipv6.address"/>
+            </div>
+            <div class="col-md-6">
+                <label class="sr-only" for="ipv4">IP v4</label>
+                <input type="text" class="form-control" id="ipv4" placeholder="IP v4" ng-model="interface.ipv4.address"/>
+            </div>
+        </div><!-- .form-group -->
+        <div class="form-group">
+            <div class="col-md-12">
+                <label class="sr-only" for="mac">MAC</label>
+                <input type="text" class="form-control" id="mac" placeholder="MAC" ng-model="interface.mac"/>
+            </div>
+        </div><!-- .form-group -->
     </div>
 </div><!-- .modal-body -->
 <div class="modal-footer">

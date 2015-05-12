@@ -76,6 +76,7 @@ faradayApp.config(['$routeProvider', function($routeProvider) {
             templateUrl: 'scripts/statusReport/partials/statusReport.html',
             controller: 'statusReportCtrl',
             title: 'Status Report | '
+        }).
         when('/host/ws/:wsId/hid/:hidId', {
             templateUrl: 'scripts/services/partials/list.html',
             controller: 'hostCtrl',

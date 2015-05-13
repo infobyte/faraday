@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
-                    function($scope, $filter, $route, $routeParams, $location, $modal, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
+                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies','BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
+                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
         init = function() {
             $scope.baseurl = BASEURL;
             $scope.severities = SEVERITIES;
@@ -39,30 +39,18 @@ angular.module('faradayApp')
 
             // load all vulnerabilities
             $scope.vulns = $filter('filter')(statusReportFact.getVulns($scope.workspace), $scope.expression);
-
-            // toggles column show property
-            $scope.toggleShow = function(column, show) {
-                $scope.columns[column] = !show;
-            };
-
-            // toggles sort field and order
-            $scope.toggleSort = function(field) {
-                $scope.toggleSortField(field);
-                $scope.toggleReverse();
-            };
-
-            // toggles column sort field
-            $scope.toggleSortField = function(field) {
-                $scope.sortField = field;
-            };
-
-            // toggle column sort order
-            $scope.toggleReverse = function() {
-                $scope.reverse = !$scope.reverse;
-            }
             
+            // created object for columns cookie columns
+            if(typeof($cookies.SRcolumns) != 'undefined'){
+                var objectoSRColumns = {};
+                var arrayOfColumns = $cookies.SRcolumns.replace(/[{}"']/g, "").split(',');
+                arrayOfColumns.forEach(function(column){
+                    var columnFinished = column.split(':');
+                    if(columnFinished[1] == "true") objectoSRColumns[columnFinished[0]] = true; else objectoSRColumns[columnFinished[0]] = false;
+                });
+            }
             // set columns to show and hide by default
-            $scope.columns = {
+            $scope.columns = objectoSRColumns || {
                 "data":             true,
                 "date":             true,
                 "desc":             true,
@@ -477,6 +465,28 @@ angular.module('faradayApp')
             }
 
             $location.path(url);
+        };
+        
+        // toggles column show property
+        $scope.toggleShow = function(column, show) {
+            $scope.columns[column] = !show;
+            $cookies.SRcolumns = JSON.stringify($scope.columns);
+        };
+
+        // toggles sort field and order
+        $scope.toggleSort = function(field) {
+            $scope.toggleSortField(field);
+            $scope.toggleReverse();
+        };
+
+        // toggles column sort field
+        $scope.toggleSortField = function(field) {
+            $scope.sortField = field;
+        };
+
+        // toggle column sort order
+        $scope.toggleReverse = function() {
+            $scope.reverse = !$scope.reverse;
         };
 
         init();

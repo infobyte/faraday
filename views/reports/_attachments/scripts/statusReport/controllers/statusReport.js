@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
-                    function($scope, $filter, $route, $routeParams, $location, $modal, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
+                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies','BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
+                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
         init = function() {
             $scope.baseurl = BASEURL;
             $scope.severities = SEVERITIES;
@@ -43,6 +43,7 @@ angular.module('faradayApp')
             // toggles column show property
             $scope.toggleShow = function(column, show) {
                 $scope.columns[column] = !show;
+                $cookies.SRcolumns = JSON.stringify($scope.columns);
             };
 
             // toggles sort field and order
@@ -61,8 +62,17 @@ angular.module('faradayApp')
                 $scope.reverse = !$scope.reverse;
             }
             
+            // rearm the Stringlifly of Status Report Columns
+            if(typeof($cookies.SRcolumns) != 'undefined'){
+                var objectoSRColumns = {};
+                var arrayOfColumns = $cookies.SRcolumns.replace(/[{}"']/g, "").split(',');
+                arrayOfColumns.forEach(function(column){
+                    var columnFinished = column.split(':');
+                    if(columnFinished[1] == "true") objectoSRColumns[columnFinished[0]] = true; else objectoSRColumns[columnFinished[0]] = false;
+                });
+            }
             // set columns to show and hide by default
-            $scope.columns = {
+            $scope.columns = objectoSRColumns || {
                 "data":             true,
                 "date":             true,
                 "desc":             true,

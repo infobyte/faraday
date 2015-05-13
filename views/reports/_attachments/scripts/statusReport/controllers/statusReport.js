@@ -39,30 +39,8 @@ angular.module('faradayApp')
 
             // load all vulnerabilities
             $scope.vulns = $filter('filter')(statusReportFact.getVulns($scope.workspace), $scope.expression);
-
-            // toggles column show property
-            $scope.toggleShow = function(column, show) {
-                $scope.columns[column] = !show;
-                $cookies.SRcolumns = JSON.stringify($scope.columns);
-            };
-
-            // toggles sort field and order
-            $scope.toggleSort = function(field) {
-                $scope.toggleSortField(field);
-                $scope.toggleReverse();
-            };
-
-            // toggles column sort field
-            $scope.toggleSortField = function(field) {
-                $scope.sortField = field;
-            };
-
-            // toggle column sort order
-            $scope.toggleReverse = function() {
-                $scope.reverse = !$scope.reverse;
-            }
             
-            // rearm the Stringlifly of Status Report Columns
+            // created object for columns cookie columns
             if(typeof($cookies.SRcolumns) != 'undefined'){
                 var objectoSRColumns = {};
                 var arrayOfColumns = $cookies.SRcolumns.replace(/[{}"']/g, "").split(',');
@@ -488,6 +466,28 @@ angular.module('faradayApp')
             }
 
             $location.path(url);
+        };
+        
+        // toggles column show property
+        $scope.toggleShow = function(column, show) {
+            $scope.columns[column] = !show;
+            $cookies.SRcolumns = JSON.stringify($scope.columns);
+        };
+
+        // toggles sort field and order
+        $scope.toggleSort = function(field) {
+            $scope.toggleSortField(field);
+            $scope.toggleReverse();
+        };
+
+        // toggles column sort field
+        $scope.toggleSortField = function(field) {
+            $scope.sortField = field;
+        };
+
+        // toggle column sort order
+        $scope.toggleReverse = function() {
+            $scope.reverse = !$scope.reverse;
         };
 
         init();

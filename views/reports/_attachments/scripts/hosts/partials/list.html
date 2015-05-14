@@ -38,7 +38,7 @@
                                 <tr>
                                     <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
                                     <th>
-                                        <a href="">Service</a>
+                                        <a href="">Services</a>
                                     </th>
                                     <th>
                                         <a href="" ng-click="toggleSort('name')">Name</a>
@@ -60,7 +60,7 @@
                                     selection-model-mode="multiple-additive" 
                                     selection-model-selected-class="multi-selected">
                                     <td><input type="checkbox" name="{{host._id}}"/></td>
-                                    <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}"><span class="glyphicon glyphicon-plus-sign"></span></a></td>
+                                    <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}">View</a></td>
                                     <td ng-bind="host.name"></td>
                                     <td ng-bind="host.description || '-'"></td>
                                     <td>

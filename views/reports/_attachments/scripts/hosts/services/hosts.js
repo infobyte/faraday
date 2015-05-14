@@ -150,7 +150,7 @@ angular.module('faradayApp')
         hostsManager.getInterfacesByHost = function(ws, hostId){
             var deferred = $q.defer();
             var self = this;
-            $http.get(BASEURL + '/' + ws + '/_design/interface/_view/interface?key=\"' + hostId + '\"')
+            $http.get(BASEURL + '/' + ws + '/_design/interfaces/_view/interfaces?key=\"' + hostId + '\"')
                 .success(function(interfaceArray){
                     var interfaces = interfaceArray.rows;
                     deferred.resolve(interfaces);

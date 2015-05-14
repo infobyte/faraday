@@ -728,7 +728,7 @@ div.col-md-12.reference{margin-top: 5px;}
 input#vuln-refs{border-radius: 5px 0 0 5px}
 i.fa.fa-plus-circle{color: green;}
 i.fa.fa-minus-circle{color: red;cursor: pointer;}
-span.input-group-addon.add-reference{
+span.input-group-addon.button-radius{
     border-radius: 4px!important;
     border-left: 1px solid #ccc;
     width: 20px;
@@ -740,7 +740,7 @@ span.input-group-addon.add-reference{
 .normal-size {
     font-size: 14px !important;
 }
-div.ports{margin: 4px 0;}
+div.input-margin{margin: 4px 0;}
 div.col-md-8.protocol input#protocol{margin-top: 35px}
 div#treemap_container{margin: 5% auto 0}
 div#compound div.showPagination{margin-bottom: 30px}

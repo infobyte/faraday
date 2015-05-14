@@ -46,7 +46,6 @@ angular.module('faradayApp')
             };
             
             $scope.service.ports = ports.filter(Boolean);
-            console.log($scope.service);
             $modalInstance.close($scope.service);
         };
 

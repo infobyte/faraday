@@ -24,7 +24,7 @@
         <div class="form-group">
             <div class="col-md-12">
                 <label class="sr-only" for="description">Description</label>
-                <textarea class="form-control" id="description" placeholder="Description" ng-model="hostdata.description" required></textarea>
+                <textarea class="form-control" id="description" placeholder="Description" ng-model="hostdata.description"></textarea>
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
@@ -48,13 +48,13 @@
         </div><!-- .form-group -->
         <div class="form-group">
             <div class="col-md-12">
-                <h5>References</h5>
-                <span class="input-group-addon add-reference" ng-click="newHostnames($event)">Add Reference</span>
+                <h5>Hostnames</h5>
+                <span class="input-group-addon button-radius" ng-click="newHostnames($event)">Add Hostname</span>
             </div>
-            <div class="col-md-12" ng-repeat="hostname in interfaceData.hostnames">
-                <div class="input-group margin-bottom-sm">
-                    <label class="sr-only" for="hostsnames">Hostsnames</label>
-                    <input type="text" class="form-control" id="hostsnames" placeholder="Hostsnames" ng-model="hostname.hostname"/>
+            <div class="col-md-12 input-margin" ng-repeat="hostname in interfaceData.hostnames">
+                <div class="input-group margin-bottom-sm col-md-12">
+                    <label class="sr-only" for="hostsnames">Hostname</label>
+                    <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname.hostname"/>
                     <span class="input-group-addon" ng-click="interfaceData.hostnames.splice($index, 1)" ng-hide="interfaceData.hostnames.length == 1"><i class="fa fa-minus-circle"></i></span>
                 </div>
             </div>

@@ -21,7 +21,7 @@
         <div class="form-group">
             <div class="col-md-12">
                 <label class="sr-only" for="description">Description</label>
-                <textarea class="form-control" id="description" placeholder="Description" ng-model="service.description" required></textarea>
+                <textarea class="form-control" id="description" placeholder="Description" ng-model="service.description"></textarea>
             </div>
         </div><!-- .form-group -->
         <div class="form-group">
@@ -37,8 +37,8 @@
         <div class="form-group">
             <div class="col-md-3">
                 <h5>Ports</h5>
-                <span class="input-group-addon add-reference" ng-click="newPort($event)">Add Port</span>
-                <div class="ports" ng-repeat="port in service.ports">
+                <span class="input-group-addon button-radius" ng-click="newPort($event)">Add Port</span>
+                <div class="input-margin" ng-repeat="port in service.ports">
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="port">Ports</label>
                         <input type="number" class="form-control" id="port" placeholder="Port" ng-model="port.key"/>

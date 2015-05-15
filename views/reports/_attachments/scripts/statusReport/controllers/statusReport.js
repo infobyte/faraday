@@ -360,7 +360,7 @@ angular.module('faradayApp')
                 $scope.selectall = false;
             }
 
-            angular.forEach($filter('filter')($scope.vulns, $scope.search), function(v) {
+            angular.forEach($filter('filter')($scope.vulns), function(v) {
                 v.selected = $scope.selectall;
             });
         };

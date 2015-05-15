@@ -846,8 +846,8 @@ aside .alert.alert-danger.alert-dismissible{
           color: #DF3936; 
             background-color: #ffffff; 
     }
-#ws-control {
-    margin-bottom: 15px;
+.btn-small-margin {
+    margin-bottom: 15px !important;
 }
 .glyphicon-btn {
     top: 0 !important;

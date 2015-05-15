@@ -61,6 +61,7 @@ p {margin-bottom: 1em;}
     margin: 10px 5px 0px;
     float: left;
 }
+.cursor{cursor: pointer;}
     #compound .columna{
         width: 492px;
         margin-top: -42px;

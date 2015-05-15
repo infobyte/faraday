@@ -103,6 +103,8 @@ angular.module('faradayApp')
                                 accumulate(tmp, "high", tvuln.value);
                             } else if (tvuln.key == 5 || tvuln.key == "critical") {
                                 accumulate(tmp, "critical", tvuln.value);
+                            } else if (tvuln.key == 6 || tvuln.key == "unclassified") {
+                                accumulate(tmp, "unclassified", tvuln.value);
                             }
                         });
                         $scope.vulnsCount = tmp;

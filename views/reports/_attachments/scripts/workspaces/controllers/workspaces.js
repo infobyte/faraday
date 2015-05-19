@@ -133,6 +133,7 @@ angular.module('faradayApp')
                 "description":  workspace.description,
                 "duration":     duration,
                 "name":         workspace.name,
+                "scope":        workspace.scope,
                 "sdate":        workspace.sdate,
                 "selected":     workspace.selected,
                 "type":         workspace.type

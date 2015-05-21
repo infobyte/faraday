@@ -14,6 +14,7 @@ TBA:
 ---
 
 * Fix ubuntu 15.04 installation bug 
+* Small bug in burp plugin "Import new vulnerabilities" checkbox issue
 
 Apr 17, 2015:
 ---

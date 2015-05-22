@@ -511,6 +511,7 @@ table.table tbody tr:hover{
         float: right;
     }
     #compound article.panel-default input.btn.btn-danger{width: 43px}
+div.col-md-6.left-big-box{width: 45%;margin: -200px 0 5px}
 
 .table-striped tbody tr:nth-child(odd){background: #f9f9f9;}
 .table-striped tbody tr:nth-child(even){background: #FFF;}
@@ -640,7 +641,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
     section .col-lg-2{margin: 0px -2% 0px 2px;padding-right: 1.9%;}
     .col-lg-6 .panel{margin-bottom: 10px}
     #list .col-lg-6, #vulns .col-lg-6{width: 55%;float: right;margin-bottom: 5px}
-    #compound .col-lg-6{width: 45%;margin-top: -2%;}
+    #compound .col-lg-6{width: 45%;}
 
     .panel{margin-bottom: 1%!important}
         article.panel > span{

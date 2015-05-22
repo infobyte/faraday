@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('summarizedCtrl', 
-        ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv',
-        function($scope, $route, $routeParams, $modal, dashboardSrv) {
+        ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv', 'statusReportFact',
+        function($scope, $route, $routeParams, $modal, dashboardSrv, statusReportFact) {
             //current workspace
             var workspace = $routeParams.wsId;
             $scope.servicesCount = [];
@@ -151,6 +151,11 @@ angular.module('faradayApp')
                         });
                     });
                 });
+                $scope.vulns = statusReportFact.getVulns(workspace);
+                $scope.vulns.sort(function(a,b){
+                    return b.meta.create_time - a.meta.create_time;
+                });
+                $scope.vulns = $scope.vulns.splice(0,5);
             }
 
             $scope.numberOfPages = function() {

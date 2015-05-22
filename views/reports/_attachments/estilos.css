@@ -512,6 +512,7 @@ table.table tbody tr:hover{
     }
     #compound article.panel-default input.btn.btn-danger{width: 43px}
 div.col-md-6.left-big-box{width: 45%;margin: -200px 0 5px}
+div.col-md-6.left-big-box table.table-striped.last-vuln td:nth-child(4){word-break: break-all;}
 
 .table-striped tbody tr:nth-child(odd){background: #f9f9f9;}
 .table-striped tbody tr:nth-child(even){background: #FFF;}

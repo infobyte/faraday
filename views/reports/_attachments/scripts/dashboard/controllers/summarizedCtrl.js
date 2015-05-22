@@ -56,6 +56,25 @@ angular.module('faradayApp')
                 $scope.hostSortReverse = !$scope.hostSortReverse;
             }
 
+            // vuln table sorting
+            $scope.vulnSortField = 'date';
+            $scope.vulnSortReverse = true;
+            // toggles sort field and order
+            $scope.vulnToggleSort = function(field) {
+                $scope.vulnToggleSortField(field);
+                $scope.vulnToggleReverse();
+            };
+
+            // toggles column sort field
+            $scope.vulnToggleSortField = function(field) {
+                $scope.vulnSortField = field;
+            };
+
+            // toggle column sort order
+            $scope.vulnToggleReverse = function() {
+                $scope.vulnSortReverse = !$scope.vulnSortReverse;
+            };
+
             if (workspace != undefined){
                 $scope.workspace = workspace;
                 dashboardSrv.getServicesCount(workspace).then(function(res){

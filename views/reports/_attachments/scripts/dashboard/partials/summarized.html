@@ -132,11 +132,11 @@
 <div class='col-md-6 left-big-box'>
     <article class='panel panel-default'>
             <header>
-                <h2>Lastest Added
+                <h2>Last Vulnerabilities
                     <span class="glyphicon glyphicon-info-sign" tooltip="Lastest Added"></span>
                 </h2>
             </header>
-            <table class="tablesorter table table-striped">
+            <table class="tablesorter table table-striped last-vuln">
                 <thead>
                     <tr>
                         <th><a href="" ng-click="vulnToggleSort('date')">Date</a></th>
@@ -148,8 +148,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="vuln in vulns | orderBy:vulnToggleSort:vulnSortReverse |
-                    startFrom:currentPage*pageSize | limitTo:pageSize">
+                    <tr ng-repeat="vuln in vulns | orderObjectBy:vulnSortField:vulnSortReverse">
                         <td>{{vuln.date | date:'MM/dd/yyyy'}}</td>
                         <td>{{vuln.target}}</td>
                         <td>{{vuln.severity}}</td>

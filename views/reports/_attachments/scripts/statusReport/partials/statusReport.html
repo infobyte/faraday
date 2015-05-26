@@ -152,6 +152,10 @@
                                 <a href="" ng-click="toggleSort('easeofresolution')">Ease of Resolution</a>
                                 <a href="" ng-click="toggleShow('easeofresolution', true)"><span class="glyphicon glyphicon-remove"></span></a>
                             </th>
+                            <th ng-if="columns.hostnames">
+                                <a href="" ng-click="toggleSort('hostnames')">Hostnames</a>
+                                <a href="" ng-click="toggleShow('hostnames', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -192,6 +196,7 @@
                                 </div>
                             </td>
                             <td ng-if="columns.easeofresolution">{{v.easeofresolution}}</td>
+                            <td ng-if="columns.hostnames"><p ng-repeat="hostname in v.hostnames">{{hostname}}</p></td>
                         </tr>
                     </tbody>
                 </table><!-- #hosts -->

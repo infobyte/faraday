@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies','BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
-                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
+                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies','BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 'hostsManager', 
+                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact, hostsManager) {
         init = function() {
             $scope.baseurl = BASEURL;
             $scope.severities = SEVERITIES;
@@ -26,6 +26,16 @@ angular.module('faradayApp')
             // current workspace
             $scope.workspace = $routeParams.wsId;
 
+            $scope.getVulns = function() {
+                var vulnerabilities = statusReportFact.getVulns($scope.workspace);
+                vulnerabilities.forEach(function(v){
+                    hostsManager.getInterfacesByHost($scope.workspace, v.parent).then(function(interface){
+                        v.hostnames = interface[0].value.hostnames;
+                    });
+                });
+                return vulnerabilities;
+            };
+
             // current search
             $scope.search = $routeParams.search;
             $scope.searchParams = "";
@@ -38,7 +48,7 @@ angular.module('faradayApp')
             }
 
             // load all vulnerabilities
-            $scope.vulns = $filter('filter')(statusReportFact.getVulns($scope.workspace), $scope.expression);
+            $scope.vulns = $filter('filter')($scope.getVulns(), $scope.expression);
             
             // created object for columns cookie columns
             if(typeof($cookies.SRcolumns) != 'undefined'){
@@ -56,6 +66,7 @@ angular.module('faradayApp')
                 "desc":             true,
                 "easeofresolution": false,
                 "evidence":         false,
+                "hostnames":        false,
                 "impact":           false,
                 "method":           false,
                 "name":             true,

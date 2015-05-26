@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('modalNewCtrl',
-        ['$scope', '$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'targetFact', 'commonsFact', 'severities', 'workspace',
-        function($scope, $modalInstance, $filter, $upload, EASEOFRESOLUTION, targetFact, commons, severities, workspace) {
+        ['$scope', '$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'targetFact', 'commonsFact', 'severities', 'workspace', 'hostsManager',
+        function($scope, $modalInstance, $filter, $upload, EASEOFRESOLUTION, targetFact, commons, severities, workspace, hostsManager) {
         
         $scope.typeOptions = [
             {name:'Vulnerability', value:'Vulnerability'},
@@ -40,6 +40,9 @@ angular.module('faradayApp')
         hosts = targetFact.getTarget($scope.workspace, true);
 
         hosts.forEach(function(h) {
+            hostsManager.getInterfacesByHost($scope.workspace, h._id).then(function(interface){
+                h.hostnames = interface[0].value.hostnames;
+            });
             h.services = [];  
             d[h._id] = h;
         });

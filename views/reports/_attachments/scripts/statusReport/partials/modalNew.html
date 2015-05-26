@@ -18,7 +18,7 @@
              <accordion close-others="true">
                 <accordion-group is-open="isopen" ng-repeat="host in hosts_with_services | filter:search_notes | startFrom:currentPage*pageSize | limitTo:pageSize">
                     <accordion-heading>
-                    <a ng-click="selected(host,null)" ng-class="{'multi-selected': host.selected == true}">{{host.name}}</a>
+                    <a ng-click="selected(host,null)" ng-class="{'multi-selected': host.selected == true}">{{host.name}} ({{host.hostnames[0]}})</a>
                       <i class="pull-right glyphicon"
                             ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
                     </accordion-heading>

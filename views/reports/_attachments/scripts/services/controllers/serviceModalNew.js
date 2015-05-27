@@ -22,7 +22,7 @@ angular.module('faradayApp')
             // current Workspace
             var ws = $routeParams.wsId;
 
-            hostsManager.getInterfacesByHost(ws, host._id).then(function(resp){
+            hostsManager.getInterfaces(ws, host._id).then(function(resp){
                 $scope.service.parent = resp[0].value._id;
             });
         };

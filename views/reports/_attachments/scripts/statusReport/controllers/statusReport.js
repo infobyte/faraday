@@ -25,12 +25,17 @@ angular.module('faradayApp')
 
             // current workspace
             $scope.workspace = $routeParams.wsId;
+            $scope.interfaces = [];
 
             $scope.getVulns = function() {
                 var vulnerabilities = statusReportFact.getVulns($scope.workspace);
-                vulnerabilities.forEach(function(v){
-                    hostsManager.getInterfacesByHost($scope.workspace, v.parent).then(function(interface){
-                        v.hostnames = interface[0].value.hostnames;
+                hostsManager.getInterfaces($scope.workspace).then(function(interfaces){
+                    interfaces.forEach(function(interface){
+                        vulnerabilities.forEach(function(vuln){
+                            if(vuln.parent == interface.value.parent){
+                                vuln.hostnames = interface.value.hostnames;
+                            }
+                        });
                     });
                 });
                 return vulnerabilities;
@@ -49,7 +54,7 @@ angular.module('faradayApp')
 
             // load all vulnerabilities
             $scope.vulns = $filter('filter')($scope.getVulns(), $scope.expression);
-            
+
             // created object for columns cookie columns
             if(typeof($cookies.SRcolumns) != 'undefined'){
                 var objectoSRColumns = {};

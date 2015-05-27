@@ -147,10 +147,15 @@ angular.module('faradayApp')
             return deferred.promise;
         }
 
-        hostsManager.getInterfacesByHost = function(ws, hostId){
+        hostsManager.getInterfaces = function(ws, hostId){
             var deferred = $q.defer();
             var self = this;
-            $http.get(BASEURL + '/' + ws + '/_design/interfaces/_view/interfaces?key=\"' + hostId + '\"')
+                if(hostId) {
+                    var url = BASEURL + '/' + ws + '/_design/interfaces/_view/interfaces?key=\"' + hostId + '\"';
+                }else{
+                    var url = BASEURL + '/' + ws + '/_design/interfaces/_view/interfaces';
+                }
+                $http.get(url)
                 .success(function(interfaceArray){
                     var interfaces = interfaceArray.rows;
                     deferred.resolve(interfaces);

@@ -34,17 +34,26 @@ angular.module('faradayApp')
             "integrity": false
         };
 
+
         var name_selected,
         host_selected,
         d = {},
         hosts = targetFact.getTarget($scope.workspace, true);
 
         hosts.forEach(function(h) {
-            hostsManager.getInterfacesByHost($scope.workspace, h._id).then(function(interface){
-                h.hostnames = interface[0].value.hostnames;
-            });
-            h.services = [];  
+            h.services = [];
             d[h._id] = h;
+        });
+
+        hostsManager.getInterfaces($scope.workspace).then(function(resp){
+            $scope.interfaces = resp;
+            hosts.forEach(function(h){
+                $scope.interfaces.forEach(function(interface){
+                    if(h._id == interface.value.parent){
+                        h.hostnames = interface.value.hostnames;
+                    }
+                });
+            });
         });
 
         var services = targetFact.getTarget($scope.workspace, false);
@@ -59,12 +68,13 @@ angular.module('faradayApp')
         $scope.hosts_with_services = hosts;
 
         $scope.numberOfPages = function() {
+            if(typeof(filteredData) == "undefined") return false;
             var filteredData = $filter('filter')($scope.hosts_with_services,$scope.search_notes);
             if (filteredData.length <= 10){
                 $scope.showPagination = 0;
             } else {            
                 $scope.showPagination = 1;
-            };
+            }
             
             return Math.ceil(filteredData.length/$scope.pagination);
         };

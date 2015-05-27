@@ -376,7 +376,9 @@ angular.module('faradayApp')
                 $scope.selectall = false;
             }
 
-            angular.forEach($filter('filter')($scope.vulns), function(v) {
+            var orderObject = $filter('orderObjectBy')($scope.vulns, $scope.sortField, $scope.reverse);
+            var tmp_vulns = $filter('limitTo')(orderObject, $scope.pageSize, $scope.currentPage * $scope.pageSize);
+            angular.forEach($filter('filter')(tmp_vulns), function(v,k) {
                 v.selected = $scope.selectall;
             });
         };

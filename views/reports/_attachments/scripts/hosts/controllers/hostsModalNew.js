@@ -18,9 +18,9 @@ angular.module('faradayApp')
 
         $scope.interfaceData = {
             "hostnames": [{key: ''}],
-            "ipv6": "",
+            "ipv6": "0000:0000:0000:0000:0000:0000:0000:0000",
             "ipv4": "",
-            "mac": "",
+            "mac": "00:00:00:00:00:00",
             "interfaceOwner": "",
             "interfaceOwned": false
         };
@@ -47,7 +47,6 @@ angular.module('faradayApp')
                 "update_controller_action": "UI Web New",
                 "owner": ""
             };
-
             $modalInstance.close([$scope.hostdata,$scope.interfaceData]);
         };
 

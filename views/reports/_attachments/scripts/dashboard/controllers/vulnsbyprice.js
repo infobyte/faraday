@@ -6,6 +6,23 @@ angular.module('faradayApp')
     .controller('vulnsbypriceCtrl', 
         ['$scope', '$route', '$routeParams', 'dashboardSrv',
         function($scope, $route, $routeParams, dashboardSrv) {
-            $scope.data = [["State", "Under 5 Years", "5 to 13 Years", "14 to 17 Years", "18 to 24 Years", "25 to 44 Years", "45 to 64 Years", "65 Years and Over"],
-                            ["AL",310504,552339,259034,450818,1231572,1215966,641667]];
+            $scope.data = [
+                {
+                    color: '#932ebe',
+                    count: 345,
+                    name: 'critical'
+                }, {
+                    color: '#DF3936',
+                    count: 111,
+                    name: 'high'
+                }, {
+                    color: '#DFBF35',
+                    count: 300,
+                    name: 'med'
+                }, {
+                    color: '#A1CE31',
+                    count: 573,
+                    name: 'low'
+                }
+            ];
         }]);

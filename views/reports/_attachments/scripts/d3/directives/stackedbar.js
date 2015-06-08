@@ -18,384 +18,130 @@ angular.module('faradayApp')
                         }, true);
 
                         scope.render = function(data) {
-/*                            
-                            data = [
-                                {severity: "critical", amount: 2},
-                                {severity: "high", amount: 100},
-                                {severity: "med", amount: 40},
-                                {severity: "low", amount: 23},
-                                {severity: "info", amount: 87},
-                                {severity: "unclassified", amount: 15}
-                            ];
+                            var margins = {
+                                top: 12,
+                                left: 48,
+                                right: 24,
+                                bottom: 24
+                            },
+                            legendPanel = {
+                                width: 180
+                            },
+                            width = 500 - margins.left - margins.right - legendPanel.width,
+                            height = 100 - margins.top - margins.bottom,
+                            series = data.map(function(d) {
+                                return {"name": d.name, "color": d.color};
+                            });
+                            dataset = data.map(function(d) {
+                                    return [{
+                                        c: d.color,
+                                        y: d.count,
+                                        x: 0
+                                    }];
+                            });
+                            stack = d3.layout.stack();
 
-                            var x = d3.scale.linear()
-                                .domain(d3.extent(data, function(d) {return d.amount;}))
-                                .range([200, 0]);
-                            var ext = d3.extent(x.domain());
-                            var totalWidth = ext[1] - ext[0];
+                            stack(dataset);
 
-                            var svg = d3.select(".stackedbars").append("svg");
-
-                            var rects = svg.selectAll('rect')
-                                .data(data);
-
-                            var newRects = rects.enter();
-
-                            console.log(x.range());
-                            console.log(x(0));
-                            console.log(x);
-                            newRects.append('rect')
-                                .attr('x', x(0))
-                                .attr('y', 100)
-                                .attr('height', 20)
-                                .attr('width', function(d, i) {
-                                    return d.amount * 100 / totalWidth;
+                            var dataset = dataset.map(function (group) {
+                                return group.map(function (d) {
+                                    // Invert the x and y values, and y0 becomes x0
+                                    return {
+                                        c: d.c,
+                                        x: d.y,
+                                        y: d.x,
+                                        x0: d.y0
+                                    };
                                 });
-*/
+                            }),
+                            svg = d3.select(".stackedbars")
+                                .append('svg')
+                                .attr('width', width + margins.left + margins.right + legendPanel.width)
+                                .attr('height', height + margins.top + margins.bottom)
+                                .append('g')
+                                .attr('transform', 'translate(' + margins.left + ',' + margins.top + ')'),
+                            xMax = d3.max(dataset, function (group) {
+                                return d3.max(group, function (d) {
+                                    return d.x + d.x0;
+                                });
+                            }),
+                            xScale = d3.scale.linear()
+                                .domain([0, xMax])
+                                .range([0, width]),
+                            months = dataset[0].map(function (d) {
+                                return d.y;
+                            }),
+                            yScale = d3.scale.ordinal()
+                                .domain(months)
+                                .rangeRoundBands([0, height], .1),
+                            xAxis = d3.svg.axis()
+                                .scale(xScale)
+                                .orient('bottom'),
+                            yAxis = d3.svg.axis()
+                                .scale(yScale)
+                                .orient('left'),
+                            colours = d3.scale.category10(),
+                            groups = svg.selectAll('g')
+                                .data(dataset)
+                                .enter()
+                                .append('g')
+                                .style('fill', function (d, i) {
+                                return d[0].c;
+                            }),
+                            rects = groups.selectAll('rect')
+                                .data(function (d) {
+                                return d;
+                            })
+                                .enter()
+                                .append('rect')
+                                .attr('x', function (d) {
+                                return xScale(d.x0);
+                            })
+                                .attr('y', function (d, i) {
+                                return yScale(d.y);
+                            })
+                                .attr('height', function (d) {
+                                return yScale.rangeBand();
+                            })
+                                .attr('width', function (d) {
+                                return xScale(d.x);
+                            })
+                                .on('mouseover', function (d) {
+                                var xPos = parseFloat(d3.select(this).attr('x')) / 2 + width / 2;
+                                var yPos = parseFloat(d3.select(this).attr('y')) + yScale.rangeBand() / 2;
 
-/*
-from here horizontal stacked bars, according to the interwebz this is a nice solution
-*/
+                                d3.select('#tooltip')
+                                    .style('left', xPos + 'px')
+                                    .style('top', yPos + 'px')
+                                    .select('#value')
+                                    .text(d.x);
 
-    var margins = {
-        top: 12,
-        left: 48,
-        right: 24,
-        bottom: 24
-    },
-    legendPanel = {
-        width: 180
-    },
-    width = 500 - margins.left - margins.right - legendPanel.width,
-    height = 100 - margins.top - margins.bottom,
-    dataset = [{
-        data: [{
-            month: 'Oct',
-            count: 345
-        }],
-        name: 'Series #1'
-    }, {
-        data: [{
-            month: 'Oct',
-            count: 573
-        }],
-        name: 'Series #4'
-    }, {
-        data: [{
-            month: 'Oct',
-            count: 573
-        }],
-        name: 'Series #2'
-    }
+                                d3.select('#tooltip').classed('hidden', false);
+                            })
+                            .on('mouseout', function () {
+                                d3.select('#tooltip').classed('hidden', true);
+                            });
 
-    ],
-    series = dataset.map(function (d) {
-        return d.name;
-    }),
-    dataset = dataset.map(function (d) {
-        return d.data.map(function (o, i) {
-            // Structure it so that your numeric
-            // axis (the stacked amount) is y
-            return {
-                y: o.count,
-                x: o.month
-            };
-        });
-    }),
-    stack = d3.layout.stack();
+                            svg.append('rect')
+                                .attr('fill', 'grey')
+                                .attr('width', 160)
+                                .attr('height', 30 * dataset.length)
+                                .attr('x', width + margins.left)
+                                .attr('y', 0);
 
-    stack(dataset);
-
-    var dataset = dataset.map(function (group) {
-        return group.map(function (d) {
-            // Invert the x and y values, and y0 becomes x0
-            return {
-                x: d.y,
-                y: d.x,
-                x0: d.y0
-            };
-        });
-    }),
-    svg = d3.select(".stackedbars")
-        .append('svg')
-        .attr('width', width + margins.left + margins.right + legendPanel.width)
-        .attr('height', height + margins.top + margins.bottom)
-        .append('g')
-        .attr('transform', 'translate(' + margins.left + ',' + margins.top + ')'),
-    xMax = d3.max(dataset, function (group) {
-        return d3.max(group, function (d) {
-            return d.x + d.x0;
-        });
-    }),
-    xScale = d3.scale.linear()
-        .domain([0, xMax])
-        .range([0, width]),
-    months = dataset[0].map(function (d) {
-        return d.y;
-    }),
-    _ = console.log(months),
-    yScale = d3.scale.ordinal()
-        .domain(months)
-        .rangeRoundBands([0, height], .1),
-    xAxis = d3.svg.axis()
-        .scale(xScale)
-        .orient('bottom'),
-    yAxis = d3.svg.axis()
-        .scale(yScale)
-        .orient('left'),
-    colours = d3.scale.category10(),
-    groups = svg.selectAll('g')
-        .data(dataset)
-        .enter()
-        .append('g')
-        .style('fill', function (d, i) {
-        return colours(i);
-    }),
-    rects = groups.selectAll('rect')
-        .data(function (d) {
-        return d;
-    })
-        .enter()
-        .append('rect')
-        .attr('x', function (d) {
-        return xScale(d.x0);
-    })
-        .attr('y', function (d, i) {
-        return yScale(d.y);
-    })
-        .attr('height', function (d) {
-        return yScale.rangeBand();
-    })
-        .attr('width', function (d) {
-        return xScale(d.x);
-    })
-        .on('mouseover', function (d) {
-        var xPos = parseFloat(d3.select(this).attr('x')) / 2 + width / 2;
-        var yPos = parseFloat(d3.select(this).attr('y')) + yScale.rangeBand() / 2;
-
-        d3.select('#tooltip')
-            .style('left', xPos + 'px')
-            .style('top', yPos + 'px')
-            .select('#value')
-            .text(d.x);
-
-        d3.select('#tooltip').classed('hidden', false);
-    })
-    .on('mouseout', function () {
-        d3.select('#tooltip').classed('hidden', true);
-    });
-
-    svg.append('rect')
-        .attr('fill', 'yellow')
-        .attr('width', 160)
-        .attr('height', 30 * dataset.length)
-        .attr('x', width + margins.left)
-        .attr('y', 0);
-
-    series.forEach(function (s, i) {
-        svg.append('text')
-            .attr('fill', 'black')
-            .attr('x', width + margins.left + 8)
-            .attr('y', i * 24 + 24)
-            .text(s);
-        svg.append('rect')
-            .attr('fill', colours(i))
-            .attr('width', 60)
-            .attr('height', 20)
-            .attr('x', width + margins.left + 90)
-            .attr('y', i * 24 + 6);
-    });
-
-/*
-up to here horizontal stacked bars, according to the interwebz this is a nice solution
-*/
-
-/*
-from here nasty horizontal stacked bars
-
-var data = [
-    {"key":"FL", "pop1":3000, "pop2":4000, "pop3":5000},
-    {"key":"CA", "pop1":3000, "pop2":3000, "pop3":3000},
-    {"key":"NY", "pop1":12000, "pop2":5000, "pop3":13000},
-    {"key":"NC", "pop1":8000, "pop2":21000, "pop3":11000},
-    {"key":"SC", "pop1":30000, "pop2":12000, "pop3":8000},
-    {"key":"AZ", "pop1":26614, "pop2":6944, "pop3":30778},
-    {"key":"TX", "pop1":8000, "pop2":12088, "pop3":20000}
-];
- 
-var n = 3, // number of layers
-    m = data.length, // number of samples per layer
-    stack = d3.layout.stack(),
-    labels = data.map(function(d) {return d.key;}),
-    
-    //go through each layer (pop1, pop2 etc, that's the range(n) part)
-    //then go through each object in data and pull out that objects's population data
-    //and put it into an array where x is the index and y is the number
-    layers = stack(d3.range(n).map(function(d) { 
-                var a = [];
-      			for (var i = 0; i < m; ++i) {
-        			a[i] = {x: i, y: data[i]['pop' + (d+1)]};  
-      			}
-  				return a;
-             })),
-    
-	//the largest single layer
-    yGroupMax = d3.max(layers, function(layer) { return d3.max(layer, function(d) { return d.y; }); }),
-    //the largest stack
-    yStackMax = d3.max(layers, function(layer) { return d3.max(layer, function(d) { return d.y0 + d.y; }); });
-
-var margin = {top: 40, right: 10, bottom: 20, left: 50},
-    width = 677 - margin.left - margin.right,
-    height = 533 - margin.top - margin.bottom;
-
-var y = d3.scale.ordinal()
-    .domain(d3.range(m))
-    .rangeRoundBands([2, height], .08);
-
-var x = d3.scale.linear()
-    .domain([0, yStackMax])
-    .range([0, width]);
-
-var color = d3.scale.linear()
-    .domain([0, n - 1])
-    .range(["#aad", "#556"]);
-
-var svg = d3.select("svg.stackedbars")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-var layer = svg.selectAll(".layer")
-    .data(layers)
-  .enter().append("g")
-    .attr("class", "layer")
-    .style("fill", function(d, i) { return color(i); });
-
-layer.selectAll("rect")
-    .data(function(d) { return d; })
-  	.enter().append("rect")
-    .attr("y", function(d) { return y(d.x); })
-	.attr("x", function(d) { return x(d.y0); })
-    .attr("height", y.rangeBand())
-    .attr("width", function(d) { return x(d.y); });
-
-var yAxis = d3.svg.axis()
-    .scale(y)
-    .tickSize(1)
-    .tickPadding(6)
-	.tickValues(labels)
-    .orient("left");
-
-svg.append("g")
-    .attr("class", "y axis")
-    .call(yAxis);
-
-up to here nasty horizontal stacked bars
-*/
-
-
-
-
-/*
-from here simple vertical stacked bars
-*/
-
-/*
-var sales = [
-  {
-    name: "Hoodie",
-    values: [
-      { count: 6, date: "2014-01-01" },
-      { count: 7, date: "2014-01-02" },
-      { count: 8, date: "2014-01-03" }
-    ]
-  },
-  {
-    name: "Jacket",
-    values: [
-      { count: 2, date: "2014-01-01" },
-      { count: 5, date: "2014-01-02" },
-      { count: 7, date: "2014-01-03" }
-    ]
-  },
-  {
-    name: "Snuggie",
-    values: [
-      { count: 3, date: "2014-01-01" },
-      { count: 2, date: "2014-01-02" },
-      { count: 3, date: "2014-01-03" }
-    ]
-  }
-];
-  
-var stack = d3.layout.stack()
-  .values(function(d) { return d.values; })
-  .x(function(d) { return new Date(Date.parse(d.date)); })
-  .y(function(d) { return d.count; });
-
-var stacked = stack(sales);
-  
-var height = 200;
-var width = 200;
-
-// we need to calculate the maximum y-value
-// across all our layers, and for each data point,
-// we need to combine the start `d.y0` and the
-// height `d.y` to get highest point
-var maxY = d3.max(stacked, function(d) {
-  return d3.max(d.values, function(d) {
-    return d.y0 + d.y;
-  });
-});
-
-var y = d3.scale.linear()
-  .range([height, 0])
-  .domain([0, maxY]);
-
-var x = d3.time.scale()
-  .range([0, width])
-  .domain(d3.extent(sales[0].values, function(d) {
-    // normally we would check across all our layers,
-    // but we can "cheat" and use `sales[0].values`
-    // since we know all layers have the same domain
-    return new Date(Date.parse(d.date));
-  }))
-  .nice(4);
-
-var svg = d3.select('svg.stackedbars');
-var color = d3.scale.category10();
-
-// bind a <g> tag for each layer
-var layers = svg.selectAll('g.layer')
-  .data(stacked, function(d) { return d.name; })
-    .enter()
-      .append('g')
-        .attr('class', 'layer')
-        .attr('fill', function(d) { return color(d.name); })
-
-// bind a <rect> to each value inside the layer
-layers.selectAll('rect')
-  .data(function(d) { return d.values; })
-  .enter()
-    .append('rect')
-      .attr('x', function(d) {return x(new Date(Date.parse(d.date))); })
-      .attr('width', width / 3)
-      .attr('y', function(d) {
-        // remember that SVG is y-down while our graph is y-up!
-        // here, we set the top-left of this bar segment
-        return y(d.y0 + d.y);
-      }).attr('height', function(d) {
-        // since we are drawing our bar from the top downwards,
-        // the length of the bar is the distance from the bottom
-        // so we subtract from `height`
-        return height - y(d.y)
-      });
-*/
-
-/*
-up to here, simple stacked vertical bars
-*/
+                            series.forEach(function(s, i) {
+                                svg.append('text')
+                                    .attr('fill', 'black')
+                                    .attr('x', width + margins.left + 8)
+                                    .attr('y', i * 24 + 24)
+                                    .text(s.name);
+                                svg.append('rect')
+                                    .attr('fill', s.color)
+                                    .attr('width', 60)
+                                    .attr('height', 20)
+                                    .attr('x', width + margins.left + 90)
+                                    .attr('y', i * 24 + 6);
+                            });
 
 
                         };

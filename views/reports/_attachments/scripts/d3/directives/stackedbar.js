@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .directive('d3HorizontalStackedBar', ['d3Service', 
-        function(d3Service) {
+    .directive('d3HorizontalStackedBar', ['d3Service', '$window',
+        function(d3Service, $window) {
             return {
                 restrict: 'EA',
                 scope: {
@@ -17,18 +17,27 @@ angular.module('faradayApp')
                             scope.render(newData);
                         }, true);
 
+                        var win = angular.element($window);
+                        scope.$watch(function() {
+                            return win.width();
+                        }, function(innerWidth) {
+                            scope.render(scope.data);
+                        }, true);
+
                         scope.render = function(data) {
+                            d3.select('.stackedbars').selectAll('svg').remove();
                             var margins = {
                                 top: 12,
                                 left: 48,
                                 right: 24,
                                 bottom: 24
-                            },
-                            legendPanel = {
-                                width: 180
-                            },
-                            width = 800 - margins.left - margins.right - legendPanel.width,
+                            };
+
+                            var pwidth = ele.parent().width();
+
+                            width = 800 - margins.left - margins.right,
                             height = 100 - margins.top - margins.bottom,
+                            width = pwidth * 0.8,
                             series = data.map(function(d) {
                                 return {"key": d.key, "color": d.color};
                             });
@@ -56,7 +65,7 @@ angular.module('faradayApp')
                             }),
                             svg = d3.select(".stackedbars")
                                 .append('svg')
-                                .attr('width', width + margins.left + margins.right + legendPanel.width)
+                                .attr('width', width + margins.left + margins.right)
                                 .attr('height', height + margins.top + margins.bottom)
                                 .append('g')
                                 .attr('transform', 'translate(' + margins.left + ',' + margins.top + ')'),
@@ -115,8 +124,8 @@ angular.module('faradayApp')
                                     .style('top', yPos + 'px')
                                     .select('#value')
                                     .text(d.x);
-
-                                d3.select('#tooltip-stacked-bar').classed('hidden', false);
+                                d3.select('#tooltip-stacked-bar')
+                                    .classed('hidden', false);
                             })
                             .on('mouseout', function () {
                                 d3.select('#tooltip-stacked-bar').classed('hidden', true);
@@ -147,6 +156,9 @@ angular.module('faradayApp')
                         */
 
                         };
+                        w.bind('resize', function () {
+                            scope.$apply();
+                        });
                     });
                 }
             };

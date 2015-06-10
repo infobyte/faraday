@@ -17,27 +17,24 @@ angular.module('faradayApp')
                             scope.render(newData);
                         }, true);
 
-                        var win = angular.element($window);
-                        scope.$watch(function() {
-                            return win.width();
-                        }, function(innerWidth) {
+                        angular.element($window).on('resize', function(e) {
                             scope.render(scope.data);
-                        }, true);
+                        });
 
                         scope.render = function(data) {
                             d3.select('.stackedbars').selectAll('svg').remove();
+
                             var margins = {
                                 top: 12,
-                                left: 48,
+                                left: 24,
                                 right: 24,
                                 bottom: 24
                             };
 
-                            var pwidth = ele.parent().width();
+                            pwidth = ele.parent().width();
 
-                            width = 800 - margins.left - margins.right,
+                            width = pwidth * 0.9,
                             height = 100 - margins.top - margins.bottom,
-                            width = pwidth * 0.8,
                             series = data.map(function(d) {
                                 return {"key": d.key, "color": d.color};
                             });
@@ -156,9 +153,11 @@ angular.module('faradayApp')
                         */
 
                         };
+                        /*
                         w.bind('resize', function () {
                             scope.$apply();
                         });
+                        */
                     });
                 }
             };

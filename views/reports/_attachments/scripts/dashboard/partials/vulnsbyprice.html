@@ -7,7 +7,10 @@
                     <span class="glyphicon glyphicon-info-sign" tooltip="Vulnerability price in Workspace"></span>
                 </h2>
             </header>
-            <h2>${{total}}</h2>
+            <h2><i class="fa fa-btc"></i> {{total}}</h2>
+            <div id="tooltip-stacked-bar" class="hidden">
+                <p><span id="value">100</span></p>
+            </div>
             <d3-horizontal-stacked-bar data="data" class="stackedbars"></d3-stacked-bars>
         </article>
 </div>

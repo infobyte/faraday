@@ -27,7 +27,7 @@ angular.module('faradayApp')
                             legendPanel = {
                                 width: 180
                             },
-                            width = 500 - margins.left - margins.right - legendPanel.width,
+                            width = 800 - margins.left - margins.right - legendPanel.width,
                             height = 100 - margins.top - margins.bottom,
                             series = data.map(function(d) {
                                 return {"key": d.key, "color": d.color};
@@ -106,21 +106,20 @@ angular.module('faradayApp')
                                 .attr('width', function (d) {
                                 return xScale(d.x);
                             })
-                                // this adds tooltips, and its not working - maybe styles?
-                                .on('mouseover', function (d) {
+                            .on('mouseover', function (d) {
                                 var xPos = parseFloat(d3.select(this).attr('x')) / 2 + width / 2;
                                 var yPos = parseFloat(d3.select(this).attr('y')) + yScale.rangeBand() / 2;
 
-                                d3.select('#tooltip')
+                                d3.select('#tooltip-stacked-bar')
                                     .style('left', xPos + 'px')
                                     .style('top', yPos + 'px')
                                     .select('#value')
                                     .text(d.x);
 
-                                d3.select('#tooltip').classed('hidden', false);
+                                d3.select('#tooltip-stacked-bar').classed('hidden', false);
                             })
                             .on('mouseout', function () {
-                                d3.select('#tooltip').classed('hidden', true);
+                                d3.select('#tooltip-stacked-bar').classed('hidden', true);
                             });
 
                         /* this adds the chart of reference, which color belongs to each label, etc

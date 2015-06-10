@@ -19,7 +19,7 @@ angular.module('faradayApp')
         $scope.interfaceData = {
             "hostnames": [{key: ''}],
             "ipv6": "0000:0000:0000:0000:0000:0000:0000:0000",
-            "ipv4": "",
+            "ipv4": "0.0.0.0",
             "mac": "00:00:00:00:00:00",
             "interfaceOwner": "",
             "interfaceOwned": false

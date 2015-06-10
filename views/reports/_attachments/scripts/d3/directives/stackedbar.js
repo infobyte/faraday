@@ -106,6 +106,7 @@ angular.module('faradayApp')
                                 .attr('width', function (d) {
                                 return xScale(d.x);
                             })
+                                // this adds tooltips, and its not working - maybe styles?
                                 .on('mouseover', function (d) {
                                 var xPos = parseFloat(d3.select(this).attr('x')) / 2 + width / 2;
                                 var yPos = parseFloat(d3.select(this).attr('y')) + yScale.rangeBand() / 2;
@@ -122,6 +123,8 @@ angular.module('faradayApp')
                                 d3.select('#tooltip').classed('hidden', true);
                             });
 
+                        /* this adds the chart of reference, which color belongs to each label, etc
+                            // i think it should be done without D3 since its easier to handle style etc
                             svg.append('rect')
                                 .attr('fill', 'grey')
                                 .attr('width', 160)
@@ -142,7 +145,7 @@ angular.module('faradayApp')
                                     .attr('x', width + margins.left + 90)
                                     .attr('y', i * 24 + 6);
                             });
-
+                        */
 
                         };
                     });

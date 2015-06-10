@@ -1,5 +1,13 @@
-<div>
-    <h1> Hola mundo! </h1>
-    <d3-horizontal-stacked-bar data="data" class="stackedbars">
-    </d3-stacked-bars>
+<div id="vulns-by-price">
+    <div class="col-lg-6">
+        <article class="panel panel-default">
+            <header>
+                <h2>
+                    Workspace price by vulnerabilities
+                    <span class="glyphicon glyphicon-info-sign" tooltip="Vulnerability price in Workspace"></span>
+                </h2>
+            </header>
+            <h2>${{total}}</h2>
+            <d3-horizontal-stacked-bar data="data" class="stackedbars"></d3-stacked-bars>
+        </article>
 </div>

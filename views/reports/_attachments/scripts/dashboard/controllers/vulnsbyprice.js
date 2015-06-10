@@ -19,11 +19,22 @@ angular.module('faradayApp')
 
                 dashboardSrv.getVulnerabilities($scope.workspace).then(function(res) {
                     $scope.vulns = res;
-                    $scope.data = $scope.generatePrices($scope.workspace, $scope.vulns, $scope.prices);
+                    $scope.data = $scope.generatePrices($scope.vulns, $scope.prices);
+                    $scope.total = $scope.generateTotal($scope.data);
                 }); 
             };
 
-            $scope.generatePrices = function(ws, vulns, prices) {
+            $scope.generateTotal = function(prices) {
+                var total = 0;
+
+                prices.forEach(function(price) {
+                    total += price.value;
+                });
+
+                return total;
+            };
+
+            $scope.generatePrices = function(vulns, prices) {
                 var data =  [
                     {
                         color: '#932ebe',

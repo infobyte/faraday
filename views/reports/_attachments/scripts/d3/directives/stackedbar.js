@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .directive('d3StackedBars', ['d3Service', 
+    .directive('d3HorizontalStackedBar', ['d3Service', 
         function(d3Service) {
             return {
                 restrict: 'EA',
@@ -30,12 +30,12 @@ angular.module('faradayApp')
                             width = 500 - margins.left - margins.right - legendPanel.width,
                             height = 100 - margins.top - margins.bottom,
                             series = data.map(function(d) {
-                                return {"name": d.name, "color": d.color};
+                                return {"key": d.key, "color": d.color};
                             });
                             dataset = data.map(function(d) {
                                     return [{
                                         c: d.color,
-                                        y: d.count,
+                                        y: d.value,
                                         x: 0
                                     }];
                             });
@@ -134,7 +134,7 @@ angular.module('faradayApp')
                                     .attr('fill', 'black')
                                     .attr('x', width + margins.left + 8)
                                     .attr('y', i * 24 + 24)
-                                    .text(s.name);
+                                    .text(s.key);
                                 svg.append('rect')
                                     .attr('fill', s.color)
                                     .attr('width', 60)

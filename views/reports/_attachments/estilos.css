@@ -407,6 +407,7 @@ table.tablesorter thead tr .headerSortDown {
 }
 
 div.modal-body .col-md-6.vuln_table{width: 63%}
+div.modal-button .btn.btn-success{float: right}
 div.modal-footer button.btn{bottom: 1%;right: 1%;}
 div.modal-footer button.btn.btn-success{right: 10%}
 div.modal-footer button.btn-footer{position: absolute;}

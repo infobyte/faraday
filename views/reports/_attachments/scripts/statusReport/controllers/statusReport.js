@@ -15,9 +15,14 @@ angular.module('faradayApp')
             $scope.reverse = true;
             $scope.showPagination = 1;
             $scope.currentPage = 0;
-            // set custom pagination if is not undefined
-            if(typeof($cookies.vulnsPerPage) == "undefined") $scope.pageSize = 10; else $scope.pageSize = parseInt($cookies.vulnsPerPage);
-            if(typeof($cookies.vulnsPerPage) == "undefined") $scope.pagination = 10; else $scope.pagination = parseInt($cookies.vulnsPerPage);
+            // set custom pagination if is possible
+            if(typeof($cookies.pageSize) == "undefined") {
+                $scope.pageSize = 10;
+                $scope.pagination = 10;
+            } else { 
+                $scope.pageSize = parseInt($cookies.pageSize);
+                $scope.pagination = parseInt($cookies.pageSize);
+            }
 
             // load all workspaces
             statusReportFact.getWorkspaces().then(function(wss) {
@@ -401,7 +406,7 @@ angular.module('faradayApp')
             if($scope.go_page > $scope.numberOfPages()) {
                 $scope.currentPage = 0;
             }
-            $cookies.vulnsPerPage = $scope.pageSize;
+            $cookies.pageSize = $scope.pageSize;
         };
 
         // encodes search string in order to send it through URL

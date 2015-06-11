@@ -340,8 +340,9 @@ ul.label-list {
 		display: inline;
 	}
 
-.label-list span.label {
+.label-list span.label, .label-list a span.label {
 	font-size: 12px !important;
+    margin: 5px;
 }
 table thead th a {
 	color: #bbb;
@@ -695,7 +696,6 @@ text.host-name{font-size: 13px;font-weight:bold;}
 .ws-name {
     font: 250%/3 'Ubuntu',Helvetica,Arial,sans-serif !important;
     font-size: 100%;
-    margin: 5px;
 }
 .ws-link {
     float: left;
@@ -876,4 +876,8 @@ aside .alert.alert-danger.alert-dismissible{
     font-family: sans-serif;
     font-size: 16px;
     line-height: 20px;
+}
+.center-lg-6 {
+    margin: 0 auto;
+    width: 500px;
 }

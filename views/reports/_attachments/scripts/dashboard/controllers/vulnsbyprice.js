@@ -14,14 +14,20 @@ angular.module('faradayApp')
                     "critical": 1000,
                     "high": 500,
                     "med": 200,
-                    "low": 100 
+                    "low": 100,
+                    "info": 0,
+                    "unclassified": 0
                 };
 
                 dashboardSrv.getVulnerabilities($scope.workspace).then(function(res) {
                     $scope.vulns = res;
-                    $scope.data = $scope.generatePrices($scope.vulns, $scope.prices);
-                    $scope.total = $scope.generateTotal($scope.data);
+                    $scope.generateData(res, $scope.prices);
                 }); 
+            };
+
+            $scope.generateData = function(vulns, prices) {
+                $scope.data = $scope.generatePrices(vulns, prices);
+                $scope.total = $scope.generateTotal($scope.data);
             };
 
             $scope.generateTotal = function(prices) {
@@ -52,6 +58,14 @@ angular.module('faradayApp')
                         color: '#A1CE31',
                         value: 0,
                         key: 'low'
+                    }, {
+                        color: '#2e97bd',
+                        value: 0,
+                        key: 'info'
+                    }, {
+                        color: '#999999',
+                        value: 0,
+                        key: 'unclassified'
                     }
                 ];
 

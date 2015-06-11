@@ -8,16 +8,14 @@
                 </h2>
             </header>
             <div class="center-lg-6">
-                <h3>This Workspace is worth ${{total}}</h3>
-            </div>
-            <div id="tooltip-stacked-bar" class="hidden">
-                <p><span id="value">100</span></p>
-            </div>
-            <d3-horizontal-stacked-bar data="data" class="stackedbars"></d3-horizontal-stacked-bar>
+                <h4><i class="fa fa-money fa-2x"></i> ${{total}} total</h4>
+            </div><!-- .center-lg-6 -->
+            <div d3-horizontal-stacked-bar data="data" class="stackedbars"></div>
             <div id="vulns-by-price-reference" class="center-lg-6">
                 <ul class="label-list">
                     <li ng-repeat="(key, value) in prices"><span class="label vuln fondo-{{key}}">{{key}} ${{value}}</span></li>
                 </ul>
-            </div>
+            </div><!-- #vulns-by-price-reference .center-lg-6 -->
         </article>
-</div>
+    </div><!-- .col-lg-6 -->
+</div><!-- #vulns-by-price -->

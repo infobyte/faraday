@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .directive('d3HorizontalStackedBar', ['d3Service', '$window',
-        function(d3Service, $window) {
+    .directive('d3HorizontalStackedBar', ['d3Service', '$window', '$compile',
+        function(d3Service, $window, $compile) {
             return {
                 restrict: 'EA',
                 scope: {
@@ -27,19 +27,17 @@ angular.module('faradayApp')
                             var margins = {
                                 top: 12,
                                 left: 24,
-                                right: 24,
-                                bottom: 24
+                                right: 12,
+                                bottom: 12
                             };
 
                             pwidth = ele.parent().width();
 
                             width = pwidth * 0.9,
-                            height = 100 - margins.top - margins.bottom,
-                            series = data.map(function(d) {
-                                return {"key": d.key, "color": d.color};
-                            });
+                            height = 80 - margins.top - margins.bottom;
                             dataset = data.map(function(d) {
                                     return [{
+                                        k: d.key,
                                         c: d.color,
                                         y: d.value,
                                         x: 0
@@ -53,6 +51,7 @@ angular.module('faradayApp')
                                 return group.map(function (d) {
                                     // Invert the x and y values, and y0 becomes x0
                                     return {
+                                        k: d.k,
                                         c: d.c,
                                         x: d.y,
                                         y: d.x,
@@ -112,52 +111,15 @@ angular.module('faradayApp')
                                 .attr('width', function (d) {
                                 return xScale(d.x);
                             })
-                            .on('mouseover', function (d) {
-                                var xPos = parseFloat(d3.select(this).attr('x')) / 2 + width / 2;
-                                var yPos = parseFloat(d3.select(this).attr('y')) + yScale.rangeBand() / 2;
-
-                                d3.select('#tooltip-stacked-bar')
-                                    .style('left', xPos + 'px')
-                                    .style('top', yPos + 'px')
-                                    .select('#value')
-                                    .text(d.x);
-                                d3.select('#tooltip-stacked-bar')
-                                    .classed('hidden', false);
-                            })
-                            .on('mouseout', function () {
-                                d3.select('#tooltip-stacked-bar').classed('hidden', true);
+                                .attr('tooltip-append-to-body', true)
+                                .attr('tooltip', function(d) {
+                                    return d.k + " sums $" + d.x;
                             });
 
-                        /* this adds the chart of reference, which color belongs to each label, etc
-                            // i think it should be done without D3 since its easier to handle style etc
-                            svg.append('rect')
-                                .attr('fill', 'grey')
-                                .attr('width', 160)
-                                .attr('height', 30 * dataset.length)
-                                .attr('x', width + margins.left)
-                                .attr('y', 0);
-
-                            series.forEach(function(s, i) {
-                                svg.append('text')
-                                    .attr('fill', 'black')
-                                    .attr('x', width + margins.left + 8)
-                                    .attr('y', i * 24 + 24)
-                                    .text(s.key);
-                                svg.append('rect')
-                                    .attr('fill', s.color)
-                                    .attr('width', 60)
-                                    .attr('height', 20)
-                                    .attr('x', width + margins.left + 90)
-                                    .attr('y', i * 24 + 6);
-                            });
-                        */
+                            ele.removeAttr("d3-horizontal-stacked-bar");
+                            $compile(ele)(scope);
 
                         };
-                        /*
-                        w.bind('resize', function () {
-                            scope.$apply();
-                        });
-                        */
                     });
                 }
             };

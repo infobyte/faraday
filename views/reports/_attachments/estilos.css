@@ -605,6 +605,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
 #treemap, #bar, #cake{height:195px}
 #vulns .columna{margin-left:2%}
     #vulns .main{width:100%;height:105px}
+    #vulns-by-price .main{width:100% !important;height: 180px !important;}
         #vulns .columna.unsexto{margin: auto;}
 #summarized .main{height:197px}
 #byservices .main{height:197px}
@@ -640,7 +641,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
     #byservices .col-lg-3, #summarized .col-lg-3{width: 29%;margin:0px -2% 0px 0%;}
     section .col-lg-2{margin: 0px -2% 0px 2px;padding-right: 1.9%;}
     .col-lg-6 .panel{margin-bottom: 10px}
-    #list .col-lg-6, #vulns .col-lg-6{width: 55%;float: right;margin-bottom: 5px}
+    #list .col-lg-6, #vulns .col-lg-6, #vulns-by-price .col-lg-6{width: 55%;float: right;margin-bottom: 5px}
     #compound .col-lg-6{width: 45%;margin-top: -2%;}
 
     .panel{margin-bottom: 1%!important}
@@ -687,7 +688,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
     .col-lg-2{width: 100%;margin: auto;}
     section#main{height: 100%!important}
     .treemap{left:256px!important;}
-    #compound .col-lg-6, #list .col-lg-6, #vulns .col-lg-6, #byservices .col-lg-3, #summarized .col-lg-3{
+    #compound .col-lg-6, #list .col-lg-6, #vulns .col-lg-6, #vulns-by-price .col-lg-6, #byservices .col-lg-3, #summarized .col-lg-3{
         width: 100%;margin-top: 0%
     }
 }
@@ -879,5 +880,6 @@ aside .alert.alert-danger.alert-dismissible{
 }
 .center-lg-6 {
     margin: 0 auto;
+    text-align: center;
     width: 500px;
 }

@@ -32,6 +32,11 @@ angular.module('faradayApp')
             return dashboardSrv._getView(url);
         };
 
+        dashboardSrv.getVulnerabilities = function(ws) {
+            var url = BASEURL + "/" + ws + "/_design/vulns/_view/all";
+            return dashboardSrv._getView(url);
+        };
+
         dashboardSrv.getVulnerabilitiesCount = function(ws) {
             var url = BASEURL + "/" + ws + "/_design/hosts/_view/vulns?group=true";
             return dashboardSrv._getView(url);
@@ -134,7 +139,7 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        dashboardSrv.getName = function(ws, id){
+        dashboardSrv.getName = function(ws, id) {
             var deferred = $q.defer();
             url = BASEURL + "/" + ws + "/" + id;
 
@@ -146,7 +151,16 @@ angular.module('faradayApp')
             });
 
             return deferred.promise;
-        }
+        };
+
+
+        dashboardSrv.accumulate = function(_array, key, value) {
+            _array.forEach(function(obj){
+                if(obj.key == key) {
+                    obj.value += value;
+                }
+            });
+        };
 
         return dashboardSrv;
     }]);

@@ -1,0 +1,41 @@
+<div class='col-md-6 left-big-box'>
+    <article class='panel panel-default'>
+            <header>
+                <h2>Last Vulnerabilities
+                    <span class="glyphicon glyphicon-info-sign" tooltip="Last vulnerabilities added"></span>
+                </h2>
+            </header>
+            <div ng-if="vulns.length == 0" class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <p>No vulnerabilities found yet.</p>
+            </div>
+            <table ng-if="vulns.length > 0" class="tablesorter table table-striped last-vuln">
+                <thead>
+                    <tr>
+                        <th><a href="" ng-click="vulnToggleSort('date')">Date</a></th>
+                        <th><a href="" ng-click="vulnToggleSort('target')">Target</a></th>
+                        <th><a href="" ng-click="vulnToggleSort('severity')">Severity</a></th>
+                        <th><a href="" ng-click="vulnToggleSort('name')">Name</a></th>
+                        <th><a href="" ng-click="vulnToggleSort('web')">Web</a></th>
+                        <th><a href="" ng-click="vulnToggleSort('easeofresolution')">Ease of resolution</a></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="vuln in vulns | orderObjectBy:vulnSortField:vulnSortReverse">
+                        <td>{{vuln.date | date:"MM/dd/yyyy 'at' h:mma"}}</td>
+                        <td>{{vuln.target}}</td>
+                        <td>{{vuln.severity}}</td>
+                        <td>{{vuln.name}}</td>
+                        <td>
+                            <span class="glyphicon glyphicon-ok" ng-show="vuln.web"></span>
+                            <span class="glyphicon glyphicon-remove" ng-show="!vuln.web"></span>
+                        </td>
+                        <td>{{vuln.easeofresolution}}</td>
+                    </tr>
+                </tbody>
+            </table>
+    </article>
+</div>

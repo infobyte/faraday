@@ -8,11 +8,11 @@
                 </h2>
             </header>
             <div class="main">
-                <div class="center-lg-6"><h4><i class="fa fa-money fa-2x"></i> ${{total}} total</h4></div>
-                <div d3-horizontal-stacked-bar data="data" text="'holamundo'" class="stackedbars"></div>
+                <div class="center-lg-6"><h4><i class="fa fa-money fa-2x"></i> {{total | currency}} total</h4></div>
+                <div d3-horizontal-stacked-bar data="data" class="stackedbars"></div>
                 <div id="vulns-by-price-reference" class="center-lg-6">
                     <ul class="label-list">
-                        <li ng-repeat="price in prices"><span class="label vuln fondo-{{price.key}}">{{price.key}} ${{price.value}}</span></li>
+                        <li ng-repeat="(severity, price) in prices" tooltip="Click on number to edit price"><span class="label vuln fondo-{{severity}}">{{severity}} $<span contenteditable="true" ng-model="prices[severity]"></span></span></li>
                     </ul>
                 </div><!-- #vulns-by-price-reference .center-lg-6 -->
             </div>

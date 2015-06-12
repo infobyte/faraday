@@ -10,32 +10,23 @@ angular.module('faradayApp')
                 //current workspace
                 $scope.workspace = $routeParams.wsId;
 
-                /*
                 $scope.prices = {
-                    "critical": 1000,
-                    "high": 500,
-                    "med": 200,
-                    "low": 100,
-                    "info": 0,
-                    "unclassified": 0
+                    "critical": "5000",
+                    "high": "3000",
+                    "med": "1000",
+                    "low": "500",
+                    "info": "0",
+                    "unclassified": "0"
                 };
-                */
-
-                $scope.prices = [
-                    {"key": "critical", "value": 1000},
-                    {"key": "high", "value": 500},
-                    {"key": "med", "value": 200},
-                    {"key": "low", "value": 100},
-                    {"key": "info", "value": 0},
-                    {"key": "unclassified", "value": 0}
-                ];
 
                 dashboardSrv.getVulnerabilities($scope.workspace).then(function(res) {
                     $scope.vulns = res;
                     $scope.generateData(res, $scope.prices);
-                    $rootScope.$broadcast("vulnsByPriceDataReady");
                 }); 
 
+                $scope.$watch('prices', function(ps) {
+                    if($scope.vulns != undefined) $scope.generateData($scope.vulns, ps);
+                }, true);
             };
 
             $scope.generateData = function(vulns, prices) {
@@ -43,12 +34,14 @@ angular.module('faradayApp')
                 $scope.total = $scope.generateTotal($scope.data);
             };
 
-            $scope.generateTotal = function(prices) {
+            $scope.generateTotal = function(data) {
                 var total = 0;
 
-                prices.forEach(function(price) {
-                    total += price.value;
-                });
+                for(var d in data) {
+                    if(data.hasOwnProperty(d)) {
+                        total += parseInt(data[d]['value']);
+                    }
+                }
 
                 return total;
             };
@@ -82,22 +75,21 @@ angular.module('faradayApp')
                     }
                 ];
 
-                pricesx = {};
-                prices.forEach(function(price) {
-                    pricesx[price.key] = price.value;
-                });
-
                 vulns.forEach(function(vuln) {
                     var sev = vuln.value.severity;
 
-                    if(sev == 2 || sev == "low") {
-                        dashboardSrv.accumulate(data, "low", pricesx[sev]);
+                    if(sev == 0 || sev == "unclassified") {
+                        dashboardSrv.accumulate(data, "unclassified", parseInt(prices[sev]));
+                    } else if(sev == 1 || sev == "info") {
+                        dashboardSrv.accumulate(data, "info", parseInt(prices[sev]));
+                    } else if(sev == 2 || sev == "low") {
+                        dashboardSrv.accumulate(data, "low", parseInt(prices[sev]));
                     } else if(sev == 3 || sev == "med") {
-                        dashboardSrv.accumulate(data, "med", pricesx[sev]);
+                        dashboardSrv.accumulate(data, "med", parseInt(prices[sev]));
                     } else if(sev == 4 || sev == "high") {
-                        dashboardSrv.accumulate(data, "high", pricesx[sev]);
+                        dashboardSrv.accumulate(data, "high", parseInt(prices[sev]));
                     } else if(sev == 5 || sev == "critical") {
-                        dashboardSrv.accumulate(data, "critical", pricesx[sev]);
+                        dashboardSrv.accumulate(data, "critical", parseInt(prices[sev]));
                     }
                 });
 

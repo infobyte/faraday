@@ -16,6 +16,7 @@ TBA:
 * Fix ubuntu 15.04 installation bug 
 * Small bug in burp plugin "Import new vulnerabilities" checkbox issue
 * Added an interactive visualization to calculate the value of a Workspace
+* Fixed several bugs in WEB UI
 
 Apr 17, 2015:
 ---

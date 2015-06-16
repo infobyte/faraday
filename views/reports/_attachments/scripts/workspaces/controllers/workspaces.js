@@ -210,16 +210,16 @@ angular.module('faradayApp')
 
         };
 
-        $scope.okEdit = function(){
+        $scope.okEdit = function() {
             $scope.modal.close($scope.newworkspace);
         };
 
 
-        $scope.cancel = function(){
+        $scope.cancel = function() {
             $scope.modal.close();
         };
 
-        $scope.delete = function(){ 
+        $scope.delete = function() {
             var selected = false;
 
             $scope.workspaces.forEach(function(w) {
@@ -229,16 +229,21 @@ angular.module('faradayApp')
                 }
             });
 
-            if(selected){
+            if(selected) {
                 $scope.modal = $modal.open({
-                    templateUrl: 'scripts/workspaces/partials/modalDelete.html',
-                    controller: 'workspacesCtrl',
-                    scope: $scope,
-                    size: 'lg'
+                    templateUrl: 'scripts/commons/partials/modalDelete.html',
+                    controller: 'commonsModalDelete',
+                    size: 'lg',
+                    resolve: {
+                        msg: function() {
+                            var msg = "A vulnerability will be deleted. This action cannot be undone. Are you sure you want to proceed?";
+                            return msg;
+                        }
+                    }
                 });
 
                 $scope.modal.result.then(function() {
-                    $scope.workspaces.forEach(function(w){
+                    $scope.workspaces.forEach(function(w) {
                         if(w.selected == true)
                             $scope.remove(w.name); 
                     });

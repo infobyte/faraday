@@ -5,10 +5,57 @@
 angular.module('faradayApp')
     .controller('workspacesCtrl', ['$modal', '$scope', '$q', 'workspacesFact', 'dashboardSrv',
             function($modal, $scope, $q, workspacesFact, dashboardSrv) {
-        $scope.workspaces = [];
-        $scope.wss = [];
-        $scope.objects = {};
-        // $scope.newworkspace = {};
+
+        $scope.init = function() {
+            $scope.wss = [];
+            $scope.objects = {};
+            $scope.workspaces = [];
+            // $scope.newworkspace = {};
+            $scope.minDate = new Date();
+            $scope.dateOptions = {
+                formatYear: 'yy',
+                startingDay: 1
+            };
+            
+            var hash_tmp = window.location.hash.split("/")[1];
+            switch (hash_tmp){
+                case "status":
+                    $scope.hash = "status";
+                    break;
+                case "dashboard":
+                    $scope.hash = "dashboard";
+                    break;
+                case "hosts":
+                    $scope.hash = "hosts";
+                    break;
+                default:
+                    $scope.hash = "";
+            }
+
+            // todo: refactor the following code
+            workspacesFact.list().then(function(wss) {
+                $scope.wss = wss;
+                var objects = {};
+                $scope.wss.forEach(function(ws){
+                    workspacesFact.get(ws, $scope.onSuccessGet);
+                    objects[ws] = dashboardSrv.getObjectsCount(ws);
+                });
+                $q.all(objects).then(function(os) {
+                    for(var workspace in os) {
+                        if(os.hasOwnProperty(workspace)) {
+                            $scope.objects[workspace] = {
+                                "total vulns": "-",
+                                "hosts": "-",
+                                "services": "-"
+                            };
+                            os[workspace].forEach(function(o) {
+                                $scope.objects[workspace][o.key] = o.value;
+                            });
+                        }
+                    }
+                });
+            });
+        };
 
         $scope.onSuccessGet = function(workspace){
             if(workspace.sdate.toString().indexOf(".") != -1) workspace.sdate = workspace.sdate * 1000;
@@ -64,49 +111,7 @@ angular.module('faradayApp')
                 }
             };
         };
-
-        $scope.init = function() {
-            // todo: refactor the following code
-            workspacesFact.list().then(function(wss) {
-                $scope.wss = wss;
-                var objects = {};
-                $scope.wss.forEach(function(ws){
-                    workspacesFact.get(ws, $scope.onSuccessGet);
-                    objects[ws] = dashboardSrv.getObjectsCount(ws);
-                });
-                $q.all(objects).then(function(os) {
-                    for(var workspace in os) {
-                        if(os.hasOwnProperty(workspace)) {
-                            $scope.objects[workspace] = {
-                                "total vulns": "-",
-                                "hosts": "-",
-                                "services": "-"
-                            };
-                            os[workspace].forEach(function(o) {
-                                $scope.objects[workspace][o.key] = o.value;
-                            });
-                        }
-                    }
-                });
-            });
-        };
-
-        var hash_tmp = window.location.hash.split("/")[1];
-        switch (hash_tmp){
-            case "status":
-                $scope.hash = "status";
-                break;
-            case "dashboard":
-                $scope.hash = "dashboard";
-                break;
-            case "hosts":
-                $scope.hash = "hosts";
-                break;
-            default:
-                $scope.hash = "";
-        }
-
-        
+      
         $scope.insert = function(workspace){
             delete workspace.selected;
             workspacesFact.put(workspace).then(function(resp){
@@ -299,8 +304,6 @@ angular.module('faradayApp')
             $scope.dt = null;
         };
 
-        $scope.minDate = new Date();
-
         $scope.open = function($event, isStart) {
             $event.preventDefault();
             $event.stopPropagation();
@@ -308,9 +311,5 @@ angular.module('faradayApp')
             if(isStart) $scope.openedStart = true; else $scope.openedEnd = true;
         };
 
-        $scope.dateOptions = {
-            formatYear: 'yy',
-            startingDay: 1
-        };
     $scope.init();
     }]);

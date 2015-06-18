@@ -46,20 +46,28 @@ describe('workspacesCtrl', function() {
                     deferred.resolve(['ws1', 'ws2']);
                     return deferred.promise;
                 },
+                onSuccess: function(workspace) {
+                    if(workspace.sdate.toString().indexOf(".") != -1) workspace.sdate = workspace.sdate * 1000;
+                    workspace.selected = false;
+                    $scope.workspaces.push(workspace);
+                },
                 get: function(workspace_name, onSuccess){
                     workspace = {
                         "_id": workspace_name,
                         "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
+                        "children": [],
                         "customer": "",
-                        "sdate": 1410832741.48194,
+                        "description": "Testing Workspaces",
+                        "duration": {
+                            "start": 1410832741.48194,
+                            "end": 1410832741.48194
+                        },
                         "name": workspace_name,
-                        "fdate": 1410832741.48194,
+                        "sdate": 1410832741.48194,
+                        "selected": true,
                         "type": "Workspace",
-                        "children": [
-                        ],
-                        "description": ""
                     };
-                    onSuccess(workspace); 
+                    onSuccess(workspace);
                 },
                 put: spyOnPutFactory,
                 delete: function(workspace, onSuccess) {
@@ -82,21 +90,62 @@ describe('workspacesCtrl', function() {
     describe('Workspaces init function', function() {
         beforeEach(function() {
             spyOn(workspacesFactMock, 'list').and.callThrough();
+            spyOn(workspacesFactMock, 'get').and.callThrough();
             spyOn(dashboardSrvMock, 'getObjectsCount').and.callThrough();
         });
-        it('ok 1111tests if wss is loaded properly', function() {
+        it('lala', function() {
+            expect($scope.wss).toEqual([]);
+            expect($scope.objects).toEqual({});
+            expect($scope.workspaces).toEqual([]);
+            $scope.init();
+            $scope.$apply();
+            expect($scope.wss).not.toEqual([]);
+            expect($scope.objects).not.toEqual({});
+            expect($scope.workspaces).not.toEqual([]);
+
+            expect($scope.minDate).not.toEqual({});
+            expect($scope.dateOptions).not.toEqual({});
+            expect($scope.hash).not.toEqual();
+        });
+        it('ok tests if wss is loaded properly', function() {
+            // var workspaces = [{
+            //     "_id": "ws1",
+            //     "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
+            //     "children": [],
+            //     "customer": "",
+            //     "description": "Testing Workspaces",
+            //     "duration": {
+            //         "start": 1410832741.48194,
+            //         "end": 1410832741.48194
+            //     },
+            //     "name": "ws1",
+            //     "sdate": 1410832741.48194 * 1000,
+            //     "selected": false,
+            //     "type": "Workspace"
+            // },{
+            //     "_id": "ws2",
+            //     "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
+            //     "children": [],
+            //     "customer": "",
+            //     "description": "Testing Workspaces",
+            //     "duration": {
+            //         "start": 1410832741.48194,
+            //         "end": 1410832741.48194
+            //     },
+            //     "name": "ws2",
+            //     "sdate": 1410832741.48194 * 1000,
+            //     "selected": false,
+            //     "type": "Workspace"}];
             $scope.init();
             $scope.$apply();
             expect(workspacesFactMock.list).toHaveBeenCalled();
             expect(workspacesFactMock.put).not.toHaveBeenCalled();
             expect(dashboardSrvMock.getObjectsCount).toHaveBeenCalled();
             expect($scope.wss).toEqual(['ws1', 'ws2']);
-        });
-        it('lala', function() {
-            expect($scope.wss).toEqual([]);
-            $scope.init();
-            $scope.$apply();
-            expect($scope.wss).not.toEqual([]);
+            // On Success
+            expect(workspacesFactMock.get).toHaveBeenCalled();
+            expect(workspace.selected).toEqual(false);
+            //expect($scope.workspaces).toEqual(workspaces);
         });
     });
 

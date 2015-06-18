@@ -10,7 +10,7 @@ module.exports = function(config){
     files : [ 
       '../_attachments/script/jquery-1.11.2.js',
       '../_attachments/script/angular.js',
-      // '../_attachments/script/angular-mocks.js',
+      '../_attachments/script/angular-mocks.js',
       '../_attachments/script/angular-route.js',
       '../_attachments/script/angular-selection-model.js',
       '../_attachments/script/*bootstrap*.js',
@@ -18,8 +18,10 @@ module.exports = function(config){
       '../_attachments/scripts/**/*.js',
       '../tests/faradayApp/components/**/*.js',
       '../_attachments/script/angular-file-upload-shim.js',
-      '../_attachments/script/angular-file-upload.js'
-
+      '../_attachments/script/angular-file-upload.js',
+      '../_attachments/script/ngClip.js',
+      '../_attachments/script/angular-cookies.js',
+      '../_attachments/script/ZeroClipboard.min.js',
     ],
 
     autoWatch : true,

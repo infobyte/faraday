@@ -65,29 +65,31 @@ angular.module('faradayApp')
             };
         };
 
-        // todo: refactor the following code
-        workspacesFact.list().then(function(wss) {
-            $scope.wss = wss;
-            var objects = {};
-            $scope.wss.forEach(function(ws){
-                workspacesFact.get(ws, $scope.onSuccessGet);
-                objects[ws] = dashboardSrv.getObjectsCount(ws);
-            });
-            $q.all(objects).then(function(os) {
-                for(var workspace in os) {
-                    if(os.hasOwnProperty(workspace)) {
-                        $scope.objects[workspace] = {
-                            "total vulns": "-",
-                            "hosts": "-",
-                            "services": "-"
-                        };
-                        os[workspace].forEach(function(o) {
-                            $scope.objects[workspace][o.key] = o.value;
-                        });
+        $scope.init = function() {
+            // todo: refactor the following code
+            workspacesFact.list().then(function(wss) {
+                $scope.wss = wss;
+                var objects = {};
+                $scope.wss.forEach(function(ws){
+                    workspacesFact.get(ws, $scope.onSuccessGet);
+                    objects[ws] = dashboardSrv.getObjectsCount(ws);
+                });
+                $q.all(objects).then(function(os) {
+                    for(var workspace in os) {
+                        if(os.hasOwnProperty(workspace)) {
+                            $scope.objects[workspace] = {
+                                "total vulns": "-",
+                                "hosts": "-",
+                                "services": "-"
+                            };
+                            os[workspace].forEach(function(o) {
+                                $scope.objects[workspace][o.key] = o.value;
+                            });
+                        }
                     }
-                }
+                });
             });
-        });
+        };
 
         var hash_tmp = window.location.hash.split("/")[1];
         switch (hash_tmp){
@@ -310,5 +312,5 @@ angular.module('faradayApp')
             formatYear: 'yy',
             startingDay: 1
         };
-
+    $scope.init();
     }]);

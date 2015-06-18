@@ -23,12 +23,26 @@ describe('workspacesCtrl', function() {
     beforeEach(function () { 
         module('faradayApp');
 
-        inject(function(_$rootScope_, _$controller_, $q){
+        inject(function(_$rootScope_, _$controller_, _$q_) {
             // The injector unwraps the underscores (_) from around the parameter names when matching
             $scope = _$rootScope_.$new();
+            dashboardSrvMock = {
+                getObjectsCount: function(ws) {
+                    var deferred = _$q_.defer();
+                    deferred.resolve([
+                        {"key":"hosts","value":2},
+                        {"key":"interfaces","value":2},
+                        {"key":"services","value":1},
+                        {"key":"total vulns","value":3},
+                        {"key":"vulns","value":1},
+                        {"key":"web vulns","value":2}
+                    ]);
+                    return deferred.promise;
+                }
+            };
             workspacesFactMock = {
                 list: function(callback) {
-                    var deferred = $q.defer();
+                    var deferred = _$q_.defer();
                     deferred.resolve(['ws1', 'ws2']);
                     return deferred.promise;
                 },
@@ -56,18 +70,33 @@ describe('workspacesCtrl', function() {
                 }
 
             };
-            $controller = _$controller_('workspacesCtrl',
-                    { $scope: $scope, workspacesFact: workspacesFactMock});
+            $controller = _$controller_('workspacesCtrl', {
+                $scope: $scope,
+                dashboardSrv: dashboardSrvMock,
+                workspacesFact: workspacesFactMock
+            });
         });
     });
 
 
-    describe('Workspaces load in $scope.wss', function() {
-        it('tests if wss is loaded properly', function() {
+    describe('Workspaces init function', function() {
+        beforeEach(function() {
             spyOn(workspacesFactMock, 'list').and.callThrough();
+            spyOn(dashboardSrvMock, 'getObjectsCount').and.callThrough();
+        });
+        it('ok 1111tests if wss is loaded properly', function() {
             $scope.init();
+            $scope.$apply();
             expect(workspacesFactMock.list).toHaveBeenCalled();
-            //expect($scope.workspaces.length).toEqual(2);
+            expect(workspacesFactMock.put).not.toHaveBeenCalled();
+            expect(dashboardSrvMock.getObjectsCount).toHaveBeenCalled();
+            expect($scope.wss).toEqual(['ws1', 'ws2']);
+        });
+        it('lala', function() {
+            expect($scope.wss).toEqual([]);
+            $scope.init();
+            $scope.$apply();
+            expect($scope.wss).not.toEqual([]);
         });
     });
 

@@ -46,11 +46,27 @@ describe('workspacesCtrl', function() {
                     deferred.resolve(['ws1', 'ws2']);
                     return deferred.promise;
                 },
-                onSuccess: function(workspace) {
-                    if(workspace.sdate.toString().indexOf(".") != -1) workspace.sdate = workspace.sdate * 1000;
-                    workspace.selected = false;
-                    $scope.workspaces.push(workspace);
+                update: function(workspace, onSuccess) {
+                    document_url = BASEURL + workspace.name + '/' + workspace.name + '?rev=' + workspace._rev;
+                    var deferred = _$q_.defer();
+                    deferred.resolve({"data":{"ok":"true", "id":"ws1", "rev":"36-e56619bfa3a9ee9b09650d3fc8878d2c"}});
+                    return deferred.promise.success(function(data){
+                        workspace._rev = data.rev;
+                        onSuccess(workspace);
+                    });
+                    //workspacesFact.update(workspace, $scope.onSuccessEdit);
                 },
+                // onSuccessEdit: function(workspace) {
+                //     for(var i = 0; i < $scope.workspaces.length; i++) {
+                //         if($scope.workspaces[i].name == workspace.name){
+                //             $scope.workspaces[i]._rev = workspace._rev;
+                //             $scope.workspaces[i].description = workspace.description;
+                //             $scope.workspaces[i].duration.start = workspace.duration.start;
+                //             $scope.workspaces[i].duration.end = workspace.duration.end;
+                //             break;
+                //         }
+                //     };
+                // },
                 get: function(workspace_name, onSuccess){
                     workspace = {
                         "_id": workspace_name,
@@ -90,10 +106,11 @@ describe('workspacesCtrl', function() {
     describe('Workspaces init function', function() {
         beforeEach(function() {
             spyOn(workspacesFactMock, 'list').and.callThrough();
-            spyOn(workspacesFactMock, 'get').and.callThrough();
             spyOn(dashboardSrvMock, 'getObjectsCount').and.callThrough();
+            spyOn(workspacesFactMock, 'get').and.callThrough();
         });
         it('lala', function() {
+            // init()
             expect($scope.wss).toEqual([]);
             expect($scope.objects).toEqual({});
             expect($scope.workspaces).toEqual([]);
@@ -108,45 +125,86 @@ describe('workspacesCtrl', function() {
             expect($scope.hash).not.toEqual();
         });
         it('ok tests if wss is loaded properly', function() {
-            // var workspaces = [{
-            //     "_id": "ws1",
-            //     "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
-            //     "children": [],
-            //     "customer": "",
-            //     "description": "Testing Workspaces",
-            //     "duration": {
-            //         "start": 1410832741.48194,
-            //         "end": 1410832741.48194
-            //     },
-            //     "name": "ws1",
-            //     "sdate": 1410832741.48194 * 1000,
-            //     "selected": false,
-            //     "type": "Workspace"
-            // },{
-            //     "_id": "ws2",
-            //     "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
-            //     "children": [],
-            //     "customer": "",
-            //     "description": "Testing Workspaces",
-            //     "duration": {
-            //         "start": 1410832741.48194,
-            //         "end": 1410832741.48194
-            //     },
-            //     "name": "ws2",
-            //     "sdate": 1410832741.48194 * 1000,
-            //     "selected": false,
-            //     "type": "Workspace"}];
             $scope.init();
             $scope.$apply();
             expect(workspacesFactMock.list).toHaveBeenCalled();
             expect(workspacesFactMock.put).not.toHaveBeenCalled();
             expect(dashboardSrvMock.getObjectsCount).toHaveBeenCalled();
             expect($scope.wss).toEqual(['ws1', 'ws2']);
-            // On Success
-            expect(workspacesFactMock.get).toHaveBeenCalled();
-            expect(workspace.selected).toEqual(false);
-            //expect($scope.workspaces).toEqual(workspaces);
         });
+        it('testing onSuccessGet', function() {
+            var workspace = {
+                "_id": "ws3",
+                "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
+                "children": [],
+                "customer": "",
+                "description": "Testing Workspaces",
+                "duration": {
+                    "start": 1410832741.48194,
+                    "end": 1410832741.48194
+                },
+                "name": "ws3",
+                "sdate": 1410832741.48194,
+                "selected": true,
+                "type": "Workspace",
+            };
+            $scope.onSuccessGet(workspace);
+            $scope.$apply();
+            expect(workspacesFactMock.get).toHaveBeenCalled();
+            // falta testear si tiene puntos el date
+            expect(workspace.selected).toEqual(false);
+            expect($scope.workspaces.length).toEqual(3);
+        });
+    });
+
+    describe('Workspace update', function() {
+        beforeEach(function() {
+            spyOn(workspacesFactMock, 'update').and.callThrough();
+        });
+        it('testing onSuccessEdit', function() {
+            $scope.workspaces = [{
+                "_id": "ws2",
+                "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
+                "children": [],
+                "customer": "",
+                "description": "Testing Workspace",
+                "duration": {
+                    "start": 1410832741.48194,
+                    "end": 1410832741.48194
+                },
+                "name": "ws2",
+                "scope": "",
+                "sdate": 1410832741.48194,
+                "selected": true,
+                "type": "Workspace",
+            }];
+            var workspace = {
+                "_id": "ws2",
+                "_rev": "10-bd88abf79cf2b7e8b419cd4387c64bef",
+                "children": [],
+                "customer": "",
+                "description": "Nuevo",
+                "duration": {
+                    "start": 141083274148194,
+                    "end": 141083274148194
+                },
+                "name": "ws2",
+                "sdate": 1410832741.48194,
+                "selected": true,
+                "type": "Workspace",
+            };
+            $scope.onSuccessEdit(workspace);
+            $scope.$apply();
+            expect($scope.workspaces[0].description).toEqual("Nuevo");
+            expect($scope.workspaces[0]._rev).toEqual("10-bd88abf79cf2b7e8b419cd4387c64bef");
+            expect($scope.workspaces[0].duration.start).toEqual(141083274148194);
+            expect($scope.workspaces[0].duration.end).toEqual(141083274148194);
+        });
+        // it('tests if update works', function() {
+        //     $scope.update();
+        //     $scope.$apply();
+        //     expect(workspacesFactMock.update).toHaveBeenCalled();
+        // });
     });
 
     // describe('Workspaces inserts in $scope.wss', function() { 

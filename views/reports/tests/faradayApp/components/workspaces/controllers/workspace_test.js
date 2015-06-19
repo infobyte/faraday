@@ -109,28 +109,23 @@ describe('workspacesCtrl', function() {
             spyOn(dashboardSrvMock, 'getObjectsCount').and.callThrough();
             spyOn(workspacesFactMock, 'get').and.callThrough();
         });
-        it('lala', function() {
-            // init()
-            expect($scope.wss).toEqual([]);
-            expect($scope.objects).toEqual({});
-            expect($scope.workspaces).toEqual([]);
-            $scope.init();
+        it('variables are defined after execution', function() {
             $scope.$apply();
-            expect($scope.wss).not.toEqual([]);
+            expect($scope.wss).toBeDefined();
+            expect($scope.objects).toBeDefined();
+            expect($scope.workspaces).toBeDefined();
+            expect($scope.minDate).toBeDefined();
+            expect($scope.dateOptions).toBeDefined();
+            expect($scope.hash).toBeDefined();
+        });
+        it('variables have proper values after execution', function() {
+            $scope.$apply();
+            expect($scope.wss).toEqual(['ws1', 'ws2']);
             expect($scope.objects).not.toEqual({});
             expect($scope.workspaces).not.toEqual([]);
-
             expect($scope.minDate).not.toEqual({});
             expect($scope.dateOptions).not.toEqual({});
-            expect($scope.hash).not.toEqual();
-        });
-        it('ok tests if wss is loaded properly', function() {
-            $scope.init();
-            $scope.$apply();
-            expect(workspacesFactMock.list).toHaveBeenCalled();
-            expect(workspacesFactMock.put).not.toHaveBeenCalled();
-            expect(dashboardSrvMock.getObjectsCount).toHaveBeenCalled();
-            expect($scope.wss).toEqual(['ws1', 'ws2']);
+            expect($scope.hash).not.toEqual(null);
         });
         it('testing onSuccessGet', function() {
             var workspace = {

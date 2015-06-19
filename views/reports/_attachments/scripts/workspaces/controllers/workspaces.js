@@ -5,11 +5,17 @@
 angular.module('faradayApp')
     .controller('workspacesCtrl', ['$modal', '$scope', '$q', 'workspacesFact', 'dashboardSrv',
             function($modal, $scope, $q, workspacesFact, dashboardSrv) {
+        $scope.dateOptions;
+        $scope.hash;
+        $scope.minDate;
+        $scope.objects;
+        $scope.workspaces;
+        $scope.wss;
 
         $scope.init = function() {
-            $scope.wss = [];
-            $scope.objects = {};
+            $scope.objects = [];
             $scope.workspaces = [];
+            $scope.wss = [];
             // $scope.newworkspace = {};
             $scope.minDate = new Date();
             $scope.dateOptions = {
@@ -311,5 +317,5 @@ angular.module('faradayApp')
             if(isStart) $scope.openedStart = true; else $scope.openedEnd = true;
         };
 
-    $scope.init();
+        $scope.init();
     }]);

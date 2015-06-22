@@ -50,6 +50,30 @@ angular.module('faradayApp')
             });
         };
 
+        workspacesFact.getDuration = function(workspace_name) {
+            var dur = {"start": 0, "end": 0},
+            ws;
+            
+/*
+            // redo this when workspacesFact.get() returns a promise!
+            workspacesFact.get(workspace_name, function(workspace) {
+                ws = workspace;
+
+                if(ws.hasOwnProperty('duration')) {
+                    if(ws.duration.hasOwnProperty('start') && ws.duration.hasOwnProperty('end')) {
+                        dur.start = ws.duration.start;
+                        dur.end = ws.duration.end;
+                    }
+                } else if(ws.hasOwnProperty('sdate') && ws.hasOwnProperty('fdate')) {
+                    dur.start = ws.sdate;
+                    dur.end = ws.fdate;
+                }
+            });
+*/
+
+            return $q.when({"start": 1262358000, "end": 1577890800});
+        };
+
         workspacesFact.exists = function(workspace_name) {
             var request = {
                 method: 'HEAD',

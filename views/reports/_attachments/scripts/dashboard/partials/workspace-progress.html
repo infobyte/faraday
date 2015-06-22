@@ -1,0 +1,22 @@
+<div id="workspace-progress">
+    <div class="col-lg-6">
+        <article class="panel panel-default">
+            <header>
+                <h2>
+                    Workspace progress
+                    <span class="glyphicon glyphicon-info-sign" tooltip="Workspace progress according to Scope dates"></span>
+                </h2>
+            </header>
+            <div class="main">
+                <div class="center-lg-6"><h4></h4></div>
+                <div id="workspace-progress-reference" class="center-lg-6">
+                    <progressbar value="progress" class="progress-striped active">{{progress}}%</progressbar>
+                    <ul class="label-list">
+                        <li>Start date: {{start | date:"MM/dd/yyyy"}}</li>
+                        <li>End date: {{end | date:"MM/dd/yyyy"}}</li>
+                    </ul>
+                </div><!-- #workspace-progress-reference .center-lg-6 -->
+            </div>
+        </article>
+    </div><!-- .col-lg-6 -->
+</div><!-- #workspace-progress -->

@@ -128,30 +128,30 @@ angular.module('faradayApp')
             $scope.onFailInsert);
         };
 
-        $scope.update = function(workspace){
-            if(typeof(workspace.duration.startDate) == "number") {
-                start = workspace.duration.startDate;
-            } else if(workspace.duration.startDate) {
-                start = workspace.duration.startDate.getTime(); 
+        $scope.update = function(ws){
+            if(typeof(ws.duration.startDate) == "number") {
+                start = ws.duration.startDate;
+            } else if(ws.duration.startDate) {
+                start = ws.duration.startDate.getTime(); 
             } else {start = "";}
-            if(typeof(workspace.duration.endDate) == "number") {
-                end = workspace.duration.endDate;
-            } else if(workspace.duration.endDate) {
-                end = workspace.duration.endDate.getTime();
+            if(typeof(ws.duration.endDate) == "number") {
+                end = ws.duration.endDate;
+            } else if(ws.duration.endDate) {
+                end = ws.duration.endDate.getTime();
             } else {end = "";}
             duration = {'start': start, 'end': end};
             workspace = {
-                "_id":          workspace._id,
-                "_rev":         workspace._rev,
-                "children":     workspace.children,
-                "customer":     workspace.customer,
-                "description":  workspace.description,
+                "_id":          ws._id,
+                "_rev":         ws._rev,
+                "children":     ws.children,
+                "customer":     ws.customer,
+                "description":  ws.description,
                 "duration":     duration,
-                "name":         workspace.name,
-                "scope":        workspace.scope,
-                "sdate":        workspace.sdate,
-                "selected":     workspace.selected,
-                "type":         workspace.type
+                "name":         ws.name,
+                "scope":        ws.scope,
+                "sdate":        ws.sdate,
+                "selected":     ws.selected,
+                "type":         ws.type
             };
             workspacesFact.update(workspace).then(function(resp) {
                 $scope.onSuccessEdit(resp);

@@ -151,12 +151,14 @@ angular.module('faradayApp')
             return ret;
         };
 
-        workspacesFact.update = function(workspace, onSuccess) {
+        workspacesFact.update = function(workspace) {
+            var deferred = $q.defer();
             document_url = BASEURL + workspace.name + '/' + workspace.name + '?rev=' + workspace._rev;
-            return $http.put(document_url, workspace).success(function(data){
+            $http.put(document_url, workspace).success(function(data){
                 workspace._rev = data.rev;
-                onSuccess(workspace);
+                deferred.resolve(data);
             });
+            return deferred.promise;
         };
 
         workspacesFact.delete = function(workspace_name, onSuccess) {

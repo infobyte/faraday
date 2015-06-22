@@ -153,7 +153,9 @@ angular.module('faradayApp')
                 "selected":     workspace.selected,
                 "type":         workspace.type
             };
-            workspacesFact.update(workspace, $scope.onSuccessEdit);
+            workspacesFact.update(workspace).then(function(resp) {
+                $scope.onSuccessEdit(resp);
+            });
         };
 
         $scope.remove = function(workspace_name){

@@ -43,7 +43,9 @@ angular.module('faradayApp')
                 $scope.wss = wss;
                 var objects = {};
                 $scope.wss.forEach(function(ws){
-                    workspacesFact.get(ws, $scope.onSuccessGet);
+                    workspacesFact.get(ws).then(function(resp) {
+                        $scope.onSuccessGet(resp.data);
+                    });
                     objects[ws] = dashboardSrv.getObjectsCount(ws);
                 });
                 $q.all(objects).then(function(os) {

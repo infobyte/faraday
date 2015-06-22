@@ -43,10 +43,11 @@ angular.module('faradayApp')
             return $q.when(data.status);
         };
 
-        workspacesFact.get = function(workspace_name, onSuccess) {
+        workspacesFact.get = function(workspace_name) {
+            deferred = $q.defer();
             return $http.get(BASEURL + workspace_name + '/' + workspace_name).
                 success(function(data, status, headers, config) {
-                onSuccess(data);
+                    deferred.resolve(data);
             });
         };
 

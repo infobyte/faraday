@@ -4,7 +4,10 @@
 
 describe('workspacesCtrl', function() {
     var $controller,
-        $scope;
+        $scope,
+        tmp_ws1,
+        tmp_ws2,
+        tmp_ws3;
 
     var $workspacesFact,
     workspacesFactMock;
@@ -17,8 +20,7 @@ describe('workspacesCtrl', function() {
     spyOnExistsFactory('test_workspace', function(){
         return false;
     });
-            
-    
+
 
     beforeEach(function () { 
         module('faradayApp');
@@ -51,17 +53,6 @@ describe('workspacesCtrl', function() {
                     deferred.resolve({"data":{"ok":"true", "id":"ws1", "rev":"36-e56619bfa3a9ee9b09650d3fc8878d2c"}});
                     return deferred.promise;
                 },
-                // onSuccessEdit: function(workspace) {
-                //     for(var i = 0; i < $scope.workspaces.length; i++) {
-                //         if($scope.workspaces[i].name == workspace.name){
-                //             $scope.workspaces[i]._rev = workspace._rev;
-                //             $scope.workspaces[i].description = workspace.description;
-                //             $scope.workspaces[i].duration.start = workspace.duration.start;
-                //             $scope.workspaces[i].duration.end = workspace.duration.end;
-                //             break;
-                //         }
-                //     };
-                // },
                 get: function(workspace_name){
                     var deferred = _$q_.defer();
                     tmp_workspace = {
@@ -76,6 +67,7 @@ describe('workspacesCtrl', function() {
                         },
                         "name": workspace_name,
                         "sdate": 1410832741.48194,
+                        "scope": "",
                         "selected": true,
                         "type": "Workspace",
                     };
@@ -83,13 +75,64 @@ describe('workspacesCtrl', function() {
                     return deferred.promise;
                 },
                 put: spyOnPutFactory,
-                delete: function(tmp_workspace, onSuccess) {
-                        onSuccess(tmp_workspace);
+                delete: function(workspace_name) {
+                    var deferred = _$q_.defer();
+                    deferred.resolve(workspace_name);
+                    return deferred.promise;
                 },
                 exists: function(workspace_name){
                     return false; 
                 }
 
+            };
+            // workspaces variables
+            tmp_ws1 = {
+                "_id": "ws1",
+                "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
+                "children": [],
+                "customer": "",
+                "description": "Testing Workspaces",
+                "duration": {
+                    "start": 1410832741.48194,
+                    "end": 1410832741.48194
+                },
+                "name": "ws1",
+                "sdate": 1410832741.48194,
+                "scope": "",
+                "selected": true,
+                "type": "Workspace"
+            };
+            tmp_ws2 = {
+                "_id": "ws2",
+                "_rev": "10-bd88abf79cf2b7e8b419cd4387c64bef",
+                "children": [],
+                "customer": "",
+                "description": "Nuevo",
+                "duration": {
+                    "startDate": 141083274148194,
+                    "endDate": 141083274148194
+                },
+                "name": "ws2",
+                "sdate": 1410832741.48194,
+                "scope": "",
+                "selected": true,
+                "type": "Workspace",
+            };
+            tmp_ws3 = {
+                "_id": "ws3",
+                "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
+                "children": [],
+                "customer": "",
+                "description": "Testing Workspaces",
+                "duration": {
+                    "start": 1410832741.48194,
+                    "end": 1410832741.48194
+                },
+                "name": "ws3",
+                "sdate": 1410832741.48194,
+                "scope": "",
+                "selected": true,
+                "type": "Workspace"
             };
             $controller = _$controller_('workspacesCtrl', {
                 $scope: $scope,
@@ -125,22 +168,7 @@ describe('workspacesCtrl', function() {
             expect($scope.hash).not.toEqual(null);
         });
         it('variables have proper values after execution of onSuccessGet function', function() {
-            var tmp_workspace = {
-                "_id": "ws3",
-                "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
-                "children": [],
-                "customer": "",
-                "description": "Testing Workspaces",
-                "duration": {
-                    "start": 1410832741.48194,
-                    "end": 1410832741.48194
-                },
-                "name": "ws3",
-                "sdate": 1410832741.48194,
-                "selected": true,
-                "type": "Workspace",
-            };
-            $scope.onSuccessGet(tmp_workspace);
+            $scope.onSuccessGet(tmp_ws1);
             $scope.$apply();
             expect(workspacesFactMock.get).toHaveBeenCalled();
             // falta testear si tiene puntos el date
@@ -170,7 +198,7 @@ describe('workspacesCtrl', function() {
                 "selected": true,
                 "type": "Workspace",
             }];
-            var tmp_workspace = {
+            var tmp_ws2_modified = {
                 "_id": "ws2",
                 "_rev": "10-bd88abf79cf2b7e8b419cd4387c64bef",
                 "children": [],
@@ -182,10 +210,11 @@ describe('workspacesCtrl', function() {
                 },
                 "name": "ws2",
                 "sdate": 1410832741.48194,
+                "scope": "",
                 "selected": true,
                 "type": "Workspace",
             };
-            $scope.onSuccessEdit(tmp_workspace);
+            $scope.onSuccessEdit(tmp_ws2_modified);
             $scope.$apply();
             expect($scope.workspaces[0].description).toEqual("Nuevo");
             expect($scope.workspaces[0]._rev).toEqual("10-bd88abf79cf2b7e8b419cd4387c64bef");
@@ -193,23 +222,8 @@ describe('workspacesCtrl', function() {
             expect($scope.workspaces[0].duration.end).toEqual(141083274148194);
         });
         it('variables are defined after execution of update function', function() {
-            var tmp_workspace = {
-                "_id": "ws2",
-                "_rev": "10-bd88abf79cf2b7e8b419cd4387c64bef",
-                "children": [],
-                "customer": "",
-                "description": "Nuevo",
-                "duration": {
-                    "startDate": 141083274148194,
-                    "endDate": 141083274148194
-                },
-                "name": "ws2",
-                "sdate": 1410832741.48194,
-                "scope": "",
-                "selected": true,
-                "type": "Workspace",
-            };
-            $scope.update(tmp_workspace);
+
+            $scope.update(tmp_ws2);
             $scope.$apply();
             expect(workspacesFactMock.update).toHaveBeenCalled();
 
@@ -222,41 +236,27 @@ describe('workspacesCtrl', function() {
             expect(workspace.duration.end).toBeDefined();
             expect(workspace.name).toBeDefined();
             expect(workspace.sdate).toBeDefined();
+            expect(workspace.scope).toBeDefined();
             expect(workspace.selected).toBeDefined();
             expect(workspace.type).toBeDefined();
         });
         it('the object that comes to the update function it is the same as is sended to update Mock', function() {
-            var tmp_workspace = {
-                "_id": "ws2",
-                "_rev": "10-bd88abf79cf2b7e8b419cd4387c64bef",
-                "children": [],
-                "customer": "",
-                "description": "Nuevo",
-                "duration": {
-                    "startDate": 141083274148194,
-                    "endDate": 141083274148194
-                },
-                "name": "ws2",
-                "sdate": 1410832741.48194,
-                "scope": "",
-                "selected": true,
-                "type": "Workspace",
-            };
-            $scope.update(tmp_workspace);
+            $scope.update(tmp_ws2);
             $scope.$apply();
             expect(workspacesFactMock.update).toHaveBeenCalled();
 
-            expect(workspace._id).toEqual(tmp_workspace._id);
-            expect(workspace._rev).toEqual(tmp_workspace._rev);
-            expect(workspace.children).toEqual(tmp_workspace.children);
-            expect(workspace.customer).toEqual(tmp_workspace.customer);
-            expect(workspace.description).toEqual(tmp_workspace.description);
-            expect(workspace.duration.start).toEqual(tmp_workspace.duration.startDate);
-            expect(workspace.duration.end).toEqual(tmp_workspace.duration.endDate);
-            expect(workspace.name).toEqual(tmp_workspace.name);
-            expect(workspace.sdate).toEqual(tmp_workspace.sdate);
-            expect(workspace.selected).toEqual(tmp_workspace.selected);
-            expect(workspace.type).toEqual(tmp_workspace.type);
+            expect(workspace._id).toEqual(tmp_ws2._id);
+            expect(workspace._rev).toEqual(tmp_ws2._rev);
+            expect(workspace.children).toEqual(tmp_ws2.children);
+            expect(workspace.customer).toEqual(tmp_ws2.customer);
+            expect(workspace.description).toEqual(tmp_ws2.description);
+            expect(workspace.duration.start).toEqual(tmp_ws2.duration.startDate);
+            expect(workspace.duration.end).toEqual(tmp_ws2.duration.endDate);
+            expect(workspace.name).toEqual(tmp_ws2.name);
+            expect(workspace.sdate).toEqual(tmp_ws2.sdate);
+            expect(workspace.scope).toEqual(tmp_ws2.scope);
+            expect(workspace.selected).toEqual(tmp_ws2.selected);
+            expect(workspace.type).toEqual(tmp_ws2.type);
 
             expect(typeof(start)).not.toEqual("object");
             expect(typeof(end)).not.toEqual("object");
@@ -268,9 +268,8 @@ describe('workspacesCtrl', function() {
     //     it('tests if duplicated inserts are avoided', function() {
     //         // Replace the mock exists function
     //         // to return that the workspace 'tuvieja' exists
-    //         workspacesFactMock.exists = function(workspace_name){ return true;};
     //         workspace_name = 'tuvieja';
-    //         workspace = {
+    //         tmp_workspace = {
     //             "_id": workspace_name,
     //             "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
     //             "customer": "",
@@ -282,40 +281,52 @@ describe('workspacesCtrl', function() {
     //             ],
     //             "description": ""
     //         };
-    //         $scope.insert(workspace);
+    //         $scope.insert(tmp_workspace);
 
     //         expect($scope.wss).not.toContain(workspace_name);
     //         expect($scope.wss.length).toEqual(2);
-    //         expect(spyOnPutFactory).not.toHaveBeenCalledWith(workspace);
+    //         expect(spyOnPutFactory).not.toHaveBeenCalledWith(tmp_workspace);
     //     });
-    //     it('tests if wss is updated properly', function() {
-    //         workspace_name = 'test_workspace';
-    //         workspace = {
-    //             "_id": workspace_name,
-    //             "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
-    //             "customer": "",
-    //             "sdate": 1410832741.48194,
-    //             "name": workspace_name,
-    //             "fdate": 1410832741.48194,
-    //             "type": "Workspace",
-    //             "children": [
-    //             ],
-    //             "description": ""
-    //         };
-    //         $scope.insert(workspace);
+       //  it('tests if wss is updated properly', function() {
+       //      workspace_name = 'test_workspace';
+       //      workspace = {
+       //          "_id": workspace_name,
+       //          "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
+       //          "customer": "",
+       //          "sdate": 1410832741.48194,
+       //          "name": workspace_name,
+       //          "fdate": 1410832741.48194,
+       //          "type": "Workspace",
+       //          "children": [
+       //          ],
+       //          "description": ""
+       //      };
+       //      $scope.insert(workspace);
 
-    //         // http://jasmine.github.io/1.3/introduction.html#section-Matchers
-    //         expect(spyOnPutFactory).toHaveBeenCalledWith(workspace, $scope.onSuccessInsert);
-    //    });
+       //      // http://jasmine.github.io/1.3/introduction.html#section-Matchers
+       //      expect(spyOnPutFactory).toHaveBeenCalledWith(workspace, $scope.onSuccessInsert);
+       // });
     // });
-    // describe('Workspaces removal in $scope.wss', function() { 
-    //     it('tests if workspaces in scope.wss are removed ', function() {
+    describe('Workspaces removal properly', function() {
+        beforeEach(function() {
+            spyOn(workspacesFactMock, 'delete').and.callThrough();
+        });
+        it('tests if workspaces in scope.wss are removed after execution of remove function', function() {
+            $scope.remove('ws1');
+            $scope.$apply();
+            
+            expect(workspacesFactMock.delete).toHaveBeenCalled();
+            expect($scope.wss).not.toContain('ws1');
+        });
+        it('tests if workspaces in scope.workspaces are removed after execution of onSuccessDelete function', function() {
+            $scope.onSuccessGet(tmp_ws3);
+            $scope.$apply();
+            $scope.onSuccessDelete('ws1');
+            $scope.$apply();
 
-    //         $scope.remove('ws1');
-    //         expect($scope.wss).not.toContain('ws1');
-    //         expect($scope.workspaces['ws1']).not.toBeDefined(); 
-    //     });
-    // });
+            expect($scope.workspaces).not.toContain(tmp_ws1);
+        });
+    });
 
     // describe('Workspaces object creation ', function() { 
     //     it('tests if workspaces create object is consistent', function() {

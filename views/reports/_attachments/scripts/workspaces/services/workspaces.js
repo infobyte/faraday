@@ -161,14 +161,19 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        workspacesFact.delete = function(workspace_name, onSuccess) {
+        workspacesFact.delete = function(workspace_name) {
+            var deferred = $q.defer();
             var request = {
                 method: 'DELETE',
                 url: BASEURL + workspace_name
             };
-            return $http(request).success(function(data) {
-                onSuccess(workspace_name);
+            $http(request).success(function(data) {
+                deferred.resolve(workspace_name);
+            })
+            .error(function() {
+                deferred.reject();
             });
+            return deferred.promise;
         };
         return workspacesFact;
     }]);

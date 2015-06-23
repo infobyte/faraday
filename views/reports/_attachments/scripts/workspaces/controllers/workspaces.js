@@ -159,7 +159,9 @@ angular.module('faradayApp')
         };
 
         $scope.remove = function(workspace_name){
-            workspacesFact.delete(workspace_name, $scope.onSuccessDelete);
+            workspacesFact.delete(workspace_name).then(function(resp) {
+                $scope.onSuccessDelete(resp);
+            });
         };
 
         // Modals methods

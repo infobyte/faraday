@@ -72,7 +72,6 @@ angular.module('faradayApp')
         };
 
         $scope.onSuccessInsert = function(workspace){
-            workspace.sdate = workspace.sdate;
             $scope.wss.push(workspace.name); 
             $scope.workspaces.push(workspace); 
         };

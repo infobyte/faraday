@@ -13,7 +13,8 @@ New features in the latest update
 TBA:
 ---
 
-* Added a view to create, edit and delete hosts
+* Added hosts CRUD
+* Added services CRUD
 * Fix ubuntu 15.04 installation bug 
 * Small bug in burp plugin "Import new vulnerabilities" checkbox issue
 * Added an interactive visualization to calculate the value of a Workspace

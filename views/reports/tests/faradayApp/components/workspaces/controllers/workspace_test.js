@@ -48,7 +48,7 @@ describe('workspacesCtrl', function() {
                     deferred.resolve(['ws1', 'ws2']);
                     return deferred.promise;
                 },
-                update: function(tmp_workspace) {
+                update: function(workspace) {
                     var deferred = _$q_.defer();
                     deferred.resolve({"data":{"ok":"true", "id":"ws1", "rev":"36-e56619bfa3a9ee9b09650d3fc8878d2c"}});
                     return deferred.promise;
@@ -74,7 +74,11 @@ describe('workspacesCtrl', function() {
                     deferred.resolve(tmp_workspace);
                     return deferred.promise;
                 },
-                put: spyOnPutFactory,
+                put: function(workspace) {
+                    var deferred = _$q_.defer();
+                    deferred.resolve("");
+                    return deferred.promise;
+                },
                 delete: function(workspace_name) {
                     var deferred = _$q_.defer();
                     deferred.resolve(workspace_name);
@@ -264,49 +268,61 @@ describe('workspacesCtrl', function() {
         });
     });
 
-    // describe('Workspaces inserts in $scope.wss', function() { 
-    //     it('tests if duplicated inserts are avoided', function() {
-    //         // Replace the mock exists function
-    //         // to return that the workspace 'tuvieja' exists
-    //         workspace_name = 'tuvieja';
-    //         tmp_workspace = {
-    //             "_id": workspace_name,
-    //             "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
-    //             "customer": "",
-    //             "sdate": 1410832741.48194,
-    //             "name": workspace_name,
-    //             "fdate": 1410832741.48194,
-    //             "type": "Workspace",
-    //             "children": [
-    //             ],
-    //             "description": ""
-    //         };
-    //         $scope.insert(tmp_workspace);
+    describe('Workspaces inserts in $scope.wss', function() {
+        beforeEach(function() {
+            spyOn(workspacesFactMock, 'put').and.callThrough();
+            spyOn($scope, 'onSuccessInsert').and.callThrough();
+        });
+        it('if put Mock is called after execution of insert function', function() {
+            $scope.insert(tmp_ws1);
+            $scope.$apply();
 
-    //         expect($scope.wss).not.toContain(workspace_name);
-    //         expect($scope.wss.length).toEqual(2);
-    //         expect(spyOnPutFactory).not.toHaveBeenCalledWith(tmp_workspace);
-    //     });
-       //  it('tests if wss is updated properly', function() {
-       //      workspace_name = 'test_workspace';
-       //      workspace = {
-       //          "_id": workspace_name,
-       //          "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
-       //          "customer": "",
-       //          "sdate": 1410832741.48194,
-       //          "name": workspace_name,
-       //          "fdate": 1410832741.48194,
-       //          "type": "Workspace",
-       //          "children": [
-       //          ],
-       //          "description": ""
-       //      };
-       //      $scope.insert(workspace);
+            expect(workspacesFactMock.put).toHaveBeenCalledWith(tmp_ws1);
+            expect($scope.onSuccessInsert).toHaveBeenCalledWith(tmp_ws1);
+        });
+        it('variables update properly after execution of onSuccessInsert function', function() {
+            // define wss after execution
+            // if it is not defined, push to $scope.wss fails
+            $scope.wss = [];
+            $scope.$apply();
+            $scope.onSuccessInsert(tmp_ws3);
+            $scope.$apply();
 
-       //      // http://jasmine.github.io/1.3/introduction.html#section-Matchers
-       //      expect(spyOnPutFactory).toHaveBeenCalledWith(workspace, $scope.onSuccessInsert);
-       // });
-    // });
+            expect($scope.wss).toContain(tmp_ws3.name);
+            expect($scope.workspaces).toContain(tmp_ws3);
+        });
+    });
+
+    describe('Workspaces object creation', function() { 
+        it('tests if workspaces create object is consistent', function() {
+            var date = new Date();
+            workspace = $scope.create('wname','wdesc', date, date, '');
+            $scope.$apply();
+
+            expect(workspace._id).toBeDefined();
+            expect(workspace._rev).toBeDefined();
+            expect(workspace.customer).toBeDefined();
+            expect(workspace.sdate).toBeDefined();
+            expect(workspace.name).toBeDefined();
+            // find out if this variable is being used
+            expect(workspace.fdate).toBeUndefined();
+            
+            expect(workspace.type).toBeDefined();
+            expect(workspace.children).toBeDefined();
+            expect(workspace.duration.start).toBeDefined();
+            expect(workspace.duration.end).toBeDefined();
+            expect(workspace.scope).toBeDefined();
+            expect(workspace.description).toBeDefined();
+
+            expect(workspace.name).toEqual('wname');
+            expect(workspace._id).toEqual('wname');
+            expect(workspace.description).toEqual('wdesc');
+            expect(workspace.duration.start).toEqual(date.getTime()); 
+            expect(workspace.duration.end).toEqual(date.getTime()); 
+            expect(workspace.scope).toEqual(''); 
+        });
+    });
+
     describe('Workspaces removal properly', function() {
         beforeEach(function() {
             spyOn(workspacesFactMock, 'delete').and.callThrough();
@@ -328,23 +344,5 @@ describe('workspacesCtrl', function() {
         });
     });
 
-    // describe('Workspaces object creation ', function() { 
-    //     it('tests if workspaces create object is consistent', function() {
-    //         workspace = $scope.create('wname','wdesc');
-    //         workspace_properties = Object.keys(workspace);
-    //         expect(workspace_properties).toContain('_id');
-    //         expect(workspace_properties).toContain('name');
-    //         expect(workspace_properties).toContain('description');
-    //         expect(workspace_properties).toContain('customer');
-    //         expect(workspace_properties).toContain('sdate');
-    //         expect(workspace_properties).toContain('fdate');
-    //         expect(workspace_properties).toContain('type');
-    //         expect(workspace_properties).toContain('children');
-
-    //         expect(workspace.name).toEqual('wname');
-    //         expect(workspace._id).toEqual('wname');
-    //         expect(workspace.description).toEqual('wdesc'); 
-    //     });
-    // });
 });
 

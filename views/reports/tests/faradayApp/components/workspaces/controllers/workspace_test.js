@@ -305,6 +305,7 @@ describe('workspacesCtrl', function() {
             expect(workspace.sdate).toBeDefined();
             expect(workspace.name).toBeDefined();
             // find out if this variable is being used
+            // is defined as undefined
             expect(workspace.fdate).toBeUndefined();
             
             expect(workspace.type).toBeDefined();
@@ -345,4 +346,3 @@ describe('workspacesCtrl', function() {
     });
 
 });
-

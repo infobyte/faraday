@@ -236,7 +236,7 @@ angular.module('faradayApp')
                     size: 'lg',
                     resolve: {
                         msg: function() {
-                            var msg = "A vulnerability will be deleted. This action cannot be undone. Are you sure you want to proceed?";
+                            var msg = "A workspace will be deleted. This action cannot be undone. Are you sure you want to proceed?";
                             return msg;
                         }
                     }

@@ -4,74 +4,97 @@
 
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$modal', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 
-                    function($scope, $filter, $route, $routeParams, $modal, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact) {
-        $scope.baseurl = BASEURL;
-        $scope.severities = SEVERITIES;
-        $scope.easeofresolution = EASEOFRESOLUTION;
+                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies','BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 'hostsManager', 
+                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact, hostsManager) {
+        init = function() {
+            $scope.baseurl = BASEURL;
+            $scope.severities = SEVERITIES;
+            $scope.easeofresolution = EASEOFRESOLUTION;
 
-        $scope.sortField = 'date';
-        $scope.reverse = true;
-        $scope.showPagination = 1;
-        $scope.currentPage = 0;
-        $scope.pageSize = 10;
-        $scope.pagination = 10;
+            $scope.sortField = 'date';
+            $scope.reverse = true;
+            $scope.showPagination = 1;
+            $scope.currentPage = 0;
+            // set custom pagination if is possible
+            if(typeof($cookies.pageSize) == "undefined") {
+                $scope.pageSize = 10;
+                $scope.pagination = 10;
+            } else { 
+                $scope.pageSize = parseInt($cookies.pageSize);
+                $scope.pagination = parseInt($cookies.pageSize);
+            }
 
-        // load all workspaces
-        statusReportFact.getWorkspaces().then(function(wss) {
-            $scope.workspaces = wss;
-        });
+            // load all workspaces
+            statusReportFact.getWorkspaces().then(function(wss) {
+                $scope.workspaces = wss;
+            });
 
-        // current workspace
-        $scope.workspace = $routeParams.wsId;
+            // current workspace
+            $scope.workspace = $routeParams.wsId;
+            $scope.interfaces = [];
 
-        // load all vulnerabilities
-        $scope.vulns = statusReportFact.getVulns($scope.workspace);
+            $scope.getVulns = function() {
+                var vulnerabilities = statusReportFact.getVulns($scope.workspace);
+                hostsManager.getInterfaces($scope.workspace).then(function(interfaces){
+                    interfaces.forEach(function(interface){
+                        vulnerabilities.forEach(function(vuln){
+                            if(vuln.parent == interface.value.parent){
+                                vuln.hostnames = interface.value.hostnames;
+                            }
+                        });
+                    });
+                });
+                return vulnerabilities;
+            };
 
-        // toggles column show property
-        $scope.toggleShow = function(column, show) {
-            $scope.columns[column] = !show;
-        };
+            // current search
+            $scope.search = $routeParams.search;
+            $scope.searchParams = "";
+            $scope.expression = {};
+            if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
+                // search expression for filter
+                $scope.expression = $scope.decodeSearch($scope.search);
+                // search params for search field, which shouldn't be used for filtering
+                $scope.searchParams = $scope.stringSearch($scope.expression);
+            }
 
-        // toggles sort field and order
-        $scope.toggleSort = function(field) {
-            $scope.toggleSortField(field);
-            $scope.toggleReverse();
-        };
+            // load all vulnerabilities
+            $scope.vulns = $filter('filter')($scope.getVulns(), $scope.expression);
 
-        // toggles column sort field
-        $scope.toggleSortField = function(field) {
-            $scope.sortField = field;
-        };
-
-        // toggle column sort order
-        $scope.toggleReverse = function() {
-            $scope.reverse = !$scope.reverse;
-        }
-        
-        // set columns to show and hide by default
-        $scope.columns = {
-            "data":             true,
-            "date":             true,
-            "desc":             true,
-            "easeofresolution": false,
-            "evidence":         false,
-            "impact":           false,
-            "method":           false,
-            "name":             true,
-            "params":           false,
-            "path":             false,
-            "pname":            false,
-            "query":            false,
-            "refs":             true,
-            "request":          false,
-            "response":         false,
-            "resolution":       false,
-            "severity":         true,
-            "status":           false,
-            "target":           true,
-            "web":              false,
-            "website":          false
+            // created object for columns cookie columns
+            if(typeof($cookies.SRcolumns) != 'undefined'){
+                var objectoSRColumns = {};
+                var arrayOfColumns = $cookies.SRcolumns.replace(/[{}"']/g, "").split(',');
+                arrayOfColumns.forEach(function(column){
+                    var columnFinished = column.split(':');
+                    if(columnFinished[1] == "true") objectoSRColumns[columnFinished[0]] = true; else objectoSRColumns[columnFinished[0]] = false;
+                });
+            }
+            // set columns to show and hide by default
+            $scope.columns = objectoSRColumns || {
+                "data":             true,
+                "date":             true,
+                "desc":             true,
+                "easeofresolution": false,
+                "evidence":         false,
+                "hostnames":        false,
+                "impact":           false,
+                "method":           false,
+                "name":             true,
+                "params":           false,
+                "path":             false,
+                "pname":            false,
+                "query":            false,
+                "refs":             true,
+                "request":          false,
+                "response":         false,
+                "resolution":       false,
+                "severity":         true,
+                "status":           false,
+                "target":           true,
+                "web":              false,
+                "website":          false
+            };
         };
 
         // returns scope vulns as CSV obj
@@ -247,12 +270,19 @@ angular.module('faradayApp')
 
             if(selected) {
                 var modal = $modal.open({
-                    templateUrl: 'scripts/partials/modal-delete.html',
-                    controller: 'modalDeleteCtrl',
+                    templateUrl: 'scripts/commons/partials/modalDelete.html',
+                    controller: 'commonsModalDelete',
                     size: 'lg',
                     resolve: {
-                        amount: function() {
-                            return i;
+                        msg: function() {
+                            var msg = "";
+                            if(i == 1) {
+                                msg = "A vulnerability will be deleted.";
+                            } else {
+                                msg = i + " vulnerabilities will be deleted.";
+                            }
+                            msg += " This action cannot be undone. Are you sure you want to proceed?";
+                            return msg;
                         }
                     }
                 });
@@ -262,8 +292,8 @@ angular.module('faradayApp')
                 });
             } else {
                 var modal = $modal.open({
-                    templateUrl: 'scripts/partials/modal-ko.html',
-                    controller: 'modalKoCtrl',
+                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    controller: 'commonsModalKoCtrl',
                     resolve: {
                         msg: function() {
                             return 'No vulnerabilities were selected to delete';
@@ -283,7 +313,7 @@ angular.module('faradayApp')
 
             if(selected) {
                 var modal = $modal.open({
-                    templateUrl: 'scripts/partials/modal-edit.html',
+                    templateUrl: 'scripts/statusReport/partials/modalEdit.html',
                     controller: 'modalEditCtrl',
                     size: 'lg',
                     resolve: {
@@ -301,8 +331,8 @@ angular.module('faradayApp')
                 });
             } else {
                 var modal = $modal.open({
-                    templateUrl: 'scripts/partials/modal-ko.html',
-                    controller: 'modalKoCtrl',
+                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    controller: 'commonsModalKoCtrl',
                     resolve: {
                         msg: function() {
                             return 'At least one vulnerabilty must be selected in order to edit';
@@ -312,7 +342,7 @@ angular.module('faradayApp')
             }
         };
 
-        $scope.insert = function(vuln){
+        $scope.insert = function(vuln) {
             statusReportFact.putVulns($scope.workspace, vuln, function(rev, evidence) {
                 vuln.rev = rev;
                 vuln.attachments = evidence;
@@ -323,11 +353,11 @@ angular.module('faradayApp')
             d = d.getDate() + "/" + (d.getMonth()+1) + "/" + d.getFullYear();
             vuln.date = d;
             $scope.vulns.push(vuln);
-        }
+        };
 
-        $scope.new = function(){
+        $scope.new = function() {
                 var modal = $modal.open({
-                    templateUrl: 'scripts/partials/modal-new.html',
+                    templateUrl: 'scripts/statusReport/partials/modalNew.html',
                     controller: 'modalNewCtrl',
                     size: 'lg',
                     resolve: {
@@ -352,28 +382,137 @@ angular.module('faradayApp')
                 $scope.selectall = false;
             }
 
-            angular.forEach($filter('filter')($scope.vulns, $scope.query), function(v) {
+            var orderObject = $filter('orderObjectBy')($scope.vulns, $scope.sortField, $scope.reverse);
+            var tmp_vulns = $filter('limitTo')(orderObject, $scope.pageSize, $scope.currentPage * $scope.pageSize);
+            angular.forEach($filter('filter')(tmp_vulns), function(v,k) {
                 v.selected = $scope.selectall;
             });
         };
 
         $scope.numberOfPages = function() {
-            $scope.filteredData = $filter('filter')($scope.vulns,$scope.query);
-            if ($scope.filteredData.length <= 10){
+            if($scope.vulns.length <= 10) {
                 $scope.showPagination = 0;
             } else {
                 $scope.showPagination = 1;
-            };
-            return parseInt($scope.filteredData.length/$scope.pageSize);
-        }
+            }
+            return parseInt($scope.vulns.length/$scope.pageSize);
+        };
 
-        $scope.go = function(){
-            if($scope.go_page < $scope.numberOfPages()+1 && $scope.go_page > -1){
+        $scope.go = function() {
+            if($scope.go_page < $scope.numberOfPages()+1 && $scope.go_page > -1) {
                 $scope.currentPage = $scope.go_page;
             }
             $scope.pageSize = $scope.pagination;
-            if($scope.go_page > $scope.numberOfPages()){
+            if($scope.go_page > $scope.numberOfPages()) {
                 $scope.currentPage = 0;
             }
-        }
+            $cookies.pageSize = $scope.pageSize;
+        };
+
+        // encodes search string in order to send it through URL
+        $scope.encodeSearch = function(search) {
+            var i = -1,
+            encode = "",
+            params = search.split(" "),
+            chunks = {};
+
+            params.forEach(function(chunk) {
+                i = chunk.indexOf(":");
+                if(i > 0) {
+                    chunks[chunk.slice(0, i)] = chunk.slice(i+1);
+                } else {
+                    if(!chunks.hasOwnProperty("free")) {
+                        chunks.free = "";
+                    }
+                    chunks.free += " ".concat(chunk);
+                }
+            });
+
+            if(chunks.hasOwnProperty("free")) {
+                chunks.free = chunks.free.slice(1);
+            }
+
+            for(var prop in chunks) {
+                if(chunks.hasOwnProperty(prop)) {
+                    if(chunks.prop != "") {
+                        encode += "&" + prop + "=" + chunks[prop];
+                    }
+                }
+            }
+            return encodeURI(encode.slice(1));
+        };
+
+        // decodes search parameters to object in order to use in filter
+        $scope.decodeSearch = function(search) {
+            var i = -1,
+            decode = {},
+            params = decodeURI(search).split("&");
+
+            params.forEach(function(param) {
+                i = param.indexOf("=");
+                decode[param.slice(0,i)] = param.slice(i+1);
+            });
+
+            if(decode.hasOwnProperty("free")) {
+                decode['$'] = decode.free;
+                delete decode.free;
+            }
+
+            return decode;
+        };
+
+        // converts current search object to string to be displayed in search field
+        $scope.stringSearch = function(obj) {
+            var search = "";
+
+            for(var prop in obj) {
+                if(obj.hasOwnProperty(prop)) {
+                    if(search != "") {
+                        search += " ";
+                    }
+                    if(prop == "$") {
+                        search += obj[prop];
+                    } else {
+                        search += prop + ":" + obj[prop];
+                    }
+                }
+            }
+
+            return search;
+        };
+
+        // changes the URL according to search params
+        $scope.searchFor = function(search, params) {
+            var url = "/status/ws/" + $routeParams.wsId;
+
+            if(search && params != "" && params != undefined) {
+                url += "/search/" + $scope.encodeSearch(params);
+            }
+
+            $location.path(url);
+        };
+        
+        // toggles column show property
+        $scope.toggleShow = function(column, show) {
+            $scope.columns[column] = !show;
+            $cookies.SRcolumns = JSON.stringify($scope.columns);
+        };
+
+        // toggles sort field and order
+        $scope.toggleSort = function(field) {
+            $scope.toggleSortField(field);
+            $scope.toggleReverse();
+        };
+
+        // toggles column sort field
+        $scope.toggleSortField = function(field) {
+            $scope.sortField = field;
+        };
+
+        // toggle column sort order
+        $scope.toggleReverse = function() {
+            $scope.reverse = !$scope.reverse;
+        };
+
+        init();
     }]);

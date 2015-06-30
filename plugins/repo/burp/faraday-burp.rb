@@ -166,13 +166,13 @@ class BurpExtender
       #@stdout.println('Menu TYPE: %s\n' % ctx)
       if ctx == 5 or ctx == 6 or ctx == 2 or ctx == 7
 
-	  faradayMenu = JMenuItem.new("Send to Faraday", nil)
+    	  faradayMenu = JMenuItem.new("Send to Faraday", nil)
 
-	  faradayMenu.addActionListener do |e|
-	     eventScan(invocation, ctx)
-	  end
+    	  faradayMenu.addActionListener do |e|
+    	     eventScan(invocation, ctx)
+    	  end
 
-	  menu.push(faradayMenu)
+    	  menu.push(faradayMenu)
       end
 
       return menu
@@ -204,7 +204,7 @@ class BurpExtender
   #
   def newScanIssue(issue, ctx=nil, import=nil)
 
-    if import == nil && @import_new_vulns.isSelected() == 0
+    if import == nil && @import_new_vulns.isSelected() == false
       #ignore new issues
       return
     end

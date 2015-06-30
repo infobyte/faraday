@@ -129,10 +129,10 @@ class NessusPlugin(core.PluginBase):
             for v in t.vulns:
                                                                                                    
                 desc=""
-                desc+=v.get('description') if v.get('description') else ""
+                desc+=v.get('description').encode("ascii", errors="backslashreplace") if v.get('description') else ""
                 resolution = ""
-                resolution = v.get('solution') if v.get('solution') else ""
-                desc+="\nOutput: "+v.get('plugin_output') if v.get('plugin_output') else ""
+                resolution = v.get('solution').encode("ascii", errors="backslashreplace") if v.get('solution') else ""
+                desc+="\nOutput: "+v.get('plugin_output').encode("ascii", errors="backslashreplace") if v.get('plugin_output') else ""
                 ref=[]
                 if v.get('cve'):
                     ref.append(", ".join(v.get('cve')))

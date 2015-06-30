@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('summarizedCtrl', 
-        ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv',
-        function($scope, $route, $routeParams, $modal, dashboardSrv) {
+        ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv', 'statusReportFact',
+        function($scope, $route, $routeParams, $modal, dashboardSrv, statusReportFact) {
             //current workspace
             var workspace = $routeParams.wsId;
             $scope.servicesCount = [];
@@ -56,6 +56,25 @@ angular.module('faradayApp')
                 $scope.hostSortReverse = !$scope.hostSortReverse;
             }
 
+            // vuln table sorting
+            $scope.vulnSortField = 'date';
+            $scope.vulnSortReverse = true;
+            // toggles sort field and order
+            $scope.vulnToggleSort = function(field) {
+                $scope.vulnToggleSortField(field);
+                $scope.vulnToggleReverse();
+            };
+
+            // toggles column sort field
+            $scope.vulnToggleSortField = function(field) {
+                $scope.vulnSortField = field;
+            };
+
+            // toggle column sort order
+            $scope.vulnToggleReverse = function() {
+                $scope.vulnSortReverse = !$scope.vulnSortReverse;
+            };
+
             if (workspace != undefined){
                 $scope.workspace = workspace;
                 dashboardSrv.getServicesCount(workspace).then(function(res){
@@ -103,6 +122,8 @@ angular.module('faradayApp')
                                 accumulate(tmp, "high", tvuln.value);
                             } else if (tvuln.key == 5 || tvuln.key == "critical") {
                                 accumulate(tmp, "critical", tvuln.value);
+                            } else if (tvuln.key == 6 || tvuln.key == "unclassified") {
+                                accumulate(tmp, "unclassified", tvuln.value);
                             }
                         });
                         $scope.vulnsCount = tmp;
@@ -149,6 +170,11 @@ angular.module('faradayApp')
                         });
                     });
                 });
+                $scope.vulns = statusReportFact.getVulns(workspace);
+                $scope.vulns.sort(function(a,b){
+                    return b.meta.create_time - a.meta.create_time;
+                });
+                $scope.vulns = $scope.vulns.splice(0,5);
             }
 
             $scope.numberOfPages = function() {

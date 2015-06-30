@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('modalNewCtrl',
-        ['$scope', '$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'targetFact', 'commonsFact', 'severities', 'workspace',
-        function($scope, $modalInstance, $filter, $upload, EASEOFRESOLUTION, targetFact, commons, severities, workspace) {
+        ['$scope', '$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'targetFact', 'commonsFact', 'severities', 'workspace', 'hostsManager',
+        function($scope, $modalInstance, $filter, $upload, EASEOFRESOLUTION, targetFact, commons, severities, workspace, hostsManager) {
         
         $scope.typeOptions = [
             {name:'Vulnerability', value:'Vulnerability'},
@@ -19,7 +19,7 @@ angular.module('faradayApp')
         $scope.target_selected = null;
         $scope.not_target_selected = false;
         $scope.incompatible_vulnWeb = false;
-        $scope.refs = [{ref:''}];
+        $scope.refs = [{key:''}];
         $scope.evidence = {};
         $scope.icons = {};
         $scope.showPagination = 1;
@@ -34,14 +34,26 @@ angular.module('faradayApp')
             "integrity": false
         };
 
+
         var name_selected,
         host_selected,
         d = {},
         hosts = targetFact.getTarget($scope.workspace, true);
 
         hosts.forEach(function(h) {
-            h.services = [];  
+            h.services = [];
             d[h._id] = h;
+        });
+
+        hostsManager.getInterfaces($scope.workspace).then(function(resp){
+            $scope.interfaces = resp;
+            hosts.forEach(function(h){
+                $scope.interfaces.forEach(function(interface){
+                    if(h._id == interface.value.parent){
+                        h.hostnames = interface.value.hostnames;
+                    }
+                });
+            });
         });
 
         var services = targetFact.getTarget($scope.workspace, false);
@@ -56,12 +68,13 @@ angular.module('faradayApp')
         $scope.hosts_with_services = hosts;
 
         $scope.numberOfPages = function() {
+            if(typeof(filteredData) == "undefined") return false;
             var filteredData = $filter('filter')($scope.hosts_with_services,$scope.search_notes);
             if (filteredData.length <= 10){
                 $scope.showPagination = 0;
             } else {            
                 $scope.showPagination = 1;
-            };
+            }
             
             return Math.ceil(filteredData.length/$scope.pagination);
         };
@@ -103,7 +116,7 @@ angular.module('faradayApp')
                 }
 
                 $scope.refs.forEach(function(r){
-                    arrayReferences.push(r.ref);
+                    arrayReferences.push(r.key);
                 });
                 
                 arrayReferences.filter(Boolean);
@@ -198,7 +211,7 @@ angular.module('faradayApp')
         }
 
         $scope.newReference = function($event){
-            $scope.refs.push({ref:''});
+            $scope.refs.push({key:''});
             $event.preventDefault();
         }
     }]);

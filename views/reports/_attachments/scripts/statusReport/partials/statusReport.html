@@ -1,0 +1,221 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<section id="main" class="seccion clearfix">
+    <div class="right-main">
+        <div id="reports-main" class="fila clearfix">
+            <div class="ws-label">
+                <h2><span id="ws-name" class="label label-default"
+                title="Current workspace">Status report for {{ workspace }} ({{vulns.length}} vulns)</span></h2><!-- WS name -->
+            </div><!-- .ws-label -->
+            <div id="ws-control" class="btn-group btn-small-margin">
+                <button file-exporter="toCSV()" type="button" class="btn btn-success" title="Download CSV for current workspace">
+                    <span class="glyphicon glyphicon-download"></span>
+                </button>
+                <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
+                    <span class="glyphicon glyphicon-refresh"></span>
+                </button>
+                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                    Change workspace <span class="caret"></span>
+                </button>
+                <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
+                    <li ng-repeat="ws in workspaces"><a href="#/status/ws/{{ws}}" class="ws" >{{ws}}</a></li>
+                </ul><!-- WS navigation -->
+            </div><!-- #ws-control -->
+    
+            <div class="button-control col-md-6 col-sm-6 col-xs-12">
+                <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="delete()">
+                    <span class="glyphicon glyphicon-trash"></span> 
+                    Delete
+                </button>
+                <button id="merge" type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()">
+                    <span class="glyphicon glyphicon-pencil"></span> 
+                    Edit
+                </button>
+                <button id="new" type="button" class="btn btn-success" title="New Vulns" ng-click="new()">
+                    <span class="glyphicon glyphicon-plus-sign"></span>
+                    New
+                </button>
+            </div><!-- .col-md-6 .col-sm-6 .col-xs-12 -->
+            <div class="reports">
+                <div class="row">
+                    <div class="col-md-6 col-sm-3 col-xs-11">
+                        <form role="form" ng-submit="searchFor(true, searchParams)">
+                            <div class="form-group">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
+                                    <input type="text" class="form-control" id="filter-by" 
+                                    placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
+                                    <span class="input-group-addon glyphicon-btn glyphicon glyphicon-search" ng-click="searchFor(true, searchParams)"></span>
+                                </div>
+                            </div>
+                        </form>  
+                    </div>
+                    <div class="col-md-12 col-sm-9 col-xs-12">
+                        <h4><span class="label label-default" title="Add columns">Add columns</span></h4>
+                        <ul class="label-list">
+                            <li ng-repeat="(column, show) in columns">
+                                <a href="" ng-click="toggleShow(column, show)" ng-show="!show">
+                                    <span class="label label-primary ws-name">{{column}}</span>
+                                </a>
+                            </li><!-- label-list -->
+                        </ul>
+                    </div>
+                </div>
+
+                <table class="csv-export status-report table table-responsive">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
+                            <th ng-if="columns.date">
+                                <a href="" ng-click="toggleSort('date')">Date</a>
+                                <a href="" ng-click="toggleShow('date', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.target">
+                                <a href="" ng-click="toggleSort('target')">Target</a>
+                                <a href="" ng-click="toggleShow('target', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.status">
+                                <a href="" ng-click="toggleSort('status')">Status</a>
+                                <a href="" ng-click="toggleShow('status', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.severity">
+                                <a href="" ng-click="toggleSort('severity')">Severity</a>
+                                <a href="" ng-click="toggleShow('severity', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.name">
+                                <a href="" ng-click="toggleSort('name')">Name</a>
+                                <a href="" ng-click="toggleShow('name', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.desc">
+                                <a href="" ng-click="toggleSort('desc')">Desc</a>
+                                <a href="" ng-click="toggleShow('desc', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.data">
+                                <a href="" ng-click="toggleSort('data')">Data</a>
+                                <a href="" ng-click="toggleShow('data', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.method">
+                                <a href="" ng-click="toggleSort('method')">Method</a>
+                                <a href="" ng-click="toggleShow('method', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.path">
+                                <a href="" ng-click="toggleSort('path')">Path</a>
+                                <a href="" ng-click="toggleShow('path', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.pname">
+                                <a href="" ng-click="toggleSort('pname')">Param Name</a>
+                                <a href="" ng-click="toggleShow('pname', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.params">
+                                <a href="" ng-click="toggleSort('params')">Params</a>
+                                <a href="" ng-click="toggleShow('params', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.query">
+                                <a href="" ng-click="toggleSort('query')">Query</a>
+                                <a href="" ng-click="toggleShow('query', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.request">
+                                <a href="" ng-click="toggleSort('request')">Request</a>
+                                <a href="" ng-click="toggleShow('request', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.response">
+                                <a href="" ng-click="toggleSort('response')">Response</a>
+                                <a href="" ng-click="toggleShow('response', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.resolution">
+                                <a href="" ng-click="toggleSort('resolution')">Resolution</a>
+                                <a href="" ng-click="toggleShow('resolution', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.web">
+                                <a href="" ng-click="toggleSort('web')">Web</a>
+                                <a href="" ng-click="toggleShow('web', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.website">
+                                <a href="" ng-click="toggleSort('website')">Website</a>
+                                <a href="" ng-click="toggleShow('website', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.refs">
+                                <a href="" ng-click="toggleSort('refs')">References</a>
+                                <a href="" ng-click="toggleShow('refs', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.evidence">
+                                <a href="" ng-click="toggleSort('attachments')">Evidence</a>
+                                <a href="" ng-click="toggleShow('evidence', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.impact">
+                                <a href="" ng-click="toggleSort('impact')">Impact</a>
+                                <a href="" ng-click="toggleShow('impact', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.easeofresolution">
+                                <a href="" ng-click="toggleSort('easeofresolution')">Ease of Resolution</a>
+                                <a href="" ng-click="toggleShow('easeofresolution', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                            <th ng-if="columns.hostnames">
+                                <a href="" ng-click="toggleSort('hostnames')">Hostnames</a>
+                                <a href="" ng-click="toggleShow('hostnames', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="v in vulns | orderObjectBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
+                            selection-model selection-model-type="checkbox"
+                            selection-model-mode="multiple-additive" 
+                            selection-model-selected-class="multi-selected">
+                            <td><input type="checkbox" name="{{v.id}}"/></td>
+                            <td ng-if="columns.date">{{v.date | date:'MM/dd/yyyy'}}</td>
+                            <td ng-if="columns.target">{{v.target}}</td>
+                            <td ng-if="columns.status">Vulnerable</td>
+                            <td ng-if="columns.severity"><span class="label vuln fondo-{{v.severity}}">{{v.severity}}</span></td>
+                            <td ng-if="columns.name">{{v.name}}</td>
+                            <td ng-if="columns.desc" text-collapse text-collapse-max-length="150" text-collapse-text="{{v.desc}}"></td>
+                            <td ng-if="columns.data" text-collapse text-collapse-max-length="150" text-collapse-text="{{v.data}}"></td>
+                            <td ng-if="columns.method">{{v.method}}</td>
+                            <td ng-if="columns.path">{{v.path}}</td>
+                            <td ng-if="columns.pname">{{v.pname}}</td>
+                            <td ng-if="columns.params">{{v.params}}</td>
+                            <td ng-if="columns.query">{{v.query}}</td>
+                            <td ng-if="columns.request" text-collapse text-collapse-max-length="100" text-collapse-text="{{v.request}}"></td>
+                            <td ng-if="columns.response" text-collapse text-collapse-max-length="100" text-collapse-text="{{v.response}}"></td>
+                            <td ng-if="columns.resolution">{{v.resolution}}</td>
+                            <td ng-if="columns.web">
+                                <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
+                                <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>
+                            </td>
+                            <td ng-if="columns.website">{{v.website}}</td>
+                            <td ng-if="columns.refs"><p ng-repeat="refs in v.refs">{{refs}}</p></td>
+                            <td ng-if="columns.evidence">
+                                <div ng-repeat="e in v.attachments track by $index">
+                                    <a href="{{baseurl + workspace}}/{{ v.id}}/{{e}}" target="_blank">{{e}}</a>
+                                </div>
+                            </td>
+                            <td ng-if="columns.impact">
+                                <div ng-repeat="(impact, rating) in v.impact">
+                                    <p ng-if="rating">{{impact}}</p>
+                                </div>
+                            </td>
+                            <td ng-if="columns.easeofresolution">{{v.easeofresolution}}</td>
+                            <td ng-if="columns.hostnames"><p ng-repeat="hostname in v.hostnames">{{hostname}}</p></td>
+                        </tr>
+                    </tbody>
+                </table><!-- #hosts -->
+                <div class="showPagination" ng-show="showPagination">
+                    <div class="form-group">
+                        <ul class="pagination">
+                            <li><a ng-hide="currentPage == 0" ng-click="currentPage=currentPage-1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                            <li><a>{{currentPage}}/{{numberOfPages()}}</a></li>
+                            <li><a ng-hide="currentPage >= numberOfPages()" ng-click="currentPage=currentPage+1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                        </ul>
+                        <form name="goToPage" id="goToPageStatus">
+                            <div class="col-md-2">
+                                <input type="number" min="0" max="{{numberOfPages()}}" class="form-control" ng-model="go_page" placeholder="Go to page"/>
+                            </div>
+                            <button class="btn btn-default" ng-click="go()">GO</button>
+                            <input type="number" min="0" class="form-control vuln_per_page" ng-model="pagination" placeholder="Numbre page" />
+                        </form>
+                    </div>
+                </div>
+            </div><!-- .reports -->
+    </div><!-- #reports-main --></div><!-- .right-main -->
+</section><!-- #main -->

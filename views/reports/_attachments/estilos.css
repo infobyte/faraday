@@ -61,6 +61,7 @@ p {margin-bottom: 1em;}
     margin: 10px 5px 0px;
     float: left;
 }
+.cursor{cursor: pointer;}
     #compound .columna{
         width: 492px;
         margin-top: -42px;
@@ -339,8 +340,9 @@ ul.label-list {
 		display: inline;
 	}
 
-.label-list span.label {
+.label-list span.label, .label-list a span.label {
 	font-size: 12px !important;
+    margin: 5px;
 }
 table thead th a {
 	color: #bbb;
@@ -406,6 +408,7 @@ table.tablesorter thead tr .headerSortDown {
 }
 
 div.modal-body .col-md-6.vuln_table{width: 63%}
+div.modal-button .btn.btn-success{float: right}
 div.modal-footer button.btn{bottom: 1%;right: 1%;}
 div.modal-footer button.btn.btn-success{right: 10%}
 div.modal-footer button.btn-footer{position: absolute;}
@@ -510,6 +513,8 @@ table.table tbody tr:hover{
         float: right;
     }
     #compound article.panel-default input.btn.btn-danger{width: 43px}
+div.col-md-6.left-big-box{width: 45%;margin: -200px 0 5px}
+div.col-md-6.left-big-box table.table-striped.last-vuln td:nth-child(4){word-break: break-all;}
 
 .table-striped tbody tr:nth-child(odd){background: #f9f9f9;}
 .table-striped tbody tr:nth-child(even){background: #FFF;}
@@ -603,6 +608,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
 #treemap, #bar, #cake{height:195px}
 #vulns .columna{margin-left:2%}
     #vulns .main{width:100%;height:105px}
+    #vulns-by-price .main{width:100% !important;height: 180px !important;}
         #vulns .columna.unsexto{margin: auto;}
 #summarized .main{height:197px}
 #byservices .main{height:197px}
@@ -638,8 +644,8 @@ text.host-name{font-size: 13px;font-weight:bold;}
     #byservices .col-lg-3, #summarized .col-lg-3{width: 29%;margin:0px -2% 0px 0%;}
     section .col-lg-2{margin: 0px -2% 0px 2px;padding-right: 1.9%;}
     .col-lg-6 .panel{margin-bottom: 10px}
-    #list .col-lg-6, #vulns .col-lg-6{width: 55%;float: right;margin-bottom: 5px}
-    #compound .col-lg-6{width: 45%;margin-top: -2%;}
+    #list .col-lg-6, #vulns .col-lg-6, #vulns-by-price .col-lg-6{width: 55%;float: right;margin-bottom: 5px}
+    #compound .col-lg-6{width: 45%;}
 
     .panel{margin-bottom: 1%!important}
         article.panel > span{
@@ -685,7 +691,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
     .col-lg-2{width: 100%;margin: auto;}
     section#main{height: 100%!important}
     .treemap{left:256px!important;}
-    #compound .col-lg-6, #list .col-lg-6, #vulns .col-lg-6, #byservices .col-lg-3, #summarized .col-lg-3{
+    #compound .col-lg-6, #list .col-lg-6, #vulns .col-lg-6, #vulns-by-price .col-lg-6, #byservices .col-lg-3, #summarized .col-lg-3{
         width: 100%;margin-top: 0%
     }
 }
@@ -694,7 +700,6 @@ text.host-name{font-size: 13px;font-weight:bold;}
 .ws-name {
     font: 250%/3 'Ubuntu',Helvetica,Arial,sans-serif !important;
     font-size: 100%;
-    margin: 5px;
 }
 .ws-link {
     float: left;
@@ -718,6 +723,7 @@ a.ng-binding.ng-pristine, a.ng-binding.ng-scope{display: block; font-size: 15px;
     a.ng-binding.ng-scope{padding: 10px;}
 div.panel-heading a i.glyphicon{margin: -25px 10px;}
 div.modal-body .alert-danger.target_not_selected{font-size: 15px}
+div.modal-body .form-group:first-child button{float: right}
 /* Pagination Modal New */
 .showPagination ul.pagination{font-size: 15px;margin:auto;padding-left: 2%}
 div.showPagination .col-md-2, div.showPagination .btn.btn-default{float:right;}
@@ -728,17 +734,20 @@ div.col-md-12.reference{margin-top: 5px;}
 input#vuln-refs{border-radius: 5px 0 0 5px}
 i.fa.fa-plus-circle{color: green;}
 i.fa.fa-minus-circle{color: red;cursor: pointer;}
-span.input-group-addon.add-reference{
-    border-radius: 4px;
+span.input-group-addon.button-radius{
+    border-radius: 4px!important;
     border-left: 1px solid #ccc;
     width: 20px;
     cursor: pointer;
 }
+    input#port
     span#cakeText{width: 95%}
     span#treemapTextModel{font-size: 14px}
 .normal-size {
     font-size: 14px !important;
 }
+div.input-margin{margin: 4px 0;}
+div.col-md-8.protocol input#protocol{margin-top: 35px}
 div#treemap_container{margin: 5% auto 0}
 div#compound div.showPagination{margin-bottom: 30px}
 div#compound .showPagination input.form-control{width:110px;}
@@ -843,3 +852,38 @@ aside .alert.alert-danger.alert-dismissible{
           color: #DF3936; 
             background-color: #ffffff; 
     }
+.btn-small-margin {
+    margin-bottom: 15px !important;
+}
+.glyphicon-btn {
+    top: 0 !important;
+}
+#tooltip-stacked-bar {
+    position: absolute;
+    text-align: center;
+    width: 40px;
+    height: auto;
+    padding: 10px;
+    background-color: white;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+#tooltip-stacked-bar.hidden {
+    display: none;
+}
+#tooltip-stacked-bar p {
+    margin: 0;
+    font-family: sans-serif;
+    font-size: 16px;
+    line-height: 20px;
+}
+.center-lg-6 {
+    margin: 0 auto;
+    text-align: center;
+    width: 500px;
+}

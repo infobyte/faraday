@@ -1,0 +1,96 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+            <section id="main" class="seccion clearfix">
+
+                <div class="right-main"><div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <span id="ws-name" class="label label-default"
+                        title="Hosts">Services from {{host.name}}</span><!-- WS name -->
+                        <div id="ws-control" class="btn-group">
+                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                                Change workspace <span class="caret"></span>
+                            </button>
+                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
+                                <li ng-repeat="ws in workspaces"><a href="#/hosts/ws/{{ws}}" class="ws" >{{ws}}</a></li>
+                            </ul><!-- WS navigation -->
+                        </div><!-- #ws-control -->
+                    </h2>
+                    <div class="reports col-md-12 col-sm-12 col-xs-12">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <div class="col-md-4">
+                                    <h5>Name</h5>
+                                    <label class="sr-only" for="name">Name</label>
+                                    <input type="text" class="form-control" id="name" placeholder="Name" ng-model="host.name" disabled/>
+                                </div>
+                                <div class="col-md-4">
+                                    <h5>Description</h5>
+                                    <label class="sr-only" for="description">Description</label>
+                                    <textarea class="form-control" id="description" placeholder="Description" ng-model="host.description" disabled></textarea>
+                                </div>
+                                <div class="col-md-4">
+                                    <h5>Operating System</h5>
+                                    <label class="sr-only" for="os">Operating System</label>
+                                    <input type="text" class="form-control" id="os" placeholder="Operating System" ng-model="host.os" disabled/>
+                                </div>
+                            </div><!-- .form-group -->
+                        </div>
+                    </div>
+                    <h2 class="ws-label">
+                        <button id="delete" type="button" class="btn btn-default" title="Delete selected hosts" ng-click="delete()">
+                            <span class="glyphicon glyphicon-trash"></span>
+                            Delete
+                        </button>
+                        <button id="merge" type="button" class="btn btn-default" title="Edit selected hosts" ng-click="edit()">
+                            <span class="glyphicon glyphicon-pencil"></span>
+                            Edit
+                        </button>
+                        <button id="merge" type="button" class="btn btn-success" title="New host" ng-click="new()">
+                            <span class="glyphicon glyphicon-plus-sign"></span>
+                            New
+                        </button>
+                    </h2><!-- .ws-label -->
+                    <div class="reports col-md-9 col-sm-9 col-xs-12">
+                        <table class="status-report hosts-list table table-responsive">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('name')">Name</a>
+                                    </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('description')">Description</a>
+                                    </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('ports')">Ports</a>
+                                    </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('protocol')">Protocol</a>
+                                    </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('status')">Status</a>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="service in services | filter:query | orderBy:sortField:reverse"
+                                    selection-model selection-model-type="checkbox" 
+                                    selection-model-mode="multiple-additive" 
+                                    selection-model-selected-class="multi-selected">
+                                    <td><input type="checkbox" name="{{s._id}}"/></td>
+                                    <td ng-bind="service.name"></td>
+                                    <td ng-bind="service.description || '-'"></td>
+                                    <td ng-bind="service.ports"></td>
+                                    <td ng-bind="service.protocol"></td>
+                                    <td ng-bind="service.status"></td>
+                                </tr>
+                            </tbody>
+                        </table><!-- #hosts -->
+                    </div><!-- .reports -->
+                </div><!-- #reports-main --></div><!-- .right-main -->
+            </section><!-- #main -->

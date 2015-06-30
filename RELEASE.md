@@ -10,6 +10,16 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+Jun 30, 2015:
+---
+
+* Added hosts CRUD
+* Added services CRUD
+* Fix ubuntu 15.04 installation bug 
+* Small bug in burp plugin "Import new vulnerabilities" checkbox issue
+* Added an interactive visualization to calculate the value of a Workspace
+* Fixed several bugs in WEB UI
+* Added a URL filter functionality to the status report, allowing searches by fields
 
 
 Apr 17, 2015:

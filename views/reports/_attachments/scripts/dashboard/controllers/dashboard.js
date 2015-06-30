@@ -4,13 +4,21 @@
 
 angular.module('faradayApp')
     .controller('dashboardCtrl', 
-        ['$scope', '$filter', '$route', '$routeParams', 'statusReportFact',
-        function($scope, $filter, $route, $routeParams, statusReportFact) {
-            //current workspace
-            $scope.workspace = $routeParams.wsId;
-            $scope.workspaces = [];
+        ['$scope', '$filter', '$route', '$routeParams', '$location', 'statusReportFact',
+        function($scope, $filter, $route, $routeParams, $location, statusReportFact) {
+            init = function() {
+                //current workspace
+                $scope.workspace = $routeParams.wsId;
+                $scope.workspaces = [];
 
-            statusReportFact.getWorkspaces().then(function(wss) {
-                $scope.workspaces = wss;
-            });
+                statusReportFact.getWorkspaces().then(function(wss) {
+                    $scope.workspaces = wss;
+                });
+            };
+
+            $scope.navigate = function(route) {
+                $location.path(route);
+            };
+
+            init();
     }]);

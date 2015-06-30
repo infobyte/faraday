@@ -26,6 +26,8 @@
                             <thead>
                                 <tr>
                                     <th>Name</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
                                     <th>Vulns</th>
                                     <th>Hosts</th>
                                     <th>Services</th>
@@ -35,6 +37,8 @@
                                 <tr ng-repeat="ws in workspaces | filter:query | orderBy:sortField:reverse"
                                     selection-model selection-model-selected-class="multi-selected"> 
                                     <td><span ng-class-even="'label label-unclassified'" ng-class-odd="'label label-high'">{{ws.name}}</span></td>
+                                    <td ng-bind="ws.duration.start || '-' | date:'MM/dd/yyyy'"></td>
+                                    <td ng-bind="ws.duration.end || '-' | date:'MM/dd/yyyy'"></td>
                                     <td ng-bind="objects[ws.name]['total vulns']"></td>
                                     <td ng-bind="objects[ws.name]['hosts']"></td>
                                     <td ng-bind="objects[ws.name]['services']"></td>

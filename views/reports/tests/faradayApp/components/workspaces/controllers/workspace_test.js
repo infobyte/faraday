@@ -4,30 +4,68 @@
 
 describe('workspacesCtrl', function() {
     var $controller,
-        $scope,
-        tmp_ws1,
-        tmp_ws2,
-        tmp_ws3;
+        $scope;
+
+    // workspaces variables
+    var tmp_ws1 = {
+        "_id": "ws1",
+        "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
+        "children": [],
+        "customer": "",
+        "description": "Testing Workspaces",
+        "duration": {
+            "start": 1410832741.48194,
+            "end": 1410832741.48194
+        },
+        "name": "ws1",
+        "sdate": 1410832741.48194,
+        "scope": "",
+        "selected": true,
+        "type": "Workspace"
+    };
+    var tmp_ws2 = {
+        "_id": "ws2",
+        "_rev": "10-bd88abf79cf2b7e8b419cd4387c64bef",
+        "children": [],
+        "customer": "",
+        "description": "Nuevo",
+        "duration": {
+            "startDate": 141083274148194,
+            "endDate": 141083274148194
+        },
+        "name": "ws2",
+        "sdate": 1410832741.48194,
+        "scope": "",
+        "selected": true,
+        "type": "Workspace",
+    };
+    var tmp_ws3 = {
+        "_id": "ws3",
+        "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
+        "children": [],
+        "customer": "",
+        "description": "Testing Workspaces",
+        "duration": {
+            "start": 1410832741.48194,
+            "end": 1410832741.48194
+        },
+        "name": "ws3",
+        "sdate": 1410832741.48194,
+        "scope": "",
+        "selected": true,
+        "type": "Workspace"
+    };
 
     var $workspacesFact,
     workspacesFactMock;
 
-    var spyOnPutFactory;
-
-    spyOnPutFactory = jasmine.createSpy('Put Workspace Factory Spy');
-    spyOnDeleteFactory = jasmine.createSpy('Delete Workspace Factory Spy'); 
-    spyOnExistsFactory = jasmine.createSpy('Delete Workspace Factory Spy');
-    spyOnExistsFactory('test_workspace', function(){
-        return false;
-    });
-
-
-    beforeEach(function () { 
+    beforeEach(function () {
         module('faradayApp');
 
         inject(function(_$rootScope_, _$controller_, _$q_) {
             // The injector unwraps the underscores (_) from around the parameter names when matching
             $scope = _$rootScope_.$new();
+
             dashboardSrvMock = {
                 getObjectsCount: function(ws) {
                     var deferred = _$q_.defer();
@@ -54,24 +92,12 @@ describe('workspacesCtrl', function() {
                     return deferred.promise;
                 },
                 get: function(workspace_name){
-                    var deferred = _$q_.defer();
-                    tmp_workspace = {
-                        "_id": workspace_name,
-                        "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
-                        "children": [],
-                        "customer": "",
-                        "description": "Testing Workspaces",
-                        "duration": {
-                            "start": 1410832741.48194,
-                            "end": 1410832741.48194
-                        },
-                        "name": workspace_name,
-                        "sdate": 1410832741.48194,
-                        "scope": "",
-                        "selected": true,
-                        "type": "Workspace",
+                    var objs = {
+                        "ws1" : tmp_ws1,
+                        "ws2" : tmp_ws2
                     };
-                    deferred.resolve(tmp_workspace);
+                    var deferred = _$q_.defer();
+                    deferred.resolve(objs[workspace_name]);
                     return deferred.promise;
                 },
                 put: function(workspace) {
@@ -85,59 +111,11 @@ describe('workspacesCtrl', function() {
                     return deferred.promise;
                 },
                 exists: function(workspace_name){
-                    return false; 
+                    return false;
                 }
 
             };
-            // workspaces variables
-            tmp_ws1 = {
-                "_id": "ws1",
-                "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
-                "children": [],
-                "customer": "",
-                "description": "Testing Workspaces",
-                "duration": {
-                    "start": 1410832741.48194,
-                    "end": 1410832741.48194
-                },
-                "name": "ws1",
-                "sdate": 1410832741.48194,
-                "scope": "",
-                "selected": true,
-                "type": "Workspace"
-            };
-            tmp_ws2 = {
-                "_id": "ws2",
-                "_rev": "10-bd88abf79cf2b7e8b419cd4387c64bef",
-                "children": [],
-                "customer": "",
-                "description": "Nuevo",
-                "duration": {
-                    "startDate": 141083274148194,
-                    "endDate": 141083274148194
-                },
-                "name": "ws2",
-                "sdate": 1410832741.48194,
-                "scope": "",
-                "selected": true,
-                "type": "Workspace",
-            };
-            tmp_ws3 = {
-                "_id": "ws3",
-                "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
-                "children": [],
-                "customer": "",
-                "description": "Testing Workspaces",
-                "duration": {
-                    "start": 1410832741.48194,
-                    "end": 1410832741.48194
-                },
-                "name": "ws3",
-                "sdate": 1410832741.48194,
-                "scope": "",
-                "selected": true,
-                "type": "Workspace"
-            };
+
             $controller = _$controller_('workspacesCtrl', {
                 $scope: $scope,
                 dashboardSrv: dashboardSrvMock,
@@ -149,8 +127,6 @@ describe('workspacesCtrl', function() {
 
     describe('Workspaces init function', function() {
         beforeEach(function() {
-            spyOn(workspacesFactMock, 'list').and.callThrough();
-            spyOn(dashboardSrvMock, 'getObjectsCount').and.callThrough();
             spyOn(workspacesFactMock, 'get').and.callThrough();
         });
         it('variables are defined after execution', function() {
@@ -170,14 +146,13 @@ describe('workspacesCtrl', function() {
             expect($scope.minDate).not.toEqual({});
             expect($scope.dateOptions).not.toEqual({});
             expect($scope.hash).not.toEqual(null);
-        });
-        it('variables have proper values after execution of onSuccessGet function', function() {
-            $scope.onSuccessGet(tmp_ws1);
-            $scope.$apply();
             expect(workspacesFactMock.get).toHaveBeenCalled();
-            // falta testear si tiene puntos el date
-            expect(tmp_workspace.selected).toEqual(false);
-            expect($scope.workspaces.length).toEqual(3);
+            $scope.workspaces.forEach(function(ws){
+                expect(ws.selected).toEqual(false);
+            });
+            expect($scope.workspaces.length).toEqual(2);
+            expect($scope.workspaces).toContain(tmp_ws1);
+            expect($scope.workspaces).toContain(tmp_ws2);
         });
     });
 
@@ -293,7 +268,7 @@ describe('workspacesCtrl', function() {
         });
     });
 
-    describe('Workspaces object creation', function() { 
+    describe('Workspaces object creation', function() {
         it('tests if workspaces create object is consistent', function() {
             var date = new Date();
             workspace = $scope.create('wname','wdesc', date, date, '');
@@ -307,7 +282,7 @@ describe('workspacesCtrl', function() {
             // find out if this variable is being used
             // is defined as undefined
             expect(workspace.fdate).toBeUndefined();
-            
+
             expect(workspace.type).toBeDefined();
             expect(workspace.children).toBeDefined();
             expect(workspace.duration.start).toBeDefined();
@@ -318,9 +293,9 @@ describe('workspacesCtrl', function() {
             expect(workspace.name).toEqual('wname');
             expect(workspace._id).toEqual('wname');
             expect(workspace.description).toEqual('wdesc');
-            expect(workspace.duration.start).toEqual(date.getTime()); 
-            expect(workspace.duration.end).toEqual(date.getTime()); 
-            expect(workspace.scope).toEqual(''); 
+            expect(workspace.duration.start).toEqual(date.getTime());
+            expect(workspace.duration.end).toEqual(date.getTime());
+            expect(workspace.scope).toEqual('');
         });
     });
 
@@ -331,7 +306,7 @@ describe('workspacesCtrl', function() {
         it('tests if workspaces in scope.wss are removed after execution of remove function', function() {
             $scope.remove('ws1');
             $scope.$apply();
-            
+
             expect(workspacesFactMock.delete).toHaveBeenCalled();
             expect($scope.wss).not.toContain('ws1');
         });

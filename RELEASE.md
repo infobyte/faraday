@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA:
+Jun 30, 2015:
 ---
 
 * Added hosts CRUD

@@ -4,7 +4,7 @@ whoosh==2.5.5
 argparse==1.1
 IPy==0.75
 restkit==4.2.2
-requests==1.2.3
+requests==2.7.0
 tornado==3.2
 flask==0.10.1
 colorama==0.3.2

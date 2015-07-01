@@ -2,111 +2,111 @@
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
 
-<form name="form" novalidate>
-<div class="modal-header">
-    <div class="modal-button">
-        <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
-        <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+<form name="form" hotkey="{enter:ok}" novalidate>
+    <div class="modal-header">
+        <div class="modal-button">
+            <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
+            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+        </div>
+        <h3 class="modal-title">Edit service</h3>
     </div>
-    <h3 class="modal-title">Edit service</h3>
-</div>
-<div class="modal-body">
-    <div class="form-horizontal">
-        <div class="form-group">
-            <div class="col-md-12">
-                <label class="sr-only" for="name">Name</label>
-                <input type="text" class="form-control" id="name" placeholder="Name" ng-model="service.name" required/>
-            </div>
-        </div><!-- .form-group -->
-        <div class="form-group">
-            <div class="col-md-12">
-                <label class="sr-only" for="description">Description</label>
-                <textarea class="form-control" id="description" placeholder="Description" ng-model="service.description"></textarea>
-            </div>
-        </div><!-- .form-group -->
-        <div class="form-group">
-            <div class="col-md-12">
-                <div class="checkbox">
-                    <label>
-                        <input type="checkbox" id="owned" ng-model="service.owned"/>
-                        <span class="normal-size">Owned</span>
-                    </label>
-                </div><!-- .checkbox -->
-            </div>
-        </div><!-- .form-group -->
-        <div class="form-group">
-            <div class="col-md-3">
-                <h5>Ports</h5>
-                <span class="input-group-addon button-radius" ng-click="newPort($event)">Add Port</span>
-                <div class="input-margin" ng-repeat="port in service.ports">
-                    <div class="input-group margin-bottom-sm">
-                        <label class="sr-only" for="port">Ports</label>
-                        <input type="number" class="form-control" id="port" placeholder="Port" ng-model="port.key"/>
-                        <span class="input-group-addon" ng-click="service.ports.splice($index, 1)" ng-hide="service.ports.length == 1"><i class="fa fa-minus-circle"></i></span>
+    <div class="modal-body">
+        <div class="form-horizontal">
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label class="sr-only" for="name">Name</label>
+                    <input type="text" class="form-control" id="name" placeholder="Name" ng-model="service.name" required/>
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label class="sr-only" for="description">Description</label>
+                    <textarea class="form-control" id="description" placeholder="Description" ng-model="service.description"></textarea>
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-12">
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" id="owned" ng-model="service.owned"/>
+                            <span class="normal-size">Owned</span>
+                        </label>
+                    </div><!-- .checkbox -->
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-3">
+                    <h5>Ports</h5>
+                    <span class="input-group-addon button-radius" ng-click="newPort($event)">Add Port</span>
+                    <div class="input-margin" ng-repeat="port in service.ports">
+                        <div class="input-group margin-bottom-sm">
+                            <label class="sr-only" for="port">Ports</label>
+                            <input type="number" class="form-control" id="port" placeholder="Port" ng-model="port.key"/>
+                            <span class="input-group-addon" ng-click="service.ports.splice($index, 1)" ng-hide="service.ports.length == 1"><i class="fa fa-minus-circle"></i></span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-3 protocol">
-                <h5>Protocol</h5>
-                <label class="sr-only" for="protocol">Protocol</label>
-                <input type="text" class="form-control" id="protocol" placeholder="Protocol" ng-model="service.protocol"/>
-            </div>
-            <div class="col-md-3">
-                <h5>Version</h5>
-                <label class="sr-only" for="version">Version</label>
-                <input type="text" class="form-control" id="version" placeholder="Version" ng-model="service.version"/>
-            </div>
-            <div class="col-md-3">
-                <h5>Status</h5>
-                <label class="sr-only" for="status">Status</label>
-                <input type="text" class="form-control" id="status" placeholder="Status" ng-model="service.status"/>
-            </div>
-        </div><!-- .form-group -->
-        <div class="form-group">
-            <div class="reports col-md-12 col-sm-12 col-xs-12" ng-if="services_selected">
-                <h5><small>
-                    Services to update
-                </small></h5>
-                <table class="status-report hosts-list table table-responsive">
-                    <thead>
-                        <tr>
-                            <th>
-                                <a href="" ng-click="toggleSort('name')">Name</a>
-                            </th>
-                            <th>
-                                <a href="" ng-click="toggleSort('description')">Description</a>
-                            </th>
-                            <th>
-                                <a href="" ng-click="toggleSort('ports')">Ports</a>
-                            </th>
-                            <th>
-                                <a href="" ng-click="toggleSort('protocol')">Protocol</a>
-                            </th>
-                            <th>
-                                <a href="" ng-click="toggleSort('status')">Status</a>
-                            </th>
-                            <th>Copy</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr ng-repeat="service in services_selected | filter:query | orderBy:sortField:reverse">
-                            <td ng-bind="service.name"></td>
-                            <td ng-bind="service.description || '-'"></td>
-                            <td ng-bind="service.ports"></td>
-                            <td ng-bind="service.protocol"></td>
-                            <td ng-bind="service.status"></td>
-                            <td><i class="fa fa-copy copy-icon fa-lg" ng-click="call(service);"></i></td>
-                        </tr>
-                    </tbody>
-                </table><!-- #hosts -->
+                <div class="col-md-3 protocol">
+                    <h5>Protocol</h5>
+                    <label class="sr-only" for="protocol">Protocol</label>
+                    <input type="text" class="form-control" id="protocol" placeholder="Protocol" ng-model="service.protocol"/>
+                </div>
+                <div class="col-md-3">
+                    <h5>Version</h5>
+                    <label class="sr-only" for="version">Version</label>
+                    <input type="text" class="form-control" id="version" placeholder="Version" ng-model="service.version"/>
+                </div>
+                <div class="col-md-3">
+                    <h5>Status</h5>
+                    <label class="sr-only" for="status">Status</label>
+                    <input type="text" class="form-control" id="status" placeholder="Status" ng-model="service.status"/>
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="reports col-md-12 col-sm-12 col-xs-12" ng-if="services_selected">
+                    <h5><small>
+                        Services to update
+                    </small></h5>
+                    <table class="status-report hosts-list table table-responsive">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <a href="" ng-click="toggleSort('name')">Name</a>
+                                </th>
+                                <th>
+                                    <a href="" ng-click="toggleSort('description')">Description</a>
+                                </th>
+                                <th>
+                                    <a href="" ng-click="toggleSort('ports')">Ports</a>
+                                </th>
+                                <th>
+                                    <a href="" ng-click="toggleSort('protocol')">Protocol</a>
+                                </th>
+                                <th>
+                                    <a href="" ng-click="toggleSort('status')">Status</a>
+                                </th>
+                                <th>Copy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="service in services_selected | filter:query | orderBy:sortField:reverse">
+                                <td ng-bind="service.name"></td>
+                                <td ng-bind="service.description || '-'"></td>
+                                <td ng-bind="service.ports"></td>
+                                <td ng-bind="service.protocol"></td>
+                                <td ng-bind="service.status"></td>
+                                <td><i class="fa fa-copy copy-icon fa-lg" ng-click="call(service);"></i></td>
+                            </tr>
+                        </tbody>
+                    </table><!-- #hosts -->
+                </div>
             </div>
         </div>
+    </div><!-- .modal-body -->
+    <div class="modal-footer">
+        <div class="modal-button">
+            <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
+            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+        </div>
     </div>
-</div><!-- .modal-body -->
-<div class="modal-footer">
-    <div class="modal-button">
-        <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
-        <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
-    </div>
-</div>
 </form>

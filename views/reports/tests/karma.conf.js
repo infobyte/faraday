@@ -22,6 +22,8 @@ module.exports = function(config){
       '../_attachments/script/ngClip.js',
       '../_attachments/script/angular-cookies.js',
       '../_attachments/script/ZeroClipboard.min.js',
+      '../_attachments/script/mousetrap.js',
+      '../_attachments/script/angular-hotkeys.js'
     ],
 
     autoWatch : true,

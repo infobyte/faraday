@@ -39,57 +39,23 @@ angular.module('faradayApp')
                 });
         };
 
-        vulnsManager.get = function(ws) {
-            var vulns = [],
-            deferred = $q.defer(),
-            url = BASEURL + ws +"/_design/vulns/_view/all";
-            $http.get(url)
-                .success(function(data, status, headers, config) {
-                    deferred.resolve(data);
+        vulnsManager.getVulns = function(ws) {
+            var deferred = $q.defer(),
+            self = this;
+            $http.get(BASEURL + '/' + ws + '/_design/hosts/_view/all')
+                .success(function(vulnsArray) {
+                    var vulns = [];
+                    vulnsArray.rows.forEach(function(vulnData) {
+                        var vuln = self._get(vulnData.value._id, vulnData.value);
+                        vulns.push(vuln);
+                    });
+                    deferred.resolve(vulns);
                 })
-                .error(function() {
+                .error(function(){
                     deferred.reject();
-                });
+                })
             return deferred.promise;
-
-            $.getJSON(vulns_url, function(data) {
-                $.each(data.rows, function(n, obj){
-                    var evidence = [],
-                    date = obj.value.date * 1000;
-                    if(typeof(obj.value.attachments) != undefined && obj.value.attachments != undefined) {
-                        for(var attachment in obj.value.attachments) {
-                            evidence.push(attachment);
-                        }
-                    }
-                    var v = {
-                        "id":               obj.id,
-                        "rev":              obj.value.rev,
-                        "attachments":      evidence,
-                        "couch_parent":     obj.value.parent,
-                        "data":             obj.value.data,
-                        "date":             date, 
-                        "delete":           false,
-                        "desc":             obj.value.desc,
-                        "easeofresolution": obj.value.easeofresolution,
-                        "impact":           obj.value.impact,
-                        "meta":             obj.value.meta,
-                        "name":             obj.value.name, 
-                        "oid":              obj.value.oid,
-                        "owned":            obj.value.owned,
-                        "owner":            obj.value.owner,
-                        "parent":           obj.key.substring(0, obj.key.indexOf('.')),
-                        "refs":             obj.value.refs,
-                        "resolution":       obj.value.resolution,
-                        "selected":         false,
-                        "severity":         obj.value.severity,
-                        "type":             obj.value.type, 
-                        "web":              false
-                    };
-                    vulns.push(v);
-                });
-            });
-            return vulns;
-        }
+        };
 
         vulnsManager.put = function(ws, vuln, callback) {
             var url = BASEURL + ws + "/" + vuln.id, 

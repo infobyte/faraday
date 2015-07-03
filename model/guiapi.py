@@ -92,49 +92,65 @@ def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?
     return None
 
 
-def createAndAddVulnToHost(host_id, name, desc, ref, severity="0", resolution=""):
-    vuln = model.api.newVuln(name, desc, ref, severity, resolution, parent_id=host_id)
+def createAndAddVulnToHost(host_id, name, desc, ref, severity="0",
+                           resolution="", confirmed=True):
+    vuln = model.api.newVuln(name, desc, ref, severity, resolution,
+                             confirmed=confirmed, parent_id=host_id)
     if addVulnToHost(host_id, vuln):
         return vuln.getID()
     return None
 
 
-def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref, severity="0", resolution=""):
-    vuln = model.api.newVuln(name, desc, ref, severity, resolution, parent_id=interface_id)
+def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref,
+                                severity="0", resolution="", confirmed=True):
+    vuln = model.api.newVuln(name, desc, ref, severity, resolution,
+                             confirmed=confirmed, parent_id=interface_id)
     if addVulnToInterface(host_id, interface_id, vuln):
         return vuln.getID()
     return None
 
 
-def createAndAddVulnToService(host_id, service_id, name, desc, ref, severity="0", resolution=""):
-    vuln = model.api.newVuln(name, desc, ref, severity, resolution, parent_id=service_id)
+def createAndAddVulnToService(host_id, service_id, name, desc, ref,
+                              severity="0", resolution="", confirmed=True):
+    vuln = model.api.newVuln(name, desc, ref, severity, resolution,
+                             confirmed=confirmed, parent_id=service_id)
     if addVulnToService(host_id, service_id, vuln):
         return vuln.getID()
     return None
 
 
-def createAndAddVulnWebToService(host_id, service_id, name, desc, website, path, ref=None,
-                                severity="0", resolution="", request=None, response=None,
-                                method=None,pname=None, params=None,query=None,category=None):
-    vuln = model.api.newVulnWeb(name, desc, website, path, ref, severity, resolution, request, response,
-                method, pname, params, query, category, parent_id=service_id)
+def createAndAddVulnWebToService(host_id, service_id, name, desc, website,
+                                 path, ref=None, severity="0", resolution="",
+                                 request=None, response=None, method=None,
+                                 pname=None, params=None, query=None,
+                                 category=None, confirmed=True):
+    vuln = model.api.newVulnWeb(name, desc, website, path, ref, severity,
+                                resolution, request, response, method, pname,
+                                params, query, category, confirmed=confirmed,
+                                parent_id=service_id)
     if addVulnToService(host_id, service_id, vuln):
         return vuln.getID()
     return None
 
 
-def createAndAddVuln(model_object, name, desc, ref=None, severity="0", resolution=""):
-    vuln = model.api.newVuln(name, desc, ref, severity, resolution, parent_id=model_object.getID())
+def createAndAddVuln(model_object, name, desc, ref=None, severity="0",
+                     resolution="", confirmed=True):
+    vuln = model.api.newVuln(name, desc, ref, severity, resolution,
+                             confirmed=confirmed,
+                             parent_id=model_object.getID())
     if addVuln(model_object.getID(), vuln):
         return vuln.getID()
     return None
 
 
-def createAndAddVulnWeb(model_object, name, desc, website, path, ref=None, severity="0", resolution="",
-                        request=None, response=None, method=None, pname=None, params=None, query=None,
-                        category=None):
-    vuln = model.api.newVulnWeb(name, desc, ref, severity, resolution, website, path, request, response,
-                method, pname, params, query, category, parent_id=model_object.getID())
+def createAndAddVulnWeb(model_object, name, desc, website, path, ref=None,
+                        severity="0", resolution="", request=None,
+                        response=None, method=None, pname=None, params=None,
+                        query=None, category=None, confirmed=True):
+    vuln = model.api.newVulnWeb(name, desc, ref, severity, resolution, website,
+                                path, request, response, method, pname, params,
+                                query, category, confirmed=confirmed,
+                                parent_id=model_object.getID())
     if addVuln(model_object.getID(), vuln):
         return vuln.getID()
     return None

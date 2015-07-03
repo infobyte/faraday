@@ -463,24 +463,28 @@ def newService(name, protocol = "tcp?", ports = [], status = "running",
         name, protocol, ports, status, version, description, parent_id)
 
 
-def newVuln(name, desc="", ref = None, severity="", resolution="", parent_id=None):
+def newVuln(name, desc="", ref=None, severity="", resolution="",
+            confirmed=False, parent_id=None):
     """
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
     return __model_controller.newVuln(
-        name, desc, ref, severity, resolution, parent_id)
+        name, desc, ref, severity, resolution, confirmed, parent_id)
 
 
-def newVulnWeb(name, desc="", ref = None, severity="", resolution="", website="", path="", request="", response="",
-                method="",pname="", params="",query="",category="", parent_id=None):
+def newVulnWeb(name, desc="", ref=None, severity="", resolution="", website="",
+               path="", request="", response="", method="", pname="",
+               params="", query="", category="", confirmed=False,
+               parent_id=None):
     """
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
     return __model_controller.newVulnWeb(
-        name, desc, ref, severity, resolution, website, path, request, response,
-        method, pname, params, query, category, parent_id)
+        name, desc, ref, severity, resolution, website, path, request,
+        response, method, pname, params, query, category, confirmed,
+        parent_id)
 
 
 def newNote(name, text, parent_id=None):

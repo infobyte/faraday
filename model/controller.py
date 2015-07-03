@@ -849,20 +849,23 @@ class ModelController(threading.Thread):
             name, protocol=protocol, ports=ports, status=status,
             version=version, description=description, parent_id=parent_id)
 
-    def newVuln(self, name, desc="", ref=None, severity="", resolution="", parent_id=None):
+    def newVuln(self, name, desc="", ref=None, severity="", resolution="",
+                confirmed=False, parent_id=None):
         return model.common.factory.createModelObject(
             model.common.ModelObjectVuln.class_signature,
-            name, desc=desc, ref=ref, severity=severity, resolution=resolution, parent_id=parent_id)
+            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            confirmed=confirmed, parent_id=parent_id)
 
-    def newVulnWeb(self, name, desc="", ref=None, severity="", resolution="", website="",
-                   path="", request="", response="", method="", pname="",
-                   params="", query="", category="", parent_id=None):
+    def newVulnWeb(self, name, desc="", ref=None, severity="", resolution="",
+                   website="", path="", request="", response="", method="",
+                   pname="", params="", query="", category="", confirmed=False,
+                   parent_id=None):
         return model.common.factory.createModelObject(
             model.common.ModelObjectVulnWeb.class_signature,
             name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
-            category=category, parent_id=parent_id)
+            category=category, confirmed=confirmed, parent_id=parent_id)
 
     def newNote(self, name, text, parent_id=None):
         return model.common.factory.createModelObject(

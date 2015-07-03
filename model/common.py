@@ -850,16 +850,12 @@ class ModelObjectNote(ModelComposite):
     def __repr__(self):
         return "%s: %s" % (self.name, self.text)
 
-#-------------------------------------------------------------------------------
+
 class ModelObjectVuln(ModelComposite):
-    """
-    Simple class to store vulnerability about any object.
-    id will be used to number vulnerability (based on a counter on the object being commented)
-    parent will be a reference to the object being commented.
-    """
     class_signature = "Vulnerability"
 
-    def __init__(self, name="",desc="", ref=None, severity="", resolution="", parent_id=None):
+    def __init__(self, name="", desc="", ref=None, severity="", resolution="",
+                 confirmed=False, parent_id=None):
         """
         The parameters refs can be a single value or a list with values
         """
@@ -867,7 +863,7 @@ class ModelObjectVuln(ModelComposite):
         self.name = name
         self._desc = desc
         self.data = ""
-        
+        self.confirmed = confirmed
         self.refs = []
 
         if isinstance(ref, list):
@@ -929,7 +925,6 @@ class ModelObjectVuln(ModelComposite):
             self.refs = refs
 
     def _getDesc(self):
-        #return self._desc.getvalue()
         return self._desc
 
     desc = property(_getDesc, _setDesc)
@@ -950,7 +945,7 @@ class ModelObjectVuln(ModelComposite):
         self.resolution = resolution
 
     def getResolution(self):
-        return self.resolution        
+        return self.resolution
 
     def getSeverity(self):
         return self.severity
@@ -973,6 +968,11 @@ class ModelObjectVuln(ModelComposite):
     def getData(self):
         return self.data
 
+    def setConfirmed(self, confirmed):
+        self.confirmed = confirmed
+
+    def getConfirmed(self):
+        return self.confirmed
 
     def __str__(self):
         return "vuln id:%s - %s" % (self.id, self.name)
@@ -980,10 +980,7 @@ class ModelObjectVuln(ModelComposite):
     def __repr__(self):
         return self.__str__()
 
-    def getSeverity(self):
-        return self.severity
 
-#-------------------------------------------------------------------------------
 class ModelObjectVulnWeb(ModelObjectVuln):
     """
     Simple class to store vulnerability web about any object.

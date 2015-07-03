@@ -237,7 +237,7 @@ class VulnMapper(ModelObjectMapper):
         vuln.setResolution(doc.get("resolution"))
         vuln.setRefs(doc.get("refs"))
         vuln.setData(doc.get("data", ""))
-        vuln.setConfirmed(doc.get("confirmed"), False)
+        vuln.setConfirmed(doc.get("confirmed"), True)
         super(VulnMapper, self).unserialize(vuln, doc)
         return vuln
 

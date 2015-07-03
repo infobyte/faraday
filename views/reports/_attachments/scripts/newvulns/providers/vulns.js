@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('vulnsManager', ['BASEURL', '$http', '$q', 'attachmentsFact', function(BASEURL, $http, $q, attachmentsFact) {
+    .factory('vulnsManager', ['Vuln', 'WebVuln', 'BASEURL', '$http', '$q', 'attachmentsFact', function(Vuln, WebVuln, BASEURL, $http, $q, attachmentsFact) {
         var vulnsManager = {};
 
         vulnsManager._objects = {};

@@ -3,9 +3,10 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('statusReportFact', ['vulnsFact', 'vulnsWebFact', 'hostsManager', 'workspacesFact', function(vulnsFact, vulnsWebFact, hostsManager, workspacesFact) {
+    .factory('statusReportFact', ['vulnsFact', 'vulnsWebFact', 'vulnsManager', 'hostsManager', 'workspacesFact', function(vulnsFact, vulnsWebFact, vulnsManager, hostsManager, workspacesFact) {
         var statusReportFact = {};
 
+/*
         statusReportFact.getVulns = function(ws) {
             var vulns       = vulnsFact.get(ws);
             var vulnsWeb    = vulnsWebFact.get(ws);
@@ -21,6 +22,10 @@ angular.module('faradayApp')
                 }
             });
             return vulnsWeb.concat(vulns);
+        };
+*/
+        statusReportFact.getVulns = function(ws) {
+            return vulnsManager.getVulns(ws);
         };
 
         statusReportFact.putVulns = function(ws, vuln, callback) {

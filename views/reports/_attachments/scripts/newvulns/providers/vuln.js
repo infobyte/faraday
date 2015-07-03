@@ -26,8 +26,8 @@ angular.module('faradayApp')
                         evidence.push(attachment);
                     }
                 }
-                this.rev = data.rev;
-                this.attachments = evidence;
+                this._rev = data.rev;
+                this._attachments = evidence;
                 this.data = data.data;
                 this.date = date;
                 this.delete = false;
@@ -53,21 +53,24 @@ angular.module('faradayApp')
             },
             update: function(data, ws) {
                 var self = this;
-                return $http.post(BASEURL + ws + "/" + self._id, data)
+                return $http.put(BASEURL + ws + "/" + self._id, data)
                     .success(function(data) {
-                        if(data.id == self._id){
-                            self._rev = data.rev;
-                        }
+                        self._rev = data.rev;
                     });
             },
             save: function(ws) {
-                var self = this;
-                bulk = {docs:self};
-                return $http.post(BASEURL + ws + "/_bulk_docs", JSON.stringify(bulk)).success(function(data) {
-                    if(data.id == self._id){
+                var self = this,
+                vuln = {};
+                angular.extend(vuln, self);
+                // remove WEBUI-specific fields
+                delete vuln.date;
+                delete vuln.delete;
+                delete vuln.selected;
+                delete vuln.web;
+                return $http.post(BASEURL + ws + "/" + self._id, vuln)
+                    .success(function(data) {
                         self._rev = data.rev;
-                    }
-                });
+                    });
             }
         }
 

@@ -304,6 +304,10 @@ article.untercio{
 .item:nth-child(6) {-webkit-animation-delay: 0.6s;}
 .item:nth-child(7) {-webkit-animation-delay: 0.7s;}
 
+/* Icons on Home */
+.icons-color-home{color: #B3B4B5;}
+.fa.icons-size-home{font-size: 9em;}
+
 /* Datos con nro grande, titulo y texto  */
 .dato1 {
     color: #858585;

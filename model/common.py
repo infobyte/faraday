@@ -989,12 +989,16 @@ class ModelObjectVulnWeb(ModelObjectVuln):
     """
     class_signature = "VulnerabilityWeb"
 
-    def __init__(self, name="",desc="", website="", path="", ref=None, severity="", resolution="", request="", response="",
-                method="",pname="", params="",query="",category="", parent_id=None):
+    def __init__(self, name="", desc="", website="", path="", ref=None,
+                 severity="", resolution="", request="", response="",
+                 method="", pname="", params="", query="", category="",
+                 confirmed=False, parent_id=None):
         """
         The parameters ref can be a single value or a list with values
         """
-        ModelObjectVuln.__init__(self, name,desc, ref, severity, resolution, parent_id)
+        ModelObjectVuln.__init__(
+            self, name, desc, ref, severity, resolution, confirmed,
+            parent_id)
         self.path = path
         self.website = website
         self.request = request

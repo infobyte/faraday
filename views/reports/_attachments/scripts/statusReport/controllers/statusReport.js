@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies','BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 'hostsManager', 
-                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact, hostsManager) {
+                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies', '$q', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 'hostsManager', 
+                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, $q, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact, hostsManager) {
         init = function() {
             $scope.baseurl = BASEURL;
             $scope.severities = SEVERITIES;
@@ -34,17 +34,20 @@ angular.module('faradayApp')
             $scope.interfaces = [];
 
             $scope.getVulns = function() {
-                var vulnerabilities = statusReportFact.getVulns($scope.workspace);
-                hostsManager.getInterfaces($scope.workspace).then(function(interfaces){
-                    interfaces.forEach(function(interface){
+                var deferred = $q.defer();
+                statusReportFact.getVulns($scope.workspace).then(function(vulnerabilities) {
+                    interfaces.forEach(function(interface) {
                         vulnerabilities.forEach(function(vuln){
                             if(vuln.parent == interface.value.parent){
                                 vuln.hostnames = interface.value.hostnames;
                             }
                         });
+                        deferred.resolve(vulnerabilities);
                     });
+                }, function() {
+                    deferred.reject();
                 });
-                return vulnerabilities;
+                return deferred.promise;
             };
 
             // current search
@@ -59,7 +62,9 @@ angular.module('faradayApp')
             }
 
             // load all vulnerabilities
-            $scope.vulns = $filter('filter')($scope.getVulns(), $scope.expression);
+            $scope.getVulns().then(function(vulns) {
+                $scope.vulns = $filter('filter')(vulns, $scope.expression);
+            });
 
             // created object for columns cookie columns
             if(typeof($cookies.SRcolumns) != 'undefined'){
@@ -127,71 +132,73 @@ angular.module('faradayApp')
                 "\"Query\", \"References\", \"Request\", \"Response\", \"Resolution\",\"Website\", "+
                 "\"Ease of Resolution\", \"Impact\"\n";
             
-            $scope.vulns.forEach(function(v) {
-                method      = "";
-                website     = "";
-                desc        = "";
-                easeofres   = "",
-                impact      = JSON.stringify(v.impact),
-                text        = "";
-                path        = "";
-                pname       = "";
-                params      = "";
-                query       = "";
-                refs        = "";
-                request     = "";
-                response    = "";
-                resolution  = "";
-                refs        = $scope.ToString(v.refs);
+            $scope.vulns.then(function(vs) {
+                forEach(function(v) {
+                    method      = "";
+                    website     = "";
+                    desc        = "";
+                    easeofres   = "",
+                    impact      = JSON.stringify(v.impact),
+                    text        = "";
+                    path        = "";
+                    pname       = "";
+                    params      = "";
+                    query       = "";
+                    refs        = "";
+                    request     = "";
+                    response    = "";
+                    resolution  = "";
+                    refs        = $scope.ToString(v.refs);
 
-                if(typeof(v.desc) != "undefined" && v.desc != null)                 desc          = $scope.cleanCSV(v.desc);
-                if(typeof(v.data) != "undefined" && v.data != null)                 text          = $scope.cleanCSV(v.data);
-                if(typeof(v.resolution) != "undefined" && v.resolution != null)     resolution    = $scope.cleanCSV(v.resolution);
-                if(typeof(refs) != "undefined" && refs != null){
-                    refs = $scope.cleanCSV(refs);
-                    refs = refs.replace(/%2c/g,"%0A");
-                }
-                if(typeof(impact) != "undefined" && impact != null){
-                    impact = $scope.cleanCSV(impact);
-                    impact = impact.replace(/%2c/g,"%0A");
-                }
-                if(v.type === "VulnerabilityWeb") {
-                    if(typeof(v.method) != "undefined" && v.method != null)         method      = $scope.cleanCSV(v.method);
-                    if(typeof(v.website) != "undefined" && v.website != null)       website     = $scope.cleanCSV(v.website);
-                    if(typeof(v.path) != "undefined" && v.path != null)             path        = $scope.cleanCSV(v.path);
-                    if(typeof(v.pname) != "undefined" && v.pname != null)           pname       = $scope.cleanCSV(v.pname);
-                    if(typeof(v.params) != "undefined" && v.params != null)         params      = $scope.cleanCSV(v.params);
-                    if(typeof(v.query) != "undefined" && v.query != null)           query       = $scope.cleanCSV(v.query);
+                    if(typeof(v.desc) != "undefined" && v.desc != null)                 desc          = $scope.cleanCSV(v.desc);
+                    if(typeof(v.data) != "undefined" && v.data != null)                 text          = $scope.cleanCSV(v.data);
+                    if(typeof(v.resolution) != "undefined" && v.resolution != null)     resolution    = $scope.cleanCSV(v.resolution);
                     if(typeof(refs) != "undefined" && refs != null){
                         refs = $scope.cleanCSV(refs);
                         refs = refs.replace(/%2c/g,"%0A");
                     }
-                    if(typeof(v.request) != "undefined" && v.request != null)       request     = $scope.cleanCSV(v.request);
-                    if(typeof(v.response) != "undefined" && v.response != null)     response    = $scope.cleanCSV(v.response);
-                    if(typeof(v.resolution) != "undefined" && v.resolution != null) resolution  = $scope.cleanCSV(v.resolution);
-                }
+                    if(typeof(impact) != "undefined" && impact != null){
+                        impact = $scope.cleanCSV(impact);
+                        impact = impact.replace(/%2c/g,"%0A");
+                    }
+                    if(v.type === "VulnerabilityWeb") {
+                        if(typeof(v.method) != "undefined" && v.method != null)         method      = $scope.cleanCSV(v.method);
+                        if(typeof(v.website) != "undefined" && v.website != null)       website     = $scope.cleanCSV(v.website);
+                        if(typeof(v.path) != "undefined" && v.path != null)             path        = $scope.cleanCSV(v.path);
+                        if(typeof(v.pname) != "undefined" && v.pname != null)           pname       = $scope.cleanCSV(v.pname);
+                        if(typeof(v.params) != "undefined" && v.params != null)         params      = $scope.cleanCSV(v.params);
+                        if(typeof(v.query) != "undefined" && v.query != null)           query       = $scope.cleanCSV(v.query);
+                        if(typeof(refs) != "undefined" && refs != null){
+                            refs = $scope.cleanCSV(refs);
+                            refs = refs.replace(/%2c/g,"%0A");
+                        }
+                        if(typeof(v.request) != "undefined" && v.request != null)       request     = $scope.cleanCSV(v.request);
+                        if(typeof(v.response) != "undefined" && v.response != null)     response    = $scope.cleanCSV(v.response);
+                        if(typeof(v.resolution) != "undefined" && v.resolution != null) resolution  = $scope.cleanCSV(v.resolution);
+                    }
 
-                content += "\""+v.date+"\","+
-                    " \""+v.web+"\","+
-                    " \"Vulnerable\","+
-                    " \""+v.severity+"\","+
-                    " \""+v.name+"\","+
-                    " \""+v.target+"\","+
-                    " \""+desc+"\","+
-                    " \""+text+"\","+
-                    " \""+method+"\","+
-                    " \""+path+"\","+
-                    " \""+pname+"\","+
-                    " \""+params+"\","+
-                    " \""+query+"\","+
-                    " \""+refs+"\","+
-                    " \""+request+"\","+
-                    " \""+response+"\","+
-                    " \""+resolution+"\","+
-                    " \""+website+"\","+
-                    " \""+impact+"\","+
-                    " \""+easeofres+"\""+
-                    "\n";
+                    content += "\""+v.date+"\","+
+                        " \""+v.web+"\","+
+                        " \"Vulnerable\","+
+                        " \""+v.severity+"\","+
+                        " \""+v.name+"\","+
+                        " \""+v.target+"\","+
+                        " \""+desc+"\","+
+                        " \""+text+"\","+
+                        " \""+method+"\","+
+                        " \""+path+"\","+
+                        " \""+pname+"\","+
+                        " \""+params+"\","+
+                        " \""+query+"\","+
+                        " \""+refs+"\","+
+                        " \""+request+"\","+
+                        " \""+response+"\","+
+                        " \""+resolution+"\","+
+                        " \""+website+"\","+
+                        " \""+impact+"\","+
+                        " \""+easeofres+"\""+
+                        "\n";
+                });
             });
 
             var obj = {

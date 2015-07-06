@@ -42,10 +42,11 @@ angular.module('faradayApp')
         vulnsManager.getVulns = function(ws) {
             var deferred = $q.defer(),
             self = this;
-            $http.get(BASEURL + '/' + ws + '/_design/hosts/_view/all')
+            $http.get(BASEURL + ws + '/_design/vulns/_view/all')
                 .success(function(vulnsArray) {
                     var vulns = [];
                     vulnsArray.rows.forEach(function(vulnData) {
+                        vulnData.value._id = vulnData.id;
                         var vuln = self._get(vulnData.value._id, vulnData.value);
                         vulns.push(vuln);
                     });
@@ -54,6 +55,51 @@ angular.module('faradayApp')
                 .error(function(){
                     deferred.reject();
                 })
+            return deferred.promise;
+        };
+
+        vulnsManager.getVuln = function(ws, id, force_reload) {
+            var deferred = $q.defer(),
+            vuln = this._search(id);
+            force_reload = force_reload || false;
+            
+            if(vuln && !force_reload) {
+                deferred.resolve(vuln);
+            } else {
+                this._load(id, deferred);
+            } 
+
+            return deferred.promise;
+        };
+
+        vulnsManager.createVuln = function(ws, vulnData) {
+            var deferred = $q.defer(),
+            self = this,
+            types = ["Vulnerability", "VulnerabilityWeb"],
+            type = types.indexOf(vulnDate.type);
+
+            if(vulnData.type > -1) {
+                var vuln = new Vuln(vulnData);
+            } else if(vulnData.type === "VulnerabilityWeb") {
+                var vuln = new WebVuln(vulnData);
+            } else {
+                deferred.reject("Error: invalid vulnerability type");
+            }
+
+            if(vuln != undefined) {
+                self.getVuln(ws, vuln._id).then(function() {
+                    deferred.reject("Error: vuln already exists");
+                }, function() {
+                    // vuln doesn't exist, good to go
+                    vuln.save(ws).then(function() {
+                        vuln = self.getVuln(ws, vuln._id);
+                        deferred.resolve(vuln);
+                    }, function() {
+                        deferred.reject("Error: vuln couldn't be saved");
+                    });
+                });
+            }
+
             return deferred.promise;
         };
 

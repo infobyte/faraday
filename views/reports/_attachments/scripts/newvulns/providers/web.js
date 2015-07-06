@@ -4,7 +4,7 @@
 
 angular.module('faradayApp')
     .factory('WebVuln', ['BASEURL', '$http', function(BASEURL, $http) {
-        WebVuln = function(data){
+        WebVuln = function(data) {
             if(data) {
                 this.set(data);
             }
@@ -13,16 +13,16 @@ angular.module('faradayApp')
         WebVuln.prototype = {
             set: function(data) {
                 if(data._id === undefined) {
-                    data['_id'] = CryptoJS.SHA1(data.name).toString();
+                    //data['_id'] = CryptoJS.SHA1(data.name).toString();
                     //// couch ID including parent id
                     //var id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
                     //// object ID without parent
                     //var sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
                 }
                 var evidence = [],
-                date = obj.value.date * 1000;
-                if(typeof(obj.value.attachments) != undefined && obj.value.attachments != undefined) {
-                    for(var attachment in obj.value.attachments) {
+                date = data.date * 1000;
+                if(typeof(data.attachments) != undefined && data.attachments != undefined) {
+                    for(var attachment in data.attachments) {
                         evidence.push(attachment);
                     }
                 }
@@ -41,14 +41,14 @@ angular.module('faradayApp')
                 this.owned = data.owned;
                 this.owner = data.owner;
                 this.params = data.params;
-                this.parent = parent;
-                this.path = path;
-                this.pname = pname;
-                this.query = query;
+                this.parent = data.parent;
+                this.path = data.path;
+                this.pname = data.pname;
+                this.query = data.query;
                 this.refs = data.refs;
-                this.request = request;
+                this.request = data.request;
                 this.resolution = data.resolution;
-                this.response = response;
+                this.response = data.response;
                 this.selected = data.selected;
                 this.severity = data.severity;
                 this.type = "VulnerabilityWeb";

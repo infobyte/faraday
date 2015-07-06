@@ -13,16 +13,16 @@ angular.module('faradayApp')
         Vuln.prototype = {
             set: function(data) {
                 if(data._id === undefined) {
-                    data['_id'] = CryptoJS.SHA1(data.name).toString();
+                    //data['_id'] = CryptoJS.SHA1(data.name).toString();
                     //// couch ID including parent id
                     //var id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
                     //// object ID without parent
                     //var sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
                 }
                 var evidence = [],
-                date = obj.value.date * 1000;
-                if(typeof(obj.value.attachments) != undefined && obj.value.attachments != undefined) {
-                    for(var attachment in obj.value.attachments) {
+                date = data.date * 1000;
+                if(typeof(data.attachments) != undefined && data.attachments != undefined) {
+                    for(var attachment in data.attachments) {
                         evidence.push(attachment);
                     }
                 }

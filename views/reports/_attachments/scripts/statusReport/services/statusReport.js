@@ -24,9 +24,6 @@ angular.module('faradayApp')
             return vulnsWeb.concat(vulns);
         };
 */
-        statusReportFact.getVulns = function(ws) {
-            return vulnsManager.getVulns(ws);
-        };
 
         statusReportFact.putVulns = function(ws, vuln, callback) {
             if(vuln.web) {

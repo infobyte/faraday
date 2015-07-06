@@ -4,18 +4,35 @@
 
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies', '$q', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 'hostsManager', 
-                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, $q, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact, hostsManager) {
+                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies', '$q', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 'hostsManager', 'vulnsManager', 
+                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, $q, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact, hostsManager, vulnsManager) {
+        $scope.baseurl;
+        $scope.columns;
+        $scope.currentPage;
+        $scope.easeofresolution;
+        $scope.expression;
+        $scope.interfaces;
+        $scope.numberOfPages;
+        $scope.pageSize;
+        $scope.reverse;
+        $scope.severities;
+        $scope.search;
+        $scope.searchParams;
+        $scope.showPagination;
+        $scope.sortField;
+        $scope.vulns;
+        $scope.workspaces;
+
         init = function() {
             $scope.baseurl = BASEURL;
             $scope.severities = SEVERITIES;
             $scope.easeofresolution = EASEOFRESOLUTION;
-
             $scope.sortField = 'date';
             $scope.reverse = true;
             $scope.showPagination = 1;
             $scope.currentPage = 0;
-            // set custom pagination if is possible
+
+            // set custom pagination if possible
             if(typeof($cookies.pageSize) == "undefined") {
                 $scope.pageSize = 10;
                 $scope.pagination = 10;
@@ -33,23 +50,6 @@ angular.module('faradayApp')
             $scope.workspace = $routeParams.wsId;
             $scope.interfaces = [];
 
-            $scope.getVulns = function() {
-                var deferred = $q.defer();
-                statusReportFact.getVulns($scope.workspace).then(function(vulnerabilities) {
-                    interfaces.forEach(function(interface) {
-                        vulnerabilities.forEach(function(vuln){
-                            if(vuln.parent == interface.value.parent){
-                                vuln.hostnames = interface.value.hostnames;
-                            }
-                        });
-                        deferred.resolve(vulnerabilities);
-                    });
-                }, function() {
-                    deferred.reject();
-                });
-                return deferred.promise;
-            };
-
             // current search
             $scope.search = $routeParams.search;
             $scope.searchParams = "";
@@ -62,8 +62,10 @@ angular.module('faradayApp')
             }
 
             // load all vulnerabilities
-            $scope.getVulns().then(function(vulns) {
+            vulnsManager.getVulns($scope.workspace).then(function(vulns) {
+                console.log(vulns);
                 $scope.vulns = $filter('filter')(vulns, $scope.expression);
+                $scope.numberOfPages = $scope.calculateNumberOfPages(); 
             });
 
             // created object for columns cookie columns
@@ -226,6 +228,7 @@ angular.module('faradayApp')
         };
 
         // updates all vulns with selected == true
+        // I BROKE THIS DO IT FROM SCRATCH WITH vulnsManager
         $scope.update = function(data) {
             $scope.vulns = [];
            
@@ -253,10 +256,12 @@ angular.module('faradayApp')
                         if(typeof(data.website) != "undefined") v.website = data.website;
                     }
             
+/*
                     statusReportFact.putVulns($scope.workspace, v, function(rev, evidence) {
                         v.rev = rev;
                         v.attachments = evidence;
                     });
+*/
                     v.selected = false;
                 }
                 $scope.vulns.push(v);
@@ -350,16 +355,20 @@ angular.module('faradayApp')
         };
 
         $scope.insert = function(vuln) {
-            statusReportFact.putVulns($scope.workspace, vuln, function(rev, evidence) {
-                vuln.rev = rev;
-                vuln.attachments = evidence;
+            vulnsManager.createVuln($scope.workspace, vuln).then(function() {
+                console.log("success");
+                $scope.vulns.push(vuln);
+            }, function() {
+                console.log("error");
             });
+            /*
+            // this shouldnt be necessary, we should use Angular formatting options directly in the partial
             //formating the date
             var d = new Date(0);
             d.setUTCSeconds(vuln.date);
             d = d.getDate() + "/" + (d.getMonth()+1) + "/" + d.getFullYear();
             vuln.date = d;
-            $scope.vulns.push(vuln);
+            */
         };
 
         $scope.new = function() {
@@ -396,7 +405,7 @@ angular.module('faradayApp')
             });
         };
 
-        $scope.numberOfPages = function() {
+        $scope.calculateNumberOfPages = function() {
             if($scope.vulns.length <= 10) {
                 $scope.showPagination = 0;
             } else {
@@ -406,11 +415,11 @@ angular.module('faradayApp')
         };
 
         $scope.go = function() {
-            if($scope.go_page < $scope.numberOfPages()+1 && $scope.go_page > -1) {
+            if($scope.go_page < $scope.numberOfPages+1 && $scope.go_page > -1) {
                 $scope.currentPage = $scope.go_page;
             }
             $scope.pageSize = $scope.pagination;
-            if($scope.go_page > $scope.numberOfPages()) {
+            if($scope.go_page > $scope.numberOfPages) {
                 $scope.currentPage = 0;
             }
             $cookies.pageSize = $scope.pageSize;

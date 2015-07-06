@@ -76,7 +76,7 @@ angular.module('faradayApp')
             var deferred = $q.defer(),
             self = this,
             types = ["Vulnerability", "VulnerabilityWeb"],
-            type = types.indexOf(vulnDate.type);
+            type = types.indexOf(vulnData.type);
 
             if(vulnData.type > -1) {
                 var vuln = new Vuln(vulnData);

@@ -5,9 +5,7 @@
 angular.module('faradayApp')
     .controller('workspacesCtrl', ['$modal', '$scope', '$q', 'workspacesFact', 'dashboardSrv',
             function($modal, $scope, $q, workspacesFact, dashboardSrv) {
-        $scope.dateOptions;
         $scope.hash;
-        $scope.minDate;
         $scope.objects;
         $scope.workspaces;
         $scope.wss;
@@ -17,11 +15,6 @@ angular.module('faradayApp')
             $scope.workspaces = [];
             $scope.wss = [];
             // $scope.newworkspace = {};
-            $scope.minDate = new Date();
-            $scope.dateOptions = {
-                formatYear: 'yy',
-                startingDay: 1
-            };
             
             var hash_tmp = window.location.hash.split("/")[1];
             switch (hash_tmp){
@@ -128,15 +121,15 @@ angular.module('faradayApp')
         };
 
         $scope.update = function(ws){
-            if(typeof(ws.duration.startDate) == "number") {
-                start = ws.duration.startDate;
-            } else if(ws.duration.startDate) {
-                start = ws.duration.startDate.getTime(); 
+            if(typeof(ws.duration.start) == "number") {
+                start = ws.duration.start;
+            } else if(ws.duration.start) {
+                start = ws.duration.start.getTime(); 
             } else {start = "";}
-            if(typeof(ws.duration.endDate) == "number") {
-                end = ws.duration.endDate;
-            } else if(ws.duration.endDate) {
-                end = ws.duration.endDate.getTime();
+            if(typeof(ws.duration.end) == "number") {
+                end = ws.duration.end;
+            } else if(ws.duration.end) {
+                end = ws.duration.end.getTime();
             } else {end = "";}
             duration = {'start': start, 'end': end};
             workspace = {
@@ -289,23 +282,6 @@ angular.module('faradayApp')
             };
             return(workspace);
 
-        };
-
-        //DATE PICKER        
-        $scope.today = function() {
-            $scope.dt = new Date();
-        };
-        $scope.today();
-
-        $scope.clear = function () {
-            $scope.dt = null;
-        };
-
-        $scope.open = function($event, isStart) {
-            $event.preventDefault();
-            $event.stopPropagation();
-
-            if(isStart) $scope.openedStart = true; else $scope.openedEnd = true;
         };
 
         $scope.init();

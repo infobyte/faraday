@@ -5,8 +5,36 @@
 angular.module('faradayApp')
     .controller('workspacesModalEdit', ['$modalInstance', '$scope', 'workspace',
         function($modalInstance, $scope, workspace) {
+        $scope.minDate;
+        $scope.dateOptions;
+        $scope.workspace;
 
-        $scope.workspace = workspace;
+        init = function () {
+        	$scope.minDate = new Date();
+            $scope.dateOptions = {
+                formatYear: 'yy',
+                startingDay: 1
+            };
+        	$scope.workspace = workspace;
+
+        };
+
+        //DATE PICKER        
+        $scope.today = function() {
+            $scope.dt = new Date();
+        };
+        $scope.today();
+
+        $scope.clear = function () {
+            $scope.dt = null;
+        };
+
+        $scope.open = function($event, isStart) {
+            $event.preventDefault();
+            $event.stopPropagation();
+
+            if(isStart) $scope.openedStart = true; else $scope.openedEnd = true;
+        };
 
         $scope.okEdit = function() {
             $modalInstance.close($scope.workspace);
@@ -15,4 +43,6 @@ angular.module('faradayApp')
         $scope.cancel = function() {
             $modalInstance.close();
         };
+
+        init();
     }]);

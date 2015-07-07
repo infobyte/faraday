@@ -15,28 +15,40 @@ angular.module('faradayApp')
                 var id = CryptoJS.SHA1(data.name + "." + data.desc).toString(),
                 evidence = [],
                 myDate = new Date(),
-                date = myDate.getTime();
+                date = myDate.getTime(),
+                meta = {};
 
                 if(typeof(data.attachments) != undefined && data.attachments != undefined) {
                     for(var attachment in data.attachments) {
                         evidence.push(attachment);
                     }
                 }
-                    "meta":         {
-                        'create_time': myEpoch,
-                        "update_time": myEpoch,
-                        "update_user":  'UI Web',
-                        'update_action': 0,
-                        'creator': 'UI Web', 
-                        'create_time': myEpoch,
-                        'update_controller_action': 'UI Web New',
-                        'owner': 'anonymous'
-                    },
 
+                // new vuln
                 if(data._id === undefined) {
                     data['_id'] = data.parent + "." + id;
+                    meta = {
+                        "create_time": date,
+                        "update_time": date,
+                        "update_user":  'UI Web',
+                        "update_action": 0,
+                        "creator": 'UI Web',
+                        "create_time": date,
+                        "update_controller_action": 'UI Web New',
+                        "owner": ''
+                    };
                 } else {
                     this._rev = data.rev;
+                    meta = {
+                        "create_time": data.date,
+                        "update_time": date,
+                        "update_user":  'UI Web',
+                        "update_action": 0,
+                        "creator": data.meta.creator,
+                        "create_time": data.meta.create_time,
+                        "update_controller_action": 'UI Web New',
+                        "owner": ''
+                    };
                 }
 
                 this.date = date;

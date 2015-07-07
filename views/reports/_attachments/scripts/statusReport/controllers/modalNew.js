@@ -45,7 +45,7 @@ angular.module('faradayApp')
             d[h._id] = h;
         });
 
-        hostsManager.getInterfaces($scope.workspace).then(function(resp){
+        hostsManager.getInterfaces($scope.workspace).then(function(resp) {
             $scope.interfaces = resp;
             hosts.forEach(function(h){
                 $scope.interfaces.forEach(function(interface){
@@ -58,7 +58,7 @@ angular.module('faradayApp')
 
         var services = targetFact.getTarget($scope.workspace, false);
 
-        for(var i = 0; i < services.length; i++){
+        for(var i = 0; i < services.length; i++) {
             var host = [];
             services[i].selected = false;
             host = d[services[i].hid];
@@ -106,8 +106,6 @@ angular.module('faradayApp')
                 var res = {},
                 id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString(),
                 sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString(),
-                myDate = new Date(),
-                myEpoch = myDate.getTime()/1000.0,
                 extra_vulns_prop = {},
                 arrayReferences = [];
 
@@ -122,28 +120,14 @@ angular.module('faradayApp')
                 arrayReferences.filter(Boolean);
 
                 var res = {
-                    "id":               id,
                     "data":             $scope.data,
-                    "date":             myEpoch,
                     "desc":             $scope.desc,
                     "easeofresolution": $scope.easeOfResolutionSelection,
                     "evidence":         $scope.evidence,
                     "impact":           $scope.impact,
-                    "meta":         {
-                        'create_time': myEpoch,
-                        "update_time": myEpoch,
-                        "update_user":  'UI Web',
-                        'update_action': 0,
-                        'creator': 'UI Web', 
-                        'create_time': myEpoch,
-                        'update_controller_action': 'UI Web New',
-                        'owner': 'anonymous'
-                    },
                     "name":             $scope.name,
-                    "oid":              sha,
                     "owned":            false,
-                    "owner":            "",
-                    "couch_parent":     $scope.target_selected._id,
+                    "parent":           $scope.target_selected._id,
                     "refs":             arrayReferences,
                     "resolution":       $scope.resolution,
                     "status":           $scope.vuln_type,
@@ -152,7 +136,7 @@ angular.module('faradayApp')
                     "type":             $scope.vuln_type
                 }
 
-                if($scope.vuln_type == "VulnerabilityWeb") {
+                if($scope.vuln_type === "VulnerabilityWeb") {
                     extra_vulns_prop = {
                         "path":         $scope.path,
                         "pname":        $scope.pname,

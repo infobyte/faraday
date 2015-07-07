@@ -26,6 +26,16 @@ angular.module('faradayApp')
                         evidence.push(attachment);
                     }
                 }
+                    "meta":         {
+                        'create_time': myEpoch,
+                        "update_time": myEpoch,
+                        "update_user":  'UI Web',
+                        'update_action': 0,
+                        'creator': 'UI Web', 
+                        'create_time': myEpoch,
+                        'update_controller_action': 'UI Web New',
+                        'owner': 'anonymous'
+                    },
                 this._rev = data.rev;
                 this._attachments = evidence;
                 this.data = data.data;

@@ -12,34 +12,50 @@ angular.module('faradayApp')
 
         WebVuln.prototype = {
             set: function(data) {
-                if(data._id === undefined) {
-                    //data['_id'] = CryptoJS.SHA1(data.name).toString();
-                    //// couch ID including parent id
-                    //var id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
-                    //// object ID without parent
-                    //var sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
-                }
-                var evidence = [],
-                date = data.date * 1000;
+                var id = CryptoJS.SHA1(data.name + "." + data.desc).toString(),
+                evidence = [],
+                myDate = new Date(),
+                date = myDate.getTime();
+
                 if(typeof(data.attachments) != undefined && data.attachments != undefined) {
                     for(var attachment in data.attachments) {
                         evidence.push(attachment);
                     }
                 }
-                this._rev = data.rev;
-                this._attachments = evidence;
-                this.data = data.data;
+                    "meta":         {
+                        'create_time': myEpoch,
+                        "update_time": myEpoch,
+                        "update_user":  'UI Web',
+                        'update_action': 0,
+                        'creator': 'UI Web', 
+                        'create_time': myEpoch,
+                        'update_controller_action': 'UI Web New',
+                        'owner': 'anonymous'
+                    },
+
+                if(data._id === undefined) {
+                    data['_id'] = data.parent + "." + id;
+                } else {
+                    this._rev = data.rev;
+                }
+
                 this.date = date;
                 this.delete = false;
+                this.obj_id = id;
+                this.owner = owner;
+                this.metadata = data.metadata;
+                this.selected = data.selected;
+                this.type = "VulnerabilityWeb";
+                this.web = true;
+
+                this._attachments = evidence;
+                this.data = data.data;
                 this.desc = data.desc;
                 this.easeofresolution = data.easeofresolution;
                 this.impact = data.impact;
-                this.metadata = data.metadata;
                 this.method = data.method;
                 this.name = data.name;
-                this.obj_id = data.obj_id;
                 this.owned = data.owned;
-                this.owner = data.owner;
                 this.params = data.params;
                 this.parent = data.parent;
                 this.path = data.path;
@@ -49,10 +65,7 @@ angular.module('faradayApp')
                 this.request = data.request;
                 this.resolution = data.resolution;
                 this.response = data.response;
-                this.selected = data.selected;
                 this.severity = data.severity;
-                this.type = "VulnerabilityWeb";
-                this.web = true;
                 this.website = data.website;
             },
             delete: function(ws) {

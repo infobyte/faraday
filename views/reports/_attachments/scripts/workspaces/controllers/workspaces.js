@@ -186,29 +186,24 @@ angular.module('faradayApp')
         };
 
         $scope.edit = function(){ 
-            var selected = false;
+            var workspace;
             $scope.workspaces.forEach(function(w) {
                 if(w.selected) {
-                    selected = true;
+                    workspace = w;
                     return;
                 }
             });
 
-            if(selected){
-                $scope.workspaces.forEach(function(w){
-                    if(w.selected){
-                        $scope.newworkspace = w;
-                        if($scope.newworkspace.duration){
-                            $scope.newworkspace.duration.startDate = w.duration.start;
-                            $scope.newworkspace.duration.endDate = w.duration.end;
-                        }
-                    } 
-                });
+            if(workspace){
                 $scope.modal = $modal.open({
                     templateUrl: 'scripts/workspaces/partials/modalEdit.html',
-                    controller: 'workspacesCtrl',
-                    scope: $scope,
-                    size: 'lg'
+                    controller: 'workspacesModalEdit',
+                    size: 'lg',
+                    resolve: {
+                        workspace: function(){
+                            return workspace;
+                        }
+                    }
                 });
 
                 $scope.modal.result.then(function(workspace) {
@@ -226,15 +221,6 @@ angular.module('faradayApp')
                 });
             }
 
-        };
-
-        $scope.okEdit = function() {
-            $scope.modal.close($scope.newworkspace);
-        };
-
-
-        $scope.cancel = function() {
-            $scope.modal.close();
         };
 
         $scope.delete = function() {

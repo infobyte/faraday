@@ -4,8 +4,14 @@
 
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies', '$q', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager', 'vulnsManager', 
-                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, $q, BASEURL, SEVERITIES, EASEOFRESOLUTION, hostsManager, vulnsManager) {
+                    ['$scope', '$filter', '$route', '$routeParams',
+                    '$location', '$modal', '$cookies', '$q', 'BASEURL',
+                    'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager',
+                    'vulnsManager', 'workspacesFact',
+                    function($scope, $filter, $route, $routeParams,
+                        $location, $modal, $cookies, $q, BASEURL,
+                        SEVERITIES, EASEOFRESOLUTION, hostsManager,
+                        vulnsManager, workspacesFact) {
         $scope.baseurl;
         $scope.columns;
         $scope.currentPage;
@@ -42,7 +48,7 @@ angular.module('faradayApp')
             }
 
             // load all workspaces
-            statusReportFact.getWorkspaces().then(function(wss) {
+            workspacesFact.list().then(function(wss) {
                 $scope.workspaces = wss;
             });
 

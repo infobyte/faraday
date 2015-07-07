@@ -69,7 +69,6 @@ angular.module('faradayApp')
 
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace).then(function(vulns) {
-                console.log(vulns);
                 $scope.vulns = $filter('filter')(vulns, $scope.expression);
                 $scope.numberOfPages = $scope.calculateNumberOfPages(); 
             });

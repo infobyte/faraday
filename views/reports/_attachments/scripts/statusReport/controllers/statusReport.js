@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies', '$q', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 'hostsManager', 'vulnsManager', 
-                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, $q, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact, hostsManager, vulnsManager) {
+                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies', '$q', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager', 'vulnsManager', 
+                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, $q, BASEURL, SEVERITIES, EASEOFRESOLUTION, hostsManager, vulnsManager) {
         $scope.baseurl;
         $scope.columns;
         $scope.currentPage;
@@ -106,11 +106,8 @@ angular.module('faradayApp')
 
         // returns scope vulns as CSV obj
         // toggles column sort field
-        $scope.cleanCSV = function(field) {
+        function cleanCSV = function(field) {
             return field.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'").replace(/[\n\r]/g, "%0A").replace(/[,]/g, "%2c");
-        };
-        $scope.ToString = function(array){
-            return array.toString();
         };
 
         $scope.toCSV = function() {
@@ -150,7 +147,7 @@ angular.module('faradayApp')
                     request     = "";
                     response    = "";
                     resolution  = "";
-                    refs        = $scope.ToString(v.refs);
+                    refs        = v.refs.toString();
 
                     if(typeof(v.desc) != "undefined" && v.desc != null)                 desc          = $scope.cleanCSV(v.desc);
                     if(typeof(v.data) != "undefined" && v.data != null)                 text          = $scope.cleanCSV(v.data);

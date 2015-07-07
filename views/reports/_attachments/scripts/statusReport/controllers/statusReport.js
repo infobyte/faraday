@@ -4,8 +4,14 @@
 
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies', '$q', 'BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 'hostsManager', 'vulnsManager', 
-                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, $q, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact, hostsManager, vulnsManager) {
+                    ['$scope', '$filter', '$route', '$routeParams',
+                    '$location', '$modal', '$cookies', '$q', 'BASEURL',
+                    'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager',
+                    'vulnsManager', 'workspacesFact',
+                    function($scope, $filter, $route, $routeParams,
+                        $location, $modal, $cookies, $q, BASEURL,
+                        SEVERITIES, EASEOFRESOLUTION, hostsManager,
+                        vulnsManager, workspacesFact) {
         $scope.baseurl;
         $scope.columns;
         $scope.currentPage;
@@ -42,7 +48,7 @@ angular.module('faradayApp')
             }
 
             // load all workspaces
-            statusReportFact.getWorkspaces().then(function(wss) {
+            workspacesFact.list().then(function(wss) {
                 $scope.workspaces = wss;
             });
 
@@ -105,11 +111,8 @@ angular.module('faradayApp')
 
         // returns scope vulns as CSV obj
         // toggles column sort field
-        $scope.cleanCSV = function(field) {
+        cleanCSV = function(field) {
             return field.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'").replace(/[\n\r]/g, "%0A").replace(/[,]/g, "%2c");
-        };
-        $scope.ToString = function(array){
-            return array.toString();
         };
 
         $scope.toCSV = function() {
@@ -149,33 +152,33 @@ angular.module('faradayApp')
                     request     = "";
                     response    = "";
                     resolution  = "";
-                    refs        = $scope.ToString(v.refs);
+                    refs        = v.refs.toString();
 
-                    if(typeof(v.desc) != "undefined" && v.desc != null)                 desc          = $scope.cleanCSV(v.desc);
-                    if(typeof(v.data) != "undefined" && v.data != null)                 text          = $scope.cleanCSV(v.data);
-                    if(typeof(v.resolution) != "undefined" && v.resolution != null)     resolution    = $scope.cleanCSV(v.resolution);
+                    if(typeof(v.desc) != "undefined" && v.desc != null)                 desc          = cleanCSV(v.desc);
+                    if(typeof(v.data) != "undefined" && v.data != null)                 text          = cleanCSV(v.data);
+                    if(typeof(v.resolution) != "undefined" && v.resolution != null)     resolution    = cleanCSV(v.resolution);
                     if(typeof(refs) != "undefined" && refs != null){
-                        refs = $scope.cleanCSV(refs);
+                        refs = cleanCSV(refs);
                         refs = refs.replace(/%2c/g,"%0A");
                     }
                     if(typeof(impact) != "undefined" && impact != null){
-                        impact = $scope.cleanCSV(impact);
+                        impact = cleanCSV(impact);
                         impact = impact.replace(/%2c/g,"%0A");
                     }
                     if(v.type === "VulnerabilityWeb") {
-                        if(typeof(v.method) != "undefined" && v.method != null)         method      = $scope.cleanCSV(v.method);
-                        if(typeof(v.website) != "undefined" && v.website != null)       website     = $scope.cleanCSV(v.website);
-                        if(typeof(v.path) != "undefined" && v.path != null)             path        = $scope.cleanCSV(v.path);
-                        if(typeof(v.pname) != "undefined" && v.pname != null)           pname       = $scope.cleanCSV(v.pname);
-                        if(typeof(v.params) != "undefined" && v.params != null)         params      = $scope.cleanCSV(v.params);
-                        if(typeof(v.query) != "undefined" && v.query != null)           query       = $scope.cleanCSV(v.query);
+                        if(typeof(v.method) != "undefined" && v.method != null)         method      = cleanCSV(v.method);
+                        if(typeof(v.website) != "undefined" && v.website != null)       website     = cleanCSV(v.website);
+                        if(typeof(v.path) != "undefined" && v.path != null)             path        = cleanCSV(v.path);
+                        if(typeof(v.pname) != "undefined" && v.pname != null)           pname       = cleanCSV(v.pname);
+                        if(typeof(v.params) != "undefined" && v.params != null)         params      = cleanCSV(v.params);
+                        if(typeof(v.query) != "undefined" && v.query != null)           query       = cleanCSV(v.query);
                         if(typeof(refs) != "undefined" && refs != null){
-                            refs = $scope.cleanCSV(refs);
+                            refs = cleanCSV(refs);
                             refs = refs.replace(/%2c/g,"%0A");
                         }
-                        if(typeof(v.request) != "undefined" && v.request != null)       request     = $scope.cleanCSV(v.request);
-                        if(typeof(v.response) != "undefined" && v.response != null)     response    = $scope.cleanCSV(v.response);
-                        if(typeof(v.resolution) != "undefined" && v.resolution != null) resolution  = $scope.cleanCSV(v.resolution);
+                        if(typeof(v.request) != "undefined" && v.request != null)       request     = cleanCSV(v.request);
+                        if(typeof(v.response) != "undefined" && v.response != null)     response    = cleanCSV(v.response);
+                        if(typeof(v.resolution) != "undefined" && v.resolution != null) resolution  = cleanCSV(v.resolution);
                     }
 
                     content += "\""+v.date+"\","+

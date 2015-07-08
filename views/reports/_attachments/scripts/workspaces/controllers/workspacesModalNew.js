@@ -11,7 +11,28 @@ angular.module('faradayApp')
         $scope.workspace;
 
         init = function () {
-        	$scope.workspace = {};
+        	$scope.workspace = {
+                "description":  "",
+                "name":         "",
+                "scope":        ""
+        	};
+        };
+
+        //DATE PICKER        
+        $scope.today = function() {
+            $scope.dt = new Date();
+        };
+        $scope.today();
+
+        $scope.clear = function () {
+            $scope.dt = null;
+        };
+
+        $scope.open = function($event, isStart) {
+            $event.preventDefault();
+            $event.stopPropagation();
+
+            if(isStart) $scope.openedStart = true; else $scope.openedEnd = true;
         };
 
         $scope.okNew = function(){

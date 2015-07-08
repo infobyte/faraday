@@ -12,15 +12,18 @@ angular.module('faradayApp')
 
         WebVuln.prototype = {
             set: function(data) {
-                var id = CryptoJS.SHA1(data.name + "." + data.desc).toString(),
-                evidence = [],
-                myDate = new Date(),
-                date = myDate.getTime(),
-                meta = {};
+                var evidence = [],
+                id = CryptoJS.SHA1(data.name + "." + data.desc).toString(),
+                meta = {},
+                now = new Date(),
+                date = now.getTime(),
+                selected = false;
 
                 if(typeof(data.attachments) != undefined && data.attachments != undefined) {
                     for(var attachment in data.attachments) {
-                        evidence.push(attachment);
+                        if(data.attachments.hasOwnProperty(attachment)) {
+                            evidence.push(attachment);
+                        }
                     }
                 }
 
@@ -28,38 +31,40 @@ angular.module('faradayApp')
                 if(data._id === undefined) {
                     data['_id'] = data.parent + "." + id;
                     meta = {
-                        "create_time": date,
                         "update_time": date,
-                        "update_user":  'UI Web',
+                        "update_user": "",
                         "update_action": 0,
-                        "creator": 'UI Web',
+                        "creator": "UI Web",
                         "create_time": date,
-                        "update_controller_action": 'UI Web New',
-                        "owner": ''
+                        "update_controller_action": "UI Web New",
+                        "owner": ""
                     };
                 } else {
-                    this._rev = data.rev;
+                    if(data.selected != undefined) {
+                        selected = data.selected;
+                    }
+                    this._rev = data._rev;
                     meta = {
-                        "create_time": data.date,
                         "update_time": date,
-                        "update_user":  'UI Web',
-                        "update_action": 0,
+                        "update_user":  data.meta.update_user,
+                        "update_action": data.meta.update_action,
                         "creator": data.meta.creator,
                         "create_time": data.meta.create_time,
-                        "update_controller_action": 'UI Web New',
-                        "owner": ''
+                        "update_controller_action": data.meta.update_controller_action,
+                        "owner": data.meta.owner
                     };
                 }
 
                 this.date = date;
                 this.delete = false;
                 this.obj_id = id;
-                this.owner = owner;
-                this.metadata = data.metadata;
-                this.selected = data.selected;
+                this.owner = "";
+                this.metadata = meta;
+                this.selected = selected;
                 this.type = "VulnerabilityWeb";
                 this.web = true;
 
+                // user-generated content
                 this._attachments = evidence;
                 this.data = data.data;
                 this.desc = data.desc;

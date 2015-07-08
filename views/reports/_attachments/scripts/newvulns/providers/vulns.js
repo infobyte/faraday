@@ -29,7 +29,7 @@ angular.module('faradayApp')
 
         vulnsManager._load = function(id, ws, deferred) {
             var self = this;
-            $http.get(BASEURL + '/' + ws + '/' + id)
+            $http.get(BASEURL + ws + '/' + id)
                 .success(function(data) {
                     var vuln = self._get(data._id, data);
                     deferred.resolve(vuln);
@@ -66,7 +66,7 @@ angular.module('faradayApp')
             if(vuln && !force_reload) {
                 deferred.resolve(vuln);
             } else {
-                this._load(id, deferred);
+                this._load(id, ws, deferred);
             } 
 
             return deferred.promise;
@@ -74,16 +74,14 @@ angular.module('faradayApp')
 
         vulnsManager.createVuln = function(ws, vulnData) {
             var deferred = $q.defer(),
-            self = this,
-            types = ["Vulnerability", "VulnerabilityWeb"],
-            type = types.indexOf(vulnData.type);
+            self = this;
 
-            if(vulnData.type > -1) {
+            if(vulnData.type === "Vulnerability") {
                 var vuln = new Vuln(vulnData);
             } else if(vulnData.type === "VulnerabilityWeb") {
                 var vuln = new WebVuln(vulnData);
             } else {
-                deferred.reject("Error: invalid vulnerability type");
+                deferred.reject("Error: Cannot create vulnerability using type '" + vulnData.type + "'");
             }
 
             if(vuln != undefined) {

@@ -40,7 +40,7 @@ angular.module('faradayApp')
         };
 
         $scope.cancel = function() {
-            $modalInstance.close();
+            $modalInstance.dismiss('cancel');
         };
 
         init();

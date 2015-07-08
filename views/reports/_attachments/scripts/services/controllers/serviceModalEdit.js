@@ -7,7 +7,7 @@ angular.module('faradayApp')
         ['$scope', '$modalInstance', '$routeParams', 'services','service', 'servicesManager', 'commonsFact', 'dashboardSrv',
         function($scope, $modalInstance, $routeParams, services, service, servicesManager, commons, dashboardSrv) {
 
-        init = function(){
+        init = function() {
             // current Workspace
             var ws = $routeParams.wsId;
             // default scope (service)
@@ -15,7 +15,7 @@ angular.module('faradayApp')
                 "ports": []
             };
 
-            if(service.length == 1){
+            if(service.length == 1) {
                 $scope.service = {
                     "name": service[0].name,
                     "description": service[0].description,
@@ -27,7 +27,7 @@ angular.module('faradayApp')
                     "status": service[0].status,
                     "version": service[0].version,
                 };
-            }else{
+            } else {
                 $scope.services_selected = service;
             }
         };

@@ -12,50 +12,70 @@ angular.module('faradayApp')
 
         Vuln.prototype = {
             set: function(data) {
-                if(data._id === undefined) {
-                    //data['_id'] = CryptoJS.SHA1(data.name).toString();
-                    //// couch ID including parent id
-                    //var id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
-                    //// object ID without parent
-                    //var sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString();
-                }
                 var evidence = [],
-                date = data.date * 1000;
+                id = CryptoJS.SHA1(data.name + "." + data.desc).toString(),
+                meta = {},
+                now = new Date(),
+                date = now.getTime(),
+                selected = false;
+
                 if(typeof(data.attachments) != undefined && data.attachments != undefined) {
                     for(var attachment in data.attachments) {
-                        evidence.push(attachment);
+                        if(data.attachments.hasOwnProperty(attachment)) {
+                            evidence.push(attachment);
+                        }
                     }
                 }
-                    "meta":         {
-                        'create_time': myEpoch,
-                        "update_time": myEpoch,
-                        "update_user":  'UI Web',
-                        'update_action': 0,
-                        'creator': 'UI Web', 
-                        'create_time': myEpoch,
-                        'update_controller_action': 'UI Web New',
-                        'owner': 'anonymous'
-                    },
-                this._rev = data.rev;
+
+                // new vuln
+                if(data._id === undefined) {
+                    data['_id'] = data.parent + "." + id;
+                    meta = {
+                        "update_time": date,
+                        "update_user": "",
+                        "update_action": 0,
+                        "creator": "UI Web",
+                        "create_time": date,
+                        "update_controller_action": "UI Web New",
+                        "owner": ""
+                    };
+                } else {
+                    if(data.selected != undefined) {
+                        selected = data.selected;
+                    }
+                    this._rev = data._rev;
+                    meta = {
+                        "update_time": date,
+                        "update_user":  data.meta.update_user,
+                        "update_action": data.meta.update_action,
+                        "creator": data.meta.creator,
+                        "create_time": data.meta.create_time,
+                        "update_controller_action": data.meta.update_controller_action,
+                        "owner": data.meta.owner
+                    };
+                }
+
+                this.date = date;
+                this.metadata = meta;
+                this.obj_id = id;
+                this.owner = "";
+                this.selected = selected;
+                this.type = "Vulnerability";
+                this.web = false;
+
+                // user-generated content
                 this._attachments = evidence;
                 this.data = data.data;
-                this.date = date;
                 this.delete = false;
                 this.desc = data.desc;
                 this.easeofresolution = data.easeofresolution;
                 this.impact = data.impact;
-                this.metadata = data.metadata;
                 this.name = data.name;
-                this.obj_id = data.obj_id;
                 this.owned = data.owned;
-                this.owner = data.owner;
                 this.parent = parent;
                 this.refs = data.refs;
                 this.resolution = data.resolution;
-                this.selected = data.selected;
                 this.severity = data.severity;
-                this.type = "Vulnerability";
-                this.web = false;
             },
             delete: function(ws) {
                 var self = this;

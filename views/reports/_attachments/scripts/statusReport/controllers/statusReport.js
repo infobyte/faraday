@@ -360,8 +360,8 @@ angular.module('faradayApp')
             vulnsManager.createVuln($scope.workspace, vuln).then(function() {
                 console.log("success");
                 $scope.vulns.push(vuln);
-            }, function() {
-                console.log("error");
+            }, function(e) {
+                console.error(e);
             });
             /*
             // this shouldnt be necessary, we should use Angular formatting options directly in the partial

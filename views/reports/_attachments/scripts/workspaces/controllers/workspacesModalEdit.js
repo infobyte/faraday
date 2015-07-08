@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('workspacesModalEdit', ['$modalInstance', '$scope', 'workspace',
-        function($modalInstance, $scope, workspace) {
+    .controller('workspacesModalEdit', ['$modalInstance', '$scope', 'ws',
+        function($modalInstance, $scope, ws) {
         $scope.minDate;
         $scope.dateOptions;
         $scope.workspace;
@@ -15,8 +15,8 @@ angular.module('faradayApp')
                 formatYear: 'yy',
                 startingDay: 1
             };
-        	$scope.workspace = workspace;
 
+        	$scope.workspace = angular.copy(ws);
         };
 
         //DATE PICKER        

@@ -146,7 +146,8 @@ angular.module('faradayApp')
                 "type":         ws.type
             };
             workspacesFact.update(workspace).then(function(resp) {
-                $scope.onSuccessEdit(resp);
+                workspace._rev = resp.rev;
+                $scope.onSuccessEdit(workspace);
             });
         };
 
@@ -158,12 +159,9 @@ angular.module('faradayApp')
 
         // Modals methods
         $scope.new = function(){ 
-            $scope.newworkspace = {};
-
             $scope.modal = $modal.open({
                 templateUrl: 'scripts/workspaces/partials/modalNew.html',
-                controller: 'workspacesCtrl',
-                scope: $scope,
+                controller: 'workspacesModalNew',
                 size: 'lg'
             });
 
@@ -174,33 +172,30 @@ angular.module('faradayApp')
 
         };
 
-        $scope.okNew = function(){
-            $scope.modal.close($scope.newworkspace);
-        };
-
         $scope.edit = function(){ 
             var workspace;
             $scope.workspaces.forEach(function(w) {
                 if(w.selected) {
                     workspace = w;
-                    return;
                 }
             });
 
             if(workspace){
-                $scope.modal = $modal.open({
+                var modal = $modal.open({
                     templateUrl: 'scripts/workspaces/partials/modalEdit.html',
                     controller: 'workspacesModalEdit',
                     size: 'lg',
                     resolve: {
-                        workspace: function(){
+                        ws: function() {
                             return workspace;
                         }
                     }
                 });
 
-                $scope.modal.result.then(function(workspace) {
-                    $scope.update(workspace); 
+                modal.result.then(function(workspace) {
+                    if(workspace != undefined){
+                        $scope.update(workspace); 
+                    }
                 });
             } else {
                 var modal = $modal.open({

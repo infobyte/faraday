@@ -234,6 +234,7 @@ angular.module('faradayApp')
 
         // deletes the vulns in the array
         $scope.remove = function(ids) {
+            var errors = [];
             ids.forEach(function(id){
                 vulnsManager.deleteVuln($scope.workspace, id).then(function(){
                     var index = -1;
@@ -244,10 +245,26 @@ angular.module('faradayApp')
                         }
                     }
                     $scope.vulns.splice(index, 1);
-                }), function(error){
-                    console.log(error);
-                }
+                }, function(errorMsg){
+                    errors.push(errors);
+                });
             });
+            if (errors.length > 0) {
+                errorMsg = "Some errors were received:\n";
+                errors.forEach(function(error){
+                    errorMsg += error + "\n";
+                });
+                $modal.open(config = {
+                    templateUrl: 'scripts/partials/modal-ko.html',
+                    controller: 'modalKoCtrl',
+                    size: 'sm',
+                    resolve: {
+                        msg: function() {
+                            return errorMsg;
+                        }
+                    }
+                });
+            }
         };
 
         // updates all vulns with selected == true
@@ -370,11 +387,19 @@ angular.module('faradayApp')
         };
 
         $scope.insert = function(vuln) {
-            vulnsManager.createVuln($scope.workspace, vuln).then(function() {
-                console.log("success");
+            vulnsManager.createVuln($scope.workspace, vuln).then(function(vuln) {
                 $scope.vulns.push(vuln);
-            }, function(e) {
-                console.error(e);
+            }, function(message){
+                $modal.open(config = {
+                    templateUrl: 'scripts/partials/modal-ko.html',
+                    controller: 'modalKoCtrl',
+                    size: 'sm',
+                    resolve: {
+                        msg: function() {
+                            return message;
+                        }
+                    }
+                });
             });
             /*
             // this shouldnt be necessary, we should use Angular formatting options directly in the partial
@@ -387,23 +412,23 @@ angular.module('faradayApp')
         };
 
         $scope.new = function() {
-                var modal = $modal.open({
-                    templateUrl: 'scripts/statusReport/partials/modalNew.html',
-                    controller: 'modalNewCtrl',
-                    size: 'lg',
-                    resolve: {
-                        severities: function() {
-                            return $scope.severities;
-                        },
-                        workspace: function() {
-                            return $scope.workspace;
-                        }
+            var modal = $modal.open({
+                templateUrl: 'scripts/statusReport/partials/modalNew.html',
+                controller: 'modalNewCtrl',
+                size: 'lg',
+                resolve: {
+                    severities: function() {
+                        return $scope.severities;
+                    },
+                    workspace: function() {
+                        return $scope.workspace;
                     }
-                 });
+                }
+             });
 
-                modal.result.then(function(data) {
-                    $scope.insert(data);
-                });
+            modal.result.then(function(data) {
+                $scope.insert(data);
+            });
         };
 
         $scope.checkAll = function() {

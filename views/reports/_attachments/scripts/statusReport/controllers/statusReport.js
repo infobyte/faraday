@@ -267,6 +267,45 @@ angular.module('faradayApp')
             }
         };
 
+        // action triggered from DELETE button
+        $scope.delete = function() {
+            selected = getSelectedVulns($scope.vulns, true);
+
+            if(selected.length > 0) {
+                var modal = $modal.open({
+                    templateUrl: 'scripts/commons/partials/modalDelete.html',
+                    controller: 'commonsModalDelete',
+                    size: 'lg',
+                    resolve: {
+                        msg: function() {
+                            var msg = "";
+                            if(selected.length == 1) {
+                                msg = "A vulnerability will be deleted.";
+                            } else {
+                                msg = selected.length + " vulnerabilities will be deleted.";
+                            }
+                            msg += " This action cannot be undone. Are you sure you want to proceed?";
+                            return msg;
+                        }
+                    }
+                });
+
+                modal.result.then(function() {
+                    $scope.remove(selected);
+                });
+            } else {
+                var modal = $modal.open({
+                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    controller: 'commonsModalKoCtrl',
+                    resolve: {
+                        msg: function() {
+                            return 'No vulnerabilities were selected to delete';
+                        }
+                    }
+                });
+            }
+        };
+
         // updates all vulns with selected == true
         // I BROKE THIS DO IT FROM SCRATCH WITH vulnsManager
         $scope.update = function(data) {
@@ -306,45 +345,6 @@ angular.module('faradayApp')
                 }
                 $scope.vulns.push(v);
             });
-        };
-
-        // action triggered from DELETE button
-        $scope.delete = function() {
-            selected = getSelectedVulns($scope.vulns, true);
-
-            if(selected.length > 0) {
-                var modal = $modal.open({
-                    templateUrl: 'scripts/commons/partials/modalDelete.html',
-                    controller: 'commonsModalDelete',
-                    size: 'lg',
-                    resolve: {
-                        msg: function() {
-                            var msg = "";
-                            if(selected.length == 1) {
-                                msg = "A vulnerability will be deleted.";
-                            } else {
-                                msg = selected.length + " vulnerabilities will be deleted.";
-                            }
-                            msg += " This action cannot be undone. Are you sure you want to proceed?";
-                            return msg;
-                        }
-                    }
-                });
-
-                modal.result.then(function() {
-                    $scope.remove(selected);
-                });
-            } else {
-                var modal = $modal.open({
-                    templateUrl: 'scripts/commons/partials/modalKO.html',
-                    controller: 'commonsModalKoCtrl',
-                    resolve: {
-                        msg: function() {
-                            return 'No vulnerabilities were selected to delete';
-                        }
-                    }
-                });
-            }
         };
 
         // action triggered from EDIT button

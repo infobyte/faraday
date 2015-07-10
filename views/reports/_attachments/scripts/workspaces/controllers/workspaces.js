@@ -88,6 +88,7 @@ angular.module('faradayApp')
                     $scope.workspaces[i].description = workspace.description;
                     $scope.workspaces[i].duration.start = workspace.duration.start;
                     $scope.workspaces[i].duration.end = workspace.duration.end;
+                    $scope.workspaces[i].scope = workspace.scope;
                     break;
                 }
             };

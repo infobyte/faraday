@@ -190,7 +190,7 @@ describe('workspacesCtrl', function() {
                 },
                 "name": "ws2",
                 "sdate": 1410832741.48194,
-                "scope": "",
+                "scope": "Nuevo Scope",
                 "selected": true,
                 "type": "Workspace",
             };
@@ -199,10 +199,11 @@ describe('workspacesCtrl', function() {
             $scope.$apply();
             for(var i = 0; i < $scope.workspaces.length; i++){
                 if($scope.workspaces[i]._id == workspace._id){                
-                    expect($scope.workspaces[i].description).toEqual("Nuevo");
-                    expect($scope.workspaces[i]._rev).toEqual("36-e56619bfa3a9ee9b09650d3fc8878d2c");
-                    expect($scope.workspaces[i].duration.start).toEqual(141083274148194);
-                    expect($scope.workspaces[i].duration.end).toEqual(141083274148194);
+                    expect($scope.workspaces[i].description).toEqual(workspace.description);
+                    expect($scope.workspaces[i]._rev).toEqual(workspace._rev);
+                    expect($scope.workspaces[i].duration.start).toEqual(workspace.duration.start);
+                    expect($scope.workspaces[i].duration.end).toEqual(workspace.duration.end);
+                    expect($scope.workspaces[i].scope).toEqual(workspace.scope);
                 }
             }
         });

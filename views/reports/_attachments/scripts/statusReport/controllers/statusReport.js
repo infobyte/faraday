@@ -4,11 +4,11 @@
 
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams',
+                    ['$scope', '$filter', '$routeParams',
                     '$location', '$modal', '$cookies', '$q', 'BASEURL',
                     'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager',
                     'vulnsManager', 'workspacesFact',
-                    function($scope, $filter, $route, $routeParams,
+                    function($scope, $filter, $routeParams,
                         $location, $modal, $cookies, $q, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, hostsManager,
                         vulnsManager, workspacesFact) {
@@ -55,7 +55,6 @@ angular.module('faradayApp')
             // current workspace
             $scope.workspace = $routeParams.wsId;
             $scope.interfaces = [];
-
             // current search
             $scope.search = $routeParams.search;
             $scope.searchParams = "";
@@ -108,6 +107,24 @@ angular.module('faradayApp')
                 "website":          false
             };
         };
+
+        // this methos recieves an array of vulns and returns
+        // a new array with the selected vulns, if justIds is not true,
+        // or a new array with the ids of the selected vulns, if it's true
+        getSelectedVulns = function(aVulns, justIds){
+            var selected = [];
+
+            aVulns.forEach(function(v) {
+                if(v.selected) {
+                    if (justIds === true){
+                        selected.push(v._id);
+                    } else {
+                        selected.push(v);
+                    }
+                }
+            });
+            return selected;
+        }
 
         // returns scope vulns as CSV obj
         // toggles column sort field
@@ -215,16 +232,20 @@ angular.module('faradayApp')
             return obj;
         };
 
-        // deletes all vulns with selected == true
-        $scope.remove = function() {
-            var old = $scope.vulns;
-            $scope.vulns = [];
-
-            old.forEach(function(v) {
-                if(v.selected) {
-                    statusReportFact.removeVulns($scope.workspace, v);
-                } else {
-                    $scope.vulns.push(v);
+        // deletes the vulns in the array
+        $scope.remove = function(ids) {
+            ids.forEach(function(id){
+                vulnsManager.delete($scope.workspace, id).then(function(){
+                    var index = -1;
+                    for (var i=0; i < $scope.vulns.length; i++){
+                        if ($scope.vulns[i]._id === id) {
+                            index = i;
+                            break;
+                        }
+                    }
+                    $scope.vulns.splice(index, 1);
+                }), function(error){
+                    console.log(error);
                 }
             });
         };
@@ -272,17 +293,9 @@ angular.module('faradayApp')
 
         // action triggered from DELETE button
         $scope.delete = function() {
-            var selected = false;
-            var i = 0;
+            selected = getSelectedVulns($scope.vulns, true);
 
-            $scope.vulns.forEach(function(v) {
-                if(v.selected) {
-                    selected = true;
-                    i++;
-                }
-            });
-
-            if(selected) {
+            if(selected.length > 0) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/commons/partials/modalDelete.html',
                     controller: 'commonsModalDelete',
@@ -290,10 +303,10 @@ angular.module('faradayApp')
                     resolve: {
                         msg: function() {
                             var msg = "";
-                            if(i == 1) {
+                            if(selected.length == 1) {
                                 msg = "A vulnerability will be deleted.";
                             } else {
-                                msg = i + " vulnerabilities will be deleted.";
+                                msg = selected.length + " vulnerabilities will be deleted.";
                             }
                             msg += " This action cannot be undone. Are you sure you want to proceed?";
                             return msg;
@@ -302,7 +315,7 @@ angular.module('faradayApp')
                 });
 
                 modal.result.then(function() {
-                    $scope.remove();
+                    $scope.remove(selected);
                 });
             } else {
                 var modal = $modal.open({

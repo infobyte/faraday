@@ -88,7 +88,7 @@ describe('workspacesCtrl', function() {
                 },
                 update: function(workspace) {
                     var deferred = _$q_.defer();
-                    deferred.resolve({"data":{"ok":"true", "id":"ws1", "rev":"36-e56619bfa3a9ee9b09650d3fc8878d2c"}});
+                    deferred.resolve({"ok":"true", "id":"ws1", "rev":"36-e56619bfa3a9ee9b09650d3fc8878d2c"});
                     return deferred.promise;
                 },
                 get: function(workspace_name){
@@ -134,8 +134,6 @@ describe('workspacesCtrl', function() {
             expect($scope.wss).toBeDefined();
             expect($scope.objects).toBeDefined();
             expect($scope.workspaces).toBeDefined();
-            expect($scope.minDate).toBeDefined();
-            expect($scope.dateOptions).toBeDefined();
             expect($scope.hash).toBeDefined();
         });
         it('variables have proper values after execution', function() {
@@ -160,46 +158,6 @@ describe('workspacesCtrl', function() {
         beforeEach(function() {
             spyOn(workspacesFactMock, 'update').and.callThrough();
         });
-        it('variables changed after execution of onSuccessEdit function', function() {
-            $scope.workspaces = [{
-                "_id": "ws2",
-                "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
-                "children": [],
-                "customer": "",
-                "description": "Testing Workspace",
-                "duration": {
-                    "start": 1410832741.48194,
-                    "end": 1410832741.48194
-                },
-                "name": "ws2",
-                "scope": "",
-                "sdate": 1410832741.48194,
-                "selected": true,
-                "type": "Workspace",
-            }];
-            var tmp_ws2_modified = {
-                "_id": "ws2",
-                "_rev": "10-bd88abf79cf2b7e8b419cd4387c64bef",
-                "children": [],
-                "customer": "",
-                "description": "Nuevo",
-                "duration": {
-                    "start": 141083274148194,
-                    "end": 141083274148194
-                },
-                "name": "ws2",
-                "sdate": 1410832741.48194,
-                "scope": "",
-                "selected": true,
-                "type": "Workspace",
-            };
-            $scope.onSuccessEdit(tmp_ws2_modified);
-            $scope.$apply();
-            expect($scope.workspaces[0].description).toEqual("Nuevo");
-            expect($scope.workspaces[0]._rev).toEqual("10-bd88abf79cf2b7e8b419cd4387c64bef");
-            expect($scope.workspaces[0].duration.start).toEqual(141083274148194);
-            expect($scope.workspaces[0].duration.end).toEqual(141083274148194);
-        });
         it('variables are defined after execution of update function', function() {
 
             $scope.update(tmp_ws2);
@@ -219,27 +177,34 @@ describe('workspacesCtrl', function() {
             expect(workspace.selected).toBeDefined();
             expect(workspace.type).toBeDefined();
         });
-        it('the object that comes to the update function it is the same as is sended to update Mock', function() {
-            $scope.update(tmp_ws2);
+        it('variables changed after execution of update function', function() {
+            var tmp_ws2_modified = {
+                "_id": "ws2",
+                "_rev": "10-bd88abf79cf2b7e8b419cd4387c64bef",
+                "children": [],
+                "customer": "",
+                "description": "Nuevo",
+                "duration": {
+                    "start": 141083274148194,
+                    "end": 141083274148194
+                },
+                "name": "ws2",
+                "sdate": 1410832741.48194,
+                "scope": "",
+                "selected": true,
+                "type": "Workspace",
+            };
             $scope.$apply();
-            expect(workspacesFactMock.update).toHaveBeenCalled();
-
-            expect(workspace._id).toEqual(tmp_ws2._id);
-            expect(workspace._rev).toEqual(tmp_ws2._rev);
-            expect(workspace.children).toEqual(tmp_ws2.children);
-            expect(workspace.customer).toEqual(tmp_ws2.customer);
-            expect(workspace.description).toEqual(tmp_ws2.description);
-            expect(workspace.duration.start).toEqual(tmp_ws2.duration.startDate);
-            expect(workspace.duration.end).toEqual(tmp_ws2.duration.endDate);
-            expect(workspace.name).toEqual(tmp_ws2.name);
-            expect(workspace.sdate).toEqual(tmp_ws2.sdate);
-            expect(workspace.scope).toEqual(tmp_ws2.scope);
-            expect(workspace.selected).toEqual(tmp_ws2.selected);
-            expect(workspace.type).toEqual(tmp_ws2.type);
-
-            expect(typeof(start)).not.toEqual("object");
-            expect(typeof(end)).not.toEqual("object");
-
+            $scope.update(tmp_ws2_modified);
+            $scope.$apply();
+            for(var i = 0; i < $scope.workspaces.length; i++){
+                if($scope.workspaces[i]._id == workspace._id){                
+                    expect($scope.workspaces[i].description).toEqual("Nuevo");
+                    expect($scope.workspaces[i]._rev).toEqual("36-e56619bfa3a9ee9b09650d3fc8878d2c");
+                    expect($scope.workspaces[i].duration.start).toEqual(141083274148194);
+                    expect($scope.workspaces[i].duration.end).toEqual(141083274148194);
+                }
+            }
         });
     });
 

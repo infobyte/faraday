@@ -235,7 +235,7 @@ angular.module('faradayApp')
         // deletes the vulns in the array
         $scope.remove = function(ids) {
             ids.forEach(function(id){
-                vulnsManager.delete($scope.workspace, id).then(function(){
+                vulnsManager.deleteVuln($scope.workspace, id).then(function(){
                     var index = -1;
                     for (var i=0; i < $scope.vulns.length; i++){
                         if ($scope.vulns[i]._id === id) {

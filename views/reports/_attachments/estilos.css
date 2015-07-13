@@ -505,18 +505,18 @@ table.table tbody tr:hover{
     border:1px solid;
 }
 #compound .tablesorter thead th:last-child{width: 19%}
-    #compound .col-lg-6 article.panel{
+    article#compound.panel{
         height: 93px;
         padding-bottom: 428px;
         background: transparent;
         border: 0px solid;
     }
-    #compound article.panel-default table{margin-bottom: 0px}
-    #compound article.panel-default input{
+    article#compound.panel-default table{margin-bottom: 0px}
+    article#compound.panel-default input{
         width: 90px;
         float: right;
     }
-    #compound article.panel-default input.btn.btn-danger{width: 43px}
+    article#compound.panel-default input.btn.btn-danger{width: 43px}
 div.col-md-6.left-big-box{width: 45%;margin: -200px 0 5px}
 div.col-md-6.left-big-box table.table-striped.last-vuln td:nth-child(4){word-break: break-all;}
 
@@ -615,6 +615,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
     #vulns-by-price .main{width:100% !important;height: 180px !important;}
         #vulns .columna.unsexto{margin: auto;}
 #summarized .main{height:197px}
+#summarized .panel.panel-default,#byservices .panel.panel-default{max-height: 239px}
 #byservices .main{height:197px}
     #byservices .alert, #summarized .alert{width: 100%}
 #compound header, #list header{min-height: 40px;}
@@ -649,7 +650,6 @@ text.host-name{font-size: 13px;font-weight:bold;}
     section .col-lg-2{margin: 0px -2% 0px 2px;padding-right: 1.9%;}
     .col-lg-6 .panel{margin-bottom: 10px}
     #list .col-lg-6, #vulns .col-lg-6, #vulns-by-price .col-lg-6{width: 55%;float: right;margin-bottom: 5px}
-    #compound .col-lg-6{width: 45%;}
 
     .panel{margin-bottom: 1%!important}
         article.panel > span{
@@ -753,11 +753,12 @@ span.input-group-addon.button-radius{
 div.input-margin{margin: 4px 0;}
 div.col-md-8.protocol input#protocol{margin-top: 35px}
 div#treemap_container{margin: 5% auto 0}
-div#compound div.showPagination{margin-bottom: 30px}
-div#compound .showPagination input.form-control{width:110px;}
-div#compound .showPagination div.form-group{margin-top: 10px;}
-div#compound article.panel-default input{width: 90px;float: right}
-div#compound .showPagination input#vuln-per-page{width: 75px!important;margin-right: 15%}
+article#compound div.showPagination{margin-bottom: 30px}
+article#compound .showPagination input.form-control{width:110px;}
+article#compound .showPagination div.form-group{margin-top: 10px;}
+article#compound.panel-default input{width: 90px;float: right}
+
+article#compound .showPagination input#vuln-per-page{width: 75px!important;margin-right: 15%}
 aside .alert.alert-danger.alert-dismissible{
     position: fixed;
     top: 45%;
@@ -891,3 +892,6 @@ aside .alert.alert-danger.alert-dismissible{
     text-align: center;
     width: 500px;
 }
+.col-lg-left{width: 46%!important;margin-top: -30px;}
+.col-lg-right{width: 53%!important;padding-left: 0px!important;}
+.no-margin-bottom{margin-bottom: 0px!important;}

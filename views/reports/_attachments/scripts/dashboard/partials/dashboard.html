@@ -24,11 +24,20 @@
             </div><!-- .reports -->
             <div ng-controller="graphicsBarCtrl" ng-include="'scripts/dashboard/partials/graphics-bar.html'"></div>
             <div ng-controller="summarizedCtrl" ng-include="'scripts/dashboard/partials/summarized.html'"></div>
-            <div ng-controller="summarizedCtrl" ng-include="'scripts/dashboard/partials/vulns-by-severity.html'"></div>
-            <div ng-controller="vulnsbypriceCtrl" ng-include="'scripts/dashboard/partials/vulns-by-price.html'"></div>
-            <div ng-controller="summarizedCtrl" ng-include="'scripts/dashboard/partials/last-vulns.html'"></div>
-            <div ng-controller="summarizedCtrl" ng-include="'scripts/dashboard/partials/compound.html'"></div>
-            <div ng-controller="summarizedCtrl" ng-include="'scripts/dashboard/partials/commands-list.html'"></div>
+            <div class="row">
+                <div class="col-lg-6 col-lg-left">
+                    <div ng-controller="summarizedCtrl" ng-include="'scripts/dashboard/partials/vulns-by-pentester.html'"></div>
+                    <div ng-controller="summarizedCtrl" ng-include="'scripts/dashboard/partials/last-vulns.html'"></div>
+                    <div ng-controller="summarizedCtrl" ng-include="'scripts/dashboard/partials/compound.html'"></div>
+                </div>
+                <div class="col-lg-6 col-lg-right">
+                    <div ng-controller="summarizedCtrl" ng-include="'scripts/dashboard/partials/vulns-by-severity.html'"></div>
+                    <div ng-controller="vulnsbypriceCtrl" ng-include="'scripts/dashboard/partials/vulns-by-price.html'"></div>
+                    <div ng-controller="summarizedCtrl" ng-include="'scripts/dashboard/partials/timeline.html'"></div>
+                    <div ng-controller="summarizedCtrl" ng-include="'scripts/dashboard/partials/commands-list.html'"></div>
+                    <div ng-controller="summarizedCtrl" ng-include="'scripts/dashboard/partials/tags-cloud.html'"></div>
+                </div>
+            </div>
         </div><!-- #reports-main -->
     </div><!-- .right-main -->
 </section>

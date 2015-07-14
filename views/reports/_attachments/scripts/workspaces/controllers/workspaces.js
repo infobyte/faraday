@@ -146,8 +146,7 @@ angular.module('faradayApp')
                 "selected":     ws.selected,
                 "type":         ws.type
             };
-            workspacesFact.update(workspace).then(function(resp) {
-                workspace._rev = resp.rev;
+            workspacesFact.update(workspace).then(function(workspace) {
                 $scope.onSuccessEdit(workspace);
             });
         };

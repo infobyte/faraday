@@ -94,7 +94,7 @@ angular.module('faradayApp')
                     controller: 'serviceModalEdit',
                     size: 'lg',
                     resolve: {
-                        service: function(){
+                        service: function() {
                             return selected_service;
                         },
 	                    services: function() {

@@ -156,7 +156,7 @@ angular.module('faradayApp')
             document_url = BASEURL + workspace.name + '/' + workspace.name + '?rev=' + workspace._rev;
             $http.put(document_url, workspace).success(function(data){
                 workspace._rev = data.rev;
-                deferred.resolve(data);
+                deferred.resolve(workspace);
             });
             return deferred.promise;
         };

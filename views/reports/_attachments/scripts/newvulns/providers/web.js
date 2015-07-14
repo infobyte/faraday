@@ -46,15 +46,16 @@ angular.module('faradayApp')
                     this._rev = data._rev;
                     meta = {
                         "update_time": date,
-                        "update_user":  data.meta.update_user,
-                        "update_action": data.meta.update_action,
-                        "creator": data.meta.creator,
-                        "create_time": data.meta.create_time,
-                        "update_controller_action": data.meta.update_controller_action,
-                        "owner": data.meta.owner
+                        "update_user":  data.metadata.update_user,
+                        "update_action": data.metadata.update_action,
+                        "creator": data.metadata.creator,
+                        "create_time": data.metadata.create_time,
+                        "update_controller_action": data.metadata.update_controller_action,
+                        "owner": data.metadata.owner
                     };
                 }
 
+                this._id = data['_id'];
                 this.date = date;
                 this.delete = false;
                 this.obj_id = id;
@@ -86,20 +87,21 @@ angular.module('faradayApp')
                 this.website = data.website;
             },
             delete: function(ws) {
-                var self = this;
-                return $http.delete(BASEURL + ws + "/" + self._id);
+                var self = this,
+                url = BASEURL + ws + "/" + self._id;
+                return $http.delete(url);
             },
             update: function(data, ws) {
-                var self = this;
-                return $http.post(BASEURL + ws + "/" + self._id, data)
+                var self = this,
+                url = BASEURL + ws + "/" + self._id;
+                return $http.post(url, data)
                     .success(function(data) {
-                        if(data.id == self._id){
-                            self._rev = data.rev;
-                        }
+                        self._rev = data.rev;
                     });
             },
             save: function(ws) {
                 var self = this,
+                url = BASEURL + ws + "/" + self._id,
                 vuln = {};
                 angular.extend(vuln, self);
                 // remove UI-specific fields
@@ -107,14 +109,12 @@ angular.module('faradayApp')
                 delete vuln.delete;
                 delete vuln.selected;
                 delete vuln.web;
-                return $http.post(BASEURL + ws + "/" + self._id, vuln)
+                return $http.post(url, vuln)
                     .success(function(data) {
-                        if(data.id == self._id){
-                            self._rev = data.rev;
-                        }
+                        self._rev = data.rev;
                     });
             }
-        }
+        };
 
         return WebVuln;
     }]);

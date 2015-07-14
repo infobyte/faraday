@@ -88,7 +88,22 @@ describe('workspacesCtrl', function() {
                 },
                 update: function(workspace) {
                     var deferred = _$q_.defer();
-                    deferred.resolve({"ok":"true", "id":"ws1", "rev":"36-e56619bfa3a9ee9b09650d3fc8878d2c"});
+                    deferred.resolve({
+                        "_id": "ws2",
+                        "_rev": "36-e56619bfa3a9ee9b09650d3fc8878d2c",
+                        "children": [],
+                        "customer": "",
+                        "description": "Nuevo",
+                        "duration": {
+                            "start": 141083274148194,
+                            "end": 141083274148194
+                        },
+                        "name": "ws2",
+                        "sdate": 1410832741.48194,
+                        "scope": "Nuevo Scope",
+                        "selected": true,
+                        "type": "Workspace",
+                    });
                     return deferred.promise;
                 },
                 get: function(workspace_name){
@@ -198,9 +213,9 @@ describe('workspacesCtrl', function() {
             $scope.update(tmp_ws2_modified);
             $scope.$apply();
             for(var i = 0; i < $scope.workspaces.length; i++){
-                if($scope.workspaces[i]._id == workspace._id){                
+                if($scope.workspaces[i]._id == workspace._id){
                     expect($scope.workspaces[i].description).toEqual(workspace.description);
-                    expect($scope.workspaces[i]._rev).toEqual(workspace._rev);
+                    expect($scope.workspaces[i]._rev).not.toEqual(workspace._rev);
                     expect($scope.workspaces[i].duration.start).toEqual(workspace.duration.start);
                     expect($scope.workspaces[i].duration.end).toEqual(workspace.duration.end);
                     expect($scope.workspaces[i].scope).toEqual(workspace.scope);

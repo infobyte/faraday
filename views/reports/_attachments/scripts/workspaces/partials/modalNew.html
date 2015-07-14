@@ -18,7 +18,7 @@
                             <label class="sr-only" for="wsp-name">Workspace Name</label>
                             <input type="text" class="form-control"
                                                ng-pattern=/^[a-z][a-z0-9\_\$\(\)\+\-\/]*$/ id="vuln-name" placeholder="Workspace Name"
-                                                                                  ng-model="newworkspace.name" required/>
+                                                                                  ng-model="workspace.name" required/>
                             <div ng-if="form.$invalid">
                                 <div class="alert alert-danger target_not_selected" role="alert" ng-hide="">
                                     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
@@ -34,7 +34,7 @@
                     <div class="col-md-12">
                         <label class="sr-only" for="vuln-desc">Workspace Description</label>
                         <textarea class="form-control" id="vuln-desc"
-                                                       placeholder="Description" ng-model="newworkspace.description"
+                                                       placeholder="Description" ng-model="workspace.description"
                                                                                  >
                         </textarea>
                     </div>
@@ -44,7 +44,7 @@
                 <div class="col-md-6">
                     <label class="sr-only" for="work-start">Start Date</label>
                     <p class="input-group">
-                      <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="newworkspace.start" is-open="openedStart" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="Start Date"  />
+                      <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="workspace.start" is-open="openedStart" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="Start Date"  />
                       <span class="input-group-btn">
                         <button type="button" class="btn btn-default" ng-click="open($event,true)"><i class="glyphicon glyphicon-calendar"></i></button>
                       </span>
@@ -53,7 +53,7 @@
                 <div class="col-md-6">
                     <label class="sr-only" for="work-end">End Date</label>
                     <p class="input-group">
-                      <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="newworkspace.end" is-open="openedEnd" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="End Date"  />
+                      <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="workspace.end" is-open="openedEnd" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="End Date"  />
                       <span class="input-group-btn">
                         <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
                       </span>
@@ -73,7 +73,7 @@
                 <div class="col-md-12">
                     <label class="sr-only" for="work-scope">Scope</label>
                     <textarea class="form-control" id="work-scope"
-                                                   placeholder="Scope" ng-model="newworkspace.scope"
+                                                   placeholder="Scope" ng-model="workspace.scope"
                                                                              >
                     </textarea>
                 </div>

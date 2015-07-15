@@ -143,7 +143,6 @@ angular.module('faradayApp')
                 "name":         ws.name,
                 "scope":        ws.scope,
                 "sdate":        ws.sdate,
-                "selected":     ws.selected,
                 "type":         ws.type
             };
             workspacesFact.update(workspace).then(function(workspace) {

@@ -142,16 +142,16 @@ describe('WebVuln', function() {
             expect(vuln._rev).toEqual("1234");
         });
 
-/*
         it('Update data', function() {
             var url = BASEURL + "ws/" + new_full_id;
 
             vuln = new WebVuln(new_data);
+            expect(vuln._rev).toBeUndefined();
 
             $httpBackend.when('POST', url).respond(201, {"rev": "1234"});
             $httpBackend.expect('POST', url);
 
-            vuln.save("ws");
+            vuln.update("ws", old_data);
 
             $httpBackend.flush();
 
@@ -163,15 +163,11 @@ describe('WebVuln', function() {
 
             vuln = new WebVuln(new_data);
 
-            $httpBackend.when('DELETE', url).respond(201, {"rev": "1234"});
             $httpBackend.expect('DELETE', url);
 
-            vuln.save("ws");
+            vuln.remove("ws");
 
             $httpBackend.flush();
-
-            expect(vuln._rev).toEqual("1234");
         });
-*/
     });
 });

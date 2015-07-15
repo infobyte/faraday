@@ -86,12 +86,12 @@ angular.module('faradayApp')
                 this.severity = data.severity;
                 this.website = data.website;
             },
-            delete: function(ws) {
+            remove: function(ws) {
                 var self = this,
                 url = BASEURL + ws + "/" + self._id;
                 return $http.delete(url);
             },
-            update: function(data, ws) {
+            update: function(ws, data) {
                 var self = this,
                 url = BASEURL + ws + "/" + self._id;
                 return $http.post(url, data)

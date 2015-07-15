@@ -256,7 +256,7 @@ describe('workspacesCtrl', function() {
             $scope.$apply();
 
             expect(workspace._id).toBeDefined();
-            expect(workspace._rev).toBeDefined();
+            expect(workspace._rev).not.toBeDefined();
             expect(workspace.customer).toBeDefined();
             expect(workspace.sdate).toBeDefined();
             expect(workspace.name).toBeDefined();

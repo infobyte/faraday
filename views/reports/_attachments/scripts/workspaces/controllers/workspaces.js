@@ -263,7 +263,6 @@ angular.module('faradayApp')
             if(start) start = start.getTime(); else start = "";
             workspace = {
                 "_id": wname,
-                "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
                 "customer": "",
                 "sdate": (new Date).getTime(),
                 "name": wname,

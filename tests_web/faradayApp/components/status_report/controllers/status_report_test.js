@@ -6,101 +6,13 @@ describe('statusReportCtrl', function() {
     var $controller,
         $scope;
 
-    // workspaces variables
-    var vuln1 = {
-        "_id": "1.2.3.4",
-        "_rev": "1-abe16726389e434ca3f37384ea76128e",
-        "name": "Internet Key Exchange (IKE) Aggressive Mode with Pre-Shared Key",
-        "parent": "1.2.3",
-        "resolution": "Be careful",
-        "refs": [
-           "CVE-2002-1623",
-           "7423",
-           "OSVDB:3820, CERT:886601"
-        ],
-        "metadata": {
-           "update_time": 1429643049.395857,
-           "update_user": "john",
-           "update_action": 0,
-           "creator": "john",
-           "create_time": 1429643049.395857,
-           "update_controller_action": "ModelControler.newVuln",
-           "owner": "john"
-        },
-        "owned": false,
-        "severity": "med",
-        "type": "Vulnerability",
-        "owner": "john",
-        "desc": "I'm scared!",
-        "data": "",
-        "description": "I'm scared!"
-    };
-    var vuln2 = {
-        "_id": "1.2.3.5",
-        "_rev": "1-abe16726389e434ca3f37384ea76128e",
-        "name": "Another vuln",
-        "parent": "1.2.3",
-        "resolution": "Be careful",
-        "refs": [
-           "CVE-2002-1623",
-           "7423",
-           "OSVDB:3820, CERT:886601"
-        ],
-        "metadata": {
-           "update_time": 1429643049.395857,
-           "update_user": "john",
-           "update_action": 0,
-           "creator": "john",
-           "create_time": 1429643049.395857,
-           "update_controller_action": "ModelControler.newVuln",
-           "owner": "john"
-        },
-        "owned": false,
-        "severity": "med",
-        "type": "Vulnerability",
-        "owner": "john",
-        "desc": "I'm scared!",
-        "data": "",
-        "description": "I'm scared!"
-    };
-    var vuln3 = {
-        "_id": "6.7.8.9",
-        "_rev": "3-f34c61eca3cb5ffc5654f710774708af",
-        "desc": "It was possible to identify the remote service by its banner.",
-        "metadata": {
-           "update_time": 1407530638.669383,
-           "update_user": "",
-           "update_action": 0,
-           "creator": "",
-           "create_time": 1407530638.669383,
-           "update_controller_action": "No model controller call",
-           "owner": ""
-        },
-        "name": "Service Detection",
-        "obj_id": "008cba9b11897f2d52c53dd953d75fa233a7fffe",
-        "owned": false,
-        "owner": "",
-        "parent": "6.7.8",
-        "refs": [
-        ],
-        "severity": "low",
-        "type": "VulnerabilityWeb",
-        "method": "",
-        "params": "",
-        "path": "",
-        "pname": "",
-        "query": "",
-        "request": "",
-        "response": "",
-        "website": "test.test.com"
-    };
-
     var $vulnsManager,
     vulnsManagerMock,
     $hostsManager,
     hostsManagerMock,
     $workspacesFact,
-    workspacesFactMock;
+    workspacesFactMock,
+    vuln1, vuln2, vuln3;
 
     var returnPromise;
 
@@ -128,6 +40,95 @@ describe('statusReportCtrl', function() {
         inject(function(_$rootScope_, _$controller_, _$q_, _$modal_) {
             // The injector unwraps the underscores (_) from around the parameter names when matching
             $scope = _$rootScope_.$new();
+            // workspaces variables
+            vuln1 = {
+                "_id": "1.2.3.4",
+                "_rev": "1-abe16726389e434ca3f37384ea76128e",
+                "name": "Internet Key Exchange (IKE) Aggressive Mode with Pre-Shared Key",
+                "parent": "1.2.3",
+                "resolution": "Be careful",
+                "refs": [
+                   "CVE-2002-1623",
+                   "7423",
+                   "OSVDB:3820, CERT:886601"
+                ],
+                "metadata": {
+                   "update_time": 1429643049.395857,
+                   "update_user": "john",
+                   "update_action": 0,
+                   "creator": "john",
+                   "create_time": 1429643049.395857,
+                   "update_controller_action": "ModelControler.newVuln",
+                   "owner": "john"
+                },
+                "owned": false,
+                "severity": "med",
+                "type": "Vulnerability",
+                "owner": "john",
+                "desc": "I'm scared!",
+                "data": "",
+                "description": "I'm scared!"
+            };
+            vuln2 = {
+                "_id": "1.2.3.5",
+                "_rev": "1-abe16726389e434ca3f37384ea76128e",
+                "name": "Another vuln",
+                "parent": "1.2.3",
+                "resolution": "Be careful",
+                "refs": [
+                   "CVE-2002-1623",
+                   "7423",
+                   "OSVDB:3820, CERT:886601"
+                ],
+                "metadata": {
+                   "update_time": 1429643049.395857,
+                   "update_user": "john",
+                   "update_action": 0,
+                   "creator": "john",
+                   "create_time": 1429643049.395857,
+                   "update_controller_action": "ModelControler.newVuln",
+                   "owner": "john"
+                },
+                "owned": false,
+                "severity": "med",
+                "type": "Vulnerability",
+                "owner": "john",
+                "desc": "I'm scared!",
+                "data": "",
+                "description": "I'm scared!"
+            };
+            vuln3 = {
+                "_id": "6.7.8.9",
+                "_rev": "3-f34c61eca3cb5ffc5654f710774708af",
+                "desc": "It was possible to identify the remote service by its banner.",
+                "metadata": {
+                   "update_time": 1407530638.669383,
+                   "update_user": "",
+                   "update_action": 0,
+                   "creator": "",
+                   "create_time": 1407530638.669383,
+                   "update_controller_action": "No model controller call",
+                   "owner": ""
+                },
+                "name": "Service Detection",
+                "obj_id": "008cba9b11897f2d52c53dd953d75fa233a7fffe",
+                "owned": false,
+                "owner": "",
+                "parent": "6.7.8",
+                "refs": [
+                ],
+                "severity": "low",
+                "type": "VulnerabilityWeb",
+                "method": "",
+                "params": "",
+                "path": "",
+                "pname": "",
+                "query": "",
+                "request": "",
+                "response": "",
+                "website": "test.test.com"
+            };
+
 
             returnPromise = function(res) {
                 var deferred = _$q_.defer();
@@ -151,13 +152,22 @@ describe('statusReportCtrl', function() {
             }
 
             vulnsManagerMock = {
+                vulns: [],
                 getVulns: function(workspace) {
-                    return returnPromise([vuln1, vuln2, vuln3])
+                    vulnsManagerMock.vulns = [vuln1, vuln2, vuln3];
+                    return returnPromise(true);
                 },
                 deleteVuln: function(workspace, id) {
                     if (id === "1.2.3.4" ||
                         id === "1.2.3.5" ||
                         id === "6.7.8.9") {
+                        var vulns_tmp = [];
+                        vulnsManagerMock.vulns.forEach(function(v) {
+                            if (v._id != id) {
+                                vulns_tmp.push(v);
+                            }
+                        });
+                        vulnsManagerMock.vulns = vulns_tmp;
                         return returnPromise(true);
                     } else {
                         return rejectPromise("error");
@@ -165,7 +175,18 @@ describe('statusReportCtrl', function() {
                 },
                 createVuln: function(workspace, vuln) {
                     vuln["id"] = "1.2.3.6";
+                    vulnsManagerMock.vulns.push(vuln);
                     return returnPromise(vuln);
+                },
+                updateVuln: function(workspace, vuln, vulnData) {
+                    if (vuln._id === "1.2.3.4" ||
+                        vuln._id === "1.2.3.5" ||
+                        vuln._id === "6.7.8.9") {
+                        angular.extend(vuln, vulnData);
+                        return returnPromise(true);
+                    } else {
+                        return rejectPromise("error");
+                    }
                 }
 
             };
@@ -427,92 +448,125 @@ describe('statusReportCtrl', function() {
         });
     });
 
-    // describe('Workspace update function', function() {
-    //     beforeEach(function() {
-    //         spyOn(workspacesFactMock, 'update').and.callThrough();
-    //     });
-    //     it('variables changed after execution of onSuccessEdit function', function() {
-    //         $scope.workspaces = [{
-    //             "_id": "ws2",
-    //             "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
-    //             "children": [],
-    //             "customer": "",
-    //             "description": "Testing Workspace",
-    //             "duration": {
-    //                 "start": 1410832741.48194,
-    //                 "end": 1410832741.48194
-    //             },
-    //             "name": "ws2",
-    //             "scope": "",
-    //             "sdate": 1410832741.48194,
-    //             "selected": true,
-    //             "type": "Workspace",
-    //         }];
-    //         var tmp_ws2_modified = {
-    //             "_id": "ws2",
-    //             "_rev": "10-bd88abf79cf2b7e8b419cd4387c64bef",
-    //             "children": [],
-    //             "customer": "",
-    //             "description": "Nuevo",
-    //             "duration": {
-    //                 "start": 141083274148194,
-    //                 "end": 141083274148194
-    //             },
-    //             "name": "ws2",
-    //             "sdate": 1410832741.48194,
-    //             "scope": "",
-    //             "selected": true,
-    //             "type": "Workspace",
-    //         };
-    //         $scope.onSuccessEdit(tmp_ws2_modified);
-    //         $scope.$apply();
-    //         expect($scope.workspaces[0].description).toEqual("Nuevo");
-    //         expect($scope.workspaces[0]._rev).toEqual("10-bd88abf79cf2b7e8b419cd4387c64bef");
-    //         expect($scope.workspaces[0].duration.start).toEqual(141083274148194);
-    //         expect($scope.workspaces[0].duration.end).toEqual(141083274148194);
-    //     });
-    //     it('variables are defined after execution of update function', function() {
+    describe('Status report vuln edition - update method', function() {
+        it('edit a valid vuln', function() {
+            var vulnData = {
+                "name": "Changed name",
+                "resolution": "New resolution",
+                "refs": [
+                   "test",
+                   "another ref"
+                ],
+                "owned": true,
+                "severity": "high"
+            };
+            $scope.update([vuln1], vulnData);
+            $scope.$apply();
 
-    //         $scope.update(tmp_ws2);
-    //         $scope.$apply();
-    //         expect(workspacesFactMock.update).toHaveBeenCalled();
+            expect($scope.vulns.length).toEqual(3);
+            $scope.vulns.forEach(function(vuln) {
+                if (vuln._id == "1.2.3.4") {
+                    expect(vuln.name).toEqual("Changed name");
+                    expect(vuln.resolution).toEqual("New resolution");
+                    expect(vuln.refs.length).toEqual(2);
+                    expect(vuln.owned).toEqual(true);
+                    expect(vuln.severity).toEqual("high");
 
-    //         expect(workspace._id).toBeDefined();
-    //         expect(workspace._rev).toBeDefined();
-    //         expect(workspace.children).toBeDefined();
-    //         expect(workspace.customer).toBeDefined();
-    //         expect(workspace.description).toBeDefined();
-    //         expect(workspace.duration.start).toBeDefined();
-    //         expect(workspace.duration.end).toBeDefined();
-    //         expect(workspace.name).toBeDefined();
-    //         expect(workspace.sdate).toBeDefined();
-    //         expect(workspace.scope).toBeDefined();
-    //         expect(workspace.selected).toBeDefined();
-    //         expect(workspace.type).toBeDefined();
-    //     });
-    //     it('the object that comes to the update function it is the same as is sended to update Mock', function() {
-    //         $scope.update(tmp_ws2);
-    //         $scope.$apply();
-    //         expect(workspacesFactMock.update).toHaveBeenCalled();
+                }
+            });
+        });
+        it('edit two valid vulns', function() {
+            var vulnData = {
+                "name": "Changed name",
+                "resolution": "New resolution",
+                "refs": [
+                   "test",
+                   "another ref"
+                ],
+                "owned": true,
+                "severity": "high"
+            };
+            $scope.update([vuln1, vuln2], vulnData);
+            $scope.$apply();
 
-    //         expect(workspace._id).toEqual(tmp_ws2._id);
-    //         expect(workspace._rev).toEqual(tmp_ws2._rev);
-    //         expect(workspace.children).toEqual(tmp_ws2.children);
-    //         expect(workspace.customer).toEqual(tmp_ws2.customer);
-    //         expect(workspace.description).toEqual(tmp_ws2.description);
-    //         expect(workspace.duration.start).toEqual(tmp_ws2.duration.startDate);
-    //         expect(workspace.duration.end).toEqual(tmp_ws2.duration.endDate);
-    //         expect(workspace.name).toEqual(tmp_ws2.name);
-    //         expect(workspace.sdate).toEqual(tmp_ws2.sdate);
-    //         expect(workspace.scope).toEqual(tmp_ws2.scope);
-    //         expect(workspace.selected).toEqual(tmp_ws2.selected);
-    //         expect(workspace.type).toEqual(tmp_ws2.type);
+            expect($scope.vulns.length).toEqual(3);
+            $scope.vulns.forEach(function(vuln) {
+                if (vuln._id == "1.2.3.4" || vuln._id == "1.2.3.5") {
+                    expect(vuln.name).toEqual("Changed name");
+                    expect(vuln.resolution).toEqual("New resolution");
+                    expect(vuln.refs.length).toEqual(2);
+                    expect(vuln.owned).toEqual(true);
+                    expect(vuln.severity).toEqual("high");
 
-    //         expect(typeof(start)).not.toEqual("object");
-    //         expect(typeof(end)).not.toEqual("object");
+                }
+            });
 
-    //     });
-    // });
+        });
+    });
+    
+    describe('Status report vuln edition - edit method (modal)', function() {
+        it('edit two vulns and accept modal', function() {
+            var vulnData = {
+                "name": "Changed name",
+                "resolution": "New resolution",
+                "refs": [
+                   "test",
+                   "another ref"
+                ],
+                "owned": true,
+                "severity": "high"
+            };
 
+            vuln1.selected = true;
+            vuln2.selected = true;
+            $scope.$apply();
+            $scope.edit();
+            fakeModal.close(vulnData);
+            $scope.$apply();
+            
+            expect($scope.vulns.length).toEqual(3);
+            $scope.vulns.forEach(function(vuln) {
+                if (vuln._id == "1.2.3.4" || vuln._id == "1.2.3.5") {
+                    expect(vuln.name).toEqual("Changed name");
+                    expect(vuln.resolution).toEqual("New resolution");
+                    expect(vuln.refs.length).toEqual(2);
+                    expect(vuln.owned).toEqual(true);
+                    expect(vuln.severity).toEqual("high");
 
+                }
+            });
+
+        });
+        it('edit a valid vuln but cancel modal', function() {
+            var vulnData = {
+                "name": "Changed name",
+                "resolution": "New resolution",
+                "refs": [
+                   "test",
+                   "another ref"
+                ],
+                "owned": true,
+                "severity": "high"
+            };
+
+            vuln1.selected = true;
+            vuln2.selected = true;
+            $scope.$apply();
+            //$scope.edit();
+            //fakeModal.dismiss();
+            //$scope.$apply();
+            
+            expect($scope.vulns.length).toEqual(3);
+            $scope.vulns.forEach(function(vuln) {
+                if (vuln._id == "1.2.3.4" || vuln._id == "1.2.3.5") {
+                    expect(vuln.name).not.toEqual("Changed name");
+                    expect(vuln.resolution).not.toEqual("New resolution");
+                    expect(vuln.refs.length).not.toEqual(2);
+                    expect(vuln.owned).not.toEqual(true);
+                    expect(vuln.severity).not.toEqual("high");
+
+                }
+            });
+        });
+    });
 });

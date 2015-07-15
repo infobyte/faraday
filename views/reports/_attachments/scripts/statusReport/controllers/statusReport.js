@@ -37,6 +37,7 @@ angular.module('faradayApp')
             $scope.reverse = true;
             $scope.showPagination = 1;
             $scope.currentPage = 0;
+            $scope.vulns = vulnsManager.vulns;
 
             // set custom pagination if possible
             if(typeof($cookies.pageSize) == "undefined") {
@@ -67,8 +68,10 @@ angular.module('faradayApp')
             }
 
             // load all vulnerabilities
-            vulnsManager.getVulns($scope.workspace).then(function(vulns) {
-                $scope.vulns = $filter('filter')(vulns, $scope.expression);
+            vulnsManager.getVulns($scope.workspace).then(function() {
+                $scope.vulns = vulnsManager.vulns;
+                // TODO: apply filters
+                // $scope.vulns = $filter('filter')(vulns, $scope.expression);
                 $scope.numberOfPages = $scope.calculateNumberOfPages(); 
             });
 
@@ -107,24 +110,6 @@ angular.module('faradayApp')
                 "website":          false
             };
         };
-
-        // this methos recieves an array of vulns and returns
-        // a new array with the selected vulns, if justIds is not true,
-        // or a new array with the ids of the selected vulns, if it's true
-        getSelectedVulns = function(aVulns, justIds){
-            var selected = [];
-
-            aVulns.forEach(function(v) {
-                if(v.selected) {
-                    if (justIds === true){
-                        selected.push(v._id);
-                    } else {
-                        selected.push(v);
-                    }
-                }
-            });
-            return selected;
-        }
 
         // returns scope vulns as CSV obj
         // toggles column sort field
@@ -234,42 +219,25 @@ angular.module('faradayApp')
 
         // deletes the vulns in the array
         $scope.remove = function(ids) {
-            var errors = [];
             ids.forEach(function(id){
                 vulnsManager.deleteVuln($scope.workspace, id).then(function(){
-                    var index = -1;
-                    for (var i=0; i < $scope.vulns.length; i++){
-                        if ($scope.vulns[i]._id === id) {
-                            index = i;
-                            break;
-                        }
-                    }
-                    $scope.vulns.splice(index, 1);
+                    $scope.vulns = vulnsManager.vulns;
                 }, function(errorMsg){
-                    errors.push(errors);
+                    // TODO: show errors somehow
+                    console.log("Error deleting vuln " + id + ": " + errorMsg);
                 });
             });
-            if (errors.length > 0) {
-                errorMsg = "Some errors were received:\n";
-                errors.forEach(function(error){
-                    errorMsg += error + "\n";
-                });
-                $modal.open(config = {
-                    templateUrl: 'scripts/partials/modal-ko.html',
-                    controller: 'modalKoCtrl',
-                    size: 'sm',
-                    resolve: {
-                        msg: function() {
-                            return errorMsg;
-                        }
-                    }
-                });
-            }
         };
 
         // action triggered from DELETE button
         $scope.delete = function() {
-            selected = getSelectedVulns($scope.vulns, true);
+            var selected = [];
+
+            $scope.vulns.forEach(function(v) {
+                if(v.selected) {
+                    selected.push(v._id);
+                }
+            });
 
             if(selected.length > 0) {
                 var modal = $modal.open({
@@ -306,56 +274,28 @@ angular.module('faradayApp')
             }
         };
 
-        // updates all vulns with selected == true
-        // I BROKE THIS DO IT FROM SCRATCH WITH vulnsManager
-        $scope.update = function(data) {
-            $scope.vulns = [];
-           
-            data.vulns.forEach(function(v) {
-                if(v.selected) {
-                    if(typeof(data.severity) == "string") v.severity = data.severity;
-                    if(typeof(data.easeofresolution) == "string") v.easeofresolution = data.easeofresolution;
-                    if(typeof(data.name) != "undefined") v.name = data.name;
-                    if(typeof(data.desc) != "undefined") v.desc = data.desc;
-                    if(typeof(data.data) != "undefined") v.data = data.data;
-                    if(typeof(data.refs) != "undefined") v.refs = data.refs;
-                    if(typeof(data.impact) != "undefined") v.impact = data.impact;
-                    if(typeof(data.resolution) != "undefined") v.resolution = data.resolution;
-                    v.evidence = data.evidence;
-                    if(v.web) {
-                        if(typeof(data.method) != "undefined") v.method = data.method;
-                        if(typeof(data.params) != "undefined") v.params = data.params;
-                        if(typeof(data.path) != "undefined") v.path = data.path;
-                        if(typeof(data.pname) != "undefined") v.pname = data.pname;
-                        if(typeof(data.query) != "undefined") v.query = data.query;
-                        if(typeof(data.refs) != "undefined") v.refs = data.refs;
-                        if(typeof(data.request) != "undefined") v.request = data.request;
-                        if(typeof(data.response) != "undefined") v.response = data.response;
-                        if(typeof(data.resolution) != "undefined") v.resolution = data.resolution;
-                        if(typeof(data.website) != "undefined") v.website = data.website;
-                    }
-            
-/*
-                    statusReportFact.putVulns($scope.workspace, v, function(rev, evidence) {
-                        v.rev = rev;
-                        v.attachments = evidence;
-                    });
-*/
-                    v.selected = false;
-                }
-                $scope.vulns.push(v);
+        $scope.update = function(aVulns, data) {
+            aVulns.forEach(function(vuln){
+                vulnsManager.updateVuln($scope.workspace, vuln, data).then(function(){
+                    $scope.vulns = vulnsManager.vulns;
+                }, function(errorMsg){
+                    // TODO: show errors somehow
+                    console.log("Error deleting vuln " + vuln._id + ": " + errorMsg);
+                });
             });
         };
 
         // action triggered from EDIT button
         $scope.edit = function() {
-            var selected = false;
+            var selected = [];
 
             $scope.vulns.forEach(function(v) {
-                if(v.selected) selected = true;
+                if(v.selected) {
+                    delete v.selected;
+                    selected.push(v);
+                }
             });
-
-            if(selected) {
+            if (selected.length > 0) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/statusReport/partials/modalEdit.html',
                     controller: 'modalEditCtrl',
@@ -365,13 +305,12 @@ angular.module('faradayApp')
                             return $scope.severities;
                         },
                         vulns: function() {
-                            return $scope.vulns;
+                            return selected;
                         }
                     }
                 });
-
                 modal.result.then(function(data) {
-                    $scope.update(data);
+                    $scope.update(selected, data);
                 });
             } else {
                 var modal = $modal.open({
@@ -387,9 +326,9 @@ angular.module('faradayApp')
         };
 
         $scope.insert = function(vuln) {
-            vulnsManager.createVuln($scope.workspace, vuln).then(function(vuln) {
-                $scope.vulns.push(vuln);
-            }, function(message){
+            vulnsManager.createVuln($scope.workspace, vuln).then(function() {
+                $scope.vulns = vulnsManager.vulns;
+            }, function(message) {
                 $modal.open(config = {
                     templateUrl: 'scripts/partials/modal-ko.html',
                     controller: 'modalKoCtrl',

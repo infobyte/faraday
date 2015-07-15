@@ -77,7 +77,7 @@ angular.module('faradayApp')
                 this.resolution = data.resolution;
                 this.severity = data.severity;
             },
-            delete: function(ws) {
+            remove: function(ws) {
                 var self = this;
                 return $http.delete(BASEURL + ws + "/" + self._id);
             },

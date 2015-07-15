@@ -9,11 +9,15 @@ describe('WebVuln', function() {
 
     var new_data,
     new_name,
+    new_website,
+    new_path,
     new_id,
     new_id_parent,
     new_full_id,
     old_data,
     old_name,
+    old_website,
+    old_path,
     old_id,
     old_id_parent,
     old_full_id;
@@ -27,9 +31,11 @@ describe('WebVuln', function() {
         BASEURL = 'http://localhost:9876/'; 
 
         new_name = "new name";
+        new_website = "new website";
+        new_path = "new path";
         new_desc = "new desc";
-        new_id = CryptoJS.SHA1(new_name + "." + new_desc).toString();
-        new_id_parent = CryptoJS.SHA1("parent");
+        new_id = CryptoJS.SHA1(new_name + "." + new_website + "." + new_path + "." + new_desc).toString();
+        new_id_parent = CryptoJS.SHA1("parent").toString();
         new_full_id = new_id_parent + "." + new_id;
 
         new_data = {
@@ -57,9 +63,11 @@ describe('WebVuln', function() {
         old_date = now.getTime();
 
         old_name = "old name";
+        old_website = "old website";
+        old_path = "old path";
         old_desc = "old desc";
-        old_id = CryptoJS.SHA1(old_name + "." + old_desc).toString();
-        old_id_parent = CryptoJS.SHA1("parent");
+        old_id = CryptoJS.SHA1(old_name + "." + old_website + "." + old_path + "." + old_desc).toString();
+        old_id_parent = CryptoJS.SHA1("parent").toString();
         old_full_id = old_id_parent + "." + old_id;
 
         old_data = {
@@ -100,7 +108,7 @@ describe('WebVuln', function() {
     });
 
     describe('CRUD', function() {
-        it('Setting data to new object works', function() {
+        it('Setting data to new object', function() {
             vuln = new WebVuln(new_data);
 
             expect(vuln._id).toBeDefined();
@@ -114,7 +122,7 @@ describe('WebVuln', function() {
             }
         });
 
-        it('Setting data to existing object works', function() {
+        it('Setting data to existing object', function() {
             vuln = new WebVuln(old_data);
 
             expect(vuln._id).toBeDefined();
@@ -127,10 +135,25 @@ describe('WebVuln', function() {
             }
         });
 
-        it('Save data', function() {
+        it('Save data to new object', function() {
             var url = BASEURL + "ws/" + new_full_id;
 
             vuln = new WebVuln(new_data);
+
+            $httpBackend.when('POST', url).respond(201, {"rev": "1234"});
+            $httpBackend.expect('POST', url);
+
+            vuln.save("ws");
+
+            $httpBackend.flush();
+
+            expect(vuln._rev).toEqual("1234");
+        });
+
+        it('Save data to existing object', function() {
+            var url = BASEURL + "ws/" + old_full_id;
+
+            vuln = new WebVuln(old_data);
 
             $httpBackend.when('POST', url).respond(201, {"rev": "1234"});
             $httpBackend.expect('POST', url);

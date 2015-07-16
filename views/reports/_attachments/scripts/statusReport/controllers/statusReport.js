@@ -214,13 +214,13 @@ angular.module('faradayApp')
         };
 
         // deletes the vulns in the array
-        $scope.remove = function(ids) {
-            ids.forEach(function(id){
-                vulnsManager.deleteVuln($scope.workspace, id).then(function(){
+        $scope.remove = function(aVulns) {
+            aVulns.forEach(function(vuln){
+                vulnsManager.deleteVuln($scope.workspace, vuln).then(function(){
                     $scope.vulns = vulnsManager.vulns;
                 }, function(errorMsg){
                     // TODO: show errors somehow
-                    console.log("Error deleting vuln " + id + ": " + errorMsg);
+                    console.log("Error deleting vuln " + vuln._id + ": " + errorMsg);
                 });
             });
         };
@@ -231,7 +231,7 @@ angular.module('faradayApp')
 
             $scope.vulns.forEach(function(v) {
                 if(v.selected) {
-                    selected.push(v._id);
+                    selected.push(v);
                 }
             });
 

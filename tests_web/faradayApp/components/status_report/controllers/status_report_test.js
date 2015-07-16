@@ -157,13 +157,13 @@ describe('statusReportCtrl', function() {
                     vulnsManagerMock.vulns = [vuln1, vuln2, vuln3];
                     return returnPromise(true);
                 },
-                deleteVuln: function(workspace, id) {
-                    if (id === "1.2.3.4" ||
-                        id === "1.2.3.5" ||
-                        id === "6.7.8.9") {
+                deleteVuln: function(workspace, vuln) {
+                    if (vuln._id === "1.2.3.4" ||
+                        vuln._id === "1.2.3.5" ||
+                        vuln._id === "6.7.8.9") {
                         var vulns_tmp = [];
                         vulnsManagerMock.vulns.forEach(function(v) {
-                            if (v._id != id) {
+                            if (v._id != vuln._id) {
                                 vulns_tmp.push(v);
                             }
                         });
@@ -218,7 +218,7 @@ describe('statusReportCtrl', function() {
 
     describe('Status report vuln deletion - remove method', function() {
         it('remove valid vuln id 1.2.3.4', function() {
-            $scope.remove(["1.2.3.4"]);
+            $scope.remove([vuln1]);
             $scope.$apply();
 
             expect($scope.vulns.length).toEqual(2);
@@ -227,7 +227,8 @@ describe('statusReportCtrl', function() {
             expect($scope.vulns).toContain(vuln3);
         });
         it('remove invalid vuln id 9.9.9.9', function() {
-            $scope.remove(["9.9.9.9"]);
+            vuln = {"_id": "9.9.9.9"}
+            $scope.remove([vuln]);
             $scope.$apply();
 
             expect($scope.vulns.length).toEqual(3);
@@ -236,7 +237,8 @@ describe('statusReportCtrl', function() {
             expect($scope.vulns).toContain(vuln3);
         });
         it('remove valid id 1.2.3.4 and invalid id 9.9.9.9', function() {
-            $scope.remove(["1.2.3.4", "9.9.9.9"]);
+            vuln = {"_id": "9.9.9.9"}
+            $scope.remove([vuln1, vuln]);
             $scope.$apply();
 
             expect($scope.vulns.length).toEqual(2);
@@ -245,7 +247,7 @@ describe('statusReportCtrl', function() {
             expect($scope.vulns).toContain(vuln3);
         });
         it('remove valid vulns ids', function() {
-            $scope.remove(["1.2.3.4", "1.2.3.5"]);
+            $scope.remove([vuln1, vuln2]);
             $scope.$apply();
 
             expect($scope.vulns.length).toEqual(1);

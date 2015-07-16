@@ -13,7 +13,6 @@ angular.module('faradayApp')
         Vuln.prototype = {
             set: function(data) {
                 var evidence = [],
-                id = CryptoJS.SHA1(data.name + "." + data.desc).toString(),
                 meta = {},
                 now = new Date(),
                 date = now.getTime(),
@@ -29,7 +28,10 @@ angular.module('faradayApp')
 
                 // new vuln
                 if(data._id === undefined) {
-                    data['_id'] = data.parent + "." + id;
+                    //data['_id'] = data.parent + "." + id;
+                    var id = CryptoJS.SHA1(data.name + "." + data.desc).toString();
+                    this._id = data.parent + "." + id;
+                    this.obj_id = id;
                     meta = {
                         "update_time": date,
                         "update_user": "",
@@ -43,7 +45,9 @@ angular.module('faradayApp')
                     if(data.selected != undefined) {
                         selected = data.selected;
                     }
+                    this._id = data._id;
                     this._rev = data._rev;
+                    this.obj_id = data._id;
                     meta = {
                         "update_time": date,
                         "update_user":  data.meta.update_user,
@@ -57,11 +61,11 @@ angular.module('faradayApp')
 
                 this.date = date;
                 this.metadata = meta;
-                this.obj_id = id;
                 this.owner = "";
                 this.selected = selected;
                 this.type = "Vulnerability";
                 this.web = false;
+                this.ws = data.ws;
 
                 // user-generated content
                 this._attachments = evidence;
@@ -72,24 +76,27 @@ angular.module('faradayApp')
                 this.impact = data.impact;
                 this.name = data.name;
                 this.owned = data.owned;
-                this.parent = parent;
+                this.parent = data.parent;
                 this.refs = data.refs;
                 this.resolution = data.resolution;
                 this.severity = data.severity;
             },
-            remove: function(ws) {
-                var self = this;
-                return $http.delete(BASEURL + ws + "/" + self._id);
+            remove: function() {
+                var self = this,
+                url = BASEURL + self.ws + "/" + self._id;
+                return $http.delete(url);
             },
-            update: function(data, ws) {
-                var self = this;
-                return $http.put(BASEURL + ws + "/" + self._id, data)
+            update: function(data) {
+                var self = this,
+                url = BASEURL + self.ws + "/" + self._id;
+                return $http.put(url, data)
                     .success(function(data) {
                         self._rev = data.rev;
                     });
             },
-            save: function(ws) {
+            save: function() {
                 var self = this,
+                url = BASEURL + self.ws + "/" + self._id,
                 vuln = {};
                 angular.extend(vuln, self);
                 // remove WEBUI-specific fields
@@ -97,7 +104,8 @@ angular.module('faradayApp')
                 delete vuln.delete;
                 delete vuln.selected;
                 delete vuln.web;
-                return $http.post(BASEURL + ws + "/" + self._id, vuln)
+                delete vuln.ws;
+                return $http.post(url, vuln)
                     .success(function(data) {
                         self._rev = data.rev;
                     });

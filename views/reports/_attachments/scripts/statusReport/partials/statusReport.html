@@ -200,19 +200,19 @@
                         </tr>
                     </tbody>
                 </table><!-- #hosts -->
-                <div class="showPagination" ng-show="showPagination">
+                <div class="showPagination" ng-show="vulns.length > 10">
                     <div class="form-group">
                         <ul class="pagination">
-                            <li><a ng-hide="currentPage == 0" ng-click="currentPage=currentPage-1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
-                            <li><a>{{currentPage}}/{{numberOfPages}}</a></li>
-                            <li><a ng-hide="currentPage >= numberOfPages" ng-click="currentPage=currentPage+1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                            <li><a ng-hide="currentPage <= 0" ng-click="currentPage = currentPage - 1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                            <li><a>{{currentPage}}/{{ ((vulns.length / pageSize) | integer)}}</a></li>
+                            <li><a ng-hide="currentPage >= ((vulns.length / pageSize) | integer)" ng-click="currentPage = currentPage + 1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
                         </ul>
                         <form name="goToPage" id="goToPageStatus">
                             <div class="col-md-2">
-                                <input type="number" min="0" max="{{numberOfPages}}" class="form-control" ng-model="go_page" placeholder="Go to page"/>
+                                <input type="number" min="0" max="{{ (vulns.length / pageSize) | integer }}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
                             </div>
                             <button class="btn btn-default" ng-click="go()">GO</button>
-                            <input type="number" min="0" class="form-control vuln_per_page" ng-model="pagination" placeholder="Numbre page" />
+                            <input type="number" min="0" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />
                         </form>
                     </div>
                 </div>

@@ -14,20 +14,20 @@ angular.module('faradayApp')
                         vulnsManager, workspacesFact) {
         $scope.baseurl;
         $scope.columns;
-        $scope.currentPage;
         $scope.easeofresolution;
         $scope.expression;
         $scope.interfaces;
-        $scope.numberOfPages;
-        $scope.pageSize;
         $scope.reverse;
         $scope.severities;
         $scope.search;
         $scope.searchParams;
-        $scope.showPagination;
         $scope.sortField;
         $scope.vulns;
         $scope.workspaces;
+        $scope.currentPage;
+        $scope.newCurrentPage;
+        $scope.pageSize;
+        $scope.newPageSize;
 
         init = function() {
             $scope.baseurl = BASEURL;
@@ -35,18 +35,15 @@ angular.module('faradayApp')
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.sortField = 'date';
             $scope.reverse = true;
-            $scope.showPagination = 1;
-            $scope.currentPage = 0;
             $scope.vulns = vulnsManager.vulns;
 
-            // set custom pagination if possible
-            if(typeof($cookies.pageSize) == "undefined") {
-                $scope.pageSize = 10;
-                $scope.pagination = 10;
-            } else { 
+            $scope.pageSize = 10,
+            $scope.currentPage = 0;
+            $scope.newCurrentPage = 0;
+ 
+            if (!isNaN(parseInt($cookies.pageSize)))
                 $scope.pageSize = parseInt($cookies.pageSize);
-                $scope.pagination = parseInt($cookies.pageSize);
-            }
+            $scope.newPageSize = $scope.pageSize;
 
             // load all workspaces
             workspacesFact.list().then(function(wss) {
@@ -72,7 +69,6 @@ angular.module('faradayApp')
                 $scope.vulns = vulnsManager.vulns;
                 // TODO: apply filters
                 // $scope.vulns = $filter('filter')(vulns, $scope.expression);
-                $scope.numberOfPages = $scope.calculateNumberOfPages(); 
             });
 
             // created object for columns cookie columns
@@ -280,7 +276,7 @@ angular.module('faradayApp')
                     $scope.vulns = vulnsManager.vulns;
                 }, function(errorMsg){
                     // TODO: show errors somehow
-                    console.log("Error deleting vuln " + vuln._id + ": " + errorMsg);
+                    console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
                 });
             });
         };
@@ -384,24 +380,14 @@ angular.module('faradayApp')
             });
         };
 
-        $scope.calculateNumberOfPages = function() {
-            if($scope.vulns.length <= 10) {
-                $scope.showPagination = 0;
-            } else {
-                $scope.showPagination = 1;
-            }
-            return parseInt($scope.vulns.length/$scope.pageSize);
-        };
-
         $scope.go = function() {
-            if($scope.go_page < $scope.numberOfPages+1 && $scope.go_page > -1) {
-                $scope.currentPage = $scope.go_page;
-            }
-            $scope.pageSize = $scope.pagination;
-            if($scope.go_page > $scope.numberOfPages) {
-                $scope.currentPage = 0;
-            }
+            $scope.pageSize = $scope.newPageSize;
             $cookies.pageSize = $scope.pageSize;
+            $scope.currentPage = 0;
+            if($scope.newCurrentPage <= parseInt($scope.vulns.length/$scope.pageSize)
+                    && $scope.newCurrentPage > -1) {
+                $scope.currentPage = $scope.newCurrentPage;
+            }
         };
 
         // encodes search string in order to send it through URL

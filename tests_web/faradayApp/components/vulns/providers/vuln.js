@@ -2,22 +2,18 @@
 // Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 // See the file 'doc/LICENSE' for the license information
 
-describe('WebVuln', function() {
-    var WebVuln,
+describe('Vuln', function() {
+    var Vuln,
     $httpBackend,
     BASEURL;
 
     var new_data,
     new_name,
-    new_website,
-    new_path,
     new_id,
     new_id_parent,
     new_full_id,
     old_data,
     old_name,
-    old_website,
-    old_path,
     old_id,
     old_id_parent,
     old_full_id;
@@ -25,16 +21,14 @@ describe('WebVuln', function() {
     // Set up the module
     beforeEach(module('faradayApp'));
 
-    beforeEach(inject(function($injector, _WebVuln_) {
+    beforeEach(inject(function($injector, _Vuln_) {
         $httpBackend = $injector.get('$httpBackend');
-        WebVuln = _WebVuln_;
+        Vuln = _Vuln_;
         BASEURL = 'http://localhost:9876/'; 
 
         new_name = "new name";
-        new_website = "new website";
-        new_path = "new path";
         new_desc = "new desc";
-        new_id = CryptoJS.SHA1(new_name + "." + new_website + "." + new_path + "." + new_desc).toString();
+        new_id = CryptoJS.SHA1(new_name + "." + new_desc).toString();
         new_id_parent = CryptoJS.SHA1("parent").toString();
         new_full_id = new_id_parent + "." + new_id;
 
@@ -43,20 +37,12 @@ describe('WebVuln', function() {
             "desc": new_desc,
             "easeofresolution": "easeofresolution",
             "impact": "impact",
-            "method": "method",
             "name": new_name,
             "owned": false,
-            "params": "params",
             "parent": new_id_parent,
-            "path": new_path,
-            "pname": "pname",
-            "query": "query",
             "refs": "refs",
-            "request": "request",
             "resolution": "resolution",
-            "response": "response",
             "severity": "severity",
-            "website": new_website,
             "ws": "ws"
         };
 
@@ -65,10 +51,8 @@ describe('WebVuln', function() {
         old_date = now.getTime();
 
         old_name = "old name";
-        old_website = "old website";
-        old_path = "old path";
         old_desc = "old desc";
-        old_id = CryptoJS.SHA1(old_name + "." + old_website + "." + old_path + "." + old_desc).toString();
+        old_id = CryptoJS.SHA1(old_name + "." + old_desc).toString();
         old_id_parent = CryptoJS.SHA1("parent").toString();
         old_full_id = old_id_parent + "." + old_id;
 
@@ -87,20 +71,12 @@ describe('WebVuln', function() {
                 "update_controller_action": "update_controller_action",
                 "owner": "owner"
             },
-            "method": "method",
             "name": old_name,
             "owned": false,
-            "params": "params",
             "parent": old_id_parent,
-            "path": old_path,
-            "pname": "pname",
-            "query": "query",
             "refs": "refs",
-            "request": "request",
             "resolution": "resolution",
-            "response": "response",
             "severity": "severity",
-            "website": old_website,
             "ws": "ws"
         };
     }));
@@ -112,11 +88,11 @@ describe('WebVuln', function() {
 
     describe('CRUD', function() {
         it('Setting data to new object', function() {
-            vuln = new WebVuln(new_data);
+            vuln = new Vuln(new_data);
 
             expect(vuln._id).toBeDefined();
             expect(vuln._id).toEqual(new_full_id);
-            expect(vuln.type).toEqual("VulnerabilityWeb");
+            expect(vuln.type).toEqual("Vulnerability");
             
             for(var prop in new_data) {
                 if(new_data.hasOwnProperty(prop)) {
@@ -126,7 +102,7 @@ describe('WebVuln', function() {
         });
 
         it('Setting data to existing object', function() {
-            vuln = new WebVuln(old_data);
+            vuln = new Vuln(old_data);
 
             expect(vuln._id).toBeDefined();
             expect(vuln._id).toEqual(old_full_id);
@@ -143,7 +119,7 @@ describe('WebVuln', function() {
         it('Save data to new object', function() {
             var url = BASEURL + "ws/" + new_full_id;
 
-            vuln = new WebVuln(new_data);
+            vuln = new Vuln(new_data);
 
             $httpBackend.when('POST', url).respond(201, {"rev": "1234"});
             $httpBackend.expect('POST', url);
@@ -158,7 +134,7 @@ describe('WebVuln', function() {
         it('Save data to existing object', function() {
             var url = BASEURL + "ws/" + old_full_id;
 
-            vuln = new WebVuln(old_data);
+            vuln = new Vuln(old_data);
 
             $httpBackend.expect('POST', url).respond(201, {"rev": "1234"});
 
@@ -172,7 +148,7 @@ describe('WebVuln', function() {
         it('Update data', function() {
             var url = BASEURL + "ws/" + new_full_id;
 
-            vuln = new WebVuln(new_data);
+            vuln = new Vuln(new_data);
             expect(vuln._rev).toBeUndefined();
 
             $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
@@ -187,7 +163,7 @@ describe('WebVuln', function() {
         it('Delete data', function() {
             var url = BASEURL + "ws/" + new_full_id;
 
-            vuln = new WebVuln(new_data);
+            vuln = new Vuln(new_data);
 
             $httpBackend.expect('DELETE', url).respond(200);
 

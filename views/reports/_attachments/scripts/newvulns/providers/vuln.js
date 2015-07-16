@@ -13,7 +13,7 @@ angular.module('faradayApp')
         Vuln.prototype = {
             set: function(data) {
                 var evidence = [],
-                meta = {},
+                metadata = {},
                 now = new Date(),
                 date = now.getTime(),
                 selected = false;
@@ -28,11 +28,10 @@ angular.module('faradayApp')
 
                 // new vuln
                 if(data._id === undefined) {
-                    //data['_id'] = data.parent + "." + id;
                     var id = CryptoJS.SHA1(data.name + "." + data.desc).toString();
                     this._id = data.parent + "." + id;
                     this.obj_id = id;
-                    meta = {
+                    metadata = {
                         "update_time": date,
                         "update_user": "",
                         "update_action": 0,
@@ -48,19 +47,20 @@ angular.module('faradayApp')
                     this._id = data._id;
                     this._rev = data._rev;
                     this.obj_id = data._id;
-                    meta = {
+                    metadata = {
                         "update_time": date,
-                        "update_user":  data.meta.update_user,
-                        "update_action": data.meta.update_action,
-                        "creator": data.meta.creator,
-                        "create_time": data.meta.create_time,
-                        "update_controller_action": data.meta.update_controller_action,
-                        "owner": data.meta.owner
+                        "update_user":  data.metadata.update_user,
+                        "update_action": data.metadata.update_action,
+                        "creator": data.metadata.creator,
+                        "create_time": data.metadata.create_time,
+                        "update_controller_action": data.metadata.update_controller_action,
+                        "owner": data.metadata.owner
                     };
                 }
 
                 this.date = date;
-                this.metadata = meta;
+                this.delete = false;
+                this.metadata = metadata;
                 this.owner = "";
                 this.selected = selected;
                 this.type = "Vulnerability";
@@ -70,7 +70,6 @@ angular.module('faradayApp')
                 // user-generated content
                 this._attachments = evidence;
                 this.data = data.data;
-                this.delete = false;
                 this.desc = data.desc;
                 this.easeofresolution = data.easeofresolution;
                 this.impact = data.impact;

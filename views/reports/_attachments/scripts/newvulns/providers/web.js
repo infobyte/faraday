@@ -17,6 +17,7 @@ angular.module('faradayApp')
         WebVuln.prototype.set = function(data) {
             Vuln.prototype.set.call(this, data);
             this._id = data._id;
+            this.obj_id = data._id;
 
             // new vuln
             if(data._id === undefined) {
@@ -24,7 +25,6 @@ angular.module('faradayApp')
 
                 //data['_id'] = data.parent + "." + id;
                 this._id = data.parent + "." + id;
-            console.log(data.parent);
                 this.obj_id = id;
             }
 

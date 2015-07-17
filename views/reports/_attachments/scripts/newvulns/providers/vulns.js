@@ -3,33 +3,41 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('vulnsManager', ['Vuln', 'WebVuln', 'BASEURL', '$http', '$q', 'attachmentsFact', function(Vuln, WebVuln, BASEURL, $http, $q, attachmentsFact) {
+    .factory('vulnsManager', 
+        ['Vuln', 'WebVuln', 'BASEURL', '$filter', '$http', '$q', 'attachmentsFact', 
+        function(Vuln, WebVuln, BASEURL, $filter, $http, $q, attachmentsFact) {
         var vulnsManager = {};
 
-        vulnsManager._objects = {};
+        vulnsManager.vulns = [];
+        vulnsManager.update_seq = 0;
+
         vulnsManager._get = function(id, data) {
-            var vuln = this._objects[id];
+            var i = $filter('getByProperty')('_id', id, this.vulns),
+            vuln = this.vulns[i];
 
             if(vuln) {
                 vuln.set(data);
             } else if(data.type == "Vulnerability") {
                 vuln = new Vuln(data);
-                this._objects[id] = vuln;
+                this.vulns.push(vuln);
             } else {
                 vuln = new WebVuln(data);
-                this._objects[id] = vuln;
+                this.vulns.push(vuln);
             }
 
             return vuln;
         };
 
         vulnsManager._search = function(id) {
-            return this._objects[id];
+            var i = $filter('getByProperty')('_id', id, this.vulns);
+            return this.vuln[i];
         };
 
-        vulnsManager._load = function(id, ws, deferred) {
-            var self = this;
-            $http.get(BASEURL + ws + '/' + id)
+        vulnsManager._load = function(id, ws) {
+            var deferred = $q.defer(),
+            self = this,
+            url = BASEURL + ws + '/' + id;
+            $http.get(url)
                 .success(function(data) {
                     var vuln = self._get(data._id, data);
                     deferred.resolve(vuln);
@@ -37,11 +45,13 @@ angular.module('faradayApp')
                 .error(function() {
                     deferred.reject();
                 });
+            return deferred.promise;
         };
 
-        vulnsManager.getVulns = function(ws) {
+        vulnsManager._loadVulns = function(ws) {
             var deferred = $q.defer(),
             self = this;
+
             $http.get(BASEURL + ws + '/_design/vulns/_view/all')
                 .success(function(vulnsArray) {
                     var vulns = [];
@@ -52,9 +62,33 @@ angular.module('faradayApp')
                     });
                     deferred.resolve(vulns);
                 })
-                .error(function(){
+                .error(function() {
                     deferred.reject();
+                });
+
+            return deferred.promise;
+        };
+
+        vulnsManager.getVulns = function(ws) {
+            var deferred = $q.defer();
+            $http.get(BASEURL + ws)
+                .success(function(wsData) {
+                    if(wsData.update_seq > vulnsManager.update_seq) {
+                        vulnsManager.update_seq = wsData.update_seq;
+                        //deferred.resolve(vulnsManager._loadVulns(ws));
+                        vulnsManager._loadVulns(ws).then(function(vulns) {
+                            vulnsManager.vulns = vulns;
+                            deferred.resolve(vulnsManager.vulns);
+                        }, function() {
+                            deferred.reject("Error loading vulnerabilities from CouchDB");
+                        });
+                    } else {
+                        deferred.resolve(vulnsManager.vulns);
+                    }
                 })
+                .error(function() {
+                    deferred.reject("Error loading workspace data");
+                });
             return deferred.promise;
         };
 
@@ -66,7 +100,7 @@ angular.module('faradayApp')
             if(vuln && !force_reload) {
                 deferred.resolve(vuln);
             } else {
-                this._load(id, ws, deferred);
+                deferred.resolve(this._load(id, ws));
             } 
 
             return deferred.promise;

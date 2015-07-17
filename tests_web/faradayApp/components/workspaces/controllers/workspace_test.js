@@ -189,7 +189,7 @@ describe('workspacesCtrl', function() {
             expect(workspace.name).toBeDefined();
             expect(workspace.sdate).toBeDefined();
             expect(workspace.scope).toBeDefined();
-            expect(workspace.selected).toBeDefined();
+            expect(workspace.selected).not.toBeDefined();
             expect(workspace.type).toBeDefined();
         });
         it('variables changed after execution of update function', function() {

@@ -11,6 +11,42 @@ angular.module('faradayApp')
         vulnsManager.vulns = [];
         vulnsManager.update_seq = 0;
 
+        vulnsManager._load = function(data) {
+            var self = this,
+            vulns = [];
+
+            for(var i = 0; i < data.rows.length; i++) {
+                var vulnData = data.rows[i];
+                if(vulnData.type == "Vulnerability") {
+                    var vuln = new Vuln(vulnData);
+                } else {
+                    var vuln = new WebVuln(vulnData);
+                }
+                vulns.push(vuln);
+            }
+
+            self.vulns = vulns;
+        };
+
+        vulnsManager.getVulns = function(ws) {
+            var self = this;
+            return $http.get(BASEURL + ws)
+                .then(function(latest) {
+                    if(latest.data.update_seq > self.update_seq) {
+                        self.update_seq = latest;
+                        $http.get(BASEURL + ws + '/_design/vulns/_view/all')
+                            .success(function(data) {
+                                self._load(data);
+                            });
+                    }
+                });
+        };
+
+
+
+/*
+        //data comes from Couch
+        //updates vuln or loads it
         vulnsManager._get = function(id, data) {
             var i = $filter('getByProperty')('_id', id, this.vulns),
             vuln = this.vulns[i];
@@ -70,10 +106,9 @@ angular.module('faradayApp')
                     var vulns = [];
                     vulnsArray.rows.forEach(function(vulnData) {
                         vulnData.value._id = vulnData.id;
-                        var vuln = self._get(vulnData.value._id, vulnData.value);
-                        vulns.push(vuln);
+                        self._get(vulnData.value._id, vulnData.value);
                     });
-                    deferred.resolve(vulns);
+                    deferred.resolve();
                 })
                 .error(function() {
                     deferred.reject();
@@ -83,18 +118,18 @@ angular.module('faradayApp')
         };
 
         vulnsManager.getVulns = function(ws) {
-            var deferred = $q.defer();
+            var deferred = $q.defer(),
+            self = this;
             vulnsManager._latest(ws).then(function(latest) {
-                if(latest > vulnsManager.update_seq) {
-                    vulnsManager.update_seq = latest;
-                    vulnsManager._loadVulns(ws).then(function(vulns) {
-                        vulnsManager.vulns = vulns;
-                        deferred.resolve(vulnsManager.vulns);
+                if(latest > self.update_seq) {
+                    self.update_seq = latest;
+                    self._loadVulns(ws).then(function() {
+                        deferred.resolve();
                     }, function() {
                         deferred.reject("Error loading vulnerabilities from CouchDB");
                     });
                 } else {
-                    deferred.resolve(vulnsManager.vulns);
+                    deferred.resolve();
                 }
             }, function() {
                 deferred.reject("Error loading workspace data from CouchDB");
@@ -190,10 +225,13 @@ angular.module('faradayApp')
             }
         };
 
-        vulnsManager.deleteVuln = function(ws, id) {
-            var url = BASEURL + ws + "/" + vuln.id + "?rev=" + vuln.rev;
-            $http.delete(url).success(function(d, s, h, c) {});
+        vulnsManager.deleteVuln = function(ws, vuln) {
+            return $http.delete(BASEURL + ws + "/" + vuln.id + "?rev=" + vuln.rev)
+                .success(function(resp) {
+                    this.vulns = this.getVulns(ws);
+                });
         };
+*/
 
         return vulnsManager;
     }]);

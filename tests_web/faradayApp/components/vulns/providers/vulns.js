@@ -25,7 +25,7 @@ describe('vulnsManager', function() {
         BASEURL = 'http://localhost:9876/'; 
 
         vuln1 = {
-            "_id": "1.2.3.4",
+            "_id": "1.2.3.8b4ffaedb84dd60d5f43c58eba66a7651458c8de",
             "_rev": "1-abe16726389e434ca3f37384ea76128e",
             "name": "Internet Key Exchange (IKE) Aggressive Mode with Pre-Shared Key",
             "parent": "1.2.3",

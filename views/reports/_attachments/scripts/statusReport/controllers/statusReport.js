@@ -414,7 +414,7 @@ angular.module('faradayApp')
             for(var prop in chunks) {
                 if(chunks.hasOwnProperty(prop)) {
                     if(chunks.prop != "") {
-                        encode += "&" + prop + "=" + chunks[prop];
+                        encode += "&" + encodeURIComponent(prop) + "=" + encodeURIComponent(chunks[prop]);
                     }
                 }
             }
@@ -429,7 +429,7 @@ angular.module('faradayApp')
 
             params.forEach(function(param) {
                 i = param.indexOf("=");
-                decode[param.slice(0,i)] = param.slice(i+1);
+                decode[decodeURIComponent(param.slice(0,i))] = decodeURIComponent(param.slice(i+1));
             });
 
             if(decode.hasOwnProperty("free")) {

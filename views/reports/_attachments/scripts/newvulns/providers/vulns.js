@@ -33,6 +33,19 @@ angular.module('faradayApp')
             return this.vuln[i];
         };
 
+        vulnsManager._latest = function(ws) {
+            var deferred = $q.defer();
+            $http.get(BASEURL + ws)
+                .success(function(wsData) {
+                    deferred.resolve(wsData.update_seq);
+                })
+                .error(function() {
+                    deferred.reject("Error connecting to CouchDB");
+                });
+
+            return deferred.promise;
+        };
+
         vulnsManager._load = function(id, ws) {
             var deferred = $q.defer(),
             self = this,
@@ -71,24 +84,22 @@ angular.module('faradayApp')
 
         vulnsManager.getVulns = function(ws) {
             var deferred = $q.defer();
-            $http.get(BASEURL + ws)
-                .success(function(wsData) {
-                    if(wsData.update_seq > vulnsManager.update_seq) {
-                        vulnsManager.update_seq = wsData.update_seq;
-                        //deferred.resolve(vulnsManager._loadVulns(ws));
-                        vulnsManager._loadVulns(ws).then(function(vulns) {
-                            vulnsManager.vulns = vulns;
-                            deferred.resolve(vulnsManager.vulns);
-                        }, function() {
-                            deferred.reject("Error loading vulnerabilities from CouchDB");
-                        });
-                    } else {
+            vulnsManager._latest(ws).then(function(latest) {
+                if(latest > vulnsManager.update_seq) {
+                    vulnsManager.update_seq = latest;
+                    vulnsManager._loadVulns(ws).then(function(vulns) {
+                        vulnsManager.vulns = vulns;
                         deferred.resolve(vulnsManager.vulns);
-                    }
-                })
-                .error(function() {
-                    deferred.reject("Error loading workspace data");
-                });
+                    }, function() {
+                        deferred.reject("Error loading vulnerabilities from CouchDB");
+                    });
+                } else {
+                    deferred.resolve(vulnsManager.vulns);
+                }
+            }, function() {
+                deferred.reject("Error loading workspace data from CouchDB");
+            });
+
             return deferred.promise;
         };
 
@@ -139,20 +150,6 @@ angular.module('faradayApp')
             var url = BASEURL + ws + "/" + vuln.id, 
             v = {
                 "_rev":             vuln.rev,
-                "data":             vuln.data,
-                "desc":             vuln.desc,
-                "easeofresolution": vuln.easeofresolution,
-                "impact":           vuln.impact,
-                "metadata":         vuln.meta,
-                "name":             vuln.name,
-                "obj_id":           vuln.oid,
-                "owned":            vuln.owned,
-                "owner":            vuln.owner,
-                "parent":           vuln.couch_parent, 
-                "refs":             vuln.refs,
-                "resolution":       vuln.resolution,
-                "severity":         vuln.severity, 
-                "type":             vuln.type
             };
             if(typeof(vuln.evidence) != undefined && vuln.evidence != undefined) {
                 // the list of evidence may have mixed objects, some of them already in CouchDB, some of them new
@@ -193,7 +190,7 @@ angular.module('faradayApp')
             }
         };
 
-        vulnsManager.remove = function(ws, vuln) {
+        vulnsManager.deleteVuln = function(ws, id) {
             var url = BASEURL + ws + "/" + vuln.id + "?rev=" + vuln.rev;
             $http.delete(url).success(function(d, s, h, c) {});
         };

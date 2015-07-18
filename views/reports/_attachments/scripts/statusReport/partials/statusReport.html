@@ -180,8 +180,8 @@
                             <td ng-if="columns.response" text-collapse text-collapse-max-length="100" text-collapse-text="{{v.response}}"></td>
                             <td ng-if="columns.resolution">{{v.resolution}}</td>
                             <td ng-if="columns.web">
-                                <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
-                                <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>
+                                <span class="glyphicon glyphicon-ok" ng-show="v.type === 'VulnerabilityWeb'"></span>
+                                <span class="glyphicon glyphicon-remove" ng-show="v.type !== 'VulnerabilityWeb'"></span>
                             </td>
                             <td ng-if="columns.website">{{v.website}}</td>
                             <td ng-if="columns.refs"><p ng-repeat="refs in v.refs">{{refs}}</p></td>

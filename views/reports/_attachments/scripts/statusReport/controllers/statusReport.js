@@ -37,7 +37,7 @@ angular.module('faradayApp')
             $scope.reverse = true;
             $scope.vulns = vulnsManager.vulns;
 
-            $scope.pageSize = 10,
+            $scope.pageSize = 10;
             $scope.currentPage = 0;
             $scope.newCurrentPage = 0;
  

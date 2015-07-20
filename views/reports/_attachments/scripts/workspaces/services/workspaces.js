@@ -29,7 +29,7 @@ angular.module('faradayApp')
             var workspaces = [],
             deferred = $q.defer();
             wss.forEach(function(ws) {
-                workspaces.push($http.get(BASEURL + ws).then(returnStatus, returnStatus));
+                workspaces.push($http.get(BASEURL + ws + "/" + ws).then(returnStatus, returnStatus));
             });
             $q.all(workspaces).then(function(resp) {
                 deferred.resolve(wss.filter(function(ws, index) {

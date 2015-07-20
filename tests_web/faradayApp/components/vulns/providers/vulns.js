@@ -25,16 +25,11 @@ describe('vulnsManager', function() {
         BASEURL = 'http://localhost:9876/'; 
 
         vuln1 = {
-            "_id": "1.2.3.8b4ffaedb84dd60d5f43c58eba66a7651458c8de",
+            "_id": "1.2.3.e29ba38bfa81e7f9050f6517babc14cf32cacdff",
             "_rev": "1-abe16726389e434ca3f37384ea76128e",
-            "name": "Internet Key Exchange (IKE) Aggressive Mode with Pre-Shared Key",
-            "parent": "1.2.3",
-            "resolution": "Be careful",
-            "refs": [
-               "CVE-2002-1623",
-               "7423",
-               "OSVDB:3820, CERT:886601"
-            ],
+            "desc": "I'm scared!",
+            "data": "",
+            "description": "I'm scared!",
             "metadata": {
                "update_time": 1429643049.395857,
                "update_user": "john",
@@ -44,13 +39,19 @@ describe('vulnsManager', function() {
                "update_controller_action": "ModelControler.newVuln",
                "owner": "john"
             },
+            "name": "Internet Key Exchange (IKE) Aggressive Mode with Pre-Shared Key",
             "owned": false,
+            "owner": "john",
+            "parent": "1.2.3",
+            "resolution": "Be careful",
+            "refs": [
+               "CVE-2002-1623",
+               "7423",
+               "OSVDB:3820, CERT:886601"
+            ],
             "severity": "med",
             "type": "Vulnerability",
-            "owner": "john",
-            "desc": "I'm scared!",
-            "data": "",
-            "description": "I'm scared!"
+            "ws": "ws"
         };
         vuln2 = {
             "_id": "1.2.3.5",
@@ -143,11 +144,12 @@ describe('vulnsManager', function() {
                 "offset":0,
                 "rows":[
                     {
-                        "id":"1.2.3.4",
+                        "id": "1.2.3.8b4ffaedb84dd60d5f43c58eba66a7651458c8de",
                         "key":"4b84b15bff6ee5796152495a230e45e3d7e947d9.34ac3ea37a2854ce00f2d97c648bf3a7cc27ebca",
-                        "value":vuln1
+                        "value": vuln1
                     }
-            ]};
+                ]
+            };
 
             $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 1});
             $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, resp);
@@ -159,6 +161,87 @@ describe('vulnsManager', function() {
             expect(vulnsManager.vulns.length).toEqual(1);
             expect(vulnsManager.vulns[0]._id).toEqual(vuln1._id);
             expect(vulnsManager.update_seq).toEqual(1);
+        });
+
+        it('createVuln', function() {
+            var id = vuln1._id,
+            vuln = vuln1;
+            delete vuln._id;
+            delete vuln._rev;
+
+            var resp = {
+                "total_rows":1,
+                "offset":0,
+                "rows":[
+                    {
+                        "id": "1.2.3.8b4ffaedb84dd60d5f43c58eba66a7651458c8de",
+                        "key":"4b84b15bff6ee5796152495a230e45e3d7e947d9.34ac3ea37a2854ce00f2d97c648bf3a7cc27ebca",
+                        "value": vuln1
+                    }
+                ]
+            };
+
+            // insert new vuln in Couch
+            $httpBackend.expect('POST', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
+            // getVulns
+            $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 1});
+            $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, resp);
+
+            vulnsManager.createVuln("ws", vuln);
+
+            $httpBackend.flush();
+
+            expect(vulnsManager.vulns.length).toEqual(1);
+            expect(vulnsManager.vulns[0]._id).toEqual(id);
+            expect(vulnsManager.update_seq).toEqual(1);
+        });
+
+        it('deleteVuln', function() {
+            var id = vuln1._id,
+            vuln = vuln1;
+            delete vuln._id;
+            delete vuln._rev;
+
+            var respInsert = {
+                "total_rows":1,
+                "offset":0,
+                "rows":[
+                    {
+                        "id": "1.2.3.8b4ffaedb84dd60d5f43c58eba66a7651458c8de",
+                        "key":"4b84b15bff6ee5796152495a230e45e3d7e947d9.34ac3ea37a2854ce00f2d97c648bf3a7cc27ebca",
+                        "value": vuln1
+                    }
+                ]
+            };
+
+            var respDelete = {
+                "total_rows":0,
+                "offset":0,
+                "rows":[]
+            };
+
+            // insert new vuln in Couch
+            $httpBackend.expect('POST', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
+            // getVulns
+            $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 1});
+            $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, respInsert);
+
+            vulnsManager.createVuln("ws", vuln);
+
+            $httpBackend.flush();
+
+            // delete vuln
+            $httpBackend.expect('DELETE', BASEURL + 'ws/' + id).respond(200);
+            // getVulns
+            $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 2});
+            $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, respDelete);
+            
+            vulnsManager.deleteVuln("ws", vulnsManager.vulns[0]);
+
+            $httpBackend.flush();
+
+            expect(vulnsManager.vulns.length).toEqual(0);
+            expect(vulnsManager.update_seq).toEqual(2);
         });
     });
 });

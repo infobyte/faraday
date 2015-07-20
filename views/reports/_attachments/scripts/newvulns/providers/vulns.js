@@ -11,12 +11,13 @@ angular.module('faradayApp')
         vulnsManager.vulns = [];
         vulnsManager.update_seq = 0;
 
+        // receives data from Couch, loads vulns property
         vulnsManager._load = function(data) {
             var self = this,
             vulns = [];
 
-            for(var i = 0; i < data.rows.length; i++) {
-                var vulnData = data.rows[i];
+            for(var i = 0; i < data.length; i++) {
+                var vulnData = data[i].value;
                 if(vulnData.type == "Vulnerability") {
                     var vuln = new Vuln(vulnData);
                 } else {
@@ -28,15 +29,61 @@ angular.module('faradayApp')
             self.vulns = vulns;
         };
 
+        vulnsManager.createVuln = function(ws, data) {
+            var deferred = $q.defer(),
+            self = this;
+
+            if(data.type == "Vulnerability") {
+                var vuln = new Vuln(data);
+            } else {
+                var vuln = new WebVuln(data);
+            }
+
+            vuln.save().then(function() {
+                self.getVulns(ws);
+                deferred.resolve();
+            }, function() {
+                deferred.reject();
+            });
+
+            return deferred.promise;
+        };
+
+        vulnsManager.deleteVuln = function(ws, vuln) {
+            var self = this;
+
+/*
+            vuln.remove().then(function(lala) {
+                console.log(lala);
+            });
+            vuln.remove().then(function() {
+                console.log("hola mundo!");
+                self.getVulns();
+            }, function() {
+                console.log("Error deleting vuln");
+            });
+
+*/
+            vuln.remove().success(function() {
+                console.log("success");
+            }).error(function() {
+                console.log("error");
+            });
+/*
+            var lala = vuln.remove();
+            console.log(lala);
+*/
+        };
+
         vulnsManager.getVulns = function(ws) {
             var self = this;
             return $http.get(BASEURL + ws)
                 .then(function(latest) {
                     if(latest.data.update_seq > self.update_seq) {
-                        self.update_seq = latest;
+                        self.update_seq = latest.data.update_seq;
                         $http.get(BASEURL + ws + '/_design/vulns/_view/all')
                             .success(function(data) {
-                                self._load(data);
+                                self._load(data.rows);
                             });
                     }
                 });

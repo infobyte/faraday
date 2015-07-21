@@ -52,27 +52,9 @@ angular.module('faradayApp')
         vulnsManager.deleteVuln = function(ws, vuln) {
             var self = this;
 
-/*
-            vuln.remove().then(function(lala) {
-                console.log(lala);
+            return vuln.remove().then(function() {
+                self.getVulns(ws);
             });
-            vuln.remove().then(function() {
-                console.log("hola mundo!");
-                self.getVulns();
-            }, function() {
-                console.log("Error deleting vuln");
-            });
-
-*/
-            vuln.remove().success(function() {
-                console.log("success");
-            }).error(function() {
-                console.log("error");
-            });
-/*
-            var lala = vuln.remove();
-            console.log(lala);
-*/
         };
 
         vulnsManager.getVulns = function(ws) {

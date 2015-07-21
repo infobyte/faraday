@@ -17,8 +17,8 @@ angular.module('faradayApp')
                 workspacesFact.getDuration($scope.workspace).then(function(duration) {
                     $scope.duration = duration;
                     $scope.progress = $scope.calculateProgress($scope.duration);
-                    $scope.start = $scope.duration.start * 1000;
-                    $scope.end = $scope.duration.end * 1000;
+                    $scope.start = $scope.duration.start;
+                    $scope.end = $scope.duration.end;
                 });
             };
 
@@ -28,14 +28,18 @@ angular.module('faradayApp')
                 today = new Date(),
                 total = 0;
 
-                today = today.getTime()/1000.0;
-                partial = today - duration.start;
-                total = duration.end - duration.start;
+                if(duration.start == "" || duration.end == "") {
+                    progress = null;
+                } else {
+                    today = today.getTime();
+                    partial = today - duration.start;
+                    total = duration.end - duration.start;
 
-                if(today > duration.end) {
-                    progress = 100;
-                } else if(duration.start < today && today <= duration.end && total > 0) {
-                    progress = Math.round(partial * 100 / total);
+                    if(today > duration.end) {
+                        progress = 100;
+                    } else if(duration.start < today && today <= duration.end && total > 0) {
+                        progress = Math.round(partial * 100 / total);
+                    }
                 }
 
                 return progress;

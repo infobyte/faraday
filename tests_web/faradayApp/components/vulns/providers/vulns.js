@@ -317,16 +317,14 @@ describe('vulnsManager', function() {
             $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 2});
             $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, respUpdate);
             
-            console.log(vulnsManager.vulns[0].name);
-            vulnsManager.updateVuln(vuln.ws, vulnsManager.vulns[0], vulnMod);
+            var vulns = vulnsManager.updateVuln(vuln.ws, vulnsManager.vulns[0], vulnMod);
             $httpBackend.flush();
-            console.log(vulnsManager.vulns[0].name);
 
             expect(vulnsManager.vulns.length).toEqual(1);
-            
+
             for(var prop in vulnMod) {
                 if(vulnMod.hasOwnProperty(prop)) {
-                    if(prop != "metadata") expect(vuln[prop]).toEqual(vulnMod[prop]);
+                    if(prop != "metadata") expect(vulnsManager.vulns[0][prop]).toEqual(vulnMod[prop]);
                 }
             }
         });

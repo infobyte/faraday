@@ -84,11 +84,20 @@ angular.module('faradayApp')
         };
 
         vulnsManager.updateVuln = function(ws, vuln, data) {
-            var self = this;
+            var deferred = $q.defer(),
+            self = this;
 
-            return vuln.update(data).then(function(resp) {
-                self.getVulns(ws);
+            vuln.update(data).then(function(resp) {
+                self.getVulns(ws).then(function(vulns) {
+                    deferred.resolve(vulns);
+                }, function() {
+                    deferred.reject();
+                });
+            }, function() {
+                deferred.reject();
             });
+
+            return deferred.promise;
         };
 
 /*

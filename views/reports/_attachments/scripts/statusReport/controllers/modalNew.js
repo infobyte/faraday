@@ -3,199 +3,163 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalNewCtrl',
-        ['$scope', '$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'targetFact', 'commonsFact', 'severities', 'workspace', 'hostsManager',
-        function($scope, $modalInstance, $filter, $upload, EASEOFRESOLUTION, targetFact, commons, severities, workspace, hostsManager) {
-        
-        $scope.typeOptions = [
-            {name:'Vulnerability', value:'Vulnerability'},
-            {name:'VulnerabilityWeb',value:'VulnerabilityWeb'}
-        ];
+    .controller('modalNewVulnCtrl',
+        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'hostsManager','servicesManager', 'cweFact',
+        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commons, severities, workspace, hostsManager, servicesManager, cweFact) {
 
-        $scope.easeofresolution = EASEOFRESOLUTION;
-        $scope.vuln_type = $scope.typeOptions[0].value;
-        $scope.severities = severities;
-        $scope.workspace = workspace;
-        $scope.target_selected = null;
-        $scope.not_target_selected = false;
-        $scope.incompatible_vulnWeb = false;
-        $scope.refs = [{key:''}];
-        $scope.evidence = {};
-        $scope.icons = {};
-        $scope.showPagination = 1;
-        $scope.currentPage = 0;
-        $scope.pageSize = 5;
-        $scope.pagination = 10;
-        $scope.file_name_error = false;
-        $scope.impact = {
-            "accountability": false,
-            "availability": false,
-            "confidentiality": false,
-            "integrity": false
-        };
+        var vm = this;
 
+        vm.vuln_types;
+        vm.easeofresolution;
+        vm.workspace;
+        vm.new_ref;
+        vm .icons;
+        vm.cweList;
+        vm.cweLimit;
+        vm.cwe_filter;
 
-        var name_selected,
-        host_selected,
-        d = {},
-        hosts = targetFact.getTarget($scope.workspace, true);
+        vm.file_name_error;
 
-        hosts.forEach(function(h) {
-            h.services = [];
-            d[h._id] = h;
-        });
+        vm.currentPage;
+        vm.newCurrentPage;
+        vm.pageSize;
 
-        hostsManager.getInterfaces($scope.workspace).then(function(resp) {
-            $scope.interfaces = resp;
-            hosts.forEach(function(h){
-                $scope.interfaces.forEach(function(interface){
-                    if(h._id == interface.value.parent){
-                        h.hostnames = interface.value.hostnames;
-                    }
+        vm.targets; 
+        vm.target_filter;
+
+        vm.data;
+
+        init = function() {
+            vm.vuln_types = [
+                {name:'Vulnerability', value:'Vulnerability'},
+                {name:'Vulnerability Web', value:'VulnerabilityWeb'}
+            ];
+            vm.easeofresolution = EASEOFRESOLUTION;
+            vm.severities = severities;
+            vm.workspace = workspace;
+            vm.new_ref = "";
+            vm.icons = {};
+
+            vm.cweList = [];
+            cweFact.get().then(function(data) {
+                vm.cweList = data;
+            });
+            vm.cweLimit = 5;
+            vm.cwe_filter = "";
+
+            vm.file_name_error = false;
+ 
+            vm.pageSize = 5;
+            vm.currentPage = 0;
+            vm.newCurrentPage = 0;
+
+            vm.data = {
+                type: "Vulnerability",
+                data: "",
+                desc: "",
+                easeofresolution: undefined,
+                evidence: {},
+                impact: {
+                    accountability: false,
+                    availability: false,
+                    confidentiality: false,
+                    integrity: false
+                },
+                name: "",
+                owned: false,
+                parent: undefined,
+                refs: [],
+                resolution: "",
+                severity: undefined,
+                method: "", 
+                path: "", 
+                pname: "", 
+                query: "", 
+                request: "",
+                resolution: "",
+                response: "",
+                website: ""
+            };
+
+            vm.targets = [];
+            vm.target_filter = "";
+
+            hostsManager.getHosts(workspace).then(function(hosts){
+                hosts.forEach(function(host){
+                    host.hostnames = [];
+                    host.services = [];
+                    hostsManager.getInterfaces(workspace, host._id).then(function(interfaces){
+                        interfaces.forEach(function(interface){
+                            host.hostnames.concat(interface.value.hostnames);
+                        });
+                        servicesManager.getServicesByHost(workspace, host._id).then(function(services) {
+                            host.services = services;
+                            vm.targets.push(host);
+                        });
+                    });
                 });
             });
-        });
-
-        var services = targetFact.getTarget($scope.workspace, false);
-
-        for(var i = 0; i < services.length; i++) {
-            var host = [];
-            services[i].selected = false;
-            host = d[services[i].hid];
-            host.services.push(services[i]);
-        }
-
-        $scope.hosts_with_services = hosts;
-
-        $scope.numberOfPages = function() {
-            if(typeof(filteredData) == "undefined") return false;
-            var filteredData = $filter('filter')($scope.hosts_with_services,$scope.search_notes);
-            if (filteredData.length <= 10){
-                $scope.showPagination = 0;
-            } else {            
-                $scope.showPagination = 1;
-            }
-            
-            return Math.ceil(filteredData.length/$scope.pagination);
         };
 
-        $scope.selectedFiles = function(files, e) {
+        vm.selectedFiles = function(files, e) {
             files.forEach(function(file) {
                 if(file.name.charAt(0) != "_") {
-                    if(!$scope.evidence.hasOwnProperty(file)) $scope.evidence[file.name] = file;
+                    if(!vm.data.evidence.hasOwnProperty(file)) vm.data.evidence[file.name] = file;
+                    vm.file_name_error = false;
                 } else {
-                    $scope.file_name_error = true;
+                    vm.file_name_error = true;
                 }
             });
-            $scope.icons = commons.loadIcons($scope.evidence); 
+            vm.icons = commons.loadIcons(vm.data.evidence);
         };
 
-        $scope.removeEvidence = function(name) {
-            delete $scope.evidence[name];
-            delete $scope.icons[name];
+        vm.removeEvidence = function(name) {
+            delete vm.data.evidence[name];
+            delete vm.icons[name];
         };
 
-        $scope.toggleImpact = function(key) {
-            $scope.impact[key] = !$scope.impact[key];
+        vm.toggleImpact = function(key) {
+            vm.data.impact[key] = !vm.data.impact[key];
         };
 
-        $scope.ok = function() {
-            if($scope.vuln_type == "VulnerabilityWeb" && host_selected == true){
-                $scope.incompatible_vulnWeb = true;
-            } else {
-                var res = {},
-                id = $scope.target_selected._id + "." + CryptoJS.SHA1($scope.name + "." + $scope.desc).toString(),
-                sha = CryptoJS.SHA1($scope.name + "." + $scope.desc).toString(),
-                extra_vulns_prop = {},
-                arrayReferences = [];
-
-                for(var key in $scope.impact) {
-                    $scope.impact[key] = Boolean($scope.impact[key]);
-                }
-
-                $scope.refs.forEach(function(r){
-                    arrayReferences.push(r.key);
-                });
-                
-                arrayReferences.filter(Boolean);
-
-                var res = {
-                    "data":             $scope.data,
-                    "desc":             $scope.desc,
-                    "easeofresolution": $scope.easeOfResolutionSelection,
-                    "evidence":         $scope.evidence,
-                    "impact":           $scope.impact,
-                    "name":             $scope.name,
-                    "owned":            false,
-                    "parent":           $scope.target_selected._id,
-                    "refs":             arrayReferences,
-                    "resolution":       $scope.resolution,
-                    "status":           $scope.vuln_type,
-                    "severity":         $scope.severitySelection,
-                    "target":           name_selected,
-                    "type":             $scope.vuln_type
-                }
-
-                if($scope.vuln_type === "VulnerabilityWeb") {
-                    extra_vulns_prop = {
-                        "path":         $scope.path,
-                        "pname":        $scope.pname,
-                        "query":        $scope.query,
-                        "request":      $scope.request,
-                        "resolution":   $scope.resolution,
-                        "response":     $scope.response,
-                        "web":          true, 
-                        "website":      $scope.website
-                    };
-                } else {
-                    extra_vulns_prop = {
-                        "web":          false
-                    };
-                }
-
-                for(var key in extra_vulns_prop) {
-                    res[key] = extra_vulns_prop[key];
-                }
-
-                $modalInstance.close(res);
-            }
+        vm.ok = function() {
+            if (!(vm.data.type === "VulnerabilityWeb" && vm.data.parent.type === "Host"))
+                vm.data.parent = vm.data.parent._id;
+                $modalInstance.close(data);
         };
 
-        $scope.cancel = function() {
+        vm.cancel = function() {
             $modalInstance.dismiss('cancel');
         };
 
-        $scope.$parent.isopen = ($scope.$parent.default === $scope.item);
- 
-        $scope.$watch('isopen', function (newvalue, oldvalue, $scope) {
-            $scope.$parent.isopen = newvalue;
-        });
-
-        $scope.selected = function(i,j){
-            if($scope.target_selected){
-                $scope.target_selected.selected = false;
+        vm.setTarget = function(target) {
+            if (vm.data.parent != undefined) {
+                vm.data.parent.selected = false;
             }
-            if(j != null){
-                host_selected = false;
-                $scope.target_selected = j;
-                name_selected = i.name;
-            }else{
-                host_selected = true;
-                $scope.target_selected = i;
-                name_selected = i.name;
-            }
-            $scope.target_selected.selected = true;
-            $scope.not_target_selected = true;
+            target.selected = true;
+            vm.data.parent = target;
         }
 
-        $scope.go = function(){
-            if($scope.go_page < $scope.numberOfPages()+2 && $scope.go_page > -1){
-                $scope.currentPage = $scope.go_page;
+        vm.go = function() {
+            vm.currentPage = 0;
+            if(vm.newCurrentPage <= parseInt(vm.targets.length/vm.pageSize)
+                    && vm.newCurrentPage > -1) {
+                vm.currentPage = vm.newCurrentPage;
             }
         }
 
-        $scope.newReference = function($event){
-            $scope.refs.push({key:''});
-            $event.preventDefault();
+        vm.newReference = function() {
+            vm.data.refs.push(vm.new_ref);
+            vm.new_ref = "";
         }
+
+        vm.populate = function(item, model, label) {
+            for (var key in item) {
+                if (vm.data.hasOwnProperty(key)) {
+                    vm.data[key] = item[key];
+                }
+            }
+        }
+
+        init();
     }]);

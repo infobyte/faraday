@@ -2,11 +2,11 @@
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
 
-<form name="form" hotkey="{enter:ok}" novalidate>
+<form name="form" hotkey="{enter:modal.ok}" novalidate>
     <div class="modal-header">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
-            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid">OK</button>
+            <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
         <h3 class="modal-title">Vulnerability creation</h3>
     </div>
@@ -14,31 +14,31 @@
         <div class="form-horizontal">
             <div class="form-group">
                 <div class="col-md-12">
-                 <input type="text" ng-model="search_notes" class="form-control input-sm" placeholder="Search" ng-change="currentPage = 0">
+                 <input type="text" ng-model="modal.target_filter" class="form-control input-sm" placeholder="Search" ng-change="modal.currentPage = 0">
                  <accordion close-others="true">
-                    <accordion-group is-open="isopen" ng-repeat="host in hosts_with_services | filter:search_notes | startFrom:currentPage*pageSize | limitTo:pageSize">
+                    <accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize">
                         <accordion-heading>
-                        <a ng-click="selected(host,null)" ng-class="{'multi-selected': host.selected == true}">{{host.name}} ({{host.hostnames[0]}})</a>
+                        <a ng-click="modal.setTarget(host)" ng-class="{'multi-selected': host.selected == true}">{{host.name}} ({{host.hostnames[0]}})</a>
                           <i class="pull-right glyphicon"
                                 ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
                         </accordion-heading>
                         <div class="panel-body" ng-repeat="service in host.services">
-                            <a ng-model="service" ng-click="selected(host,service)" ng-class="{'multi-selected': service.selected == true}">{{service.name}}</a>
+                            <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': service.selected == true}">{{service.name}}</a>
                       </div>
                     </accordion-group>
                   </accordion>
-                    <div class="showPagination" ng-show="showPagination">
+                  <div class="showPagination" ng-show="modal.targets_filtered.length > modal.pageSize">
                         <div class="form-group">
                             <ul class="pagination">
-                                <li><a ng-hide="currentPage == 0" ng-click="currentPage=currentPage-1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
-                                <li><a>{{currentPage}}/{{numberOfPages()+1}}</a></li>
-                                <li><a ng-hide="currentPage >= numberOfPages()+1" ng-click="currentPage=currentPage+1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                                <li><a ng-hide="modal.currentPage <= 0" ng-click="modal.currentPage = modal.currentPage - 1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                                <li><a>{{modal.currentPage}}/{{ ((modal.targets_filtered.length / modal.pageSize) | integer)}}</a></li>
+                                <li><a ng-hide="modal.currentPage >= ((modal.targets_filtered.length / modal.pageSize) | integer)" ng-click="modal.currentPage = modal.currentPage + 1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
                             </ul>
                             <ng-form name="goToPage">
                                 <div class="col-md-2">
-                                    <input type="number" min="0" max="{{numberOfPages()+1}}" class="form-control" ng-model="go_page" placeholder="Go to page"/>
+                                    <input type="number" min="0" max="{{ (modal.targets_filtered.length / modal.pageSize) | integer }}" class="form-control" ng-model="modal.newCurrentPage" placeholder="Go to page"/>
                                 </div>
-                                <button class="btn btn-danger" ng-click="go()">GO</button>
+                                <button class="btn btn-danger" ng-click="modal.go()">GO</button>
                             </ng-form>
                         </div>
                     </div>
@@ -46,32 +46,35 @@
             </div>
         </div>
 
-        <div class="alert alert-danger target_not_selected" role="alert" ng-hide="not_target_selected">
-          <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-          <span class="sr-only">Error:</span>
-          There is no target selected
+        <div class="alert alert-danger target_not_selected" role="alert" ng-hide="modal.data.parent != undefined">
+            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            <span class="sr-only">Error:</span>
+            There is no target selected
+            </div>
+        <div class="alert alert-danger target_not_selected" role="alert" ng-show="modal.data.type === 'VulnerabilityWeb' && modal.data.parent.type === 'Host'">
+            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            <span class="sr-only">Error:</span>
+            Vulnerability incompatible with host target, please select a service
         </div>
-        <div class="alert alert-danger target_not_selected" role="alert" ng-show="incompatible_vulnWeb">
-          <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-          <span class="sr-only">Error:</span>
-          Vulnerability incompatible with host target, please select a service
+        <div class="col-md-12">
+            <h5>CWE</h5>
+            <input type="text" ng-model="modal.cwe_selected" class="form-control input-sm" placeholder="Search for CWE" typeahead="cwe as cwe.name for cwe in modal.cweList | filter:{name: $viewValue} | limitTo:10" typeahead-on-select="modal.populate($item, $model, $label)">
         </div>
-
         <div class="form-horizontal">
             <div class="form-group">
                 <div class="col-md-4">
                     <h5>Type</h5>
-                    <select class="form-control" ng-model="vuln_type" ng-options="option.value as option.name for option in typeOptions">
+                    <select class="form-control" ng-model="modal.data.type" ng-options="option.value as option.name for option in modal.vuln_types">
                     </select>
                 </div>
                 <div class="col-md-4">
                     <h5>Severity</h5>
-                    <select class="form-control" ng-model="severitySelection" ng-options="s as s for s in severities" required>
+                    <select class="form-control" ng-model="modal.data.severity" ng-options="s for s in modal.severities" required>
                     </select>
                 </div>
                 <div class="col-md-4">
                     <h5>Ease of Resolution</h5>
-                    <select class="form-control" ng-model="easeOfResolutionSelection" ng-options="e as e for e in easeofresolution">
+                    <select class="form-control" ng-model="modal.data.easeofresolution" ng-options="e for e in modal.easeofresolution">
                         <option value=""></option>
                     </select>
                 </div>
@@ -79,80 +82,81 @@
             <div class="form-group">
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-name">Vuln name</label>
-                    <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="name" required/>
+                    <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="modal.data.name" required/>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-desc">Vuln description</label>
-                    <textarea class="form-control" id="vuln-desc" placeholder="Description" ng-model="desc" required></textarea>
+                    <textarea class="form-control" id="vuln-desc" placeholder="Description" ng-model="modal.data.desc" required></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-data">Vuln data</label>
-                    <textarea class="form-control" id="vuln-data" placeholder="Data" ng-model="data"></textarea>
+                    <textarea class="form-control" id="vuln-data" placeholder="Data" ng-model="modal.data.data"></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
-                <div class="col-md-12 reference" ng-repeat="reference in refs">
+                <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="modal.new_ref"/>
+                    <span class="input-group-addon" ng-click="modal.newReference()"><i class="fa fa-plus-circle"></i></span>
+                <div class="col-md-12 reference" ng-repeat="reference in modal.data.refs">
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="vuln-refs">References</label>
-                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.key"/>
-                        <span class="input-group-addon" ng-click="newReference($event)"><i class="fa fa-plus-circle"></i></span>
-                        <span class="input-group-addon" ng-click="refs.splice($index, 1)" ng-hide="refs.length == 1"><i class="fa fa-minus-circle"></i></span>
+                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference"/>
+                        <span class="input-group-addon" ng-click="modal.data.refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                     </div>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-resolution">Vuln Resolution</label>
-                    <textarea class="form-control" id="vuln-resolution" placeholder="Resolution" ng-model="resolution"></textarea>
+                    <textarea class="form-control" id="vuln-resolution" placeholder="Resolution" ng-model="modal.data.resolution"></textarea>
                 </div>
             </div><!-- .form-group -->
         </div>
 
-        <div class="animate-switch-container" ng-switch on="vuln_type">
+        <div class="animate-switch-container" ng-switch on="modal.data.type">
             <div class="animate-switch" ng-switch-when="VulnerabilityWeb">
                 <div class="form-horizontal">
                     <div class="form-group">
                         <div class="col-md-4">
                             <label class="sr-only control-label" for="vuln-method">Method</label>
-                            <input type="text" class="form-control" id="vuln-method" placeholder="Method" ng-model="$parent.method"/>
+                            <input type="text" class="form-control" id="vuln-method" placeholder="Method" ng-model="modal.data.method"/>
                         </div>
                         <div class="col-md-3">
                             <label class="sr-only control-label" for="vuln-pname">Param Name</label>
-                            <input type="text" class="form-control" id="vuln-pname" placeholder="Param name" ng-model="$parent.pname"/>
+                            <input type="text" class="form-control" id="vuln-pname" placeholder="Param name" ng-model="modal.data.pname"/>
                         </div>
                         <div class="col-md-5">
                             <label class="sr-only control-label" for="vuln-params">Params</label>
-                            <input type="text" class="form-control" id="vuln-params" placeholder="Params" ng-model="$parent.params"/>
+                            <input type="text" class="form-control" id="vuln-params" placeholder="Params" ng-model="modal.data.params"/>
                         </div>
                     </div><!-- .form-group -->
                     <div class="form-group">
                         <div class="col-md-4">
                             <label class="sr-only control-label" for="vuln-path">Path</label>
-                            <input type="text" class="form-control" id="vuln-path" placeholder="Path" ng-model="$parent.path"/>
+                            <input type="text" class="form-control" id="vuln-path" placeholder="Path" ng-model="modal.data.path"/>
                         </div>
                         <div class="col-md-4">
                             <label class="sr-only control-label" for="vuln-query">Query</label>
-                            <input type="text" class="form-control" id="vuln-query" placeholder="Query" ng-model="$parent.query"/>
+                            <input type="text" class="form-control" id="vuln-query" placeholder="Query" ng-model="modal.data.query"/>
                         </div>
                         <div class="col-md-4">
                             <label class="sr-only control-label" for="vuln-website">Website</label>
-                            <input type="text" class="form-control" id="vuln-website" placeholder="Website" ng-model="$parent.website"/>
+                            <input type="text" class="form-control" id="vuln-website" placeholder="Website" ng-model="modal.data.website"/>
                         </div>
                     </div><!-- .form-group -->
                     <div class="form-group">
                         <div class="col-md-12">
                             <label class="sr-only control-label" for="vuln-request">Request</label>
-                            <textarea class="form-control" id="vuln-request" placeholder="Request" ng-model="$parent.request"></textarea>
+                            <textarea class="form-control" id="vuln-request" placeholder="Request" ng-model="modal.data.request"></textarea>
                         </div>
                     </div><!-- .form-group -->
                     <div class="form-group">
                         <div class="col-md-12">
                             <label class="sr-only control-label" for="vuln-response">Response</label>
-                            <textarea class="form-control" id="vuln-response" placeholder="Response" ng-model="$parent.response"></textarea>
+                            <textarea class="form-control" id="vuln-response" placeholder="Response" ng-model="modal.data.response"></textarea>
                         </div>
                     </div><!-- .form-group -->
                 </div><!-- .form-horizontal -->
@@ -161,28 +165,28 @@
         </div><!-- .animate-switch-container -->
 
         <h4>Impact</h4>
-        <div ng-repeat="(key, value) in impact" class="normal-size" style="cursor: pointer;">
-            <h4><span ng-class="{'label label-default': !value, 'label label-success': value}" ng-click="toggleImpact(key)">{{key}}</span></h4>
+        <div ng-repeat="(key, value) in modal.data.impact" class="normal-size" style="cursor: pointer;">
+            <h4><span ng-class="{'label label-default': !value, 'label label-success': value}" ng-click="modal.toggleImpact(key)">{{key}}</span></h4>
         </div><!-- .normal-size -->
 
         <h4>Evidence</h4>
-        <div class="alert alert-danger normal-size" role="alert" ng-if="file_name_error">
+        <div class="alert alert-danger normal-size" role="alert" ng-if="modal.file_name_error">
           <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
           <span class="sr-only">Error:</span>
           Cannot upload evidence starting with underscore, please choose a different name for the file.
         </div>
         <div class="form-group normal-size">
-            <input type="file" id="evidence" ng-file-select ng-multiple="true" resetOnClick="false" ng-file-change="selectedFiles($files, $event)"/>
+            <input type="file" id="evidence" ng-file-select ng-multiple="true" resetOnClick="false" ng-file-change="modal.selectedFiles($files, $event)"/>
             <p class="help-block">Multiple files are allowed.</p>
         </div><!-- .form-group -->
-        <div id="evidenceFiles" class="normal-size" ng-if="evidence">
+        <div id="evidenceFiles" class="normal-size" ng-if="modal.data.evidence">
             <ul>
-                <li ng-repeat="e in evidence | orderObjectBy:'name':true | orderBy:'name'">
+                <li ng-repeat="e in modal.data.evidence | orderObjectBy:'name':true | orderBy:'name'">
                     <div class="btn-group">
                         <button type="button" class="btn btn-default">
                             <span class="fa {{icons[e.name]}}" title="Evidence {{e.name}}"></span> {{e.name}}
                         </button><!-- ng-repeat -->
-                        <button type="button" class="btn btn-danger" ng-click="removeEvidence(e.name)">
+                        <button type="button" class="btn btn-danger" ng-click="modal.removeEvidence(e.name)">
                             <span class="glyphicon glyphicon-trash"></span>
                         </button>
                     </div>
@@ -192,8 +196,8 @@
     </div><!-- .modal-body -->
     <div class="modal-footer">
         <div class="modal-button">
-            <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
-            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+            <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="modal.ok()">OK</button>
+            <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
     </div>
 </form>

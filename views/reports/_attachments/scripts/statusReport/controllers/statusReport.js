@@ -37,7 +37,7 @@ angular.module('faradayApp')
             $scope.reverse = true;
             $scope.vulns = vulnsManager.vulns;
 
-            $scope.pageSize = 10,
+            $scope.pageSize = 10;
             $scope.currentPage = 0;
             $scope.newCurrentPage = 0;
  
@@ -347,7 +347,7 @@ angular.module('faradayApp')
         $scope.new = function() {
             var modal = $modal.open({
                 templateUrl: 'scripts/statusReport/partials/modalNew.html',
-                controller: 'modalNewCtrl',
+                controller: 'modalNewVulnCtrl as modal',
                 size: 'lg',
                 resolve: {
                     severities: function() {
@@ -414,7 +414,7 @@ angular.module('faradayApp')
             for(var prop in chunks) {
                 if(chunks.hasOwnProperty(prop)) {
                     if(chunks.prop != "") {
-                        encode += "&" + prop + "=" + chunks[prop];
+                        encode += "&" + encodeURIComponent(prop) + "=" + encodeURIComponent(chunks[prop]);
                     }
                 }
             }
@@ -429,7 +429,7 @@ angular.module('faradayApp')
 
             params.forEach(function(param) {
                 i = param.indexOf("=");
-                decode[param.slice(0,i)] = param.slice(i+1);
+                decode[decodeURIComponent(param.slice(0,i))] = decodeURIComponent(param.slice(i+1));
             });
 
             if(decode.hasOwnProperty("free")) {

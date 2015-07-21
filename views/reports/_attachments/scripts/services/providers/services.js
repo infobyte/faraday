@@ -66,6 +66,23 @@ angular.module('faradayApp')
                 })
             return deferred.promise;
         }
+        
+        servicesManager.getServicesByHost = function(ws, host_id) {
+            var deferred = $q.defer();
+            var url = BASEURL + "/" + ws + "/_design/services/_view/byhost?key=\"" + host_id + "\"";
+            $http.get(url).then(function(res){
+                var promises = [];
+                res.data.rows.forEach(function(service){
+                    promises.push(servicesManager.getService(service.id, ws, true));
+                });
+                $q.all(promises).then(function(services) {
+                    deferred.resolve(services);
+                });
+            }, function(){
+                deferred.reject();
+            });
+            return deferred.promise;
+        }
 
         servicesManager.deleteServices = function(id, ws) {
             var deferred = $q.defer();

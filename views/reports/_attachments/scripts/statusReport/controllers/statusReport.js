@@ -347,7 +347,7 @@ angular.module('faradayApp')
         $scope.new = function() {
             var modal = $modal.open({
                 templateUrl: 'scripts/statusReport/partials/modalNew.html',
-                controller: 'modalNewCtrl',
+                controller: 'modalNewVulnCtrl as modal',
                 size: 'lg',
                 resolve: {
                     severities: function() {

@@ -12,13 +12,19 @@ angular.module('faradayApp')
 
         Vuln.prototype = {
             set: function(data) {
+                if(data.name === "" || data.name === undefined) {
+                    throw "Unable to create Vuln without a name";
+                } else if(data.desc === "" || data.desc === undefined) {
+                    throw "Unable to create Vuln without a description";
+                }
+
                 var evidence = [],
                 metadata = {},
                 now = new Date(),
                 date = now.getTime(),
                 selected = false;
 
-                if(typeof(data.attachments) != undefined && data.attachments != undefined) {
+                if(data.attachments !== undefined) {
                     for(var attachment in data.attachments) {
                         if(data.attachments.hasOwnProperty(attachment)) {
                             evidence.push(attachment);
@@ -29,42 +35,38 @@ angular.module('faradayApp')
                 // new vuln
                 if(data._id === undefined) {
                     var id = CryptoJS.SHA1(data.name + "." + data.desc).toString();
+
                     this._id = data.parent + "." + id;
                     this.obj_id = id;
-                    metadata = {
-                        "update_time": date,
-                        "update_user": "",
-                        "update_action": 0,
-                        "creator": "UI Web",
-                        "create_time": date,
-                        "update_controller_action": "UI Web New",
-                        "owner": ""
-                    };
+
+                    metadata.update_time = date;
+                    metadata.update_user = "";
+                    metadata.update_action = 0;
+                    metadata.creator = "UI Web";
+                    metadata.create_time = date;
+                    metadata.update_controller_action = "UI Web New";
+                    metadata.owner = "";
                 } else {
-                    if(data.selected != undefined) {
-                        selected = data.selected;
-                    }
+                    if(data.selected !== undefined) selected = data.selected;
+
                     this._id = data._id;
-                    this._rev = data._rev;
                     this.obj_id = data._id;
-                    metadata = {
-                        "update_time": date,
-                        "update_user":  data.metadata.update_user,
-                        "update_action": data.metadata.update_action,
-                        "creator": data.metadata.creator,
-                        "create_time": data.metadata.create_time,
-                        "update_controller_action": data.metadata.update_controller_action,
-                        "owner": data.metadata.owner
-                    };
+                    if(data._rev !== undefined) this._rev = data._rev;
+
+                    metadata.update_time = date;
+                    if(data.metadata.update_user !== undefined) metadata.update_user = data.metadata.update_user;
+                    if(data.metadata.update_action !== undefined) metadata.update_action = data.metadata.update_action;
+                    if(data.metadata.creator !== undefined) metadata.creator = data.metadata.creator;
+                    if(data.metadata.create_time !== undefined) metadata.create_time = data.metadata.create_time;
+                    if(data.metadata.update_controller_action !== undefined) metadata.update_controller_action = data.metadata.update_controller_action;
+                    if(data.metadata.owner !== undefined) metadata.owner = data.metadata.owner;
                 }
 
                 this.date = date;
-                this.delete = false;
                 this.metadata = metadata;
                 this.owner = "";
                 this.selected = selected;
                 this.type = "Vulnerability";
-                this.web = false;
                 this.ws = data.ws;
 
                 // user-generated content

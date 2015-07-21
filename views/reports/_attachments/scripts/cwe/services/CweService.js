@@ -17,8 +17,7 @@ angular.module('faradayApp')
                         id: obj.id,
                         cwe: obj.doc.cwe,
                         name: obj.doc.name,
-                        desc_summary: obj.doc.desc_summary,
-                        description: obj.doc.description,
+                        desc: "Summary: " + obj.doc.desc_summary + "\n\n" + obj.doc.description,
                         resolution: obj.doc.resolution,
                         exploitation: obj.doc.exploitation,
                         references: obj.doc.references

@@ -56,7 +56,10 @@
             <span class="sr-only">Error:</span>
             Vulnerability incompatible with host target, please select a service
         </div>
-
+        <div class="col-md-12">
+            <h5>CWE</h5>
+            <input type="text" ng-model="modal.cwe_selected" class="form-control input-sm" placeholder="Search for CWE" typeahead="cwe as cwe.name for cwe in modal.cweList | filter:{name: $viewValue} | limitTo:10" typeahead-on-select="modal.populate($item, $model, $label)">
+        </div>
         <div class="form-horizontal">
             <div class="form-group">
                 <div class="col-md-4">

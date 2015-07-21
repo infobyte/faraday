@@ -42,6 +42,7 @@ angular.module('faradayApp')
 
             vm.cweList = [];
             cweFact.get().then(function(data) {
+                console.log(data);
                 vm.cweList = data;
             });
             vm.cweLimit = 5;
@@ -151,6 +152,14 @@ angular.module('faradayApp')
         vm.newReference = function() {
             vm.data.refs.push(vm.new_ref);
             vm.new_ref = "";
+        }
+
+        vm.populate = function(item, model, label) {
+            for (var key in item) {
+                if (vm.data.hasOwnProperty(key)) {
+                    vm.data[key] = item[key];
+                }
+            }
         }
 
         init();

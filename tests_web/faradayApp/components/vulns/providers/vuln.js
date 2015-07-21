@@ -112,8 +112,6 @@ describe('Vuln', function() {
                     if(prop != "metadata") expect(vuln[prop]).toEqual(old_data[prop]);
                 }
             }
-
-
         });
 
         it('Save data to new object', function() {
@@ -158,6 +156,12 @@ describe('Vuln', function() {
             $httpBackend.flush();
 
             expect(vuln._rev).toEqual("1234");
+            
+            for(var prop in old_data) {
+                if(old_data.hasOwnProperty(prop)) {
+                    if(prop != "metadata") expect(vuln[prop]).toEqual(old_data[prop]);
+                }
+            }
         });
 
         it('Delete data', function() {

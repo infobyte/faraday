@@ -87,10 +87,13 @@ angular.module('faradayApp')
             },
             update: function(data) {
                 var self = this,
-                url = BASEURL + self.ws + "/" + self._id;
-                return $http.put(url, data)
-                    .success(function(data) {
-                        self._rev = data.rev;
+                url = BASEURL + self.ws + "/" + self._id,
+                vuln = new Vuln(self);
+                vuln.set(data);
+                return $http.put(url, vuln)
+                    .success(function(response) {
+                        self.set(data);
+                        self._rev = response.rev;
                     });
             },
             save: function() {

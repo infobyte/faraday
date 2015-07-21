@@ -71,7 +71,13 @@ angular.module('faradayApp')
                 });
         };
 
+        vulnsManager.updateVuln = function(ws, vuln, data) {
+            var self = this;
 
+            return vuln.update(data).then(function(resp) {
+                self.getVulns(ws);
+            });
+        };
 
 /*
         //data comes from Couch

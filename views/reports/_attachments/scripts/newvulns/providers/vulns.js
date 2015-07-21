@@ -27,6 +27,8 @@ angular.module('faradayApp')
             }
 
             self.vulns = vulns;
+
+            return self.vulns;
         };
 
         vulnsManager.createVuln = function(ws, data) {
@@ -58,17 +60,27 @@ angular.module('faradayApp')
         };
 
         vulnsManager.getVulns = function(ws) {
-            var self = this;
-            return $http.get(BASEURL + ws)
-                .then(function(latest) {
-                    if(latest.data.update_seq > self.update_seq) {
-                        self.update_seq = latest.data.update_seq;
+            var deferred = $q.defer(),
+            self = this;
+
+            $http.get(BASEURL + ws)
+                .success(function(latest) {
+                    if(latest.update_seq > self.update_seq) {
+                        self.update_seq = latest.update_seq;
                         $http.get(BASEURL + ws + '/_design/vulns/_view/all')
                             .success(function(data) {
-                                self._load(data.rows);
+                                deferred.resolve(self._load(data.rows));
+                            })
+                            .error(function() {
+                                deferred.reject();
                             });
                     }
+                })
+                .error(function() {
+                    deferred.reject();
                 });
+
+            return deferred.promise;
         };
 
         vulnsManager.updateVuln = function(ws, vuln, data) {

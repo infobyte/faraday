@@ -67,7 +67,8 @@ angular.module('faradayApp')
         };
 
         errorHandler = function(response) {
-            return $q.reject(response.data.reason.replace("file", "workspace")); 
+            if(response.data) response = response.data.reason;
+            return $q.reject(response.replace("file", "workspace")); 
         };
 
         workspacesFact.put = function(workspace) {
@@ -86,7 +87,7 @@ angular.module('faradayApp')
                     workspace._rev = data.rev;
                 }).
                 error(function(data) {
-                    errorHandler;
+                    errorHandler(data);
                 });
         };
 
@@ -134,10 +135,11 @@ angular.module('faradayApp')
                             }
                         }
                         $http.post(BASEURL + workspace + "/_bulk_docs", JSON.stringify(bulk));
-                    }, errorHandler);
+                    }, errorHandler(data));
                 }).
                 error(function(data) {
-                    errorHandler;
+                    console.log(data);
+                    errorHandler(data);
                 });
         };
 

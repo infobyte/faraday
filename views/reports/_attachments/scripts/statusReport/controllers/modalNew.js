@@ -149,9 +149,7 @@ angular.module('faradayApp')
         }
 
         vm.newReference = function() {
-            console.log(vm.new_ref);
             vm.data.refs.push(vm.new_ref);
-            console.log(vm.data.refs);
             vm.new_ref = "";
         }
 

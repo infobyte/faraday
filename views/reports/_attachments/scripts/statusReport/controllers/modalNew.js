@@ -42,7 +42,6 @@ angular.module('faradayApp')
 
             vm.cweList = [];
             cweFact.get().then(function(data) {
-                console.log(data);
                 vm.cweList = data;
             });
             vm.cweLimit = 5;

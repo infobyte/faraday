@@ -19,11 +19,20 @@ angular.module('faradayApp')
             for(var i = 0; i < data.length; i++) {
                 var vulnData = data[i].value;
                 if(vulnData.type == "Vulnerability") {
-                    var vuln = new Vuln(vulnData);
+                    try {
+                        var vuln = new Vuln(vulnData);
+                        vulns.push(vuln);
+                    } catch(e) {
+                        console.log(e.name + ":" + e.message);
+                    }
                 } else {
-                    var vuln = new WebVuln(vulnData);
+                    try {
+                        var vuln = new WebVuln(vulnData);
+                        vulns.push(vuln);
+                    } catch(e) {
+                        console.log(e.name + ":" + e.message);
+                    }
                 }
-                vulns.push(vuln);
             }
 
             self.vulns = vulns;

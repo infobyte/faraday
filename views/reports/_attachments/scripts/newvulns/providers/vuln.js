@@ -6,18 +6,15 @@ angular.module('faradayApp')
     .factory('Vuln', ['BASEURL', '$http', function(BASEURL, $http) {
         Vuln = function(data){
             if(data) {
+                if(data.name === "" || data.name === undefined) {
+                    throw new Error("Unable to create Vuln without a name");
+                }
                 this.set(data);
             }
         };
 
         Vuln.prototype = {
             set: function(data) {
-                if(data.name === "" || data.name === undefined) {
-                    throw "Unable to create Vuln without a name";
-                } else if(data.desc === "" || data.desc === undefined) {
-                    throw "Unable to create Vuln without a description";
-                }
-
                 var evidence = [],
                 metadata = {},
                 now = new Date(),

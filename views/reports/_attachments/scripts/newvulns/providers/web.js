@@ -6,8 +6,10 @@ angular.module('faradayApp')
     .factory('WebVuln', ['Vuln', 'BASEURL', '$http', function(Vuln, BASEURL, $http) {
 
         WebVuln = function(data) {
-            //Vuln.call(this, data);
             if(data) {
+                if(data.name === "" || data.name === undefined) {
+                    throw new Error("Unable to create Vuln without a name");
+                }
                 this.set(data);
             }
         };

@@ -101,6 +101,12 @@ describe('Vuln', function() {
             }
         });
 
+        it('Setting data to new invalid object', function() {
+            delete new_data.name;
+
+            expect(function() { new Vuln(new_data); }).toThrowError(Error, "Unable to create Vuln without a name");
+        });
+
         it('Setting data to existing object', function() {
             vuln = new Vuln(old_data);
 
@@ -121,9 +127,7 @@ describe('Vuln', function() {
 
             $httpBackend.when('POST', url).respond(201, {"rev": "1234"});
             $httpBackend.expect('POST', url);
-
             vuln.save();
-
             $httpBackend.flush();
 
             expect(vuln._rev).toEqual("1234");
@@ -135,9 +139,7 @@ describe('Vuln', function() {
             vuln = new Vuln(old_data);
 
             $httpBackend.expect('POST', url).respond(201, {"rev": "1234"});
-
             vuln.save();
-
             $httpBackend.flush();
 
             expect(vuln._rev).toEqual("1234");
@@ -150,9 +152,7 @@ describe('Vuln', function() {
             expect(vuln._rev).toBeUndefined();
 
             $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
-
             vuln.update(old_data);
-
             $httpBackend.flush();
 
             expect(vuln._rev).toEqual("1234");

@@ -29,7 +29,6 @@ describe('vulnsManager', function() {
             "_rev": "1-abe16726389e434ca3f37384ea76128e",
             "desc": "I'm scared!",
             "data": "",
-            "description": "I'm scared!",
             "metadata": {
                "update_time": 1429643049.395857,
                "update_user": "john",
@@ -78,8 +77,7 @@ describe('vulnsManager', function() {
             "type": "Vulnerability",
             "owner": "john",
             "desc": "I'm scared!",
-            "data": "",
-            "description": "I'm scared!"
+            "data": ""
         };
         vuln3 = {
             "_id": "6.7.8.9",
@@ -253,19 +251,18 @@ describe('vulnsManager', function() {
                 "_rev": "1-abe16726389e434ca3f37384ea76128e",
                 "desc": "Hello World!",
                 "data": "",
-                "description": "I'm scared!",
                 "metadata": {
                    "update_time": 1429643049.395857,
-                   "update_user": "john",
+                   "update_user": "",
                    "update_action": 0,
-                   "creator": "john",
+                   "creator": "UI Web",
                    "create_time": 1429643049.395857,
                    "update_controller_action": "ModelControler.newVuln",
-                   "owner": "john"
+                   "owner": ""
                 },
                 "name": "Something something dark side",
                 "owned": false,
-                "owner": "john",
+                "owner": "",
                 "parent": "1.2.3",
                 "resolution": "Be careful",
                 "refs": [
@@ -297,7 +294,7 @@ describe('vulnsManager', function() {
                     {
                         "id": "1.2.3.8b4ffaedb84dd60d5f43c58eba66a7651458c8de",
                         "key":"4b84b15bff6ee5796152495a230e45e3d7e947d9.34ac3ea37a2854ce00f2d97c648bf3a7cc27ebca",
-                        "value": vuln1
+                        "value": vulnMod
                     }
                 ]
             };

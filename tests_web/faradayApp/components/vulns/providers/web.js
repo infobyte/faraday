@@ -125,6 +125,12 @@ describe('WebVuln', function() {
             }
         });
 
+        it('Setting data to new invalid object', function() {
+            delete new_data.name;
+
+            expect(function() { new WebVuln(new_data); }).toThrowError(Error, "Unable to create Vuln without a name");
+        });
+
         it('Setting data to existing object', function() {
             vuln = new WebVuln(old_data);
 

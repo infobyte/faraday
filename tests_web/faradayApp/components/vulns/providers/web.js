@@ -151,8 +151,8 @@ describe('WebVuln', function() {
 
             vuln = new WebVuln('ws', new_data);
 
-            $httpBackend.when('POST', url).respond(201, {"rev": "1234"});
-            $httpBackend.expect('POST', url);
+            $httpBackend.when('PUT', url).respond(201, {"rev": "1234"});
+            $httpBackend.expect('PUT', url);
 
             vuln.save();
 
@@ -166,7 +166,7 @@ describe('WebVuln', function() {
 
             vuln = new WebVuln('ws', old_data);
 
-            $httpBackend.expect('POST', url).respond(201, {"rev": "1234"});
+            $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
 
             vuln.save();
 

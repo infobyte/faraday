@@ -125,8 +125,8 @@ describe('Vuln', function() {
 
             vuln = new Vuln('ws', new_data);
 
-            $httpBackend.when('POST', url).respond(201, {"rev": "1234"});
-            $httpBackend.expect('POST', url);
+            $httpBackend.when('PUT', url).respond(201, {"rev": "1234"});
+            $httpBackend.expect('PUT', url);
             vuln.save();
             $httpBackend.flush();
 
@@ -138,7 +138,7 @@ describe('Vuln', function() {
 
             vuln = new Vuln('ws', old_data);
 
-            $httpBackend.expect('POST', url).respond(201, {"rev": "1234"});
+            $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
             vuln.save();
             $httpBackend.flush();
 

@@ -114,12 +114,13 @@ angular.module('faradayApp')
                 vuln = {};
                 angular.extend(vuln, self);
                 // remove WEBUI-specific fields
+                delete vuln._attachments;
                 delete vuln.date;
                 delete vuln.delete;
                 delete vuln.selected;
                 delete vuln.web;
                 delete vuln.ws;
-                return $http.post(url, vuln)
+                return $http.put(url, vuln)
                     .success(function(data) {
                         self._rev = data.rev;
                     });

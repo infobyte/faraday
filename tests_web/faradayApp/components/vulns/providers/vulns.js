@@ -180,7 +180,7 @@ describe('vulnsManager', function() {
             };
 
             // insert new vuln in Couch
-            $httpBackend.expect('POST', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
+            $httpBackend.expect('PUT', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
             // getVulns
             $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 1});
             $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, resp);
@@ -219,7 +219,7 @@ describe('vulnsManager', function() {
             };
 
             // insert new vuln in Couch
-            $httpBackend.expect('POST', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
+            $httpBackend.expect('PUT', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
             // getVulns
             $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 1});
             $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, respInsert);
@@ -300,7 +300,7 @@ describe('vulnsManager', function() {
             };
 
             // insert new vuln in Couch
-            $httpBackend.expect('POST', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
+            $httpBackend.expect('PUT', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
             // getVulns
             $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 1});
             $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, respInsert);

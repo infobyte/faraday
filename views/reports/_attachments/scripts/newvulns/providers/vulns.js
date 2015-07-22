@@ -48,8 +48,11 @@ angular.module('faradayApp')
                 }
 
                 vuln.save().then(function() {
-                    self.getVulns(ws);
-                    deferred.resolve();
+                    self.getVulns(ws).then(function() {
+                        deferred.resolve();
+                    }, function() {
+                        deferred.reject();
+                    });
                 }, function() {
                     deferred.reject();
                 });

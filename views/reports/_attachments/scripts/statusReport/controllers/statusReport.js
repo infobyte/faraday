@@ -324,8 +324,8 @@ angular.module('faradayApp')
                 $scope.vulns = vulnsManager.vulns;
             }, function(message) {
                 $modal.open(config = {
-                    templateUrl: 'scripts/partials/modal-ko.html',
-                    controller: 'modalKoCtrl',
+                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    controller: 'commonsModalKoCtrl',
                     size: 'sm',
                     resolve: {
                         msg: function() {

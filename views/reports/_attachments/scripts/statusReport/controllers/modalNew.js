@@ -76,7 +76,6 @@ angular.module('faradayApp')
                 pname: "", 
                 query: "", 
                 request: "",
-                resolution: "",
                 response: "",
                 website: ""
             };

@@ -54,6 +54,7 @@ angular.module('faradayApp')
                     deferred.reject();
                 });
             } catch(e) {
+                console.log(e.name + ":" + e.message);
                 deferred.reject(e.name + ":" + e.message);
             }
 

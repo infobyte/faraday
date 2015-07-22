@@ -36,7 +36,7 @@
                             </ul>
                             <ng-form name="goToPage">
                                 <div class="col-md-2">
-                                    <input type="number" min="0" max="{{ (modal.targets_filtered.length / modal.pageSize) | integer }}" class="form-control" ng-model="modal.newCurrentPage" placeholder="Go to page"/>
+                                    <input type="number" class="form-control" ng-model="modal.newCurrentPage" placeholder="Go to page"/>
                                 </div>
                                 <button class="btn btn-danger" ng-click="modal.go()">GO</button>
                             </ng-form>

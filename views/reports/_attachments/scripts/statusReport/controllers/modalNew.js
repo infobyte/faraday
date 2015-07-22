@@ -89,7 +89,7 @@ angular.module('faradayApp')
                     host.services = [];
                     hostsManager.getInterfaces(workspace, host._id).then(function(interfaces){
                         interfaces.forEach(function(interface){
-                            host.hostnames.concat(interface.value.hostnames);
+                            host.hostnames = host.hostnames.concat(interface.value.hostnames);
                         });
                         servicesManager.getServicesByHost(workspace, host._id).then(function(services) {
                             host.services = services;

@@ -125,7 +125,7 @@ angular.module('faradayApp')
         vm.ok = function() {
             if (!(vm.data.type === "VulnerabilityWeb" && vm.data.parent.type === "Host"))
                 vm.data.parent = vm.data.parent._id;
-                $modalInstance.close(data);
+                $modalInstance.close(vm.data);
         };
 
         vm.cancel = function() {

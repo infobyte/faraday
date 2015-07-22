@@ -1,18 +1,24 @@
-<article class="panel panel-default" id="workspace-progress" ng-if="progress">
+<article class="panel panel-default" id="workspace-progress">
     <header>
         <h2>
             Workspace progress
             <span class="glyphicon glyphicon-info-sign" tooltip="Workspace progress according to Scope dates"></span>
         </h2>
     </header>
-    <div class="row">
-        <div class="center-lg-6"><h4></h4></div>
-        <div id="workspace-progress-reference" class="center-lg-6">
+    <div>
+        <div id="workspace-progress-reference" class="center-lg-6" ng-if="progress">
             <progressbar value="progress" class="progress-striped active">{{progress}}%</progressbar>
             <ul class="label-list">
                 <li><span class="label label-default">Start date: {{start | date:"MM/dd/yyyy"}}</span></li>
                 <li><span class="label label-default">End date: {{end | date:"MM/dd/yyyy"}}</span></li>
             </ul>
         </div><!-- #workspace-progress-reference .center-lg-6 -->
+        <div ng-if="!progress" class="alert alert-info alert-dismissible no-margin-bottom">
+            <button type="button" class="close" data-dismiss="alert">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+            </button>
+            <p>Start date and end date are required</p>
+        </div><!-- ng-if -->
     </div>
 </article>

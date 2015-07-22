@@ -892,6 +892,7 @@ aside .alert.alert-danger.alert-dismissible{
     text-align: center;
     width: 500px;
 }
+    div#workspace-progress-reference.center-lg-6{padding-top: 15px}
 .col-lg-left{width: 46%!important;margin-top: -30px;}
 .col-lg-right{width: 53%!important;padding-left: 0px!important;}
 .no-margin-bottom{margin-bottom: 0px!important;}

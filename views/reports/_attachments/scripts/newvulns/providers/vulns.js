@@ -12,26 +12,22 @@ angular.module('faradayApp')
         vulnsManager.update_seq = 0;
 
         // receives data from Couch, loads vulns property
-        vulnsManager._load = function(data) {
+        vulnsManager._load = function(ws, data) {
             var self = this,
             vulns = [];
 
             for(var i = 0; i < data.length; i++) {
                 var vulnData = data[i].value;
-                if(vulnData.type == "Vulnerability") {
-                    try {
-                        var vuln = new Vuln(vulnData);
+                try {
+                    if(vulnData.type == "Vulnerability") {
+                        var vuln = new Vuln(ws, vulnData);
                         vulns.push(vuln);
-                    } catch(e) {
-                        console.log(e.name + ":" + e.message);
-                    }
-                } else {
-                    try {
-                        var vuln = new WebVuln(vulnData);
+                    } else {
+                        var vuln = new WebVuln(ws, vulnData);
                         vulns.push(vuln);
-                    } catch(e) {
-                        console.log(e.name + ":" + e.message);
                     }
+                } catch(e) {
+                    console.log(e.name + ":" + e.message);
                 }
             }
 
@@ -44,18 +40,22 @@ angular.module('faradayApp')
             var deferred = $q.defer(),
             self = this;
 
-            if(data.type == "Vulnerability") {
-                var vuln = new Vuln(data);
-            } else {
-                var vuln = new WebVuln(data);
-            }
+            try {
+                if(data.type == "Vulnerability") {
+                    var vuln = new Vuln(ws, data);
+                } else {
+                    var vuln = new WebVuln(ws, data);
+                }
 
-            vuln.save().then(function() {
-                self.getVulns(ws);
-                deferred.resolve();
-            }, function() {
-                deferred.reject();
-            });
+                vuln.save().then(function() {
+                    self.getVulns(ws);
+                    deferred.resolve();
+                }, function() {
+                    deferred.reject();
+                });
+            } catch(e) {
+                deferred.reject(e.name + ":" + e.message);
+            }
 
             return deferred.promise;
         };
@@ -78,7 +78,7 @@ angular.module('faradayApp')
                         self.update_seq = latest.update_seq;
                         $http.get(BASEURL + ws + '/_design/vulns/_view/all')
                             .success(function(data) {
-                                deferred.resolve(self._load(data.rows));
+                                deferred.resolve(self._load(ws, data.rows));
                             })
                             .error(function() {
                                 deferred.reject();
@@ -110,142 +110,6 @@ angular.module('faradayApp')
         };
 
 /*
-        //data comes from Couch
-        //updates vuln or loads it
-        vulnsManager._get = function(id, data) {
-            var i = $filter('getByProperty')('_id', id, this.vulns),
-            vuln = this.vulns[i];
-
-            if(vuln) {
-                vuln.set(data);
-            } else if(data.type == "Vulnerability") {
-                vuln = new Vuln(data);
-                this.vulns.push(vuln);
-            } else {
-                vuln = new WebVuln(data);
-                this.vulns.push(vuln);
-            }
-
-            return vuln;
-        };
-
-        vulnsManager._search = function(id) {
-            var i = $filter('getByProperty')('_id', id, this.vulns);
-            return this.vuln[i];
-        };
-
-        vulnsManager._latest = function(ws) {
-            var deferred = $q.defer();
-            $http.get(BASEURL + ws)
-                .success(function(wsData) {
-                    deferred.resolve(wsData.update_seq);
-                })
-                .error(function() {
-                    deferred.reject("Error connecting to CouchDB");
-                });
-
-            return deferred.promise;
-        };
-
-        vulnsManager._load = function(id, ws) {
-            var deferred = $q.defer(),
-            self = this,
-            url = BASEURL + ws + '/' + id;
-            $http.get(url)
-                .success(function(data) {
-                    var vuln = self._get(data._id, data);
-                    deferred.resolve(vuln);
-                })
-                .error(function() {
-                    deferred.reject();
-                });
-            return deferred.promise;
-        };
-
-        vulnsManager._loadVulns = function(ws) {
-            var deferred = $q.defer(),
-            self = this;
-
-            $http.get(BASEURL + ws + '/_design/vulns/_view/all')
-                .success(function(vulnsArray) {
-                    var vulns = [];
-                    vulnsArray.rows.forEach(function(vulnData) {
-                        vulnData.value._id = vulnData.id;
-                        self._get(vulnData.value._id, vulnData.value);
-                    });
-                    deferred.resolve();
-                })
-                .error(function() {
-                    deferred.reject();
-                });
-
-            return deferred.promise;
-        };
-
-        vulnsManager.getVulns = function(ws) {
-            var deferred = $q.defer(),
-            self = this;
-            vulnsManager._latest(ws).then(function(latest) {
-                if(latest > self.update_seq) {
-                    self.update_seq = latest;
-                    self._loadVulns(ws).then(function() {
-                        deferred.resolve();
-                    }, function() {
-                        deferred.reject("Error loading vulnerabilities from CouchDB");
-                    });
-                } else {
-                    deferred.resolve();
-                }
-            }, function() {
-                deferred.reject("Error loading workspace data from CouchDB");
-            });
-
-            return deferred.promise;
-        };
-
-        vulnsManager.getVuln = function(ws, id, force_reload) {
-            var deferred = $q.defer(),
-            vuln = this._search(id);
-            force_reload = force_reload || false;
-            
-            if(vuln && !force_reload) {
-                deferred.resolve(vuln);
-            } else {
-                deferred.resolve(this._load(id, ws));
-            } 
-
-            return deferred.promise;
-        };
-
-        vulnsManager.createVuln = function(ws, vulnData) {
-            var deferred = $q.defer(),
-            self = this;
-
-            if(vulnData.type === "Vulnerability") {
-                var vuln = new Vuln(vulnData);
-            } else if(vulnData.type === "VulnerabilityWeb") {
-                var vuln = new WebVuln(vulnData);
-            } else {
-                deferred.reject("Error: Cannot create vulnerability using type '" + vulnData.type + "'");
-            }
-
-            if(vuln != undefined) {
-                self.getVuln(ws, vuln._id).then(function() {
-                    deferred.reject("Error: vuln already exists");
-                }, function() {
-                    // vuln doesn't exist, good to go
-                    vuln.save(ws).then(function() {
-                        vuln = self.getVuln(ws, vuln._id);
-                        deferred.resolve(vuln);
-                    }, function() {
-                        deferred.reject("Error: vuln couldn't be saved");
-                    });
-                });
-            }
-
-            return deferred.promise;
-        };
-
         vulnsManager.put = function(ws, vuln, callback) {
             var url = BASEURL + ws + "/" + vuln.id, 
             v = {
@@ -288,13 +152,6 @@ angular.module('faradayApp')
                     callback(d.rev, []);
                 });
             }
-        };
-
-        vulnsManager.deleteVuln = function(ws, vuln) {
-            return $http.delete(BASEURL + ws + "/" + vuln.id + "?rev=" + vuln.rev)
-                .success(function(resp) {
-                    this.vulns = this.getVulns(ws);
-                });
         };
 */
 

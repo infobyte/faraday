@@ -4,18 +4,24 @@
 
 angular.module('faradayApp')
     .factory('Vuln', ['BASEURL', '$http', function(BASEURL, $http) {
-        Vuln = function(data){
+        Vuln = function(ws, data){
             if(data) {
-                if(data.name === "" || data.name === undefined) {
+                if(data.name === undefined || data.name === "") {
                     throw new Error("Unable to create Vuln without a name");
                 }
-                this.set(data);
+                this.set(ws, data);
             }
         };
 
         Vuln.prototype = {
-            set: function(data) {
+            set: function(ws, data) {
                 var evidence = [],
+                impact = {
+                    accountability: false,
+                    availability: false,
+                    confidentiality: false,
+                    integrity: false
+                },
                 metadata = {},
                 now = new Date(),
                 date = now.getTime(),
@@ -64,20 +70,27 @@ angular.module('faradayApp')
                 this.owner = "";
                 this.selected = selected;
                 this.type = "Vulnerability";
-                this.ws = data.ws;
+                this.ws = ws;
 
                 // user-generated content
                 this._attachments = evidence;
-                this.data = data.data;
-                this.desc = data.desc;
-                this.easeofresolution = data.easeofresolution;
-                this.impact = data.impact;
-                this.name = data.name;
-                this.owned = data.owned;
-                this.parent = data.parent;
-                this.refs = data.refs;
-                this.resolution = data.resolution;
-                this.severity = data.severity;
+                if(data.data !== undefined) this.data = data.data;
+                if(data.desc !== undefined) this.desc = data.desc;
+                if(data.easeofresolution !== undefined) this.easeofresolution = data.easeofresolution;
+                if(data.impact !== undefined) {
+                    this.impact = data.impact;
+                    for(var prop in data.impact) {
+                        if(data.impact.hasOwnProperty(prop)) {
+                            this.impact[prop] = data.impact[prop];
+                        }
+                    }
+                }
+                if(data.name !== undefined && data.name !== "") this.name = data.name;
+                if(data.owned !== undefined) this.owned = data.owned;
+                if(data.parent !== undefined) this.parent = data.parent;
+                if(data.refs !== undefined) this.refs = data.refs;
+                if(data.resolution !== undefined) this.resolution = data.resolution;
+                if(data.severity !== undefined) this.severity = data.severity;
             },
             remove: function() {
                 var self = this,
@@ -87,11 +100,11 @@ angular.module('faradayApp')
             update: function(data) {
                 var self = this,
                 url = BASEURL + self.ws + "/" + self._id,
-                vuln = new Vuln(self);
-                vuln.set(data);
+                vuln = new Vuln(self.ws, self);
+                vuln.set(self.ws, data);
                 return $http.put(url, vuln)
                     .success(function(response) {
-                        self.set(data);
+                        self.set(self.ws, data);
                         self._rev = response.rev;
                     });
             },

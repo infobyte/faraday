@@ -112,7 +112,7 @@ describe('WebVuln', function() {
 
     describe('CRUD', function() {
         it('Setting data to new object', function() {
-            vuln = new WebVuln(new_data);
+            vuln = new WebVuln('ws', new_data);
 
             expect(vuln._id).toBeDefined();
             expect(vuln._id).toEqual(new_full_id);
@@ -128,11 +128,11 @@ describe('WebVuln', function() {
         it('Setting data to new invalid object', function() {
             delete new_data.name;
 
-            expect(function() { new WebVuln(new_data); }).toThrowError(Error, "Unable to create Vuln without a name");
+            expect(function() { new WebVuln('ws', new_data); }).toThrowError(Error, "Unable to create Vuln without a name");
         });
 
         it('Setting data to existing object', function() {
-            vuln = new WebVuln(old_data);
+            vuln = new WebVuln('ws', old_data);
 
             expect(vuln._id).toBeDefined();
             expect(vuln._id).toEqual(old_full_id);
@@ -149,7 +149,7 @@ describe('WebVuln', function() {
         it('Save data to new object', function() {
             var url = BASEURL + "ws/" + new_full_id;
 
-            vuln = new WebVuln(new_data);
+            vuln = new WebVuln('ws', new_data);
 
             $httpBackend.when('POST', url).respond(201, {"rev": "1234"});
             $httpBackend.expect('POST', url);
@@ -164,7 +164,7 @@ describe('WebVuln', function() {
         it('Save data to existing object', function() {
             var url = BASEURL + "ws/" + old_full_id;
 
-            vuln = new WebVuln(old_data);
+            vuln = new WebVuln('ws', old_data);
 
             $httpBackend.expect('POST', url).respond(201, {"rev": "1234"});
 
@@ -178,7 +178,7 @@ describe('WebVuln', function() {
         it('Update data', function() {
             var url = BASEURL + "ws/" + new_full_id;
 
-            vuln = new WebVuln(new_data);
+            vuln = new WebVuln('ws', new_data);
             expect(vuln._rev).toBeUndefined();
 
             $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
@@ -193,7 +193,7 @@ describe('WebVuln', function() {
         it('Delete data', function() {
             var url = BASEURL + "ws/" + new_full_id;
 
-            vuln = new WebVuln(new_data);
+            vuln = new WebVuln('ws', new_data);
 
             $httpBackend.expect('DELETE', url).respond(200);
 

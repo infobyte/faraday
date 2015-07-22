@@ -13,7 +13,7 @@ angular.module('faradayApp')
         vm.easeofresolution;
         vm.workspace;
         vm.new_ref;
-        vm .icons;
+        vm.icons;
         vm.cweList;
         vm.cweLimit;
         vm.cwe_filter;

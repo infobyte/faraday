@@ -10,7 +10,7 @@ describe('vulnsManager', function() {
     $httpBackend,
     $q,
     BASEURL,
-    vuln1, vuln2, vuln3;
+    vuln1;
 
     // Set up the module
     beforeEach(module('faradayApp'));
@@ -51,64 +51,6 @@ describe('vulnsManager', function() {
             "severity": "med",
             "type": "Vulnerability",
             "ws": "ws"
-        };
-        vuln2 = {
-            "_id": "1.2.3.5",
-            "_rev": "1-abe16726389e434ca3f37384ea76128e",
-            "name": "Another vuln",
-            "parent": "1.2.3",
-            "resolution": "Be careful",
-            "refs": [
-               "CVE-2002-1623",
-               "7423",
-               "OSVDB:3820, CERT:886601"
-            ],
-            "metadata": {
-               "update_time": 1429643049.395857,
-               "update_user": "john",
-               "update_action": 0,
-               "creator": "john",
-               "create_time": 1429643049.395857,
-               "update_controller_action": "ModelControler.newVuln",
-               "owner": "john"
-            },
-            "owned": false,
-            "severity": "med",
-            "type": "Vulnerability",
-            "owner": "john",
-            "desc": "I'm scared!",
-            "data": ""
-        };
-        vuln3 = {
-            "_id": "6.7.8.9",
-            "_rev": "3-f34c61eca3cb5ffc5654f710774708af",
-            "desc": "It was possible to identify the remote service by its banner.",
-            "metadata": {
-               "update_time": 1407530638.669383,
-               "update_user": "",
-               "update_action": 0,
-               "creator": "",
-               "create_time": 1407530638.669383,
-               "update_controller_action": "No model controller call",
-               "owner": ""
-            },
-            "name": "Service Detection",
-            "obj_id": "008cba9b11897f2d52c53dd953d75fa233a7fffe",
-            "owned": false,
-            "owner": "",
-            "parent": "6.7.8",
-            "refs": [
-            ],
-            "severity": "low",
-            "type": "VulnerabilityWeb",
-            "method": "",
-            "params": "",
-            "path": "",
-            "pname": "",
-            "query": "",
-            "request": "",
-            "response": "",
-            "website": "test.test.com"
         };
     }));
 

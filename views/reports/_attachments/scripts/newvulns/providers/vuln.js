@@ -24,8 +24,7 @@ angular.module('faradayApp')
                 },
                 metadata = {},
                 now = new Date(),
-                date = now.getTime(),
-                selected = false;
+                date = now.getTime();
 
                 if(data.attachments !== undefined) {
                     for(var attachment in data.attachments) {
@@ -50,8 +49,6 @@ angular.module('faradayApp')
                     metadata.update_controller_action = "UI Web New";
                     metadata.owner = "";
                 } else {
-                    if(data.selected !== undefined) selected = data.selected;
-
                     this._id = data._id;
                     this.obj_id = data._id;
                     if(data._rev !== undefined) this._rev = data._rev;
@@ -68,7 +65,6 @@ angular.module('faradayApp')
                 this.date = date;
                 this.metadata = metadata;
                 this.owner = "";
-                this.selected = selected;
                 this.type = "Vulnerability";
                 this.ws = ws;
 
@@ -117,7 +113,6 @@ angular.module('faradayApp')
                 delete vuln._attachments;
                 delete vuln.date;
                 delete vuln.delete;
-                delete vuln.selected;
                 delete vuln.web;
                 delete vuln.ws;
                 return $http.put(url, vuln)

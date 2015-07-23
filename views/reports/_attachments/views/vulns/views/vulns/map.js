@@ -22,16 +22,15 @@ function(doc) {
         }
 
         var obj = {
-            "rev":              doc._rev,
-            "attachments":      doc._attachments,
+            "_rev":             doc._rev,
+            "_attachments":     doc._attachments,
             "data":             doc.data,
-            "date":             doc.metadata.create_time, 
             "desc":             doc.desc, 
             "easeofresolution": easeofresolution,
             "impact":           impact,
-            "meta":             doc.metadata,
+            "metadata":         doc.metadata,
             "name":             doc.name, 
-            "oid":              doc.obj_id,
+            "obj_id":           doc.obj_id,
             "owned":            doc.owned,
             "owner":            doc.owner,
             "parent":           doc.parent, 

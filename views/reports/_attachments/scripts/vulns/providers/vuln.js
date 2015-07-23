@@ -53,13 +53,10 @@ angular.module('faradayApp')
                     this.obj_id = data._id;
                     if(data._rev !== undefined) this._rev = data._rev;
 
+                    if(this.metadata !== undefined) metadata = this.metadata; 
                     metadata.update_time = date;
-                    if(data.metadata.update_user !== undefined) metadata.update_user = data.metadata.update_user;
-                    if(data.metadata.update_action !== undefined) metadata.update_action = data.metadata.update_action;
-                    if(data.metadata.creator !== undefined) metadata.creator = data.metadata.creator;
-                    if(data.metadata.create_time !== undefined) metadata.create_time = data.metadata.create_time;
-                    if(data.metadata.update_controller_action !== undefined) metadata.update_controller_action = data.metadata.update_controller_action;
-                    if(data.metadata.owner !== undefined) metadata.owner = data.metadata.owner;
+                    metadata.update_user = "";
+                    metadata.update_action = 0;
                 }
 
                 this.date = date;

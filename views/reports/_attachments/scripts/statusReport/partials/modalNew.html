@@ -98,13 +98,18 @@
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
-                <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="modal.new_ref"/>
-                    <span class="input-group-addon" ng-click="modal.newReference()"><i class="fa fa-plus-circle"></i></span>
+                <div class="col-md-12">
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="vuln-refs">References</label>
+                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="modal.new_ref"/>
+                        <span class="input-group-addon cursor" ng-click="modal.newReference()"><i class="fa fa-plus-circle"></i></span>
+                    </div>
+                </div>
                 <div class="col-md-12 reference" ng-repeat="reference in modal.data.refs">
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="vuln-refs">References</label>
                         <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference"/>
-                        <span class="input-group-addon" ng-click="modal.data.refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+                        <span class="input-group-addon cursor" ng-click="modal.data.refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                     </div>
                 </div>
             </div><!-- .form-group -->

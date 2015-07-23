@@ -142,5 +142,63 @@ describe('modalNewVulnCtrl', function() {
             expect(vm.data.parent).toEqual(service_target);
             expect(vm.data.parent.selected).toEqual(true);
         });
+        it('variables have proper values after execution of ok function', function() {
+            $scope.$apply();
+            var vuln = {
+                data: "data",
+                desc: "desc",
+                easeofresolution: "simple",
+                evidence: {"name": "evidence", "type":"image/vnd.microsoft.icon"},
+                impact: {
+                    "accountability": true,
+                    "availability": true,
+                    "confidentiality": false,
+                    "integrity": false
+                },
+                method: "method",
+                name: "name",
+                owned: true,
+                params: "params",
+                parent: {"_id":"d037090bfc65d5d94e95c9da29a2803249a65e0b","type":"Service"},
+                path: "path",
+                pname: "pname",
+                query: "query",
+                refs: ["ref1","ref2"],
+                request: "request",
+                resolution: "resolution",
+                response: "response",
+                severity: "info",
+                type: "VulnerabilityWeb",
+                website: "website"
+            };
+
+            for(var key in vuln){
+                if (vuln.hasOwnProperty(key)) {
+                    vm.data[key] = vuln[key];
+                }
+            }
+            vm.ok();
+            expect(vm.data.data).toEqual('data');
+            expect(vm.data.desc).toEqual('desc');
+            expect(vm.data.easeofresolution).toEqual('simple');
+            expect(vm.data.evidence).toEqual({"name": "evidence", "type": "image/vnd.microsoft.icon"});
+            expect(vm.data.impact).toEqual({"accountability": true, "availability": true, "confidentiality": false, "integrity": false});
+            expect(vm.data.method).toEqual('method');
+            expect(vm.data.name).toEqual('name');
+            expect(vm.data.owned).toEqual(true);
+            expect(vm.data.params).toEqual('params');
+            expect(vm.data.parent).toEqual('d037090bfc65d5d94e95c9da29a2803249a65e0b');
+            expect(vm.data.path).toEqual('path');
+            expect(vm.data.pname).toEqual('pname');
+            expect(vm.data.query).toEqual('query');
+            expect(vm.data.refs).toContain('ref1');
+            expect(vm.data.refs).toContain('ref2');
+            expect(vm.data.request).toEqual('request');
+            expect(vm.data.resolution).toEqual('resolution');
+            expect(vm.data.response).toEqual('response');
+            expect(vm.data.severity).toEqual('info');
+            expect(vm.data.type).toEqual('VulnerabilityWeb');
+            expect(vm.data.website).toEqual('website');
+        });
     });
 });

@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('Vuln', ['BASEURL', '$http', function(BASEURL, $http) {
+    .factory('Vuln', ['BASEURL', '$http', 'attachmentsFact', function(BASEURL, $http, attachmentsFact) {
         Vuln = function(ws, data){
             if(data) {
                 if(data.name === undefined || data.name === "") {
@@ -15,8 +15,7 @@ angular.module('faradayApp')
 
         Vuln.prototype = {
             set: function(ws, data) {
-                var evidence = [],
-                impact = {
+                var impact = {
                     accountability: false,
                     availability: false,
                     confidentiality: false,
@@ -25,14 +24,6 @@ angular.module('faradayApp')
                 metadata = {},
                 now = new Date(),
                 date = now.getTime();
-
-                if(data.attachments !== undefined) {
-                    for(var attachment in data.attachments) {
-                        if(data.attachments.hasOwnProperty(attachment)) {
-                            evidence.push(attachment);
-                        }
-                    }
-                }
 
                 // new vuln
                 if(data._id === undefined) {
@@ -66,7 +57,7 @@ angular.module('faradayApp')
                 this.ws = ws;
 
                 // user-generated content
-                if(evidence.length > 0) this._attachments = evidence;
+                if(data._attachments !== undefined && data._attachments.length > 0) this._attachments = data._attachments;
                 if(data.data !== undefined) this.data = data.data;
                 if(data.desc !== undefined) this.desc = data.desc;
                 if(data.easeofresolution !== undefined) this.easeofresolution = data.easeofresolution;
@@ -136,6 +127,46 @@ angular.module('faradayApp')
                     });
             }
         }
+
+        _loadAttachments = function(evidence) {
+            // the list of evidence may have mixed objects, some of them already in CouchDB, some of them new
+            // new attachments are of File type and need to be processed by attachmentsFact.loadAttachments 
+            // old attachments are of type String (file name) and need to be processed by attachmentsFact.getStubs
+            var attachments = {},
+            deferred = $q.defer(),
+            files = [],
+            names = [],
+            promises = [],
+            stubs = [];
+
+            for(var name in evidence) {
+                if(evidence[name] instanceof File) {
+                    files.push(evidence[name]);
+                } else {
+                    stubs.push(name);
+                }
+            }
+
+            if(stubs.length > 0) promises.push(attachmentsFact.getStubs(ws, vuln.id, stubs));
+            if(files.length > 0) promises.push(attachmentsFact.loadAttachments(files));
+
+            $q.all(promises).then(function(result) {
+                result.forEach(function(atts) {
+                    for(var name in atts) {
+                        attachments[name] = atts[name];
+                        names.push(name);
+                    }
+                });
+                deferred.resolve(attachments);
+                $http.put(url, v).success(function(d, s, h, c) {
+                    callback(d.rev, names);
+                });
+            }, function() {
+                deferred.reject("Unable to load attachments");
+            });
+
+            return deferred.promise;
+        };
 
         return Vuln;
     }]);

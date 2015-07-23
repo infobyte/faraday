@@ -56,11 +56,13 @@
             <span class="sr-only">Error:</span>
             Vulnerability incompatible with host target, please select a service
         </div>
-        <div class="col-md-12">
-            <h5>CWE</h5>
-            <input type="text" ng-model="modal.cwe_selected" class="form-control input-sm" placeholder="Search for CWE" typeahead="cwe as cwe.name for cwe in modal.cweList | filter:{name: $viewValue} | limitTo:10" typeahead-on-select="modal.populate($item, $model, $label)">
-        </div>
         <div class="form-horizontal">
+            <div class="form-group">
+                <div class="col-md-12">
+                    <h5>CWE</h5>
+                    <input type="text" ng-model="modal.cwe_selected" class="form-control input-sm" placeholder="Search for CWE" typeahead="cwe as cwe.name for cwe in modal.cweList | filter:{name: $viewValue} | limitTo:10" typeahead-on-select="modal.populate($item, $model, $label)">
+                </div>
+            </div>
             <div class="form-group">
                 <div class="col-md-4">
                     <h5>Type</h5>
@@ -98,13 +100,18 @@
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
-                <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="modal.new_ref"/>
-                    <span class="input-group-addon" ng-click="modal.newReference()"><i class="fa fa-plus-circle"></i></span>
+                <div class="col-md-12">
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="vuln-refs">References</label>
+                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="modal.new_ref"/>
+                        <span class="input-group-addon cursor" ng-click="modal.newReference()"><i class="fa fa-plus-circle"></i></span>
+                    </div>
+                </div>
                 <div class="col-md-12 reference" ng-repeat="reference in modal.data.refs">
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="vuln-refs">References</label>
                         <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference"/>
-                        <span class="input-group-addon" ng-click="modal.data.refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+                        <span class="input-group-addon cursor" ng-click="modal.data.refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                     </div>
                 </div>
             </div><!-- .form-group -->

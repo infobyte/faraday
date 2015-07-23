@@ -29,10 +29,18 @@
                     <span class="glyphicon glyphicon-trash"></span> 
                     Delete
                 </button>
-                <button id="merge" type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()">
-                    <span class="glyphicon glyphicon-pencil"></span> 
-                    Edit
-                </button>
+                <div id="merge" class="btn-group btn-small-margin">
+                    <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()" ng-disabled="selectedVulns.length != 1">
+                        <span class="glyphicon glyphicon-pencil"></span> 
+                        Edit
+                    </button>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-disabled="selectedVulns.length < 2">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li><a href="#" class="ws" >Action1</a></li>
+                    </ul>
+                    </div>
                 <button id="new" type="button" class="btn btn-success" title="New Vulns" ng-click="new()">
                     <span class="glyphicon glyphicon-plus-sign"></span>
                     New
@@ -162,7 +170,8 @@
                         <tr ng-repeat="v in filtered = (vulns | filter:expression) | orderObjectBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
                             selection-model selection-model-type="checkbox"
                             selection-model-mode="multiple-additive" 
-                            selection-model-selected-class="multi-selected">
+                            selection-model-selected-class="multi-selected"
+                            selection-model-selected-items="selectedVulns">
                             <td><input type="checkbox" name="{{v.id}}"/></td>
                             <td ng-if="columns.date">{{v.date | date:'MM/dd/yyyy'}}</td>
                             <td ng-if="columns.target">{{v.target}}</td>

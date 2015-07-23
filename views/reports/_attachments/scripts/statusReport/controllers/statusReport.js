@@ -29,6 +29,8 @@ angular.module('faradayApp')
         $scope.pageSize;
         $scope.newPageSize;
 
+        $scope.selectedVulns;
+
         init = function() {
             $scope.baseurl = BASEURL;
             $scope.severities = SEVERITIES;
@@ -103,6 +105,8 @@ angular.module('faradayApp')
                 "web":              false,
                 "website":          false
             };
+
+            $scope.selectedVulns = [];
         };
 
         // returns scope vulns as CSV obj
@@ -281,15 +285,7 @@ angular.module('faradayApp')
 
         // action triggered from EDIT button
         $scope.edit = function() {
-            var selected = [];
-
-            $scope.vulns.forEach(function(v) {
-                if(v.selected) {
-                    delete v.selected;
-                    selected.push(v);
-                }
-            });
-            if (selected.length > 0) {
+            if ($scope.selectedVulns.length == 1) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/statusReport/partials/modalEdit.html',
                     controller: 'modalEditCtrl',
@@ -299,12 +295,12 @@ angular.module('faradayApp')
                             return $scope.severities;
                         },
                         vulns: function() {
-                            return selected;
+                            return $scope.selectedVulns;
                         }
                     }
                 });
                 modal.result.then(function(data) {
-                    $scope.update(selected, data);
+                    $scope.update($scope.selectedVulns, data);
                 });
             } else {
                 var modal = $modal.open({
@@ -312,12 +308,28 @@ angular.module('faradayApp')
                     controller: 'commonsModalKoCtrl',
                     resolve: {
                         msg: function() {
-                            return 'At least one vulnerabilty must be selected in order to edit';
+                            return 'A vulnierabilty must be selected in order to edit';
                         }
                     }
                 });
             }
         };
+
+        $scope.editName = function() {
+            var modal = $modal.open({
+                templateUrl: 'scripts/commons/partials/editString.html',
+                controller: 'commonsModalEditString',
+                size: 'lg',
+                resolve: {
+                    msg: function() {
+                        return "Enter the new name:";
+                    }
+                }
+            });
+            modal.result.then(function(name) {
+                $scope.update($scope.selectedVulns, {name: name});
+            });
+        }
 
         $scope.insert = function(vuln) {
             vulnsManager.createVuln($scope.workspace, vuln).then(function() {

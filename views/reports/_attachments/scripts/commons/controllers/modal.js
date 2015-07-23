@@ -23,3 +23,17 @@ angular.module('faradayApp')
             $modalInstance.close();
         };
     }]);
+
+angular.module('faradayApp')
+    .controller('commonsModalEditString', ['$scope', '$modalInstance', 'msg', function($scope, $modalInstance, msg) {
+        $scope.msg = msg;
+        $scope.data = {name: ''};
+
+        $scope.ok = function() {
+            $modalInstance.close($scope.data.name);
+        };
+
+        $scope.cancel = function() {
+            $modalInstance.dismiss();
+        }
+    }]);

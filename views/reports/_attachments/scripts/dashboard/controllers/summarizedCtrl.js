@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('summarizedCtrl', 
-        ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv', 'statusReportFact',
-        function($scope, $route, $routeParams, $modal, dashboardSrv, statusReportFact) {
+        ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv', 'vulnsManager',
+        function($scope, $route, $routeParams, $modal, dashboardSrv, vulnsManager) {
             //current workspace
             var workspace = $routeParams.wsId;
             $scope.servicesCount = [];
@@ -75,8 +75,9 @@ angular.module('faradayApp')
                 $scope.vulnSortReverse = !$scope.vulnSortReverse;
             };
 
-            if (workspace != undefined){
+            if(workspace != undefined) {
                 $scope.workspace = workspace;
+
                 dashboardSrv.getServicesCount(workspace).then(function(res){
                     res.sort(function(a, b){
                         return b.value - a.value;
@@ -84,6 +85,7 @@ angular.module('faradayApp')
                     $scope.servicesCount = res;
 
                 });
+
                 dashboardSrv.getObjectsCount(workspace).then(function(res){
                     for(var i = res.length - 1; i >= 0; i--) {
                         if(res[i].key === "interfaces") {
@@ -92,6 +94,7 @@ angular.module('faradayApp')
                     }
                     $scope.objectsCount = res;
                 });
+
                 dashboardSrv.getVulnerabilitiesCount(workspace).then(function(res){
                     if (res.length > 0) {
                         var tmp = [
@@ -129,6 +132,7 @@ angular.module('faradayApp')
                         $scope.vulnsCount = tmp;
                     }
                 });
+
                 dashboardSrv.getCommands(workspace).then(function(res){
                     res.forEach(function(cmd){
                         cmd.user = cmd.user || "unknown";
@@ -143,6 +147,7 @@ angular.module('faradayApp')
                     });
                     $scope.commands = res;
                 });
+
                 dashboardSrv.getHosts(workspace).then(function(res){
                     dashboardSrv.getHostsByServicesCount(workspace).then(function(servicesCount){
                         res.forEach(function(host){
@@ -170,11 +175,14 @@ angular.module('faradayApp')
                         });
                     });
                 });
-                $scope.vulns = statusReportFact.getVulns(workspace);
-                $scope.vulns.sort(function(a,b){
-                    return b.meta.create_time - a.meta.create_time;
+
+                vulnsManager.getVulns(workspace).then(function() {
+                    $scope.vulns = vulnsManager.vulns;
+                    $scope.vulns.sort(function(a,b){
+                        return b.meta.create_time - a.meta.create_time;
+                    });
+                    $scope.vulns = $scope.vulns.splice(0,5);
                 });
-                $scope.vulns = $scope.vulns.splice(0,5);
             }
 
             $scope.numberOfPages = function() {

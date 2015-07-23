@@ -67,28 +67,6 @@ angular.module('faradayApp')
             return deferred.promise;
         }
 
-        // sync method - still used in statusReportFact
-        hostsManager.get = function(ws) {
-            hosts_url = BASEURL + ws + "/_design/hosts/_view/hosts";
-            var hosts = [];
-            //gets hosts json from couch
-            $.getJSON(hosts_url, function(data) {
-                $.each(data.rows, function(n, obj) {
-                   hosts[obj.id] = {
-                       "categories": obj.value.categories,
-                       "default_gateway": obj.value.default_gateway,
-                       "description": obj.value.description,
-                       "metadata": obj.value.metadata,
-                       "name": obj.value.name,
-                       "os": obj.value.os,
-                       "owned": obj.value.owned,
-                       "owner": obj.value.owner
-                    };
-                }); 
-            });
-            return hosts;
-        }
-
         hostsManager.deleteHost = function(id, ws) {
             var deferred = $q.defer();
             var self = this;

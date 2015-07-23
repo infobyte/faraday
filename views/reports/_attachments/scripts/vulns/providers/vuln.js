@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('Vuln', ['BASEURL', '$http', 'attachmentsFact', function(BASEURL, $http, attachmentsFact) {
+    .factory('Vuln', ['BASEURL', '$http', '$q', 'attachmentsFact', function(BASEURL, $http, $q, attachmentsFact) {
         Vuln = function(ws, data){
             if(data) {
                 if(data.name === undefined || data.name === "") {
@@ -98,7 +98,6 @@ angular.module('faradayApp')
 
                 vuln._id = self._id;
                 if(self._rev !== undefined) vuln._rev = self._rev;
-                if(self._attachments !== undefined) vuln._attachments = self._attachments;
                 vuln.data = self.data;
                 vuln.desc = self.desc;
                 vuln.easeofresolution = self.easeofresolution;
@@ -117,14 +116,38 @@ angular.module('faradayApp')
                 return vuln;
             },
             save: function() {
-                var self = this,
-                url = BASEURL + self.ws + "/" + self._id,
+                var deferred = $q.defer(),
+                loadAtt,
+                self = this,
+                url = BASEURL + self.ws + "/" + self._id;
                 vuln = self.populate();
 
-                return $http.put(url, vuln)
-                    .success(function(data) {
-                        self._rev = data.rev;
-                    });
+                if(self._attachments !== undefined) {
+                    loadAtt = _loadAttachments(self._attachments);
+                }
+
+                $q.when(loadAtt).then(function(atts) {
+                    vuln._attachments = atts;
+                    
+                    $http.put(url, vuln)
+                        .success(function(data) {
+                            self._rev = data.rev;
+                            self._attachments = Object.keys(vuln._attachments);
+                            deferred.resolve();
+                        }, function() {
+                            deferred.reject();
+                        });
+                }, function() {
+                    $http.put(url, vuln)
+                        .success(function(data) {
+                            self._rev = data.rev;
+                            deferred.resolve();
+                        }, function() {
+                            deferred.reject();
+                        });
+                });
+
+                return deferred.promise;
             }
         }
 
@@ -135,7 +158,6 @@ angular.module('faradayApp')
             var attachments = {},
             deferred = $q.defer(),
             files = [],
-            names = [],
             promises = [],
             stubs = [];
 
@@ -154,13 +176,9 @@ angular.module('faradayApp')
                 result.forEach(function(atts) {
                     for(var name in atts) {
                         attachments[name] = atts[name];
-                        names.push(name);
                     }
                 });
                 deferred.resolve(attachments);
-                $http.put(url, v).success(function(d, s, h, c) {
-                    callback(d.rev, names);
-                });
             }, function() {
                 deferred.reject("Unable to load attachments");
             });

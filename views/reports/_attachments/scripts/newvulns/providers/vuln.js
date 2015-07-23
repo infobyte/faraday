@@ -69,7 +69,7 @@ angular.module('faradayApp')
                 this.ws = ws;
 
                 // user-generated content
-                this._attachments = evidence;
+                if(evidence.length > 0) this._attachments = evidence;
                 if(data.data !== undefined) this.data = data.data;
                 if(data.desc !== undefined) this.desc = data.desc;
                 if(data.easeofresolution !== undefined) this.easeofresolution = data.easeofresolution;
@@ -104,17 +104,35 @@ angular.module('faradayApp')
                         self._rev = response.rev;
                     });
             },
+            populate: function() {
+                var self = this,
+                vuln = {};
+
+                vuln._id = self._id;
+                if(self._rev !== undefined) vuln._rev = self._rev;
+                if(self._attachments !== undefined) vuln._attachments = self._attachments;
+                vuln.data = self.data;
+                vuln.desc = self.desc;
+                vuln.easeofresolution = self.easeofresolution;
+                vuln.impact = self.impact;
+                vuln.metadata = self.metadata;
+                vuln.name = self.name;
+                vuln.obj_id = self.obj_id;
+                vuln.owned = self.owned;
+                vuln.owner = self.owner;
+                vuln.parent = self.parent;
+                vuln.refs = self.refs;
+                vuln.resolution = self.resolution;
+                vuln.severity = self.severity;
+                vuln.type = self.type;
+
+                return vuln;
+            },
             save: function() {
                 var self = this,
                 url = BASEURL + self.ws + "/" + self._id,
-                vuln = {};
-                angular.extend(vuln, self);
-                // remove WEBUI-specific fields
-                delete vuln._attachments;
-                delete vuln.date;
-                delete vuln.delete;
-                delete vuln.web;
-                delete vuln.ws;
+                vuln = self.populate();
+
                 return $http.put(url, vuln)
                     .success(function(data) {
                         self._rev = data.rev;

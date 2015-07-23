@@ -30,7 +30,6 @@ angular.module('faradayApp')
 
             this.type = "VulnerabilityWeb";
 
-            // user-generated content
             if(data.method !== undefined) this.method = data.method;
             if(data.params !== undefined) this.params = data.params;
             if(data.path !== undefined) this.path = data.path;
@@ -40,6 +39,23 @@ angular.module('faradayApp')
             if(data.resolution !== undefined) this.resolution = data.resolution;
             if(data.response !== undefined) this.response = data.response;
             if(data.website !== undefined) this.website = data.website;
+        };
+
+        WebVuln.prototype.populate = function() {
+            var self = this,
+            vuln = Vuln.prototype.populate.call(this);
+
+            vuln.method = self.method;
+            vuln.params = self.params;
+            vuln.path = self.path;
+            vuln.pname = self.pname;
+            vuln.query = self.query;
+            vuln.request = self.request;
+            vuln.resolution = self.resolution;
+            vuln.response = self.response;
+            vuln.website = self.website;
+
+            return vuln;
         };
 
         return WebVuln;

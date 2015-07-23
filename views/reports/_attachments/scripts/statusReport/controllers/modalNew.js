@@ -74,6 +74,7 @@ angular.module('faradayApp')
                 method: "", 
                 path: "", 
                 pname: "", 
+                params: "",
                 query: "", 
                 request: "",
                 response: "",
@@ -122,9 +123,10 @@ angular.module('faradayApp')
         };
 
         vm.ok = function() {
-            if (!(vm.data.type === "VulnerabilityWeb" && vm.data.parent.type === "Host"))
+            if (!(vm.data.type === "VulnerabilityWeb" && vm.data.parent.type === "Host")) {
                 vm.data.parent = vm.data.parent._id;
                 $modalInstance.close(vm.data);
+            }
         };
 
         vm.cancel = function() {

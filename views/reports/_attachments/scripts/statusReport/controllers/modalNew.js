@@ -150,8 +150,10 @@ angular.module('faradayApp')
         }
 
         vm.newReference = function() {
-            vm.data.refs.push(vm.new_ref);
-            vm.new_ref = "";
+            if(vm.data.refs.indexOf(vm.new_ref) === -1) {
+                vm.data.refs.push(vm.new_ref);
+                vm.new_ref = "";
+            }
         }
 
         vm.populate = function(item, model, label) {

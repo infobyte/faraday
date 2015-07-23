@@ -74,6 +74,7 @@ angular.module('faradayApp')
                 method: "", 
                 path: "", 
                 pname: "", 
+                params: "",
                 query: "", 
                 request: "",
                 response: "",

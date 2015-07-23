@@ -22,6 +22,7 @@ function(doc) {
         }
 
         var obj = {
+            "_id":              doc._id,
             "_rev":             doc._rev,
             "_attachments":     doc._attachments,
             "data":             doc.data,

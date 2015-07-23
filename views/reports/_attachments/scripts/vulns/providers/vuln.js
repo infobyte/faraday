@@ -78,7 +78,7 @@ angular.module('faradayApp')
             },
             remove: function() {
                 var self = this,
-                url = BASEURL + self.ws + "/" + self._id;
+                url = BASEURL + self.ws + "/" + self._id + "?rev=" + self._rev;
                 return $http.delete(url);
             },
             update: function(data) {

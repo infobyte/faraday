@@ -66,10 +66,20 @@ angular.module('faradayApp')
 
         vulnsManager.deleteVuln = function(ws, vuln) {
             var self = this;
+            var deferred = $q.defer();
 
-            return vuln.remove().then(function() {
-                self.getVulns(ws);
-            });
+            vuln.remove()
+                .then(function() {
+                    return self.getVulns(ws);
+                })
+                .then(function() {
+                    deferred.resolve(self.vulns);
+                })
+                .catch(function (err) {
+                deferred.reject(err);
+                });
+
+            return deferred.promise;
         };
 
         vulnsManager.getVulns = function(ws) {

@@ -34,14 +34,24 @@ function(doc) {
             "obj_id":           doc.obj_id,
             "owned":            doc.owned,
             "owner":            doc.owner,
-            "path":             doc.path,
             "parent":           doc.parent, 
             "refs":             doc.refs,
             "resolution":       resolution,
             "severity":         doc.severity, 
             "type":             doc.type,
-            "website":          doc.website
         };
+
+        if(doc.type == "VulnerabilityWeb") {
+            obj.method =       	doc.method;
+            obj.params =       	doc.params;
+            obj.path =         	doc.path;
+            obj.pname =        	doc.pname;
+            obj.query =        	doc.query;
+            obj.request =      	doc.request;
+            obj.response =     	doc.response;
+            obj.website =      	doc.website;
+        }
+
         emit(doc._id, obj);
     }
 }

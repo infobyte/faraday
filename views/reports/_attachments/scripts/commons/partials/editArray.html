@@ -1,0 +1,23 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<div class="modal-header" hotkey="{enter:ok}">
+    <h5>{{msg}}</h5>
+</div>
+<div class="modal-body">
+	<div class="form-group editArray">
+	    <div class="input-group margin-bottom-sm">
+	        <input type="text" class="form-control" ng-model="new_value"/>
+	        <span class="input-group-addon cursor" ng-click="newValue()"><i class="fa fa-plus-circle"></i></span>
+	    </div>
+	    <div class="input-group margin-bottom-sm reference" ng-repeat="v in data.property">
+	        <input type="text" class="form-control" ng-model="v"/>
+	        <span class="input-group-addon cursor" ng-click="data.property.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+	    </div>
+	</div>
+</div>
+<div class="modal-footer editArray">
+    <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+    <button class="btn btn-success" ng-click="ok()">OK</button>
+</div>

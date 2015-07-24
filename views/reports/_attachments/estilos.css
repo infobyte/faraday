@@ -735,6 +735,8 @@ div.showPagination form#goToPageStatus{margin-top:-40px;}
 input.form-control.vuln_per_page{width: 10%;margin: auto}
 /* End */
 .reference{margin-top: 5px;}
+div.form-group.editArray{margin-bottom: 0px}
+div.modal-footer.editArray{margin-top: 0px}
 input#vuln-refs{border-radius: 5px 0 0 5px}
 i.fa.fa-plus-circle{color: green;}
 i.fa.fa-minus-circle{color: red;cursor: pointer;}

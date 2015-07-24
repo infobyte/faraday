@@ -51,3 +51,23 @@ angular.module('faradayApp')
             $modalInstance.dismiss();
         }
     }]);
+angular.module('faradayApp')
+    .controller('commonsModalEditArray', ['$scope', '$modalInstance', 'msg', function($scope, $modalInstance, msg) {
+        $scope.msg = msg;
+        $scope.data = {property: []};
+
+        $scope.newValue = function() {
+            if($scope.data.property.indexOf($scope.new_value) === -1) {
+                $scope.data.property.push($scope.new_value);
+                $scope.new_value = "";
+            }
+        }
+
+        $scope.ok = function() {
+            $modalInstance.close($scope.data.property);
+        };
+
+        $scope.cancel = function() {
+            $modalInstance.dismiss();
+        }
+    }]);

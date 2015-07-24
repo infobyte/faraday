@@ -220,6 +220,7 @@ angular.module('faradayApp')
             aVulns.forEach(function(vuln){
                 vulnsManager.deleteVuln($scope.workspace, vuln).then(function(){
                     $scope.vulns = vulnsManager.vulns;
+                    $scope.selectedVulns = [];
                 }, function(errorMsg){
                     // TODO: show errors somehow
                     console.log("Error deleting vuln " + vuln._id + ": " + errorMsg);
@@ -229,15 +230,7 @@ angular.module('faradayApp')
 
         // action triggered from DELETE button
         $scope.delete = function() {
-            var selected = [];
-
-            $scope.vulns.forEach(function(v) {
-                if(v.selected) {
-                    selected.push(v);
-                }
-            });
-
-            if(selected.length > 0) {
+            if($scope.selectedVulns.length > 0) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/commons/partials/modalDelete.html',
                     controller: 'commonsModalDelete',
@@ -245,10 +238,10 @@ angular.module('faradayApp')
                     resolve: {
                         msg: function() {
                             var msg = "";
-                            if(selected.length == 1) {
+                            if($scope.selectedVulns.length == 1) {
                                 msg = "A vulnerability will be deleted.";
                             } else {
-                                msg = selected.length + " vulnerabilities will be deleted.";
+                                msg = $scope.selectedVulns.length + " vulnerabilities will be deleted.";
                             }
                             msg += " This action cannot be undone. Are you sure you want to proceed?";
                             return msg;
@@ -257,7 +250,7 @@ angular.module('faradayApp')
                 });
 
                 modal.result.then(function() {
-                    $scope.remove(selected);
+                    $scope.remove($scope.selectedVulns);
                 });
             } else {
                 var modal = $modal.open({
@@ -315,24 +308,41 @@ angular.module('faradayApp')
             }
         };
 
-        var editProperty = function(partial, controller, message, property, options) {
+        var editProperty = function(partial, controller, message, property, opts) {
+            if(opts == undefined) {
+                opts = {};
+            }
+            var resolve = {
+                msg: function() {
+                    return message;
+                },
+                options: function() {
+                    return opts.options;
+                }
+            };
             var modal = $modal.open({
                 templateUrl: partial,
                 controller: controller,
                 size: 'lg',
-                resolve: {
-                    msg: function() {
-                        return message;
-                    },
-                    options: function() {
-                        return options;
-                    }
-                }
+                resolve: resolve
             });
             modal.result.then(function(data) {
-                obj = {};
-                obj[property] = data
-                $scope.update($scope.selectedVulns, obj);
+                $scope.selectedVulns.forEach(function(vuln) {
+                    obj = {};
+                    obj[property] = data;
+
+                    if (opts.callback != undefined){
+                        obj = opts.callback(vuln, data);
+                    }
+
+                    vulnsManager.updateVuln($scope.workspace, vuln, obj).then(function(){
+                        $scope.vulns = vulnsManager.vulns;
+                        $scope.selectedVulns = [];
+                    }, function(errorMsg){
+                        // TODO: show errors somehow
+                        console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
+                    });
+                });
             });
         }
         
@@ -373,8 +383,8 @@ angular.module('faradayApp')
                 'scripts/commons/partials/editOptions.html',
                 'commonsModalEditOptions',
                 'Enter the new severity:',
-                'severities',
-                SEVERITIES);
+                'severity',
+                {options: SEVERITIES});
         }
 
         $scope.editEaseofresolution = function() {
@@ -383,12 +393,25 @@ angular.module('faradayApp')
                 'commonsModalEditOptions',
                 'Enter the new easeofresolution:',
                 'easeofresolution',
-                EASEOFRESOLUTION);
+                {options: EASEOFRESOLUTION});
+        }
+
+        $scope.editReferences = function() {
+            editProperty(
+                'scripts/commons/partials/editArray.html',
+                'commonsModalEditArray',
+                'Enter the new references:',
+                'refs',
+                {callback: function (vuln, refs) {
+                    return {'refs': vuln.refs.concat(refs)};
+                }}
+                );
         }
 
         $scope.insert = function(vuln) {
             vulnsManager.createVuln($scope.workspace, vuln).then(function() {
                 $scope.vulns = vulnsManager.vulns;
+                $scope.selectedVulns = [];
             }, function(message) {
                 $modal.open(config = {
                     templateUrl: 'scripts/commons/partials/modalKO.html',

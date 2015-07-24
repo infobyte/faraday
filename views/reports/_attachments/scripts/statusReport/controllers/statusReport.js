@@ -281,19 +281,25 @@ angular.module('faradayApp')
             if ($scope.selectedVulns.length == 1) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/statusReport/partials/modalEdit.html',
-                    controller: 'modalEditCtrl',
+                    controller: 'modalEditCtrl as modal',
                     size: 'lg',
                     resolve: {
                         severities: function() {
                             return $scope.severities;
                         },
-                        vulns: function() {
-                            return $scope.selectedVulns;
+                        vuln: function() {
+                            return $scope.selectedVulns[0];
                         }
                     }
                 });
                 modal.result.then(function(data) {
-                    $scope.update($scope.selectedVulns, data);
+                    vulnsManager.updateVuln($scope.workspace, $scope.selectedVulns[0], data).then(function(){
+                        $scope.vulns = vulnsManager.vulns;
+                    }, function(errorMsg){
+                        // TODO: show errors somehow
+                        console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
+                    });
+       
                 });
             } else {
                 var modal = $modal.open({

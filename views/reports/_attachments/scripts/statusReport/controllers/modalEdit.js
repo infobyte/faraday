@@ -4,7 +4,7 @@
 
 angular.module('faradayApp')
     .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'vulns', 
-        function($modalInstance, EASEOFRESOLUTION, commons, severities, vulns) {
+        function($modalInstance, EASEOFRESOLUTION, commons, severities, vuln) {
         
         var vm = this;
 
@@ -18,8 +18,7 @@ angular.module('faradayApp')
         vm.file_name_error;
 
         vm.data;
-        vm.vulns;
-        vm.mixed;
+        vm.vuln;
 
         init = function() {
             vm.easeofresolution = EASEOFRESOLUTION;
@@ -60,27 +59,17 @@ angular.module('faradayApp')
                 website: ""
             };
 
-            vm.vulns = vulns;
+            vm.vuln = angularjs.copy(vuln);
 
-            vm.mixed = false;
-            var mask = 0x00;
-            var vuln_mask = {"VulnerabilityWeb": 0x01, "Vulnerability": 0x10};
+            vm.populate(vm.vuln);
 
-            vm.vulns.forEach(function(v) {
-                if (typeof(v.attachments) != undefined && v.attachments != undefined) {
-                    v.attachments.forEach(function(name) {
-                        vm.data.evidence[name] = {"name": name};
-                    });
-                    vm.icons = commons.loadIcons(vm.data.evidence); 
-                    vm.mask = vm.mask | vuln_mask[v.type];
-                }
-            });
-
-            vm.mixed = mask == 0x11;
-
-            if (vm.vulns.length == 1) {
-                vm.populate(vm.vulns[0]);
-            } 
+            // TODO: EVIDENCE SHOUD BE LOADED ALREADY?    
+            /*if (typeof(v.attachments) != undefined && v.attachments != undefined) {
+                v.attachments.forEach(function(name) {
+                    vm.data.evidence[name] = {"name": name};
+                });
+                vm.icons = commons.loadIcons(vm.data.evidence); 
+            });*/
         };
         
         vm.selectedFiles = function(files, e) {
@@ -104,43 +93,7 @@ angular.module('faradayApp')
         };
         
         vm.ok = function() {
-           if(vm.web) { 
-                res = {
-                    "data":             vm.data,
-                    "desc":             vm.desc,
-                    "easeofresolution": vm.easeOfResolutionSelection,
-                    "evidence":         vm.evidence,
-                    "impact":           vm.impact,
-                    "method":           vm.method,
-                    "name":             vm.name, 
-                    "params":           vm.params,
-                    "path":             vm.path,
-                    "pname":            vm.pname,
-                    "query":            vm.query,
-                    "refs":             vm.refs,
-                    "request":          vm.request,
-                    "response":         vm.response,
-                    "resolution":       vm.resolution,
-                    "severity":         vm.severitySelection, 
-                    "vulns":            vm.vulns, 
-                    "website":          vm.website
-                };    
-            } else {
-                res = {
-                    "data":         vm.data,
-                    "desc":         vm.desc,
-                    "easeofresolution": vm.easeOfResolutionSelection,
-                    "evidence":     vm.evidence,
-                    "impact":       vm.impact,
-                    "name":         vm.name, 
-                    "refs":         vm.refs,
-                    "resolution":   vm.resolution,
-                    "severity":     vm.severitySelection, 
-                    "vulns":        vm.vulns 
-                };
-            }
-
-            $modalInstance.close(res);
+            $modalInstance.close(vm.data);
         };
 
         vm.cancel = function() {
@@ -154,7 +107,7 @@ angular.module('faradayApp')
 
        vm.populate = function(item) {
             for (var key in data) {
-                if (item.hasOwnProperty(key)) {
+                if (item.hasOwnProperty(key) && data.hasOwnProperty(key)) {
                     vm.data[key] = item[key];
                 }
             }

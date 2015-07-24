@@ -315,7 +315,7 @@ angular.module('faradayApp')
             }
         };
 
-        var editProperty = function(partial, controller, message, property) {
+        var editProperty = function(partial, controller, message, property, options) {
             var modal = $modal.open({
                 templateUrl: partial,
                 controller: controller,
@@ -323,6 +323,9 @@ angular.module('faradayApp')
                 resolve: {
                     msg: function() {
                         return message;
+                    },
+                    options: function() {
+                        return options;
                     }
                 }
             });
@@ -339,6 +342,48 @@ angular.module('faradayApp')
                 'commonsModalEditString',
                 'Enter the new name:',
                 'name');
+        }
+
+        $scope.editDesc = function() {
+            editProperty(
+                'scripts/commons/partials/editText.html',
+                'commonsModalEditString',
+                'Enter the new desc:',
+                'desc');
+        }
+
+        $scope.editData = function() {
+            editProperty(
+                'scripts/commons/partials/editText.html',
+                'commonsModalEditString',
+                'Enter the new data:',
+                'data');
+        }
+
+        $scope.editResolution = function() {
+            editProperty(
+                'scripts/commons/partials/editText.html',
+                'commonsModalEditString',
+                'Enter the new resolution:',
+                'resolution');
+        }
+
+        $scope.editSeverity = function() {
+            editProperty(
+                'scripts/commons/partials/editOptions.html',
+                'commonsModalEditOptions',
+                'Enter the new severity:',
+                'severities',
+                SEVERITIES);
+        }
+
+        $scope.editEaseofresolution = function() {
+            editProperty(
+                'scripts/commons/partials/editOptions.html',
+                'commonsModalEditOptions',
+                'Enter the new easeofresolution:',
+                'easeofresolution',
+                EASEOFRESOLUTION);
         }
 
         $scope.insert = function(vuln) {

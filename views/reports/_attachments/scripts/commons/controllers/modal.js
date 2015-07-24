@@ -37,3 +37,17 @@ angular.module('faradayApp')
             $modalInstance.dismiss();
         }
     }]);
+angular.module('faradayApp')
+    .controller('commonsModalEditOptions', ['$scope', '$modalInstance', 'msg', 'options', function($scope, $modalInstance, msg, options) {
+        $scope.msg = msg;
+        $scope.options = options;
+        $scope.data = {property: ''};
+
+        $scope.ok = function() {
+            $modalInstance.close($scope.data.property);
+        };
+
+        $scope.cancel = function() {
+            $modalInstance.dismiss();
+        }
+    }]);

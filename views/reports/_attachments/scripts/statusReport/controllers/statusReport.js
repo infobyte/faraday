@@ -341,6 +341,30 @@ angular.module('faradayApp')
                 'name');
         }
 
+        $scope.editDesc = function() {
+            editProperty(
+                'scripts/commons/partials/editText.html',
+                'commonsModalEditString',
+                'Enter the new desc:',
+                'desc');
+        }
+
+        $scope.editData = function() {
+            editProperty(
+                'scripts/commons/partials/editText.html',
+                'commonsModalEditString',
+                'Enter the new data:',
+                'data');
+        }
+
+        $scope.editResolution = function() {
+            editProperty(
+                'scripts/commons/partials/editText.html',
+                'commonsModalEditString',
+                'Enter the new resolution:',
+                'resolution');
+        }
+
         $scope.insert = function(vuln) {
             vulnsManager.createVuln($scope.workspace, vuln).then(function() {
                 $scope.vulns = vulnsManager.vulns;

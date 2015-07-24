@@ -50,9 +50,6 @@ angular.module('faradayApp')
                     if(data._rev !== undefined) this._rev = data._rev;
 
                     if(this.metadata !== undefined) metadata = this.metadata; 
-                    metadata.update_time = date;
-                    metadata.update_user = "";
-                    metadata.update_action = 0;
                 }
 
                 this.date = date;
@@ -88,23 +85,24 @@ angular.module('faradayApp')
             },
             _update: function(vuln, data) {
                 var self = this,
-                url = BASEURL + self.ws + "/" + self._id,
+                url = BASEURL + vuln.ws + "/" + vuln._id;
                  
-                self.public_properties.forEach(function (prop) {
-                    if (vuln.hasOwnProperty(prop) && data.hasOwnProperty(prop)) {
+                vuln.public_properties.forEach(function(prop) {
+                    if(vuln.hasOwnProperty(prop) && data.hasOwnProperty(prop)) {
                         vuln[prop] = data[prop];
                     }
                 });
 
                 return $http.put(url, vuln)
                     .success(function(response) {
-                        self.set(self.ws, data);
+                        self.set(self.ws, vuln);
                         self._rev = response.rev;
                     });
             },
             update: function(data) {
+                var self = this,
                 vuln = new Vuln(self.ws, self);
-                self._update(vuln, data)
+                return self._update(vuln, data);
             },
             populate: function() {
                 var self = this,
@@ -136,6 +134,14 @@ angular.module('faradayApp')
                 url = BASEURL + self.ws + "/" + self._id;
                 vuln = self.populate();
 
+                $http.put(url, vuln)
+                    .success(function(data) {
+                        self._rev = data.rev;
+                        deferred.resolve(self);
+                    }, function() {
+                        deferred.reject();
+                    });
+/*
                 if(self._attachments !== undefined) {
                     loadAtt = _loadAttachments(self._attachments);
                 }
@@ -160,10 +166,11 @@ angular.module('faradayApp')
                             deferred.reject();
                         });
                 });
+*/
 
                 return deferred.promise;
             }
-        }
+        };
 
         _loadAttachments = function(evidence) {
             // the list of evidence may have mixed objects, some of them already in CouchDB, some of them new

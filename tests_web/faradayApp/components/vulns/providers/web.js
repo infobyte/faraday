@@ -74,6 +74,7 @@ describe('WebVuln', function() {
 
         old_data = {
             "_id": old_full_id,
+            "_rev": "1-lalalal",
             "data": "data",
             "desc": old_desc,
             "easeofresolution": "easeofresolution",
@@ -110,8 +111,16 @@ describe('WebVuln', function() {
         $httpBackend.verifyNoOutstandingRequest();
     });
 
-    describe('CRUD', function() {
-        it('Setting data to new object', function() {
+    describe('CRUD with invalid data', function() {
+        it('Setting new object', function() {
+            delete new_data.name;
+
+            expect(function() { new WebVuln('ws', new_data); }).toThrowError(Error, "Unable to create Vuln without a name");
+        });
+    });
+
+    describe('CRUD with valid data', function() {
+        it('Setting new object', function() {
             vuln = new WebVuln('ws', new_data);
 
             expect(vuln._id).toBeDefined();
@@ -125,13 +134,7 @@ describe('WebVuln', function() {
             }
         });
 
-        it('Setting data to new invalid object', function() {
-            delete new_data.name;
-
-            expect(function() { new WebVuln('ws', new_data); }).toThrowError(Error, "Unable to create Vuln without a name");
-        });
-
-        it('Setting data to existing object', function() {
+        it('Setting existing object', function() {
             vuln = new WebVuln('ws', old_data);
 
             expect(vuln._id).toBeDefined();
@@ -142,17 +145,13 @@ describe('WebVuln', function() {
                     if(prop != "metadata") expect(vuln[prop]).toEqual(old_data[prop]);
                 }
             }
-
-
         });
 
-        it('Save data to new object', function() {
+        it('Saving new object', function() {
             var url = BASEURL + "ws/" + new_full_id;
+            var vuln = new WebVuln('ws', new_data);
 
-            vuln = new WebVuln('ws', new_data);
-
-            $httpBackend.when('PUT', url).respond(201, {"rev": "1234"});
-            $httpBackend.expect('PUT', url);
+            $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
 
             vuln.save();
 
@@ -161,10 +160,9 @@ describe('WebVuln', function() {
             expect(vuln._rev).toEqual("1234");
         });
 
-        it('Save data to existing object', function() {
+        it('Saving existing object', function() {
             var url = BASEURL + "ws/" + old_full_id;
-
-            vuln = new WebVuln('ws', old_data);
+            var vuln = new WebVuln('ws', old_data);
 
             $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
 
@@ -175,25 +173,30 @@ describe('WebVuln', function() {
             expect(vuln._rev).toEqual("1234");
         });
 
-        it('Update data', function() {
+        it('Updating object', function() {
             var url = BASEURL + "ws/" + new_full_id;
-
-            vuln = new WebVuln('ws', new_data);
-            expect(vuln._rev).toBeUndefined();
+            var vuln = new WebVuln('ws', new_data);
 
             $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
 
+            delete old_data._id;
+            delete old_data._rev;
             vuln.update(old_data);
 
             $httpBackend.flush();
 
             expect(vuln._rev).toEqual("1234");
+            
+            for(var prop in old_data) {
+                if(old_data.hasOwnProperty(prop)) {
+                    if(prop != "metadata") expect(vuln[prop]).toEqual(old_data[prop]);
+                }
+            }
         });
 
-        it('Delete data', function() {
-            var url = BASEURL + "ws/" + new_full_id;
-
-            vuln = new WebVuln('ws', new_data);
+        it('Deleting object', function() {
+            var url = BASEURL + "ws/" + old_full_id + "?rev=" + old_data._rev;
+            var vuln = new WebVuln('ws', old_data);
 
             $httpBackend.expect('DELETE', url).respond(200);
 

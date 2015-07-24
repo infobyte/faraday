@@ -2,7 +2,7 @@
 // Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 // See the file 'doc/LICENSE' for the license information
 
-describe('Vuln', function() {
+describe('Vulnerability Object', function() {
     var Vuln,
     $httpBackend,
     BASEURL;
@@ -21,9 +21,11 @@ describe('Vuln', function() {
     // Set up the module
     beforeEach(module('faradayApp'));
 
-    beforeEach(inject(function($injector, _Vuln_) {
-        $httpBackend = $injector.get('$httpBackend');
+    beforeEach(inject(function($injector, _$httpBackend_, _$q_, _Vuln_, _attachmentsFact_) {
+        $httpBackend = _$httpBackend_;
+        $q = _$q_;
         Vuln = _Vuln_;
+        attachmentsFact = _attachmentsFact_;
         BASEURL = 'http://localhost:9876/'; 
 
         new_name = "new name";
@@ -58,6 +60,7 @@ describe('Vuln', function() {
 
         old_data = {
             "_id": old_full_id,
+            "_rev": "1-lalalala",
             "data": "data",
             "desc": old_desc,
             "easeofresolution": "easeofresolution",
@@ -86,8 +89,16 @@ describe('Vuln', function() {
         $httpBackend.verifyNoOutstandingRequest();
     });
 
-    describe('CRUD', function() {
-        it('Setting data to new object', function() {
+    describe('CRUD with invalid data', function() {
+        it('Setting new object', function() {
+            delete new_data.name;
+
+            expect(function() { new Vuln('ws', new_data); }).toThrowError(Error, "Unable to create Vuln without a name");
+        });
+    });
+
+    describe('CRUD with valid data', function() {
+        it('Setting new object', function() {
             vuln = new Vuln('ws', new_data);
 
             expect(vuln._id).toBeDefined();
@@ -101,13 +112,7 @@ describe('Vuln', function() {
             }
         });
 
-        it('Setting data to new invalid object', function() {
-            delete new_data.name;
-
-            expect(function() { new Vuln('ws', new_data); }).toThrowError(Error, "Unable to create Vuln without a name");
-        });
-
-        it('Setting data to existing object', function() {
+        it('Setting existing object', function() {
             vuln = new Vuln('ws', old_data);
 
             expect(vuln._id).toBeDefined();
@@ -120,39 +125,42 @@ describe('Vuln', function() {
             }
         });
 
-        it('Save data to new object', function() {
+        it('Saving new object', function() {
             var url = BASEURL + "ws/" + new_full_id;
+            var vuln = new Vuln('ws', new_data);
 
-            vuln = new Vuln('ws', new_data);
+            $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
 
-            $httpBackend.when('PUT', url).respond(201, {"rev": "1234"});
-            $httpBackend.expect('PUT', url);
             vuln.save();
+
             $httpBackend.flush();
 
             expect(vuln._rev).toEqual("1234");
         });
 
-        it('Save data to existing object', function() {
+        it('Saving existing object', function() {
             var url = BASEURL + "ws/" + old_full_id;
-
-            vuln = new Vuln('ws', old_data);
+            var vuln = new Vuln('ws', old_data);
 
             $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
+
             vuln.save();
+            
             $httpBackend.flush();
 
             expect(vuln._rev).toEqual("1234");
         });
 
-        it('Update data', function() {
+        it('Updating object', function() {
             var url = BASEURL + "ws/" + new_full_id;
-
-            vuln = new Vuln('ws', new_data);
-            expect(vuln._rev).toBeUndefined();
+            var vuln = new Vuln('ws', new_data);
 
             $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
+
+            delete old_data._id;
+            delete old_data._rev;
             vuln.update(old_data);
+
             $httpBackend.flush();
 
             expect(vuln._rev).toEqual("1234");
@@ -164,10 +172,9 @@ describe('Vuln', function() {
             }
         });
 
-        it('Delete data', function() {
-            var url = BASEURL + "ws/" + new_full_id;
-
-            vuln = new Vuln('ws', new_data);
+        it('Deleting object', function() {
+            var url = BASEURL + "ws/" + old_full_id + "?rev=" + old_data._rev;
+            var vuln = new Vuln('ws', old_data);
 
             $httpBackend.expect('DELETE', url).respond(200);
 

@@ -273,7 +273,7 @@ angular.module('faradayApp')
         };
 
         $scope.update = function(aVulns, data) {
-            aVulns.forEach(function(vuln){
+            aVulns.forEach(function(vuln) { 
                 vulnsManager.updateVuln($scope.workspace, vuln, data).then(function(){
                     $scope.vulns = vulnsManager.vulns;
                 }, function(errorMsg){
@@ -315,20 +315,30 @@ angular.module('faradayApp')
             }
         };
 
-        $scope.editName = function() {
+        var editProperty = function(partial, controller, message, property) {
             var modal = $modal.open({
-                templateUrl: 'scripts/commons/partials/editString.html',
-                controller: 'commonsModalEditString',
+                templateUrl: partial,
+                controller: controller,
                 size: 'lg',
                 resolve: {
                     msg: function() {
-                        return "Enter the new name:";
+                        return message;
                     }
                 }
             });
-            modal.result.then(function(name) {
-                $scope.update($scope.selectedVulns, {name: name});
+            modal.result.then(function(data) {
+                obj = {};
+                obj[property] = data
+                $scope.update($scope.selectedVulns, obj);
             });
+        }
+        
+        $scope.editName = function() {
+            editProperty(
+                'scripts/commons/partials/editString.html',
+                'commonsModalEditString',
+                'Enter the new name:',
+                'name');
         }
 
         $scope.insert = function(vuln) {

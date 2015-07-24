@@ -14,6 +14,11 @@ angular.module('faradayApp')
         };
 
         Vuln.prototype = {
+            public_properties: [
+                'name', 'desc', '_attachments', 'data', 'easeofresolution', 
+                'impact', 'owned', 'refs', 'resolution', 'severity'
+            ],
+
             set: function(ws, data) {
                 var impact = {
                     accountability: false,
@@ -81,16 +86,25 @@ angular.module('faradayApp')
                 url = BASEURL + self.ws + "/" + self._id + "?rev=" + self._rev;
                 return $http.delete(url);
             },
-            update: function(data) {
+            _update: function(vuln, data) {
                 var self = this,
                 url = BASEURL + self.ws + "/" + self._id,
-                vuln = new Vuln(self.ws, self);
-                vuln.set(self.ws, data);
+                 
+                self.public_properties.forEach(function (prop) {
+                    if (vuln.hasOwnProperty(prop) && data.hasOwnProperty(prop)) {
+                        vuln[prop] = data[prop];
+                    }
+                });
+
                 return $http.put(url, vuln)
                     .success(function(response) {
                         self.set(self.ws, data);
                         self._rev = response.rev;
                     });
+            },
+            update: function(data) {
+                vuln = new Vuln(self.ws, self);
+                self._update(vuln, data)
             },
             populate: function() {
                 var self = this,

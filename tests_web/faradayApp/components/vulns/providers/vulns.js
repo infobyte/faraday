@@ -59,7 +59,7 @@ describe('vulnsManager', function() {
         $httpBackend.verifyNoOutstandingRequest();
     });
 
-    describe(' ', function() {
+    describe('Basic usage', function() {
         it('Initialization', function() {
             expect(vulnsManager.vulns).toBeDefined();
             expect(vulnsManager.vulns).toEqual([]);
@@ -137,8 +137,8 @@ describe('vulnsManager', function() {
         });
 
         it('deleteVuln', function() {
-            var id = vuln1._id,
-            vuln = vuln1;
+            var id = vuln1._id;
+            var vuln = angular.copy(vuln1);
             delete vuln._id;
             delete vuln._rev;
 
@@ -161,7 +161,7 @@ describe('vulnsManager', function() {
             };
 
             // insert new vuln in Couch
-            $httpBackend.expect('PUT', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
+            $httpBackend.expect('PUT', BASEURL + "ws/" + id).respond(201, {"rev": vuln1._rev});
             // getVulns
             $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 1});
             $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, respInsert);
@@ -171,7 +171,7 @@ describe('vulnsManager', function() {
             $httpBackend.flush();
 
             // delete vuln
-            $httpBackend.expect('DELETE', BASEURL + 'ws/' + id).respond(200);
+            $httpBackend.expect('DELETE', BASEURL + 'ws/' + id + "?rev=" + vuln1._rev).respond(200);
             // getVulns
             $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 2});
             $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, respDelete);
@@ -180,11 +180,12 @@ describe('vulnsManager', function() {
             $httpBackend.flush();
 
             expect(vulnsManager.vulns.length).toEqual(0);
+            expect(vulnsManager.update_seq).toEqual(2);
         });
 
         it('updateVuln', function() {
-            var id = vuln1._id,
-            vuln = vuln1;
+            var id = vuln1._id;
+            var vuln = angular.copy(vuln1);
             delete vuln._id;
             delete vuln._rev;
 

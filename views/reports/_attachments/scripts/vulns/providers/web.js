@@ -15,6 +15,10 @@ angular.module('faradayApp')
 
         WebVuln.prototype = new Vuln();
 
+        WebVuln.prototype.public_properties = Vuln.prototype.public_properties.concat([
+                'method', 'params', 'path', 'pname', 'query',
+                'request', 'response', 'website']);
+
         WebVuln.prototype.set = function(ws, data) {
             Vuln.prototype.set.call(this, ws, data);
             // new vuln

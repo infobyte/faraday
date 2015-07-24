@@ -27,10 +27,10 @@ angular.module('faradayApp')
 angular.module('faradayApp')
     .controller('commonsModalEditString', ['$scope', '$modalInstance', 'msg', function($scope, $modalInstance, msg) {
         $scope.msg = msg;
-        $scope.data = {name: ''};
+        $scope.data = {property: ''};
 
         $scope.ok = function() {
-            $modalInstance.close($scope.data.name);
+            $modalInstance.close($scope.data.property);
         };
 
         $scope.cancel = function() {

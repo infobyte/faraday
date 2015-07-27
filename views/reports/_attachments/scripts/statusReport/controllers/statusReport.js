@@ -352,38 +352,6 @@ angular.module('faradayApp')
             });
         }
         
-        $scope.editName = function() {
-            editProperty(
-                'scripts/commons/partials/editString.html',
-                'commonsModalEditString',
-                'Enter the new name:',
-                'name');
-        }
-
-        $scope.editDesc = function() {
-            editProperty(
-                'scripts/commons/partials/editText.html',
-                'commonsModalEditString',
-                'Enter the new desc:',
-                'desc');
-        }
-
-        $scope.editData = function() {
-            editProperty(
-                'scripts/commons/partials/editText.html',
-                'commonsModalEditString',
-                'Enter the new data:',
-                'data');
-        }
-
-        $scope.editResolution = function() {
-            editProperty(
-                'scripts/commons/partials/editText.html',
-                'commonsModalEditString',
-                'Enter the new resolution:',
-                'resolution');
-        }
-
         $scope.editSeverity = function() {
             editProperty(
                 'scripts/commons/partials/editOptions.html',
@@ -455,11 +423,17 @@ angular.module('faradayApp')
                 property);
         }
 
-        $scope.editText = function(property) {
+        $scope.editText = function(property, message_word) {
+            var message;
+            if(message_word) {
+                message = 'Enter the new ' + message_word + ':';
+            } else {
+                message = 'Enter the new ' + property + ':';
+            }
             editProperty(
                 'scripts/commons/partials/editText.html',
                 'commonsModalEditString',
-                'Enter the new ' + property + ':',
+                message,
                 property);
         }
 

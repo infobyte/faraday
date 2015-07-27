@@ -56,14 +56,17 @@
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
-                    <h4>References</h4>
-                    <span class="input-group-addon button-radius" ng-click="modal.newReference()">Add Reference</span>
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="vuln-refs">References</label>
+                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="modal.new_ref"/>
+                        <span class="input-group-addon cursor" ng-click="modal.newReference()"><i class="fa fa-plus-circle"></i></span>
+                    </div>
                 </div>
                 <div class="col-md-12 reference" ng-repeat="reference in modal.data.refs">
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="vuln-refs">References</label>
-                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference"/>
-                        <span class="input-group-addon" ng-click="modal.data.refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.value"/>
+                        <span class="input-group-addon cursor" ng-click="modal.data.refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                     </div>
                 </div>
             </div><!-- .form-group -->
@@ -73,43 +76,43 @@
                     <textarea class="form-control" id="vuln-resolution" placeholder="Resolution" ng-model="modal.data.resolution"></textarea>
                 </div>
             </div><!-- .form-group -->
-            <div ng-if="modal.vm.type === 'VulnerabilityWeb'">
+            <div ng-if="modal.vuln.type === 'VulnerabilityWeb'">
                 <div class="form-group">
-                    <div class="col-md-4 has-error">
+                    <div class="col-md-4">
                         <label class="sr-only control-label" for="vuln-method">Method</label>
-                        <input type="text" class="form-control input-error" id="vuln-method" placeholder="Method" ng-model="moda.data.method"/>
+                        <input type="text" class="form-control input-error" id="vuln-method" placeholder="Method" ng-model="modal.data.method"/>
                     </div>
-                    <div class="col-md-3 has-error">
+                    <div class="col-md-3">
                         <label class="sr-only control-label" for="vuln-pname">Param Name</label>
                         <input type="text" class="form-control input-error" id="vuln-pname" placeholder="Param name" ng-model="modal.data.pname"/>
                     </div>
-                    <div class="col-md-5 has-error">
+                    <div class="col-md-5">
                         <label class="sr-only control-label" for="vuln-params">Params</label>
                         <input type="text" class="form-control input-error" id="vuln-params" placeholder="Params" ng-model="modal.data.params"/>
                     </div>
                 </div><!-- .form-group -->
                 <div class="form-group">
-                    <div class="col-md-4 has-error">
+                    <div class="col-md-4">
                         <label class="sr-only control-label" for="vuln-path">Path</label>
                         <input type="text" class="form-control input-error" id="vuln-path" placeholder="Path" ng-model="modal.data.path"/>
                     </div>
-                    <div class="col-md-4 has-error">
+                    <div class="col-md-4">
                         <label class="sr-only control-label" for="vuln-query">Query</label>
                         <input type="text" class="form-control input-error" id="vuln-query" placeholder="Query" ng-model="modal.data.query"/>
                     </div>
-                    <div class="col-md-4 has-error">
+                    <div class="col-md-4">
                         <label class="sr-only control-label" for="vuln-website">Website</label>
                         <input type="text" class="form-control input-error" id="vuln-website" placeholder="Website" ng-model="modal.data.website"/>
                     </div>
                 </div><!-- .form-group -->
                 <div class="form-group">
-                    <div class="col-md-12 has-error">
+                    <div class="col-md-12">
                         <label class="sr-only control-label" for="vuln-request">Request</label>
                         <textarea class="form-control input-error" id="vuln-request" placeholder="Request" ng-model="modal.data.request"></textarea>
                     </div>
                 </div><!-- .form-group -->
                 <div class="form-group">
-                    <div class="col-md-12 has-error">
+                    <div class="col-md-12">
                         <label class="sr-only control-label" for="vuln-response">Response</label>
                         <textarea class="form-control input-error" id="vuln-response" placeholder="Response" ng-model="modal.data.response"></textarea>
                     </div>

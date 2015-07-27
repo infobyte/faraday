@@ -20,8 +20,16 @@ angular.module('faradayApp')
                         desc: "Summary: " + obj.doc.desc_summary + "\n\n" + obj.doc.description,
                         resolution: obj.doc.resolution,
                         exploitation: obj.doc.exploitation,
-                        references: obj.doc.references
+                        refs: obj.doc.references
                     };
+                    if (typeof(obj.doc.references) == "string") {
+                        c.refs = [];
+                        obj.doc.references.split('\n').forEach(function(ref) {
+                            if (ref != "") {
+                                c.refs.push(ref);
+                            }
+                        });
+                    }
                     cweFact.cweList.push(c);
                 });
                 deferred.resolve(cweFact.cweList);

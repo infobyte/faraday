@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'vulns', 
-        function($modalInstance, EASEOFRESOLUTION, commons, severities, vuln) {
+    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'vuln', 'cweFact', 
+        function($modalInstance, EASEOFRESOLUTION, commons, severities, vuln, cweFact) {
         
         var vm = this;
 
@@ -47,19 +47,20 @@ angular.module('faradayApp')
                     integrity: false
                 },
                 name: "",
-                refs: [],
+                refs: {},
                 resolution: "",
                 severity: undefined,
                 method: "", 
                 path: "", 
                 pname: "", 
+                params: "",
                 query: "", 
                 request: "",
                 response: "",
                 website: ""
             };
 
-            vm.vuln = angularjs.copy(vuln);
+            vm.vuln = angular.copy(vuln);
 
             vm.populate(vm.vuln);
 
@@ -89,10 +90,16 @@ angular.module('faradayApp')
         }
 
         vm.toggleImpact = function(key) {
-            vm.impact[key] = !vm.impact[key];
+            vm.data.impact[key] = !vm.data.impact[key];
         };
         
         vm.ok = function() {
+            // convert refs to an array of strings
+            var refs = [];
+            vm.data.refs.forEach(function(ref) {
+                refs.push(ref.value);
+            });
+            vm.data.refs = refs;
             $modalInstance.close(vm.data);
         };
 
@@ -101,15 +108,23 @@ angular.module('faradayApp')
         };
 
         vm.newReference = function() {
-            vm.data.refs.push(vm.new_ref);
+            vm.data.refs.push({value: vm.new_ref});
             vm.new_ref = "";
         }
 
-       vm.populate = function(item) {
-            for (var key in data) {
-                if (item.hasOwnProperty(key) && data.hasOwnProperty(key)) {
+        vm.populate = function(item) {
+            for (var key in vm.data) {
+                if (key != "refs" && item.hasOwnProperty(key) && vm.data.hasOwnProperty(key)) {
                     vm.data[key] = item[key];
                 }
             }
+            // convert refs to an array of objects
+            var refs = [];
+            item.refs.forEach(function(ref) {
+                refs.push({value: ref});
+            });
+            vm.data.refs = refs;
         }
+
+        init();
     }]);

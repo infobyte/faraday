@@ -5,19 +5,19 @@ function(doc) {
     if(doc.type == "Vulnerability" || doc.type == "VulnerabilityWeb"){
         var easeofresolution = "trivial",
         impact = {
-            "accountability": 0,
-            "availability": 0,
-            "confidentiality": 0,
-            "integrity": 0
+            "accountability": false,
+            "availability": false,
+            "confidentiality": false,
+            "integrity": false
         },
         resolution = "";
-        if(doc.easeofresolution != "undefined" && typeof(doc.easeofresolution) != "undefined") {
+        if(doc.easeofresolution !== undefined) {
             easeofresolution = doc.easeofresolution;
         }
-        if(doc.impact != "undefined" && typeof(doc.impact) != "undefined") {
+        if(doc.impact !== undefined) {
             impact = doc.impact;
         }
-        if(doc.resolution != "undefined" && typeof(doc.resolution) != "undefined") {
+        if(doc.resolution !== undefined) {
             resolution = doc.resolution;
         }
 

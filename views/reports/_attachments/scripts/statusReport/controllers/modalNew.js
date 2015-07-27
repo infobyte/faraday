@@ -146,9 +146,9 @@ angular.module('faradayApp')
 
         vm.setTarget = function(target) {
             if (vm.data.parent != undefined) {
-                vm.data.parent.selected = false;
+                vm.data.parent.selected_modalNewCtrl = false;
             }
-            target.selected = true;
+            target.selected_modalNewCtrl = true;
             vm.data.parent = target;
         }
 

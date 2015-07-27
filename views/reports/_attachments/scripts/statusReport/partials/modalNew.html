@@ -18,12 +18,12 @@
                  <accordion close-others="true">
                     <accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize">
                         <accordion-heading>
-                        <a ng-click="modal.setTarget(host)" ng-class="{'multi-selected': host.selected == true}">{{host.name}} ({{host.hostnames[0]}})</a>
+                        <a ng-click="modal.setTarget(host)" ng-class="{'multi-selected': host.selected_modalNewCtrl == true}">{{host.name}} ({{host.hostnames[0]}})</a>
                           <i class="pull-right glyphicon"
                                 ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
                         </accordion-heading>
                         <div class="panel-body" ng-repeat="service in host.services">
-                            <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': service.selected == true}">{{service.name}}</a>
+                            <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': service.selected_modalNewCtrl == true}">{{service.name}}</a>
                       </div>
                     </accordion-group>
                   </accordion>

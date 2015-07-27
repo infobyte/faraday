@@ -94,6 +94,8 @@ angular.module('faradayApp')
         };
         
         vm.ok = function() {
+            // add the ref in new_ref, if there's any
+            vm.newReference();
             // convert refs to an array of strings
             var refs = [];
             vm.data.refs.forEach(function(ref) {
@@ -108,8 +110,13 @@ angular.module('faradayApp')
         };
 
         vm.newReference = function() {
-            vm.data.refs.push({value: vm.new_ref});
-            vm.new_ref = "";
+            if (vm.new_ref != "") {
+                // we need to check if the ref already exists
+                if (vm.data.refs.filter(function(ref) {return ref.value === vm.new_ref}).length == 0) {
+                    vm.data.refs.push({value: vm.new_ref});
+                    vm.new_ref = "";
+                }
+            }
         }
 
         vm.populate = function(item) {

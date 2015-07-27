@@ -124,7 +124,18 @@ angular.module('faradayApp')
 
         vm.ok = function() {
             if (!(vm.data.type === "VulnerabilityWeb" && vm.data.parent.type === "Host")) {
+                // add the ref in new_ref, if there's any
+                vm.newReference();
+
+                // convert refs to an array of strings
+                var refs = [];
+                vm.data.refs.forEach(function(ref) {
+                    refs.push(ref.value);
+                });
+                vm.data.refs = refs;
+
                 vm.data.parent = vm.data.parent._id;
+
                 $modalInstance.close(vm.data);
             }
         };
@@ -150,18 +161,29 @@ angular.module('faradayApp')
         }
 
         vm.newReference = function() {
-            if(vm.data.refs.indexOf(vm.new_ref) === -1) {
-                vm.data.refs.push(vm.new_ref);
-                vm.new_ref = "";
+            if (vm.new_ref != "") {
+                // we need to check if the ref already exists
+                if (vm.data.refs.filter(function(ref) {return ref.value === vm.new_ref}).length == 0) {
+                    vm.data.refs.push({value: vm.new_ref});
+                    vm.new_ref = "";
+                }
             }
         }
 
         vm.populate = function(item, model, label) {
+
             for (var key in item) {
-                if (vm.data.hasOwnProperty(key)) {
+                if (key != "refs" && vm.data.hasOwnProperty(key)) {
                     vm.data[key] = item[key];
                 }
             }
+
+            // convert refs to an array of objects
+            var refs = [];
+            item.refs.forEach(function(ref) {
+                refs.push({value: ref});
+            });
+            vm.data.refs = refs;
         }
 
         init();

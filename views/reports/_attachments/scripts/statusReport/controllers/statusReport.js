@@ -441,6 +441,28 @@ angular.module('faradayApp')
                 );
         }
 
+        $scope.editString = function(property, message_word) {
+            var message;
+            if(message_word) {
+                message = 'Enter the new ' + message_word + ':';
+            } else {
+                message = 'Enter the new ' + property + ':';
+            }
+            editProperty(
+                'scripts/commons/partials/editString.html',
+                'commonsModalEditString',
+                message,
+                property);
+        }
+
+        $scope.editText = function(property) {
+            editProperty(
+                'scripts/commons/partials/editText.html',
+                'commonsModalEditString',
+                'Enter the new ' + property + ':',
+                property);
+        }
+
         $scope.insert = function(vuln) {
             vulnsManager.createVuln($scope.workspace, vuln).then(function() {
                 $scope.vulns = vulnsManager.vulns;

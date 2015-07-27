@@ -46,6 +46,15 @@
                         <li><a class="ws" ng-click="editEaseofresolution()">Edit easeofresolution</a></li>
                         <li><a class="ws" ng-click="editReferences()">Edit references</a></li>
                         <li><a class="ws" ng-click="editImpact()">Edit impact</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a class="ws" ng-click="editString('method')">Edit method</a></li>
+                        <li><a class="ws" ng-click="editString('pname', 'param name')">Edit param name</a></li>
+                        <li><a class="ws" ng-click="editString('params', 'parameters')">Edit parameters</a></li>
+                        <li><a class="ws" ng-click="editString('path')">Edit path</a></li>
+                        <li><a class="ws" ng-click="editString('query')">Edit query</a></li>
+                        <li><a class="ws" ng-click="editString('website')">Edit website</a></li>
+                        <li><a class="ws" ng-click="editText('request')">Edit request</a></li>
+                        <li><a class="ws" ng-click="editText('response')">Edit response</a></li>
                     </ul>
                     </div>
                 <button id="new" type="button" class="btn btn-success" title="New Vulns" ng-click="new()">

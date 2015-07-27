@@ -54,11 +54,11 @@ angular.module('faradayApp')
             vm.newCurrentPage = 0;
 
             vm.data = {
+                _attachments: {},
                 type: "Vulnerability",
                 data: "",
                 desc: "",
                 easeofresolution: undefined,
-                evidence: {},
                 impact: {
                     accountability: false,
                     availability: false,
@@ -104,17 +104,17 @@ angular.module('faradayApp')
         vm.selectedFiles = function(files, e) {
             files.forEach(function(file) {
                 if(file.name.charAt(0) != "_") {
-                    if(!vm.data.evidence.hasOwnProperty(file)) vm.data.evidence[file.name] = file;
+                    if(!vm.data._attachments.hasOwnProperty(file)) vm.data._attachments[file.name] = file;
                     vm.file_name_error = false;
                 } else {
                     vm.file_name_error = true;
                 }
             });
-            vm.icons = commons.loadIcons(vm.data.evidence);
+            vm.icons = commons.loadIcons(vm.data._attachments);
         };
 
         vm.removeEvidence = function(name) {
-            delete vm.data.evidence[name];
+            delete vm.data._attachments[name];
             delete vm.icons[name];
         };
 

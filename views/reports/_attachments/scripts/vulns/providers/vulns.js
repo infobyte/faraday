@@ -27,7 +27,7 @@ angular.module('faradayApp')
                         vulns.push(vuln);
                     }
                 } catch(e) {
-                    console.log(e.name + ":" + e.message);
+                    console.log(e.stack);
                 }
             }
 
@@ -57,8 +57,8 @@ angular.module('faradayApp')
                     deferred.reject();
                 });
             } catch(e) {
-                console.log(e.name + ":" + e.message);
-                deferred.reject(e.name + ":" + e.message);
+                console.log(e.stack);
+                deferred.reject(e.name + ": " + e.message);
             }
 
             return deferred.promise;

@@ -18,7 +18,6 @@ angular.module('faradayApp')
                 'name', 'desc', '_attachments', 'data', 'easeofresolution', 
                 'impact', 'owned', 'refs', 'resolution', 'severity'
             ],
-
             set: function(ws, data) {
                 var impact = {
                     accountability: false,
@@ -59,7 +58,14 @@ angular.module('faradayApp')
                 this.ws = ws;
 
                 // user-generated content
-                if(data._attachments !== undefined && data._attachments.length > 0) this._attachments = data._attachments;
+                if(data._attachments !== undefined) {
+                    this._attachments = [];
+                    for(var att in data._attachments) {
+                        if(data._attachments.hasOwnProperty(att)) {
+                            this._attachments.push(data._attachments[att]);
+                        }
+                    }
+                }
                 if(data.data !== undefined) this.data = data.data;
                 if(data.desc !== undefined) this.desc = data.desc;
                 if(data.easeofresolution !== undefined) this.easeofresolution = data.easeofresolution;
@@ -105,42 +111,51 @@ angular.module('faradayApp')
                 return self._update(vuln, data);
             },
             populate: function() {
-                var self = this,
+                var deferred = $q.defer(),
+                self = this,
                 vuln = {};
 
                 vuln._id = self._id;
-                if(self._rev !== undefined) vuln._rev = self._rev;
-                vuln.data = self.data;
-                vuln.desc = self.desc;
-                vuln.easeofresolution = self.easeofresolution;
-                vuln.impact = self.impact;
                 vuln.metadata = self.metadata;
-                vuln.name = self.name;
                 vuln.obj_id = self.obj_id;
-                vuln.owned = self.owned;
                 vuln.owner = self.owner;
                 vuln.parent = self.parent;
-                vuln.refs = self.refs;
-                vuln.resolution = self.resolution;
-                vuln.severity = self.severity;
                 vuln.type = self.type;
 
-                return vuln;
+                self.public_properties.forEach(function(prop) {
+                    if(prop !== "_attachments") vuln[prop] = self[prop];
+                });
+
+                if(self._attachments !== undefined) {
+                    attachmentsFact.loadAttachments(self._attachments).then(function(atts) {
+                        vuln._attachments = atts;
+                        deferred.resolve(vuln);
+                    }, function() {
+                        deferred.reject("Unable to load attachments");
+                    });
+                } else {
+                    deferred.resolve(vuln);
+                }
+
+                return deferred.promise;
             },
             save: function() {
                 var deferred = $q.defer(),
                 loadAtt,
                 self = this,
                 url = BASEURL + self.ws + "/" + self._id;
-                vuln = self.populate();
+                
+                self.populate().then(function(resp) {
+                    $http.put(url, resp)
+                        .success(function(data) {
+                            self._rev = data.rev;
+                            deferred.resolve(self);
+                        }, function() {
+                            deferred.reject();
+                        });
+                }, function() {
+                });
 
-                $http.put(url, vuln)
-                    .success(function(data) {
-                        self._rev = data.rev;
-                        deferred.resolve(self);
-                    }, function() {
-                        deferred.reject();
-                    });
 /*
                 if(self._attachments !== undefined) {
                     loadAtt = _loadAttachments(self._attachments);

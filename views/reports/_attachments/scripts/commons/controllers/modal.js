@@ -71,3 +71,20 @@ angular.module('faradayApp')
             $modalInstance.dismiss();
         }
     }]);
+angular.module('faradayApp')
+    .controller('commonsModalEditObject', ['$scope', '$modalInstance', 'msg', 'options', function($scope, $modalInstance, msg, options) {
+        $scope.msg = msg;
+        $scope.data = {property: options};
+
+        $scope.toggleImpact = function(key) {
+            $scope.data.property[key] = !$scope.data.property[key];
+        };
+
+        $scope.ok = function() {
+            $modalInstance.close($scope.data.property);
+        };
+
+        $scope.cancel = function() {
+            $modalInstance.dismiss();
+        }
+    }]);

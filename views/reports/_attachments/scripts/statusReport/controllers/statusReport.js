@@ -414,6 +414,33 @@ angular.module('faradayApp')
                 );
         }
 
+        $scope.editImpact = function() {
+            editProperty(
+                'scripts/commons/partials/editObject.html',
+                'commonsModalEditObject',
+                'Enter the new impact:',
+                'impact',
+                {
+                    options: {
+                        accountability: false,
+                        availability: false,
+                        confidentiality: false,
+                        integrity: false
+                    },
+                    callback: function (vuln, impact) {
+                        for(key in vuln.impact){
+                            if(vuln.impact.hasOwnProperty(key)) {
+                                if(impact[key] === true) {
+                                    vuln.impact[key] = impact[key];
+                                }
+                            }
+                        }
+                        return {'impact': vuln.impact};
+                    }
+                }
+                );
+        }
+
         $scope.insert = function(vuln) {
             vulnsManager.createVuln($scope.workspace, vuln).then(function() {
                 $scope.vulns = vulnsManager.vulns;

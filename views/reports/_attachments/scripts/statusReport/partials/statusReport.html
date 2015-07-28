@@ -43,8 +43,8 @@
                         <li><a class="ws" ng-click="editText('data')">Edit data</a></li>
                         <li><a class="ws" ng-click="editText('resolution')">Edit resolution</a></li>
                         <li><a class="ws" ng-click="editSeverity()">Edit severity</a></li>
-                        <li><a class="ws" ng-click="editEaseofresolution()">Edit easeofresolution</a></li>
-                        <li><a class="ws" ng-click="editReferences()">Edit references</a></li>
+                        <li><a class="ws" ng-click="editEaseofresolution()">Edit ease of resolution</a></li>
+                        <li><a class="ws" ng-click="editReferences()">Add references</a></li>
                         <li><a class="ws" ng-click="editImpact()">Edit impact</a></li>
                         <li role="separator" class="divider"></li>
                         <li><a class="ws" ng-click="editString('method')">Edit method</a></li>
@@ -55,6 +55,8 @@
                         <li><a class="ws" ng-click="editString('website')">Edit website</a></li>
                         <li><a class="ws" ng-click="editText('request')">Edit request</a></li>
                         <li><a class="ws" ng-click="editText('response')">Edit response</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a class="ws" ng-click="editCWE()">Edit CWE</a></li>
                     </ul>
                     </div>
                 <button id="new" type="button" class="btn btn-success" title="New Vulns" ng-click="new()">

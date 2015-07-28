@@ -64,7 +64,7 @@ describe('vulnsManager', function() {
             expect(vulnsManager.vulns).toBeDefined();
             expect(vulnsManager.vulns).toEqual([]);
             expect(vulnsManager.update_seq).toBeDefined();
-            expect(vulnsManager.update_seq).toEqual(0);
+            expect(vulnsManager.update_seq).toEqual({});
         });
 
         it('getVulns with unchanged DB', function() {
@@ -75,7 +75,7 @@ describe('vulnsManager', function() {
             $httpBackend.flush();
 
             expect(vulnsManager.vulns).toEqual([]);
-            expect(vulnsManager.update_seq).toEqual(0);
+            expect(vulnsManager.update_seq["ws"]).toEqual(0);
         });
 
         it('getVulns with changed DB', function() {
@@ -100,7 +100,7 @@ describe('vulnsManager', function() {
 
             expect(vulnsManager.vulns.length).toEqual(1);
             expect(vulnsManager.vulns[0]._id).toEqual(vuln1._id);
-            expect(vulnsManager.update_seq).toEqual(1);
+            expect(vulnsManager.update_seq["ws"]).toEqual(1);
         });
 
         it('createVuln', function() {
@@ -133,7 +133,7 @@ describe('vulnsManager', function() {
 
             expect(vulnsManager.vulns.length).toEqual(1);
             expect(vulnsManager.vulns[0]._id).toEqual(id);
-            expect(vulnsManager.update_seq).toEqual(1);
+            expect(vulnsManager.update_seq["ws"]).toEqual(1);
         });
 
         it('deleteVuln', function() {
@@ -180,7 +180,7 @@ describe('vulnsManager', function() {
             $httpBackend.flush();
 
             expect(vulnsManager.vulns.length).toEqual(0);
-            expect(vulnsManager.update_seq).toEqual(2);
+            expect(vulnsManager.update_seq["ws"]).toEqual(2);
         });
 
         it('updateVuln', function() {

@@ -9,7 +9,7 @@ angular.module('faradayApp')
         var vulnsManager = {};
 
         vulnsManager.vulns = [];
-        vulnsManager.update_seq = 0;
+        vulnsManager.update_seq = {};
 
         // receives data from Couch, loads vulns property
         vulnsManager._load = function(ws, data) {
@@ -88,8 +88,9 @@ angular.module('faradayApp')
 
             $http.get(BASEURL + ws)
                 .success(function(latest) {
-                    if(latest.update_seq > self.update_seq) {
-                        self.update_seq = latest.update_seq;
+                    if(self.update_seq[ws] === undefined) self.update_seq[ws] = 0;
+                    if(latest.update_seq > self.update_seq[ws]) {
+                        self.update_seq[ws] = latest.update_seq;
                         $http.get(BASEURL + ws + '/_design/vulns/_view/all')
                             .success(function(data) {
                                 deferred.resolve(self._load(ws, data.rows));

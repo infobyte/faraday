@@ -378,7 +378,14 @@ angular.module('faradayApp')
                 'Enter the new references:',
                 'refs',
                 {callback: function (vuln, refs) {
-                    return {'refs': vuln.refs.concat(refs)};
+                    var references = vuln.refs.concat([]);
+                    refs.forEach(function(ref) {
+                        if(vuln.refs.indexOf(ref) == -1){
+                            references.push(ref);
+                        }
+                    });
+
+                    return {'refs': references};
                 }}
                 );
         }
@@ -436,6 +443,38 @@ angular.module('faradayApp')
                 'commonsModalEditString',
                 message,
                 property);
+        }
+
+        $scope.editCWE = function() {
+            var modal = $modal.open({
+                templateUrl: 'scripts/commons/partials/editCWE.html',
+                controller: 'commonsModalEditCWE',
+                size: 'lg',
+                resolve: {
+                    msg: function() {
+                        return 'CWE template';
+                    }
+                }
+            });
+            modal.result.then(function(data) {
+                $scope.selectedVulns.forEach(function(vuln) {
+                    var references = vuln.refs.concat([]);
+                    data.refs.forEach(function(ref) {
+                        if(vuln.refs.indexOf(ref) == -1){
+                            references.push(ref);
+                        }
+                    });
+                    data.refs = references;                    
+
+                    vulnsManager.updateVuln($scope.workspace, vuln, data).then(function(){
+                        $scope.vulns = vulnsManager.vulns;
+                        $scope.selectedVulns = [];
+                    }, function(errorMsg){
+                        // TODO: show errors somehow
+                        console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
+                    });
+                });
+            });
         }
 
         $scope.insert = function(vuln) {

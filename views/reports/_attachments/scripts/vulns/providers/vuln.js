@@ -99,6 +99,10 @@ angular.module('faradayApp')
                     var files = {},
                     stubs = {};
                     vuln._attachments = {};
+
+                    // the list of evidence may have mixed objects, some of them already in CouchDB, some of them new
+                    // new attachments are of File type and need to be processed by attachmentsFact.loadAttachments 
+                    // old attachments are of type Object and they represent a Stub, nothing should be done to them
                     for(var name in data._attachments) {
                         if(data._attachments.hasOwnProperty(name)) {
                             if(data._attachments[name] instanceof File) {
@@ -186,70 +190,8 @@ angular.module('faradayApp')
                 }, function() {
                 });
 
-/*
-                if(self._attachments !== undefined) {
-                    loadAtt = _loadAttachments(self._attachments);
-                }
-
-                $q.when(loadAtt).then(function(atts) {
-                    vuln._attachments = atts;
-                    
-                    $http.put(url, vuln)
-                        .success(function(data) {
-                            self._rev = data.rev;
-                            self._attachments = Object.keys(vuln._attachments);
-                            deferred.resolve();
-                        }, function() {
-                            deferred.reject();
-                        });
-                }, function() {
-                    $http.put(url, vuln)
-                        .success(function(data) {
-                            self._rev = data.rev;
-                            deferred.resolve();
-                        }, function() {
-                            deferred.reject();
-                        });
-                });
-*/
-
                 return deferred.promise;
             }
-        };
-
-        _loadAttachments = function(evidence) {
-            // the list of evidence may have mixed objects, some of them already in CouchDB, some of them new
-            // new attachments are of File type and need to be processed by attachmentsFact.loadAttachments 
-            // old attachments are of type String (file name) and need to be processed by attachmentsFact.getStubs
-            var attachments = {},
-            deferred = $q.defer(),
-            files = [],
-            promises = [],
-            stubs = [];
-
-            for(var name in evidence) {
-                if(evidence[name] instanceof File) {
-                    files.push(evidence[name]);
-                } else {
-                    stubs.push(name);
-                }
-            }
-
-            if(stubs.length > 0) promises.push(attachmentsFact.getStubs(ws, vuln.id, stubs));
-            if(files.length > 0) promises.push(attachmentsFact.loadAttachments(files));
-
-            $q.all(promises).then(function(result) {
-                result.forEach(function(atts) {
-                    for(var name in atts) {
-                        attachments[name] = atts[name];
-                    }
-                });
-                deferred.resolve(attachments);
-            }, function() {
-                deferred.reject("Unable to load attachments");
-            });
-
-            return deferred.promise;
         };
 
         return Vuln;

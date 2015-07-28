@@ -123,51 +123,5 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-/*
-        vulnsManager.put = function(ws, vuln, callback) {
-            var url = BASEURL + ws + "/" + vuln.id, 
-            v = {
-                "_rev":             vuln.rev,
-            };
-            if(typeof(vuln.evidence) != undefined && vuln.evidence != undefined) {
-                // the list of evidence may have mixed objects, some of them already in CouchDB, some of them new
-                // new attachments are of File type and need to be processed by attachmentsFact.loadAttachments 
-                // old attachments are of type String (file name) and need to be processed by attachmentsFact.getStubs
-                var stubs = [],
-                files = [],
-                names = [],
-                promises = [];
-                v._attachments = {};
-
-                for(var name in vuln.evidence) {
-                    if(vuln.evidence[name] instanceof File) {
-                        files.push(vuln.evidence[name]);
-                    } else {
-                        stubs.push(name);
-                    }
-                }
-
-                if(stubs.length > 0) promises.push(attachmentsFact.getStubs(ws, vuln.id, stubs));
-                if(files.length > 0) promises.push(attachmentsFact.loadAttachments(files));
-
-                $q.all(promises).then(function(result) {
-                    result.forEach(function(atts) {
-                        for(var name in atts) {
-                            v._attachments[name] = atts[name];
-                            names.push(name);
-                        }
-                    });
-                    $http.put(url, v).success(function(d, s, h, c) {
-                        callback(d.rev, names);
-                    });
-                });
-            } else {
-                $http.put(url, v).success(function(d, s, h, c) {
-                    callback(d.rev, []);
-                });
-            }
-        };
-*/
-
         return vulnsManager;
     }]);

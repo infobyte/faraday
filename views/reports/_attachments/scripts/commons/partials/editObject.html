@@ -6,9 +6,30 @@
     <h5>{{msg}}</h5>
 </div>
 <div class="modal-body">
-    <div ng-repeat="(key, value) in data.property" class="normal-size" style="cursor: pointer;">
-        <h4><span ng-class="{'label label-default': !value, 'label label-success': value}" ng-click="toggleImpact(key)">{{key}}</span></h4>
-    </div><!-- .normal-size -->
+	<div class="row">
+		<div class="col-md-4">
+			<div class="ws-list">
+				<a class="ws-link" ng-repeat="(key, value) in options" style="height:35px">
+					<p class="label label-primary ws-name">
+						<span class="glyphicon glyphicon-ok tagLabel" ng-click="addImpact(key)"></span>{{key}}
+						<span class="glyphicon glyphicon-remove tagLabel" ng-click="delImpact(key)"></span>
+					</p>
+				</a>
+			</div><!-- .ws-list -->
+		</div>
+		<div class="col-md-4">
+			<h5>Add</h5>
+		    <div ng-repeat="add in impact.add" class="normal-size" style="cursor: pointer;">
+		        <h4><span class="label label-success" ng-click="add_backImpact(add)">{{add}}</span></h4>
+		    </div><!-- .normal-size -->
+		</div>
+		<div class="col-md-4">
+			<h5>Delete</h5>
+		    <div ng-repeat="del in impact.del" class="normal-size" style="cursor: pointer;">
+		        <h4><span class="label label-danger" ng-click="del_backImpact(del)">{{del}}</span></h4>
+		    </div><!-- .normal-size -->
+		</div>
+	</div>
 </div>
 <div class="modal-footer">
     <button class="btn btn-danger" ng-click="cancel()">Cancel</button>

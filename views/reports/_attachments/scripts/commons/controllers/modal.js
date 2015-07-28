@@ -86,15 +86,51 @@ angular.module('faradayApp')
     }]);
 angular.module('faradayApp')
     .controller('commonsModalEditObject', ['$scope', '$modalInstance', 'msg', 'options', function($scope, $modalInstance, msg, options) {
+        var data = [];
         $scope.msg = msg;
-        $scope.data = {property: options};
+        $scope.options = options;
+        $scope.data = {};
+        $scope.impact = {
+            add: [],
+            del: []
+        };
 
-        $scope.toggleImpact = function(key) {
-            $scope.data.property[key] = !$scope.data.property[key];
+        $scope.addImpact = function(key) {
+            if($scope.impact.add.indexOf(key) === -1 && $scope.impact.del.indexOf(key) === -1) {
+                $scope.impact.add.push(key);
+            }
+        };
+
+        $scope.delImpact = function(key) {
+            if($scope.impact.del.indexOf(key) === -1 && $scope.impact.add.indexOf(key) === -1) {
+                $scope.impact.del.push(key);
+            }
+        };
+
+        $scope.del_backImpact = function(key) {
+            var i = $scope.impact.del.indexOf(key);
+            if(i != -1) {
+                $scope.impact.del.splice(i, 1);
+            }
+        };
+
+        $scope.add_backImpact = function(key) {
+            var i = $scope.impact.add.indexOf(key);
+            if(i != -1) {
+                $scope.impact.add.splice(i, 1);
+            }
         };
 
         $scope.ok = function() {
-            $modalInstance.close($scope.data.property);
+            for(opt in $scope.options){
+               if($scope.impact.add.indexOf(opt) != -1) {
+                    $scope.data[opt] = true;
+                }
+                if($scope.impact.del.indexOf(opt) != -1) {
+                    $scope.data[opt] = false;
+                }
+            }
+            $modalInstance.close($scope.data);
         };
 
         $scope.cancel = function() {

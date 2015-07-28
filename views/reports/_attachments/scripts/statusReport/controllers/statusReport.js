@@ -403,15 +403,17 @@ angular.module('faradayApp')
                         confidentiality: false,
                         integrity: false
                     },
-                    callback: function (vuln, impact) {
+                    callback: function (vuln, impacts) {
+                        var impact = {};
                         for(key in vuln.impact){
                             if(vuln.impact.hasOwnProperty(key)) {
-                                if(impact[key] === true) {
-                                    vuln.impact[key] = impact[key];
+                                impact[key] = vuln.impact[key];
+                                if(impacts.hasOwnProperty(key)) {
+                                    impact[key] = impacts[key];
                                 }
                             }
                         }
-                        return {'impact': vuln.impact};
+                        return {'impact': impact};
                     }
                 }
                 );

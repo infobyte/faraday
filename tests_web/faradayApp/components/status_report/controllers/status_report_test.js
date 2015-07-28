@@ -273,7 +273,8 @@ describe('statusReportCtrl', function() {
         it('call delete with a valid vuln (1.2.3.4) selected and accept modal', function() {
             // we need $scope.vulns to have all the vulns before calling
             // the delete method
-            vuln1.selected = true;
+            vuln1.selected_statusreport_controller = true;
+            $scope.selectedVulns.push(vuln1);
             $scope.$apply();
             $scope.delete();
             fakeModal.close();
@@ -287,7 +288,8 @@ describe('statusReportCtrl', function() {
         it('call delete with a valid vuln (1.2.3.4) selected and cancel modal', function() {
             // we need $scope.vulns to have all the vulns before calling
             // the delete method
-            vuln1.selected = true;
+            vuln1.selected_statusreport_controller = true;
+            $scope.selectedVulns.push(vuln1);
             $scope.$apply();
             $scope.delete();
             fakeModal.dismiss();
@@ -299,8 +301,10 @@ describe('statusReportCtrl', function() {
             expect($scope.vulns).toContain(vuln3);
         });
         it('call delete with valid vulns selected and accept modal', function() {
-            vuln1.selected = true;
-            vuln2.selected = true;
+            vuln1.selected_statusreport_controller = true;
+            vuln2.selected_statusreport_controller = true;
+            $scope.selectedVulns.push(vuln1);
+            $scope.selectedVulns.push(vuln2);
             $scope.$apply();
             $scope.delete();
             fakeModal.close();

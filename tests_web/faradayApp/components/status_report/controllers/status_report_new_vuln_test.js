@@ -123,24 +123,24 @@ describe('modalNewVulnCtrl', function() {
             $scope.$apply();
             vm.new_ref = "This is a new Reference";
             vm.newReference();
-            expect(vm.data.refs).toContain('This is a new Reference');
+            expect(vm.data.refs).toContain({value: 'This is a new Reference'});
 
             vm.new_ref = "This is another reference";
             vm.newReference();
-            expect(vm.data.refs).toContain('This is another reference');
+            expect(vm.data.refs).toContain({value: 'This is another reference'});
         });
         it('selected is true of data.parent object execution of setTarget function', function() {
             $scope.$apply();
             var target = vm.targets[0];
             vm.setTarget(target);
             expect(vm.data.parent).toEqual(target);
-            expect(vm.data.parent.selected).toEqual(true);
+            expect(vm.data.parent.selected_modalNewCtrl).toEqual(true);
 
             //if a service is the target
             var service_target = target.services[0];
             vm.setTarget(target.services[0]);
             expect(vm.data.parent).toEqual(service_target);
-            expect(vm.data.parent.selected).toEqual(true);
+            expect(vm.data.parent.selected_modalNewCtrl).toEqual(true);
         });
         it('variables have proper values after execution of ok function', function() {
             $scope.$apply();
@@ -163,7 +163,7 @@ describe('modalNewVulnCtrl', function() {
                 path: "path",
                 pname: "pname",
                 query: "query",
-                refs: ["ref1","ref2"],
+                refs: [{value: "ref1"}, {value: "ref2"}],
                 request: "request",
                 resolution: "resolution",
                 response: "response",

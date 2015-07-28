@@ -214,8 +214,8 @@
                             <td ng-if="columns.website">{{v.website}}</td>
                             <td ng-if="columns.refs"><p ng-repeat="refs in v.refs track by $index">{{refs}}</p></td>
                             <td ng-if="columns.evidence">
-                                <div ng-repeat="e in v._attachments track by $index">
-                                    <a href="{{baseurl + workspace}}/{{v.id}}/{{e}}" target="_blank">{{e}}</a>
+                                <div ng-repeat="(name, file) in v._attachments track by $index">
+                                    <a ng-href="{{baseurl + workspace}}/{{v._id}}/{{name | encodeURIComponent}}" target="_blank">{{name | decodeURIComponent}}</a>
                                 </div>
                             </td>
                             <td ng-if="columns.impact">

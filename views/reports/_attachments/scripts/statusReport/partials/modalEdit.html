@@ -136,14 +136,14 @@
                 <input type="file" id="evidence" ng-file-select ng-multiple="true" resetOnClick="false" ng-file-change="modal.selectedFiles($files, $event)"/>
                 <p class="help-block">Multiple files are allowed.</p>
             </div><!-- .form-group -->
-            <div id="evidenceFiles" class="normal-size" ng-if="modal.data.evidence">
+            <div id="evidenceFiles" class="normal-size" ng-if="modal.data._attachments">
                 <ul>
-                    <li ng-repeat="e in modal.data.evidence | orderObjectBy:'name':true | orderBy:'name'">
+                    <li ng-repeat="(name, file) in modal.data._attachments">
                         <div class="btn-group">
                             <button type="button" class="btn btn-default">
-                                <span class="fa {{icons[e.name]}}" title="Evidence {{e.name}}"></span> {{e.name}}
+                                <span class="fa {{icons[name]}}" title="Evidence {{name}}"></span> {{name}}
                             </button><!-- ng-repeat -->
-                            <button type="button" class="btn btn-danger" ng-click="modal.removeEvidence(e.name)">
+                            <button type="button" class="btn btn-danger" ng-click="modal.removeEvidence(name)">
                                 <span class="glyphicon glyphicon-trash"></span>
                             </button>
                         </div>

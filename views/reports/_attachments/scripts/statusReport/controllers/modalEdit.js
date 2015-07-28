@@ -36,10 +36,10 @@ angular.module('faradayApp')
             vm.file_name_error = false;
  
             vm.data = {
+                _attachments: {},
                 data: "",
                 desc: "",
                 easeofresolution: undefined,
-                evidence: {},
                 impact: {
                     accountability: false,
                     availability: false,
@@ -65,27 +65,26 @@ angular.module('faradayApp')
             vm.populate(vm.vuln);
 
             // TODO: EVIDENCE SHOUD BE LOADED ALREADY?    
-            /*if (typeof(v.attachments) != undefined && v.attachments != undefined) {
-                v.attachments.forEach(function(name) {
-                    vm.data.evidence[name] = {"name": name};
-                });
-                vm.icons = commons.loadIcons(vm.data.evidence); 
-            });*/
+            if(vm.vuln._attachments !== undefined) {
+                console.log(vm.data._attachments);
+                vm.data._attachments = vm.vuln._attachments;
+                vm.icons = commons.loadIcons(vm.data._attachments); 
+            }
         };
         
         vm.selectedFiles = function(files, e) {
             files.forEach(function(file) {
                 if(file.name.charAt(0) != "_") {
-                    if(!vm.evidence.hasOwnProperty(file)) vm.evidence[file.name] = file;
+                    if(!vm.data._attachments.hasOwnProperty(file)) vm.data._attachments[file.name] = file;
                 } else {
                     vm.file_name_error = true;
                 }
             });
-            vm.icons = commons.loadIcons(vm.evidence); 
+            vm.icons = commons.loadIcons(vm._attachments); 
         }
 
         vm.removeEvidence = function(name) {
-            delete vm.evidence[name];
+            delete vm.data._attachments[name];
             delete vm.icons[name];
         }
 

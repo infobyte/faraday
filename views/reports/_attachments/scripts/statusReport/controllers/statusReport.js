@@ -30,6 +30,7 @@ angular.module('faradayApp')
         $scope.newPageSize;
 
         $scope.selectedVulns;
+        $scope.vulnWebSelected;
 
         init = function() {
             $scope.baseurl = BASEURL;
@@ -106,7 +107,7 @@ angular.module('faradayApp')
                 "website":          false
             };
 
-            $scope.selectedVulns = [];
+            clearSelection();
         };
 
         // returns scope vulns as CSV obj
@@ -220,7 +221,7 @@ angular.module('faradayApp')
             aVulns.forEach(function(vuln){
                 vulnsManager.deleteVuln($scope.workspace, vuln).then(function(){
                     $scope.vulns = vulnsManager.vulns;
-                    $scope.selectedVulns = [];
+                    clearSelection();
                 }, function(errorMsg){
                     // TODO: show errors somehow
                     console.log("Error deleting vuln " + vuln._id + ": " + errorMsg);
@@ -295,8 +296,8 @@ angular.module('faradayApp')
                 modal.result.then(function(data) {
                     vulnsManager.updateVuln($scope.workspace, $scope.selectedVulns[0], data).then(function(){
                         $scope.vulns = vulnsManager.vulns;
-                        $scope.selectedVulns = [];
-                    }, function(errorMsg) {
+                        clearSelection();
+                    }, function(errorMsg){
                         // TODO: show errors somehow
                         console.log("Error updating vuln " + $scope.selectedVulns[0].name + " (" + $scope.selectedVulns[0]._id + "): " + errorMsg);
                     });
@@ -344,7 +345,7 @@ angular.module('faradayApp')
 
                     vulnsManager.updateVuln($scope.workspace, vuln, obj).then(function(){
                         $scope.vulns = vulnsManager.vulns;
-                        $scope.selectedVulns = [];
+                        clearSelection();
                     }, function(errorMsg){
                         // TODO: show errors somehow
                         console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
@@ -470,7 +471,7 @@ angular.module('faradayApp')
 
                     vulnsManager.updateVuln($scope.workspace, vuln, data).then(function(){
                         $scope.vulns = vulnsManager.vulns;
-                        $scope.selectedVulns = [];
+                        clearSelection();
                     }, function(errorMsg){
                         // TODO: show errors somehow
                         console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
@@ -482,7 +483,7 @@ angular.module('faradayApp')
         $scope.insert = function(vuln) {
             vulnsManager.createVuln($scope.workspace, vuln).then(function() {
                 $scope.vulns = vulnsManager.vulns;
-                $scope.selectedVulns = [];
+                clearSelection();
             }, function(message) {
                 $modal.open(config = {
                     templateUrl: 'scripts/commons/partials/modalKO.html',
@@ -535,7 +536,7 @@ angular.module('faradayApp')
             var orderObject = $filter('orderObjectBy')($scope.vulns, $scope.sortField, $scope.reverse);
             var tmp_vulns = $filter('limitTo')(orderObject, $scope.pageSize, $scope.currentPage * $scope.pageSize);
             angular.forEach($filter('filter')(tmp_vulns), function(v,k) {
-                v.selected = $scope.selectall;
+                v.selected_statusreport_controller = $scope.selectall;
             });
         };
 
@@ -652,6 +653,17 @@ angular.module('faradayApp')
         // toggle column sort order
         $scope.toggleReverse = function() {
             $scope.reverse = !$scope.reverse;
+        };
+
+        $scope.selectionChange = function() {
+            $scope.vulnWebSelected = $scope.selectedVulns.some(function(v) {
+                return v.type === "VulnerabilityWeb"
+            });
+        };
+
+        clearSelection = function() {
+            $scope.selectedVulns = [];
+            $scope.vulnWebSelected = false;
         };
 
         init();

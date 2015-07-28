@@ -12,7 +12,7 @@
 	        <span class="input-group-addon cursor" ng-click="newValue()"><i class="fa fa-plus-circle"></i></span>
 	    </div>
 	    <div class="input-group margin-bottom-sm reference" ng-repeat="v in data.property">
-	        <input type="text" class="form-control" ng-model="v"/>
+	        <input type="text" class="form-control" ng-model="v.value"/>
 	        <span class="input-group-addon cursor" ng-click="data.property.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
 	    </div>
 	</div>

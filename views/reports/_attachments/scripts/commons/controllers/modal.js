@@ -55,15 +55,28 @@ angular.module('faradayApp')
     .controller('commonsModalEditArray', ['$scope', '$modalInstance', 'msg', function($scope, $modalInstance, msg) {
         $scope.msg = msg;
         $scope.data = {property: []};
+        $scope.new_value = "";
 
         $scope.newValue = function() {
-            if($scope.data.property.indexOf($scope.new_value) === -1) {
-                $scope.data.property.push($scope.new_value);
-                $scope.new_value = "";
+            if ($scope.new_value != "") {
+                // we need to check if the ref already exists
+                if ($scope.data.property.filter(function(ref) {return ref.value === $scope.new_value}).length == 0) {
+                    $scope.data.property.push({value: $scope.new_value});
+                    $scope.new_value = "";
+                }
             }
         }
 
         $scope.ok = function() {
+            // add the ref in new_ref, if there's any
+            $scope.newValue();
+            // convert refs to an array of strings
+            var values = [];
+            $scope.data.property.forEach(function(val) {
+                values.push(val.value);
+            });
+            $scope.data.property = values;
+
             $modalInstance.close($scope.data.property);
         };
 

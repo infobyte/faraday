@@ -12,9 +12,13 @@ angular.module('faradayApp')
             var deferred = $q.defer(),
             promises = [],
             tmp = {};
-            files.forEach(function(file) {
-                promises.push(attachmentsFact.loadAttachment(file));
-            });
+            for(var name in files) {
+                if(files.hasOwnProperty(name)) {
+                    var file = files[name];
+                    file.name = name;
+                    promises.push(attachmentsFact.loadAttachment(file));
+                }
+            }
             $q.all(promises).then(function(attachments) {
                 attachments.forEach(function(attachment) {
                     tmp[attachment.filename] = attachment.value;

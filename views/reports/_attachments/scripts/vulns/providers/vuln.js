@@ -59,12 +59,7 @@ angular.module('faradayApp')
 
                 // user-generated content
                 if(data._attachments !== undefined) {
-                    this._attachments = [];
-                    for(var att in data._attachments) {
-                        if(data._attachments.hasOwnProperty(att)) {
-                            this._attachments.push(data._attachments[att]);
-                        }
-                    }
+                    this._attachments = data._attachments;
                 }
                 if(data.data !== undefined) this.data = data.data;
                 if(data.desc !== undefined) this.desc = data.desc;

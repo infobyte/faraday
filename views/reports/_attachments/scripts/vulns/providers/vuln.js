@@ -188,6 +188,7 @@ angular.module('faradayApp')
                             deferred.reject();
                         });
                 }, function() {
+                    deferred.reject();
                 });
 
                 return deferred.promise;

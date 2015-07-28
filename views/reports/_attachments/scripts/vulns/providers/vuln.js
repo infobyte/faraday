@@ -85,20 +85,55 @@ angular.module('faradayApp')
                 return $http.delete(url);
             },
             _update: function(vuln, data) {
-                var self = this,
+                var deferred = $q.defer(),
+                self = this,
                 url = BASEURL + vuln.ws + "/" + vuln._id;
                  
                 vuln.public_properties.forEach(function(prop) {
                     if(vuln.hasOwnProperty(prop) && data.hasOwnProperty(prop)) {
-                        vuln[prop] = data[prop];
+                        if(prop != "_attachments") vuln[prop] = data[prop];
                     }
                 });
 
-                return $http.put(url, vuln)
-                    .success(function(response) {
-                        self.set(self.ws, vuln);
-                        self._rev = response.rev;
+                if(data._attachments !== undefined) {
+                    var files = {},
+                    stubs = {};
+                    vuln._attachments = {};
+                    for(var name in data._attachments) {
+                        if(data._attachments.hasOwnProperty(name)) {
+                            if(data._attachments[name] instanceof File) {
+                                files[name] = data._attachments[name];
+                            } else {
+                                stubs[name] = data._attachments[name];
+                            }
+                        }
+                    }
+                    angular.extend(vuln._attachments, stubs);
+                    attachmentsFact.loadAttachments(files).then(function(atts) {
+                        angular.extend(vuln._attachments, atts);
+                        $http.put(url, vuln)
+                            .success(function(response) {
+                                self.set(self.ws, vuln);
+                                self._rev = response.rev;
+                                deferred.resolve();
+                            })
+                            .error(function() {
+                                deferred.reject();
+                            });
                     });
+                } else {
+                    $http.put(url, vuln)
+                        .success(function(response) {
+                            self.set(self.ws, vuln);
+                            self._rev = response.rev;
+                            deferred.resolve();
+                        })
+                        .error(function() {
+                            deferred.reject();
+                        });
+                }
+
+                return deferred.promise;
             },
             update: function(data) {
                 var self = this,

@@ -66,7 +66,6 @@ angular.module('faradayApp')
 
             // TODO: EVIDENCE SHOUD BE LOADED ALREADY?    
             if(vm.vuln._attachments !== undefined) {
-                console.log(vm.data._attachments);
                 vm.data._attachments = vm.vuln._attachments;
                 vm.icons = commons.loadIcons(vm.data._attachments); 
             }

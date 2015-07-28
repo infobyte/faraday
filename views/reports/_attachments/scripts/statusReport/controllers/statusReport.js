@@ -296,9 +296,9 @@ angular.module('faradayApp')
                     vulnsManager.updateVuln($scope.workspace, $scope.selectedVulns[0], data).then(function(){
                         $scope.vulns = vulnsManager.vulns;
                         $scope.selectedVulns = [];
-                    }, function(errorMsg){
+                    }, function(errorMsg) {
                         // TODO: show errors somehow
-                        console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
+                        console.log("Error updating vuln " + $scope.selectedVulns[0].name + " (" + $scope.selectedVulns[0]._id + "): " + errorMsg);
                     });
        
                 });

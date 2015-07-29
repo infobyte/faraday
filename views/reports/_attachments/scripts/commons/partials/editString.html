@@ -2,13 +2,15 @@
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
 
-<div class="modal-header" hotkey="{enter:ok}">
-    <h5>{{msg}}</h5>
-</div>
-<div class="modal-body">
-    <input type="text" ng-model="data.property" class="form-control"/>
-</div>
-<div class="modal-footer">
-    <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
-    <button class="btn btn-success" ng-click="ok()">OK</button>
-</div>
+<form hotkey="{enter:ok}">
+	<div class="modal-header">
+	    <h5>{{msg}}</h5>
+	</div>
+	<div class="modal-body">
+	    <input type="text" ng-model="data.property" class="form-control"/>
+	</div>
+	<div class="modal-footer">
+	    <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+	    <button class="btn btn-success" ng-click="ok()">OK</button>
+	</div>
+</form>

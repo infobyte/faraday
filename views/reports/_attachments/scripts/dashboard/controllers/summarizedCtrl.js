@@ -176,10 +176,10 @@ angular.module('faradayApp')
                     });
                 });
 
-                vulnsManager.getVulns(workspace).then(function() {
-                    $scope.vulns = vulnsManager.vulns;
+                vulnsManager.getVulns(workspace).then(function(vulns) {
+                    $scope.vulns = vulns;
                     $scope.vulns.sort(function(a,b){
-                        return b.meta.create_time - a.meta.create_time;
+                        return b.metadata.create_time - a.metadata.create_time;
                     });
                     $scope.vulns = $scope.vulns.splice(0,5);
                 });

@@ -76,18 +76,22 @@ angular.module('faradayApp')
                 if(data.name !== undefined && data.name !== "") this.name = data.name;
                 if(data.owned !== undefined) this.owned = data.owned;
                 if(data.parent !== undefined) {
-                    this.parent = data.parent;
-                    this.target = "";
-                    this.hostnames = "";
-                    var self = this;
-                    hostsManager.getHost(this.parent, this.ws)
+                    var self = this,
+                    parts = data.parent.split(".");
+
+                    self.parent = data.parent;
+                    self.target = "";
+                    self.hostnames = "";
+
+                    hostsManager.getHost(parts[0], self.ws)
                         .then(function(host) {
                             self.target = host.name;
                         })
                         .catch(function() {
                             console.log("Unable to load vuln's Host parent");
                         });
-                    hostsManager.getInterfaces(this.ws, this.parent)
+                    
+                    hostsManager.getInterfaces(self.ws, parts[0])
                         .then(function(interfaces) {
                             var hostnames = [];
                             interfaces.forEach(function(interf) {

@@ -710,6 +710,8 @@ text.host-name{font-size: 13px;font-weight:bold;}
     color: #ffffff;
     text-decoration: none;
 }
+    a.ws-link span.impact-ok{top: 2px;left: -4px;color: #5cb85c;}
+    a.ws-link span.impact-del{top: 3px;left: 2px;color: #d9534f;}
 a.ws-link:hover {    
     color: #ffffff;
     text-decoration: none;

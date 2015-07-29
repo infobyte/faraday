@@ -134,6 +134,9 @@ angular.module('faradayApp')
                 });
                 vm.data.refs = refs;
 
+                // delete selection
+                delete vm.data.parent.selected_modalNewCtrl;
+
                 vm.data.parent = vm.data.parent._id;
 
                 $modalInstance.close(vm.data);
@@ -146,7 +149,7 @@ angular.module('faradayApp')
 
         vm.setTarget = function(target) {
             if (vm.data.parent != undefined) {
-                vm.data.parent.selected_modalNewCtrl = false;
+                delete vm.data.parent.selected_modalNewCtrl;
             }
             target.selected_modalNewCtrl = true;
             vm.data.parent = target;

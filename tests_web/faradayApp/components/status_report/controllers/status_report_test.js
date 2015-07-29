@@ -152,12 +152,11 @@ describe('statusReportCtrl', function() {
             }
 
             vulnsManagerMock = {
-                vulns: [],
+                vulns: [vuln1, vuln2, vuln3],
                 getVulns: function(workspace) {
-                    vulnsManagerMock.vulns = [vuln1, vuln2, vuln3];
-                    return returnPromise(true);
+                    return returnPromise(vulnsManagerMock.vulns);
                 },
-                deleteVuln: function(workspace, vuln) {
+                deleteVuln: function(vuln) {
                     if (vuln._id === "1.2.3.4" ||
                         vuln._id === "1.2.3.5" ||
                         vuln._id === "6.7.8.9") {
@@ -168,7 +167,7 @@ describe('statusReportCtrl', function() {
                             }
                         });
                         vulnsManagerMock.vulns = vulns_tmp;
-                        return returnPromise(true);
+                        return returnPromise();
                     } else {
                         return rejectPromise("error");
                     }
@@ -178,12 +177,12 @@ describe('statusReportCtrl', function() {
                     vulnsManagerMock.vulns.push(vuln);
                     return returnPromise(vuln);
                 },
-                updateVuln: function(workspace, vuln, vulnData) {
+                updateVuln: function(vuln, vulnData) {
                     if (vuln._id === "1.2.3.4" ||
                         vuln._id === "1.2.3.5" ||
                         vuln._id === "6.7.8.9") {
                         angular.extend(vuln, vulnData);
-                        return returnPromise(true);
+                        return returnPromise();
                     } else {
                         return rejectPromise("error");
                     }
@@ -455,63 +454,11 @@ describe('statusReportCtrl', function() {
     });
 
     describe('Status report vuln edition - update method', function() {
-        it('edit a valid vuln', function() {
-            var vulnData = {
-                "name": "Changed name",
-                "resolution": "New resolution",
-                "refs": [
-                   "test",
-                   "another ref"
-                ],
-                "owned": true,
-                "severity": "high"
-            };
-            $scope.update([vuln1], vulnData);
-            $scope.$apply();
-
-            expect($scope.vulns.length).toEqual(3);
-            $scope.vulns.forEach(function(vuln) {
-                if (vuln._id == "1.2.3.4") {
-                    expect(vuln.name).toEqual("Changed name");
-                    expect(vuln.resolution).toEqual("New resolution");
-                    expect(vuln.refs.length).toEqual(2);
-                    expect(vuln.owned).toEqual(true);
-                    expect(vuln.severity).toEqual("high");
-
-                }
-            });
-        });
-        it('edit two valid vulns', function() {
-            var vulnData = {
-                "name": "Changed name",
-                "resolution": "New resolution",
-                "refs": [
-                   "test",
-                   "another ref"
-                ],
-                "owned": true,
-                "severity": "high"
-            };
-            $scope.update([vuln1, vuln2], vulnData);
-            $scope.$apply();
-
-            expect($scope.vulns.length).toEqual(3);
-            $scope.vulns.forEach(function(vuln) {
-                if (vuln._id == "1.2.3.4" || vuln._id == "1.2.3.5") {
-                    expect(vuln.name).toEqual("Changed name");
-                    expect(vuln.resolution).toEqual("New resolution");
-                    expect(vuln.refs.length).toEqual(2);
-                    expect(vuln.owned).toEqual(true);
-                    expect(vuln.severity).toEqual("high");
-
-                }
-            });
-
-        });
+       //TODO: test each editable property 
     });
     
     describe('Status report vuln edition - edit method (modal)', function() {
-        it('edit two vulns and accept modal', function() {
+        it('edit a vuln and accept modal', function() {
             var vulnData = {
                 "name": "Changed name",
                 "resolution": "New resolution",
@@ -522,9 +469,10 @@ describe('statusReportCtrl', function() {
                 "owned": true,
                 "severity": "high"
             };
+            
+            vuln1.selected_statusreport_controller = true;
+            $scope.selectedVulns.push(vuln1);
 
-            vuln1.selected = true;
-            vuln2.selected = true;
             $scope.$apply();
             $scope.edit();
             fakeModal.close(vulnData);
@@ -532,7 +480,7 @@ describe('statusReportCtrl', function() {
             
             expect($scope.vulns.length).toEqual(3);
             $scope.vulns.forEach(function(vuln) {
-                if (vuln._id == "1.2.3.4" || vuln._id == "1.2.3.5") {
+                if (vuln._id == "1.2.3.4") {
                     expect(vuln.name).toEqual("Changed name");
                     expect(vuln.resolution).toEqual("New resolution");
                     expect(vuln.refs.length).toEqual(2);
@@ -554,9 +502,8 @@ describe('statusReportCtrl', function() {
                 "owned": true,
                 "severity": "high"
             };
-
-            vuln1.selected = true;
-            vuln2.selected = true;
+            vuln1.selected_statusreport_controller = true;
+            $scope.selectedVulns.push(vuln1);
             $scope.$apply();
             //$scope.edit();
             //fakeModal.dismiss();
@@ -564,7 +511,7 @@ describe('statusReportCtrl', function() {
             
             expect($scope.vulns.length).toEqual(3);
             $scope.vulns.forEach(function(vuln) {
-                if (vuln._id == "1.2.3.4" || vuln._id == "1.2.3.5") {
+                if (vuln._id == "1.2.3.4") {
                     expect(vuln.name).not.toEqual("Changed name");
                     expect(vuln.resolution).not.toEqual("New resolution");
                     expect(vuln.refs.length).not.toEqual(2);

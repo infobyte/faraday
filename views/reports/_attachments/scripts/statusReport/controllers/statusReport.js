@@ -481,7 +481,7 @@ angular.module('faradayApp')
             }, function(message) {
                 var msg = "The vulnerability couldn't be created";
                 if(message == "409") {
-                    msg += "because a vulnerability with the same parameters already exists in this Workspace";
+                    msg += " because a vulnerability with the same parameters already exists in this Workspace";
                 }
                 showMessage(msg);
             });

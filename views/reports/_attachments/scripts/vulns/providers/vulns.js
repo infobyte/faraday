@@ -8,33 +8,7 @@ angular.module('faradayApp')
         function(Vuln, WebVuln, BASEURL, $filter, $http, $q, attachmentsFact) {
         var vulnsManager = {};
 
-        vulnsManager.vulns = [];
-        vulnsManager.update_seq = {};
-
         // receives data from Couch, loads vulns property
-        vulnsManager._load = function(ws, data) {
-            var self = this,
-            vulns = [];
-
-            for(var i = 0; i < data.length; i++) {
-                var vulnData = data[i].value;
-                try {
-                    if(vulnData.type == "Vulnerability") {
-                        var vuln = new Vuln(ws, vulnData);
-                        vulns.push(vuln);
-                    } else {
-                        var vuln = new WebVuln(ws, vulnData);
-                        vulns.push(vuln);
-                    }
-                } catch(e) {
-                    console.log(e.stack);
-                }
-            }
-
-            self.vulns = vulns;
-
-            return self.vulns;
-        };
 
         vulnsManager.createVuln = function(ws, data) {
             var deferred = $q.defer(),
@@ -47,15 +21,13 @@ angular.module('faradayApp')
                     var vuln = new WebVuln(ws, data);
                 }
 
-                vuln.save().then(function() {
-                    self.getVulns(ws).then(function() {
-                        deferred.resolve();
-                    }, function() {
-                        deferred.reject();
+                vuln.save()
+                    .then(function() {
+                        return self.getVulns(ws);
+                    })
+                    .catch(function(err) {
+                        deferred.reject(err);
                     });
-                }, function() {
-                    deferred.reject();
-                });
             } catch(e) {
                 console.log(e.stack);
                 deferred.reject(e.name + ": " + e.message);
@@ -72,11 +44,8 @@ angular.module('faradayApp')
                 .then(function() {
                     return self.getVulns(ws);
                 })
-                .then(function() {
-                    deferred.resolve(self.vulns);
-                })
-                .catch(function (err) {
-                deferred.reject(err);
+                .catch(function(err) {
+                    deferred.reject(err);
                 });
 
             return deferred.promise;
@@ -84,24 +53,29 @@ angular.module('faradayApp')
 
         vulnsManager.getVulns = function(ws) {
             var deferred = $q.defer(),
-            self = this;
+            self = this,
+            vulns = [];
 
-            $http.get(BASEURL + ws)
-                .success(function(latest) {
-                    if(self.update_seq[ws] === undefined) self.update_seq[ws] = 0;
-                    if(latest.update_seq > self.update_seq[ws]) {
-                        self.update_seq[ws] = latest.update_seq;
-                        $http.get(BASEURL + ws + '/_design/vulns/_view/all')
-                            .success(function(data) {
-                                deferred.resolve(self._load(ws, data.rows));
-                            })
-                            .error(function() {
-                                deferred.reject();
-                            });
+            $http.get(BASEURL + ws + '/_design/vulns/_view/all')
+                .success(function(data) {
+                    for(var i = 0; i < data.rows.length; i++) {
+                        var vulnData = data.rows[i].value;
+                        try {
+                            if(vulnData.type == "Vulnerability") {
+                                var vuln = new Vuln(ws, vulnData);
+                                vulns.push(vuln);
+                            } else {
+                                var vuln = new WebVuln(ws, vulnData);
+                                vulns.push(vuln);
+                            }
+                        } catch(e) {
+                            console.log(e.stack);
+                        }
                     }
+                    deferred.resolve(vulns);
                 })
                 .error(function() {
-                    deferred.reject();
+                    deferred.reject("Unable to retrieve vulnerabilities from Couch");
                 });
 
             return deferred.promise;
@@ -111,15 +85,13 @@ angular.module('faradayApp')
             var deferred = $q.defer(),
             self = this;
 
-            vuln.update(data).then(function(resp) {
-                self.getVulns(ws).then(function(vulns) {
-                    deferred.resolve(vulns);
-                }, function() {
-                    deferred.reject();
+            vuln.update(data)
+                .then(function(resp) {
+                    return self.getVulns(ws);
+                })
+                .catch(function(err) {
+                    deferred.reject(err);
                 });
-            }, function() {
-                deferred.reject();
-            });
 
             return deferred.promise;
         };

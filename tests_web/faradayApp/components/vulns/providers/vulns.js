@@ -19,6 +19,7 @@ describe('vulnsManager', function() {
         $filter = $injector.get('$filter');
         $httpBackend = $injector.get('$httpBackend');
         $q = $injector.get('$q');
+        $rootScope = $injector.get('$rootScope');
         vulnsManager = _vulnsManager_;
         Vuln = _Vuln_;
         WebVuln = _WebVuln_;
@@ -60,25 +61,7 @@ describe('vulnsManager', function() {
     });
 
     describe('Basic usage', function() {
-        it('Initialization', function() {
-            expect(vulnsManager.vulns).toBeDefined();
-            expect(vulnsManager.vulns).toEqual([]);
-            expect(vulnsManager.update_seq).toBeDefined();
-            expect(vulnsManager.update_seq).toEqual({});
-        });
-
-        it('getVulns with unchanged DB', function() {
-            $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 0});
-
-            vulnsManager.getVulns("ws");
-
-            $httpBackend.flush();
-
-            expect(vulnsManager.vulns).toEqual([]);
-            expect(vulnsManager.update_seq["ws"]).toEqual(0);
-        });
-
-        it('getVulns with changed DB', function() {
+        it('getVulns', function() {
             var resp = {
                 "total_rows":1,
                 "offset":0,
@@ -91,16 +74,18 @@ describe('vulnsManager', function() {
                 ]
             };
 
-            $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 1});
+            var vulns;
+
             $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, resp);
 
-            vulnsManager.getVulns("ws");
+            vulnsManager.getVulns("ws").then(function(vs) {
+                vulns = vs;
+            });
 
             $httpBackend.flush();
 
-            expect(vulnsManager.vulns.length).toEqual(1);
-            expect(vulnsManager.vulns[0]._id).toEqual(vuln1._id);
-            expect(vulnsManager.update_seq["ws"]).toEqual(1);
+            expect(vulns.length).toEqual(1);
+            expect(vulns[0]._id).toEqual(vuln1._id);
         });
 
         it('createVuln', function() {
@@ -121,19 +106,20 @@ describe('vulnsManager', function() {
                 ]
             };
 
+            var vulns = [];
+
             // insert new vuln in Couch
             $httpBackend.expect('PUT', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
             // getVulns
-            $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 1});
             $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, resp);
 
-            vulnsManager.createVuln("ws", vuln);
+            var lala = vulnsManager.createVuln("ws", vuln);
 
             $httpBackend.flush();
+            $rootScope.$apply();
 
-            expect(vulnsManager.vulns.length).toEqual(1);
-            expect(vulnsManager.vulns[0]._id).toEqual(id);
-            expect(vulnsManager.update_seq["ws"]).toEqual(1);
+            expect(vulns.length).toEqual(1);
+            expect(vulns[0]._id).toEqual(id);
         });
 
         it('deleteVuln', function() {
@@ -163,7 +149,6 @@ describe('vulnsManager', function() {
             // insert new vuln in Couch
             $httpBackend.expect('PUT', BASEURL + "ws/" + id).respond(201, {"rev": vuln1._rev});
             // getVulns
-            $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 1});
             $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, respInsert);
 
             vulnsManager.createVuln("ws", vuln);
@@ -173,14 +158,12 @@ describe('vulnsManager', function() {
             // delete vuln
             $httpBackend.expect('DELETE', BASEURL + 'ws/' + id + "?rev=" + vuln1._rev).respond(200);
             // getVulns
-            $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 2});
             $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, respDelete);
             
             vulnsManager.deleteVuln("ws", vulnsManager.vulns[0]);
             $httpBackend.flush();
 
             expect(vulnsManager.vulns.length).toEqual(0);
-            expect(vulnsManager.update_seq["ws"]).toEqual(2);
         });
 
         it('updateVuln', function() {
@@ -245,7 +228,6 @@ describe('vulnsManager', function() {
             // insert new vuln in Couch
             $httpBackend.expect('PUT', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
             // getVulns
-            $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 1});
             $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, respInsert);
             // call to insert
             vulnsManager.createVuln("ws", vuln);
@@ -254,7 +236,6 @@ describe('vulnsManager', function() {
             // update vuln
             $httpBackend.expect('PUT', BASEURL + 'ws/' + id).respond(200, {"rev": "2345"});
             // getVulns
-            $httpBackend.expect('GET', BASEURL + 'ws').respond(200, {"update_seq": 2});
             $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, respUpdate);
             
             var vulns = vulnsManager.updateVuln(vuln.ws, vulnsManager.vulns[0], vulnMod);

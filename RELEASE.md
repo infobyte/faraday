@@ -10,6 +10,15 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+Jul 29, 2015:
+---
+
+* Added ENTER shortcut on modals
+* Added Unit Test of Workspaces
+* Added display the progress of the workspace
+* Fixed bugs on Workspaces component
+
+
 Jun 30, 2015:
 ---
 

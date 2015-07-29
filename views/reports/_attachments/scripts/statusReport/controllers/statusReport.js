@@ -479,7 +479,11 @@ angular.module('faradayApp')
                     clearSelection();
                 });
             }, function(message) {
-                showMessage('The vulnerability couldn\'t be created');
+                var msg = "The vulnerability couldn't be created";
+                if(message == "409") {
+                    msg += "because a vulnerability with the same parameters already exists in this Workspace";
+                }
+                showMessage(msg);
             });
             /*
             // this shouldnt be necessary, we should use Angular formatting options directly in the partial

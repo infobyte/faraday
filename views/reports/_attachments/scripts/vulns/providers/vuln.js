@@ -184,8 +184,9 @@ angular.module('faradayApp')
                         .success(function(data) {
                             self._rev = data.rev;
                             deferred.resolve(self);
-                        }, function() {
-                            deferred.reject();
+                        })
+                        .error(function(data, status, headers, config) {
+                            deferred.reject(status);
                         });
                 }, function() {
                     deferred.reject();

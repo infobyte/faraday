@@ -231,9 +231,11 @@ angular.module('faradayApp')
         // deletes the vulns in the array
         $scope.remove = function(aVulns) {
             aVulns.forEach(function(vuln){
-                vulnsManager.deleteVuln($scope.workspace, vuln).then(function(vulns){
-                    $scope.vulns = vulns;
-                    clearSelection();
+                vulnsManager.deleteVuln(vuln).then(function(){
+                    vulnsManager.getVulns($scope.workspace).then(function(vulns) {
+                        $scope.vulns = vulns;
+                        clearSelection();
+                    });
                 }, function(errorMsg){
                     // TODO: show errors somehow
                     console.log("Error deleting vuln " + vuln._id + ": " + errorMsg);
@@ -270,17 +272,6 @@ angular.module('faradayApp')
             }
         };
 
-        $scope.update = function(aVulns, data) {
-            aVulns.forEach(function(vuln) { 
-                vulnsManager.updateVuln($scope.workspace, vuln, data).then(function(vulns){
-                    $scope.vulns = vulns;
-                }, function(errorMsg){
-                    // TODO: show errors somehow
-                    console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
-                });
-            });
-        };
-
         // action triggered from EDIT button
         $scope.edit = function() {
             if ($scope.selectedVulns.length == 1) {
@@ -298,9 +289,11 @@ angular.module('faradayApp')
                     }
                 });
                 modal.result.then(function(data) {
-                    vulnsManager.updateVuln($scope.workspace, $scope.selectedVulns[0], data).then(function(vulns){
-                        $scope.vulns = vulns;
-                        clearSelection();
+                    vulnsManager.updateVuln($scope.selectedVulns[0], data).then(function(){
+                        vulnsManager.getVulns($scope.workspace).then(function(vulns) {
+                            $scope.vulns = vulns;
+                            clearSelection();
+                        });
                     }, function(errorMsg){
                         showMessage("Error updating vuln " + $scope.selectedVulns[0].name + " (" + $scope.selectedVulns[0]._id + "): " + errorMsg);
                     });
@@ -338,9 +331,11 @@ angular.module('faradayApp')
                         obj = opts.callback(vuln, data);
                     }
 
-                    vulnsManager.updateVuln($scope.workspace, vuln, obj).then(function(vulns){
-                        $scope.vulns = vulns;
-                        clearSelection();
+                    vulnsManager.updateVuln(vuln, obj).then(function(vulns){
+                        vulnsManager.getVulns($scope.workspace).then(function(vulns) {
+                            $scope.vulns = vulns;
+                            clearSelection();
+                        });
                     }, function(errorMsg){
                         // TODO: show errors somehow
                         console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
@@ -464,9 +459,11 @@ angular.module('faradayApp')
                     });
                     data.refs = references;                    
 
-                    vulnsManager.updateVuln($scope.workspace, vuln, data).then(function(vulns){
-                        $scope.vulns = vulns;
-                        clearSelection();
+                    vulnsManager.updateVuln(vuln, data).then(function(vulns){
+                        vulnsManager.getVulns($scope.workspace).then(function(vulns) {
+                            $scope.vulns = vulns;
+                            clearSelection();
+                        });
                     }, function(errorMsg){
                         // TODO: show errors somehow
                         console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
@@ -476,9 +473,11 @@ angular.module('faradayApp')
         }
 
         $scope.insert = function(vuln) {
-            vulnsManager.createVuln($scope.workspace, vuln).then(function(vulns) {
-                $scope.vulns = vulns;
-                clearSelection();
+            vulnsManager.createVuln($scope.workspace, vuln).then(function() {
+                vulnsManager.getVulns($scope.workspace).then(function(vulns) {
+                    $scope.vulns = vulns;
+                    clearSelection();
+                });
             }, function(message) {
                 showMessage('The vulnerability couldn\'t be created');
             });

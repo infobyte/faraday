@@ -29,10 +29,36 @@
                     <span class="glyphicon glyphicon-trash"></span> 
                     Delete
                 </button>
-                <button id="merge" type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()">
-                    <span class="glyphicon glyphicon-pencil"></span> 
-                    Edit
-                </button>
+                <div id="merge" class="btn-group btn-small-margin">
+                    <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()" ng-disabled="selectedVulns.length != 1">
+                        <span class="glyphicon glyphicon-pencil"></span> 
+                        Edit
+                    </button>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="selectedVulns.length < 2">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li><a class="ws" ng-click="editString('name')">Edit name</a></li>
+                        <li><a class="ws" ng-click="editText('desc', 'description')">Edit description</a></li>
+                        <li><a class="ws" ng-click="editText('data')">Edit data</a></li>
+                        <li><a class="ws" ng-click="editText('resolution')">Edit resolution</a></li>
+                        <li><a class="ws" ng-click="editSeverity()">Edit severity</a></li>
+                        <li><a class="ws" ng-click="editEaseofresolution()">Edit ease of resolution</a></li>
+                        <li><a class="ws" ng-click="editReferences()">Add references</a></li>
+                        <li><a class="ws" ng-click="editImpact()">Edit impact</a></li>
+                        <li ng-show="vulnWebSelected" role="separator" class="divider"></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('method')">Edit method</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('pname', 'param name')">Edit param name</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('params', 'parameters')">Edit parameters</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('path')">Edit path</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('query')">Edit query</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('website')">Edit website</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editText('request')">Edit request</a></li>
+                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editText('response')">Edit response</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a class="ws" ng-click="editCWE()">From CWE</a></li>
+                    </ul>
+                    </div>
                 <button id="new" type="button" class="btn btn-success" title="New Vulns" ng-click="new()">
                     <span class="glyphicon glyphicon-plus-sign"></span>
                     New
@@ -159,10 +185,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr ng-repeat="v in vulns | orderObjectBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
+                        <tr ng-repeat="v in filtered = (vulns | filter:expression) | orderObjectBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
                             selection-model selection-model-type="checkbox"
                             selection-model-mode="multiple-additive" 
-                            selection-model-selected-class="multi-selected">
+                            selection-model-selected-attribute="selected_statusreport_controller"
+                            selection-model-selected-class="multi-selected"
+                            selection-model-selected-items="selectedVulns"
+                            selection-model-on-change="selectionChange()">
                             <td><input type="checkbox" name="{{v.id}}"/></td>
                             <td ng-if="columns.date">{{v.date | date:'MM/dd/yyyy'}}</td>
                             <td ng-if="columns.target">{{v.target}}</td>
@@ -180,14 +209,14 @@
                             <td ng-if="columns.response" text-collapse text-collapse-max-length="100" text-collapse-text="{{v.response}}"></td>
                             <td ng-if="columns.resolution">{{v.resolution}}</td>
                             <td ng-if="columns.web">
-                                <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
-                                <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>
+                                <span class="glyphicon glyphicon-ok" ng-show="v.type === 'VulnerabilityWeb'"></span>
+                                <span class="glyphicon glyphicon-remove" ng-show="v.type !== 'VulnerabilityWeb'"></span>
                             </td>
                             <td ng-if="columns.website">{{v.website}}</td>
-                            <td ng-if="columns.refs"><p ng-repeat="refs in v.refs">{{refs}}</p></td>
+                            <td ng-if="columns.refs"><p ng-repeat="refs in v.refs track by $index">{{refs}}</p></td>
                             <td ng-if="columns.evidence">
-                                <div ng-repeat="e in v.attachments track by $index">
-                                    <a href="{{baseurl + workspace}}/{{ v.id}}/{{e}}" target="_blank">{{e}}</a>
+                                <div ng-repeat="(name, file) in v._attachments track by $index">
+                                    <a ng-href="{{baseurl + workspace}}/{{v._id}}/{{name | encodeURIComponent}}" target="_blank">{{name | decodeURIComponent}}</a>
                                 </div>
                             </td>
                             <td ng-if="columns.impact">
@@ -200,19 +229,19 @@
                         </tr>
                     </tbody>
                 </table><!-- #hosts -->
-                <div class="showPagination" ng-show="showPagination">
+                <div class="showPagination" ng-show="filtered.length > pageSize">
                     <div class="form-group">
                         <ul class="pagination">
-                            <li><a ng-hide="currentPage == 0" ng-click="currentPage=currentPage-1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
-                            <li><a>{{currentPage}}/{{numberOfPages()}}</a></li>
-                            <li><a ng-hide="currentPage >= numberOfPages()" ng-click="currentPage=currentPage+1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                            <li><a ng-hide="currentPage <= 0" ng-click="currentPage = currentPage - 1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                            <li><a>{{currentPage}}/{{ ((filtered.length / pageSize) | integer)}}</a></li>
+                            <li><a ng-hide="currentPage >= ((filtered.length / pageSize) | integer)" ng-click="currentPage = currentPage + 1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
                         </ul>
                         <form name="goToPage" id="goToPageStatus">
                             <div class="col-md-2">
-                                <input type="number" min="0" max="{{numberOfPages()}}" class="form-control" ng-model="go_page" placeholder="Go to page"/>
+                                <input type="number" min="0" max="{{ (filtered.length / pageSize) | integer }}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
                             </div>
                             <button class="btn btn-default" ng-click="go()">GO</button>
-                            <input type="number" min="0" class="form-control vuln_per_page" ng-model="pagination" placeholder="Numbre page" />
+                            <input type="number" min="0" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />
                         </form>
                     </div>
                 </div>

@@ -2,36 +2,36 @@
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
 
-<form name="formEdit" hotkey="{enter:ok}" novalidate>
+<form name="formEdit" hotkey="{enter:modal.ok}" novalidate>
     <div class="modal-header">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="ok()" ng-disabled="formEdit.$invalid">OK</button>
-            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="formEdit.$invalid">OK</button>
+            <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
-        <h3 class="modal-title">Bulk edit</h3>
+        <h3 class="modal-title">Vuln edit</h3>
     </div>
     <div class="modal-body">
-        <div ng-if="mixed">
-            <div class="alert alert-danger alert-dismissible" role="alert">
-                <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h5><strong>Hey!</strong> You have selected both vulnerabilities and web vulnerabilities. Please keep in mind that fields in red are specific for web vulnerabilities and these will not be added to regular vulnerabilities.</h5>
-            </div>
-        </div><!-- ng-if -->
-        <div ng-if="!web">
+        <div>
             <h5><small>
                 Please choose a severity, name, description and data
             </small></h5>
-        </div><!-- ng-if -->
+        </div>
         <div class="form-horizontal">
+            <div class="form-group">
+                <div class="col-md-12">
+                    <h5>CWE</h5>
+                    <input type="text" ng-model="modal.cwe_selected" class="form-control input-sm" placeholder="Search for CWE" typeahead="cwe as cwe.name for cwe in modal.cweList | filter:{name: $viewValue} | limitTo:10" typeahead-on-select="modal.populate($item, $model, $label)">
+                </div>
+            </div>
             <div class="form-group">
                 <div class="col-md-6">
                     <h5>Severity</h5>
-                    <select class="form-control" ng-model="severitySelection" ng-options="s as s for s in severities">
+                    <select class="form-control" ng-model="modal.data.severity" ng-options="s as s for s in modal.severities">
                     </select>
                 </div>
                 <div class="col-md-6">
                     <h5>Ease of Resolution</h5>
-                    <select class="form-control" ng-model="easeOfResolutionSelection" ng-options="e as e for e in easeofresolution">
+                    <select class="form-control" ng-model="modal.data.easeofresolution" ng-options="e as e for e in modal.easeofresolution">
                         <option value=""></option>
                     </select>
                 </div>
@@ -39,108 +39,111 @@
             <div class="form-group">
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-name">Vuln name</label>
-                    <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="name"/>
+                    <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="modal.data.name"/>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-desc">Vuln description</label>
-                    <textarea class="form-control" id="vuln-desc" placeholder="Description" value="{{p_desc}}" ng-model="desc"></textarea>
+                    <textarea class="form-control" id="vuln-desc" placeholder="Description" ng-model="modal.data.desc"></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-data">Vuln data</label>
-                    <textarea class="form-control" id="vuln-data" placeholder="Data" value="{{p_data}}"  ng-model="data"></textarea>
+                    <textarea class="form-control" id="vuln-data" placeholder="Data" ng-model="modal.data.data"></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
-                    <h4>References</h4>
-                    <span class="input-group-addon button-radius" ng-click="newReference($event)">Add Reference</span>
-                </div>
-                <div class="col-md-12 reference" ng-repeat="reference in refs">
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="vuln-refs">References</label>
-                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.key"/>
-                        <span class="input-group-addon" ng-click="refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="modal.new_ref"/>
+                        <span class="input-group-addon cursor" ng-click="modal.newReference()"><i class="fa fa-plus-circle"></i></span>
+                    </div>
+                </div>
+                <div class="col-md-12 reference" ng-repeat="reference in modal.data.refs">
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="vuln-refs">References</label>
+                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.value"/>
+                        <span class="input-group-addon cursor" ng-click="modal.data.refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                     </div>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-resolution">Vuln Resolution</label>
-                    <textarea class="form-control" id="vuln-resolution" placeholder="Resolution" ng-model="resolution"></textarea>
+                    <textarea class="form-control" id="vuln-resolution" placeholder="Resolution" ng-model="modal.data.resolution"></textarea>
                 </div>
             </div><!-- .form-group -->
-            <div ng-if="web">
+            <div ng-if="modal.vuln.type === 'VulnerabilityWeb'">
                 <div class="form-group">
-                    <div class="col-md-4 has-error">
+                    <div class="col-md-4">
                         <label class="sr-only control-label" for="vuln-method">Method</label>
-                        <input type="text" class="form-control input-error" id="vuln-method" value="{{p_method}}" placeholder="Method" ng-model="$parent.method"/>
+                        <input type="text" class="form-control input-error" id="vuln-method" placeholder="Method" ng-model="modal.data.method"/>
                     </div>
-                    <div class="col-md-3 has-error">
+                    <div class="col-md-3">
                         <label class="sr-only control-label" for="vuln-pname">Param Name</label>
-                        <input type="text" class="form-control input-error" id="vuln-pname" value="{{p_pname}}" placeholder="Param name" ng-model="$parent.pname"/>
+                        <input type="text" class="form-control input-error" id="vuln-pname" placeholder="Param name" ng-model="modal.data.pname"/>
                     </div>
-                    <div class="col-md-5 has-error">
+                    <div class="col-md-5">
                         <label class="sr-only control-label" for="vuln-params">Params</label>
-                        <input type="text" class="form-control input-error" id="vuln-params" value="{{p_params}}" placeholder="Params" ng-model="$parent.params"/>
+                        <input type="text" class="form-control input-error" id="vuln-params" placeholder="Params" ng-model="modal.data.params"/>
                     </div>
                 </div><!-- .form-group -->
                 <div class="form-group">
-                    <div class="col-md-4 has-error">
+                    <div class="col-md-4">
                         <label class="sr-only control-label" for="vuln-path">Path</label>
-                        <input type="text" class="form-control input-error" id="vuln-path" value="{{p_path}}" placeholder="Path" ng-model="$parent.path"/>
+                        <input type="text" class="form-control input-error" id="vuln-path" placeholder="Path" ng-model="modal.data.path"/>
                     </div>
-                    <div class="col-md-4 has-error">
+                    <div class="col-md-4">
                         <label class="sr-only control-label" for="vuln-query">Query</label>
-                        <input type="text" class="form-control input-error" id="vuln-query"  value="{{p_query}}"placeholder="Query" ng-model="$parent.query"/>
+                        <input type="text" class="form-control input-error" id="vuln-query" placeholder="Query" ng-model="modal.data.query"/>
                     </div>
-                    <div class="col-md-4 has-error">
+                    <div class="col-md-4">
                         <label class="sr-only control-label" for="vuln-website">Website</label>
-                        <input type="text" class="form-control input-error" id="vuln-website" value="{{p_website}}" placeholder="Website" ng-model="$parent.website"/>
+                        <input type="text" class="form-control input-error" id="vuln-website" placeholder="Website" ng-model="modal.data.website"/>
                     </div>
                 </div><!-- .form-group -->
                 <div class="form-group">
-                    <div class="col-md-12 has-error">
+                    <div class="col-md-12">
                         <label class="sr-only control-label" for="vuln-request">Request</label>
-                        <textarea class="form-control input-error" id="vuln-request" value="{{p_request}}" placeholder="Request" ng-model="$parent.request"></textarea>
+                        <textarea class="form-control input-error" id="vuln-request" placeholder="Request" ng-model="modal.data.request"></textarea>
                     </div>
                 </div><!-- .form-group -->
                 <div class="form-group">
-                    <div class="col-md-12 has-error">
+                    <div class="col-md-12">
                         <label class="sr-only control-label" for="vuln-response">Response</label>
-                        <textarea class="form-control input-error" id="vuln-response" value="{{p_response}}" placeholder="Response" ng-model="$parent.response"></textarea>
+                        <textarea class="form-control input-error" id="vuln-response" placeholder="Response" ng-model="modal.data.response"></textarea>
                     </div>
                 </div><!-- .form-group -->
             </div><!-- ng-if -->
         </div><!-- .form-horizontal -->
 
         <h4>Impact</h4>
-        <div ng-repeat="(key, value) in impact" class="normal-size" style="cursor: pointer;">
-            <h4><span ng-class="{'label label-default': !value, 'label label-success': value}" ng-click="toggleImpact(key)">{{key}}</span></h4>
+        <div ng-repeat="(key, value) in modal.data.impact" class="normal-size" style="cursor: pointer;">
+            <h4><span ng-class="{'label label-default': !value, 'label label-success': value}" ng-click="modal.toggleImpact(key)">{{key}}</span></h4>
         </div><!-- .normal-size -->
 
-        <div ng-if="vulnc == 1">
+        <div>
             <h4>Evidence</h4>
-            <div class="alert alert-danger normal-size" role="alert" ng-if="file_name_error">
+            <div class="alert alert-danger normal-size" role="alert" ng-if="modal.file_name_error">
               <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
               <span class="sr-only">Error:</span>
               Cannot upload evidence starting with underscore, please choose a different name for the file.
             </div>
             <div class="form-group normal-size">
-                <input type="file" id="evidence" ng-file-select ng-multiple="true" resetOnClick="false" ng-file-change="selectedFiles($files, $event)"/>
+                <input type="file" id="evidence" ng-file-select ng-multiple="true" resetOnClick="false" ng-file-change="modal.selectedFiles($files, $event)"/>
                 <p class="help-block">Multiple files are allowed.</p>
             </div><!-- .form-group -->
-            <div id="evidenceFiles" class="normal-size" ng-if="evidence">
+            <div id="evidenceFiles" class="normal-size" ng-if="modal.data._attachments">
                 <ul>
-                    <li ng-repeat="e in evidence | orderObjectBy:'name':true | orderBy:'name'">
+                    <li ng-repeat="(name, file) in modal.data._attachments">
                         <div class="btn-group">
                             <button type="button" class="btn btn-default">
-                                <span class="fa {{icons[e.name]}}" title="Evidence {{e.name}}"></span> {{e.name}}
+                                <span class="fa {{icons[name]}}" title="Evidence {{name | decodeURIComponent}}"></span> {{name | decodeURIComponent}}
                             </button><!-- ng-repeat -->
-                            <button type="button" class="btn btn-danger" ng-click="removeEvidence(e.name)">
+                            <button type="button" class="btn btn-danger" ng-click="modal.removeEvidence(name)">
                                 <span class="glyphicon glyphicon-trash"></span>
                             </button>
                         </div>
@@ -148,44 +151,10 @@
                 </ul>
             </div><!-- #evidenceFiles -->
         </div><!-- ng-if -->
-
-        <h5><small>
-            Vulnerabilities to update
-        </small></h5>
-        <table class="csv-export status-report">
-            <thead>
-                <tr>
-                    <th><a href="" ng-click="sortField = 'date'; reverse = !reverse">Date</a></th>
-                    <th><a href="" ng-click="sortField = 'web'; reverse = !reverse">Web</a></th>
-                    <th><a href="" ng-click="sortField = 'status'; reverse = !reverse">Status</a></th>
-                    <th><a href="" ng-click="sortField = 'severity'; reverse = !reverse">Severity</a></th>
-                    <th><a href="" ng-click="sortField = 'name'; reverse = !reverse">Name</a></th>
-                    <th><a href="" ng-click="sortField = 'target'; reverse = !reverse">Target</a></th>
-                    <th><a href="" ng-click="sortField = 'desc'; reverse = !reverse">Desc</a></th>
-                    <th><a href="">Copy</a></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr ng-repeat="v in vulns | filter:isChecked | orderBy:sortField:reverse">
-                    <td>{{v.date | date:'MM/dd/yyyy'}}</td>
-                    <td>
-                        <span class="glyphicon glyphicon-ok" ng-show="v.web"></span>
-                        <span class="glyphicon glyphicon-remove" ng-show="!v.web"></span>
-                    </td>
-                    <td>Vulnerable</td>
-                    <td>{{v.severity}}</td>
-                    <td>{{v.name}}</td>
-                    <td>{{v.target}}</td>
-                    <td text-collapse text-collapse-max-length="50" text-collapse-text="{{v.desc}}"></td>
-                    <td><i class="fa fa-copy copy-icon fa-lg" ng-click="pickVuln(v);call();"></i></td>
-                </tr>
-            </tbody>
-        </table><!-- #hosts -->
-    </div><!-- .modal-body -->
     <div class="modal-footer">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="ok()" ng-disabled="formEdit.$invalid">OK</button>
-            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="formEdit.$invalid">OK</button>
+            <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
     </div>
 </form>

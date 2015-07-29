@@ -1,0 +1,38 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<div class="modal-header" hotkey="{enter:ok}">
+    <h5>{{msg}}</h5>
+</div>
+<div class="modal-body">
+	<div class="row">
+		<div class="col-md-4">
+			<h2 class="ws-label"><span class="label label-default" title="All Impacts">All Impacts</span></h2>
+			<div class="ws-list">
+				<a class="ws-link" ng-repeat="(key, value) in options" style="height:35px">
+					<p class="label label-primary ws-name" style="cursor:default;">
+						<span class="glyphicon glyphicon-ok impact-ok cursor" ng-click="addImpact(key)"></span>{{key}}
+						<span class="glyphicon glyphicon-remove impact-del cursor" ng-click="delImpact(key)"></span>
+					</p>
+				</a>
+			</div><!-- .ws-list -->
+		</div>
+		<div class="col-md-4">
+			<h2 class="ws-label"><span class="label label-default" title="Will add">Will add</span></h2>
+		    <div ng-repeat="add in impact.add" class="normal-size" style="cursor: pointer;">
+		        <h4><span class="label label-success" ng-click="add_backImpact(add)">{{add}}</span></h4>
+		    </div><!-- .normal-size -->
+		</div>
+		<div class="col-md-4">
+			<h2 class="ws-label"><span class="label label-default" title="Will delete">Will delete</span></h2>
+		    <div ng-repeat="del in impact.del" class="normal-size" style="cursor: pointer;">
+		        <h4><span class="label label-danger" ng-click="del_backImpact(del)">{{del}}</span></h4>
+		    </div><!-- .normal-size -->
+		</div>
+	</div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+    <button class="btn btn-success" ng-click="ok()">OK</button>
+</div>

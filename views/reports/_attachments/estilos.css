@@ -710,6 +710,8 @@ text.host-name{font-size: 13px;font-weight:bold;}
     color: #ffffff;
     text-decoration: none;
 }
+    a.ws-link span.impact-ok{top: 2px;left: -4px;color: #5cb85c;}
+    a.ws-link span.impact-del{top: 3px;left: 2px;color: #d9534f;}
 a.ws-link:hover {    
     color: #ffffff;
     text-decoration: none;
@@ -734,7 +736,9 @@ div.showPagination .col-md-2, div.showPagination .btn.btn-default{float:right;}
 div.showPagination form#goToPageStatus{margin-top:-40px;}
 input.form-control.vuln_per_page{width: 10%;margin: auto}
 /* End */
-div.col-md-12.reference{margin-top: 5px;}
+.reference{margin-top: 5px;}
+div.form-group.editArray{margin-bottom: 0px}
+div.modal-footer.editArray{margin-top: 0px}
 input#vuln-refs{border-radius: 5px 0 0 5px}
 i.fa.fa-plus-circle{color: green;}
 i.fa.fa-minus-circle{color: red;cursor: pointer;}

@@ -5,43 +5,53 @@ function(doc) {
     if(doc.type == "Vulnerability" || doc.type == "VulnerabilityWeb"){
         var easeofresolution = "trivial",
         impact = {
-            "accountability": 0,
-            "availability": 0,
-            "confidentiality": 0,
-            "integrity": 0
+            "accountability": false,
+            "availability": false,
+            "confidentiality": false,
+            "integrity": false
         },
         resolution = "";
-        if(doc.easeofresolution != "undefined" && typeof(doc.easeofresolution) != "undefined") {
+        if(doc.easeofresolution !== undefined) {
             easeofresolution = doc.easeofresolution;
         }
-        if(doc.impact != "undefined" && typeof(doc.impact) != "undefined") {
+        if(doc.impact !== undefined) {
             impact = doc.impact;
         }
-        if(doc.resolution != "undefined" && typeof(doc.resolution) != "undefined") {
+        if(doc.resolution !== undefined) {
             resolution = doc.resolution;
         }
 
         var obj = {
-            "rev":              doc._rev,
-            "attachments":      doc._attachments,
+            "_id":              doc._id,
+            "_rev":             doc._rev,
+            "_attachments":     doc._attachments,
             "data":             doc.data,
-            "date":             doc.metadata.create_time, 
             "desc":             doc.desc, 
             "easeofresolution": easeofresolution,
             "impact":           impact,
-            "meta":             doc.metadata,
+            "metadata":         doc.metadata,
             "name":             doc.name, 
-            "oid":              doc.obj_id,
+            "obj_id":           doc.obj_id,
             "owned":            doc.owned,
             "owner":            doc.owner,
-            "path":             doc.path,
             "parent":           doc.parent, 
             "refs":             doc.refs,
             "resolution":       resolution,
             "severity":         doc.severity, 
-            "status":           doc.type,
-            "website":          doc.website
+            "type":             doc.type,
         };
+
+        if(doc.type == "VulnerabilityWeb") {
+            obj.method =       	doc.method;
+            obj.params =       	doc.params;
+            obj.path =         	doc.path;
+            obj.pname =        	doc.pname;
+            obj.query =        	doc.query;
+            obj.request =      	doc.request;
+            obj.response =     	doc.response;
+            obj.website =      	doc.website;
+        }
+
         emit(doc._id, obj);
     }
 }

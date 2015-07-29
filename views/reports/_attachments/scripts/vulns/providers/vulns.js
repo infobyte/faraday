@@ -19,7 +19,13 @@ angular.module('faradayApp')
                     var vuln = new WebVuln(ws, data);
                 }
 
-                return vuln.save();
+                vuln.save()
+                    .then(function(resp) {
+                        deferred.resolve(resp);
+                    })
+                    .catch(function(err) {
+                        deferred.reject(err);
+                    });
             } catch(e) {
                 console.log(e.stack);
                 deferred.reject(e.name + ": " + e.message);

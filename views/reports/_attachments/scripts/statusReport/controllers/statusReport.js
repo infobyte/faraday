@@ -230,16 +230,19 @@ angular.module('faradayApp')
 
         // deletes the vulns in the array
         $scope.remove = function(aVulns) {
-            aVulns.forEach(function(vuln){
-                vulnsManager.deleteVuln(vuln).then(function(){
-                    vulnsManager.getVulns($scope.workspace).then(function(vulns) {
-                        $scope.vulns = vulns;
-                        clearSelection();
+            aVulns.forEach(function(vuln) {
+                vulnsManager.deleteVuln(vuln)
+                    .then(function() {
+                        vulnsManager.getVulns($scope.workspace)
+                            .then(function(vulns) {
+                                $scope.vulns = vulns;
+                                clearSelection();
+                            });
+                    })
+                    .catch(function(errorMsg) {
+                        // TODO: show errors somehow
+                        console.log("Error deleting vuln " + vuln._id + ": " + errorMsg);
                     });
-                }, function(errorMsg){
-                    // TODO: show errors somehow
-                    console.log("Error deleting vuln " + vuln._id + ": " + errorMsg);
-                });
             });
         };
 

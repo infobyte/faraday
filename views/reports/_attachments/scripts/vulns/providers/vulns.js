@@ -8,8 +8,6 @@ angular.module('faradayApp')
         function(Vuln, WebVuln, BASEURL, $filter, $http, $q, attachmentsFact) {
         var vulnsManager = {};
 
-        // receives data from Couch, loads vulns property
-
         vulnsManager.createVuln = function(ws, data) {
             var deferred = $q.defer(),
             self = this;
@@ -21,13 +19,7 @@ angular.module('faradayApp')
                     var vuln = new WebVuln(ws, data);
                 }
 
-                vuln.save()
-                    .then(function() {
-                        return self.getVulns(ws);
-                    })
-                    .catch(function(err) {
-                        deferred.reject(err);
-                    });
+                return vuln.save();
             } catch(e) {
                 console.log(e.stack);
                 deferred.reject(e.name + ": " + e.message);
@@ -36,19 +28,8 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        vulnsManager.deleteVuln = function(ws, vuln) {
-            var self = this;
-            var deferred = $q.defer();
-
-            vuln.remove()
-                .then(function() {
-                    return self.getVulns(ws);
-                })
-                .catch(function(err) {
-                    deferred.reject(err);
-                });
-
-            return deferred.promise;
+        vulnsManager.deleteVuln = function(vuln) {
+            return vuln.remove();
         };
 
         vulnsManager.getVulns = function(ws) {
@@ -81,19 +62,8 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        vulnsManager.updateVuln = function(ws, vuln, data) {
-            var deferred = $q.defer(),
-            self = this;
-
-            vuln.update(data)
-                .then(function(resp) {
-                    return self.getVulns(ws);
-                })
-                .catch(function(err) {
-                    deferred.reject(err);
-                });
-
-            return deferred.promise;
+        vulnsManager.updateVuln = function(vuln, data) {
+            return vuln.update(data);
         };
 
         return vulnsManager;

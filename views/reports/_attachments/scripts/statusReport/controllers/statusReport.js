@@ -216,6 +216,18 @@ angular.module('faradayApp')
             return obj;
         };
 
+        showMessage = function(msg) {
+            var modal = $modal.open({
+                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    controller: 'commonsModalKoCtrl',
+                    resolve: {
+                        msg: function() {
+                            return msg;
+                        }
+                    }
+                });
+        }
+
         // deletes the vulns in the array
         $scope.remove = function(aVulns) {
             aVulns.forEach(function(vuln){
@@ -254,15 +266,7 @@ angular.module('faradayApp')
                     $scope.remove($scope.selectedVulns);
                 });
             } else {
-                var modal = $modal.open({
-                    templateUrl: 'scripts/commons/partials/modalKO.html',
-                    controller: 'commonsModalKoCtrl',
-                    resolve: {
-                        msg: function() {
-                            return 'No vulnerabilities were selected to delete';
-                        }
-                    }
-                });
+                showMessage('No vulnerabilities were selected to delete');
             }
         };
 
@@ -298,21 +302,12 @@ angular.module('faradayApp')
                         $scope.vulns = vulnsManager.vulns;
                         clearSelection();
                     }, function(errorMsg){
-                        // TODO: show errors somehow
-                        console.log("Error updating vuln " + $scope.selectedVulns[0].name + " (" + $scope.selectedVulns[0]._id + "): " + errorMsg);
+                        showMessage("Error updating vuln " + $scope.selectedVulns[0].name + " (" + $scope.selectedVulns[0]._id + "): " + errorMsg);
                     });
        
                 });
             } else {
-                var modal = $modal.open({
-                    templateUrl: 'scripts/commons/partials/modalKO.html',
-                    controller: 'commonsModalKoCtrl',
-                    resolve: {
-                        msg: function() {
-                            return 'A vulnierabilty must be selected in order to edit';
-                        }
-                    }
-                });
+                showMessage('A vulnierabilty must be selected in order to edit');
             }
         };
 
@@ -485,16 +480,7 @@ angular.module('faradayApp')
                 $scope.vulns = vulnsManager.vulns;
                 clearSelection();
             }, function(message) {
-                $modal.open(config = {
-                    templateUrl: 'scripts/commons/partials/modalKO.html',
-                    controller: 'commonsModalKoCtrl',
-                    size: 'sm',
-                    resolve: {
-                        msg: function() {
-                            return message;
-                        }
-                    }
-                });
+                showMessage('The vulnerability couldn\'t be created');
             });
             /*
             // this shouldnt be necessary, we should use Angular formatting options directly in the partial

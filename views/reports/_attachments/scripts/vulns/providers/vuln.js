@@ -5,7 +5,36 @@
 angular.module('faradayApp')
     .factory('Vuln', ['BASEURL', '$http', '$q', 'attachmentsFact', 'hostsManager', 
     function(BASEURL, $http, $q, attachmentsFact, hostsManager) {
-        Vuln = function(ws, data){
+        Vuln = function(ws, data) {
+            this.data = "";
+            this.date = "";
+            this.desc = "";
+            this.easeofresolution = "";
+            this.impact = {
+                accountability: false,
+                availability: false,
+                confidentiality: false,
+                integrity: false
+            };
+            this.metadata = {
+                update_time: "",
+                update_user: "",
+                update_action: 0,
+                creator: "",
+                create_time: "",
+                update_controller_action: "",
+                owner: ""
+            };
+            this.name = "";
+            this.owner = "";
+            this.owned = "";
+            this.parent = "";
+            this.refs = "";
+            this.resolution = "";
+            this.severity = "";
+            this.type = "Vulnerability";
+            this.ws = "";
+
             if(data) {
                 if(data.name === undefined || data.name === "") {
                     throw new Error("Unable to create Vuln without a name");
@@ -16,7 +45,7 @@ angular.module('faradayApp')
 
         Vuln.prototype = {
             public_properties: [
-                'name', 'desc', '_attachments', 'data', 'easeofresolution', 
+                '_attachments', 'name', 'desc', 'data', 'easeofresolution', 
                 'impact', 'owned', 'refs', 'resolution', 'severity'
             ],
             set: function(ws, data) {
@@ -116,7 +145,12 @@ angular.module('faradayApp')
                 var deferred = $q.defer(),
                 self = this,
                 url = BASEURL + vuln.ws + "/" + vuln._id;
-                 
+
+                var now = new Date(),
+                date = now.getTime();
+
+                vuln.metadata.update_time = date;
+
                 vuln.public_properties.forEach(function(prop) {
                     if(vuln.hasOwnProperty(prop) && data.hasOwnProperty(prop)) {
                         if(prop != "_attachments") vuln[prop] = data[prop];

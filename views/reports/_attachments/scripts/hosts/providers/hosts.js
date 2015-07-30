@@ -7,6 +7,7 @@ angular.module('faradayApp')
         var hostsManager = {};
 
         hostsManager._objects = {};
+        hostsManager._interfaces = {};
 
         hostsManager._get = function(id, data) {
             var host = this._objects[id];
@@ -147,16 +148,22 @@ angular.module('faradayApp')
 
         hostsManager.getInterfaces = function(ws, id) {
             var deferred = $q.defer(),
-            self = this,
-            url = BASEURL + '/' + ws + '/_design/interfaces/_view/interfaces?key=\"' + id + '\"';
+            self = this;
 
-            $http.get(url)
-                .success(function(interfaces) {
-                    deferred.resolve(interfaces.rows);
-                })
-                .error(function() {
-                    deferred.reject("Unable to retrieve Interfaces for Host " + id);
-                });
+            if(self._interfaces.hasOwnProperty(id)) {
+                deferred.resolve(self._interfaces[id]);
+            } else {
+                var url = BASEURL + '/' + ws + '/_design/interfaces/_view/interfaces?key=\"' + id + '\"';
+
+                $http.get(url)
+                    .success(function(interfaces) {
+                        self._interfaces[id] = interfaces.rows;
+                        deferred.resolve(interfaces.rows);
+                    })
+                    .error(function() {
+                        deferred.reject("Unable to retrieve Interfaces for Host " + id);
+                    });
+            }
 
             return deferred.promise;
         };

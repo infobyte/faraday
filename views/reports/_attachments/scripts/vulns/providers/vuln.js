@@ -6,10 +6,17 @@ angular.module('faradayApp')
     .factory('Vuln', ['BASEURL', '$http', '$q', 'attachmentsFact', 'hostsManager', 
     function(BASEURL, $http, $q, attachmentsFact, hostsManager) {
         Vuln = function(ws, data) {
+            var now = new Date(),
+            date = now.getTime();
+
+            this._id = "";
+            this._rev = "";
+            this._attachments = {};
             this.data = "";
-            this.date = "";
+            this.date = date;
             this.desc = "";
             this.easeofresolution = "";
+            this.hostnames = "";
             this.impact = {
                 accountability: false,
                 availability: false,
@@ -17,21 +24,23 @@ angular.module('faradayApp')
                 integrity: false
             };
             this.metadata = {
-                update_time: "",
+                update_time: date,
                 update_user: "",
                 update_action: 0,
-                creator: "",
-                create_time: "",
-                update_controller_action: "",
+                creator: "UI Web",
+                create_time: date,
+                update_controller_action: "UI Web New",
                 owner: ""
             };
             this.name = "";
+            this.obj_id = "";
             this.owner = "";
             this.owned = "";
             this.parent = "";
             this.refs = "";
             this.resolution = "";
             this.severity = "";
+            this.target = "";
             this.type = "Vulnerability";
             this.ws = "";
 
@@ -49,42 +58,18 @@ angular.module('faradayApp')
                 'impact', 'owned', 'refs', 'resolution', 'severity'
             ],
             set: function(ws, data) {
-                var impact = {
-                    accountability: false,
-                    availability: false,
-                    confidentiality: false,
-                    integrity: false
-                },
-                metadata = {},
-                now = new Date(),
-                date = now.getTime();
-
                 // new vuln
                 if(data._id === undefined) {
                     var id = CryptoJS.SHA1(data.name + "." + data.desc).toString();
-
                     this._id = data.parent + "." + id;
                     this.obj_id = id;
-
-                    metadata.update_time = date;
-                    metadata.update_user = "";
-                    metadata.update_action = 0;
-                    metadata.creator = "UI Web";
-                    metadata.create_time = date;
-                    metadata.update_controller_action = "UI Web New";
-                    metadata.owner = "";
                 } else {
                     this._id = data._id;
                     this.obj_id = data._id;
                     if(data._rev !== undefined) this._rev = data._rev;
-
-                    if(this.metadata !== undefined) metadata = this.metadata; 
+                    if(data.metadata !== undefined) this.metadata = data.metadata; 
                 }
 
-                this.date = date;
-                this.metadata = metadata;
-                this.owner = "";
-                this.type = "Vulnerability";
                 this.ws = ws;
 
                 // user-generated content
@@ -95,7 +80,6 @@ angular.module('faradayApp')
                 if(data.desc !== undefined) this.desc = data.desc;
                 if(data.easeofresolution !== undefined) this.easeofresolution = data.easeofresolution;
                 if(data.impact !== undefined) {
-                    this.impact = data.impact;
                     for(var prop in data.impact) {
                         if(data.impact.hasOwnProperty(prop)) {
                             this.impact[prop] = data.impact[prop];
@@ -107,11 +91,7 @@ angular.module('faradayApp')
                 if(data.parent !== undefined) {
                     var self = this,
                     parts = data.parent.split(".");
-
                     self.parent = data.parent;
-                    self.target = "";
-                    self.hostnames = "";
-
                     hostsManager.getHost(parts[0], self.ws)
                         .then(function(host) {
                             self.target = host.name;
@@ -119,7 +99,6 @@ angular.module('faradayApp')
                         .catch(function() {
                             console.log("Unable to load vuln's Host parent");
                         });
-                    
                     hostsManager.getInterfaces(self.ws, parts[0])
                         .then(function(interfaces) {
                             var hostnames = [];

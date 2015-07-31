@@ -23,7 +23,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="vuln in vulns | orderObjectBy:vulnSortField:vulnSortReverse">
+                <tr ng-repeat="vuln in vulns | orderObjectBy:vulnSortField:vulnSortReverse | limitTo:5">
                     <td>{{vuln.date | date:"MM/dd/yyyy 'at' h:mma"}}</td>
                     <td>{{vuln.target}}</td>
                     <td>{{vuln.severity}}</td>

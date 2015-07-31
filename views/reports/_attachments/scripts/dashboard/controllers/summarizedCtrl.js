@@ -181,7 +181,6 @@ angular.module('faradayApp')
                     $scope.vulns.sort(function(a,b){
                         return b.metadata.create_time - a.metadata.create_time;
                     });
-                    $scope.vulns = $scope.vulns.splice(0,5);
                 });
             }
 

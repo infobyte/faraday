@@ -13,7 +13,6 @@ angular.module('faradayApp')
             this._rev = "";
             this._attachments = {};
             this.data = "";
-            this.date = date;
             this.desc = "";
             this.easeofresolution = "";
             this.hostnames = "";

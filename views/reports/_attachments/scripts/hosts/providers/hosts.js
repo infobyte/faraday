@@ -145,6 +145,29 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        hostsManager.getAllInterfaces = function(ws) {
+            var deferred = $q.defer(),
+            self = this;
+
+            var url = BASEURL + '/' + ws + '/_design/interfaces/_view/interfaces';
+
+            $http.get(url)
+                .success(function(ints) {
+                    var interfaces = [];
+
+                    ints.rows.forEach(function(interf) {
+                        interfaces.push(interf.value);
+                    });
+
+                    deferred.resolve(interfaces);
+                })
+                .error(function() {
+                    deferred.reject("Unable to retrieve Interfaces");
+                });
+
+            return deferred.promise;
+        };
+
         hostsManager.getInterfaces = function(ws, id) {
             var deferred = $q.defer(),
             self = this;

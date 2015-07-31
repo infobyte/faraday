@@ -4,9 +4,27 @@
 
 angular.module('faradayApp')
     .factory('vulnsManager', 
-        ['Vuln', 'WebVuln', 'BASEURL', '$filter', '$http', '$q', 'attachmentsFact', 
-        function(Vuln, WebVuln, BASEURL, $filter, $http, $q, attachmentsFact) {
+        ['Vuln', 'WebVuln', 'BASEURL', '$filter', '$http', '$q', 'attachmentsFact', 'hostsManager', 
+        function(Vuln, WebVuln, BASEURL, $filter, $http, $q, attachmentsFact, hostsManager) {
         var vulnsManager = {};
+
+        vulnsManager._loadHosts = function(hosts, interfaces) {
+            var res = {};
+
+            interfaces.forEach(function(interf) {
+                var host = interf.parent;
+                if(!res.hasOwnProperty(host)) res[host] = {};
+                if(!res[host].hasOwnProperty("hostnames")) res[host]["hostnames"] = [];
+                res[host]["hostnames"] = res[host]["hostnames"].concat(interf.hostnames);
+            });
+
+            hosts.forEach(function(host) {
+                if(!res.hasOwnProperty(host._id)) res[host._id] = {};
+                res[host._id]["target"] = host.name;
+            });
+
+            return res;
+        };
 
         vulnsManager.createVuln = function(ws, data) {
             var deferred = $q.defer(),
@@ -59,6 +77,20 @@ angular.module('faradayApp')
                             console.log(e.stack);
                         }
                     }
+
+                    var parents = [hostsManager.getHosts(ws), hostsManager.getAllInterfaces(ws)];
+
+                    $q.all(parents)
+                        .then(function(ps) {
+                            var hosts = self._loadHosts(ps[0], ps[1]);
+
+                            vulns.forEach(function(vuln) {
+                                var pid = vuln.parent.split(".")[0];
+                                vuln.target = hosts[pid]["target"];
+                                vuln.hostnames = hosts[pid]["hostnames"];
+                            });
+                        });
+
                     deferred.resolve(vulns);
                 })
                 .error(function() {

@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('Vuln', ['BASEURL', '$http', '$q', 'attachmentsFact', 'hostsManager', 
-    function(BASEURL, $http, $q, attachmentsFact, hostsManager) {
+    .factory('Vuln', ['BASEURL', '$http', '$q', 'attachmentsFact', 
+    function(BASEURL, $http, $q, attachmentsFact) {
         Vuln = function(ws, data) {
             var now = new Date(),
             date = now.getTime();
@@ -88,31 +88,6 @@ angular.module('faradayApp')
                 if(data.name !== undefined && data.name !== "") this.name = data.name;
                 if(data.owned !== undefined) this.owned = data.owned;
                 if(data.parent !== undefined) this.parent = data.parent; 
-                /*
-                if(data.parent !== undefined) {
-                    var self = this,
-                    parts = data.parent.split(".");
-                    self.parent = data.parent;
-                    hostsManager.getHost(parts[0], self.ws)
-                        .then(function(host) {
-                            self.target = host.name;
-                        })
-                        .catch(function() {
-                            console.log("Unable to load vuln's Host parent");
-                        });
-                    hostsManager.getInterfaces(self.ws, parts[0])
-                        .then(function(interfaces) {
-                            var hostnames = [];
-                            interfaces.forEach(function(interf) {
-                                hostnames = hostnames.concat(interf.value.hostnames);
-                            });
-                            self.hostnames = hostnames;
-                        })
-                        .catch(function() {
-                            console.log("Unable to load vuln's Interface parents");
-                        });
-                }
-                */
                 if(data.refs !== undefined) this.refs = data.refs;
                 if(data.resolution !== undefined) this.resolution = data.resolution;
                 if(data.severity !== undefined) this.severity = data.severity;

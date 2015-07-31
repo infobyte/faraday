@@ -225,7 +225,7 @@
                                 </div>
                             </td>
                             <td ng-if="columns.easeofresolution">{{v.easeofresolution}}</td>
-                            <td ng-if="columns.hostnames"><p ng-repeat="hostname in v.hostnames">{{hostname}}</p></td>
+                            <td ng-if="columns.hostnames"><p ng-repeat="hostname in v.hostnames track by $index">{{hostname}}</p></td>
                         </tr>
                     </tbody>
                 </table><!-- #hosts -->

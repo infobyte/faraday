@@ -27,7 +27,7 @@
                     <td>{{vuln.date | date:"MM/dd/yyyy 'at' h:mma"}}</td>
                     <td>{{vuln.target}}</td>
                     <td>{{vuln.severity}}</td>
-                    <td>{{vuln.name}}</td>
+                    <td class="wrapword">{{vuln.name}}</td>
                     <td>
                         <span class="glyphicon glyphicon-ok" ng-show="vuln.web"></span>
                         <span class="glyphicon glyphicon-remove" ng-show="!vuln.web"></span>

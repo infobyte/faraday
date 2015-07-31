@@ -899,3 +899,13 @@ aside .alert.alert-danger.alert-dismissible{
 .col-lg-left{width: 46%!important;margin-top: -30px;}
 .col-lg-right{width: 53%!important;padding-left: 0px!important;}
 .no-margin-bottom{margin-bottom: 0px!important;}
+.wrapword{
+    white-space: -moz-pre-wrap !important;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    white-space: pre-wrap;       /* css-3 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+    white-space: -webkit-pre-wrap; /* Newer versions of Chrome/Safari*/
+    word-break: break-all;
+    white-space: normal;
+}

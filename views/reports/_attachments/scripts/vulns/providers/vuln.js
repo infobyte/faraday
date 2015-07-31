@@ -87,6 +87,8 @@ angular.module('faradayApp')
                 }
                 if(data.name !== undefined && data.name !== "") this.name = data.name;
                 if(data.owned !== undefined) this.owned = data.owned;
+                if(data.parent !== undefined) this.parent = data.parent; 
+                /*
                 if(data.parent !== undefined) {
                     var self = this,
                     parts = data.parent.split(".");
@@ -110,6 +112,7 @@ angular.module('faradayApp')
                             console.log("Unable to load vuln's Interface parents");
                         });
                 }
+                */
                 if(data.refs !== undefined) this.refs = data.refs;
                 if(data.resolution !== undefined) this.resolution = data.resolution;
                 if(data.severity !== undefined) this.severity = data.severity;

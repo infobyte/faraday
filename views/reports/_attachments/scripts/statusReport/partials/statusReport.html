@@ -95,8 +95,8 @@
                         <tr>
                             <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
                             <th ng-if="columns.date">
-                                <a href="" ng-click="toggleSort('date')">Date</a>
-                                <a href="" ng-click="toggleShow('date', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                                <a href="" ng-click="toggleSort('metadata.create_time')">Date</a>
+                                <a href="" ng-click="toggleShow('metadata.create_time', true)"><span class="glyphicon glyphicon-remove"></span></a>
                             </th>
                             <th ng-if="columns.target">
                                 <a href="" ng-click="toggleSort('target')">Target</a>
@@ -193,7 +193,7 @@
                             selection-model-selected-items="selectedVulns"
                             selection-model-on-change="selectionChange()">
                             <td><input type="checkbox" name="{{v.id}}"/></td>
-                            <td ng-if="columns.date">{{v.date | date:'MM/dd/yyyy'}}</td>
+                            <td ng-if="columns.date">{{v.metadata.create_time | date:'MM/dd/yyyy'}}</td>
                             <td ng-if="columns.target">{{v.target}}</td>
                             <td ng-if="columns.status">Vulnerable</td>
                             <td ng-if="columns.severity"><span class="label vuln fondo-{{v.severity}}">{{v.severity}}</span></td>

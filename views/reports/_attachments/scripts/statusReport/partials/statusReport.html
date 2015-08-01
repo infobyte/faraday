@@ -30,11 +30,11 @@
                     Delete
                 </button>
                 <div id="merge" class="btn-group btn-small-margin">
-                    <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()" ng-disabled="selectedVulns.length != 1">
+                    <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()" ng-disabled="selectedVulns().length != 1">
                         <span class="glyphicon glyphicon-pencil"></span> 
                         Edit
                     </button>
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="selectedVulns.length < 2">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="selectedVulns().length < 2">
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
@@ -190,7 +190,6 @@
                             selection-model-mode="multiple-additive" 
                             selection-model-selected-attribute="selected_statusreport_controller"
                             selection-model-selected-class="multi-selected"
-                            selection-model-selected-items="selectedVulns"
                             selection-model-on-change="selectionChange()">
                             <td><input type="checkbox" name="{{v.id}}"/></td>
                             <td ng-if="columns.date">{{v.metadata.create_time | date:'MM/dd/yyyy'}}</td>
@@ -229,7 +228,7 @@
                         </tr>
                     </tbody>
                 </table><!-- #hosts -->
-                <div class="showPagination" ng-show="filtered.length > pageSize">
+                <div class="showPagination">
                     <div class="form-group">
                         <ul class="pagination">
                             <li><a ng-hide="currentPage <= 0" ng-click="currentPage = currentPage - 1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>

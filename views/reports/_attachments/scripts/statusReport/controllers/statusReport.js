@@ -29,7 +29,6 @@ angular.module('faradayApp')
         $scope.pageSize;
         $scope.newPageSize;
 
-        $scope.selectedVulns;
         $scope.vulnWebSelected;
 
         init = function() {
@@ -106,9 +105,20 @@ angular.module('faradayApp')
                 "web":              false,
                 "website":          false
             };
-
-            clearSelection();
+            
+            $scope.vulnWebSelected = false;
         };
+
+        $scope.selectedVulns = function() {
+            selected = [];
+            $scope.vulns.forEach(function(vuln) {
+                if (vuln.selected_statusreport_controller) {
+                    selected.push(vuln);
+                }
+            });
+            return selected;
+        }
+
 
         // returns scope vulns as CSV obj
         // toggles column sort field
@@ -232,13 +242,7 @@ angular.module('faradayApp')
         $scope.remove = function(aVulns) {
             aVulns.forEach(function(vuln) {
                 vulnsManager.deleteVuln(vuln)
-                    .then(function() {
-                        vulnsManager.getVulns($scope.workspace)
-                            .then(function(vulns) {
-                                $scope.vulns = vulns;
-                                clearSelection();
-                            });
-                    })
+                    .then(function() {})
                     .catch(function(errorMsg) {
                         // TODO: show errors somehow
                         console.log("Error deleting vuln " + vuln._id + ": " + errorMsg);
@@ -248,7 +252,7 @@ angular.module('faradayApp')
 
         // action triggered from DELETE button
         $scope.delete = function() {
-            if($scope.selectedVulns.length > 0) {
+            if($scope.selectedVulns().length > 0) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/commons/partials/modalDelete.html',
                     controller: 'commonsModalDelete',
@@ -256,10 +260,10 @@ angular.module('faradayApp')
                     resolve: {
                         msg: function() {
                             var msg = "";
-                            if($scope.selectedVulns.length == 1) {
+                            if($scope.selectedVulns().length == 1) {
                                 msg = "A vulnerability will be deleted.";
                             } else {
-                                msg = $scope.selectedVulns.length + " vulnerabilities will be deleted.";
+                                msg = $scope.selectedVulns().length + " vulnerabilities will be deleted.";
                             }
                             msg += " This action cannot be undone. Are you sure you want to proceed?";
                             return msg;
@@ -268,7 +272,7 @@ angular.module('faradayApp')
                 });
 
                 modal.result.then(function() {
-                    $scope.remove($scope.selectedVulns);
+                    $scope.remove($scope.selectedVulns());
                 });
             } else {
                 showMessage('No vulnerabilities were selected to delete');
@@ -277,7 +281,7 @@ angular.module('faradayApp')
 
         // action triggered from EDIT button
         $scope.edit = function() {
-            if ($scope.selectedVulns.length == 1) {
+            if ($scope.selectedVulns().length == 1) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/statusReport/partials/modalEdit.html',
                     controller: 'modalEditCtrl as modal',
@@ -287,18 +291,14 @@ angular.module('faradayApp')
                             return $scope.severities;
                         },
                         vuln: function() {
-                            return $scope.selectedVulns[0];
+                            return $scope.selectedVulns()[0];
                         }
                     }
                 });
                 modal.result.then(function(data) {
-                    vulnsManager.updateVuln($scope.selectedVulns[0], data).then(function(){
-                        vulnsManager.getVulns($scope.workspace).then(function(vulns) {
-                            $scope.vulns = vulns;
-                            clearSelection();
-                        });
+                    vulnsManager.updateVuln($scope.selectedVulns()[0], data).then(function(){
                     }, function(errorMsg){
-                        showMessage("Error updating vuln " + $scope.selectedVulns[0].name + " (" + $scope.selectedVulns[0]._id + "): " + errorMsg);
+                        showMessage("Error updating vuln " + $scope.selectedVulns()[0].name + " (" + $scope.selectedVulns()[0]._id + "): " + errorMsg);
                     });
        
                 });
@@ -326,7 +326,7 @@ angular.module('faradayApp')
                 resolve: resolve
             });
             modal.result.then(function(data) {
-                $scope.selectedVulns.forEach(function(vuln) {
+                $scope.selectedVulns().forEach(function(vuln) {
                     obj = {};
                     obj[property] = data;
 
@@ -335,10 +335,6 @@ angular.module('faradayApp')
                     }
 
                     vulnsManager.updateVuln(vuln, obj).then(function(vulns){
-                        vulnsManager.getVulns($scope.workspace).then(function(vulns) {
-                            $scope.vulns = vulns;
-                            clearSelection();
-                        });
                     }, function(errorMsg){
                         // TODO: show errors somehow
                         console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
@@ -453,7 +449,7 @@ angular.module('faradayApp')
                 }
             });
             modal.result.then(function(data) {
-                $scope.selectedVulns.forEach(function(vuln) {
+                $scope.selectedVulns().forEach(function(vuln) {
                     var references = vuln.refs.concat([]);
                     data.refs.forEach(function(ref) {
                         if(vuln.refs.indexOf(ref) == -1){
@@ -463,10 +459,6 @@ angular.module('faradayApp')
                     data.refs = references;                    
 
                     vulnsManager.updateVuln(vuln, data).then(function(vulns){
-                        vulnsManager.getVulns($scope.workspace).then(function(vulns) {
-                            $scope.vulns = vulns;
-                            clearSelection();
-                        });
                     }, function(errorMsg){
                         // TODO: show errors somehow
                         console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
@@ -477,10 +469,6 @@ angular.module('faradayApp')
 
         $scope.insert = function(vuln) {
             vulnsManager.createVuln($scope.workspace, vuln).then(function() {
-                vulnsManager.getVulns($scope.workspace).then(function(vulns) {
-                    $scope.vulns = vulns;
-                    clearSelection();
-                });
             }, function(message) {
                 var msg = "The vulnerability couldn't be created";
                 if(message == "409") {
@@ -537,7 +525,7 @@ angular.module('faradayApp')
             $cookies.pageSize = $scope.pageSize;
             $scope.currentPage = 0;
             if($scope.newCurrentPage <= parseInt($scope.vulns.length/$scope.pageSize)
-                    && $scope.newCurrentPage > -1) {
+                    && $scope.newCurrentPage > -1 && !isNaN(parseInt($scope.newCurrentPage))) {
                 $scope.currentPage = $scope.newCurrentPage;
             }
         };
@@ -648,14 +636,9 @@ angular.module('faradayApp')
         };
 
         $scope.selectionChange = function() {
-            $scope.vulnWebSelected = $scope.selectedVulns.some(function(v) {
+            $scope.vulnWebSelected = $scope.selectedVulns().some(function(v) {
                 return v.type === "VulnerabilityWeb"
             });
-        };
-
-        clearSelection = function() {
-            $scope.selectedVulns = [];
-            $scope.vulnWebSelected = false;
         };
 
         init();

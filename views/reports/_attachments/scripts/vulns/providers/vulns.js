@@ -7,6 +7,9 @@ angular.module('faradayApp')
         ['Vuln', 'WebVuln', 'BASEURL', '$filter', '$http', '$q', 'attachmentsFact', 'hostsManager', 
         function(Vuln, WebVuln, BASEURL, $filter, $http, $q, attachmentsFact, hostsManager) {
         var vulnsManager = {};
+        
+        vulnsManager.vulns = [];
+        vulnsManager.vulns_indexes = {};
 
         vulnsManager._loadHosts = function(hosts, interfaces) {
             var res = {};
@@ -39,6 +42,8 @@ angular.module('faradayApp')
 
                 vuln.save()
                     .then(function(resp) {
+                        self.vulns_indexes[vuln._id] = self.vulns.length;
+                        self.vulns.push(vuln);
                         deferred.resolve(resp);
                     })
                     .catch(function(err) {
@@ -51,28 +56,43 @@ angular.module('faradayApp')
 
             return deferred.promise;
         };
-
+        
         vulnsManager.deleteVuln = function(vuln) {
-            return vuln.remove();
+            var deferred = $q.defer();
+            self = this;
+            vuln.remove().then(function(){
+                var index = self.vulns_indexes[vuln._id];
+                for (var i = index + 1; i < self.vulns.length; i++) {
+                    self.vulns_indexes[self.vulns[i]._id] = self.vulns_indexes[self.vulns[i]._id] - 1;
+                }
+                self.vulns.splice(self.vulns_indexes[vuln._id], 1);
+                delete self.vulns_indexes[vuln._id];
+                deferred.resolve();
+            }, function(err){
+                deferred.reject(err);
+            });
+
+            return deferred.promise
         };
 
         vulnsManager.getVulns = function(ws) {
             var deferred = $q.defer(),
-            self = this,
-            vulns = [];
+            self = this;
 
             $http.get(BASEURL + ws + '/_design/vulns/_view/all')
                 .success(function(data) {
+                    self.vulns = [];
+                    self.vulns_indexes = {};
                     for(var i = 0; i < data.rows.length; i++) {
                         var vulnData = data.rows[i].value;
                         try {
                             if(vulnData.type == "Vulnerability") {
                                 var vuln = new Vuln(ws, vulnData);
-                                vulns.push(vuln);
                             } else {
                                 var vuln = new WebVuln(ws, vulnData);
-                                vulns.push(vuln);
                             }
+                            self.vulns_indexes[vuln._id] = self.vulns.length;
+                            self.vulns.push(vuln);
                         } catch(e) {
                             console.log(e.stack);
                         }
@@ -84,14 +104,14 @@ angular.module('faradayApp')
                         .then(function(ps) {
                             var hosts = self._loadHosts(ps[0], ps[1]);
 
-                            vulns.forEach(function(vuln) {
+                            self.vulns.forEach(function(vuln) {
                                 var pid = vuln.parent.split(".")[0];
                                 vuln.target = hosts[pid]["target"];
                                 vuln.hostnames = hosts[pid]["hostnames"];
                             });
                         });
 
-                    deferred.resolve(vulns);
+                    deferred.resolve(self.vulns);
                 })
                 .error(function() {
                     deferred.reject("Unable to retrieve vulnerabilities from Couch");
@@ -101,7 +121,14 @@ angular.module('faradayApp')
         };
 
         vulnsManager.updateVuln = function(vuln, data) {
-            return vuln.update(data);
+            var deferred = $q.defer();
+            self = this;
+            vuln.update(data).then(function(){
+                self.vulns[self.vulns_indexes[vuln._id]] = vuln;
+            }, function(err){
+                deferred.reject(err);
+            });
+            return deferred.promise
         };
 
         return vulnsManager;

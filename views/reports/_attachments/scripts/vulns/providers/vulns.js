@@ -44,7 +44,20 @@ angular.module('faradayApp')
                     .then(function(resp) {
                         self.vulns_indexes[vuln._id] = self.vulns.length;
                         self.vulns.push(vuln);
-                        deferred.resolve(resp);
+                        var parents = [hostsManager.getHosts(ws), hostsManager.getAllInterfaces(ws)];
+
+                        $q.all(parents)
+                            .then(function(ps) {
+                                var hosts = self._loadHosts(ps[0], ps[1]);
+
+                                self.vulns.forEach(function(vuln) {
+                                    var pid = vuln.parent.split(".")[0];
+                                    vuln.target = hosts[pid]["target"];
+                                    vuln.hostnames = hosts[pid]["hostnames"];
+                                });
+                            });
+
+                        deferred.resolve(self.resp);
                     })
                     .catch(function(err) {
                         deferred.reject(err);

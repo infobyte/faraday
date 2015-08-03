@@ -52,6 +52,8 @@ angular.module('faradayApp')
         servicesManager.getServices = function(ws) {
             var deferred = $q.defer();
             var self = this;
+            this._objects = {};
+
             $http.get(BASEURL + '/' + ws + '/_design/services/_view/services')
                 .success(function(servicesArray){
                     var services = [];

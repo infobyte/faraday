@@ -94,7 +94,7 @@ angular.module('faradayApp')
 
             $http.get(BASEURL + ws + '/_design/vulns/_view/all')
                 .success(function(data) {
-                    self.vulns = [];
+                    self.vulns.splice(0, self.vulns.length);
                     self.vulns_indexes = {};
                     for(var i = 0; i < data.rows.length; i++) {
                         var vulnData = data.rows[i].value;

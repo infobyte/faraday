@@ -9,9 +9,8 @@ Please run ./faraday.py --update
 
 New features in the latest update
 =====================================
-* Added installation support Debian 8.1
 
-Jul 29, 2015:
+TBA, 2015:
 ---
 
 * Added CWE database and integration with vulns creation

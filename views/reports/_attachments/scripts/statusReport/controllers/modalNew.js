@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('modalNewVulnCtrl',
-        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'hostsManager','servicesManager', 'cweFact',
-        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commons, severities, workspace, hostsManager, servicesManager, cweFact) {
+        ['$modalInstance', '$filter', '$upload', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'workspace', 'targetFact', 'cweFact',
+        function($modalInstance, $filter, $upload, EASEOFRESOLUTION, commons, severities, workspace, targetFact, cweFact) {
 
         var vm = this;
 
@@ -84,20 +84,8 @@ angular.module('faradayApp')
             vm.targets = [];
             vm.target_filter = "";
 
-            hostsManager.getHosts(workspace).then(function(hosts){
-                hosts.forEach(function(host){
-                    host.hostnames = [];
-                    host.services = [];
-                    hostsManager.getInterfaces(workspace, host._id).then(function(interfaces){
-                        interfaces.forEach(function(interface){
-                            host.hostnames = host.hostnames.concat(interface.value.hostnames);
-                        });
-                        servicesManager.getServicesByHost(workspace, host._id).then(function(services) {
-                            host.services = services;
-                            vm.targets.push(host);
-                        });
-                    });
-                });
+            targetFact.getTargets(workspace).then(function(targets){
+                vm.targets = targets;
             });
         };
 

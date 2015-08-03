@@ -3,31 +3,41 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('targetFact', ['BASEURL', '$http', function(BASEURL, $http) {
+    .factory('targetFact', ['BASEURL', '$q', 'hostsManager', 'servicesManager', function(BASEURL, $q, hostsManager, servicesManager) {
         var targetFact = {};
 
-        targetFact.getTarget = function(ws, need_hosts) {
-            if(need_hosts){
-                var hosts = [];
-                var url = BASEURL + ws + "/_design/hosts/_view/hosts";
-                $.getJSON(url, function(data) {
-                    $.each(data.rows, function(n, obj) {
-                        obj.value._id = obj.id;
-                        hosts.push(obj.value);
-                    });
+        targetFact.getTargets = function(workspace) {
+            var deferred = $q.defer();
+            var res = [];
+            var hosts_dict = {};
+            hostsManager.getHosts(workspace).then(function(hosts) {
+                hosts.forEach(function(host) {
+                    host.hostnames = [];
+                    host.services = [];
+                    hosts_dict[host._id] = host;
+                    res.push(host);
                 });
-                return hosts;
-            }else{
-                var services = [];
-                var url = BASEURL + ws + "/_design/services/_view/byhost";
-                $.getJSON(url, function(data) {
-                    $.each(data.rows, function(n, obj) {
-                        obj.value._id = obj.id;
-                        services.push(obj.value);
+                hostsManager.getAllInterfaces(workspace).then(function(interfaces) {
+                    interfaces.forEach(function(interf) {
+                        if (hosts_dict.hasOwnProperty(interf.parent)) {
+                            hosts_dict[interf.parent].hostnames = hosts_dict[interf.parent].hostnames.concat(interf.hostnames);
+                        }
                     });
-                });
-                return services;
-            }
+                }, function(err) {deferred.reject(err)});
+                servicesManager.getServices(workspace).then(function(services) {
+                    services.forEach(function(service) {
+                        host_id = service.parent.split(".")[0];
+                        if (hosts_dict.hasOwnProperty(host_id)) {
+                            hosts_dict[host_id].services.push(service);
+                        }
+                    });
+                }, function(err) {deferred.reject(err)});
+
+                deferred.resolve(res);
+
+            }, function(err) {deferred.reject(err)});
+
+            return deferred.promise;
         };
 
         return targetFact;

@@ -19,6 +19,15 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        dashboardSrv.vulnPrices = {
+            "critical": "5000",
+            "high": "3000",
+            "med": "1000",
+            "low": "500",
+            "info": "0",
+            "unclassified": "0"
+        };
+
         dashboardSrv.getHostsByServicesCount = function(ws, id) {
             var url = BASEURL + "/" + ws + "/_design/hosts/_view/byservicecount?group=true";
             if (id != undefined){

@@ -10,14 +10,7 @@ angular.module('faradayApp')
                 //current workspace
                 $scope.workspace = $routeParams.wsId;
 
-                $scope.prices = {
-                    "critical": "5000",
-                    "high": "3000",
-                    "med": "1000",
-                    "low": "500",
-                    "info": "0",
-                    "unclassified": "0"
-                };
+                $scope.prices = dashboardSrv.vulnPrices;
 
                 dashboardSrv.getVulnerabilities($scope.workspace).then(function(res) {
                     $scope.vulns = res;

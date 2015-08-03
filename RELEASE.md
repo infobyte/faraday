@@ -14,10 +14,12 @@ New features in the latest update
 Jul 29, 2015:
 ---
 
+* Added CWE database and integration with vulns creation
 * Added ENTER shortcut on modals
-* Added Unit Test of Workspaces
-* Added display the progress of the workspace
-* Fixed bugs on Workspaces component
+* Progress bar for workspace in the dashboard
+* Bug fixing in workspaces and status report components
+* Unit testing for vulns, status report and workspaces components
+* Debian 8.1 support
 
 
 Jun 30, 2015:

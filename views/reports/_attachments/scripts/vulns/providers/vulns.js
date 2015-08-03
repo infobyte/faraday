@@ -52,8 +52,10 @@ angular.module('faradayApp')
 
                                 self.vulns.forEach(function(vuln) {
                                     var pid = vuln.parent.split(".")[0];
-                                    vuln.target = hosts[pid]["target"];
-                                    vuln.hostnames = hosts[pid]["hostnames"];
+                                    if (hosts.hasOwnProperty(pid)) {
+                                        vuln.target = hosts[pid]["target"];
+                                        vuln.hostnames = hosts[pid]["hostnames"];
+                                    };
                                 });
                             });
 
@@ -119,8 +121,10 @@ angular.module('faradayApp')
 
                             self.vulns.forEach(function(vuln) {
                                 var pid = vuln.parent.split(".")[0];
-                                vuln.target = hosts[pid]["target"];
-                                vuln.hostnames = hosts[pid]["hostnames"];
+                                if (hosts.hasOwnProperty(pid)) {
+                                    vuln.target = hosts[pid]["target"];
+                                    vuln.hostnames = hosts[pid]["hostnames"];
+                                }
                             });
                         });
 

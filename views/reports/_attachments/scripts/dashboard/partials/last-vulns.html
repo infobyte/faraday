@@ -14,7 +14,7 @@
         <table ng-if="vulns.length > 0" class="tablesorter table table-striped last-vuln">
             <thead>
                 <tr>
-                    <th><a href="" ng-click="vulnToggleSort('date')">Date</a></th>
+                    <th><a href="" ng-click="vulnToggleSort('metadata.create_time')">Date</a></th>
                     <th><a href="" ng-click="vulnToggleSort('target')">Target</a></th>
                     <th><a href="" ng-click="vulnToggleSort('severity')">Severity</a></th>
                     <th><a href="" ng-click="vulnToggleSort('name')">Name</a></th>
@@ -24,7 +24,7 @@
             </thead>
             <tbody>
                 <tr ng-repeat="vuln in vulns | orderObjectBy:vulnSortField:vulnSortReverse | limitTo:5">
-                    <td>{{vuln.metadata.create_time | date:"MM/dd/yyyy 'at' h:mma"}}</td>
+                    <td>{{vuln.metadata.create_time * 1000 | date:"MM/dd/yyyy 'at' h:mma"}}</td>
                     <td>{{vuln.target}}</td>
                     <td>{{vuln.severity}}</td>
                     <td class="wrapword">{{vuln.name}}</td>

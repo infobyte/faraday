@@ -192,7 +192,7 @@
                             selection-model-selected-class="multi-selected"
                             selection-model-on-change="selectionChange()">
                             <td><input type="checkbox" name="{{v.id}}"/></td>
-                            <td ng-if="columns.date">{{v.metadata.create_time | date:'MM/dd/yyyy'}}</td>
+                            <td ng-if="columns.date">{{v.metadata.create_time * 1000 | date:'MM/dd/yyyy'}}</td>
                             <td ng-if="columns.target">{{v.target}}</td>
                             <td ng-if="columns.status">Vulnerable</td>
                             <td ng-if="columns.severity"><span class="label vuln fondo-{{v.severity}}">{{v.severity}}</span></td>

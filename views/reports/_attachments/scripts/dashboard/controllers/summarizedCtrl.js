@@ -58,7 +58,7 @@ angular.module('faradayApp')
 
             // vuln table sorting
             $scope.vulnSortField = 'metadata.create_time';
-            $scope.vulnSortReverse = false;
+            $scope.vulnSortReverse = true;
             // toggles sort field and order
             $scope.vulnToggleSort = function(field) {
                 $scope.vulnToggleSortField(field);

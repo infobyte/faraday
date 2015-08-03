@@ -7,7 +7,7 @@ angular.module('faradayApp')
     function(BASEURL, $http, $q, attachmentsFact) {
         Vuln = function(ws, data) {
             var now = new Date(),
-            date = now.getTime();
+            date = now.getTime() / 1000.0;
 
             this._id = "";
             this._rev = "";

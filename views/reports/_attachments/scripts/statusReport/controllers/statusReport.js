@@ -68,7 +68,7 @@ angular.module('faradayApp')
 
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace).then(function(vulns) {
-                $scope.vulns = vulns;
+                $scope.vulns = vulnsManager.vulns;
             });
 
             // created object for columns cookie columns

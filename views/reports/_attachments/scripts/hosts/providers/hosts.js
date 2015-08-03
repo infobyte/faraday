@@ -54,6 +54,8 @@ angular.module('faradayApp')
         hostsManager.getHosts = function(ws) {
             var deferred = $q.defer();
             var self = this;
+            this._objects = {};
+            
             $http.get(BASEURL + '/' + ws + '/_design/hosts/_view/hosts')
                 .success(function(hostsArray) {
                     var hosts = [];

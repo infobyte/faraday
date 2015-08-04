@@ -53,38 +53,30 @@ angular.module('faradayApp')
 
         Vuln.prototype = {
             public_properties: [
-                '_attachments', 'name', 'desc', 'data', 'easeofresolution', 
-                'impact', 'owned', 'refs', 'resolution', 'severity'
+                '_attachments', 'data', 'desc', 'easeofresolution', 
+                'impact', 'name', 'owned', 'refs', 'resolution', 'severity'
             ],
             set: function(ws, data) {
+                var self = this;
+
                 // new vuln
                 if(data._id === undefined) {
                     var id = CryptoJS.SHA1(data.name + "." + data.desc).toString();
-                    this._id = data.parent + "." + id;
-                    this.obj_id = id;
+                    self._id = data.parent + "." + id;
+                    self.obj_id = id;
                 } else {
-                    this._id = data._id;
-                    this.obj_id = data._id;
-                    if(data._rev !== undefined) this._rev = data._rev;
-                    if(data.metadata !== undefined) this.metadata = data.metadata; 
+                    self._id = data._id;
+                    self.obj_id = data.obj_id;
+                    if(data._rev !== undefined) self._rev = data._rev;
+                    if(data.metadata !== undefined) self.metadata = data.metadata; 
                 }
 
-                this.ws = ws;
+                self.ws = ws;
+                if(data.parent !== undefined) self.parent = data.parent; 
 
-                // user-generated content
-                if(data._attachments !== undefined) {
-                    this._attachments = data._attachments;
-                }
-                if(data.data !== undefined) this.data = data.data;
-                if(data.desc !== undefined) this.desc = data.desc;
-                if(data.easeofresolution !== undefined) this.easeofresolution = data.easeofresolution;
-                if(data.impact !== undefined) this.impact = data.impact;
-                if(data.name !== undefined && data.name !== "") this.name = data.name;
-                if(data.owned !== undefined) this.owned = data.owned;
-                if(data.parent !== undefined) this.parent = data.parent; 
-                if(data.refs !== undefined) this.refs = data.refs;
-                if(data.resolution !== undefined) this.resolution = data.resolution;
-                if(data.severity !== undefined) this.severity = data.severity;
+                self.public_properties.forEach(function(property) {
+                    if(data[property] !== undefined) self[property] = data[property];
+                });
             },
             remove: function() {
                 var self = this,

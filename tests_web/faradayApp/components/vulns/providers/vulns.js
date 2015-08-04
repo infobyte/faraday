@@ -10,7 +10,9 @@ describe('vulnsManager', function() {
     $httpBackend,
     $q,
     BASEURL,
-    vuln1;
+    vuln1,
+    hosts, interfaces, 
+    hostnames = [];
 
     // Set up the module
     beforeEach(module('faradayApp'));
@@ -28,18 +30,27 @@ describe('vulnsManager', function() {
         vuln1 = {
             "_id": "1.2.3.e29ba38bfa81e7f9050f6517babc14cf32cacdff",
             "_rev": "1-abe16726389e434ca3f37384ea76128e",
+            "_attachments": {},
             "desc": "I'm scared!",
             "data": "",
+            "easeofresolution": 'trivial',
+            "impact": {
+                "availability": false,
+                "accountability": false,
+                "confidentiality": false,
+                "integrity": false
+            },
             "metadata": {
                "update_time": 1429643049.395857,
-               "update_user": "john",
+               "update_user": "",
                "update_action": 0,
-               "creator": "john",
+               "creator": "",
                "create_time": 1429643049.395857,
                "update_controller_action": "ModelControler.newVuln",
-               "owner": "john"
+               "owner": ""
             },
             "name": "Internet Key Exchange (IKE) Aggressive Mode with Pre-Shared Key",
+            "obj_id": "e29ba38bfa81e7f9050f6517babc14cf32cacdff",
             "owned": false,
             "owner": "john",
             "parent": "1.2.3",
@@ -53,6 +64,59 @@ describe('vulnsManager', function() {
             "type": "Vulnerability",
             "ws": "ws"
         };
+
+        hosts = {
+            "total_rows": 1,
+            "offset": 0,
+            "rows": [
+                {
+                    "_id": "1.2.3", 
+                    "value": {
+                        "name": "Host parent"
+                    }
+                }
+            ]
+        };
+
+        interfaces = {
+            "total_rows": 3,
+            "offset": 0,
+            "rows": [
+                {
+                    "_id": "1.2.3.4",
+                    "value": {
+                        "hostnames": [
+                            "h41",
+                            "h42",
+                            "h43"
+                        ]
+                    }
+                }, {
+                    "_id": "1.2.3.5",
+                    "value": {
+                        "hostnames": [
+                            "h51",
+                            "h52",
+                            "h53"
+                        ]
+                    }
+                }, {
+                    "_id": "1.2.3.6",
+                    "value": {
+                        "hostnames": [
+                            "h61",
+                            "h62",
+                            "h63"
+                        ]
+                    }
+                }
+            ]
+        };
+
+        interfaces.rows.forEach(function(interf) {
+            hostnames = hostnames.concat(interf.value.hostnames);
+        });
+
     }));
 
     afterEach(function() {
@@ -62,9 +126,9 @@ describe('vulnsManager', function() {
 
     describe('Basic usage', function() {
         it('getVulns', function() {
-            var resp = {
-                "total_rows":1,
-                "offset":0,
+            var vuln = {
+                "total_rows": 1,
+                "offset": 0,
                 "rows":[
                     {
                         "id": "1.2.3.8b4ffaedb84dd60d5f43c58eba66a7651458c8de",
@@ -74,18 +138,32 @@ describe('vulnsManager', function() {
                 ]
             };
 
+
             var vulns;
 
-            $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, resp);
+            $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, vuln);
+            $httpBackend.expect('GET', BASEURL + 'ws/_design/hosts/_view/hosts').respond(200, hosts);
+            $httpBackend.expect('GET', BASEURL + 'ws/_design/interfaces/_view/interfaces').respond(200, interfaces);
 
             vulnsManager.getVulns("ws").then(function(vs) {
                 vulns = vs;
             });
 
+            $rootScope.$apply();
             $httpBackend.flush();
+            $rootScope.$apply();
 
             expect(vulns.length).toEqual(1);
             expect(vulns[0]._id).toEqual(vuln1._id);
+            vulnsManager.vulns.forEach(function(v) {
+                for(var prop in vuln1) {
+                    expect(v[prop]).toEqual(vuln1[prop]);
+                }
+            });
+            vulns.forEach(function(vuln) {
+                expect(vuln.target).toEqual(hosts.rows[0].value.name);
+                expect(vuln.hostnames).toEqual(hostnames);
+            });
         });
 
         it('createVuln', function() {
@@ -110,8 +188,8 @@ describe('vulnsManager', function() {
 
             // insert new vuln in Couch
             $httpBackend.expect('PUT', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
-            // getVulns
-            $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, resp);
+            $httpBackend.expect('GET', BASEURL + 'ws/_design/hosts/_view/hosts').respond(200, hosts);
+            $httpBackend.expect('GET', BASEURL + 'ws/_design/interfaces/_view/interfaces').respond(200, interfaces);
 
             var lala = vulnsManager.createVuln("ws", vuln);
 

@@ -2,7 +2,7 @@
 // Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 // See the file 'doc/LICENSE' for the license information
 
-describe('modalNewVulnCtrl', function() {
+describe('StatusReport modalNewVulnCtrl', function() {
     var $controller, 
         vm,
         $scope;

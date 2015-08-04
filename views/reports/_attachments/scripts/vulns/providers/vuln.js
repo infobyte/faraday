@@ -78,13 +78,7 @@ angular.module('faradayApp')
                 if(data.data !== undefined) this.data = data.data;
                 if(data.desc !== undefined) this.desc = data.desc;
                 if(data.easeofresolution !== undefined) this.easeofresolution = data.easeofresolution;
-                if(data.impact !== undefined) {
-                    for(var prop in data.impact) {
-                        if(data.impact.hasOwnProperty(prop)) {
-                            this.impact[prop] = data.impact[prop];
-                        }
-                    }
-                }
+                if(data.impact !== undefined) this.impact = data.impact;
                 if(data.name !== undefined && data.name !== "") this.name = data.name;
                 if(data.owned !== undefined) this.owned = data.owned;
                 if(data.parent !== undefined) this.parent = data.parent; 

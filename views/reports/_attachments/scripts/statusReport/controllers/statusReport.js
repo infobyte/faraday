@@ -36,7 +36,7 @@ angular.module('faradayApp')
             $scope.severities = SEVERITIES;
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.sortField = 'metadata.create_time';
-            $scope.reverse = false;
+            $scope.reverse = true;
             $scope.vulns = [];
 
             $scope.pageSize = 10;

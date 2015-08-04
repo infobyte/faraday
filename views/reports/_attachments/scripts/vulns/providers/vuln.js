@@ -102,7 +102,7 @@ angular.module('faradayApp')
                 vuln.metadata.update_time = date;
 
                 vuln.public_properties.forEach(function(prop) {
-                    if(vuln.hasOwnProperty(prop) && data.hasOwnProperty(prop)) {
+                    if(data.hasOwnProperty(prop)) {
                         if(prop != "_attachments") vuln[prop] = data[prop];
                     }
                 });

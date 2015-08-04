@@ -27,7 +27,7 @@ angular.module('faradayApp')
 
         hostsManager._load = function(id, ws, deferred) {
             var self = this;
-            $http.get(BASEURL + '/' + ws + '/' + id)
+            $http.get(BASEURL + ws + '/' + id)
                 .success(function(data){
                     var host = self._get(data._id, data);
                     deferred.resolve(host);
@@ -56,7 +56,7 @@ angular.module('faradayApp')
             var self = this;
             this._objects = {};
             
-            $http.get(BASEURL + '/' + ws + '/_design/hosts/_view/hosts')
+            $http.get(BASEURL + ws + '/_design/hosts/_view/hosts')
                 .success(function(hostsArray) {
                     var hosts = [];
                     hostsArray.rows.forEach(function(hostData) {
@@ -151,7 +151,7 @@ angular.module('faradayApp')
             var deferred = $q.defer(),
             self = this;
 
-            var url = BASEURL + '/' + ws + '/_design/interfaces/_view/interfaces';
+            var url = BASEURL + ws + '/_design/interfaces/_view/interfaces';
 
             $http.get(url)
                 .success(function(ints) {
@@ -174,7 +174,7 @@ angular.module('faradayApp')
             var deferred = $q.defer(),
             self = this;
 
-            var url = BASEURL + '/' + ws + '/_design/interfaces/_view/interfaces?key=\"' + id + '\"';
+            var url = BASEURL + ws + '/_design/interfaces/_view/interfaces?key=\"' + id + '\"';
 
             $http.get(url)
                 .success(function(interfaces) {

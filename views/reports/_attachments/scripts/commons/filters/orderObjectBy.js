@@ -19,8 +19,14 @@ angular.module('faradayApp')
       function compareItems(field) {
         return function(a, b) {
           var res;
-          a = a[field];
-          b = b[field];
+          if(field === 'metadata.create_time') {
+            var arrayField = field.split(".");
+            a = a[arrayField[0]][arrayField[1]];
+            b = b[arrayField[0]][arrayField[1]];
+          } else {
+            a = a[field];
+            b = b[field];
+          } 
           if(typeof(a) == "string" && typeof(b) == "string") {
             a = a.toLowerCase();
             b = b.toLowerCase();

@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('hostsCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$modal', 'hostsManager', 'statusReportFact', 
-                    function($scope, $filter, $route, $routeParams, $modal, hostsManager, statusReportFact) {
+                    ['$scope', '$filter', '$route', '$routeParams', '$modal', 'hostsManager', 'workspacesFact', 
+                    function($scope, $filter, $route, $routeParams, $modal, hostsManager, workspacesFact) {
 
         init = function() {
             $scope.selectall = false;
@@ -14,7 +14,7 @@ angular.module('faradayApp')
             // current workspace
             $scope.workspace = $routeParams.wsId;
             // load all workspaces
-            statusReportFact.getWorkspaces().then(function(wss) {
+            workspacesFact.list().then(function(wss) {
                 $scope.workspaces = wss;
             });
 

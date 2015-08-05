@@ -346,6 +346,7 @@ class PluginControllerAPIClient(object):
     def send_cmd(self, cmd):
         data = {"cmd": cmd}
         new_cmd = cmd
+        output_file = None
         try:
             response = requests.post(self.url_input,
                                      data=json.dumps(data),

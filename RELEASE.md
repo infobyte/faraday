@@ -10,6 +10,17 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+Aug 05, 2015:
+---
+
+* Added CWE database and integration with vulns creation
+* Added ENTER shortcut on modals
+* Progress bar for workspace in the dashboard
+* Bug fixing in workspaces and status report components
+* Unit testing for vulns, status report and workspaces components
+* Debian 8.1 support
+
+
 Jun 30, 2015:
 ---
 

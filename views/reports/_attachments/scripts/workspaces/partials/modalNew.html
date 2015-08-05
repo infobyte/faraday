@@ -2,80 +2,82 @@
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
 
-<div class="modal-header">
-    <div class="modal-button">
-        <button class="btn btn-success" ng-disabled="form.$invalid || date.$invalid" ng-click="okNew()">Save</button>
-        <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+<form name="form">
+    <div class="modal-header">
+        <div class="modal-button">
+            <button class="btn btn-success" ng-disabled="form.$invalid || date.$invalid" ng-click="okNew()">Save</button>
+            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+        </div>
+        <h3 class="modal-title">New Workspace</h3>
     </div>
-    <h3 class="modal-title">New Workspace</h3>
-</div>
-<div class="modal-body">
-    <div class="form-horizontal">
-            <div class="form-group">
-                <div class="col-md-12">
-                    <form name="form" novalidate> 
-                        <label class="sr-only" for="wsp-name">Workspace Name</label>
-                        <input type="text" class="form-control"
-                                           ng-pattern=/^[a-z][a-z0-9\_\$\(\)\+\-\/]*$/ id="vuln-name" placeholder="Workspace Name"
-                                                                              ng-model="newworkspace.name" required/>
-                        <div ng-if="form.$invalid">
-                            <div class="alert alert-danger target_not_selected" role="alert" ng-hide="">
-                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                                <span class="sr-only">Error:</span>
-                                <button type="button" class="close" data-dismiss="alert"><span area-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                                Workspace name should follow pattern [a-z][a-z0-9_$()+-/]*
+    <div class="modal-body">
+        <div class="form-horizontal">
+                <div class="form-group">
+                    <div class="col-md-12">
+                        <ng-form name="form" novalidate> 
+                            <label class="sr-only" for="wsp-name">Workspace Name</label>
+                            <input type="text" class="form-control"
+                                               ng-pattern=/^[a-z][a-z0-9\_\$\(\)\+\-\/]*$/ id="vuln-name" placeholder="Workspace Name"
+                                                                                  ng-model="workspace.name" required/>
+                            <div ng-if="form.$invalid">
+                                <div class="alert alert-danger target_not_selected" role="alert" ng-hide="">
+                                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                    <span class="sr-only">Error:</span>
+                                    <button type="button" class="close" data-dismiss="alert"><span area-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                                    Workspace name should follow pattern [a-z][a-z0-9_$()+-/]*
+                                </div>
                             </div>
-                        </div>
-                    </form>
+                        </ng-form>
+                    </div>
+                </div><!-- .form-group -->
+                <div class="form-group">
+                    <div class="col-md-12">
+                        <label class="sr-only" for="vuln-desc">Workspace Description</label>
+                        <textarea class="form-control" id="vuln-desc"
+                                                       placeholder="Description" ng-model="workspace.description"
+                                                                                 >
+                        </textarea>
+                    </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <ng-form name="date" novalidate>
+                <div class="col-md-6">
+                    <label class="sr-only" for="work-start">Start Date</label>
+                    <p class="input-group">
+                      <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="workspace.start" is-open="openedStart" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="Start Date"  />
+                      <span class="input-group-btn">
+                        <button type="button" class="btn btn-default" ng-click="open($event,true)"><i class="glyphicon glyphicon-calendar"></i></button>
+                      </span>
+                    </p>
                 </div>
+                <div class="col-md-6">
+                    <label class="sr-only" for="work-end">End Date</label>
+                    <p class="input-group">
+                      <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="workspace.end" is-open="openedEnd" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="End Date"  />
+                      <span class="input-group-btn">
+                        <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                      </span>
+                    </p>
+                </div>
+                <div ng-if="date.$invalid" class="col-md-12">
+                    <div class="alert alert-danger target_not_selected" role="alert" ng-hide="">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        <span class="sr-only">Error:</span>
+                        <button type="button" class="close" data-dismiss="alert"><span area-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        Invalid Date
+                    </div>
+                </div>
+            </ng-form>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
-                    <label class="sr-only" for="vuln-desc">Workspace Description</label>
-                    <textarea class="form-control" id="vuln-desc"
-                                                   placeholder="Description" ng-model="newworkspace.description"
+                    <label class="sr-only" for="work-scope">Scope</label>
+                    <textarea class="form-control" id="work-scope"
+                                                   placeholder="Scope" ng-model="workspace.scope"
                                                                              >
                     </textarea>
                 </div>
-        </div><!-- .form-group -->
-        <div class="form-group">
-            <form name="date" novalidate>
-            <div class="col-md-6">
-                <label class="sr-only" for="work-start">Start Date</label>
-                <p class="input-group">
-                  <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="newworkspace.start" is-open="openedStart" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="Start Date"  />
-                  <span class="input-group-btn">
-                    <button type="button" class="btn btn-default" ng-click="open($event,true)"><i class="glyphicon glyphicon-calendar"></i></button>
-                  </span>
-                </p>
-            </div>
-            <div class="col-md-6">
-                <label class="sr-only" for="work-end">End Date</label>
-                <p class="input-group">
-                  <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="newworkspace.end" is-open="openedEnd" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="End Date"  />
-                  <span class="input-group-btn">
-                    <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
-                  </span>
-                </p>
-            </div>
-            <div ng-if="date.$invalid" class="col-md-12">
-                <div class="alert alert-danger target_not_selected" role="alert" ng-hide="">
-                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                    <span class="sr-only">Error:</span>
-                    <button type="button" class="close" data-dismiss="alert"><span area-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                    Invalid Date
-                </div>
-            </div>
-        </form>
-        </div><!-- .form-group -->
-        <div class="form-group">
-            <div class="col-md-12">
-                <label class="sr-only" for="work-scope">Scope</label>
-                <textarea class="form-control" id="work-scope"
-                                               placeholder="Scope" ng-model="newworkspace.scope"
-                                                                         >
-                </textarea>
-            </div>
-        </div><!-- .form-group -->
-    </div><!-- .form-horizontal -->
-</div><!-- .modal-body -->
+            </div><!-- .form-group -->
+        </div><!-- .form-horizontal -->
+    </div><!-- .modal-body -->
+</form>

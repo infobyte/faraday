@@ -188,6 +188,14 @@ angular.module('faradayApp')
 	        });
 	    };
 
+        $scope.checkAllServices = function() {
+            $scope.selectall = !$scope.selectall;
+
+            angular.forEach($filter('filter')($scope.services, $scope.query), function(service) {
+                service.selected = $scope.selectall;
+            });
+        };
+
 	    // toggles sort field and order
 	    $scope.toggleSort = function(field) {
 	        $scope.toggleSortField(field);

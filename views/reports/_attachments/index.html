@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="script/bootstrap.min.css">
     <link rel="stylesheet" href="script/bootstrap-theme.min.css">
     <link rel="stylesheet" type="text/css" href="styles/font-awesome.css" />
+    <link rel="stylesheet" type="text/css" href="styles/angular-hotkeys.css" />
 
     <!-- Icons -->
     <link href="favicon.ico" rel="shortcut icon">
@@ -31,11 +32,13 @@
     <link href="images/site_preview.jpg" rel="image_src" />
 
     <!-- Scripts -->
+    <script type="text/javascript" src="script/mousetrap.js"></script>
     <script type="text/javascript" src="script/jquery.js"></script>
     <script type="text/javascript" src="script/jquery.couch.js"></script>
     <script type="text/javascript" src="script/bootstrap.min.js"></script>
     <script type="text/javascript" src="script/angular.js"></script>
     <script type="text/javascript" src="script/angular-cookies.js"></script>
+    <script type="text/javascript" src="script/angular-hotkeys.js"></script>
     <script type="text/javascript" src="script/angular-route.js"></script>
     <script type="text/javascript" src="script/angular-selection-model.js"></script>
     <script type="text/javascript" src="script/angular-file-upload-shim.js"></script><!-- compatibility with older browsers -->
@@ -65,19 +68,24 @@
     <script type="text/javascript" src="scripts/commons/directives/contenteditable.js"></script>
     <script type="text/javascript" src="scripts/commons/controllers/modal.js"></script>
     <script type="text/javascript" src="scripts/commons/providers/commons.js"></script>
+    <script type="text/javascript" src="scripts/commons/filters/decodeURIComponent.js"></script>
+    <script type="text/javascript" src="scripts/commons/filters/encodeURIComponent.js"></script>
+    <script type="text/javascript" src="scripts/commons/filters/getByProperty.js"></script>
     <script type="text/javascript" src="scripts/commons/filters/orderObjectBy.js"></script>
     <script type="text/javascript" src="scripts/commons/filters/startFrom.js"></script>
+    <script type="text/javascript" src="scripts/commons/filters/integer.js"></script>
     <script type="text/javascript" src="scripts/fileExporter/directives/download.js"></script>
-    <script type="text/javascript" src="scripts/fileExporter/services/blob.js"></script>
-    <script type="text/javascript" src="scripts/fileExporter/services/click.js"></script>
+    <script type="text/javascript" src="scripts/fileExporter/providers/blob.js"></script>
+    <script type="text/javascript" src="scripts/fileExporter/providers/click.js"></script>
+    <script type="text/javascript" src="scripts/cwe/providers/CweService.js"></script>
     <script type="text/javascript" src="scripts/hosts/controllers/host.js"></script>
     <script type="text/javascript" src="scripts/hosts/controllers/hosts.js"></script>
     <script type="text/javascript" src="scripts/hosts/controllers/hostsModalEdit.js"></script>
     <script type="text/javascript" src="scripts/hosts/controllers/hostsModalNew.js"></script>
-    <script type="text/javascript" src="scripts/hosts/services/host.js"></script>
-    <script type="text/javascript" src="scripts/hosts/services/hosts.js"></script>
+    <script type="text/javascript" src="scripts/hosts/providers/host.js"></script>
+    <script type="text/javascript" src="scripts/hosts/providers/hosts.js"></script>
     <script type="text/javascript" src="scripts/navigation/controllers/navigationCtrl.js"></script>
-    <script type="text/javascript" src="scripts/notes/services/notes.js"></script>
+    <script type="text/javascript" src="scripts/notes/providers/notes.js"></script>
     <script type="text/javascript" src="scripts/services/controllers/serviceModalNew.js"></script>
     <script type="text/javascript" src="scripts/services/controllers/serviceModalEdit.js"></script>
     <script type="text/javascript" src="scripts/services/providers/services.js"></script>
@@ -86,18 +94,21 @@
     <script type="text/javascript" src="scripts/statusReport/controllers/modalEdit.js"></script>
     <script type="text/javascript" src="scripts/statusReport/controllers/modalNew.js"></script>
     <script type="text/javascript" src="scripts/statusReport/directives/textCollapse.js"></script>
-    <script type="text/javascript" src="scripts/statusReport/services/statusReport.js"></script>
-    <script type="text/javascript" src="scripts/statusReport/services/target.js"></script>
-    <script type="text/javascript" src="scripts/vulns/services/vulns.js"></script>
-    <script type="text/javascript" src="scripts/vulnsWeb/services/vulnsWeb.js"></script>
+    <script type="text/javascript" src="scripts/statusReport/providers/target.js"></script>
+    <script type="text/javascript" src="scripts/vulns/providers/vuln.js"></script>
+    <script type="text/javascript" src="scripts/vulns/providers/vulns.js"></script>
+    <script type="text/javascript" src="scripts/vulns/providers/web.js"></script>
     <script type="text/javascript" src="scripts/workspaces/controllers/workspaces.js"></script>
-    <script type="text/javascript" src="scripts/workspaces/services/workspaces.js"></script>
+    <script type="text/javascript" src="scripts/workspaces/controllers/workspacesModalEdit.js"></script>
+    <script type="text/javascript" src="scripts/workspaces/controllers/workspacesModalNew.js"></script>
+    <script type="text/javascript" src="scripts/workspaces/providers/workspaces.js"></script>
     <script type="text/javascript" src="scripts/dashboard/controllers/dashboard.js"></script>
     <script type="text/javascript" src="scripts/dashboard/controllers/graphicsBarCtrl.js"></script>
     <script type="text/javascript" src="scripts/dashboard/controllers/summarizedCtrl.js"></script>
     <script type="text/javascript" src="scripts/dashboard/controllers/vulnsbyprice.js"></script>
-    <script type="text/javascript" src="scripts/dashboard/services/dashboard.js"></script>
-    <script type="text/javascript" src="scripts/d3/services/d3.js"></script>
+    <script type="text/javascript" src="scripts/dashboard/controllers/workspaceProgress.js"></script>
+    <script type="text/javascript" src="scripts/dashboard/providers/dashboard.js"></script>
+    <script type="text/javascript" src="scripts/d3/providers/d3.js"></script>
     <script type="text/javascript" src="scripts/d3/directives/treemap.js"></script>
     <script type="text/javascript" src="scripts/d3/directives/bar.js"></script>
     <script type="text/javascript" src="scripts/d3/directives/cake.js"></script>

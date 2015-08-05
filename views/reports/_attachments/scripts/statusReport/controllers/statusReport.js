@@ -4,49 +4,57 @@
 
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$location', '$modal', '$cookies','BASEURL', 'SEVERITIES', 'EASEOFRESOLUTION', 'statusReportFact', 'hostsManager', 
-                    function($scope, $filter, $route, $routeParams, $location, $modal, $cookies, BASEURL, SEVERITIES, EASEOFRESOLUTION, statusReportFact, hostsManager) {
+                    ['$scope', '$filter', '$routeParams',
+                    '$location', '$modal', '$cookies', '$q', 'BASEURL',
+                    'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager',
+                    'vulnsManager', 'workspacesFact',
+                    function($scope, $filter, $routeParams,
+                        $location, $modal, $cookies, $q, BASEURL,
+                        SEVERITIES, EASEOFRESOLUTION, hostsManager,
+                        vulnsManager, workspacesFact) {
+        $scope.baseurl;
+        $scope.columns;
+        $scope.easeofresolution;
+        $scope.expression;
+        $scope.interfaces;
+        $scope.reverse;
+        $scope.severities;
+        $scope.search;
+        $scope.searchParams;
+        $scope.sortField;
+        $scope.vulns;
+        $scope.workspaces;
+        $scope.currentPage;
+        $scope.newCurrentPage;
+        $scope.pageSize;
+        $scope.newPageSize;
+
+        $scope.vulnWebSelected;
+
         init = function() {
             $scope.baseurl = BASEURL;
             $scope.severities = SEVERITIES;
             $scope.easeofresolution = EASEOFRESOLUTION;
-
-            $scope.sortField = 'date';
+            $scope.sortField = 'metadata.create_time';
             $scope.reverse = true;
-            $scope.showPagination = 1;
+            $scope.vulns = [];
+
+            $scope.pageSize = 10;
             $scope.currentPage = 0;
-            // set custom pagination if is possible
-            if(typeof($cookies.pageSize) == "undefined") {
-                $scope.pageSize = 10;
-                $scope.pagination = 10;
-            } else { 
+            $scope.newCurrentPage = 0;
+ 
+            if (!isNaN(parseInt($cookies.pageSize)))
                 $scope.pageSize = parseInt($cookies.pageSize);
-                $scope.pagination = parseInt($cookies.pageSize);
-            }
+            $scope.newPageSize = $scope.pageSize;
 
             // load all workspaces
-            statusReportFact.getWorkspaces().then(function(wss) {
+            workspacesFact.list().then(function(wss) {
                 $scope.workspaces = wss;
             });
 
             // current workspace
             $scope.workspace = $routeParams.wsId;
             $scope.interfaces = [];
-
-            $scope.getVulns = function() {
-                var vulnerabilities = statusReportFact.getVulns($scope.workspace);
-                hostsManager.getInterfaces($scope.workspace).then(function(interfaces){
-                    interfaces.forEach(function(interface){
-                        vulnerabilities.forEach(function(vuln){
-                            if(vuln.parent == interface.value.parent){
-                                vuln.hostnames = interface.value.hostnames;
-                            }
-                        });
-                    });
-                });
-                return vulnerabilities;
-            };
-
             // current search
             $scope.search = $routeParams.search;
             $scope.searchParams = "";
@@ -59,7 +67,9 @@ angular.module('faradayApp')
             }
 
             // load all vulnerabilities
-            $scope.vulns = $filter('filter')($scope.getVulns(), $scope.expression);
+            vulnsManager.getVulns($scope.workspace).then(function(vulns) {
+                $scope.vulns = vulnsManager.vulns;
+            });
 
             // created object for columns cookie columns
             if(typeof($cookies.SRcolumns) != 'undefined'){
@@ -95,15 +105,25 @@ angular.module('faradayApp')
                 "web":              false,
                 "website":          false
             };
+            
+            $scope.vulnWebSelected = false;
         };
+
+        $scope.selectedVulns = function() {
+            selected = [];
+            $scope.vulns.forEach(function(vuln) {
+                if (vuln.selected_statusreport_controller) {
+                    selected.push(vuln);
+                }
+            });
+            return selected;
+        }
+
 
         // returns scope vulns as CSV obj
         // toggles column sort field
-        $scope.cleanCSV = function(field) {
+        cleanCSV = function(field) {
             return field.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'").replace(/[\n\r]/g, "%0A").replace(/[,]/g, "%2c");
-        };
-        $scope.ToString = function(array){
-            return array.toString();
         };
 
         $scope.toCSV = function() {
@@ -127,71 +147,73 @@ angular.module('faradayApp')
                 "\"Query\", \"References\", \"Request\", \"Response\", \"Resolution\",\"Website\", "+
                 "\"Ease of Resolution\", \"Impact\"\n";
             
-            $scope.vulns.forEach(function(v) {
-                method      = "";
-                website     = "";
-                desc        = "";
-                easeofres   = "",
-                impact      = JSON.stringify(v.impact),
-                text        = "";
-                path        = "";
-                pname       = "";
-                params      = "";
-                query       = "";
-                refs        = "";
-                request     = "";
-                response    = "";
-                resolution  = "";
-                refs        = $scope.ToString(v.refs);
+            $scope.vulns.then(function(vs) {
+                forEach(function(v) {
+                    method      = "";
+                    website     = "";
+                    desc        = "";
+                    easeofres   = "",
+                    impact      = JSON.stringify(v.impact),
+                    text        = "";
+                    path        = "";
+                    pname       = "";
+                    params      = "";
+                    query       = "";
+                    refs        = "";
+                    request     = "";
+                    response    = "";
+                    resolution  = "";
+                    refs        = v.refs.toString();
 
-                if(typeof(v.desc) != "undefined" && v.desc != null)                 desc          = $scope.cleanCSV(v.desc);
-                if(typeof(v.data) != "undefined" && v.data != null)                 text          = $scope.cleanCSV(v.data);
-                if(typeof(v.resolution) != "undefined" && v.resolution != null)     resolution    = $scope.cleanCSV(v.resolution);
-                if(typeof(refs) != "undefined" && refs != null){
-                    refs = $scope.cleanCSV(refs);
-                    refs = refs.replace(/%2c/g,"%0A");
-                }
-                if(typeof(impact) != "undefined" && impact != null){
-                    impact = $scope.cleanCSV(impact);
-                    impact = impact.replace(/%2c/g,"%0A");
-                }
-                if(v.type === "VulnerabilityWeb") {
-                    if(typeof(v.method) != "undefined" && v.method != null)         method      = $scope.cleanCSV(v.method);
-                    if(typeof(v.website) != "undefined" && v.website != null)       website     = $scope.cleanCSV(v.website);
-                    if(typeof(v.path) != "undefined" && v.path != null)             path        = $scope.cleanCSV(v.path);
-                    if(typeof(v.pname) != "undefined" && v.pname != null)           pname       = $scope.cleanCSV(v.pname);
-                    if(typeof(v.params) != "undefined" && v.params != null)         params      = $scope.cleanCSV(v.params);
-                    if(typeof(v.query) != "undefined" && v.query != null)           query       = $scope.cleanCSV(v.query);
+                    if(typeof(v.desc) != "undefined" && v.desc != null)                 desc          = cleanCSV(v.desc);
+                    if(typeof(v.data) != "undefined" && v.data != null)                 text          = cleanCSV(v.data);
+                    if(typeof(v.resolution) != "undefined" && v.resolution != null)     resolution    = cleanCSV(v.resolution);
                     if(typeof(refs) != "undefined" && refs != null){
-                        refs = $scope.cleanCSV(refs);
+                        refs = cleanCSV(refs);
                         refs = refs.replace(/%2c/g,"%0A");
                     }
-                    if(typeof(v.request) != "undefined" && v.request != null)       request     = $scope.cleanCSV(v.request);
-                    if(typeof(v.response) != "undefined" && v.response != null)     response    = $scope.cleanCSV(v.response);
-                    if(typeof(v.resolution) != "undefined" && v.resolution != null) resolution  = $scope.cleanCSV(v.resolution);
-                }
+                    if(typeof(impact) != "undefined" && impact != null){
+                        impact = cleanCSV(impact);
+                        impact = impact.replace(/%2c/g,"%0A");
+                    }
+                    if(v.type === "VulnerabilityWeb") {
+                        if(typeof(v.method) != "undefined" && v.method != null)         method      = cleanCSV(v.method);
+                        if(typeof(v.website) != "undefined" && v.website != null)       website     = cleanCSV(v.website);
+                        if(typeof(v.path) != "undefined" && v.path != null)             path        = cleanCSV(v.path);
+                        if(typeof(v.pname) != "undefined" && v.pname != null)           pname       = cleanCSV(v.pname);
+                        if(typeof(v.params) != "undefined" && v.params != null)         params      = cleanCSV(v.params);
+                        if(typeof(v.query) != "undefined" && v.query != null)           query       = cleanCSV(v.query);
+                        if(typeof(refs) != "undefined" && refs != null){
+                            refs = cleanCSV(refs);
+                            refs = refs.replace(/%2c/g,"%0A");
+                        }
+                        if(typeof(v.request) != "undefined" && v.request != null)       request     = cleanCSV(v.request);
+                        if(typeof(v.response) != "undefined" && v.response != null)     response    = cleanCSV(v.response);
+                        if(typeof(v.resolution) != "undefined" && v.resolution != null) resolution  = cleanCSV(v.resolution);
+                    }
 
-                content += "\""+v.date+"\","+
-                    " \""+v.web+"\","+
-                    " \"Vulnerable\","+
-                    " \""+v.severity+"\","+
-                    " \""+v.name+"\","+
-                    " \""+v.target+"\","+
-                    " \""+desc+"\","+
-                    " \""+text+"\","+
-                    " \""+method+"\","+
-                    " \""+path+"\","+
-                    " \""+pname+"\","+
-                    " \""+params+"\","+
-                    " \""+query+"\","+
-                    " \""+refs+"\","+
-                    " \""+request+"\","+
-                    " \""+response+"\","+
-                    " \""+resolution+"\","+
-                    " \""+website+"\","+
-                    " \""+impact+"\","+
-                    " \""+easeofres+"\""+
-                    "\n";
+                    content += "\""+v.date+"\","+
+                        " \""+v.web+"\","+
+                        " \"Vulnerable\","+
+                        " \""+v.severity+"\","+
+                        " \""+v.name+"\","+
+                        " \""+v.target+"\","+
+                        " \""+desc+"\","+
+                        " \""+text+"\","+
+                        " \""+method+"\","+
+                        " \""+path+"\","+
+                        " \""+pname+"\","+
+                        " \""+params+"\","+
+                        " \""+query+"\","+
+                        " \""+refs+"\","+
+                        " \""+request+"\","+
+                        " \""+response+"\","+
+                        " \""+resolution+"\","+
+                        " \""+website+"\","+
+                        " \""+impact+"\","+
+                        " \""+easeofres+"\""+
+                        "\n";
+                });
             });
 
             var obj = {
@@ -204,71 +226,33 @@ angular.module('faradayApp')
             return obj;
         };
 
-        // deletes all vulns with selected == true
-        $scope.remove = function() {
-            var old = $scope.vulns;
-            $scope.vulns = [];
-
-            old.forEach(function(v) {
-                if(v.selected) {
-                    statusReportFact.removeVulns($scope.workspace, v);
-                } else {
-                    $scope.vulns.push(v);
-                }
-            });
-        };
-
-        // updates all vulns with selected == true
-        $scope.update = function(data) {
-            $scope.vulns = [];
-           
-            data.vulns.forEach(function(v) {
-                if(v.selected) {
-                    if(typeof(data.severity) == "string") v.severity = data.severity;
-                    if(typeof(data.easeofresolution) == "string") v.easeofresolution = data.easeofresolution;
-                    if(typeof(data.name) != "undefined") v.name = data.name;
-                    if(typeof(data.desc) != "undefined") v.desc = data.desc;
-                    if(typeof(data.data) != "undefined") v.data = data.data;
-                    if(typeof(data.refs) != "undefined") v.refs = data.refs;
-                    if(typeof(data.impact) != "undefined") v.impact = data.impact;
-                    if(typeof(data.resolution) != "undefined") v.resolution = data.resolution;
-                    v.evidence = data.evidence;
-                    if(v.web) {
-                        if(typeof(data.method) != "undefined") v.method = data.method;
-                        if(typeof(data.params) != "undefined") v.params = data.params;
-                        if(typeof(data.path) != "undefined") v.path = data.path;
-                        if(typeof(data.pname) != "undefined") v.pname = data.pname;
-                        if(typeof(data.query) != "undefined") v.query = data.query;
-                        if(typeof(data.refs) != "undefined") v.refs = data.refs;
-                        if(typeof(data.request) != "undefined") v.request = data.request;
-                        if(typeof(data.response) != "undefined") v.response = data.response;
-                        if(typeof(data.resolution) != "undefined") v.resolution = data.resolution;
-                        if(typeof(data.website) != "undefined") v.website = data.website;
+        showMessage = function(msg) {
+            var modal = $modal.open({
+                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    controller: 'commonsModalKoCtrl',
+                    resolve: {
+                        msg: function() {
+                            return msg;
+                        }
                     }
-            
-                    statusReportFact.putVulns($scope.workspace, v, function(rev, evidence) {
-                        v.rev = rev;
-                        v.attachments = evidence;
+                });
+        }
+
+        // deletes the vulns in the array
+        $scope.remove = function(aVulns) {
+            aVulns.forEach(function(vuln) {
+                vulnsManager.deleteVuln(vuln)
+                    .then(function() {})
+                    .catch(function(errorMsg) {
+                        // TODO: show errors somehow
+                        console.log("Error deleting vuln " + vuln._id + ": " + errorMsg);
                     });
-                    v.selected = false;
-                }
-                $scope.vulns.push(v);
             });
         };
 
         // action triggered from DELETE button
         $scope.delete = function() {
-            var selected = false;
-            var i = 0;
-
-            $scope.vulns.forEach(function(v) {
-                if(v.selected) {
-                    selected = true;
-                    i++;
-                }
-            });
-
-            if(selected) {
+            if($scope.selectedVulns().length > 0) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/commons/partials/modalDelete.html',
                     controller: 'commonsModalDelete',
@@ -276,10 +260,10 @@ angular.module('faradayApp')
                     resolve: {
                         msg: function() {
                             var msg = "";
-                            if(i == 1) {
+                            if($scope.selectedVulns().length == 1) {
                                 msg = "A vulnerability will be deleted.";
                             } else {
-                                msg = i + " vulnerabilities will be deleted.";
+                                msg = $scope.selectedVulns().length + " vulnerabilities will be deleted.";
                             }
                             msg += " This action cannot be undone. Are you sure you want to proceed?";
                             return msg;
@@ -288,91 +272,238 @@ angular.module('faradayApp')
                 });
 
                 modal.result.then(function() {
-                    $scope.remove();
+                    $scope.remove($scope.selectedVulns());
                 });
             } else {
-                var modal = $modal.open({
-                    templateUrl: 'scripts/commons/partials/modalKO.html',
-                    controller: 'commonsModalKoCtrl',
-                    resolve: {
-                        msg: function() {
-                            return 'No vulnerabilities were selected to delete';
-                        }
-                    }
-                });
+                showMessage('No vulnerabilities were selected to delete');
             }
         };
 
         // action triggered from EDIT button
         $scope.edit = function() {
-            var selected = false;
-
-            $scope.vulns.forEach(function(v) {
-                if(v.selected) selected = true;
-            });
-
-            if(selected) {
+            if ($scope.selectedVulns().length == 1) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/statusReport/partials/modalEdit.html',
-                    controller: 'modalEditCtrl',
+                    controller: 'modalEditCtrl as modal',
                     size: 'lg',
                     resolve: {
                         severities: function() {
                             return $scope.severities;
                         },
-                        vulns: function() {
-                            return $scope.vulns;
+                        vuln: function() {
+                            return $scope.selectedVulns()[0];
                         }
                     }
                 });
-
                 modal.result.then(function(data) {
-                    $scope.update(data);
+                    vulnsManager.updateVuln($scope.selectedVulns()[0], data).then(function(){
+                    }, function(errorMsg){
+                        showMessage("Error updating vuln " + $scope.selectedVulns()[0].name + " (" + $scope.selectedVulns()[0]._id + "): " + errorMsg);
+                    });
+       
                 });
             } else {
-                var modal = $modal.open({
-                    templateUrl: 'scripts/commons/partials/modalKO.html',
-                    controller: 'commonsModalKoCtrl',
-                    resolve: {
-                        msg: function() {
-                            return 'At least one vulnerabilty must be selected in order to edit';
-                        }
-                    }
-                });
+                showMessage('A vulnierabilty must be selected in order to edit');
             }
         };
 
-        $scope.insert = function(vuln) {
-            statusReportFact.putVulns($scope.workspace, vuln, function(rev, evidence) {
-                vuln.rev = rev;
-                vuln.attachments = evidence;
+        var editProperty = function(partial, controller, message, property, opts) {
+            if(opts == undefined) {
+                opts = {};
+            }
+            var resolve = {
+                msg: function() {
+                    return message;
+                },
+                options: function() {
+                    return opts.options;
+                }
+            };
+            var modal = $modal.open({
+                templateUrl: partial,
+                controller: controller,
+                size: 'lg',
+                resolve: resolve
             });
+            modal.result.then(function(data) {
+                $scope.selectedVulns().forEach(function(vuln) {
+                    obj = {};
+                    obj[property] = data;
+
+                    if (opts.callback != undefined){
+                        obj = opts.callback(vuln, data);
+                    }
+
+                    vulnsManager.updateVuln(vuln, obj).then(function(vulns){
+                    }, function(errorMsg){
+                        // TODO: show errors somehow
+                        console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
+                    });
+                });
+            });
+        }
+        
+        $scope.editSeverity = function() {
+            editProperty(
+                'scripts/commons/partials/editOptions.html',
+                'commonsModalEditOptions',
+                'Enter the new severity:',
+                'severity',
+                {options: SEVERITIES});
+        }
+
+        $scope.editEaseofresolution = function() {
+            editProperty(
+                'scripts/commons/partials/editOptions.html',
+                'commonsModalEditOptions',
+                'Enter the new easeofresolution:',
+                'easeofresolution',
+                {options: EASEOFRESOLUTION});
+        }
+
+        $scope.editReferences = function() {
+            editProperty(
+                'scripts/commons/partials/editArray.html',
+                'commonsModalEditArray',
+                'Enter the new references:',
+                'refs',
+                {callback: function (vuln, refs) {
+                    var references = vuln.refs.concat([]);
+                    refs.forEach(function(ref) {
+                        if(vuln.refs.indexOf(ref) == -1){
+                            references.push(ref);
+                        }
+                    });
+
+                    return {'refs': references};
+                }}
+                );
+        }
+
+        $scope.editImpact = function() {
+            editProperty(
+                'scripts/commons/partials/editObject.html',
+                'commonsModalEditObject',
+                'Enter the new impact:',
+                'impact',
+                {
+                    options: {
+                        accountability: false,
+                        availability: false,
+                        confidentiality: false,
+                        integrity: false
+                    },
+                    callback: function (vuln, impacts) {
+                        var impact = {};
+                        for(key in vuln.impact){
+                            if(vuln.impact.hasOwnProperty(key)) {
+                                impact[key] = vuln.impact[key];
+                                if(impacts.hasOwnProperty(key)) {
+                                    impact[key] = impacts[key];
+                                }
+                            }
+                        }
+                        return {'impact': impact};
+                    }
+                }
+                );
+        }
+
+        $scope.editString = function(property, message_word) {
+            var message;
+            if(message_word) {
+                message = 'Enter the new ' + message_word + ':';
+            } else {
+                message = 'Enter the new ' + property + ':';
+            }
+            editProperty(
+                'scripts/commons/partials/editString.html',
+                'commonsModalEditString',
+                message,
+                property);
+        }
+
+        $scope.editText = function(property, message_word) {
+            var message;
+            if(message_word) {
+                message = 'Enter the new ' + message_word + ':';
+            } else {
+                message = 'Enter the new ' + property + ':';
+            }
+            editProperty(
+                'scripts/commons/partials/editText.html',
+                'commonsModalEditString',
+                message,
+                property);
+        }
+
+        $scope.editCWE = function() {
+            var modal = $modal.open({
+                templateUrl: 'scripts/commons/partials/editCWE.html',
+                controller: 'commonsModalEditCWE',
+                size: 'lg',
+                resolve: {
+                    msg: function() {
+                        return 'CWE template';
+                    }
+                }
+            });
+            modal.result.then(function(data) {
+                $scope.selectedVulns().forEach(function(vuln) {
+                    var references = vuln.refs.concat([]);
+                    data.refs.forEach(function(ref) {
+                        if(vuln.refs.indexOf(ref) == -1){
+                            references.push(ref);
+                        }
+                    });
+                    data.refs = references;                    
+
+                    vulnsManager.updateVuln(vuln, data).then(function(vulns){
+                    }, function(errorMsg){
+                        // TODO: show errors somehow
+                        console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
+                    });
+                });
+            });
+        }
+
+        $scope.insert = function(vuln) {
+            vulnsManager.createVuln($scope.workspace, vuln).then(function() {
+            }, function(message) {
+                var msg = "The vulnerability couldn't be created";
+                if(message == "409") {
+                    msg += " because a vulnerability with the same parameters already exists in this Workspace";
+                }
+                showMessage(msg);
+            });
+            /*
+            // this shouldnt be necessary, we should use Angular formatting options directly in the partial
             //formating the date
             var d = new Date(0);
             d.setUTCSeconds(vuln.date);
             d = d.getDate() + "/" + (d.getMonth()+1) + "/" + d.getFullYear();
             vuln.date = d;
-            $scope.vulns.push(vuln);
+            */
         };
 
         $scope.new = function() {
-                var modal = $modal.open({
-                    templateUrl: 'scripts/statusReport/partials/modalNew.html',
-                    controller: 'modalNewCtrl',
-                    size: 'lg',
-                    resolve: {
-                        severities: function() {
-                            return $scope.severities;
-                        },
-                        workspace: function() {
-                            return $scope.workspace;
-                        }
+            var modal = $modal.open({
+                templateUrl: 'scripts/statusReport/partials/modalNew.html',
+                controller: 'modalNewVulnCtrl as modal',
+                size: 'lg',
+                resolve: {
+                    severities: function() {
+                        return $scope.severities;
+                    },
+                    workspace: function() {
+                        return $scope.workspace;
                     }
-                 });
+                }
+             });
 
-                modal.result.then(function(data) {
-                    $scope.insert(data);
-                });
+            modal.result.then(function(data) {
+                $scope.insert(data);
+            });
         };
 
         $scope.checkAll = function() {
@@ -385,28 +516,18 @@ angular.module('faradayApp')
             var orderObject = $filter('orderObjectBy')($scope.vulns, $scope.sortField, $scope.reverse);
             var tmp_vulns = $filter('limitTo')(orderObject, $scope.pageSize, $scope.currentPage * $scope.pageSize);
             angular.forEach($filter('filter')(tmp_vulns), function(v,k) {
-                v.selected = $scope.selectall;
+                v.selected_statusreport_controller = $scope.selectall;
             });
         };
 
-        $scope.numberOfPages = function() {
-            if($scope.vulns.length <= 10) {
-                $scope.showPagination = 0;
-            } else {
-                $scope.showPagination = 1;
-            }
-            return parseInt($scope.vulns.length/$scope.pageSize);
-        };
-
         $scope.go = function() {
-            if($scope.go_page < $scope.numberOfPages()+1 && $scope.go_page > -1) {
-                $scope.currentPage = $scope.go_page;
-            }
-            $scope.pageSize = $scope.pagination;
-            if($scope.go_page > $scope.numberOfPages()) {
-                $scope.currentPage = 0;
-            }
+            $scope.pageSize = $scope.newPageSize;
             $cookies.pageSize = $scope.pageSize;
+            $scope.currentPage = 0;
+            if($scope.newCurrentPage <= parseInt($scope.vulns.length/$scope.pageSize)
+                    && $scope.newCurrentPage > -1 && !isNaN(parseInt($scope.newCurrentPage))) {
+                $scope.currentPage = $scope.newCurrentPage;
+            }
         };
 
         // encodes search string in order to send it through URL
@@ -435,7 +556,7 @@ angular.module('faradayApp')
             for(var prop in chunks) {
                 if(chunks.hasOwnProperty(prop)) {
                     if(chunks.prop != "") {
-                        encode += "&" + prop + "=" + chunks[prop];
+                        encode += "&" + encodeURIComponent(prop) + "=" + encodeURIComponent(chunks[prop]);
                     }
                 }
             }
@@ -450,7 +571,7 @@ angular.module('faradayApp')
 
             params.forEach(function(param) {
                 i = param.indexOf("=");
-                decode[param.slice(0,i)] = param.slice(i+1);
+                decode[decodeURIComponent(param.slice(0,i))] = decodeURIComponent(param.slice(i+1));
             });
 
             if(decode.hasOwnProperty("free")) {
@@ -512,6 +633,12 @@ angular.module('faradayApp')
         // toggle column sort order
         $scope.toggleReverse = function() {
             $scope.reverse = !$scope.reverse;
+        };
+
+        $scope.selectionChange = function() {
+            $scope.vulnWebSelected = $scope.selectedVulns().some(function(v) {
+                return v.type === "VulnerabilityWeb"
+            });
         };
 
         init();

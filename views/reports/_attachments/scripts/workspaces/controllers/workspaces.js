@@ -5,10 +5,58 @@
 angular.module('faradayApp')
     .controller('workspacesCtrl', ['$modal', '$scope', '$q', 'workspacesFact', 'dashboardSrv',
             function($modal, $scope, $q, workspacesFact, dashboardSrv) {
-        $scope.workspaces = [];
-        $scope.wss = [];
-        $scope.objects = {};
-        // $scope.newworkspace = {};
+        $scope.hash;
+        $scope.objects;
+        $scope.workspaces;
+        $scope.wss;
+
+        $scope.init = function() {
+            $scope.objects = [];
+            $scope.workspaces = [];
+            $scope.wss = [];
+            // $scope.newworkspace = {};
+            
+            var hash_tmp = window.location.hash.split("/")[1];
+            switch (hash_tmp){
+                case "status":
+                    $scope.hash = "status";
+                    break;
+                case "dashboard":
+                    $scope.hash = "dashboard";
+                    break;
+                case "hosts":
+                    $scope.hash = "hosts";
+                    break;
+                default:
+                    $scope.hash = "";
+            }
+
+            // todo: refactor the following code
+            workspacesFact.list().then(function(wss) {
+                $scope.wss = wss;
+                var objects = {};
+                $scope.wss.forEach(function(ws){
+                    workspacesFact.get(ws).then(function(resp) {
+                        $scope.onSuccessGet(resp);
+                    });
+                    objects[ws] = dashboardSrv.getObjectsCount(ws);
+                });
+                $q.all(objects).then(function(os) {
+                    for(var workspace in os) {
+                        if(os.hasOwnProperty(workspace)) {
+                            $scope.objects[workspace] = {
+                                "total vulns": "-",
+                                "hosts": "-",
+                                "services": "-"
+                            };
+                            os[workspace].forEach(function(o) {
+                                $scope.objects[workspace][o.key] = o.value;
+                            });
+                        }
+                    }
+                });
+            });
+        };
 
         $scope.onSuccessGet = function(workspace){
             if(workspace.sdate.toString().indexOf(".") != -1) workspace.sdate = workspace.sdate * 1000;
@@ -17,7 +65,6 @@ angular.module('faradayApp')
         };
 
         $scope.onSuccessInsert = function(workspace){
-            workspace.sdate = workspace.sdate;
             $scope.wss.push(workspace.name); 
             $scope.workspaces.push(workspace); 
         };
@@ -41,6 +88,7 @@ angular.module('faradayApp')
                     $scope.workspaces[i].description = workspace.description;
                     $scope.workspaces[i].duration.start = workspace.duration.start;
                     $scope.workspaces[i].duration.end = workspace.duration.end;
+                    $scope.workspaces[i].scope = workspace.scope;
                     break;
                 }
             };
@@ -64,47 +112,7 @@ angular.module('faradayApp')
                 }
             };
         };
-
-        // todo: refactor the following code
-        workspacesFact.list().then(function(wss) {
-            $scope.wss = wss;
-            var objects = {};
-            $scope.wss.forEach(function(ws){
-                workspacesFact.get(ws, $scope.onSuccessGet);
-                objects[ws] = dashboardSrv.getObjectsCount(ws);
-            });
-            $q.all(objects).then(function(os) {
-                for(var workspace in os) {
-                    if(os.hasOwnProperty(workspace)) {
-                        $scope.objects[workspace] = {
-                            "total vulns": "-",
-                            "hosts": "-",
-                            "services": "-"
-                        };
-                        os[workspace].forEach(function(o) {
-                            $scope.objects[workspace][o.key] = o.value;
-                        });
-                    }
-                }
-            });
-        });
-
-        var hash_tmp = window.location.hash.split("/")[1];
-        switch (hash_tmp){
-            case "status":
-                $scope.hash = "status";
-                break;
-            case "dashboard":
-                $scope.hash = "dashboard";
-                break;
-            case "hosts":
-                $scope.hash = "hosts";
-                break;
-            default:
-                $scope.hash = "";
-        }
-
-        
+      
         $scope.insert = function(workspace){
             delete workspace.selected;
             workspacesFact.put(workspace).then(function(resp){
@@ -113,46 +121,46 @@ angular.module('faradayApp')
             $scope.onFailInsert);
         };
 
-        $scope.update = function(workspace){
-            if(typeof(workspace.duration.startDate) == "number") {
-                start = workspace.duration.startDate;
-            } else if(workspace.duration.startDate) {
-                start = workspace.duration.startDate.getTime(); 
+        $scope.update = function(ws){
+            if(typeof(ws.duration.start) == "number") {
+                start = ws.duration.start;
+            } else if(ws.duration.start) {
+                start = ws.duration.start.getTime(); 
             } else {start = "";}
-            if(typeof(workspace.duration.endDate) == "number") {
-                end = workspace.duration.endDate;
-            } else if(workspace.duration.endDate) {
-                end = workspace.duration.endDate.getTime();
+            if(typeof(ws.duration.end) == "number") {
+                end = ws.duration.end;
+            } else if(ws.duration.end) {
+                end = ws.duration.end.getTime();
             } else {end = "";}
             duration = {'start': start, 'end': end};
             workspace = {
-                "_id":          workspace._id,
-                "_rev":         workspace._rev,
-                "children":     workspace.children,
-                "customer":     workspace.customer,
-                "description":  workspace.description,
+                "_id":          ws._id,
+                "_rev":         ws._rev,
+                "children":     ws.children,
+                "customer":     ws.customer,
+                "description":  ws.description,
                 "duration":     duration,
-                "name":         workspace.name,
-                "scope":        workspace.scope,
-                "sdate":        workspace.sdate,
-                "selected":     workspace.selected,
-                "type":         workspace.type
+                "name":         ws.name,
+                "scope":        ws.scope,
+                "sdate":        ws.sdate,
+                "type":         ws.type
             };
-            workspacesFact.update(workspace, $scope.onSuccessEdit);
+            workspacesFact.update(workspace).then(function(workspace) {
+                $scope.onSuccessEdit(workspace);
+            });
         };
 
         $scope.remove = function(workspace_name){
-            workspacesFact.delete(workspace_name, $scope.onSuccessDelete);
+            workspacesFact.delete(workspace_name).then(function(resp) {
+                $scope.onSuccessDelete(resp);
+            });
         };
 
         // Modals methods
         $scope.new = function(){ 
-            $scope.newworkspace = {};
-
             $scope.modal = $modal.open({
                 templateUrl: 'scripts/workspaces/partials/modalNew.html',
-                controller: 'workspacesCtrl',
-                scope: $scope,
+                controller: 'workspacesModalNew',
                 size: 'lg'
             });
 
@@ -163,38 +171,30 @@ angular.module('faradayApp')
 
         };
 
-        $scope.okNew = function(){
-            $scope.modal.close($scope.newworkspace);
-        };
-
         $scope.edit = function(){ 
-            var selected = false;
+            var workspace;
             $scope.workspaces.forEach(function(w) {
                 if(w.selected) {
-                    selected = true;
-                    return;
+                    workspace = w;
                 }
             });
 
-            if(selected){
-                $scope.workspaces.forEach(function(w){
-                    if(w.selected){
-                        $scope.newworkspace = w;
-                        if($scope.newworkspace.duration){
-                            $scope.newworkspace.duration.startDate = w.duration.start;
-                            $scope.newworkspace.duration.endDate = w.duration.end;
-                        }
-                    } 
-                });
-                $scope.modal = $modal.open({
+            if(workspace){
+                var modal = $modal.open({
                     templateUrl: 'scripts/workspaces/partials/modalEdit.html',
-                    controller: 'workspacesCtrl',
-                    scope: $scope,
-                    size: 'lg'
+                    controller: 'workspacesModalEdit',
+                    size: 'lg',
+                    resolve: {
+                        ws: function() {
+                            return workspace;
+                        }
+                    }
                 });
 
-                $scope.modal.result.then(function(workspace) {
-                    $scope.update(workspace); 
+                modal.result.then(function(workspace) {
+                    if(workspace != undefined){
+                        $scope.update(workspace); 
+                    }
                 });
             } else {
                 var modal = $modal.open({
@@ -208,15 +208,6 @@ angular.module('faradayApp')
                 });
             }
 
-        };
-
-        $scope.okEdit = function() {
-            $scope.modal.close($scope.newworkspace);
-        };
-
-
-        $scope.cancel = function() {
-            $scope.modal.close();
         };
 
         $scope.delete = function() {
@@ -271,7 +262,6 @@ angular.module('faradayApp')
             if(start) start = start.getTime(); else start = "";
             workspace = {
                 "_id": wname,
-                "_rev": "2-bd88abf79cf2b7e8b419cd4387c64bef",
                 "customer": "",
                 "sdate": (new Date).getTime(),
                 "name": wname,
@@ -287,28 +277,5 @@ angular.module('faradayApp')
 
         };
 
-        //DATE PICKER        
-        $scope.today = function() {
-            $scope.dt = new Date();
-        };
-        $scope.today();
-
-        $scope.clear = function () {
-            $scope.dt = null;
-        };
-
-        $scope.minDate = new Date();
-
-        $scope.open = function($event, isStart) {
-            $event.preventDefault();
-            $event.stopPropagation();
-
-            if(isStart) $scope.openedStart = true; else $scope.openedEnd = true;
-        };
-
-        $scope.dateOptions = {
-            formatYear: 'yy',
-            startingDay: 1
-        };
-
+        $scope.init();
     }]);

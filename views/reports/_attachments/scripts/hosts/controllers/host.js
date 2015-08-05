@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('hostCtrl',
-        ['$scope', '$filter', '$route', '$routeParams', '$modal', 'hostsManager', 'statusReportFact', 'dashboardSrv', 'servicesManager',
-        function($scope, $filter, $route, $routeParams, $modal, hostsManager, statusReportFact, dashboardSrv, servicesManager) {
+        ['$scope', '$filter', '$route', '$routeParams', '$modal', 'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager',
+        function($scope, $filter, $route, $routeParams, $modal, hostsManager, workspacesFact, dashboardSrv, servicesManager) {
 
 
 	    init = function() {
@@ -15,7 +15,7 @@ angular.module('faradayApp')
             //ID of current host
             var hostId = $routeParams.hidId;
             // load all workspaces
-            statusReportFact.getWorkspaces().then(function(wss) {
+            workspacesFact.list().then(function(wss) {
                 $scope.workspaces = wss;
             });
             // current host
@@ -94,7 +94,7 @@ angular.module('faradayApp')
                     controller: 'serviceModalEdit',
                     size: 'lg',
                     resolve: {
-                        service: function(){
+                        service: function() {
                             return selected_service;
                         },
 	                    services: function() {
@@ -187,6 +187,14 @@ angular.module('faradayApp')
 	            host.selected = $scope.selectall;
 	        });
 	    };
+
+        $scope.checkAllServices = function() {
+            $scope.selectall = !$scope.selectall;
+
+            angular.forEach($filter('filter')($scope.services, $scope.query), function(service) {
+                service.selected = $scope.selectall;
+            });
+        };
 
 	    // toggles sort field and order
 	    $scope.toggleSort = function(field) {

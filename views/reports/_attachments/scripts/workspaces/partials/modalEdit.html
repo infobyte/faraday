@@ -2,54 +2,56 @@
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
 
-<div class="modal-header">
-    <div class="modal-button">
-        <button class="btn btn-success" ng-click="okEdit()">OK</button>
-        <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+<form>
+    <div class="modal-header">
+        <div class="modal-button">
+            <button class="btn btn-success" ng-click="okEdit()">OK</button>
+            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+        </div>
+        <h3 class="modal-title">Edit Workspace: {{workspace.name}}</h3>
     </div>
-    <h3 class="modal-title">Edit Workspace: {{newworkspace.name}}</h3>
-</div>
-<div class="modal-body">
-    <div class="form-horizontal">
-        <div class="form-group">
-            <div class="col-md-12">
-                <label class="sr-only" for="vuln-desc">Workspace Description</label>
-                <textarea class="form-control" id="vuln-desc"
-                                               placeholder="Description" value={{newworkspace.description}}
-                    ng-model="newworkspace.description" required></textarea>
-            </div>
-        </div><!-- .form-group -->
-        <div class="form-group">
-            <div class="col-md-6">
-                <h5>Start Date</h5>
-                <label class="sr-only" for="work-start">Start Date</label>
-                <p class="input-group">
-                  <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="newworkspace.duration.startDate" is-open="openedStart" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="Start Date"/>
-                  <span class="input-group-btn">
-                    <button type="button" class="btn btn-default" ng-click="open($event,true)"><i class="glyphicon glyphicon-calendar"></i></button>
-                  </span>
-                </p>
-            </div>
-            <div class="col-md-6">
-                <h5>End Date</h5>
-                <label class="sr-only" for="work-end">End Date</label>
-                <p class="input-group">
-                  <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="newworkspace.duration.endDate" is-open="openedEnd" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="End Date"/>
-                  <span class="input-group-btn">
-                    <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
-                  </span>
-                </p>
-            </div>
+    <div class="modal-body">
+        <div class="form-horizontal">
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label class="sr-only" for="vuln-desc">Workspace Description</label>
+                    <textarea class="form-control" id="vuln-desc"
+                                                   placeholder="Description" value={{workspace.description}}
+                        ng-model="workspace.description" required></textarea>
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-6">
+                    <h5>Start Date</h5>
+                    <label class="sr-only" for="work-start">Start Date</label>
+                    <p class="input-group">
+                      <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="workspace.duration.start" is-open="openedStart" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="Start Date"/>
+                      <span class="input-group-btn">
+                        <button type="button" class="btn btn-default" ng-click="open($event,true)"><i class="glyphicon glyphicon-calendar"></i></button>
+                      </span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h5>End Date</h5>
+                    <label class="sr-only" for="work-end">End Date</label>
+                    <p class="input-group">
+                      <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="workspace.duration.end" is-open="openedEnd" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="End Date"/>
+                      <span class="input-group-btn">
+                        <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                      </span>
+                    </p>
+                </div>
 
-        </div><!-- .form-group -->
-        <div class="form-group">
-            <div class="col-md-12">
-                <label class="sr-only" for="work-scope">Scope</label>
-                <textarea class="form-control" id="work-scope"
-                                               placeholder="Scope" ng-model="newworkspace.scope"
-                                                                         >
-                </textarea>
-            </div>
-        </div><!-- .form-group -->
-    </div><!-- .form-horizontal -->
-</div><!-- .modal-body -->
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label class="sr-only" for="work-scope">Scope</label>
+                    <textarea class="form-control" id="work-scope"
+                                                   placeholder="Scope" ng-model="workspace.scope"
+                                                                             >
+                    </textarea>
+                </div>
+            </div><!-- .form-group -->
+        </div><!-- .form-horizontal -->
+    </div><!-- .modal-body -->
+</form>

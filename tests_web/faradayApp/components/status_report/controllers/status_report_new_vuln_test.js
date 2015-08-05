@@ -7,11 +7,9 @@ describe('StatusReport modalNewVulnCtrl', function() {
         vm,
         $scope;
 
-    var $hostsManager,
-    hostsManagerMock,
-    $cweFact,
+    var $cweFact,
     cweFact,
-    servicesManagerMock;
+    targetFactMock;
 
     var returnPromise;
 
@@ -35,33 +33,54 @@ describe('StatusReport modalNewVulnCtrl', function() {
                 return deferred.promise;
             }
 
-            hostsManagerMock = {
-                getHosts: function(ws) {
+            targetFactMock = {
+                getTargets: function(ws) {
                     return returnPromise([
-                        { _id: "1", name: "host1" },
-                        { _id: "2", name: "host2" },
-                        { _id: "3", name: "host3" }
-                    ])
-                },
-                getInterfaces: function(ws, h_id) {
-                    return returnPromise([
-                        {"value":
-                            {
-                                _id: h_id + ".1",
-                                name: "int1",
-                                hostnames: ["test" + h_id + ".faradaysec.com"]
-                            }
+                        {
+                            _id: "1",
+                            name: "host1",
+                            hostnames: ['test1.faradaysec.com'],
+                            services:[
+                                {
+                                    _id: "1.1.1",
+                                    name: "srv1"
+                                },
+                                {
+                                    _id: "1.1.2",
+                                    name: "srv2"
+                                }
+                            ]
+                        },
+                        {
+                            _id: "2",
+                            name: "host2",
+                            hostnames: ['test2.faradaysec.com'],
+                            services:[
+                                {
+                                    _id: "2.1.1",
+                                    name: "srv1"
+                                },
+                                {
+                                    _id: "2.1.2",
+                                    name: "srv2"
+                                }
+                            ]
+                        },
+                        {
+                            _id: "3",
+                            name: "host3",
+                            hostnames: ['test3.faradaysec.com'],
+                            services:[
+                                {
+                                    _id: "3.1.1",
+                                    name: "srv1"
+                                },
+                                {
+                                    _id: "3.1.2",
+                                    name: "srv2"
+                                }
+                            ]
                         }
-                    ])
-                }
-            }
-
-            servicesManagerMock = {
-                getServicesByHost: function(ws, h_id) {
-                    return returnPromise([
-                        { _id: h_id + ".1.1", name: "serv" + h_id },
-                        { _id: h_id + ".1.2", name: "serv" + h_id },
-                        { _id: h_id + ".1.3", name: "serv" + h_id },
                     ])
                 }
             }
@@ -83,8 +102,7 @@ describe('StatusReport modalNewVulnCtrl', function() {
                 EASEOFRESOLUTION: ['simple', 'moderate', 'hard'],
                 severities: ['low', 'medium', 'high'],
                 workspace: 'test',
-                hostsManager: hostsManagerMock,
-                servicesManager: servicesManagerMock,
+                targetFact: targetFactMock,
                 cweFact: cweFactMock
             });
 
@@ -103,7 +121,7 @@ describe('StatusReport modalNewVulnCtrl', function() {
                 expect(target.hostnames).toEqual(["test" + (j + 1) + ".faradaysec.com"]);
                 target.services.forEach(function(services, k) {
                     expect(services._id).toEqual((j + 1) + ".1." + (k + 1));
-                    expect(services.name).toEqual("serv" + (j + 1));
+                    expect(services.name).toEqual("srv" + (k + 1));
                 });
             });
         });

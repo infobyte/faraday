@@ -28,7 +28,7 @@ describe('vulnsManager', function() {
         BASEURL = 'http://localhost:9876/'; 
 
         vuln1 = {
-            "_id": "1.2.3.e29ba38bfa81e7f9050f6517babc14cf32cacdff",
+            "_id": "1.e29ba38bfa81e7f9050f6517babc14cf32cacdff",
             "_rev": "1-abe16726389e434ca3f37384ea76128e",
             "_attachments": {},
             "desc": "I'm scared!",
@@ -53,7 +53,7 @@ describe('vulnsManager', function() {
             "obj_id": "e29ba38bfa81e7f9050f6517babc14cf32cacdff",
             "owned": false,
             "owner": "john",
-            "parent": "1.2.3",
+            "parent": "1",
             "resolution": "Be careful",
             "refs": [
                "CVE-2002-1623",
@@ -70,7 +70,7 @@ describe('vulnsManager', function() {
             "offset": 0,
             "rows": [
                 {
-                    "_id": "1.2.3", 
+                    "_id": "1", 
                     "value": {
                         "name": "Host parent"
                     }
@@ -83,30 +83,33 @@ describe('vulnsManager', function() {
             "offset": 0,
             "rows": [
                 {
-                    "_id": "1.2.3.4",
+                    "_id": "1.2",
                     "value": {
+                        "parent": "1",
+                        "hostnames": [
+                            "h21",
+                            "h22",
+                            "h23"
+                        ]
+                    }
+                }, {
+                    "_id": "1.3",
+                    "value": {
+                        "parent": "1",
+                        "hostnames": [
+                            "h31",
+                            "h32",
+                            "h33"
+                        ]
+                    }
+                }, {
+                    "_id": "1.4",
+                    "value": {
+                        "parent": "1",
                         "hostnames": [
                             "h41",
                             "h42",
                             "h43"
-                        ]
-                    }
-                }, {
-                    "_id": "1.2.3.5",
-                    "value": {
-                        "hostnames": [
-                            "h51",
-                            "h52",
-                            "h53"
-                        ]
-                    }
-                }, {
-                    "_id": "1.2.3.6",
-                    "value": {
-                        "hostnames": [
-                            "h61",
-                            "h62",
-                            "h63"
                         ]
                     }
                 }

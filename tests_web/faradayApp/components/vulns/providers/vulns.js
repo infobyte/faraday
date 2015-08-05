@@ -149,20 +149,17 @@ describe('vulnsManager', function() {
                 vulns = vs;
             });
 
-            $rootScope.$apply();
             $httpBackend.flush();
-            $rootScope.$apply();
 
             expect(vulns.length).toEqual(1);
             expect(vulns[0]._id).toEqual(vuln1._id);
+
             vulnsManager.vulns.forEach(function(v) {
                 for(var prop in vuln1) {
                     expect(v[prop]).toEqual(vuln1[prop]);
                 }
-            });
-            vulns.forEach(function(vuln) {
-                expect(vuln.target).toEqual(hosts.rows[0].value.name);
-                expect(vuln.hostnames).toEqual(hostnames);
+                expect(v.target).toEqual(hosts.rows[0].value.name);
+                expect(v.hostnames).toEqual(hostnames);
             });
         });
 
@@ -198,6 +195,7 @@ describe('vulnsManager', function() {
 
             expect(vulns.length).toEqual(1);
             expect(vulns[0]._id).toEqual(id);
+            expect(vulnsManager.vulns[0]._id).toEqual(id);
         });
 
         it('deleteVuln', function() {

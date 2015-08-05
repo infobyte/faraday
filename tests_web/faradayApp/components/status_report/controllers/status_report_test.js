@@ -152,22 +152,23 @@ describe('statusReportCtrl', function() {
             }
 
             vulnsManagerMock = {
-                vulns: [vuln1, vuln2, vuln3],
+                vulns: [],
                 getVulns: function(workspace) {
+                    vulnsManagerMock.vulns = [vuln1, vuln2, vuln3];
                     return returnPromise(vulnsManagerMock.vulns);
                 },
                 deleteVuln: function(vuln) {
                     if (vuln._id === "1.2.3.4" ||
                         vuln._id === "1.2.3.5" ||
                         vuln._id === "6.7.8.9") {
-                        var vulns_tmp = [];
-                        vulnsManagerMock.vulns.forEach(function(v) {
-                            if (v._id != vuln._id) {
-                                vulns_tmp.push(v);
+                        for (var i = 0; i < vulnsManagerMock.vulns.length; i++) {
+                            var v = vulnsManagerMock.vulns[i];
+                            if (v._id == vuln._id) {
+                                vulnsManagerMock.vulns.splice(i, 1);
+                                break;
                             }
-                        });
-                        vulnsManagerMock.vulns = vulns_tmp;
-                        return returnPromise();
+                        };
+                        return returnPromise(vulnsManagerMock.vulns);
                     } else {
                         return rejectPromise("error");
                     }
@@ -273,7 +274,6 @@ describe('statusReportCtrl', function() {
             // we need $scope.vulns to have all the vulns before calling
             // the delete method
             vuln1.selected_statusreport_controller = true;
-            $scope.selectedVulns.push(vuln1);
             $scope.$apply();
             $scope.delete();
             fakeModal.close();
@@ -288,7 +288,6 @@ describe('statusReportCtrl', function() {
             // we need $scope.vulns to have all the vulns before calling
             // the delete method
             vuln1.selected_statusreport_controller = true;
-            $scope.selectedVulns.push(vuln1);
             $scope.$apply();
             $scope.delete();
             fakeModal.dismiss();
@@ -302,8 +301,6 @@ describe('statusReportCtrl', function() {
         it('call delete with valid vulns selected and accept modal', function() {
             vuln1.selected_statusreport_controller = true;
             vuln2.selected_statusreport_controller = true;
-            $scope.selectedVulns.push(vuln1);
-            $scope.selectedVulns.push(vuln2);
             $scope.$apply();
             $scope.delete();
             fakeModal.close();
@@ -471,7 +468,6 @@ describe('statusReportCtrl', function() {
             };
             
             vuln1.selected_statusreport_controller = true;
-            $scope.selectedVulns.push(vuln1);
 
             $scope.$apply();
             $scope.edit();
@@ -503,7 +499,6 @@ describe('statusReportCtrl', function() {
                 "severity": "high"
             };
             vuln1.selected_statusreport_controller = true;
-            $scope.selectedVulns.push(vuln1);
             $scope.$apply();
             //$scope.edit();
             //fakeModal.dismiss();

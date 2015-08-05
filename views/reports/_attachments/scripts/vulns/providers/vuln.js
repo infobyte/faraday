@@ -71,6 +71,7 @@ angular.module('faradayApp')
                     if(data.metadata !== undefined) self.metadata = data.metadata; 
                 }
 
+                if(data.owner !== undefined) self.owner = data.owner;
                 self.ws = ws;
                 if(data.parent !== undefined) self.parent = data.parent; 
 

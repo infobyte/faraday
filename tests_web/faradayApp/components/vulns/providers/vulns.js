@@ -6,6 +6,7 @@ describe('vulnsManager', function() {
     var vulnsManager,
     Vuln,
     WebVuln,
+    hostsManager,
     $filter,
     $httpBackend,
     $q,
@@ -18,14 +19,6 @@ describe('vulnsManager', function() {
     beforeEach(module('faradayApp'));
 
     beforeEach(inject(function($injector, _vulnsManager_, _Vuln_, _WebVuln_) {
-        $filter = $injector.get('$filter');
-        $httpBackend = $injector.get('$httpBackend');
-        $q = $injector.get('$q');
-        $rootScope = $injector.get('$rootScope');
-        vulnsManager = _vulnsManager_;
-        Vuln = _Vuln_;
-        WebVuln = _WebVuln_;
-        BASEURL = 'http://localhost:9876/'; 
 
         vuln1 = {
             "_id": "1.e29ba38bfa81e7f9050f6517babc14cf32cacdff",
@@ -120,6 +113,28 @@ describe('vulnsManager', function() {
             hostnames = hostnames.concat(interf.value.hostnames);
         });
 
+        hostsManagerMock = {
+            getHosts: function(ws) {
+                var deferred = _$q_.defer();
+                deferred.resolve(hosts);
+                return deferred.promise;
+            },
+            getallInterfaces: function() {
+                var deferred = _$q_.defer();
+                deferred.resolve(interfaces);
+                return deferred.promise;
+            }
+        };
+
+        $filter = $injector.get('$filter');
+        $httpBackend = $injector.get('$httpBackend');
+        $q = $injector.get('$q');
+        $rootScope = $injector.get('$rootScope');
+        hostsManager = hostsManagerMock;
+        vulnsManager = _vulnsManager_;
+        Vuln = _Vuln_;
+        WebVuln = _WebVuln_;
+        BASEURL = 'http://localhost:9876/'; 
     }));
 
     afterEach(function() {
@@ -148,21 +163,32 @@ describe('vulnsManager', function() {
             $httpBackend.expect('GET', BASEURL + 'ws/_design/hosts/_view/hosts').respond(200, hosts);
             $httpBackend.expect('GET', BASEURL + 'ws/_design/interfaces/_view/interfaces').respond(200, interfaces);
 
-            vulnsManager.getVulns("ws").then(function(vs) {
-                vulns = vs;
-            });
+            vulnsManager.getVulns("ws")
+                .then(function(vs) {
+                    vulns = vs;
+                });
 
             $httpBackend.flush();
 
             expect(vulns.length).toEqual(1);
-            expect(vulns[0]._id).toEqual(vuln1._id);
+            expect(vulnsManager.vulns.length).toEqual(1);
 
+            // promise is resolved correctly
+            vulns.forEach(function(v) {
+                for(var prop in vuln1) {
+                    expect(v[prop]).toEqual(vuln1[prop]);
+                }
+                expect(v["target"]).toEqual(hosts.rows[0].value.name);
+                expect(v["hostnames"]).toEqual(hostnames);
+            });
+
+            // array is updated correctly
             vulnsManager.vulns.forEach(function(v) {
                 for(var prop in vuln1) {
                     expect(v[prop]).toEqual(vuln1[prop]);
                 }
-                expect(v.target).toEqual(hosts.rows[0].value.name);
-                expect(v.hostnames).toEqual(hostnames);
+                expect(v["target"]).toEqual(hosts.rows[0].value.name);
+                expect(v["hostnames"]).toEqual(hostnames);
             });
         });
 

@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA, 2015:
+Aug 05, 2015:
 ---
 
 * Added CWE database and integration with vulns creation

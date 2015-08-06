@@ -244,6 +244,17 @@
                         </form>
                     </div>
                 </div>
+                <div id="counter">
+                    <span>Total</span>
+                    <span class="counterNum">{{vulns.length}}</span>
+                    <div ng-if="search">
+                        <span>Viewing</span>
+                        <span class="counterNum">{{filtered.length}}</span>
+                    </div>
+                    <p style="margin:0px" ng-if="!search"></p>
+                    <span>Selected</span>
+                    <span class="counterNum">{{selectedVulns().length}}</span>
+                </div>
             </div><!-- .reports -->
     </div><!-- #reports-main --></div><!-- .right-main -->
 </section><!-- #main -->

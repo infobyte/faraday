@@ -910,3 +910,28 @@ aside .alert.alert-danger.alert-dismissible{
     word-break: break-all;
     white-space: normal;
 }
+#counter{
+    font-size: 12px;
+    position: fixed;
+    background: #999;
+    opacity: 0.6;
+    color: #FFF;
+    display: block;
+    right: 0px;
+    border-radius: 7px 0px 0px 7px;
+    padding: 5px;
+    text-decoration: none!important;
+    z-index: 100000;
+    -webkit-transition: opacity 0.5s ease-out;
+    -moz-transition: opacity 0.5s ease-out;
+    -o-transition: opacity 0.5s ease-out;
+    transition: opacity 0.5s ease-out;
+    cursor: default;
+}
+#counter:hover{
+    opacity: 0;
+}
+.counterNum{
+    font-size: 15px;
+    font-weight: bold;
+}

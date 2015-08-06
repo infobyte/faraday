@@ -514,8 +514,8 @@ angular.module('faradayApp')
             }
 
             var orderObject = $filter('orderObjectBy')($scope.vulns, $scope.sortField, $scope.reverse);
-            var tmp_vulns = $filter('limitTo')(orderObject, $scope.pageSize, $scope.currentPage * $scope.pageSize);
-            angular.forEach($filter('filter')(tmp_vulns), function(v,k) {
+            var tmp_vulns = orderObject.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
+            angular.forEach($filter('filter')(tmp_vulns, $scope.expression), function(v,k) {
                 v.selected_statusreport_controller = $scope.selectall;
             });
         };

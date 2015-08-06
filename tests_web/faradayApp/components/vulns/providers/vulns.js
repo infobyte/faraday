@@ -3,23 +3,26 @@
 // See the file 'doc/LICENSE' for the license information
 
 describe('vulnsManager', function() {
+    // Declare dependencies
     var vulnsManager,
     Vuln,
     WebVuln,
-    hostsManager,
     $filter,
     $httpBackend,
+    $provide,
     $q,
-    BASEURL,
-    vuln1,
+    BASEURL;
+
+    // Declare data
+    var vuln1,
     hosts, interfaces, 
     hostnames = [];
 
     // Set up the module
     beforeEach(module('faradayApp'));
 
-    beforeEach(inject(function($injector, _vulnsManager_, _Vuln_, _WebVuln_) {
-
+    // Initialize data
+    beforeEach(function() {
         vuln1 = {
             "_id": "1.e29ba38bfa81e7f9050f6517babc14cf32cacdff",
             "_rev": "1-abe16726389e434ca3f37384ea76128e",
@@ -112,29 +115,39 @@ describe('vulnsManager', function() {
         interfaces.rows.forEach(function(interf) {
             hostnames = hostnames.concat(interf.value.hostnames);
         });
+    });
 
-        hostsManagerMock = {
+    beforeEach(angular.mock.module(function(_$provide_) {
+        $provide = _$provide_;
+    }));
+
+    // Initialize dependencies
+    beforeEach(inject(function($injector, _vulnsManager_, _Vuln_, _WebVuln_) {
+    //beforeEach(function() {
+        var hostsManagerMock = {
             getHosts: function(ws) {
                 var deferred = _$q_.defer();
                 deferred.resolve(hosts);
                 return deferred.promise;
             },
-            getallInterfaces: function() {
+            getAllInterfaces: function() {
                 var deferred = _$q_.defer();
                 deferred.resolve(interfaces);
                 return deferred.promise;
             }
         };
 
-        $filter = $injector.get('$filter');
-        $httpBackend = $injector.get('$httpBackend');
-        $q = $injector.get('$q');
-        $rootScope = $injector.get('$rootScope');
-        hostsManager = hostsManagerMock;
-        vulnsManager = _vulnsManager_;
-        Vuln = _Vuln_;
-        WebVuln = _WebVuln_;
-        BASEURL = 'http://localhost:9876/'; 
+        $provide.value('hostsManager', hostsManagerMock);
+
+        inject(function(_vulnsManager_, _Vuln_, _WebVuln_, _$filter_, _$httpBackend_, _$q_) {
+            $filter = _$filter_;
+            $httpBackend = _$httpBackend_;
+            $q = _$q_;
+            vulnsManager = _vulnsManager_;
+            Vuln = _Vuln_;
+            WebVuln = _WebVuln_;
+            BASEURL = 'http://localhost:9876/'; 
+        });
     }));
 
     afterEach(function() {
@@ -220,7 +233,6 @@ describe('vulnsManager', function() {
             var lala = vulnsManager.createVuln("ws", vuln);
 
             $httpBackend.flush();
-            $rootScope.$apply();
 
             expect(vulns.length).toEqual(1);
             expect(vulns[0]._id).toEqual(id);

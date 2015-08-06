@@ -33,7 +33,7 @@ angular.module('faradayApp')
         $scope.updateWorkspace = function() {
             if($routeParams.wsId != undefined) {
                 $scope.workspace = $routeParams.wsId;
-                $cookies.currentUrl = $location.path();
+                $cookies.put('currentUrl', $location.path());
             }
         };
 
@@ -43,7 +43,7 @@ angular.module('faradayApp')
             } else {
                 $scope.component = $location.path().split("/")[1];
             }
-            $cookies.currentComponent = $scope.component;
+            $cookies.put('currentComponent', $scope.component);
         };
 
         $scope.showNavigation = function() {
@@ -54,14 +54,14 @@ angular.module('faradayApp')
         $scope.loadCurrentWorkspace = function() {
             var pos = -1;
 
-            if($cookies.currentUrl != undefined) {
-                pos = $cookies.currentUrl.indexOf('ws/');
+            if($cookies.get('currentUrl') != undefined) {
+                pos = $cookies.get('currentUrl').indexOf('ws/');
             }
 
             if($routeParams.wsId != undefined) {
                 $scope.workspace = $routeParams.wsId;
             } else if(pos >= 0) {
-                $scope.workspace = $cookies.currentUrl.slice(pos+3);
+                $scope.workspace = $cookies.get('currentUrl').slice(pos+3);
             }
         };
 

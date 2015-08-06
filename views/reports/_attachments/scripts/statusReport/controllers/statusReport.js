@@ -43,8 +43,8 @@ angular.module('faradayApp')
             $scope.currentPage = 0;
             $scope.newCurrentPage = 0;
  
-            if (!isNaN(parseInt($cookies.pageSize)))
-                $scope.pageSize = parseInt($cookies.pageSize);
+            if (!isNaN(parseInt($cookies.get('pageSize'))))
+                $scope.pageSize = parseInt($cookies.get('pageSize'));
             $scope.newPageSize = $scope.pageSize;
 
             // load all workspaces
@@ -72,9 +72,9 @@ angular.module('faradayApp')
             });
 
             // created object for columns cookie columns
-            if(typeof($cookies.SRcolumns) != 'undefined') {
+            if(typeof($cookies.get('SRcolumns')) != 'undefined'){
                 var objectoSRColumns = {};
-                var arrayOfColumns = $cookies.SRcolumns.replace(/[{}"']/g, "").split(',');
+                var arrayOfColumns = $cookies.get('SRcolumns').replace(/[{}"']/g, "").split(',');
                 arrayOfColumns.forEach(function(column){
                     var columnFinished = column.split(':');
                     if(columnFinished[1] == "true") objectoSRColumns[columnFinished[0]] = true; else objectoSRColumns[columnFinished[0]] = false;
@@ -474,7 +474,7 @@ angular.module('faradayApp')
 
         $scope.go = function() {
             $scope.pageSize = $scope.newPageSize;
-            $cookies.pageSize = $scope.pageSize;
+            $cookies.put('pageSize', $scope.pageSize);
             $scope.currentPage = 0;
             if($scope.newCurrentPage <= parseInt($scope.vulns.length/$scope.pageSize)
                     && $scope.newCurrentPage > -1 && !isNaN(parseInt($scope.newCurrentPage))) {
@@ -568,7 +568,7 @@ angular.module('faradayApp')
         // toggles column show property
         $scope.toggleShow = function(column, show) {
             $scope.columns[column] = !show;
-            $cookies.SRcolumns = JSON.stringify($scope.columns);
+            $cookies.put('SRcolumns', JSON.stringify($scope.columns));
         };
 
         // toggles sort field and order

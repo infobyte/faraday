@@ -16,12 +16,17 @@ angular.module('faradayApp')
             $scope.currentPage = 0;
             $scope.pageSize = 10;
             $scope.pagination = 10;
+            $scope.vulns;
 
             // graphicsBarCtrl data
             $scope.topServices; // previously known as treemapData
             $scope.topHosts; // previously known as barData
             $scope.vulnsCount;
             $scope.vulnsCountClass; // classified vulns count 
+
+            // vulnsByPrice
+            $scope.workspaceWorth;
+            $scope.vulnPrices = dashboardSrv.vulnPrices;
 
             // cmd table sorting
             $scope.cmdSortField = 'date';
@@ -113,32 +118,36 @@ angular.module('faradayApp')
                 dashboardSrv.getVulnerabilitiesCount(workspace).then(function(res) {
                     if(res.length > 0) {
                         var tmp = [
-                            {"key": "critical", "value": 0, "color": "#8B00FF"},
-                            {"key": "high", "value": 0, "color": "#DF3936"},
-                            {"key": "med", "value": 0, "color": "#DFBF35"},
-                            {"key": "low", "value": 0, "color": "#A1CE31"},
-                            {"key": "info", "value": 0, "color": "#428BCA"},
-                            {"key": "unclassified", "value": 0}
+                            {"key": "critical", "value": 0, "color": "#8B00FF", "amount": 0},
+                            {"key": "high", "value": 0, "color": "#DF3936", "amount": 0},
+                            {"key": "med", "value": 0, "color": "#DFBF35", "amount": 0},
+                            {"key": "low", "value": 0, "color": "#A1CE31", "amount": 0},
+                            {"key": "info", "value": 0, "color": "#428BCA", "amount": 0},
+                            {"key": "unclassified", "value": 0, "color": "#999999", "amount": 0}
                         ];
 
                         res.forEach(function(tvuln) {
-                            if (tvuln.key == 1 || tvuln.key == "info"){
-                                dashboardSrv.accumulate(tmp, "info", tvuln.value);
+                            if(tvuln.key == 1 || tvuln.key == "info") {
+                                dashboardSrv.accumulate(tmp, "info", tvuln.value, "value");
                             } else if (tvuln.key == 2 || tvuln.key == "low") {
-                                dashboardSrv.accumulate(tmp, "low", tvuln.value);
+                                dashboardSrv.accumulate(tmp, "low", tvuln.value, "value");
                             } else if (tvuln.key == 3 || tvuln.key == "med") {
-                                dashboardSrv.accumulate(tmp, "med", tvuln.value);
+                                dashboardSrv.accumulate(tmp, "med", tvuln.value, "value");
                             } else if (tvuln.key == 4 || tvuln.key == "high") {
-                                dashboardSrv.accumulate(tmp, "high", tvuln.value);
+                                dashboardSrv.accumulate(tmp, "high", tvuln.value, "value");
                             } else if (tvuln.key == 5 || tvuln.key == "critical") {
-                                dashboardSrv.accumulate(tmp, "critical", tvuln.value);
+                                dashboardSrv.accumulate(tmp, "critical", tvuln.value, "value");
                             } else if (tvuln.key == 6 || tvuln.key == "unclassified") {
-                                dashboardSrv.accumulate(tmp, "unclassified", tvuln.value);
+                                dashboardSrv.accumulate(tmp, "unclassified", tvuln.value, "value");
                             }
                         });
 
                         // used to create colored boxes for vulns
                         $scope.vulnsCount = tmp;
+
+                        // used to create workspace's worth
+                        $scope.generateVulnPrices($scope.vulnsCount, $scope.vulnPrices);
+                        $scope.workspaceWorth = $scope.sumProperty($scope.vulnsCount, "amount");
 
                         // used to create pie chart for vulns
                         $scope.vulnsCountClass = {"children": angular.copy(tmp)};
@@ -148,6 +157,13 @@ angular.module('faradayApp')
                                 break;
                             }
                         };
+
+                        $scope.$watch('vulnPrices', function(ps) {
+                            if($scope.vulnsCount != undefined) {
+                                $scope.generateVulnPrices($scope.vulnsCount, $scope.vulnPrices);
+                                $scope.workspaceWorth = $scope.sumProperty($scope.vulnsCount, "amount");
+                            }
+                        }, true);
                     }
                 });
 
@@ -281,6 +297,24 @@ angular.module('faradayApp')
                         }
                     });
                 }
+            };
+
+            $scope.sumProperty = function(data, prop) {
+                var total = 0;
+
+                for(var d in data) {
+                    if(data.hasOwnProperty(d)) {
+                        if(data[d][prop] !== undefined) total += parseInt(data[d][prop]);
+                    }
+                }
+
+                return total;
+            };
+
+            $scope.generateVulnPrices = function(vulns, prices) {
+                vulns.forEach(function(vuln) {
+                    vuln.amount = vuln.value * prices[vuln.key];
+                });
             };
     }]);
 

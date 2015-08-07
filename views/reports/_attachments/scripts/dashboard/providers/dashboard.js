@@ -164,8 +164,9 @@ angular.module('faradayApp')
 
 
         dashboardSrv.accumulate = function(_array, key, value, accum) {
-            _array.forEach(function(obj){
+            _array.forEach(function(obj) {
                 if(obj.key == key) {
+                    if(obj[accum] === undefined) obj[accum] = 0;
                     obj[accum] += value;
                 }
             });

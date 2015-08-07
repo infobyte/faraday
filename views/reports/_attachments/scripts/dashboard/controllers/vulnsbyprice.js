@@ -10,36 +10,35 @@ angular.module('faradayApp')
                 //current workspace
                 $scope.workspace = $routeParams.wsId;
 
-                $scope.prices = dashboardSrv.vulnPrices;
+                $scope.vulnPrices = dashboardSrv.vulnPrices;
 
                 dashboardSrv.getVulnerabilities($scope.workspace).then(function(res) {
                     $scope.vulns = res;
-                    $scope.generateData(res, $scope.prices);
+                    $scope.vulnsCount = $scope.generateVulnPrices(res, $scope.vulnPrices);
+                    $scope.workspaceWorth = $scope.sumProperty($scope.vulnsCount, "amount");
                 }); 
 
-                $scope.$watch('prices', function(ps) {
-                    if($scope.vulns != undefined) $scope.generateData($scope.vulns, ps);
+                $scope.$watch('vulnPrices', function(ps) {
+                    if($scope.vulns != undefined) {
+                        $scope.vulnsCount = $scope.generateVulnPrices($scope.vulns, $scope.vulnPrices);
+                        $scope.workspaceWorth = $scope.sumProperty($scope.vulnsCount, "amount");
+                    }
                 }, true);
             };
 
-            $scope.generateData = function(vulns, prices) {
-                $scope.data = $scope.generatePrices(vulns, prices);
-                $scope.total = $scope.generateTotal($scope.data);
-            };
-
-            $scope.generateTotal = function(data) {
+            $scope.sumProperty = function(data, prop) {
                 var total = 0;
 
                 for(var d in data) {
                     if(data.hasOwnProperty(d)) {
-                        total += parseInt(data[d]['amount']);
+                        if(data[d][prop] !== undefined) total += parseInt(data[d][prop]);
                     }
                 }
 
                 return total;
             };
 
-            $scope.generatePrices = function(vulns, prices) {
+            $scope.generateVulnPrices = function(vulns, prices) {
                 var data =  [
                     {
                         color: '#932ebe',

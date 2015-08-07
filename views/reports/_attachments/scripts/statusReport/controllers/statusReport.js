@@ -513,11 +513,13 @@ angular.module('faradayApp')
                 $scope.selectall = false;
             }
 
-            var orderObject = $filter('orderObjectBy')($scope.vulns, $scope.sortField, $scope.reverse);
-            var tmp_vulns = orderObject.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
-            angular.forEach($filter('filter')(tmp_vulns, $scope.expression), function(v,k) {
+            var tmp_vulns = $filter('orderObjectBy')($scope.vulns, $scope.sortField, $scope.reverse);
+            tmp_vulns = $filter('filter')(tmp_vulns, $scope.expression);
+            tmp_vulns = tmp_vulns.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
+            tmp_vulns.forEach(function(v,k) {
                 v.selected_statusreport_controller = $scope.selectall;
             });
+
         };
 
         $scope.go = function() {

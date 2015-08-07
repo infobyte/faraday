@@ -32,7 +32,7 @@ angular.module('faradayApp')
 
                 for(var d in data) {
                     if(data.hasOwnProperty(d)) {
-                        total += parseInt(data[d]['value']);
+                        total += parseInt(data[d]['amount']);
                     }
                 }
 
@@ -43,27 +43,27 @@ angular.module('faradayApp')
                 var data =  [
                     {
                         color: '#932ebe',
-                        value: 0,
+                        amount: 0,
                         key: 'critical'
                     }, {
                         color: '#DF3936',
-                        value: 0,
+                        amount: 0,
                         key: 'high'
                     }, {
                         color: '#DFBF35',
-                        value: 0,
+                        amount: 0,
                         key: 'med'
                     }, {
                         color: '#A1CE31',
-                        value: 0,
+                        amount: 0,
                         key: 'low'
                     }, {
                         color: '#2e97bd',
-                        value: 0,
+                        amount: 0,
                         key: 'info'
                     }, {
                         color: '#999999',
-                        value: 0,
+                        amount: 0,
                         key: 'unclassified'
                     }
                 ];
@@ -72,17 +72,17 @@ angular.module('faradayApp')
                     var sev = vuln.value.severity;
 
                     if(sev == 0 || sev == "unclassified") {
-                        dashboardSrv.accumulate(data, "unclassified", parseInt(prices[sev]));
+                        dashboardSrv.accumulate(data, "unclassified", parseInt(prices[sev]), "amount");
                     } else if(sev == 1 || sev == "info") {
-                        dashboardSrv.accumulate(data, "info", parseInt(prices[sev]));
+                        dashboardSrv.accumulate(data, "info", parseInt(prices[sev]), "amount");
                     } else if(sev == 2 || sev == "low") {
-                        dashboardSrv.accumulate(data, "low", parseInt(prices[sev]));
+                        dashboardSrv.accumulate(data, "low", parseInt(prices[sev]), "amount");
                     } else if(sev == 3 || sev == "med") {
-                        dashboardSrv.accumulate(data, "med", parseInt(prices[sev]));
+                        dashboardSrv.accumulate(data, "med", parseInt(prices[sev]), "amount");
                     } else if(sev == 4 || sev == "high") {
-                        dashboardSrv.accumulate(data, "high", parseInt(prices[sev]));
+                        dashboardSrv.accumulate(data, "high", parseInt(prices[sev]), "amount");
                     } else if(sev == 5 || sev == "critical") {
-                        dashboardSrv.accumulate(data, "critical", parseInt(prices[sev]));
+                        dashboardSrv.accumulate(data, "critical", parseInt(prices[sev]), "amount");
                     }
                 });
 

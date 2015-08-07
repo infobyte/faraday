@@ -10,13 +10,18 @@ angular.module('faradayApp')
             var workspace = $routeParams.wsId;
             $scope.servicesCount = [];
             $scope.objectsCount = [];
-            $scope.vulnsCount = [];
             $scope.commands = [];
             $scope.hosts = [];
             $scope.showPagination = 1;
             $scope.currentPage = 0;
             $scope.pageSize = 10;
             $scope.pagination = 10;
+
+            // graphicsBarCtrl data
+            $scope.topServices; // previously known as treemapData
+            $scope.topHosts; // previously known as barData
+            $scope.vulnsCount;
+            $scope.vulnsCountClass; // classified vulns count 
 
             // cmd table sorting
             $scope.cmdSortField = 'date';
@@ -78,12 +83,22 @@ angular.module('faradayApp')
             if(workspace != undefined) {
                 $scope.workspace = workspace;
 
-                dashboardSrv.getServicesCount(workspace).then(function(res){
-                    res.sort(function(a, b){
+                dashboardSrv.getServicesCount(workspace).then(function(res) {
+                    res.sort(function(a, b) {
                         return b.value - a.value;
                     });
+
                     $scope.servicesCount = res;
 
+                    if(res.length > 4) {
+                        var colors = ["#FA5882", "#FF0040", "#B40431", "#610B21", "#2A0A1B"];
+                        var tmp = [];
+                        res.slice(0, 5).forEach(function(srv) {
+                            srv.color = colors.shift();
+                            tmp.push(srv);
+                        });
+                        $scope.topServices = {"children": tmp};
+                    }
                 });
 
                 dashboardSrv.getObjectsCount(workspace).then(function(res){
@@ -95,41 +110,44 @@ angular.module('faradayApp')
                     $scope.objectsCount = res;
                 });
 
-                dashboardSrv.getVulnerabilitiesCount(workspace).then(function(res){
-                    if (res.length > 0) {
+                dashboardSrv.getVulnerabilitiesCount(workspace).then(function(res) {
+                    if(res.length > 0) {
                         var tmp = [
-                            {"key": "critical", "value": 0},
-                            {"key": "high", "value": 0},
-                            {"key": "med", "value": 0},
-                            {"key": "low", "value": 0},
-                            {"key": "info", "value": 0},
+                            {"key": "critical", "value": 0, "color": "#8B00FF"},
+                            {"key": "high", "value": 0, "color": "#DF3936"},
+                            {"key": "med", "value": 0, "color": "#DFBF35"},
+                            {"key": "low", "value": 0, "color": "#A1CE31"},
+                            {"key": "info", "value": 0, "color": "#428BCA"},
                             {"key": "unclassified", "value": 0}
                         ];
 
-                        function accumulate(_array, key, value){
-                            _array.forEach(function(obj){
-                                if (obj.key == key){
-                                    obj.value += value;
-                                }
-                            });
-                        }
-
-                        res.forEach(function(tvuln){
+                        res.forEach(function(tvuln) {
                             if (tvuln.key == 1 || tvuln.key == "info"){
-                                accumulate(tmp, "info", tvuln.value);
+                                dashboardSrv.accumulate(tmp, "info", tvuln.value);
                             } else if (tvuln.key == 2 || tvuln.key == "low") {
-                                accumulate(tmp, "low", tvuln.value);
+                                dashboardSrv.accumulate(tmp, "low", tvuln.value);
                             } else if (tvuln.key == 3 || tvuln.key == "med") {
-                                accumulate(tmp, "med", tvuln.value);
+                                dashboardSrv.accumulate(tmp, "med", tvuln.value);
                             } else if (tvuln.key == 4 || tvuln.key == "high") {
-                                accumulate(tmp, "high", tvuln.value);
+                                dashboardSrv.accumulate(tmp, "high", tvuln.value);
                             } else if (tvuln.key == 5 || tvuln.key == "critical") {
-                                accumulate(tmp, "critical", tvuln.value);
+                                dashboardSrv.accumulate(tmp, "critical", tvuln.value);
                             } else if (tvuln.key == 6 || tvuln.key == "unclassified") {
-                                accumulate(tmp, "unclassified", tvuln.value);
+                                dashboardSrv.accumulate(tmp, "unclassified", tvuln.value);
                             }
                         });
+
+                        // used to create colored boxes for vulns
                         $scope.vulnsCount = tmp;
+
+                        // used to create pie chart for vulns
+                        $scope.vulnsCountClass = {"children": angular.copy(tmp)};
+                        for(var i = 0; i < $scope.vulnsCountClass.children.length; i++) {
+                            if($scope.vulnsCountClass.children[i].key == "unclassified") {
+                                $scope.vulnsCountClass.children.splice(i, 1);
+                                break;
+                            }
+                        };
                     }
                 });
 
@@ -149,12 +167,12 @@ angular.module('faradayApp')
                 });
 
                 dashboardSrv.getHosts(workspace).then(function(res){
-                    dashboardSrv.getHostsByServicesCount(workspace).then(function(servicesCount){
+                    dashboardSrv.getHostsByServicesCount(workspace).then(function(servicesCount) {
                         res.forEach(function(host){
                             // Maybe this part should be in the view somehow
                             // or, even better, in CSS file
                             oss = ["windows", "cisco", "router", "osx", "apple","linux", "unix"];
-                            oss.forEach(function(os){
+                            oss.forEach(function(os) {
                                 if (host.os.toLowerCase().indexOf(os) != -1) {
                                     host.icon = os;
                                     if (os == "unix") {
@@ -170,7 +188,20 @@ angular.module('faradayApp')
                                     host.servicesCount = count.value;
                                     return
                                 }
-                            })
+                            });
+                            // load data for Top Hosts
+                            if(servicesCount.length > 2) {
+                                servicesCount.sort(function(a, b) {
+                                    return b.value-a.value;
+                                });
+                                var colors = ["rgb(57, 59, 121)","rgb(82, 84, 163)","rgb(107, 110, 207)"];
+                                var tmp = [];
+                                servicesCount.slice(0, 3).forEach(function(srv) {
+                                    srv.color = colors.shift();
+                                    tmp.push(srv);
+                                });
+                                $scope.topHosts = tmp;
+                            }
                             $scope.hosts.push(host);
                         });
                     });
@@ -179,7 +210,7 @@ angular.module('faradayApp')
                 vulnsManager.getVulns(workspace).then(function(vulns) {
                     $scope.vulns = vulns;
                 });
-            }
+            };
 
             $scope.numberOfPages = function() {
                 $scope.filteredData = $scope.hosts;
@@ -189,7 +220,7 @@ angular.module('faradayApp')
                     $scope.showPagination = 1;
                 };
                 return parseInt($scope.filteredData.length/$scope.pageSize);
-            }
+            };
 
             $scope.go = function(page,pagination){
                 if(this.go_page < $scope.numberOfPages()+1 && this.go_page > -1){
@@ -199,7 +230,7 @@ angular.module('faradayApp')
                 if(this.go_page > $scope.numberOfPages()){
                     $scope.currentPage = 0;
                 }
-            }
+            };
 
             $scope.showServices = function(host_id) {
                 if ($scope.workspace != undefined){
@@ -217,7 +248,7 @@ angular.module('faradayApp')
                         }
                      });
                 }
-            }
+            };
 
             $scope.showHosts = function(srv_name) {
                 if ($scope.workspace != undefined){
@@ -235,7 +266,22 @@ angular.module('faradayApp')
                         }
                      });
                 }
-            }
+            };
+
+            $scope.treemap = function(data) {
+                if(data !== undefined && data != {}) {
+                    var modal = $modal.open({
+                        templateUrl: 'scripts/dashboard/partials/modal-treemap.html',
+                        controller: 'treemapModalCtrl',
+                        size: 'lg',
+                        resolve: {
+                            workspace: function() {
+                                return $scope.workspace;
+                            }
+                        }
+                    });
+                }
+            };
     }]);
 
 angular.module('faradayApp')

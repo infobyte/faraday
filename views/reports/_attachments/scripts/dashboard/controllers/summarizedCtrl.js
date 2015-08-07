@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('summarizedCtrl', 
-        ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv', 'vulnsManager',
-        function($scope, $route, $routeParams, $modal, dashboardSrv, vulnsManager) {
+        ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv', 'vulnsManager', 'workspacesFact',
+        function($scope, $route, $routeParams, $modal, dashboardSrv, vulnsManager, workspacesFact) {
             //current workspace
             var workspace = $routeParams.wsId;
             $scope.servicesCount = [];
@@ -27,6 +27,12 @@ angular.module('faradayApp')
             // vulnsByPrice
             $scope.workspaceWorth;
             $scope.vulnPrices = dashboardSrv.vulnPrices;
+
+            // wsProgress
+            $scope.wsDuration;
+            $scope.wsEnd;
+            $scope.wsStart;
+            $scope.wsProgress;
 
             // cmd table sorting
             $scope.cmdSortField = 'date';
@@ -118,7 +124,7 @@ angular.module('faradayApp')
                 dashboardSrv.getVulnerabilitiesCount(workspace).then(function(res) {
                     if(res.length > 0) {
                         var tmp = [
-                            {"key": "critical", "value": 0, "color": "#8B00FF", "amount": 0},
+                            {"key": "critical", "value": 0, "color": "#932EBE", "amount": 0},
                             {"key": "high", "value": 0, "color": "#DF3936", "amount": 0},
                             {"key": "med", "value": 0, "color": "#DFBF35", "amount": 0},
                             {"key": "low", "value": 0, "color": "#A1CE31", "amount": 0},
@@ -226,6 +232,13 @@ angular.module('faradayApp')
                 vulnsManager.getVulns(workspace).then(function(vulns) {
                     $scope.vulns = vulns;
                 });
+
+                workspacesFact.getDuration($scope.workspace).then(function(duration) {
+                    $scope.wsDuration = duration;
+                    $scope.wsProgress = $scope.calculateProgress($scope.wsDuration);
+                    $scope.wsStart = $scope.wsDuration.start;
+                    $scope.wsEnd = $scope.wsDuration.end;
+                });
             };
 
             $scope.numberOfPages = function() {
@@ -315,6 +328,29 @@ angular.module('faradayApp')
                 vulns.forEach(function(vuln) {
                     vuln.amount = vuln.value * prices[vuln.key];
                 });
+            };
+
+            $scope.calculateProgress = function(duration) {
+                var partial = 0,
+                progress = 0,
+                today = new Date(),
+                total = 0;
+
+                if(duration.start == "" || duration.end == "") {
+                    progress = null;
+                } else {
+                    today = today.getTime();
+                    partial = today - duration.start;
+                    total = duration.end - duration.start;
+
+                    if(today > duration.end) {
+                        progress = 100;
+                    } else if(duration.start < today && today <= duration.end && total > 0) {
+                        progress = Math.round(partial * 100 / total);
+                    }
+                }
+
+                return progress;
             };
     }]);
 

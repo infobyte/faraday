@@ -11,7 +11,7 @@
             </h2>
         </header>
         <span id="treemapText"></span>
-        <div ng-if="topServices.length < 5" class="alert alert-info alert-dismissible">
+        <div ng-if="topServices == undefined || topServices.length < 5" class="alert alert-info alert-dismissible">
             <button type="button" class="close" data-dismiss="alert">
                 <span aria-hidden="true">&times;</span>
                 <span class="sr-only">Close</span>
@@ -29,7 +29,7 @@
             </h2>
         </header>
         <span id="barText"></span>
-        <div ng-if="topHosts.length < 3" class="alert alert-info alert-dismissible">
+        <div ng-if="topHosts == undefined || topHosts.length < 3" class="alert alert-info alert-dismissible">
             <button type="button" class="close" data-dismiss="alert">
                 <span aria-hidden="true">&times;</span>
                 <span class="sr-only">Close</span>
@@ -47,7 +47,7 @@
             </h2>
         </header>
         <span id="cakeText"></span>
-        <div ng-if="vulnsCountClass.length == 0" class="alert alert-info alert-dismissible">
+        <div ng-if="vulnsCountClass == undefined || vulnsCountClass.length == 0" class="alert alert-info alert-dismissible">
             <button type="button" class="close" data-dismiss="alert">
                 <span aria-hidden="true">&times;</span>
                 <span class="sr-only">Close</span>

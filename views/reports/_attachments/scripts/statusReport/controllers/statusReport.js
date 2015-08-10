@@ -7,11 +7,11 @@ angular.module('faradayApp')
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$modal', '$cookies', '$q', 'BASEURL',
                     'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager',
-                    'vulnsManager', 'workspacesFact',
+                    'vulnsManager', 'workspacesFact', 'csvService',
                     function($scope, $filter, $routeParams,
                         $location, $modal, $cookies, $q, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, hostsManager,
-                        vulnsManager, workspacesFact) {
+                        vulnsManager, workspacesFact, csvService) {
         $scope.baseurl;
         $scope.columns;
         $scope.easeofresolution;
@@ -122,111 +122,9 @@ angular.module('faradayApp')
             return selected;
         }
 
-
-        // returns scope vulns as CSV obj
-        // toggles column sort field
-        cleanCSV = function(field) {
-            return field.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'").replace(/[\n\r]/g, "%0A").replace(/[,]/g, "%2c");
-        };
-
-        $scope.toCSV = function() {
-            var method  = "",
-            website     = "",
-            desc        = "",
-            easeofres   = "",
-            impact      = "",
-            text        = "",
-            path        = "",
-            pname       = "",
-            params      = "",
-            query       = "",
-            refs        = "",
-            request     = "",
-            response    = "",
-            resolution  = "",
-            content     = "\"Date\", \"Web\", \"Status\", \"Severity\", "+
-                "\"Name\", \"Target\", \"Description\", "+
-                "\"Data\", \"Method\", \"Path\", \"Param Name\", \"Params\", "+
-                "\"Query\", \"References\", \"Request\", \"Response\", \"Resolution\",\"Website\", "+
-                "\"Ease of Resolution\", \"Impact\"\n";
-            
-            $scope.vulns.then(function(vs) {
-                forEach(function(v) {
-                    method      = "";
-                    website     = "";
-                    desc        = "";
-                    easeofres   = "",
-                    impact      = JSON.stringify(v.impact),
-                    text        = "";
-                    path        = "";
-                    pname       = "";
-                    params      = "";
-                    query       = "";
-                    refs        = "";
-                    request     = "";
-                    response    = "";
-                    resolution  = "";
-                    refs        = v.refs.toString();
-
-                    if(typeof(v.desc) != "undefined" && v.desc != null)                 desc          = cleanCSV(v.desc);
-                    if(typeof(v.data) != "undefined" && v.data != null)                 text          = cleanCSV(v.data);
-                    if(typeof(v.resolution) != "undefined" && v.resolution != null)     resolution    = cleanCSV(v.resolution);
-                    if(typeof(refs) != "undefined" && refs != null){
-                        refs = cleanCSV(refs);
-                        refs = refs.replace(/%2c/g,"%0A");
-                    }
-                    if(typeof(impact) != "undefined" && impact != null){
-                        impact = cleanCSV(impact);
-                        impact = impact.replace(/%2c/g,"%0A");
-                    }
-                    if(v.type === "VulnerabilityWeb") {
-                        if(typeof(v.method) != "undefined" && v.method != null)         method      = cleanCSV(v.method);
-                        if(typeof(v.website) != "undefined" && v.website != null)       website     = cleanCSV(v.website);
-                        if(typeof(v.path) != "undefined" && v.path != null)             path        = cleanCSV(v.path);
-                        if(typeof(v.pname) != "undefined" && v.pname != null)           pname       = cleanCSV(v.pname);
-                        if(typeof(v.params) != "undefined" && v.params != null)         params      = cleanCSV(v.params);
-                        if(typeof(v.query) != "undefined" && v.query != null)           query       = cleanCSV(v.query);
-                        if(typeof(refs) != "undefined" && refs != null){
-                            refs = cleanCSV(refs);
-                            refs = refs.replace(/%2c/g,"%0A");
-                        }
-                        if(typeof(v.request) != "undefined" && v.request != null)       request     = cleanCSV(v.request);
-                        if(typeof(v.response) != "undefined" && v.response != null)     response    = cleanCSV(v.response);
-                        if(typeof(v.resolution) != "undefined" && v.resolution != null) resolution  = cleanCSV(v.resolution);
-                    }
-
-                    content += "\""+v.date+"\","+
-                        " \""+v.web+"\","+
-                        " \"Vulnerable\","+
-                        " \""+v.severity+"\","+
-                        " \""+v.name+"\","+
-                        " \""+v.target+"\","+
-                        " \""+desc+"\","+
-                        " \""+text+"\","+
-                        " \""+method+"\","+
-                        " \""+path+"\","+
-                        " \""+pname+"\","+
-                        " \""+params+"\","+
-                        " \""+query+"\","+
-                        " \""+refs+"\","+
-                        " \""+request+"\","+
-                        " \""+response+"\","+
-                        " \""+resolution+"\","+
-                        " \""+website+"\","+
-                        " \""+impact+"\","+
-                        " \""+easeofres+"\""+
-                        "\n";
-                });
-            });
-
-            var obj = {
-                "content":  content,
-                "extension": "csv",
-                "title":    "SR-" + $scope.workspace,
-                "type": "text/csv"
-            };
-            
-            return obj;
+        $scope.csv = function() {
+            tmp_vulns = $filter('filter')($scope.vulns, $scope.expression);
+            return csvService.generator($scope.columns, tmp_vulns, $scope.workspace);
         };
 
         showMessage = function(msg) {

@@ -82,28 +82,28 @@ angular.module('faradayApp')
             }
             // set columns to show and hide by default
             $scope.columns = objectoSRColumns || {
-                "data":             true,
                 "date":             true,
+                "severity":         true,
+                "target":           true,
+                "name":             true,
                 "desc":             true,
+                "resolution":       false,
+                "data":             true,
                 "easeofresolution": false,
+                "status":           false,
+                "website":          false,
+                "path":             false,
+                "request":          false,
+                "refs":             true,
                 "evidence":         false,
                 "hostnames":        false,
                 "impact":           false,
                 "method":           false,
-                "name":             true,
                 "params":           false,
-                "path":             false,
                 "pname":            false,
                 "query":            false,
-                "refs":             true,
-                "request":          false,
                 "response":         false,
-                "resolution":       false,
-                "severity":         true,
-                "status":           false,
-                "target":           true,
-                "web":              false,
-                "website":          false
+                "web":              false
             };
             
             $scope.vulnWebSelected = false;

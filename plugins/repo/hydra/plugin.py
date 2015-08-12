@@ -27,9 +27,9 @@ __maintainer__ = "Francisco Amato"
 __email__      = "famato@infobytesec.com"
 __status__     = "Development"
 
-                           
-                                                                     
-                      
+
+
+
 
 class HydraParser(object):
     """
@@ -44,10 +44,10 @@ class HydraParser(object):
             reg = re.search("\[([^$]+)\]\[([^$]+)\] host: ([^$]+)   login: ([^$]+)   password: ([^$]+)",l)
             if reg:
                 item = {'port' : reg.group(1), 'plugin' : reg.group(2), 'ip' : reg.group(3), 'login' : reg.group(4), 'password' : reg.group(5) }
-                                         
+
                 self.items.append(item)
 
-                                    
+
 
 
 
@@ -88,14 +88,14 @@ class HydraPlugin(core.PluginBase):
                                 "-6":"prefer IPv6 addresses",
                                 "-v":"verbose mode / show login+pass combination for each attempt",
                                 "-V":"verbose mode / show login+pass combination for each attempt",
-                                "-U":"service module usage details",            
+                                "-U":"service module usage details",
         }
 
         global current_path
         self._output_file_path = os.path.join(self.data_path,
                                              "hydra_output-%s.txt" % self._rid)
-        
-                                  
+
+
 
 
     def parseOutputString(self, output, debug = False):
@@ -116,12 +116,12 @@ class HydraPlugin(core.PluginBase):
         for item in parser.items:
             service=item['plugin']
             port=item['port']
-            
+
             if hosts.has_key(item['ip']) == False:
                 hosts[item['ip']]=[]
-                
+
             hosts[item['ip']].append([item['login'],item['password']])
-                
+
         for k,v in hosts.iteritems():
             h_id = self.createAndAddHost(k)
             if self._isIPV4(k):
@@ -131,13 +131,16 @@ class HydraPlugin(core.PluginBase):
             s_id = self.createAndAddServiceToInterface(h_id,i_id,service,ports=[port],protocol="tcp",status="open")
             for cred in v:
                 self.createAndAddCredToService(h_id,s_id, cred[0],cred[1])
-            
+                self.createAndAddVulnToService(
+                    h_id, s_id, "Credentials found",
+                    "user:%s\npass:%s" % (cred[0], cred[1]), severity="high")
+
         del parser
 
     xml_arg_re = re.compile(r"^.*(-o\s*[^\s]+).*$")
     def processCommandString(self, username, current_path, command_string):
 
-        self._output_file_path=os.path.join(self.data_path,"hydra_output-%s.txt" % random.uniform(1,10))        
+        self._output_file_path=os.path.join(self.data_path,"hydra_output-%s.txt" % random.uniform(1,10))
         arg_match = self.xml_arg_re.match(command_string)
 
         if arg_match is None:
@@ -146,7 +149,7 @@ class HydraPlugin(core.PluginBase):
             return re.sub(arg_match.group(1),
                           r"-o %s" % self._output_file_path,
                           command_string)
-    
+
     def _isIPV4(self, ip):
         if len(ip.split(".")) == 4:
             return True

@@ -73,7 +73,10 @@
                                     <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
                                     <input type="text" class="form-control" id="filter-by" 
                                     placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
-                                    <span class="input-group-addon glyphicon-btn glyphicon glyphicon-search" ng-click="searchFor(true, searchParams)"></span>
+                                    <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
+                                        <i class="fa fa-search" ng-if="vulns"></i>
+                                        <i class="fa fa-refresh fa-spin" ng-hide="vulns"></i>
+                                    </span>
                                 </div>
                             </div>
                         </form>  

@@ -94,8 +94,8 @@
                     <thead>
                         <tr>
                             <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
-                            <th><a href="" ng-click="edit()">Edit</a></th>
-                            <th><a href="" ng-click="delete()">Delete</a></th>
+                            <th><a href="">Edit</a></th>
+                            <th><a href="">Delete</a></th>
                             <th ng-if="columns.date">
                                 <a href="" ng-click="toggleSort('metadata.create_time')">Date</a>
                                 <a href="" ng-click="toggleShow('date', true)"><span class="glyphicon glyphicon-remove"></span></a>
@@ -194,8 +194,8 @@
                             selection-model-selected-class="multi-selected"
                             selection-model-on-change="selectionChange()">
                             <td><input type="checkbox" name="{{v.id}}"/></td>
-                            <td><span ng-click="v.selected_statusreport_controller=true;edit();" class="glyphicon glyphicon-pencil cursor"></span></td>
-                            <td><span ng-click="v.selected_statusreport_controller=true;delete();" class="glyphicon glyphicon-trash cursor"></span></td>
+                            <td><span ng-click="v.selected_statusreport_controller=true;editVuln(v);" class="glyphicon glyphicon-pencil cursor"></span></td>
+                            <td><span ng-click="v.selected_statusreport_controller=true;deleteVuln(v);" class="glyphicon glyphicon-trash cursor"></span></td>
                             <td ng-if="columns.date">{{v.metadata.create_time * 1000 | date:'MM/dd/yyyy'}}</td>
                             <td ng-if="columns.target">{{v.target}}</td>
                             <td ng-if="columns.status">Vulnerable</td>

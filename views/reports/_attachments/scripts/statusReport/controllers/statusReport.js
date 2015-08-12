@@ -253,9 +253,18 @@ angular.module('faradayApp')
             });
         };
 
+
         // action triggered from DELETE button
         $scope.delete = function() {
-            if($scope.selectedVulns().length > 0) {
+            _delete($scope.selectedVulns());
+        };
+        // delete only one vuln
+        $scope.deleteVuln = function(vuln) {
+            _delete([vuln]);
+        };
+
+        _delete = function(vulns) {
+            if(vulns.length > 0) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/commons/partials/modalDelete.html',
                     controller: 'commonsModalDelete',
@@ -263,10 +272,10 @@ angular.module('faradayApp')
                     resolve: {
                         msg: function() {
                             var msg = "";
-                            if($scope.selectedVulns().length == 1) {
+                            if(vulns.length == 1) {
                                 msg = "A vulnerability will be deleted.";
                             } else {
-                                msg = $scope.selectedVulns().length + " vulnerabilities will be deleted.";
+                                msg = vulns.length + " vulnerabilities will be deleted.";
                             }
                             msg += " This action cannot be undone. Are you sure you want to proceed?";
                             return msg;
@@ -275,16 +284,24 @@ angular.module('faradayApp')
                 });
 
                 modal.result.then(function() {
-                    $scope.remove($scope.selectedVulns());
+                    $scope.remove(vulns);
                 });
             } else {
                 showMessage('No vulnerabilities were selected to delete');
             }
-        };
+        }
 
         // action triggered from EDIT button
         $scope.edit = function() {
-            if ($scope.selectedVulns().length == 1) {
+            _edit($scope.selectedVulns());
+        };
+
+        $scope.editVuln = function(vuln) {
+            _edit([vuln]);
+        };
+
+        _edit = function(vulns) {
+           if (vulns.length == 1) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/statusReport/partials/modalEdit.html',
                     controller: 'modalEditCtrl as modal',
@@ -294,21 +311,21 @@ angular.module('faradayApp')
                             return $scope.severities;
                         },
                         vuln: function() {
-                            return $scope.selectedVulns()[0];
+                            return vulns[0];
                         }
                     }
                 });
                 modal.result.then(function(data) {
-                    vulnsManager.updateVuln($scope.selectedVulns()[0], data).then(function(){
+                    vulnsManager.updateVuln(vulns[0], data).then(function(){
                     }, function(errorMsg){
-                        showMessage("Error updating vuln " + $scope.selectedVulns()[0].name + " (" + $scope.selectedVulns()[0]._id + "): " + errorMsg);
+                        showMessage("Error updating vuln " + vulns[0].name + " (" + vulns[0]._id + "): " + errorMsg);
                     });
        
                 });
             } else {
                 showMessage('A vulnierabilty must be selected in order to edit');
             }
-        };
+        }
 
         var editProperty = function(partial, controller, message, property, opts) {
             if(opts == undefined) {

@@ -14,6 +14,8 @@ fi
 
 update=0
 #protection
+sha_kali2_i686=d08b0562acc3da5a392509a1801d5569e1ace750d26d020b83ecc4c8eea4f191
+sha_kali2_x86_64=f8ee223706bd306dbdba1bd9232f196878c598cb449d006e24edbcbe85f19f2a
 sha_kali_i686=f071539d8d64ad9b30c7214daf5b890a94b0e6d68f13bdcc34c2453c99afe9c4
 sha_kali_x86_64=02a050372fb30ede1454e1dd99d97e0fe0963ce2bd36c45efe90eec78df11d04
 sha_ubuntu13_10_i686=8199904fb5fca8bc244c31b596c3ae0d441483bfbb2dc47f66186ceffbf3586e
@@ -43,6 +45,9 @@ echo "[+] Install $os $arch"
 down=0
 if [ "$os" = "Ubuntu 10.04.2 LTS" ]; then
     version="ubuntu10-04.02$arch"
+elif [[ "$os" =~ "Kali GNU/Linux 2."* ]]; then
+    version="kali2-$arch"
+    down=1    
 elif [[ "$os" =~ .*Kali.* ]]; then
     version="kali-$arch"
     down=1

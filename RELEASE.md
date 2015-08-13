@@ -17,7 +17,7 @@ TBA:
 * Added quick vuln edit and delete in WEB UI
 * Expanded Unit Tests for WEB UI
 * XML Cleaner
-
+* Kali 2.0 support
 
 Aug 05, 2015:
 ---

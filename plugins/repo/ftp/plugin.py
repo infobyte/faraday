@@ -85,12 +85,6 @@ class CmdFtpPlugin(core.PluginBase):
                                                    ports = [self._port],
                                                    status = "open")
 
-                
-            
-
-            print ("Host detected: %s" % ip_address)
-
-            api.log("New host detected: %s" % ip_address)
         if debug is True:
             api.devlog("Debug is active")
 

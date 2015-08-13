@@ -24,6 +24,7 @@ from model.common import factory, ModelObjectVuln, ModelObjectVulnWeb, ModelObje
 from model.hosts import Host, Interface, Service
 
 from model.commands_history import CommandRunInformation
+from utils.common import sha1OfStr
 
 from time import time
 
@@ -408,7 +409,7 @@ class PluginController(PluginControllerBase):
 
         if self._active_plugin.has_custom_output():
             if not os.path.isfile(self._active_plugin.get_custom_file_path()):
-                model.api.devlog("PluginController output file (%s) not created" % self._active_plugin.get_custom_file_path())
+                model.api.devlog("Report file PluginController output file (%s) not created" % self._active_plugin.get_custom_file_path())
                 return False
             output_file = open(self._active_plugin.get_custom_file_path(), 'r')
             output = output_file.read()
@@ -784,6 +785,7 @@ class PluginProcess(multiprocessing.Process):
 
     def run(self):
         proc_name = self.name
+        plugin = self.plugin
         model.api.devlog("-" * 40)
         model.api.devlog("proc_name = %s" % proc_name)
         model.api.devlog("Starting run method on PluginProcess")
@@ -796,9 +798,11 @@ class PluginProcess(multiprocessing.Process):
             if output is not None:
                 model.api.devlog('%s: %s' % (proc_name, "New Output"))
                 try:
+                    self.output = output
                     self.plugin.parseOutputString(output)
                 except Exception as e:
-                    
+                    print  ('Plugin Error: %s, (%s)' % (plugin.id, sha1OfStr(output)))
+                    model.api.log('Plugin Error: %s, (%s)' % (plugin.id, sha1OfStr(output)),"DEBUG")
                     model.api.devlog("Plugin raised an exception:")
                     model.api.devlog(traceback.format_exc())
                 else:
@@ -806,9 +810,11 @@ class PluginProcess(multiprocessing.Process):
                         try:
                             self.new_elem_queue.put(self.plugin._pending_actions.get(block=False))
                         except Queue.Empty:
+                            model.api.log('Plugin Error: %s, (%s)' % (plugin.id, sha1OfStr(output)),"DEBUG")
                             model.api.devlog("PluginProcess run _pending_actions queue Empty. Breaking loop")
                             break
                         except Exception:
+                            model.api.log('Plugin Error: %s, (%s)' % (plugin.id, sha1OfStr(output)),"DEBUG")
                             model.api.devlog("PluginProcess run getting from _pending_action queue - something strange happened... unhandled exception?")
                             model.api.devlog(traceback.format_exc())
                             break
@@ -817,6 +823,8 @@ class PluginProcess(multiprocessing.Process):
                 
                 done = True
                 model.api.devlog('%s: Exiting' % proc_name)
+                model.api.log('Plugin finished: %s, (%s)' % (plugin.id, sha1OfStr(self.output)),"DEBUG")
+                print  ('Plugin finished: %s, (%s)' % (plugin.id, sha1OfStr(self.output)))
                 
             self.output_queue.task_done()
         self.new_elem_queue.put(None)

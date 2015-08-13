@@ -371,16 +371,10 @@ class MetasploitPlugin(core.PluginBase):
                     self.createAndAddNoteToHost(h_id,n.ntype,n.data)
 
             for v in item.vulnsByHost:
-                print (h_id, v.name, v.desc, v.refs)
                 v_id = self.createAndAddVulnToHost(h_id, v.name, v.desc, ref=v.refs)
                 
             
             for s in item.services:
-                print (h_id, i_id , s['name'],
-                                                           s['proto'],
-                                                           [s['port']],
-                                                           s['state'],
-                                                           s['info'])
                 s_id = self.createAndAddServiceToInterface(h_id, i_id , s['name'],
                                                            s['proto'],
                                                            ports = [s['port']],
@@ -394,8 +388,6 @@ class MetasploitPlugin(core.PluginBase):
                      
                 if s['port'] in item.credsByService:
                     for c in item.credsByService[s['port']]:
-                        print "CREDS"
-                        print (h_id,s_id,s['port'],c.user,c.passwd)
                         self.createAndAddCredToService(h_id,s_id,c.user,c.passwd)
 
                 n_id = None
@@ -410,7 +402,6 @@ class MetasploitPlugin(core.PluginBase):
                                                                  pname=v.pname, params=v.params, query=v.query,
                                                                  category=v.category)
                     else:
-                        print (h_id, s_id, v.name, v.desc, v.refs)
                         v_id = self.createAndAddVulnToService(h_id, s_id, v.name, v.desc, ref=v.refs)
 
 

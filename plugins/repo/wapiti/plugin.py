@@ -274,7 +274,6 @@ class WapitiPlugin(core.PluginBase):
         i=1;
         for item in parser.items:
             mport = "%s%i" % (self.port,i)
-            print "estoy recorriendo algo ? (%s) (%s) (%s) (%s) (%s) (%s)" % (item.url,item.info,item.parameter,self.port,self.protocol,self.host)
             s_id = self.createAndAddServiceToInterface(h_id, i_id, mport,
                                                 "tcp",
                                                 [mport],

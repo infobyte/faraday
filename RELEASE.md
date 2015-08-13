@@ -19,6 +19,10 @@ TBA:
 * Add Unit testing for vulns and status report component
 * Fixes on WEB UI
 * XML Cleaner
+* Improve plugins running status log (Adding log information on report importing)
+* Clean dev log on plugins
+* w3af plugin refactoring
+
 
 Aug 05, 2015:
 ---

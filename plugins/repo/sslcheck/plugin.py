@@ -109,8 +109,8 @@ class SslcheckPlugin(core.PluginBase):
             if not os.path.exists(self._output_file_path):
                 return False
             parser = SslcheckParser(self._output_file_path)
-            print parser.result
-            print parser.hostinfo
+            # print parser.result
+            # print parser.hostinfo
             for host in parser.result:
                 h_id = self.createAndAddHost(host)
                 if(re.match("(^[2][0-5][0-5]|^[1]{0,1}[0-9]{1,2})\.([0-2][0-5][0-5]|[1]{0,1}[0-9]{1,2})\.([0-2][0-5][0-5]|[1]{0,1}[0-9]{1,2})\.([0-2][0-5][0-5]|[1]{0,1}[0-9]{1,2})$"

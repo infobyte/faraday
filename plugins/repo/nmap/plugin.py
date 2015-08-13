@@ -539,18 +539,22 @@ class NmapPlugin(core.PluginBase):
                                                    description = srvname)
                 note=True
                 for v in port.vulns:
+                    severity = 0
                     desc=v.desc
                     desc+="\nOutput: "+ v.response if v.response else ""
+
+                    if re.search(r"VULNERABLE",desc):
+                        severity = "high"
                     if v.web:
                         if note:
                             n_id = self.createAndAddNoteToService(h_id,s_id,"website","")
                             n2_id = self.createAndAddNoteToNote(h_id,s_id,n_id,minterfase,"")
                             note=False
                         v_id = self.createAndAddVulnWebToService(h_id,s_id,v.name,desc=desc,
-                                                                 severity=0,website=minterfase)
+                                                                 severity=severity,website=minterfase)
                     else:
                         v_id = self.createAndAddVulnToService(h_id,s_id,v.name,desc=v.desc,
-                                                                 severity=0)
+                                                                 severity=severity)
                 
         del parser
         

@@ -131,9 +131,7 @@ class HydraPlugin(core.PluginBase):
             s_id = self.createAndAddServiceToInterface(h_id,i_id,service,ports=[port],protocol="tcp",status="open")
             for cred in v:
                 self.createAndAddCredToService(h_id,s_id, cred[0],cred[1])
-                self.createAndAddVulnToService(
-                    h_id, s_id, "Credentials found",
-                    "user:%s\npass:%s" % (cred[0], cred[1]), severity="high")
+                self.createAndAddVulnToService(h_id, s_id, "Weak Credentials","[hydra found the following credentials]\nuser:%s\npass:%s" % (cred[0], cred[1]), severity="high")
 
         del parser
 

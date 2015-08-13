@@ -10,6 +10,9 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+* Medusa, Hydra & Metasploit plug-in now add discovered weak credentials as a vulnerability
+* Nmap plug-in applys a severity depending on the result of a NSE script 
+
 Aug 05, 2015:
 ---
 

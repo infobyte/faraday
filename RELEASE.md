@@ -10,6 +10,12 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+TBA:
+---
+* Added quick vuln edit in WEB UI
+* Fixes on WEB UI
+* XML Cleaner
+
 Aug 05, 2015:
 ---
 

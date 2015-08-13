@@ -75,7 +75,7 @@
                                     placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
                                     <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
                                         <i class="fa fa-search" ng-if="vulns"></i>
-                                        <i class="fa fa-refresh fa-spin" ng-hide="vulns"></i>
+                                        <i class="fa fa-refresh fa-spin" ng-if="vulns.length == 0"></i>
                                     </span>
                                 </div>
                             </div>

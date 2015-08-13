@@ -289,7 +289,7 @@ angular.module('faradayApp')
             } else {
                 showMessage('No vulnerabilities were selected to delete');
             }
-        }
+        };
 
         // action triggered from EDIT button
         $scope.edit = function() {
@@ -325,7 +325,7 @@ angular.module('faradayApp')
             } else {
                 showMessage('A vulnierabilty must be selected in order to edit');
             }
-        }
+        };
 
         var editProperty = function(partial, controller, message, property, opts) {
             if(opts == undefined) {

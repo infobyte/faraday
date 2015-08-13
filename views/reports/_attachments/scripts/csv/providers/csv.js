@@ -22,7 +22,11 @@ angular.module('faradayApp')
                 aProperties.forEach(function(prop) {
                     object = {};
                     if(typeof(v[prop]) === "object") v[prop] = parseObject(v[prop]);
-                    if(typeof(v[prop]) != "undefined" && v[prop] != null) object[prop] = cleanCSV(v[prop]); else object[prop] = "";
+                    if(typeof(v[prop]) != "undefined" && v[prop] != null) {
+                        object[prop] = cleanCSV(v[prop]);
+                    } else {
+                        object[prop] = "";
+                    }
                     if(prop === "date") object[prop] = parseDate(v["metadata"]["create_time"] * 1000);
                     if(prop === "web") {
                         if(v.type === "Vulnerability") {
@@ -48,7 +52,6 @@ angular.module('faradayApp')
         };
 
         cleanCSV = function(field) {
-
             return field.replace(/\"/g, "\"\"");
         };
 
@@ -60,13 +63,12 @@ angular.module('faradayApp')
                         parsedData += key + ":" + object[key] + "\n";
                     }
                 }
-                parsedData = parsedData.substring(0, parsedData.length - 1);
             } else {
                 object.forEach(function(obj, k) {
                     parsedData += obj + "\n";
                 });
-                parsedData = parsedData.substring(0, parsedData.length - 1);
             }
+            parsedData = parsedData.substring(0, parsedData.length - 1);
             return parsedData;
         };
 

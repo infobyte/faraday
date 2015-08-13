@@ -7,11 +7,11 @@ angular.module('faradayApp')
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$modal', '$cookies', '$q', 'BASEURL',
                     'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager',
-                    'vulnsManager', 'workspacesFact',
+                    'vulnsManager', 'workspacesFact', 'csvService',
                     function($scope, $filter, $routeParams,
                         $location, $modal, $cookies, $q, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, hostsManager,
-                        vulnsManager, workspacesFact) {
+                        vulnsManager, workspacesFact, csvService) {
         $scope.baseurl;
         $scope.columns;
         $scope.easeofresolution;
@@ -82,28 +82,28 @@ angular.module('faradayApp')
             }
             // set columns to show and hide by default
             $scope.columns = objectoSRColumns || {
-                "data":             true,
                 "date":             true,
+                "severity":         true,
+                "target":           true,
+                "name":             true,
                 "desc":             true,
+                "resolution":       false,
+                "data":             true,
                 "easeofresolution": false,
+                "status":           false,
+                "website":          false,
+                "path":             false,
+                "request":          false,
+                "refs":             true,
                 "evidence":         false,
                 "hostnames":        false,
                 "impact":           false,
                 "method":           false,
-                "name":             true,
                 "params":           false,
-                "path":             false,
                 "pname":            false,
                 "query":            false,
-                "refs":             true,
-                "request":          false,
                 "response":         false,
-                "resolution":       false,
-                "severity":         true,
-                "status":           false,
-                "target":           true,
-                "web":              false,
-                "website":          false
+                "web":              false
             };
             
             $scope.vulnWebSelected = false;
@@ -111,7 +111,10 @@ angular.module('faradayApp')
 
         $scope.selectedVulns = function() {
             selected = [];
-            $scope.vulns.forEach(function(vuln) {
+            var tmp_vulns = $filter('orderObjectBy')($scope.vulns, $scope.sortField, $scope.reverse);
+            tmp_vulns = $filter('filter')(tmp_vulns, $scope.expression);
+            tmp_vulns = tmp_vulns.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
+            tmp_vulns.forEach(function(vuln) {
                 if (vuln.selected_statusreport_controller) {
                     selected.push(vuln);
                 }
@@ -119,111 +122,9 @@ angular.module('faradayApp')
             return selected;
         }
 
-
-        // returns scope vulns as CSV obj
-        // toggles column sort field
-        cleanCSV = function(field) {
-            return field.replace(/\n[ ]*\n/g, "").replace(/\"/g, "'").replace(/[\n\r]/g, "%0A").replace(/[,]/g, "%2c");
-        };
-
-        $scope.toCSV = function() {
-            var method  = "",
-            website     = "",
-            desc        = "",
-            easeofres   = "",
-            impact      = "",
-            text        = "",
-            path        = "",
-            pname       = "",
-            params      = "",
-            query       = "",
-            refs        = "",
-            request     = "",
-            response    = "",
-            resolution  = "",
-            content     = "\"Date\", \"Web\", \"Status\", \"Severity\", "+
-                "\"Name\", \"Target\", \"Description\", "+
-                "\"Data\", \"Method\", \"Path\", \"Param Name\", \"Params\", "+
-                "\"Query\", \"References\", \"Request\", \"Response\", \"Resolution\",\"Website\", "+
-                "\"Ease of Resolution\", \"Impact\"\n";
-            
-            $scope.vulns.then(function(vs) {
-                forEach(function(v) {
-                    method      = "";
-                    website     = "";
-                    desc        = "";
-                    easeofres   = "",
-                    impact      = JSON.stringify(v.impact),
-                    text        = "";
-                    path        = "";
-                    pname       = "";
-                    params      = "";
-                    query       = "";
-                    refs        = "";
-                    request     = "";
-                    response    = "";
-                    resolution  = "";
-                    refs        = v.refs.toString();
-
-                    if(typeof(v.desc) != "undefined" && v.desc != null)                 desc          = cleanCSV(v.desc);
-                    if(typeof(v.data) != "undefined" && v.data != null)                 text          = cleanCSV(v.data);
-                    if(typeof(v.resolution) != "undefined" && v.resolution != null)     resolution    = cleanCSV(v.resolution);
-                    if(typeof(refs) != "undefined" && refs != null){
-                        refs = cleanCSV(refs);
-                        refs = refs.replace(/%2c/g,"%0A");
-                    }
-                    if(typeof(impact) != "undefined" && impact != null){
-                        impact = cleanCSV(impact);
-                        impact = impact.replace(/%2c/g,"%0A");
-                    }
-                    if(v.type === "VulnerabilityWeb") {
-                        if(typeof(v.method) != "undefined" && v.method != null)         method      = cleanCSV(v.method);
-                        if(typeof(v.website) != "undefined" && v.website != null)       website     = cleanCSV(v.website);
-                        if(typeof(v.path) != "undefined" && v.path != null)             path        = cleanCSV(v.path);
-                        if(typeof(v.pname) != "undefined" && v.pname != null)           pname       = cleanCSV(v.pname);
-                        if(typeof(v.params) != "undefined" && v.params != null)         params      = cleanCSV(v.params);
-                        if(typeof(v.query) != "undefined" && v.query != null)           query       = cleanCSV(v.query);
-                        if(typeof(refs) != "undefined" && refs != null){
-                            refs = cleanCSV(refs);
-                            refs = refs.replace(/%2c/g,"%0A");
-                        }
-                        if(typeof(v.request) != "undefined" && v.request != null)       request     = cleanCSV(v.request);
-                        if(typeof(v.response) != "undefined" && v.response != null)     response    = cleanCSV(v.response);
-                        if(typeof(v.resolution) != "undefined" && v.resolution != null) resolution  = cleanCSV(v.resolution);
-                    }
-
-                    content += "\""+v.date+"\","+
-                        " \""+v.web+"\","+
-                        " \"Vulnerable\","+
-                        " \""+v.severity+"\","+
-                        " \""+v.name+"\","+
-                        " \""+v.target+"\","+
-                        " \""+desc+"\","+
-                        " \""+text+"\","+
-                        " \""+method+"\","+
-                        " \""+path+"\","+
-                        " \""+pname+"\","+
-                        " \""+params+"\","+
-                        " \""+query+"\","+
-                        " \""+refs+"\","+
-                        " \""+request+"\","+
-                        " \""+response+"\","+
-                        " \""+resolution+"\","+
-                        " \""+website+"\","+
-                        " \""+impact+"\","+
-                        " \""+easeofres+"\""+
-                        "\n";
-                });
-            });
-
-            var obj = {
-                "content":  content,
-                "extension": "csv",
-                "title":    "SR-" + $scope.workspace,
-                "type": "text/csv"
-            };
-            
-            return obj;
+        $scope.csv = function() {
+            tmp_vulns = $filter('filter')($scope.vulns, $scope.expression);
+            return csvService.generator($scope.columns, tmp_vulns, $scope.workspace);
         };
 
         showMessage = function(msg) {
@@ -250,9 +151,18 @@ angular.module('faradayApp')
             });
         };
 
+
         // action triggered from DELETE button
         $scope.delete = function() {
-            if($scope.selectedVulns().length > 0) {
+            _delete($scope.selectedVulns());
+        };
+        // delete only one vuln
+        $scope.deleteVuln = function(vuln) {
+            _delete([vuln]);
+        };
+
+        _delete = function(vulns) {
+            if(vulns.length > 0) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/commons/partials/modalDelete.html',
                     controller: 'commonsModalDelete',
@@ -260,10 +170,10 @@ angular.module('faradayApp')
                     resolve: {
                         msg: function() {
                             var msg = "";
-                            if($scope.selectedVulns().length == 1) {
+                            if(vulns.length == 1) {
                                 msg = "A vulnerability will be deleted.";
                             } else {
-                                msg = $scope.selectedVulns().length + " vulnerabilities will be deleted.";
+                                msg = vulns.length + " vulnerabilities will be deleted.";
                             }
                             msg += " This action cannot be undone. Are you sure you want to proceed?";
                             return msg;
@@ -272,7 +182,7 @@ angular.module('faradayApp')
                 });
 
                 modal.result.then(function() {
-                    $scope.remove($scope.selectedVulns());
+                    $scope.remove(vulns);
                 });
             } else {
                 showMessage('No vulnerabilities were selected to delete');
@@ -281,7 +191,15 @@ angular.module('faradayApp')
 
         // action triggered from EDIT button
         $scope.edit = function() {
-            if ($scope.selectedVulns().length == 1) {
+            _edit($scope.selectedVulns());
+        };
+
+        $scope.editVuln = function(vuln) {
+            _edit([vuln]);
+        };
+
+        _edit = function(vulns) {
+           if (vulns.length == 1) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/statusReport/partials/modalEdit.html',
                     controller: 'modalEditCtrl as modal',
@@ -291,14 +209,14 @@ angular.module('faradayApp')
                             return $scope.severities;
                         },
                         vuln: function() {
-                            return $scope.selectedVulns()[0];
+                            return vulns[0];
                         }
                     }
                 });
                 modal.result.then(function(data) {
-                    vulnsManager.updateVuln($scope.selectedVulns()[0], data).then(function(){
+                    vulnsManager.updateVuln(vulns[0], data).then(function(){
                     }, function(errorMsg){
-                        showMessage("Error updating vuln " + $scope.selectedVulns()[0].name + " (" + $scope.selectedVulns()[0]._id + "): " + errorMsg);
+                        showMessage("Error updating vuln " + vulns[0].name + " (" + vulns[0]._id + "): " + errorMsg);
                     });
        
                 });

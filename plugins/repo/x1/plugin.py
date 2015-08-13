@@ -177,8 +177,7 @@ class X1Plugin(core.PluginBase):
 
     def parseOutputString(self, output, debug = False):
         
-
-        print "X1 testing"                                                                   
+                                                           
         parser = X1XmlParser(output)
         for item in parser.items:
             h_id = self.createAndAddHost(item.host,item.name)

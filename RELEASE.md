@@ -18,6 +18,9 @@ TBA:
 * Expanded Unit Tests for WEB UI
 * XML Cleaner
 * Kali 2.0 support
+* Improve plugins running status log (Adding log information on report importing)
+* Clean dev log on plugins
+* w3af plugin refactoring
 
 Aug 05, 2015:
 ---

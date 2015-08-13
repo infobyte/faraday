@@ -114,7 +114,10 @@ angular.module('faradayApp')
 
         $scope.selectedVulns = function() {
             selected = [];
-            $scope.vulns.forEach(function(vuln) {
+            var tmp_vulns = $filter('orderObjectBy')($scope.vulns, $scope.sortField, $scope.reverse);
+            tmp_vulns = $filter('filter')(tmp_vulns, $scope.expression);
+            tmp_vulns = tmp_vulns.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
+            tmp_vulns.forEach(function(vuln) {
                 if (vuln.selected_statusreport_controller) {
                     selected.push(vuln);
                 }

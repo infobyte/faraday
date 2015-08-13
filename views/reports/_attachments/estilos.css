@@ -920,6 +920,7 @@ aside .alert.alert-danger.alert-dismissible{
     right: 0px;
     border-radius: 7px 0px 0px 7px;
     padding: 5px;
+    bottom: 40px;
     text-decoration: none!important;
     z-index: 100000;
     -webkit-transition: opacity 0.5s ease-out;

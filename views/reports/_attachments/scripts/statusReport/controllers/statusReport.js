@@ -107,9 +107,6 @@ angular.module('faradayApp')
             };
             
             $scope.vulnWebSelected = false;
-
-            var counter = document.getElementById('counter');
-            counter.style.bottom = screen.height / 20 + "px";
         };
 
         $scope.selectedVulns = function() {

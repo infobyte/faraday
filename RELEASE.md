@@ -12,7 +12,11 @@ New features in the latest update
 
 TBA:
 ---
-* Added quick vuln edit in WEB UI
+* Actions on status report impact on visible vulnerabilities
+* Export to CSV matches columns in status report
+* Vulnerability counter on status report
+* Added quick vuln edit and delete in WEB UI
+* Add Unit testing for vulns and status report component
 * Fixes on WEB UI
 * XML Cleaner
 

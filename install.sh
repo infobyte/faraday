@@ -30,7 +30,7 @@ if [ -f /etc/lsb-release ]; then
 	if [ ! -f /usr/bin/lsb_release ] ; then
            apt-get update
            update=1
-	   apt-get -y install lsb-release
+	       apt-get -y install lsb-release
         fi
         os=$(lsb_release -s -d)
 elif [ -f /etc/debian_version ]; then
@@ -115,6 +115,10 @@ else
     apt-get -y install python-qt3
 fi
 
+if [ "$update" -eq 0 ]; then
+    apt-get update
+    update=1
+fi
 apt-get --ignore-missing -y install ipython python-pip python-dev libpq-dev couchdb
 pip install -r requirements.txt
 

@@ -12,13 +12,12 @@ New features in the latest update
 
 TBA:
 ---
-* Actions on status report impact on visible vulnerabilities
-* Export to CSV matches columns in status report
-* Vulnerability counter on status report
+* Exported CSV contains filters and columns from Status Report in WEB UI
+* Vulnerability counter on Status Report in WEB UI
 * Added quick vuln edit and delete in WEB UI
-* Add Unit testing for vulns and status report component
-* Fixes on WEB UI
+* Expanded Unit Tests for WEB UI
 * XML Cleaner
+
 
 Aug 05, 2015:
 ---

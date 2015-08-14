@@ -69,9 +69,9 @@
                     <select class="form-control" ng-model="modal.data.type" ng-options="option.value as option.name for option in modal.vuln_types">
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4" ng-class="{'has-error': form.severity.$invalid }">
                     <h5>Severity</h5>
-                    <select class="form-control" ng-model="modal.data.severity" ng-options="s for s in modal.severities" required>
+                    <select class="form-control" ng-model="modal.data.severity" name="severity" ng-options="s for s in modal.severities" required>
                     </select>
                 </div>
                 <div class="col-md-4">
@@ -81,16 +81,16 @@
                     </select>
                 </div>
             </div><!-- .form-group -->
-            <div class="form-group">
+            <div class="form-group" ng-class="{'has-error': form.name.$invalid }">
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-name">Vuln name</label>
-                    <input type="text" class="form-control" id="vuln-name" placeholder="Name" ng-model="modal.data.name" required/>
+                    <input type="text" class="form-control" id="vuln-name" name="name" placeholder="Name" ng-model="modal.data.name" required/>
                 </div>
             </div><!-- .form-group -->
-            <div class="form-group">
+            <div class="form-group" ng-class="{'has-error': form.desc.$invalid }">
                 <div class="col-md-12">
                     <label class="sr-only" for="vuln-desc">Vuln description</label>
-                    <textarea class="form-control" id="vuln-desc" placeholder="Description" ng-model="modal.data.desc" required></textarea>
+                    <textarea class="form-control" id="vuln-desc" name="desc" placeholder="Description" ng-model="modal.data.desc" required></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">

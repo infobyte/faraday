@@ -59,23 +59,28 @@ elif [ "$os" = "Ubuntu 13.10" ]; then
 elif [ "$os" = "Ubuntu 13.04" ]; then
     version="ubuntu13-04-$arch"
     down=1
-elif [[ "$os" =~ "Ubuntu 14.04".*|"Ubuntu 14.10".*|"Ubuntu Vivid Vervet (development branch)"|"Debian 8.".*|"Ubuntu 15".* ]]; then
+elif [[ "$os" =~ "Ubuntu 14.04".*|"Ubuntu 14.10".*|"Ubuntu Vivid Vervet (development branch)"|"Ubuntu 15".* ]]; then
     version="ubuntu13-10-$arch"
     down=1
     # Install pip from github.
     # Bug: https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1306991
     wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
     python get-pip.py
-elif [[ "$os" =~ "Debian 7".* ]]; then
+elif [[ "$os" =~ "Debian 7".*|"Debian 8".* ]]; then
     version="ubuntu13-10-$arch"
     down=1
+    wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
+    python get-pip.py    
     echo "deb http://ftp.debian.org/debian experimental main" >> /etc/apt/sources.list
     echo "deb http://ftp.debian.org/debian sid main" >> /etc/apt/sources.list
     apt-get update
-    apt-get -t experimental -y install libc6-dev
-    sed -i 's/deb http:\/\/ftp.debian.org\/debian experimental main//' /etc/apt/sources.list
-    sed -i 's/deb http:\/\/ftp.debian.org\/debian sid main//' /etc/apt/sources.list
-    apt-get update
+
+    if [[ "$os" =~ "Debian 7".* ]]; then
+        apt-get -t experimental -y install libc6-dev
+        sed -i 's/deb http:\/\/ftp.debian.org\/debian experimental main//' /etc/apt/sources.list
+        sed -i 's/deb http:\/\/ftp.debian.org\/debian sid main//' /etc/apt/sources.list
+        apt-get update
+    fi
 else
     echo "[-] Could not find a install for $os ($arch $kernel)"
     exit
@@ -110,7 +115,7 @@ else
     apt-get -y install python-qt3
 fi
 
-apt-get -y install ipython python-pip python-dev couchdb libpq-dev
+apt-get --ignore-missing -y install ipython python-pip python-dev libpq-dev couchdb
 pip install -r requirements.txt
 
 echo "You can now run Faraday, enjoy!"

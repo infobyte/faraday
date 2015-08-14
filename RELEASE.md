@@ -21,6 +21,8 @@ TBA:
 * Improve plugins running status log (Adding log information on report importing)
 * Clean dev log on plugins
 * w3af plugin refactoring
+* Fix Debian 7/8.1 install support
+
 
 Aug 05, 2015:
 ---

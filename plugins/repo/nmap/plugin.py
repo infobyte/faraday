@@ -545,6 +545,10 @@ class NmapPlugin(core.PluginBase):
 
                     if re.search(r"VULNERABLE",desc):
                         severity = "high"
+                    if re.search(r"ERROR",desc):
+                        severity = "unclassified"
+                    if re.search(r"Couldn't",desc):
+                        severity = "unclassified" 
                     if v.web:
                         if note:
                             n_id = self.createAndAddNoteToService(h_id,s_id,"website","")

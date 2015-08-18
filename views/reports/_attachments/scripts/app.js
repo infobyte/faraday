@@ -25,12 +25,12 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
     })())
     .constant("SEVERITIES", (function() {
         var severities = [
-            "unclassified",
-            "info",
-            "low",
-            "med",
+            "critical",
             "high",
-            "critical"
+            "med",
+            "low",
+            "info",
+            "unclassified"
         ];
         return severities;
     })());

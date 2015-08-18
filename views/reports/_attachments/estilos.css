@@ -937,3 +937,9 @@ aside .alert.alert-danger.alert-dismissible{
     font-weight: bold;
 }
 .text-center{text-align: center; width: 25px;}
+select.colors-severities option[value="unclassified"]{color: #999;}
+select.colors-severities option[value="info"]{color: #2e97bd;}
+select.colors-severities option[value="low"]{color: #A1CE31;}
+select.colors-severities option[value="med"]{color: #DFBF35;}
+select.colors-severities option[value="high"]{color: #DF3936;}
+select.colors-severities option[value="critical"]{color: #932ebe;}

@@ -71,7 +71,7 @@
                 </div>
                 <div class="col-md-4">
                     <h5>Severity</h5>
-                    <select class="form-control" ng-model="modal.data.severity" ng-options="s for s in modal.severities" required>
+                    <select class="form-control colors-severities" ng-model="modal.data.severity" ng-options="s as s for s in modal.severities track by s" required>
                     </select>
                 </div>
                 <div class="col-md-4">

@@ -73,7 +73,7 @@ angular.module('faradayApp')
         };
         
         vulnsManager.deleteVuln = function(vuln) {
-            var deferred = $q.defer();
+            var deferred = $q.defer(),
             self = this;
             vuln.remove().then(function(){
                 var index = self.vulns_indexes[vuln._id];
@@ -138,7 +138,7 @@ angular.module('faradayApp')
         };
 
         vulnsManager.updateVuln = function(vuln, data) {
-            var deferred = $q.defer();
+            var deferred = $q.defer(),
             self = this;
             vuln.update(data).then(function(){
                 self.vulns[self.vulns_indexes[vuln._id]] = vuln;

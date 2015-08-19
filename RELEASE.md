@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA:
+Aug 19, 2015:
 ---
 * Exported CSV contains filters and columns from Status Report in WEB UI
 * Vulnerability counter on Status Report in WEB UI

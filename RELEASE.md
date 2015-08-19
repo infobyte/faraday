@@ -10,6 +10,20 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+Aug 19, 2015:
+---
+* Exported CSV contains filters and columns from Status Report in WEB UI
+* Vulnerability counter on Status Report in WEB UI
+* Added quick vuln edit and delete in WEB UI
+* Expanded Unit Tests for WEB UI
+* XML Cleaner
+* Kali 2.0 support
+* Improve plugins running status log (Adding log information on report importing)
+* Clean dev log on plugins
+* w3af plugin refactoring
+* Fix Debian 7/8.1 install support
+
+
 Aug 05, 2015:
 ---
 

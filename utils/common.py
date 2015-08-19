@@ -12,6 +12,13 @@ import struct
 import sys
 import requests
 
+def sha1OfFile(filepath):
+    with open(filepath, 'rb') as f:
+        return hashlib.sha1(f.read()).hexdigest()
+
+def sha1OfStr(strvalue):
+    return hashlib.sha1(strvalue).hexdigest()        
+
 def get_hash(parts):
 
     return hashlib.sha1("._.".join(parts)).hexdigest()

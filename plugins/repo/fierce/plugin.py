@@ -195,7 +195,6 @@ class FiercePlugin(core.PluginBase):
         for item in parser.items:
             if item['ip'] == "127.0.0.1" or item['ip'] == '':
                 continue
-            print "agregando (%s) (%s)" % (item['host'],item['ip'])
             h_id = self.createAndAddHost(item['ip'])
             i_id = self.createAndAddInterface(h_id, item['ip'], ipv4_address= item['ip'], hostname_resolution = [item['host']])
             if item['isResolver']:

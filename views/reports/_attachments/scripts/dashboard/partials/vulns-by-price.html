@@ -5,12 +5,19 @@
             <span class="glyphicon glyphicon-info-sign" tooltip="Total net worth of Workspace, according to current vulnerabilities' prices"></span>
         </h2>
     </header>
-    <div class="main">
-        <div class="center-lg-6"><h4><i class="fa fa-money fa-2x"></i> {{total | currency}} total</h4></div>
-        <div d3-horizontal-stacked-bar data="data" class="stackedbars"></div>
+    <div ng-if="vulnsCount == undefined || vulnsCount.length == 0" class="alert alert-info alert-dismissible no-margin-bottom">
+        <button type="button" class="close" data-dismiss="alert">
+            <span aria-hidden="true">&times;</span>
+            <span class="sr-only">Close</span>
+        </button>
+        <p>No vulnerabilities found yet.</p>
+    </div>
+    <div class="main" ng-if="vulnsCount.length > 0">
+        <div class="center-lg-6"><h4><i class="fa fa-money fa-2x"></i> {{workspaceWorth | currency}} total</h4></div>
+        <div d3-horizontal-stacked-bar data="vulnsCount" class="stackedbars"></div>
         <div id="vulns-by-price-reference" class="center-lg-6">
             <ul class="label-list">
-                <li ng-repeat="(severity, price) in prices" tooltip="Click on number to edit price"><span class="label vuln fondo-{{severity}}">{{severity}} $<span contenteditable="true" ng-model="prices[severity]"></span></span></li>
+                <li ng-repeat="(severity, price) in vulnPrices" tooltip="Click on number to edit price"><span class="label vuln fondo-{{severity}}">{{severity}} $<span contenteditable="true" ng-model="vulnPrices[severity]"></span></span></li>
             </ul>
         </div><!-- #vulns-by-price-reference .center-lg-6 -->
     </div>

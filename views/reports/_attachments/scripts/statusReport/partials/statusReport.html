@@ -10,7 +10,7 @@
                 title="Current workspace">Status report for {{ workspace }} ({{vulns.length}} vulns)</span></h2><!-- WS name -->
             </div><!-- .ws-label -->
             <div id="ws-control" class="btn-group btn-small-margin">
-                <button file-exporter="toCSV()" type="button" class="btn btn-success" title="Download CSV for current workspace">
+                <button file-exporter="csv()" type="button" class="btn btn-success" title="Download CSV for current workspace">
                     <span class="glyphicon glyphicon-download"></span>
                 </button>
                 <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
@@ -73,7 +73,10 @@
                                     <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
                                     <input type="text" class="form-control" id="filter-by" 
                                     placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
-                                    <span class="input-group-addon glyphicon-btn glyphicon glyphicon-search" ng-click="searchFor(true, searchParams)"></span>
+                                    <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
+                                        <i class="fa fa-search" ng-if="vulns"></i>
+                                        <i class="fa fa-refresh fa-spin" ng-if="vulns.length == 0"></i>
+                                    </span>
                                 </div>
                             </div>
                         </form>  
@@ -94,6 +97,8 @@
                     <thead>
                         <tr>
                             <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
+                            <th><a href=""></a></th>
+                            <th><a href=""></a></th>
                             <th ng-if="columns.date">
                                 <a href="" ng-click="toggleSort('metadata.create_time')">Date</a>
                                 <a href="" ng-click="toggleShow('date', true)"><span class="glyphicon glyphicon-remove"></span></a>
@@ -191,7 +196,9 @@
                             selection-model-selected-attribute="selected_statusreport_controller"
                             selection-model-selected-class="multi-selected"
                             selection-model-on-change="selectionChange()">
-                            <td><input type="checkbox" name="{{v.id}}"/></td>
+                            <td class="text-center"><input type="checkbox" name="{{v.id}}"/></td>
+                            <td class="text-center"><span ng-click="editVuln(v)" class="glyphicon glyphicon-pencil cursor" tooltip="Edit"></span></td>
+                            <td class="text-center"><span ng-click="deleteVuln(v)" class="glyphicon glyphicon-trash cursor" tooltip="Delete"></span></td>
                             <td ng-if="columns.date">{{v.metadata.create_time * 1000 | date:'MM/dd/yyyy'}}</td>
                             <td ng-if="columns.target">{{v.target}}</td>
                             <td ng-if="columns.status">Vulnerable</td>
@@ -243,6 +250,17 @@
                             <input type="number" min="0" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />
                         </form>
                     </div>
+                </div>
+                <div id="counter">
+                    <span>Total</span>
+                    <span class="counterNum">{{vulns.length}}</span>
+                    <div ng-if="search">
+                        <span>Viewing</span>
+                        <span class="counterNum">{{filtered.length}}</span>
+                    </div>
+                    <p style="margin:0px" ng-if="!search"></p>
+                    <span>Selected</span>
+                    <span class="counterNum">{{selectedVulns().length}}</span>
                 </div>
             </div><!-- .reports -->
     </div><!-- #reports-main --></div><!-- .right-main -->

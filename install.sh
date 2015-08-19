@@ -14,6 +14,8 @@ fi
 
 update=0
 #protection
+sha_kali2_i686=d08b0562acc3da5a392509a1801d5569e1ace750d26d020b83ecc4c8eea4f191
+sha_kali2_x86_64=f8ee223706bd306dbdba1bd9232f196878c598cb449d006e24edbcbe85f19f2a
 sha_kali_i686=f071539d8d64ad9b30c7214daf5b890a94b0e6d68f13bdcc34c2453c99afe9c4
 sha_kali_x86_64=02a050372fb30ede1454e1dd99d97e0fe0963ce2bd36c45efe90eec78df11d04
 sha_ubuntu13_10_i686=8199904fb5fca8bc244c31b596c3ae0d441483bfbb2dc47f66186ceffbf3586e
@@ -28,7 +30,7 @@ if [ -f /etc/lsb-release ]; then
 	if [ ! -f /usr/bin/lsb_release ] ; then
            apt-get update
            update=1
-	   apt-get -y install lsb-release
+	       apt-get -y install lsb-release
         fi
         os=$(lsb_release -s -d)
 elif [ -f /etc/debian_version ]; then
@@ -43,6 +45,9 @@ echo "[+] Install $os $arch"
 down=0
 if [ "$os" = "Ubuntu 10.04.2 LTS" ]; then
     version="ubuntu10-04.02$arch"
+elif [[ "$os" =~ "Kali GNU/Linux 2."* ]]; then
+    version="kali2-$arch"
+    down=1    
 elif [[ "$os" =~ .*Kali.* ]]; then
     version="kali-$arch"
     down=1
@@ -54,23 +59,28 @@ elif [ "$os" = "Ubuntu 13.10" ]; then
 elif [ "$os" = "Ubuntu 13.04" ]; then
     version="ubuntu13-04-$arch"
     down=1
-elif [[ "$os" =~ "Ubuntu 14.04".*|"Ubuntu 14.10".*|"Ubuntu Vivid Vervet (development branch)"|"Debian 8.".*|"Ubuntu 15".* ]]; then
+elif [[ "$os" =~ "Ubuntu 14.04".*|"Ubuntu 14.10".*|"Ubuntu Vivid Vervet (development branch)"|"Ubuntu 15".* ]]; then
     version="ubuntu13-10-$arch"
     down=1
     # Install pip from github.
     # Bug: https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1306991
     wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
     python get-pip.py
-elif [[ "$os" =~ "Debian 7".* ]]; then
+elif [[ "$os" =~ "Debian 7".*|"Debian 8".* ]]; then
     version="ubuntu13-10-$arch"
     down=1
+    wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
+    python get-pip.py    
     echo "deb http://ftp.debian.org/debian experimental main" >> /etc/apt/sources.list
     echo "deb http://ftp.debian.org/debian sid main" >> /etc/apt/sources.list
     apt-get update
-    apt-get -t experimental -y install libc6-dev
-    sed -i 's/deb http:\/\/ftp.debian.org\/debian experimental main//' /etc/apt/sources.list
-    sed -i 's/deb http:\/\/ftp.debian.org\/debian sid main//' /etc/apt/sources.list
-    apt-get update
+
+    if [[ "$os" =~ "Debian 7".* ]]; then
+        apt-get -t experimental -y install libc6-dev
+        sed -i 's/deb http:\/\/ftp.debian.org\/debian experimental main//' /etc/apt/sources.list
+        sed -i 's/deb http:\/\/ftp.debian.org\/debian sid main//' /etc/apt/sources.list
+        apt-get update
+    fi
 else
     echo "[-] Could not find a install for $os ($arch $kernel)"
     exit
@@ -105,7 +115,11 @@ else
     apt-get -y install python-qt3
 fi
 
-apt-get -y install ipython python-pip python-dev couchdb libpq-dev
+if [ "$update" -eq 0 ]; then
+    apt-get update
+    update=1
+fi
+apt-get --ignore-missing -y install ipython python-pip python-dev libpq-dev couchdb
 pip install -r requirements.txt
 
 echo "You can now run Faraday, enjoy!"

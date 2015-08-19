@@ -398,7 +398,6 @@ class ArachniPlugin(core.PluginBase):
 
             
             for issue in parser.issues:
-                print dir(issue)
                 
                 desc=issue.description
                 desc+="\nSolution: " + issue.remedy_guidance if issue.remedy_guidance !="None" else ""

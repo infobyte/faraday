@@ -158,6 +158,7 @@ class Item(object):
         self.detail = self.get_text_from_subnode('description')
         self.severity = self.node.get('severity')
         self.method = self.node.get('method')
+        self.param = self.node.get('var') if self.node.get('var') != "None" else ""
         self.req = self.resp = ''
         for tx in self.node.findall('http-transactions/http-transaction'):
                                                        
@@ -228,7 +229,7 @@ class W3afPlugin(core.PluginBase):
 
         for item in parser.items:
             v_id = self.createAndAddVulnWebToService(h_id, s_id, item.name,
-                                                     item.detail, website=parser.host, severity=item.severity,
+                                                     item.detail, pname=item.param, path=item.url, website=parser.host, severity=item.severity,
                                                      method=item.method, request=item.req, response=item.resp)
         del parser
         

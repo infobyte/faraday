@@ -43,7 +43,7 @@ angular.module('faradayApp')
                                 return [{
                                     k: d.key,
                                     c: d.color,
-                                    y: d.value,
+                                    y: d.amount,
                                     x: 0
                                 }];
                         });

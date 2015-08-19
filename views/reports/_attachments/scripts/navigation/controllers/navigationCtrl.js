@@ -17,6 +17,7 @@ angular.module('faradayApp')
         };
 
         var timer = $interval($scope.checkCwe, 43200000);
+        $scope.checkCwe();
 
         $scope.$on('$destroy', function() {
             $interval.cancel(timer);
@@ -63,7 +64,6 @@ angular.module('faradayApp')
         };
 
         $scope.loadCurrentWorkspace();
-        $scope.checkCwe();
 
         if(navigator.userAgent.toLowerCase().indexOf('iceweasel') > -1) {
              $scope.isIceweasel = "Your browser is not supported, please use Firefox or Chrome";

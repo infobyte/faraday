@@ -170,6 +170,22 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        hostsManager.getAllVulnsCount = function(ws) {
+            var deferred = $q.defer();
+
+            var url = BASEURL + ws + '/_design/vulns/_view/byhost?group=true';
+
+            $http.get(url)
+                .success(function(vulns) {
+                    deferred.resolve(vulns.rows);
+                })
+                .error(function() {
+                    deferred.reject("Unable to load Vulnerabilities");
+                });
+
+            return deferred.promise;
+        };
+
         hostsManager.getInterfaces = function(ws, id) {
             var deferred = $q.defer(),
             self = this;

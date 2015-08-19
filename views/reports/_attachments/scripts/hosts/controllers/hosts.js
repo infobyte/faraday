@@ -18,10 +18,22 @@ angular.module('faradayApp')
                 $scope.workspaces = wss;
             });
 
-            hostsManager.getHosts($scope.workspace).then(function(hosts) {
-                $scope.hosts = hosts;
-                $scope.loadIcons();
-            });
+            hostsManager.getHosts($scope.workspace)
+                .then(function(hosts) {
+                    $scope.hosts = hosts;
+                    $scope.loadIcons();
+                });
+
+            hostsManager.getAllVulnsCount($scope.workspace)
+                .then(function(vulns) {
+                    $scope.vulnsCount = {};
+                    vulns.forEach(function(vuln) {
+                        $scope.vulnsCount[vuln.key] = vuln.value;
+                    });
+                })
+                .catch(function(e) {
+                    console.log(e);
+                });
         };
 
         $scope.loadIcons = function() {

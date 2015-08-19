@@ -3,11 +3,25 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('navigationCtrl', ['$scope', '$http','$route', '$routeParams', '$cookies', '$location',
-        function($scope, $http, $route, $routeParams, $cookies, $location) {
+    .controller('navigationCtrl', ['$scope', '$http','$route', '$routeParams', '$cookies', '$location', '$interval',
+        function($scope, $http, $route, $routeParams, $cookies, $location, $interval) {
 
         $scope.workspace = "";
         $scope.component = "";
+
+        $scope.checkCwe = function() {
+            $http.get("https://www.faradaysec.com/scripts/updatedb.php").then(function() {
+            }, function() {
+                console.log("CWE database couldn't be updated");
+            });
+        };
+
+        var timer = $interval($scope.checkCwe, 43200000);
+        $scope.checkCwe();
+
+        $scope.$on('$destroy', function() {
+            $interval.cancel(timer);
+        });
 
         $scope.$on('$routeChangeSuccess', function() {
             $scope.updateWorkspace();

@@ -8,6 +8,8 @@ See the file 'doc/LICENSE' for the license information
 import os
 import sys
 import signal
+import threading
+import requests
 
 # TODO: no seria mejor activar todo ?
 # XXX: something strange happens if we import
@@ -35,6 +37,28 @@ from gui.gui_app import UiFactory
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
+
+
+class TimerClass(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.__event = threading.Event()
+
+    def run(self):
+        while not self.__event.is_set():
+            try:
+                res = requests.get(
+                    "https://www.faradaysec.com/scripts/updatedb.php",
+                    params={'version': CONF.getVersion()},
+                    timeout=1,
+                    verify=True)
+                res.status_code
+            except Exception:
+                model.api.devlog("CWE database couldn't be updated")
+            self.__event.wait(43200)
+
+    def stop(self):
+        self.__event.set()
 
 
 class MainApplication(object):
@@ -74,6 +98,9 @@ class MainApplication(object):
 
         self.gui_app.setSplashImage(os.path.join(
             CONF.getImagePath(), "splash2.png"))
+
+        self.timer = TimerClass()
+        self.timer.start()
 
     def enableExceptHook(self):
         sys.excepthook = exception_handler
@@ -177,6 +204,7 @@ class MainApplication(object):
         self._model_controller.stop()
         self._model_controller.join()
         self.gui_app.quit()
+        self.timer.stop()
         model.api.devlog("Waiting for controller threads to end...")
         return exit_code
 

@@ -518,3 +518,210 @@ describe('statusReportCtrl', function() {
         });
     });
 });
+
+
+describe('statusReportCtrl check all function', function() {
+    var $controller,
+        $scope;
+
+    var $vulnsManager,
+    vulnsManagerMock,
+    $workspacesFact,
+    workspacesFactMock;
+
+    var returnPromise;
+
+    beforeEach(function () {
+        module('faradayApp');
+
+        inject(function(_$rootScope_, _$controller_, _$q_, _$modal_) {
+            // The injector unwraps the underscores (_) from around the parameter names when matching
+            $scope = _$rootScope_.$new();
+            // workspaces variables
+
+            returnPromise = function(res) {
+                var deferred = _$q_.defer();
+                deferred.resolve(res);
+                return deferred.promise;
+            }
+
+            rejectPromise = function(res) {
+                var deferred = _$q_.defer();
+                deferred.reject(res);
+                return deferred.promise;
+            }
+
+            workspacesFactMock = {
+                list: function() {
+                    return returnPromise(['ws1', 'ws2'])
+                }
+            }
+
+            vulnsManagerMock = {
+                vulns: [],
+                getVulns: function(workspace) {
+                    vulnsManagerMock.vulns = [];
+                    for (var i=0; i < 10; i++) {
+                        var vuln1 = {
+                            "_id": "1.2.3." + i,
+                            "_rev": "1-abe16726389e434ca3f37384ea76128e",
+                            "name": "vuln " + i,
+                            "parent": "1.2.3",
+                            "resolution": "Be careful",
+                            "refs": [
+                               "CVE-2002-1623",
+                               "7423",
+                               "OSVDB:3820, CERT:886601"
+                            ],
+                            "metadata": {
+                               "update_time": 1429643049.395857,
+                               "update_user": "john",
+                               "update_action": 0,
+                               "creator": "john",
+                               "create_time": 1429643049.395857 + i,
+                               "update_controller_action": "ModelControler.newVuln",
+                               "owner": "john"
+                            },
+                            "owned": false,
+                            "severity": "med",
+                            "type": "Vulnerability",
+                            "owner": "john",
+                            "desc": "I'm scared!",
+                            "data": "",
+                            "description": "I'm scared!"
+                        };
+                        var vuln2 = {
+                            "_id": "2.2.3." + i,
+                            "_rev": "1-abe16726389e434ca3f37384ea76128e",
+                            "name": "vuln " + i,
+                            "parent": "2.2.3",
+                            "resolution": "Be careful",
+                            "refs": [
+                               "CVE-2002-1623",
+                               "7423",
+                               "OSVDB:3820, CERT:886601"
+                            ],
+                            "metadata": {
+                               "update_time": 1429643049.395857,
+                               "update_user": "john",
+                               "update_action": 0,
+                               "creator": "john",
+                               "create_time": 1429643049.395857 + i + 10,
+                               "update_controller_action": "ModelControler.newVuln",
+                               "owner": "john"
+                            },
+                            "owned": false,
+                            "severity": "high",
+                            "type": "Vulnerability",
+                            "owner": "john",
+                            "desc": "I'm scared!",
+                            "data": "",
+                            "description": "I'm scared!"
+                        };
+                        vulnsManagerMock.vulns.push(vuln1);
+                        vulnsManagerMock.vulns.push(vuln2);
+                    }
+                    return returnPromise(vulnsManagerMock.vulns);
+                }
+            };
+
+            $controller = _$controller_('statusReportCtrl', {
+                $scope: $scope,
+                vulnsManager: vulnsManagerMock,
+                hostsManager: {},
+                workspacesFact: workspacesFactMock,
+                $routeParams: {wsId: 'ws1'},
+                $modal: _$modal_
+            });
+        });
+    });
+
+    describe('sort properly', function() {
+        beforeEach(function() {
+            $scope.selectall = false;
+            $scope.reverse = false;
+            $scope.pageSize = 5;
+            // we set the sort field to make sure that
+            // vulns are in the same order in every test
+            $scope.sortField = "metadata.create_time";
+            search_elem = function(aVulns, id){
+                for(var i=0; i < aVulns.length; i++){
+                    if (aVulns[i]._id == id) {
+                        return aVulns[i];
+                    }
+                }
+                return {};
+            };
+        });
+        it('when current page is 0', function() {
+            $scope.currentPage = 0;
+            $scope.$apply();
+            $scope.checkAll();
+
+            $scope.vulns.forEach(function(v) {
+                if(v._id === "1.2.3.0" || v._id === "1.2.3.1" || v._id === "1.2.3.2" || v._id === "1.2.3.3" || v._id === "1.2.3.4") {
+                    expect(search_elem($scope.vulns, v._id).selected_statusreport_controller).toEqual(true);
+                } else {
+                    expect(search_elem($scope.vulns, v._id).selected_statusreport_controller).not.toEqual(true);
+                }
+            });
+        });
+        it('when current page is 1', function() {
+            $scope.currentPage = 1;
+            $scope.$apply();
+            $scope.checkAll();
+
+            $scope.vulns.forEach(function(v) {
+                if(v._id === "1.2.3.5" || v._id === "1.2.3.6" || v._id === "1.2.3.7" || v._id === "1.2.3.8" || v._id === "1.2.3.9") {
+                    expect(search_elem($scope.vulns, v._id).selected_statusreport_controller).toEqual(true);
+                } else {
+                    expect(search_elem($scope.vulns, v._id).selected_statusreport_controller).not.toEqual(true);
+                }
+            });
+        });
+        it('when current page is 0 and filtering', function() {
+            $scope.currentPage = 0;
+            $scope.expression = {severity:"med"};
+            $scope.$apply();
+            $scope.checkAll();
+
+            $scope.vulns.forEach(function(v) {
+                if(v._id === "1.2.3.0" || v._id === "1.2.3.1" || v._id === "1.2.3.2" || v._id === "1.2.3.3" || v._id === "1.2.3.4") {
+                    expect(search_elem($scope.vulns, v._id).selected_statusreport_controller).toEqual(true);
+                } else {
+                    expect(search_elem($scope.vulns, v._id).selected_statusreport_controller).not.toEqual(true);
+                }
+            });
+        });
+        it('when current page is 1 and filtering', function() {
+            $scope.currentPage = 1;
+            $scope.expression = {severity:"high"};
+            $scope.$apply();
+            $scope.checkAll();
+
+            $scope.vulns.forEach(function(v) {
+                if(v._id === "2.2.3.5" || v._id === "2.2.3.6" || v._id === "2.2.3.7" || v._id === "2.2.3.8" || v._id === "2.2.3.9") {
+                    expect(search_elem($scope.vulns, v._id).selected_statusreport_controller).toEqual(true);
+                } else {
+                    expect(search_elem($scope.vulns, v._id).selected_statusreport_controller).not.toEqual(true);
+                }
+            });
+        });
+        it('when page size is the total of vulns', function() {
+            $scope.currentPage = 0;
+            $scope.pageSize = 20;
+            $scope.expression = {severity:"high"};
+            $scope.$apply();
+            $scope.checkAll();
+
+            $scope.vulns.forEach(function(v) {
+                if(v._id.split(".")[0] === "2") {
+                    expect(search_elem($scope.vulns, v._id).selected_statusreport_controller).toEqual(true);
+                } else {
+                    expect(search_elem($scope.vulns, v._id).selected_statusreport_controller).not.toEqual(true);
+                }
+            });
+        });
+    });
+
+});

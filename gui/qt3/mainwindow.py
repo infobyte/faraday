@@ -350,6 +350,10 @@ class MainWindow(qt.QMainWindow):
 
         self._log_console.show()
 
+        self.timer = qt.QTimer(self)
+        self.connect(self.timer, qt.SIGNAL('timeout()'), self.createShellTab)
+        self.timer.start(200, True)
+
         for shell_widget in self._shell_widgets:
             shell_widget.show()
 
@@ -362,7 +366,6 @@ class MainWindow(qt.QMainWindow):
         shell_widget.setFocus()
 
     def createShellTab(self):
-
         tab_name = "Shell-%d" % self._tab_manager.getNextId()
         self._main_app.createShellEnvironment(tab_name)
 

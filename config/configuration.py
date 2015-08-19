@@ -12,9 +12,9 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
     from xml.etree.ElementTree import Element, ElementTree
-    
+
 the_config = None
-    
+
 CONST_API_CON_INFO = "api_con_info"
 CONST_API_CON_INFO_HOST = "api_con_info_host"
 CONST_API_CON_INFO_PORT = "api_con_info_port"
@@ -54,10 +54,10 @@ CONST_TKTTEMPLATE = "tickets_template"
 CONST_LAST_WORKSPACE = "last_workspace"
 CONST_PLUGIN_SETTINGS = "plugin_settings"
 
-                                                                
+
 DEFAULT_XML = os.path.dirname(__file__) +  "/default.xml"
 
- 
+
 class Configuration:
 
     def __init__(self, xml_file=DEFAULT_XML):
@@ -68,11 +68,11 @@ class Configuration:
         if self._isConfig(): self._getConfig()
 
     def _isConfig(self):
-        """ Checks whether the given file exists and belongs 
+        """ Checks whether the given file exists and belongs
         to faraday's configuration syntax"""
 
         root = f = None
-        
+
         try:
             f = open(self.filepath, 'rb')
             try:
@@ -86,7 +86,7 @@ class Configuration:
         except IOError, err:
             print "Error while opening file.\n%s. %s" % (err, self.filepath)
             return False
-            
+
         finally:
             if f: f.close()
 
@@ -117,7 +117,7 @@ class Configuration:
             completes private attributes with such information. """
 
         tree = self._getTree()
-        if tree:                                                          
+        if tree:
             self._api_con_info_host = self._getValue(tree, CONST_API_CON_INFO_HOST)
             self._api_con_info_port = self._getValue(tree, CONST_API_CON_INFO_PORT)
             self._api_restful_con_info_port = self._getValue(tree, CONST_API_RESTFUL_CON_INFO_PORT)
@@ -158,7 +158,7 @@ class Configuration:
             self._tkt_template = self._getValue(tree, CONST_TKTTEMPLATE,default ="{}")
 
 
-                        
+
     def getApiConInfo(self):
         if str(self._api_con_info_host) == "None" or str(self._api_con_info_port) == "None":
             return None
@@ -167,14 +167,14 @@ class Configuration:
     def getApiRestfulConInfo(self):
         if str(self._api_con_info_host) == "None" or str(self._api_restful_con_info_port) == "None":
             return None
-        return self._api_con_info_host, int(self._api_restful_con_info_port)        
-                                  
+        return self._api_con_info_host, int(self._api_restful_con_info_port)
+
     def getApiConInfoHost(self):
         return self._api_con_info_host
-    
+
     def getApiConInfoPort(self):
         return self._api_con_info_port
-    
+
     def getApiRestfulConInfoPort(self):
         return self._api_restful_con_info_port
 
@@ -201,7 +201,7 @@ class Configuration:
 
     def getDefaultTempPath(self):
         return os.path.expanduser(self._default_temp_path)
-    
+
     def getFont(self):
         return self._font
 
@@ -280,7 +280,7 @@ class Configuration:
     def getTktTemplate(self):
         return self._tkt_template
 
-                        
+
 
     def setLastWorkspace(self, workspaceName):
         self._last_workspace = workspaceName
@@ -293,14 +293,14 @@ class Configuration:
     def setApiRestfulConInfo(self, val1, val2):
         self._api_con_info = val1, val2
         self.setApiConInfoHost(val1)
-        self.setApiRestfulConInfoPort(val2)        
-        
+        self.setApiRestfulConInfoPort(val2)
+
     def setApiConInfoHost(self, val):
         self._api_con_info_host = val
-    
+
     def setApiConInfoPort(self, val):
         self._api_con_info_port = str(val)
-    
+
     def setApiRestfulConInfoPort(self, val):
         self._api_restful_con_info_port = str(val)
 
@@ -327,7 +327,7 @@ class Configuration:
 
     def setDefaultTempPath(self, val):
         self._default_temp_path = val
-    
+
     def setFont(self, val):
         self._font = val
 
@@ -376,7 +376,7 @@ class Configuration:
     def setVersion(self, val):
         self._version = val
 
-    def setCouchUri(self, uri): 
+    def setCouchUri(self, uri):
         self._couch_uri = uri
 
     def setCouchIsReplicated(self, is_it):
@@ -387,7 +387,7 @@ class Configuration:
 
     def setPluginSettings(self, settings):
         self._plugin_settings = settings
-    
+
     def indent(self, elem, level=0):
         """ Indents the tree to make a pretty view of it. """
 
@@ -410,19 +410,19 @@ class Configuration:
         """ Saves XML config on new file. """
 
         ROOT = Element("faraday")
-        
+
         API_CON_INFO_HOST = Element(CONST_API_CON_INFO_HOST)
         API_CON_INFO_HOST.text = self.getApiConInfoHost()
         ROOT.append(API_CON_INFO_HOST)
-        
+
         API_CON_INFO_PORT = Element(CONST_API_CON_INFO_PORT)
         API_CON_INFO_PORT.text = str(self.getApiConInfoPort())
         ROOT.append(API_CON_INFO_PORT)
 
         API_RESTFUL_CON_INFO_PORT = Element(CONST_API_RESTFUL_CON_INFO_PORT)
         API_RESTFUL_CON_INFO_PORT.text = str(self.getApiRestfulConInfoPort())
-        ROOT.append(API_RESTFUL_CON_INFO_PORT)        
-        
+        ROOT.append(API_RESTFUL_CON_INFO_PORT)
+
         APPNAME = Element(CONST_APPNAME)
         APPNAME.text = self.getAppname()
         ROOT.append(APPNAME)
@@ -556,28 +556,15 @@ class Configuration:
         TKT_TEMPLATE.text = self.getTktTemplate()
         ROOT.append(TKT_TEMPLATE)
 
-        self.indent(ROOT, 0)                                                          
+        self.indent(ROOT, 0)
         xml_file = os.path.expanduser(xml_file)
-        ElementTree(ROOT).write(xml_file)                                      
-        
+        ElementTree(ROOT).write(xml_file)
+
 def getInstanceConfiguration():
     global the_config
-    if the_config is None:                                                                                           
+    if the_config is None:
         if os.path.exists(os.path.expanduser("~/.faraday/config/user.xml")):
             the_config = Configuration(os.path.expanduser("~/.faraday/config/user.xml"))
         else:
             the_config = Configuration(os.path.expanduser("~/.faraday/config/config.xml"))
     return the_config
-
-
-                           
-                                     
- 
-                                     
-                                 
-
-                                          
-                                         
-                                                            
-                                                                
-                                                              

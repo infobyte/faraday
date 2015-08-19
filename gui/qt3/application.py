@@ -58,7 +58,6 @@ class GuiApp(qt.QApplication, FaradayUi):
         return self._main_window
 
     def run(self, args):
-        self._main_window.createShellTab()
         self.createLoggerWidget()
         self._main_window.showAll()
         couchURL = CONF.getCouchURI()

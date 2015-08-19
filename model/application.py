@@ -47,7 +47,12 @@ class TimerClass(threading.Thread):
     def run(self):
         while not self.__event.is_set():
             try:
-                requests.get("https://www.faradaysec.com/scripts/updatedb.php")
+                res = requests.get(
+                    "https://www.faradaysec.com/scripts/updatedb.php",
+                    params={'version': CONF.getVersion()},
+                    timeout=1,
+                    verify=True)
+                res.status_code
             except Exception:
                 model.api.devlog("CWE database couldn't be updated")
             self.__event.wait(43200)

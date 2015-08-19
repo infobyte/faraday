@@ -9,12 +9,14 @@ angular.module('faradayApp')
         $scope.workspace = "";
         $scope.component = "";
 
-        var timer = $interval(function() {
-            $http.jsonp("https://www.faradaysec.com/scripts/updatedb.php").then(function() {
+        $scope.checkCwe = function() {
+            $http.get("https://www.faradaysec.com/scripts/updatedb.php").then(function() {
             }, function() {
                 console.log("CWE database couldn't be updated");
             });
-        }, 43200000);
+        };
+
+        var timer = $interval($scope.checkCwe, 43200000);
 
         $scope.$on('$destroy', function() {
             $interval.cancel(timer);
@@ -61,6 +63,7 @@ angular.module('faradayApp')
         };
 
         $scope.loadCurrentWorkspace();
+        $scope.checkCwe();
 
         if(navigator.userAgent.toLowerCase().indexOf('iceweasel') > -1) {
              $scope.isIceweasel = "Your browser is not supported, please use Firefox or Chrome";

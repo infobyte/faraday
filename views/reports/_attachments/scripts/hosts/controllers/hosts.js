@@ -28,7 +28,12 @@ angular.module('faradayApp')
                 .then(function(vulns) {
                     $scope.vulnsCount = {};
                     vulns.forEach(function(vuln) {
-                        $scope.vulnsCount[vuln.key] = vuln.value;
+                        var parts = vuln.key.split("."),
+                        parent = parts[0];
+
+                        if(parts.length > 1) $scope.vulnsCount[vuln.key] = vuln.value;
+                        if($scope.vulnsCount[parent] == undefined) $scope.vulnsCount[parent] = 0;
+                        $scope.vulnsCount[parent] += vuln.value;
                     });
                 })
                 .catch(function(e) {

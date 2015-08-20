@@ -65,7 +65,7 @@
                                     <td ng-bind="host.description || '-'"></td>
                                     <td>
                                         <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" tooltip="{{host.os}}"/>
-                                        <span ng-if="host.icon == undefined" class="glyphicon glyphicon-question-sign" tooltip="{{host.os}}"></span>
+                                        <span ng-if="host.icon == undefined" class="fa fa-laptop" tooltip="{{host.os}}"></span>
                                     </td>
                                     <td ng-bind="host.owned"></td>
                                 </tr>

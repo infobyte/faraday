@@ -10,6 +10,10 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+TBA:
+---
+* Added vulns count for Hosts in WEB UI
+
 Aug 19, 2015:
 ---
 * Exported CSV contains filters and columns from Status Report in WEB UI

@@ -7,7 +7,6 @@ angular.module('faradayApp')
         ['$scope', '$filter', '$route', '$routeParams', '$modal', 'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager',
         function($scope, $filter, $route, $routeParams, $modal, hostsManager, workspacesFact, dashboardSrv, servicesManager) {
 
-
 	    init = function() {
 	    	$scope.selectall = false;
             // current workspace
@@ -24,13 +23,26 @@ angular.module('faradayApp')
             });
             // services by host
             $scope.services = [];
-            dashboardSrv.getServicesByHost($scope.workspace, hostId).then(function(services){
-            	services.forEach(function(service){
-                    servicesManager.getService(service.id, $scope.workspace, true).then(function(s){
-                        $scope.services.push(s);
+            dashboardSrv.getServicesByHost($scope.workspace, hostId)
+                .then(function(services) {
+                    services.forEach(function(service) {
+                        servicesManager.getService(service.id, $scope.workspace, true)
+                            .then(function(s) {
+                                $scope.services.push(s);
+                            });
                     });
                 });
-            });
+
+            hostsManager.getAllVulnsCount($scope.workspace)
+                .then(function(vulns) {
+                    $scope.vulnsCount = {};
+                    vulns.forEach(function(vuln) {
+                        $scope.vulnsCount[vuln.key] = vuln.value;
+                    });
+                })
+                .catch(function(e) {
+                    console.log(e);
+                });
 	    };
 
         $scope.new = function() {

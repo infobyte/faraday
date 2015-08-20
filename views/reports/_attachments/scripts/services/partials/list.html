@@ -75,6 +75,9 @@
                                     <th>
                                         <a href="" ng-click="toggleSort('status')">Status</a>
                                     </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('vulns')">Vulns</a>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -88,6 +91,7 @@
                                     <td ng-bind="service.ports"></td>
                                     <td ng-bind="service.protocol"></td>
                                     <td ng-bind="service.status"></td>
+                                    <td ng-bind="vulnsCount[service._id] || '-'"></td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->

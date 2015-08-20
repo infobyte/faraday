@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('hostsCtrl', 
-                    ['$scope', '$filter', '$route', '$routeParams', '$modal', 'hostsManager', 'workspacesFact', 
-                    function($scope, $filter, $route, $routeParams, $modal, hostsManager, workspacesFact) {
+        ['$scope', '$filter', '$route', '$routeParams', '$modal', 'hostsManager', 'workspacesFact', 
+        function($scope, $filter, $route, $routeParams, $modal, hostsManager, workspacesFact) {
 
         init = function() {
             $scope.selectall = false;

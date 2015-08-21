@@ -13,6 +13,7 @@ New features in the latest update
 TBA:
 ---
 * Added vulns count for Hosts in WEB UI
+* Added masscan plugin
 
 Aug 19, 2015:
 ---

@@ -48,7 +48,7 @@
                         <li><a class="ws" ng-click="editEaseofresolution()">Edit ease of resolution</a></li>
                         <li><a class="ws" ng-click="editReferences()">Add references</a></li>
                         <li><a class="ws" ng-click="editImpact()">Edit impact</a></li>
-                        <li><a class="ws" ng-click="">Edit confirmed</a></li>
+                        <li><a class="ws" ng-click="editConfirm()">Edit confirmed</a></li>
                         <li ng-show="vulnWebSelected" role="separator" class="divider"></li>
                         <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('method')">Edit method</a></li>
                         <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('pname', 'param name')">Edit param name</a></li>
@@ -203,7 +203,7 @@
                             <td class="text-center"><input type="checkbox" name="{{v.id}}"/></td>
                             <td class="text-center"><span ng-click="editVuln(v)" class="glyphicon glyphicon-pencil cursor" tooltip="Edit"></span></td>
                             <td class="text-center"><span ng-click="deleteVuln(v)" class="glyphicon glyphicon-trash cursor" tooltip="Delete"></span></td>
-                            <td class="text-center"><span ng-click="toggleConfirm(v)" class="glyphicon glyphicon-filter cursor" tooltip="{{v.confirmed ? 'Disconfirm' : 'Confirm'}}" ng-class="{ disabled:v.confirmed === false }"></span></td>
+                            <td class="text-center"><span ng-click="toggleConfirmVuln(v, v.confirmed)" class="glyphicon glyphicon-filter cursor" tooltip="{{v.confirmed ? 'Disconfirm' : 'Confirm'}}" ng-class="{ disabled:v.confirmed === false }"></span></td>
                             <td ng-if="columns.date">{{v.metadata.create_time * 1000 | date:'MM/dd/yyyy'}}</td>
                             <td ng-if="columns.target">
                                 <a href="#/status/ws/{{workspace}}/search/target={{v.target}}">{{v.target}}</a>

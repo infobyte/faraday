@@ -189,15 +189,17 @@ angular.module('faradayApp')
             }
         };
 
-        $scope.toggleConfirm = function(vuln) {
-            if(vuln.confirmed === true) {
-                var toggleConfirm = {'confirmed': false};
-            } else {
-                var toggleConfirm = {'confirmed': true};
-            }
-            vulnsManager.updateVuln(vuln, toggleConfirm).then(function(){
-            }, function(errorMsg){
-                showMessage("Error updating vuln " + vuln[0].name + " (" + vuln[0]._id + "): " + errorMsg);
+        $scope.toggleConfirmVuln = function(vuln, confirm) {
+            _toggleConfirm([vuln], confirm);
+        };
+
+        _toggleConfirm = function(vulns, confirm) {
+            var toggleConfirm = {'confirmed': !confirm};
+            vulns.forEach(function(vuln) {
+                vulnsManager.updateVuln(vuln, toggleConfirm).then(function(){
+                }, function(errorMsg){
+                    showMessage("Error updating vuln " + vuln.name + " (" + vuln._id + "): " + errorMsg);
+                });
             });
         };
 
@@ -366,6 +368,15 @@ angular.module('faradayApp')
                 message,
                 property);
         }
+
+        $scope.editConfirm = function() {
+            editProperty(
+                'scripts/commons/partials/editOptions.html',
+                'commonsModalEditOptions',
+                'Confirm/Disconfirm:',
+                'confirmed',
+                {options: [true, false]});
+        };
 
         $scope.editCWE = function() {
             var modal = $modal.open({

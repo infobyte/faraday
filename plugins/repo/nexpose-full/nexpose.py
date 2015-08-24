@@ -17,14 +17,14 @@ except ImportError:
                       
 ETREE_VERSION = [int(i) for i in ETREE_VERSION.split(".")]
 
-def htmlType(node):
+def parse_html_type(node):
     ret = ""
     tag = node.tag.lower()
 
     if tag == 'containerblockelement':
         if len(list(node)) > 0:
             for child in list(node):
-                ret += htmlType(child)
+                ret += parse_html_type(child)
         else:
             ret += str(node.text).strip()
     if tag == 'listitem':
@@ -32,17 +32,17 @@ def htmlType(node):
     if tag == 'orderedlist':
         i = 1
         for item in list(node):
-            ret += "\t" + str(i) + " " + htmlType(item) + "\n"
+            ret += "\t" + str(i) + " " + parse_html_type(item) + "\n"
             i += 1
     if tag == 'paragraph':
         if len(list(node)) > 0:
             for child in list(node):
-                ret += htmlType(child)
+                ret += parse_html_type(child)
         else:
             ret += str(node.text).strip()
     if tag == 'unorderedlist':
         for item in list(node):
-            ret += "\t" + "* " + htmlType(item) + "\n"
+            ret += "\t" + "* " + parse_html_type(item) + "\n"
     if tag == 'urllink':
         if node.text:
             ret += str(node.text).strip() + " "
@@ -53,6 +53,20 @@ def htmlType(node):
             last = attr
         
     return ret
+
+def parse_tests_type(node, vulnsDefinitions):
+    vulns = list()
+
+    for tests in node.iter('tests'):
+        for test in tests.iter('test'):
+            vuln = dict()
+            if test.get('id').lower() in vulnsDefinitions:
+                vuln = vulnsDefinitions[test.get('id').lower()]
+                for desc in list(test):
+                    vuln['desc'] += parse_html_type(desc)
+                vulns.append(vuln)
+
+    return vulns
 
 current_path = os.path.abspath(os.getcwd())
 
@@ -81,7 +95,7 @@ for vulnsDef in root.iter('VulnerabilityDefinitions'):
 
         for item in list(vulnDef):
             if item.tag == 'description':
-                vuln['desc'] = htmlType(item)
+                vuln['desc'] = parse_html_type(item)
             if item.tag == 'exploits':
                 for exploit in list(item):
                     vuln['refs'].append(str(exploit.get('title')).strip() + ' ' + str(exploit.get('link')).strip())
@@ -89,7 +103,7 @@ for vulnsDef in root.iter('VulnerabilityDefinitions'):
                 for ref in list(item):
                     vuln['refs'].append(str(ref.text).strip())
             if item.tag == 'solution':
-                vuln['resolution'] = htmlType(item)
+                vuln['resolution'] = parse_html_type(item)
             """
             # there is currently no method to register tags in vulns
             if item.tag == 'tags':
@@ -101,13 +115,31 @@ for vulnsDef in root.iter('VulnerabilityDefinitions'):
 for nodes in root.iter('nodes'):
     for node in nodes.iter('node'):
         host = dict()
-        for tests in node.iter('tests'):
-            host['vulns'] = list()
-            for test in tests.iter('test'):
-                vuln = dict()
-                if test.get('id').lower() in vulns:
-                    vuln = vulns[test.get('id').lower()]
-                    for desc in list(test):
-                        vuln['desc'] += htmlType(desc)
-                    host['vulns'].append(vuln)
+        host['name'] = node.get('address')
+        host['hostnames'] = set()
+        host['services'] = list()
+        host['vulns'] = parse_tests_type(node, vulns)
+
+        for names in node.iter('names'):
+            for name in list(names):
+                host['hostnames'].add(name.text)
+
+        for endpoints in node.iter('endpoints'):
+            for endpoint in list(endpoints):
+                svc = {
+                    'protocol': endpoint.get('protocol'),
+                    'port': endpoint.get('port'),
+                    'status': endpoint.get('status'),
+                }
+                for services in endpoint.iter('services'):
+                    for service in list(services):
+                        svc['name'] = service.get('name')
+                        svc['vulns'] = parse_tests_type(service, vulns)
+                        for configs in service.iter('configurations'):
+                            for config in list(configs):
+                                if "banner" in config.get('name'):
+                                    svc['version'] = config.get('name')
+
+                host['services'].append(svc)
+
         hosts.append(host)

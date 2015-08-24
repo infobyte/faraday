@@ -27,13 +27,13 @@ ETREE_VERSION = [int(i) for i in ETREE_VERSION.split(".")]
 
 current_path = os.path.abspath(os.getcwd())
 
-__author__     = "Francisco Amato"
+__author__     = "Micaela Ranea Sanchez"
 __copyright__  = "Copyright (c) 2013, Infobyte LLC"
-__credits__    = ["Francisco Amato"]
+__credits__    = ["Francisco Amato", "Federico Kirschbaum", "Micaela Ranea Sanchez", "German Riera"]
 __license__    = ""
 __version__    = "1.0.0"
-__maintainer__ = "Francisco Amato"
-__email__      = "famato@infobytesec.com"
+__maintainer__ = "Micaela Ranea Sanchez"
+__email__      = "mranea@infobytesec.com"
 __status__     = "Development"
 
 

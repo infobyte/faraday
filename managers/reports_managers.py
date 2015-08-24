@@ -199,6 +199,8 @@ class ReportXmlParser(object):
             return "impact"
         elif "NeXposeSimpleXML" == tag:
             return "nexpose"
+        elif "NexposeReport" == tag:
+            return "nexpose-full"
         elif "SCAN" == tag:
             return "qualysguard"
         elif "scanJob" == tag:

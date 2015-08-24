@@ -56,6 +56,7 @@ angular.module('faradayApp')
             vm.data = {
                 _attachments: {},
                 type: "Vulnerability",
+                confirmed: false,
                 data: "",
                 desc: "",
                 easeofresolution: undefined,

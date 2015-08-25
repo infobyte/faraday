@@ -375,7 +375,20 @@ angular.module('faradayApp')
                 'commonsModalEditOptions',
                 'Confirm/Disconfirm:',
                 'confirmed',
-                {options: [true, false]});
+                {
+                    options: ['Confirm', 'Disconfirm'],
+                    callback: function(vuln, data) {
+                        var property;
+                        if(data === 'Confirm') {
+                            property = {'confirmed': true};
+                        } else {
+                            property = {'confirmed': false};
+                        }
+                        return property;
+                    }
+                }
+                );
+
         };
 
         $scope.editCWE = function() {

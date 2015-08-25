@@ -86,7 +86,12 @@
                                     selection-model-mode="multiple-additive" 
                                     selection-model-selected-class="multi-selected">
                                     <td><input type="checkbox" name="{{s._id}}"/></td>
-                                    <td ng-bind="service.name"></td>
+                                    <td>
+                                        {{service.name}}
+                                        <a href="http://www.shodan.io/search?query={{service.name}}" tooltip="Search in Shodan" target="_blank">
+                                            <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                                        </a>
+                                    </td>
                                     <td ng-bind="service.description || '-'"></td>
                                     <td ng-bind="service.ports"></td>
                                     <td ng-bind="service.protocol"></td>

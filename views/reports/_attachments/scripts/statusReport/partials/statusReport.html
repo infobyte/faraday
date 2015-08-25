@@ -200,7 +200,12 @@
                             <td class="text-center"><span ng-click="editVuln(v)" class="glyphicon glyphicon-pencil cursor" tooltip="Edit"></span></td>
                             <td class="text-center"><span ng-click="deleteVuln(v)" class="glyphicon glyphicon-trash cursor" tooltip="Delete"></span></td>
                             <td ng-if="columns.date">{{v.metadata.create_time * 1000 | date:'MM/dd/yyyy'}}</td>
-                            <td ng-if="columns.target">{{v.target}}</td>
+                            <td ng-if="columns.target">
+                                {{v.target}}
+                                <a href="http://www.shodan.io/search?query={{v.target}}" tooltip="Search in Shodan" target="_blank">
+                                    <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                                </a>
+                            </td>
                             <td ng-if="columns.status">Vulnerable</td>
                             <td ng-if="columns.severity"><span class="label vuln fondo-{{v.severity}}">{{v.severity}}</span></td>
                             <td ng-if="columns.name">{{v.name}}</td>
@@ -231,7 +236,14 @@
                                 </div>
                             </td>
                             <td ng-if="columns.easeofresolution">{{v.easeofresolution}}</td>
-                            <td ng-if="columns.hostnames"><p ng-repeat="hostname in v.hostnames track by $index">{{hostname}}</p></td>
+                            <td ng-if="columns.hostnames">
+                                <p ng-repeat="hostname in v.hostnames track by $index">
+                                    {{hostname}}
+                                    <a href="http://www.shodan.io/search?query={{hostname}}" tooltip="Search in Shodan" target="_blank">
+                                        <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                                    </a>
+                                </p>
+                            </td>
                         </tr>
                     </tbody>
                 </table><!-- #hosts -->

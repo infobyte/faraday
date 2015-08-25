@@ -18,7 +18,12 @@
         <tbody>
             <tr ng-repeat="host in hosts | orderBy:sortField:sortReverse">
                 <td><input disabled type="checkbox" ng-model="host.owned"/></td>
-                <td>{{host.name}}</td>
+                <td>
+                    {{host.name}}
+                    <a href="http://www.shodan.io/search?query={{host.name}}" tooltip="Search in Shodan" target="_blank">
+                        <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                    </a>
+                </td>
                 <td>{{host.os}}</td>
             </tr>
         </tbody>

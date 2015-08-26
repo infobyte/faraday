@@ -37,11 +37,15 @@ angular.module('faradayApp')
             var date = new Date(),
             timestamp = date.getTime()/1000.0;
 
-            $scope.service.ports.forEach(function(port){
-                ports.push(port.key);
-            });
+            if($scope.service.ports.length !== 0) {
+                $scope.service.ports.forEach(function(port){
+                    ports.push(port.key);
+                });
+                $scope.service.ports = ports.filter(Boolean);
+            } else {
+                delete $scope.service.ports;
+            }
             
-            $scope.service.ports = ports.filter(Boolean);
             $modalInstance.close($scope.service);
         };
 

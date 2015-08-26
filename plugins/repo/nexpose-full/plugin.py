@@ -89,7 +89,11 @@ class NexposeFullXmlParser(object):
             else:
                 ret += str(node.text).strip()
         if tag == 'listitem':
-            ret = str(node.text).strip()
+            if len(list(node)) > 0:
+                for child in list(node):
+                    ret += self.parse_html_type(child)
+            else:
+                ret = str(node.text).strip()
         if tag == 'orderedlist':
             i = 1
             for item in list(node):
@@ -156,7 +160,8 @@ class NexposeFullXmlParser(object):
 
                 for item in list(vulnDef):
                     if item.tag == 'description':
-                        vuln['desc'] = self.parse_html_type(item)
+                        for htmlType in list(item):
+                            vuln['desc'] += self.parse_html_type(htmlType)
                     if item.tag == 'exploits':
                         for exploit in list(item):
                             vuln['refs'].append(str(exploit.get('title')).strip() + ' ' + str(exploit.get('link')).strip())
@@ -164,7 +169,8 @@ class NexposeFullXmlParser(object):
                         for ref in list(item):
                             vuln['refs'].append(str(ref.text).strip())
                     if item.tag == 'solution':
-                        vuln['resolution'] = self.parse_html_type(item)
+                        for htmlType in list(item):
+                            vuln['resolution'] += self.parse_html_type(htmlType)
                     """
                     # there is currently no method to register tags in vulns
                     if item.tag == 'tags':

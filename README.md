@@ -15,6 +15,8 @@ Please read the [RELEASE notes](https://github.com/infobyte/faraday/blob/master/
 
 Plugins list:
 ---
+
+[![Join the chat at https://gitter.im/infobyte/faraday](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/infobyte/faraday?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 Right now faraday has more than [40+ supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among them you will find: 
 ![](https://raw.github.com/wiki/infobyte/faraday/images/plugins/Plugins.png)
 

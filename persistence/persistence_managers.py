@@ -19,7 +19,7 @@ from utils.logs import getLogger
 from managers.all import ViewsManager
 
 #from persistence.change import change_factory
-
+from config.globals import CONST_BLACKDBS
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
@@ -523,7 +523,7 @@ class CouchDbManager(AbstractPersistenceManager):
 
     #@trap_timeout
     def _loadDbs(self):
-        conditions = lambda x: not x.startswith("_") and x != 'reports'
+        conditions = lambda x: not x.startswith("_") and x not in CONST_BLACKDBS
         for dbname in filter(conditions, self.__serv.all_dbs()):
             if dbname not in self.dbs.keys():
                 getLogger(self).debug(

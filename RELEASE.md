@@ -14,6 +14,7 @@ TBA:
 ---
 * Added vulns count for Hosts in WEB UI
 * Update w3af plugin to support report version 1.7.6
+* Ignore cwe database from updater and QT views
 
 Aug 19, 2015:
 ---

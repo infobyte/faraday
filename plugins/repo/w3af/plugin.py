@@ -87,7 +87,7 @@ class W3afXmlParser(object):
         bugtype=""
         
                                            
-        scaninfo = tree.findall('scaninfo')[0]
+        scaninfo = tree.findall('scan-info')[0]
         self.target = scaninfo.get('target')
         host = re.search("(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp;%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|localhost|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))[\:]*([0-9]+)*([/]*($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+)).*?$", self.target)
                             
@@ -154,17 +154,30 @@ class Item(object):
         self.id=self.node.get('id')
         self.name = self.node.get('name')
         self.url = self.node.get('url')
+        self.url = self.url if self.url != 'None' else "/"
         self.plugin = self.node.get('plugin')
         self.detail = self.get_text_from_subnode('description')
+        self.resolution = self.get_text_from_subnode('fix-guidance')
+        self.fix_effort = self.get_text_from_subnode('fix-effort')
+        self.longdetail = self.get_text_from_subnode('description')
         self.severity = self.node.get('severity')
         self.method = self.node.get('method')
+        self.ref = []
         self.param = self.node.get('var') if self.node.get('var') != "None" else ""
+        for ref in self.node.findall('references/reference'):
+            self.ref.append(ref.get('url'))
+
         self.req = self.resp = ''
         for tx in self.node.findall('http-transactions/http-transaction'):
-                                                       
-            self.req = tx.find('httprequest/status').text
-                                                        
-            self.resp = tx.find('httpresponse/status').text
+            self.req = tx.find('http-request/status').text
+            for h in tx.findall('http-request/headers/header'):
+                self.req += "\n%s: %s" % (h.get('field'),h.get('content'))
+
+            self.resp = tx.find('http-response/status').text
+            for h in tx.findall('http-response/headers/header'):
+                self.resp += "\n%s: %s" % (h.get('field'),h.get('content'))
+            self.resp += "\n%s" % tx.find('http-response/body').text
+
     
     def do_clean(self,value):
         myreturn =""
@@ -194,8 +207,8 @@ class W3afPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id              = "W3af"
         self.name            = "W3af XML Output Plugin"
-        self.plugin_version         = "0.0.1"
-        self.version   = "1.2"
+        self.plugin_version         = "0.0.2"
+        self.version   = "1.7.6"
         self.framework_version  = "1.0.0"
         self.options         = None
         self._current_output = None
@@ -204,7 +217,6 @@ class W3afPlugin(core.PluginBase):
         self._completition = {
             "":"",
             "-h":"Display this help message.",
-            "-p":"-p &lt;profile&gt; Run with the selected &lt;profile&gt;",
             }
 
         global current_path
@@ -230,7 +242,7 @@ class W3afPlugin(core.PluginBase):
         for item in parser.items:
             v_id = self.createAndAddVulnWebToService(h_id, s_id, item.name,
                                                      item.detail, pname=item.param, path=item.url, website=parser.host, severity=item.severity,
-                                                     method=item.method, request=item.req, response=item.resp)
+                                                     method=item.method, request=item.req, resolution=item.resolution, ref=item.ref, response=item.resp)
         del parser
         
                       

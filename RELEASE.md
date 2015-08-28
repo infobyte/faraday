@@ -13,6 +13,7 @@ New features in the latest update
 TBA:
 ---
 * Added vulns count for Hosts in WEB UI
+* Update w3af plugin to support report version 1.7.6
 
 Aug 19, 2015:
 ---

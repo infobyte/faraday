@@ -17,6 +17,7 @@ TBA:
 * Added quick vuln edit and delete in WEB UI
 * Expanded Unit Tests for WEB UI
 * XML Cleaner
+* Plugin for Nexpose XML Export 2.0
 
 
 Aug 05, 2015:

@@ -187,8 +187,8 @@ article.untercio{
                     }
                         .sin_padding h2{padding-bottom: 16px;}
 
-/* ==== COLORES generales ==== */
-/* Fondos */
+/* ==== General COLORS ==== */
+/* Backgrounds Legacy */
 .fondo-rojo, .fondo-high, .fondo-error {background-color: #DF3936 !important;}
 .fondo-negro {background-color: #000 !important;}
 .fondo-gris1, .fondo-critical {background-color: #932ebe !important;}
@@ -198,13 +198,56 @@ article.untercio{
 .fondo-naranja, .fondo-med {background-color: #DFBF35 !important;}
 .fondo-amarillo, .fondo-low, .fondo-created{background-color: #A1CE31 !important;}
 .fondo-violeta {background-color: #932ebe !important;}
-/* Textos*/
+/* Backgrounds New */
+.background-unclassified {
+    background-color: #ffffff !important;
+    border: solid 1px #999999;
+}
+.background-info {
+    background-color: #ffffff !important;
+    border: solid 1px #2e97bd;
+}
+.background-low {
+    background-color: #ffffff !important;
+    border: solid 1px #a1ce31;
+}
+.background-med {
+    background-color: #ffffff !important;
+    border: solid 1px #dfbf35;
+}
+.background-high {
+    background-color: #ffffff !important;
+    border: solid 1px #df3936;
+}
+.background-critical {
+    background-color: #ffffff !important;
+    border: solid 1px #932ebe;
+}
+/* Texts Legacy*/
 .texto-rojo {color: #DF3936;}
 .texto-negro {color: #000;}
 .texto-gris1 {color: #2D2F31;}
 .texto-blanco {color: #6B6565;}
-
-/* Home Menu grande */
+/* Texts New*/
+.text-unclassified {
+    color: #999999 !important;
+}
+.text-info {
+    color: #2e97bd !important;
+}
+.text-low {
+    color: #a1ce31 !important;
+}
+.text-med {
+    color: #dfbf35 !important;
+}
+.text-high {
+    color: #df3936 !important;
+}
+.text-critical {
+    color: #932ebe !important;
+}
+/* Big Home menu */
 .home-list {
 	margin-top: 20px;
 }
@@ -588,7 +631,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
 #treemap, #bar, #cake{height:195px}
 #vulns .columna{margin-left:2%}
     #vulns .main{width:100%;height:105px}
-    #vulns-by-price .main{width:100% !important;height: 180px !important;}
+    #vulns-by-price .main{width:100% !important;height: 140px !important;}
         #vulns .columna.unsexto{margin: auto;}
 #summarized .main{height:197px}
 #summarized .panel.panel-default,#byservices .panel.panel-default{max-height: 239px}

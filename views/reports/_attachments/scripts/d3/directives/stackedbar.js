@@ -28,16 +28,16 @@ angular.module('faradayApp')
                         d3.select('.stackedbars').selectAll('svg').remove();
 
                         var margins = {
-                            top: 12,
-                            left: 24,
-                            right: 12,
-                            bottom: 12
+                            top: 5,
+                            left: 15,
+                            right: 5,
+                            bottom: 5
                         };
 
                         // get parent width to calculate graphic width
                         var pwidth = ele.parent().width(),
                         width = pwidth * 0.9,
-                        height = 80 - margins.top - margins.bottom;
+                        height = 30 - margins.top - margins.bottom;
 
                         var dataset = data.map(function(d) {
                                 return [{

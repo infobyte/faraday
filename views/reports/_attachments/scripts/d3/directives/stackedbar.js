@@ -117,6 +117,19 @@ angular.module('faradayApp')
                             .attr('tooltip-append-to-body', true)
                             .attr('tooltip', function(d) {
                                 return d.k + " sums $" + d.x;
+                            })
+                            .attr('class', function(d) {
+                                return "sb-" + d.k;
+                            })
+                            .style('opacity', 0.8)
+                            .on('mouseenter', function(d) {
+                                console.log(d);
+                                var line = d3.select('.sb-'+d.k)
+                                    .style("opacity", 1);
+                            })
+                            .on('mouseleave', function(d) {
+                                var line = d3.select('.sb-'+d.k)
+                                    .style("opacity", 0.8);
                             });
 
                         ele.removeAttr("d3-horizontal-stacked-bar");

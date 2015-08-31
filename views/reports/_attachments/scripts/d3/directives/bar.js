@@ -75,20 +75,19 @@ angular.module('faradayApp')
                 .attr("height", function(d) { return height - margin.top - margin.bottom - y(d.value); })
                 .attr("width", 30)
                 .style('opacity', 0)
-                .on('mouseover', function(d){
-                  workspace = $routeParams.wsId;
-                  var hurl    = "/" + workspace + "/_design/hosts/_view/hosts";
-                  hosts    = get_obj(hurl);
-                  var name = hosts[d.key].name;
-                  document.getElementById("barText").innerHTML =  "<div style='background-color:" + d.color + "'><b>" + name + '</b></div>' + d.value;
-
+                .on('mouseover', function(d) {
+                    workspace = $routeParams.wsId;
+                    var hurl    = "/" + workspace + "/_design/hosts/_view/hosts";
+                    hosts    = get_obj(hurl);
+                    var name = hosts[d.key].name;
+                    document.getElementById("barText").innerHTML =  "<div style='background-color:" + d.color + "'><b>" + name + '</b></div>' + d.value;
                 })
                 .on('mouseleave', function(){
                   document.getElementById("barText").innerHTML = "";
                 })
                 .transition()
                     .duration(1250)
-                    .style('opacity', 1);
+                    .style('opacity', 0.8);
 
                 function get_obj(ourl) {
                   var ls = {};

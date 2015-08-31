@@ -247,6 +247,16 @@ article.untercio{
 .text-critical {
     color: #932ebe !important;
 }
+/* Opacity */
+.opacity-low {
+    opacity: 0.6;
+}
+.opacity-med {
+    opacity: 0.8;
+}
+.opacity-high {
+    opacity: 1;
+}
 /* Big Home menu */
 .home-list {
 	margin-top: 20px;

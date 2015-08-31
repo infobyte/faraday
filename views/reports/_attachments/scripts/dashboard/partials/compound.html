@@ -22,7 +22,7 @@
         <tbody>
             <tr ng-repeat="host in hosts | orderBy:hostSortField:hostSortReverse |
             startFrom:currentPage*pageSize | limitTo:pageSize">
-                <td><a href="" class="host" ng-click="showServices(host.id)">{{host.name}}</a></td>
+                <td><a href="" class="host" ng-click="showServices(host)">{{host.name}}</a></td>
                 <td>{{host.servicesCount}}</td>
                 <td>
                     <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" tooltip="{{host.os}}"/>

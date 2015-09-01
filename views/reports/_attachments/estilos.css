@@ -351,6 +351,9 @@ article.untercio{
 .dato2 * {
     text-align: center;
 }
+.dato2:hover {
+
+}
     .dato2 .nro {
         font-size: 300%;
         font-weight: 400;
@@ -707,8 +710,12 @@ text.host-name{font-size: 13px;font-weight:bold;}
     .left_auths{margin:5px;float:right;margin-top: -52px;}
     .left_auth{margin:5px;float:right;margin-top: -40px;}
 
-        div.box div.columna:nth-child(even){background-color: #F5F5F5; color: #6B6565!important;}
-        div.box div.columna:nth-child(odd){background-color: #F5F5F5; color: #6B6565!important;}
+        div.box div.columna {
+            background-color: #F5F5F5; color: #6B6565!important;
+        }
+        div.box div.columna:hover {
+            background-color: #E9E9E9; color: #6B6565!important;
+        }
     #merge, #delete, #new{margin:5px;float:right;}
 .input-sm{float: left;margin-bottom: 20px;}
 /* Media */

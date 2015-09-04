@@ -211,7 +211,7 @@ function load_all_hosts(design) {
 				|| v.os.toLowerCase().indexOf("unix") > -1) icon = "linux";
 			var os = "";
 			if(icon === "") {
-				os = "<span class=\"glyphicon glyphicon-question-sign faraday-qtips\" title="+v.os+"></span>";
+				os = "<span class=\"fa fa-laptop faraday-qtips\" title="+v.os+"></span>";
 			} else {
 				os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+v.os+"\"/>";
 			}
@@ -262,7 +262,7 @@ function load_all_hosts(design) {
 					|| cleanOs.toLowerCase().indexOf("unix") > -1) icon = "linux";
 				var os = "";
 				if(icon === "") {
-					os = "<span class=\"glyphicon glyphicon-question-sign faraday-qtips\" title="+cleanOs+"></span>";
+					os = "<span class=\"fa fa-laptop faraday-qtips\" title="+cleanOs+"></span>";
 				} else {
 					os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+cleanOs+"\"/>";
 				}

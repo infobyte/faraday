@@ -13,6 +13,7 @@ New features in the latest update
 TBA:
 ---
 * Adding more time to generation shells QT3
+* Add "Search in Shodan" links in different views (Status Report, Host View, Service View)
 * Added vulns count for Hosts in WEB UI
 * Update w3af plugin to support report version 1.7.6
 * Ignore cwe database from updater and QT views

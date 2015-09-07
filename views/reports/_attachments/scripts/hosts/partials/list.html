@@ -64,7 +64,12 @@
                                     selection-model-selected-class="multi-selected">
                                     <td><input type="checkbox" name="{{host._id}}"/></td>
                                     <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}">View</a></td>
-                                    <td ng-bind="host.name"></td>
+                                    <td>
+                                        {{host.name}}
+                                        <a href="//www.shodan.io/search?query={{host.name}}" tooltip="Search in Shodan" target="_blank">
+                                            <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                                        </a>
+                                    </td>
                                     <td ng-bind="host.description || '-'"></td>
                                     <td ng-bind="vulnsCount[host._id] || '-'"></td>
                                     <td>

@@ -17,6 +17,8 @@ TBA:
 * Added vulns count for Hosts in WEB UI
 * Update w3af plugin to support report version 1.7.6
 * Ignore cwe database from updater and QT views
+* Plugin for Nexpose XML Export 2.0
+
 
 Aug 19, 2015:
 ---

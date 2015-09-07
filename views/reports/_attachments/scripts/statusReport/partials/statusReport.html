@@ -202,7 +202,7 @@
                             <td ng-if="columns.date">{{v.metadata.create_time * 1000 | date:'MM/dd/yyyy'}}</td>
                             <td ng-if="columns.target">
                                 {{v.target}}
-                                <a href="http://www.shodan.io/search?query={{v.target}}" tooltip="Search in Shodan" target="_blank">
+                                <a href="//www.shodan.io/search?query={{v.target}}" tooltip="Search in Shodan" target="_blank">
                                     <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                 </a>
                             </td>
@@ -239,7 +239,7 @@
                             <td ng-if="columns.hostnames">
                                 <p ng-repeat="hostname in v.hostnames track by $index">
                                     {{hostname}}
-                                    <a href="http://www.shodan.io/search?query={{hostname}}" tooltip="Search in Shodan" target="_blank">
+                                    <a href="//www.shodan.io/search?query={{hostname}}" tooltip="Search in Shodan" target="_blank">
                                         <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                     </a>
                                 </p>

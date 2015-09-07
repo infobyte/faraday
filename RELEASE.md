@@ -12,6 +12,7 @@ New features in the latest update
 
 TBA:
 ---
+* Add "Search in Shodan" links in different views (Status Report, Host View, Service View)
 * Added vulns count for Hosts in WEB UI
 
 Aug 19, 2015:

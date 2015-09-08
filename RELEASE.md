@@ -13,13 +13,32 @@ New features in the latest update
 TBA:
 ---
 * Fix bug copy clipboard offline (update path of ngClip dependeces)
-* Actions on status report impact on visible vulnerabilities
-* Export to CSV matches columns in status report
-* Vulnerability counter on status report
+* Add class to set colors to severities in new/edit vuln view
+* Medusa, Hydra & Metasploit plug-in now add discovered weak credentials as a vulnerability
+* Nmap plug-in applys a severity depending on the result of a NSE script
+* Small bug empty ease of resolution
+* Adding more time to generation shells QT3
+* Add "Search in Shodan" links in different views (Status Report, Host View, Service View)
+* Remove required of name field service bulk edition
+* Add ng-disabled on Edit button if select more of 1 host on Host View WEB UI
+* Added vulns count for Hosts in WEB UI
+* Update w3af plugin to support report version 1.7.6
+* Ignore cwe database from updater and QT views
+* Plugin for Nexpose XML Export 2.0
+* Added masscan plugin (1.0.3)
+
+Aug 19, 2015:
+---
+* Exported CSV contains filters and columns from Status Report in WEB UI
+* Vulnerability counter on Status Report in WEB UI
 * Added quick vuln edit and delete in WEB UI
-* Add Unit testing for vulns and status report component
-* Fixes on WEB UI
+* Expanded Unit Tests for WEB UI
 * XML Cleaner
+* Kali 2.0 support
+* Improve plugins running status log (Adding log information on report importing)
+* Clean dev log on plugins
+* w3af plugin refactoring
+* Fix Debian 7/8.1 install support
 
 Aug 05, 2015:
 ---

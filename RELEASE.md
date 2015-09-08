@@ -12,6 +12,7 @@ New features in the latest update
 
 TBA:
 ---
+<<<<<<< HEAD
 * Add class to set colors to severities in new/edit vuln view
 * Medusa, Hydra & Metasploit plug-in now add discovered weak credentials as a vulnerability
 * Nmap plug-in applys a severity depending on the result of a NSE script
@@ -19,6 +20,7 @@ TBA:
 * Adding more time to generation shells QT3
 * Add "Search in Shodan" links in different views (Status Report, Host View, Service View)
 * Remove required of name field service bulk edition
+* Add ng-disabled on Edit button if select more of 1 host on Host View WEB UI
 * Added vulns count for Hosts in WEB UI
 * Update w3af plugin to support report version 1.7.6
 * Ignore cwe database from updater and QT views

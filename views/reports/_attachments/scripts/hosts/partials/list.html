@@ -23,7 +23,7 @@
                             <span class="glyphicon glyphicon-trash"></span>
                             Delete
                         </button>
-                        <button id="merge" type="button" class="btn btn-default" title="Edit selected hosts" ng-click="edit()">
+                        <button id="merge" type="button" class="btn btn-default" title="Edit selected hosts" ng-disabled="selectedHosts().length > 1" ng-click="edit()">
                             <span class="glyphicon glyphicon-pencil"></span>
                             Edit
                         </button>
@@ -61,7 +61,8 @@
                                 <tr ng-repeat="host in hosts | filter:query | orderBy:sortField:reverse"
                                     selection-model selection-model-type="checkbox" 
                                     selection-model-mode="multiple-additive" 
-                                    selection-model-selected-class="multi-selected">
+                                    selection-model-selected-class="multi-selected"
+                                    selection-model-on-change="selectedHosts()">
                                     <td><input type="checkbox" name="{{host._id}}"/></td>
                                     <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}">View</a></td>
                                     <td>

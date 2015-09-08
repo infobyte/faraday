@@ -359,6 +359,7 @@ angular.module('faradayApp')
         ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'host',
         function($scope, $modalInstance, dashboardSrv, workspace, host) {
 
+            $scope.host = host
             $scope.sortField = 'port';
             $scope.sortReverse = false;
             

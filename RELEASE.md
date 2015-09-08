@@ -19,7 +19,7 @@ TBA:
 * Update w3af plugin to support report version 1.7.6
 * Ignore cwe database from updater and QT views
 * Plugin for Nexpose XML Export 2.0
-
+* Added masscan plugin (1.0.3)
 
 Aug 19, 2015:
 ---

@@ -89,18 +89,31 @@ angular.module('faradayApp')
                 .attr("display", function(d) { return d.depth ? null : "none"; })
                 .attr("d", arc)
                 .attr("fill-rule", "evenodd")
+                .attr("class", function(d) {
+                    var key = "";
+                    if(d.key) {
+                        key = "cake-" + d.key;
+                    } 
+                    return key;
+                })
                 .style("fill", function(d) {return d.color; })
                 .style("stroke-width", "0.5")
                 .style("opacity", 0)
-                .on('mouseover', function(d){
-                  document.getElementById("cakeText").innerHTML = "<div style='background-color:" + d.color + "'><b>" + d.key + '</b></div>' + d.value;
+                .on('mouseover', function(d) {
+                    document.getElementById("cakeText").innerHTML = "<div style='background-color:" + d.color + "'><b>" + d.key + '</b></div>' + d.value;
                 })
-                .on('mouseleave', function(){
-                  document.getElementById("cakeText").innerHTML = "";
+                .on('mouseenter', function(d) {
+                    var slice = d3.select('.cake-'+d.key)
+                        .style("opacity", 1);
+                })
+                .on('mouseleave', function(d) {
+                    var slice = d3.select('.cake-'+d.key)
+                        .style("opacity", 0.8);
+                    document.getElementById("cakeText").innerHTML = "";
                 })
                 .transition()
                     .duration(1250)
-                    .style('opacity', 1);
+                    .style('opacity', 0.8);
 
             // Get total size of the tree = value of root node from partition.
             totalSize = path.node().__data__.value;

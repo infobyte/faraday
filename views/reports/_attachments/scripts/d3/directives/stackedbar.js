@@ -28,16 +28,16 @@ angular.module('faradayApp')
                         d3.select('.stackedbars').selectAll('svg').remove();
 
                         var margins = {
-                            top: 12,
-                            left: 24,
-                            right: 12,
-                            bottom: 12
+                            top: 5,
+                            left: 15,
+                            right: 5,
+                            bottom: 5
                         };
 
                         // get parent width to calculate graphic width
                         var pwidth = ele.parent().width(),
                         width = pwidth * 0.9,
-                        height = 80 - margins.top - margins.bottom;
+                        height = 30 - margins.top - margins.bottom;
 
                         var dataset = data.map(function(d) {
                                 return [{
@@ -117,6 +117,19 @@ angular.module('faradayApp')
                             .attr('tooltip-append-to-body', true)
                             .attr('tooltip', function(d) {
                                 return d.k + " sums $" + d.x;
+                            })
+                            .attr('class', function(d) {
+                                return "sb-" + d.k;
+                            })
+                            .style('opacity', 0.8)
+                            .on('mouseenter', function(d) {
+                                console.log(d);
+                                var line = d3.select('.sb-'+d.k)
+                                    .style("opacity", 1);
+                            })
+                            .on('mouseleave', function(d) {
+                                var line = d3.select('.sb-'+d.k)
+                                    .style("opacity", 0.8);
                             });
 
                         ele.removeAttr("d3-horizontal-stacked-bar");

@@ -261,17 +261,17 @@ angular.module('faradayApp')
                 }
             };
 
-            $scope.showServices = function(host_id) {
+            $scope.showServices = function(host) {
                 if ($scope.workspace != undefined){
                     var modal = $modal.open({
                         templateUrl: 'scripts/dashboard/partials/modal-services-by-host.html',
                         controller: 'summarizedCtrlServicesModal',
                         size: 'lg',
                         resolve: {
-                            host_id: function(){
-                                return host_id
+                            host: function() {
+                                return host
                             },
-                            workspace: function(){
+                            workspace: function() {
                                 return $scope.workspace;
                             }
                         }
@@ -356,8 +356,8 @@ angular.module('faradayApp')
 
 angular.module('faradayApp')
     .controller('summarizedCtrlServicesModal', 
-        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'host_id',
-        function($scope, $modalInstance, dashboardSrv, workspace, host_id) {
+        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'host',
+        function($scope, $modalInstance, dashboardSrv, workspace, host) {
 
             $scope.sortField = 'port';
             $scope.sortReverse = false;
@@ -378,8 +378,8 @@ angular.module('faradayApp')
                 $scope.sortReverse = !$scope.sortReverse;
             }
 
-            dashboardSrv.getServicesByHost(workspace, host_id).then(function(services){
-                dashboardSrv.getName(workspace, host_id).then(function(name){
+            dashboardSrv.getServicesByHost(workspace, host._id).then(function(services){
+                dashboardSrv.getName(workspace, host._id).then(function(name){
                     $scope.name = name;
                     $scope.services = services;
                 })

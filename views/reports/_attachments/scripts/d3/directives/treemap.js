@@ -62,7 +62,11 @@ angular.module('faradayApp')
             var node = div.datum(data_cp).selectAll(".node")
               .data(treemap.nodes)
             .enter().append("div")
-              .attr("class", "node treemap-tooltip")
+              .attr("class", function(d) {
+                  var ret = "node treemap-tooltip";
+                  if(d.key) ret += " tm-" + d.key;
+                  return ret;
+              })
               .call(position)
               .style("background", function(d) { return d.color; })
               .style('opacity', 0)
@@ -79,12 +83,18 @@ angular.module('faradayApp')
                   document.getElementById("treemapTextModel").innerHTML = "<div style='background-color:" + d.color + "'>" + d.key + '</div>' + d.value;
                 }
               })
-              .on('mouseleave', function(){
+              .on('mouseenter', function(d) {
+                var line = d3.select('.tm-'+d.key)
+                    .style("opacity", 1);
+              })
+              .on('mouseleave', function(d) {
+                var line = d3.select('.tm-'+d.key)
+                    .style("opacity", 0.8);
                 document.getElementById("treemapText").innerHTML = "";
               })
               .transition()
                   .duration(1250)
-                  .style('opacity', 1);
+                  .style('opacity', 0.8);
 
           };
         });

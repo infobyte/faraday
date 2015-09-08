@@ -2,38 +2,14 @@
 /* Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) */
 /* See the file 'doc/LICENSE' for the license information */
 /*reset*/
-html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td {margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body {line-height:1}ol,ul {list-style:none}blockquote,q {quotes:none}:focus {outline:0}ins {text-decoration:none}del {text-decoration:line-through}table {border-collapse:collapse;border-spacing:0}ul,li {list-style:none}.clearfix:after{content:".";display:block;clear:both;visibility:hidden;line-height:0;    height:0}
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td {margin:0;padding:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body {line-height:1}ol,ul {list-style:none}blockquote,q {quotes:none}:focus {outline:0}ins {text-decoration:none}del {text-decoration:line-through}table {border-collapse:collapse;border-spacing:0}ul,li {list-style:none}.clearfix:after{content:".";display:block;clear:both;visibility:hidden;line-height:0;    height:0}
 .clearfix{display:inline-block}html[xmlns] .clearfix{display:block}* html .clearfix{height:1%}
 /**/
-@font-face {
-  font-family: 'Ubuntu';
-  font-style: normal;
-  font-weight: 300;
-  src: local('Ubuntu Light'), local('Ubuntu-Light'), url(fonts/ubuntu/_aijTyevf54tkVDLy-dlnLO3LdcAZYWl9Si6vvxL-qU.woff) format('woff');
-}
-@font-face {
-  font-family: 'Ubuntu';
-  font-style: normal;
-  font-weight: 400;
-  src: local('Ubuntu'), url(fonts/ubuntu/vRvZYZlUaogOuHbBTT1SNevvDin1pK8aKteLpeZ5c0A.woff) format('woff');
-}
-@font-face {
-  font-family: 'Ubuntu';
-  font-style: normal;
-  font-weight: 700;
-  src: local('Ubuntu Bold'), local('Ubuntu-Bold'), url(fonts/ubuntu/0ihfXUL2emPh0ROJezvraLO3LdcAZYWl9Si6vvxL-qU.woff) format('woff');
-}
-@font-face {
-  font-family: 'Ubuntu';
-  font-style: italic;
-  font-weight: 400;
-  src: local('Ubuntu Italic'), local('Ubuntu-Italic'), url(/fonts/ubuntu/kbP_6ONYVgE-bLa9ZRbvvnYhjbSpvc47ee6xR_80Hnw.woff) format('woff');
-}
 html#no-overflow{overflow-x:hidden;}
 body {
-    font:62.5%/1.5 'Ubuntu',Helvetica,Arial,sans-serif!important;
+    font:62.5%/1.5 ,Helvetica,Arial,sans-serif!important;
     color: #2D2F31;
-    background: #E8EFF0!important;
+    background: #F5F5F5 !important;
 }
 ul{padding:0 0 0 0;margin-bottom: 20px;}
 a {
@@ -176,13 +152,13 @@ article.untercio{
         text-align: left;
     }
         .seccion article header {
-            background: #3F4649;
+            background: #FFFFFF;
             min-height: 40px;
             text-align: left;
         }
             .seccion article header h2 {
-                color: #fff;
-                font-size: 17px;
+                color: #101010;
+                font-size: 14px;
                 width: 100%;
                 margin: 0 12px;
                 padding: 0;
@@ -211,8 +187,8 @@ article.untercio{
                     }
                         .sin_padding h2{padding-bottom: 16px;}
 
-/* ==== COLORES generales ==== */
-/* Fondos */
+/* ==== General COLORS ==== */
+/* Backgrounds Legacy */
 .fondo-rojo, .fondo-high, .fondo-error {background-color: #DF3936 !important;}
 .fondo-negro {background-color: #000 !important;}
 .fondo-gris1, .fondo-critical {background-color: #932ebe !important;}
@@ -222,13 +198,66 @@ article.untercio{
 .fondo-naranja, .fondo-med {background-color: #DFBF35 !important;}
 .fondo-amarillo, .fondo-low, .fondo-created{background-color: #A1CE31 !important;}
 .fondo-violeta {background-color: #932ebe !important;}
-/* Textos*/
+/* Backgrounds New */
+.background-unclassified {
+    background-color: #ffffff !important;
+    border: solid 1px #999999;
+}
+.background-info {
+    background-color: #ffffff !important;
+    border: solid 1px #2e97bd;
+}
+.background-low {
+    background-color: #ffffff !important;
+    border: solid 1px #a1ce31;
+}
+.background-med {
+    background-color: #ffffff !important;
+    border: solid 1px #dfbf35;
+}
+.background-high {
+    background-color: #ffffff !important;
+    border: solid 1px #df3936;
+}
+.background-critical {
+    background-color: #ffffff !important;
+    border: solid 1px #932ebe;
+}
+/* Texts Legacy*/
 .texto-rojo {color: #DF3936;}
 .texto-negro {color: #000;}
 .texto-gris1 {color: #2D2F31;}
-.texto-blanco {color: #fff;}
-
-/* Home Menu grande */
+.texto-blanco {color: #6B6565;}
+/* Texts New*/
+.text-unclassified {
+    color: #999999 !important;
+}
+.text-info {
+    color: #2e97bd !important;
+}
+.text-low {
+    color: #a1ce31 !important;
+}
+.text-med {
+    color: #dfbf35 !important;
+}
+.text-high {
+    color: #df3936 !important;
+}
+.text-critical {
+    color: #932ebe !important;
+}
+/* Opacity */
+.opacity-low {
+    opacity: 0.6;
+}
+.opacity-med {
+    opacity: 0.8;
+}
+.opacity-high {
+    opacity: 1;
+}
+/* Big Home menu */
 .home-list {
 	margin-top: 20px;
 }
@@ -322,9 +351,12 @@ article.untercio{
 .dato2 * {
     text-align: center;
 }
+.dato2:hover {
+
+}
     .dato2 .nro {
         font-size: 300%;
-        font-weight: 300;
+        font-weight: 400;
         letter-spacing: -.1em;
     }
     .dato2 .txt {
@@ -349,7 +381,7 @@ ul.label-list {
     margin: 5px;
 }
 table thead th a {
-	color: #bbb;
+	color: #2E91D8;
 	font-weight: normal;
 }
 	table thead th a:hover {
@@ -378,10 +410,10 @@ table.tablesorter thead tr .header {
     cursor: pointer;
 }
 table.tablesorter thead tr th, table.tablesorter tfoot tr th {
-    background-color: #3F464C;
+    background-color: #FFFFFF;
     color: #fff;
     border: 1px solid #FFF;
-    font-size: 14px;
+    font-size: 12px;
 }
 
 table.tablesorter tbody td {
@@ -612,7 +644,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
 #treemap, #bar, #cake{height:195px}
 #vulns .columna{margin-left:2%}
     #vulns .main{width:100%;height:105px}
-    #vulns-by-price .main{width:100% !important;height: 180px !important;}
+    #vulns-by-price .main{width:100% !important;height: 140px !important;}
         #vulns .columna.unsexto{margin: auto;}
 #summarized .main{height:197px}
 #summarized .panel.panel-default,#byservices .panel.panel-default{max-height: 239px}
@@ -678,8 +710,12 @@ text.host-name{font-size: 13px;font-weight:bold;}
     .left_auths{margin:5px;float:right;margin-top: -52px;}
     .left_auth{margin:5px;float:right;margin-top: -40px;}
 
-        div.box div.columna:nth-child(even){background-color: #DF3936; color: #000!important;}
-        div.box div.columna:nth-child(odd){background-color: #000; color: #DF3936!important;}
+        div.box div.columna {
+            background-color: #F5F5F5; color: #6B6565!important;
+        }
+        div.box div.columna:hover {
+            background-color: #E9E9E9; color: #6B6565!important;
+        }
     #merge, #delete, #new{margin:5px;float:right;}
 .input-sm{float: left;margin-bottom: 20px;}
 /* Media */

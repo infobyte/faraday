@@ -170,7 +170,7 @@ class ReportXmlParser(object):
             return "arachni"
         elif "nmaprun" == tag:
             return "nmap"
-        elif "w3af-run" == tag:^M
+        elif "w3af-run" == tag:
             return "w3af"
         elif "NessusClientData_v2" == tag:
             return "nessus"

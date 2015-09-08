@@ -12,6 +12,7 @@ New features in the latest update
 
 TBA:
 ---
+* Small bug empty ease of resolution
 * Adding more time to generation shells QT3
 * Add "Search in Shodan" links in different views (Status Report, Host View, Service View)
 * Added vulns count for Hosts in WEB UI

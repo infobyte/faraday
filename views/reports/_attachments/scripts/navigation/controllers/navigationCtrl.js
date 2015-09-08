@@ -65,7 +65,6 @@ angular.module('faradayApp')
 
         $scope.loadCurrentWorkspace();
 
-        console.log(navigator.userAgent.toLowerCase())
         // if(navigator.userAgent.toLowerCase().indexOf('iceweasel') > -1) {
         //      $scope.isIceweasel = "Your browser is not supported, please use Firefox or Chrome";
         // }

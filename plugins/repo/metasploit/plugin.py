@@ -389,6 +389,7 @@ class MetasploitPlugin(core.PluginBase):
                 if s['port'] in item.credsByService:
                     for c in item.credsByService[s['port']]:
                         self.createAndAddCredToService(h_id,s_id,c.user,c.passwd)
+                        self.createAndAddVulnToService(h_id, s_id, "Weak Credentials","[metasploit found the following credentials]\nuser:%s\npass:%s" % (c.user, c.passwd), severity="high")
 
                 n_id = None
                 for v in item.vulnsByService[s['id']]:

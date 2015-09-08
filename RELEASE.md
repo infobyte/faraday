@@ -12,6 +12,8 @@ New features in the latest update
 
 TBA:
 ---
+* Medusa, Hydra & Metasploit plug-in now add discovered weak credentials as a vulnerability
+* Nmap plug-in applys a severity depending on the result of a NSE script
 * Small bug empty ease of resolution
 * Adding more time to generation shells QT3
 * Add "Search in Shodan" links in different views (Status Report, Host View, Service View)
@@ -33,7 +35,6 @@ Aug 19, 2015:
 * Clean dev log on plugins
 * w3af plugin refactoring
 * Fix Debian 7/8.1 install support
-
 
 Aug 05, 2015:
 ---

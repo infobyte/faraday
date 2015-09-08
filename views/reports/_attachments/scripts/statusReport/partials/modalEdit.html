@@ -24,10 +24,14 @@
                 </div>
             </div>
             <div class="form-group">
-                <div class="col-md-6" ng-class="{'has-error': formEdit.severity.$invalid }">
+                 <div class="col-md-6 severities">
                     <h5>Severity</h5>
-                    <select class="form-control" ng-model="modal.data.severity" name="severity" ng-options="s as s for s in modal.severities" required>
-                    </select>
+                    <button type="button" class="btn btn-default dropdown-toggle color-{{modal.data.severity}}" name="severity" data-toggle="dropdown" title="Change severity" ng-class="{'button-error': modal.data.severity === undefined}">
+                    {{modal.data.severity || 'Edit severity'}} <span class="caret" style="color:#000"></span>
+                    </button>
+                    <ul id="nav" class="dropdown-menu dropdown-menu-left" role="menu">
+                        <li ng-repeat="s in modal.severities"><a href="" class="ws color-{{s}}" ng-click="modal.data.severity=s">{{s}}</a></li>
+                    </ul><!-- WS navigation -->
                 </div>
                 <div class="col-md-6">
                     <h5>Ease of Resolution</h5>

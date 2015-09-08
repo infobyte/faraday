@@ -352,7 +352,7 @@ class MainWindow(qt.QMainWindow):
 
         self.timer = qt.QTimer(self)
         self.connect(self.timer, qt.SIGNAL('timeout()'), self.createShellTab)
-        self.timer.start(600, True)
+        self.timer.start(1000, True)
 
         for shell_widget in self._shell_widgets:
             shell_widget.show()

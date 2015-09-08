@@ -6,7 +6,7 @@
     <h5>{{msg}}</h5>
 </div>
 <div class="modal-body">
-    <select class="form-control" ng-model="data.property" ng-options="o as o for o in options">
+    <select class="form-control colors-severities" ng-model="data.property" ng-options="o as o for o in options track by o" required>
     </select>
 </div>
 <div class="modal-footer">

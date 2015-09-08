@@ -12,6 +12,7 @@ New features in the latest update
 
 TBA:
 ---
+* Add class to set colors to severities in new/edit vuln view
 * Medusa, Hydra & Metasploit plug-in now add discovered weak credentials as a vulnerability
 * Nmap plug-in applys a severity depending on the result of a NSE script
 * Small bug empty ease of resolution

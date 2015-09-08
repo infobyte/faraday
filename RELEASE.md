@@ -12,6 +12,12 @@ New features in the latest update
 
 TBA:
 ---
+* Refactor GUI Web:
+  Icon added for Modal Error
+  OS, Creator, Date for modal-services-by-host.html
+  Fixed typo in Host Edit, the popup message was wrong
+  First version for in estilos.css for clear mode
+  Also added hover to grey boxes in Dashboard.
 * Added vulns count for Hosts in WEB UI
 * Update w3af plugin to support report version 1.7.6
 * Ignore cwe database from updater and QT views

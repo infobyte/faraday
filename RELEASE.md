@@ -12,6 +12,7 @@ New features in the latest update
 
 TBA:
 ---
+* Adding more navigability in differents GUI Web (Services/Views)
 * Fix bug copy clipboard offline (update path of ngClip dependeces)
 * Add class to set colors to severities in new/edit vuln view
 * Medusa, Hydra & Metasploit plug-in now add discovered weak credentials as a vulnerability

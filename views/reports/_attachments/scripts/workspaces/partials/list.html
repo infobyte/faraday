@@ -35,7 +35,7 @@
                             <tbody>
                                 <tr ng-repeat="ws in workspaces | filter:query | orderBy:sortField:reverse"
                                     selection-model selection-model-selected-class="multi-selected"> 
-                                    <td><span ng-class-even="'label label-unclassified'" ng-class-odd="'label label-high'">{{ws.name}}</span></td>
+                                    <td><a href="#/{{hash}}dashboard/ws/{{ws.name}}"><span ng-class-even="'label label-unclassified'" ng-class-odd="'label label-high'">{{ws.name}}</span></td>
                                     <td ng-bind="ws.duration.start || '-' | date:'MM/dd/yyyy'"></td>
                                     <td ng-bind="ws.duration.end || '-' | date:'MM/dd/yyyy'"></td>
                                     <td ng-bind="objects[ws.name]['total vulns']"></td>

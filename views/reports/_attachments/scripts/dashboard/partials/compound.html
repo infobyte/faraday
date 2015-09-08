@@ -23,7 +23,7 @@
             <tr ng-repeat="host in hosts | orderBy:hostSortField:hostSortReverse |
             startFrom:currentPage*pageSize | limitTo:pageSize">
                 <td>
-                    <a href="" class="host" ng-click="showServices(host.id)">{{host.name}}</a>
+                    <a href="" class="host" ng-click="showServices(host)">{{host.name}}</a>
                     <a href="//www.shodan.io/search?query={{host.name}}" tooltip="Search in Shodan" target="_blank">
                         <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                     </a>
@@ -31,7 +31,7 @@
                 <td>{{host.servicesCount}}</td>
                 <td>
                     <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" tooltip="{{host.os}}"/>
-                    <span ng-if="host.icon == undefined" class="glyphicon glyphicon-question-sign" tooltip="{{host.os}}"></span>
+                    <span ng-if="host.icon == undefined" class="fa fa-laptop" tooltip="{{host.os}}"></span>
                 </td>
             </tr>
         </tbody>

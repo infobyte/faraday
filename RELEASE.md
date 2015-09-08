@@ -12,6 +12,7 @@ New features in the latest update
 
 TBA:
 ---
+* Fix bug copy clipboard offline (update path of ngClip dependeces)
 * Actions on status report impact on visible vulnerabilities
 * Export to CSV matches columns in status report
 * Vulnerability counter on status report

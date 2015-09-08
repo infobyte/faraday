@@ -35,7 +35,8 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         return severities;
     })());
 
-faradayApp.config(['$routeProvider', function($routeProvider) {
+faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, ngClipProvider) {
+    ngClipProvider.setPath("script/ZeroClipboard.swf");
     $routeProvider.
         when('/dashboard/ws/:wsId', {
             templateUrl: 'scripts/dashboard/partials/dashboard.html',

@@ -71,7 +71,7 @@
                                         </a>
                                     </td>
                                     <td ng-bind="host.description || '-'"></td>
-                                    <td ng-bind="vulnsCount[host._id] || '-'"></td>
+                                    <td> <a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="vulnsCount[host._id] || '-'"></a></td>
                                     <td>
                                         <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" tooltip="{{host.os}}"/>
                                         <span ng-if="host.icon == undefined" class="glyphicon glyphicon-question-sign" tooltip="{{host.os}}"></span>

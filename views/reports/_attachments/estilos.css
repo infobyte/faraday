@@ -975,9 +975,24 @@ aside .alert.alert-danger.alert-dismissible{
     font-weight: bold;
 }
 .text-center{text-align: center; width: 25px;}
-select.colors-severities option[value="unclassified"]{color: #999;}
-select.colors-severities option[value="info"]{color: #2e97bd;}
-select.colors-severities option[value="low"]{color: #A1CE31;}
-select.colors-severities option[value="med"]{color: #DFBF35;}
-select.colors-severities option[value="high"]{color: #DF3936;}
-select.colors-severities option[value="critical"]{color: #932ebe;}
+.severities .color-unclassified, .severities .color-unclassified:hover{color: #999;}
+.severities .color-info, .severities .color-info:hover{color: #2e97bd;}
+.severities .color-low, .severities .color-low:hover{color: #A1CE31;}
+.severities .color-med, .severities .color-med:hover{color: #DFBF35;}
+.severities .color-high, .severities .color-high:hover{color: #DF3936;}
+.severities .color-critical, .severities .color-critical:hover{color: #932ebe;}
+.severities > button{
+    width: 100%;
+    text-align: left;
+}
+.severities > button > span{
+    color: #000;
+    float: right;
+    margin-top: 8px;
+}
+.severities > .dropdown-menu-left{left: 14px;}
+.severities button.button-error{
+    border-color: #a94442;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+}

@@ -18,6 +18,7 @@ TBA:
 * Small bug empty ease of resolution
 * Adding more time to generation shells QT3
 * Add "Search in Shodan" links in different views (Status Report, Host View, Service View)
+* Remove required of name field service bulk edition
 * Added vulns count for Hosts in WEB UI
 * Update w3af plugin to support report version 1.7.6
 * Ignore cwe database from updater and QT views

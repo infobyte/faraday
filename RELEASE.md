@@ -12,6 +12,7 @@ New features in the latest update
 
 TBA:
 ---
+* Add ng-disabled on Edit button if select more of 1 host on Host View WEB UI
 * Added vulns count for Hosts in WEB UI
 
 Aug 19, 2015:

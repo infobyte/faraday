@@ -1,6 +1,6 @@
 '''
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
@@ -21,7 +21,7 @@ class CmdMasscanPlugin(NmapPlugin):
         self.id              = "Masscan"
         self.name            = "Masscan Output Plugin"
         self.plugin_version         = "0.0.1"
-        self.version   = ""
+        self.version   = "1.0.3"
         self.options         = None
         self._command_regex  = re.compile(r'^(masscan|sudo masscan|\.\/masscan|sudo \.\/masscan).*?')  
         self._output_file_path = os.path.join(self.data_path,

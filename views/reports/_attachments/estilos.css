@@ -516,8 +516,11 @@ table.table tbody tr:hover{
     background-color: #f2dede !important;
 }
 
+table.last-vuln th{text-align: center;}
+#list .tablesorter thead th:first-child{width: 49%;}
 #list .tablesorter thead th {
-    width: 45%;
+    width: 36%;
+    text-align: center;
     border:1px solid;
 }
 #list tbody{display: block}
@@ -527,15 +530,15 @@ table.table tbody tr:hover{
 #list .tablesorter thead th:last-child{width: 19%}
 #compound tbody{display: block;max-height: 370px}
 #compound .tablesorter tr {display: table-row;}
-#compound .tablesorter tbody td {width: 48%}
+#compound .tablesorter tbody td {width: 38%}
 #compound .tablesorter tbody td span,#compound .tablesorter tbody td img{margin-right: 25px}
-#compound .tablesorter thead th:first-child{width: 54%}
+#compound .tablesorter thead th:first-child{width: 52%;padding-left: 14%;}
 #compound .tablesorter thead th {
-    width: 27%;
+    width: 29%;
     float: left;
     border:1px solid;
 }
-#compound .tablesorter thead th:last-child{width: 19%}
+#compound .tablesorter thead th:last-child{width: 19%;padding-left: 2%;}
     article#compound.panel{
         height: 93px;
         padding-bottom: 428px;

@@ -10,6 +10,8 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+* Add class to set colors to severities in new/edit vuln view
+
 TBA:
 ---
 * Actions on status report impact on visible vulnerabilities

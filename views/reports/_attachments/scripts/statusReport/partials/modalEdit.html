@@ -5,7 +5,7 @@
 <form name="formEdit" novalidate>
     <div class="modal-header">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="formEdit.$invalid">OK</button>
+            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="formEdit.$invalid || modal.data.severity === undefined">OK</button>
             <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
         <h3 class="modal-title">Vuln edit</h3>

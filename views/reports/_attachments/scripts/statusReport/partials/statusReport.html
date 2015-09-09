@@ -207,7 +207,7 @@
                             </td>
                             <td ng-if="columns.status">Vulnerable</td>
                             <td ng-if="columns.severity"><a href="#/status/ws/{{workspace}}/search/severity={{v.severity}}"><span class="label vuln fondo-{{v.severity}}">{{v.severity}}</span></a></td>
-                            <td ng-if="columns.name"><a href="#/status/ws/{{workspace}}/search/name={{v.name | encodeURIComponent}}">{{v.name}}</a></td>
+                            <td ng-if="columns.name"><a href="#/status/ws/{{workspace}}/search/name={{v.name | encodeURIComponent | encodeURIComponent}}">{{v.name}}</a></td>
                             <td ng-if="columns.desc" text-collapse text-collapse-max-length="150" text-collapse-text="{{v.desc}}"></td>
                             <td ng-if="columns.data" text-collapse text-collapse-max-length="150" text-collapse-text="{{v.data}}"></td>
                             <td ng-if="columns.method"><a href="#/status/ws/{{workspace}}/search/method={{v.method}}">{{v.method}}</a></td>

@@ -489,7 +489,6 @@ table.status-report thead tr .header {
 table.status-report tbody td {
     color: #3D3D3D;
     padding: 5px;
-    vertical-align: top;
 }
 
 table.status-report tbody tr.odd td {
@@ -529,17 +528,26 @@ table.last-vuln th{text-align: center;}
 #list .tablesorter tbody td {width: 51.6%}
 #list .tablesorter tbody td:nth-child(2){width: 51%;word-break: break-all;}
 #list .tablesorter thead th:last-child{width: 19%}
-#compound tbody{display: block;max-height: 370px}
-#compound .tablesorter tr {display: table-row;}
-#compound .tablesorter tbody td {width: 38%}
-#compound .tablesorter tbody td span,#compound .tablesorter tbody td img{margin-right: 25px}
-#compound .tablesorter thead th:first-child{width: 52%;padding-left: 14%;}
-#compound .tablesorter thead th {
-    width: 29%;
-    float: left;
-    border:1px solid;
+/* Fixed */
+.table-fixed thead {
+  width: 100%;
 }
-#compound .tablesorter thead th:last-child{width: 19%;padding-left: 2%;}
+.table-fixed tbody {
+  height: 230px;
+  overflow-y: auto;
+  width: 100%;
+}
+.table-fixed thead, .table-fixed tbody, .table-fixed tr, .table-fixed td, .table-fixed th {
+  display: block;
+}
+.table-fixed tbody td, .table-fixed thead > tr> th {
+  float: left;
+  border-bottom-width: 0;
+}
+.table-fixed th{text-align: center}
+.table-fixed th{padding-right: 6%!important;}
+#compound tbody{display: block;max-height: 370px}
+#compound .tablesorter tbody td span,#compound .tablesorter tbody td img{margin-right: 25px}
     article#compound.panel{
         height: 93px;
         padding-bottom: 428px;

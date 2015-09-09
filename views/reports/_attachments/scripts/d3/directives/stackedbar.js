@@ -123,7 +123,6 @@ angular.module('faradayApp')
                             })
                             .style('opacity', 0.8)
                             .on('mouseenter', function(d) {
-                                console.log(d);
                                 var line = d3.select('.sb-'+d.k)
                                     .style("opacity", 1);
                             })

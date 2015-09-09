@@ -68,27 +68,32 @@ angular.module('faradayApp')
               .data(data)
               .enter()
                 .append('rect')
-                .attr("class", "bar")
+                .attr("class", function(d) { return "id-" + d.key + " bar"; })
                 .attr("x", function(d) { return x(d.key); })
                 .attr("y", function(d) { return y(d.value - 0.5); })
                 .style("fill", function(d) { return color(Math.random()*55); })
                 .attr("height", function(d) { return height - margin.top - margin.bottom - y(d.value); })
                 .attr("width", 30)
                 .style('opacity', 0)
-                .on('mouseover', function(d){
-                  workspace = $routeParams.wsId;
-                  var hurl    = "/" + workspace + "/_design/hosts/_view/hosts";
-                  hosts    = get_obj(hurl);
-                  var name = hosts[d.key].name;
-                  document.getElementById("barText").innerHTML =  "<div style='background-color:" + d.color + "'><b>" + name + '</b></div>' + d.value;
-
+                .on('mouseover', function(d) {
+                    workspace = $routeParams.wsId;
+                    var hurl    = "/" + workspace + "/_design/hosts/_view/hosts";
+                    hosts    = get_obj(hurl);
+                    var name = hosts[d.key].name;
+                    document.getElementById("barText").innerHTML =  "<div style='background-color:" + d.color + "'><b>" + name + '</b></div>' + d.value;
                 })
-                .on('mouseleave', function(){
-                  document.getElementById("barText").innerHTML = "";
+                .on('mouseenter', function(d) {
+                    var line = d3.select('.id-'+d.key)
+                        .style("opacity", 1);
+                })
+                .on('mouseleave', function(d) {
+                    document.getElementById("barText").innerHTML = "";
+                    var line = d3.select('.id-'+d.key)
+                        .style("opacity", 0.8);
                 })
                 .transition()
                     .duration(1250)
-                    .style('opacity', 1);
+                    .style('opacity', 0.8);
 
                 function get_obj(ourl) {
                   var ls = {};

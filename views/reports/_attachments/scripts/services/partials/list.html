@@ -6,8 +6,7 @@
 
                 <div class="right-main"><div id="reports-main" class="fila clearfix">
                     <h2 class="ws-label">
-                        <span id="ws-name" class="label label-default"
-                        title="Hosts">Services from {{host.name}}</span><!-- WS name -->
+                        <span id="ws-name" title="Hosts">Services from {{host.name}}</span><!-- WS name -->
                         <div id="ws-control" class="btn-group">
                             <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
                                 <span class="glyphicon glyphicon-refresh"></span>
@@ -75,6 +74,9 @@
                                     <th>
                                         <a href="" ng-click="toggleSort('status')">Status</a>
                                     </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('vulns')">Vulns</a>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -83,11 +85,24 @@
                                     selection-model-mode="multiple-additive" 
                                     selection-model-selected-class="multi-selected">
                                     <td><input type="checkbox" name="{{s._id}}"/></td>
-                                    <td ng-bind="service.name"></td>
+                                    <td>
+                                        {{service.name}}
+                                        <a href="//www.shodan.io/search?query={{service.name}}" tooltip="Search in Shodan" target="_blank">
+                                            <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                                        </a>
+                                    </td>
                                     <td ng-bind="service.description || '-'"></td>
-                                    <td ng-bind="service.ports"></td>
+                                    <td>
+                                        <li ng-repeat="p in service.ports">   
+                                            {{p}}                                     
+                                            <a href="//www.shodan.io/search?query=port:{{p}}" tooltip="Search in Shodan" target="_blank">
+                                                <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                                            </a>
+                                        </li>
+                                    </td>
                                     <td ng-bind="service.protocol"></td>
                                     <td ng-bind="service.status"></td>
+                                    <td ng-bind="vulnsCount[service._id] || '-'"></td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->

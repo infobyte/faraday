@@ -37,8 +37,8 @@ class Updater(object):
         logger.info('Installing missing dependencies in pip')
         pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
 
-        logger.info('Upgrading DBs to latest version')
-        DB().run() 
+        # logger.info('Upgrading DBs to latest version')
+        # DB().run() 
 
         logger.info('Upgrading DBs to latest version')
         CouchViews().run()
@@ -80,8 +80,7 @@ class CouchViews(Update):
         # if not query_yes_no("Faraday won't behave correctly with older versions, proceed?", 'no'):
         #     return
 
-        dbs = filter(lambda x: not x.startswith("_") and 'backup' not in x and \
-                'reports' not in x, serv.all_dbs())
+	dbs = filter(lambda x: not x.startswith("_") and 'backup' not in x and x not in CONST_BLACKDBS, serv.all_dbs())
         logger.info('Dbs to upgrade: %s' % (', '.join(dbs)))
 
 
@@ -173,7 +172,7 @@ class DB(Update):
         serv = couchdbkit.Server(source_server)
 
         logger.info('We are about to upgrade dbs in Server [%s]' % source_server)
-        dbs = filter(lambda x: not x.startswith("_") and 'backup' not in x and 'reports' not in x, serv.all_dbs())
+	dbs = filter(lambda x: not x.startswith("_") and 'backup' not in x and x not in CONST_BLACKDBS, serv.all_dbs())
         logger.info('Dbs to upgrade: %s' % (', '.join(dbs)))
 
         if not query_yes_no('Proceed?', 'no'):

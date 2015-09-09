@@ -151,7 +151,7 @@ class MedusaPlugin(core.PluginBase):
             s_id = self.createAndAddServiceToInterface(h_id,i_id,item['service'],ports=[port],protocol="tcp",status="open")
             
             self.createAndAddCredToService(h_id,s_id, item['user'],item['pass'])
-
+            self.createAndAddVulnToService(h_id, s_id, "Weak Credentials","[medusa found the following credentials]\nuser:%s\npass:%s" % (item['user'], item['pass']), severity="high")
         del parser
 
     xml_arg_re = re.compile(r"^.*(-O\s*[^\s]+).*$")

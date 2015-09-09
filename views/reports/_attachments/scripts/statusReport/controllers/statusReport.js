@@ -480,14 +480,14 @@ angular.module('faradayApp')
                     }
                 }
             }
-            return encodeURI(encode.slice(1));
+            return encode.slice(1);
         };
 
         // decodes search parameters to object in order to use in filter
         $scope.decodeSearch = function(search) {
             var i = -1,
             decode = {},
-            params = decodeURI(search).split("&");
+            params = search.split("&");
 
             params.forEach(function(param) {
                 i = param.indexOf("=");

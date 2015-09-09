@@ -6,8 +6,7 @@
 
                 <div class="right-main"><div id="reports-main" class="fila clearfix">
                     <h2 class="ws-label">
-                        <span id="ws-name" class="label label-default"
-                        title="Hosts">Hosts for {{workspace}} ({{hosts.length}})</span><!-- WS name -->
+                        <span id="ws-name" title="Hosts">Hosts for {{workspace}} ({{hosts.length}})</span><!-- WS name -->
                         <div id="ws-control" class="btn-group">
                             <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
                                 <span class="glyphicon glyphicon-refresh"></span>
@@ -23,7 +22,7 @@
                             <span class="glyphicon glyphicon-trash"></span>
                             Delete
                         </button>
-                        <button id="merge" type="button" class="btn btn-default" title="Edit selected hosts" ng-click="edit()">
+                        <button id="merge" type="button" class="btn btn-default" title="Edit selected hosts" ng-disabled="selectedHosts().length > 1" ng-click="edit()">
                             <span class="glyphicon glyphicon-pencil"></span>
                             Edit
                         </button>
@@ -47,6 +46,9 @@
                                         <a href="" ng-click="toggleSort('description')">Description</a>
                                     </th>
                                     <th>
+                                        <a href="" ng-click="toggleSort('vulns')">Vulns</a>
+                                    </th>
+                                    <th>
                                         <a href="" ng-click="toggleSort('os')">OS</a>
                                     </th>
                                     <th>
@@ -58,14 +60,21 @@
                                 <tr ng-repeat="host in hosts | filter:query | orderBy:sortField:reverse"
                                     selection-model selection-model-type="checkbox" 
                                     selection-model-mode="multiple-additive" 
-                                    selection-model-selected-class="multi-selected">
+                                    selection-model-selected-class="multi-selected"
+                                    selection-model-on-change="selectedHosts()">
                                     <td><input type="checkbox" name="{{host._id}}"/></td>
                                     <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}">View</a></td>
-                                    <td ng-bind="host.name"></td>
+                                    <td>
+                                        {{host.name}}
+                                        <a href="//www.shodan.io/search?query={{host.name}}" tooltip="Search in Shodan" target="_blank">
+                                            <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                                        </a>
+                                    </td>
                                     <td ng-bind="host.description || '-'"></td>
+                                    <td> <a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="vulnsCount[host._id] || '-'"></a></td>
                                     <td>
                                         <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" tooltip="{{host.os}}"/>
-                                        <span ng-if="host.icon == undefined" class="glyphicon glyphicon-question-sign" tooltip="{{host.os}}"></span>
+                                        <span ng-if="host.icon == undefined" class="fa fa-laptop" tooltip="{{host.os}}"></span>
                                     </td>
                                     <td ng-bind="host.owned"></td>
                                 </tr>

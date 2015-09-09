@@ -6,8 +6,7 @@
     <section id="main" class="seccion clearfix">
                 <div class="right-main"><div id="reports-main" class="fila clearfix">
                     <h2 class="ws-label">
-                        <span id="ws-name" class="label label-default"
-                        title="Workspaces">Workspaces</span><!-- WS name -->
+                        <span id="ws-name" title="Workspaces">Workspaces</span><!-- WS name -->
                         <button id="delete" type="button" class="btn btn-default" title="Delete selected Workspaces" ng-click="delete()">
                             <span class="glyphicon glyphicon-trash"></span>
                             Delete
@@ -36,11 +35,11 @@
                             <tbody>
                                 <tr ng-repeat="ws in workspaces | filter:query | orderBy:sortField:reverse"
                                     selection-model selection-model-selected-class="multi-selected"> 
-                                    <td><span ng-class-even="'label label-unclassified'" ng-class-odd="'label label-high'">{{ws.name}}</span></td>
+                                    <td><a href="#/{{hash}}dashboard/ws/{{ws.name}}"><span ng-class-even="'label label-unclassified'" ng-class-odd="'label label-high'">{{ws.name}}</span></td>
                                     <td ng-bind="ws.duration.start || '-' | date:'MM/dd/yyyy'"></td>
                                     <td ng-bind="ws.duration.end || '-' | date:'MM/dd/yyyy'"></td>
-                                    <td ng-bind="objects[ws.name]['total vulns']"></td>
-                                    <td ng-bind="objects[ws.name]['hosts']"></td>
+                                    <td><a href="#/status/ws/{{ws.name}}">{{objects[ws.name]['total vulns']}}</a></td>
+                                    <td><a href="#/hosts/ws/{{ws.name}}">{{objects[ws.name]['hosts']}}</a></td>
                                     <td ng-bind="objects[ws.name]['services']"></td>
                                 </tr>
                             </tbody>

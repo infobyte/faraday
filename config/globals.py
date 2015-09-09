@@ -27,6 +27,7 @@ CONST_FARADAY_ZSH_PLUGIN = "zsh/plugin_controller_client.py"
 CONST_FARADAY_BASE_CFG = "config/default.xml"
 CONST_FARADAY_USER_CFG = "config/config.xml"
 CONST_FARADAY_LIB_HELPERS = "shell/core/_helpers.so"
+CONST_BLACKDBS = ('cwe','reports')
 
 CONST_USER_HOME = "~"
 CONST_USER_ZSHRC = "~/.zshrc"

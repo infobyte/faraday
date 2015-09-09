@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA:
+Sep 10, 2015:
 ---
 * Adding filename path information of report imported in history command
 * Remove old couchdb upgrade process

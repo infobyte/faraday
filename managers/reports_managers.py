@@ -89,7 +89,7 @@ class ReportManager(threading.Thread):
 
                         model.api.devlog("The file is %s, %s" % (filename,parser.report_type))
 
-                        command_string = "./%s report" % parser.report_type.lower()
+                        command_string = "./%s %s" % (parser.report_type.lower(), filename)
                         model.api.devlog("Executing %s" % (command_string))
                         
                         new_cmd, output_file = client.send_cmd(command_string) 

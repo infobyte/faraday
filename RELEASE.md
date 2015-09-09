@@ -12,9 +12,10 @@ New features in the latest update
 
 TBA:
 ---
+* Adding filename path information of report imported in history command
 * Remove old couchdb upgrade process
 * Adding Iceweasel browser > 38.2.0 support
-* Adding more navigability in differents GUI Web (Services/Views)
+* Adding more navigability in differents GUI Web (Dashboard/Services/Views)
 * Fix bug copy clipboard offline (update path of ngClip dependeces)
 * Add class to set colors to severities in new/edit vuln view
 * Medusa, Hydra & Metasploit plug-in now add discovered weak credentials as a vulnerability

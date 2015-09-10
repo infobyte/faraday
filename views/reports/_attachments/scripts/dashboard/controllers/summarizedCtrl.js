@@ -157,11 +157,15 @@ angular.module('faradayApp')
 
                         // used to create pie chart for vulns
                         $scope.vulnsCountClass = {"children": angular.copy(tmp)};
+                        $scope.doughnut = {key: [], value: [], colors: []}
                         for(var i = 0; i < $scope.vulnsCountClass.children.length; i++) {
                             if($scope.vulnsCountClass.children[i].key == "unclassified") {
                                 $scope.vulnsCountClass.children.splice(i, 1);
                                 break;
                             }
+                            $scope.doughnut.key.push($scope.vulnsCountClass.children[i].key);
+                            $scope.doughnut.value.push($scope.vulnsCountClass.children[i].value);
+                            $scope.doughnut.colors.push($scope.vulnsCountClass.children[i].color);
                         };
 
                         $scope.$watch('vulnPrices', function(ps) {

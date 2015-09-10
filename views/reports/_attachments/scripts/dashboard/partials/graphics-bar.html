@@ -54,6 +54,6 @@
             </button>
             <p>No vulnerabilities found yet</p>
         </div>
-        <d3-cake data="vulnsCountClass"></d3-cake>
+        <div ng-include="'scripts/dashboard/partials/doughnut.html'" ng-if="vulnsCountClass != undefined || vulnsCountClass.length != 0"></div>
     </article>
 </div>

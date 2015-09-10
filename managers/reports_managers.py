@@ -21,8 +21,6 @@ except ImportError:
     import xml.etree.ElementTree as ET
 from apis.rest.api import PluginControllerAPIClient
 
-from utils.common import sha1OfFile
-
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
@@ -89,16 +87,13 @@ class ReportManager(threading.Thread):
                         #TODO: get host and port from config
                         client = PluginControllerAPIClient("127.0.0.1", 9977)
 
-                        model.api.log("Importing report type: %s , (%s) - (%s)" % (parser.report_type, filename, sha1OfFile(filename)))
+                        model.api.devlog("The file is %s, %s" % (filename,parser.report_type))
 
-                        command_string = "./%s report" % parser.report_type.lower()
+                        command_string = "./%s %s" % (parser.report_type.lower(), filename)
                         model.api.devlog("Executing %s" % (command_string))
                         
                         new_cmd, output_file = client.send_cmd(command_string) 
                         client.send_output(command_string, filename) 
-                    else:
-                        model.api.log("Report type not found: (%s)" % (filename))
-
                     os.rename(filename, os.path.join(self._report_ppath, name)) 
 
         self.onlinePlugins()
@@ -204,6 +199,8 @@ class ReportXmlParser(object):
             return "impact"
         elif "NeXposeSimpleXML" == tag:
             return "nexpose"
+        elif "NexposeReport" == tag:
+            return "nexpose-full"
         elif "SCAN" == tag:
             return "qualysguard"
         elif "scanJob" == tag:
@@ -212,4 +209,3 @@ class ReportXmlParser(object):
             return "netsparker"
         else:
             return None
-

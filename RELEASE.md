@@ -10,11 +10,32 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA:
+Sep 10, 2015:
 ---
+* Adding filename path information of report imported in history command
+* Remove old couchdb upgrade process
+* Adding Iceweasel browser > 38.2.0 support
+* Adding more navigability in differents GUI Web (Dashboard/Services/Views)
+* Fixed bug copy clipboard offline (update path of ngClip dependeces)
+* Added class to set colors to severities in new/edit vuln view
+* Medusa, Hydra & Metasploit plug-in now added discovered weak credentials as a vulnerability
+* Nmap plug-in applyies a severity depending on the result of a NSE script
+* Fixed small bug for empty ease of resolution
+* Adding more time to generation shells QT
+* Added "Search in Shodan" links in different views (Status Report, Host View, Service View)
+* Removed required of name field service bulk edition
+* Added ng-disabled on Edit button if select more of 1 host on Host View WEB UI
+* Refactored GUI Web:
+  Icon added for Modal Error
+  OS, Creator, Date for modal-services-by-host.html
+  Fixed typo in Host Edit, the popup message was wrong
+  First version for in estilos.css for clear mode
+  Also, added hover to grey boxes in the Dashboard.
 * Added vulns count for Hosts in WEB UI
-* Update w3af plugin to support report version 1.7.6
-* Ignore cwe database from updater and QT views
+* Updated w3af plugin to support report version 1.7.6
+* Ignored cwe database from updater and QT views
+* Plugin for Nexpose XML Export 2.0
+* Added masscan plugin (1.0.3)
 
 Aug 19, 2015:
 ---
@@ -28,7 +49,6 @@ Aug 19, 2015:
 * Clean dev log on plugins
 * w3af plugin refactoring
 * Fix Debian 7/8.1 install support
-
 
 Aug 05, 2015:
 ---

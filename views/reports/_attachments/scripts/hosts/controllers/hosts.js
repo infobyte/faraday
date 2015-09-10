@@ -79,13 +79,9 @@ angular.module('faradayApp')
 
         $scope.delete = function() {
             var selected = [];
-
-            for(var i=0; i < $scope.hosts.length; i++) {
-                var host = $scope.hosts[i];
-                if(host.selected) {
-                    selected.push(host._id);
-                }
-            };
+            $scope.selectedHosts().forEach(function(select) {
+                selected.push(select._id);
+            });
 
             if(selected.length == 0) {
                 $modal.open(config = {
@@ -166,24 +162,15 @@ angular.module('faradayApp')
         }
 
         $scope.edit = function() {
-            var selected_host = null;
 
-            $scope.hosts.forEach(function(host) {
-                if(host.selected) {
-                    // if more than one host was selected,
-                    // we only use the last one, for now
-                    selected_host = host;
-                }
-            });
-
-            if(selected_host) {
+            if($scope.selectedHosts().length == 1) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/hosts/partials/modalEdit.html',
                     controller: 'hostsModalEdit',
                     size: 'lg',
                     resolve: {
                         host: function(){
-                            return selected_host;
+                            return $scope.selectedHosts()[0];
                         }
                     }
                  });
@@ -191,7 +178,7 @@ angular.module('faradayApp')
                 modal.result.then(function(data) {
                     hostdata = data[0];
                     interfaceData = data[1];
-                    $scope.update(selected_host, hostdata, interfaceData);
+                    $scope.update($scope.selectedHosts()[0], hostdata, interfaceData);
                 });
             } else {
                 $modal.open(config = {
@@ -250,6 +237,16 @@ angular.module('faradayApp')
                 "type": "Interface"
             };
             return interfaceData;
+        };
+
+        $scope.selectedHosts = function() {
+            selected = [];
+            $scope.hosts.forEach(function(host) {
+                if(host.selected === true) {
+                    selected.push(host);
+                }
+            });
+            return selected;
         };
 
         $scope.checkAll = function() {

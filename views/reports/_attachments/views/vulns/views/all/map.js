@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 function(doc) {
     if(doc.type == "Vulnerability" || doc.type == "VulnerabilityWeb"){
-        var easeofresolution = "trivial",
+        var easeofresolution = "",
         impact = {
             "accountability": false,
             "availability": false,

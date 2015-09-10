@@ -1,4 +1,4 @@
-<article id='compound' class='panel panel-default'>
+<article id="compound" class='panel panel-default'>
     <header>
         <h2><a href="#/hosts/ws/{{workspace}}">Hosts</a>
             <span class="glyphicon glyphicon-info-sign" tooltip="All hosts, each one showing its service count and operating system. By clicking on a host IP you can access a list with all of its services"></span>
@@ -11,20 +11,25 @@
         </button>
         <p>No hosts found yet.</p>
     </div>
-    <table id="hosts" ng-if="hosts.length > 0" class="tablesorter table table-striped">
+    <table id="hosts" ng-if="hosts.length > 0" class="tablesorter table table-striped table-fixed">
         <thead>
             <tr>
-                <th><a href="" ng-click="hostToggleSort('name')">Host</a></th>
-                <th><a href="" ng-click="hostToggleSort('servicesCount')">Services</a></th>
-                <th><a href="" ng-click="hostToggleSort('os')">OS</a></th>
+                <th class="col-xs-6"><a href="" ng-click="hostToggleSort('name')">Host</a></th>
+                <th class="col-xs-4"><a href="" ng-click="hostToggleSort('servicesCount')">Services</a></th>
+                <th class="col-xs-2"><a href="" ng-click="hostToggleSort('os')">OS</a></th>
             </tr>
         </thead>
         <tbody>
             <tr ng-repeat="host in hosts | orderBy:hostSortField:hostSortReverse |
             startFrom:currentPage*pageSize | limitTo:pageSize">
-                <td><a href="" class="host" ng-click="showServices(host.id)">{{host.name}}</a></td>
-                <td>{{host.servicesCount}}</td>
-                <td>
+                <td class="col-xs-6">
+                    <a href="" class="host" ng-click="showServices(host)">{{host.name}}</a>
+                    <a href="//www.shodan.io/search?query={{host.name}}" tooltip="Search in Shodan" target="_blank">
+                        <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                    </a>
+                </td>
+                <td class="col-xs-6">{{host.servicesCount}}</td>
+                <td class="col-xs-4">
                     <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" tooltip="{{host.os}}"/>
                     <span ng-if="host.icon == undefined" class="fa fa-laptop" tooltip="{{host.os}}"></span>
                 </td>

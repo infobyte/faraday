@@ -125,7 +125,7 @@ angular.module('faradayApp')
                     size: 'sm',
                     resolve: {
                         msg: function() {
-                            return 'No hosts were selected to edit';
+                            return 'No services were selected to edit';
                         }
                     }
                 });

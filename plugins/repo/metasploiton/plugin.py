@@ -195,6 +195,7 @@ class MetasploitOnPlugin(core.PluginBase):
                 for c in cur.fetchall():
                     self._checkDate(str(c[3]))
                     self.createAndAddCredToService(h_id,s_id,c[4],c[5])
+                    self.createAndAddVulnToService(h_id, s_id, "Weak Credentials","[metasploit found the following credentials]\nuser:%s\npass:%s" % (c[4], c[5]), severity="high")
                                                                            
                   
                                                                     

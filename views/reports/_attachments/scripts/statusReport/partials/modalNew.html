@@ -5,7 +5,7 @@
 <form name="form" novalidate>
     <div class="modal-header">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid">OK</button>
+            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined">OK</button>
             <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
         <h3 class="modal-title">Vulnerability creation</h3>
@@ -69,10 +69,14 @@
                     <select class="form-control" ng-model="modal.data.type" ng-options="option.value as option.name for option in modal.vuln_types">
                     </select>
                 </div>
-                <div class="col-md-4" ng-class="{'has-error': form.severity.$invalid }">
+                <div class="col-md-4 severities">
                     <h5>Severity</h5>
-                    <select class="form-control" ng-model="modal.data.severity" name="severity" ng-options="s for s in modal.severities" required>
-                    </select>
+                    <button type="button" class="btn btn-default dropdown-toggle color-{{modal.data.severity}}" name="severity" data-toggle="dropdown" title="Change severity" ng-class="{'button-error': modal.data.severity === undefined}">
+                    {{modal.data.severity || 'Add severity'}} <span class="caret"></span>
+                    </button>
+                    <ul id="nav" class="dropdown-menu dropdown-menu-left" role="menu">
+                        <li ng-repeat="s in modal.severities"><a href="" class="ws color-{{s}}" ng-click="modal.data.severity=s">{{s}}</a></li>
+                    </ul><!-- WS navigation -->
                 </div>
                 <div class="col-md-4">
                     <h5>Ease of Resolution</h5>

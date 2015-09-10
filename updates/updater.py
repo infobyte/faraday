@@ -37,8 +37,8 @@ class Updater(object):
         logger.info('Installing missing dependencies in pip')
         pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
 
-        logger.info('Upgrading DBs to latest version')
-        DB().run() 
+        # logger.info('Upgrading DBs to latest version')
+        # DB().run() 
 
         logger.info('Upgrading DBs to latest version')
         CouchViews().run()

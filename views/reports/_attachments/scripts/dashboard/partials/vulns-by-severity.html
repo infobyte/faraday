@@ -14,10 +14,10 @@
     </div>
     <div class='main box'>
         <div ng-repeat="vuln in vulnsCount" class="columna unsexto cursor">
-            <article class="dato2 fondo-{{vuln.key}}" ng-click="navigate('/status/ws/'+workspace+'/search/severity='+vuln.key)">
+            <article class="dato2 background-{{vuln.key}}" ng-click="navigate('/status/ws/'+workspace+'/search/severity='+vuln.key)">
                 <section>
-                    <div class="nro texto-blanco">{{vuln.value}}</div>
-                    <div class="txt texto-blanco">{{vuln.key}}</div>
+                    <div class="nro text-{{vuln.key}}">{{vuln.value}}</div>
+                    <div class="txt text-{{vuln.key}}">{{vuln.key}}</div>
                 </section>
             </article>
         </div>

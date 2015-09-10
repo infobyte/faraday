@@ -36,7 +36,7 @@
             </button>
             <p>At least 3 hosts needed to show this visualization</p>
         </div>
-        <d3-bars data="topHosts"></d3-bars>
+        <div ng-include="'scripts/dashboard/partials/barChart.html'" ng-if="topHosts != undefined || topHosts.length > 3"></div>
     </article>
 </div>
 <div class='col-lg-2'>

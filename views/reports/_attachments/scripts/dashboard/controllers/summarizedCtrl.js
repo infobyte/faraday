@@ -217,11 +217,16 @@ angular.module('faradayApp')
                                     return b.value-a.value;
                                 });
                                 var colors = ["rgb(57, 59, 121)","rgb(82, 84, 163)","rgb(107, 110, 207)"];
-                                var tmp = [];
+                                var tmp = {key:[], colors:[], value:[]};
+                                tmp.options = {
+                                    showScale : false
+                                };
                                 servicesCount.slice(0, 3).forEach(function(srv) {
-                                    srv.color = colors.shift();
-                                    tmp.push(srv);
+                                    tmp.colors.push(colors.shift());
+                                    tmp.value.push(srv.value);
+                                    tmp.key.push(host.name);
                                 });
+                                console.log(tmp);
                                 $scope.topHosts = tmp;
                             }
                             $scope.hosts.push(host);

@@ -6,8 +6,7 @@
     <div class="right-main">
         <div id="reports-main" class="fila clearfix">
             <div class="ws-label">
-                <h2><span id="ws-name" class="label label-default"
-                title="Current workspace">Status report for {{ workspace }} ({{vulns.length}} vulns)</span></h2><!-- WS name -->
+                <h2><span id="ws-name" title="Current workspace">Status report for {{ workspace }} ({{vulns.length}} vulns)</span></h2><!-- WS name -->
             </div><!-- .ws-label -->
             <div id="ws-control" class="btn-group btn-small-margin">
                 <button file-exporter="csv()" type="button" class="btn btn-success" title="Download CSV for current workspace">
@@ -200,17 +199,22 @@
                             <td class="text-center"><span ng-click="editVuln(v)" class="glyphicon glyphicon-pencil cursor" tooltip="Edit"></span></td>
                             <td class="text-center"><span ng-click="deleteVuln(v)" class="glyphicon glyphicon-trash cursor" tooltip="Delete"></span></td>
                             <td ng-if="columns.date">{{v.metadata.create_time * 1000 | date:'MM/dd/yyyy'}}</td>
-                            <td ng-if="columns.target">{{v.target}}</td>
+                            <td ng-if="columns.target">
+                                <a href="#/status/ws/{{workspace}}/search/target={{v.target}}">{{v.target}}</a>
+                                <a href="//www.shodan.io/search?query={{v.target}}" tooltip="Search in Shodan" target="_blank">
+                                    <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                                </a>
+                            </td>
                             <td ng-if="columns.status">Vulnerable</td>
-                            <td ng-if="columns.severity"><span class="label vuln fondo-{{v.severity}}">{{v.severity}}</span></td>
-                            <td ng-if="columns.name">{{v.name}}</td>
+                            <td ng-if="columns.severity"><a href="#/status/ws/{{workspace}}/search/severity={{v.severity}}"><span class="label vuln fondo-{{v.severity}}">{{v.severity}}</span></a></td>
+                            <td ng-if="columns.name"><a href="#/status/ws/{{workspace}}/search/name={{v.name | encodeURIComponent | encodeURIComponent}}">{{v.name}}</a></td>
                             <td ng-if="columns.desc" text-collapse text-collapse-max-length="150" text-collapse-text="{{v.desc}}"></td>
                             <td ng-if="columns.data" text-collapse text-collapse-max-length="150" text-collapse-text="{{v.data}}"></td>
-                            <td ng-if="columns.method">{{v.method}}</td>
-                            <td ng-if="columns.path">{{v.path}}</td>
-                            <td ng-if="columns.pname">{{v.pname}}</td>
+                            <td ng-if="columns.method"><a href="#/status/ws/{{workspace}}/search/method={{v.method}}">{{v.method}}</a></td>
+                            <td ng-if="columns.path"><a href="#/status/ws/{{workspace}}/search/path={{v.path}}">{{v.path}}</a></td>
+                            <td ng-if="columns.pname"><a href="#/status/ws/{{workspace}}/search/pname={{v.pname}}">{{v.pname}}</a></td>
                             <td ng-if="columns.params">{{v.params}}</td>
-                            <td ng-if="columns.query">{{v.query}}</td>
+                            <td ng-if="columns.query"><a href="#/status/ws/{{workspace}}/search/query={{v.query}}">{{v.query}}</a></td>
                             <td ng-if="columns.request" text-collapse text-collapse-max-length="100" text-collapse-text="{{v.request}}"></td>
                             <td ng-if="columns.response" text-collapse text-collapse-max-length="100" text-collapse-text="{{v.response}}"></td>
                             <td ng-if="columns.resolution">{{v.resolution}}</td>
@@ -218,7 +222,7 @@
                                 <span class="glyphicon glyphicon-ok" ng-show="v.type === 'VulnerabilityWeb'"></span>
                                 <span class="glyphicon glyphicon-remove" ng-show="v.type !== 'VulnerabilityWeb'"></span>
                             </td>
-                            <td ng-if="columns.website">{{v.website}}</td>
+                            <td ng-if="columns.website"><a href="#/status/ws/{{workspace}}/search/website={{v.website}}">{{v.website}}</a></td>
                             <td ng-if="columns.refs"><p ng-repeat="refs in v.refs track by $index">{{refs}}</p></td>
                             <td ng-if="columns.evidence">
                                 <div ng-repeat="(name, file) in v._attachments track by $index">
@@ -230,8 +234,15 @@
                                     <p ng-if="rating">{{impact}}</p>
                                 </div>
                             </td>
-                            <td ng-if="columns.easeofresolution">{{v.easeofresolution}}</td>
-                            <td ng-if="columns.hostnames"><p ng-repeat="hostname in v.hostnames track by $index">{{hostname}}</p></td>
+                            <td ng-if="columns.easeofresolution"><a href="#/status/ws/{{workspace}}/search/easeofresolution={{v.easeofresolution}}">{{v.easeofresolution}}</a></td>
+                            <td ng-if="columns.hostnames">
+                                <p ng-repeat="hostname in v.hostnames track by $index">
+                                    <a href="#/status/ws/{{workspace}}/search/hostnames={{hostname}}">{{hostname}}</a>
+                                    <a href="//www.shodan.io/search?query={{hostname}}" tooltip="Search in Shodan" target="_blank">
+                                        <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                                    </a>
+                                </p>
+                            </td>
                         </tr>
                     </tbody>
                 </table><!-- #hosts -->

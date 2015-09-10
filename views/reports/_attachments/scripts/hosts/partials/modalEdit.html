@@ -12,10 +12,10 @@
     </div>
     <div class="modal-body">
         <div class="form-horizontal">
-            <div class="form-group">
+            <div class="form-group" ng-class="{'has-error': form.name.$invalid }">
                 <div class="col-md-12">
                     <label class="sr-only" for="name">Name</label>
-                    <input type="text" class="form-control" id="name" placeholder="Name" ng-model="host.name" required/>
+                    <input type="text" class="form-control" id="name" name="name" placeholder="Name" ng-model="host.name" required/>
                     <span class="help-block normal-size">
                         Example: 192.168.0.1
                     </span>

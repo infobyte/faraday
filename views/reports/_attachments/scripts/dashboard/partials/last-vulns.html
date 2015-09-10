@@ -25,7 +25,12 @@
             <tbody>
                 <tr ng-repeat="vuln in vulns | orderObjectBy:vulnSortField:vulnSortReverse | limitTo:5">
                     <td>{{vuln.metadata.create_time * 1000 | date:"MM/dd/yyyy 'at' h:mma"}}</td>
-                    <td>{{vuln.target}}</td>
+                    <td>
+                        {{vuln.target}}
+                        <a href="//www.shodan.io/search?query={{vuln.target}}" tooltip="Search in Shodan" target="_blank">
+                            <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                        </a>                        
+                    </td>
                     <td>{{vuln.severity}}</td>
                     <td class="wrapword">{{vuln.name}}</td>
                     <td>

@@ -12,12 +12,12 @@
     </div>
     <div class="modal-body">
         <div class="form-horizontal">
-                <div class="form-group">
+                <div class="form-group" ng-class="{'has-error': form.name.$invalid }">
                     <div class="col-md-12">
                         <ng-form name="form" novalidate> 
                             <label class="sr-only" for="wsp-name">Workspace Name</label>
                             <input type="text" class="form-control"
-                                               ng-pattern=/^[a-z][a-z0-9\_\$\(\)\+\-\/]*$/ id="vuln-name" placeholder="Workspace Name"
+                                               ng-pattern=/^[a-z][a-z0-9\_\$\(\)\+\-\/]*$/ id="vuln-name" name="name" placeholder="Workspace Name"
                                                                                   ng-model="workspace.name" required/>
                             <div ng-if="form.$invalid">
                                 <div class="alert alert-danger target_not_selected" role="alert" ng-hide="">

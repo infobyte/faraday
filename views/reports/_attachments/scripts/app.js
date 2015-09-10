@@ -25,17 +25,18 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
     })())
     .constant("SEVERITIES", (function() {
         var severities = [
-            "unclassified",
-            "info",
-            "low",
-            "med",
+            "critical",
             "high",
-            "critical"
+            "med",
+            "low",
+            "info",
+            "unclassified"
         ];
         return severities;
     })());
 
-faradayApp.config(['$routeProvider', function($routeProvider) {
+faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, ngClipProvider) {
+    ngClipProvider.setPath("script/ZeroClipboard.swf");
     $routeProvider.
         when('/dashboard/ws/:wsId', {
             templateUrl: 'scripts/dashboard/partials/dashboard.html',

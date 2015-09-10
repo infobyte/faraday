@@ -12,10 +12,10 @@
     </div>
     <div class="modal-body">
         <div class="form-horizontal">
-            <div class="form-group">
+            <div class="form-group" ng-class="{'has-error': form.name.$invalid }">
                 <div class="col-md-12">
                     <label class="sr-only" for="service">Name</label>
-                    <input type="text" class="form-control" id="service" placeholder="Name" ng-model="service.name" required/>
+                    <input type="text" class="form-control" id="service" name="name" placeholder="Name" ng-model="service.name" required/>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
@@ -38,18 +38,18 @@
                 <div class="col-md-3">
                     <h5>Ports</h5>
                     <span class="input-group-addon button-radius" ng-click="newPort($event)">Add Port</span>
-                    <div class="input-margin" ng-repeat="port in service.ports">
+                    <div class="input-margin" ng-repeat="port in service.ports" ng-class="{'has-error': form.port.$invalid }">
                         <div class="input-group margin-bottom-sm">
                             <label class="sr-only" for="port">Ports</label>
-                            <input type="number" class="form-control" id="port" placeholder="Port" ng-model="port.key" required/>
+                            <input type="number" class="form-control" id="port" name="port" placeholder="Port" ng-model="port.key" required/>
                             <span class="input-group-addon" ng-click="service.ports.splice($index, 1)" ng-hide="service.ports.length == 1"><i class="fa fa-minus-circle"></i></span>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 protocol">
+                <div class="col-md-3 protocol" ng-class="{'has-error': form.protocol.$invalid }">
                     <h5>Protocol</h5>
                     <label class="sr-only" for="protocol">Protocol</label>
-                    <input type="text" class="form-control" id="protocol" placeholder="Protocol" ng-model="service.protocol" required/>
+                    <input type="text" class="form-control" id="protocol" name="protocol" placeholder="Protocol" ng-model="service.protocol" required/>
                 </div>
                 <div class="col-md-3">
                     <h5>Version</h5>

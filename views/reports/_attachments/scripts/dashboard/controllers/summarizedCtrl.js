@@ -230,7 +230,6 @@ angular.module('faradayApp')
                                     tmp.value.push(srv.value);
                                     tmp.key.push(host.name);
                                 });
-                                console.log(tmp);
                                 $scope.topHosts = tmp;
                             }
                             $scope.hosts.push(host);

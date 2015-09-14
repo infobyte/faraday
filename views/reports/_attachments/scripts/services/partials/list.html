@@ -55,6 +55,21 @@
                         </button>
                     </h2><!-- .ws-label -->
                     <div class="reports col-md-9 col-sm-9 col-xs-12">
+                        <div class="col-md-6 col-sm-3 col-xs-11">
+                            <form role="form" ng-submit="searchFor(true, searchParams)">
+                                <div class="form-group">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
+                                        <input type="text" class="form-control" id="filter-by" 
+                                        placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
+                                        <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
+                                            <i class="fa fa-search" ng-if="services"></i>
+                                            <i class="fa fa-refresh fa-spin" ng-if="services.length == 0"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </form>  
+                        </div>
                         <table class="status-report hosts-list table table-responsive">
                             <thead>
                                 <tr>
@@ -80,7 +95,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="service in services | filter:query | orderBy:sortField:reverse"
+                                <tr ng-repeat="service in filtered = (services | filter:expression) | orderBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
                                     selection-model selection-model-type="checkbox" 
                                     selection-model-mode="multiple-additive" 
                                     selection-model-selected-class="multi-selected">
@@ -106,6 +121,22 @@
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->
+                        <div class="showPagination">
+                            <div class="form-group">
+                                <ul class="pagination">
+                                    <li><a ng-hide="currentPage <= 0" ng-click="currentPage = currentPage - 1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                                    <li><a>{{currentPage}}/{{ ((filtered.length / pageSize) | integer)}}</a></li>
+                                    <li><a ng-hide="currentPage >= ((filtered.length / pageSize) | integer)" ng-click="currentPage = currentPage + 1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                                </ul>
+                                <form name="goToPage" id="goToPageStatus">
+                                    <div class="col-md-2">
+                                        <input type="number" min="0" max="{{ (filtered.length / pageSize) | integer }}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
+                                    </div>
+                                    <button class="btn btn-default" ng-click="go()">GO</button>
+                                    <input type="number" min="0" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />
+                                </form>
+                            </div>
+                        </div><!-- .showPagination -->
                     </div><!-- .reports -->
                 </div><!-- #reports-main --></div><!-- .right-main -->
             </section><!-- #main -->

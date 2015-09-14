@@ -57,8 +57,6 @@ angular.module('faradayApp')
                 // search params for search field, which shouldn't be used for filtering
                 $scope.searchParams = $scope.stringSearch($scope.expression);
             }
-
-
         };
 
         $scope.loadIcons = function() {

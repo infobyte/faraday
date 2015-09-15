@@ -157,7 +157,7 @@ angular.module('faradayApp')
 
                         // used to create pie chart for vulns
                         $scope.vulnsCountClass = {"children": angular.copy(tmp)};
-                        $scope.doughnut = {key: [], value: [], colors: []}
+                        $scope.doughnut = {key: [], value: [], colors: [], options: {maintainAspectRatio: false}};
                         for(var i = 0; i < $scope.vulnsCountClass.children.length; i++) {
                             if($scope.vulnsCountClass.children[i].key == "unclassified") {
                                 $scope.vulnsCountClass.children.splice(i, 1);
@@ -223,7 +223,8 @@ angular.module('faradayApp')
                                 var colors = ["rgb(57, 59, 121)","rgb(82, 84, 163)","rgb(107, 110, 207)"];
                                 var tmp = {key:[], colors:[], value:[]};
                                 tmp.options = {
-                                    showScale : false
+                                    showScale : false,
+                                    maintainAspectRatio: false
                                 };
                                 servicesCount.slice(0, 3).forEach(function(srv) {
                                     tmp.colors.push(colors.shift());

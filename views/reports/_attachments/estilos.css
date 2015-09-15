@@ -1005,3 +1005,4 @@ aside .alert.alert-danger.alert-dismissible{
     -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
     box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
 }
+#bar .chart-container, #doughnut .chart-container{height: 130px}

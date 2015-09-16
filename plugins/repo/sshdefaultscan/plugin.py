@@ -21,10 +21,7 @@ __status__ = "Development"
 class SSHDefaultScanPlugin(core.PluginBase):
     """
     Handle sshdefaultscan (https://github.com/atarantini/sshdefaultscan) output
-    with default settings.
-
-    TODO: Add support for --username and --passwords parameters
-    TODO: Add support for --port parameter
+    using --batch and --batch-template; supports --username and --password
     """
     def __init__(self):
         core.PluginBase.__init__(self)
@@ -37,19 +34,24 @@ class SSHDefaultScanPlugin(core.PluginBase):
 
     def parseOutputString(self, output, debug=False):
         for line in [l.strip() for l in output.split("\n")]:
-            output_rexeg_match = re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", line)
+            output_rexeg_match = re.match(r".*:.*@\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", line)
             if output_rexeg_match:
-                host = self.createAndAddHost(line)
-                iface = self.createAndAddInterface(host, line, ipv4_address=line)
+                credentials, address = line.split("@")
+                host = self.createAndAddHost(address)
+                iface = self.createAndAddInterface(host, address, ipv4_address=address)
                 service = self.createAndAddServiceToInterface(
                     host, iface, "ssh", protocol="tcp", ports=22
                 )
-                cred = self.createAndAddCredToService(host, service, "root", "root")
+                username, password = credentials.split(":")
+                cred = self.createAndAddCredToService(host, service, username, password)
                 vuln = self.createAndAddVulnToService(
                     host,
                     service,
                     "Default credentials",
-                    desc="The SSH server have default credentials (root:root)",
+                    desc="The SSH server have default credentials ({username}:{password})".format(
+                        username=username,
+                        password=password
+                    ),
                     severity=3
                 )
 
@@ -57,7 +59,10 @@ class SSHDefaultScanPlugin(core.PluginBase):
 
     def processCommandString(self, username, current_path, command_string):
         if "--batch" not in command_string:
-            return "{} --batch".format(command_string)
+            return "{command} --batch --batch-template {template}".format(
+                command=command_string,
+                template="{username}:{password}@{host}"
+            )
 
         return None
 

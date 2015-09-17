@@ -10,6 +10,10 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+TBA:
+---
+* Fix for saving objects without parent
+
 Sep 10, 2015:
 ---
 * Adding filename path information of report imported in history command

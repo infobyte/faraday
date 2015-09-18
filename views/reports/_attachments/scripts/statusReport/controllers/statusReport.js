@@ -72,7 +72,7 @@ angular.module('faradayApp')
             });
 
             // created object for columns cookie columns
-            if(typeof($cookies.SRcolumns) != 'undefined'){
+            if(typeof($cookies.SRcolumns) != 'undefined') {
                 var objectoSRColumns = {};
                 var arrayOfColumns = $cookies.SRcolumns.replace(/[{}"']/g, "").split(',');
                 arrayOfColumns.forEach(function(column){
@@ -268,7 +268,7 @@ angular.module('faradayApp')
                 'Enter the new severity:',
                 'severity',
                 {options: SEVERITIES});
-        }
+        };
 
         $scope.editEaseofresolution = function() {
             editProperty(
@@ -277,7 +277,7 @@ angular.module('faradayApp')
                 'Enter the new easeofresolution:',
                 'easeofresolution',
                 {options: EASEOFRESOLUTION});
-        }
+        };
 
         $scope.editReferences = function() {
             editProperty(
@@ -296,7 +296,7 @@ angular.module('faradayApp')
                     return {'refs': references};
                 }}
                 );
-        }
+        };
 
         $scope.editImpact = function() {
             editProperty(
@@ -325,7 +325,7 @@ angular.module('faradayApp')
                     }
                 }
                 );
-        }
+        };
 
         $scope.editString = function(property, message_word) {
             var message;
@@ -339,7 +339,7 @@ angular.module('faradayApp')
                 'commonsModalEditString',
                 message,
                 property);
-        }
+        };
 
         $scope.editText = function(property, message_word) {
             var message;
@@ -353,7 +353,7 @@ angular.module('faradayApp')
                 'commonsModalEditString',
                 message,
                 property);
-        }
+        };
 
         $scope.editCWE = function() {
             var modal = $modal.open({
@@ -383,7 +383,7 @@ angular.module('faradayApp')
                     });
                 });
             });
-        }
+        };
 
         $scope.insert = function(vuln) {
             vulnsManager.createVuln($scope.workspace, vuln).then(function() {

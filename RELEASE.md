@@ -13,6 +13,7 @@ New features in the latest update
 TBA:
 ---
 * Fix for saving objects without parent
+* Hosts and Services views now have pagination and search
 
 Sep 10, 2015:
 ---

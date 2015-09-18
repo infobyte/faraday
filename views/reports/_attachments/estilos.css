@@ -1007,3 +1007,7 @@ aside .alert.alert-danger.alert-dismissible{
 }
 #bar .chart-container, #doughnut .chart-container{height: 130px}
 div.form-group.input-accordion{margin: 0px!important}
+/* Firefox */
+@-moz-document url-prefix() {
+    .severities > button > span{margin-top: -10px;}
+}

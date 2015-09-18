@@ -14,20 +14,22 @@
         <div class="form-horizontal">
             <div class="form-group">
                 <div class="col-md-12">
-                 <input type="text" ng-model="modal.target_filter" class="form-control input-sm" placeholder="Search" ng-change="modal.currentPage = 0">
-                 <accordion close-others="true">
-                    <accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize">
+                    <div class="form-group input-accordion">
+                        <input type="text" ng-model="modal.target_filter" class="form-control input-sm" placeholder="Search" ng-change="modal.currentPage = 0">
+                    </div>
+                    <accordion close-others="true">
+                        <accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize">
                         <accordion-heading>
                         <a ng-click="modal.setTarget(host)" ng-class="{'multi-selected': host.selected_modalNewCtrl == true}">{{host.name}} ({{host.hostnames[0]}})</a>
-                          <i class="pull-right glyphicon"
-                                ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
+                        <i class="pull-right glyphicon"
+                        ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
                         </accordion-heading>
                         <div class="panel-body" ng-repeat="service in host.services">
                             <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': service.selected_modalNewCtrl == true}">{{service.name}}</a>
-                      </div>
-                    </accordion-group>
-                  </accordion>
-                  <div class="showPagination" ng-show="modal.targets_filtered.length > modal.pageSize">
+                        </div>
+                        </accordion-group>
+                    </accordion>
+                    <div class="showPagination" ng-show="modal.targets_filtered.length > modal.pageSize">
                         <div class="form-group">
                             <ul class="pagination">
                                 <li><a ng-hide="modal.currentPage <= 0" ng-click="modal.currentPage = modal.currentPage - 1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>

@@ -63,7 +63,7 @@
                                         <input type="text" class="form-control" id="filter-by" 
                                         placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
                                         <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                            <i class="fa fa-search" ng-if="services"></i>
+                                            <i class="fa fa-search" ng-if="services.length > 0"></i>
                                             <i class="fa fa-refresh fa-spin" ng-if="services.length == 0"></i>
                                         </span>
                                     </div>

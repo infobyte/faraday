@@ -461,9 +461,12 @@ class ModelController(threading.Thread):
                 object_parent.addChild(obj)
             # we have to make sure that certain objects have to have a parent
             if (obj.class_signature in
-                ["Interface", "Service", "ModelObjectVuln",
-                 "ModelObjectVulnWeb", "ModelObjectNote",
-                 "ModelObjectCred"] and object_parent is None):
+                [model.hosts.Interface.class_signature,
+                 model.hosts.Service.class_signature,
+                 model.common.ModelObjectNote.class_signature,
+                 model.common.ModelObjectVuln.class_signature,
+                 model.common.ModelObjectVulnWeb.class_signature,
+                 model.common.ModelObjectCred.class_signature] and object_parent is None):
                 return False
             dataMapper.save(obj)
             self.treeWordsTries.addWord(obj.getName())

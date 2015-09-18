@@ -121,7 +121,6 @@ angular.module('faradayApp')
                     refs.push(ref.value);
                 });
                 vm.data.refs = refs;
-                vm.data.confirmed = true;
 
                 // delete selection
                 delete vm.data.parent.selected_modalNewCtrl;

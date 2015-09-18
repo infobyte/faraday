@@ -69,11 +69,7 @@
                     <select class="form-control" ng-model="modal.data.type" ng-options="option.value as option.name for option in modal.vuln_types">
                     </select>
                 </div>
-<<<<<<< HEAD
                 <div class="col-md-4 severities">
-=======
-                <div class="col-md-4">
->>>>>>> Update modalNew of status report
                     <h5>Severity</h5>
                     <button type="button" class="btn btn-default dropdown-toggle color-{{modal.data.severity}}" name="severity" data-toggle="dropdown" title="Change severity" ng-class="{'button-error': modal.data.severity === undefined}">
                     {{modal.data.severity || 'Add severity'}} <span class="caret"></span>

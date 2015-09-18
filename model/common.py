@@ -907,6 +907,21 @@ class ModelObjectVuln(ModelComposite):
         self._id = get_hash([self.name, self._desc])
         self._prependParentId()
 
+    def tieBreakable(self, key):
+        '''
+        If the confirmed property has a conflict, there's two possible reasons:
+            confirmed is false, and the new value is true => returns true
+            confirmed is true, and the new value is false => returns true
+        '''
+        if key == "confirmed":
+            return True
+        return False
+
+    def tieBreak(self, key, prop1, prop2):
+        if key == "confirmed":
+            return True
+        return (prop1, prop2)
+
     def _setDesc(self, desc):
         self._desc = desc
 
@@ -1069,7 +1084,7 @@ class ModelObjectVulnWeb(ModelObjectVuln):
 
     #@save
     @updateLocalMetadata
-    def updateAttributes(self, name=None, desc=None, website=None, path=None, refs=None, 
+    def updateAttributes(self, name=None, desc=None, website=None, path=None, refs=None,
                         severity=None, resolution=None, request=None,response=None, method=None,
                         pname=None, params=None, query=None, category=None):
         super(ModelObjectVulnWeb, self).updateAttributes(name, desc, severity, resolution, refs)

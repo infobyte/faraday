@@ -467,6 +467,11 @@ class ModelController(threading.Thread):
                  model.common.ModelObjectVuln.class_signature,
                  model.common.ModelObjectVulnWeb.class_signature,
                  model.common.ModelObjectCred.class_signature] and object_parent is None):
+                # TODO: refactor log module. We need to log twice to see it in
+                # qt and in the terminal. Ugly.
+                msg = "A parent is needed for %s objects" % obj.class_signature
+                getLogger(self).error(msg)
+                model.api.log(msg)
                 return False
             dataMapper.save(obj)
             self.treeWordsTries.addWord(obj.getName())

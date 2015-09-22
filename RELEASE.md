@@ -14,6 +14,8 @@ TBA:
 ---
 * Fix for saving objects without parent
 * Hosts and Services views now have pagination and search
+* Updates version number on Faraday Start
+* Vuln references are now shown as links in Status Report
 
 Sep 10, 2015:
 ---

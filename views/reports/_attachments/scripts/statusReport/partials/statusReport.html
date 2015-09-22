@@ -223,7 +223,9 @@
                                 <span class="glyphicon glyphicon-remove" ng-show="v.type !== 'VulnerabilityWeb'"></span>
                             </td>
                             <td ng-if="columns.website"><a href="#/status/ws/{{workspace}}/search/website={{v.website}}">{{v.website}}</a></td>
-                            <td ng-if="columns.refs"><p ng-repeat="refs in v.refs track by $index">{{refs}}</p></td>
+                            <td ng-if="columns.refs">
+                                <p ng-repeat="refs in v.refs track by $index"><a ng-click="processReference(refs)">{{refs}}</a></p>
+                            </td>
                             <td ng-if="columns.evidence">
                                 <div ng-repeat="(name, file) in v._attachments track by $index">
                                     <a ng-href="{{baseurl + workspace}}/{{v._id}}/{{name | encodeURIComponent}}" target="_blank">{{name | decodeURIComponent}}</a>

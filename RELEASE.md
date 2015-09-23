@@ -16,6 +16,8 @@ TBA:
 * Hosts and Services views now have pagination and search
 * Updates version number on Faraday Start
 * Vuln references are now shown as links in Status Report
+* Visual fixes on Firefox
+* Migrate graphs from D3.js to Chart.js
 
 Sep 10, 2015:
 ---

@@ -552,6 +552,7 @@ def init():
     global logger
 
     args = getParserArgs()
+    setUpLogger()
     logger = getLogger("launcher")
 
 def main():
@@ -570,7 +571,6 @@ def main():
         checkConfiguration()
         setConf()
         checkCouchUrl()
-        setUpLogger()
         update()
         checkUpdates()
         startFaraday()

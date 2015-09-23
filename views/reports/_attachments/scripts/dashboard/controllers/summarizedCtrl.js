@@ -77,7 +77,11 @@ angular.module('faradayApp')
                         $scope.objectsCount = res;
                     });
 
-                    dashboardSrv.getVulnerabilitiesCount(workspace).then(function(res) {
+                    // dashboardSrv.getVulnerabilitiesCount(workspace).then(function(res) {
+                    //     console.log(res);
+                    // });
+
+                    createGraphics = function(res) {
                         if(res.length > 0) {
                             var tmp = [
                                 {"key": "critical", "value": 0, "color": "#932EBE", "amount": 0},
@@ -131,7 +135,8 @@ angular.module('faradayApp')
                                 }
                             }, true);
                         }
-                    });
+                    };
+
 
                     dashboardSrv.getCommands(workspace).then(function(res){
                         res.forEach(function(cmd){
@@ -194,13 +199,40 @@ angular.module('faradayApp')
                         });
                     });
 
-                    vulnsManager.getConfirmedVulns(workspace).then(function(vulns) {
+                    vulnsManager.getVulns(workspace).then(function(vulns) {
                         $scope.vulns = vulns;
+                        var data = angular.copy(vulns);
+                        var arraySeverities = vulnBySeverity(data);
+                        createGraphics(arraySeverities);
                     });
 
-                    $scope.getAllVulns = function() {
-                        vulnsManager.getVulns(workspace).then(function(vulns) {
-                            $scope.vulns = vulns;
+                    vulnBySeverity = function(vulns) {
+                        var arraySeverities = [];
+                        var severity = {
+                            "critical":0,
+                            "high":0,
+                            "med":0,
+                            "low":0,
+                            "info":0,
+                            "unclassified":0
+                        };
+                        vulns.forEach(function(d) {
+                            severity[d.severity] += 1;
+                        });
+                        for(key in severity) {
+                            if(severity.hasOwnProperty(key)) {
+                                arraySeverities.push({key:key,value:severity[key]});
+                            }
+                        }
+                        return arraySeverities;
+                    };
+
+                    $scope.getConfirmedVulns = function() {
+                        vulnsManager.getConfirmedVulns(workspace).then(function(vulns) {
+                            console.log(vulns);
+                            var data = angular.copy(vulns);
+                            var arraySeverities = vulnBySeverity(data);
+                            createGraphics(arraySeverities);
                         });
                     };
 

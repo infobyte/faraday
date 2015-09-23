@@ -18,11 +18,13 @@ except ImportError:
 from gui.gui_app import FaradayUi
 from gui.qt3.mainwindow import MainWindow
 from gui.qt3.customevents import QtCustomEvent
+from gui.qt3.logconsole import GUIHandler
 from shell.controller.env import ShellEnvironment
 
 import model.guiapi
 import model.api
 import model.log
+from utils.logs import addHandler
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -50,6 +52,9 @@ class GuiApp(qt.QApplication, FaradayUi):
         notifier.widget = self._main_window
         model.guiapi.notification_center.registerWidget(self._main_window)
 
+        self.loghandler = GUIHandler()
+        addHandler(self.loghandler)
+
         self._splash_screen = qt.QSplashScreen(
             qt.QPixmap(os.path.join(CONF.getImagePath(), "splash2.png")),
             qt.Qt.WStyle_StaysOnTop)
@@ -72,8 +77,7 @@ class GuiApp(qt.QApplication, FaradayUi):
         return exit_code
 
     def createLoggerWidget(self):
-        if not model.log.getLogger().isGUIOutputRegistered():
-            model.log.getLogger().registerGUIOutput(self._main_window.getLogConsole())
+        self.loghandler.registerGUIOutput(self._main_window.getLogConsole())
 
     def loadWorkspaces(self):
         self.getMainWindow().getWorkspaceTreeView().loadAllWorkspaces()
@@ -95,7 +99,7 @@ class GuiApp(qt.QApplication, FaradayUi):
         self._splash_screen.finish(self._main_window)
 
     def quit(self):
-        model.log.getLogger().clearWidgets()
+        self.loghandler.clearWidgets()
         self.getMainWindow().hide()
         envs = [env for env in self._shell_envs.itervalues()]
         for env in envs:

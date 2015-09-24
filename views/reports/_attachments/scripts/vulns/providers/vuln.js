@@ -39,6 +39,7 @@ angular.module('faradayApp')
             this.parent = "";
             this.refs = "";
             this.resolution = "";
+            this.service = "";
             this.severity = "";
             this.target = "";
             this.type = "Vulnerability";

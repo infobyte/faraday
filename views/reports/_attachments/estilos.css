@@ -1007,3 +1007,5 @@ aside .alert.alert-danger.alert-dismissible{
 }
 #bar .chart-container, #doughnut .chart-container{height: 130px}
 .disabled{color: #919191}
+div.btn-group .vulns-filter{left: -2px;}
+div.btn-group .dropdown-menu.margin{margin-left: 38px}

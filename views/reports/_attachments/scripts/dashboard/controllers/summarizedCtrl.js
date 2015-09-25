@@ -7,6 +7,7 @@ angular.module('faradayApp')
         ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv', 'vulnsManager', 'workspacesFact',
         function($scope, $route, $routeParams, $modal, dashboardSrv, vulnsManager, workspacesFact) {
             $scope.vulns;
+            $scope._areConfirmed = false;
 
             // graphicsBarCtrl data
             $scope.topServices; // previously known as treemapData
@@ -123,9 +124,11 @@ angular.module('faradayApp')
                                     $scope.vulnsCountClass.children.splice(i, 1);
                                     break;
                                 }
-                                $scope.doughnut.key.push($scope.vulnsCountClass.children[i].key);
-                                $scope.doughnut.value.push($scope.vulnsCountClass.children[i].value);
-                                $scope.doughnut.colors.push($scope.vulnsCountClass.children[i].color);
+                                if($scope.vulnsCountClass.children[i].value !== 0) {
+                                    $scope.doughnut.key.push($scope.vulnsCountClass.children[i].key);
+                                    $scope.doughnut.value.push($scope.vulnsCountClass.children[i].value);
+                                    $scope.doughnut.colors.push($scope.vulnsCountClass.children[i].color);
+                                }
                             };
 
                             $scope.$watch('vulnPrices', function(ps) {
@@ -202,39 +205,15 @@ angular.module('faradayApp')
                     vulnsManager.getVulns(workspace).then(function(vulns) {
                         $scope.vulns = vulns;
                         var data = angular.copy(vulns);
-                        var arraySeverities = vulnBySeverity(data);
-                        createGraphics(arraySeverities);
-                    });
+                        var arrayVulnsParsed = vulnParse(data);
+                        createGraphics(arrayVulnsParsed[0]);
 
-                    vulnBySeverity = function(vulns) {
-                        var arraySeverities = [];
-                        var severity = {
-                            "critical":0,
-                            "high":0,
-                            "med":0,
-                            "low":0,
-                            "info":0,
-                            "unclassified":0
-                        };
-                        vulns.forEach(function(d) {
-                            severity[d.severity] += 1;
-                        });
-                        for(key in severity) {
-                            if(severity.hasOwnProperty(key)) {
-                                arraySeverities.push({key:key,value:severity[key]});
+                        for(key in arrayVulnsParsed[1]) {
+                            if(arrayVulnsParsed[1].hasOwnProperty(key)) {
+                                $scope.objectsCount.push({"key": key, "value": arrayVulnsParsed[1][key]});
                             }
                         }
-                        return arraySeverities;
-                    };
-
-                    $scope.getConfirmedVulns = function() {
-                        vulnsManager.getConfirmedVulns(workspace).then(function(vulns) {
-                            console.log(vulns);
-                            var data = angular.copy(vulns);
-                            var arraySeverities = vulnBySeverity(data);
-                            createGraphics(arraySeverities);
-                        });
-                    };
+                    });
 
                     workspacesFact.getDuration($scope.workspace).then(function(duration) {
                         $scope.wsDuration = duration;
@@ -244,6 +223,60 @@ angular.module('faradayApp')
                     });
                 }
 
+            };
+
+            vulnParse = function(vulns, confirmed) {
+                var arraySeverities = [];
+                var vulnsStatus = {
+                    "web vulns": 0,
+                    "vulns": 0,
+                    "total vulns":0
+                };
+                var severity = {
+                    "critical":0,
+                    "high":0,
+                    "med":0,
+                    "low":0,
+                    "info":0,
+                    "unclassified":0
+                };
+                vulns.forEach(function(v) {
+                    // Vulns Counter if need to do it
+                    if(v.type === "VulnerabilityWeb") {
+                        vulnsStatus["web vulns"] += 1;
+                    } else {
+                        vulnsStatus["vulns"] += 1;
+                    }
+                    vulnsStatus["total vulns"] += 1;
+
+                    severity[v.severity] += 1;
+                });
+                for(key in severity) {
+                    if(severity.hasOwnProperty(key)) {
+                        arraySeverities.push({key:key,value:severity[key]});
+                    }
+                }
+                return [arraySeverities, vulnsStatus];
+            };
+
+            $scope.getConfirmedVulns = function() {
+                if($scope._areConfirmed === false) {
+                    vulnsManager.getConfirmedVulns($scope.workspace).then(function(vulns) {
+                        var data = angular.copy(vulns);
+                        var arrayVulnsParsed = vulnParse(data);
+                        createGraphics(arrayVulnsParsed[0]);
+
+                        $scope.objectsCount.forEach(function(obj) {
+                            if(arrayVulnsParsed[1].hasOwnProperty(obj.key)) {
+                                obj.value = arrayVulnsParsed[1][obj.key];
+                            }
+                        });
+                    });
+                    $scope._areConfirmed = true;
+                } else {
+                    init();
+                    $scope._areConfirmed = false;
+                }
             };
 
             // toggles sort field and order

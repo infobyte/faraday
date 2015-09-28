@@ -13,6 +13,7 @@ New features in the latest update
 TBA:
 ---
 * Fix for saving objects without parent
+* Filter false-positives in Status Report
 
 Sep 10, 2015:
 ---

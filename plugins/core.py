@@ -823,8 +823,7 @@ class PluginProcess(multiprocessing.Process):
                 
                 done = True
                 model.api.devlog('%s: Exiting' % proc_name)
-                model.api.log('Plugin finished: %s, (%s)' % (plugin.id, sha1OfStr(self.output)),"DEBUG")
-                print  ('Plugin finished: %s, (%s)' % (plugin.id, sha1OfStr(self.output)))
+                model.api.log('Plugin finished: %s, (%s)' % (plugin.id, sha1OfStr(self.output)))
                 
             self.output_queue.task_done()
         self.new_elem_queue.put(None)

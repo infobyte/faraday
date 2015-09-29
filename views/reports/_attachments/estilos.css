@@ -1012,3 +1012,5 @@ div.form-group.input-accordion{margin: 0px!important}
 @-moz-document url-prefix() {
     .severities > button > span{margin-top: -10px;}
 }
+span.bold{font-weight: bold}
+div.jumbotron.jumbotron-font h1{font-size: 54px}

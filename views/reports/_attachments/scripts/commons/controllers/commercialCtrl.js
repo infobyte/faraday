@@ -6,5 +6,13 @@ angular.module('faradayApp')
     .controller('commercialCtrl', 
         ['$scope', '$location',
         function($scope, $location) {
-        	$scope.header = $location.path().split("/")[1];
+        	if ($location.path().split("/")[1] === "executive") {
+        		$scope.header = "executive report";
+        	} else if ($location.path().split("/")[1] === "comparison") {
+        		$scope.header = "workspace comparison";
+        	} else if ($location.path().split("/")[1] === "communication") {
+        		$scope.header = "chat";
+        	} else {
+        		$scope.header = $location.path().split("/")[1];
+        	}
         }]);

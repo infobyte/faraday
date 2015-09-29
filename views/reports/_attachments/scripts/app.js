@@ -123,6 +123,29 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, 
             controller: 'workspacesCtrl',
             title: 'Workspaces | '
         }).
+        when('/communication', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Communication | '
+        }).
+        when('/comparison', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl'
+        }).
+        when('/webshell', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl'
+        }).
+        when('/executive', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Executive Report | '
+        }).
+        when('/users', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Users | '
+        }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html',
             controller: 'statusReportCtrl'

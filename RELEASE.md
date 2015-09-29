@@ -19,6 +19,7 @@ TBA:
 * Visual fixes on Firefox
 * Migrate graphs from D3.js to Chart.js
 * Added Services columns to Status Report
+* Added sections of Commercial versions
 
 Sep 10, 2015:
 ---

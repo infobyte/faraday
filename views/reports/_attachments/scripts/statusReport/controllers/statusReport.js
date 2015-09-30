@@ -114,9 +114,9 @@ angular.module('faradayApp')
             url_pattern = new RegExp('^(http|https):\\/\\/?');
 
             var cve_pattern = new RegExp(/^CVE-\d{4}-\d{4,7}$/),
-            cwe_pattern = new RegExp(/^CWE-\d{4}-\d{4,7}$/),
-            edb_pattern = new RegExp(/^EDB-ID:\d{1,}$/),
-            osvdb_pattern = new RegExp(/^OSVDB:\d{1,}$/);
+            cwe_pattern = new RegExp(/^CWE-\d{4,7}$/),
+            edb_pattern = new RegExp(/^EDB-ID:\s?\d{1,}$/),
+            osvdb_pattern = new RegExp(/^OSVDB:\s?\d{1,}$/);
 
             var cve = text.search(cve_pattern),
             cwe = text.search(cwe_pattern),

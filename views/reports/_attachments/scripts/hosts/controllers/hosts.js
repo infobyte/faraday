@@ -13,7 +13,9 @@ angular.module('faradayApp')
             $scope.hosts = [];
             // current workspace
             $scope.workspace = $routeParams.wsId;
+
             $scope.sortField = "name";
+
             // load all workspaces
             workspacesFact.list().then(function(wss) {
                 $scope.workspaces = wss;
@@ -352,7 +354,9 @@ angular.module('faradayApp')
 
         $scope.selectedHosts = function() {
             selected = [];
-            $scope.hosts.forEach(function(host) {
+
+            tmp_hosts = filter($scope.hosts);
+            tmp_hosts.forEach(function(host) {
                 if(host.selected === true) {
                     selected.push(host);
                 }
@@ -363,9 +367,7 @@ angular.module('faradayApp')
         $scope.checkAll = function() {
             $scope.selectall = !$scope.selectall;
 
-            var tmp_hosts = $filter('orderObjectBy')($scope.hosts, $scope.sortField, $scope.reverse);
-            tmp_hosts = $filter('filter')(tmp_hosts, $scope.expression);
-            tmp_hosts = tmp_hosts.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
+            tmp_hosts = filter($scope.hosts);
             tmp_hosts.forEach(function(host) {
                 host.selected = $scope.selectall;
             });
@@ -386,6 +388,14 @@ angular.module('faradayApp')
         $scope.toggleReverse = function() {
             $scope.reverse = !$scope.reverse;
         }
+
+        filter = function(data) {
+            var tmp_data = $filter('orderObjectBy')(data, $scope.sortField, $scope.reverse);
+            tmp_data = $filter('filter')(tmp_data, $scope.expression);
+            tmp_data = tmp_data.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
+
+            return tmp_data;
+        };
         
         init();
     }]);

@@ -66,6 +66,18 @@ angular.module('faradayApp')
             }
 	    };
 
+        $scope.selectedServices = function() {
+            selected = [];
+
+            tmp_services = filter($scope.services);
+            tmp_services.forEach(function(service) {
+                if(service.selected === true) {
+                    selected.push(service);
+                }
+            });
+            return selected;
+        };
+
         // changes the URL according to search params
         $scope.searchFor = function(search, params) {
             var url = "/host/ws/" + $routeParams.wsId + "/hid/" + $routeParams.hidId;
@@ -204,24 +216,14 @@ angular.module('faradayApp')
         };
 
         $scope.edit = function() {
-            var selected_service = [];
-
-            $scope.services.forEach(function(service) {
-                if(service.selected) {
-                    // if more than one service was selected,
-                    // we only use the last one, for now
-                    selected_service.push(service);
-                }
-            });
-
-            if(selected_service.length > 0) {
+            if($scope.selectedServices().length > 0) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/services/partials/modalEdit.html',
                     controller: 'serviceModalEdit',
                     size: 'lg',
                     resolve: {
                         service: function() {
-                            return selected_service;
+                            return $scope.selectedServices();
                         },
 	                    services: function() {
 	                        return $scope.services;
@@ -230,7 +232,7 @@ angular.module('faradayApp')
                  });
 
                 modal.result.then(function(data) {
-                    $scope.update(selected_service, data);
+                    $scope.update($scope.selectedServices(), data);
                 });
             } else {
                 $modal.open(config = {
@@ -248,7 +250,7 @@ angular.module('faradayApp')
 
         $scope.delete = function() {
             var selected = [];
-            $scope.services.forEach(function(service){
+            $scope.selectedServices().forEach(function(service){
             	if(service.selected){
             		selected.push(service._id);
             	}
@@ -305,21 +307,10 @@ angular.module('faradayApp')
             });
         };
 
-
-	    $scope.checkAll = function() {
-	        $scope.selectall = !$scope.selectall;
-
-	        angular.forEach($filter('filter')($scope.hosts, $scope.query), function(host) {
-	            host.selected = $scope.selectall;
-	        });
-	    };
-
         $scope.checkAllServices = function() {
             $scope.selectall = !$scope.selectall;
 
-            var tmp_services = $filter('orderObjectBy')($scope.services, $scope.sortField, $scope.reverse);
-            tmp_services = $filter('filter')(tmp_services, $scope.expression);
-            tmp_services = tmp_services.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
+            tmp_services = filter($scope.services);
             tmp_services.forEach(function(service) {
                 service.selected = $scope.selectall;
             });
@@ -340,6 +331,14 @@ angular.module('faradayApp')
 	    $scope.toggleReverse = function() {
 	        $scope.reverse = !$scope.reverse;
 	    }
+
+        filter = function(data) {
+            var tmp_data = $filter('orderObjectBy')(data, $scope.sortField, $scope.reverse);
+            tmp_data = $filter('filter')(tmp_data, $scope.expression);
+            tmp_data = tmp_data.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
+
+            return tmp_data;
+        };
 
 	    init();
     }]);

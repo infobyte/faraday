@@ -13,6 +13,7 @@ angular.module('faradayApp')
             $scope.hosts = [];
             // current workspace
             $scope.workspace = $routeParams.wsId;
+            $scope.sortField = "name";
             // load all workspaces
             workspacesFact.list().then(function(wss) {
                 $scope.workspaces = wss;
@@ -362,7 +363,10 @@ angular.module('faradayApp')
         $scope.checkAll = function() {
             $scope.selectall = !$scope.selectall;
 
-            angular.forEach($filter('filter')($scope.hosts, $scope.expression), function(host) {
+            var tmp_hosts = $filter('orderObjectBy')($scope.hosts, $scope.sortField, $scope.reverse);
+            tmp_hosts = $filter('filter')(tmp_hosts, $scope.expression);
+            tmp_hosts = tmp_hosts.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
+            tmp_hosts.forEach(function(host) {
                 host.selected = $scope.selectall;
             });
         };

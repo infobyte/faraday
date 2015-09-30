@@ -128,7 +128,7 @@ angular.module('faradayApp')
             } else if(cve > -1) {
                 url = "https://cve.mitre.org/cgi-bin/cvename.cgi?name=" + text.substring(cve + 4);
             } else if(cwe > -1) {
-                url = "https://cwe.mitre.org/data/definitions/" + text.substring(cwe + 3) + ".html";
+                url = "https://cwe.mitre.org/data/definitions/" + text.substring(cwe + 4) + ".html";
             } else if(osvdb > -1) {
                 url = "http://osvdb.org/show/osvdb/" + text.substring(osvdb + 6);
             } else if(edb > -1) {

@@ -37,7 +37,6 @@ class PeepingTomPlugin(core.PluginBase):
     def parseOutputString(self, output):
         # Find data path
         data_path_search = re.search(r"in '(.*)\/'", output)
-        print data_path_search
         if not data_path_search:
             # No data path found
             return True

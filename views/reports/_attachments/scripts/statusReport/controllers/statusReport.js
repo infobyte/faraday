@@ -84,6 +84,7 @@ angular.module('faradayApp')
             $scope.columns = objectoSRColumns || {
                 "date":             true,
                 "severity":         true,
+                "service":          true,
                 "target":           true,
                 "name":             true,
                 "desc":             true,

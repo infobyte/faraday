@@ -41,7 +41,7 @@
             </div><!-- .form-group -->
             <div class="form-group">
                 <ng-form name="date" novalidate>
-                <div class="col-md-6">
+                <div class="col-md-6 datepicker">
                     <label class="sr-only" for="work-start">Start Date</label>
                     <p class="input-group">
                       <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="workspace.start" is-open="openedStart" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="Start Date"  />
@@ -50,7 +50,7 @@
                       </span>
                     </p>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6 datepicker">
                     <label class="sr-only" for="work-end">End Date</label>
                     <p class="input-group">
                       <input type="text" class="form-control" datepicker-popup="MM/dd/yyyy" ng-model="workspace.end" is-open="openedEnd" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" close-text="Close" placeholder="End Date"  />

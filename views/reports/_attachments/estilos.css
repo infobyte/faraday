@@ -1011,3 +1011,7 @@ div.form-group.input-accordion{margin: 0px!important}
 @-moz-document url-prefix() {
     .severities > button > span{margin-top: -10px;}
 }
+/* Normalize datepicker */
+div.datepicker ul.dropdown-menu{width: 288px;}
+div.datepicker > p > ul > li > div > table{width: 97%}
+div.datepicker .btn-sm, .btn-group-sm > .btn{padding: 5px 7px}

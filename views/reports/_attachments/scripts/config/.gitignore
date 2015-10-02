@@ -2,7 +2,5 @@
 # Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-# Ignore all files in this dir
-*
-# Except for this one
-!.gitignore
+# Ignore config file
+config.json

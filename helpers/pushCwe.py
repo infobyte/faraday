@@ -5,6 +5,10 @@ Copyright (C) 2014  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+'''
+This script upload a Vulnerability database to Couch.
+It takes the content of the DB from data/cwe.csv
+'''
 import argparse
 import os
 from couchdbkit import Server, designer

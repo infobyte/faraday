@@ -18,12 +18,14 @@ import argparse
 import platform
 import subprocess
 import pip
+import json
 
 from utils.logs import getLogger, setUpLogger
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/external_libs/lib/python2.7/dist-packages')
 from config.configuration import getInstanceConfiguration
 from config.globals import *
 from utils.profilehooks import profile
+from utils.user_input import query_yes_no
 
 
 
@@ -540,6 +542,29 @@ def checkCouchUrl():
         # Non fatal error
         pass
 
+def checkVersion():
+    try:
+        f = open(CONST_VERSION_FILE)
+        f_version = f.read().strip()
+        if not args.update:
+            if getInstanceConfiguration().getVersion() != None and getInstanceConfiguration().getVersion() != f_version:
+                logger.warning("You have different version of Faraday since your last run.\nRun ./faraday.py --update to update configuration!")
+                if query_yes_no('Do you want to close Faraday?', 'yes'):
+                    exit(-1)
+
+        getInstanceConfiguration().setVersion(f_version)
+        f.close()
+
+        doc = {"ver": getInstanceConfiguration().getVersion()}
+
+        if os.path.isfile(CONST_CONFIG):
+            os.remove(CONST_CONFIG)
+        with open(CONST_CONFIG, "w") as doc_file:
+            json.dump(doc, doc_file)
+    except Exception as e:
+        getLogger("launcher").error("It seems that something's wrong with your version\nPlease contact customer support")
+        exit(-1)
+    
 
 def init():
     """Initializes what is needed before starting.
@@ -570,6 +595,7 @@ def main():
         checkConfiguration()
         setConf()
         checkCouchUrl()
+        checkVersion()
         setUpLogger()
         update()
         checkUpdates()

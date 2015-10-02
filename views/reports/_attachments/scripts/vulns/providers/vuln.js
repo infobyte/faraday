@@ -12,6 +12,7 @@ angular.module('faradayApp')
             this._id = "";
             this._rev = "";
             this._attachments = {};
+            this.confirmed = true;
             this.data = "";
             this.desc = "";
             this.easeofresolution = "";
@@ -38,6 +39,7 @@ angular.module('faradayApp')
             this.parent = "";
             this.refs = "";
             this.resolution = "";
+            this.service = "";
             this.severity = "";
             this.target = "";
             this.type = "Vulnerability";
@@ -53,7 +55,7 @@ angular.module('faradayApp')
 
         Vuln.prototype = {
             public_properties: [
-                '_attachments', 'data', 'desc', 'easeofresolution', 
+                '_attachments', 'confirmed', 'data', 'desc', 'easeofresolution', 
                 'impact', 'name', 'owned', 'refs', 'resolution', 'severity'
             ],
             set: function(ws, data) {

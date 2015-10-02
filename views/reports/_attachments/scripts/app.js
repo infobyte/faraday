@@ -8,7 +8,7 @@ $.ajaxSetup({
     async: false
 });
 
-var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload', 'filter', 'ngClipboard', 'ngCookies', 'cfp.hotkeys'])
+var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload', 'filter', 'ngClipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js'])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;
@@ -53,6 +53,16 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, 
             controller: 'workspacesCtrl',
             title: 'Dashboard | '
         }).
+        when('/hosts/ws/:wsId/search/:search', {
+            templateUrl: 'scripts/hosts/partials/list.html',
+            controller: 'hostsCtrl',
+            title: 'Hosts | '
+        }).
+        when('/hosts/ws/:wsId/search', {
+            templateUrl: 'scripts/hosts/partials/list.html',
+            controller: 'hostsCtrl',
+            title: 'Hosts | '
+        }).
         when('/hosts/ws/:wsId', {
             templateUrl: 'scripts/hosts/partials/list.html',
             controller: 'hostsCtrl',
@@ -62,6 +72,16 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, 
             templateUrl: 'scripts/commons/partials/workspaces.html',
             controller: 'workspacesCtrl',
             title: 'Hosts | '
+        }).
+        when('/host/ws/:wsId/hid/:hidId/search/:search', {
+            templateUrl: 'scripts/services/partials/list.html',
+            controller: 'hostCtrl',
+            title: 'Services | '
+        }).
+        when('/host/ws/:wsId/hid/:hidId/search', {
+            templateUrl: 'scripts/services/partials/list.html',
+            controller: 'hostCtrl',
+            title: 'Services | '
         }).
         when('/hosts', {
             templateUrl: 'scripts/commons/partials/workspaces.html',
@@ -102,6 +122,29 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, 
             templateUrl: 'scripts/workspaces/partials/list.html',
             controller: 'workspacesCtrl',
             title: 'Workspaces | '
+        }).
+        when('/communication', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Communication | '
+        }).
+        when('/comparison', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl'
+        }).
+        when('/webshell', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl'
+        }).
+        when('/executive', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Executive Report | '
+        }).
+        when('/users', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Users | '
         }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html',

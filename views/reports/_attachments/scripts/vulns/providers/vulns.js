@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .factory('vulnsManager', 
-        ['Vuln', 'WebVuln', 'BASEURL', '$filter', '$http', '$q', 'attachmentsFact', 'hostsManager', 
-        function(Vuln, WebVuln, BASEURL, $filter, $http, $q, attachmentsFact, hostsManager) {
+        ['Vuln', 'WebVuln', 'BASEURL', '$filter', '$http', '$q', 'attachmentsFact', 'hostsManager', 'servicesManager', 
+        function(Vuln, WebVuln, BASEURL, $filter, $http, $q, attachmentsFact, hostsManager, servicesManager) {
         var vulnsManager = {};
         
         vulnsManager.vulns = [];
@@ -29,6 +29,16 @@ angular.module('faradayApp')
             return res;
         };
 
+        vulnsManager._loadServices = function(services) {
+            var res = {};
+
+            services.forEach(function(service) {
+                res[service._id] = "(" + service['ports'].join(",") + "/" + service['protocol'] + ") " + service['name'];
+            });
+
+            return res;
+        };
+
         vulnsManager.createVuln = function(ws, data) {
             var deferred = $q.defer(),
             self = this;
@@ -44,18 +54,20 @@ angular.module('faradayApp')
                     .then(function(resp) {
                         self.vulns_indexes[vuln._id] = self.vulns.length;
                         self.vulns.push(vuln);
-                        var parents = [hostsManager.getHosts(ws), hostsManager.getAllInterfaces(ws)];
+                        var parents = [hostsManager.getHosts(ws), hostsManager.getAllInterfaces(ws), servicesManager.getServices(ws)];
 
                         $q.all(parents)
                             .then(function(ps) {
                                 var hosts = self._loadHosts(ps[0], ps[1]);
+                                var services = self._loadServices(ps[2]);
 
                                 self.vulns.forEach(function(vuln) {
                                     var pid = vuln.parent.split(".")[0];
                                     if (hosts.hasOwnProperty(pid)) {
                                         vuln.target = hosts[pid]["target"];
                                         vuln.hostnames = hosts[pid]["hostnames"];
-                                    };
+                                    }
+                                    if(services.hasOwnProperty(vuln.parent)) vuln.service = services[vuln.parent];
                                 });
                             });
 
@@ -113,18 +125,21 @@ angular.module('faradayApp')
                         }
                     }
 
-                    var parents = [hostsManager.getHosts(ws), hostsManager.getAllInterfaces(ws)];
+                    var parents = [hostsManager.getHosts(ws), hostsManager.getAllInterfaces(ws), servicesManager.getServices(ws)];
 
                     $q.all(parents)
                         .then(function(ps) {
                             var hosts = self._loadHosts(ps[0], ps[1]);
+                            var services = self._loadServices(ps[2]);
 
                             self.vulns.forEach(function(vuln) {
                                 var pid = vuln.parent.split(".")[0];
-                                if (hosts.hasOwnProperty(pid)) {
+
+                                if(hosts.hasOwnProperty(pid)) {
                                     vuln.target = hosts[pid]["target"];
                                     vuln.hostnames = hosts[pid]["hostnames"];
                                 }
+                                if(services.hasOwnProperty(vuln.parent)) vuln.service = services[vuln.parent];
                             });
                         });
 

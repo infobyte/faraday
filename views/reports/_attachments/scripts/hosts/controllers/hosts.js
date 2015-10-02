@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('hostsCtrl', 
-        ['$scope', '$filter', '$route', '$routeParams', '$modal', 'hostsManager', 'workspacesFact', 
-        function($scope, $filter, $route, $routeParams, $modal, hostsManager, workspacesFact) {
+        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$modal', 'hostsManager', 'workspacesFact', 
+        function($scope, $cookies, $filter, $location, $route, $routeParams, $modal, hostsManager, workspacesFact) {
 
         init = function() {
             $scope.selectall = false;
@@ -13,6 +13,9 @@ angular.module('faradayApp')
             $scope.hosts = [];
             // current workspace
             $scope.workspace = $routeParams.wsId;
+
+            $scope.sortField = "name";
+
             // load all workspaces
             workspacesFact.list().then(function(wss) {
                 $scope.workspaces = wss;
@@ -39,6 +42,24 @@ angular.module('faradayApp')
                 .catch(function(e) {
                     console.log(e);
                 });
+
+            $scope.pageSize = 10;
+            $scope.currentPage = 0;
+            $scope.newCurrentPage = 0;
+ 
+            if(!isNaN(parseInt($cookies.pageSize))) $scope.pageSize = parseInt($cookies.pageSize);
+            $scope.newPageSize = $scope.pageSize;
+
+            // current search
+            $scope.search = $routeParams.search;
+            $scope.searchParams = "";
+            $scope.expression = {};
+            if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
+                // search expression for filter
+                $scope.expression = $scope.decodeSearch($scope.search);
+                // search params for search field, which shouldn't be used for filtering
+                $scope.searchParams = $scope.stringSearch($scope.expression);
+            }
         };
 
         $scope.loadIcons = function() {
@@ -58,6 +79,99 @@ angular.module('faradayApp')
                     }
                 });
             });
+        };
+
+        // changes the URL according to search params
+        $scope.searchFor = function(search, params) {
+            var url = "/hosts/ws/" + $routeParams.wsId;
+
+            if(search && params != "" && params != undefined) {
+                url += "/search/" + $scope.encodeSearch(params);
+            }
+
+            $location.path(url);
+        };
+        
+        $scope.go = function() {
+            $scope.pageSize = $scope.newPageSize;
+            $cookies.pageSize = $scope.pageSize;
+            $scope.currentPage = 0;
+            if($scope.newCurrentPage <= parseInt($scope.hosts.length/$scope.pageSize)
+                    && $scope.newCurrentPage > -1 && !isNaN(parseInt($scope.newCurrentPage))) {
+                $scope.currentPage = $scope.newCurrentPage;
+            }
+        };
+
+        // encodes search string in order to send it through URL
+        $scope.encodeSearch = function(search) {
+            var i = -1,
+            encode = "",
+            params = search.split(" "),
+            chunks = {};
+
+            params.forEach(function(chunk) {
+                i = chunk.indexOf(":");
+                if(i > 0) {
+                    chunks[chunk.slice(0, i)] = chunk.slice(i+1);
+                } else {
+                    if(!chunks.hasOwnProperty("free")) {
+                        chunks.free = "";
+                    }
+                    chunks.free += " ".concat(chunk);
+                }
+            });
+
+            if(chunks.hasOwnProperty("free")) {
+                chunks.free = chunks.free.slice(1);
+            }
+
+            for(var prop in chunks) {
+                if(chunks.hasOwnProperty(prop)) {
+                    if(chunks.prop != "") {
+                        encode += "&" + encodeURIComponent(prop) + "=" + encodeURIComponent(chunks[prop]);
+                    }
+                }
+            }
+            return encode.slice(1);
+        };
+
+        // decodes search parameters to object in order to use in filter
+        $scope.decodeSearch = function(search) {
+            var i = -1,
+            decode = {},
+            params = search.split("&");
+
+            params.forEach(function(param) {
+                i = param.indexOf("=");
+                decode[decodeURIComponent(param.slice(0,i))] = decodeURIComponent(param.slice(i+1));
+            });
+
+            if(decode.hasOwnProperty("free")) {
+                decode['$'] = decode.free;
+                delete decode.free;
+            }
+
+            return decode;
+        };
+
+        // converts current search object to string to be displayed in search field
+        $scope.stringSearch = function(obj) {
+            var search = "";
+
+            for(var prop in obj) {
+                if(obj.hasOwnProperty(prop)) {
+                    if(search != "") {
+                        search += " ";
+                    }
+                    if(prop == "$") {
+                        search += obj[prop];
+                    } else {
+                        search += prop + ":" + obj[prop];
+                    }
+                }
+            }
+
+            return search;
         };
 
         $scope.remove = function(ids) {
@@ -159,10 +273,9 @@ angular.module('faradayApp')
             }, function(message){
                 console.log(message);
             });
-        }
+        };
 
         $scope.edit = function() {
-
             if($scope.selectedHosts().length == 1) {
                 var modal = $modal.open({
                     templateUrl: 'scripts/hosts/partials/modalEdit.html',
@@ -241,7 +354,9 @@ angular.module('faradayApp')
 
         $scope.selectedHosts = function() {
             selected = [];
-            $scope.hosts.forEach(function(host) {
+
+            tmp_hosts = filter($scope.hosts);
+            tmp_hosts.forEach(function(host) {
                 if(host.selected === true) {
                     selected.push(host);
                 }
@@ -252,7 +367,8 @@ angular.module('faradayApp')
         $scope.checkAll = function() {
             $scope.selectall = !$scope.selectall;
 
-            angular.forEach($filter('filter')($scope.hosts, $scope.query), function(host) {
+            tmp_hosts = filter($scope.hosts);
+            tmp_hosts.forEach(function(host) {
                 host.selected = $scope.selectall;
             });
         };
@@ -272,6 +388,14 @@ angular.module('faradayApp')
         $scope.toggleReverse = function() {
             $scope.reverse = !$scope.reverse;
         }
+
+        filter = function(data) {
+            var tmp_data = $filter('orderObjectBy')(data, $scope.sortField, $scope.reverse);
+            tmp_data = $filter('filter')(tmp_data, $scope.expression);
+            tmp_data = tmp_data.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
+
+            return tmp_data;
+        };
         
         init();
     }]);

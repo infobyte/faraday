@@ -5,11 +5,11 @@
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
                     ['$scope', '$filter', '$routeParams',
-                    '$location', '$modal', '$cookies', '$q', 'BASEURL',
+                    '$location', '$modal', '$cookies', '$q', '$window', 'BASEURL',
                     'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager',
                     'vulnsManager', 'workspacesFact', 'csvService',
                     function($scope, $filter, $routeParams,
-                        $location, $modal, $cookies, $q, BASEURL,
+                        $location, $modal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, hostsManager,
                         vulnsManager, workspacesFact, csvService) {
         $scope.baseurl;
@@ -72,7 +72,7 @@ angular.module('faradayApp')
             });
 
             // created object for columns cookie columns
-            if(typeof($cookies.SRcolumns) != 'undefined'){
+            if(typeof($cookies.SRcolumns) != 'undefined') {
                 var objectoSRColumns = {};
                 var arrayOfColumns = $cookies.SRcolumns.replace(/[{}"']/g, "").split(',');
                 arrayOfColumns.forEach(function(column){
@@ -84,6 +84,7 @@ angular.module('faradayApp')
             $scope.columns = objectoSRColumns || {
                 "date":             true,
                 "severity":         true,
+                "service":          true,
                 "target":           true,
                 "name":             true,
                 "desc":             true,
@@ -107,6 +108,37 @@ angular.module('faradayApp')
             };
             
             $scope.vulnWebSelected = false;
+        };
+
+        $scope.processReference = function(text) {
+            var url = 'http://google.com/',
+            url_pattern = new RegExp('^(http|https):\\/\\/?');
+
+            var cve_pattern = new RegExp(/^CVE-\d{4}-\d{4,7}$/),
+            cwe_pattern = new RegExp(/^CWE(-|:)\d{1,7}$/),
+            edb_pattern = new RegExp(/^EDB-ID:\s?\d{1,}$/),
+            osvdb_pattern = new RegExp(/^OSVDB:\s?\d{1,}$/);
+
+            var cve = text.search(cve_pattern),
+            cwe = text.search(cwe_pattern),
+            edb = text.search(edb_pattern),
+            osvdb = text.search(osvdb_pattern);
+
+            if(url_pattern.test(text)) {
+                url = text;
+            } else if(cve > -1) {
+                url = "https://cve.mitre.org/cgi-bin/cvename.cgi?name=" + text.substring(cve + 4);
+            } else if(cwe > -1) {
+                url = "https://cwe.mitre.org/data/definitions/" + text.substring(cwe + 4) + ".html";
+            } else if(osvdb > -1) {
+                url = "http://osvdb.org/show/osvdb/" + text.substring(osvdb + 6);
+            } else if(edb > -1) {
+                url = "https://www.exploit-db.com/exploits/" + text.substring(edb + 7);
+            } else {
+                url += 'search?q=' + text;
+            }
+            
+            $window.open(url, '_blank');
         };
 
         $scope.selectedVulns = function() {
@@ -268,7 +300,7 @@ angular.module('faradayApp')
                 'Enter the new severity:',
                 'severity',
                 {options: SEVERITIES});
-        }
+        };
 
         $scope.editEaseofresolution = function() {
             editProperty(
@@ -277,7 +309,7 @@ angular.module('faradayApp')
                 'Enter the new easeofresolution:',
                 'easeofresolution',
                 {options: EASEOFRESOLUTION});
-        }
+        };
 
         $scope.editReferences = function() {
             editProperty(
@@ -296,7 +328,7 @@ angular.module('faradayApp')
                     return {'refs': references};
                 }}
                 );
-        }
+        };
 
         $scope.editImpact = function() {
             editProperty(
@@ -325,7 +357,7 @@ angular.module('faradayApp')
                     }
                 }
                 );
-        }
+        };
 
         $scope.editString = function(property, message_word) {
             var message;
@@ -339,7 +371,7 @@ angular.module('faradayApp')
                 'commonsModalEditString',
                 message,
                 property);
-        }
+        };
 
         $scope.editText = function(property, message_word) {
             var message;
@@ -353,7 +385,7 @@ angular.module('faradayApp')
                 'commonsModalEditString',
                 message,
                 property);
-        }
+        };
 
         $scope.editCWE = function() {
             var modal = $modal.open({
@@ -383,7 +415,7 @@ angular.module('faradayApp')
                     });
                 });
             });
-        }
+        };
 
         $scope.insert = function(vuln) {
             vulnsManager.createVuln($scope.workspace, vuln).then(function() {

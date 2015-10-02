@@ -106,6 +106,10 @@
                                 <a href="" ng-click="toggleSort('target')">Target</a>
                                 <a href="" ng-click="toggleShow('target', true)"><span class="glyphicon glyphicon-remove"></span></a>
                             </th>
+                            <th ng-if="columns.service">
+                                <a href="" ng-click="toggleSort('service')">Service</a>
+                                <a href="" ng-click="toggleShow('service', true)"><span class="glyphicon glyphicon-remove"></span></a>
+                            </th>
                             <th ng-if="columns.status">
                                 <a href="" ng-click="toggleSort('status')">Status</a>
                                 <a href="" ng-click="toggleShow('status', true)"><span class="glyphicon glyphicon-remove"></span></a>
@@ -200,10 +204,13 @@
                             <td class="text-center"><span ng-click="deleteVuln(v)" class="glyphicon glyphicon-trash cursor" tooltip="Delete"></span></td>
                             <td ng-if="columns.date">{{v.metadata.create_time * 1000 | date:'MM/dd/yyyy'}}</td>
                             <td ng-if="columns.target">
-                                <a href="#/status/ws/{{workspace}}/search/target={{v.target}}">{{v.target}}</a>
-                                <a href="//www.shodan.io/search?query={{v.target}}" tooltip="Search in Shodan" target="_blank">
+                                <a ng-href="#/status/ws/{{workspace}}/search/target={{v.target}}">{{v.target}}</a>
+                                <a ng-href="//www.shodan.io/search?query={{v.target}}" tooltip="Search in Shodan" target="_blank">
                                     <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                 </a>
+                            </td>
+                            <td ng-if="columns.service">
+                                <a ng-href="#/status/ws/{{workspace}}/search/service={{v.service | encodeURIComponent | encodeURIComponent}}">{{v.service}}</a>
                             </td>
                             <td ng-if="columns.status">Vulnerable</td>
                             <td ng-if="columns.severity"><a href="#/status/ws/{{workspace}}/search/severity={{v.severity}}"><span class="label vuln fondo-{{v.severity}}">{{v.severity}}</span></a></td>
@@ -223,7 +230,9 @@
                                 <span class="glyphicon glyphicon-remove" ng-show="v.type !== 'VulnerabilityWeb'"></span>
                             </td>
                             <td ng-if="columns.website"><a href="#/status/ws/{{workspace}}/search/website={{v.website}}">{{v.website}}</a></td>
-                            <td ng-if="columns.refs"><p ng-repeat="refs in v.refs track by $index">{{refs}}</p></td>
+                            <td ng-if="columns.refs">
+                                <p ng-repeat="refs in v.refs track by $index"><a ng-click="processReference(refs)">{{refs}}</a></p>
+                            </td>
                             <td ng-if="columns.evidence">
                                 <div ng-repeat="(name, file) in v._attachments track by $index">
                                     <a ng-href="{{baseurl + workspace}}/{{v._id}}/{{name | encodeURIComponent}}" target="_blank">{{name | decodeURIComponent}}</a>

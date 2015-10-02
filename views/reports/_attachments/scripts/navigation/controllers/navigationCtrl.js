@@ -16,8 +16,10 @@ angular.module('faradayApp')
             });
         };
 
-        var timer = $interval($scope.checkCwe, 43200000);
-        $scope.checkCwe();
+        configSrv.promise.then(function() {
+            var timer = $interval($scope.checkCwe, 43200000);
+            $scope.checkCwe();
+        });
 
         $scope.$on('$destroy', function() {
             $interval.cancel(timer);

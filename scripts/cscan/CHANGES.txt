@@ -1,0 +1,2 @@
+* v1.0.0 (09/23/15):
+* First release cscan tool

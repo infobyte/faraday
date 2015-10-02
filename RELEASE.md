@@ -12,6 +12,7 @@ New features in the latest update
 
 TBA:
 ---
+* Continuous Scanning Tool cscan added to ./scripts/cscan
 * Fix for saving objects without parent
 * Hosts and Services views now have pagination and search
 * Updates version number on Faraday Start

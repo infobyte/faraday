@@ -448,7 +448,7 @@ class ModelController(threading.Thread):
         old_obj = dataMapper.find(obj.getID())
         if old_obj:
             if not old_obj.needs_merge(obj):
-                #the object is exactly the same,
+                # the object is exactly the same,
                 # so return and do nothing
                 return True
             if not self.addUpdate(old_obj, obj):
@@ -459,6 +459,20 @@ class ModelController(threading.Thread):
             object_parent = self.mappers_manager.find(parent_id)
             if object_parent:
                 object_parent.addChild(obj)
+            # we have to make sure that certain objects have to have a parent
+            if (obj.class_signature in
+                [model.hosts.Interface.class_signature,
+                 model.hosts.Service.class_signature,
+                 model.common.ModelObjectNote.class_signature,
+                 model.common.ModelObjectVuln.class_signature,
+                 model.common.ModelObjectVulnWeb.class_signature,
+                 model.common.ModelObjectCred.class_signature] and object_parent is None):
+                # TODO: refactor log module. We need to log twice to see it in
+                # qt and in the terminal. Ugly.
+                msg = "A parent is needed for %s objects" % obj.class_signature
+                getLogger(self).error(msg)
+                model.api.log(msg)
+                return False
             dataMapper.save(obj)
             self.treeWordsTries.addWord(obj.getName())
             if obj.class_signature == model.hosts.Host.class_signature:
@@ -879,7 +893,7 @@ class ModelController(threading.Thread):
         hosts = self.mappers_manager.getMapper(
             model.hosts.Host.__name__).getAll()
         return hosts
-    
+
     def getWebVulns(self):
         return self.mappers_manager.getMapper(
             model.common.ModelObjectVulnWeb.class_signature).getAll()

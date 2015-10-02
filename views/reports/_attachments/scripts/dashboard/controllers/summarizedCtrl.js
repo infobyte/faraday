@@ -157,11 +157,15 @@ angular.module('faradayApp')
 
                         // used to create pie chart for vulns
                         $scope.vulnsCountClass = {"children": angular.copy(tmp)};
+                        $scope.doughnut = {key: [], value: [], colors: [], options: {maintainAspectRatio: false}};
                         for(var i = 0; i < $scope.vulnsCountClass.children.length; i++) {
                             if($scope.vulnsCountClass.children[i].key == "unclassified") {
                                 $scope.vulnsCountClass.children.splice(i, 1);
                                 break;
                             }
+                            $scope.doughnut.key.push($scope.vulnsCountClass.children[i].key);
+                            $scope.doughnut.value.push($scope.vulnsCountClass.children[i].value);
+                            $scope.doughnut.colors.push($scope.vulnsCountClass.children[i].color);
                         };
 
                         $scope.$watch('vulnPrices', function(ps) {
@@ -217,10 +221,15 @@ angular.module('faradayApp')
                                     return b.value-a.value;
                                 });
                                 var colors = ["rgb(57, 59, 121)","rgb(82, 84, 163)","rgb(107, 110, 207)"];
-                                var tmp = [];
+                                var tmp = {key:[], colors:[], value:[]};
+                                tmp.options = {
+                                    showScale : false,
+                                    maintainAspectRatio: false
+                                };
                                 servicesCount.slice(0, 3).forEach(function(srv) {
-                                    srv.color = colors.shift();
-                                    tmp.push(srv);
+                                    tmp.colors.push(colors.shift());
+                                    tmp.value.push(srv.value);
+                                    tmp.key.push(host.name);
                                 });
                                 $scope.topHosts = tmp;
                             }

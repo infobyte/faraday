@@ -10,6 +10,20 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+TBA:
+---
+* Continuous Scanning Tool cscan added to ./scripts/cscan
+* Fix for saving objects without parent
+* Hosts and Services views now have pagination and search
+* Updates version number on Faraday Start
+* Visual fixes on Firefox
+* Migrate graphs from D3.js to Chart.js
+* Added Services columns to Status Report
+* Added sections of Commercial versions
+* Converted references to links in Status Report. Support for CVE, CWE, Exploit Database and Open Source Vulnerability Database
+* Added Pippingtom, SSHdefaultscan and pasteAnalyzer plugins
+* Fixed Debian install
+
 Sep 10, 2015:
 ---
 * Adding filename path information of report imported in history command

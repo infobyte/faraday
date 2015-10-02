@@ -36,7 +36,7 @@
             </button>
             <p>At least 3 hosts needed to show this visualization</p>
         </div>
-        <d3-bars data="topHosts"></d3-bars>
+        <div id="bar" ng-include="'scripts/dashboard/partials/barChart.html'" ng-if="topHosts != undefined || topHosts.length > 3"></div>
     </article>
 </div>
 <div class='col-lg-2'>
@@ -54,6 +54,6 @@
             </button>
             <p>No vulnerabilities found yet</p>
         </div>
-        <d3-cake data="vulnsCountClass"></d3-cake>
+        <div id="doughnut" ng-include="'scripts/dashboard/partials/doughnut.html'" ng-if="vulnsCountClass != undefined || vulnsCountClass.length != 0"></div>
     </article>
 </div>

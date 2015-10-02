@@ -5,6 +5,10 @@ Copyright (C) 2014  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+'''
+This script fixes invalid XMLs.
+'''
+
 import argparse
 from bs4 import BeautifulSoup
 

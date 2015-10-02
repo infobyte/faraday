@@ -1014,3 +1014,7 @@ div.form-group.input-accordion{margin: 0px!important}
 }
 span.bold{font-weight: bold}
 div.jumbotron.jumbotron-font h1{font-size: 54px}
+/* Normalize datepicker */
+div.datepicker ul.dropdown-menu{width: 288px;}
+div.datepicker > p > ul > li > div > table{width: 97%}
+div.datepicker .btn-sm, .btn-group-sm > .btn{padding: 5px 7px}

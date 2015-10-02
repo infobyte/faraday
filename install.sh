@@ -66,7 +66,7 @@ elif [[ "$os" =~ "Ubuntu 14.04".*|"Ubuntu 14.10".*|"Ubuntu Vivid Vervet (develop
     # Bug: https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1306991
     wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
     python get-pip.py
-elif [[ "$os" =~ "Debian 7".*|"Debian 8".* ]]; then
+elif [[ "$os" =~ "Debian 7".*|"Debian 8".*|"stretch/sid".* ]]; then
     version="ubuntu13-10-$arch"
     down=1
     wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py

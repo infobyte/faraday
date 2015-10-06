@@ -4,10 +4,11 @@
 
 angular.module('faradayApp')
     .controller('summarizedCtrl', 
-        ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv', 'vulnsManager', 'workspacesFact',
-        function($scope, $route, $routeParams, $modal, dashboardSrv, vulnsManager, workspacesFact) {
+        ['$scope', '$route', '$routeParams', '$modal', '$filter','dashboardSrv', 'vulnsManager', 'workspacesFact',
+        function($scope, $route, $routeParams, $modal, $filter, dashboardSrv, vulnsManager, workspacesFact) {
             $scope.vulns;
             $scope._areConfirmed = false;
+            var allVulns;
 
             // graphicsBarCtrl data
             $scope.topServices; // previously known as treemapData
@@ -203,8 +204,10 @@ angular.module('faradayApp')
                     });
 
                     vulnsManager.getVulns(workspace).then(function(vulns) {
-                        $scope.vulns = vulns;
-                        var data = angular.copy(vulns);
+                        confirmed_filter = { "confirmed":true };
+                        $scope.vulns = $filter('filter')(vulnsManager.vulns, confirmed_filter);
+                        allVulns = vulnsManager.vulns;
+                        var data = angular.copy($scope.vulns);
                         var arrayVulnsParsed = vulnParse(data);
                         createGraphics(arrayVulnsParsed[0]);
 
@@ -259,18 +262,16 @@ angular.module('faradayApp')
                 return [arraySeverities, vulnsStatus];
             };
 
-            $scope.getConfirmedVulns = function() {
+            $scope.getAllVulns = function() {
                 if($scope._areConfirmed === false) {
-                    vulnsManager.getConfirmedVulns($scope.workspace).then(function(vulns) {
-                        var data = angular.copy(vulns);
-                        var arrayVulnsParsed = vulnParse(data);
-                        createGraphics(arrayVulnsParsed[0]);
+                    var data = angular.copy(allVulns);
+                    var arrayVulnsParsed = vulnParse(data);
+                    createGraphics(arrayVulnsParsed[0]);
 
-                        $scope.objectsCount.forEach(function(obj) {
-                            if(arrayVulnsParsed[1].hasOwnProperty(obj.key)) {
-                                obj.value = arrayVulnsParsed[1][obj.key];
-                            }
-                        });
+                    $scope.objectsCount.forEach(function(obj) {
+                        if(arrayVulnsParsed[1].hasOwnProperty(obj.key)) {
+                            obj.value = arrayVulnsParsed[1][obj.key];
+                        }
                     });
                     $scope._areConfirmed = true;
                 } else {

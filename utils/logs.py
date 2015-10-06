@@ -18,13 +18,9 @@ LOG_FILE = os.path.join(
     FARADAY_USER_HOME, CONST_FARADAY_LOGS_PATH, 'faraday.log')
 
 
-def setUpLogger():
-    # Default logger
-    from config.configuration import getInstanceConfiguration
-    CONF = getInstanceConfiguration()
-
+def setUpLogger(debug=False):
     level = logging.INFO
-    if CONF.getDebugStatus():
+    if debug:
         level = logging.DEBUG
 
     logger = logging.getLogger('faraday')

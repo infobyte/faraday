@@ -552,8 +552,9 @@ def init():
     global logger
 
     args = getParserArgs()
-    setUpLogger()
+    setUpLogger(args.debug)
     logger = getLogger("launcher")
+
 
 def main():
     """Main.

@@ -30,6 +30,8 @@ angular.module('faradayApp')
         $scope.newPageSize;
 
         $scope.vulnWebSelected;
+        $scope.confirm = false;
+        var allVulns;
 
         init = function() {
             $scope.baseurl = BASEURL;
@@ -68,7 +70,9 @@ angular.module('faradayApp')
 
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace).then(function(vulns) {
-                $scope.vulns = vulnsManager.vulns;
+                confirmed_filter = { "confirmed":true };
+                $scope.vulns = $filter('filter')(vulnsManager.vulns, confirmed_filter);
+                allVulns = vulnsManager.vulns;
             });
 
             // created object for columns cookie columns
@@ -125,6 +129,19 @@ angular.module('faradayApp')
         $scope.csv = function() {
             tmp_vulns = $filter('filter')($scope.vulns, $scope.expression);
             return csvService.generator($scope.columns, tmp_vulns, $scope.workspace);
+        };
+
+        $scope.toggleFilter = function() {
+            if($scope.confirm === false) {
+                $scope.vulns = allVulns;
+                $scope.confirm = true;
+            } else {
+                confirmed_filter = { "confirmed":true };
+                $scope.vulns = $filter('filter')(vulnsManager.vulns, confirmed_filter);
+                $scope.newCurrentPage = 0;
+                $scope.go();
+                $scope.confirm = false;
+            }
         };
 
         showMessage = function(msg) {

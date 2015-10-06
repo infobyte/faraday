@@ -564,7 +564,7 @@ def checkVersion():
     except Exception as e:
         getLogger("launcher").error("It seems that something's wrong with your version\nPlease contact customer support")
         exit(-1)
-    
+
 
 def init():
     """Initializes what is needed before starting.
@@ -577,7 +577,9 @@ def init():
     global logger
 
     args = getParserArgs()
+    setUpLogger(args.debug)
     logger = getLogger("launcher")
+
 
 def main():
     """Main.
@@ -596,7 +598,6 @@ def main():
         setConf()
         checkCouchUrl()
         checkVersion()
-        setUpLogger()
         update()
         checkUpdates()
         startFaraday()

@@ -471,7 +471,6 @@ class ModelController(threading.Thread):
                 # qt and in the terminal. Ugly.
                 msg = "A parent is needed for %s objects" % obj.class_signature
                 getLogger(self).error(msg)
-                model.api.log(msg)
                 return False
             dataMapper.save(obj)
             self.treeWordsTries.addWord(obj.getName())

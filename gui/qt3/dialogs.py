@@ -24,63 +24,6 @@ from modelobjectitems import NoteRootItem, VulnRootItem, CredRootItem
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
-                                                                       
-                                               
-class LogConsole(qt.QVBox):
-    """
-    widget component used to display a log or any other content in
-    a small console window
-    """
-    tag_regex = re.compile(r"^(\[(.*)\]\s+-).*$", re.DOTALL)
-    tag_replace_regex = re.compile(r"^(\[(.*)\]\s+-)")
-    tag_colors = {
-        "NOTIFICATION" : "#1400F2",
-        "INFO" : "#000000",
-        "WARNING" : "#F5760F",
-        "ERROR" : "#FC0000",
-        "CRITICAL": "#FC0000",
-        "DEBUG" : "#0AC400",
-    }
-
-    def __init__(self, parent, caption=""):
-        qt.QVBox.__init__(self, parent)
-        self.setName(caption)
-        self._text_edit = qt.QTextEdit(self, caption)
-                                           
-        self._text_edit.setTextFormat(qt.Qt.LogText)
-
-    def customEvent(self, event):
-        self.update(event)
-
-    def update(self, event):
-        if event.type() == 3131:
-            self.appendText(event.text)
-
-    def appendText(self, text):
-        """
-        appends new text to the console
-        """
-        m = self.tag_regex.match(text)
-        if m is not None:
-            tag = m.group(2).upper()
-            colored_tag = "<font color=\"%s\"><b>[%s]</b></font> -" % (self.tag_colors.get(tag, "#000000"), tag)
-            text = self.tag_replace_regex.sub(colored_tag, text)
-        else:
-            text = "<font color=\"#000000\"><b>[INFO]</b></font> - %s" % text
-
-        self._text_edit.append(text)
-
-    def clear(self):
-        """
-        Clear the console
-        """
-        self._text_edit.clear()
-
-    def sizeHint(self):
-        """Returns recommended size of dialog."""
-        return qt.QSize(90, 30)
-
-                                                                                
 
 class BaseDialog(qt.QDialog):
 
@@ -148,10 +91,10 @@ class BaseDialog(qt.QDialog):
         self.connect( self.quit_button, qt.SIGNAL('clicked()'), callback)
 
     def sizeHint(self):
-                                                                  
+
         return qt.QSize(400, 150)
 
-                                                                                
+
 
 class LoginDialog(BaseDialog):
     def __init__(self, parent, callback):
@@ -189,22 +132,22 @@ class LoginDialog(BaseDialog):
         return self.__username_txt.latin1(), self.__passwd_txt.latin1()
 
     def _login(self):
-                                                                 
-                               
+
+
         self.__username_txt = self._username_edit.text()
         self.__passwd_txt = self.__password_edit.text()
         api.devlog("Username: %s\nPassword: %s" %(self.__username_txt, self.__passwd_txt))
         self.accept()
 
     def _clear(self):
-                                          
+
         self._username_edit.clear()
         self.__password_edit.clear()
 
     def sizeHint(self):
         return qt.QSize(250, 100)
 
-                                                                                
+
 
 class DebugPersistenceDialog(BaseDialog):
 
@@ -217,7 +160,7 @@ class DebugPersistenceDialog(BaseDialog):
         self.layout.addWidget( self.text )
         self.setupButtons({"ok" : None})
 
-                                                                                
+
 
 class ConflictResolutionDialog(BaseDialog):
     def __init__(self, conflicts, parent=None, name=None):
@@ -255,7 +198,7 @@ class ConflictResolutionDialog(BaseDialog):
         self.object_group_button = qt.QButtonGroup()
         self.object_group_button.insert(self.choice_button_first_object)
         self.object_group_button.insert(self.choice_button_second_object)
-        
+
         hbox.addLayout(vbox)
 
         self.layout.addLayout(hbox)
@@ -287,7 +230,7 @@ class ConflictResolutionDialog(BaseDialog):
         self.first_object = self.conflict.getFirstObject()
         self.second_object = self.conflict.getSecondObject()
         type = self.conflict.getModelObjectType()
-        
+
         self.setCaption(type)
         name_first_object = self.first_object.getName()
         name_second_object = self.second_object.getName()
@@ -308,9 +251,9 @@ class ConflictResolutionDialog(BaseDialog):
             self.editor_second_object = ServiceEditor(self.second_object)
 
         self.editor_first_object.fillEditionTable(self.detailtable_first_object)
-                                               
+
         self.editor_second_object.fillEditionTable(self.detailtable_second_object)
-                                                
+
 
     def getSelectedEditor(self):
         if self.choice_button_first_object.isChecked():
@@ -333,7 +276,7 @@ class ConflictResolutionDialog(BaseDialog):
     def sizeHint(self):
         return qt.QSize(750, 500)
 
-                                                                                
+
 
 class ModelObjectListViewItem(qt.QListViewItem):
     def __init__(self, qtparent, model_object=None):
@@ -364,7 +307,7 @@ class ListableObjecttDialog(BaseDialog):
         self._selected_items = []
         self.edition_layout = None
         self.title = title
-        
+
         self.listview = qt.QListView(self)
         self.listview.setSorting(-1)
         self.listview.setSelectionMode(qt.QListView.Extended)
@@ -374,7 +317,7 @@ class ListableObjecttDialog(BaseDialog):
         self.setListItems()
 
         vbox1.addWidget(self.listview)
-        
+
         self.button_box1 = qt.QHBoxLayout()
         self.add_button = qt.QPushButton("Add", self)
         self.add_button.setMaximumSize(qt.QSize(100, 25))
@@ -398,7 +341,7 @@ class ListableObjecttDialog(BaseDialog):
         self.button_box2.addStretch(1)
 
         vbox2.addLayout(self.button_box2)
-        
+
         hbox.setSpacing(6)
         hbox.addLayout(vbox1)
         hbox.addLayout(vbox2)
@@ -451,7 +394,7 @@ class NotesDialog(ListableObjecttDialog):
         if self._current_item is not None:
             if self._current_item.type == "Note":
                 self.edition_layout.setNote(self._current_item.getModelObject())
-        
+
     def saveValue(self):
         if self._current_item is not None:
             if self._current_item.type == "Note":
@@ -464,7 +407,7 @@ class NotesDialog(ListableObjecttDialog):
     def addValue(self):
         dialog = NewNoteDialog(self, callback=self.__addValue)
         dialog.exec_loop()
-    
+
     def __addValue(self, *args):
         obj = self.rootitem.getModelObject()
         if self._current_item:
@@ -473,13 +416,13 @@ class NotesDialog(ListableObjecttDialog):
         self.setListItems()
 
     def removeValue(self):
-        for item in self._selected_items: 
+        for item in self._selected_items:
             if item.type == "Note":
                 note = item.getModelObject()
                 guiapi.delNote(note.getParent().getID(), note.getID())
         self.setListItems()
         self.edition_layout.clear()
-                    
+
 
     def sizeHint(self):
         return qt.QSize(750, 500)
@@ -495,23 +438,23 @@ class VulnsDialog(ListableObjecttDialog):
 
         self._vuln_edition_widget = qt.QFrame()
         self._vuln_edition_layout = VulnEditor(self._vuln_edition_widget)
-        
+
         self._vuln_web_scrollbar_view = qt.QScrollView()
         self._vuln_web_scrollbar_view.setResizePolicy(qt.QScrollView.AutoOneFit)
         self._vuln_web_edition_widget = qt.QFrame(self._vuln_web_scrollbar_view.viewport())
         self._vuln_web_edition_layout = VulnWebEditor(self._vuln_web_edition_widget)
         self._vuln_web_edition_layout.setMargin(5)
         self._vuln_web_scrollbar_view.addChild(self._vuln_web_edition_widget)
-        
+
         self._widget_stack.addWidget(self._vuln_edition_widget, 0)
         self._widget_stack.addWidget(self._vuln_web_scrollbar_view, 1)
         self._widget_stack.raiseWidget(self._vuln_edition_widget)
-        
+
         self._vuln_edition_widget.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Ignored, qt.QSizePolicy.Ignored))
         self._vuln_web_edition_widget.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Ignored, qt.QSizePolicy.Ignored))
-        
+
         self.edition_layout = self._vuln_edition_widget.layout()
-        
+
         parent_layout.addWidget(self._widget_stack)
 
     def setListItems(self):
@@ -530,7 +473,7 @@ class VulnsDialog(ListableObjecttDialog):
                     self._widget_stack.raiseWidget(self._vuln_web_scrollbar_view)
                 self.edition_layout = widget.layout()
                 self.edition_layout.setVuln(self._current_item.getModelObject())
-        
+
     def saveValue(self):
         if self._current_item is not None:
             if self._current_item.type == "Vuln" or self._current_item.type == "VulnWeb":
@@ -549,18 +492,18 @@ class VulnsDialog(ListableObjecttDialog):
             vuln_web_enabled = True
         dialog = NewVulnDialog(self, callback=self.__addValue, vuln_web_enabled=vuln_web_enabled)
         dialog.exec_loop()
-    
+
     def __addValue(self, *args):
         obj = self.model_object
         if args[0]:
-                     
+
             guiapi.createAndAddVulnWeb(obj, *args[1:])
         else:
             guiapi.createAndAddVuln(obj, *args[1:])
         self.setListItems()
 
     def removeValue(self):
-        for item in self._selected_items: 
+        for item in self._selected_items:
             if item.type == "Vuln" or item.type == "VulnWeb":
                 vuln = item.getModelObject()
                 guiapi.delVuln(vuln.getParent().getID(), vuln.getID())
@@ -590,7 +533,7 @@ class CredsDialog(ListableObjecttDialog):
         if self._current_item is not None:
             if self._current_item.type == "Cred":
                 self.edition_layout.setCred(self._current_item.getModelObject())
-        
+
     def saveValue(self):
         if self._current_item is not None:
             if self._current_item.type == "Cred":
@@ -603,20 +546,20 @@ class CredsDialog(ListableObjecttDialog):
     def addValue(self):
         dialog = NewCredDialog(self, callback=self.__addValue)
         dialog.exec_loop()
-    
+
     def __addValue(self, *args):
         obj = self.rootitem.getModelObject()
         guiapi.createAndAddCred(obj, *args)
         self.setListItems()
 
     def removeValue(self):
-        for item in self._selected_items: 
+        for item in self._selected_items:
             if item.type == "Cred":
                 cred = item.getModelObject()
                 guiapi.delCred(cred.getParent().getID(), cred.getID())
         self.setListItems()
         self.edition_layout.clear()
-                    
+
 
     def sizeHint(self):
         return qt.QSize(750, 500)
@@ -633,7 +576,7 @@ class AboutDialog(BaseDialog):
         self.logolabel = qt.QLabel( self )
         self.logolabel.setPixmap( self.logo )
         self.logolabel.setAlignment( qt.Qt.AlignHCenter | qt.Qt.AlignVCenter )
-                                                                           
+
         self._about_text = u"""%s v%s""" % (CONF.getAppname(),CONF.getVersion())
         self._about_text += "\nInfobyte LLC. All rights reserved"
 
@@ -645,7 +588,7 @@ class AboutDialog(BaseDialog):
         self.setupButtons({"ok" : None})
 
 
-                                                                                
+
 class RepositoryConfigDialog(BaseDialog):
 
     def __init__(self, parent, url="http://example:5984", replication = False, replics = "", callback=None):
@@ -653,7 +596,7 @@ class RepositoryConfigDialog(BaseDialog):
                             layout_margin=25, layout_spacing=20, modal=True)
 
         self._callback = callback
-        
+
         self.setCaption("Repository Configuration")
 
         hbox1 = qt.QHBox(self)
@@ -668,7 +611,7 @@ class RepositoryConfigDialog(BaseDialog):
         self._replicate_label = qt.QLabel("Replication enabled", hbox2)
         self._replicate_edit = qt.QCheckBox(hbox2)
         self._replicate_edit.setChecked(replication)
-                                                               
+
         self.layout.addWidget(hbox2)
 
         hbox3 = qt.QHBox(self)
@@ -691,7 +634,7 @@ class RepositoryConfigDialog(BaseDialog):
         self.__repourl_txt = self._repourl_edit.text()
         self.__is_replicated_bool = self._replicate_edit.isChecked()
         self.__replics_list_txt = self.__replics_edit.text()
-        return (self.__repourl_txt.latin1(), 
+        return (self.__repourl_txt.latin1(),
             self.__is_replicated_bool,
             self.__replics_list_txt.latin1())
 
@@ -700,7 +643,7 @@ class RepositoryConfigDialog(BaseDialog):
             self._callback(*self.getData())
         self.accept()
 
-                                                                                
+
 
 class ExceptionDialog(BaseDialog):
 
@@ -735,7 +678,7 @@ If you press Cancel the application will just continue.""", self )
 
     def sizeHint(self):
         return qt.QSize(680, 300)
-                                                                                
+
 
 class SimpleDialog(BaseDialog):
 
@@ -744,10 +687,10 @@ class SimpleDialog(BaseDialog):
                             layout_margin=10, layout_spacing=10, modal=True)
         self.setCaption(type)
 
-                                                   
+
         self.text = qt.QLabel(self)
         self.text.setTextFormat(qt.Qt.RichText)
-        self.text.setText(text.replace("\n", "<br>"))                          
+        self.text.setText(text.replace("\n", "<br>"))
         self.text.setAlignment( qt.Qt.AlignHCenter | qt.Qt.AlignVCenter )
         self.layout.addWidget( self.text )
         self.setupButtons({"ok" : None})
@@ -758,7 +701,7 @@ class ExitDialog(BaseDialog):
         BaseDialog.__init__(self, parent, "ExitDialog",
                             layout_margin=20, layout_spacing=15, modal=True)
         self.setCaption(title)
-                                        
+
         hbox1 = qt.QHBox(self)
         hbox1.setSpacing(5)
         self._message_label = qt.QLabel(msg, hbox1)
@@ -771,14 +714,14 @@ class ExitDialog(BaseDialog):
     def sizeHint(self):
         return qt.QSize(50, 50)
 
-                                                                                
+
 
 class MessageDialog(BaseDialog):
     def __init__(self, parent, callback=None , title="Are you sure?", msg="Are you sure?", item=None):
         BaseDialog.__init__(self, parent, "ExitDialog",
                             layout_margin=20, layout_spacing=15, modal=True)
         self.setCaption(title)
-                                        
+
         self._callback = callback
         self._item=item
         hbox1 = qt.QHBox(self)
@@ -792,24 +735,24 @@ class MessageDialog(BaseDialog):
     def ok_pressed(self):
         if self._callback is not None:
             self._callback(self._item)
-        self.accept()    
+        self.accept()
 
     def sizeHint(self):
         return qt.QSize(50, 50)
 
-                                                                                
+
 
 class VulnDialog(BaseDialog):
 
     def __init__(self, parent, name="",description="", ref="", callback=None, item=None):
         BaseDialog.__init__(self, parent, "VulnDialog",
                             layout_margin=10, layout_spacing=15, modal=True)
-                                                                                     
+
         self._item = item
         self._callback = callback
         self.setCaption("New vulnerability" if name is "" else "Vuln %s" % item.name)
 
-                      
+
 
         hbox1 = qt.QHBox(self)
         hbox1.setSpacing(5)
@@ -817,7 +760,7 @@ class VulnDialog(BaseDialog):
         self._name_edit = qt.QLineEdit(hbox1)
         if name: self._name_edit.setText(name)
         self.layout.addWidget(hbox1)
-        
+
         hbox2 = qt.QHBox(self)
         hbox2.setSpacing(5)
         ref_label = qt.QLabel("Ref", hbox2)
@@ -828,7 +771,7 @@ class VulnDialog(BaseDialog):
         vbox6 = qt.QVBox(self)
         vbox6.setSpacing(5)
         description_label = qt.QLabel("Description:", vbox6 )
-                                                                                  
+
         self._description_edit = qt.QTextEdit(vbox6)
         self._description_edit.setTextFormat(qt.Qt.PlainText)
         if description: self._description_edit.append(description)
@@ -856,7 +799,7 @@ class CategoryDialog(BaseDialog):
     def __init__(self, parent, name="", callback=None, item=None):
         BaseDialog.__init__(self, parent, "CategoryDialog",
                             layout_margin=10, layout_spacing=15, modal=True)
-                                                                                           
+
         self._item = item
         self._callback = callback
         self.setCaption("New category" if name is "" else "Category in %s" % item.name)
@@ -879,19 +822,19 @@ class CategoryDialog(BaseDialog):
                 self.accept()
             else:
                 dialog = SimpleDialog(self, "Please select a name")
-                dialog.exec_loop() 
+                dialog.exec_loop()
 
     def sizeHint(self):
         return qt.QSize(600, 400)
 
-                                                                                
+
 
 class NoteDialog(BaseDialog):
 
     def __init__(self, parent, name="", text="", callback=None, item=None):
         BaseDialog.__init__(self, parent, "NoteDialog",
                             layout_margin=10, layout_spacing=15, modal=True)
-                                                                                  
+
         self._item = item
         self._callback = callback
         self.setCaption("New note" if name is "" else "Note %d" % item.id)
@@ -906,7 +849,7 @@ class NoteDialog(BaseDialog):
         vbox2 = qt.QVBox(self)
         vbox2.setSpacing(3)
         content_label = qt.QLabel("Note content:", vbox2 )
-                                                                              
+
         self._textedit = qt.QTextEdit(vbox2)
         self._textedit.setTextFormat(qt.Qt.PlainText)
         if text: self._textedit.append(text)
@@ -916,7 +859,7 @@ class NoteDialog(BaseDialog):
                             "cancel" : None
                           })
     def ok_pressed(self):
-        if self._callback is not None:        
+        if self._callback is not None:
             if self._name_edit.text() != "":
                 if self._item is not None:
                     self._callback(self._name_edit.text(), self._textedit.text(),self._item)
@@ -925,14 +868,14 @@ class NoteDialog(BaseDialog):
                 self.accept()
             else:
                 dialog = SimpleDialog(self, "Please select a name")
-                dialog.exec_loop()   
+                dialog.exec_loop()
 
     def sizeHint(self):
         return qt.QSize(600, 400)
 
-                                                                                
 
-            
+
+
 class NotificationWidget(qt.QLabel):
     def __init__(self, parent, text=""):
         qt.QLabel.__init__(self, parent, "notification")
@@ -940,16 +883,16 @@ class NotificationWidget(qt.QLabel):
         color = qt.QColor(232, 226, 179, qt.QColor.Rgb)
         pal.setColor(qt.QColorGroup.Background, color)
         self.setTextFormat(qt.Qt.RichText)
-        self.setText(text.replace("\n", "<br>"))                          
+        self.setText(text.replace("\n", "<br>"))
         self.setFrameStyle(qt.QFrame.PopupPanel | qt.QFrame.Plain)
         self.setAlignment( qt.Qt.AlignHCenter | qt.Qt.AlignVCenter )
         self.setPalette(pal)
-        
+
         _w,_h=self._getsize(text)
         self.resize(qt.QSize(_w,_h))
-                                                                                          
+
         self._updatePos(parent)
-        
+
     def _getsize(self, text):
         _tlist=text.split("\n")
         _width=0
@@ -959,11 +902,11 @@ class NotificationWidget(qt.QLabel):
             if _size > _width:
                 _width = _size
                 if _size > 80 and len(i.split(" ")) <=2:
-                    _w=12   
-                                                                               
-    
+                    _w=12
+
+
         return _width*_w,(28*len(text.split("\n")))
-    
+
 
     def _updatePos(self, parent):
         pos = qt.QPoint()
@@ -977,7 +920,7 @@ class NotificationWidget(qt.QLabel):
         parent.removeChild(self)
         self.destroy()
 
-                                                                                
+
 
 class WorkspacePropertiesDialog(BaseDialog):
 
@@ -986,7 +929,7 @@ class WorkspacePropertiesDialog(BaseDialog):
                             layout_margin=10, layout_spacing=15, modal=True)
         self._callback = callback
         self.setCaption('Workspace Properties')
-                                                                          
+
 
         hbox1 = qt.QHBox(self)
         hbox1.setSpacing(5)
@@ -1019,8 +962,8 @@ class WorkspacePropertiesDialog(BaseDialog):
         })
 
     def ok_pressed(self):
-                                                                                 
-                                                        
+
+
         if self._callback is not None:
             name = self._name_edit.text()
             description = self._desc_edit.text()
@@ -1033,9 +976,9 @@ class WorkspacePropertiesDialog(BaseDialog):
     def sizeHint(self):
         return qt.QSize(600, 400)
 
-                                                                                
-                                                                         
-                                                       
+
+
+
 class WorkspaceCreationDialog(BaseDialog):
 
     def __init__(self, parent, text="", callback=None, workspace=None, workspace_manager=None):
@@ -1044,7 +987,7 @@ class WorkspaceCreationDialog(BaseDialog):
         self._callback = callback
         self.setCaption('New Workspace')
         self._main_window = parent
-        
+
         hbox1 = qt.QHBox(self)
         hbox1.setSpacing(5)
         self._name_label = qt.QLabel("Name", hbox1)
@@ -1086,9 +1029,9 @@ class WorkspaceCreationDialog(BaseDialog):
                 self._callback(self.__name_txt, self.__desc_txt, self.__type_txt)
             self.accept()
         else:
-            self._main_window.showPopup("A workspace must be named with all lowercase letters (a-z), digits (0-9) or any of the _$()+-/ characters. The name has to start with a lowercase letter (a-z)") 
+            self._main_window.showPopup("A workspace must be named with all lowercase letters (a-z), digits (0-9) or any of the _$()+-/ characters. The name has to start with a lowercase letter (a-z)")
 
-                                                                                
+
 
 class PluginSettingsDialog(BaseDialog, PluginSettingsUi):
     def __init__(self, parent=None, plugin_manager=None):
@@ -1160,7 +1103,7 @@ class PluginSettingsDialog(BaseDialog, PluginSettingsUi):
             self.t_parameters.verticalHeader().setLabel(index, setting)
             self.t_parameters.setText(index, 0, str(value))
 
-                                                                                
+
 
 class VulnsListDialog(BaseDialog, VulnerabilitiesUi):
     def __init__(self, parent=None,item=None):
@@ -1191,7 +1134,7 @@ class VulnsListDialog(BaseDialog, VulnerabilitiesUi):
 
 
     def del_vuln(self, vuln):
-        
+
         index = self.t_vulns.currentRow()
         self._vulns.remove(vuln)
         self.t_vulns.removeRows([index])
@@ -1199,7 +1142,7 @@ class VulnsListDialog(BaseDialog, VulnerabilitiesUi):
 
 
     def _setup_signals(self):
-                                                          
+
         self.connect(self.t_vulns, SIGNAL("doubleClicked(int,int,int,QPoint)"),self._edit)
 
         self.connect(self.add_button, SIGNAL("clicked()"), self._add)
@@ -1207,50 +1150,50 @@ class VulnsListDialog(BaseDialog, VulnerabilitiesUi):
         self.connect(self.delete_button, SIGNAL("clicked()"), self._delete)
         self.connect(self.list_note_button, SIGNAL("clicked()"), self._list_note)
         self.connect(self.manage_evidence_button, SIGNAL("clicked()"), self._evidence)
-        
-    
+
+
     def _edit(self):
-                                       
+
         if self.t_vulns.currentSelection() != -1:
             _object=self._vulns[self.t_vulns.currentRow()]
             dialog = VulnDialog(self,str(_object.name),str(_object.desc),str(_object.refs),self._editcallback,_object)
             res = dialog.exec_loop()
-            
+
     def _evidence(self):
-                                       
+
         if self.t_vulns.currentSelection() != -1:
             _object=self._vulns[self.t_vulns.currentRow()]
             _object.object = _object
             dialog = EvidencesListDialog(self, _object)
-                                             
-                                            
+
+
             dialog.exec_loop()
-            
+
     def _list_note(self):
-                                       
+
         if self.t_vulns.currentSelection() != -1:
             _object=self._vulns[self.t_vulns.currentRow()]
             _object.object = _object
             dialog = NotesListDialog(self, _object)
-                                             
-                                            
+
+
             dialog.exec_loop()
-            
+
     def _editcallback(self,name,desc,ref,item):
 
         item.name=name
         item.desc=desc
         item.ref=ref
-        
+
         self.t_vulns.setText(self.t_vulns.currentRow(), 0, name)
         self.t_vulns.setText(self.t_vulns.currentRow(), 1, ref)
         self.t_vulns.setText(self.t_vulns.currentRow(), 2, desc)
 
     def _newcallback(self, name, desc, ref, item):
         _parent=self._item.object.getParent()
-        
+
         api.devlog("newVuln (%s) (%s) (%s) (%s) " % (name, desc, ref, item.object.getName(),))
-        
+
         _newvuln=api.newVuln(name,desc,ref)
 
         if item.type == "Application":
@@ -1261,22 +1204,22 @@ class VulnsListDialog(BaseDialog, VulnerabilitiesUi):
             api.addVulnToHost(_newvuln,item.object.getName())
         elif item.type == "Service":
             api.addVulnToService(_newvuln,_parent.name,item.object.getName())
-        
-                                                          
-        self.add_vuln(_newvuln)   
-        
+
+
+        self.add_vuln(_newvuln)
+
     def _add(self):
         if self._item is not None and self._item.object is not None:
             dialog = VulnDialog(self,callback=self._newcallback,item=self._item)
             res = dialog.exec_loop()
-            
-    
+
+
     def _delete(self):
         if self.t_vulns.currentSelection() != -1:
             _vuln=self._vulns[self.t_vulns.currentRow()]
             _parent=_vuln._parent
-                                                                                                  
-            
+
+
             if isinstance(_parent,hosts.HostApplication):
                 api.delVulnFromApplication(_vuln.getID(),_parent.getParent().name,_parent.name)
             elif isinstance(_parent,hosts.Interface):
@@ -1285,12 +1228,12 @@ class VulnsListDialog(BaseDialog, VulnerabilitiesUi):
                 api.delVulnFromHost(_vuln.getID(),_parent.name)
             elif isinstance(_parent,hosts.Service):
                 api.delVulnFromService(_vuln.getID(),_parent.getParent().name,_parent.name)
-        
-                                                                 
-            self.del_vuln(_vuln)
-        
 
-                                                                                
+
+            self.del_vuln(_vuln)
+
+
+
 
 class PreferencesDialog(BaseDialog, PreferencesUi):
     def __init__(self, parent=None):
@@ -1304,7 +1247,7 @@ class PreferencesDialog(BaseDialog, PreferencesUi):
 
         self._styles = None
         self._sizes = None
-        
+
         self._family = None
         self._style = None
         self._size = None
@@ -1313,7 +1256,7 @@ class PreferencesDialog(BaseDialog, PreferencesUi):
         self._set_connections()
         self._load_styles(0)
         self._load_sizes(0)
-        
+
     def _set_connections(self):
         self.connect(self.cb_font_family, SIGNAL("activated(int)"),
                      self._load_styles)
@@ -1362,7 +1305,7 @@ class PreferencesDialog(BaseDialog, PreferencesUi):
         self.le_example.setFont(font)
         self._main_window.shell_font = font
 
-                                                                                
+
 
 class NotesListDialog(BaseDialog, NotesListUI):
 
@@ -1373,11 +1316,11 @@ class NotesListDialog(BaseDialog, NotesListUI):
         self.notes_table.setColumnReadOnly(1, True)
         self._notes = []
         self._setup_signals()
-        self._item = item                                                           
+        self._item = item
         if item is not None and item.object is not None:
             for n in item.object.getNotes():
                 self.add_note_to_table(n)
-        
+
     def add_note_to_table(self, note):
         index = self.notes_table.numRows()
         self._notes.append(note)
@@ -1387,17 +1330,17 @@ class NotesListDialog(BaseDialog, NotesListUI):
         self.notes_table.adjustColumn(0)
         self.notes_table.adjustColumn(1)
         self.notes_table.adjustRow(index)
-    
+
     def _setup_signals(self):
-                                                          
-                                                                                    
-                              
+
+
+
 
         self.connect(self.add_button, SIGNAL("clicked()"), self._add_note)
         self.connect(self.edit_button, SIGNAL("clicked()"), self._edit_note)
         self.connect(self.delete_button, SIGNAL("clicked()"), self._delete_note)
         self.connect(self.list_note_button, SIGNAL("clicked()"), self._list_note)
-    
+
     def _edit_note(self):
         if self.notes_table.currentSelection() != -1:
             _object=self._notes[self.notes_table.currentRow()]
@@ -1405,13 +1348,13 @@ class NotesListDialog(BaseDialog, NotesListUI):
             res = dialog.exec_loop()
 
     def _list_note(self):
-                                       
+
         if self.notes_table.currentSelection() != -1:
             _object=self._notes[self.notes_table.currentRow()]
             _object.object = _object
             dialog = NotesListDialog(self, _object)
-                                             
-                                            
+
+
             dialog.exec_loop()
 
     def _editcallbackNote(self,name,text,item):
@@ -1422,11 +1365,11 @@ class NotesListDialog(BaseDialog, NotesListUI):
 
     def _newcallbackNote(self, name, text, item):
         _parent=self._item.object.getParent()
-        
+
         api.devlog("newNote (%s) (%s) (%s)  " % (name, text, item.object.getName(),))
-        
+
         _newnote=api.newNote(name,text)
-        
+
         if item.object.class_signature == "HostApplication":
             api.addNoteToApplication(_newnote,_parent.name,item.object.getName())
         elif item.object.class_signature == "Interface":
@@ -1436,25 +1379,25 @@ class NotesListDialog(BaseDialog, NotesListUI):
         elif item.object.class_signature == "Service":
             api.addNoteToService(_newnote,_parent.name,item.object.getName())
         else:
-                                                                                            
-                                                                                    
+
+
             item.object.addNote(_newnote)
-        
+
         self.add_note_to_table(_newnote)
-        
+
     def _add_note(self):
         if self._item is not None and self._item.object is not None:
             dialog = NoteDialog(self,callback=self._newcallbackNote,item=self._item)
             res = dialog.exec_loop()
-            
-    
+
+
     def _delete_note(self):
-        
+
         _object=self._notes[self.notes_table.currentRow()]
         if self.notes_table.currentSelection() != -1:
             _note=self._notes[self.notes_table.currentRow()]
             _parent=_note._parent
-                
+
             if _parent.class_signature == "HostApplication":
                 api.delNoteFromApplication(_note.getID(),_parent.getParent().name,_parent.name)
             elif _parent.class_signature == "Interface":
@@ -1465,21 +1408,21 @@ class NotesListDialog(BaseDialog, NotesListUI):
                 api.delNoteFromService(_note.getID(),_parent.getParent().name,_parent.name)
             else:
                 _parent.delNote(_note.getID())
-                
-        
-                                                                 
+
+
+
             self.del_note(_note)
-        
+
 
     def del_note(self, note):
-        
+
         index = self.notes_table.currentRow()
         self._notes.remove(note)
         self.notes_table.removeRows([index])
 
-                                                                              
 
-                                                                                
+
+
 
 class EvidencesListDialog(BaseDialog, EvidencesListUI):
 
@@ -1489,11 +1432,11 @@ class EvidencesListDialog(BaseDialog, EvidencesListUI):
         self.evidences_table.setColumnReadOnly(0, True)
         self.evidences_table.setColumnReadOnly(1, True)
         self._setup_signals()
-        self._item = item                                                               
+        self._item = item
         if item is not None and item.object is not None:
             for n in item.object.evidences:
                 self.add_evidence_to_table(n)
-        
+
     def add_evidence_to_table(self, evidence):
         index = self.evidences_table.numRows()
         self.evidences_table.insertRows(index)
@@ -1502,22 +1445,22 @@ class EvidencesListDialog(BaseDialog, EvidencesListUI):
         self.evidences_table.adjustColumn(0)
         self.evidences_table.adjustColumn(1)
         self.evidences_table.adjustRow(index)
-    
+
     def _setup_signals(self):
-                                                          
-                                                                                        
-                                  
+
+
+
 
         self.connect(self.add_button, SIGNAL("clicked()"), self._add_evidence)
         self.connect(self.delete_button, SIGNAL("clicked()"), self._delete_evidence)
 
     def _newcallbackEvidence(self, name, item):
-        
+
         d_path = api.addEvidence("%s" % name)
         if d_path is not False:
             self._item.object.evidences.append(d_path)
             self.add_evidence_to_table(d_path)
-        
+
     def _add_evidence(self):
         if self._item is not None and self._item.object is not None:
             filename =  QFileDialog.getOpenFileName(
@@ -1526,15 +1469,15 @@ class EvidencesListDialog(BaseDialog, EvidencesListUI):
                         None,
                         "open file dialog",
                         "Choose a file to add in the evidence" );
-            
+
             if (filename):
                 self._newcallbackEvidence(filename,self._item)
                 for n in self._item.object.evidences:
                     api.devlog("Los items screenshot son:" + n)
-            
-            
+
+
     def _delete_evidence(self):
-        
+
         if self.evidences_table.currentSelection() != -1:
 
             index = self.evidences_table.currentRow()
@@ -1545,11 +1488,11 @@ class EvidencesListDialog(BaseDialog, EvidencesListUI):
             self._updateIds()
             for n in self._item.object.evidences:
                 api.devlog("Los items screenshot son:" + n)
-                
+
     def _updateIds(self):
         for i in range(0,self.evidences_table.numRows()):
             self.evidences_table.setText(i , 0, str(i))
-        
 
 
-                                                                                     
+
+

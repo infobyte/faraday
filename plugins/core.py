@@ -91,7 +91,7 @@ class modelactions:
     CADDVULNWEBSRV         = 2038
     ADDNOTENOTE         = 2039
     CADDNOTENOTE        = 2039
-    
+
     __descriptions = {
         ADDHOST             : "ADDHOST",
         CADDHOST            : "CADDHOST",
@@ -277,7 +277,7 @@ class PluginControllerBase(object):
                     modelactions.ADDNOTESRV : model.api.addNoteToService,
                     modelactions.CADDNOTESRV : model.api.createAndAddNoteToService,
                     modelactions.ADDNOTENOTE : model.api.addNoteToNote,
-                    modelactions.CADDNOTENOTE : model.api.createAndAddNoteToNote,                    
+                    modelactions.CADDNOTENOTE : model.api.createAndAddNoteToNote,
                     #Creds
                     modelactions.CADDCREDSRV : model.api.createAndAddCredToService,
                     modelactions.ADDCREDSRV  :  model.api.addCredToService,
@@ -544,26 +544,26 @@ class PluginBase(object):
         """
         return self._command_regex is not None and\
         self._command_regex.match(current_input.strip()) is not None
-        
-        
+
+
     def getCompletitionSuggestionsList(self, current_input):
         """
         This method can be overriden in the plugin implementation
         if a different kind of check is needed
         """
-        
+
         words=current_input.split(" ")
-        
-        cword=words[len(words)-1] 
-        
-        
-        
+
+        cword=words[len(words)-1]
+
+
+
         options={}
         for k,v in self._completition.iteritems():
             if re.search(str("^"+cword),k,flags=re.IGNORECASE):
-                
+
                 options[k]=v
-                
+
         return options
 
     def parseOutputString(self, output):
@@ -580,7 +580,7 @@ class PluginBase(object):
         With this method a plugin can add aditional arguments to the command that
         it's going to be executed.
         """
-        return None 
+        return None
 
     def getParsedElementsDict(self):
         """
@@ -609,9 +609,9 @@ class PluginBase(object):
         pass
 
     def _set_host(self):
-        
+
         pass
-        
+
     def __addPendingAction(self, *args):
         """
         Adds a new pending action to the queue
@@ -631,7 +631,7 @@ class PluginBase(object):
                  ipv6_address = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_prefix = "00",
                  ipv6_gateway = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns = [],
                  network_segment = "", hostname_resolution = []):
-        self.__addPendingAction(modelactions.CADDINTERFACE, host_id, name, mac, ipv4_address, 
+        self.__addPendingAction(modelactions.CADDINTERFACE, host_id, name, mac, ipv4_address,
             ipv4_mask, ipv4_gateway, ipv4_dns, ipv6_address, ipv6_prefix, ipv6_gateway, ipv6_dns,
             network_segment, hostname_resolution)
         return factory.generateID(
@@ -643,9 +643,9 @@ class PluginBase(object):
             network_segment=network_segment,
             hostname_resolution=hostname_resolution)
 
-    def createAndAddServiceToInterface(self, host_id, interface_id, name, protocol = "tcp?", 
+    def createAndAddServiceToInterface(self, host_id, interface_id, name, protocol = "tcp?",
                 ports = [], status = "running", version = "unknown", description = ""):
-        self.__addPendingAction(modelactions.CADDSERVICEINT, host_id, interface_id, name, protocol, 
+        self.__addPendingAction(modelactions.CADDSERVICEINT, host_id, interface_id, name, protocol,
                 ports, status, version, description)
         return factory.generateID(
             Service.class_signature,
@@ -681,7 +681,7 @@ class PluginBase(object):
                                 method, pname, params, query,category)
         return factory.generateID(
             ModelObjectVulnWeb.class_signature,
-            name=name, desc=desc, ref=ref, severity=severity, resolution=resolution, 
+            name=name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
             category=category, parent_id=service_id)
@@ -745,7 +745,7 @@ class PluginBase(object):
 
     def addVulnWebToService(self, host_id, service_id, vuln):
         self.__addPendingAction(modelactions.ADDVULNWEBSRV, host_id, service_id, vuln)
-        
+
     def addNoteToHost(self, host_id, note):
         self.__addPendingAction(modelactions.ADDNOTEHOST, host_id, note)
 
@@ -760,18 +760,18 @@ class PluginBase(object):
 
     def addNoteToNote(self, host_id, service_id,note_id, note):
         self.__addPendingAction(modelactions.ADDNOTENOTE, host_id, service_id, note_id, note)
-        
+
     def addCredToService(self, host_id, service_id, cred):
         self.__addPendingAction(modelactions.ADDCREDSRV, host_id, service_id, cred)
 
     def delServiceFromInterface(self, service, hostname,
                  intname, remote = True):
         self.__addPendingAction(modelactions.DELSERVICEINT,hostname,intname,service,remote)
-        
+
     def log(self, msg, level='INFO'):
         self.__addPendingAction(modelactions.LOG,msg,level)
 
-    def devlog(self, msg):        
+    def devlog(self, msg):
         self.__addPendingAction(modelactions.DEVLOG,msg)
 
 
@@ -781,7 +781,7 @@ class PluginProcess(multiprocessing.Process):
         self.output_queue = output_queue
         self.new_elem_queue = new_elem_queue
         self.plugin = plugin_instance
-        
+
 
     def run(self):
         proc_name = self.name
@@ -800,8 +800,7 @@ class PluginProcess(multiprocessing.Process):
                 try:
                     self.output = output
                     self.plugin.parseOutputString(output)
-                except Exception as e:
-                    print  ('Plugin Error: %s, (%s)' % (plugin.id, sha1OfStr(output)))
+                except Exception:
                     model.api.log('Plugin Error: %s, (%s)' % (plugin.id, sha1OfStr(output)),"DEBUG")
                     model.api.devlog("Plugin raised an exception:")
                     model.api.devlog(traceback.format_exc())
@@ -820,12 +819,11 @@ class PluginProcess(multiprocessing.Process):
                             break
 
             else:
-                
+
                 done = True
                 model.api.devlog('%s: Exiting' % proc_name)
-                model.api.log('Plugin finished: %s, (%s)' % (plugin.id, sha1OfStr(self.output)),"DEBUG")
-                print  ('Plugin finished: %s, (%s)' % (plugin.id, sha1OfStr(self.output)))
-                
+                model.api.log('Plugin finished: %s, (%s)' % (plugin.id, sha1OfStr(self.output)))
+
             self.output_queue.task_done()
         self.new_elem_queue.put(None)
         return

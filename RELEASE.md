@@ -12,6 +12,10 @@ New features in the latest update
 
 TBA:
 ---
+
+
+Oct 2, 2015:
+---
 * Continuous Scanning Tool cscan added to ./scripts/cscan
 * Fix for saving objects without parent
 * Hosts and Services views now have pagination and search

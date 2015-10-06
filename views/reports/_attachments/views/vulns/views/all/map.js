@@ -10,7 +10,8 @@ function(doc) {
             "confidentiality": false,
             "integrity": false
         },
-        resolution = "";
+        resolution = "",
+        confirmed = false;
         if(doc.easeofresolution !== undefined) {
             easeofresolution = doc.easeofresolution;
         }
@@ -25,7 +26,7 @@ function(doc) {
             "_id":              doc._id,
             "_rev":             doc._rev,
             "_attachments":     doc._attachments,
-            "confirmed":        doc.confirmed,
+            "confirmed":        doc.confirmed || confirmed,
             "data":             doc.data,
             "desc":             doc.desc, 
             "easeofresolution": easeofresolution,

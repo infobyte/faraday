@@ -70,8 +70,11 @@ angular.module('faradayApp')
 
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace).then(function(vulns) {
+                $scope.loadedVulns = true;
+
                 confirmed_filter = { "confirmed":true };
                 $scope.vulns = $filter('filter')(vulnsManager.vulns, confirmed_filter);
+
                 allVulns = vulnsManager.vulns;
             });
 

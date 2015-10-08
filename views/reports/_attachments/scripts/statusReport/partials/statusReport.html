@@ -6,7 +6,7 @@
     <div class="right-main">
         <div id="reports-main" class="fila clearfix">
             <div class="ws-label">
-                <h2><span id="ws-name" title="Current workspace">Status report for {{ workspace }} ({{vulns.length}} vulns)</span></h2><!-- WS name -->
+                <h2><span id="ws-name" title="Current workspace">Status report for {{ workspace }} ({{filtered.length}} vulns)</span></h2><!-- WS name -->
             </div><!-- .ws-label -->
             <div id="ws-control" class="btn-group btn-small-margin">
                 <button file-exporter="csv()" type="button" class="btn btn-success" title="Download CSV for current workspace">
@@ -15,7 +15,7 @@
                 <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
                     <span class="glyphicon glyphicon-refresh"></span>
                 </button>
-                <button type="button" class="btn btn-danger" title="{{ confirm === true ? 'Confirmed vulns' : 'All vulns' }}" ng-click="toggleFilter()">
+                <button type="button" class="btn btn-danger" title="{{ confirm === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleFilter(expression)">
                     <span class="glyphicon glyphicon-filter"></span>
                 </button>
                 <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
@@ -73,7 +73,7 @@
                         <form role="form" ng-submit="searchFor(true, searchParams)">
                             <div class="form-group">
                                 <div class="input-group input-group-sm">
-                                    <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
+                                    <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search && search != 'confirmed=true'"></span>
                                     <input type="text" class="form-control" id="filter-by" 
                                     placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
                                     <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">

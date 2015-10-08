@@ -30,7 +30,7 @@ angular.module('faradayApp')
         $scope.newPageSize;
 
         $scope.vulnWebSelected;
-        $scope.confirm = false;
+        $scope.confirm = true;
         var allVulns;
 
         init = function() {
@@ -59,6 +59,13 @@ angular.module('faradayApp')
             $scope.interfaces = [];
             // current search
             $scope.search = $routeParams.search;
+            if($scope.search === undefined) { 
+                $scope.search = "confirmed=true";
+            } else {
+                if($scope.search.indexOf("confirmed") === -1 || $scope.confirm === false) {
+                    $scope.search = $scope.search.concat("&confirmed=true");
+                }
+            }
             $scope.searchParams = "";
             $scope.expression = {};
             if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
@@ -71,11 +78,7 @@ angular.module('faradayApp')
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace).then(function(vulns) {
                 $scope.loadedVulns = true;
-
-                confirmed_filter = { "confirmed":true };
-                $scope.vulns = $filter('filter')(vulnsManager.vulns, confirmed_filter);
-
-                allVulns = vulnsManager.vulns;
+                $scope.vulns = vulnsManager.vulns;
             });
 
             // created object for columns cookie columns
@@ -134,16 +137,25 @@ angular.module('faradayApp')
             return csvService.generator($scope.columns, tmp_vulns, $scope.workspace);
         };
 
-        $scope.toggleFilter = function() {
-            if($scope.confirm === false) {
-                $scope.vulns = allVulns;
+        $scope.toggleFilter = function(expression) {
+            if(expression["confirmed"] === undefined) {
+                expression["confirmed"] = true;
+                $scope.expression = expression;
                 $scope.confirm = true;
-            } else {
-                confirmed_filter = { "confirmed":true };
-                $scope.vulns = $filter('filter')(vulnsManager.vulns, confirmed_filter);
                 $scope.newCurrentPage = 0;
                 $scope.go();
+            } else {
+                $scope.expression = {};
+                for(key in expression) {
+                    if(expression.hasOwnProperty(key)) {
+                        if(key !== "confirmed") {
+                            $scope.expression[key] = expression[key];
+                        }
+                    }
+                }
                 $scope.confirm = false;
+                $scope.newCurrentPage = 0;
+                $scope.go();
             }
         };
 
@@ -570,7 +582,9 @@ angular.module('faradayApp')
                     if(prop == "$") {
                         search += obj[prop];
                     } else {
-                        search += prop + ":" + obj[prop];
+                        if(prop !== "confirmed"){
+                            search += prop + ":" + obj[prop];
+                        }
                     }
                 }
             }

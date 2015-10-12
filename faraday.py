@@ -307,7 +307,7 @@ def startFaraday():
                 """Make sure you got couchdb up and running.\nIf couchdb is up, point your browser to: \n[%s]""" % url)
     else:
         print(Fore.WHITE + Style.BRIGHT + \
-                """Please config Couchdb for fancy HTML5 Dashboard""")
+                """Please config Couchdb for fancy HTML5 Dashboard (https://github.com/infobyte/faraday/wiki/Couchdb)""")
 
     print(Fore.RESET + Back.RESET + Style.RESET_ALL)
 

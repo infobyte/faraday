@@ -12,7 +12,7 @@ New features in the latest update
 
 TBA:
 ---
-
+* Adding wiki information default faraday without couchdb configuration
 
 Oct 2, 2015:
 ---

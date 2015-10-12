@@ -12,7 +12,7 @@ New features in the latest update
 
 TBA:
 ---
-
+* bin/getAllIpsNotServices.py added: Get All IPs from targets without services
 
 Oct 2, 2015:
 ---

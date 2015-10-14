@@ -102,7 +102,7 @@
                                     <td><input type="checkbox" name="{{s._id}}"/></td>
                                     <td>
                                         {{service.name}}
-                                        <a href="//www.shodan.io/search?query={{service.name}}" tooltip="Search in Shodan" target="_blank">
+                                        <a href="//www.shodan.io/search?query={{service.name}}" uib-tooltip="Search in Shodan" target="_blank">
                                             <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                         </a>
                                     </td>
@@ -110,7 +110,7 @@
                                     <td>
                                         <li ng-repeat="p in service.ports">   
                                             {{p}}                                     
-                                            <a href="//www.shodan.io/search?query=port:{{p}}" tooltip="Search in Shodan" target="_blank">
+                                            <a href="//www.shodan.io/search?query=port:{{p}}" uib-tooltip="Search in Shodan" target="_blank">
                                                 <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                             </a>
                                         </li>

@@ -2,7 +2,7 @@
     <header>
         <h2>
             Workspace's worth
-            <span class="glyphicon glyphicon-info-sign" tooltip="Total net worth of Workspace, according to current vulnerabilities' prices"></span>
+            <span class="glyphicon glyphicon-info-sign" uib-tooltip="Total net worth of Workspace, according to current vulnerabilities' prices"></span>
         </h2>
     </header>
     <div ng-if="vulnsCount == undefined || vulnsCount.length == 0" class="alert alert-info alert-dismissible no-margin-bottom">
@@ -17,7 +17,7 @@
         <div d3-horizontal-stacked-bar data="vulnsCount" class="stackedbars"></div>
         <div id="vulns-by-price-reference" class="center-lg-6">
             <ul class="label-list">
-                <li ng-repeat="(severity, price) in vulnPrices" tooltip="Click on number to edit price">
+                <li ng-repeat="(severity, price) in vulnPrices" uib-tooltip="Click on number to edit price">
                     <span class="label vuln fondo-{{severity}}">
                         {{severity}} $
                         <span contenteditable="true" ng-model="vulnPrices[severity]"></span>

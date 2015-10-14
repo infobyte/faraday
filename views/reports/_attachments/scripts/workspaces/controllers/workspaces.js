@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('workspacesCtrl', ['$modal', '$scope', '$q', 'workspacesFact', 'dashboardSrv',
-            function($modal, $scope, $q, workspacesFact, dashboardSrv) {
+    .controller('workspacesCtrl', ['$uibModal', '$scope', '$q', 'workspacesFact', 'dashboardSrv',
+            function($uibModal, $scope, $q, workspacesFact, dashboardSrv) {
         $scope.hash;
         $scope.objects;
         $scope.workspaces;
@@ -70,7 +70,7 @@ angular.module('faradayApp')
         };
         
         $scope.onFailInsert = function(error){
-            var modal = $modal.open({
+            var modal = $uibModal.open({
                 templateUrl: 'scripts/commons/partials/modalKO.html',
                 controller: 'commonsModalKoCtrl',
                 resolve: {
@@ -158,7 +158,7 @@ angular.module('faradayApp')
 
         // Modals methods
         $scope.new = function(){ 
-            $scope.modal = $modal.open({
+            $scope.modal = $uibModal.open({
                 templateUrl: 'scripts/workspaces/partials/modalNew.html',
                 controller: 'workspacesModalNew',
                 size: 'lg'
@@ -180,7 +180,7 @@ angular.module('faradayApp')
             });
 
             if(workspace){
-                var modal = $modal.open({
+                var modal = $uibModal.open({
                     templateUrl: 'scripts/workspaces/partials/modalEdit.html',
                     controller: 'workspacesModalEdit',
                     size: 'lg',
@@ -197,7 +197,7 @@ angular.module('faradayApp')
                     }
                 });
             } else {
-                var modal = $modal.open({
+                var modal = $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',
                     controller: 'commonsModalKoCtrl',
                     resolve: {
@@ -221,7 +221,7 @@ angular.module('faradayApp')
             });
 
             if(selected) {
-                $scope.modal = $modal.open({
+                $scope.modal = $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalDelete.html',
                     controller: 'commonsModalDelete',
                     size: 'lg',
@@ -240,7 +240,7 @@ angular.module('faradayApp')
                     });
                 });
             } else {
-                var modal = $modal.open({
+                var modal = $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',
                     controller: 'commonsModalKoCtrl',
                     resolve: {

@@ -5,11 +5,11 @@
 angular.module('faradayApp')
     .controller('statusReportCtrl', 
                     ['$scope', '$filter', '$routeParams',
-                    '$location', '$modal', '$cookies', '$q', '$window', 'BASEURL',
+                    '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
                     'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager',
                     'vulnsManager', 'workspacesFact', 'csvService',
                     function($scope, $filter, $routeParams,
-                        $location, $modal, $cookies, $q, $window, BASEURL,
+                        $location, $uibModal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, hostsManager,
                         vulnsManager, workspacesFact, csvService) {
         $scope.baseurl;
@@ -160,7 +160,7 @@ angular.module('faradayApp')
         };
 
         showMessage = function(msg) {
-            var modal = $modal.open({
+            var modal = $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',
                     controller: 'commonsModalKoCtrl',
                     resolve: {
@@ -195,7 +195,7 @@ angular.module('faradayApp')
 
         _delete = function(vulns) {
             if(vulns.length > 0) {
-                var modal = $modal.open({
+                var modal = $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalDelete.html',
                     controller: 'commonsModalDelete',
                     size: 'lg',
@@ -232,7 +232,7 @@ angular.module('faradayApp')
 
         _edit = function(vulns) {
            if (vulns.length == 1) {
-                var modal = $modal.open({
+                var modal = $uibModal.open({
                     templateUrl: 'scripts/statusReport/partials/modalEdit.html',
                     controller: 'modalEditCtrl as modal',
                     size: 'lg',
@@ -269,7 +269,7 @@ angular.module('faradayApp')
                     return opts.options;
                 }
             };
-            var modal = $modal.open({
+            var modal = $uibModal.open({
                 templateUrl: partial,
                 controller: controller,
                 size: 'lg',
@@ -388,7 +388,7 @@ angular.module('faradayApp')
         };
 
         $scope.editCWE = function() {
-            var modal = $modal.open({
+            var modal = $uibModal.open({
                 templateUrl: 'scripts/commons/partials/editCWE.html',
                 controller: 'commonsModalEditCWE',
                 size: 'lg',
@@ -437,7 +437,7 @@ angular.module('faradayApp')
         };
 
         $scope.new = function() {
-            var modal = $modal.open({
+            var modal = $uibModal.open({
                 templateUrl: 'scripts/statusReport/partials/modalNew.html',
                 controller: 'modalNewVulnCtrl as modal',
                 size: 'lg',

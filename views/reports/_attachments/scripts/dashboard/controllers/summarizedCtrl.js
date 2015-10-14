@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('summarizedCtrl', 
-        ['$scope', '$route', '$routeParams', '$modal', 'dashboardSrv', 'vulnsManager', 'workspacesFact',
-        function($scope, $route, $routeParams, $modal, dashboardSrv, vulnsManager, workspacesFact) {
+        ['$scope', '$route', '$routeParams', '$uibModal', 'dashboardSrv', 'vulnsManager', 'workspacesFact',
+        function($scope, $route, $routeParams, $uibModal, dashboardSrv, vulnsManager, workspacesFact) {
             //current workspace
             var workspace = $routeParams.wsId;
             $scope.servicesCount = [];
@@ -272,7 +272,7 @@ angular.module('faradayApp')
 
             $scope.showServices = function(host) {
                 if ($scope.workspace != undefined){
-                    var modal = $modal.open({
+                    var modal = $uibModal.open({
                         templateUrl: 'scripts/dashboard/partials/modal-services-by-host.html',
                         controller: 'summarizedCtrlServicesModal',
                         size: 'lg',
@@ -290,7 +290,7 @@ angular.module('faradayApp')
 
             $scope.showHosts = function(srv_name) {
                 if ($scope.workspace != undefined){
-                    var modal = $modal.open({
+                    var modal = $uibModal.open({
                         templateUrl: 'scripts/dashboard/partials/modal-hosts-by-service.html',
                         controller: 'summarizedCtrlHostsModal',
                         size: 'lg',
@@ -308,7 +308,7 @@ angular.module('faradayApp')
 
             $scope.treemap = function(data) {
                 if(data !== undefined && data != {}) {
-                    var modal = $modal.open({
+                    var modal = $uibModal.open({
                         templateUrl: 'scripts/dashboard/partials/modal-treemap.html',
                         controller: 'treemapModalCtrl',
                         size: 'lg',

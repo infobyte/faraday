@@ -2,12 +2,12 @@
     <header>
         <h2>
             Workspace progress
-            <span class="glyphicon glyphicon-info-sign" tooltip="Workspace progress according to Scope dates"></span>
+            <span class="glyphicon glyphicon-info-sign" uib-tooltip="Workspace progress according to Scope dates"></span>
         </h2>
     </header>
     <div>
         <div id="workspace-progress-reference" class="center-lg-6" ng-if="wsProgress">
-            <progressbar value="wsProgress" class="progress-striped">{{wsProgress}}%</progressbar>
+            <uib-progressbar value="wsProgress" class="progress-striped">{{wsProgress}}%</uib-progressbar>
             <ul class="label-list">
                 <li><span class="label label-default">Start date: {{wsStart | date:"MM/dd/yyyy"}}</span></li>
                 <li><span class="label label-default">End date: {{wsEnd | date:"MM/dd/yyyy"}}</span></li>

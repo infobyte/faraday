@@ -87,14 +87,14 @@ def getParserArgs():
 
     parser_connection.add_argument('-n', '--hostname', action="store",
         dest="host",
-        default="localhost",
+        default=None,
         help="The hostname where both server APIs will listen (XMLRPC and RESTful). \
         Default = localhost")
 
-    parser_connection.add_argument('-px', '--port-xmlrpc', action="store", dest="port_xmlrpc", default=9876, type=int,
+    parser_connection.add_argument('-px', '--port-xmlrpc', action="store", dest="port_xmlrpc", default=None, type=int,
         help="Sets the port where the api XMLRPCServer will listen. Default = 9876")
     parser_connection.add_argument('-pr', '--port-rest', action="store", dest="port_rest",
-        default=9977, type=int,
+        default=None, type=int,
         help="Sets the port where the api RESTful server will listen. Default = 9977")
 
     parser.add_argument('-d', '--debug', action="store_true", dest="debug",
@@ -267,12 +267,28 @@ def setConf():
 
     CONF = getInstanceConfiguration()
     CONF.setDebugStatus(args.debug)
-    # if args.host != FARADAY_DEFAULT_HOST:
-    CONF.setApiConInfoHost(args.host)
-    # if args.port_xmlrpc != FARADAY_DEFAULT_PORT_XMLRPC:
-    CONF.setApiConInfoPort(args.port_xmlrpc)
-    # if args.port_rest != FARADAY_DEFAULT_PORT_REST:
-    CONF.setApiRestfulConInfoPort(args.port_rest)
+
+    host = CONF.getApiConInfoHost()
+    port_xmlrpc = CONF.getApiConInfoPort()
+    port_rest = CONF.getApiRestfulConInfoPort()
+
+    print "[CONF]", host, port_rest, port_xmlrpc
+
+    host = host if host else FARADAY_DEFAULT_HOST
+    port_xmlrpc = port_xmlrpc if port_xmlrpc else FARADAY_DEFAULT_PORT_XMLRPC
+    port_rest = port_rest if port_rest else FARADAY_DEFAULT_PORT_REST
+
+    print "[DEFAULTS]", host, port_rest, port_xmlrpc
+
+    host = args.host if args.host else host
+    port_xmlrpc = args.port_xmlrpc if args.port_xmlrpc else port_xmlrpc
+    port_rest = args.port_rest if args.port_rest else port_rest
+
+    print "[ARGS]", host, port_rest, port_xmlrpc
+
+    CONF.setApiConInfoHost(host)
+    CONF.setApiConInfoPort(port_xmlrpc)
+    CONF.setApiRestfulConInfoPort(port_rest)
 
     CONF.setAuth(args.disable_login)
 
@@ -600,6 +616,7 @@ def init():
     global logger
 
     args = getParserArgs()
+    setUpLogger(args.debug)
     logger = getLogger("launcher")
 
 
@@ -620,7 +637,6 @@ def main():
         setConf()
         checkCouchUrl()
         checkVersion()
-        setUpLogger()
         update()
         checkUpdates()
         startFaraday()

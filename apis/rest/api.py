@@ -42,29 +42,20 @@ def stopServer():
         _http_server.stop()
 
 
-def startAPIs(plugin_manager, model_controller, mapper_manager, hostname=None, port=None):
+def startAPIs(plugin_manager, model_controller, mapper_manager, hostname, port):
     global _rest_controllers
     global _http_server
     _rest_controllers = [PluginControllerAPI(plugin_manager, mapper_manager), ModelControllerAPI(model_controller)]
 
-    #TODO: some way to get defaults.. from config?
-    if str(hostname) == "None":
-        hostname = "localhost"
-    if str(port) == "None":
-        port = 9977
-
-    if CONF.getApiRestfulConInfo() is None:
-        CONF.setApiRestfulConInfo(hostname, port)
-
     app = Flask('APISController')
 
     _http_server = HTTPServer(WSGIContainer(app))
-    _http_server.listen(port,address=hostname) 
+    _http_server.listen(port, address=hostname)
 
     routes = [r for c in _rest_controllers for r in c.getRoutes()]
 
-    for route in routes: 
-        app.add_url_rule(route.path, view_func=route.view_func, methods=route.methods) 
+    for route in routes:
+        app.add_url_rule(route.path, view_func=route.view_func, methods=route.methods)
 
     logging.getLogger("tornado.access").addHandler(logger.getLogger(app))
     logging.getLogger("tornado.access").propagate = False
@@ -169,8 +160,8 @@ class ModelControllerAPI(RESTApi):
         hostid = json_data['hostid']
 
         host = self.controller.getHost(hostid)
-        if not host: 
-            return self.badRequest("no plugin available for cmd") 
+        if not host:
+            return self.badRequest("no plugin available for cmd")
 
         visitor = VulnsLookupVisitor(vulnid)
         host.accept(visitor)
@@ -178,7 +169,7 @@ class ModelControllerAPI(RESTApi):
         if not visitor.vulns:
             return self.noContent('No vuls matched criteria')
 
-        # forward to controller 
+        # forward to controller
         for vuln, parents in zip(visitor.vulns, visitor.parents):
             last_parent = parents[0]
             self.controller.delVulnSYNC(last_parent, vuln.getID())
@@ -198,8 +189,8 @@ class ModelControllerAPI(RESTApi):
         hostid = json_data['hostid']
 
         host = self.controller.getHost(hostid)
-        if not host: 
-            return self.badRequest("no plugin available for cmd") 
+        if not host:
+            return self.badRequest("no plugin available for cmd")
 
         visitor = VulnsLookupVisitor(vulnid)
         host.accept(visitor)
@@ -213,9 +204,9 @@ class ModelControllerAPI(RESTApi):
         resolution = json_data.get('resolution', None)
         refs = json_data.get('refs', None)
 
-        # forward to controller 
-        for vuln in visitor.vulns: 
-            self.controller.editVulnSYNC(vuln, name, desc, severity, resolution, refs) 
+        # forward to controller
+        for vuln in visitor.vulns:
+            self.controller.editVulnSYNC(vuln, name, desc, severity, resolution, refs)
 
         return self.ok("output successfully sent to plugin")
 

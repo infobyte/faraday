@@ -272,19 +272,13 @@ def setConf():
     port_xmlrpc = CONF.getApiConInfoPort()
     port_rest = CONF.getApiRestfulConInfoPort()
 
-    print "[CONF]", host, port_rest, port_xmlrpc
-
     host = host if host else FARADAY_DEFAULT_HOST
     port_xmlrpc = port_xmlrpc if port_xmlrpc else FARADAY_DEFAULT_PORT_XMLRPC
     port_rest = port_rest if port_rest else FARADAY_DEFAULT_PORT_REST
 
-    print "[DEFAULTS]", host, port_rest, port_xmlrpc
-
     host = args.host if args.host else host
     port_xmlrpc = args.port_xmlrpc if args.port_xmlrpc else port_xmlrpc
     port_rest = args.port_rest if args.port_rest else port_rest
-
-    print "[ARGS]", host, port_rest, port_xmlrpc
 
     CONF.setApiConInfoHost(host)
     CONF.setApiConInfoPort(port_xmlrpc)

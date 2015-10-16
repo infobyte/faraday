@@ -12,7 +12,7 @@ New features in the latest update
 
 TBA:
 ---
-
+*Added parametrization for port configuration on APIs.
 
 Oct 2, 2015:
 ---

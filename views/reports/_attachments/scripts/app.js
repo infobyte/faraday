@@ -8,7 +8,7 @@ $.ajaxSetup({
     async: false
 });
 
-var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload', 'filter', 'ngClipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js'])
+var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload', 'filter', 'ngClipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js', 'ui.grid', 'ui.grid.selection', 'ngSanitize'])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;

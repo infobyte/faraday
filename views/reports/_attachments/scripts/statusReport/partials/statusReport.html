@@ -32,11 +32,11 @@
                     Delete
                 </button>
                 <div id="merge" class="btn-group btn-small-margin">
-                    <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()" ng-disabled="selectedVulns().length != 1">
+                    <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()" ng-disabled="getCurrentSelection().length != 1">
                         <span class="glyphicon glyphicon-pencil"></span> 
                         Edit
                     </button>
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="selectedVulns().length < 2">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="getCurrentSelection().length < 2">
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
@@ -96,7 +96,7 @@
                     </div>
                 </div>
 
-                <table class="csv-export status-report table table-responsive">
+                <!-- <table class="csv-export status-report table table-responsive">
                     <thead>
                         <tr>
                             <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
@@ -264,7 +264,7 @@
                         </tr>
                     </tbody>
                 </table><!-- #hosts -->
-                <div class="showPagination">
+                <!--<div class="showPagination">
                     <div class="form-group">
                         <ul class="pagination">
                             <li><a ng-hide="currentPage <= 0" ng-click="currentPage = currentPage - 1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
@@ -279,7 +279,8 @@
                             <input type="number" min="0" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />
                         </form>
                     </div>
-                </div>
+                </div> -->
+                <div ui-grid="gridOptions" ui-grid-selection class="grid"></div>
                 <div id="counter">
                     <span>Total</span>
                     <span class="counterNum">{{vulns.length}}</span>

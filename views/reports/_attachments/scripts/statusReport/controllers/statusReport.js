@@ -7,11 +7,11 @@ angular.module('faradayApp')
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
                     'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager',
-                    'vulnsManager', 'workspacesFact', 'csvService',
+                    'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, hostsManager,
-                        vulnsManager, workspacesFact, csvService) {
+                        vulnsManager, workspacesFact, csvService, uiGridConstants) {
         $scope.baseurl;
         $scope.columns;
         $scope.easeofresolution;
@@ -28,6 +28,7 @@ angular.module('faradayApp')
         $scope.newCurrentPage;
         $scope.pageSize;
         $scope.newPageSize;
+        $scope.gridOptions;
 
         $scope.vulnWebSelected;
         $scope.confirmed = false;
@@ -41,10 +42,44 @@ angular.module('faradayApp')
             $scope.reverse = true;
             $scope.vulns = [];
 
+            $scope.gridOptions = {
+                enableRowSelection: true,
+                enableSelectAll: true,
+                enableRowHeaderSelection: true,
+                selectionRowHeaderWidth: 35,
+                expandableRowHeight: 380,
+                showGridFooter:true
+            };
+            $scope.gridOptions.columnDefs = [];
+            $scope.gridOptions.multiSelect = true;
+            $scope.showObjects = function(arrayOfObjects) {
+                var string = "";
+                for(key in arrayOfObjects) {
+                    if(arrayOfObjects.hasOwnProperty(key)) {
+                        if(arrayOfObjects[key] === true) {
+                            string += "<div class='pos-middle crop-text'>" + key +  "</div>";
+                        }
+                    }
+                }
+                return string;
+            };
+
+            $scope.gridOptions.onRegisterApi = function(gridApi){
+                //set gridApi on scope
+                $scope.gridApi = gridApi;
+                gridApi.selection.on.rowSelectionChanged($scope,function(row){
+                    var msg = 'row selected ' + row.isSelected;
+                });
+
+                gridApi.selection.on.rowSelectionChangedBatch($scope,function(rows){
+                    var msg = 'rows changed ' + rows.length;
+                });
+            };
+
             $scope.pageSize = 10;
             $scope.currentPage = 0;
             $scope.newCurrentPage = 0;
- 
+
             if (!isNaN(parseInt($cookies.get('pageSize'))))
                 $scope.pageSize = parseInt($cookies.get('pageSize'));
             $scope.newPageSize = $scope.pageSize;
@@ -78,8 +113,7 @@ angular.module('faradayApp')
 
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace).then(function(vulns) {
-                $scope.loadedVulns = true;
-                $scope.vulns = vulnsManager.vulns;
+                $scope.gridOptions.data = vulnsManager.vulns;
             });
 
             // created object for columns cookie columns
@@ -117,10 +151,25 @@ angular.module('faradayApp')
                 "response":         false,
                 "web":              false
             };
-            
+            for(key in $scope.columns) {
+                if($scope.columns.hasOwnProperty(key) && $scope.columns[key] == true) {
+                    if(key === 'date') {
+                        $scope.gridOptions.columnDefs.push({ 'name' : 'metadata.create_time', 'displayName' : key, type: 'date', cellFilter: 'date:"MM-dd-yyyy"' });
+                    } else if(key === 'impact') {
+                        $scope.gridOptions.columnDefs.push({ 'name' : key, 'type': 'object', 'displayName': key, 'cellTemplate': "<div class=\"ui-grid-cell-contents center\" ng-bind-html=\"grid.appScope.showObjects(row.entity.impact)\"></div>" });
+                    } else {
+                        $scope.gridOptions.columnDefs.push({ 'name' : key });
+                    }
+                }
+            }
+
             $scope.vulnWebSelected = false;
         };
 
+        $scope.selectAll = function() {
+            $scope.gridApi.selection.selectAllRows();
+        };
+     
         $scope.processReference = function(text) {
             var url = 'http://google.com/',
             url_pattern = new RegExp('^(http|https):\\/\\/?');
@@ -164,6 +213,10 @@ angular.module('faradayApp')
             });
             return selected;
         }
+
+        $scope.getCurrentSelection = function() {
+            return $scope.gridApi.selection.getSelectedRows();
+        };
 
         $scope.csv = function() {
             tmp_vulns = $filter('filter')($scope.vulns, $scope.expression);
@@ -272,7 +325,7 @@ angular.module('faradayApp')
 
         // action triggered from EDIT button
         $scope.edit = function() {
-            _edit($scope.selectedVulns());
+            _edit($scope.getCurrentSelection());
         };
 
         $scope.editVuln = function(vuln) {
@@ -295,6 +348,7 @@ angular.module('faradayApp')
                     }
                 });
                 modal.result.then(function(data) {
+                    console.log(data);
                     vulnsManager.updateVuln(vulns[0], data).then(function(){
                     }, function(errorMsg){
                         showMessage("Error updating vuln " + vulns[0].name + " (" + vulns[0]._id + "): " + errorMsg);
@@ -325,7 +379,7 @@ angular.module('faradayApp')
                 resolve: resolve
             });
             modal.result.then(function(data) {
-                $scope.selectedVulns().forEach(function(vuln) {
+                $scope.getCurrentSelection().forEach(function(vuln) {
                     obj = {};
                     obj[property] = data;
 
@@ -642,6 +696,7 @@ angular.module('faradayApp')
         $scope.toggleShow = function(column, show) {
             $scope.columns[column] = !show;
             $cookies.put('SRcolumns', JSON.stringify($scope.columns));
+            $scope.gridOptions.columnDefs.push({ 'name' : column });
         };
 
         // toggles sort field and order

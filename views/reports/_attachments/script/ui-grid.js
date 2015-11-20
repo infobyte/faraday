@@ -1,7 +1,7 @@
 /*!
-* ui-grid - v3.0.7 - 2015-10-06
-* Copyright (c) 2015 ; License: MIT 
-*/
+ * ui-grid - v3.0.7 - 2015-10-06
+ * Copyright (c) 2015 ; License: MIT 
+ */
 
 (function () {
   'use strict';

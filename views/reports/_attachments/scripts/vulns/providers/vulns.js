@@ -141,9 +141,8 @@ angular.module('faradayApp')
                                 }
                                 if(services.hasOwnProperty(vuln.parent)) vuln.service = services[vuln.parent];
                             });
+                            deferred.resolve(self.vulns);
                         });
-
-                    deferred.resolve(self.vulns);
                 })
                 .error(function() {
                     deferred.reject("Unable to retrieve vulnerabilities from Couch");

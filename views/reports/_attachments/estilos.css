@@ -1021,3 +1021,8 @@ div.datepicker .btn-sm, .btn-group-sm > .btn{padding: 5px 7px}
 .disabled{color: #919191}
 div.btn-group .vulns-filter{left: -2px;}
 div.btn-group .dropdown-menu.margin{margin-left: 38px}
+/* UI GRID */
+.ui-grid-cell.ui-grid-disable-selection.ui-grid-row-header-cell{pointer-events: auto!important;}
+.grid {
+  height: 98vh;
+}

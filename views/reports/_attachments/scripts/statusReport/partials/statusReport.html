@@ -6,7 +6,7 @@
     <div class="right-main">
         <div id="reports-main" class="fila clearfix">
             <div class="ws-label">
-                <h2><span id="ws-name" title="Current workspace">Status report for {{ workspace }} ({{ confirmed === false ? 'all vulns' : 'confirmed' }}) ({{filtered.length}} vulns)</span></h2><!-- WS name -->
+                <h2><span id="ws-name" title="Current workspace">Status report for {{ workspace }} ({{ confirmed === false ? 'all vulns' : 'confirmed' }}) ({{gridOptions.data.length}} vulns)</span></h2><!-- WS name -->
             </div><!-- .ws-label -->
             <div id="ws-control" class="btn-group btn-small-margin">
                 <button file-exporter="csv()" type="button" class="btn btn-success" title="Download CSV for current workspace">
@@ -77,8 +77,8 @@
                                     <input type="text" class="form-control" id="filter-by" 
                                     placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
                                     <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                        <i class="fa fa-search" ng-if="vulns && loadedVulns === true"></i>
-                                        <i class="fa fa-refresh fa-spin" ng-if="vulns.length == 0 && loadedVulns != true"></i>
+                                        <i class="fa fa-search" ng-if="gridOptions.data.length > 0"></i>
+                                        <i class="fa fa-refresh fa-spin" ng-if="gridOptions.data.length == 0"></i>
                                     </span>
                                 </div>
                             </div>
@@ -280,17 +280,17 @@
                         </form>
                     </div>
                 </div> -->
-                <div ui-grid="gridOptions" ui-grid-selection class="grid"></div>
+                <div ui-grid="gridOptions" ui-grid-grouping ui-grid-selection ui-grid-pagination class="grid"></div>
                 <div id="counter">
                     <span>Total</span>
-                    <span class="counterNum">{{vulns.length}}</span>
+                    <span class="counterNum">{{gridOptions.total}}</span>
                     <div ng-if="search">
                         <span>Viewing</span>
-                        <span class="counterNum">{{filtered.length}}</span>
+                        <span class="counterNum">{{gridOptions.data.length}}</span>
                     </div>
                     <p style="margin:0px" ng-if="!search"></p>
                     <span>Selected</span>
-                    <span class="counterNum">{{selectedVulns().length}}</span>
+                    <span class="counterNum">{{getCurrentSelection().length}}</span>
                 </div>
             </div><!-- .reports -->
     </div><!-- #reports-main --></div><!-- .right-main -->

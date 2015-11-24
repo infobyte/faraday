@@ -49,28 +49,6 @@ angular.module('faradayApp')
                                 '<span class="glyphicon glyphicon-pencil cursor" uib-tooltip="Edit"></span>'+
                            '</div>';
 
-            var setGroupValues = function( columns, rows ) {
-                columns.forEach( function( column ) {
-                    if ( column.grouping && column.grouping.groupPriority > -1 ){
-                        // Put the balance next to all group labels.
-                        column.treeAggregationFn = function( aggregation, fieldValue, numValue, row ) {
-                            if ( typeof(aggregation.value) === 'undefined') {
-                                aggregation.value = 0;
-                            }
-                            aggregation.value = aggregation.value + row.entity.balance;
-                        };
-                        column.customTreeAggregationFinalizerFn = function( aggregation ) {
-                            if ( typeof(aggregation.groupVal) !== 'undefined') {
-                                aggregation.rendered = aggregation.groupVal + ' (' + $filter('currency')(aggregation.value) + ')';
-                            } else {
-                                aggregation.rendered = null;
-                            }
-                        };
-                    }
-                });
-                return columns;
-            };
-
             $scope.gridOptions = {
                 enableSelectAll: true,
                 enableColumnMenus: false,
@@ -78,10 +56,9 @@ angular.module('faradayApp')
                 enableRowHeaderSelection: false,
                 paginationPageSizes: [10, 50, 75, 100],
                 paginationPageSize: 10,
-                enableHorizontalScrollbar: 0,
-                enableVerticalScrollbar: 0,
                 treeRowHeaderAlwaysVisible: false,
-                enableGroupHeaderSelection: true
+                enableGroupHeaderSelection: true,
+                rowHeight: 50
             };
             $scope.gridOptions.columnDefs = [];
             $scope.gridOptions.multiSelect = true;
@@ -107,7 +84,6 @@ angular.module('faradayApp')
             $scope.gridOptions.onRegisterApi = function(gridApi){
                 //set gridApi on scope
                 $scope.gridApi = gridApi;
-                $scope.gridApi.grid.registerColumnsProcessor( setGroupValues, 410 );
                 $scope.gridApi.selection.on.rowSelectionChanged( $scope, function ( rowChanged ) {
                     if ( typeof(rowChanged.treeLevel) !== 'undefined' && rowChanged.treeLevel > -1 ) {
                         // this is a group header
@@ -122,10 +98,6 @@ angular.module('faradayApp')
                     }
                 });
             };
-
-            $scope.pageSize = 10;
-            $scope.currentPage = 0;
-            $scope.newCurrentPage = 0;
 
             if (!isNaN(parseInt($cookies.get('pageSize'))))
                 $scope.pageSize = parseInt($cookies.get('pageSize'));
@@ -177,10 +149,10 @@ angular.module('faradayApp')
             // set columns to show and hide by default
             $scope.columns = objectoSRColumns || {
                 "date":             true,
+                "name":             true,
                 "severity":         true,
                 "service":          true,
                 "target":           true,
-                "name":             true,
                 "desc":             true,
                 "resolution":       false,
                 "data":             true,
@@ -214,7 +186,7 @@ angular.module('faradayApp')
 
             var myHeader = "<div ng-class=\"{ 'sortable': sortable }\">"+
                                 "<div class=\"ui-grid-cell-contents\" col-index=\"renderIndex\" title=\"TOOLTIP\">{{ col.displayName CUSTOM_FILTERS }}"+
-                                    "<a href=\"\" ng-click=\"grid.appScope.toggleShow(col.displayName, true)\"><span class=\"glyphicon glyphicon-remove\"></span></a>"+
+                                    "<a href=\"\" ng-click=\"grid.appScope.toggleShow(col.displayName, true)\"><span style=\"color:#000;\" class=\"glyphicon glyphicon-remove\"></span></a>"+
                                     "<span ui-grid-visible=\"col.sort.direction\" ng-class=\"{ 'ui-grid-icon-up-dir': col.sort.direction == asc, 'ui-grid-icon-down-dir': col.sort.direction == desc, 'ui-grid-icon-blank': !col.sort.direction }\">&nbsp;</span>"+
                                 "</div>"+
                                 "<div class=\"ui-grid-column-menu-button\" ng-if=\"grid.options.enableColumnMenus && !col.isRowHeader  && col.colDef.enableColumnMenu !== false\" ng-click=\"toggleMenu($event)\" ng-class=\"{'ui-grid-column-menu-button-last-col': isLastCol}\">"+
@@ -224,32 +196,27 @@ angular.module('faradayApp')
                             "</div>";
 
             if(column === 'date') {
-                $scope.gridOptions.columnDefs.push({ 'name' : 'metadata.create_time', 'displayName' : column, type: 'date', cellFilter: 'date:"MM-dd-yyyy"', headerCellTemplate: myHeader
+                $scope.gridOptions.columnDefs.push({ 'name' : 'metadata.create_time', 'displayName' : column, type: 'date', cellFilter: 'date:"MM/dd/yyyy"', headerCellTemplate: myHeader
                 });
             } else if(column === 'name') {
-                $scope.gridOptions.columnDefs.push({ 'name' : column, grouping: { groupPriority: 0 }, 'cellTemplate': '<div><div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents" title="TOOLTIP">{{COL_FIELD CUSTOM_FILTERS}}</div></div>', headerCellTemplate: myHeader,
+                $scope.gridOptions.columnDefs.push({ 'name' : column, 'cellTemplate': '<div><div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents" popover-placement="right" uib-popover="{{COL_FIELD CUSTOM_FILTERS}}">{{COL_FIELD CUSTOM_FILTERS}}</div></div>', headerCellTemplate: myHeader,
                     sort: { priority: 0, direction: 'asc' }
                 });
             } else if(column === 'severity') {
-                $scope.gridOptions.columnDefs.push({ 'name' : column, 'cellTemplate': "<a href=\"#/status/ws/" + $scope.workspace + "/search/severity={{row.entity.severity}}\"><span class=\"label vuln fondo-{{row.entity.severity}}\">{{row.entity.severity | uppercase}}</span></a>", headerCellTemplate: myHeader,
+                $scope.gridOptions.columnDefs.push({ 'name' : column, 'cellTemplate': "<a href=\"#/status/ws/" + $scope.workspace + "/search/severity={{row.entity.severity}}\"><span class=\"label vuln fondo-{{COL_FIELD CUSTOM_FILTERS}}\">{{COL_FIELD CUSTOM_FILTERS | uppercase}}</span></a>", headerCellTemplate: myHeader,
                     sortingAlgorithm: compareSeverities
                 });
             } else if(column === 'target') {
-                $scope.gridOptions.columnDefs.push({ 'name' : column, 'cellTemplate': "<div ng-if='row.entity._id != undefined'><a ng-href=\"#/status/ws/" + $scope.workspace + "/search/target={{row.entity.target}}\">{{row.entity.target}}</a>" +
+                $scope.gridOptions.columnDefs.push({ 'name' : column, 'cellTemplate': "<div ng-if='row.entity._id != undefined'><a ng-href=\"#/status/ws/" + $scope.workspace + "/search/target={{row.entity.target}}\">{{COL_FIELD CUSTOM_FILTERS}}</a>" +
                     "<a ng-href=\"//www.shodan.io/search?query={{row.entity.target}}\" uib-tooltip=\"Search in Shodan\" target=\"_blank\">" +
                         "<img ng-src=\"../././reports/images/shodan.png\" height=\"15px\" width=\"15px\" style='margin-left:5px'/>" +
-                    "</a></div>", headerCellTemplate: myHeader,
-                    headerTooltip: function( col ) {
-                        return 'Header: ' + col.displayName;
-                    },
-                    cellTooltip: function( row, col ) {
-                        return 'hola' + row.entity[col.displayName.toLowerCase()];
-                    }
+                    "</a></div>"+
+                    "<div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\">{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader
                 });
             } else if(column === 'impact' || column === 'refs' || column === 'hostnames') {
-                $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class=\"ui-grid-cell-contents center\" ng-bind-html=\"grid.appScope.showObjects(row.entity[col.displayName])\"></div>", headerCellTemplate: myHeader });
+                $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class=\"ui-grid-cell-contents center\" ng-bind-html=\"grid.appScope.showObjects(COL_FIELD CUSTOM_FILTERS)\"></div><div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\">{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader });
             } else if(column === 'service') {
-                $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class=\"ui-grid-cell-contents\"><a href=\"#/status/ws/" + $scope.workspace + "/search/service={{row.entity.service | encodeURIComponent | encodeURIComponent}}\" target=\"_blank\">{{row.entity.service}}</a></div>", headerCellTemplate: myHeader });
+                $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class=\"ui-grid-cell-contents\"><a href=\"#/status/ws/" + $scope.workspace + "/search/service={{row.entity.service | encodeURIComponent | encodeURIComponent}}\" target=\"_blank\">{{COL_FIELD CUSTOM_FILTERS}}</a></div><div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\">{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader });
             } else if(column === 'web') {
                 $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column,
                 'cellTemplate': "<div ng-if='row.entity._id != undefined' class=\"ui-grid-cell-contents center\">"+
@@ -259,14 +226,7 @@ angular.module('faradayApp')
                  headerCellTemplate: myHeader
                 });
             } else {
-                $scope.gridOptions.columnDefs.push({ 'name' : column, headerCellTemplate: myHeader,
-                    headerTooltip: function( col ) {
-                        return 'Header: ' + col.displayName;
-                    },
-                    cellTooltip: function( row, col ) {
-                        return 'hola' + col.displayName.toLowerCase();
-                    }
-                });
+                $scope.gridOptions.columnDefs.push({ 'name' : column, headerCellTemplate: myHeader });
             }
         };
 
@@ -317,6 +277,19 @@ angular.module('faradayApp')
             });
             return selected;
         }
+
+        $scope.groupBy = function(property) {
+            if(property === 'date') property = 'metadata.create_time';
+            loadVulns(property);
+            $scope.gridApi.grouping.clearGrouping();
+            $scope.gridApi.grouping.groupColumn(property);
+            $scope.propertyGroupBy = property;
+        };
+
+        $scope.clearGroupBy = function() {
+            $scope.gridApi.grouping.clearGrouping();
+            $scope.propertyGroupBy = false;
+        };
 
         $scope.getCurrentSelection = function() {
             return $scope.gridApi.selection.getSelectedRows();
@@ -667,12 +640,11 @@ angular.module('faradayApp')
             */
         };
 
-        loadVulns = function() {
+        loadVulns = function(property) {
             // load all vulnerabilities
-            vulnsManager.getVulns($scope.workspace).then(function(vulns) {
-                tmp_data = $filter('orderObjectBy')(vulnsManager.vulns, 'name', true);
-                $scope.gridOptions.data = $filter('filter')(tmp_data, $scope.expression);
-            });
+            if (!property) property = "name";
+            tmp_data = $filter('orderObjectBy')(vulnsManager.vulns, property, true);
+            $scope.gridOptions.data = $filter('filter')(tmp_data, $scope.expression);
         };
 
         $scope.new = function() {

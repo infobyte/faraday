@@ -718,7 +718,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
         justify-content: center;
         align-items: center;
     }
-    #merge, #delete, #new, #tags, left{margin:5px;float:right}
+    #merge, #delete, #new, #tags, #group-by, left{margin:5px;float:right}
     .left_auths{margin:5px;float:right;margin-top: -52px;}
     .left_auth{margin:5px;float:right;margin-top: -40px;}
 
@@ -1025,4 +1025,8 @@ div.btn-group .dropdown-menu.margin{margin-left: 38px}
 .ui-grid-cell.ui-grid-disable-selection.ui-grid-row-header-cell{pointer-events: auto!important;}
 .grid {
   height: 98vh;
+}
+.ui-grid .ui-grid-row:nth-child(odd) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid .ui-grid-row:nth-child(even) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid-cell-contents{
+    white-space: pre!important;
+    word-wrap: break-word!important;
 }

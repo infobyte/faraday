@@ -61,7 +61,18 @@
                         <li role="separator" class="divider"></li>
                         <li><a class="ws" ng-click="editCWE()">From CWE</a></li>
                     </ul>
-                    </div>
+                </div>
+                <div id="group-by" class="btn-group btn-small-margin">
+                    <button type="button" class="btn btn-default" title="Group by" ng-click="clearGroupBy()">
+                        {{ !propertyGroupBy ? "Group By" : "Clear"}}
+                    </button>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Group By">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li ng-repeat="(column, show) in columns"><a class="ws" ng-click="groupBy(column)">{{column}}</a></li>
+                    </ul>
+                </div>
                 <button id="new" type="button" class="btn btn-success" title="New Vulns" ng-click="new()">
                     <span class="glyphicon glyphicon-plus-sign"></span>
                     New

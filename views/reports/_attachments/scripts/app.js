@@ -93,6 +93,21 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, 
             controller: 'hostCtrl',
             title: 'Services | '
         }).
+        when('/status/ws/:wsId/groupby/:groupbyId', {
+            templateUrl: 'scripts/statusReport/partials/statusReport.html',
+            controller: 'statusReportCtrl',
+            title: 'Status Report | '
+        }).
+        when('/status/ws/:wsId/groupby/:groupbyId/search/:search', {
+            templateUrl: 'scripts/statusReport/partials/statusReport.html',
+            controller: 'statusReportCtrl',
+            title: 'Status Report | '
+        }).
+        when('/status/ws/:wsId/groupby/:groupbyId/search', {
+            templateUrl: 'scripts/statusReport/partials/statusReport.html',
+            controller: 'statusReportCtrl',
+            title: 'Status Report | '
+        }).
         when('/status/ws/:wsId/search/:search', {
             templateUrl: 'scripts/statusReport/partials/statusReport.html',
             controller: 'statusReportCtrl',

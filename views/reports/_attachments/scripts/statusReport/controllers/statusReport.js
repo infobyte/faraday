@@ -38,6 +38,7 @@ angular.module('faradayApp')
             $scope.baseurl = BASEURL;
             $scope.severities = SEVERITIES;
             $scope.easeofresolution = EASEOFRESOLUTION;
+            $scope.propertyGroupBy = $routeParams.groupbyId;
             $scope.sortField = 'metadata.create_time';
             $scope.reverse = true;
             $scope.vulns = [];
@@ -174,9 +175,14 @@ angular.module('faradayApp')
             };
             $scope.gridOptions.columnDefs.push({ name: ' ', width: '50', cellTemplate: deleteRow });
             $scope.gridOptions.columnDefs.push({ name: '  ', width: '50', cellTemplate: editRow });
+            var count = 0;
             for(key in $scope.columns) {
                 if($scope.columns.hasOwnProperty(key) && $scope.columns[key] == true) {
+                    ++count;
                     _addColumn(key);
+                    if(key === $scope.propertyGroupBy) {
+                        $scope.gridOptions.columnDefs[count + 1].grouping = { groupPriority: 0 };
+                    }
                 }
             }
             $scope.vulnWebSelected = false;
@@ -279,16 +285,15 @@ angular.module('faradayApp')
         }
 
         $scope.groupBy = function(property) {
-            if(property === 'date') property = 'metadata.create_time';
-            loadVulns(property);
-            $scope.gridApi.grouping.clearGrouping();
-            $scope.gridApi.grouping.groupColumn(property);
-            $scope.propertyGroupBy = property;
+            var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + property;
+
+            $location.path(url);
         };
 
         $scope.clearGroupBy = function() {
-            $scope.gridApi.grouping.clearGrouping();
-            $scope.propertyGroupBy = false;
+            var url = "/status/ws/" + $routeParams.wsId;
+
+            $location.path(url);
         };
 
         $scope.getCurrentSelection = function() {
@@ -769,7 +774,11 @@ angular.module('faradayApp')
 
         // changes the URL according to search params
         $scope.searchFor = function(search, params) {
-            var url = "/status/ws/" + $routeParams.wsId;
+            if(window.location.hash.substring(1).indexOf('groupby') === -1) {
+                var url = "/status/ws/" + $routeParams.wsId;
+            } else {
+                var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
+            }
 
             if(search && params != "" && params != undefined) {
                 url += "/search/" + $scope.encodeSearch(params);
@@ -818,11 +827,13 @@ angular.module('faradayApp')
         };
 
         var compareSeverities = function(a, b) {
-            var res = 1;
-            if($scope.severities.indexOf(a) > $scope.severities.indexOf(b)) {
-              res = -1;
+            if($scope.propertyGroupBy !== "severity") {
+                var res = 1;
+                if($scope.severities.indexOf(a) > $scope.severities.indexOf(b)) {
+                  res = -1;
+                }
+                return res;
             }
-            return res;
         };
 
         init();

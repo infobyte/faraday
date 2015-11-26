@@ -130,6 +130,10 @@ angular.module('faradayApp')
                 // search params for search field, which shouldn't be used for filtering
                 $scope.searchParams = $scope.stringSearch($scope.expression);
             }
+            $scope.hash = window.location.hash;
+            if(window.location.hash.substring(1).indexOf('search') !== -1) {
+                $scope.hash = $scope.hash.slice(0, window.location.hash.indexOf('search') - 1);
+            }
 
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace).then(function(vulns) {
@@ -213,7 +217,7 @@ angular.module('faradayApp')
                     sortingAlgorithm: compareSeverities
                 });
             } else if(column === 'target') {
-                $scope.gridOptions.columnDefs.push({ 'name' : column, 'cellTemplate': "<div ng-if='row.entity._id != undefined'><a ng-href=\"#/status/ws/" + $scope.workspace + "/search/target={{row.entity.target}}\">{{COL_FIELD CUSTOM_FILTERS}}</a>" +
+                $scope.gridOptions.columnDefs.push({ 'name' : column, 'cellTemplate': "<div ng-if='row.entity._id != undefined'><a ng-href=" + $scope.hash + "/search/target={{row.entity.target}}>{{COL_FIELD CUSTOM_FILTERS}}</a>" +
                     "<a ng-href=\"//www.shodan.io/search?query={{row.entity.target}}\" uib-tooltip=\"Search in Shodan\" target=\"_blank\">" +
                         "<img ng-src=\"../././reports/images/shodan.png\" height=\"15px\" width=\"15px\" style='margin-left:5px'/>" +
                     "</a></div>"+
@@ -222,7 +226,7 @@ angular.module('faradayApp')
             } else if(column === 'impact' || column === 'refs' || column === 'hostnames') {
                 $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class=\"ui-grid-cell-contents center\" ng-bind-html=\"grid.appScope.showObjects(COL_FIELD CUSTOM_FILTERS)\"></div><div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\">{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader });
             } else if(column === 'service') {
-                $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class=\"ui-grid-cell-contents\"><a href=\"#/status/ws/" + $scope.workspace + "/search/service={{row.entity.service | encodeURIComponent | encodeURIComponent}}\" target=\"_blank\">{{COL_FIELD CUSTOM_FILTERS}}</a></div><div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\">{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader });
+                $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class='ui-grid-cell-contents'><a href=" + $scope.hash + "/search/service={{grid.appScope.encodeUrl(row.entity.service)}}>{{COL_FIELD CUSTOM_FILTERS}}</a></div><div ng-if='row.groupHeader && col.grouping.groupPriority !== undefined'>{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader });
             } else if(column === 'web') {
                 $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column,
                 'cellTemplate': "<div ng-if='row.entity._id != undefined' class=\"ui-grid-cell-contents center\">"+
@@ -298,6 +302,10 @@ angular.module('faradayApp')
 
         $scope.getCurrentSelection = function() {
             return $scope.gridApi.selection.getSelectedRows();
+        };
+
+        $scope.encodeUrl = function(text) {
+            return encodeURIComponent(encodeURIComponent(text));
         };
 
         $scope.csv = function() {

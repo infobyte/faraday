@@ -25,7 +25,7 @@
                         ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
                         </uib-accordion-heading>
                         <div class="panel-body" ng-repeat="service in host.services">
-                            <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': service.selected_modalNewCtrl == true}">{{service.name}}</a>
+                            <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': service.selected_modalNewCtrl == true}">{{service.name}}  {{service.ports}}</a>
                         </div>
                         </uib-accordion-group>
                     </uib-accordion>

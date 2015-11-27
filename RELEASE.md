@@ -12,7 +12,9 @@ New features in the latest update
 
 TBA:
 ---
-*Added parametrization for port configuration on APIs.
+* Added parametrization for port configuration on APIs.
+* Bug cwe, reports name in workspaces
+* Adding port in vulnerability new gui web target/service
 
 Oct 2, 2015:
 ---

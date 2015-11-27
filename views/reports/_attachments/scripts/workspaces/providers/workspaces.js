@@ -20,7 +20,7 @@ angular.module('faradayApp')
         filterReservedWorkspaces = function(wss) {
             var deferred = $q.defer();
             deferred.resolve(wss.data.filter(function(ws) {
-                return ws.search(/^_/) < 0 && ws.search("cwe") < 0 && ws.search("reports") < 0;
+                return ws.search(/^_/) < 0 && ws.search("^cwe$") < 0 && ws.search("^reports$") < 0;
             }));
             return deferred.promise;
         };

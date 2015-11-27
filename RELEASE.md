@@ -13,6 +13,11 @@ New features in the latest update
 TBA:
 ---
 *Added parametrization for port configuration on APIs.
+* Adding new scripts for faraday plugin:
+  - /bin/delAllVulnsWith.py - delete all vulns that match a regex
+  - /bin/getAllbySrv.py - get all ip addresses that have defined open port
+
+
 
 Oct 2, 2015:
 ---

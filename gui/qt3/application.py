@@ -72,7 +72,7 @@ class GuiApp(qt.QApplication, FaradayUi):
             model.api.log("Make sure you have couchdb up and running if you want visualizations.")
             model.api.log("If couchdb is up, point your browser to: [%s]" % url)
         else:
-            model.api.log("Please configure Couchdb for fancy HTML5 Dashboard")
+            model.api.log("Please configure Couchdb for fancy HTML5 Dashboard (https://github.com/infobyte/faraday/wiki/Couchdb)")
         exit_code = self.exec_loop()
         return exit_code
 

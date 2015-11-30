@@ -139,7 +139,7 @@ class MainApplication(object):
 
                 last_workspace = CONF.getLastWorkspace()
                 if not self._workspace_manager.workspaceExists(last_workspace):
-                    getLogger(self).info("Your last workspace ("+last_workspace+") wasn't accessible, check configuration...")
+                    getLogger(self).info("Your last workspace ("+str(last_workspace)+") wasn't accessible, check configuration...")
                     self._workspace_manager.openDefaultWorkspace()
                     #self._workspace_manager.createWorkspace(last_workspace, 'default workspace, probably created already in couchb')
                 else:

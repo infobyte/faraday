@@ -14,6 +14,7 @@ TBA:
 ---
 * Added parametrization for port configuration on APIs.
 * Bug get_installed_distributions from handler exceptions
+* Fixed bug null last workspace
 
 Oct 2, 2015:
 ---

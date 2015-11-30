@@ -12,7 +12,8 @@ New features in the latest update
 
 TBA:
 ---
-*Added parametrization for port configuration on APIs.
+* Added parametrization for port configuration on APIs.
+* Bug get_installed_distributions from handler exceptions
 
 Oct 2, 2015:
 ---

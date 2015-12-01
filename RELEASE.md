@@ -17,6 +17,7 @@ TBA:
 * Adding wiki information default faraday without couchdb configuration
 * Fixed Unicode bug in Nexpose-full Plugin
 * Filter false-positives in Status Report
+* Fixed bugs in CSV export/import QT
 
 Oct 2, 2015:
 ---

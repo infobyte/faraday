@@ -14,12 +14,5 @@ function(doc) {
     emit("interfaces", 1);
   } else if(doc.type=="Note") {
     emit("notes", 1);
-  } else if(doc.type=="VulnerabilityWeb" || doc.type=="Vulnerability") {
-    if(doc.type=="VulnerabilityWeb") {
-      emit("web vulns", 1);
-    } else {
-      emit("vulns", 1);
-    }
-    emit("total vulns", 1);
   }
 }

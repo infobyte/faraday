@@ -42,8 +42,17 @@ angular.module('faradayApp')
         };
 
         dashboardSrv.getVulnerabilities = function(ws) {
+            var deferred = $q.defer();
+
             var url = BASEURL + "/" + ws + "/_design/vulns/_view/all";
-            return dashboardSrv._getView(url);
+            var AllVulns = [];
+            dashboardSrv._getView(url).then(function(vulns) {
+                vulns.forEach(function(v) {
+                    if(v.confirmed === true) AllVulns.push(v);
+                });
+                deferred.resolve(AllVulns);
+            });
+            return deferred.promise;
         };
 
         dashboardSrv.getVulnerabilitiesCount = function(ws) {

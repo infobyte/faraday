@@ -30,6 +30,8 @@ angular.module('faradayApp')
         $scope.newPageSize;
 
         $scope.vulnWebSelected;
+        $scope.confirm = true;
+        var allVulns;
 
         init = function() {
             $scope.baseurl = BASEURL;
@@ -57,6 +59,13 @@ angular.module('faradayApp')
             $scope.interfaces = [];
             // current search
             $scope.search = $routeParams.search;
+            if($scope.search === undefined) { 
+                $scope.search = "confirmed=true";
+            } else {
+                if($scope.search.indexOf("confirmed") === -1 || $scope.confirm === false) {
+                    $scope.search = $scope.search.concat("&confirmed=true");
+                }
+            }
             $scope.searchParams = "";
             $scope.expression = {};
             if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
@@ -68,6 +77,7 @@ angular.module('faradayApp')
 
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace).then(function(vulns) {
+                $scope.loadedVulns = true;
                 $scope.vulns = vulnsManager.vulns;
             });
 
@@ -159,6 +169,28 @@ angular.module('faradayApp')
             return csvService.generator($scope.columns, tmp_vulns, $scope.workspace);
         };
 
+        $scope.toggleFilter = function(expression) {
+            if(expression["confirmed"] === undefined) {
+                expression["confirmed"] = true;
+                $scope.expression = expression;
+                $scope.confirm = true;
+                $scope.newCurrentPage = 0;
+                $scope.go();
+            } else {
+                $scope.expression = {};
+                for(key in expression) {
+                    if(expression.hasOwnProperty(key)) {
+                        if(key !== "confirmed") {
+                            $scope.expression[key] = expression[key];
+                        }
+                    }
+                }
+                $scope.confirm = false;
+                $scope.newCurrentPage = 0;
+                $scope.go();
+            }
+        };
+
         showMessage = function(msg) {
             var modal = $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',
@@ -219,6 +251,20 @@ angular.module('faradayApp')
             } else {
                 showMessage('No vulnerabilities were selected to delete');
             }
+        };
+
+        $scope.toggleConfirmVuln = function(vuln, confirm) {
+            _toggleConfirm([vuln], confirm);
+        };
+
+        _toggleConfirm = function(vulns, confirm) {
+            var toggleConfirm = {'confirmed': !confirm};
+            vulns.forEach(function(vuln) {
+                vulnsManager.updateVuln(vuln, toggleConfirm).then(function(){
+                }, function(errorMsg){
+                    showMessage("Error updating vuln " + vuln.name + " (" + vuln._id + "): " + errorMsg);
+                });
+            });
         };
 
         // action triggered from EDIT button
@@ -387,6 +433,28 @@ angular.module('faradayApp')
                 property);
         };
 
+        $scope.editConfirm = function() {
+            editProperty(
+                'scripts/commons/partials/editOptions.html',
+                'commonsModalEditOptions',
+                'Confirm/Disconfirm:',
+                'confirmed',
+                {
+                    options: ['Confirm', 'Disconfirm'],
+                    callback: function(vuln, data) {
+                        var property;
+                        if(data === 'Confirm') {
+                            property = {'confirmed': true};
+                        } else {
+                            property = {'confirmed': false};
+                        }
+                        return property;
+                    }
+                }
+                );
+
+        };
+
         $scope.editCWE = function() {
             var modal = $uibModal.open({
                 templateUrl: 'scripts/commons/partials/editCWE.html',
@@ -546,7 +614,9 @@ angular.module('faradayApp')
                     if(prop == "$") {
                         search += obj[prop];
                     } else {
-                        search += prop + ":" + obj[prop];
+                        if(prop !== "confirmed"){
+                            search += prop + ":" + obj[prop];
+                        }
                     }
                 }
             }

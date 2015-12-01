@@ -13,7 +13,7 @@ import model.controller
 import managers.mapper_manager
 from mockito import mock
 from persistence.mappers.abstract_mapper import NullPersistenceManager
-from model.hosts import Host
+from model.hosts import Host, ModelObjectVuln
 from model.diff import ModelObjectDiff
 
 import test_cases.common as test_utils
@@ -50,6 +50,19 @@ class DiffTests(unittest.TestCase):
         diff = ModelObjectDiff(h1, h2)
 
         self.assertTrue(diff.existDiff())
+
+    def test_diff_between_equal_vulns_with_different_confirmed(self):
+        v1 = ModelObjectVuln(name="vuln1",
+                             desc="description",
+                             severity="high",
+                             confirmed=True)
+        v2 = ModelObjectVuln(name="vuln1",
+                             desc="description", severity="high")
+
+        self.assertFalse(v1.addUpdate(v2),
+                         "The conflict should be resolved automatically")
+        self.assertTrue(v1.confirmed,
+                        "The vuln should be still confirmed")
 
 
 class UpdatesTests(unittest.TestCase):

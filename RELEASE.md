@@ -16,6 +16,7 @@ TBA:
 * Bug get_installed_distributions from handler exceptions
 * Adding wiki information default faraday without couchdb configuration
 * Fixed Unicode bug in Nexpose-full Plugin
+* Filter false-positives in Status Report
 
 Oct 2, 2015:
 ---

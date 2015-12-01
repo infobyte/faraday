@@ -6,7 +6,7 @@
     <div class="right-main">
         <div id="reports-main" class="fila clearfix">
             <div class="ws-label">
-                <h2><span id="ws-name" title="Current workspace">Status report for {{ workspace }} ({{vulns.length}} vulns)</span></h2><!-- WS name -->
+                <h2><span id="ws-name" title="Current workspace">Status report for {{ workspace }} ({{filtered.length}} vulns)</span></h2><!-- WS name -->
             </div><!-- .ws-label -->
             <div id="ws-control" class="btn-group btn-small-margin">
                 <button file-exporter="csv()" type="button" class="btn btn-success" title="Download CSV for current workspace">
@@ -14,6 +14,9 @@
                 </button>
                 <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
                     <span class="glyphicon glyphicon-refresh"></span>
+                </button>
+                <button type="button" class="btn btn-danger" title="{{ confirm === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleFilter(expression)">
+                    <span class="glyphicon glyphicon-filter"></span>
                 </button>
                 <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
                     Change workspace <span class="caret"></span>
@@ -45,6 +48,7 @@
                         <li><a class="ws" ng-click="editEaseofresolution()">Edit ease of resolution</a></li>
                         <li><a class="ws" ng-click="editReferences()">Add references</a></li>
                         <li><a class="ws" ng-click="editImpact()">Edit impact</a></li>
+                        <li><a class="ws" ng-click="editConfirm()">Confirm/Change to false positive</a></li>
                         <li ng-show="vulnWebSelected" role="separator" class="divider"></li>
                         <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('method')">Edit method</a></li>
                         <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('pname', 'param name')">Edit param name</a></li>
@@ -69,12 +73,12 @@
                         <form role="form" ng-submit="searchFor(true, searchParams)">
                             <div class="form-group">
                                 <div class="input-group input-group-sm">
-                                    <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
+                                    <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search && search != 'confirmed=true'"></span>
                                     <input type="text" class="form-control" id="filter-by" 
                                     placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
                                     <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                        <i class="fa fa-search" ng-if="vulns"></i>
-                                        <i class="fa fa-refresh fa-spin" ng-if="vulns.length == 0"></i>
+                                        <i class="fa fa-search" ng-if="vulns && loadedVulns === true"></i>
+                                        <i class="fa fa-refresh fa-spin" ng-if="vulns.length == 0 && loadedVulns != true"></i>
                                     </span>
                                 </div>
                             </div>
@@ -96,6 +100,7 @@
                     <thead>
                         <tr>
                             <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
+                            <th><a href=""></a></th>
                             <th><a href=""></a></th>
                             <th><a href=""></a></th>
                             <th ng-if="columns.date">
@@ -202,6 +207,10 @@
                             <td class="text-center"><input type="checkbox" name="{{v.id}}"/></td>
                             <td class="text-center"><span ng-click="editVuln(v)" class="glyphicon glyphicon-pencil cursor" uib-tooltip="Edit"></span></td>
                             <td class="text-center"><span ng-click="deleteVuln(v)" class="glyphicon glyphicon-trash cursor" uib-tooltip="Delete"></span></td>
+                            <td class="text-center">
+                                <span ng-click="toggleConfirmVuln(v, v.confirmed)" class="glyphicon glyphicon-filter cursor" 
+                                uib-tooltip="{{v.confirmed ? 'Change to false positive' : 'Confirm'}}" ng-class="{ disabled:v.confirmed === false }"></span>
+                            </td>
                             <td ng-if="columns.date">{{v.metadata.create_time * 1000 | date:'MM/dd/yyyy'}}</td>
                             <td ng-if="columns.target">
                                 <a ng-href="#/status/ws/{{workspace}}/search/target={{v.target}}">{{v.target}}</a>

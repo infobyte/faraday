@@ -1018,3 +1018,6 @@ div.jumbotron.jumbotron-font h1{font-size: 54px}
 div.datepicker ul.dropdown-menu{width: 288px;}
 div.datepicker > p > ul > li > div > table{width: 97%}
 div.datepicker .btn-sm, .btn-group-sm > .btn{padding: 5px 7px}
+.disabled{color: #919191}
+div.btn-group .vulns-filter{left: -2px;}
+div.btn-group .dropdown-menu.margin{margin-left: 38px}

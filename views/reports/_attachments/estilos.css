@@ -984,7 +984,7 @@ aside .alert.alert-danger.alert-dismissible{
     font-size: 15px;
     font-weight: bold;
 }
-.text-center{text-align: center; width: 25px;}
+.text-center{text-align: center; line-height: 40px;}
 .severities .color-unclassified, .severities .color-unclassified:hover{color: #999;}
 .severities .color-info, .severities .color-info:hover{color: #2e97bd;}
 .severities .color-low, .severities .color-low:hover{color: #A1CE31;}
@@ -1026,7 +1026,9 @@ div.btn-group .dropdown-menu.margin{margin-left: 38px}
 .grid {
   height: 98vh;
 }
+.ui-grid-cell-contents.left-rows.text-center.ng-scope{white-space: normal!important; }
 .ui-grid .ui-grid-row:nth-child(odd) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid .ui-grid-row:nth-child(even) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid-cell-contents{
     white-space: pre!important;
     word-wrap: break-word!important;
 }
+.ui-grid-cell-contents.center > .pos-middle.crop-text{margin-top: -15px; margin-bottom: 12px;}

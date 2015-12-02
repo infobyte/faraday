@@ -216,7 +216,10 @@ angular.module('faradayApp')
                 });
             } else if(column === 'severity') {
                     $scope.gridOptions.columnDefs.push({ 'name' : column,
-                        'cellTemplate': '<div><div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents text-center"><a href=\"#/status/ws/" + $scope.workspace + "/search/severity={{row.entity.severity}}\"><span class=\"label vuln fondo-{{COL_FIELD}}\">{{COL_FIELD | uppercase}}</span></a></div></div>',
+                        'cellTemplate': '<div ng-if="row.entity._id != undefined">'+
+                            '<div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents text-center"><a href=\"#/status/ws/' + $scope.workspace + '/search/severity={{COL_FIELD}}\"><span class=\"label vuln fondo-{{COL_FIELD}}\">{{COL_FIELD | uppercase}}</span></a></div>'+
+                        '</div>'+
+                        '<div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\"><span class=\"label vuln fondo-{{COL_FIELD}}\">{{COL_FIELD | uppercase}}</span></div>',
                         headerCellTemplate: myHeader,
                         type: 'string',
                         width: '110',

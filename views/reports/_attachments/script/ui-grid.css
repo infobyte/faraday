@@ -408,7 +408,10 @@ select.ui-grid-filter-select:hover {
   overflow: hidden;
   float: left;
   background-color: inherit;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
   box-sizing: border-box;
+  border-top: 1px solid #ddd;
 }
 .ui-grid-cell:last-child {
   border-right: 0;
@@ -424,6 +427,7 @@ select.ui-grid-filter-select:hover {
   text-overflow: ellipsis;
   overflow: hidden;
   height: 100%;
+  font-size: 12px;
 }
 .ui-grid-cell-contents-hidden {
   visibility: hidden;
@@ -767,7 +771,7 @@ fieldset[disabled] .ui-grid-menu .ui-grid-menu-inner .ui-grid-menu-close-button.
 */
 [class^="ui-grid-icon"]:before,
 [class*=" ui-grid-icon"]:before {
-  font-family: "ui-grid";
+  font-family: 'ui-grid';
   font-style: normal;
   font-weight: normal;
   speak: none;
@@ -1785,15 +1789,6 @@ select[multiple].ui-grid-pager-row-count-picker select {
 .ui-grid-row.ui-grid-row-selected > [ui-grid-row] > .ui-grid-cell {
   background-color: #f2dede;
 }
-.ui-grid-disable-selection {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  cursor: default;
-}
 .ui-grid-selection-row-header-buttons {
   cursor: pointer;
   opacity: 0.1;
@@ -1976,7 +1971,4 @@ select[multiple].ui-grid-pager-row-count-picker select {
   -ms-text-overflow: ellipsis;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.grid {
-  height: 600px;
 }

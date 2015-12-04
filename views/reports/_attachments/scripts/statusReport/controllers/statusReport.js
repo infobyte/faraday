@@ -43,10 +43,10 @@ angular.module('faradayApp')
             $scope.reverse = true;
             $scope.vulns = [];
 
-            var deleteRow = '<div ng-if="row.entity._id != undefined" class="ui-grid-cell-contents left-rows text-center" ng-click="grid.appScope.deleteVuln(row.entity)">'+
+            var deleteRow = '<div ng-if="row.entity._id != undefined" class="ui-grid-cell-contents row-tooltip text-center" ng-click="grid.appScope.deleteVuln(row.entity)">'+
                                 '<span class="glyphicon glyphicon-trash cursor" uib-tooltip="Delete"></span>'+
                             '</div>';
-            var editRow = '<div ng-if="row.entity._id != undefined" class="ui-grid-cell-contents left-rows text-center" ng-click="grid.appScope.editVuln(row.entity)">'+
+            var editRow = '<div ng-if="row.entity._id != undefined" class="ui-grid-cell-contents row-tooltip text-center" ng-click="grid.appScope.editVuln(row.entity)">'+
                                 '<span class="glyphicon glyphicon-pencil cursor" uib-tooltip="Edit"></span>'+
                            '</div>';
 
@@ -57,9 +57,10 @@ angular.module('faradayApp')
                 enableRowHeaderSelection: false,
                 paginationPageSizes: [10, 50, 75, 100],
                 paginationPageSize: 10,
+                enableHorizontalScrollbar: 0,
                 treeRowHeaderAlwaysVisible: false,
                 enableGroupHeaderSelection: true,
-                rowHeight: 50
+                rowHeight: 95
             };
             $scope.gridOptions.columnDefs = [];
             $scope.gridOptions.multiSelect = true;
@@ -70,13 +71,13 @@ angular.module('faradayApp')
                     for(key in object) {
                         if(object.hasOwnProperty(key)) {
                             if(object[key] === true) {
-                                partial += "<div class='pos-middle crop-text'>" + key +  "</div>";
+                                partial += "<p class='pos-middle crop-text'>" + key +  "</p>";
                             }
                         }
                     }
                 } else {
                     object.forEach(function(key) {
-                        partial += "<div class='pos-middle crop-text'>" + key +  "</div>";
+                        partial += "<p class='pos-middle crop-text'>" + key +  "</p>";
                     });
                 }
                 return partial;
@@ -139,7 +140,11 @@ angular.module('faradayApp')
             vulnsManager.getVulns($scope.workspace).then(function(vulns) {
                 tmp_data = $filter('orderObjectBy')(vulnsManager.vulns, $scope.propertyGroupBy, true);
                 $scope.gridOptions.data = $filter('filter')(tmp_data, $scope.expression);
+
                 $scope.gridOptions.total = vulns.length;
+                if($scope.gridOptions.total > $scope.gridOptions.paginationPageSize && $scope.gridOptions.total > 100) {
+                    $scope.gridOptions.paginationPageSizes.push($scope.gridOptions.total);
+                }
             });
 
             // created object for columns cookie columns
@@ -177,8 +182,8 @@ angular.module('faradayApp')
                 "response":         false,
                 "web":              false
             };
-            $scope.gridOptions.columnDefs.push({ name: ' ', width: '50', cellTemplate: deleteRow });
-            $scope.gridOptions.columnDefs.push({ name: '  ', width: '50', cellTemplate: editRow });
+            $scope.gridOptions.columnDefs.push({ name: ' ', width: '40', cellTemplate: deleteRow });
+            $scope.gridOptions.columnDefs.push({ name: '  ', width: '30', cellTemplate: editRow });
             var count = 0;
             for(key in $scope.columns) {
                 if($scope.columns.hasOwnProperty(key) && $scope.columns[key] == true) {
@@ -207,11 +212,11 @@ angular.module('faradayApp')
                             "</div>";
 
             if(column === 'date') {
-                $scope.gridOptions.columnDefs.push({ 'name' : 'metadata.create_time', 'displayName' : column, type: 'date', cellFilter: 'date:"MM/dd/yyyy"', headerCellTemplate: myHeader, width: '110'
+                $scope.gridOptions.columnDefs.push({ 'name' : 'metadata.create_time', 'displayName' : column, type: 'date', cellFilter: 'date:"MM/dd/yyyy"', headerCellTemplate: myHeader, width: '90'
                 });
             } else if(column === 'name') {
                 $scope.gridOptions.columnDefs.push({ 'name' : column,
-                'cellTemplate': '<div ng-if="row.entity._id != undefined"><div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents" uib-tooltip="{{COL_FIELD}}"><a ng-href=' + $scope.hash + '/search/name={{row.entity.name}}>{{COL_FIELD CUSTOM_FILTERS}}</a></div></div><div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\">{{COL_FIELD CUSTOM_FILTERS}}</div>',
+                'cellTemplate': '<div ng-if="row.entity._id != undefined"><div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents white-space" uib-tooltip="{{COL_FIELD}}"><a ng-href=' + $scope.hash + '/search/name={{row.entity.name}}>{{COL_FIELD CUSTOM_FILTERS}}</a></div></div><div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\" class="ui-grid-cell-contents white-space">{{COL_FIELD CUSTOM_FILTERS}}</div>',
                 headerCellTemplate: myHeader
                 });
             } else if(column === 'severity') {
@@ -226,7 +231,7 @@ angular.module('faradayApp')
                         sortingAlgorithm: compareSeverities
                     });
             } else if(column === 'target') {
-                $scope.gridOptions.columnDefs.push({ 'name' : column, 'cellTemplate': "<div ng-if='row.entity._id != undefined'><a ng-href=" + $scope.hash + "/search/target={{row.entity.target}}>{{COL_FIELD CUSTOM_FILTERS}}</a>" +
+                $scope.gridOptions.columnDefs.push({ 'name' : column, 'cellTemplate': "<div ng-if='row.entity._id != undefined' class='ui-grid-cell-contents row-tooltip'><a ng-href=" + $scope.hash + "/search/target={{row.entity.target}}>{{COL_FIELD CUSTOM_FILTERS}}</a>" +
                     "<a ng-href=\"//www.shodan.io/search?query={{row.entity.target}}\" uib-tooltip=\"Search in Shodan\" target=\"_blank\">" +
                         "<img ng-src=\"../././reports/images/shodan.png\" height=\"15px\" width=\"15px\" style='margin-left:5px'/>" +
                     "</a></div>"+
@@ -245,12 +250,23 @@ angular.module('faradayApp')
                 "</div>",
                  headerCellTemplate: myHeader
                 });
-            } else if(column === 'desc' || column === 'data' || column === 'resolution' || column === 'request' || column === 'response') {
+            } else if(column === 'desc') {
                 $scope.gridOptions.columnDefs.push({ 'name' : column, headerCellTemplate: myHeader,
-                cellTemplate: '<div><div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents" uib-tooltip="{{COL_FIELD}}">{{COL_FIELD CUSTOM_FILTERS}}</div></div>'
+                cellTemplate: '<div><div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents overflow-cell white-space" uib-tooltip=\"{{grid.appScope.ifTooltip(COL_FIELD)}}\">{{COL_FIELD CUSTOM_FILTERS}}</div></div>',
+                minWidth: '320'
+                });
+            } else if(column === 'data' || column === 'resolution' || column === 'request' || column === 'response') {
+                $scope.gridOptions.columnDefs.push({ 'name' : column, headerCellTemplate: myHeader,
+                cellTemplate: '<div><div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents white-space" uib-tooltip="{{COL_FIELD}}">{{COL_FIELD CUSTOM_FILTERS}}</div></div>'
                 });
             } else {
                 $scope.gridOptions.columnDefs.push({ 'name' : column, headerCellTemplate: myHeader });
+            }
+        };
+
+        $scope.ifTooltip = function(text) {
+            if(text !== undefined && text.length > 450) {
+                return text;
             }
         };
 

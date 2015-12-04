@@ -1032,3 +1032,11 @@ div.btn-group .dropdown-menu.margin{margin-left: 38px}
     word-wrap: break-word!important;
 }
 .ui-grid-cell-contents.center > .pos-middle.crop-text{margin-top: -15px; margin-bottom: 12px;}
+.grid.ui-grid{font-family: 12px!important;}
+.ui-grid-cell-contents.row-tooltip.text-center{white-space: normal!important; }
+.white-space{white-space: pre!important; word-wrap: break-word;}
+.ui-grid-cell-contents.center > .pos-middle.crop-text{top: 2%!important;white-space: }
+.overflow-cell{
+    height: 95px!important;
+    overflow-y: auto!important;
+}

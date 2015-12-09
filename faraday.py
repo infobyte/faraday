@@ -268,13 +268,9 @@ def setConf():
     CONF = getInstanceConfiguration()
     CONF.setDebugStatus(args.debug)
 
-    host = CONF.getApiConInfoHost()
-    port_xmlrpc = CONF.getApiConInfoPort()
-    port_rest = CONF.getApiRestfulConInfoPort()
-
-    host = host if host else FARADAY_DEFAULT_HOST
-    port_xmlrpc = port_xmlrpc if port_xmlrpc else FARADAY_DEFAULT_PORT_XMLRPC
-    port_rest = port_rest if port_rest else FARADAY_DEFAULT_PORT_REST
+    host = CONF.getApiConInfoHost() if str(CONF.getApiConInfoHost()) != "None" else FARADAY_DEFAULT_HOST
+    port_xmlrpc = CONF.getApiConInfoPort() if str(CONF.getApiConInfoPort()) != "None" else FARADAY_DEFAULT_PORT_XMLRPC
+    port_rest = CONF.getApiRestfulConInfoPort() if str(CONF.getApiRestfulConInfoPort()) != "None" else FARADAY_DEFAULT_PORT_REST
 
     host = args.host if args.host else host
     port_xmlrpc = args.port_xmlrpc if args.port_xmlrpc else port_xmlrpc
@@ -474,8 +470,6 @@ def checkConfiguration():
     logger.info("Checking configuration.")
     logger.info("Setting up plugins.")
     setupPlugins(args.dev_mode)
-    logger.info("Setting up folders.")
-    setupFolders(CONST_FARADAY_FOLDER_LIST)
     logger.info("Setting up Qt configuration.")
     setupQtrc()
     logger.info("Setting up ZSH integration.")
@@ -504,8 +498,9 @@ def checkFolder(folder):
     """
 
     if not os.path.isdir(folder):
-        logger.info("Creating %s" % folder)
-        os.mkdir(folder)
+        if logger:
+            logger.info("Creating %s" % folder)
+        os.makedirs(folder)
 
 
 def printBanner():
@@ -611,8 +606,10 @@ def init():
 
     global args
     global logger
+    logger = None
 
     args = getParserArgs()
+    setupFolders(CONST_FARADAY_FOLDER_LIST)
     setUpLogger(args.debug)
     logger = getLogger("launcher")
 

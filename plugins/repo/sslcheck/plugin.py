@@ -11,6 +11,7 @@ from plugins import core
 import re
 import os
 import sys
+import random
 
 try:
     import xml.etree.cElementTree as ET
@@ -69,7 +70,7 @@ class SslcheckPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id = "Sslcheck"
         self.name = "Sslcheck XML Output Plugin"
-        self.plugin_version = "0.0.1"
+        self.plugin_version = "0.0.2"
         self.version = "0.30"
         self._completition = {
             "":"ssl-check [-h] [-r {key,ren,sign,serv,cyph,forw,heart,crime,all} [{key,ren,sign,serv,cyph,forw,heart,crime,all} ...]] -host HOST [-port PORT] [--xml] [--version]",
@@ -87,7 +88,9 @@ class SslcheckPlugin(core.PluginBase):
         self._command_regex = re.compile(r'^(sudo sslcheck|sslcheck|\.\/sslcheck).*?')
 
         global current_path
-        self._output_file_path = os.path.join(self.data_path, "sslcheck_output-%s.xml" % self._rid)
+        self._output_file_path = os.path.join(self.data_path,"%s_%s_output-%s.xml" % (self.ws,
+                                                                                        self.id, 
+                                                                                        random.uniform(1,10)))
 
     def canParseCommandString(self, current_input):
         if self._command_regex.match(current_input.strip()):
@@ -159,8 +162,6 @@ class SslcheckPlugin(core.PluginBase):
 
         del parser
 
-        if not debug:
-            os.remove(self._output_file_path)
         return True
 
     xml_arg_re = re.compile(r"^.*(--xml\s*[^\s]+).*$")

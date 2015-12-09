@@ -374,7 +374,7 @@ class NmapPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id              = "Nmap"
         self.name            = "Nmap XML Output Plugin"
-        self.plugin_version         = "0.0.2"
+        self.plugin_version         = "0.0.3"
         self.version   = "6.40"
         self.framework_version  = "1.0.0"
         self.options         = None
@@ -574,7 +574,9 @@ class NmapPlugin(core.PluginBase):
         Adds the -oX parameter to get xml output to the command string that the
         user has set.
         """
-        self._output_file_path = os.path.join(self.data_path,"nmap_output-%s.xml" % random.uniform(1,10))        
+        self._output_file_path = os.path.join(self.data_path,"%s_%s_output-%s.xml" % (self.ws,
+                                                                                        self.id, 
+                                                                                        random.uniform(1,10)))
 
         arg_match = self.xml_arg_re.match(command_string)
 

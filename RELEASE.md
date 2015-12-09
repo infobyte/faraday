@@ -12,6 +12,15 @@ New features in the latest update
 
 TBA:
 ---
+* Refactor plugin base adding active ws name
+* Refactor plugins now all the command plugin do not delete the /data/ output file and we add the current workspace
+  Plugin changes:
+  amap
+  dnsmap
+  nmap
+  sslcheck
+  wcscan
+  webfuzzer
 * Added parametrization for port configuration on APIs.
 * Bug get_installed_distributions from handler exceptions
 * Adding wiki information default faraday without couchdb configuration

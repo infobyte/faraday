@@ -498,6 +498,7 @@ class PluginBase(object):
     def __init__(self):
 
         self.data_path = CONF.getDataPath()
+        self.ws = CONF.getLastWorkspace()
         self.persistence_path = CONF.getPersistencePath()
         # Must be unique. Check that there is not
         # an existant plugin with the same id.

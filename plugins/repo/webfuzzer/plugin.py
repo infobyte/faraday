@@ -86,7 +86,7 @@ class WebfuzzerPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id              = "Webfuzzer"
         self.name            = "Webfuzzer Output Plugin"
-        self.plugin_version         = "0.0.1"
+        self.plugin_version         = "0.0.2"
         self.version   = "0.2.0"
         self.options         = None
         self._current_output = None
@@ -149,9 +149,7 @@ class WebfuzzerPlugin(core.PluginBase):
             n2_id = self.createAndAddNoteToNote(h_id,s_id,n_id,parser.hostname,"")
 
         del parser
-        
-        if not debug:
-            os.remove(self._output_path)
+
         return True
 
 

@@ -30,7 +30,7 @@ angular.module('faradayApp')
         $scope.newPageSize;
 
         $scope.vulnWebSelected;
-        $scope.confirm = true;
+        $scope.confirm = false;
         var allVulns;
 
         init = function() {
@@ -59,9 +59,7 @@ angular.module('faradayApp')
             $scope.interfaces = [];
             // current search
             $scope.search = $routeParams.search;
-            if($scope.search === undefined) { 
-                $scope.search = "confirmed=true";
-            } else {
+            if($scope.search !== undefined) { 
                 if($scope.search.indexOf("confirmed") === -1 || $scope.confirm === false) {
                     $scope.search = $scope.search.concat("&confirmed=true");
                 }

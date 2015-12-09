@@ -17,7 +17,7 @@ angular.module('faradayApp')
             $scope.pageSize = 10;
             $scope.pagination = 10;
             $scope.vulns;
-            $scope._areConfirmed = false;
+            $scope._areConfirmed = true;
             var allVulns;
 
             // graphicsBarCtrl data

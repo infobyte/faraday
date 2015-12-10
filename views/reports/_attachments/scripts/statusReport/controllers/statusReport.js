@@ -523,17 +523,17 @@ angular.module('faradayApp')
         };
 
         $scope.checkAll = function() {
-            if(!$scope.selectall) {
-                $scope.selectall = true;
+            if(!$scope.selectAll) {
+                $scope.selectAll = true;
             } else {
-                $scope.selectall = false;
+                $scope.selectAll = false;
             }
 
             var tmp_vulns = $filter('orderObjectBy')($scope.vulns, $scope.sortField, $scope.reverse);
             tmp_vulns = $filter('filter')(tmp_vulns, $scope.expression);
             tmp_vulns = tmp_vulns.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
             tmp_vulns.forEach(function(v,k) {
-                v.selected_statusreport_controller = $scope.selectall;
+                v.selected_statusreport_controller = $scope.selectAll;
             });
 
         };

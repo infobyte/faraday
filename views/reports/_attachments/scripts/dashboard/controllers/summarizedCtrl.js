@@ -17,7 +17,7 @@ angular.module('faradayApp')
             $scope.pageSize = 10;
             $scope.pagination = 10;
             $scope.vulns;
-            $scope._areConfirmed = true;
+            $scope._areConfirmed = false;
             var allVulns;
 
             // graphicsBarCtrl data
@@ -203,9 +203,10 @@ angular.module('faradayApp')
                     });
 
                     vulnsManager.getVulns(workspace).then(function(vulns) {
+                        $scope.vulns = vulnsManager.vulns;
+
                         confirmed_filter = { "confirmed":true };
-                        $scope.vulns = $filter('filter')(vulnsManager.vulns, confirmed_filter);
-                        allVulns = vulnsManager.vulns;
+                        filteredVulns = $filter('filter')(vulnsManager.vulns, confirmed_filter);
                         var data = angular.copy($scope.vulns);
                         var arrayVulnsParsed = vulnParse(data);
                         createGraphics(arrayVulnsParsed[0]);
@@ -263,7 +264,7 @@ angular.module('faradayApp')
 
             $scope.getAllVulns = function() {
                 if($scope._areConfirmed === false) {
-                    var data = angular.copy(allVulns);
+                    var data = angular.copy(filteredVulns);
                     var arrayVulnsParsed = vulnParse(data);
                     createGraphics(arrayVulnsParsed[0]);
 

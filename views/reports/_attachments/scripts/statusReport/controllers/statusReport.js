@@ -435,10 +435,10 @@ angular.module('faradayApp')
             editProperty(
                 'scripts/commons/partials/editOptions.html',
                 'commonsModalEditOptions',
-                'Confirm/Disconfirm:',
+                'Confirm/Change to false positive:',
                 'confirmed',
                 {
-                    options: ['Confirm', 'Disconfirm'],
+                    options: ['Confirm', 'Set to false positive'],
                     callback: function(vuln, data) {
                         var property;
                         if(data === 'Confirm') {

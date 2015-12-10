@@ -9,7 +9,7 @@
 	<div class="form-group">
 	    <div class="col-md-12 form-group severities">
 	        <button type="button" class="btn btn-default dropdown-toggle color-{{data.property}}" data-toggle="dropdown" title="Change severity">
-	        Edit property <span class="caret"></span>
+	        {{data.property || 'Edit property'}} <span class="caret"></span>
 	        </button>
 	        <ul id="nav" class="dropdown-menu dropdown-menu-left" role="menu">
 	            <li ng-repeat="o in options"><a href="" class="ws color-{{o}}" ng-click="data.property = o">{{o}}</a></li>

@@ -67,19 +67,30 @@ angular.module('faradayApp')
             };
             $scope.gridOptions.columnDefs = [];
 
-            $scope.showObjects = function(object) {
+            $scope.showObjects = function(object, property, IdEvidence) {
                 var partial = "";
                 if(angular.isArray(object) === false) {
                     for(key in object) {
                         if(object.hasOwnProperty(key)) {
                             if(object[key] === true) {
                                 partial += "<p class='pos-middle crop-text'>" + key +  "</p>";
+                            } else if(property === "evidence") {
+                                partial += "<p class='pos-middle crop-text'><a href='http://127.0.0.1:5984/"+$scope.workspace+"/"+IdEvidence+"/"+key+"' target='_blank'>" + key +  "</a></p>";
                             }
                         }
                     }
                 } else {
                     object.forEach(function(key) {
-                        partial += "<p class='pos-middle crop-text'>" + key +  "</p>";
+                        if(key === "") return;
+                        if(property === "hostnames") {
+                            partial += "<p><a href='//www.shodan.io/search?query=" + key + "' class=\"pos-middle crop-text\" uib-tooltip=\"Search in Shodan\" target=\"_blank\">" +
+                            "<img src=\"../././reports/images/shodan.png\" height=\"15px\" width=\"15px\" style=\"margin-left:5px\"/></a>"+
+                            "<a href=\""+ $scope.hash + "/search/"+ property +"=" + key + "\">" + key +  "</a></p>";
+                        } else if(property === "refs"){
+                            partial += "<p class='pos-middle crop-text'><a href='"+ $scope.hash + "/search/" + property +"=" + key + "'>" + key + "</a></p>";
+                        } else {
+                            partial += "<p class='pos-middle crop-text'>" + key + "</p>";
+                        }
                     });
                 }
                 return partial;
@@ -246,7 +257,9 @@ angular.module('faradayApp')
                     width: '115',
                 });
             } else if(column === 'impact' || column === 'refs' || column === 'hostnames') {
-                $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class=\"ui-grid-cell-contents center\" ng-bind-html=\"grid.appScope.showObjects(COL_FIELD CUSTOM_FILTERS)\"></div><div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\">{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader });
+                $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class=\"ui-grid-cell-contents center\" ng-bind-html=\"grid.appScope.showObjects(COL_FIELD, col.displayName)\"></div><div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\">{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader });
+            } else if(column === 'evidence') {
+                $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class=\"ui-grid-cell-contents center\" ng-bind-html=\"grid.appScope.showObjects(row.entity._attachments, col.displayName, row.entity._id)\"></div><div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\">{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader });
             } else if(column === 'service') {
                 $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class='ui-grid-cell-contents'><a href=" + $scope.hash + "/search/service={{grid.appScope.encodeUrl(row.entity.service)}}>{{COL_FIELD CUSTOM_FILTERS}}</a></div><div ng-if='row.groupHeader && col.grouping.groupPriority !== undefined'>{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader, width: '110' });
             } else if(column === 'web') {

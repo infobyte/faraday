@@ -205,10 +205,15 @@ angular.module('faradayApp')
                     });
 
                     vulnsManager.getVulns(workspace).then(function(vulns) {
-                        $scope.vulns = vulnsManager.vulns;
-
                         confirmed_filter = { "confirmed":true };
                         filteredVulns = $filter('filter')(vulnsManager.vulns, confirmed_filter);
+
+                        if($scope._areConfirmed === true) {
+                            $scope.vulns = filteredVulns;
+                        } else {
+                            $scope.vulns = vulnsManager.vulns;
+                        }
+
                         var data = angular.copy($scope.vulns);
                         var arrayVulnsParsed = vulnParse(data);
                         createGraphics(arrayVulnsParsed[0]);

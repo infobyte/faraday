@@ -19,7 +19,7 @@ TBA:
 * Filter false-positives in Status Report
 * bin/getAllIpsNotServices.py added: Get All IPs from targets without services
 * Fixed bug that prevented the use of "reports" and "cwe" strings in Workspace names
-* Adding port in vulnerability new gui web target/service
+* Added port to Service type target in new vuln modal
 
 Oct 2, 2015:
 ---

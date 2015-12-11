@@ -1040,3 +1040,4 @@ div.btn-group .dropdown-menu.margin{margin-left: 38px}
     height: 95px!important;
     overflow-y: auto!important;
 }
+div.ui-grid-header-cell .ui-grid-cell-contents{white-space: normal;}

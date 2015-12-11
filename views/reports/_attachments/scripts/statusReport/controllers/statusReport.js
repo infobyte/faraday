@@ -40,8 +40,10 @@ angular.module('faradayApp')
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.propertyGroupBy = $routeParams.groupbyId;
             $scope.sortField = 'metadata.create_time';
+            $scope.colProperties = ["date","name","severity","service","target","desc","resolution","data","status","website","path","request","method","params","pname","query","response"];
             $scope.reverse = true;
             $scope.vulns = [];
+            $scope.selected = false;
 
             var deleteRow = '<div ng-if="row.entity._id != undefined" class="ui-grid-cell-contents row-tooltip text-center" ng-click="grid.appScope.deleteVuln(row.entity)">'+
                                 '<span class="glyphicon glyphicon-trash cursor" uib-tooltip="Delete"></span>'+
@@ -51,6 +53,7 @@ angular.module('faradayApp')
                            '</div>';
 
             $scope.gridOptions = {
+                multiSelect: true,
                 enableSelectAll: true,
                 enableColumnMenus: false,
                 enableRowSelection: true,
@@ -63,7 +66,6 @@ angular.module('faradayApp')
                 rowHeight: 95
             };
             $scope.gridOptions.columnDefs = [];
-            $scope.gridOptions.multiSelect = true;
 
             $scope.showObjects = function(object) {
                 var partial = "";
@@ -92,12 +94,16 @@ angular.module('faradayApp')
                         children = $scope.gridApi.treeBase.getRowChildren( rowChanged );
                         children.forEach( function ( child ) {
                             if ( rowChanged.isSelected ) {
+                                console.log(child.entity);
                                 $scope.gridApi.selection.selectRow( child.entity );
                             } else {
                                 $scope.gridApi.selection.unSelectRow( child.entity );
                             }
                         });
                     }
+                });
+                $scope.gridApi.pagination.on.paginationChanged($scope, function (pageNumber, pageSize) {
+                    $scope.gridApi.selection.clearSelectedRows();
                 });
             };
 
@@ -182,6 +188,7 @@ angular.module('faradayApp')
                 "response":         false,
                 "web":              false
             };
+            $scope.gridOptions.columnDefs.push({ name: '   ', width: '20', headerCellTemplate: "<i class=\"fa fa-check cursor\" ng-click=\"grid.appScope.selectAll()\" ng-style=\"{'opacity':(grid.appScope.selected === true) ? '1':'0.6'}\"></i>" });
             $scope.gridOptions.columnDefs.push({ name: ' ', width: '40', cellTemplate: deleteRow });
             $scope.gridOptions.columnDefs.push({ name: '  ', width: '30', cellTemplate: editRow });
             var count = 0;
@@ -190,8 +197,8 @@ angular.module('faradayApp')
                     count++;
                     _addColumn(key);
                     if(key === $scope.propertyGroupBy) {
-                        $scope.gridOptions.columnDefs[count + 1].grouping = { groupPriority: 0 };
-                        $scope.gridOptions.columnDefs[count + 1].sort = { priority: 0, direction: 'asc' }
+                        $scope.gridOptions.columnDefs[count + 2].grouping = { groupPriority: 0 };
+                        $scope.gridOptions.columnDefs[count + 2].sort = { priority: 0, direction: 'asc' }
                     }
                 }
             }
@@ -271,7 +278,15 @@ angular.module('faradayApp')
         };
 
         $scope.selectAll = function() {
-            $scope.gridApi.selection.selectAllRows();
+            if($scope.selected === false) {
+                for(var i = 0; i <= $scope.gridOptions.paginationPageSize; i++) {
+                    $scope.gridApi.selection.selectRowByVisibleIndex(i);
+                }
+                $scope.selected = true;
+            } else {
+                $scope.gridApi.selection.clearSelectedRows();
+                $scope.selected = false;
+            }
         };
      
         $scope.processReference = function(text) {
@@ -307,7 +322,7 @@ angular.module('faradayApp')
 
         $scope.selectedVulns = function() {
             selected = [];
-            var tmp_vulns = $filter('orderObjectBy')($scope.vulns, $scope.sortField, $scope.reverse);
+            var tmp_vulns = $filter('orderObjectBy')($scope.gridOptions.data, $scope.sortField, $scope.reverse);
             tmp_vulns = $filter('filter')(tmp_vulns, $scope.expression);
             tmp_vulns = tmp_vulns.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
             tmp_vulns.forEach(function(vuln) {
@@ -339,7 +354,7 @@ angular.module('faradayApp')
         };
 
         $scope.csv = function() {
-            tmp_vulns = $filter('filter')($scope.vulns, $scope.expression);
+            tmp_vulns = $filter('filter')($scope.gridOptions.data, $scope.expression);
             return csvService.generator($scope.columns, tmp_vulns, $scope.workspace);
         };
 
@@ -730,7 +745,7 @@ angular.module('faradayApp')
             $scope.pageSize = $scope.newPageSize;
             $cookies.put('pageSize', $scope.pageSize);
             $scope.currentPage = 0;
-            if($scope.newCurrentPage <= parseInt($scope.vulns.length/$scope.pageSize)
+            if($scope.newCurrentPage <= parseInt($scope.gridOptions.data.length/$scope.pageSize)
                     && $scope.newCurrentPage > -1 && !isNaN(parseInt($scope.newCurrentPage))) {
                 $scope.currentPage = $scope.newCurrentPage;
             }

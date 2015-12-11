@@ -18,6 +18,8 @@ TBA:
 * Fixed Unicode bug in Nexpose-full Plugin
 * Filter false-positives in Status Report
 * bin/getAllIpsNotServices.py added: Get All IPs from targets without services
+* Fixed bug that prevented the use of "reports" and "cwe" strings in Workspace names
+* Adding port in vulnerability new gui web target/service
 
 Oct 2, 2015:
 ---

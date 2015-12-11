@@ -30,7 +30,7 @@ angular.module('faradayApp')
         $scope.newPageSize;
 
         $scope.vulnWebSelected;
-        $scope.confirm = false;
+        $scope.confirmed = false;
         var allVulns;
 
         init = function() {
@@ -59,13 +59,16 @@ angular.module('faradayApp')
             $scope.interfaces = [];
             // current search
             $scope.search = $routeParams.search;
-            if($scope.search !== undefined) { 
-                if($scope.search.indexOf("confirmed") === -1 || $scope.confirm === false) {
-                    $scope.search = $scope.search.concat("&confirmed=true");
-                }
-            }
             $scope.searchParams = "";
             $scope.expression = {};
+            if($cookies.get('confirmed') === 'true') $scope.confirmed = true;
+            if($scope.confirmed === true) {
+                if($scope.search !== undefined) {
+                    $scope.search = $scope.search.concat("&confirmed=true");
+                } else {
+                    $scope.search = "confirmed=true";
+                }
+            }
             if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
                 // search expression for filter
                 $scope.expression = $scope.decodeSearch($scope.search);
@@ -171,7 +174,8 @@ angular.module('faradayApp')
             if(expression["confirmed"] === undefined) {
                 expression["confirmed"] = true;
                 $scope.expression = expression;
-                $scope.confirm = true;
+                $cookies.put('confirmed', $scope.expression.confirmed);
+                $scope.confirmed = true;
                 $scope.newCurrentPage = 0;
                 $scope.go();
             } else {
@@ -183,7 +187,8 @@ angular.module('faradayApp')
                         }
                     }
                 }
-                $scope.confirm = false;
+                $cookies.put('confirmed', $scope.expression.confirmed);
+                $scope.confirmed = false;
                 $scope.newCurrentPage = 0;
                 $scope.go();
             }

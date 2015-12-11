@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('summarizedCtrl', 
-        ['$scope', '$route', '$routeParams', '$uibModal', '$filter','dashboardSrv', 'vulnsManager', 'workspacesFact',
-        function($scope, $route, $routeParams, $uibModal, $filter, dashboardSrv, vulnsManager, workspacesFact) {
+        ['$scope', '$route', '$routeParams', '$uibModal', '$filter', '$cookies', 'dashboardSrv', 'vulnsManager', 'workspacesFact',
+        function($scope, $route, $routeParams, $uibModal, $filter, $cookies, dashboardSrv, vulnsManager, workspacesFact) {
             //current workspace
             var workspace = $routeParams.wsId;
             $scope.servicesCount = [];
@@ -47,6 +47,8 @@ angular.module('faradayApp')
                 // vuln table sorting
                 $scope.vulnSortField = 'metadata.create_time';
                 $scope.vulnSortReverse = true;
+
+                if($cookies.get('confirmed') === 'true') $scope._areConfirmed = true;
 
                 if(workspace != undefined) {
                     $scope.workspace = workspace;
@@ -262,7 +264,7 @@ angular.module('faradayApp')
                 return [arraySeverities, vulnsStatus];
             };
 
-            $scope.getAllVulns = function() {
+            $scope.getFilteredVulns = function() {
                 if($scope._areConfirmed === false) {
                     var data = angular.copy(filteredVulns);
                     var arrayVulnsParsed = vulnParse(data);
@@ -274,9 +276,11 @@ angular.module('faradayApp')
                         }
                     });
                     $scope._areConfirmed = true;
+                    $cookies.put('confirmed', $scope._areConfirmed);
                 } else {
                     init();
                     $scope._areConfirmed = false;
+                    $cookies.put('confirmed', $scope._areConfirmed);
                 }
             };
 

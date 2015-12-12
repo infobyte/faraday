@@ -84,8 +84,8 @@ class ReportManager(threading.Thread):
                                      
                     parser = ReportXmlParser(filename)
                     if (parser.report_type is not None):
-                        #TODO: get host and port from config
-                        client = PluginControllerAPIClient("127.0.0.1", 9977)
+                        host, port = CONF.getApiRestfulConInfo()
+                        client = PluginControllerAPIClient(host, port)
 
                         model.api.devlog("The file is %s, %s" % (filename,parser.report_type))
 

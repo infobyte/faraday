@@ -17,8 +17,11 @@ import shlex
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     
+    # executes received code
     parser.add_argument('-e')
+    # where to store fplugin's output
     parser.add_argument('-o')
+    # file with code to execute
     parser.add_argument('-f')
     
     #get all hosts

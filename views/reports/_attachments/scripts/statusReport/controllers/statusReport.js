@@ -198,7 +198,7 @@ angular.module('faradayApp')
                 "response":         false,
                 "web":              false
             };
-            $scope.gridOptions.columnDefs.push({ name: '   ', width: '20', headerCellTemplate: "<i class=\"fa fa-check cursor\" ng-click=\"grid.appScope.selectAll()\" ng-style=\"{'opacity':(grid.appScope.selected === true) ? '1':'0.6'}\"></i>" });
+            $scope.gridOptions.columnDefs.push({ name: '   ', width: '20', headerCellTemplate: "<i class=\"fa fa-check cursor\" ng-click=\"grid.appScope.selectAll()\" ng-style=\"{'opacity':(grid.appScope.selected === true) ? '1':'0.6'}\"></i>", pinnedLeft:true });
             $scope.gridOptions.columnDefs.push({ name: ' ', width: '40', cellTemplate: deleteRow });
             $scope.gridOptions.columnDefs.push({ name: '  ', width: '30', cellTemplate: editRow });
             var count = 0;

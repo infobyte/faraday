@@ -78,7 +78,7 @@ angular.module('faradayApp')
                             if(object[key] === true) {
                                 partial += "<p class='pos-middle crop-text'>" + key +  "</p>";
                             } else if(property === "evidence") {
-                                partial += "<p class='pos-middle crop-text'><a href='http://127.0.0.1:5984/"+$scope.workspace+"/"+IdEvidence+"/"+key+"' target='_blank'>" + key +  "</a></p>";
+                                partial += "<p class='pos-middle crop-text'><a href='http://127.0.0.1:5984/"+$scope.workspace+"/"+IdEvidence+"/"+$scope.encodeUrl(key)+"' target='_blank'>" + key +  "</a></p>";
                             }
                         }
                     }
@@ -722,11 +722,9 @@ angular.module('faradayApp')
 
         loadVulns = function(property) {
             // load all vulnerabilities
-            console.log(vulnsManager.vulns);
             if (!property) property = "name";
             tmp_data = $filter('orderObjectBy')(vulnsManager.vulns, property, true);
             $scope.gridOptions.data = $filter('filter')(tmp_data, $scope.expression);
-            console.log($scope.gridOptions.data);
         };
 
         $scope.new = function() {

@@ -1028,13 +1028,13 @@ div.btn-group .dropdown-menu.margin{margin-left: 38px}
 }
 .ui-grid-cell-contents.left-rows.text-center.ng-scope{white-space: normal!important; }
 .ui-grid .ui-grid-row:nth-child(odd) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid .ui-grid-row:nth-child(even) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid-cell-contents{
-    white-space: pre!important;
+    white-space: pre;
     word-wrap: break-word!important;
 }
 .grid.ui-grid{font-family: 12px!important;}
 .ui-grid-cell-contents.row-tooltip.text-center{white-space: normal!important; }
 .white-space{white-space: pre!important; word-wrap: break-word;}
-.ui-grid-cell-contents.center > .pos-middle.crop-text{top: 2%!important;white-space: }
+.ui-grid-cell-contents.center > .pos-middle.crop-text{top: 2%!important;white-space: inherit!important;}
 .overflow-cell{
     height: 95px!important;
     overflow-y: auto!important;

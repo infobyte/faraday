@@ -26,7 +26,6 @@ angular.module('faradayApp')
         $scope.workspaces;
         $scope.currentPage;
         $scope.newCurrentPage;
-        $scope.pageSize;
         $scope.newPageSize;
         $scope.gridOptions;
 
@@ -116,10 +115,6 @@ angular.module('faradayApp')
                     $scope.gridApi.selection.clearSelectedRows();
                 });
             };
-
-            if (!isNaN(parseInt($cookies.get('pageSize'))))
-                $scope.pageSize = parseInt($cookies.get('pageSize'));
-            $scope.newPageSize = $scope.pageSize;
 
             // load all workspaces
             workspacesFact.list().then(function(wss) {
@@ -340,19 +335,6 @@ angular.module('faradayApp')
             
             $window.open(url, '_blank');
         };
-
-        $scope.selectedVulns = function() {
-            selected = [];
-            var tmp_vulns = $filter('orderObjectBy')($scope.gridOptions.data, $scope.sortField, $scope.reverse);
-            tmp_vulns = $filter('filter')(tmp_vulns, $scope.expression);
-            tmp_vulns = tmp_vulns.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
-            tmp_vulns.forEach(function(vuln) {
-                if (vuln.selected_statusreport_controller) {
-                    selected.push(vuln);
-                }
-            });
-            return selected;
-        }
 
         $scope.groupBy = function(property) {
             var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + property;
@@ -746,32 +728,6 @@ angular.module('faradayApp')
             });
         };
 
-        $scope.checkAll = function() {
-            if(!$scope.selectAll) {
-                $scope.selectAll = true;
-            } else {
-                $scope.selectAll = false;
-            }
-
-            var tmp_vulns = $filter('orderObjectBy')($scope.vulns, $scope.sortField, $scope.reverse);
-            tmp_vulns = $filter('filter')(tmp_vulns, $scope.expression);
-            tmp_vulns = tmp_vulns.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
-            tmp_vulns.forEach(function(v,k) {
-                v.selected_statusreport_controller = $scope.selectAll;
-            });
-
-        };
-
-        $scope.go = function() {
-            $scope.pageSize = $scope.newPageSize;
-            $cookies.put('pageSize', $scope.pageSize);
-            $scope.currentPage = 0;
-            if($scope.newCurrentPage <= parseInt($scope.gridOptions.data.length/$scope.pageSize)
-                    && $scope.newCurrentPage > -1 && !isNaN(parseInt($scope.newCurrentPage))) {
-                $scope.currentPage = $scope.newCurrentPage;
-            }
-        };
-
         // encodes search string in order to send it through URL
         $scope.encodeSearch = function(search) {
             var i = -1,
@@ -876,28 +832,6 @@ angular.module('faradayApp')
                 }
             }
             $cookies.put('SRcolumns', JSON.stringify($scope.columns));
-        };
-
-        // toggles sort field and order
-        $scope.toggleSort = function(field) {
-            $scope.toggleSortField(field);
-            $scope.toggleReverse();
-        };
-
-        // toggles column sort field
-        $scope.toggleSortField = function(field) {
-            $scope.sortField = field;
-        };
-
-        // toggle column sort order
-        $scope.toggleReverse = function() {
-            $scope.reverse = !$scope.reverse;
-        };
-
-        $scope.selectionChange = function() {
-            $scope.vulnWebSelected = $scope.selectedVulns().some(function(v) {
-                return v.type === "VulnerabilityWeb"
-            });
         };
 
         var compareSeverities = function(a, b) {

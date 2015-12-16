@@ -12,6 +12,7 @@ New features in the latest update
 
 TBA:
 ---
+* Fixed bug in first run of Faraday with log path and API errors
 * Added parametrization for port configuration on APIs
 * Bug get_installed_distributions from handler exceptions
 * Adding wiki information default faraday without couchdb configuration

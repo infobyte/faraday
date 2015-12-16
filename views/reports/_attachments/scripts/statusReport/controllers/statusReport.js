@@ -44,11 +44,15 @@ angular.module('faradayApp')
             $scope.vulns = [];
             $scope.selected = false;
 
-            var deleteRow = '<div ng-if="row.entity._id != undefined" class="ui-grid-cell-contents row-tooltip text-center" ng-click="grid.appScope.deleteVuln(row.entity)">'+
-                                '<span class="glyphicon glyphicon-trash cursor" uib-tooltip="Delete"></span>'+
+            var deleteRow = '<div ng-if="row.entity._id != undefined" class="ui-grid-cell-contents row-tooltip text-center">'+
+                                '<span ng-click="grid.appScope.deleteVuln(row.entity)" class="glyphicon glyphicon-trash cursor" uib-tooltip="Delete"></span>'+
                             '</div>';
-            var editRow = '<div ng-if="row.entity._id != undefined" class="ui-grid-cell-contents row-tooltip text-center" ng-click="grid.appScope.editVuln(row.entity)">'+
-                                '<span class="glyphicon glyphicon-pencil cursor" uib-tooltip="Edit"></span>'+
+            var editRow = '<div ng-if="row.entity._id != undefined" class="ui-grid-cell-contents row-tooltip text-center">'+
+                                '<span ng-click="grid.appScope.editVuln(row.entity)" class="glyphicon glyphicon-pencil cursor" uib-tooltip="Edit"></span>'+
+                           '</div>';
+
+            var filterRow = '<div ng-if="row.entity._id != undefined" class="ui-grid-cell-contents row-tooltip text-center">'+
+                                '<span ng-click="grid.appScope.toggleConfirmVuln(row.entity, row.entity.confirmed)" class="glyphicon glyphicon-filter cursor" uib-tooltip="{{grid.appScope.confirmedTooltip(row.entity.confirmed)}}" tooltip-placement="right" ng-class="{ disabled:row.entity.confirmed === false }"></span>'+
                            '</div>';
 
             $scope.gridOptions = {
@@ -86,7 +90,7 @@ angular.module('faradayApp')
                             "<img src=\"../././reports/images/shodan.png\" height=\"15px\" width=\"15px\" style=\"margin-left:5px\"/></a>"+
                             "<a href=\""+ $scope.hash + "/search/"+ property +"=" + key + "\">" + key +  "</a></p>";
                         } else if(property === "refs"){
-                            partial += "<p class='pos-middle crop-text'><a href='"+ $scope.hash + "/search/" + property +"=" + key + "'>" + key + "</a></p>";
+                            partial += "<p class='pos-middle crop-text'><a href='" + $scope.processReference(key) + "' target=\"_blank\">" + key + "</a></p>";
                         } else {
                             partial += "<p class='pos-middle crop-text'>" + key + "</p>";
                         }
@@ -194,6 +198,7 @@ angular.module('faradayApp')
                 "web":              false
             };
             $scope.gridOptions.columnDefs.push({ name: '   ', width: '20', headerCellTemplate: "<i class=\"fa fa-check cursor\" ng-click=\"grid.appScope.selectAll()\" ng-style=\"{'opacity':(grid.appScope.selected === true) ? '1':'0.6'}\"></i>", pinnedLeft:true });
+            $scope.gridOptions.columnDefs.push({ name: '    ', width: '40', cellTemplate: filterRow });
             $scope.gridOptions.columnDefs.push({ name: ' ', width: '40', cellTemplate: deleteRow });
             $scope.gridOptions.columnDefs.push({ name: '  ', width: '30', cellTemplate: editRow });
             var count = 0;
@@ -202,8 +207,8 @@ angular.module('faradayApp')
                     count++;
                     _addColumn(key);
                     if(key === $scope.propertyGroupBy) {
-                        $scope.gridOptions.columnDefs[count + 2].grouping = { groupPriority: 1 };
-                        $scope.gridOptions.columnDefs[count + 2].sort = { priority: 0, direction: 'asc' }
+                        $scope.gridOptions.columnDefs[count + 3].grouping = { groupPriority: 0 };
+                        $scope.gridOptions.columnDefs[count + 3].sort = { priority: 0, direction: 'asc' }
                     }
                 }
             }
@@ -287,6 +292,16 @@ angular.module('faradayApp')
             }
         };
 
+        $scope.confirmedTooltip = function(isConfirmed) {
+            var res = "";
+            if(isConfirmed === true) {
+                res = "Change to false positive";
+            } else {
+                res = "Confirm";
+            }
+            return res;
+        };
+
         $scope.selectAll = function() {
             if($scope.selected === false) {
                 for(var i = 0; i <= $scope.gridOptions.paginationPageSize; i++) {
@@ -333,7 +348,7 @@ angular.module('faradayApp')
                 url += 'search?q=' + text;
             }
             
-            $window.open(url, '_blank');
+            return url;
         };
 
         $scope.groupBy = function(property) {
@@ -366,9 +381,8 @@ angular.module('faradayApp')
                 expression["confirmed"] = true;
                 $scope.expression = expression;
                 $cookies.put('confirmed', $scope.expression.confirmed);
+                loadVulns();
                 $scope.confirmed = true;
-                $scope.newCurrentPage = 0;
-                $scope.go();
             } else {
                 $scope.expression = {};
                 for(key in expression) {
@@ -379,9 +393,8 @@ angular.module('faradayApp')
                     }
                 }
                 $cookies.put('confirmed', $scope.expression.confirmed);
+                loadVulns();
                 $scope.confirmed = false;
-                $scope.newCurrentPage = 0;
-                $scope.go();
             }
         };
 
@@ -454,12 +467,18 @@ angular.module('faradayApp')
         };
 
         _toggleConfirm = function(vulns, confirm) {
-            var toggleConfirm = {'confirmed': !confirm};
+            var toggleConfirm = {'confirmed': !confirm},
+            deferred = $q.defer(),
+            promises = [];
             vulns.forEach(function(vuln) {
-                vulnsManager.updateVuln(vuln, toggleConfirm).then(function(){
-                }, function(errorMsg){
-                    showMessage("Error updating vuln " + vuln.name + " (" + vuln._id + "): " + errorMsg);
-                });
+                promises.push(vulnsManager.updateVuln(vuln, toggleConfirm));
+            });
+            $q.all(promises).then(function(res) {
+                if(confirm === true) {
+                    loadVulns();
+                }
+            }, function(errorMsg){
+                showMessage("Error updating vuln " + vuln.name + " (" + vuln._id + "): " + errorMsg);
             });
         };
 
@@ -703,9 +722,11 @@ angular.module('faradayApp')
 
         loadVulns = function(property) {
             // load all vulnerabilities
+            console.log(vulnsManager.vulns);
             if (!property) property = "name";
             tmp_data = $filter('orderObjectBy')(vulnsManager.vulns, property, true);
             $scope.gridOptions.data = $filter('filter')(tmp_data, $scope.expression);
+            console.log($scope.gridOptions.data);
         };
 
         $scope.new = function() {

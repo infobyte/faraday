@@ -205,10 +205,11 @@ angular.module('faradayApp')
             self = this;
             vuln.update(data).then(function(){
                 self.vulns[self.vulns_indexes[vuln._id]] = vuln;
+                deferred.resolve(vuln);
             }, function(err){
                 deferred.reject(err);
             });
-            return deferred.promise
+            return deferred.promise;
         };
 
         return vulnsManager;

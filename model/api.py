@@ -94,6 +94,7 @@ def _setUpAPIServer(hostname=None, port=None):
             _xmlrpc_api_server.register_function(createAndAddNoteToHost)
             _xmlrpc_api_server.register_function(createAndAddNoteToNote)
             _xmlrpc_api_server.register_function(createAndAddVulnWebToService)
+            _xmlrpc_api_server.register_function(createAndAddVulnToService)
             _xmlrpc_api_server.register_function(createAndAddVulnToHost)
             _xmlrpc_api_server.register_function(addHost)
             _xmlrpc_api_server.register_function(addInterface)

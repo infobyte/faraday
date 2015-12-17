@@ -138,12 +138,18 @@ class MainApplication(object):
                 # report manager
 
                 last_workspace = CONF.getLastWorkspace()
-                if not self._workspace_manager.workspaceExists(last_workspace):
-                    getLogger(self).info("Your last workspace ("+str(last_workspace)+") wasn't accessible, check configuration...")
-                    self._workspace_manager.openDefaultWorkspace()
-                    #self._workspace_manager.createWorkspace(last_workspace, 'default workspace, probably created already in couchb')
-                else:
-                    self._workspace_manager.openWorkspace(last_workspace)
+                try:
+                    if not self._workspace_manager.workspaceExists(last_workspace):
+                        getLogger(self).info("Your last workspace ("+str(last_workspace)+") wasn't accessible, check configuration...")
+                        self._workspace_manager.openDefaultWorkspace()
+                        #self._workspace_manager.createWorkspace(last_workspace, 'default workspace, probably created already in couchb')
+                    else:
+                        self._workspace_manager.openWorkspace(last_workspace)
+                except restkit.errors.Unauthorized:
+                    print "You are trying to enter CouchDB with authentication"
+                    print "Add your credentials to your user configuration file in $HOME/.faraday/config/user.xml"
+                    print "For example: <couch_uri>http://john:password@127.0.0.1:5984</couch_uri>"
+                    return
 
                 model.api.setUpAPIs(
                     self._model_controller,

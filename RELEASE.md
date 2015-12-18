@@ -13,8 +13,19 @@ New features in the latest update
 TBA:
 ---
 * Immunity Canvas plugin added
+* Added Dig plugin
+* Added Traceroute plugin
 * Fixed bug in first run of Faraday with log path and API errors
 * Added parametrization for port configuration on APIs
+* Refactor Plugin Base to update active WS name in var
+* Refactor Plugins to use current WS in temp filename under $HOME/.faraday/data. Affected Plugins:
+    - amap
+    - dnsmap
+    - nmap
+    - sslcheck
+    - wcscan
+    - webfuzzer
+    - nikto
 * Bug get_installed_distributions from handler exceptions
 * Adding wiki information default faraday without couchdb configuration
 * Fixed Unicode bug in Nexpose-full Plugin
@@ -25,8 +36,6 @@ TBA:
     - /bin/delAllVulnsWith.py - delete all vulns that match a regex
     - /bin/getAllbySrv.py - get all IP addresses that have defined open port
     - /bin/getAllIpsNotServices.py added - get all IPs from targets without services
-* Added Dig plugin
-* Added Traceroute plugin
 * Fixed bug null last workspace
 
 Oct 2, 2015:

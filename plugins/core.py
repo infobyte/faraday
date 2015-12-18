@@ -521,6 +521,9 @@ class PluginBase(object):
     def get_custom_file_path(self):
         return self._output_file_path
 
+    def get_ws(self):
+        return CONF.getLastWorkspace()
+
     def getSettings(self):
         for param, (param_type, value) in self._settings.iteritems():
             yield param, value

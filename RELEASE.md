@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA:
+Dec 18, 2015:
 ---
 * Immunity Canvas plugin added
 * Added Dig plugin

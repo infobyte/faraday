@@ -26,13 +26,13 @@ TBA:
     - wcscan
     - webfuzzer
     - nikto
-* Bug get_installed_distributions from handler exceptions
-* Adding Wiki information about running Faraday without configuring CouchDB
+* Fixed bug get_installed_distributions from handler exceptions
+* Added Wiki information about running Faraday without configuring CouchDB
 * Fixed Unicode bug in Nexpose-full Plugin
 * Filter false-positives in Status Report
 * Fixed bug that prevented the use of "reports" and "cwe" strings in Workspace names
 * Added port to Service type target in new vuln modal
-* Adding new scripts for faraday plugin:
+* Added new scripts for faraday plugin:
     - /bin/delAllVulnsWith.py - delete all vulns that match a regex
     - /bin/getAllbySrv.py - get all IP addresses that have defined open port
     - /bin/getAllIpsNotServices.py added - get all IPs from targets without services

@@ -37,6 +37,7 @@ TBA:
     - /bin/getAllbySrv.py - get all IP addresses that have defined open port
     - /bin/getAllIpsNotServices.py added - get all IPs from targets without services
 * Fixed bug null last workspace
+* Fixed bugs in CSV export/import in QT
 
 Oct 2, 2015:
 ---

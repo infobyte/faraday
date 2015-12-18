@@ -77,7 +77,7 @@ class DnsmapPlugin(core.PluginBase):
         self._command_regex = re.compile(r'^(sudo dnsmap|dnsmap|\.\/dnsmap).*?')
 
         global current_path
-        self._output_file_path = os.path.join(self.data_path,"%s_%s_output-%s.xml" % (self.ws,
+        self._output_file_path = os.path.join(self.data_path,"%s_%s_output-%s.xml" % (self.get_ws(),
                                                                                         self.id, 
                                                                                         random.uniform(1,10)))
 

@@ -574,7 +574,7 @@ class NmapPlugin(core.PluginBase):
         Adds the -oX parameter to get xml output to the command string that the
         user has set.
         """
-        self._output_file_path = os.path.join(self.data_path,"%s_%s_output-%s.xml" % (self.ws,
+        self._output_file_path = os.path.join(self.data_path,"%s_%s_output-%s.xml" % (self.get_ws(),
                                                                                         self.id, 
                                                                                         random.uniform(1,10)))
 

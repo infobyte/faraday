@@ -19,7 +19,7 @@
                     <ul id="nav" class="dropdown-menu dropdown-menu-left margin" role="menu">
                         <li ng-repeat="ws in workspaces"><a href="#/dashboard/ws/{{ws}}" class="ws" >{{ws}}</a></li>
                     </ul><!-- WS navigation -->
-                    <button type="button" class="btn btn-danger vulns-filter" title="{{_areConfirmed === true ? 'View confirmed vulns' : 'View all vulns'}}" ng-click="getFilteredVulns()">
+                    <button type="button" class="btn btn-danger vulns-filter" title="{{_areConfirmed === false ? 'View confirmed vulns' : 'View all vulns'}}" ng-click="getFilteredVulns()">
                         {{_areConfirmed === false ? 'View confirmed vulns' : 'View all vulns'}} <span class="glyphicon glyphicon-filter"></span>
                     </button>
                 </div><!-- #ws-control -->

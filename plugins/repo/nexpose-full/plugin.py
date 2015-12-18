@@ -87,13 +87,13 @@ class NexposeFullXmlParser(object):
                 for child in list(node):
                     ret += self.parse_html_type(child)
             else:
-                ret += str(node.text).strip()
+                ret += node.text.encode("ascii", errors="backslashreplace").strip() if node.get('text') else ""
         if tag == 'listitem':
             if len(list(node)) > 0:
                 for child in list(node):
                     ret += self.parse_html_type(child)
             else:
-                ret = str(node.text).strip()
+                ret = node.text.encode("ascii", errors="backslashreplace").strip() if node.get('text') else ""
         if tag == 'orderedlist':
             i = 1
             for item in list(node):
@@ -104,17 +104,17 @@ class NexposeFullXmlParser(object):
                 for child in list(node):
                     ret += self.parse_html_type(child)
             else:
-                ret += str(node.text).strip()
+                ret += node.text.encode("ascii", errors="backslashreplace") if node.get('text') else ""
         if tag == 'unorderedlist':
             for item in list(node):
                 ret += "\t" + "* " + self.parse_html_type(item) + "\n"
         if tag == 'urllink':
-            if node.text:
-                ret += str(node.text).strip() + " "
+            if node.get('text'):
+                ret += node.text.encode("ascii", errors="backslashreplace").strip() + " "
             last = ""
             for attr in node.attrib:
-                if node.get(attr) != node.get(last):
-                    ret += str(node.get(attr)) + " "
+                if node.get(attr) and node.get(attr) != node.get(last):
+                    ret += node.get(attr).encode("ascii", errors="backslashreplace") + " "
                 last = attr
             
         return ret
@@ -164,10 +164,15 @@ class NexposeFullXmlParser(object):
                             vuln['desc'] += self.parse_html_type(htmlType)
                     if item.tag == 'exploits':
                         for exploit in list(item):
-                            vuln['refs'].append(str(exploit.get('title')).strip() + ' ' + str(exploit.get('link')).strip())
+                            if exploit.get('title') and exploit.get('link'):
+                                title = exploit.get('title').encode("ascii", errors="backslashreplace").strip()
+                                link = exploit.get('link').encode("ascii", errors="backslashreplace").strip()
+                                vuln['refs'].append(title + ' ' + link)
                     if item.tag == 'references':
                         for ref in list(item):
-                            vuln['refs'].append(str(ref.text).strip())
+                            if ref.get('text'):
+                                rf = ref.get('text').encode("ascii", errors="backslashreplace").strip()
+                                vuln['refs'].append(rf)
                     if item.tag == 'solution':
                         for htmlType in list(item):
                             vuln['resolution'] += self.parse_html_type(htmlType)

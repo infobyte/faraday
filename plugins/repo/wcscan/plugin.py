@@ -11,6 +11,7 @@ from plugins import core
 import re
 import os
 import sys
+import random
 
 try:
     import xml.etree.cElementTree as ET
@@ -77,7 +78,7 @@ class WcscanPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id = "Wcscan"
         self.name = "Wcscan XML Output Plugin"
-        self.plugin_version = "0.0.1"
+        self.plugin_version = "0.0.2"
         self.version = "0.30"
         self._completition = {
 				"":"wcscan [-h] [-r] [-host HOST] [-port PORT] [--xml XMLOUTPUT] [--version] files [files ...]",
@@ -95,7 +96,10 @@ class WcscanPlugin(core.PluginBase):
         self._command_regex = re.compile(r'^(sudo wcscan|wcscan|\.\/wcscan).*?')
 
         global current_path
-        self._output_file_path = os.path.join(self.data_path, "wcscan_output-%s.xml" % self._rid)
+        self._output_file_path = os.path.join(self.data_path,"%s_%s_output-%s.xml" % (self.get_ws(),
+                                                                                        self.id, 
+                                                                                        random.uniform(1,10)))
+
 
     def canParseCommandString(self, current_input):
         if self._command_regex.match(current_input.strip()):
@@ -152,8 +156,6 @@ class WcscanPlugin(core.PluginBase):
 																										severity=0)		
         del parser
 
-        if not debug:
-            os.remove(self._output_file_path)
         return True
 
     xml_arg_re = re.compile(r"^.*(--xml\s*[^\s]+).*$")

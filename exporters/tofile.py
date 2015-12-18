@@ -16,21 +16,25 @@ class CSVVulnStatusReport(object):
         self.path = path
         self.modelobjects = modelobjects 
 
+    #(self,ip,port,protocol,name,desc,severity,type):
     def getVulnCSVField(self, host, vuln, serv = None):
         vdate = str(date.fromtimestamp(vuln.getMetadata().create_time))
         status = 'vuln'
-        level = vuln.severity
+        level = str(vuln.severity)
         name = vuln.name
+        vtype = '1'
         target = host.name + ( ':' + ','.join([ str(x) for x in serv.getPorts()]) if serv else '')
-        if vuln.class_signature == "VulnerabilityWeb": 
-            target = "%s/%s" % (target, vuln.path)
-        
-        desc = vuln.desc.replace('\n', '<br/>')
+        if vuln.class_signature == "VulnerabilityWeb":
+            vtype = '2'
+        desc = vuln.desc.replace('\n', '<br/>')  if vuln.desc else ""
+        desc = desc.replace(',', '&nbsp;')
 
-        csv_fields = [ vdate , status , str(level) , name , target , desc]
+        csv_fields = [ vdate , host.name ,' '.join([ str(x) for x in serv.getPorts()]) if serv else '', serv.getProtocol() if serv else "",  name, desc, level , vtype]
+        
+        
         try:
             encoded_csv_fields = map(lambda x: x.encode('utf-8'), csv_fields) 
-        except Exception as e:
+        except Exception as e:  
             print e
 
         field = "|".join(encoded_csv_fields)

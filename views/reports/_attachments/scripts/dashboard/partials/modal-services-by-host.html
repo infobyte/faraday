@@ -21,7 +21,7 @@
             <tr ng-repeat="srv in services | orderBy:sortField:sortReverse">
                 <td>
                     {{srv.name}}
-                    <a href="//www.shodan.io/search?query={{srv.name}}" tooltip="Search in Shodan" target="_blank">
+                    <a href="//www.shodan.io/search?query={{srv.name}}" uib-tooltip="Search in Shodan" target="_blank">
                         <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                     </a>
                 </td>
@@ -29,7 +29,7 @@
                 <td>
                     <li ng-repeat="p in srv.ports">   
                         {{p}}                                     
-                        <a href="//www.shodan.io/search?query=port:{{p}}" tooltip="Search in Shodan" target="_blank">
+                        <a href="//www.shodan.io/search?query=port:{{p}}" uib-tooltip="Search in Shodan" target="_blank">
                             <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                         </a>
                     </li>

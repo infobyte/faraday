@@ -20,9 +20,8 @@ output_folder = "%s/output" % os.path.dirname(file_path)
 if not os.path.exists(output_folder):
     os.mkdir(output_folder)
 
-#TODO: Load this from faraday config
-host = "127.0.0.1"
-port = 9977
+host = os.environ["FARADAY_ZSH_HOST"]
+port = int(os.environ["FARADAY_ZSH_RPORT"])
 
 url_input = "http://%s:%d/cmd/input" % (host, port)
 url_output = "http://%s:%d/cmd/output" % (host, port)

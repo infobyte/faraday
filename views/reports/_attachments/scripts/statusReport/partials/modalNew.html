@@ -17,18 +17,18 @@
                     <div class="form-group input-accordion">
                         <input type="text" ng-model="modal.target_filter" class="form-control input-sm" placeholder="Search" ng-change="modal.currentPage = 0">
                     </div>
-                    <accordion close-others="true">
-                        <accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize">
-                        <accordion-heading>
+                    <uib-accordion close-others="true">
+                        <uib-accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize">
+                        <uib-accordion-heading>
                         <a ng-click="modal.setTarget(host)" ng-class="{'multi-selected': host.selected_modalNewCtrl == true}">{{host.name}} ({{host.hostnames[0]}})</a>
                         <i class="pull-right glyphicon"
                         ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
-                        </accordion-heading>
+                        </uib-accordion-heading>
                         <div class="panel-body" ng-repeat="service in host.services">
-                            <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': service.selected_modalNewCtrl == true}">{{service.name}}</a>
+                            <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': service.selected_modalNewCtrl == true}">{{service.name}}  {{service.ports}}</a>
                         </div>
-                        </accordion-group>
-                    </accordion>
+                        </uib-accordion-group>
+                    </uib-accordion>
                     <div class="showPagination" ng-show="modal.targets_filtered.length > modal.pageSize">
                         <div class="form-group">
                             <ul class="pagination">
@@ -62,7 +62,7 @@
             <div class="form-group">
                 <div class="col-md-12">
                     <h5>CWE</h5>
-                    <input type="text" ng-model="modal.cwe_selected" class="form-control input-sm" placeholder="Search for CWE" typeahead="cwe as cwe.name for cwe in modal.cweList | filter:{name: $viewValue} | limitTo:10" typeahead-on-select="modal.populate($item, $model, $label)">
+                    <input type="text" ng-model="modal.cwe_selected" class="form-control input-sm" placeholder="Search for CWE" uib-typeahead="cwe as cwe.name for cwe in modal.cweList | filter:{name: $viewValue} | limitTo:10" typeahead-on-select="modal.populate($item, $model, $label)">
                 </div>
             </div>
             <div class="form-group">

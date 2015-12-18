@@ -8,11 +8,13 @@ See the file 'doc/LICENSE' for the license information
 
 import os
 import zipfile
+import logging
 
 import model.common
 from config.configuration import getInstanceConfiguration
 #from workspace import Workspace
 import model.log
+from utils.logs import getLogger
 from utils.common import *
 import shutil
 #from plugins.api import PluginControllerAPI
@@ -89,9 +91,10 @@ def _setUpAPIServer(hostname=None, port=None):
             _xmlrpc_api_server.register_function(createAndAddServiceToInterface)
             _xmlrpc_api_server.register_function(createAndAddApplication)
             _xmlrpc_api_server.register_function(createAndAddNoteToService)
-            _xmlrpc_api_server.register_function(createAndAddNoteToHost)            
+            _xmlrpc_api_server.register_function(createAndAddNoteToHost)
             _xmlrpc_api_server.register_function(createAndAddNoteToNote)
             _xmlrpc_api_server.register_function(createAndAddVulnWebToService)
+            _xmlrpc_api_server.register_function(createAndAddVulnToService)
             _xmlrpc_api_server.register_function(createAndAddVulnToHost)
             _xmlrpc_api_server.register_function(addHost)
             _xmlrpc_api_server.register_function(addInterface)
@@ -152,14 +155,14 @@ def createAndAddApplication(host_id, name, status = "running", version = "unknow
         return application.getID()
     return None
 
-def createAndAddServiceToApplication(host_id, application_id, name, protocol = "tcp?", 
+def createAndAddServiceToApplication(host_id, application_id, name, protocol = "tcp?",
                 ports = [], status = "running", version = "unknown", description = ""):
     service = newService(name, protocol, ports, status, version, description)
     if addServiceToApplication(host_id, application_id, service):
         return service.getID()
     return None
 
-def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?", 
+def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?",
                 ports = [], status = "running", version = "unknown", description = ""):
     service = newService(name, protocol, ports, status, version, description, parent_id=interface_id)
     if addServiceToInterface(host_id, interface_id, service):
@@ -179,7 +182,7 @@ def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref, severity
     if addVulnToInterface(host_id, interface_id, vuln):
         return vuln.getID()
     return None
-    
+
 def createAndAddVulnToApplication(host_id, application_id, name, desc, ref, severity, resolution):
     vuln = newVuln(name, desc, ref, severity, resolution)
     if addVulnToApplication(host_id, application_id, vuln):
@@ -205,7 +208,7 @@ def createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity,
     return None
 
 # Note
- 
+
 def createAndAddNoteToHost(host_id, name, text):
     note = newNote(name, text, parent_id=host_id)
     if addNoteToHost(host_id, note):
@@ -463,24 +466,28 @@ def newService(name, protocol = "tcp?", ports = [], status = "running",
         name, protocol, ports, status, version, description, parent_id)
 
 
-def newVuln(name, desc="", ref = None, severity="", resolution="", parent_id=None):
+def newVuln(name, desc="", ref=None, severity="", resolution="",
+            confirmed=False, parent_id=None):
     """
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
     return __model_controller.newVuln(
-        name, desc, ref, severity, resolution, parent_id)
+        name, desc, ref, severity, resolution, confirmed, parent_id)
 
 
-def newVulnWeb(name, desc="", ref = None, severity="", resolution="", website="", path="", request="", response="",
-                method="",pname="", params="",query="",category="", parent_id=None):
+def newVulnWeb(name, desc="", ref=None, severity="", resolution="", website="",
+               path="", request="", response="", method="", pname="",
+               params="", query="", category="", confirmed=False,
+               parent_id=None):
     """
     It creates and returns a Vulnerability object.
     The created object is not added to the model.
     """
     return __model_controller.newVulnWeb(
-        name, desc, ref, severity, resolution, website, path, request, response,
-        method, pname, params, query, category, parent_id)
+        name, desc, ref, severity, resolution, website, path, request,
+        response, method, pname, params, query, category, confirmed,
+        parent_id)
 
 
 def newNote(name, text, parent_id=None):
@@ -535,27 +542,27 @@ def exportWorskpace(workspace_path, export_path):
 #                        print f
                     zip.write(fullpath, archive_name, zipfile.ZIP_DEFLATED)
     zip.close()
-    
+
 
 def importWorskpace(workspace_path, file_path):
     """
     This api will import a zip file of the persistence directory.
     WARNING: this will overwrite any existing files!
     """
-        
+
     archive = zipfile.ZipFile(str(file_path), "r", zipfile.ZIP_DEFLATED)
     names = archive.namelist()
-    
+
     for name in names:
         filename = os.path.join(workspace_path, name)
         if not os.path.exists(os.path.dirname(filename)):
             os.mkdir(os.path.dirname(filename))
         # create the output file. This will overwrite any existing file with the same name
-        temp = open(filename, "wb") 
+        temp = open(filename, "wb")
         data = archive.read(name) # read data from zip archive
         temp.write(data)
         temp.close()
-            
+
     archive.close()
 
 #-------------------------------------------------------------------------------
@@ -568,18 +575,18 @@ def addEvidence(file_path):
     """
     filename=os.path.basename(file_path)
     ###: Ver de sacar ese nombre evidences del config
-    
+
     dpath="%s/evidences/" % (__model_controller._persistence_dir)
     dpathfilename="%s%s" % (dpath,filename)
-    
+
     #devlog("[addEvidence] File added ("+file_path+") destination path ("+dpathfilename+")")
-    
+
     if os.path.isfile(dpathfilename):
         devlog("[addEvidence] - File evidence (" + dpathfilename +") exists abort adding")
     else:
         if not os.path.isdir(dpath):
             os.mkdir(dpath)
-            
+
         shutil.copyfile(file_path,dpathfilename)
         if os.path.isfile(dpathfilename):
             #XXX: la idea es no acceder directamente a cosas privadas del model controller como esto de _check_evidences
@@ -594,7 +601,7 @@ def checkEvidence(file_path):
     """
     if not os.path.isfile(file_path):
         devlog("[addEvidence] - File evidence (" + dpathfilename +") doesnt exists abort adding")
-    else:        
+    else:
         __model_controller._check_evidences.append(file_path)
         return True
 
@@ -606,7 +613,7 @@ def cleanEvidence():
     """
     check_evidences=__model_controller._check_evidences
     #devlog("[cleanEvidence] check_evidence values=" + str(check_evidences))
-    
+
     evidence_path="%s/evidences/" % (__model_controller._persistence_dir)
     for root, dirs, files in os.walk(evidence_path):
         for filename in files:
@@ -643,16 +650,22 @@ def log(msg ,level = "INFO"):
     it will also log to a file with the corresponding level
     if logger was configured that way
     """
-    model.log.getLogger().log(msg,level)
+    levels = {
+        "CRITICAL": logging.CRITICAL,
+        "ERROR": logging.ERROR,
+        "WARNING": logging.WARNING,
+        "INFO": logging.INFO,
+        "DEBUG": logging.DEBUG,
+        "NOTSET": logging.NOTSET
+    }
+    level = levels.get(level, logging.NOTSET)
+    getLogger().log(level, msg)
 
 def devlog(msg):
     """
     If DEBUG is set it will print information directly to stdout
     """
-    import logging
-    if CONF.getDebugStatus():
-        logging.getLogger('faraday.model.api').debug(msg)
-        model.log.getLogger().log(msg, "DEBUG")
+    getLogger().debug(msg)
 
 def showDialog(msg, level="Information"):
     return model.log.getNotifier().showDialog(msg, level)
@@ -670,7 +683,7 @@ def getLoggedUser():
 #-------------------------------------------------------------------------------
 
 #TODO: implement!!!!!
-def getLocalDefaultGateway():    
+def getLocalDefaultGateway():
     return gateway()
 
 

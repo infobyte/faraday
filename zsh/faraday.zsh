@@ -5,21 +5,20 @@
 #
 #'''
 
-
 WORKSPACE=`cat $HOME/.faraday/config/user.xml |  grep '<last_workspace' | cut -d '>' -f 2 | cut -d '<' -f 1`
-STATUS=`curl -s 127.0.0.1:9977/status/check |  sed "s/[^0-9]//g" | grep -v '^[[:space:]]*$'`
+STATUS=`curl -s $FARADAY_ZSH_HOST:$FARADAY_ZSH_RPORT/status/check |  sed "s/[^0-9]//g" | grep -v '^[[:space:]]*$'`
 PS1="%{${fg_bold[red]}%}[faraday]($WORKSPACE)%{${reset_color}%} $PS1"
 
 echo ">>> WELCOME TO FARADAY"
 echo "[+] Current Workspace: $WORKSPACE"
 if [[ -z $STATUS ]]; then
 		echo "[-] API: Warning API unreachable"
-	
-	elif [[ $STATUS == "200" ]]; then	 
+
+	elif [[ $STATUS == "200" ]]; then
 		echo "[+] API: OK"
-	else	
-		echo "[!] API: $STATUS"	
-	
+	else
+		echo "[!] API: $STATUS"
+
 fi
 
 setopt multios

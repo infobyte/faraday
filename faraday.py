@@ -66,6 +66,12 @@ FARADAY_QTRC = os.path.join(FARADAY_BASE, CONST_FARADAY_QTRC_PATH)
 FARADAY_QTRCBAK = os.path.expanduser(CONST_FARADAY_QTRC_BACKUP)
 CONST_VERSION_FILE = os.path.join(FARADAY_BASE,"VERSION")
 
+REQUESTS_CA_BUNDLE_VAR = "REQUESTS_CA_BUNDLE"
+FARADAY_DEFAULT_PORT_XMLRPC = 9876
+FARADAY_DEFAULT_PORT_REST = 9977
+FARADAY_DEFAULT_HOST = "localhost"
+
+
 def getParserArgs():
     """Parser setup for faraday launcher arguments.
 
@@ -81,13 +87,15 @@ def getParserArgs():
 
     parser_connection.add_argument('-n', '--hostname', action="store",
         dest="host",
-        default="localhost",
-        help="The hostname where api XMLRPCServer will listen. \
+        default=None,
+        help="The hostname where both server APIs will listen (XMLRPC and RESTful). \
         Default = localhost")
 
-    parser_connection.add_argument('-p', '--port', action="store", dest="port",
-        default=9876, type=int,
-        help="Sets the port where api XMLRPCServer will listen. Default = 9876")
+    parser_connection.add_argument('-px', '--port-xmlrpc', action="store", dest="port_xmlrpc", default=None, type=int,
+        help="Sets the port where the api XMLRPCServer will listen. Default = 9876")
+    parser_connection.add_argument('-pr', '--port-rest', action="store", dest="port_rest",
+        default=None, type=int,
+        help="Sets the port where the api RESTful server will listen. Default = 9977")
 
     parser.add_argument('-d', '--debug', action="store_true", dest="debug",
         default=False,
@@ -151,6 +159,7 @@ def getParserArgs():
     #args = parser.parse_args(['@parser_args.cfg'])
     return parser.parse_args()
 
+
 def query_user_bool(question, default=True):
     """Returns a boolean based on user input.
 
@@ -186,8 +195,8 @@ def query_user_bool(question, default=True):
         if choice in valid_no_ans:
             return False
 
-        sys.stdout.write("Please respond with 'yes' or 'no' "\
-                             "(or 'y' or 'n').\n")
+        sys.stdout.write("Please respond with 'yes' or 'no' "
+                         "(or 'y' or 'n').\n")
 
 
 def checkDependencies():
@@ -216,7 +225,7 @@ def checkDependencies():
                 try:
                     __import__(module[0])
                 except ImportError:
-                    if query_user_bool("Missing module %s." \
+                    if query_user_bool("Missing module %s."
                         " Do you wish to install it?" % module[0]):
                         pip.main(['install', "%s==%s" %
                                  (module[0], module[1]), '--user'])
@@ -237,13 +246,14 @@ def startProfiler(app, output, depth):
 
     """
 
-    logger.warning("[!] Faraday will be started with a profiler attached." \
-    "Performance may be affected.")
+    logger.warning("[!] Faraday will be started with a profiler attached."
+                   "Performance may be affected.")
 
     start = profile(app,
-            filename=output,
-            entries=depth)
+                    filename=output,
+                    entries=depth)
     return start
+
 
 def setConf():
     """User configuration management and instantiation.
@@ -257,10 +267,22 @@ def setConf():
 
     CONF = getInstanceConfiguration()
     CONF.setDebugStatus(args.debug)
-    if args.host != 'localhost':
-        CONF.setApiConInfoHost(args.host)
-    if args.port != 9876:
-        CONF.setApiConInfoPort(args.port)
+
+    host = CONF.getApiConInfoHost() if str(CONF.getApiConInfoHost()) != "None" else FARADAY_DEFAULT_HOST
+    port_xmlrpc = CONF.getApiConInfoPort() if str(CONF.getApiConInfoPort()) != "None" else FARADAY_DEFAULT_PORT_XMLRPC
+    port_rest = CONF.getApiRestfulConInfoPort() if str(CONF.getApiRestfulConInfoPort()) != "None" else FARADAY_DEFAULT_PORT_REST
+
+    host = args.host if args.host else host
+    port_xmlrpc = args.port_xmlrpc if args.port_xmlrpc else port_xmlrpc
+    port_rest = args.port_rest if args.port_rest else port_rest
+
+    logger.info("XMLRPC API Server listening on %s:%s" % (host, port_xmlrpc))
+    logger.info("RESTful API Server listening on %s:%s" % (host, port_rest))
+
+    CONF.setApiConInfoHost(host)
+    CONF.setApiConInfoPort(port_xmlrpc)
+    CONF.setApiRestfulConInfoPort(port_rest)
+
     CONF.setAuth(args.disable_login)
 
 
@@ -289,10 +311,9 @@ def startFaraday():
 
     if args.profile:
         logger.info("Starting main application with profiler.")
-        start = startProfiler(
-                main_app.start,
-                args.profile_output,
-                args.profile_depth)
+        start = startProfiler(main_app.start,
+                              args.profile_output,
+                              args.profile_depth)
     else:
         logger.info("Starting main application.")
         start = main_app.start
@@ -307,13 +328,14 @@ def startFaraday():
                 """Make sure you got couchdb up and running.\nIf couchdb is up, point your browser to: \n[%s]""" % url)
     else:
         print(Fore.WHITE + Style.BRIGHT + \
-                """Please config Couchdb for fancy HTML5 Dashboard""")
+                """Please config Couchdb for fancy HTML5 Dashboard (https://github.com/infobyte/faraday/wiki/Couchdb)""")
 
     print(Fore.RESET + Back.RESET + Style.RESET_ALL)
 
     exit_status = start()
 
     return exit_status
+
 
 def setupPlugins(dev_mode=False):
     """Checks and handles Faraday's plugin status.
@@ -341,6 +363,7 @@ def setupPlugins(dev_mode=False):
 
         shutil.copytree(FARADAY_PLUGINS_BASEPATH, FARADAY_PLUGINS_PATH)
 
+
 def setupQtrc():
     """Cheks and handles QT configuration file.
 
@@ -356,6 +379,7 @@ def setupQtrc():
             cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqui.so'))
         except:
             pass
+
 
 def setupZSH():
     """Cheks and handles Faraday's integration with ZSH.
@@ -379,6 +403,7 @@ def setupZSH():
     shutil.copy(FARADAY_BASE_ZSH, FARADAY_USER_ZSH_PATH)
     shutil.copy(FARADAY_BASE_ZSH_PLUGIN, FARADAY_USER_ZSH_PATH)
 
+
 def setupXMLConfig():
     """Checks user configuration file status.
 
@@ -390,6 +415,7 @@ def setupXMLConfig():
         shutil.copy(FARADAY_BASE_CONFIG_XML, FARADAY_USER_CONFIG_XML)
     else:
         logger.info("Using custom user configuration.")
+
 
 def setupLibs():
     """Checks ELF libraries status."
@@ -424,12 +450,14 @@ def setupLibs():
 
     subprocess.call(['ln', '-s', helpers, FARADAY_BASE_LIB_HELPERS])
 
+
 def setupImages():
     """ Copy png icons
     """
     if os.path.exists(FARADAY_USER_IMAGES):
         shutil.rmtree(FARADAY_USER_IMAGES)
     shutil.copytree(FARADAY_BASE_IMAGES, FARADAY_USER_IMAGES)
+
 
 def checkConfiguration():
     """Checks if the environment is ready to run Faraday.
@@ -442,8 +470,6 @@ def checkConfiguration():
     logger.info("Checking configuration.")
     logger.info("Setting up plugins.")
     setupPlugins(args.dev_mode)
-    logger.info("Setting up folders.")
-    setupFolders(CONST_FARADAY_FOLDER_LIST)
     logger.info("Setting up Qt configuration.")
     setupQtrc()
     logger.info("Setting up ZSH integration.")
@@ -455,6 +481,7 @@ def checkConfiguration():
     logger.info("Setting up icons for QT interface.")
     setupImages()
 
+
 def setupFolders(folderlist):
     """Checks if a list of folders exists and creates them otherwise.
 
@@ -464,14 +491,18 @@ def setupFolders(folderlist):
         fp_folder = os.path.join(FARADAY_USER_HOME, folder)
         checkFolder(fp_folder)
 
+
 def checkFolder(folder):
     """Checks whether a folder exists and creates it if it doesn't.
 
     """
 
     if not os.path.isdir(folder):
-        logger.info("Creating %s" % folder)
-        os.mkdir(folder)
+        if logger:
+            logger.info("Creating %s" % folder)
+        os.makedirs(folder)
+
+
 
 def printBanner():
     """Prints Faraday's ascii banner.
@@ -492,6 +523,7 @@ _/ ____\_____  ____________     __| _/_____   ___.__.
     print(Back.RESET + "            Where pwnage goes multiplayer")
     print(Fore.RESET + Back.RESET + Style.RESET_ALL)
     logger.info("Starting Faraday IDE.")
+
 
 def update():
     """Updates Faraday IDE.
@@ -564,7 +596,7 @@ def checkVersion():
     except Exception as e:
         getLogger("launcher").error("It seems that something's wrong with your version\nPlease contact customer support")
         exit(-1)
-    
+
 
 def init():
     """Initializes what is needed before starting.
@@ -575,9 +607,13 @@ def init():
 
     global args
     global logger
+    logger = None
 
     args = getParserArgs()
+    setupFolders(CONST_FARADAY_FOLDER_LIST)
+    setUpLogger(args.debug)
     logger = getLogger("launcher")
+
 
 def main():
     """Main.
@@ -591,12 +627,11 @@ def main():
         printBanner()
         logger.info("Dependencies met.")
         if args.cert_path:
-            os.environ['REQUESTS_CA_BUNDLE'] = args.cert_path
+            os.environ[REQUESTS_CA_BUNDLE_VAR] = args.cert_path
         checkConfiguration()
         setConf()
         checkCouchUrl()
         checkVersion()
-        setUpLogger()
         update()
         checkUpdates()
         startFaraday()

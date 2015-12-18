@@ -14,6 +14,7 @@ import re
 import os
 import pprint
 import sys
+import random
 
 try:
     import xml.etree.cElementTree as ET
@@ -302,6 +303,9 @@ class NiktoPlugin(core.PluginBase):
         Adds the -oX parameter to get xml output to the command string that the
         user has set.
         """
+        self._output_file_path = os.path.join(self.data_path,"%s_%s_output-%s.xml" % (self.get_ws(),
+                                                                                        self.id, 
+                                                                                        random.uniform(1,10)))        
         arg_match = self.xml_arg_re.match(command_string)
 
 

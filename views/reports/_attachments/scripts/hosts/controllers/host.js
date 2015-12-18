@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('hostCtrl',
-        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$modal', 'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager',
-        function($scope, $cookies, $filter, $location, $route, $routeParams, $modal, hostsManager, workspacesFact, dashboardSrv, servicesManager) {
+        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager',
+        function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, dashboardSrv, servicesManager) {
 
 	    init = function() {
 	    	$scope.selectall = false;
@@ -172,7 +172,7 @@ angular.module('faradayApp')
         };
 
         $scope.new = function() {
-            var modal = $modal.open({
+            var modal = $uibModal.open({
                 templateUrl: 'scripts/services/partials/modalNew.html',
                 controller: 'serviceModalNew',
                 size: 'lg',
@@ -192,7 +192,7 @@ angular.module('faradayApp')
             servicesManager.createService(service, $scope.workspace).then(function(service) {
                 $scope.services.push(service);
             }, function(message) {
-                $modal.open(config = {
+                $uibModal.open(config = {
                     templateUrl: 'scripts/commons/partials/modalKO.html',
                     controller: 'commonsModalKoCtrl',
                     size: 'sm',
@@ -217,7 +217,7 @@ angular.module('faradayApp')
 
         $scope.edit = function() {
             if($scope.selectedServices().length > 0) {
-                var modal = $modal.open({
+                var modal = $uibModal.open({
                     templateUrl: 'scripts/services/partials/modalEdit.html',
                     controller: 'serviceModalEdit',
                     size: 'lg',
@@ -235,7 +235,7 @@ angular.module('faradayApp')
                     $scope.update($scope.selectedServices(), data);
                 });
             } else {
-                $modal.open(config = {
+                $uibModal.open(config = {
                     templateUrl: 'scripts/commons/partials/modalKO.html',
                     controller: 'commonsModalKoCtrl',
                     size: 'sm',
@@ -257,7 +257,7 @@ angular.module('faradayApp')
             });
 
             if(selected.length == 0) {
-                $modal.open(config = {
+                $uibModal.open(config = {
                     templateUrl: 'scripts/commons/partials/modalKO.html',
                     controller: 'commonsModalKoCtrl',
                     size: 'sm',
@@ -273,7 +273,7 @@ angular.module('faradayApp')
                     message = selected.length  + " hosts will be deleted";
                 }
                 message = message.concat(" along with all of its children. This operation cannot be undone. Are you sure you want to proceed?");
-                $modal.open(config = {
+                $uibModal.open(config = {
                     templateUrl: 'scripts/commons/partials/modalDelete.html',
                     controller: 'commonsModalDelete',
                     size: 'lg',

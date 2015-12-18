@@ -81,15 +81,15 @@
                                     <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}">View</a></td>
                                     <td>
                                         {{host.name}}
-                                        <a href="//www.shodan.io/search?query={{host.name}}" tooltip="Search in Shodan" target="_blank">
+                                        <a href="//www.shodan.io/search?query={{host.name}}" uib-tooltip="Search in Shodan" target="_blank">
                                             <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                         </a>
                                     </td>
                                     <td ng-bind="host.description || '-'"></td>
                                     <td> <a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="vulnsCount[host._id] || '-'"></a></td>
                                     <td>
-                                        <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" tooltip="{{host.os}}"/>
-                                        <span ng-if="host.icon == undefined" class="fa fa-laptop" tooltip="{{host.os}}"></span>
+                                        <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
+                                        <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
                                     </td>
                                     <td ng-bind="host.owned"></td>
                                 </tr>

@@ -13,6 +13,7 @@ from gui.qt3.perspective import PerspectiveManager
 from gui.qt3.hostsbrowser import HostsBrowser
 from gui.qt3.workspacebrowser import WorkspaceTreeWindow
 from gui.qt3.dialogs import *
+from gui.qt3.logconsole import LogConsole
 from gui.qt3.configdialog import ConfigDialog
 from gui.qt3.toolbars import *
 from gui.qt3.customevents import *

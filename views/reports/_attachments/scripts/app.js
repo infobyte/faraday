@@ -8,7 +8,7 @@ $.ajaxSetup({
     async: false
 });
 
-var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload', 'filter', 'ngClipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js'])
+var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload', 'filter', 'ngClipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js', 'ui.grid', 'ui.grid.selection', 'ui.grid.grouping', 'ngSanitize', 'ui.grid.pagination', 'ui.grid.pinning'])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;
@@ -92,6 +92,21 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, 
             templateUrl: 'scripts/services/partials/list.html',
             controller: 'hostCtrl',
             title: 'Services | '
+        }).
+        when('/status/ws/:wsId/groupby/:groupbyId', {
+            templateUrl: 'scripts/statusReport/partials/statusReport.html',
+            controller: 'statusReportCtrl',
+            title: 'Status Report | '
+        }).
+        when('/status/ws/:wsId/groupby/:groupbyId/search/:search', {
+            templateUrl: 'scripts/statusReport/partials/statusReport.html',
+            controller: 'statusReportCtrl',
+            title: 'Status Report | '
+        }).
+        when('/status/ws/:wsId/groupby/:groupbyId/search', {
+            templateUrl: 'scripts/statusReport/partials/statusReport.html',
+            controller: 'statusReportCtrl',
+            title: 'Status Report | '
         }).
         when('/status/ws/:wsId/search/:search', {
             templateUrl: 'scripts/statusReport/partials/statusReport.html',

@@ -759,13 +759,13 @@ class HostsBrowser(qt.QVBox):
                 
                 d = l.split("|")
                 
-                if len(d) <=5:
-                    api.devlog("Error vuln line: ("+l+")" )
+                if len(d) <=8:
+                    api.log("Error vuln line: ("+l+")" )
                 else:
-                    self._newVulnImport(d[0],d[1],d[2],d[3],d[4],d[5],d[6])
+                    self._newVulnImport(d[1],d[2],d[3],d[4],d[5],d[6],d[7])
 
     def _newVulnImport(self,ip,port,protocol,name,desc,severity,type):
-        if port == "0": #vuln host
+        if port == "": #vuln host
             h_id = guiapi.createAndAddHost(ip)
             v_id = guiapi.createAndAddVulnToHost(h_id, name, desc, [],severity)
         else: #vuln port
@@ -776,8 +776,8 @@ class HostsBrowser(qt.QVBox):
                 i_id = guiapi.createAndAddInterface(h_id,ip,ipv6_address=ip)
             s_id = guiapi.createAndAddServiceToInterface(h_id,i_id,port,protocol,ports=[port])
             if type == "2":
-                v_id = guiapi.createAndAddVulnWebToService(h_id,s_id, name, desc, "/","/",[],severity)
-            else:
+                v_id = guiapi.createAndAddVulnWebToService(h_id,s_id, name, desc, [], severity, "/", "/")
+            else:                
                 v_id = guiapi.createAndAddVulnToService(h_id,s_id, name, desc, [],severity)
 
         api.devlog("type:" + type)

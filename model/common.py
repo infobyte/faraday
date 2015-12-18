@@ -850,16 +850,12 @@ class ModelObjectNote(ModelComposite):
     def __repr__(self):
         return "%s: %s" % (self.name, self.text)
 
-#-------------------------------------------------------------------------------
+
 class ModelObjectVuln(ModelComposite):
-    """
-    Simple class to store vulnerability about any object.
-    id will be used to number vulnerability (based on a counter on the object being commented)
-    parent will be a reference to the object being commented.
-    """
     class_signature = "Vulnerability"
 
-    def __init__(self, name="",desc="", ref=None, severity="", resolution="", parent_id=None):
+    def __init__(self, name="", desc="", ref=None, severity="", resolution="",
+                 confirmed=False, parent_id=None):
         """
         The parameters refs can be a single value or a list with values
         """
@@ -867,7 +863,7 @@ class ModelObjectVuln(ModelComposite):
         self.name = name
         self._desc = desc
         self.data = ""
-        
+        self.confirmed = confirmed
         self.refs = []
 
         if isinstance(ref, list):
@@ -911,6 +907,21 @@ class ModelObjectVuln(ModelComposite):
         self._id = get_hash([self.name, self._desc])
         self._prependParentId()
 
+    def tieBreakable(self, key):
+        '''
+        If the confirmed property has a conflict, there's two possible reasons:
+            confirmed is false, and the new value is true => returns true
+            confirmed is true, and the new value is false => returns true
+        '''
+        if key == "confirmed":
+            return True
+        return False
+
+    def tieBreak(self, key, prop1, prop2):
+        if key == "confirmed":
+            return True
+        return (prop1, prop2)
+
     def _setDesc(self, desc):
         self._desc = desc
 
@@ -929,7 +940,6 @@ class ModelObjectVuln(ModelComposite):
             self.refs = refs
 
     def _getDesc(self):
-        #return self._desc.getvalue()
         return self._desc
 
     desc = property(_getDesc, _setDesc)
@@ -950,7 +960,7 @@ class ModelObjectVuln(ModelComposite):
         self.resolution = resolution
 
     def getResolution(self):
-        return self.resolution        
+        return self.resolution
 
     def getSeverity(self):
         return self.severity
@@ -973,6 +983,11 @@ class ModelObjectVuln(ModelComposite):
     def getData(self):
         return self.data
 
+    def setConfirmed(self, confirmed):
+        self.confirmed = confirmed
+
+    def getConfirmed(self):
+        return self.confirmed
 
     def __str__(self):
         return "vuln id:%s - %s" % (self.id, self.name)
@@ -980,10 +995,7 @@ class ModelObjectVuln(ModelComposite):
     def __repr__(self):
         return self.__str__()
 
-    def getSeverity(self):
-        return self.severity
 
-#-------------------------------------------------------------------------------
 class ModelObjectVulnWeb(ModelObjectVuln):
     """
     Simple class to store vulnerability web about any object.
@@ -992,12 +1004,16 @@ class ModelObjectVulnWeb(ModelObjectVuln):
     """
     class_signature = "VulnerabilityWeb"
 
-    def __init__(self, name="",desc="", website="", path="", ref=None, severity="", resolution="", request="", response="",
-                method="",pname="", params="",query="",category="", parent_id=None):
+    def __init__(self, name="", desc="", website="", path="", ref=None,
+                 severity="", resolution="", request="", response="",
+                 method="", pname="", params="", query="", category="",
+                 confirmed=False, parent_id=None):
         """
         The parameters ref can be a single value or a list with values
         """
-        ModelObjectVuln.__init__(self, name,desc, ref, severity, resolution, parent_id)
+        ModelObjectVuln.__init__(
+            self, name, desc, ref, severity, resolution, confirmed,
+            parent_id)
         self.path = path
         self.website = website
         self.request = request
@@ -1068,7 +1084,7 @@ class ModelObjectVulnWeb(ModelObjectVuln):
 
     #@save
     @updateLocalMetadata
-    def updateAttributes(self, name=None, desc=None, website=None, path=None, refs=None, 
+    def updateAttributes(self, name=None, desc=None, website=None, path=None, refs=None,
                         severity=None, resolution=None, request=None,response=None, method=None,
                         pname=None, params=None, query=None, category=None):
         super(ModelObjectVulnWeb, self).updateAttributes(name, desc, severity, resolution, refs)

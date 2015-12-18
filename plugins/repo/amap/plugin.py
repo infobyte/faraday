@@ -32,7 +32,7 @@ class AmapPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id              = "Amap"
         self.name            = "Amap Output Plugin"
-        self.plugin_version         = "0.0.2"
+        self.plugin_version         = "0.0.3"
         self.version   = "5.4"
         self.options         = None
         self._current_output = None
@@ -127,8 +127,6 @@ class AmapPlugin(core.PluginBase):
             service = services.get(key)
             s_id = self.createAndAddServiceToInterface(h_id, i_id, service[5], service[2], ports = [service[1]], status = service[3],description = service[6])
         
-        if not debug:
-            os.remove(self._file_output_path)
         return True
 
     file_arg_re = re.compile(r"^.*(-o \s*[^\s]+\s+(?:-m|)).*$")
@@ -179,8 +177,9 @@ class AmapPlugin(core.PluginBase):
         parser.add_argument('-m')
         
         
-               
-        self._file_output_path=os.path.join(self.data_path,"amap_output-%s.txt" % random.uniform(1,10))        
+        self._output_file_path = os.path.join(self.data_path,"%s_%s_output-%s.xml" % (self.get_ws(),
+                                                                                        self.id, 
+                                                                                        random.uniform(1,10)))        
         
         if arg_match is None:               
             final= re.sub(r"(^.*?amap)",

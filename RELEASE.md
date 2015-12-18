@@ -10,7 +10,36 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA:
+Dec 18, 2015:
+---
+* Immunity Canvas plugin added
+* Added Dig plugin
+* Added Traceroute plugin
+* Fixed bug in first run of Faraday with log path and API errors
+* Added parametrization for port configuration on APIs
+* Refactor Plugin Base to update active WS name in var
+* Refactor Plugins to use current WS in temp filename under $HOME/.faraday/data. Affected Plugins:
+    - amap
+    - dnsmap
+    - nmap
+    - sslcheck
+    - wcscan
+    - webfuzzer
+    - nikto
+* Fixed bug get_installed_distributions from handler exceptions
+* Added Wiki information about running Faraday without configuring CouchDB
+* Fixed Unicode bug in Nexpose-full Plugin
+* Filter false-positives in Status Report
+* Fixed bug that prevented the use of "reports" and "cwe" strings in Workspace names
+* Added port to Service type target in new vuln modal
+* Added new scripts for faraday plugin:
+    - /bin/delAllVulnsWith.py - delete all vulns that match a regex
+    - /bin/getAllbySrv.py - get all IP addresses that have defined open port
+    - /bin/getAllIpsNotServices.py added - get all IPs from targets without services
+* Fixed bug null last workspace
+* Fixed bugs in CSV export/import in QT
+
+Oct 2, 2015:
 ---
 * Continuous Scanning Tool cscan added to ./scripts/cscan
 * Fix for saving objects without parent

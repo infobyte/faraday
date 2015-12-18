@@ -115,7 +115,7 @@ angular.module('faradayApp')
                                 return xScale(d.x);
                             })
                             .attr('tooltip-append-to-body', true)
-                            .attr('tooltip', function(d) {
+                            .attr('uib-tooltip', function(d) {
                                 return d.k + " sums $" + d.x;
                             })
                             .attr('class', function(d) {

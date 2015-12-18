@@ -47,7 +47,7 @@ class ReportManager(threading.Thread):
                 try:
                     self.syncReports()
                 except Exception:
-                    model.api.devlog("An exception was captured while saving reports\n%s" % traceback.format_exc())
+                    model.api.log("An exception was captured while saving reports\n%s" % traceback.format_exc())
                 finally:
                     tmp_timer = 0
 
@@ -80,17 +80,20 @@ class ReportManager(threading.Thread):
             if root == self._report_path:
                 for name in files:
                     filename = os.path.join(root, name)
-                    model.api.devlog( "Report file is %s" % filename) 
-                                     
+                    model.api.log( "Report file is %s" % filename)
+                    
                     parser = ReportXmlParser(filename)
                     if (parser.report_type is not None):
-                        #TODO: get host and port from config
-                        client = PluginControllerAPIClient("127.0.0.1", 9977)
+                        
+                        host = CONF.getApiConInfoHost()
+                        port_rest = int(CONF.getApiRestfulConInfoPort())
 
-                        model.api.devlog("The file is %s, %s" % (filename,parser.report_type))
+                        client = PluginControllerAPIClient(host, port_rest)
+
+                        model.api.log("The file is %s, %s" % (filename,parser.report_type))
 
                         command_string = "./%s %s" % (parser.report_type.lower(), filename)
-                        model.api.devlog("Executing %s" % (command_string))
+                        model.api.log("Executing %s" % (command_string))
                         
                         new_cmd, output_file = client.send_cmd(command_string) 
                         client.send_output(command_string, filename) 
@@ -136,7 +139,6 @@ class ReportXmlParser(object):
 
         if root_tag:
             self.report_type = self.rType(root_tag,output)
-        model.api.devlog(self.report_type)
         
     def getRootTag(self, xml_file_path):
         result = f = None
@@ -148,11 +150,11 @@ class ReportXmlParser(object):
                     break
             except SyntaxError, err:
                 self.report_type = None
-                model.api.devlog("Not an xml file.\n %s" % (err))
+                model.api.log("Not an xml file.\n %s" % (err))
 
         except IOError, err:
             self.report_type = None
-            model.api.devlog("Error while opening file.\n%s. %s" % (err, xml_file_path))
+            model.api.log("Error while opening file.\n%s. %s" % (err, xml_file_path))
         finally:
             f.seek(0)
             output=f.read()

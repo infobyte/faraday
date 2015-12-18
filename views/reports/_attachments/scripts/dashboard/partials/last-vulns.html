@@ -1,7 +1,7 @@
 <article class='panel panel-default left-big-box'>
         <header>
             <h2>Last Vulnerabilities
-                <span class="glyphicon glyphicon-info-sign" tooltip="Last vulnerabilities added"></span>
+                <span class="glyphicon glyphicon-info-sign" uib-tooltip="Last vulnerabilities added"></span>
             </h2>
         </header>
         <div ng-if="vulns.length == 0" class="alert alert-info alert-dismissible no-margin-bottom">
@@ -27,7 +27,7 @@
                     <td>{{vuln.metadata.create_time * 1000 | date:"MM/dd/yyyy 'at' h:mma"}}</td>
                     <td>
                         {{vuln.target}}
-                        <a href="//www.shodan.io/search?query={{vuln.target}}" tooltip="Search in Shodan" target="_blank">
+                        <a href="//www.shodan.io/search?query={{vuln.target}}" uib-tooltip="Search in Shodan" target="_blank">
                             <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                         </a>                        
                     </td>

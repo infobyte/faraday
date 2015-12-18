@@ -718,7 +718,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
         justify-content: center;
         align-items: center;
     }
-    #merge, #delete, #new, #tags, left{margin:5px;float:right}
+    #merge, #delete, #new, #tags, #group-by, left{margin:5px;float:right}
     .left_auths{margin:5px;float:right;margin-top: -52px;}
     .left_auth{margin:5px;float:right;margin-top: -40px;}
 
@@ -984,7 +984,7 @@ aside .alert.alert-danger.alert-dismissible{
     font-size: 15px;
     font-weight: bold;
 }
-.text-center{text-align: center; width: 25px;}
+.text-center{text-align: center; line-height: 40px;}
 .severities .color-unclassified, .severities .color-unclassified:hover{color: #999;}
 .severities .color-info, .severities .color-info:hover{color: #2e97bd;}
 .severities .color-low, .severities .color-low:hover{color: #A1CE31;}
@@ -1018,3 +1018,25 @@ div.jumbotron.jumbotron-font h1{font-size: 54px}
 div.datepicker ul.dropdown-menu{width: 288px;}
 div.datepicker > p > ul > li > div > table{width: 97%}
 div.datepicker .btn-sm, .btn-group-sm > .btn{padding: 5px 7px}
+.disabled{color: #919191}
+div.btn-group .vulns-filter{left: -2px;}
+div.btn-group .dropdown-menu.margin{margin-left: 38px}
+/* UI GRID */
+.ui-grid-cell.ui-grid-disable-selection.ui-grid-row-header-cell{pointer-events: auto!important;}
+.grid {
+  height: 98vh;
+}
+.ui-grid-cell-contents.left-rows.text-center.ng-scope{white-space: normal!important; }
+.ui-grid .ui-grid-row:nth-child(odd) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid .ui-grid-row:nth-child(even) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid-cell-contents{
+    white-space: pre;
+    word-wrap: break-word!important;
+}
+.grid.ui-grid{font-family: 12px!important;}
+.ui-grid-cell-contents.row-tooltip.text-center{white-space: normal!important; }
+.white-space{white-space: pre!important; word-wrap: break-word;}
+.ui-grid-cell-contents.center > .pos-middle.crop-text{top: 2%!important;white-space: inherit!important;}
+.overflow-cell{
+    height: 95px!important;
+    overflow-y: auto!important;
+}
+div.ui-grid-header-cell .ui-grid-cell-contents{white-space: normal;}

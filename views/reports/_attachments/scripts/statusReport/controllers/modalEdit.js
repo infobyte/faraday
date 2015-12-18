@@ -37,6 +37,7 @@ angular.module('faradayApp')
  
             vm.data = {
                 _attachments: {},
+                confirmed: false,
                 data: "",
                 desc: "",
                 easeofresolution: undefined,

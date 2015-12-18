@@ -87,14 +87,14 @@ def getParserArgs():
 
     parser_connection.add_argument('-n', '--hostname', action="store",
         dest="host",
-        default="localhost",
+        default=None,
         help="The hostname where both server APIs will listen (XMLRPC and RESTful). \
         Default = localhost")
 
-    parser_connection.add_argument('-px', '--port-xmlrpc', action="store", dest="port_xmlrpc", default=9876, type=int,
+    parser_connection.add_argument('-px', '--port-xmlrpc', action="store", dest="port_xmlrpc", default=None, type=int,
         help="Sets the port where the api XMLRPCServer will listen. Default = 9876")
     parser_connection.add_argument('-pr', '--port-rest', action="store", dest="port_rest",
-        default=9977, type=int,
+        default=None, type=int,
         help="Sets the port where the api RESTful server will listen. Default = 9977")
 
     parser.add_argument('-d', '--debug', action="store_true", dest="debug",
@@ -267,12 +267,21 @@ def setConf():
 
     CONF = getInstanceConfiguration()
     CONF.setDebugStatus(args.debug)
-    # if args.host != FARADAY_DEFAULT_HOST:
-    CONF.setApiConInfoHost(args.host)
-    # if args.port_xmlrpc != FARADAY_DEFAULT_PORT_XMLRPC:
-    CONF.setApiConInfoPort(args.port_xmlrpc)
-    # if args.port_rest != FARADAY_DEFAULT_PORT_REST:
-    CONF.setApiRestfulConInfoPort(args.port_rest)
+
+    host = CONF.getApiConInfoHost() if str(CONF.getApiConInfoHost()) != "None" else FARADAY_DEFAULT_HOST
+    port_xmlrpc = CONF.getApiConInfoPort() if str(CONF.getApiConInfoPort()) != "None" else FARADAY_DEFAULT_PORT_XMLRPC
+    port_rest = CONF.getApiRestfulConInfoPort() if str(CONF.getApiRestfulConInfoPort()) != "None" else FARADAY_DEFAULT_PORT_REST
+
+    host = args.host if args.host else host
+    port_xmlrpc = args.port_xmlrpc if args.port_xmlrpc else port_xmlrpc
+    port_rest = args.port_rest if args.port_rest else port_rest
+
+    logger.info("XMLRPC API Server listening on %s:%s" % (host, port_xmlrpc))
+    logger.info("RESTful API Server listening on %s:%s" % (host, port_rest))
+
+    CONF.setApiConInfoHost(host)
+    CONF.setApiConInfoPort(port_xmlrpc)
+    CONF.setApiRestfulConInfoPort(port_rest)
 
     CONF.setAuth(args.disable_login)
 
@@ -319,7 +328,7 @@ def startFaraday():
                 """Make sure you got couchdb up and running.\nIf couchdb is up, point your browser to: \n[%s]""" % url)
     else:
         print(Fore.WHITE + Style.BRIGHT + \
-                """Please config Couchdb for fancy HTML5 Dashboard""")
+                """Please config Couchdb for fancy HTML5 Dashboard (https://github.com/infobyte/faraday/wiki/Couchdb)""")
 
     print(Fore.RESET + Back.RESET + Style.RESET_ALL)
 
@@ -461,8 +470,6 @@ def checkConfiguration():
     logger.info("Checking configuration.")
     logger.info("Setting up plugins.")
     setupPlugins(args.dev_mode)
-    logger.info("Setting up folders.")
-    setupFolders(CONST_FARADAY_FOLDER_LIST)
     logger.info("Setting up Qt configuration.")
     setupQtrc()
     logger.info("Setting up ZSH integration.")
@@ -491,8 +498,10 @@ def checkFolder(folder):
     """
 
     if not os.path.isdir(folder):
-        logger.info("Creating %s" % folder)
-        os.mkdir(folder)
+        if logger:
+            logger.info("Creating %s" % folder)
+        os.makedirs(folder)
+
 
 
 def printBanner():
@@ -598,8 +607,11 @@ def init():
 
     global args
     global logger
+    logger = None
 
     args = getParserArgs()
+    setupFolders(CONST_FARADAY_FOLDER_LIST)
+    setUpLogger(args.debug)
     logger = getLogger("launcher")
 
 
@@ -620,7 +632,6 @@ def main():
         setConf()
         checkCouchUrl()
         checkVersion()
-        setUpLogger()
         update()
         checkUpdates()
         startFaraday()

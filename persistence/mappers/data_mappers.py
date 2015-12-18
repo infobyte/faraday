@@ -226,7 +226,8 @@ class VulnMapper(ModelObjectMapper):
             "severity": vuln.getSeverity(),
             "resolution": vuln.getResolution(),
             "refs": vuln.getRefs(),
-            "data": vuln.getData()
+            "data": vuln.getData(),
+            "confirmed": vuln.getConfirmed()
         })
         return doc
 
@@ -236,6 +237,7 @@ class VulnMapper(ModelObjectMapper):
         vuln.setResolution(doc.get("resolution"))
         vuln.setRefs(doc.get("refs"))
         vuln.setData(doc.get("data", ""))
+        vuln.setConfirmed(doc.get("confirmed", True))
         super(VulnMapper, self).unserialize(vuln, doc)
         return vuln
 

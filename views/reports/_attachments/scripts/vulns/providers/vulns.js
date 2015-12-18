@@ -141,6 +141,54 @@ angular.module('faradayApp')
                                 }
                                 if(services.hasOwnProperty(vuln.parent)) vuln.service = services[vuln.parent];
                             });
+                            deferred.resolve(self.vulns);
+                        });
+                })
+                .error(function() {
+                    deferred.reject("Unable to retrieve vulnerabilities from Couch");
+                });
+
+            return deferred.promise;
+        };
+
+        vulnsManager.getConfirmedVulns = function(ws) {
+            var deferred = $q.defer(),
+            self = this;
+
+            $http.get(BASEURL + ws + '/_design/vulns/_view/all')
+                .success(function(data) {
+                    self.vulns.splice(0, self.vulns.length);
+                    self.vulns_indexes = {};
+                    for(var i = 0; i < data.rows.length; i++) {
+                        var vulnData = data.rows[i].value;
+                        if(vulnData.confirmed === true) {
+                            try {
+                                if(vulnData.type == "Vulnerability") {
+                                    var vuln = new Vuln(ws, vulnData);
+                                } else {
+                                    var vuln = new WebVuln(ws, vulnData);
+                                }
+                                self.vulns_indexes[vuln._id] = self.vulns.length;
+                                self.vulns.push(vuln);
+                            } catch(e) {
+                                console.log(e.stack);
+                            }
+                        }
+                    }
+
+                    var parents = [hostsManager.getHosts(ws), hostsManager.getAllInterfaces(ws)];
+
+                    $q.all(parents)
+                        .then(function(ps) {
+                            var hosts = self._loadHosts(ps[0], ps[1]);
+
+                            self.vulns.forEach(function(vuln) {
+                                var pid = vuln.parent.split(".")[0];
+                                if (hosts.hasOwnProperty(pid)) {
+                                    vuln.target = hosts[pid]["target"];
+                                    vuln.hostnames = hosts[pid]["hostnames"];
+                                }
+                            });
                         });
 
                     deferred.resolve(self.vulns);
@@ -157,10 +205,11 @@ angular.module('faradayApp')
             self = this;
             vuln.update(data).then(function(){
                 self.vulns[self.vulns_indexes[vuln._id]] = vuln;
+                deferred.resolve(vuln);
             }, function(err){
                 deferred.reject(err);
             });
-            return deferred.promise
+            return deferred.promise;
         };
 
         return vulnsManager;

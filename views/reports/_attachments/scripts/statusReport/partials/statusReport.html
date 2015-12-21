@@ -63,8 +63,11 @@
                     </ul>
                 </div>
                 <div id="group-by" class="btn-group btn-small-margin">
-                    <button type="button" class="btn btn-default" title="Group by" ng-click="clearGroupBy()">
-                        {{ !propertyGroupBy ? "Group By" : "Clear"}}
+                    <button type="button" ng-if="propertyGroupBy" class="btn btn-danger" title="Clear" ng-click="clearGroupBy()">
+                        <i class="fa fa-times"></i>
+                    </button>
+                    <button type="button" class="btn btn-default" title="{{propertyGroupBy || 'Group By'}}" >
+                        {{ (propertyGroupBy | uppercase) || "Group By"}}
                     </button>
                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Group By">
                         <span class="caret"></span>

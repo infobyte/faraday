@@ -39,7 +39,6 @@ angular.module('faradayApp')
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.propertyGroupBy = $routeParams.groupbyId;
             $scope.sortField = 'metadata.create_time';
-            $scope.colProperties = ["date","name","severity","service","target","desc","resolution","data","status","website","path","request","method","params","pname","query","response"];
             $scope.reverse = true;
             $scope.vulns = [];
             $scope.selected = false;
@@ -253,15 +252,15 @@ angular.module('faradayApp')
                     "<a ng-href=\"//www.shodan.io/search?query={{row.entity.target}}\" uib-tooltip=\"Search in Shodan\" target=\"_blank\">" +
                         "<img ng-src=\"../././reports/images/shodan.png\" height=\"15px\" width=\"15px\" style='margin-left:5px'/>" +
                     "</a></div>"+
-                    "<div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\">{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader,
-                    width: '115',
+                    "<div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\" class=\"ui-grid-cell-contents white-space\">{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader,
+                    width: '120',
                 });
             } else if(column === 'impact' || column === 'refs' || column === 'hostnames') {
-                $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class=\"ui-grid-cell-contents center\" ng-bind-html=\"grid.appScope.showObjects(COL_FIELD, col.name)\"></div><div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\">{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader });
+                $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div ng-if=\"row.entity._id != undefined\"><div class=\"ui-grid-cell-contents center\" ng-bind-html=\"grid.appScope.showObjects(COL_FIELD, col.name)\"></div></div><div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\" class=\"ui-grid-cell-contents white-space\">{{COL_FIELD}}</div>", headerCellTemplate: myHeader });
             } else if(column === 'evidence') {
                 $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class=\"ui-grid-cell-contents center\" ng-bind-html=\"grid.appScope.showObjects(row.entity._attachments, col.name, row.entity._id)\"></div><div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\">{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader });
             } else if(column === 'service') {
-                $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div class='ui-grid-cell-contents'><a href=" + $scope.hash + "/search/service={{grid.appScope.encodeUrl(row.entity.service)}}>{{COL_FIELD CUSTOM_FILTERS}}</a></div><div ng-if='row.groupHeader && col.grouping.groupPriority !== undefined'>{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader, width: '110' });
+                $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, 'cellTemplate': "<div ng-if=\"row.entity._id != undefined\"><div class='ui-grid-cell-contents'><a href=" + $scope.hash + "/search/service={{grid.appScope.encodeUrl(row.entity.service)}}>{{COL_FIELD CUSTOM_FILTERS}}</a></div></div><div ng-if='row.groupHeader && col.grouping.groupPriority !== undefined' class='ui-grid-cell-contents white-space'>{{COL_FIELD CUSTOM_FILTERS}}</div>", headerCellTemplate: myHeader, width: '110' });
             } else if(column === 'web') {
                 $scope.gridOptions.columnDefs.push({ 'name' : column, 'displayName': column, width: '80',
                 'cellTemplate': "<div ng-if='row.entity._id != undefined' class=\"ui-grid-cell-contents center\">"+

@@ -77,7 +77,7 @@ angular.module('faradayApp')
                             if(object[key] === true) {
                                 partial += "<p class='pos-middle crop-text'>" + key +  "</p>";
                             } else if(property === "evidence") {
-                                partial += "<p class='pos-middle crop-text'><a href='http://127.0.0.1:5984/"+$scope.workspace+"/"+IdEvidence+"/"+$scope.encodeUrl(key)+"' target='_blank'>" + key +  "</a></p>";
+                                partial += "<p class='pos-middle crop-text'><a href='"+ $scope.baseurl + $scope.workspace+"/"+IdEvidence+"/"+$scope.encodeUrl(key)+"' target='_blank'>" + key +  "</a></p>";
                             }
                         }
                     }

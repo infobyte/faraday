@@ -155,6 +155,10 @@ angular.module('faradayApp')
                 tmp_data = $filter('orderObjectBy')(vulnsManager.vulns, $scope.propertyGroupBy, true);
                 $scope.gridOptions.data = $filter('filter')(tmp_data, $scope.expression);
 
+                $scope.gridOptions.data.forEach(function(vulns) {
+                    vulns.metadata.create_time = vulns.metadata.create_time * 1000;
+                });
+
                 $scope.gridOptions.total = vulns.length;
                 if($scope.gridOptions.total > $scope.gridOptions.paginationPageSize && $scope.gridOptions.total > 100) {
                     $scope.gridOptions.paginationPageSizes.push($scope.gridOptions.total);

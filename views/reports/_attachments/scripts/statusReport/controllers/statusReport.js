@@ -844,7 +844,7 @@ angular.module('faradayApp')
             column = column.toLowerCase();
             $scope.columns[column] = !show;
             for (i = 0;i < $scope.gridOptions.columnDefs.length; i++) {
-                if($scope.gridOptions.columnDefs[i].name === column) {
+                if($scope.gridOptions.columnDefs[i].name === column || $scope.gridOptions.columnDefs[i].displayName === column) {
                     $scope.gridOptions.columnDefs.splice(i, 1);
                 } else {
                     if(show === false) {

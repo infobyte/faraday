@@ -155,10 +155,6 @@ angular.module('faradayApp')
                 tmp_data = $filter('orderObjectBy')(vulnsManager.vulns, $scope.propertyGroupBy, true);
                 $scope.gridOptions.data = $filter('filter')(tmp_data, $scope.expression);
 
-                $scope.gridOptions.data.forEach(function(vulns) {
-                    vulns.metadata.create_time = vulns.metadata.create_time * 1000;
-                });
-
                 $scope.gridOptions.total = vulns.length;
                 if($scope.gridOptions.total > $scope.gridOptions.paginationPageSize && $scope.gridOptions.total > 100) {
                     $scope.gridOptions.paginationPageSizes.push($scope.gridOptions.total);
@@ -232,7 +228,8 @@ angular.module('faradayApp')
                             "</div>";
 
             if(column === 'date') {
-                $scope.gridOptions.columnDefs.push({ 'name' : 'metadata.create_time', 'displayName' : column, type: 'date', cellFilter: 'date:"MM/dd/yyyy"', headerCellTemplate: myHeader, width: '90'
+                $scope.gridOptions.columnDefs.push({ 'name' : 'metadata.create_time', 'displayName' : column, headerCellTemplate: myHeader, width: '90',
+                    cellTemplate: '<div ng-if="row.entity._id != undefined"><div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents white-space">{{COL_FIELD * 1000 | date:"MM/dd/yyyy"}}</div></div><div ng-if=\"row.groupHeader && col.grouping.groupPriority !== undefined\" class="ui-grid-cell-contents white-space">{{COL_FIELD.split(" ")[0] * 1000 | date:"MM/dd/yyyy"}}</div>'
                 });
             } else if(column === 'name') {
                 $scope.gridOptions.columnDefs.push({ 'name' : column,

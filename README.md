@@ -44,11 +44,6 @@ $ ./install.sh
 $ ./faraday.py
 ```
 
-Get it now!
----
-[![Download Tarball](https://raw.github.com/wiki/infobyte/faraday/images/download.png)]
-(https://github.com/infobyte/faraday/tarball/master)
-
 Links
 ---
 

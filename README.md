@@ -16,43 +16,33 @@ Please read the [RELEASE notes](https://github.com/infobyte/faraday/blob/master/
 
 Plugins list
 ---
-Right now Faraday has more than [40 supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among them you will find: 
+Don't change the way you work today! Faraday plays well with other, right now it has more than [40 supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among them you will find: 
+
 ![](https://raw.github.com/wiki/infobyte/faraday/images/plugins/Plugins.png)
 
+There are 3 kind of plugins:
+ * Plugins that intercept commands, fired directly when a command is detected in the console. These are transparent to you and no additional action on your part is needed.
+ * Plugins that import file reports. You have to copy the report to **$HOME/.faraday/report/[workspacename]** (replacing [workspacename with the actual name of your Workspace]) and Faraday will automatically detect, process and add it to the HostTree.
+ * Plugin connectors or online (BeEF, Metasploit, Burp), these connect directly with external APIs or databases, or talk directly to Faraday's RPC API.
 
-Installation
+Getting started
 ---
-
-The following platform are supported - [More information] (https://github.com/infobyte/faraday/wiki/Installation) :
+The following platforms are supported.
 
 ![platform](https://raw.github.com/wiki/infobyte/faraday/images/platform/supported.png) 
 
+Read more about [supported platforms and installation specifics] (https://github.com/infobyte/faraday/wiki/Installation).
 
-Quick install:
+##### Quick install
 
-Download the latest tarball by clicking [here] (https://github.com/infobyte/faraday/tarball/master) 
+Download the [latest tarball](https://github.com/infobyte/faraday/tarball/master) or clone the [Faraday Git Project](https://github.com/infobyte/faraday repository):
 
-Preferably, you can download faraday by cloning the [Git] (https://github.com/infobyte/faraday) repository:
-
-    $ git clone https://github.com/infobyte/faraday.git faraday-dev
-    $ cd faraday-dev
-    $ ./install.sh
-    
-
-
-Usage 
------ 
-
-To get started, simply execute faraday and use the new console to start working in the pentest: 
-
-       $ ./faraday.py
-    
-Plugins types:
----
-We have 3 kind of plugins:
- * Plugins that intercept commands (directly detected when you execute commands in the console)  
- * Plugins that import file reports (you have to copy the report to $HOME/.faraday/report/[workspacename] and faraday will automatically detect the report, process and added to the HostTree.
- * Plugins connectors or online (BeEF, Metasploit, Burp) connect directly with external API or database or connect with Faraday RPC API.   
+```
+$ git clone https://github.com/infobyte/faraday.git faraday-dev
+$ cd faraday-dev
+$ ./install.sh
+$ ./faraday.py
+```
 
 Get it now!
 ---

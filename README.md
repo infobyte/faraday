@@ -44,16 +44,11 @@ $ ./install.sh
 $ ./faraday.py
 ```
 
-More
+More about Faraday
 ---
+Want to read more about the project? Try our [wiki](https://github.com/infobyte/faraday/wiki).
 
-* Homepage: http://faradaysec.com
-* User's manual: https://github.com/infobyte/faraday/wiki
-* Download: [.tar.gz] (https://github.com/infobyte/faraday/tarball/master)
-* Issue tracker: https://github.com/infobyte/faraday/issues
-* Frequently Asked Questions (FAQ): https://github.com/infobyte/faraday/wiki/FAQ
-* Mailing list subscription: https://groups.google.com/forum/#!forum/faradaysec
-* Twitter: [@faradaysec] (https://twitter.com/faradaysec)
-* [Demos] (https://github.com/infobyte/faraday/wiki/Demos)
-* IRC: [ircs://irc.freenode.net/faraday-dev] (ircs://irc.freenode.net/faraday-dev)
+Already a user and have a question or bug report? Please check out our [FAQ](https://github.com/infobyte/faraday/wiki/FAQ). If you're still having troubles you can [open a ticket](https://github.com/infobyte/faraday/issues/new).
+
+Join our community! Join our [mailing list](https://groups.google.com/forum/#!forum/faradaysec), find us on Twitter [@faradaysec] (https://twitter.com/faradaysec) or IRC channel #faraday-dev in [freenode](ircs://irc.freenode.net/faraday-dev).
 

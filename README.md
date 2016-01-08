@@ -6,15 +6,9 @@ The main purpose of Faraday is to re-use the available tools in the community to
 
 Designed for simplicity, users should notice no difference between their own terminal application and the one included in Faraday. Developed with a specialized set of functionalities that help users improve their own work. Do you remember yourself programming without an IDE? Well, Faraday does the same as an IDE does for you when programming, but from the perspective of a penetration test.
 
-![GUI - QT](https://raw.github.com/wiki/infobyte/faraday/images/Faraday-Mainwindow.png)
-
-Once the data is loaded Faraday crunches it into different visualizations useful not only for managers, but also for pentesters.
-
-![GUI - Web](https://raw.github.com/wiki/infobyte/faraday/images/GUI_Dashboard_new.png)
-
 Please read the [RELEASE notes](https://github.com/infobyte/faraday/blob/master/RELEASE.md)!
 
-Plugins list
+Plugins
 ---
 Don't change the way you work today! Faraday plays well with other, right now it has more than [40 supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among them you will find: 
 

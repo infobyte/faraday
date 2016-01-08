@@ -50,5 +50,5 @@ Want to read more about the project? Try our [wiki](https://github.com/infobyte/
 
 Already a user and have a question or bug report? Please check out our [FAQ](https://github.com/infobyte/faraday/wiki/FAQ). If you're still having troubles you can [open a ticket](https://github.com/infobyte/faraday/issues/new).
 
-Join our community! Join our [mailing list](https://groups.google.com/forum/#!forum/faradaysec), find us on Twitter [@faradaysec] (https://twitter.com/faradaysec) or IRC channel #faraday-dev in [freenode](ircs://irc.freenode.net/faraday-dev).
+Join our community! Subscribe to our [mailing list](https://groups.google.com/forum/#!forum/faradaysec) or find us on Twitter [@faradaysec] (https://twitter.com/faradaysec) or IRC channel #faraday-dev in [freenode](ircs://irc.freenode.net/faraday-dev).
 

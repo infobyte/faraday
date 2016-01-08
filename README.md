@@ -22,7 +22,7 @@ Don't change the way you work today! Faraday plays well with other, right now it
 
 There are 3 kind of plugins:
  * Plugins that intercept commands, fired directly when a command is detected in the console. These are transparent to you and no additional action on your part is needed.
- * Plugins that import file reports. You have to copy the report to **$HOME/.faraday/report/[workspacename]** (replacing [workspacename with the actual name of your Workspace]) and Faraday will automatically detect, process and add it to the HostTree.
+ * Plugins that import file reports. You have to copy the report to **$HOME/.faraday/report/[workspacename]** (replacing **[workspacename]** with the actual name of your Workspace) and Faraday will automatically detect, process and add it to the HostTree.
  * Plugin connectors or online (BeEF, Metasploit, Burp), these connect directly with external APIs or databases, or talk directly to Faraday's RPC API.
 
 Getting started

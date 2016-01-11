@@ -21,19 +21,22 @@ def main():
     parser = argparse.ArgumentParser(prog='removeBySeverity', epilog="Example: ./%(prog)s.py")
     parser.add_argument('-c', '--couchdburi', action='store', type=str,
                         dest='couchdb',default="http://127.0.0.1:5984",
-                        help='Couchdb URL (default http://127.0.0.1:5984)')
-    parser.add_argument('-d', '--db', action='store', type=str,
+                        help='Couchdb URL as http://user:password@couch_ip:couch_port (defaults to http://127.0.0.1:5984)')
+    parser.add_argument('-d', '--db', action='store', type=str, required=True,
                         dest='db', help='DB to process')
     parser.add_argument('-s', '--severity', action='store', type=str, required=True,
                         dest='severity', help='Vulnerability severity')
     parser.add_argument('-t', '--test', action='store_true', 
-                        dest='test', help='Dry run')
+                        dest='test', help='Dry run, does everything except updating the DB')
+    parser.add_argument('-v', '--verbose', action='store_true', 
+                        dest='verbose', help='Extended output')
 
     #arguments put in variables
     args = parser.parse_args()
-    dbs = list()
+    db = args.db
     severity = args.severity
     test = args.test
+    verbose = args.verbose
 
     #default value from ENV COUCHDB
     couchdb = os.environ.get('COUCHDB')
@@ -41,18 +44,9 @@ def main():
     if not couchdb:
         couchdb = args.couchdb
 
-    if args.db:
-        dbs.append(args.db)
+    fixDb(couchdb, db, severity, test, verbose)
 
-    if len(dbs) == 0:
-        dbs = requests.get(couchdb + '/_all_dbs')
-        dbs = dbs.json()
-        dbs = filter(lambda x: not x.startswith('_') and x != 'cwe' and x != 'reports', dbs)
-    
-    for db in dbs:
-        fixDb(couchdb, db, severity, test)
-
-def fixDb(couchdb, db, severity, test):
+def fixDb(couchdb, db, severity, test, verbose):
     couchdb = str(couchdb)
     db = str(db)
 
@@ -77,10 +71,13 @@ def fixDb(couchdb, db, severity, test):
                 rev = str(row['value'])
 
                 # delete vuln
-                print " - Deleting vulnerability with ID " + id
+                if verbose:
+                    print " - Deleting vulnerability with ID " + id
                 if not test:
                     delete = requests.delete(couchdb + '/' + db + '/' + id + '?rev=' + rev)
-                    print " -- " + delete.reason + " (" + str(delete.status_code) + ")"
+                    if verbose:
+                        print " -- " + delete.reason + " (" + str(delete.status_code) + ")"
+            print " Done"
         else:
             print "No vulns were found in DB " + db + " with severity " + severity + "!"
     elif response_code == 401:

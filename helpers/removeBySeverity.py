@@ -15,7 +15,6 @@ import argparse
 import json
 import requests
 import os
-from pprint import pprint
 
 def main():
     #arguments parser
@@ -25,13 +24,16 @@ def main():
                         help='Couchdb URL (default http://127.0.0.1:5984)')
     parser.add_argument('-d', '--db', action='store', type=str,
                         dest='db', help='DB to process')
-    parser.add_argument('-s', '--severity', action='store', type=str,
+    parser.add_argument('-s', '--severity', action='store', type=str, required=True,
                         dest='severity', help='Vulnerability severity')
+    parser.add_argument('-t', '--test', action='store_true', 
+                        dest='test', help='Dry run')
 
     #arguments put in variables
     args = parser.parse_args()
     dbs = list()
     severity = args.severity
+    test = args.test
 
     #default value from ENV COUCHDB
     couchdb = os.environ.get('COUCHDB')
@@ -48,9 +50,9 @@ def main():
         dbs = filter(lambda x: not x.startswith('_') and x != 'cwe' and x != 'reports', dbs)
     
     for db in dbs:
-        fixDb(couchdb, db, severity)
+        fixDb(couchdb, db, severity, test)
 
-def fixDb(couchdb, db, severity):
+def fixDb(couchdb, db, severity, test):
     couchdb = str(couchdb)
     db = str(db)
 
@@ -59,11 +61,9 @@ def fixDb(couchdb, db, severity):
     payload = { "map" : """function(doc) { if((doc.type == \"Vulnerability\" && doc.severity == \""""+severity+"""\") ||
                                             (doc.type == \"VulnerabilityWeb\" && doc.severity == \""""+severity+"""\")){ emit(doc._id, doc._rev); }}""" }
 
-    print payload
     r = requests.post(couchdb + '/' + db + '/_temp_view', headers=headers, data=json.dumps(payload))
     response_code = r.status_code
 
-    print response_code
     if response_code == 200:
         response = r.json()
         rows = response['rows']
@@ -77,12 +77,12 @@ def fixDb(couchdb, db, severity):
                 rev = str(row['value'])
 
                 # delete vuln
-                print " - Deleting vulnerability \"" + child['name'] + "\"  with ID " + id
-                delete = requests.delete(couchdb + '/' + db + '/' + id + '?rev=' + rev)
-                print " -- " + delete.reason + " (" + str(delete.status_code) + ")"
+                print " - Deleting vulnerability with ID " + id
+                if not test:
+                    delete = requests.delete(couchdb + '/' + db + '/' + id + '?rev=' + rev)
+                    print " -- " + delete.reason + " (" + str(delete.status_code) + ")"
         else:
             print "No vulns were found in DB " + db + " with severity " + severity + "!"
-        """
     elif response_code == 401:
         print " Autorization required to access " + db + ", make sure to add user:pwd to Couch URI using --couchdburi"
 

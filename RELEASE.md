@@ -10,6 +10,10 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+TBA:
+---
+* Added script to remove all vulns with a specific severity value (parameterized)
+
 Dec 18, 2015:
 ---
 * Immunity Canvas plugin added

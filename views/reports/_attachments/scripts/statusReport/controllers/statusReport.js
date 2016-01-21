@@ -296,7 +296,8 @@ angular.module('faradayApp')
                 headerCellTemplate: header,
                 visible: $scope.columns["refs"]
             });
-            $scope.gridOptions.columnDefs.push({ name : 'evidence',
+            $scope.gridOptions.columnDefs.push({ name : '_attachments',
+                displayName: "evidence",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/evidencecolumn.html',
                 headerCellTemplate: header,
                 visible: $scope.columns["evidence"]
@@ -575,7 +576,6 @@ angular.module('faradayApp')
                     }, function(errorMsg){
                         showMessage("Error updating vuln " + vulns[0].name + " (" + vulns[0]._id + "): " + errorMsg);
                     });
-       
                 });
             } else {
                 showMessage('A vulnierabilty must be selected in order to edit');

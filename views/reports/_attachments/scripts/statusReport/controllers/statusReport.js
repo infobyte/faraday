@@ -58,35 +58,6 @@ angular.module('faradayApp')
             };
             $scope.gridOptions.columnDefs = [];
 
-            $scope.showObjects = function(object, property, IdEvidence) {
-                var partial = "";
-                if(angular.isArray(object) === false) {
-                    for(key in object) {
-                        if(object.hasOwnProperty(key)) {
-                            if(object[key] === true) {
-                                partial += "<p class='pos-middle crop-text'>" + key +  "</p>";
-                            } else if(property === "evidence") {
-                                partial += "<p class='pos-middle crop-text'><a href='"+ $scope.baseurl + $scope.workspace+"/"+IdEvidence+"/"+$scope.encodeUrl(key)+"' target='_blank'>" + key +  "</a></p>";
-                            }
-                        }
-                    }
-                } else {
-                    object.forEach(function(key) {
-                        if(key === "") return;
-                        if(property === "hostnames") {
-                            partial += "<p><a href='//www.shodan.io/search?query=" + key + "' class=\"pos-middle crop-text\" uib-tooltip=\"Search in Shodan\" target=\"_blank\">" +
-                            "<img src=\"../././reports/images/shodan.png\" height=\"15px\" width=\"15px\" style=\"margin-left:5px\"/></a>"+
-                            "<a href=\""+ $scope.hash + "/search/"+ property +"=" + key + "\">" + key +  "</a></p>";
-                        } else if(property === "refs"){
-                            partial += "<p class='pos-middle crop-text'><a href='" + $scope.processReference(key) + "' target=\"_blank\">" + key + "</a></p>";
-                        } else {
-                            partial += "<p class='pos-middle crop-text'>" + key + "</p>";
-                        }
-                    });
-                }
-                return partial;
-            };
-
             $scope.gridOptions.onRegisterApi = function(gridApi){
                 //set gridApi on scope
                 $scope.gridApi = gridApi;
@@ -430,10 +401,6 @@ angular.module('faradayApp')
 
         $scope.encodeUrl = function(text) {
             return encodeURIComponent(encodeURIComponent(text));
-        };
-
-        $scope.encodeEvidence = function(text) {
-            return encodeURIComponent(text);
         };
 
         $scope.csv = function() {

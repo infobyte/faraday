@@ -1,0 +1,4 @@
+<div class="ui-grid-cell-contents center" ng-repeat="(key, value) in row.entity._attachments">
+<p class='pos-middle crop-text'><a href='{{grid.appScope.baseurl}}{{grid.appScope.workspace}}/{{row.entity._id}}/{{grid.appScope.encodeEvidence(key)}}' target='_blank'>{{key}}</a></p>
+</div>
+<div ng-if="row.groupHeader && col.grouping.groupPriority !== undefined">{{COL_FIELD CUSTOM_FILTERS}}</div>

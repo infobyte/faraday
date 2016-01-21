@@ -162,17 +162,6 @@ angular.module('faradayApp')
             $scope.gridOptions.columnDefs.push({ name: 'confirmVuln', width: '40', headerCellTemplate: "<div></div>", cellTemplate: 'scripts/statusReport/partials/ui-grid/confirmbutton.html' });
             $scope.gridOptions.columnDefs.push({ name: 'deleteVuln', width: '40', headerCellTemplate: "<div></div>", cellTemplate: 'scripts/statusReport/partials/ui-grid/deletebutton.html' });
             $scope.gridOptions.columnDefs.push({ name: 'editVuln', width: '30', headerCellTemplate: "<div></div>", cellTemplate: 'scripts/statusReport/partials/ui-grid/editbutton.html' });
-            var count = 0;
-            for(key in $scope.columns) {
-                if($scope.columns.hasOwnProperty(key) && $scope.columns[key] == true) {
-                    count++;
-                    //_addColumn(key);
-                    if(key === $scope.propertyGroupBy) {
-                        $scope.gridOptions.columnDefs[count + 3].grouping = { groupPriority: 0 };
-                        $scope.gridOptions.columnDefs[count + 3].sort = { priority: 0, direction: 'asc' }
-                    }
-                }
-            }
 
             var header = '<div ng-class="{ \'sortable\': sortable }">'+
                     '       <div class="ui-grid-cell-contents" col-index="renderIndex" title="TOOLTIP">{{ col.displayName CUSTOM_FILTERS }}'+
@@ -316,6 +305,17 @@ angular.module('faradayApp')
             });
 
             $scope.vulnWebSelected = false;
+
+            var count = 0;
+            for(key in $scope.columns) {
+                if($scope.columns.hasOwnProperty(key) && $scope.columns[key] == true) {
+                    count++;
+                    if(key === $scope.propertyGroupBy) {
+                        $scope.gridOptions.columnDefs[count + 3].grouping = { groupPriority: 0 };
+                        $scope.gridOptions.columnDefs[count + 3].sort = { priority: 0, direction: 'asc' }
+                    }
+                }
+            }
         };
 
         $scope.ifTooltip = function(text) {

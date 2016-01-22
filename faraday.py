@@ -125,11 +125,6 @@ def getParserArgs():
         help="Disable the application exception hook that allows to send error \
         reports to developers.")
 
-    parser.add_argument('--disable-login', action="store_true",
-        dest="disable_login",
-        default=False,
-        help="Disable the auth splash screen.")
-
     parser.add_argument('--dev-mode', action="store_true", dest="dev_mode",
         default=False,
         help="Enable dev mode. This will use the user config and plugin folder.")
@@ -282,8 +277,6 @@ def setConf():
     CONF.setApiConInfoHost(host)
     CONF.setApiConInfoPort(port_xmlrpc)
     CONF.setApiRestfulConInfoPort(port_rest)
-
-    CONF.setAuth(args.disable_login)
 
 
 def startFaraday():

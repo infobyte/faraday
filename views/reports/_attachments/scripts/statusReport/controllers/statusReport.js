@@ -58,6 +58,8 @@ angular.module('faradayApp')
             };
             $scope.gridOptions.columnDefs = [];
 
+            if ($cookies.get('pageSize') !== undefined) $scope.gridOptions.paginationPageSize = parseInt($cookies.get('pageSize'));
+
             $scope.gridOptions.onRegisterApi = function(gridApi){
                 //set gridApi on scope
                 $scope.gridApi = gridApi;
@@ -75,6 +77,7 @@ angular.module('faradayApp')
                     }
                 });
                 $scope.gridApi.pagination.on.paginationChanged($scope, function (pageNumber, pageSize) {
+                    $cookies.put('pageSize', pageSize);
                     $scope.gridApi.selection.clearSelectedRows();
                 });
             };

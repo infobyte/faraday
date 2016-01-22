@@ -179,7 +179,7 @@ angular.module('faradayApp')
             $scope.gridOptions.columnDefs.push({ name : 'metadata.create_time',
                 displayName : "Date",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/datecolumn.html',
-                headerCellTemplate: 'scripts/statusReport/partials/ui-grid/columns/datecolumn.html',
+                headerCellTemplate: header,
                 width: '90',
                 visible: $scope.columns["date"]
             });

@@ -28,7 +28,6 @@ from utils.profilehooks import profile
 from utils.user_input import query_yes_no
 
 
-
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 FARADAY_BASE = os.path.dirname(os.path.realpath(__file__))
 QTDIR=os.path.join(FARADAY_BASE, 'external_libs', 'qt')
@@ -148,7 +147,7 @@ def getParserArgs():
 
     parser_gui_ex.add_argument('--cli', '--console', action="store_true",
         dest="cli",
-        default="false",
+        default=False,
         help="Set this flag to avoid gui and use faraday as a cli.")
 
     #args = parser.parse_args(['@parser_args.cfg'])
@@ -212,7 +211,6 @@ def checkDependencies():
             else:
                 modules.append([line[:line.index('=')], (line[line.index('=')+2:]).strip()])
         f.close()
-
         pip_dist = [dist.project_name.lower() for dist in pip.get_installed_distributions()]
 
         for module in modules:
@@ -540,7 +538,7 @@ def checkUpdates():
         getInstanceConfiguration().setAppname("Faraday - Penetration Test IDE Community")
         parameter = {"version": getInstanceConfiguration().getVersion()}
 
-        f.close
+        f.close()
         resp = requests.get(uri, params=parameter, timeout=1, verify=True)
         resp = resp.text.strip()
     except Exception as e:

@@ -13,6 +13,7 @@ New features in the latest update
 TBA:
 ---
 * Fixed small bug in CSV importing
+* Added support for Mint 17 
 
 Dec 18, 2015:
 ---

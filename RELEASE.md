@@ -10,6 +10,8 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+TBA:
+---
 * Fixed small bug in CSV importing
 
 Dec 18, 2015:

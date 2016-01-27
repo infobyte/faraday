@@ -45,7 +45,7 @@ echo "[+] Install $os $arch"
 down=0
 if [ "$os" = "Ubuntu 10.04.2 LTS" ]; then
     version="ubuntu10-04.02$arch"
-elif [[ "$os" =~ "Kali GNU/Linux 2."* ]]; then
+elif [[ "$os" =~ "Kali GNU/Linux 2."*|"Kali GNU/Linux Rolling".* ]]; then
     version="kali2-$arch"
     down=1    
 elif [[ "$os" =~ .*Kali.* ]]; then

@@ -13,6 +13,7 @@ New features in the latest update
 TBA:
 ---
 * Fixed small bug in CSV importing
+* Added support for Kali Rolling Edition
 
 Dec 18, 2015:
 ---

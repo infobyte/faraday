@@ -26,7 +26,7 @@ import apis.rest.api as restapi
 import model.log
 from utils.logs import getLogger
 import traceback
-from managers.all import PluginManager
+from plugins.manager import PluginManager
 from managers.mapper_manager import MapperManager
 from managers.reports_managers import ReportManager
 

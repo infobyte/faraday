@@ -175,10 +175,3 @@ class GuiApp(qt.QApplication, FaradayUi):
             self.getMainWindow().refreshWorkspaceTreeView()
 
             self.getMainWindow().getWorkspaceTreeView().loadAllWorkspaces()
-
-    def openWorkspace(self, name):
-        try:
-            self.getWorkspaceManager().openWorkspace(name)
-        except Exception:
-            model.api.log("An exception was captured while opening \
-                workspace %s\n%s" % (name, traceback.format_exc()), "ERROR")

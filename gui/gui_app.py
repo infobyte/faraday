@@ -6,6 +6,10 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+import traceback
+
+import model.api
+
 
 class UiFactory(object):
     @staticmethod
@@ -23,7 +27,6 @@ class UiFactory(object):
 class FaradayUi(object):
     def __init__(self, model_controller=None, plugin_manager=None,
                  workspace_manager=None, gui="qt3"):
-        #self.main_app = main_app
         self.model_controller = model_controller
         self.plugin_manager = plugin_manager
         self.workspace_manager = workspace_manager
@@ -63,3 +66,10 @@ class FaradayUi(object):
 
     def createLoggerWidget(self):
         pass
+
+    def openWorkspace(self, name):
+        try:
+            self.getWorkspaceManager().openWorkspace(name)
+        except Exception:
+            model.api.log("An exception was captured while opening \
+                workspace %s\n%s" % (name, traceback.format_exc()), "ERROR")

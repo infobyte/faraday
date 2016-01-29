@@ -17,7 +17,7 @@ import requests
 from model.controller import ModelController
 from persistence.persistence_managers import DbManager
 from controllers.change import ChangeController
-from managers.model_managers import WorkspaceManager
+from managers.workspace_manager import WorkspaceManager
 import model.api
 import model.guiapi
 import apis.rest.api as restapi

@@ -12,7 +12,6 @@ import model.api as api
 import model.guiapi as guiapi
 import re
 import model.hosts as hosts
-from managers.model_managers import WorkspaceManager
 from ui.plugin_settings import *
 from ui.vulnerabilities import *
 from ui.preferences import *

@@ -125,10 +125,9 @@ class modelactions:
 
 class ModelController(threading.Thread):
 
-    def __init__(self, security_manager, mappers_manager):
+    def __init__(self, mappers_manager):
         threading.Thread.__init__(self)
 
-        self.__sec = security_manager
         self.mappers_manager = mappers_manager
 
         # set as daemon
@@ -917,8 +916,3 @@ class ModelController(threading.Thread):
 
                 for hostname in intr.getHostnames():
                     self.treeWordsTries.addWord(hostname)
-
-    def checkPermissions(self, op):
-        ## In order to use the decorator passPermissionsOrRaise
-        ## The client should implement checkPermissions method.
-        self.__sec.checkPermissions(op)

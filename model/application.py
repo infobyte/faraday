@@ -14,8 +14,6 @@ import requests
 # TODO: no seria mejor activar todo ?
 # XXX: something strange happens if we import
 # this module at the bottom of the list....
-from auth.manager import SecurityManager
-from auth.manager import codes
 from model.controller import ModelController
 from persistence.persistence_managers import DbManager
 from controllers.change import ChangeController
@@ -70,14 +68,11 @@ class MainApplication(object):
 
         self._configuration = CONF
 
-        self._security_manager = SecurityManager()
         self._mappers_manager = MapperManager()
         self._changes_controller = ChangeController()
         self._db_manager = DbManager()
 
-        self._model_controller = ModelController(
-            self._security_manager,
-            self._mappers_manager)
+        self._model_controller = ModelController(self._mappers_manager)
 
         self._plugin_manager = PluginManager(
             os.path.join(CONF.getConfigPath(), "plugins"),
@@ -117,67 +112,53 @@ class MainApplication(object):
 
             signal.signal(signal.SIGINT, self.ctrlC)
 
-            logged = True
 
-            while True:
+            model.api.devlog("Starting application...")
+            model.api.devlog("Setting up remote API's...")
+            # We need to create the last used workspace (or the default
+            # workspace) before we start the model controller and the
+            # report manager
 
-                username, password = "usuario", "password"
+            last_workspace = CONF.getLastWorkspace()
+            try:
+                if not self._workspace_manager.workspaceExists(last_workspace):
+                    getLogger(self).info("Your last workspace ("+str(last_workspace)+") wasn't accessible, check configuration...")
+                    self._workspace_manager.openDefaultWorkspace()
+                    #self._workspace_manager.createWorkspace(last_workspace, 'default workspace, probably created already in couchb')
+                else:
+                    self._workspace_manager.openWorkspace(last_workspace)
+            except restkit.errors.Unauthorized:
+                print "You are trying to enter CouchDB with authentication"
+                print "Add your credentials to your user configuration file in $HOME/.faraday/config/user.xml"
+                print "For example: <couch_uri>http://john:password@127.0.0.1:5984</couch_uri>"
+                return
 
-                if username is None and password is None:
-                    break
-                result = self._security_manager.authenticateUser(username, password)
-                if result == codes.successfulLogin:
-                    logged = True
-                    break
+            model.api.setUpAPIs(
+                self._model_controller,
+                self._workspace_manager,
+                CONF.getApiConInfoHost(),
+                CONF.getApiConInfoPort())
+            model.guiapi.setUpGUIAPIs(self._model_controller)
 
-            if logged:
-                model.api.devlog("Starting application...")
-                model.api.devlog("Setting up remote API's...")
-                # We need to create the last used workspace (or the default
-                # workspace) before we start the model controller and the
-                # report manager
+            model.api.devlog("Starting model controller daemon...")
 
-                last_workspace = CONF.getLastWorkspace()
-                try:
-                    if not self._workspace_manager.workspaceExists(last_workspace):
-                        getLogger(self).info("Your last workspace ("+str(last_workspace)+") wasn't accessible, check configuration...")
-                        self._workspace_manager.openDefaultWorkspace()
-                        #self._workspace_manager.createWorkspace(last_workspace, 'default workspace, probably created already in couchb')
-                    else:
-                        self._workspace_manager.openWorkspace(last_workspace)
-                except restkit.errors.Unauthorized:
-                    print "You are trying to enter CouchDB with authentication"
-                    print "Add your credentials to your user configuration file in $HOME/.faraday/config/user.xml"
-                    print "For example: <couch_uri>http://john:password@127.0.0.1:5984</couch_uri>"
-                    return
+            self._model_controller.start()
+            model.api.startAPIServer()
+            restapi.startAPIs(
+                self._plugin_manager,
+                self._model_controller,
+                self._mappers_manager,
+                CONF.getApiConInfoHost(),
+                CONF.getApiRestfulConInfoPort())
+            # Start report manager here
+            getLogger(self).debug("Starting Reports Manager Thread")
+            self._reports_manager.startWatch()
 
-                model.api.setUpAPIs(
-                    self._model_controller,
-                    self._workspace_manager,
-                    CONF.getApiConInfoHost(),
-                    CONF.getApiConInfoPort())
-                model.guiapi.setUpGUIAPIs(self._model_controller)
+            model.api.devlog("Faraday ready...")
 
-                model.api.devlog("Starting model controller daemon...")
+            self.gui_app.splashMessage("Loading workspace... Please wait.")
 
-                self._model_controller.start()
-                model.api.startAPIServer()
-                restapi.startAPIs(
-                    self._plugin_manager,
-                    self._model_controller,
-                    self._mappers_manager,
-                    CONF.getApiConInfoHost(),
-                    CONF.getApiRestfulConInfoPort())
-                # Start report manager here
-                getLogger(self).debug("Starting Reports Manager Thread")
-                self._reports_manager.startWatch()
-
-                model.api.devlog("Faraday ready...")
-                model.api.__current_logged_user = username
-
-                self.gui_app.splashMessage("Loading workspace... Please wait.")
-
-                self.gui_app.loadWorkspaces()
+            self.gui_app.loadWorkspaces()
 
             self.gui_app.stopSplashScreen()
 
@@ -188,11 +169,7 @@ class MainApplication(object):
             print "-" * 50
             self.__exit(-1)
 
-        if logged:
-            exit_code = self.gui_app.run([])
-            #exit_code = self.app.exec_loop()
-        else:
-            exit_code = -1
+        exit_code = self.gui_app.run([])
 
         return self.__exit(exit_code)
 

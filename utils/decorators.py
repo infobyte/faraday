@@ -47,13 +47,6 @@ def updateLocalMetadata(func):
         return func(self, *args, **kwargs)
     return wrapper
 
-@simple_decorator
-def passPermissionsOrRaise(func):
-    def wrapper(self, *args, **kwargs):
-        self.checkPermissions(op = func.func_name)
-        return func(self, *args, **kwargs)
-    return wrapper
-
 
 @simple_decorator
 def trap_timeout(func):

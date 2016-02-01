@@ -12,7 +12,7 @@ import threading
 import time
 import traceback
 import re
-import requests
+
 try:
     import xml.etree.cElementTree as ET
 
@@ -24,7 +24,38 @@ from apis.rest.api import PluginControllerAPIClient
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
-class NoReportsWatchException(Exception): pass
+
+class NoReportsWatchException(Exception):
+    pass
+
+
+class ReportProcessor():
+    def __init__(self, filename):
+        host = CONF.getApiConInfoHost()
+        port_rest = int(CONF.getApiRestfulConInfoPort())
+
+        self.client = PluginControllerAPIClient(host, port_rest)
+
+        self.filename = filename
+
+    def processReport(self):
+        """
+        Process one Report
+        """
+        model.api.log("Report file is %s" % self.filename)
+
+        parser = ReportXmlParser(self.filename)
+        if (parser.report_type is not None):
+            model.api.log(
+                "The file is %s, %s" % (self.filename, parser.report_type))
+
+            command_string = "./%s %s" % (parser.report_type.lower(),
+                                          self.filename)
+            model.api.log("Executing %s" % (command_string))
+
+            new_cmd, output_file = self.client.send_cmd(command_string)
+            self.client.send_output(command_string, self.filename)
+
 
 class ReportManager(threading.Thread):
     def __init__(self, timer, plugin_controller, path=None):
@@ -80,27 +111,13 @@ class ReportManager(threading.Thread):
             if root == self._report_path:
                 for name in files:
                     filename = os.path.join(root, name)
-                    model.api.log( "Report file is %s" % filename)
 
-                    parser = ReportParser(filename)
-                    if (parser.report_type is not None):
+                    processor = ReportProcessor(filename)
+                    processor.processReport()
 
-                        host = CONF.getApiConInfoHost()
-                        port_rest = int(CONF.getApiRestfulConInfoPort())
-
-                        client = PluginControllerAPIClient(host, port_rest)
-
-                        model.api.log("The file is %s, %s" % (filename,parser.report_type))
-
-                        command_string = "./%s %s" % (parser.report_type.lower(), filename)
-                        model.api.log("Executing %s" % (command_string))
-
-                        new_cmd, output_file = client.send_cmd(command_string)
-                        client.send_output(command_string, filename)
                     os.rename(filename, os.path.join(self._report_ppath, name))
 
         self.onlinePlugins()
-
 
     def onlinePlugins(self):
         """
@@ -121,7 +138,6 @@ class ReportManager(threading.Thread):
                     self.plugin_controller.storeCommandOutput("")
 
                     self.plugin_controller.onCommandFinished()
-
 
 
 class ReportParser(object):

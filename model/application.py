@@ -26,8 +26,6 @@ from utils.logs import getLogger
 import traceback
 from plugins.manager import PluginManager
 from managers.mapper_manager import MapperManager
-from managers.reports_managers import ReportManager
-
 from utils.error_report import exception_handler
 from utils.error_report import installThreadExcepthook
 
@@ -78,13 +76,10 @@ class MainApplication(object):
             os.path.join(CONF.getConfigPath(), "plugins"),
             self._mappers_manager)
 
-        self._reports_manager = ReportManager(10, self._plugin_manager.createController("ReportManager"))
-
         self._workspace_manager = WorkspaceManager(
             self._db_manager,
             self._mappers_manager,
-            self._changes_controller,
-            self._reports_manager)
+            self._changes_controller)
 
         self.gui_app = UiFactory.create(self._model_controller,
                                         self._plugin_manager,
@@ -111,7 +106,6 @@ class MainApplication(object):
             self.gui_app.splashMessage("Starting Faraday")
 
             signal.signal(signal.SIGINT, self.ctrlC)
-
 
             model.api.devlog("Starting application...")
             model.api.devlog("Setting up remote API's...")
@@ -150,9 +144,6 @@ class MainApplication(object):
                 self._mappers_manager,
                 CONF.getApiConInfoHost(),
                 CONF.getApiRestfulConInfoPort())
-            # Start report manager here
-            getLogger(self).debug("Starting Reports Manager Thread")
-            self._reports_manager.startWatch()
 
             model.api.devlog("Faraday ready...")
 
@@ -182,7 +173,6 @@ class MainApplication(object):
         model.api.devlog("stopping model controller thread...")
         model.api.stopAPIServer()
         restapi.stopServer()
-        self._reports_manager.stop()
         self._changes_controller.stop()
         self._model_controller.stop()
         self._model_controller.join()

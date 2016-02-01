@@ -6,7 +6,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from utils.logs import getLogger
 from model.workspace import Workspace
 from persistence.persistence_managers import DBTYPE
 
@@ -17,18 +16,20 @@ CONF = getInstanceConfiguration()
 
 
 class WorkspaceManager(object):
-    """Workspace Manager class
-    It's responsabilities goes from:
+    """
+    Workspace Manager class
+    Its responsibilities goes from:
         * Workspace creation
         * Workspace removal
         * Workspace opening
-        * Active Workspace switching"""
+        * Active Workspace switching
+    """
 
-    def __init__(self, dbManager, mappersManager, changesManager, reportsManager, *args, **kwargs):
+    def __init__(self, dbManager, mappersManager,
+                 changesManager, *args, **kwargs):
         self.dbManager = dbManager
         self.mappersManager = mappersManager
         self.changesManager = changesManager
-        self.reportsManager = reportsManager
         self.active_workspace = None
 
     def getWorkspacesNames(self):
@@ -44,10 +45,10 @@ class WorkspaceManager(object):
             self.setActiveWorkspace(workspace)
             CONF.setLastWorkspace(name)
             CONF.saveConfig()
-            notification_center.workspaceChanged(workspace,self.getWorkspaceType(name))
+            notification_center.workspaceChanged(
+                workspace, self.getWorkspaceType(name))
             notification_center.workspaceLoad(workspace.getHosts())
             self.changesManager.watch(self.mappersManager, dbConnector)
-            self.reportsManager.watch(name)
             return workspace
         return False
 
@@ -56,24 +57,27 @@ class WorkspaceManager(object):
             self.closeWorkspace()
             dbConnector = self.dbManager.getConnector(name)
             self.mappersManager.createMappers(dbConnector)
-            workspace = self.mappersManager.getMapper(Workspace.__name__).find(name)
+            workspace = self.mappersManager.getMapper(
+                Workspace.__name__).find(name)
             if not workspace:
                 notification_center.showDialog(
-                    "Error loading workspace.\nYou should try opening faraday with the '--update' option",
+                    ("Error loading workspace.\n"
+                     "You should try opening faraday "
+                     "with the '--update' option"),
                     level="ERROR")
                 return self.openDefaultWorkspace()
             self.setActiveWorkspace(workspace)
             CONF.setLastWorkspace(name)
             CONF.saveConfig()
-            notification_center.workspaceChanged(workspace,self.getWorkspaceType(name))
+            notification_center.workspaceChanged(
+                workspace, self.getWorkspaceType(name))
             notification_center.workspaceLoad(workspace.getHosts())
             self.changesManager.watch(self.mappersManager, dbConnector)
-            self.reportsManager.watch(name)
             return workspace
         return None
 
     def openDefaultWorkspace(self):
-        #This method opens the default workspace called 'untitled'
+        # This method opens the default workspace called 'untitled'
         if 'untitled' not in self.getWorkspacesNames():
             workspace = Workspace('untitled', 'default workspace')
             dbConnector = self.dbManager.createDb(
@@ -84,10 +88,8 @@ class WorkspaceManager(object):
             self.mappersManager.save(workspace)
         return self.openWorkspace('untitled')
 
-
     def closeWorkspace(self):
         self.changesManager.unwatch()
-
 
     def removeWorkspace(self, name):
         if name in self.getWorkspacesNames():
@@ -118,12 +120,11 @@ class WorkspaceManager(object):
             return 'FS'
 
     def namedTypeToDbType(self, name):
-        if name =='CouchDB':
+        if name == 'CouchDB':
             return DBTYPE.COUCHDB
         if name == 'FS':
             return DBTYPE.FS
 
     def getAvailableWorkspaceTypes(self):
-        return [self._dbTypeToNamedType(dbtype) for \
+        return [self._dbTypeToNamedType(dbtype) for
                 dbtype in self.dbManager.getAvailableDBs()]
-

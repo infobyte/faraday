@@ -86,9 +86,6 @@ class MainApplication(object):
                                         self._workspace_manager,
                                         args.gui)
 
-        self.gui_app.setSplashImage(os.path.join(
-            CONF.getImagePath(), "splash2.png"))
-
         self.timer = TimerClass()
         self.timer.start()
 

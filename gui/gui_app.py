@@ -6,9 +6,8 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import traceback
-
-import model.api
+from config.configuration import getInstanceConfiguration
+CONF = getInstanceConfiguration()
 
 
 class UiFactory(object):
@@ -68,8 +67,20 @@ class FaradayUi(object):
         pass
 
     def openWorkspace(self, name):
+        # The method openWorkspace can return a workspace or
+        # raise en Exception. For now, just raise it to the caller
         try:
-            self.getWorkspaceManager().openWorkspace(name)
-        except Exception:
-            model.api.log("An exception was captured while opening \
-                workspace %s\n%s" % (name, traceback.format_exc()), "ERROR")
+            ws = self.getWorkspaceManager().openWorkspace(name)
+        except Exception as e:
+            raise e
+        return ws
+
+    def openDefaultWorkspace(self):
+        """
+        Opens the default workspace (called 'untitled').
+        This method shouldn't fail, since the default workspace
+        should be always available
+
+        Returns the default workspace
+        """
+        return self.getWorkspaceManager().openDefaultWorkspace()

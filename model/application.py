@@ -11,9 +11,6 @@ import signal
 import threading
 import requests
 
-# TODO: no seria mejor activar todo ?
-# XXX: something strange happens if we import
-# this module at the bottom of the list....
 from model.controller import ModelController
 from persistence.persistence_managers import DbManager
 from controllers.change import ChangeController
@@ -64,7 +61,7 @@ class MainApplication(object):
     def __init__(self, args):
         self._original_excepthook = sys.excepthook
 
-        self._configuration = CONF
+        self.args = args
 
         self._mappers_manager = MapperManager()
         self._changes_controller = ChangeController()
@@ -81,10 +78,13 @@ class MainApplication(object):
             self._mappers_manager,
             self._changes_controller)
 
-        self.gui_app = UiFactory.create(self._model_controller,
+        if self.args.cli:
+            self.app = CliApp()
+        else:
+            self.app = UiFactory.create(self._model_controller,
                                         self._plugin_manager,
                                         self._workspace_manager,
-                                        args.gui)
+                                        self.args.gui)
 
         self.timer = TimerClass()
         self.timer.start()
@@ -98,31 +98,13 @@ class MainApplication(object):
 
     def start(self):
         try:
-
-            self.gui_app.startSplashScreen()
-            self.gui_app.splashMessage("Starting Faraday")
-
             signal.signal(signal.SIGINT, self.ctrlC)
 
             model.api.devlog("Starting application...")
             model.api.devlog("Setting up remote API's...")
-            # We need to create the last used workspace (or the default
-            # workspace) before we start the model controller and the
-            # report manager
 
-            last_workspace = CONF.getLastWorkspace()
-            try:
-                if not self._workspace_manager.workspaceExists(last_workspace):
-                    getLogger(self).info("Your last workspace ("+str(last_workspace)+") wasn't accessible, check configuration...")
-                    self._workspace_manager.openDefaultWorkspace()
-                    #self._workspace_manager.createWorkspace(last_workspace, 'default workspace, probably created already in couchb')
-                else:
-                    self._workspace_manager.openWorkspace(last_workspace)
-            except restkit.errors.Unauthorized:
-                print "You are trying to enter CouchDB with authentication"
-                print "Add your credentials to your user configuration file in $HOME/.faraday/config/user.xml"
-                print "For example: <couch_uri>http://john:password@127.0.0.1:5984</couch_uri>"
-                return
+            workspace = CONF.getLastWorkspace()
+            self.args.workspace = workspace
 
             model.api.setUpAPIs(
                 self._model_controller,
@@ -144,36 +126,30 @@ class MainApplication(object):
 
             model.api.devlog("Faraday ready...")
 
-            self.gui_app.splashMessage("Loading workspace... Please wait.")
-
-            self.gui_app.loadWorkspaces()
-
-            self.gui_app.stopSplashScreen()
+            exit_code = self.app.run(self.args)
 
         except Exception:
             print "There was an error while starting Faraday"
             print "-" * 50
             traceback.print_exc()
             print "-" * 50
-            self.__exit(-1)
+            exit_code = -1
 
-        exit_code = self.gui_app.run([])
-
-        return self.__exit(exit_code)
+        finally:
+            return self.__exit(exit_code)
 
     def __exit(self, exit_code=0):
         """
         Exits the application with the provided code.
         It also waits until all app threads end.
         """
-        model.api.devlog("Closing Faraday...")
+        model.api.log("Closing Faraday...")
         model.api.devlog("stopping model controller thread...")
         model.api.stopAPIServer()
         restapi.stopServer()
         self._changes_controller.stop()
         self._model_controller.stop()
         self._model_controller.join()
-        self.gui_app.quit()
         self.timer.stop()
         model.api.devlog("Waiting for controller threads to end...")
         return exit_code
@@ -182,11 +158,11 @@ class MainApplication(object):
         """
         Redefined quit handler to nicely end up things
         """
-        self.gui_app.quit()
+        self.app.quit()
 
     def ctrlC(self, signal, frame):
         getLogger(self).info("Exiting...")
-        self.__exit(exit_code=0)
+        self.app.quit()
 
     def getWorkspaceManager(self):
         return self._workspace_manager

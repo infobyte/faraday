@@ -25,6 +25,7 @@ import model.guiapi
 import model.api
 import model.log
 from utils.logs import addHandler
+from utils.logs import getLogger
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -59,11 +60,28 @@ class GuiApp(qt.QApplication, FaradayUi):
             qt.QPixmap(os.path.join(CONF.getImagePath(), "splash2.png")),
             qt.Qt.WStyle_StaysOnTop)
 
+        self.startSplashScreen()
+
     def getMainWindow(self):
         return self._main_window
 
     def run(self, args):
+        workspace = args.workspace
+        try:
+            ws = super(GuiApp, self).openWorkspace(workspace)
+        except Exception as e:
+            getLogger(self).error(
+                ("Your last workspace %s is not accessible, "
+                 "check configuration") % workspace)
+            getLogger(self).error(str(e))
+            ws = self.openDefaultWorkspace()
+        workspace = ws.name
+        CONF.setLastWorkspace(workspace)
+        CONF.saveConfig()
+
+        self.loadWorkspaces()
         self.createLoggerWidget()
+        self.stopSplashScreen()
         self._main_window.showAll()
         couchURL = CONF.getCouchURI()
         if couchURL:
@@ -75,6 +93,14 @@ class GuiApp(qt.QApplication, FaradayUi):
             model.api.log("Please configure Couchdb for fancy HTML5 Dashboard (https://github.com/infobyte/faraday/wiki/Couchdb)")
         exit_code = self.exec_loop()
         return exit_code
+
+    def openWorkspace(self, name):
+        try:
+            ws = super(GuiApp, self).openWorkspace(name)
+        except Exception as e:
+            model.guiapi.notification_center.showDialog(str(e))
+            ws = self.openDefaultWorkspace()
+        return ws
 
     def createLoggerWidget(self):
         self.loghandler.registerGUIOutput(self._main_window.getLogConsole())

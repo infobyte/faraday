@@ -33,7 +33,6 @@ angular.module('faradayApp')
         $scope.$on('$routeChangeSuccess', function() {
             if(componentsNeedsWS.indexOf($location.path().split("/")[1]) != -1 && $routeParams.wsId !== undefined) {
                 workspacesFact.exists($routeParams.wsId).then(function(resp){
-                    console.log(resp);
                     if(resp === true) {
                         $scope.workspaceExists = true;
                     } else {

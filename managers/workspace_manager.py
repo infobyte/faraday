@@ -43,14 +43,23 @@ class WorkspaceManager(object):
 
     def createWorkspace(self, name, desc, dbtype=DBTYPE.FS):
         workspace = Workspace(name, desc)
-        dbConnector = self.dbManager.createDb(name, dbtype)
+        try:
+            dbConnector = self.dbManager.createDb(name, dbtype)
+        except restkit.Unauthorized:
+            raise WorkspaceException(
+                ("You're not authorized to create workspaces\n"
+                 "Make sure you're an admin and add your credentials"
+                 "to your user configuration "
+                 "file in $HOME/.faraday/config/user.xml\n"
+                 "For example: "
+                 "<couch_uri>http://john:password@127.0.0.1:5984</couch_uri>"))
+        except Exception as e:
+            raise WorkspaceException(str(e))
         if dbConnector:
             self.closeWorkspace()
             self.mappersManager.createMappers(dbConnector)
             self.mappersManager.save(workspace)
             self.setActiveWorkspace(workspace)
-            CONF.setLastWorkspace(name)
-            CONF.saveConfig()
             notification_center.workspaceChanged(
                 workspace, self.getWorkspaceType(name))
             notification_center.workspaceLoad(workspace.getHosts())

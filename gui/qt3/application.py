@@ -195,8 +195,14 @@ class GuiApp(qt.QApplication, FaradayUi):
             model.api.devlog("Looking for the delegation class")
             manager = self.getWorkspaceManager()
 
-            w = manager.createWorkspace(name, description,
-                                         manager.namedTypeToDbType(w_type))
+            try:
+                w = manager.createWorkspace(
+                    name, description,
+                    manager.namedTypeToDbType(w_type))
+                CONF.setLastWorkspace(w.name)
+                CONF.saveConfig()
+            except Exception as e:
+                model.guiapi.notification_center.showDialog(str(e))
 
             self.getMainWindow().refreshWorkspaceTreeView()
 

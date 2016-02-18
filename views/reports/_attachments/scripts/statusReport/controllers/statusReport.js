@@ -115,9 +115,7 @@ angular.module('faradayApp')
 
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace).then(function(vulns) {
-                tmp_data = $filter('orderObjectBy')(vulnsManager.vulns, $scope.propertyGroupBy, true);
-                $scope.gridOptions.data = $filter('filter')(tmp_data, $scope.expression);
-
+                $scope.filterVulns();
                 $scope.gridOptions.total = vulns.length;
                 if($scope.gridOptions.total > $scope.gridOptions.paginationPageSize && $scope.gridOptions.total > 100) {
                     $scope.gridOptions.paginationPageSizes.push($scope.gridOptions.total);
@@ -354,7 +352,7 @@ angular.module('faradayApp')
                 $scope.selected = false;
             }
         };
-     
+
         $scope.processReference = function(text) {
             var url = 'http://google.com/',
             url_pattern = new RegExp('^(http|https):\\/\\/?');
@@ -382,7 +380,7 @@ angular.module('faradayApp')
             } else {
                 url += 'search?q=' + text;
             }
-            
+
             return url;
         };
 
@@ -543,6 +541,7 @@ angular.module('faradayApp')
                 });
                 modal.result.then(function(data) {
                     vulnsManager.updateVuln(vulns[0], data).then(function(){
+                        $scope.filterVulns();
                     }, function(errorMsg){
                         showMessage("Error updating vuln " + vulns[0].name + " (" + vulns[0]._id + "): " + errorMsg);
                     });
@@ -580,6 +579,7 @@ angular.module('faradayApp')
                     }
 
                     vulnsManager.updateVuln(vuln, obj).then(function(vulns){
+                        $scope.filterVulns();
                     }, function(errorMsg){
                         // TODO: show errors somehow
                         console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
@@ -587,7 +587,12 @@ angular.module('faradayApp')
                 });
             });
         }
-        
+
+        $scope.filterVulns = function() {
+            tmp_data = $filter('orderObjectBy')(vulnsManager.vulns, $scope.propertyGroupBy, true);
+            $scope.gridOptions.data = $filter('filter')(tmp_data, $scope.expression);
+        };
+
         $scope.editSeverity = function() {
             editProperty(
                 'scripts/commons/partials/editOptions.html',

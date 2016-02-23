@@ -17,10 +17,6 @@ angular.module('faradayApp')
             });
         };
 
-        workspacesFact.list().then(function(wss) {
-            $scope.wss = wss;
-        });
-
         configSrv.promise.then(function() {
             var timer = $interval($scope.checkCwe, 43200000);
             $scope.checkCwe();
@@ -32,6 +28,10 @@ angular.module('faradayApp')
 
         $scope.$on('$routeChangeSuccess', function() {
             if(componentsNeedsWS.indexOf($location.path().split("/")[1]) != -1 && $routeParams.wsId !== undefined) {
+                workspacesFact.list().then(function(wss) {
+                    $scope.wss = wss;
+                });
+
                 workspacesFact.exists($routeParams.wsId).then(function(resp){
                     if(resp === true) {
                         $scope.workspaceExists = true;

@@ -1042,3 +1042,4 @@ div.btn-group .dropdown-menu.margin{margin-left: 38px}
 div.ui-grid-header-cell .ui-grid-cell-contents{white-space: normal;}
 div.alert.alert-danger.alert-dismissible .ws-list{text-align: center; text-transform: uppercase; padding: 10px}
 div.alert.alert-danger.alert-dismissible .ws-list a:hover{text-decoration: none}
+a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}

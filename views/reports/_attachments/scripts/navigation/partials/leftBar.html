@@ -5,22 +5,22 @@
     <nav>
         <ul>
             <li>
-                <a href="#/dashboard/ws/{{workspace}}" class="ws-dashboard" style="color: #ffffff !important" uib-tooltip="Dashboard" tooltip-placement="right">
+                <a href="#/dashboard/ws/{{workspace}}" class="ws-dashboard" style="color: #ffffff !important" uib-tooltip="Dashboard" tooltip-placement="right" ng-class="{'button-disable': workspaceExists === false}">
                     <img src="images/ico-dashboard-menu.svg" alt="Dashboard"/>
                 </a>
             </li>
             <li>
-                <a href="#/status/ws/{{workspace}}" class="status-report" style="color: #ffffff !important" uib-tooltip="Status Report" tooltip-placement="right">
+                <a href="#/status/ws/{{workspace}}" class="status-report" style="color: #ffffff !important" uib-tooltip="Status Report" tooltip-placement="right" ng-class="{'button-disable': workspaceExists === false}">
                     <img src="images/ico-status-menu.svg" alt="Status Report"/>
                 </a>
-            </li> 
+            </li>
             <li>
                 <a href="#/workspaces" class="workspaces" style="color: #ffffff !important" uib-tooltip="Workspaces" tooltip-placement="right">
                     <img src="images/ico-workspaces-menu.svg" alt="Workspaces"/>
                 </a>
             </li>
             <li>
-                <a href="#/hosts/ws/{{workspace}}" class="workspaces" style="color: #ffffff !important" uib-tooltip="Hosts" tooltip-placement="right">
+                <a href="#/hosts/ws/{{workspace}}" class="workspaces" style="color: #ffffff !important" uib-tooltip="Hosts" tooltip-placement="right" ng-class="{'button-disable': workspaceExists === false}">
                     <i class="fa fa-sitemap host"></i>
                 </a>
             </li>
@@ -42,12 +42,12 @@
             <li>
                 <a href="#/comparison" class="executive-report" style="color: #ffffff !important" uib-tooltip="Workspaces Comparison" tooltip-placement="right">
                     <img src="images/ico-workspace-comparison-menu.svg" alt="Workspaces Comparison"/>
-                </a>            
+                </a>
             </li>
             <li>
                 <a href="#/webshell" class="executive-report" style="color: #ffffff !important" uib-tooltip="Web Shell" tooltip-placement="right">
                     <img src="images/ico-web-shell-menu.svg" alt="Webshell"/>
-                </a>            
+                </a>
             </li>
         </ul>
     </nav>

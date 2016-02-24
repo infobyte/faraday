@@ -5,12 +5,12 @@
     <nav>
         <ul>
             <li>
-                <a href="#/dashboard/ws/{{workspace}}" class="ws-dashboard" style="color: #ffffff !important" uib-tooltip="Dashboard" tooltip-placement="right" ng-class="{'button-disable': workspaceExists === false}">
+                <a href="#/dashboard/ws/{{workspace}}" class="ws-dashboard" style="color: #ffffff !important" uib-tooltip="Dashboard" tooltip-placement="right">
                     <img src="images/ico-dashboard-menu.svg" alt="Dashboard"/>
                 </a>
             </li>
             <li>
-                <a href="#/status/ws/{{workspace}}" class="status-report" style="color: #ffffff !important" uib-tooltip="Status Report" tooltip-placement="right" ng-class="{'button-disable': workspaceExists === false}">
+                <a href="#/status/ws/{{workspace}}" class="status-report" style="color: #ffffff !important" uib-tooltip="Status Report" tooltip-placement="right">
                     <img src="images/ico-status-menu.svg" alt="Status Report"/>
                 </a>
             </li>
@@ -20,7 +20,7 @@
                 </a>
             </li>
             <li>
-                <a href="#/hosts/ws/{{workspace}}" class="workspaces" style="color: #ffffff !important" uib-tooltip="Hosts" tooltip-placement="right" ng-class="{'button-disable': workspaceExists === false}">
+                <a href="#/hosts/ws/{{workspace}}" class="workspaces" style="color: #ffffff !important" uib-tooltip="Hosts" tooltip-placement="right">
                     <i class="fa fa-sitemap host"></i>
                 </a>
             </li>
@@ -58,16 +58,5 @@
         </button>
         <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
         <span ng-bind="isIceweasel"></span>
-    </div>
-    <div ng-if="workspaceExists === false" class="alert alert-danger alert-dismissible">
-        <button type="button" class="close" data-dismiss="alert">
-            <span aria-hidden="true">&times;</span>
-            <span class="sr-only">Close</span>
-        </button>
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-        <span>This workspace does not exist. Select one of the list</span>
-        <ul class="ws-list">
-            <li ng-repeat="ws in wss"><a href="#/{{component}}/ws/{{ws}}"><span ng-class-even="'label label-unclassified'" ng-class-odd="'label label-high'">{{ws}}</span></a></li>
-        </ul>
     </div>
 </aside>

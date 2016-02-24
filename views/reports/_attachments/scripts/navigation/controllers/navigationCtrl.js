@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('navigationCtrl', ['$scope', '$http', '$route', '$routeParams', '$cookies', '$location', '$interval', 'configSrv', 'workspacesFact',
-        function($scope, $http, $route, $routeParams, $cookies, $location, $interval, configSrv, workspacesFact) {
+    .controller('navigationCtrl', ['$scope', '$http', '$route', '$routeParams', '$cookies', '$location', '$interval', '$uibModal', 'configSrv', 'workspacesFact',
+        function($scope, $http, $route, $routeParams, $cookies, $location, $interval, $uibModal, configSrv, workspacesFact) {
 
         $scope.workspace = "";
         $scope.component = "";
@@ -33,18 +33,27 @@ angular.module('faradayApp')
                 });
 
                 workspacesFact.exists($routeParams.wsId).then(function(resp){
-                    if(resp === true) {
-                        $scope.workspaceExists = true;
-                    } else {
-                        $scope.workspaceExists = false;
+                    if(resp !== true) {
+                        $scope.modalWsNoExist();
                     }
                 });
-            } else {
-                $scope.workspaceExists = null;
             }
             $scope.updateWorkspace();
             $scope.updateComponent();
         });
+
+        $scope.modalWsNoExist = function() {
+            $scope.modalInstance = $uibModal.open({
+                templateUrl: 'scripts/navigation/partials/wsNo-exist.html',
+                scope: $scope,
+                backdrop: 'static',
+                keyboard: false
+            });
+        };
+
+        $scope.cancel = function() {
+            $scope.modalInstance.dismiss('cancel');
+        };
 
         $scope.updateWorkspace = function() {
             if($routeParams.wsId != undefined) {

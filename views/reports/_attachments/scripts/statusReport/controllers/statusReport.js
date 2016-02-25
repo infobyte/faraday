@@ -209,7 +209,7 @@ angular.module('faradayApp')
             $scope.gridOptions.columnDefs.push({ name : 'target',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/targetcolumn.html',
                 headerCellTemplate: header,
-                width: '120',
+                width: '140',
                 visible: $scope.columns["target"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'desc',

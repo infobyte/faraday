@@ -44,7 +44,6 @@ def exception_handler(type, value, tb):
     import requests
     import hashlib
     import platform
-    import pip
 
     text = StringIO()
     traceback.print_exception(type, value, tb, file=text)
@@ -59,8 +58,14 @@ def exception_handler(type, value, tb):
     exception_hash = hashlib.sha256(excepts).hexdigest()
     os_dist = " ".join(platform.dist())
     python_version = platform.python_version()
-    modules_info = ",".join([ "%s=%s" % (x.key, x.version) 
-                        for x in pip.get_installed_distributions()])
+    modules_info = ""
+    try:
+        import pip
+        modules_info = ",".join([ "%s=%s" % (x.key, x.version)
+                            for x in pip.get_installed_distributions()])
+    except ImportError:
+        pass    
+
 
     python_dist = "Python %s \n Modules: [ %s ]" % (python_version, modules_info)
 
@@ -90,7 +95,6 @@ def reportToDevelopers(self, *description):
         import requests
         import hashlib
         import platform
-        import pip
 
         uri = CONF.getTktPostUri()
         headers = json.loads(CONF.getApiParams())

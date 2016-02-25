@@ -12,6 +12,7 @@ New features in the latest update
 
 TBA:
 ---
+* Fixed bug in pip debian
 * Fixed small bug in CSV importing
 * Fixed styles for Status Report
 * Fixed bug on Status Report filter after editing

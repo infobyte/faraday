@@ -7,7 +7,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import subprocess
-import pip
 import couchdbkit
 import model.workspace
 import persistence.mappers.data_mappers as dm
@@ -34,8 +33,14 @@ class Updater(object):
         logger.info('Checking qt3 libs')
         QT().run()
 
-        logger.info('Installing missing dependencies in pip')
-        pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
+        try:
+            import pip
+            logger.info('Installing missing dependencies in pip')
+            pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
+        except ImportError:
+            logger.error("Checking missing dependencies in pip")
+            pass        
+
 
         # logger.info('Upgrading DBs to latest version')
         # DB().run() 

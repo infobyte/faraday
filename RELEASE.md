@@ -14,6 +14,7 @@ TBA:
 ---
 * Fixed small bug in CSV importing
 * Added support for Kali Rolling Edition
+* Show all evidence files in Status Report
 
 Dec 18, 2015:
 ---

@@ -17,7 +17,6 @@ import shutil
 import argparse
 import platform
 import subprocess
-import pip
 import json
 
 from utils.logs import getLogger, setUpLogger
@@ -202,29 +201,32 @@ def checkDependencies():
     """
 
     if not args.ignore_deps:
+        try:
+            import pip
+            modules = []
+            f = open(CONST_REQUIREMENTS_FILE)
+            for line in f:
+                if not line.find('#'):
+                    break
+                else:
+                    modules.append([line[:line.index('=')], (line[line.index('=')+2:]).strip()])
+            f.close()
+            pip_dist = [dist.project_name.lower() for dist in pip.get_installed_distributions()]
 
-        modules = []
-        f = open(CONST_REQUIREMENTS_FILE)
-        for line in f:
-            if not line.find('#'):
-                break
-            else:
-                modules.append([line[:line.index('=')], (line[line.index('=')+2:]).strip()])
-        f.close()
-        pip_dist = [dist.project_name.lower() for dist in pip.get_installed_distributions()]
+            for module in modules:
+                if module[0].lower() not in pip_dist:
+                    try:
+                        __import__(module[0])
+                    except ImportError:
+                        if query_user_bool("Missing module %s."
+                            " Do you wish to install it?" % module[0]):
+                            pip.main(['install', "%s==%s" %
+                                     (module[0], module[1]), '--user'])
 
-        for module in modules:
-            if module[0].lower() not in pip_dist:
-                try:
-                    __import__(module[0])
-                except ImportError:
-                    if query_user_bool("Missing module %s."
-                        " Do you wish to install it?" % module[0]):
-                        pip.main(['install', "%s==%s" %
-                                 (module[0], module[1]), '--user'])
-
-                    else:
-                        return False
+                        else:
+                            return False
+        except ImportError:
+            pass
 
     return True
 

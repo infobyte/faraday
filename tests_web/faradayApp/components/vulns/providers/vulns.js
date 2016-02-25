@@ -7,8 +7,9 @@ describe('vulnsManager', function() {
     var vulnsManager,
     Vuln,
     WebVuln,
-    hostsManager;
-    
+    hostsManager,
+    servicesManager;
+
     var $filter,
     $httpBackend,
     $q,
@@ -21,7 +22,7 @@ describe('vulnsManager', function() {
     couchVuln2,
     couchVulnEmpty;
 
-    var hosts, interfaces, 
+    var hosts, interfaces,
     hostnames = [];
 
     // Set up the module
@@ -128,7 +129,7 @@ describe('vulnsManager', function() {
 
         hosts = [
             {
-                "_id": "1", 
+                "_id": "1",
                 "name": "Host parent"
             }
         ];
@@ -158,6 +159,8 @@ describe('vulnsManager', function() {
             }
         ];
 
+        services = [];
+
         interfaces.forEach(function(interf) {
             interf.hostnames.forEach(function(hostname) {
                 if(hostnames.indexOf(hostname) < 0) hostnames.push(hostname);
@@ -174,18 +177,27 @@ describe('vulnsManager', function() {
                 deferred.resolve(hosts);
                 return deferred.promise;
             },
-            getAllInterfaces: function() {
+            getAllInterfaces: function(ws) {
                 var deferred = $q.defer();
                 deferred.resolve(interfaces);
                 return deferred.promise;
             }
         };
 
+        var servicesManagerMock = {
+            getServices: function(ws) {
+                var deferred = $q.defer();
+                deferred.resolve(services);
+                return deferred.promise;
+            }
+        };
+
         module(function($provide) {
             $provide.factory('hostsManager', function($q) { return hostsManagerMock; });
+            $provide.factory('servicesManager', function($q) { return servicesManagerMock; });
         });
 
-        inject(function(_vulnsManager_, _Vuln_, _WebVuln_, _$filter_, _$httpBackend_, _$q_, _hostsManager_) {
+        inject(function(_vulnsManager_, _Vuln_, _WebVuln_, _$filter_, _$httpBackend_, _$q_, _hostsManager_, _servicesManager_) {
             $filter = _$filter_;
             $httpBackend = _$httpBackend_;
             $q = _$q_;
@@ -193,7 +205,8 @@ describe('vulnsManager', function() {
             Vuln = _Vuln_;
             WebVuln = _WebVuln_;
             hostsManager = _hostsManager_;
-            BASEURL = 'http://localhost:9876/'; 
+            servicesManager = _servicesManager_;
+            BASEURL = 'http://localhost:9876/';
         });
 
     });
@@ -283,7 +296,7 @@ describe('vulnsManager', function() {
 
             // delete vuln
             $httpBackend.expect('DELETE', BASEURL + 'ws/' + id + "?rev=" + vuln1._rev).respond(200);
-            
+
             vulnsManager.deleteVuln(vulnsManager.vulns[0]);
             $httpBackend.flush();
 
@@ -304,7 +317,7 @@ describe('vulnsManager', function() {
 
             // update vuln
             $httpBackend.expect('PUT', BASEURL + 'ws/' + id).respond(200, {"rev": "1-abe16726389e434ca3f37384ea76128e"});
-            
+
             var vulns = vulnsManager.updateVuln(vulnsManager.vulns[0], vuln2);
             $httpBackend.flush();
 

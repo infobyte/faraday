@@ -259,60 +259,60 @@ describe('statusReportCtrl', function() {
     });
 
     describe('Status report vuln deletion - delete method (modal)', function() {
-        // it('call delete by property with no vulns selected', function() {
-        //     // we need $scope.gridOptions.data to have all the vulns before calling
-        //     // the delete method
-        //     $scope.$apply();
-        //     $scope.deleteVuln(vuln1);
-        //     fakeModal.close();
-        //     $scope.$apply();
+        it('call delete by property with no vulns selected', function() {
+            // we need $scope.gridOptions.data to have all the vulns before calling
+            // the delete method
+            $scope.$apply();
+            $scope.deleteVuln(vuln1);
+            fakeModal.close();
+            $scope.$apply();
 
-        //     expect($scope.gridOptions.data.length).toEqual(3);
-        //     expect($scope.gridOptions.data).toContain(vuln1);
-        //     expect($scope.gridOptions.data).toContain(vuln2);
-        //     expect($scope.gridOptions.data).toContain(vuln3);
-        // });
-        // it('call delete with a valid vuln (1.2.3.4) selected and accept modal', function() {
-        //     // we need $scope.gridOptions.data to have all the vulns before calling
-        //     // the delete method
-        //     vuln1.selected_statusreport_controller = true;
-        //     $scope.$apply();
-        //     $scope.deleteVuln();
-        //     fakeModal.close();
-        //     $scope.$apply();
+            expect($scope.gridOptions.data.length).toEqual(3);
+            expect($scope.gridOptions.data).toContain(vuln1);
+            expect($scope.gridOptions.data).toContain(vuln2);
+            expect($scope.gridOptions.data).toContain(vuln3);
+        });
+        it('call delete with a valid vuln (1.2.3.4) selected and accept modal', function() {
+            // we need $scope.gridOptions.data to have all the vulns before calling
+            // the delete method
+            vuln1.selected_statusreport_controller = true;
+            $scope.$apply();
+            $scope.deleteVuln();
+            fakeModal.close();
+            $scope.$apply();
 
-        //     expect($scope.gridOptions.data.length).toEqual(2);
-        //     expect($scope.gridOptions.data).not.toContain(vuln1);
-        //     expect($scope.gridOptions.data).toContain(vuln2);
-        //     expect($scope.gridOptions.data).toContain(vuln3);
-        // });
-        // it('call delete with a valid vuln (1.2.3.4) selected and cancel modal', function() {
-        //     // we need $scope.gridOptions.data to have all the vulns before calling
-        //     // the delete method
-        //     vuln1.selected_statusreport_controller = true;
-        //     $scope.$apply();
-        //     $scope.delete();
-        //     fakeModal.dismiss();
-        //     $scope.$apply();
+            expect($scope.gridOptions.data.length).toEqual(2);
+            expect($scope.gridOptions.data).not.toContain(vuln1);
+            expect($scope.gridOptions.data).toContain(vuln2);
+            expect($scope.gridOptions.data).toContain(vuln3);
+        });
+        it('call delete with a valid vuln (1.2.3.4) selected and cancel modal', function() {
+            // we need $scope.gridOptions.data to have all the vulns before calling
+            // the delete method
+            vuln1.selected_statusreport_controller = true;
+            $scope.$apply();
+            $scope.delete();
+            fakeModal.dismiss();
+            $scope.$apply();
 
-        //     expect($scope.gridOptions.data.length).toEqual(3);
-        //     expect($scope.gridOptions.data).toContain(vuln1);
-        //     expect($scope.gridOptions.data).toContain(vuln2);
-        //     expect($scope.gridOptions.data).toContain(vuln3);
-        // });
-        // it('call delete with valid vulns selected and accept modal', function() {
-        //     vuln1.selected_statusreport_controller = true;
-        //     vuln2.selected_statusreport_controller = true;
-        //     $scope.$apply();
-        //     $scope.delete();
-        //     fakeModal.close();
-        //     $scope.$apply();
+            expect($scope.gridOptions.data.length).toEqual(3);
+            expect($scope.gridOptions.data).toContain(vuln1);
+            expect($scope.gridOptions.data).toContain(vuln2);
+            expect($scope.gridOptions.data).toContain(vuln3);
+        });
+        it('call delete with valid vulns selected and accept modal', function() {
+            vuln1.selected_statusreport_controller = true;
+            vuln2.selected_statusreport_controller = true;
+            $scope.$apply();
+            $scope.delete();
+            fakeModal.close();
+            $scope.$apply();
 
-        //     expect($scope.gridOptions.data.length).toEqual(1);
-        //     expect($scope.gridOptions.data).not.toContain(vuln1);
-        //     expect($scope.gridOptions.data).not.toContain(vuln2);
-        //     expect($scope.gridOptions.data).toContain(vuln3);
-        // });
+            expect($scope.gridOptions.data.length).toEqual(1);
+            expect($scope.gridOptions.data).not.toContain(vuln1);
+            expect($scope.gridOptions.data).not.toContain(vuln2);
+            expect($scope.gridOptions.data).toContain(vuln3);
+        });
     });
 
     describe('Status report vuln creation - insert method', function() {

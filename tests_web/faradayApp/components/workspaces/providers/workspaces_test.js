@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 describe('workspacesFact', function() {
-    var $httpBackend, createFactory; 
+    var $httpBackend, createFactory;
 
     // Set up the module
     beforeEach(module('faradayApp'));
@@ -27,7 +27,7 @@ describe('workspacesFact', function() {
 
    describe('Workspaces Service CRUD', function() {
        it('Tests if factory is well created', function() {
-           fact = createFactory(); 
+           fact = createFactory();
        });
 
        it('Tests if existence is well asked', function() {
@@ -42,7 +42,7 @@ describe('workspacesFact', function() {
            $httpBackend.flush();
        });
 
-       it('Tests if OK Inserts are well done', function() { 
+       it('Tests if OK Inserts are well done', function() {
            var workspace =  {
                "_id": "test_workspace",
                "customer": "",
@@ -62,26 +62,23 @@ describe('workspacesFact', function() {
                    workspace).respond(200, {"ok": true});
 
            fact = createFactory();
-           var workspace_exists = false;
-           onSuccess = function(){ workspace_exists = true;};
 
-           fact.put(workspace, onSuccess); 
+           fact.put(workspace);
            $httpBackend.flush();
            expect(workspace_exists).toBe(true);
        });
 
-       it('Tests if OK Delete are well done', function() { 
+       it('Tests if OK Delete are well done', function() {
            $httpBackend.expectDELETE('http://localhost:9876/test_workspace').
                respond(200, {"ok": true});
 
            fact = createFactory();
-           var workspace_exists = true;
-           onSuccess = function(){ workspace_exists = false;};
 
-           workspace_exists = fact.delete('test_workspace', onSuccess); 
+           fact.delete('test_workspace').then(function(resp) {
+            expect(resp).toBe('test_workspace');
+           });
            $httpBackend.flush();
-           expect(workspace_exists).toBe(false);
        });
-   }); 
+   });
 
 });

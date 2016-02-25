@@ -19,6 +19,7 @@ TBA:
 * Added support for Kali Rolling Edition
 * Notify user when the current Workspace doesn't exist
 * Show all evidence files in Status Report
+* Added script to remove all vulns with a specific severity value (parameterized)
 
 Dec 18, 2015:
 ---

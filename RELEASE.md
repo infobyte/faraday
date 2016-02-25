@@ -20,6 +20,7 @@ TBA:
 * Notify user when the current Workspace doesn't exist
 * Show all evidence files in Status Report
 * Added script to remove all vulns with a specific severity value (parameterized)
+* Fixed Arachni Plugin bugs
 
 Dec 18, 2015:
 ---

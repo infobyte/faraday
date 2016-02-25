@@ -157,7 +157,8 @@ class ReportParser(object):
         f = result = None
 
         signatures = {
-         "\x50\x4B" : "zip"
+         "\x50\x4B" : "zip" ,
+         "\x3C\x3F\x78\x6D\x6C" : "xml"
         }
 
         try:
@@ -193,7 +194,7 @@ class ReportParser(object):
         if report_type == "zip":
             result = "maltego"
 
-        else:
+        elif report_type == "xml":
 
             try:
                 for event, elem in ET.iterparse(f, ('start', )):

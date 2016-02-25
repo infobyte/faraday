@@ -13,7 +13,10 @@ New features in the latest update
 TBA:
 ---
 * Fixed small bug in CSV importing
+* Fixed styles for Status Report
+* Fixed bug on Status Report filter after editing
 * Added support for Kali Rolling Edition
+* Notify user when the current Workspace doesn't exist
 
 Dec 18, 2015:
 ---

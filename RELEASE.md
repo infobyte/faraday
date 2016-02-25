@@ -12,6 +12,9 @@ New features in the latest update
 
 TBA:
 ---
+* BugFix pip install.
+* Checks additionals about dependencies in installation.
+* Warning about a upgrade to experimental in debian installation.
 * Fixed small bug in CSV importing
 * Added support for Kali Rolling Edition
 

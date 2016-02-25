@@ -13,6 +13,9 @@ New features in the latest update
 TBA:
 ---
 * Fixed bug in pip debian
+* BugFix pip install.
+* Checks additionals about dependencies in installation.
+* Warning about a upgrade to experimental in debian installation.
 * Fixed small bug in CSV importing
 * Fixed styles for Status Report
 * Fixed bug on Status Report filter after editing

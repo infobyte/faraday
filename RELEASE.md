@@ -18,6 +18,7 @@ TBA:
 * Fixed bug on Status Report filter after editing
 * Added support for Kali Rolling Edition
 * Notify user when the current Workspace doesn't exist
+* Show all evidence files in Status Report
 
 Dec 18, 2015:
 ---

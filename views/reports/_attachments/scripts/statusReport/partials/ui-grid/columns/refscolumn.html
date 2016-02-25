@@ -1,5 +1,5 @@
 <div ng-if="row.entity._id != undefined">
-    <div class="ui-grid-cell-contents center">
+    <div class="ui-grid-cell-contents center overflow-cell">
         <p ng-repeat="ref in COL_FIELD" class='pos-middle crop-text'><a href='{{grid.appScope.processReference(ref)}}' target="_blank">{{ref}}</a></p>
     </div>
 </div>

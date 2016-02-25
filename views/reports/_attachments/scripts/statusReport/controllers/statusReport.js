@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('statusReportCtrl', 
+    .controller('statusReportCtrl',
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
                     'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager',
@@ -354,7 +354,7 @@ angular.module('faradayApp')
                 $scope.selected = false;
             }
         };
-     
+
         $scope.processReference = function(text) {
             var url = 'http://google.com/',
             url_pattern = new RegExp('^(http|https):\\/\\/?');
@@ -382,7 +382,7 @@ angular.module('faradayApp')
             } else {
                 url += 'search?q=' + text;
             }
-            
+
             return url;
         };
 
@@ -587,7 +587,7 @@ angular.module('faradayApp')
                 });
             });
         }
-        
+
         $scope.editSeverity = function() {
             editProperty(
                 'scripts/commons/partials/editOptions.html',
@@ -723,7 +723,7 @@ angular.module('faradayApp')
                             references.push(ref);
                         }
                     });
-                    data.refs = references;                    
+                    data.refs = references;
 
                     vulnsManager.updateVuln(vuln, data).then(function(vulns){
                     }, function(errorMsg){
@@ -869,7 +869,7 @@ angular.module('faradayApp')
 
             $location.path(url);
         };
-        
+
         // toggles column show property
         $scope.toggleShow = function(column, show) {
             column = column.toLowerCase();

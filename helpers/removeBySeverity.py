@@ -82,6 +82,8 @@ def fixDb(couchdb, db, severity, test, verbose):
             print "No vulns were found in DB " + db + " with severity " + severity + "!"
     elif response_code == 401:
         print " Autorization required to access " + db + ", make sure to add user:pwd to Couch URI using --couchdburi"
+    else:
+        print "Error connecting to CouchDB, please verify the service is up"
 
 if __name__ == "__main__":
     main()

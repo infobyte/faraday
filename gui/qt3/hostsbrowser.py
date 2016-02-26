@@ -758,8 +758,7 @@ class HostsBrowser(qt.QVBox):
                     continue
                 
                 d = l.split("|")
-                
-                if len(d) <=8:
+                if len(d) <8:
                     api.log("Error vuln line: ("+l+")" )
                 else:
                     self._newVulnImport(d[1],d[2],d[3],d[4],d[5],d[6],d[7])

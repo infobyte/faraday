@@ -1,86 +1,84 @@
-// // Faraday Penetration Test IDE
-// // Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
-// // See the file 'doc/LICENSE' for the license information
+// Faraday Penetration Test IDE
+// Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+// See the file 'doc/LICENSE' for the license information
 
-// describe('workspacesFact', function() {
-//     var $httpBackend, createFactory; 
+describe('workspacesFact', function() {
+    var $httpBackend, createFactory;
 
-//     // Set up the module
-//     beforeEach(module('faradayApp'));
+    // Set up the module
+    beforeEach(module('faradayApp'));
 
-//     beforeEach(inject(function($injector) {
-//         // Set up the mock http service responses
-//         $httpBackend = $injector.get('$httpBackend');
-//         var $workspacesFact = $injector.get('workspacesFact');
+    beforeEach(inject(function($injector) {
+        // Set up the mock http service responses
+        $httpBackend = $injector.get('$httpBackend');
+        var $workspacesFact = $injector.get('workspacesFact');
 
-//         createFactory = function() {
-//             return $injector.get('workspacesFact', {'BASEURL' : 'http://localhost:9876/',
-//                                     '$http': $httpBackend});
-//         };
-//     }));
+        createFactory = function() {
+            return $injector.get('workspacesFact', {'BASEURL' : 'http://localhost:9876/',
+                                    '$http': $httpBackend});
+        };
+    }));
 
 
-//    afterEach(function() {
-//      $httpBackend.verifyNoOutstandingExpectation();
-//      $httpBackend.verifyNoOutstandingRequest();
-//    });
+   afterEach(function() {
+     $httpBackend.verifyNoOutstandingExpectation();
+     $httpBackend.verifyNoOutstandingRequest();
+   });
 
-//    describe('Workspaces Service CRUD', function() {
-//        it('Tests if factory is well created', function() {
-//            fact = createFactory(); 
-//        });
+   describe('Workspaces Service CRUD', function() {
+       it('Tests if factory is well created', function() {
+           fact = createFactory();
+       });
 
-//        it('Tests if existence is well asked', function() {
-//            $httpBackend.when('HEAD', 'http://localhost:9876/tuvieja')
-//                                            .respond(200, '');
+       it('Tests if existence is well asked', function() {
+           $httpBackend.when('HEAD', 'http://localhost:9876/tuvieja')
+                                           .respond(200, '');
 
-//            $httpBackend.expectHEAD('http://localhost:9876/tuvieja');
-//            fact = createFactory();
-//            workspace_exists = fact.exists('tuvieja');
-//            expect(workspace_exists).toBe(true);
-//            $httpBackend.flush();
-//        });
+           $httpBackend.expectHEAD('http://localhost:9876/tuvieja');
+           fact = createFactory();
+           fact.exists('tuvieja').then(function(exist){
+	           expect(exist).toBe(true);
+           });
+           $httpBackend.flush();
+       });
 
-//        it('Tests if OK Inserts are well done', function() { 
-//            var workspace =  {
-//                "_id": "test_workspace",
-//                "customer": "",
-//                "sdate": 1415901244.040532,
-//                "name": "test_workspace",
-//                "fdate": 1415901244.040532,
-//                "type": "Workspace",
-//                "children": [
-//                ],
-//                "description": ""
-//            };
+       it('Tests if OK Inserts are well done', function() {
+           var workspace =  {
+               "_id": "test_workspace",
+               "customer": "",
+               "sdate": 1415901244.040532,
+               "name": "test_workspace",
+               "fdate": 1415901244.040532,
+               "type": "Workspace",
+               "children": [
+               ],
+               "description": ""
+           };
 
-//            $httpBackend.expectPUT('http://localhost:9876/test_workspace',
-//                    workspace).respond(200, {"ok": true});
+           $httpBackend.expectPUT('http://localhost:9876/test_workspace',
+                   workspace).respond(200, {"ok": true});
 
-//            $httpBackend.expectPUT('http://localhost:9876/test_workspace/test_workspace',
-//                    workspace).respond(200, {"ok": true});
+           $httpBackend.expectPUT('http://localhost:9876/test_workspace/test_workspace',
+                   workspace).respond(200, {"ok": true});
 
-//            fact = createFactory();
-//            var workspace_exists = false;
-//            onSuccess = function(){ workspace_exists = true;};
+           fact = createFactory();
 
-//            fact.put(workspace, onSuccess); 
-//            $httpBackend.flush();
-//            expect(workspace_exists).toBe(true);
-//        });
+           fact.put(workspace);
+           $httpBackend.flush();
+           expect(workspace_exists).toBe(true);
+       });
 
-//        it('Tests if OK Delete are well done', function() { 
-//            $httpBackend.expectDELETE('http://localhost:9876/test_workspace').
-//                respond(200, {"ok": true});
+       it('Tests if OK Delete are well done', function() {
+           $httpBackend.expectDELETE('http://localhost:9876/test_workspace').
+               respond(200, {"ok": true});
 
-//            fact = createFactory();
-//            var workspace_exists = true;
-//            onSuccess = function(){ workspace_exists = false;};
+           fact = createFactory();
 
-//            workspace_exists = fact.delete('test_workspace', onSuccess); 
-//            $httpBackend.flush();
-//            expect(workspace_exists).toBe(false);
-//        });
-//    }); 
+           fact.delete('test_workspace').then(function(resp) {
+            expect(resp).toBe('test_workspace');
+           });
+           $httpBackend.flush();
+       });
+   });
 
-// });
+});

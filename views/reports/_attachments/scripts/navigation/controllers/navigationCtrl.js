@@ -3,11 +3,12 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('navigationCtrl', ['$scope', '$http', '$route', '$routeParams', '$cookies', '$location', '$interval', 'configSrv',
-        function($scope, $http, $route, $routeParams, $cookies, $location, $interval, configSrv) {
+    .controller('navigationCtrl', ['$scope', '$http', '$route', '$routeParams', '$cookies', '$location', '$interval', '$uibModal', 'configSrv', 'workspacesFact',
+        function($scope, $http, $route, $routeParams, $cookies, $location, $interval, $uibModal, configSrv, workspacesFact) {
 
         $scope.workspace = "";
         $scope.component = "";
+        var componentsNeedsWS = ["dashboard","status","hosts"];
 
         $scope.checkCwe = function() {
             $http.get("https://www.faradaysec.com/scripts/updatedb.php?version=" + configSrv.faraday_version).then(function() {
@@ -26,9 +27,33 @@ angular.module('faradayApp')
         });
 
         $scope.$on('$routeChangeSuccess', function() {
+            if(componentsNeedsWS.indexOf($location.path().split("/")[1]) != -1 && $routeParams.wsId !== undefined) {
+                workspacesFact.list().then(function(wss) {
+                    $scope.wss = wss;
+                });
+
+                workspacesFact.exists($routeParams.wsId).then(function(resp){
+                    if(resp !== true) {
+                        $scope.modalWsNoExist();
+                    }
+                });
+            }
             $scope.updateWorkspace();
             $scope.updateComponent();
         });
+
+        $scope.modalWsNoExist = function() {
+            $scope.modalInstance = $uibModal.open({
+                templateUrl: 'scripts/navigation/partials/wsNo-exist.html',
+                scope: $scope,
+                backdrop: 'static',
+                keyboard: false
+            });
+        };
+
+        $scope.cancel = function() {
+            $scope.modalInstance.dismiss('cancel');
+        };
 
         $scope.updateWorkspace = function() {
             if($routeParams.wsId != undefined) {
@@ -70,5 +95,4 @@ angular.module('faradayApp')
         // if(navigator.userAgent.toLowerCase().indexOf('iceweasel') > -1) {
         //      $scope.isIceweasel = "Your browser is not supported, please use Firefox or Chrome";
         // }
-        
 	}]);

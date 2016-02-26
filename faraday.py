@@ -17,7 +17,6 @@ import shutil
 import argparse
 import platform
 import subprocess
-import pip
 import json
 
 from utils.logs import getLogger, setUpLogger
@@ -26,7 +25,6 @@ from config.configuration import getInstanceConfiguration
 from config.globals import *
 from utils.profilehooks import profile
 from utils.user_input import query_yes_no
-
 
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
@@ -125,11 +123,6 @@ def getParserArgs():
         help="Disable the application exception hook that allows to send error \
         reports to developers.")
 
-    parser.add_argument('--disable-login', action="store_true",
-        dest="disable_login",
-        default=False,
-        help="Disable the auth splash screen.")
-
     parser.add_argument('--dev-mode', action="store_true", dest="dev_mode",
         default=False,
         help="Enable dev mode. This will use the user config and plugin folder.")
@@ -153,7 +146,7 @@ def getParserArgs():
 
     parser_gui_ex.add_argument('--cli', '--console', action="store_true",
         dest="cli",
-        default="false",
+        default=False,
         help="Set this flag to avoid gui and use faraday as a cli.")
 
     #args = parser.parse_args(['@parser_args.cfg'])
@@ -208,30 +201,32 @@ def checkDependencies():
     """
 
     if not args.ignore_deps:
+        try:
+            import pip
+            modules = []
+            f = open(CONST_REQUIREMENTS_FILE)
+            for line in f:
+                if not line.find('#'):
+                    break
+                else:
+                    modules.append([line[:line.index('=')], (line[line.index('=')+2:]).strip()])
+            f.close()
+            pip_dist = [dist.project_name.lower() for dist in pip.get_installed_distributions()]
 
-        modules = []
-        f = open(CONST_REQUIREMENTS_FILE)
-        for line in f:
-            if not line.find('#'):
-                break
-            else:
-                modules.append([line[:line.index('=')], (line[line.index('=')+2:]).strip()])
-        f.close()
+            for module in modules:
+                if module[0].lower() not in pip_dist:
+                    try:
+                        __import__(module[0])
+                    except ImportError:
+                        if query_user_bool("Missing module %s."
+                            " Do you wish to install it?" % module[0]):
+                            pip.main(['install', "%s==%s" %
+                                     (module[0], module[1]), '--user'])
 
-        pip_dist = [dist.project_name.lower() for dist in pip.get_installed_distributions()]
-
-        for module in modules:
-            if module[0].lower() not in pip_dist:
-                try:
-                    __import__(module[0])
-                except ImportError:
-                    if query_user_bool("Missing module %s."
-                        " Do you wish to install it?" % module[0]):
-                        pip.main(['install', "%s==%s" %
-                                 (module[0], module[1]), '--user'])
-
-                    else:
-                        return False
+                        else:
+                            return False
+        except ImportError:
+            pass
 
     return True
 
@@ -282,8 +277,6 @@ def setConf():
     CONF.setApiConInfoHost(host)
     CONF.setApiConInfoPort(port_xmlrpc)
     CONF.setApiRestfulConInfoPort(port_rest)
-
-    CONF.setAuth(args.disable_login)
 
 
 def startFaraday():
@@ -548,7 +541,7 @@ def checkUpdates():
         getInstanceConfiguration().setAppname("Faraday - Penetration Test IDE Community")
         parameter = {"version": getInstanceConfiguration().getVersion()}
 
-        f.close
+        f.close()
         resp = requests.get(uri, params=parameter, timeout=1, verify=True)
         resp = resp.text.strip()
     except Exception as e:

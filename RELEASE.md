@@ -10,6 +10,23 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+Feb 26, 2016:
+---
+* Fixed bug in pip debian
+* BugFix pip install.
+* Checks additionals about dependencies in installation.
+* Warning about a upgrade to experimental in debian installation.
+* Fixed small bug in CSV importing
+* Fixed styles for Status Report
+* Fixed bug on Status Report filter after editing
+* Added support for Kali Rolling Edition
+* Notify user when the current Workspace doesn't exist
+* Show all evidence files in Status Report
+* Added script to remove all vulns with a specific severity value (parameterized)
+* Fixed Arachni Plugin bugs
+* Added new version for Maltego Plugin
+* Added support for Mint 17 
+
 Dec 18, 2015:
 ---
 * Immunity Canvas plugin added

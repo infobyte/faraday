@@ -36,14 +36,10 @@
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-3">
-                    <h5>Ports</h5>
-                    <span class="input-group-addon button-radius" ng-click="newPort($event)">Add Port</span>
+                    <h5>Port</h5>
                     <div class="input-margin" ng-repeat="port in service.ports">
-                        <div class="input-group margin-bottom-sm">
-                            <label class="sr-only" for="port">Ports</label>
-                            <input type="number" class="form-control" id="port" placeholder="Port" ng-model="port.key"/>
-                            <span class="input-group-addon" ng-click="service.ports.splice($index, 1)" ng-hide="service.ports.length == 1"><i class="fa fa-minus-circle"></i></span>
-                        </div>
+                        <label class="sr-only" for="port">Port</label>
+                        <input type="number" class="form-control" id="port" placeholder="Port" ng-model="port.key"/>
                     </div>
                 </div>
                 <div class="col-md-3 protocol">

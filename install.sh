@@ -5,7 +5,6 @@
 ## See the file 'doc/LICENSE' for the license information
 ###
 
-
 #Check if is it root
 if [ $EUID -ne 0 ]; then
  echo "You must be root."
@@ -41,13 +40,19 @@ else
         os="$(uname -s) $(uname -r)"
 fi
 
+#Check if python2 is already installed
+if ! which python2 > /dev/null; then
+    echo "[-] Please install Python2 or make sure it is in your path"
+    exit 1
+fi
+
 echo "[+] Install $os $arch"
 down=0
 if [ "$os" = "Ubuntu 10.04.2 LTS" ]; then
     version="ubuntu10-04.02$arch"
-elif [[ "$os" =~ "Kali GNU/Linux 2."* ]]; then
+elif [[ "$os" =~ "Kali GNU/Linux 2."*|"Kali GNU/Linux Rolling".* ]]; then
     version="kali2-$arch"
-    down=1    
+    down=1
 elif [[ "$os" =~ .*Kali.* ]]; then
     version="kali-$arch"
     down=1
@@ -64,22 +69,40 @@ elif [[ "$os" =~ "Ubuntu 14.04".*|"Ubuntu 14.10".*|"Ubuntu Vivid Vervet (develop
     down=1
     # Install pip from github.
     # Bug: https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1306991
+    wget https://bootstrap.pypa.io/get-pip.py
+    python get-pip.py
+elif [[ "$os" =~ "Mint 17".* ]]; then
+    version="ubuntu13-10-$arch"
+    down=1
+    # Install pip from github.
+    # Bug: https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1306991
     wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
     python get-pip.py
 elif [[ "$os" =~ "Debian 7".*|"Debian 8".*|"stretch/sid".* ]]; then
     version="ubuntu13-10-$arch"
     down=1
-    wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
-    python get-pip.py    
+    # Install pip from github.
+    # Bug: https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1306991
+    wget https://bootstrap.pypa.io/get-pip.py
+    python get-pip.py
+
+    #Check if user agree with change to experimental
+    read -r -p "We need change your debian to experimental - sid branch (If you are not). You agree?[Y/n] " input
+
+    case $input in
+
+        [nN][oO]|[nN])
+                    echo "[!]Faraday install: Aborted"
+                    echo "[!]You need agree the update to experimental - sid"
+                    exit 1;;
+    esac
+
     echo "deb http://ftp.debian.org/debian experimental main" >> /etc/apt/sources.list
     echo "deb http://ftp.debian.org/debian sid main" >> /etc/apt/sources.list
     apt-get update
 
     if [[ "$os" =~ "Debian 7".* ]]; then
         apt-get -t experimental -y install libc6-dev
-        sed -i 's/deb http:\/\/ftp.debian.org\/debian experimental main//' /etc/apt/sources.list
-        sed -i 's/deb http:\/\/ftp.debian.org\/debian sid main//' /etc/apt/sources.list
-        apt-get update
     fi
 else
     echo "[-] Could not find a install for $os ($arch $kernel)"
@@ -87,20 +110,20 @@ else
 fi
 
 if [ "$down" -eq 1 ]; then
-    
+
     if [ -e lib-$version.tgz ]; then
         echo "[+] QT Libs already downloaded"
     else
         echo "[+] Download QT Libs"
         wget "https://www.faradaysec.com/down/faraday/lib-$version.tgz" -O lib-$version.tgz
     fi
-    
+
     shav="sha_${version//-/_}"
     echo `sha256sum lib-$version.tgz`
     if [ -e lib-$version.tgz ]; then
         if [ "`echo ${!shav}`" = "`sha256sum lib-$version.tgz | awk -F\" \" \{'print $1'\}`" ]; then
             echo "[+] SHA256 ok"
-            tar -xvzf lib-$version.tgz 
+            tar -xvzf lib-$version.tgz
             mv lib-$version/ external_libs
         else
             rm lib-$version.tgz
@@ -119,7 +142,23 @@ if [ "$update" -eq 0 ]; then
     apt-get update
     update=1
 fi
+
 apt-get --ignore-missing -y install ipython python-pip python-dev libpq-dev couchdb
+
+#Check if python-setuptools not exists.
+python -c "import setuptools" > /dev/null 2>&1
+
+if [ "$?" -eq 1 ]; then
+    apt-get install python-setuptools
+fi
+
+#Delete debian experimental from sources.
+if [[ "$os" =~ "Debian 7".*|"Debian 8".*|"stretch/sid".* ]]; then
+  sed -i 's/deb http:\/\/ftp.debian.org\/debian experimental main//' /etc/apt/sources.list
+  sed -i 's/deb http:\/\/ftp.debian.org\/debian sid main//' /etc/apt/sources.list
+  apt-get update
+fi
+
 pip install -r requirements.txt
 
 echo "You can now run Faraday, enjoy!"

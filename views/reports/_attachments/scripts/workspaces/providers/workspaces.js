@@ -76,14 +76,18 @@ angular.module('faradayApp')
         };
 
         workspacesFact.exists = function(workspace_name) {
+            var deferred = $q.defer();
             var request = {
                 method: 'HEAD',
                 url: BASEURL + workspace_name
             };
-            var exists_workspace = false;
-            return $http(request).success(function(data) {
-                exists_workspace = true;
+            $http(request).success(function(data) {
+                deferred.resolve(true);
+            })
+            .error(function() {
+                deferred.resolve(false);
             });
+            return deferred.promise;
         };
 
         errorHandler = function(response) {

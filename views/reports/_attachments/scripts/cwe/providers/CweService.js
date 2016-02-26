@@ -10,30 +10,33 @@ angular.module('faradayApp')
         cweFact.get = function() {
             var deferred = $q.defer();
             var cwe_url = BASEURL + 'cwe/_all_docs?include_docs=true';
-
-            $http.get(cwe_url).then(function(res) {
-                res.data.rows.forEach(function(obj) {
-                    var c = {
-                        id: obj.id,
-                        cwe: obj.doc.cwe,
-                        name: obj.doc.name,
-                        desc: "Summary: " + obj.doc.desc_summary + "\n\n" + obj.doc.description,
-                        resolution: obj.doc.resolution,
-                        exploitation: obj.doc.exploitation,
-                        refs: obj.doc.references
-                    };
-                    if (typeof(obj.doc.references) == "string") {
-                        c.refs = [];
-                        obj.doc.references.split('\n').forEach(function(ref) {
-                            if (ref != "") {
-                                c.refs.push(ref);
-                            }
-                        });
-                    }
-                    cweFact.cweList.push(c);
-                });
+            if (cweFact.cweList.length > 0) {
                 deferred.resolve(cweFact.cweList);
-            });
+            } else {
+                $http.get(cwe_url).then(function(res) {
+                    res.data.rows.forEach(function(obj) {
+                        var c = {
+                            id: obj.id,
+                            cwe: obj.doc.cwe,
+                            name: obj.doc.name,
+                            desc: "Summary: " + obj.doc.desc_summary + "\n\n" + obj.doc.description,
+                            resolution: obj.doc.resolution,
+                            exploitation: obj.doc.exploitation,
+                            refs: obj.doc.references
+                        };
+                        if (typeof(obj.doc.references) == "string") {
+                            c.refs = [];
+                            obj.doc.references.split('\n').forEach(function(ref) {
+                                if (ref != "") {
+                                    c.refs.push(ref);
+                                }
+                            });
+                        }
+                        cweFact.cweList.push(c);
+                    });
+                    deferred.resolve(cweFact.cweList);
+                });
+            }
 
             return deferred.promise;
         };

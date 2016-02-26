@@ -5,6 +5,7 @@
 angular.module('faradayApp')
     .factory('WebVuln', ['Vuln', 'BASEURL', '$http', function(Vuln, BASEURL, $http) {
         WebVuln = function(ws, data) {
+            Vuln.call(this, data);
             if(data) {
                 if(data.name === undefined || data.name === "") {
                     throw new Error("Unable to create Vuln without a name");
@@ -18,7 +19,7 @@ angular.module('faradayApp')
             'request', 'response', 'website'
         ];
 
-        WebVuln.prototype = new Vuln();
+        WebVuln.prototype = Object.create(Vuln.prototype);
 
         WebVuln.prototype.public_properties = Vuln.prototype.public_properties.concat(public_properties);
 
@@ -58,6 +59,8 @@ angular.module('faradayApp')
 
             return vuln;
         };
+
+        WebVuln.prototype.constructor = WebVuln;
 
         return WebVuln;
     }]);

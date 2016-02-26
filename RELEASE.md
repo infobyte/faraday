@@ -25,6 +25,7 @@ TBA:
 * Added script to remove all vulns with a specific severity value (parameterized)
 * Fixed Arachni Plugin bugs
 * Added new version for Maltego Plugin
+* Added support for Mint 17 
 
 Dec 18, 2015:
 ---

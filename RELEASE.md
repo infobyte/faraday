@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA:
+Feb 26, 2016:
 ---
 * Fixed bug in pip debian
 * BugFix pip install.

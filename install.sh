@@ -78,6 +78,13 @@ elif [[ "$os" =~ "Mint 17".* ]]; then
     # Bug: https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1306991
     wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
     python get-pip.py
+elif [[ "$os" =~ "Mint 17".* ]]; then
+    version="ubuntu13-10-$arch"
+    down=1
+    # Install pip from github.
+    # Bug: https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1306991
+    wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
+    python get-pip.py
 elif [[ "$os" =~ "Debian 7".*|"Debian 8".*|"stretch/sid".* ]]; then
     version="ubuntu13-10-$arch"
     down=1

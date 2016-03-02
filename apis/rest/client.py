@@ -114,9 +114,13 @@ class PluginControllerAPIClient(object):
         finally:
             return new_cmd, output_file
 
-    def send_output(self, cmd, output_file):
-        output_file = open(output_file)
-        output = base64.b64encode(output_file.read())
+    def send_output(self, cmd, output_file=None):
+        # output_file could be None, when there is
+        # no output to send
+        output = ""
+        if output_file:
+            output_file = open(output_file)
+            output = base64.b64encode(output_file.read())
         data = {"cmd": cmd, "output": output}
         response = requests.post(self.url_output,
                                  data=json.dumps(data),

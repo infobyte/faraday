@@ -100,6 +100,9 @@ class GuiApp(qt.QApplication, FaradayUi):
         except Exception as e:
             model.guiapi.notification_center.showDialog(str(e))
             ws = self.openDefaultWorkspace()
+        workspace = ws.name
+        CONF.setLastWorkspace(workspace)
+        CONF.saveConfig()
         return ws
 
     def createLoggerWidget(self):

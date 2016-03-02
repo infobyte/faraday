@@ -81,7 +81,6 @@ def getParserArgs():
 
     parser_connection = parser.add_argument_group('connection')
     parser_profile = parser.add_argument_group('profiling')
-    parser_gui_ex = parser.add_mutually_exclusive_group()
 
     parser_connection.add_argument('-n', '--hostname', action="store",
         dest="host",
@@ -140,14 +139,26 @@ def getParserArgs():
         default=None,
         help="Path to the valid CouchDB certificate")
 
-    parser_gui_ex.add_argument('--gui', action="store", dest="gui",
+    parser.add_argument('--gui', action="store", dest="gui",
         default="qt3",
         help="Select interface to start faraday. Default = qt3")
 
-    parser_gui_ex.add_argument('--cli', '--console', action="store_true",
+    parser.add_argument('--cli', action="store_true",
         dest="cli",
         default=False,
         help="Set this flag to avoid gui and use faraday as a cli.")
+
+    parser.add_argument(
+        '-w', '--workspace', action="store",
+        dest="workspace",
+        default=None,
+        help="Workspace to be opened")
+
+    parser.add_argument(
+        '-r', '--report', action="store",
+        dest="filename",
+        default=None,
+        help="Report to be parsed by the cli")
 
     #args = parser.parse_args(['@parser_args.cfg'])
     return parser.parse_args()

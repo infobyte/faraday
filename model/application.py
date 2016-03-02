@@ -27,6 +27,7 @@ from utils.error_report import exception_handler
 from utils.error_report import installThreadExcepthook
 
 from gui.gui_app import UiFactory
+from model.cli_app import CliApp
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
@@ -79,7 +80,7 @@ class MainApplication(object):
             self._changes_controller)
 
         if self.args.cli:
-            self.app = CliApp()
+            self.app = CliApp(self._workspace_manager)
         else:
             self.app = UiFactory.create(self._model_controller,
                                         self._plugin_manager,
@@ -103,8 +104,9 @@ class MainApplication(object):
             model.api.devlog("Starting application...")
             model.api.devlog("Setting up remote API's...")
 
-            workspace = CONF.getLastWorkspace()
-            self.args.workspace = workspace
+            if not self.args.workspace:
+                workspace = CONF.getLastWorkspace()
+                self.args.workspace = workspace
 
             model.api.setUpAPIs(
                 self._model_controller,

@@ -673,6 +673,16 @@ def showDialog(msg, level="Information"):
 def showPopup(msg, level="Information"):
     return model.log.getNotifier().showPopup(msg, level)
 
+
+# Plugin status
+
+def pluginStart():
+    __model_controller.addPluginStart()
+
+
+def pluginEnd():
+    __model_controller.addPluginEnd()
+
 #-------------------------------------------------------------------------------
 def getLoggedUser():
     """

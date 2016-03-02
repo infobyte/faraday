@@ -19,54 +19,59 @@ try:
 except ImportError:
     print "cElementTree could not be imported. Using ElementTree instead"
     import xml.etree.ElementTree as ET
-from apis.rest.api import PluginControllerAPIClient
+from apis.rest.client import PluginControllerAPIClient
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 
-class NoReportsWatchException(Exception):
-    pass
-
-
 class ReportProcessor():
-    def __init__(self, filename):
+    def __init__(self):
         host = CONF.getApiConInfoHost()
         port_rest = int(CONF.getApiRestfulConInfoPort())
 
         self.client = PluginControllerAPIClient(host, port_rest)
 
-        self.filename = filename
-
-    def processReport(self):
+    def processReport(self, filename):
         """
         Process one Report
         """
-        model.api.log("Report file is %s" % self.filename)
+        model.api.log("Report file is %s" % filename)
 
-        parser = ReportXmlParser(self.filename)
+        parser = ReportXmlParser(filename)
         if (parser.report_type is not None):
             model.api.log(
-                "The file is %s, %s" % (self.filename, parser.report_type))
+                "The file is %s, %s" % (filename, parser.report_type))
 
             command_string = "./%s %s" % (parser.report_type.lower(),
-                                          self.filename)
+                                          filename)
             model.api.log("Executing %s" % (command_string))
 
             new_cmd, output_file = self.client.send_cmd(command_string)
-            self.client.send_output(command_string, self.filename)
+            self.client.send_output(command_string, filename)
+            return True
+        return False
+
+    def onlinePlugin(self, cmd):
+        new_cmd, output_file = self.client.send_cmd(cmd)
+        self.client.send_output(cmd)
 
 
 class ReportManager(threading.Thread):
-    def __init__(self, timer, plugin_controller, path=None):
+    def __init__(self, timer, ws_name):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.timer = timer
         self._stop = False
-        self.path = path
-        self.plugin_controller = plugin_controller
-        self._report_path = None
-        self._report_ppath = None
+        self._report_path = os.path.join(CONF.getReportPath(), ws_name)
+        self._report_ppath = os.path.join(self._report_path, "process")
+        self.processor = ReportProcessor()
+
+        if not os.path.exists(self._report_path):
+            os.mkdir(self._report_path)
+
+        if not os.path.exists(self._report_ppath):
+            os.mkdir(self._report_ppath)
 
     def run(self):
         tmp_timer = 0
@@ -85,21 +90,6 @@ class ReportManager(threading.Thread):
     def stop(self):
         self._stop = True
 
-    def watch(self, name):
-        self._report_path = os.path.join(CONF.getReportPath(), name)
-        self._report_ppath = os.path.join(self._report_path, "process")
-
-        if not os.path.exists(self._report_path):
-            os.mkdir(self._report_path)
-
-        if not os.path.exists(self._report_ppath):
-            os.mkdir(self._report_ppath)
-
-    def startWatch(self):
-        if not self._report_path:
-            raise NoReportsWatchException()
-        self.start()
-
     def syncReports(self):
         """
         Synchronize report directory using the DataManager and Plugins online
@@ -112,8 +102,7 @@ class ReportManager(threading.Thread):
                 for name in files:
                     filename = os.path.join(root, name)
 
-                    processor = ReportProcessor(filename)
-                    processor.processReport()
+                    self.processor.processReport(filename)
 
                     os.rename(filename, os.path.join(self._report_ppath, name))
 
@@ -123,21 +112,14 @@ class ReportManager(threading.Thread):
         """
         Process online plugins
         """
-        _pluginsOn={"MetasploitOn" : "./metasploiton online",}
-        _pluginsOn.update({"Beef" : "./beef online",})
-        _psettings=CONF.getPluginSettings()
+        pluginsOn = {"MetasploitOn": "./metasploiton online"}
+        pluginsOn.update({"Beef": "./beef online"})
+        psettings = CONF.getPluginSettings()
 
-        for k,v in _pluginsOn.iteritems():
-            if k in _psettings:
-                if _psettings[k]['settings']['Enable'] == "1":
-                    new_cmd = self.plugin_controller.processCommandInput("", "",
-                                                                             "",
-                                                                             v,
-                                                                             False)
-
-                    self.plugin_controller.storeCommandOutput("")
-
-                    self.plugin_controller.onCommandFinished()
+        for name, cmd in pluginsOn.iteritems():
+            if name in psettings:
+                if psettings[name]['settings']['Enable'] == "1":
+                    self.processor.onlinePlugin(cmd)
 
 
 class ReportParser(object):

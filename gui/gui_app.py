@@ -6,6 +6,8 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+from managers.reports_managers import ReportManager
+
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
@@ -29,6 +31,7 @@ class FaradayUi(object):
         self.model_controller = model_controller
         self.plugin_manager = plugin_manager
         self.workspace_manager = workspace_manager
+        self.report_manager = None
 
     def getModelController(self):
         return self.model_controller
@@ -69,8 +72,14 @@ class FaradayUi(object):
     def openWorkspace(self, name):
         # The method openWorkspace can return a workspace or
         # raise en Exception. For now, just raise it to the caller
+        if self.report_manager:
+            self.report_manager.stop()
+            self.report_manager.join()
         try:
             ws = self.getWorkspaceManager().openWorkspace(name)
+            self.report_manager = ReportManager(
+                10, name)
+            self.report_manager.start()
         except Exception as e:
             raise e
         return ws
@@ -83,4 +92,11 @@ class FaradayUi(object):
 
         Returns the default workspace
         """
-        return self.getWorkspaceManager().openDefaultWorkspace()
+        if self.report_manager:
+            self.report_manager.stop()
+            self.report_manager.join()
+        ws = self.getWorkspaceManager().openDefaultWorkspace()
+        self.report_manager = ReportManager(
+                10, ws.name)
+        self.report_manager.start()
+        return ws

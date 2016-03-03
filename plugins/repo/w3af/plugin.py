@@ -22,7 +22,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
     ETREE_VERSION = ET.VERSION
-                      
+
 ETREE_VERSION = [int(i) for i in ETREE_VERSION.split(".")]
 
 current_path = os.path.abspath(os.getcwd())
@@ -36,9 +36,9 @@ __maintainer__ = "Francisco Amato"
 __email__      = "famato@infobytesec.com"
 __status__     = "Development"
 
-                           
-                                                                     
-                      
+
+
+
 
 class W3afXmlParser(object):
     """
@@ -56,12 +56,12 @@ class W3afXmlParser(object):
         self.host = None
 
         tree = self.parse_xml(xml_output)
-        
+
         if tree:
             self.items = [data for data in self.get_items(tree)]
         else:
             self.items = []
-            
+
 
     def parse_xml(self, xml_output):
         """
@@ -85,27 +85,27 @@ class W3afXmlParser(object):
         @return items A list of Host instances
         """
         bugtype=""
-        
-                                           
+
+
         scaninfo = tree.findall('scan-info')[0]
         self.target = scaninfo.get('target')
         host = re.search("(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp;%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|localhost|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))[\:]*([0-9]+)*([/]*($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+)).*?$", self.target)
-                            
+
         self.protocol = host.group(1)
         self.host = host.group(4)
         if self.protocol == 'https':
             self.port=443
         if host.group(11) is not None:
             self.port = host.group(11)
-            
+
         for node in tree.findall('vulnerability'):
             yield Item(node)
         for node in tree.findall('information'):
             yield Item(node)
-                                  
 
 
-                 
+
+
 def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
     """
     Finds a subnode in the item node and the retrieves a value from it
@@ -114,9 +114,9 @@ def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
     """
     global ETREE_VERSION
     node = None
-    
+
     if ETREE_VERSION[0] <= 1 and ETREE_VERSION[1] < 3:
-                                                           
+
         match_obj = re.search("([^\@]+?)\[\@([^=]*?)=\'([^\']*?)\'",subnode_xpath_expr)
         if match_obj is not None:
             node_to_find = match_obj.group(1)
@@ -138,7 +138,7 @@ def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
     return None
 
 
-                 
+
 
 
 class Item(object):
@@ -176,15 +176,17 @@ class Item(object):
             self.resp = tx.find('http-response/status').text
             for h in tx.findall('http-response/headers/header'):
                 self.resp += "\n%s: %s" % (h.get('field'),h.get('content'))
-            self.resp += "\n%s" % tx.find('http-response/body').text
 
-    
+            if tx.find('http-response/body'):
+                self.resp += "\n%s" % tx.find('http-response/body').text
+
+
     def do_clean(self,value):
         myreturn =""
         if value is not None:
             myreturn = re.sub("\n","",value)
         return myreturn
-        
+
     def get_text_from_subnode(self, subnode_xpath_expr):
         """
         Finds a subnode in the host node and the retrieves a value from it.
@@ -196,7 +198,6 @@ class Item(object):
             return sub_node.text
 
         return None
-
 
 
 class W3afPlugin(core.PluginBase):
@@ -222,7 +223,7 @@ class W3afPlugin(core.PluginBase):
         global current_path
         self._output_file_path = os.path.join(self.data_path,
                                              "w3af_output-%s.xml" % self._rid)
-                                  
+
 
     def parseOutputString(self, output, debug = False):
 
@@ -244,10 +245,10 @@ class W3afPlugin(core.PluginBase):
                                                      item.detail, pname=item.param, path=item.url, website=parser.host, severity=item.severity,
                                                      method=item.method, request=item.req, resolution=item.resolution, ref=item.ref, response=item.resp)
         del parser
-        
-                      
-                                             
-                    
+
+
+
+
 
 
     def resolve(self, host):
@@ -259,7 +260,7 @@ class W3afPlugin(core.PluginBase):
 
     def processCommandString(self, username, current_path, command_string):
         return None
-        
+
 
     def setHost(self):
         pass

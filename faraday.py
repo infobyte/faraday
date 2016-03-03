@@ -496,6 +496,7 @@ def checkFolder(folder):
         os.makedirs(folder)
 
 
+
 def printBanner():
     """Prints Faraday's ascii banner.
 

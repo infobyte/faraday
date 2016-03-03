@@ -157,7 +157,7 @@ class Configuration:
             self._tkt_api_params = self._getValue(tree, CONST_TKTAPIPARAMS,default ="{}")
             self._tkt_template = self._getValue(tree, CONST_TKTTEMPLATE,default ="{}")
 
-
+            self._merge_strategy = None
 
     def getApiConInfo(self):
         if str(self._api_con_info_host) == "None" or str(self._api_con_info_port) == "None":
@@ -280,6 +280,9 @@ class Configuration:
     def getTktTemplate(self):
         return self._tkt_template
 
+    def getMergeStrategy(self):
+        return self._merge_strategy
+
     def setLastWorkspace(self, workspaceName):
         self._last_workspace = workspaceName
 
@@ -385,6 +388,9 @@ class Configuration:
 
     def setPluginSettings(self, settings):
         self._plugin_settings = settings
+
+    def setMergeStrategy(self, strategy):
+        self._merge_strategy = strategy
 
     def indent(self, elem, level=0):
         """ Indents the tree to make a pretty view of it. """

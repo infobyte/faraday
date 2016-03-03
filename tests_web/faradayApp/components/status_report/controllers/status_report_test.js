@@ -259,12 +259,12 @@ describe('statusReportCtrl', function() {
     });
 
     describe('Status report vuln deletion - delete method (modal)', function() {
-        it('call delete by property with no vulns selected', function() {
+        it('call delete with no vulns selected', function() {
             // we need $scope.gridOptions.data to have all the vulns before calling
             // the delete method
+            $scope.getCurrentSelection = function() { return []; }
             $scope.$apply();
-            $scope.deleteVuln(vuln1);
-            fakeModal.close();
+            $scope.delete();
             $scope.$apply();
 
             expect($scope.gridOptions.data.length).toEqual(3);
@@ -275,9 +275,9 @@ describe('statusReportCtrl', function() {
         it('call delete with a valid vuln (1.2.3.4) selected and accept modal', function() {
             // we need $scope.gridOptions.data to have all the vulns before calling
             // the delete method
-            vuln1.selected_statusreport_controller = true;
+            $scope.getCurrentSelection = function() { return [vuln1]; }
             $scope.$apply();
-            $scope.deleteVuln();
+            $scope.delete();
             fakeModal.close();
             $scope.$apply();
 
@@ -289,7 +289,7 @@ describe('statusReportCtrl', function() {
         it('call delete with a valid vuln (1.2.3.4) selected and cancel modal', function() {
             // we need $scope.gridOptions.data to have all the vulns before calling
             // the delete method
-            vuln1.selected_statusreport_controller = true;
+            $scope.getCurrentSelection = function() { return [vuln1]; }
             $scope.$apply();
             $scope.delete();
             fakeModal.dismiss();
@@ -301,8 +301,7 @@ describe('statusReportCtrl', function() {
             expect($scope.gridOptions.data).toContain(vuln3);
         });
         it('call delete with valid vulns selected and accept modal', function() {
-            vuln1.selected_statusreport_controller = true;
-            vuln2.selected_statusreport_controller = true;
+            $scope.getCurrentSelection = function() { return [vuln1, vuln2]; }
             $scope.$apply();
             $scope.delete();
             fakeModal.close();
@@ -469,11 +468,7 @@ describe('statusReportCtrl', function() {
                 "severity": "high"
             };
 
-            vuln1.selected_statusreport_controller = true;
-
-            $scope.getCurrentSelection = function() {
-                return [vuln1];
-            };
+            $scope.getCurrentSelection = function() { return [vuln1]; };
 
             $scope.$apply();
             $scope.edit();
@@ -504,11 +499,11 @@ describe('statusReportCtrl', function() {
                 "owned": true,
                 "severity": "high"
             };
-            vuln1.selected_statusreport_controller = true;
+            $scope.getCurrentSelection = function() { return [vuln1]; };
             $scope.$apply();
-            //$scope.edit();
-            //fakeModal.dismiss();
-            //$scope.$apply();
+            $scope.edit();
+            fakeModal.dismiss();
+            $scope.$apply();
 
             expect($scope.gridOptions.data.length).toEqual(3);
             $scope.gridOptions.data.forEach(function(vuln) {

@@ -26,4 +26,3 @@ class CliApp():
 
         rp = ReportProcessor()
         rp.processReport(args.filename)
-        print "\nExit CliApp\n"

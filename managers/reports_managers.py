@@ -38,7 +38,7 @@ class ReportProcessor():
         """
         model.api.log("Report file is %s" % filename)
 
-        parser = ReportXmlParser(filename)
+        parser = ReportParser(filename)
         if (parser.report_type is not None):
             model.api.log(
                 "The file is %s, %s" % (filename, parser.report_type))

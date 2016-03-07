@@ -12,6 +12,7 @@ New features in the latest update
 
 TBA:
 ---
+* Added cli mode (see wiki for usage instructions)
 
 
 Feb 26, 2016:

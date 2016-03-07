@@ -1092,8 +1092,10 @@ class PluginSettingsDialog(BaseDialog, PluginSettingsUi):
         params = self._plugin_settings[plugin_id]
 
         self.le_name.setText(params["name"])
-        self.le_version.setText(params["version"])
-        self.le_pversion.setText(params["plugin_version"])
+        self.le_version.setText(
+            params.get("version") if params.get("version") else "")
+        self.le_pversion.setText(
+            params.get("plugin_version") if params.get("plugin_version") else "")
 
         for setting, value in params["settings"].iteritems():
             index = self.t_parameters.numRows()

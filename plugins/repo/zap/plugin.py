@@ -217,13 +217,13 @@ class Item(object):
                 port = mregex.group(11)
 
             try:
-                params = [i[0] for i in uri.split('?')[1].split('&').split('=')]
+                params = [i.split('=')[0] for i in uri.split('?')[1].split('&')]
             except Exception as e:
                 params = ''
 
             item = {
             'uri' : uri,
-            'params' : params,
+            'params' : ', '.join(params),
             'host' : host,
             'protocol' : protocol,
             'port' : port

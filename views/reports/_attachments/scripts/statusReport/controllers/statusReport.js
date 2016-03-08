@@ -722,7 +722,7 @@ angular.module('faradayApp')
                 }
             });
             modal.result.then(function(data) {
-                $scope.selectedVulns().forEach(function(vuln) {
+                $scope.getCurrentSelection().forEach(function(vuln) {
                     var references = vuln.refs.concat([]);
                     data.refs.forEach(function(ref) {
                         if(vuln.refs.indexOf(ref) == -1){

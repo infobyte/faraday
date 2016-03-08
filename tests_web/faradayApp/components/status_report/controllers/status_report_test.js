@@ -473,7 +473,131 @@ describe('statusReportCtrl', function() {
     });
 
     describe('Status report vuln edition - update method', function() {
-       //TODO: test each editable property 
+        it('edit many vulns by property', function() {
+            $scope.getCurrentSelection = function() { return [vuln1, vuln2, vuln3]; };
+            var impact = {
+                accountability: true,
+                availability: true,
+                confidentiality: true,
+                integrity: false
+            };
+
+            $scope.$apply();
+            // String properties
+            $scope.editString('name');
+            fakeModal.close('Changed name');
+            // Text properties
+            $scope.editText('desc');
+            fakeModal.close('Changed description');
+            // Severity property
+            $scope.editSeverity();
+            fakeModal.close('high');
+            // Ease of resolution property(obj)
+            $scope.editEaseofresolution();
+            fakeModal.close('difficult');
+            // References property
+            $scope.editReferences();
+            fakeModal.close(['CVE-new-ref','OSVDB:new-ref']);
+            // Impact property(obj)
+            $scope.editImpact();
+            fakeModal.close(impact);
+            // Comfirm property
+            $scope.editConfirm();
+            fakeModal.close('Confirm');
+
+            $scope.gridOptions.data.forEach(function(v) {
+                expect(v.name).toEqual("Changed name");
+                expect(v.desc).toEqual("Changed description");
+                expect(v.severity).toEqual("high");
+                expect(v.easeofresolution).toEqual("difficult");
+                expect(v.refs).toContain('CVE-new-ref', 'OSVDB:new-ref');
+                expect(v.impact).toEqual(impact);
+                expect(v.confirmed).toEqual(true);
+            });
+        });
+        it('edit many vulns by property but cancel the modal', function() {
+            $scope.getCurrentSelection = function() { return [vuln1, vuln2, vuln3]; };
+            var impact = {
+                accountability: true,
+                availability: true,
+                confidentiality: true,
+                integrity: false
+            };
+
+            $scope.$apply();
+            // String properties
+            $scope.editString('name');
+            fakeModal.dismiss();
+            // Text properties
+            $scope.editText('desc');
+            fakeModal.dismiss();
+            // Severity property
+            $scope.editSeverity();
+            fakeModal.dismiss();
+            // Ease of resolution property(obj)
+            $scope.editEaseofresolution();
+            fakeModal.dismiss();
+            // References property
+            $scope.editReferences();
+            fakeModal.dismiss();
+            // Impact property(obj)
+            $scope.editImpact();
+            fakeModal.dismiss();
+            // Comfirm property
+            $scope.editConfirm();
+            fakeModal.dismiss();
+
+            $scope.gridOptions.data.forEach(function(v) {
+                expect(v.name).not.toEqual("Changed name");
+                expect(v.desc).not.toEqual("Changed description");
+                expect(v.severity).not.toEqual("high");
+                expect(v.easeofresolution).not.toEqual("difficult");
+                expect(v.refs).not.toContain('CVE-new-ref', 'OSVDB:new-ref');
+                expect(v.impact).not.toEqual(impact);
+                expect(v.confirmed).not.toEqual(true);
+            });
+        });
+        it('edit many vulns from CWE', function() {
+            $scope.getCurrentSelection = function() { return [vuln1, vuln2, vuln3]; };
+            var CWE_obj = {
+                name: "ES-Cisco ASA Error",
+                desc: "Summary: El cisco ASA es vulnerable",
+                refs: ['CVE-new-ref'],
+                resolution: "Actualizar la ultima version"
+            };
+
+            $scope.$apply();
+            $scope.editCWE();
+            fakeModal.close(CWE_obj);
+
+            $scope.gridOptions.data.forEach(function(v) {
+                expect(v.name).toEqual("ES-Cisco ASA Error");
+                expect(v.desc).toEqual("Summary: El cisco ASA es vulnerable");
+                expect(v.refs).toContain('CVE-new-ref');
+                expect(v.resolution).toEqual('Actualizar la ultima version');
+            });
+        });
+        it('edit many vulns from CWE but cancel the modal', function() {
+            $scope.getCurrentSelection = function() { return [vuln1, vuln2, vuln3]; };
+            var CWE_obj = {
+                name: "ES-Cisco ASA Error",
+                desc: "Summary: El cisco ASA es vulnerable",
+                refs: ['CVE-new-ref'],
+                resolution: "Actualizar la ultima version"
+            };
+
+            $scope.$apply();
+            $scope.editCWE();
+            fakeModal.dismiss();
+            $scope.$apply();
+
+            $scope.gridOptions.data.forEach(function(v) {
+                expect(v.name).not.toEqual("ES-Cisco ASA Error");
+                expect(v.desc).not.toEqual("Summary: El cisco ASA es vulnerable");
+                expect(v.refs).not.toContain('CVE-new-ref');
+                expect(v.resolution).not.toEqual('Actualizar la ultima version');
+            });
+        });
     });
 
     describe('Status report vuln edition - edit method (modal)', function() {
@@ -536,38 +660,6 @@ describe('statusReportCtrl', function() {
                     expect(vuln.severity).not.toEqual("high");
 
                 }
-            });
-        });
-        it('edit many vulns by property', function() {
-            $scope.getCurrentSelection = function() { return [vuln1, vuln2, vuln3]; };
-            var impact = {
-                accountability: true,
-                availability: true,
-                confidentiality: true,
-                integrity: false
-            };
-
-            $scope.$apply();
-            $scope.editString('name');
-            fakeModal.close('Changed name');
-            $scope.editText('desc');
-            fakeModal.close('Changed description');
-            $scope.editSeverity();
-            fakeModal.close('high');
-            $scope.editEaseofresolution();
-            fakeModal.close('difficult');
-            $scope.editReferences();
-            fakeModal.close(['CVE-new-ref','OSVDB:new-ref']);
-            $scope.editImpact();
-            fakeModal.close(impact);
-
-            $scope.gridOptions.data.forEach(function(v) {
-                expect(v.name).toEqual("Changed name");
-                expect(v.desc).toEqual("Changed description");
-                expect(v.severity).toEqual("high");
-                expect(v.easeofresolution).toEqual("difficult");
-                expect(v.refs).toContain('CVE-new-ref', 'OSVDB:new-ref');
-                expect(v.impact).toEqual(impact);
             });
         });
     });

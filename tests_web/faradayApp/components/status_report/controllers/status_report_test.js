@@ -538,7 +538,7 @@ describe('statusReportCtrl', function() {
                 }
             });
         });
-        it('edit a property of many vulns', function() {
+        it('edit many vulns by property', function() {
             $scope.getCurrentSelection = function() { return [vuln1, vuln2, vuln3]; };
             var impact = {
                 accountability: true,

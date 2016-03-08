@@ -64,6 +64,7 @@ angular.module('faradayApp')
                 //set gridApi on scope
                 $scope.gridApi = gridApi;
                 $scope.gridApi.selection.on.rowSelectionChanged( $scope, function ( rowChanged ) {
+                    $scope.selectionChange();
                     if ( typeof(rowChanged.treeLevel) !== 'undefined' && rowChanged.treeLevel > -1 ) {
                         // this is a group header
                         children = $scope.gridApi.treeBase.getRowChildren( rowChanged );
@@ -897,6 +898,12 @@ angular.module('faradayApp')
                 }
                 return res;
             }
+        };
+
+        $scope.selectionChange = function() {
+            $scope.vulnWebSelected = $scope.getCurrentSelection().some(function(v) {
+                return v.type === "VulnerabilityWeb"
+            });
         };
 
         init();

@@ -63,12 +63,19 @@ describe('statusReportCtrl', function() {
                    "update_controller_action": "ModelControler.newVuln",
                    "owner": "john"
                 },
+                "impact": {
+                    accountability: false,
+                    availability: false,
+                    confidentiality: false,
+                    integrity: false
+                },
                 "owned": false,
                 "severity": "med",
                 "type": "Vulnerability",
                 "owner": "john",
                 "desc": "I'm scared!",
                 "data": "",
+                "easeofresolution": "simple",
                 "description": "I'm scared!"
             };
             vuln2 = {
@@ -91,12 +98,19 @@ describe('statusReportCtrl', function() {
                    "update_controller_action": "ModelControler.newVuln",
                    "owner": "john"
                 },
+                "impact": {
+                    accountability: false,
+                    availability: false,
+                    confidentiality: false,
+                    integrity: false
+                },
                 "owned": false,
                 "severity": "med",
                 "type": "Vulnerability",
                 "owner": "john",
                 "desc": "I'm scared!",
                 "data": "",
+                "easeofresolution": "trivial",
                 "description": "I'm scared!"
             };
             vuln3 = {
@@ -112,6 +126,7 @@ describe('statusReportCtrl', function() {
                    "update_controller_action": "No model controller call",
                    "owner": ""
                 },
+                "easeofresolution": "simple",
                 "name": "Service Detection",
                 "obj_id": "008cba9b11897f2d52c53dd953d75fa233a7fffe",
                 "owned": false,
@@ -119,6 +134,12 @@ describe('statusReportCtrl', function() {
                 "parent": "6.7.8",
                 "refs": [
                 ],
+                "impact": {
+                    accountability: false,
+                    availability: false,
+                    confidentiality: false,
+                    integrity: false
+                },
                 "severity": "low",
                 "type": "VulnerabilityWeb",
                 "method": "",
@@ -515,6 +536,38 @@ describe('statusReportCtrl', function() {
                     expect(vuln.severity).not.toEqual("high");
 
                 }
+            });
+        });
+        it('edit a property of many vulns', function() {
+            $scope.getCurrentSelection = function() { return [vuln1, vuln2, vuln3]; };
+            var impact = {
+                accountability: true,
+                availability: true,
+                confidentiality: true,
+                integrity: false
+            };
+
+            $scope.$apply();
+            $scope.editString('name');
+            fakeModal.close('Changed name');
+            $scope.editText('desc');
+            fakeModal.close('Changed description');
+            $scope.editSeverity();
+            fakeModal.close('high');
+            $scope.editEaseofresolution();
+            fakeModal.close('difficult');
+            $scope.editReferences();
+            fakeModal.close(['CVE-new-ref','OSVDB:new-ref']);
+            $scope.editImpact();
+            fakeModal.close(impact);
+
+            $scope.gridOptions.data.forEach(function(v) {
+                expect(v.name).toEqual("Changed name");
+                expect(v.desc).toEqual("Changed description");
+                expect(v.severity).toEqual("high");
+                expect(v.easeofresolution).toEqual("difficult");
+                expect(v.refs).toContain('CVE-new-ref', 'OSVDB:new-ref');
+                expect(v.impact).toEqual(impact);
             });
         });
     });

@@ -95,9 +95,6 @@ class MainApplication(object):
         sys.excepthook = exception_handler
         installThreadExcepthook()
 
-    def disableLogin(self):
-        CONF.setAuth(sys.disablelogin)
-
     def start(self):
         try:
             signal.signal(signal.SIGINT, self.ctrlC)
@@ -166,6 +163,3 @@ class MainApplication(object):
     def ctrlC(self, signal, frame):
         getLogger(self).info("Exiting...")
         self.app.quit()
-
-    def getWorkspaceManager(self):
-        return self._workspace_manager

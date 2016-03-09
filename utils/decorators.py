@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 import restkit.errors
 import model
 
+
 def simple_decorator(decorator):
     '''this decorator can be used to turn simple functions
     into well-behaved decorators, so long as the decorators
@@ -24,20 +25,10 @@ def simple_decorator(decorator):
         g.__doc__ = f.__doc__
         g.__dict__.update(f.__dict__)
         return g
-                                                            
-                                  
     new_decorator.__name__ = decorator.__name__
     new_decorator.__doc__ = decorator.__doc__
     new_decorator.__dict__.update(decorator.__dict__)
     return new_decorator
- 
-
-@simple_decorator
-def modify_class_field(func):
-    def wrapper(self, *args, **kwargs):
-        self.cuca = "eehh"
-        return func(self, *args, **kwargs)
-    return wrapper
 
 
 @simple_decorator
@@ -64,5 +55,3 @@ def trap_timeout(func):
             model.api.devlog("Operation [%s] timeout" % func.__name__)
             return func(self, *args, **kwargs)
     return wrapper
-
-

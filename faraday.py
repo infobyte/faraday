@@ -282,9 +282,6 @@ def setConf():
     port_xmlrpc = args.port_xmlrpc if args.port_xmlrpc else port_xmlrpc
     port_rest = args.port_rest if args.port_rest else port_rest
 
-    logger.info("XMLRPC API Server listening on %s:%s" % (host, port_xmlrpc))
-    logger.info("RESTful API Server listening on %s:%s" % (host, port_rest))
-
     CONF.setApiConInfoHost(host)
     CONF.setApiConInfoPort(port_xmlrpc)
     CONF.setApiRestfulConInfoPort(port_rest)

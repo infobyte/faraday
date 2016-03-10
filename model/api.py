@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
+import socket
 import zipfile
 import logging
 
@@ -76,44 +77,61 @@ def _setUpAPIServer(hostname=None, port=None):
         if CONF.getApiConInfo() is None:
             CONF.setApiConInfo(hostname, port)
         devlog("starting XMLRPCServer with api_conn_info = %s" % str(CONF.getApiConInfo()))
-        try:
-            _xmlrpc_api_server = model.common.XMLRPCServer(CONF.getApiConInfo())
-            # Registers the XML-RPC introspection functions system.listMethods, system.methodHelp and system.methodSignature.
-            _xmlrpc_api_server.register_introspection_functions()
+        
+        while True:
 
-            # register a function to nicely stop server
-            _xmlrpc_api_server.register_function(_xmlrpc_api_server.stop_server)
+            try:
+                _xmlrpc_api_server = model.common.XMLRPCServer(CONF.getApiConInfo())
+                # Registers the XML-RPC introspection functions system.listMethods, system.methodHelp and system.methodSignature.
+                _xmlrpc_api_server.register_introspection_functions()
 
-            # register all the api functions to be exposed by the server
-            _xmlrpc_api_server.register_function(createAndAddHost)
-            _xmlrpc_api_server.register_function(createAndAddInterface)
-            _xmlrpc_api_server.register_function(createAndAddServiceToApplication)
-            _xmlrpc_api_server.register_function(createAndAddServiceToInterface)
-            _xmlrpc_api_server.register_function(createAndAddApplication)
-            _xmlrpc_api_server.register_function(createAndAddNoteToService)
-            _xmlrpc_api_server.register_function(createAndAddNoteToHost)
-            _xmlrpc_api_server.register_function(createAndAddNoteToNote)
-            _xmlrpc_api_server.register_function(createAndAddVulnWebToService)
-            _xmlrpc_api_server.register_function(createAndAddVulnToService)
-            _xmlrpc_api_server.register_function(createAndAddVulnToHost)
-            _xmlrpc_api_server.register_function(addHost)
-            _xmlrpc_api_server.register_function(addInterface)
-            _xmlrpc_api_server.register_function(addServiceToApplication)
-            _xmlrpc_api_server.register_function(addServiceToInterface)
-            _xmlrpc_api_server.register_function(addApplication)
-            _xmlrpc_api_server.register_function(newHost)
-            _xmlrpc_api_server.register_function(newInterface)
-            _xmlrpc_api_server.register_function(newService)
-            _xmlrpc_api_server.register_function(newApplication)
-            _xmlrpc_api_server.register_function(devlog)
+                # register a function to nicely stop server
+                _xmlrpc_api_server.register_function(_xmlrpc_api_server.stop_server)
 
-            #TODO: check if all necessary APIs are registered here!!
+                # register all the api functions to be exposed by the server
+                _xmlrpc_api_server.register_function(createAndAddHost)
+                _xmlrpc_api_server.register_function(createAndAddInterface)
+                _xmlrpc_api_server.register_function(createAndAddServiceToApplication)
+                _xmlrpc_api_server.register_function(createAndAddServiceToInterface)
+                _xmlrpc_api_server.register_function(createAndAddApplication)
+                _xmlrpc_api_server.register_function(createAndAddNoteToService)
+                _xmlrpc_api_server.register_function(createAndAddNoteToHost)
+                _xmlrpc_api_server.register_function(createAndAddNoteToNote)
+                _xmlrpc_api_server.register_function(createAndAddVulnWebToService)
+                _xmlrpc_api_server.register_function(createAndAddVulnToService)
+                _xmlrpc_api_server.register_function(createAndAddVulnToHost)
+                _xmlrpc_api_server.register_function(addHost)
+                _xmlrpc_api_server.register_function(addInterface)
+                _xmlrpc_api_server.register_function(addServiceToApplication)
+                _xmlrpc_api_server.register_function(addServiceToInterface)
+                _xmlrpc_api_server.register_function(addApplication)
+                _xmlrpc_api_server.register_function(newHost)
+                _xmlrpc_api_server.register_function(newInterface)
+                _xmlrpc_api_server.register_function(newService)
+                _xmlrpc_api_server.register_function(newApplication)
+                _xmlrpc_api_server.register_function(devlog)
 
-            devlog("XMLRPC API server configured...")
-        except Exception, e:
-            msg = "There was an error creating the XMLRPC API Server:\n%s" % str(e)
-            log(msg)
-            devlog("[ERROR] - %s" % msg)
+                #TODO: check if all necessary APIs are registered here!!
+
+                getLogger().info(
+                    "XMLRPC API server configured on %s" % str(
+                        CONF.getApiConInfo()))
+                break
+            except socket.error as exception:
+                if exception.errno == 98:
+                    # Port already in use
+                    # Let's try the next one
+                    port += 1
+                    if port > 65535:
+                        raise Exception("No ports available!")
+                    CONF.setApiConInfo(hostname, port)
+                    CONF.saveConfig()
+                else:
+                    raise exception
+            except Exception as e:
+                msg = "There was an error creating the XMLRPC API Server:\n%s" % str(e)
+                log(msg)
+                devlog("[ERROR] - %s" % msg)
 
 
 #-------------------------------------------------------------------------------

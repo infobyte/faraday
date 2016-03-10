@@ -173,7 +173,9 @@ class Configuration:
         return self._api_con_info_host
 
     def getApiConInfoPort(self):
-        return self._api_con_info_port
+        if str(self._api_con_info_port) == "None":
+            return None
+        return int(self._api_con_info_port)
 
     def getApiRestfulConInfoPort(self):
         return self._api_restful_con_info_port

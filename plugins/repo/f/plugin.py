@@ -60,7 +60,9 @@ class FPlugin(core.PluginBase):
         parser.add_argument('-e')
         parser.add_argument('-f')
         parser.add_argument('-o')
+        
         #NO support -h --help style parameters.
+        #Need "" in all parameter. Example script.py -p "parameter1 parameter2"
         parser.add_argument('-p')
 
         if arg_match is None:

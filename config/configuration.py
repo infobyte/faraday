@@ -178,7 +178,9 @@ class Configuration:
         return int(self._api_con_info_port)
 
     def getApiRestfulConInfoPort(self):
-        return self._api_restful_con_info_port
+        if str(self._api_restful_con_info_port) == "None":
+            return None
+        return int(self._api_restful_con_info_port)
 
     def getAppname(self):
         return self._appname
@@ -420,18 +422,18 @@ class Configuration:
         tree = self._getTree()
 
         API_CON_INFO_HOST = Element(CONST_API_CON_INFO_HOST)
-        API_CON_INFO_HOST.text = self._getValue(tree, CONST_API_CON_INFO_HOST)
-        # API_CON_INFO_HOST.text = self.getApiConInfoHost()
+        #API_CON_INFO_HOST.text = self._getValue(tree, CONST_API_CON_INFO_HOST)
+        API_CON_INFO_HOST.text = self.getApiConInfoHost()
         ROOT.append(API_CON_INFO_HOST)
 
         API_CON_INFO_PORT = Element(CONST_API_CON_INFO_PORT)
-        API_CON_INFO_PORT.text = self._getValue(tree, CONST_API_CON_INFO_PORT)
-        # API_CON_INFO_PORT.text = str(self.getApiConInfoPort())
+        #API_CON_INFO_PORT.text = self._getValue(tree, CONST_API_CON_INFO_PORT)
+        API_CON_INFO_PORT.text = str(self.getApiConInfoPort())
         ROOT.append(API_CON_INFO_PORT)
 
         API_RESTFUL_CON_INFO_PORT = Element(CONST_API_RESTFUL_CON_INFO_PORT)
-        API_RESTFUL_CON_INFO_PORT.text = self._getValue(tree, CONST_API_RESTFUL_CON_INFO_PORT)
-        # API_RESTFUL_CON_INFO_PORT.text = str(self.getApiRestfulConInfoPort())
+        #API_RESTFUL_CON_INFO_PORT.text = self._getValue(tree, CONST_API_RESTFUL_CON_INFO_PORT)
+        API_RESTFUL_CON_INFO_PORT.text = str(self.getApiRestfulConInfoPort())
         ROOT.append(API_RESTFUL_CON_INFO_PORT)
 
         APPNAME = Element(CONST_APPNAME)

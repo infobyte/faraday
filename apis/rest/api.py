@@ -6,6 +6,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+import socket
 import threading
 import logging
 import base64
@@ -48,7 +49,24 @@ def startAPIs(plugin_manager, model_controller, mapper_manager, hostname, port):
     app = Flask('APISController')
 
     _http_server = HTTPServer(WSGIContainer(app))
-    _http_server.listen(port, address=hostname)
+    while True:
+        try:
+            _http_server.listen(port, address=hostname)
+            logger.getLogger().info(
+                    "REST API server configured on %s" % str(
+                        CONF.getApiRestfulConInfo()))
+            break
+        except socket.error as exception:
+            if exception.errno == 98:
+                # Port already in use
+                # Let's try the next one
+                port += 1
+                if port > 65535:
+                    raise Exception("No ports available!")
+                CONF.setApiRestfulConInfoPort(port)
+                CONF.saveConfig()
+            else:
+                raise exception
 
     routes = [r for c in _rest_controllers for r in c.getRoutes()]
 

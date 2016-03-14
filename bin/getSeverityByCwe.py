@@ -42,7 +42,11 @@ def getCweData():
 
             dict.update( {item['key'] : value} )
 
-        return dict
+        if dict == {}:
+            return None
+        else:
+            print 'Get CWE data: OK\n'
+            return dict
 
     elif response_code == 401:
         print 'Autorization required, make sure to add user:pwd to Couch URI'
@@ -92,6 +96,23 @@ def checkSeverity(vuln, cwe_dict, severity_choose, workspace):
             print 'Error in update Vulnerability, status code: ' + str(update.status_code)
             print update.text
 
+help = (
+'\nGet Vulns filtered by Severity and change Severity based in CWE\n'
+'Parameters:\n'
+'1º : Filter by Severity (<=) (unclassified, info, low, med, high, critical, all)\n'
+'2º : Url to Couchdb\n'
+'3º : Workspace name\n'
+'Try help for this description.\n'
+'Example:'
+'./fplugin.py -f getSeverityByCwe.py -p high '
+'http://username:password@localhost:5984/ workspace_test_name'
+'Note: In this case, change vulns with severity high, med, low, info and unclassified'
+)
+
+if script_parameters == 'help' or script_parameters == None or script_parameters == '' :
+    print help
+    raise(Exception('Exit for help'))
+
 # Main
 list_parameters = script_parameters.split(' ')
 
@@ -112,22 +133,12 @@ severity = 'info'
 if list_parameters[0]:
     severity = list_parameters[0]
 
-help = (
-'\nGet Vulns filtered by Severity and change Severity based in CWE\n'
-'Parameters:\n'
-'1º : Filter by Severity (<=) (unclassified, info, low, med, high, critical, all)\n'
-'2º : Url to Couchdb\n'
-'3º : Workspace name\n'
-'Example:'
-'./fplugin.py -f getSeverityByCwe.py -p high '
-'http://username:password@localhost:5984/ workspace_test_name'
-)
-
-if script_parameters == '' or script_parameters == None :
-    print help
-    raise(Exception('Exit for help'))
 
 cwe = getCweData()
+
+if cwe is None:
+    print 'CWE DB not downloaded....EXIT'
+    raise(Exception('Exit CWE DB not found'))
 
 for host in api.__model_controller.getAllHosts():
     for v in host.getVulns():

@@ -60,22 +60,22 @@ class FPlugin(core.PluginBase):
         parser.add_argument('-e')
         parser.add_argument('-f')
         parser.add_argument('-o')
-        
+
         #NO support -h --help style parameters.
         #Need "" in all parameter. Example script.py -p "parameter1 parameter2"
         parser.add_argument('-p')
 
         if arg_match is None:
-            final= re.sub(r"(^.*?fplugin)",
+            final = re.sub(r"(^.*?fplugin)",
                           r"\1 -o %s" % self._file_output_path,
                           command_string)
         else:
-            final= re.sub(arg_match.group(1),
+            final = re.sub(arg_match.group(1),
                           r"-o %s" % self._file_output_path,
                           command_string)
 
 
-        cmd=shlex.split(re.sub(r'\-h|\-\-help', r'', final))
+        cmd = shlex.split(re.sub(r'\-h|\-\-help', r'', final))
         try:
             self.args, unknown = parser.parse_known_args(cmd)
         except SystemExit:

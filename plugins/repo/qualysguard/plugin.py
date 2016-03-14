@@ -140,22 +140,18 @@ class Results():
         self.impact = self.get_text_from_glossary('IMPACT')
 
         #Description
-        self.desc = self.get_text_from_glossary('THREAT')
-
+        self.desc = self.cleaner_results(self.get_text_from_glossary('THREAT'))
         if not self.desc:
             self.desc = ''
-
         if self.result:
-            self.desc += '\nResult: ' + self.result.strip('<P>')
-
+            self.desc += '\n\nResult: ' + self.cleaner_results(self.result)
         if self.impact:
-            self.desc += '\nImpact: ' + self.impact.strip('<P>')
-
+            self.desc += '\n\nImpact: ' +self.cleaner_results(self.impact)
         if self.result:
-            self.desc += '\nSolution: ' + self.solution.strip('<P>')
+            self.desc += '\n\nSolution: ' + self.cleaner_results(self.solution)
 
+        #References
         self.ref = []
-
         self.ref.append( self.get_text_from_glossary('CVE_ID_LIST/CVE_ID/ID') )
 
         if self.cvss:
@@ -164,6 +160,9 @@ class Results():
         if self.pci:
             self.ref.append('PCI: ' + self.pci)
 
+    def cleaner_results(self, string):
+
+        return string.replace('<P>', '').replace('<UL>','').replace('<LI>','').replace('<BR>', '')
 
     def get_text_from_glossary(self, tag):
         """

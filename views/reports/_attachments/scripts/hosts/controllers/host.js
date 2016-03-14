@@ -8,7 +8,7 @@ angular.module('faradayApp')
         function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, dashboardSrv, servicesManager) {
 
 	    init = function() {
-	    	$scope.selectall = false;
+	    	$scope.selectall_service = false;
             // current workspace
             $scope.workspace = $routeParams.wsId;
             //ID of current host
@@ -308,11 +308,11 @@ angular.module('faradayApp')
         };
 
         $scope.checkAllServices = function() {
-            $scope.selectall = !$scope.selectall;
+            $scope.selectall_service = !$scope.selectall_service;
 
             tmp_services = filter($scope.services);
             tmp_services.forEach(function(service) {
-                service.selected = $scope.selectall;
+                service.selected = $scope.selectall_service;
             });
         };
 

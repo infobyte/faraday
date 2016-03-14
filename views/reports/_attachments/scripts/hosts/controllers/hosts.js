@@ -8,7 +8,7 @@ angular.module('faradayApp')
         function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact) {
 
         init = function() {
-            $scope.selectall = false;
+            $scope.selectall_hosts = false;
             // hosts list
             $scope.hosts = [];
             // current workspace
@@ -365,11 +365,11 @@ angular.module('faradayApp')
         };
 
         $scope.checkAll = function() {
-            $scope.selectall = !$scope.selectall;
+            $scope.selectall_hosts = !$scope.selectall_hosts;
 
             tmp_hosts = filter($scope.hosts);
             tmp_hosts.forEach(function(host) {
-                host.selected = $scope.selectall;
+                host.selected = $scope.selectall_hosts;
             });
         };
 

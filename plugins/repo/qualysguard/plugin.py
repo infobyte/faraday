@@ -123,16 +123,16 @@ class Results():
         self.result = self.get_text_from_subnode(self.node, 'RESULT')
 
         self.severity_dict = {
-        None : 'info',
-        '' : 'info',
-        '1' : 'low',
-        '2' : 'med',
-        '3' : 'high'
+        '1' : 'info',
+        '2' : 'low',
+        '3' : 'med',
+        '4' : 'high',
+        '5' : 'critical'
         }
 
         #GLOSSARY TAG
         self.glossary = glossary
-        self.severity = self.severity_dict[self.get_text_from_glossary('SEVERITY')]
+        self.severity = self.severity_dict.get(self.get_text_from_glossary('SEVERITY'), 'info')
         self.title = self.get_text_from_glossary('TITLE')
         self.cvss = self.get_text_from_glossary('CVSS_SCORE/CVSS_BASE')
         self.pci = self.get_text_from_glossary('PCI_FLAG')
@@ -162,7 +162,10 @@ class Results():
 
     def cleaner_results(self, string):
 
-        return string.replace('<P>', '').replace('<UL>','').replace('<LI>','').replace('<BR>', '')
+        try:
+            return string.replace('<P>', '').replace('<UL>','').replace('<LI>','').replace('<BR>', '')
+        except:
+            return ''
 
     def get_text_from_glossary(self, tag):
         """

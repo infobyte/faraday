@@ -192,7 +192,7 @@ class ReportParser(object):
         if report_type == "zip":
             result = "maltego"
 
-        elif report_type == "xml":
+        else:
 
             try:
                 for event, elem in ET.iterparse(f, ('start', )):

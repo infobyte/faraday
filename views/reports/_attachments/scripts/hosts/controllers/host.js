@@ -28,6 +28,7 @@ angular.module('faradayApp')
             $scope.services = [];
             dashboardSrv.getServicesByHost($scope.workspace, hostId)
                 .then(function(services) {
+                    if (services.length > 0) $scope.loadedServices = true;
                     services.forEach(function(service) {
                         servicesManager.getService(service.id, $scope.workspace, true)
                             .then(function(s) {
@@ -50,7 +51,7 @@ angular.module('faradayApp')
             $scope.pageSize = 10;
             $scope.currentPage = 0;
             $scope.newCurrentPage = 0;
- 
+
             if(!isNaN(parseInt($cookies.pageSize))) $scope.pageSize = parseInt($cookies.pageSize);
             $scope.newPageSize = $scope.pageSize;
 
@@ -88,7 +89,7 @@ angular.module('faradayApp')
 
             $location.path(url);
         };
-        
+
         $scope.go = function() {
             $scope.pageSize = $scope.newPageSize;
             $cookies.pageSize = $scope.pageSize;
@@ -206,7 +207,7 @@ angular.module('faradayApp')
         };
 
         $scope.update = function(services, data) {
-            services.forEach(function(service){            	
+            services.forEach(function(service){
                 delete service.selected;
 	            servicesManager.updateService(service, data, $scope.workspace).then(function(s) {
 	            }, function(message){

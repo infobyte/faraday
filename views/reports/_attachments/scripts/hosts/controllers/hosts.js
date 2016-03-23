@@ -24,6 +24,7 @@ angular.module('faradayApp')
             hostsManager.getHosts($scope.workspace)
                 .then(function(hosts) {
                     $scope.hosts = hosts;
+                    $scope.loadedVulns = true;
                     $scope.loadIcons();
                 });
 
@@ -46,7 +47,7 @@ angular.module('faradayApp')
             $scope.pageSize = 10;
             $scope.currentPage = 0;
             $scope.newCurrentPage = 0;
- 
+
             if(!isNaN(parseInt($cookies.pageSize))) $scope.pageSize = parseInt($cookies.pageSize);
             $scope.newPageSize = $scope.pageSize;
 
@@ -91,7 +92,7 @@ angular.module('faradayApp')
 
             $location.path(url);
         };
-        
+
         $scope.go = function() {
             $scope.pageSize = $scope.newPageSize;
             $cookies.pageSize = $scope.pageSize;
@@ -396,6 +397,6 @@ angular.module('faradayApp')
 
             return tmp_data;
         };
-        
+
         init();
     }]);

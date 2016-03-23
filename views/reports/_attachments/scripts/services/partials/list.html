@@ -63,12 +63,12 @@
                                         <input type="text" class="form-control" id="filter-by" 
                                         placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
                                         <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                            <i class="fa fa-search" ng-if="services.length > 0"></i>
-                                            <i class="fa fa-refresh fa-spin" ng-if="services.length == 0"></i>
+                                            <i class="fa fa-search" ng-if="services.length > 0 || !loadedServices"></i>
+                                            <i class="fa fa-refresh fa-spin" ng-if="services.length == 0 && loadedServices"></i>
                                         </span>
                                     </div>
                                 </div>
-                            </form>  
+                            </form>
                         </div>
                         <table class="status-report hosts-list table table-responsive">
                             <thead>

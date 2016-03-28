@@ -381,7 +381,11 @@ class CouchDbConnector(DbConnector):
 
     #@trap_timeout
     def _compactDatabase(self):
-        self.db.compact()
+        try:
+            self.db.compact()
+        except:
+            getLogger(self).warn(
+                "You're not authorized to compact this database")
 
 
 class AbstractPersistenceManager(object):
@@ -544,8 +548,12 @@ class CouchDbManager(AbstractPersistenceManager):
     def pushReports(self):
         vmanager = ViewsManager()
         reports = os.path.join(os.getcwd(), "views", "reports")
-        workspace = self.__serv.get_or_create_db("reports")
-        vmanager.addView(reports, workspace)
+        try:
+            workspace = self.__serv.get_or_create_db("reports")
+            vmanager.addView(reports, workspace)
+        except:
+            getLogger(self).warn(
+                "Reports database couldn't be uploaded. You need to be an admin to do it")
         return self.__uri + "/reports/_design/reports/index.html"
 
     def lostConnectionResolv(self):

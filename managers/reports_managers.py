@@ -250,7 +250,7 @@ class ReportParser(object):
             return "nexpose"
         elif "NexposeReport" == tag:
             return "nexpose-full"
-        elif "SCAN" == tag:
+        elif "ASSET_DATA_REPORT" == tag:
             return "qualysguard"
         elif "scanJob" == tag:
             return "retina"

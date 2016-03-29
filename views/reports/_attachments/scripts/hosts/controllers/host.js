@@ -334,7 +334,7 @@ angular.module('faradayApp')
 	    }
 
         filter = function(data) {
-            var tmp_data = $filter('orderObjectBy')(data, $scope.sortField, $scope.reverse);
+            var tmp_data = $filter('orderBy')(data, $scope.sortField, $scope.reverse);
             tmp_data = $filter('filter')(tmp_data, $scope.expression);
             tmp_data = tmp_data.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
 

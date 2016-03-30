@@ -605,24 +605,7 @@ class RepositoryConfigDialog(BaseDialog):
         if url: self._repourl_edit.setText(url)
         self.layout.addWidget(hbox1)
 
-        hbox2 = qt.QHBox(self)
-        hbox2.setSpacing(5)
-        self._replicate_label = qt.QLabel("Replication enabled", hbox2)
-        self._replicate_edit = qt.QCheckBox(hbox2)
-        self._replicate_edit.setChecked(replication)
-
-        self.layout.addWidget(hbox2)
-
-        hbox3 = qt.QHBox(self)
-        hbox3.setSpacing(10)
-        self._replics_label = qt.QLabel("Replics", hbox3)
-        self.__replics_edit = qt.QLineEdit(hbox3)
-        if replics: self.__replics_edit.setText(replics)
-        self.layout.addWidget(hbox3)
-
         self.__repourl_txt = self._repourl_edit.text()
-        self.__is_replicated_bool = self._replicate_edit.isChecked()
-        self.__replics_list_txt = self.__replics_edit.text()
 
 
         self.setupButtons({ "ok" : self.ok_pressed,
@@ -631,11 +614,7 @@ class RepositoryConfigDialog(BaseDialog):
 
     def getData(self):
         self.__repourl_txt = self._repourl_edit.text()
-        self.__is_replicated_bool = self._replicate_edit.isChecked()
-        self.__replics_list_txt = self.__replics_edit.text()
-        return (self.__repourl_txt.latin1(),
-            self.__is_replicated_bool,
-            self.__replics_list_txt.latin1())
+        return (self.__repourl_txt.latin1())
 
     def ok_pressed(self):
         if self._callback is not None:

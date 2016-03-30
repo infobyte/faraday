@@ -520,7 +520,7 @@ class MainWindow(qt.QMainWindow):
                                                    callback=None)
         result = repoconfig_dialog.exec_loop()
         if result == qt.QDialog.Accepted:
-            repourl, isReplicated, replics = repoconfig_dialog.getData()
+            repourl = repoconfig_dialog.getData()
             api.devlog("repourl = %s" % repourl)
             wm = self._main_app.getWorkspaceManager()
             if not CouchDbManager.testCouch(repourl):
@@ -540,8 +540,6 @@ class MainWindow(qt.QMainWindow):
                     return
 
             CONF.setCouchUri(repourl)
-            CONF.setCouchIsReplicated(isReplicated)
-            CONF.setCouchReplics(replics)
             CONF.saveConfig()
 
             wm.closeWorkspace()

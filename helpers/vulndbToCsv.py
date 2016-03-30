@@ -29,6 +29,7 @@ class JsonToCsv():
         self.description = None
         self.resolution = None
         self.references = None
+        self.severity = None
 
         self.content = self.getContent(file)
         self.parse()
@@ -55,6 +56,8 @@ class JsonToCsv():
             self.cwe = self.cwe[0]
 
         self.name = self.content.get('title')
+        self.severity = self.content.get('severity')
+
         self.description = ''.join(self.content.get('description'))
         self.resolution = ''.join(self.content.get('fix').get('guidance'))
 
@@ -86,7 +89,7 @@ def main():
         file_csv = open('vulndb.csv','w')
 
         file_csv.write(
-        'cwe,name,desc_summary,description,resolution,exploitation,references\n'
+        'cwe,name,desc_summary,description,resolution,exploitation,references,severity\n'
         )
 
         writer = csv.writer(
@@ -110,7 +113,8 @@ def main():
                 csv_content.description,
                 csv_content.resolution,
                 '',
-                ' '.join(csv_content.references)
+                ' '.join(csv_content.references),
+                csv_content.severity
                 )
 
                 writer.writerow(result)

@@ -224,7 +224,7 @@ class ReportParser(object):
         elif "report" == tag:
             if re.search("https://raw.githubusercontent.com/Arachni/arachni/", output) != None:
                 return "arachni_faraday"
-            elif re.search("OpenVAS", output) != None:
+            elif re.search("OpenVAS", output) != None or re.search('<omp><version>', output) != None:
                 return "openvas"
             else:
                 return "zap"

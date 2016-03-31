@@ -16,7 +16,7 @@ TBA:
 * Support for multiple Faraday instances in the same host
 * Fixed bug for editing web vulns in bulk
 * Fixed bug for select all in web UI
-* Fixed bugs in Qualys, ZAP, nikto, w3af plugins
+* Fixed bugs in Qualys, ZAP, nikto, w3af, openVas plugins
 * Added some new scripts and helpers
 
 

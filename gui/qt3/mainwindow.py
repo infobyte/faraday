@@ -410,43 +410,6 @@ class MainWindow(qt.QMainWindow):
             shell.myemit('clearSelectionSignal')
         qt.QApplication.clipboard().setSelectionMode(False)
 
-    def _importWorkspace(self):
-        model.api.showPopup("Be careful that importing could overwrite existing files", level="Warning")
-        wm = self._main_app.getWorkspaceManager()
-        mwin = self._main_app.getMainWindow()
-
-        filename =  QFileDialog.getOpenFileName(
-                    "$HOME/.faraday",
-                    "Faraday export file  (*.faraday)",
-                    None,
-                    "import file dialog",
-                    "Choose a file to import" );
-        if filename and filename is not None:
-            model.api.log("Import function %s/ %s" % (CONF.getPersistencePath(),filename))
-
-
-
-            api.importWorskpace("%s/" % CONF.getPersistencePath(), filename)
-
-            wm.loadWorkspaces()
-            w = wm.getActiveWorkspace()
-            wm.setActiveWorkspace(w)
-
-
-            mwin.getWorkspaceTreeView().loadAllWorkspaces()
-
-    def _exportWorkspace(self):
-        filename =  QFileDialog.getSaveFileName(
-                    "/tmp",
-                    "Faraday export file  (*.faraday)",
-                    None,
-                    "save file dialog",
-                    "Choose a file to save the export" );
-        if filename and filename is not None:
-            model.api.log("Export function %s" % filename)
-            api.exportWorskpace("%s/" % CONF.getPersistencePath(), "%s.faraday" % filename)
-
-
     def getTabManager(self):
         return self._tab_manager
 

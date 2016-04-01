@@ -77,7 +77,7 @@ def _setUpAPIServer(hostname=None, port=None):
         if CONF.getApiConInfo() is None:
             CONF.setApiConInfo(hostname, port)
         devlog("starting XMLRPCServer with api_conn_info = %s" % str(CONF.getApiConInfo()))
-        
+
         while True:
 
             try:
@@ -539,49 +539,6 @@ def newApplication(name, status = "running", version = "unknown"):
 #getConflicts: get the current conflicts
 def getConflicts():
     return __model_controller.getConflicts()
-
-#-------------------------------------------------------------------------------
-
-#exportWorskpace
-
-def exportWorskpace(workspace_path, export_path):
-    """
-    This api will create a zip file for the persistence directory
-    """
-    zip = zipfile.ZipFile(export_path, 'w', compression=zipfile.ZIP_DEFLATED)
-    root_len = len(os.path.abspath(workspace_path))
-    for root, dirs, files in os.walk(workspace_path):
-        if ".svn" not in root:
-            archive_root = os.path.abspath(root)[root_len:]
-            if files is not ".svn":
-                for f in files:
-                    fullpath = os.path.join(root, f)
-                    archive_name = os.path.join(archive_root, f)
-#                        print f
-                    zip.write(fullpath, archive_name, zipfile.ZIP_DEFLATED)
-    zip.close()
-
-
-def importWorskpace(workspace_path, file_path):
-    """
-    This api will import a zip file of the persistence directory.
-    WARNING: this will overwrite any existing files!
-    """
-
-    archive = zipfile.ZipFile(str(file_path), "r", zipfile.ZIP_DEFLATED)
-    names = archive.namelist()
-
-    for name in names:
-        filename = os.path.join(workspace_path, name)
-        if not os.path.exists(os.path.dirname(filename)):
-            os.mkdir(os.path.dirname(filename))
-        # create the output file. This will overwrite any existing file with the same name
-        temp = open(filename, "wb")
-        data = archive.read(name) # read data from zip archive
-        temp.write(data)
-        temp.close()
-
-    archive.close()
 
 #-------------------------------------------------------------------------------
 # EVIDENCE

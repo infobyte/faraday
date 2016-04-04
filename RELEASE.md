@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA:
+Apr 04, 2016
 ---
 * Added cli mode (see wiki for usage instructions)
 * Support for multiple Faraday instances in the same host

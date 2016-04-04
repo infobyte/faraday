@@ -6,10 +6,9 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+import socket
 import threading
 import logging
-import requests
-import json
 import base64
 
 from flask import Flask, request, jsonify
@@ -50,7 +49,24 @@ def startAPIs(plugin_manager, model_controller, mapper_manager, hostname, port):
     app = Flask('APISController')
 
     _http_server = HTTPServer(WSGIContainer(app))
-    _http_server.listen(port, address=hostname)
+    while True:
+        try:
+            _http_server.listen(port, address=hostname)
+            logger.getLogger().info(
+                    "REST API server configured on %s" % str(
+                        CONF.getApiRestfulConInfo()))
+            break
+        except socket.error as exception:
+            if exception.errno == 98:
+                # Port already in use
+                # Let's try the next one
+                port += 1
+                if port > 65535:
+                    raise Exception("No ports available!")
+                CONF.setApiRestfulConInfoPort(port)
+                CONF.saveConfig()
+            else:
+                raise exception
 
     routes = [r for c in _rest_controllers for r in c.getRoutes()]
 
@@ -323,48 +339,6 @@ class PluginControllerAPI(RESTApi):
     def clearActivePlugins(self):
         self.plugin_controller.clearActivePlugins()
         return self.ok("active plugins cleared")
-
-
-class PluginControllerAPIClient(object):
-    def __init__(self, hostname, port):
-        self.hostname = hostname
-        self.port = port
-        self.url_input = "http://%s:%d/cmd/input" % (self.hostname, self.port)
-        self.url_output = "http://%s:%d/cmd/output" % (self.hostname, self.port)
-        self.url_active_plugins = "http://%s:%d/cmd/active-plugins" % (self.hostname, self.port)
-        self.headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-
-    def send_cmd(self, cmd):
-        data = {"cmd": cmd}
-        new_cmd = cmd
-        output_file = None
-        try:
-            response = requests.post(self.url_input,
-                                     data=json.dumps(data),
-                                     headers=self.headers)
-
-            if response.status_code == 200:
-                json_response = response.json()
-                if "cmd" in json_response.keys():
-                    if json_response.get("cmd") is not None:
-                        new_cmd = json_response.get("cmd")
-                if "custom_output_file" in json_response.keys():
-                    output_file = json_response.get("custom_output_file")
-        except:
-            new_cmd = cmd
-        finally:
-            return new_cmd, output_file
-
-    def send_output(self, cmd, output_file):
-        output_file = open(output_file)
-        output = base64.b64encode(output_file.read())
-        data = {"cmd": cmd, "output": output}
-        response = requests.post(self.url_output,
-                                 data=json.dumps(data),
-                                 headers=self.headers)
-        if response.status_code != 200:
-            return False
-        return True
 
 
 class Route(object):

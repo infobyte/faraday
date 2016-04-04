@@ -4,10 +4,6 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-"""
-Contains base classes used to represent the application model
-and some other common objects and functions used in the model
-"""
 import sys
 import os
 import traceback
@@ -18,7 +14,7 @@ from utils.decorators import updateLocalMetadata
 import json
 import model
 from conflict import ConflictUpdate
-from model.diff import ModelObjectDiff
+from model.diff import ModelObjectDiff, MergeSolver
 
 try:
     import model.api as api
@@ -31,12 +27,20 @@ from utils.common import *
 from time import time
 import cPickle as pickle
 from config.configuration import getInstanceConfiguration
+CONF = getInstanceConfiguration()
+
+"""
+Contains base classes used to represent the application model
+and some other common objects and functions used in the model
+"""
+
 
 class MetadataUpdateActions(object):
     """Constants for the actions made on the update"""
     UNDEFINED   = -1
     CREATE      = 0
     UPDATE      = 1
+
 
 class Metadata(object):
     """To save information about the modification of ModelObjects.
@@ -150,7 +154,7 @@ class ModelObject(object):
         if prop1 in self.defaultValues(): return prop2
         elif prop2 in self.defaultValues(): return prop1
         elif self.tieBreakable(key): return self.tieBreak(key, prop1, prop2)
-        else: return (prop2, prop1)
+        else: return (prop1, prop2)
 
     def tieBreakable(self, key):
         return False
@@ -164,10 +168,18 @@ class ModelObject(object):
         for k, v in diff.getPropertiesDiff().items():
             attribute = self.__getAttribute(k)
             prop_update = self.propertyTieBreaker(attribute, *v)
-            if isinstance(prop_update, tuple):
-                conflict = True
-            else:
+
+            if (not isinstance(prop_update, tuple) or
+                    CONF.getMergeStrategy()):
+                # if there's a strategy set by the user, apply it
+                if isinstance(prop_update, tuple):
+                    prop_update = MergeSolver(
+                        CONF.getMergeStrategy()
+                        ).solve(prop_update[0], prop_update[1])
+
                 setattr(self, attribute, prop_update)
+            else:
+                conflict = True
         if conflict:
             self.updates.append(ConflictUpdate(self, newModelObject))
         return conflict

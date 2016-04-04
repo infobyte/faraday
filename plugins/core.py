@@ -20,7 +20,9 @@ import Queue
 import traceback
 import model.common
 import errno
-from model.common import factory, ModelObjectVuln, ModelObjectVulnWeb, ModelObjectNote, ModelObjectCred
+from model.common import (
+    factory, ModelObjectVuln, ModelObjectVulnWeb,
+    ModelObjectNote, ModelObjectCred)
 from model.hosts import Host, Interface, Service
 
 from model.commands_history import CommandRunInformation
@@ -53,73 +55,77 @@ copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
 
 
 class modelactions:
-    ADDHOST             = 2000
-    CADDHOST            = 2001
-    ADDINTERFACE        = 2002
-    CADDINTERFACE       = 2003
-    ADDSERVICEINT       = 2004
-    ADDSERVICEAPP       = 2005
-    CADDSERVICEINT      = 2006
-    CADDSERVICEAPP      = 2007
-    CADDSERVICEHOST     = 2008
-    ADDAPPLICATION      = 2009
-    CADDAPPLICATION     = 2010
-    ADDVULNINT          = 2013
-    CADDVULNINT         = 2014
-    ADDVULNAPP          = 2015
-    CADDVULNAPP         = 2016
-    ADDVULNHOST         = 2017
-    CADDVULNHOST        = 2018
-    ADDVULNSRV          = 2019
-    CADDVULNSRV         = 2020
-    ADDNOTEINT          = 2021
-    CADDNOTEINT         = 2022
-    ADDNOTEAPP          = 2023
-    CADDNOTEAPP         = 2024
-    ADDNOTEHOST         = 2025
-    CADDNOTEHOST        = 2026
-    ADDNOTESRV          = 2027
-    CADDNOTESRV         = 2028
-    CADDNOTEVULN        = 2030
-    CADDNOTEVULN        = 2031
-    LOG                 = 2032
-    DEVLOG              = 2033
-    DELSERVICEINT       = 2034
-    ADDCREDSRV       = 2035
-    CADDCREDSRV      = 2036
-    ADDVULNWEBSRV          = 2037
-    CADDVULNWEBSRV         = 2038
-    ADDNOTENOTE         = 2039
-    CADDNOTENOTE        = 2039
+    ADDHOST = 2000
+    CADDHOST = 2001
+    ADDINTERFACE = 2002
+    CADDINTERFACE = 2003
+    ADDSERVICEINT = 2004
+    ADDSERVICEAPP = 2005
+    CADDSERVICEINT = 2006
+    CADDSERVICEAPP = 2007
+    CADDSERVICEHOST = 2008
+    ADDAPPLICATION = 2009
+    CADDAPPLICATION = 2010
+    ADDVULNINT = 2013
+    CADDVULNINT = 2014
+    ADDVULNAPP = 2015
+    CADDVULNAPP = 2016
+    ADDVULNHOST = 2017
+    CADDVULNHOST = 2018
+    ADDVULNSRV = 2019
+    CADDVULNSRV = 2020
+    ADDNOTEINT = 2021
+    CADDNOTEINT = 2022
+    ADDNOTEAPP = 2023
+    CADDNOTEAPP = 2024
+    ADDNOTEHOST = 2025
+    CADDNOTEHOST = 2026
+    ADDNOTESRV = 2027
+    CADDNOTESRV = 2028
+    CADDNOTEVULN = 2030
+    CADDNOTEVULN = 2031
+    LOG = 2032
+    DEVLOG = 2033
+    DELSERVICEINT = 2034
+    ADDCREDSRV = 2035
+    CADDCREDSRV = 2036
+    ADDVULNWEBSRV = 2037
+    CADDVULNWEBSRV = 2038
+    ADDNOTENOTE = 2039
+    CADDNOTENOTE = 2039
+    PLUGINSTART = 3000
+    PLUGINEND = 3001
 
     __descriptions = {
-        ADDHOST             : "ADDHOST",
-        CADDHOST            : "CADDHOST",
-        ADDINTERFACE        : "ADDINTERFACE",
-        CADDINTERFACE       : "CADDINTERFACE",
-        ADDSERVICEINT       : "ADDSERVICEINT",
-        ADDSERVICEAPP       : "ADDSERVICEAPP",
-        CADDSERVICEINT      : "CADDSERVICEINT",
-        CADDSERVICEAPP      : "CADDSERVICEAPP",
-        CADDSERVICEHOST     : "CADDSERVICEHOST",
-        ADDAPPLICATION      : "ADDAPPLICATION",
-        CADDAPPLICATION     : "CADDAPPLICATION",
-        ADDVULNINT          : "ADDVULNINT",
-        CADDVULNINT         : "CADDVULNINT",
-        ADDVULNAPP          : "ADDVULNAPP",
-        CADDVULNAPP         : "CADDVULNAPP",
-        ADDVULNHOST         : "ADDVULNHOST",
-        CADDVULNHOST        : "CADDVULNHOST",
-        ADDVULNSRV          : "ADDVULNSRV",
-        CADDVULNSRV         : "CADDVULNSRV",
-        LOG                 : "LOG",
-        DEVLOG              : "DEVLOG",
-        DELSERVICEINT       : "DELSERVICEINT",
-        ADDCREDSRV       : "ADDCREDINT",
-        ADDVULNWEBSRV          : "ADDVULNWEBSRV",
-        CADDVULNWEBSRV         : "CADDVULNWEBSRV",
-        ADDNOTENOTE          : "ADDNOTENOTE",
-        CADDNOTENOTE         : "CADDNOTENOTE",
+        ADDHOST: "ADDHOST",
+        CADDHOST: "CADDHOST",
+        ADDINTERFACE: "ADDINTERFACE",
+        CADDINTERFACE: "CADDINTERFACE",
+        ADDSERVICEINT: "ADDSERVICEINT",
+        ADDSERVICEAPP: "ADDSERVICEAPP",
+        CADDSERVICEINT: "CADDSERVICEINT",
+        CADDSERVICEAPP: "CADDSERVICEAPP",
+        CADDSERVICEHOST: "CADDSERVICEHOST",
+        ADDAPPLICATION: "ADDAPPLICATION",
+        CADDAPPLICATION: "CADDAPPLICATION",
+        ADDVULNINT: "ADDVULNINT",
+        CADDVULNINT: "CADDVULNINT",
+        ADDVULNAPP: "ADDVULNAPP",
+        CADDVULNAPP: "CADDVULNAPP",
+        ADDVULNHOST: "ADDVULNHOST",
+        CADDVULNHOST: "CADDVULNHOST",
+        ADDVULNSRV: "ADDVULNSRV",
+        CADDVULNSRV: "CADDVULNSRV",
+        LOG: "LOG",
+        DEVLOG: "DEVLOG",
+        DELSERVICEINT: "DELSERVICEINT",
+        ADDCREDSRV: "ADDCREDINT",
+        ADDVULNWEBSRV: "ADDVULNWEBSRV",
+        CADDVULNWEBSRV: "CADDVULNWEBSRV",
+        ADDNOTENOTE: "ADDNOTENOTE",
+        CADDNOTENOTE: "CADDNOTENOTE",
+        PLUGINSTART: "PLUGINSTART",
+        PLUGINEND: "PLUGINEND"
     }
 
     @staticmethod
@@ -209,6 +215,8 @@ class PluginControllerBase(object):
         output_queue.put(None)
         output_queue.join()
 
+        self._processAction(modelactions.PLUGINSTART, [])
+
         #model.api.devlog("Core: queue size '%s'" % new_elem_queue.qsize())
         while True:
             try:
@@ -233,6 +241,7 @@ class PluginControllerBase(object):
                 model.api.devlog("PluginController.onCommandFinished - new_elem_queue Exception- something strange happened... unhandled exception?")
                 model.api.devlog(traceback.format_exc())
                 break
+        self._processAction(modelactions.PLUGINEND, [])
 
     def _processAction(self, action, parameters):
         """
@@ -286,6 +295,9 @@ class PluginControllerBase(object):
                     #LOG
                     modelactions.LOG : model.api.log,
                     modelactions.DEVLOG : model.api.devlog,
+                    # Plugin state
+                    modelactions.PLUGINSTART: model.api.pluginStart,
+                    modelactions.PLUGINEND: model.api.pluginEnd
         }
 
     def updatePluginSettings(self, plugin_id, new_settings):

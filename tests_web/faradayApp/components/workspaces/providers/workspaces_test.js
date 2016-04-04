@@ -31,12 +31,12 @@ describe('workspacesFact', function() {
        });
 
        it('Tests if existence is well asked', function() {
-           $httpBackend.when('HEAD', 'http://localhost:9876/tuvieja')
+           $httpBackend.when('HEAD', 'http://localhost:9876/test_workspace')
                                            .respond(200, '');
 
-           $httpBackend.expectHEAD('http://localhost:9876/tuvieja');
+           $httpBackend.expectHEAD('http://localhost:9876/test_workspace');
            fact = createFactory();
-           fact.exists('tuvieja').then(function(exist){
+           fact.exists('test_workspace').then(function(exist){
 	           expect(exist).toBe(true);
            });
            $httpBackend.flush();
@@ -55,17 +55,34 @@ describe('workspacesFact', function() {
                "description": ""
            };
 
+           var object = {
+            _attachments:
+              { views:
+                {"content_type": "application/javascript"}
+              }
+           };
+
            $httpBackend.expectPUT('http://localhost:9876/test_workspace',
                    workspace).respond(200, {"ok": true});
 
            $httpBackend.expectPUT('http://localhost:9876/test_workspace/test_workspace',
                    workspace).respond(200, {"ok": true});
 
+           $httpBackend.expectGET('http://localhost:9876/reports/_design/reports').respond(200, object);
+
+           $httpBackend.expectPOST('http://localhost:9876/test_workspace/_bulk_docs',
+                   {'docs': []}).respond(200, {"ok": true});
+
+           $httpBackend.when('HEAD', 'http://localhost:9876/test_workspace')
+                                           .respond(200, '');
+
            fact = createFactory();
 
            fact.put(workspace);
+           fact.exists('test_workspace').then(function(exist){
+             expect(exist).toBe(true);
+           });
            $httpBackend.flush();
-           expect(workspace_exists).toBe(true);
        });
 
        it('Tests if OK Delete are well done', function() {

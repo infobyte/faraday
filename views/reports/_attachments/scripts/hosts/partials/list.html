@@ -37,15 +37,15 @@
                                 <div class="form-group">
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
-                                        <input type="text" class="form-control" id="filter-by" 
+                                        <input type="text" class="form-control" id="filter-by"
                                         placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
                                         <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                            <i class="fa fa-search" ng-if="hosts"></i>
-                                            <i class="fa fa-refresh fa-spin" ng-if="hosts.length == 0"></i>
+                                            <i class="fa fa-search" ng-if="loadedVulns"></i>
+                                            <i class="fa fa-refresh fa-spin" ng-if="!loadedVulns"></i>
                                         </span>
                                     </div>
                                 </div>
-                            </form>  
+                            </form>
                         </div>
                         <table class="status-report hosts-list table table-responsive">
                             <thead>
@@ -73,8 +73,8 @@
                             </thead>
                             <tbody>
                                 <tr ng-repeat="host in filtered = (hosts | filter:expression) | orderBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
-                                    selection-model selection-model-type="checkbox" 
-                                    selection-model-mode="multiple-additive" 
+                                    selection-model selection-model-type="checkbox"
+                                    selection-model-mode="multiple-additive"
                                     selection-model-selected-class="multi-selected"
                                     selection-model-on-change="selectedHosts()">
                                     <td><input type="checkbox" name="{{host._id}}"/></td>

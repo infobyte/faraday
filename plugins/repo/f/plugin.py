@@ -41,12 +41,12 @@ class FPlugin(core.PluginBase):
                                 "-e":"execute model directly",
                                 "-o":"output command",
         }
-        
+
 
     def parseOutputString(self, output, debug = False):
         pass
-            
-            
+
+
     file_arg_re = re.compile(r"^.*(-o\s*[^\s]+).*$")
     def processCommandString(self, username, current_path, command_string):
         """
@@ -56,30 +56,34 @@ class FPlugin(core.PluginBase):
         self._file_output_path=os.path.join(self.data_path,"f_output-%s.txt" % random.uniform(1,10))
 
         parser = argparse.ArgumentParser()
-        
+
         parser.add_argument('-e')
         parser.add_argument('-f')
         parser.add_argument('-o')
-                
-        if arg_match is None:               
-            final= re.sub(r"(^.*?fplugin)",
+
+        #NO support -h --help style parameters.
+        #Need "" in all parameter. Example script.py -p "parameter1 parameter2"
+        parser.add_argument('-p')
+
+        if arg_match is None:
+            final = re.sub(r"(^.*?fplugin)",
                           r"\1 -o %s" % self._file_output_path,
-                          command_string) 
+                          command_string)
         else:
-            final= re.sub(arg_match.group(1),
+            final = re.sub(arg_match.group(1),
                           r"-o %s" % self._file_output_path,
                           command_string)
-        
-                                          
-        cmd=shlex.split(re.sub(r'\-h|\-\-help', r'', final))
+
+
+        cmd = shlex.split(re.sub(r'\-h|\-\-help', r'', final))
         try:
             self.args, unknown = parser.parse_known_args(cmd)
         except SystemExit:
             pass
-        
-        codeEx=""
+
+        codeEx = ""
         if self.args.e:
-            codeEx=self.args.e
+            codeEx = self.args.e
         elif self.args.f:
             with open(current_path + "/" + self.args.f) as f:
                 codeEx = f.read()
@@ -88,13 +92,16 @@ class FPlugin(core.PluginBase):
         if codeEx:
             buffer = StringIO()
             sys.stdout = buffer
-            
+
             try:
-                exec(codeEx)
+                locales = locals()
+                locales.update({'script_parameters' : self.args.p})
+                exec(codeEx, globals(), locales)
+
             except Exception:
                 api.devlog("[Error] - Faraday plugin")
                 api.devlog(traceback.format_exc())
-                                 
+
             sys.stdout = sys.__stdout__
 
             try:
@@ -103,7 +110,7 @@ class FPlugin(core.PluginBase):
                 f.close()
             except:
                 api.devlog ("[Faraday] Can't save faraday plugin output file")
-                return            
+                return
 
             print buffer.getvalue()
 
@@ -116,4 +123,3 @@ class FPlugin(core.PluginBase):
 
 def createPlugin():
     return FPlugin()
-

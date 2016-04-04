@@ -75,6 +75,8 @@ class modelactions:
     EDITCRED = 2048
     ADDCRED = 2049
     DELCRED = 2050
+    PLUGINSTART = 3000
+    PLUGINEND = 3001
 
     __descriptions = {
         ADDHOST: "ADDHOST",
@@ -115,7 +117,9 @@ class modelactions:
         ADDVULN: "ADDVULN",
         DELVULN: "DELVULN",
         ADDCRED: "ADDCRED",
-        DELCRED: "DELCRED"
+        DELCRED: "DELCRED",
+        PLUGINSTART: "PLUGINSTART",
+        PLUGINEND: "PLUGINEND"
     }
 
     @staticmethod
@@ -125,27 +129,22 @@ class modelactions:
 
 class ModelController(threading.Thread):
 
-    def __init__(self, security_manager, mappers_manager):
+    def __init__(self, mappers_manager):
         threading.Thread.__init__(self)
 
-        self.__sec = security_manager
         self.mappers_manager = mappers_manager
 
         # set as daemon
         self.setDaemon(True)
 
-        #TODO: think of a good way to handle cross reference between hosts and
-        #categories
-        self._categories = {}
-        self._categories[CONF.getDefaultCategory()] = []
-
-        # dictionary with host ids as key
-        self._hosts = None
-
         # flag to stop daemon thread
         self._stop = False
         # locks needed to make model thread-safe
         self._hosts_lock = threading.RLock()
+
+        # count of plugins sending actions
+        self.active_plugins_count = 0
+        self.active_plugins_count_lock = threading.RLock()
 
         #TODO: check if it is better using collections.deque
         # a performance analysis should be done
@@ -242,7 +241,10 @@ class ModelController(threading.Thread):
             modelactions.EDITNOTE: self.__edit,
             modelactions.EDITCRED: self.__edit,
             modelactions.ADDCRED: self.__add,
-            modelactions.DELCRED: self.__del
+            modelactions.DELCRED: self.__del,
+            # Plugin states
+            modelactions.PLUGINSTART: self._pluginStart,
+            modelactions.PLUGINEND: self._pluginEnd
         }
 
     def run(self):
@@ -350,8 +352,9 @@ class ModelController(threading.Thread):
         """
         while True:
             # check if thread must finish
-            if self._stop:
-                return
+            # no plugin should be active to stop the controller
+            if self._stop and self.active_plugins_count == 0:
+                break
             # first we check if there is a sync api request
             # or if the model is being saved/sync'ed
             # or if we have pending duplicated hosts that need to be
@@ -385,8 +388,8 @@ class ModelController(threading.Thread):
             # because if we don't do it, the daemon will be blocked forever
             pass
         except Exception:
-            getLogger(self).devlog("something strange happened... unhandled exception?")
-            getLogger(self).devlog(traceback.format_exc())
+            getLogger(self).debug("something strange happened... unhandled exception?")
+            getLogger(self).debug(traceback.format_exc())
 
     def sync_lock(self):
         self._sync_api_request = True
@@ -653,6 +656,24 @@ class ModelController(threading.Thread):
             res = True
         return res
 
+    def addPluginStart(self):
+        self.__addPendingAction(modelactions.PLUGINSTART)
+
+    def addPluginEnd(self):
+        self.__addPendingAction(modelactions.PLUGINEND)
+
+    def _pluginStart(self):
+        self.active_plugins_count_lock.acquire()
+        getLogger(self).info("Plugin Started")
+        self.active_plugins_count += 1
+        self.active_plugins_count_lock.release()
+
+    def _pluginEnd(self):
+        self.active_plugins_count_lock.acquire()
+        getLogger(self).info("Plugin Ended")
+        self.active_plugins_count -= 1
+        self.active_plugins_count_lock.release()
+
     def addVulnToInterfaceASYNC(self, host, intId, newVuln):
         self.__addPendingAction(modelactions.ADDVULNINT, newVuln, intId)
 
@@ -888,9 +909,6 @@ class ModelController(threading.Thread):
         hosts_mapper = self.mappers_manager.getMapper(model.hosts.Host.__name__)
         return hosts_mapper.find(name)
 
-    def getHostsCount(self):
-        return len(self._hosts)
-
     def getAllHosts(self):
         hosts = self.mappers_manager.getMapper(
             model.hosts.Host.__name__).getAll()
@@ -917,8 +935,3 @@ class ModelController(threading.Thread):
 
                 for hostname in intr.getHostnames():
                     self.treeWordsTries.addWord(hostname)
-
-    def checkPermissions(self, op):
-        ## In order to use the decorator passPermissionsOrRaise
-        ## The client should implement checkPermissions method.
-        self.__sec.checkPermissions(op)

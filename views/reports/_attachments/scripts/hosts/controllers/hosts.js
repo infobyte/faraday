@@ -8,7 +8,7 @@ angular.module('faradayApp')
         function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact) {
 
         init = function() {
-            $scope.selectall = false;
+            $scope.selectall_hosts = false;
             // hosts list
             $scope.hosts = [];
             // current workspace
@@ -24,6 +24,7 @@ angular.module('faradayApp')
             hostsManager.getHosts($scope.workspace)
                 .then(function(hosts) {
                     $scope.hosts = hosts;
+                    $scope.loadedVulns = true;
                     $scope.loadIcons();
                 });
 
@@ -46,7 +47,7 @@ angular.module('faradayApp')
             $scope.pageSize = 10;
             $scope.currentPage = 0;
             $scope.newCurrentPage = 0;
- 
+
             if(!isNaN(parseInt($cookies.pageSize))) $scope.pageSize = parseInt($cookies.pageSize);
             $scope.newPageSize = $scope.pageSize;
 
@@ -91,7 +92,7 @@ angular.module('faradayApp')
 
             $location.path(url);
         };
-        
+
         $scope.go = function() {
             $scope.pageSize = $scope.newPageSize;
             $cookies.pageSize = $scope.pageSize;
@@ -365,11 +366,11 @@ angular.module('faradayApp')
         };
 
         $scope.checkAll = function() {
-            $scope.selectall = !$scope.selectall;
+            $scope.selectall_hosts = !$scope.selectall_hosts;
 
             tmp_hosts = filter($scope.hosts);
             tmp_hosts.forEach(function(host) {
-                host.selected = $scope.selectall;
+                host.selected = $scope.selectall_hosts;
             });
         };
 
@@ -390,12 +391,12 @@ angular.module('faradayApp')
         }
 
         filter = function(data) {
-            var tmp_data = $filter('orderObjectBy')(data, $scope.sortField, $scope.reverse);
+            var tmp_data = $filter('orderBy')(data, $scope.sortField, $scope.reverse);
             tmp_data = $filter('filter')(tmp_data, $scope.expression);
             tmp_data = tmp_data.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
 
             return tmp_data;
         };
-        
+
         init();
     }]);

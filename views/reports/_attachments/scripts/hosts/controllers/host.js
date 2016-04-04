@@ -8,7 +8,7 @@ angular.module('faradayApp')
         function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, dashboardSrv, servicesManager) {
 
 	    init = function() {
-	    	$scope.selectall = false;
+	    	$scope.selectall_service = false;
             // current workspace
             $scope.workspace = $routeParams.wsId;
             //ID of current host
@@ -28,6 +28,7 @@ angular.module('faradayApp')
             $scope.services = [];
             dashboardSrv.getServicesByHost($scope.workspace, hostId)
                 .then(function(services) {
+                    if (services.length > 0) $scope.loadedServices = true;
                     services.forEach(function(service) {
                         servicesManager.getService(service.id, $scope.workspace, true)
                             .then(function(s) {
@@ -50,7 +51,7 @@ angular.module('faradayApp')
             $scope.pageSize = 10;
             $scope.currentPage = 0;
             $scope.newCurrentPage = 0;
- 
+
             if(!isNaN(parseInt($cookies.pageSize))) $scope.pageSize = parseInt($cookies.pageSize);
             $scope.newPageSize = $scope.pageSize;
 
@@ -88,7 +89,7 @@ angular.module('faradayApp')
 
             $location.path(url);
         };
-        
+
         $scope.go = function() {
             $scope.pageSize = $scope.newPageSize;
             $cookies.pageSize = $scope.pageSize;
@@ -206,7 +207,7 @@ angular.module('faradayApp')
         };
 
         $scope.update = function(services, data) {
-            services.forEach(function(service){            	
+            services.forEach(function(service){
                 delete service.selected;
 	            servicesManager.updateService(service, data, $scope.workspace).then(function(s) {
 	            }, function(message){
@@ -308,11 +309,11 @@ angular.module('faradayApp')
         };
 
         $scope.checkAllServices = function() {
-            $scope.selectall = !$scope.selectall;
+            $scope.selectall_service = !$scope.selectall_service;
 
             tmp_services = filter($scope.services);
             tmp_services.forEach(function(service) {
-                service.selected = $scope.selectall;
+                service.selected = $scope.selectall_service;
             });
         };
 
@@ -333,7 +334,7 @@ angular.module('faradayApp')
 	    }
 
         filter = function(data) {
-            var tmp_data = $filter('orderObjectBy')(data, $scope.sortField, $scope.reverse);
+            var tmp_data = $filter('orderBy')(data, $scope.sortField, $scope.reverse);
             tmp_data = $filter('filter')(tmp_data, $scope.expression);
             tmp_data = tmp_data.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
 

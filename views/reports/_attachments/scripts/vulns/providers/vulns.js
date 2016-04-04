@@ -3,11 +3,11 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('vulnsManager', 
+    .factory('vulnsManager',
         ['Vuln', 'WebVuln', 'BASEURL', '$filter', '$http', '$q', 'attachmentsFact', 'hostsManager', 'servicesManager', 
         function(Vuln, WebVuln, BASEURL, $filter, $http, $q, attachmentsFact, hostsManager, servicesManager) {
         var vulnsManager = {};
-        
+
         vulnsManager.vulns = [];
         vulnsManager.vulns_indexes = {};
 
@@ -77,13 +77,12 @@ angular.module('faradayApp')
                         deferred.reject(err);
                     });
             } catch(e) {
-                console.log(e.stack);
                 deferred.reject(e.name + ": " + e.message);
             }
 
             return deferred.promise;
         };
-        
+
         vulnsManager.deleteVuln = function(vuln) {
             var deferred = $q.defer(),
             self = this;

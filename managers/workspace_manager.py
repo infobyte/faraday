@@ -6,7 +6,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from utils.logs import getLogger
+import restkit
+
 from model.workspace import Workspace
 from persistence.persistence_managers import DBTYPE
 
@@ -16,19 +17,25 @@ from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 
+class WorkspaceException(Exception):
+    pass
+
+
 class WorkspaceManager(object):
-    """Workspace Manager class
-    It's responsabilities goes from:
+    """
+    Workspace Manager class
+    Its responsibilities goes from:
         * Workspace creation
         * Workspace removal
         * Workspace opening
-        * Active Workspace switching"""
+        * Active Workspace switching
+    """
 
-    def __init__(self, dbManager, mappersManager, changesManager, reportsManager, *args, **kwargs):
+    def __init__(self, dbManager, mappersManager,
+                 changesManager, *args, **kwargs):
         self.dbManager = dbManager
         self.mappersManager = mappersManager
         self.changesManager = changesManager
-        self.reportsManager = reportsManager
         self.active_workspace = None
 
     def getWorkspacesNames(self):
@@ -36,58 +43,75 @@ class WorkspaceManager(object):
 
     def createWorkspace(self, name, desc, dbtype=DBTYPE.FS):
         workspace = Workspace(name, desc)
-        dbConnector = self.dbManager.createDb(name, dbtype)
+        try:
+            dbConnector = self.dbManager.createDb(name, dbtype)
+        except restkit.Unauthorized:
+            raise WorkspaceException(
+                ("You're not authorized to create workspaces\n"
+                 "Make sure you're an admin and add your credentials"
+                 "to your user configuration "
+                 "file in $HOME/.faraday/config/user.xml\n"
+                 "For example: "
+                 "<couch_uri>http://john:password@127.0.0.1:5984</couch_uri>"))
+        except Exception as e:
+            raise WorkspaceException(str(e))
         if dbConnector:
             self.closeWorkspace()
             self.mappersManager.createMappers(dbConnector)
             self.mappersManager.save(workspace)
             self.setActiveWorkspace(workspace)
-            CONF.setLastWorkspace(name)
-            CONF.saveConfig()
-            notification_center.workspaceChanged(workspace,self.getWorkspaceType(name))
+            notification_center.workspaceChanged(
+                workspace, self.getWorkspaceType(name))
             notification_center.workspaceLoad(workspace.getHosts())
             self.changesManager.watch(self.mappersManager, dbConnector)
-            self.reportsManager.watch(name)
             return workspace
         return False
 
     def openWorkspace(self, name):
-        if name in self.getWorkspacesNames():
-            self.closeWorkspace()
+        if name not in self.getWorkspacesNames():
+            raise WorkspaceException(
+                "Workspace %s wasn't found" % name)
+        self.closeWorkspace()
+        try:
             dbConnector = self.dbManager.getConnector(name)
-            self.mappersManager.createMappers(dbConnector)
-            workspace = self.mappersManager.getMapper(Workspace.__name__).find(name)
-            if not workspace:
-                notification_center.showDialog(
-                    "Error loading workspace.\nYou should try opening faraday with the '--update' option",
-                    level="ERROR")
-                return self.openDefaultWorkspace()
-            self.setActiveWorkspace(workspace)
-            CONF.setLastWorkspace(name)
-            CONF.saveConfig()
-            notification_center.workspaceChanged(workspace,self.getWorkspaceType(name))
-            notification_center.workspaceLoad(workspace.getHosts())
-            self.changesManager.watch(self.mappersManager, dbConnector)
-            self.reportsManager.watch(name)
-            return workspace
-        return None
+        except restkit.Unauthorized:
+            raise WorkspaceException(
+                ("You're not authorized to access this workspace\n"
+                 "Add your credentials to your user configuration "
+                 "file in $HOME/.faraday/config/user.xml\n"
+                 "For example: "
+                 "<couch_uri>http://john:password@127.0.0.1:5984</couch_uri>"))
+        except Exception as e:
+            raise WorkspaceException(str(e))
+        self.mappersManager.createMappers(dbConnector)
+        workspace = self.mappersManager.getMapper(
+            Workspace.__name__).find(name)
+        if not workspace:
+            raise WorkspaceException(
+                ("Error loading workspace.\n"
+                 "You should try opening faraday "
+                 "with the '--update' option"))
+        self.setActiveWorkspace(workspace)
+        notification_center.workspaceChanged(
+            workspace, self.getWorkspaceType(name))
+        notification_center.workspaceLoad(workspace.getHosts())
+        self.changesManager.watch(self.mappersManager, dbConnector)
+        return workspace
 
-    def openDefaultWorkspace(self):
-        #This method opens the default workspace called 'untitled'
-        if 'untitled' not in self.getWorkspacesNames():
-            workspace = Workspace('untitled', 'default workspace')
+    def openDefaultWorkspace(self, name='untitled'):
+        # This method opens the default workspace called 'untitled'
+        if name not in self.getWorkspacesNames():
+            workspace = Workspace(name, 'default workspace')
             dbConnector = self.dbManager.createDb(
                 workspace.getName(), DBTYPE.FS)
             if self.active_workspace:
                 self.closeWorkspace()
             self.mappersManager.createMappers(dbConnector)
             self.mappersManager.save(workspace)
-        return self.openWorkspace('untitled')
-
+        return self.openWorkspace(name)
 
     def closeWorkspace(self):
         self.changesManager.unwatch()
-
 
     def removeWorkspace(self, name):
         if name in self.getWorkspacesNames():
@@ -118,12 +142,11 @@ class WorkspaceManager(object):
             return 'FS'
 
     def namedTypeToDbType(self, name):
-        if name =='CouchDB':
+        if name == 'CouchDB':
             return DBTYPE.COUCHDB
         if name == 'FS':
             return DBTYPE.FS
 
     def getAvailableWorkspaceTypes(self):
-        return [self._dbTypeToNamedType(dbtype) for \
+        return [self._dbTypeToNamedType(dbtype) for
                 dbtype in self.dbManager.getAvailableDBs()]
-

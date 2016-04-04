@@ -750,7 +750,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
 /* End of media */
 /* Styles for WS list */
 .ws-name {
-    font: 250%/3 'Ubuntu',Helvetica,Arial,sans-serif !important;
+    font: 120%/3 'Ubuntu',Helvetica,Arial,sans-serif !important;
     font-size: 100%;
 }
 .ws-link {

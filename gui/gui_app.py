@@ -6,6 +6,11 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+from managers.reports_managers import ReportManager
+
+from config.configuration import getInstanceConfiguration
+CONF = getInstanceConfiguration()
+
 
 class UiFactory(object):
     @staticmethod
@@ -23,10 +28,10 @@ class UiFactory(object):
 class FaradayUi(object):
     def __init__(self, model_controller=None, plugin_manager=None,
                  workspace_manager=None, gui="qt3"):
-        #self.main_app = main_app
         self.model_controller = model_controller
         self.plugin_manager = plugin_manager
         self.workspace_manager = workspace_manager
+        self.report_manager = None
 
     def getModelController(self):
         return self.model_controller
@@ -63,3 +68,35 @@ class FaradayUi(object):
 
     def createLoggerWidget(self):
         pass
+
+    def openWorkspace(self, name):
+        # The method openWorkspace can return a workspace or
+        # raise en Exception. For now, just raise it to the caller
+        if self.report_manager:
+            self.report_manager.stop()
+            self.report_manager.join()
+        try:
+            ws = self.getWorkspaceManager().openWorkspace(name)
+            self.report_manager = ReportManager(
+                10, name)
+            self.report_manager.start()
+        except Exception as e:
+            raise e
+        return ws
+
+    def openDefaultWorkspace(self):
+        """
+        Opens the default workspace (called 'untitled').
+        This method shouldn't fail, since the default workspace
+        should be always available
+
+        Returns the default workspace
+        """
+        if self.report_manager:
+            self.report_manager.stop()
+            self.report_manager.join()
+        ws = self.getWorkspaceManager().openDefaultWorkspace()
+        self.report_manager = ReportManager(
+                10, ws.name)
+        self.report_manager.start()
+        return ws

@@ -185,7 +185,7 @@ angular.module('faradayApp')
                 loadAtt,
                 self = this,
                 url = BASEURL + self.ws + "/" + self._id;
-                
+
                 self.populate().then(function(resp) {
                     $http.put(url, resp)
                         .success(function(data) {

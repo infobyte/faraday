@@ -63,12 +63,19 @@ describe('statusReportCtrl', function() {
                    "update_controller_action": "ModelControler.newVuln",
                    "owner": "john"
                 },
+                "impact": {
+                    accountability: false,
+                    availability: false,
+                    confidentiality: false,
+                    integrity: false
+                },
                 "owned": false,
                 "severity": "med",
                 "type": "Vulnerability",
                 "owner": "john",
                 "desc": "I'm scared!",
                 "data": "",
+                "easeofresolution": "simple",
                 "description": "I'm scared!"
             };
             vuln2 = {
@@ -91,12 +98,19 @@ describe('statusReportCtrl', function() {
                    "update_controller_action": "ModelControler.newVuln",
                    "owner": "john"
                 },
+                "impact": {
+                    accountability: false,
+                    availability: false,
+                    confidentiality: false,
+                    integrity: false
+                },
                 "owned": false,
                 "severity": "med",
                 "type": "Vulnerability",
                 "owner": "john",
                 "desc": "I'm scared!",
                 "data": "",
+                "easeofresolution": "trivial",
                 "description": "I'm scared!"
             };
             vuln3 = {
@@ -112,6 +126,7 @@ describe('statusReportCtrl', function() {
                    "update_controller_action": "No model controller call",
                    "owner": ""
                 },
+                "easeofresolution": "simple",
                 "name": "Service Detection",
                 "obj_id": "008cba9b11897f2d52c53dd953d75fa233a7fffe",
                 "owned": false,
@@ -119,6 +134,12 @@ describe('statusReportCtrl', function() {
                 "parent": "6.7.8",
                 "refs": [
                 ],
+                "impact": {
+                    accountability: false,
+                    availability: false,
+                    confidentiality: false,
+                    integrity: false
+                },
                 "severity": "low",
                 "type": "VulnerabilityWeb",
                 "method": "",
@@ -259,12 +280,12 @@ describe('statusReportCtrl', function() {
     });
 
     describe('Status report vuln deletion - delete method (modal)', function() {
-        it('call delete by property with no vulns selected', function() {
+        it('call delete with no vulns selected', function() {
             // we need $scope.gridOptions.data to have all the vulns before calling
             // the delete method
+            $scope.getCurrentSelection = function() { return []; }
             $scope.$apply();
-            $scope.deleteVuln(vuln1);
-            fakeModal.close();
+            $scope.delete();
             $scope.$apply();
 
             expect($scope.gridOptions.data.length).toEqual(3);
@@ -275,9 +296,9 @@ describe('statusReportCtrl', function() {
         it('call delete with a valid vuln (1.2.3.4) selected and accept modal', function() {
             // we need $scope.gridOptions.data to have all the vulns before calling
             // the delete method
-            vuln1.selected_statusreport_controller = true;
+            $scope.getCurrentSelection = function() { return [vuln1]; }
             $scope.$apply();
-            $scope.deleteVuln();
+            $scope.delete();
             fakeModal.close();
             $scope.$apply();
 
@@ -289,7 +310,7 @@ describe('statusReportCtrl', function() {
         it('call delete with a valid vuln (1.2.3.4) selected and cancel modal', function() {
             // we need $scope.gridOptions.data to have all the vulns before calling
             // the delete method
-            vuln1.selected_statusreport_controller = true;
+            $scope.getCurrentSelection = function() { return [vuln1]; }
             $scope.$apply();
             $scope.delete();
             fakeModal.dismiss();
@@ -301,8 +322,7 @@ describe('statusReportCtrl', function() {
             expect($scope.gridOptions.data).toContain(vuln3);
         });
         it('call delete with valid vulns selected and accept modal', function() {
-            vuln1.selected_statusreport_controller = true;
-            vuln2.selected_statusreport_controller = true;
+            $scope.getCurrentSelection = function() { return [vuln1, vuln2]; }
             $scope.$apply();
             $scope.delete();
             fakeModal.close();
@@ -453,7 +473,131 @@ describe('statusReportCtrl', function() {
     });
 
     describe('Status report vuln edition - update method', function() {
-       //TODO: test each editable property 
+        it('edit many vulns by property', function() {
+            $scope.getCurrentSelection = function() { return [vuln1, vuln2, vuln3]; };
+            var impact = {
+                accountability: true,
+                availability: true,
+                confidentiality: true,
+                integrity: false
+            };
+
+            $scope.$apply();
+            // String properties
+            $scope.editString('name');
+            fakeModal.close('Changed name');
+            // Text properties
+            $scope.editText('desc');
+            fakeModal.close('Changed description');
+            // Severity property
+            $scope.editSeverity();
+            fakeModal.close('high');
+            // Ease of resolution property(obj)
+            $scope.editEaseofresolution();
+            fakeModal.close('difficult');
+            // References property
+            $scope.editReferences();
+            fakeModal.close(['CVE-new-ref','OSVDB:new-ref']);
+            // Impact property(obj)
+            $scope.editImpact();
+            fakeModal.close(impact);
+            // Comfirm property
+            $scope.editConfirm();
+            fakeModal.close('Confirm');
+
+            $scope.gridOptions.data.forEach(function(v) {
+                expect(v.name).toEqual("Changed name");
+                expect(v.desc).toEqual("Changed description");
+                expect(v.severity).toEqual("high");
+                expect(v.easeofresolution).toEqual("difficult");
+                expect(v.refs).toContain('CVE-new-ref', 'OSVDB:new-ref');
+                expect(v.impact).toEqual(impact);
+                expect(v.confirmed).toEqual(true);
+            });
+        });
+        it('edit many vulns by property but cancel the modal', function() {
+            $scope.getCurrentSelection = function() { return [vuln1, vuln2, vuln3]; };
+            var impact = {
+                accountability: true,
+                availability: true,
+                confidentiality: true,
+                integrity: false
+            };
+
+            $scope.$apply();
+            // String properties
+            $scope.editString('name');
+            fakeModal.dismiss();
+            // Text properties
+            $scope.editText('desc');
+            fakeModal.dismiss();
+            // Severity property
+            $scope.editSeverity();
+            fakeModal.dismiss();
+            // Ease of resolution property(obj)
+            $scope.editEaseofresolution();
+            fakeModal.dismiss();
+            // References property
+            $scope.editReferences();
+            fakeModal.dismiss();
+            // Impact property(obj)
+            $scope.editImpact();
+            fakeModal.dismiss();
+            // Comfirm property
+            $scope.editConfirm();
+            fakeModal.dismiss();
+
+            $scope.gridOptions.data.forEach(function(v) {
+                expect(v.name).not.toEqual("Changed name");
+                expect(v.desc).not.toEqual("Changed description");
+                expect(v.severity).not.toEqual("high");
+                expect(v.easeofresolution).not.toEqual("difficult");
+                expect(v.refs).not.toContain('CVE-new-ref', 'OSVDB:new-ref');
+                expect(v.impact).not.toEqual(impact);
+                expect(v.confirmed).not.toEqual(true);
+            });
+        });
+        it('edit many vulns from CWE', function() {
+            $scope.getCurrentSelection = function() { return [vuln1, vuln2, vuln3]; };
+            var CWE_obj = {
+                name: "ES-Cisco ASA Error",
+                desc: "Summary: El cisco ASA es vulnerable",
+                refs: ['CVE-new-ref'],
+                resolution: "Actualizar la ultima version"
+            };
+
+            $scope.$apply();
+            $scope.editCWE();
+            fakeModal.close(CWE_obj);
+
+            $scope.gridOptions.data.forEach(function(v) {
+                expect(v.name).toEqual("ES-Cisco ASA Error");
+                expect(v.desc).toEqual("Summary: El cisco ASA es vulnerable");
+                expect(v.refs).toContain('CVE-new-ref');
+                expect(v.resolution).toEqual('Actualizar la ultima version');
+            });
+        });
+        it('edit many vulns from CWE but cancel the modal', function() {
+            $scope.getCurrentSelection = function() { return [vuln1, vuln2, vuln3]; };
+            var CWE_obj = {
+                name: "ES-Cisco ASA Error",
+                desc: "Summary: El cisco ASA es vulnerable",
+                refs: ['CVE-new-ref'],
+                resolution: "Actualizar la ultima version"
+            };
+
+            $scope.$apply();
+            $scope.editCWE();
+            fakeModal.dismiss();
+            $scope.$apply();
+
+            $scope.gridOptions.data.forEach(function(v) {
+                expect(v.name).not.toEqual("ES-Cisco ASA Error");
+                expect(v.desc).not.toEqual("Summary: El cisco ASA es vulnerable");
+                expect(v.refs).not.toContain('CVE-new-ref');
+                expect(v.resolution).not.toEqual('Actualizar la ultima version');
+            });
+        });
     });
 
     describe('Status report vuln edition - edit method (modal)', function() {
@@ -469,11 +613,7 @@ describe('statusReportCtrl', function() {
                 "severity": "high"
             };
 
-            vuln1.selected_statusreport_controller = true;
-
-            $scope.getCurrentSelection = function() {
-                return [vuln1];
-            };
+            $scope.getCurrentSelection = function() { return [vuln1]; };
 
             $scope.$apply();
             $scope.edit();
@@ -504,11 +644,11 @@ describe('statusReportCtrl', function() {
                 "owned": true,
                 "severity": "high"
             };
-            vuln1.selected_statusreport_controller = true;
+            $scope.getCurrentSelection = function() { return [vuln1]; };
             $scope.$apply();
-            //$scope.edit();
-            //fakeModal.dismiss();
-            //$scope.$apply();
+            $scope.edit();
+            fakeModal.dismiss();
+            $scope.$apply();
 
             expect($scope.gridOptions.data.length).toEqual(3);
             $scope.gridOptions.data.forEach(function(vuln) {

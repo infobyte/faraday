@@ -9,6 +9,7 @@ import json
 import os
 import shutil
 import mockito
+import restkit
 import threading
 from urlparse import urlparse
 import traceback
@@ -224,14 +225,16 @@ class CouchDbConnector(DbConnector):
         super(CouchDbConnector, self).__init__(type=DBTYPE.COUCHDB)
         self.db = db
         self.saves_counter = 0
-        #self.seq_num = seq_num
         self.mutex = threading.Lock()
-        vmanager = ViewsManager()
-        vmanager.addViews(self.db)
         self._docs = {}
-        self._compactDatabase()
+        try:
+            vmanager = ViewsManager()
+            vmanager.addViews(self.db)
+            self._compactDatabase()
+        except restkit.Unauthorized:
+            getLogger(self).warn(
+                "You're not authorized to upload views to this database")
         self.seq_num = self.db.info()['update_seq']
-        # self._tree = self._createTree(self.getDocs())
 
     def getDocs(self):
         if len(self._docs.keys()) == 0:
@@ -378,7 +381,11 @@ class CouchDbConnector(DbConnector):
 
     #@trap_timeout
     def _compactDatabase(self):
-        self.db.compact()
+        try:
+            self.db.compact()
+        except:
+            getLogger(self).warn(
+                "You're not authorized to compact this database")
 
 
 class AbstractPersistenceManager(object):
@@ -541,8 +548,12 @@ class CouchDbManager(AbstractPersistenceManager):
     def pushReports(self):
         vmanager = ViewsManager()
         reports = os.path.join(os.getcwd(), "views", "reports")
-        workspace = self.__serv.get_or_create_db("reports")
-        vmanager.addView(reports, workspace)
+        try:
+            workspace = self.__serv.get_or_create_db("reports")
+            vmanager.addView(reports, workspace)
+        except:
+            getLogger(self).warn(
+                "Reports database couldn't be uploaded. You need to be an admin to do it")
         return self.__uri + "/reports/_design/reports/index.html"
 
     def lostConnectionResolv(self):

@@ -157,7 +157,7 @@ class Configuration:
             self._tkt_api_params = self._getValue(tree, CONST_TKTAPIPARAMS,default ="{}")
             self._tkt_template = self._getValue(tree, CONST_TKTTEMPLATE,default ="{}")
 
-
+            self._merge_strategy = None
 
     def getApiConInfo(self):
         if str(self._api_con_info_host) == "None" or str(self._api_con_info_port) == "None":
@@ -173,10 +173,14 @@ class Configuration:
         return self._api_con_info_host
 
     def getApiConInfoPort(self):
-        return self._api_con_info_port
+        if str(self._api_con_info_port) == "None":
+            return None
+        return int(self._api_con_info_port)
 
     def getApiRestfulConInfoPort(self):
-        return self._api_restful_con_info_port
+        if str(self._api_restful_con_info_port) == "None":
+            return None
+        return int(self._api_restful_con_info_port)
 
     def getAppname(self):
         return self._appname
@@ -279,6 +283,9 @@ class Configuration:
 
     def getTktTemplate(self):
         return self._tkt_template
+
+    def getMergeStrategy(self):
+        return self._merge_strategy
 
     def setLastWorkspace(self, workspaceName):
         self._last_workspace = workspaceName
@@ -386,6 +393,9 @@ class Configuration:
     def setPluginSettings(self, settings):
         self._plugin_settings = settings
 
+    def setMergeStrategy(self, strategy):
+        self._merge_strategy = strategy
+
     def indent(self, elem, level=0):
         """ Indents the tree to make a pretty view of it. """
 
@@ -412,18 +422,18 @@ class Configuration:
         tree = self._getTree()
 
         API_CON_INFO_HOST = Element(CONST_API_CON_INFO_HOST)
-        API_CON_INFO_HOST.text = self._getValue(tree, CONST_API_CON_INFO_HOST)
-        # API_CON_INFO_HOST.text = self.getApiConInfoHost()
+        #API_CON_INFO_HOST.text = self._getValue(tree, CONST_API_CON_INFO_HOST)
+        API_CON_INFO_HOST.text = self.getApiConInfoHost()
         ROOT.append(API_CON_INFO_HOST)
 
         API_CON_INFO_PORT = Element(CONST_API_CON_INFO_PORT)
-        API_CON_INFO_PORT.text = self._getValue(tree, CONST_API_CON_INFO_PORT)
-        # API_CON_INFO_PORT.text = str(self.getApiConInfoPort())
+        #API_CON_INFO_PORT.text = self._getValue(tree, CONST_API_CON_INFO_PORT)
+        API_CON_INFO_PORT.text = str(self.getApiConInfoPort())
         ROOT.append(API_CON_INFO_PORT)
 
         API_RESTFUL_CON_INFO_PORT = Element(CONST_API_RESTFUL_CON_INFO_PORT)
-        API_RESTFUL_CON_INFO_PORT.text = self._getValue(tree, CONST_API_RESTFUL_CON_INFO_PORT)
-        # API_RESTFUL_CON_INFO_PORT.text = str(self.getApiRestfulConInfoPort())
+        #API_RESTFUL_CON_INFO_PORT.text = self._getValue(tree, CONST_API_RESTFUL_CON_INFO_PORT)
+        API_RESTFUL_CON_INFO_PORT.text = str(self.getApiRestfulConInfoPort())
         ROOT.append(API_RESTFUL_CON_INFO_PORT)
 
         APPNAME = Element(CONST_APPNAME)

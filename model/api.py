@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
+import socket
 import zipfile
 import logging
 
@@ -76,44 +77,61 @@ def _setUpAPIServer(hostname=None, port=None):
         if CONF.getApiConInfo() is None:
             CONF.setApiConInfo(hostname, port)
         devlog("starting XMLRPCServer with api_conn_info = %s" % str(CONF.getApiConInfo()))
-        try:
-            _xmlrpc_api_server = model.common.XMLRPCServer(CONF.getApiConInfo())
-            # Registers the XML-RPC introspection functions system.listMethods, system.methodHelp and system.methodSignature.
-            _xmlrpc_api_server.register_introspection_functions()
 
-            # register a function to nicely stop server
-            _xmlrpc_api_server.register_function(_xmlrpc_api_server.stop_server)
+        while True:
 
-            # register all the api functions to be exposed by the server
-            _xmlrpc_api_server.register_function(createAndAddHost)
-            _xmlrpc_api_server.register_function(createAndAddInterface)
-            _xmlrpc_api_server.register_function(createAndAddServiceToApplication)
-            _xmlrpc_api_server.register_function(createAndAddServiceToInterface)
-            _xmlrpc_api_server.register_function(createAndAddApplication)
-            _xmlrpc_api_server.register_function(createAndAddNoteToService)
-            _xmlrpc_api_server.register_function(createAndAddNoteToHost)
-            _xmlrpc_api_server.register_function(createAndAddNoteToNote)
-            _xmlrpc_api_server.register_function(createAndAddVulnWebToService)
-            _xmlrpc_api_server.register_function(createAndAddVulnToService)
-            _xmlrpc_api_server.register_function(createAndAddVulnToHost)
-            _xmlrpc_api_server.register_function(addHost)
-            _xmlrpc_api_server.register_function(addInterface)
-            _xmlrpc_api_server.register_function(addServiceToApplication)
-            _xmlrpc_api_server.register_function(addServiceToInterface)
-            _xmlrpc_api_server.register_function(addApplication)
-            _xmlrpc_api_server.register_function(newHost)
-            _xmlrpc_api_server.register_function(newInterface)
-            _xmlrpc_api_server.register_function(newService)
-            _xmlrpc_api_server.register_function(newApplication)
-            _xmlrpc_api_server.register_function(devlog)
+            try:
+                _xmlrpc_api_server = model.common.XMLRPCServer(CONF.getApiConInfo())
+                # Registers the XML-RPC introspection functions system.listMethods, system.methodHelp and system.methodSignature.
+                _xmlrpc_api_server.register_introspection_functions()
 
-            #TODO: check if all necessary APIs are registered here!!
+                # register a function to nicely stop server
+                _xmlrpc_api_server.register_function(_xmlrpc_api_server.stop_server)
 
-            devlog("XMLRPC API server configured...")
-        except Exception, e:
-            msg = "There was an error creating the XMLRPC API Server:\n%s" % str(e)
-            log(msg)
-            devlog("[ERROR] - %s" % msg)
+                # register all the api functions to be exposed by the server
+                _xmlrpc_api_server.register_function(createAndAddHost)
+                _xmlrpc_api_server.register_function(createAndAddInterface)
+                _xmlrpc_api_server.register_function(createAndAddServiceToApplication)
+                _xmlrpc_api_server.register_function(createAndAddServiceToInterface)
+                _xmlrpc_api_server.register_function(createAndAddApplication)
+                _xmlrpc_api_server.register_function(createAndAddNoteToService)
+                _xmlrpc_api_server.register_function(createAndAddNoteToHost)
+                _xmlrpc_api_server.register_function(createAndAddNoteToNote)
+                _xmlrpc_api_server.register_function(createAndAddVulnWebToService)
+                _xmlrpc_api_server.register_function(createAndAddVulnToService)
+                _xmlrpc_api_server.register_function(createAndAddVulnToHost)
+                _xmlrpc_api_server.register_function(addHost)
+                _xmlrpc_api_server.register_function(addInterface)
+                _xmlrpc_api_server.register_function(addServiceToApplication)
+                _xmlrpc_api_server.register_function(addServiceToInterface)
+                _xmlrpc_api_server.register_function(addApplication)
+                _xmlrpc_api_server.register_function(newHost)
+                _xmlrpc_api_server.register_function(newInterface)
+                _xmlrpc_api_server.register_function(newService)
+                _xmlrpc_api_server.register_function(newApplication)
+                _xmlrpc_api_server.register_function(devlog)
+
+                #TODO: check if all necessary APIs are registered here!!
+
+                getLogger().info(
+                    "XMLRPC API server configured on %s" % str(
+                        CONF.getApiConInfo()))
+                break
+            except socket.error as exception:
+                if exception.errno == 98:
+                    # Port already in use
+                    # Let's try the next one
+                    port += 1
+                    if port > 65535:
+                        raise Exception("No ports available!")
+                    CONF.setApiConInfo(hostname, port)
+                    CONF.saveConfig()
+                else:
+                    raise exception
+            except Exception as e:
+                msg = "There was an error creating the XMLRPC API Server:\n%s" % str(e)
+                log(msg)
+                devlog("[ERROR] - %s" % msg)
 
 
 #-------------------------------------------------------------------------------
@@ -523,49 +541,6 @@ def getConflicts():
     return __model_controller.getConflicts()
 
 #-------------------------------------------------------------------------------
-
-#exportWorskpace
-
-def exportWorskpace(workspace_path, export_path):
-    """
-    This api will create a zip file for the persistence directory
-    """
-    zip = zipfile.ZipFile(export_path, 'w', compression=zipfile.ZIP_DEFLATED)
-    root_len = len(os.path.abspath(workspace_path))
-    for root, dirs, files in os.walk(workspace_path):
-        if ".svn" not in root:
-            archive_root = os.path.abspath(root)[root_len:]
-            if files is not ".svn":
-                for f in files:
-                    fullpath = os.path.join(root, f)
-                    archive_name = os.path.join(archive_root, f)
-#                        print f
-                    zip.write(fullpath, archive_name, zipfile.ZIP_DEFLATED)
-    zip.close()
-
-
-def importWorskpace(workspace_path, file_path):
-    """
-    This api will import a zip file of the persistence directory.
-    WARNING: this will overwrite any existing files!
-    """
-
-    archive = zipfile.ZipFile(str(file_path), "r", zipfile.ZIP_DEFLATED)
-    names = archive.namelist()
-
-    for name in names:
-        filename = os.path.join(workspace_path, name)
-        if not os.path.exists(os.path.dirname(filename)):
-            os.mkdir(os.path.dirname(filename))
-        # create the output file. This will overwrite any existing file with the same name
-        temp = open(filename, "wb")
-        data = archive.read(name) # read data from zip archive
-        temp.write(data)
-        temp.close()
-
-    archive.close()
-
-#-------------------------------------------------------------------------------
 # EVIDENCE
 #-------------------------------------------------------------------------------
 #TODO: refactor!! acomodar estos metodos para que no accedan a cosas directas del model_controller
@@ -672,6 +647,16 @@ def showDialog(msg, level="Information"):
 
 def showPopup(msg, level="Information"):
     return model.log.getNotifier().showPopup(msg, level)
+
+
+# Plugin status
+
+def pluginStart():
+    __model_controller.addPluginStart()
+
+
+def pluginEnd():
+    __model_controller.addPluginEnd()
 
 #-------------------------------------------------------------------------------
 def getLoggedUser():

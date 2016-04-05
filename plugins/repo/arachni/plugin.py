@@ -367,7 +367,7 @@ class ArachniPlugin(core.PluginBase):
         self.options         = None
 
         self._command_regex  = re.compile(
-        r'^(arachni_faraday |\.\/arachni_faraday).*?'
+        r'^(arachni |\.\/arachni).*?'
         )
 
         self.protocol = None

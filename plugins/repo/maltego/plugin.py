@@ -318,7 +318,7 @@ class MaltegoPlugin(core.PluginBase):
          self.options         = None
          self._current_output = None
 
-         self._command_regex  = re.compile(r'^(sudo maltego_faraday|maltego_faraday|\.\/maltego_faraday).*?')
+         self._command_regex  = re.compile(r'^(sudo maltego|maltego|\.\/maltego).*?')
 
          self.report = None
          global current_path

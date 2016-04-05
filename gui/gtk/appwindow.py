@@ -2,26 +2,18 @@
 import os
 import sys
 import gi
-from gi.repository import GLib, Gio, Gtk, Vte, GObject
+
 from config.configuration import getInstanceConfiguration
 from consolelog import ConsoleLog
+from mainwidgets import Sidebar
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-CONF = getInstanceConfiguration()
+from gi.repository import GLib, Gio, Gtk, Vte, GObject, Gdk
 
-#""" PROBLEM:
-#    GTK.NOTEBOOK SHOULD APPEND WIDGETS
-#    RIGHT NOW I'M APPENDING BOXES
-#    IT'S A BIG FUCK UP BUT IT IS SOON ENOUGHT TO FIX IT
-#    DO IT BEFORE ITS A MESS
-#
-#    PROPOSED SOLUTION: LEAVE THIS AS IT PRETTY MUCH IS, LET IT HANDLE
-#    STUFF CONCERNING THE WINDOW.
-#
-#    CREATE NEW MODULE WINDOWUI THAT ACTUALLY CONTAINS THE UI
-#"""
+
+CONF = getInstanceConfiguration()
 
 
 class AppWindow(Gtk.ApplicationWindow):
@@ -30,10 +22,11 @@ class AppWindow(Gtk.ApplicationWindow):
     to display log information on the text box defined in ConsoleLog module"""
 
     __gsignals__ = {
-                "new_log": (GObject.SIGNAL_RUN_FIRST, None, (str, int))
+                "new_log": (GObject.SIGNAL_RUN_FIRST, None, (str, int, )),
+                "new_notif": (GObject.SIGNAL_RUN_FIRST, None, (str, ))
                 }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, workspace_manager, *args, **kwargs):
         super(Gtk.ApplicationWindow, self).__init__(*args, **kwargs)
 
         # This will be in the windows group and have the "win" prefix
@@ -43,10 +36,16 @@ class AppWindow(Gtk.ApplicationWindow):
         max_action.connect("change-state", self.on_maximize_toggle)
         self.add_action(max_action)
 
+        self.workspace_manager = workspace_manager
         # creates an instance of ConsoleLog and puts it in a box
         self.log = ConsoleLog()
         self.loggerBox = Gtk.Box()
-        self.loggerBox.pack_start(self.log.getView(), False, False, 5)
+        self.loggerBox.pack_start(self.log.getView(), True, True, 0)
+
+        # creates an instance of statusbar and puts it in a box
+        self.statusbar = Gtk.Statusbar.new()
+        self.statusbarBox = Gtk.Box()
+        self.statusbarBox.pack_start(self.statusbar, True, True, 0)
 
         # Keep it in sync with the actual state. Deep dark GTK magic
         self.connect("notify::is-maximized",
@@ -57,6 +56,12 @@ class AppWindow(Gtk.ApplicationWindow):
         # the main layout of our window is a notebook which supports tabs
         self.notebook = Gtk.Notebook()
         self.notebook.popup_enable()
+
+        # TODO: override_background_color is deprecated. prolly best
+        # to use something else. this works for now so as to make
+        # the notebooks background not white
+        self.notebook.override_background_color(0, Gdk.RGBA(0, 0, 0, 0))
+
         self.add(self.notebook)
         self.page1 = self.mainBox_creator()
         self.notebook.append_page(self.page1, Gtk.Label("1"))
@@ -73,10 +78,6 @@ class AppWindow(Gtk.ApplicationWindow):
         # This explodes everywhere, it is very weird. Pass works for now
         pass
 
-    def getLogBox(self):
-        """Returns the box used by window to display the logger's TextView"""
-        return self.loggerBox
-
     def mainBox_creator(self):
         """Creates the mainbox of the Window, where all the other small
         little boxes live"""
@@ -90,24 +91,23 @@ class AppWindow(Gtk.ApplicationWindow):
         toolbar = self.create_toolbar()
         terminal = self.create_terminal()
 
-        sidebar = Gtk.Label()
-        sidebar.set_label("Test")  # TODO: make the sidebar do something
-                                   # TODO: fix sidebar's that weird color?
+        sidebar = Sidebar(self.workspace_manager).getWSList()
 
         filtr = self.create_filter()  # weird name 'cause filter is reserved
 
-        sidebarBox.pack_start(sidebar, True, True, 0)
+        sidebarBox.pack_start(sidebar , False, True, 0)
         terminalBox.pack_start(terminal, True, True, 0)
 
         middleBox.pack_start(terminalBox, True, True, 0)
         middleBox.pack_end(sidebarBox, False, False, 0)
 
         toolbarBox.pack_start(toolbar, True, True, 0)
-        # toolbarBox.pack_end(filtr, False, False, 0)
+        toolbarBox.pack_end(filtr, False, False, 0)
 
         mainBox.pack_start(toolbarBox, False, False, 0)
         mainBox.pack_start(middleBox, True, True, 0)
-        mainBox.pack_start(self.getLogBox(), False, False, 0)
+        mainBox.pack_start(self.loggerBox, False, False, 0)
+        mainBox.pack_start(self.statusbarBox, False, False, 0)
 
         return mainBox
 
@@ -141,10 +141,12 @@ class AppWindow(Gtk.ApplicationWindow):
             self.unmaximize()
 
     def create_filter(self):
+
         entryBox = Gtk.Box()
         entry = Gtk.Entry()
         entry.set_text("Filter")
         entryBox.pack_start(entry, True, True, 0)
+
         return entryBox
 
     def create_toolbar(self):
@@ -154,8 +156,6 @@ class AppWindow(Gtk.ApplicationWindow):
 
         toolbar = Gtk.Toolbar()
         toolbar.set_hexpand(True)
-        #TODO: CHECK THIS OUT, PROBABLY HAS THE KEY TO MAKING ENTRY AND STUFF
-        # PRETTY
         toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR)
 
         # new_from_stock is deprecated, but should work fine for now

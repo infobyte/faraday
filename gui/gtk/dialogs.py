@@ -67,6 +67,10 @@ class PreferenceWindowDialog(Gtk.Window):
 
 
 class NewWorkspaceDialog(Gtk.Window):
+    """Sets up the New Workspace Dialog, where the user can set a name,
+    a description and a type for a new workspace. Also checks that the
+    those attributes don't correspond to an existing workspace"""
+
     def __init__(self, callback=None,  workspace_manager=None):
 
         Gtk.Window.__init__(self, title="Create New Workspace")
@@ -143,6 +147,8 @@ class NewWorkspaceDialog(Gtk.Window):
 
 
 class OpenWorkspaceDialog(Gtk.Window):
+    """Sets up a Dialog where the user can choose a workspace from those
+    existing"""
     def __init__(self, callback, workspace_manager):
         Gtk.Window.__init__(self, title="Open Workspace")
         self.set_size_request(200, 200)
@@ -183,6 +189,9 @@ class OpenWorkspaceDialog(Gtk.Window):
 
 
 class PluginOptionsDialog(Gtk.Window):
+    """The dialog where the user can see details about the plugins installed
+    Its missing the feature to set the preferences. IMPORTANT to implement
+    that"""
     def __init__(self, plugin_manager):
 
         Gtk.Window.__init__(self, title="Plugins Options")
@@ -245,6 +254,8 @@ class PluginOptionsDialog(Gtk.Window):
         return entry_box
 
     def createPluginInfo(self, plugin_manager):
+        """Creates and return a TreeStore where the basic information about
+        the plugins live"""
         plugin_info = Gtk.TreeStore(str, str, str)
         if plugin_manager is not None:
             self.plugin_settings = plugin_manager.getSettings()

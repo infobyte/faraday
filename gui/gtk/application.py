@@ -1,14 +1,10 @@
 # -*- coding: utf-8 -*-
-import sys
 import os
 import gi
 import model.guiapi
 import model.api
 import model.log
 
-gi.require_version('Gtk', '3.0')
-gi.require_version('Vte', '2.91')
-from gi.repository import Gio, Gtk
 from gui.gui_app import FaradayUi
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
@@ -20,8 +16,10 @@ from dialogs import PluginOptionsDialog
 from gui.loghandler import GUIHandler
 from utils.logs import addHandler
 
-import ipdb
+gi.require_version('Gtk', '3.0')
+gi.require_version('Vte', '2.91')
 
+from gi.repository import Gio, Gtk
 
 CONF = getInstanceConfiguration()
 
@@ -128,7 +126,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         if not self.window:
             # Windows are associated with the application
             # when the last one is closed the application shuts down
-            self.window = AppWindow(application=self, title="Faraday")
+            self.window = AppWindow(self.workspace_manager,
+                                    application=self,
+                                    title="Faraday")
         self.window.present()
 
         self.loghandler = GUIHandler()

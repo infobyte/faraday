@@ -13,6 +13,8 @@ import time
 import traceback
 import re
 
+from utils.logs import getLogger
+
 try:
     import xml.etree.cElementTree as ET
 
@@ -39,20 +41,51 @@ class ReportProcessor():
         model.api.log("Report file is %s" % filename)
 
         parser = ReportParser(filename)
-        if (parser.report_type is not None):
-            model.api.log(
-                "The file is %s, %s" % (filename, parser.report_type))
 
-            command_string = "./%s %s" % (parser.report_type.lower(),
-                                          filename)
-            model.api.log("Executing %s" % (command_string))
+        if (parser.report_type is None):
 
-            new_cmd, output_file = self.client.send_cmd(command_string)
-            self.client.send_output(command_string, filename)
-            return True
-        return False
+            getLogger(self).debug('Automatical detection FAILED... Try manual...')
+            parser.report_type = self.getUserPluginName(filename)
+            if parser.report_type is None:
+
+                getLogger(self).error(
+                    'Plugin not found automatic and manual try!! FATAL'
+                )
+
+                return False
+
+        model.api.log(
+            'The file is %s, %s' % (filename, parser.report_type)
+        )
+
+        command_string = "./%s %s" % (
+            parser.report_type.lower(),
+            filename
+        )
+
+        model.api.log("Executing %s" % (command_string))
+
+        new_cmd, output_file = self.client.send_cmd(command_string)
+        self.client.send_output(command_string, filename)
+        return True
+
+    def getUserPluginName(self, pathFile):
+
+        try:
+
+            nameReport = pathFile[pathFile.rfind('/') + 1: pathFile.rfind('.')]
+            plugin = nameReport[nameReport.find('_faraday_') + 9:]
+
+            if plugin is not None or plugin != '':
+                return plugin
+            else:
+                return None
+
+        except:
+            return None
 
     def onlinePlugin(self, cmd):
+
         new_cmd, output_file = self.client.send_cmd(cmd)
         self.client.send_output(cmd)
 
@@ -65,6 +98,7 @@ class ReportManager(threading.Thread):
         self._stop = False
         self._report_path = os.path.join(CONF.getReportPath(), ws_name)
         self._report_ppath = os.path.join(self._report_path, "process")
+        self._report_upath = os.path.join(self._report_path, "unprocessed")
         self.processor = ReportProcessor()
 
         if not os.path.exists(self._report_path):
@@ -72,6 +106,9 @@ class ReportManager(threading.Thread):
 
         if not os.path.exists(self._report_ppath):
             os.mkdir(self._report_ppath)
+
+        if not os.path.exists(self._report_upath):
+            os.mkdir(self._report_upath)
 
     def run(self):
         tmp_timer = 0
@@ -83,7 +120,9 @@ class ReportManager(threading.Thread):
                 try:
                     self.syncReports()
                 except Exception:
-                    model.api.log("An exception was captured while saving reports\n%s" % traceback.format_exc())
+                    model.api.log(
+                        "An exception was captured while saving reports\n%s" % traceback.format_exc()
+                    )
                 finally:
                     tmp_timer = 0
 
@@ -102,9 +141,18 @@ class ReportManager(threading.Thread):
                 for name in files:
                     filename = os.path.join(root, name)
 
-                    self.processor.processReport(filename)
+                    # If plugin not is detected... move to unprocessed
+                    if self.processor.processReport(filename) is False:
 
-                    os.rename(filename, os.path.join(self._report_ppath, name))
+                        os.rename(
+                            filename,
+                            os.path.join(self._report_upath, name)
+                        )
+                    else:
+                        os.rename(
+                            filename,
+                            os.path.join(self._report_ppath, name)
+                        )
 
         self.onlinePlugins()
 

@@ -6,14 +6,6 @@ See the file 'doc/LICENSE' for the license information
 '''
 # -*- coding: utf-8 -*-
 
-                                                                         
- 
-                                   
-                                                          
- 
-                                                      
-
-
 from qt import *
 from qttable import QTable
 from model.api import devlog
@@ -110,16 +102,16 @@ class PluginSettingsUi(QDialog):
         label_version_font.setBold(1)
         self.label_version.setFont(label_version_font)
         layout6.addWidget(self.label_version)
-        
+
         self.le_version = QLineEdit(self.frame3,"le_version")
         self.le_version.setMinimumSize(QSize(250,0))
         self.le_version.setReadOnly(1)
         layout6.addWidget(self.le_version)
 
         frame3Layout.addLayout(layout6,1,0)
-        
+
         layout7 = QHBoxLayout(None,0,6,"layout7")
-        
+
         self.label_pversion = QLabel(self.frame3,"label_pversion")
         self.label_pversion.setMinimumSize(QSize(67,0))
         self.label_pversion.setMaximumSize(QSize(67,32767))
@@ -127,13 +119,13 @@ class PluginSettingsUi(QDialog):
         label_pversion_font.setBold(1)
         self.label_pversion.setFont(label_pversion_font)
         layout7.addWidget(self.label_pversion)
-        
+
         self.le_pversion = QLineEdit(self.frame3,"le_pversion")
         self.le_pversion.setMinimumSize(QSize(250,0))
         self.le_pversion.setReadOnly(1)
         layout7.addWidget(self.le_pversion)
-        
-        frame3Layout.addLayout(layout7,2,0)     
+
+        frame3Layout.addLayout(layout7,2,0)
 
         PluginSettingsUiLayout.addWidget(self.frame3,0,1)
 

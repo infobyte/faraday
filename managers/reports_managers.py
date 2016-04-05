@@ -155,8 +155,8 @@ class ReportParser(object):
         f = result = None
 
         signatures = {
-         "\x50\x4B" : "zip" ,
-         "\x3C\x3F\x78\x6D\x6C" : "xml"
+         "\x50\x4B": "zip",
+         "\x3C\x3F\x78\x6D\x6C": "xml"
         }
 
         try:
@@ -168,7 +168,7 @@ class ReportParser(object):
                 if file_signature.find(key) == 0:
 
                     result = signatures[key]
-                    model.api.log("Report type detected: %s" %result)
+                    model.api.log("Report type detected: %s" % result)
                     break
 
         except IOError, err:
@@ -183,12 +183,12 @@ class ReportParser(object):
 
         f, report_type = self.open_file(file_path)
 
-        #Check error in open_file()
-        if f == None and report_type == None:
+        # Check error in open_file()
+        if f is None and report_type is None:
             self.report_type = None
             return None, None
 
-        #Find root tag based in report_type
+        # Find root tag based in report_type
         if report_type == "zip":
             result = "maltego"
 
@@ -205,7 +205,8 @@ class ReportParser(object):
 
         f.seek(0)
         output = f.read()
-        if f: f.close()
+        if f:
+            f.close()
 
         return result, output
 
@@ -222,9 +223,9 @@ class ReportParser(object):
         elif "NessusClientData_v2" == tag:
             return "nessus"
         elif "report" == tag:
-            if re.search("https://raw.githubusercontent.com/Arachni/arachni/", output) != None:
+            if re.search("https://raw.githubusercontent.com/Arachni/arachni/", output) is not None:
                 return "arachni"
-            elif re.search("OpenVAS", output) != None or re.search('<omp><version>', output) != None:
+            elif re.search("OpenVAS", output) is not None or re.search('<omp><version>', output) is not None:
                 return "openvas"
             else:
                 return "zap"

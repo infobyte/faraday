@@ -41,10 +41,10 @@ def stopServer():
         _http_server.stop()
 
 
-def startAPIs(plugin_manager, model_controller, mapper_manager, hostname, port):
+def startAPIs(plugin_controller, model_controller, hostname, port):
     global _rest_controllers
     global _http_server
-    _rest_controllers = [PluginControllerAPI(plugin_manager, mapper_manager), ModelControllerAPI(model_controller)]
+    _rest_controllers = [PluginControllerAPI(plugin_controller), ModelControllerAPI(model_controller)]
 
     app = Flask('APISController')
 
@@ -287,11 +287,8 @@ class ModelControllerAPI(RESTApi):
 
 
 class PluginControllerAPI(RESTApi):
-    def __init__(self, plugin_manager, mapper_manager):
-        self.plugin_controller = PluginControllerForApi(
-            "PluginController",
-            plugin_manager.getPlugins(),
-            mapper_manager)
+    def __init__(self, plugin_controller):
+        self.plugin_controller = plugin_controller
 
     def getRoutes(self):
         routes = []

@@ -87,7 +87,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         """
         Gtk.Application.do_startup(self)  # deep GTK magic
 
-        self.sidebar = Sidebar(self.workspace_manager, self.changeWorkspace)
+        self.sidebar = Sidebar(self.workspace_manager,
+                               self.changeWorkspace,
+                               CONF.getLastWorkspace())
+
         self.terminal = Terminal(CONF)
         self.console_log = ConsoleLog()
         self.statusbar = Statusbar(self.on_click_notifications)
@@ -184,8 +187,10 @@ class GuiApp(Gtk.Application, FaradayUi):
     def on_click_notifications(self):
         pass
 
-    def changeWorkspace(self, workspace):
+    def changeWorkspace(self, workspaceSelection):
         """Pretty much copy/pasted from QT3 GUI"""
+        model, treeiter = workspaceSelection.get_selected()
+        workspaceName = model[treeiter][0]
         try:
             ws = self.openWorkspace(workspaceName)
         except Exception as e:
@@ -195,6 +200,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         CONF.setLastWorkspace(workspace)
         CONF.saveConfig()
         return ws
+
+    def openDefaultWorkspace(self):
+        #TODO: IMPLEMENT
+        pass
 
     def run(self, args):
         """First method to run, as defined by FaradayUi. This method is

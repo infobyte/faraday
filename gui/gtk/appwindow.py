@@ -47,7 +47,6 @@ class AppWindow(Gtk.ApplicationWindow):
         #TOP BOX: TOOLBAR AND FILTER
         self.topBox = Gtk.Box()
         self.topBox.pack_start(self.create_toolbar(), True, True, 0)
-        self.topBox.pack_start(self.create_filter(), False, False, 0)
 
         # MIDDLE BOX: NOTEBOOK AND SIDEBAR
         self.notebook = Gtk.Notebook()
@@ -99,14 +98,6 @@ class AppWindow(Gtk.ApplicationWindow):
             self.maximize()
         else:
             self.unmaximize()
-
-    def create_filter(self):
-        entryBox = Gtk.Box()
-        entry = Gtk.Entry()
-        entry.set_text("Filter")
-        entryBox.pack_start(entry, True, True, 0)
-
-        return entryBox
 
     def create_toolbar(self):
         """ Creates toolbar with an open and new button, getting the icons

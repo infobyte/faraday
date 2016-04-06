@@ -37,10 +37,11 @@ class Sidebar(Gtk.Widget):
     instance by the application. It only handles the view, all the backend
     word is handled by the application via the callback"""
 
-    def __init__(self, workspace_manager, callback_to_change_workspace):
+    def __init__(self, workspace_manager, callback_to_change_workspace, conf):
         super(Gtk.Widget, self).__init__()
         self.callback = callback_to_change_workspace
         self.ws_manager = workspace_manager
+        self.lastWorkspace = conf
 
     def createTitle(self):
         title = Gtk.Label()
@@ -50,22 +51,27 @@ class Sidebar(Gtk.Widget):
     def workspaceModel(self):
         workspace_list_info = Gtk.ListStore(str)
         for ws in self.ws_manager.getWorkspacesNames():
-            workspace_list_info.append([ws])
+            treeIter = workspace_list_info.append([ws])
+            if ws == self.lastWorkspace:
+                self.defaultSelection = treeIter
+
         return workspace_list_info
 
     def workspaceView(self, ws_model):
-        lst = Gtk.TreeView(ws_model)
+        self.lst = Gtk.TreeView(ws_model)
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("Workspaces", renderer, text=0)
-        lst.append_column(column)
+        self.lst.append_column(column)
 
-        self.selection = lst.get_selection()
-        self.selection.connect("changed", self.changeWorkspace)
-        return lst
+        # select by default the last active workspace
+        if self.defaultSelection is not None:
+            self.selectDefault = self.lst.get_selection()
+            self.selectDefault.select_iter(self.defaultSelection)
 
-    def changeWorkspace(self, selection):
-        model, treeiter = selection.get_selected()
-        self.callback(model[treeiter][0])
+        self.selection = self.lst.get_selection()
+        self.selection.connect("changed", self.callback)
+
+        return self.lst
 
     def getSelectedWs(self):
         return self.selection

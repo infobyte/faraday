@@ -7,7 +7,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
-import model.api
+#import model.api
 import threading
 import time
 import traceback
@@ -34,62 +34,36 @@ class ReportProcessor():
         """
         Process one Report
         """
-        model.api.log("Report file is %s" % filename)
+        getLogger(self).debug("Report file is %s" % filename)
 
         parser = ReportParser(filename)
 
-        if (parser.report_type is None):
+        if parser.report_type is None:
+            getLogger(self).error(
+                'Plugin not found: automatic and manual try!'
+            )
+            return False
 
-            getLogger(self).debug(
-                'Automatical detection FAILED... Trying manual...')
-            parser.report_type = self.getUserPluginName(filename)
-            if parser.report_type is None:
+        return self._sendReport(parser.report_type, filename)
 
-                getLogger(self).error(
-                    'Plugin not found: automatic and manual try!'
-                )
-
-                return False
-
+    def _sendReport(self, rtype, filename):
         command_string = "./%s %s" % (
-            parser.report_type.lower(),
-            filename
-        )
+            rtype.lower(),
+            filename)
 
         has_plugin, _, _ = self.plugin_controller.processCommandInput(
             command_string)
-
         if not has_plugin:
             getLogger(self).error(
-                'Faraday have not a plugin for this tool... Processing: ABORT'
-            )
-
+                'Faraday have not a plugin for this tool... Processing: ABORT')
             return False
 
-        model.api.log(
-            'The file is %s, %s' % (filename, parser.report_type)
-        )
-        model.api.log("Executing %s" % (command_string))
-
+        getLogger(self).debug(
+            'The file is %s, %s' % (filename, rtype))
+        getLogger(self).info("Executing %s" % (command_string))
         output = open(filename, 'r').read()
         self.plugin_controller.onCommandFinished(command_string, output)
-
         return True
-
-    def getUserPluginName(self, pathFile):
-
-        try:
-
-            nameReport = pathFile[pathFile.rfind('/') + 1: pathFile.rfind('.')]
-            plugin = nameReport[nameReport.find('_faraday_') + 9:]
-
-            if plugin is not None or plugin != '':
-                return plugin
-            else:
-                return None
-
-        except:
-            return None
 
     def onlinePlugin(self, cmd):
 
@@ -128,7 +102,7 @@ class ReportManager(threading.Thread):
                 try:
                     self.syncReports()
                 except Exception:
-                    model.api.log(
+                    getLogger(self).error(
                         "An exception was captured while saving reports\n%s"
                         % traceback.format_exc()
                     )
@@ -190,11 +164,33 @@ class ReportParser(object):
     """
 
     def __init__(self, report_path):
-        self.report_type = ""
+        self.report_type = None
         root_tag, output = self.getRootTag(report_path)
 
         if root_tag:
             self.report_type = self.rType(root_tag, output)
+
+        if self.report_type is None:
+
+            getLogger(self).debug(
+                'Automatical detection FAILED... Trying manual...')
+
+            self.report_type = self.getUserPluginName(report_path)
+
+    def getUserPluginName(self, pathFile):
+
+        try:
+
+            nameReport = pathFile[pathFile.rfind('/') + 1: pathFile.rfind('.')]
+            plugin = nameReport[nameReport.find('_faraday_') + 9:]
+
+            if plugin is not None or plugin != '':
+                return plugin
+            else:
+                return None
+
+        except:
+            return None
 
     def open_file(self, file_path):
         """
@@ -225,12 +221,12 @@ class ReportParser(object):
                 if file_signature.find(key) == 0:
 
                     result = signatures[key]
-                    model.api.log("Report type detected: %s" % result)
+                    getLogger(self).debug("Report type detected: %s" % result)
                     break
 
         except IOError, err:
             self.report_type = None
-            model.api.log(
+            getLogger(self).error(
                 "Error while opening file.\n%s. %s" % (err, file_path))
 
         return f, result
@@ -259,7 +255,7 @@ class ReportParser(object):
 
             except SyntaxError, err:
                 self.report_type = None
-                model.api.log("Not an xml file.\n %s" % (err))
+                getLogger(self).error("Not an xml file.\n %s" % (err))
 
         f.seek(0)
         output = f.read()
@@ -296,7 +292,7 @@ class ReportParser(object):
 
             else:
                 return "zap"
-    
+
         elif "niktoscan" == tag:
             return "nikto"
         elif "MetasploitV4" == tag:

@@ -32,11 +32,12 @@ CONF = getInstanceConfiguration()
 
 
 class GuiApp(qt.QApplication, FaradayUi):
-    def __init__(self, model_controller, plugin_manager, workspace_manager):
+    def __init__(self, model_controller, plugin_manager, workspace_manager, plugin_controller):
         FaradayUi.__init__(self,
                            model_controller,
                            plugin_manager,
-                           workspace_manager)
+                           workspace_manager,
+                           plugin_controller)
         qt.QApplication.__init__(self, [])
 
         self._shell_envs = dict()

@@ -51,8 +51,9 @@ class PreferenceWindowDialog(Gtk.Window):
         hbox.pack_end(self.cancel_button, False, True, 0)
 
     def on_click_OK(self, button):
+        """Defines what happens when user clicks OK button"""
         repourl = self.entry.get_text()
-
+        #TODO: stop printing errors, put them on a dialog window
         if not CouchDbManager.testCouch(repourl):
             print("NOT A VALID URL")
         if repourl.startswith("https://"):
@@ -61,6 +62,7 @@ class PreferenceWindowDialog(Gtk.Window):
 
         CONF.setCouchUri(repourl)
         CONF.saveConfig()
+        self.destroy()
 
     def on_click_cancel(self, button):
         self.destroy()
@@ -141,48 +143,6 @@ class NewWorkspaceDialog(Gtk.Window):
                                             "ts(0-9) or any of the _$()+-/ "
                                             "characters. The name has to start"
                                             " with a lowercase letter")
-
-    def on_click_cancel(self, button):
-        self.destroy()
-
-
-class OpenWorkspaceDialog(Gtk.Window):
-    """Sets up a Dialog where the user can choose a workspace from those
-    existing"""
-    def __init__(self, callback, workspace_manager):
-        Gtk.Window.__init__(self, title="Open Workspace")
-        self.set_size_request(200, 200)
-        self.workspace_manager = workspace_manager
-        self.callback = callback
-
-        self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-
-        self.chooseWorkspace = Gtk.ComboBoxText()
-        self.populateWorkspaceList()
-
-        self.mainBox.pack_start(self.chooseWorkspace, True, True, 0)
-
-        self.buttonBox = Gtk.Box(spacing=6)
-        self.OK_button = Gtk.Button.new_with_label("OK")
-        self.OK_button.connect("clicked", self.on_click_OK)
-        self.cancel_button = Gtk.Button.new_with_label("Cancel")
-        self.cancel_button.connect("clicked", self.on_click_cancel)
-        self.buttonBox.pack_start(self.OK_button, False, False, 10)
-        self.buttonBox.pack_end(self.cancel_button, False, False, 10)
-        self.buttonBox.show()
-
-        self.mainBox.pack_end(self.buttonBox, False, False, 0)
-
-        self.mainBox.show()
-        self.add(self.mainBox)
-
-    def populateWorkspaceList(self):
-        for w in self.workspace_manager.getWorkspacesNames():
-            self.chooseWorkspace.append_text(w)
-
-    def on_click_OK(self, button):
-        self.callback(self.chooseWorkspace.get_active_text())
-        self.destroy()
 
     def on_click_cancel(self, button):
         self.destroy()

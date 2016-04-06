@@ -9,10 +9,16 @@ from gui.gui_app import FaradayUi
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
 from appwindow import AppWindow
-from dialogs import OpenWorkspaceDialog
+
 from dialogs import PreferenceWindowDialog
 from dialogs import NewWorkspaceDialog
 from dialogs import PluginOptionsDialog
+
+from mainwidgets import Sidebar
+from mainwidgets import ConsoleLog
+from mainwidgets import Terminal
+from mainwidgets import Statusbar
+
 from gui.loghandler import GUIHandler
 from utils.logs import addHandler
 
@@ -48,7 +54,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Returns the main window. This is none only at the
         the startup, the GUI will create one as soon as do_activate() is called
         """
-
         return self.window
 
     def createWorkspace(self, name, description="", w_type=""):
@@ -82,6 +87,11 @@ class GuiApp(Gtk.Application, FaradayUi):
         """
         Gtk.Application.do_startup(self)  # deep GTK magic
 
+        self.sidebar = Sidebar(self.workspace_manager, self.changeWorkspace)
+        self.terminal = Terminal(CONF)
+        self.console_log = ConsoleLog()
+        self.statusbar = Statusbar(self.on_click_notifications)
+
         action = Gio.SimpleAction.new("about", None)
         action.connect("activate", self.on_about)
         self.add_action(action)
@@ -100,10 +110,6 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         action = Gio.SimpleAction.new("new", None)
         action.connect("activate", self.on_new_button)
-        self.add_action(action)
-
-        action = Gio.SimpleAction.new("open", None)
-        action.connect("activate", self.on_open_button)
         self.add_action(action)
 
         action = Gio.SimpleAction.new("new_terminal")  # new terminal = new tab
@@ -126,7 +132,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         if not self.window:
             # Windows are associated with the application
             # when the last one is closed the application shuts down
-            self.window = AppWindow(self.workspace_manager,
+            self.window = AppWindow(self.sidebar,
+                                    self.terminal,
+                                    self.console_log,
+                                    self.statusbar,
                                     application=self,
                                     title="Faraday")
         self.window.present()
@@ -165,9 +174,17 @@ class GuiApp(Gtk.Application, FaradayUi):
         new_workspace_dialog.show_all()
 
     def on_new_terminal_button(self, action, params):
-        AppWindow.new_tab(self.window)
+        """When the user clicks on the new_terminal button, creates a new
+        instance of the Terminal and tells the window to add it as a new tab
+        for the notebook"""
+        new_terminal = Terminal(CONF)
+        the_new_terminal = new_terminal.getTerminal()
+        AppWindow.new_tab(self.window, the_new_terminal)
 
-    def changeWorkspace(self, workspaceName):
+    def on_click_notifications(self):
+        pass
+
+    def changeWorkspace(self, workspace):
         """Pretty much copy/pasted from QT3 GUI"""
         try:
             ws = self.openWorkspace(workspaceName)
@@ -178,12 +195,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         CONF.setLastWorkspace(workspace)
         CONF.saveConfig()
         return ws
-
-    def on_open_button(self, action, params):
-        """This is what happens if you press the open button on the toolbar"""
-        open_workspace_dialog = OpenWorkspaceDialog(self.changeWorkspace,
-                                                    self.workspace_manager)
-        open_workspace_dialog.show_all()
 
     def run(self, args):
         """First method to run, as defined by FaradayUi. This method is
@@ -203,6 +214,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         CONF.setLastWorkspace(workspace)
         CONF.saveConfig()
         Gtk.Application.run(self)
+
 
     def on_quit(self, action, param):
         self.quit()

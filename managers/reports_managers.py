@@ -46,7 +46,7 @@ class ReportProcessor():
             if parser.report_type is None:
 
                 getLogger(self).error(
-                    'Plugin not found automatic and manual try!! FATAL'
+                    'Plugin not found: automatic and manual try!'
                 )
 
                 return False
@@ -61,7 +61,7 @@ class ReportProcessor():
 
         if not has_plugin:
             getLogger(self).error(
-                'Faraday have not a plugin for this tool... FATAL'
+                'Faraday have not a plugin for this tool... Processing: ABORT'
             )
 
             return False
@@ -129,7 +129,8 @@ class ReportManager(threading.Thread):
                     self.syncReports()
                 except Exception:
                     model.api.log(
-                        "An exception was captured while saving reports\n%s" % traceback.format_exc()
+                        "An exception was captured while saving reports\n%s"
+                        % traceback.format_exc()
                     )
                 finally:
                     tmp_timer = 0
@@ -280,12 +281,22 @@ class ReportParser(object):
         elif "NessusClientData_v2" == tag:
             return "nessus"
         elif "report" == tag:
-            if re.search("https://raw.githubusercontent.com/Arachni/arachni/", output) is not None:
+
+            if re.search(
+                "https://raw.githubusercontent.com/Arachni/arachni/",
+                output
+             ) is not None:
                 return "arachni"
-            elif re.search("OpenVAS", output) is not None or re.search('<omp><version>', output) is not None:
+
+            elif re.search("OpenVAS", output) is not None or re.search(
+                '<omp><version>',
+                output
+            ) is not None:
                 return "openvas"
+
             else:
                 return "zap"
+    
         elif "niktoscan" == tag:
             return "nikto"
         elif "MetasploitV4" == tag:

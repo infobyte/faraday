@@ -21,18 +21,14 @@ try:
 except ImportError:
     print "cElementTree could not be imported. Using ElementTree instead"
     import xml.etree.ElementTree as ET
-from apis.rest.client import PluginControllerAPIClient
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 
 class ReportProcessor():
-    def __init__(self):
-        host = CONF.getApiConInfoHost()
-        port_rest = int(CONF.getApiRestfulConInfoPort())
-
-        self.client = PluginControllerAPIClient(host, port_rest)
+    def __init__(self, plugin_controller):
+        self.plugin_controller = plugin_controller
 
     def processReport(self, filename):
         """
@@ -44,7 +40,8 @@ class ReportProcessor():
 
         if (parser.report_type is None):
 
-            getLogger(self).debug('Automatical detection FAILED... Try manual...')
+            getLogger(self).debug(
+                'Automatical detection FAILED... Trying manual...')
             parser.report_type = self.getUserPluginName(filename)
             if parser.report_type is None:
 
@@ -54,19 +51,29 @@ class ReportProcessor():
 
                 return False
 
-        model.api.log(
-            'The file is %s, %s' % (filename, parser.report_type)
-        )
-
         command_string = "./%s %s" % (
             parser.report_type.lower(),
             filename
         )
 
+        has_plugin, _, _ = self.plugin_controller.processCommandInput(
+            command_string)
+
+        if not has_plugin:
+            getLogger(self).error(
+                'Faraday have not a plugin for this tool... FATAL'
+            )
+
+            return False
+
+        model.api.log(
+            'The file is %s, %s' % (filename, parser.report_type)
+        )
         model.api.log("Executing %s" % (command_string))
 
-        new_cmd, output_file = self.client.send_cmd(command_string)
-        self.client.send_output(command_string, filename)
+        output = open(filename, 'r').read()
+        self.plugin_controller.onCommandFinished(command_string, output)
+
         return True
 
     def getUserPluginName(self, pathFile):
@@ -86,12 +93,13 @@ class ReportProcessor():
 
     def onlinePlugin(self, cmd):
 
-        new_cmd, output_file = self.client.send_cmd(cmd)
-        self.client.send_output(cmd)
+        _, new_cmd, output_file = self.plugin_controller.processCommandInput(
+            cmd)
+        self.plugin_controller.onCommandFinished(cmd, '')
 
 
 class ReportManager(threading.Thread):
-    def __init__(self, timer, ws_name):
+    def __init__(self, timer, ws_name, plugin_controller):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.timer = timer
@@ -99,7 +107,7 @@ class ReportManager(threading.Thread):
         self._report_path = os.path.join(CONF.getReportPath(), ws_name)
         self._report_ppath = os.path.join(self._report_path, "process")
         self._report_upath = os.path.join(self._report_path, "unprocessed")
-        self.processor = ReportProcessor()
+        self.processor = ReportProcessor(plugin_controller)
 
         if not os.path.exists(self._report_path):
             os.mkdir(self._report_path)
@@ -221,7 +229,8 @@ class ReportParser(object):
 
         except IOError, err:
             self.report_type = None
-            model.api.log("Error while opening file.\n%s. %s" % (err, file_path))
+            model.api.log(
+                "Error while opening file.\n%s. %s" % (err, file_path))
 
         return f, result
 

@@ -8,6 +8,8 @@ Designed for simplicity, users should notice no difference between their own ter
 
 Please read the [RELEASE notes](https://github.com/infobyte/faraday/blob/master/RELEASE.md)!
 
+![GUI - Web](https://raw.github.com/wiki/infobyte/faraday/images/GUI_Dashboard_new.png)
+
 Plugins
 ---
 Don't change the way you work today! Faraday plays well with others, right now it has more than [40 supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among them you will find: 

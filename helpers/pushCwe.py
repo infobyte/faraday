@@ -17,7 +17,7 @@ import csv
 def main():
 
     #arguments parser
-    parser = argparse.ArgumentParser(prog='pushExecutiveReports', epilog="Example: ./%(prog)s.py")
+    parser = argparse.ArgumentParser(prog='pushCwe', epilog="Example: ./%(prog)s.py")
     parser.add_argument('-c', '--couchdburi', action='store', type=str,
                         dest='couchdb',default="http://127.0.0.1:5984",
                         help='Couchdb URL (default http://127.0.0.1:5984)')

@@ -12,15 +12,28 @@ from gi.repository import GLib, Gio, Gtk, GObject, Gdk
 CONF = getInstanceConfiguration()
 
 
-class AppWindow(Gtk.ApplicationWindow):
+class _IdleObject(GObject.GObject):
+    """
+    Override GObject.GObject to always emit signals in the main thread
+    by emmitting on an idle handler
+    """
+    def __init__(self):
+        GObject.GObject.__init__(self)
+
+    def emit(self, *args):
+        GObject.idle_add(GObject.GObject.emit, self, *args)
+
+
+
+class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     """The main window of the GUI. Draws the toolbar.
     Positions the terminal, sidebar, consolelog and statusbar received from
     the app and defined in the mainwidgets module"""
 
     __gsignals__ = {
-                "new_log": (GObject.SIGNAL_RUN_FIRST, None, (str, int, )),
-                "new_notif": (GObject.SIGNAL_RUN_FIRST, None, (str, ))
-                }
+        "new_log": (GObject.SIGNAL_RUN_FIRST, None, (str, int, )),
+        "new_notif": (GObject.SIGNAL_RUN_FIRST, None, (str, ))
+    }
 
     def __init__(self, sidebar, terminal, console_log, statusbar,
                  *args, **kwargs):
@@ -62,7 +75,7 @@ class AppWindow(Gtk.ApplicationWindow):
 
         # NOTIFACTION BOX: THE BUTTON TO ACCESS NOTIFICATION DIALOG
         self.notificationBox = Gtk.Box()
-        self.notificationBox.pack_start(self.statusbar.get_button(), True, True, 0)
+        self.notificationBox.pack_start(self.statusbar.button, True, True, 0)
 
         # MAINBOX: THE BIGGER BOX OF ALL THE LITTLE BOXES
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)

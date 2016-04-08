@@ -25,9 +25,10 @@ from utils.logs import addHandler
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-from gi.repository import Gio, Gtk
+from gi.repository import Gio, Gtk, GObject
 
 CONF = getInstanceConfiguration()
+
 
 
 class GuiApp(Gtk.Application, FaradayUi):
@@ -149,9 +150,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.loghandler.registerGUIOutput(self.window.getLogConsole())
 
     def postEvent(self, receiver, event):
-        if receiver is None:
-            receiver = self.getMainWindow()
-        receiver.emit("new_log", event.text, event.type())
+		self.window.emit("new_log", event.text, event.type())
 
     def on_about(self, action, param):
         """ Defines what happens when you press 'about' on the menu"""

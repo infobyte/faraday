@@ -96,6 +96,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         self.show_all()
 
+
     def terminalBox(self, terminal):
         terminalBox = Gtk.Box()
         terminalBox.pack_start(terminal, True, True, 0)
@@ -147,6 +148,11 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         new_terminal_button.set_action_name('app.new_terminal')
         toolbar.insert(new_terminal_button, 1)
 
+        remove_terminal_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_REMOVE)
+        remove_terminal_button.set_is_important(True)
+        remove_terminal_button.connect("clicked", self.delete_tab)
+        toolbar.insert(remove_terminal_button, 2)
+
         return toolbar
 
     def new_tab(self, new_terminal):
@@ -159,3 +165,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         pageN = self.terminalBox(new_terminal)
         self.notebook.append_page(pageN, Gtk.Label(str(tab_number+1)))
         self.show_all()
+
+    def delete_tab(self, button):
+        current_page = self.notebook.get_current_page()
+        self.notebook.remove_page(current_page)

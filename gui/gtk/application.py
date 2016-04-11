@@ -155,6 +155,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         notifier.widget = self.window
         model.guiapi.notification_center.registerWidget(self.window)
 
+        new_terminal = Terminal(CONF)
+        the_new_terminal = new_terminal.getTerminal()
+        AppWindow.new_tab(self.window, the_new_terminal)
+
     def postEvent(self, receiver, event):
         if receiver is None:
             receiver = self.getMainWindow()

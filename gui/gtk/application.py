@@ -224,10 +224,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         CONF.saveConfig()
         return ws
 
-    def openDefaultWorkspace(self):
-        #TODO: IMPLEMENT
-        pass
-
     def run(self, args):
         """First method to run, as defined by FaradayUi. This method is
         mandatory"""

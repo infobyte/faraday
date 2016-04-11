@@ -63,7 +63,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         #SIDEBAR BOX
         self.sidebarBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.sidebarBox.pack_start(self.sidebar.lst, True, True, 0)
+        self.sidebarBox.pack_start(self.sidebar.scrollableView, True, True, 0)
         self.sidebarBox.pack_start(self.sidebar.sidebar_button, False, False, 0)
 
         # MIDDLE BOX: NOTEBOOK AND SIDEBAR

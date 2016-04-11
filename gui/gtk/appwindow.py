@@ -167,5 +167,18 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.show_all()
 
     def delete_tab(self, button):
+        """Deletes the current tab"""
         current_page = self.notebook.get_current_page()
         self.notebook.remove_page(current_page)
+        self.reorder_tab_names()
+
+    def reorder_tab_names(self):
+        """When a tab is deleted, all other tabs must be renamed to reacomodate
+        the numbers"""
+        #Tabs are zero indexed, but their labels start at one
+
+        number_of_tabs = self.notebook.get_n_pages()
+        for n in range(number_of_tabs):
+            tab = self.notebook.get_nth_page(n)
+            self.notebook.set_tab_label_text(tab, str(n+1))
+        self.tab_number = number_of_tabs-1

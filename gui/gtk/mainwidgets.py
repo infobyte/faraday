@@ -42,6 +42,7 @@ class Sidebar(Gtk.Widget):
         self.callback = callback_to_change_workspace
         self.ws_manager = workspace_manager
         self.lastWorkspace = conf
+        self.workspace_list_info = Gtk.ListStore(str)
 
     def createTitle(self):
         title = Gtk.Label()
@@ -49,13 +50,10 @@ class Sidebar(Gtk.Widget):
         return title
 
     def workspaceModel(self):
-        workspace_list_info = Gtk.ListStore(str)
         for ws in self.ws_manager.getWorkspacesNames():
-            treeIter = workspace_list_info.append([ws])
+            treeIter = self.workspace_list_info.append([ws])
             if ws == self.lastWorkspace:
                 self.defaultSelection = treeIter
-
-        return workspace_list_info
 
     def workspaceView(self, ws_model):
         self.lst = Gtk.TreeView(ws_model)
@@ -72,6 +70,12 @@ class Sidebar(Gtk.Widget):
         self.selection.connect("changed", self.callback)
 
         return self.lst
+
+    def addLastWorkspace(self):
+        last_workspace = self.ws_manager.getWorkspacesNames()[-1]
+        self.workspace_list_info.append([last_workspace])
+
+
 
     def getSelectedWs(self):
         return self.selection
@@ -103,6 +107,7 @@ class ConsoleLog(Gtk.Widget):
         self.logger.add(self.textView)
 
     def getLogger(self):
+        """Returns the ScrolledWindow used to contain the view"""
         return self.logger
 
     def getView(self):
@@ -125,13 +130,13 @@ class ConsoleLog(Gtk.Widget):
 class Statusbar(Gtk.Widget):
     def __init__(self, on_button_do):
         super(Gtk.Widget, self).__init__()
+        """Creates a button with zero ("0") as label"""
         self.callback = on_button_do
         self.button_label_int = 0
         self.button = Gtk.Button.new_with_label(str(self.button_label_int))
+        self.button.connect("clicked", self.callback)
 
     def inc_button_label(self):
+        """increments the label by one"""
         self.button_label_int += 1
         self.button.set_label(str(self.button_label_int))
-
-
-

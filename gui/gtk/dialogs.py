@@ -253,3 +253,25 @@ class PluginOptionsDialog(Gtk.Window):
         self.nameEntry.set_text(model[treeiter][0])
         self.versionEntry.set_text(model[treeiter][1])
         self.pluginVersionEntry.set_text(model[treeiter][2])
+
+class NotificationsDialog(Gtk.Window):
+    def __init__(self, view, callback):
+        Gtk.Window.__init__(self, title="Notifications")
+        self.set_size_request(400, 200)
+        self.view = view
+        self.destroy_notifications = callback
+
+        self.button = Gtk.Button()
+        self.button.set_label("OK")
+        self.button.connect("clicked", self.on_click_OK)
+
+        self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.mainBox.pack_start(self.view, True, True, 0)
+        self.mainBox.pack_start(self.button, False, False, 0)
+
+        self.add(self.mainBox)
+
+    def on_click_OK(self, button):
+        self.destroy_notifications()
+        self.destroy()
+

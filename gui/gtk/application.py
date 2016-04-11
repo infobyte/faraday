@@ -13,6 +13,7 @@ from appwindow import AppWindow
 from dialogs import PreferenceWindowDialog
 from dialogs import NewWorkspaceDialog
 from dialogs import PluginOptionsDialog
+from dialogs import NotificationsDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import ConsoleLog
@@ -95,6 +96,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.terminal = Terminal(CONF)
         self.console_log = ConsoleLog()
         self.statusbar = Statusbar(self.on_click_notifications)
+        self.notificationsModel = Gtk.ListStore(str)
 
         action = Gio.SimpleAction.new("about", None)
         action.connect("activate", self.on_about)
@@ -154,12 +156,12 @@ class GuiApp(Gtk.Application, FaradayUi):
         model.guiapi.notification_center.registerWidget(self.window)
 
     def postEvent(self, receiver, event):
-        print event.type()
         if receiver is None:
             receiver = self.getMainWindow()
         if event.type() == 3131:
             receiver.emit("new_log", event.text)
         if event.type() == 5100:
+            self.notificationsModel.prepend([event.change.getMessage()])
             receiver.emit("new_notif")
 
     def on_about(self, action, param):
@@ -193,8 +195,19 @@ class GuiApp(Gtk.Application, FaradayUi):
         the_new_terminal = new_terminal.getTerminal()
         AppWindow.new_tab(self.window, the_new_terminal)
 
-    def on_click_notifications(self):
-        pass
+    def on_click_notifications(self, button):
+
+        notifications_view = Gtk.TreeView(self.notificationsModel)
+        renderer = Gtk.CellRendererText()
+        column = Gtk.TreeViewColumn("Notifications", renderer, text=0)
+        notifications_view.append_column(column)
+        notifications_dialog = NotificationsDialog(notifications_view,
+                                                   self.delete_notifications)
+        notifications_dialog.show_all()
+
+    def delete_notifications(self):
+        self.notificationsModel.clear()
+        self.window.emit("clear_notifications")
 
     def changeWorkspace(self, workspaceSelection):
         """Pretty much copy/pasted from QT3 GUI"""

@@ -31,7 +31,8 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
     __gsignals__ = {
         "new_log": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
-        "new_notif": (GObject.SIGNAL_RUN_FIRST, None, ())
+        "new_notif": (GObject.SIGNAL_RUN_FIRST, None, ()),
+        "clear_notifications" : (GObject.SIGNAL_RUN_FIRST, None, ())
     }
 
     def __init__(self, sidebar, terminal, console_log, statusbar,
@@ -69,7 +70,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.middleBox.pack_start(self.sidebar.getWSList(), False, False, 0)
 
         # LOGGER BOX: THE LOGGER, DUH
-        print self.log
         self.loggerBox = Gtk.Box()
         self.loggerBox.pack_start(self.log.getLogger(), True, True, 0)
 
@@ -99,6 +99,9 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         """What should the window do when it gets a new_log signal"""
         self.log.customEvent(text)
 
+    def do_clear_notifications(self):
+        self.statusbar.button.set_label("0")
+
     def do_new_notif(self):
         self.statusbar.inc_button_label()
 
@@ -114,6 +117,9 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
             self.maximize()
         else:
             self.unmaximize()
+
+    def refreshSidebar(self):
+        self.sidebar.refresh()
 
     def create_toolbar(self):
         """ Creates toolbar with an open and new button, getting the icons

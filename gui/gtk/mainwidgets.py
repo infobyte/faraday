@@ -97,10 +97,13 @@ class ConsoleLog(Gtk.Widget):
         self.textView.set_justification(Gtk.Justification.LEFT)
         self.textView.set_buffer(self.textBuffer)
 
-    def getLastPosition(self):
-        """Gets the buffers last position"""
-        # return self.textBuffer.get_end_iter()
-        pass
+        self.logger = Gtk.ScrolledWindow.new(None, None)
+        self.logger.set_min_content_height(100)
+        self.logger.set_min_content_width(100)
+        self.logger.add(self.textView)
+
+    def getLogger(self):
+        return self.logger
 
     def getView(self):
         """Returns the text view"""
@@ -110,24 +113,25 @@ class ConsoleLog(Gtk.Widget):
         """Returns the buffer"""
         return self.textBuffer
 
-    def customEvent(self, text, type_):
+    def customEvent(self, text):
         """Filters event so that only those with type 3131 get to the log"""
-        if type_ == 3131:
-            self.update(text)
+        self.update(text)
 
     def update(self, event):
         """Updates the textBuffer with the event sent"""
-        # last_position = self.textBuffer.get_end_iter()
-        # self.textBuffer.insert_at_cursor("aaa" , 3)
-        print "This, hopefully, someday, will be printed to the log"
+        last_position = self.textBuffer.get_end_iter()
+        self.textBuffer.insert(last_position, event+"\n", len(event + "\n"))
 
 class Statusbar(Gtk.Widget):
     def __init__(self, on_button_do):
         super(Gtk.Widget, self).__init__()
         self.callback = on_button_do
-        self.button = Gtk.Button.new_with_label("Notif")
+        self.button_label_int = 0
+        self.button = Gtk.Button.new_with_label(str(self.button_label_int))
 
-    def get_button(self):
-        return self.button
+    def inc_button_label(self):
+        self.button_label_int += 1
+        self.button.set_label(str(self.button_label_int))
+
 
 

@@ -24,15 +24,14 @@ class _IdleObject(GObject.GObject):
         GObject.idle_add(GObject.GObject.emit, self, *args)
 
 
-
 class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     """The main window of the GUI. Draws the toolbar.
     Positions the terminal, sidebar, consolelog and statusbar received from
     the app and defined in the mainwidgets module"""
 
     __gsignals__ = {
-        "new_log": (GObject.SIGNAL_RUN_FIRST, None, (str, int, )),
-        "new_notif": (GObject.SIGNAL_RUN_FIRST, None, (str, ))
+        "new_log": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
+        "new_notif": (GObject.SIGNAL_RUN_FIRST, None, ())
     }
 
     def __init__(self, sidebar, terminal, console_log, statusbar,
@@ -70,8 +69,9 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.middleBox.pack_start(self.sidebar.getWSList(), False, False, 0)
 
         # LOGGER BOX: THE LOGGER, DUH
+        print self.log
         self.loggerBox = Gtk.Box()
-        self.loggerBox.pack_start(self.log.getView(), True, True, 0)
+        self.loggerBox.pack_start(self.log.getLogger(), True, True, 0)
 
         # NOTIFACTION BOX: THE BUTTON TO ACCESS NOTIFICATION DIALOG
         self.notificationBox = Gtk.Box()
@@ -95,14 +95,17 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         terminalBox.pack_start(terminal, True, True, 0)
         return terminalBox
 
-    def do_new_log(self, text, type_):
+    def do_new_log(self, text):
         """What should the window do when it gets a new_log signal"""
-        self.log.customEvent(text, type_)
+        self.log.customEvent(text)
+
+    def do_new_notif(self):
+        self.statusbar.inc_button_label()
 
     def getLogConsole(self):
         """Returns the LogConsole. Needed by the GUIHandler logger"""
         # This explodes everywhere, it is very weird. Pass works for now
-        pass
+        return self.log
 
     def on_maximize_toggle(self, action, value):
         """Defines what happens when the window gets the signal to maximize"""

@@ -147,10 +147,20 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.loghandler = GUIHandler()
         model.guiapi.setMainApp(self)
         addHandler(self.loghandler)
-        self.loghandler.registerGUIOutput(self.window.getLogConsole())
+        self.loghandler.registerGUIOutput(self.window)
+
+        notifier = model.log.getNotifier()
+        notifier.widget = self.window
+        model.guiapi.notification_center.registerWidget(self.window)
 
     def postEvent(self, receiver, event):
-		self.window.emit("new_log", event.text, event.type())
+        print event.type()
+        if receiver is None:
+            receiver = self.getMainWindow()
+        if event.type() == 3131:
+            receiver.emit("new_log", event.text)
+        if event.type() == 5100:
+            receiver.emit("new_notif")
 
     def on_about(self, action, param):
         """ Defines what happens when you press 'about' on the menu"""

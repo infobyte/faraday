@@ -73,12 +73,13 @@ class NewWorkspaceDialog(Gtk.Window):
     a description and a type for a new workspace. Also checks that the
     those attributes don't correspond to an existing workspace"""
 
-    def __init__(self, callback=None,  workspace_manager=None):
+    def __init__(self, callback,  workspace_manager, sidebar):
 
         Gtk.Window.__init__(self, title="Create New Workspace")
         self.set_size_request(200, 200)
         self.timeout_id = None
         self.callback = callback
+        self.sidebar = sidebar
 
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
 
@@ -136,6 +137,7 @@ class NewWorkspaceDialog(Gtk.Window):
                 self.callback(self.__name_txt,
                               self.__desc_txt,
                               self.__type_txt)
+                self.sidebar.addWorkspace(self.__name_txt)
                 self.destroy()
             else:
                 self._main_window.showPopup("A workspace must be named with "

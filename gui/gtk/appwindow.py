@@ -67,7 +67,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.notebook.append_page(self.terminal.getTerminal(), Gtk.Label("1"))
         self.middleBox = Gtk.Box()
         self.middleBox.pack_start(self.notebook, True, True, 0)
-        self.middleBox.pack_start(self.sidebar.getWSList(), False, False, 0)
+        self.middleBox.pack_start(self.sidebar.lst, False, False, 0)
 
         # LOGGER BOX: THE LOGGER, DUH
         self.loggerBox = Gtk.Box()

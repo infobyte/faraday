@@ -91,7 +91,8 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         self.sidebar = Sidebar(self.workspace_manager,
                                self.changeWorkspace,
-                               CONF.getLastWorkspace())
+                               CONF.getLastWorkspace(),
+                               )
 
         self.terminal = Terminal(CONF)
         self.console_log = ConsoleLog()
@@ -184,7 +185,8 @@ class GuiApp(Gtk.Application, FaradayUi):
     def on_new_button(self, action, params):
         "Defines what happens when you press the 'new' button on the toolbar"
         new_workspace_dialog = NewWorkspaceDialog(self.createWorkspace,
-                                                  self.workspace_manager)
+                                                  self.workspace_manager,
+                                                  self.sidebar)
         new_workspace_dialog.show_all()
 
     def on_new_terminal_button(self, action, params):

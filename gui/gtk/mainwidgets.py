@@ -44,6 +44,9 @@ class Sidebar(Gtk.Widget):
         self.lastWorkspace = conf
         self.workspace_list_info = Gtk.ListStore(str)
 
+        self.workspaceModel()
+        self.workspaceView(self.workspace_list_info)
+
     def createTitle(self):
         title = Gtk.Label()
         title.set_text("Workspaces")
@@ -69,13 +72,9 @@ class Sidebar(Gtk.Widget):
         self.selection = self.lst.get_selection()
         self.selection.connect("changed", self.callback)
 
-        return self.lst
-
-    def addLastWorkspace(self):
-        last_workspace = self.ws_manager.getWorkspacesNames()[-1]
-        self.workspace_list_info.append([last_workspace])
-
-
+    def addWorkspace(self, ws):
+        print"HOLA"
+        self.workspace_list_info.append([ws])
 
     def getSelectedWs(self):
         return self.selection

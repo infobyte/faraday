@@ -45,7 +45,17 @@ class Sidebar(Gtk.Widget):
         self.workspace_list_info = Gtk.ListStore(str)
 
         self.workspaceModel()
-        self.workspaceView(self.workspace_list_info)
+        self.workspaceView()
+
+        self.sidebar_button = Gtk.Button.new_with_label("Refresh")
+        self.sidebar_button.connect("clicked", self.refreshSidebar)
+
+    def refreshSidebar(self, button):
+        self.clearSidebar()
+        self.workspaceModel()
+
+    def clearSidebar(self):
+        self.workspace_list_info.clear()
 
     def createTitle(self):
         title = Gtk.Label()
@@ -58,8 +68,8 @@ class Sidebar(Gtk.Widget):
             if ws == self.lastWorkspace:
                 self.defaultSelection = treeIter
 
-    def workspaceView(self, ws_model):
-        self.lst = Gtk.TreeView(ws_model)
+    def workspaceView(self):
+        self.lst = Gtk.TreeView(self.workspace_list_info)
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("Workspaces", renderer, text=0)
         self.lst.append_column(column)
@@ -73,14 +83,14 @@ class Sidebar(Gtk.Widget):
         self.selection.connect("changed", self.callback)
 
     def addWorkspace(self, ws):
-        print"HOLA"
         self.workspace_list_info.append([ws])
 
     def getSelectedWs(self):
-        return self.selection
+        return self.lst.get_selection()
 
-    def getWSList(self):
-        return self.workspaceView(self.workspaceModel())
+    def selectWs(self, ws):
+        self.select = self.lst.get_selection()
+        self.select.select_iter(ws)
 
 
 class ConsoleLog(Gtk.Widget):

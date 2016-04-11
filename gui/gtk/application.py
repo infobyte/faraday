@@ -91,8 +91,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         self.sidebar = Sidebar(self.workspace_manager,
                                self.changeWorkspace,
-                               CONF.getLastWorkspace(),
-                               )
+                               CONF.getLastWorkspace())
 
         self.terminal = Terminal(CONF)
         self.console_log = ConsoleLog()

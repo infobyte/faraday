@@ -61,13 +61,19 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.topBox = Gtk.Box()
         self.topBox.pack_start(self.create_toolbar(), True, True, 0)
 
+        #SIDEBAR BOX
+        self.sidebarBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.sidebarBox.pack_start(self.sidebar.lst, True, True, 0)
+        self.sidebarBox.pack_start(self.sidebar.sidebar_button, False, False, 0)
+
         # MIDDLE BOX: NOTEBOOK AND SIDEBAR
         self.notebook = Gtk.Notebook()
         self.notebook.popup_enable()
         self.notebook.append_page(self.terminal.getTerminal(), Gtk.Label("1"))
+
         self.middleBox = Gtk.Box()
         self.middleBox.pack_start(self.notebook, True, True, 0)
-        self.middleBox.pack_start(self.sidebar.lst, False, False, 0)
+        self.middleBox.pack_start(self.sidebarBox, False, False, 0)
 
         # LOGGER BOX: THE LOGGER, DUH
         self.loggerBox = Gtk.Box()
@@ -82,7 +88,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.mainBox.pack_start(self.topBox, False, False, 0)
         self.mainBox.pack_start(self.middleBox, True, True, 0)
         self.mainBox.pack_start(self.loggerBox, False, False, 0)
-        self.mainBox.pack_start(self.notificationBox, False, False, 0)
+        self.mainBox.pack_end(self.notificationBox, False, False, 0)
 
         self.add(self.mainBox)
 

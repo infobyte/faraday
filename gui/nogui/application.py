@@ -18,11 +18,12 @@ CONF = getInstanceConfiguration()
 
 
 class GuiApp(FaradayUi):
-    def __init__(self, model_controller, plugin_manager, workspace_manager):
+    def __init__(self, model_controller, plugin_manager, workspace_manager, plugin_controller):
         FaradayUi.__init__(self,
                            model_controller,
                            plugin_manager,
-                           workspace_manager)
+                           workspace_manager,
+                           plugin_controller)
         self._stop = False
         model.guiapi.setMainApp(self)
         self.event_watcher = EventWatcher()

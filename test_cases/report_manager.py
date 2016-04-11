@@ -1,47 +1,47 @@
 #!/usr/bin/python
-'''
-Faraday Penetration Test IDE
+"""
+Faraday Penetration Test IDE.
+
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
+"""
 
-'''
+import mock
 import unittest
 import sys
 sys.path.append('.')
 
-from config.configuration import getInstanceConfiguration
-from model.workspace import Workspace
-from managers.reports_managers import ReportManager, NoReportsWatchException
+from plugins.core import PluginControllerForApi
+from managers.reports_managers import ReportProcessor
+from managers.reports_managers import ReportParser
 
-from persistence.persistence_managers import DBTYPE
-from mockito import mock, verify, when, any
-CONF = getInstanceConfiguration()
+class UnitTestReportParser(unittest.TestCase):
 
-from test_cases import common
+    def testSendReportWithPlugin(self):
 
-class UnitTestWorkspaceManager(unittest.TestCase):
-    def testCreateReportManager(self):
-        timer = 10
-        report_manager = ReportManager(timer, mock())
+        plugin_controller = mock.Mock(spec=PluginControllerForApi)
+        plugin_controller.processCommandInput.return_value = (True, None, None)
+        report_processor = ReportProcessor(plugin_controller)
 
-        self.assertIsNotNone(report_manager)
+        file_mock = mock.MagicMock(spec=file)
+        file_mock.read.return_value = 'Stringreturned'
 
-    def testWatchReportPath(self):
-        import os.path 
-        import os
-        workspace_name = common.new_random_workspace_name()
-        timer = 10
+        with mock.patch('__builtin__.open', create=True) as mock_open:
+            res = report_processor._sendReport("nmap", 'strings')
+            self.assertTrue(res, "The plugin should be executed")
 
-        report_manager = ReportManager(timer, mock())
-        report_manager.watch(workspace_name)
+    def testSendReportWithoutPlugin(self):
 
-        self.assertTrue(os.path.exists(os.path.join(CONF.getReportPath(),
-                            workspace_name)), 'Report directory not found')
-        
-    def testStartReportNoPathRunsException(self): 
-        report_manager = ReportManager(0, mock())
-        self.assertRaises(NoReportsWatchException, report_manager.startWatch) 
+        plugin_controller = mock.Mock(spec=PluginControllerForApi)
+        plugin_controller.processCommandInput.return_value = (False, None, None)
+        report_processor = ReportProcessor(plugin_controller)
+
+        file_mock = mock.MagicMock(spec=file)
+        file_mock.read.return_value = 'Stringreturned'
+
+        with mock.patch('__builtin__.open', create=True) as mock_open:
+            res = report_processor._sendReport("nmap", 'strings')
+            self.assertFalse(res, "The plugin should not be executed")
 
 if __name__ == '__main__':
     unittest.main()
-

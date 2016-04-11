@@ -15,6 +15,8 @@ from model.controller import ModelController
 from persistence.persistence_managers import DbManager
 from controllers.change import ChangeController
 from managers.workspace_manager import WorkspaceManager
+from plugins.core import PluginControllerForApi
+
 import model.api
 import model.guiapi
 import apis.rest.api as restapi
@@ -79,13 +81,21 @@ class MainApplication(object):
             self._mappers_manager,
             self._changes_controller)
 
+        # Create a PluginController and send this to UI selected.
+        self._plugin_controller = PluginControllerForApi(
+            'PluginController',
+            self._plugin_manager.getPlugins(),
+            self._mappers_manager
+        )
+
         if self.args.cli:
-            self.app = CliApp(self._workspace_manager)
+            self.app = CliApp(self._workspace_manager, self._plugin_controller)
             CONF.setMergeStrategy("new")
         else:
             self.app = UiFactory.create(self._model_controller,
                                         self._plugin_manager,
                                         self._workspace_manager,
+                                        self._plugin_controller,
                                         self.args.gui)
 
         self.timer = TimerClass()
@@ -118,11 +128,11 @@ class MainApplication(object):
             self._model_controller.start()
             model.api.startAPIServer()
             restapi.startAPIs(
-                self._plugin_manager,
+                self._plugin_controller,
                 self._model_controller,
-                self._mappers_manager,
                 CONF.getApiConInfoHost(),
-                CONF.getApiRestfulConInfoPort())
+                CONF.getApiRestfulConInfoPort()
+            )
 
             model.api.devlog("Faraday ready...")
 

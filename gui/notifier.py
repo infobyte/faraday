@@ -11,7 +11,7 @@ import gui.customevents as events
 
 
 class NotificationCenter():
-    def __init__(self, uiapp=FaradayUi()):
+    def __init__(self, uiapp=FaradayUi(None, None, None, None, None)):
         self.uiapp = uiapp
         self._consumers = []
         self._consumers_lock = threading.RLock()

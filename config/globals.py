@@ -25,6 +25,7 @@ CONST_FARADAY_QTRC_BACKUP = '~/.qt/.qtrc_faraday.bak'
 CONST_FARADAY_ZSHRC = "zsh/.zshrc"
 CONST_FARADAY_ZSH_FARADAY = "zsh/faraday.zsh"
 CONST_FARADAY_ZSH_PLUGIN = "zsh/plugin_controller_client.py"
+CONST_FARADAY_ZSH_OUTPUT_PATH = "zsh/output"
 CONST_FARADAY_BASE_CFG = "config/default.xml"
 CONST_FARADAY_USER_CFG = "config/config.xml"
 CONST_FARADAY_LIB_HELPERS = "shell/core/_helpers.so"

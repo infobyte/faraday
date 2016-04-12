@@ -69,6 +69,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         # MIDDLE BOX: NOTEBOOK AND SIDEBAR
         self.notebook = Gtk.Notebook()
         self.notebook.popup_enable()
+        self.notebook.set_scrollable(True)
         self.notebook.append_page(self.terminal.getTerminal(), Gtk.Label("1"))
 
         self.middleBox = Gtk.Box()

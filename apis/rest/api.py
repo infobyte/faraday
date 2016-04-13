@@ -313,10 +313,11 @@ class PluginControllerAPI(RESTApi):
         json_data = request.get_json()
         if 'cmd' in json_data.keys():
             cmd = json_data.get('cmd')
-            has_plugin, new_cmd, output_file = self.plugin_controller.\
-                processCommandInput(cmd)
-            if has_plugin:
-                return self.pluginAvailable(new_cmd, output_file)
+            pid = json_data.get('pid')
+            plugin, new_cmd = self.plugin_controller.\
+                processCommandInput(pid, cmd)
+            if plugin:
+                return self.pluginAvailable(plugin, new_cmd)
             return self.noContent("no plugin available for cmd")
         #cmd not sent, bad request
         return self.badRequest("cmd parameter not sent")

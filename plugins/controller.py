@@ -15,9 +15,8 @@ import os
 import Queue
 import shlex
 import time
-import uuid
 
-from plugins.core import PluginProcess
+from plugins.plugin import PluginProcess
 import model.api
 from model.commands_history import CommandRunInformation
 from plugins.modelactions import modelactions
@@ -42,11 +41,8 @@ class PluginControllerBase(object):
             os.path.expanduser(CONST_FARADAY_HOME_PATH),
             CONST_FARADAY_ZSH_OUTPUT_PATH)
 
-    def _find_plugin(self, new_plugin_id):
-        try:
-            return self._plugins[new_plugin_id]
-        except KeyError:
-            return None
+    def _find_plugin(self, plugin_id):
+        return self._plugins.get(plugin_id, None)
 
     def _is_command_malformed(self, original_command, modified_command):
         """
@@ -347,12 +343,11 @@ class PluginControllerForApi(PluginControllerBase):
             self, id, available_plugins, mapper_manager)
         self._active_plugins = {}
 
-    def processCommandInput(self, cmd, pid):
+    def processCommandInput(self, pid, cmd):
         """
         This method tries to find a plugin to parse the command sent
         by the terminal (identiefied by the process id).
         """
-
         plugin = self._get_plugins_by_input(cmd)
 
         if plugin:
@@ -364,22 +359,20 @@ class PluginControllerForApi(PluginControllerBase):
                         'command': cmd.split()[0],
                         'params': ' '.join(cmd.split()[1:])})
                 self._mapper_manager.save(cmd_info)
+                self._active_plugins[pid] = plugin, cmd_info
 
-                # This variable stores the filepath where we want
-                # the terminal's output after the cmd execution
-                output_file_path = os.path.join(
-                    self.output_path,
-                    "%d-%s" % (pid, uuid.uuid4()))
-                self._active_plugins[pid] = plugin, output_file_path, cmd_info
+                return plugin.id, modified_cmd_string
 
-                return plugin.id, output_file_path, modified_cmd_string
-
-        return None, None, None
+        return None, None
 
     def getPluginAutocompleteOptions(self, command_string):
+        """
+        Not implementend right now. Maybe it's better to use
+        zsh autocomplete features
+        """
         pass
 
-    def onCommandFinished(self, pid, exit_code):
+    def onCommandFinished(self, pid, exit_code, term_output):
         """
         For now we're not doing anything with the exit code,
         since plugins only parse the output in case of a
@@ -387,14 +380,17 @@ class PluginControllerForApi(PluginControllerBase):
         """
         if pid not in self._active_plugins.keys():
             return False
-        plugin, output_file_path, cmd_info = self._active_plugins.get(pid)
+        plugin, cmd_info = self._active_plugins.get(pid)
+
         cmd_info.duration = time() - cmd_info.itime
         self._mapper_manager.save(cmd_info)
 
-        if os.path.isfile(output_file_path):
-            self.processOutput(plugin, open(output_file_path, 'r').read())
+        self.processOutput(plugin, term_output)
         del self._active_plugins[pid]
         return True
+
+    def processReport(self, plugin, filepath):
+        pass
 
     def clearActivePlugins(self):
         self._active_plugins = {}

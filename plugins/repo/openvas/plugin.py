@@ -251,7 +251,7 @@ class OpenvasPlugin(core.PluginBase):
                     
                 if item.port == "None":
                     v_id = self.createAndAddVulnToHost(h_id,item.name.encode("utf-8"),desc=item.description.encode("utf-8"),
-                                                       ref=ref)
+                                                       severity=item.severity.encode("utf-8"),ref=ref)
                 else:
                     
                     if item.service:

@@ -51,6 +51,10 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.log = console_log
         self.statusbar = statusbar
 
+        #sets up the clipboard
+        self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        self.selection_clipboard = Gtk.Clipboard.get(Gdk.SELECTION_PRIMARY)
+
         # Keep it in sync with the actual state. Deep dark GTK magic
         self.connect("notify::is-maximized",
                      lambda obj:
@@ -66,11 +70,13 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.sidebarBox.pack_start(self.sidebar.scrollableView, True, True, 0)
         self.sidebarBox.pack_start(self.sidebar.sidebar_button, False, False, 0)
 
+        #TERMINAL BOX
+        self.firstTerminalBox = self.terminalBox(self.terminal.getTerminal())
+
         # MIDDLE BOX: NOTEBOOK AND SIDEBAR
         self.notebook = Gtk.Notebook()
-        self.notebook.popup_enable()
         self.notebook.set_scrollable(True)
-        self.notebook.append_page(self.terminal.getTerminal(), Gtk.Label("1"))
+        self.notebook.append_page(self.firstTerminalBox, Gtk.Label("1"))
 
         self.middleBox = Gtk.Box()
         self.middleBox.pack_start(self.notebook, True, True, 0)
@@ -97,11 +103,42 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         self.show_all()
 
-
     def terminalBox(self, terminal):
+        eventTerminalBox = Gtk.EventBox()
         terminalBox = Gtk.Box()
         terminalBox.pack_start(terminal, True, True, 0)
-        return terminalBox
+        eventTerminalBox.connect("button_press_event", self.right_click)
+        eventTerminalBox.add(terminalBox)
+        return eventTerminalBox
+
+    def right_click(self, eventbox, event):
+        menu = Gtk.Menu()
+        copy = Gtk.MenuItem("Copy")
+        paste = Gtk.MenuItem("Paste")
+        copy.connect("activate", self.copy_text)
+        paste.connect("activate", self.paste_text)
+        copy.show()
+        paste.show()
+        menu.append(paste)
+        menu.append(copy)
+        menu.popup(None, None, None, None, event.button, event.time)
+
+    def copy_text(self, button):
+        content = self.selection_clipboard.wait_for_text()
+        self.clipboard.set_text(content, -1)
+
+    def paste_text(self, button):
+        import ipdb; ipdb.set_trace()
+        currentTab = self.notebook.get_current_page()
+        currentTerminal = self.getCurrentFocusedTerminal(currentTab)
+        text = self.clipboard.wait_for_text()
+        currentTerminal.feed_child(text, -1)
+
+    def getCurrentFocusedTerminal(self, currentTab):
+        currentEventBox = self.notebook.get_children()[currentTab]
+        currentBox = currentEventBox.get_children()[0]
+        currentTerminal = currentBox.get_children()[0]
+        return currentTerminal
 
     def do_new_log(self, text):
         """What should the window do when it gets a new_log signal"""

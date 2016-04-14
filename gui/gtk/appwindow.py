@@ -98,12 +98,13 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.mainBox.pack_end(self.notificationBox, False, False, 0)
 
         self.add(self.mainBox)
-
         self.tab_number = 0  # 0 indexed
 
         self.show_all()
 
     def terminalBox(self, terminal):
+        """Given a terminal, creates an EventBox for the Box that has as a
+        children said terminal"""
         eventTerminalBox = Gtk.EventBox()
         terminalBox = Gtk.Box()
         terminalBox.pack_start(terminal, True, True, 0)
@@ -112,29 +113,51 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         return eventTerminalBox
 
     def right_click(self, eventbox, event):
+        """Defines the menu created when a user rightclicks on the
+        terminal eventbox"""
         menu = Gtk.Menu()
         copy = Gtk.MenuItem("Copy")
         paste = Gtk.MenuItem("Paste")
-        copy.connect("activate", self.copy_text)
-        paste.connect("activate", self.paste_text)
-        copy.show()
-        paste.show()
         menu.append(paste)
         menu.append(copy)
+
+        accelgroup = Gtk.AccelGroup()
+        self.add_accel_group(accelgroup)
+        accellabel = Gtk.AccelLabel("Ctrl+Shift+C")
+        accellabel.set_hexpand(True)
+        copy.add_accelerator("activate",
+                             accelgroup,
+                             Gdk.keyval_from_name("C"),
+                             Gdk.ModifierType.CONTROL_MASK,
+                             Gtk.AccelFlags.VISIBLE)
+
+        copy.connect("activate", self.copy_text)
+        paste.connect("activate", self.paste_text)
+
+        copy.show()
+        paste.show()
         menu.popup(None, None, None, None, event.button, event.time)
 
     def copy_text(self, button):
+        """What happens when the user copies text"""
         content = self.selection_clipboard.wait_for_text()
         self.clipboard.set_text(content, -1)
 
     def paste_text(self, button):
-        import ipdb; ipdb.set_trace()
+        """What happens when the user pastes text"""
         currentTab = self.notebook.get_current_page()
-        currentTerminal = self.getCurrentFocusedTerminal(currentTab)
-        text = self.clipboard.wait_for_text()
-        currentTerminal.feed_child(text, -1)
+        currentTerminal = self.getCurrentFocusedTerminal()
+        currentTerminal.paste_clipboard()
 
-    def getCurrentFocusedTerminal(self, currentTab):
+    def getFocusedTab(self):
+        """Return the focused tab"""
+        return self.notebook.get_current_page()
+
+    def getCurrentFocusedTerminal(self):
+        """The focused terminal is the only children of the notebook
+        which has as only children an eventbox which has as only
+        children the terminal"""
+        currentTab = self.getFocusedTab()
         currentEventBox = self.notebook.get_children()[currentTab]
         currentBox = currentEventBox.get_children()[0]
         currentTerminal = currentBox.get_children()[0]

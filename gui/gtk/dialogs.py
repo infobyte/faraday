@@ -36,7 +36,7 @@ class PreferenceWindowDialog(Gtk.Window):
         vbox.pack_start(self.label, True, True, 0)
 
         self.entry = Gtk.Entry()
-        self.entry.set_text("Preferences")
+        self.entry.set_text("http://127.0.0.1:5050")
         vbox.pack_start(self.entry, True, True, 0)
 
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)

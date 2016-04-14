@@ -197,19 +197,23 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         toolbar = Gtk.Toolbar()
         toolbar.set_hexpand(True)
         toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR)
+        icons = CONF.getImagePath() + "icons/"
 
         # new_from_stock is deprecated, but should work fine for now
-        new_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_NEW)
+        new_button_icon = Gtk.Image.new_from_file(icons + "sync.png")
+        new_terminal_icon = Gtk.Image.new_from_file(icons + "newshell.png")
+        remove_terminal_icon = Gtk.Image.new_from_file(icons + "exit.png")
+        new_button = Gtk.ToolButton.new(new_button_icon, None)
         new_button.set_is_important(True)
         toolbar.insert(new_button, 0)
         new_button.set_action_name('app.new')
 
-        new_terminal_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_DND)
+        new_terminal_button = Gtk.ToolButton.new(new_terminal_icon, None)
         new_terminal_button.set_is_important(True)
         new_terminal_button.set_action_name('app.new_terminal')
         toolbar.insert(new_terminal_button, 1)
 
-        remove_terminal_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_REMOVE)
+        remove_terminal_button = Gtk.ToolButton.new(remove_terminal_icon, None)
         remove_terminal_button.set_is_important(True)
         remove_terminal_button.connect("clicked", self.delete_tab)
         toolbar.insert(remove_terminal_button, 2)

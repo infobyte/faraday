@@ -247,7 +247,7 @@ class PluginController(PluginControllerBase):
         else:
             cmd_info = CommandRunInformation(
                 **{'workspace': model.api.getActiveWorkspace().name,
-                    'itime': time(),
+                    'itime': time.time(),
                     'command': command_string.split()[0],
                     'params': ' '.join(command_string.split()[1:])})
             self._mapper_manager.save(cmd_info)
@@ -355,7 +355,7 @@ class PluginControllerForApi(PluginControllerBase):
             if not self._is_command_malformed(cmd, modified_cmd_string):
                 cmd_info = CommandRunInformation(
                     **{'workspace': model.api.getActiveWorkspace().name,
-                        'itime': time(),
+                        'itime': time.time(),
                         'command': cmd.split()[0],
                         'params': ' '.join(cmd.split()[1:])})
                 self._mapper_manager.save(cmd_info)
@@ -382,7 +382,7 @@ class PluginControllerForApi(PluginControllerBase):
             return False
         plugin, cmd_info = self._active_plugins.get(pid)
 
-        cmd_info.duration = time() - cmd_info.itime
+        cmd_info.duration = time.time() - cmd_info.itime
         self._mapper_manager.save(cmd_info)
 
         self.processOutput(plugin, term_output)

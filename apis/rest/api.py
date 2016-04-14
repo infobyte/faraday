@@ -92,12 +92,12 @@ class RESTApi(object):
     def badRequest(self, message):
         error = 400
         return jsonify(error=error,
-                       message=message), error
+                       message=message)
 
     def noContent(self, message):
         code = 204
         return jsonify(code=code,
-                       message=message), code
+                       message=message)
 
     def ok(self, message):
         code = 200
@@ -303,14 +303,15 @@ class PluginControllerAPI(RESTApi):
                             methods=['DELETE']))
         return routes
 
-    def pluginAvailable(self, new_cmd, output_file):
+    def pluginAvailable(self, plugin, cmd):
         code = 200
         return jsonify(code=code,
-                       cmd=new_cmd,
-                       custom_output_file=output_file)
+                       cmd=cmd,
+                       plugin=plugin)
 
     def postCmdInput(self):
         json_data = request.get_json()
+        print json_data
         if 'cmd' in json_data.keys():
             if 'pid' in json_data.keys():
                 cmd = json_data.get('cmd')
@@ -326,6 +327,7 @@ class PluginControllerAPI(RESTApi):
 
     def postCmdOutput(self):
         json_data = request.get_json()
+        print json_data
         if 'pid' in json_data.keys():
             if 'output' in json_data.keys():
                 if 'exit_code' in json_data.keys():

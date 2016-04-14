@@ -29,7 +29,6 @@ url_active_plugins = "http://%s:%d/cmd/active-plugins" % (host, port)
 headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
 
-
 def send_cmd(pid, cmd):
 
     data = {'pid': pid, 'cmd': cmd}
@@ -62,7 +61,7 @@ def gen_output(pid):
     print "%s/%s.%s.output" % (output_folder, pid, uuid.uuid4())
     return 0
 
-def send_output(cmd, pid, exit_code, output_file):
+def send_output(pid, exit_code, output_file):
     output_file = open(output_file)
     output = output_file.read()
 
@@ -82,21 +81,27 @@ def send_output(cmd, pid, exit_code, output_file):
 
 
 def main(argv):
-    if len(argv) < 3:
+    if len(argv) < 2:
         sys.exit(0)
 
     action = argv[1]
 
-    dispatcher = {
-        'send_cmd': send_cmd,
-        'send_output': send_output,
-        'gen_output': gen_output}
+    # dispatcher = {
+    #     'send_cmd': send_cmd,
+    #     'send_output': send_output,
+    #     'gen_output': gen_output}
 
-    if action in dispatcher.keys():
-        if len(argv[2:]) > 0:
-            dispatcher[action](*argv[2:])
+    if action == 'send_cmd' and len(argv[2:]) == 2:
+        send_cmd(argv[2], argv[3])
+    if action == 'send_output' and len(argv[2:]) == 3:
+        send_cmd(argv[2], argv[3], argv[4])
+    if action == 'gen_output' and len(argv[2:]) == 1:
+        send_cmd(argv[2])
 
-    #sys.exit(0)
+    # if action in dispatcher.keys():
+    #     if len(argv[2:]) > 0:
+    #         dispatcher[action](*argv[2:])
+
 
 if __name__ == '__main__':
     main(sys.argv)

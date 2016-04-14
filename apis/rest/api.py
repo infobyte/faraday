@@ -293,14 +293,14 @@ class PluginControllerAPI(RESTApi):
     def getRoutes(self):
         routes = []
         routes.append(Route(path='/cmd/input',
-                              view_func=self.postCmdInput,
-                              methods=['POST']))
+                            view_func=self.postCmdInput,
+                            methods=['POST']))
         routes.append(Route(path='/cmd/output',
-                              view_func=self.postCmdOutput,
-                              methods=['POST']))
+                            view_func=self.postCmdOutput,
+                            methods=['POST']))
         routes.append(Route(path='/cmd/active-plugins',
-                              view_func=self.clearActivePlugins,
-                              methods=['DELETE']))
+                            view_func=self.clearActivePlugins,
+                            methods=['DELETE']))
         return routes
 
     def pluginAvailable(self, new_cmd, output_file):
@@ -312,27 +312,34 @@ class PluginControllerAPI(RESTApi):
     def postCmdInput(self):
         json_data = request.get_json()
         if 'cmd' in json_data.keys():
-            cmd = json_data.get('cmd')
-            pid = json_data.get('pid')
-            plugin, new_cmd = self.plugin_controller.\
-                processCommandInput(pid, cmd)
-            if plugin:
-                return self.pluginAvailable(plugin, new_cmd)
-            return self.noContent("no plugin available for cmd")
-        #cmd not sent, bad request
+            if 'pid' in json_data.keys():
+                cmd = json_data.get('cmd')
+                pid = json_data.get('pid')
+                plugin, new_cmd = self.plugin_controller.\
+                    processCommandInput(pid, cmd)
+                if plugin:
+                    return self.pluginAvailable(plugin, new_cmd)
+                return self.noContent("no plugin available for cmd")
+            return self.badRequest("pid parameter not sent")
+        # cmd not sent, bad request
         return self.badRequest("cmd parameter not sent")
 
     def postCmdOutput(self):
         json_data = request.get_json()
-        if 'cmd' in json_data.keys():
+        if 'pid' in json_data.keys():
             if 'output' in json_data.keys():
-                cmd = json_data.get('cmd')
-                output = base64.b64decode(json_data.get('output'))
-                if self.plugin_controller.onCommandFinished(cmd, output):
-                    return self.ok("output successfully sent to plugin")
-                return self.badRequest("output received but no active plugin")
+                if 'exit_code' in json_data.keys():
+                    pid = json_data.get('pid')
+                    output = base64.b64decode(json_data.get('output'))
+                    exit_code = json_data.get('exit_code')
+                    if self.plugin_controller.onCommandFinished(
+                            pid, exit_code, output):
+                        return self.ok("output successfully sent to plugin")
+                    return self.badRequest(
+                        "output received but no active plugin")
+                return self.badRequest("exit_code parameter not sent")
             return self.badRequest("output parameter not sent")
-        return self.badRequest("cmd parameter not sent")
+        return self.badRequest("pid parameter not sent")
 
     def clearActivePlugins(self):
         self.plugin_controller.clearActivePlugins()

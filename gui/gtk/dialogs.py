@@ -194,18 +194,18 @@ class PluginOptionsDialog(Gtk.Window):
                                                        for i in range(3)]
 
         self.nameEntry, self.versionEntry, self.pluginVersionEntry = [
-                Gtk.Entry() for i in range(3)]
+                Gtk.Label() for i in range(3)]
 
         nameLabel.set_text("Name: ")
         versionLabel.set_text("Version: ")
         pluginVersionLabel.set_text("Plugin version: ")
 
         nameBox.pack_start(nameLabel, False, False, 5)
-        nameBox.pack_start(self.nameEntry, True, True, 5)
+        nameBox.pack_start(self.nameEntry, False, True, 5)
         versionBox.pack_start(versionLabel, False, False, 5)
-        versionBox.pack_start(self.versionEntry, True, True, 5)
+        versionBox.pack_start(self.versionEntry, False, True, 5)
         pluginVersionBox.pack_start(pluginVersionLabel, False, False, 5)
-        pluginVersionBox.pack_start(self.pluginVersionEntry, True, True, 5)
+        pluginVersionBox.pack_start(self.pluginVersionEntry, False, True, 5)
 
         infoBox.pack_start(nameBox, False, False, 5)
         infoBox.pack_start(versionBox, False, False, 5)
@@ -338,9 +338,9 @@ class PluginOptionsDialog(Gtk.Window):
 
         self.setSettingsView()
 
-        self.nameEntry.set_text(model[treeiter][1])
-        self.versionEntry.set_text(model[treeiter][2])
-        self.pluginVersionEntry.set_text(model[treeiter][3])
+        self.nameEntry.set_label(model[treeiter][1])
+        self.versionEntry.set_label(model[treeiter][2])
+        self.pluginVersionEntry.set_label(model[treeiter][3])
 
     def setSettingsView(self):
         adecuateModel = self.models[self.id_of_selected]

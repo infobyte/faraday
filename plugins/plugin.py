@@ -99,6 +99,12 @@ class PluginBase(object):
 
         return options
 
+    def processOutput(self, term_output):
+        output = term_output
+        if self.has_custom_output():
+            output = open(self.get_custom_file_path(), 'r').read()
+        self.parseOutputString(output)
+
     def parseOutputString(self, output):
         """
         This method must be implemented.

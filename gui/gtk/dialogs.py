@@ -2,12 +2,13 @@
 import gi
 import re
 
+gi.require_version('Gtk', '3.0')
+
 from gi.repository import Gtk
 from persistence.persistence_managers import CouchDbManager
 from utils.common import checkSSL
 from config.configuration import getInstanceConfiguration
 
-gi.require_version('Gtk', '3.0')
 
 CONF = getInstanceConfiguration()
 
@@ -53,7 +54,7 @@ class PreferenceWindowDialog(Gtk.Window):
     def on_click_OK(self, button):
         """Defines what happens when user clicks OK button"""
         repourl = self.entry.get_text()
-        #TODO: stop printing errors, put them on a dialog window
+        # TODO: stop printing errors, put them on a dialog window
         if not CouchDbManager.testCouch(repourl):
             print("NOT A VALID URL")
         if repourl.startswith("https://"):
@@ -151,15 +152,40 @@ class NewWorkspaceDialog(Gtk.Window):
 
 
 class PluginOptionsDialog(Gtk.Window):
-    """The dialog where the user can see details about the plugins installed
-    Its missing the feature to set the preferences. IMPORTANT to implement
-    that"""
+    """The dialog where the user can see details about installed plugins.
+    It is not the prettiest thing in the world but it works.
+    Creating and displaying the models of each plugin settings is specially
+    messy, there's more info in the appropiate methods"""
     def __init__(self, plugin_manager):
 
         Gtk.Window.__init__(self, title="Plugins Options")
         self.set_size_request(200, 200)
+
+        if plugin_manager is not None:
+            self.plugin_settings = plugin_manager.getSettings()
+        else:
+            self.plugin_settings = {}
+
+        self.settings_view = None
+        self.id_of_selected = "Acunetix XML Output Plugin" #just a placeholder
+        self.models = self.createPluginsSettingsModel()
+        self.setSettingsView()
+
         plugin_info = self.createPluginInfo(plugin_manager)
         pluginList = self.createPluginListView(plugin_info)
+        scroll_pluginList = Gtk.ScrolledWindow(None, None)
+        scroll_pluginList.add(pluginList)
+        pluginListBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        pluginListBox.pack_start(scroll_pluginList, True, True, 0)
+
+        buttonBox = Gtk.Box()
+        OK_button = Gtk.Button.new_with_label("OK")
+        cancel_button = Gtk.Button.new_with_label("Cancel")
+        OK_button.connect("clicked", self.on_click_OK, plugin_manager)
+        cancel_button.connect("clicked", self.on_click_cancel)
+        buttonBox.pack_start(OK_button, True, True, 0)
+        buttonBox.pack_start(cancel_button, True, True, 0)
+        pluginListBox.pack_start(buttonBox, False, False, 0)
 
         infoBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         nameBox, versionBox, pluginVersionBox = [Gtk.Box() for i in range(3)]
@@ -168,7 +194,7 @@ class PluginOptionsDialog(Gtk.Window):
                                                        for i in range(3)]
 
         self.nameEntry, self.versionEntry, self.pluginVersionEntry = [
-                                                Gtk.Entry() for i in range(3)]
+                Gtk.Entry() for i in range(3)]
 
         nameLabel.set_text("Name: ")
         versionLabel.set_text("Version: ")
@@ -187,12 +213,21 @@ class PluginOptionsDialog(Gtk.Window):
 
         self.pluginSpecsBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.pluginSpecsBox.pack_start(infoBox, False, False, 5)
+        self.pluginSpecsBox.pack_start(self.settings_view, True, True, 0)
 
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.mainBox.pack_start(pluginList, False, False, 5)
+        self.mainBox.pack_start(pluginListBox, True, True, 5)
         self.mainBox.pack_end(self.pluginSpecsBox, True, True, 5)
 
         self.add(self.mainBox)
+
+    def on_click_OK(self, button, plugin_manager):
+        if plugin_manager is not None:
+            plugin_manager.updateSettings(self.plugin_settings)
+        self.destroy()
+
+    def on_click_cancel(self, button):
+        self.destroy()
 
     def create_entry_box(self, plugin_name, plugin_tool, plugin_version):
         entry_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -218,18 +253,17 @@ class PluginOptionsDialog(Gtk.Window):
     def createPluginInfo(self, plugin_manager):
         """Creates and return a TreeStore where the basic information about
         the plugins live"""
-        plugin_info = Gtk.TreeStore(str, str, str)
-        if plugin_manager is not None:
-            self.plugin_settings = plugin_manager.getSettings()
-        else:
-            self.plugin_settings = {}
+        plugin_info = Gtk.TreeStore(str, str, str, str)
 
         for plugin_id, params in self.plugin_settings.iteritems():
-            plugin_info.append(None, [params["name"],
+            plugin_info.append(None, [plugin_id,
+                                      params["name"],
                                       params["version"],
                                       params["plugin_version"]])
 
-        return plugin_info
+        sorted_plugin_info = Gtk.TreeModelSort(model=plugin_info)
+        sorted_plugin_info.set_sort_column_id(1, Gtk.SortType.ASCENDING)
+        return sorted_plugin_info
 
     def createPluginListView(self, plugin_info):
         """Creates the view for the left-hand side list of the dialog.
@@ -238,7 +272,8 @@ class PluginOptionsDialog(Gtk.Window):
 
         plugin_list_view = Gtk.TreeView(plugin_info)
         renderer = Gtk.CellRendererText()
-        column = Gtk.TreeViewColumn("Title", renderer, text=0)
+        column = Gtk.TreeViewColumn("Title", renderer, text=1)
+        column.set_sort_column_id(1)
         plugin_list_view.append_column(column)
 
         selection = plugin_list_view.get_selection()
@@ -246,15 +281,71 @@ class PluginOptionsDialog(Gtk.Window):
 
         return plugin_list_view
 
+    def createPluginsSettingsModel(self):
+        """Creates a dictionary with
+        {plugin-name : [(setting-name, setting-value)]} structure. This is used
+        to hold all the plugins settings models"""
+
+        models = {}
+
+        for plugin_id in self.plugin_settings.iteritems():
+            plugin_info = plugin_id[1]
+            store = Gtk.ListStore(str, str)
+            for setting in plugin_info["settings"].items():
+                setting_name = setting[0]
+                setting_value = setting[1]
+                store.append([setting_name, setting_value])
+            models[plugin_id[1]["name"]] = store
+        return models
+
+    def createAdecuatePluginSettingView(self, store):
+        """Create the adecuate plugin settings view. The first time this is
+        executed, it will be none and it will tell the view which columns
+        to and such. After that, it will just change the model displayed"""
+        self.active_store = store
+
+        if self.settings_view is None:
+            self.settings_view = Gtk.TreeView(store)
+            renderer_text = Gtk.CellRendererText()
+            column_text = Gtk.TreeViewColumn("Settings", renderer_text, text=0)
+            self.settings_view.append_column(column_text)
+
+            renderer_editable_text = Gtk.CellRendererText()
+            renderer_editable_text.set_property("editable", True)
+            renderer_editable_text.connect("edited", self.value_changed)
+            column_editabletext = Gtk.TreeViewColumn("Value",
+                                                     renderer_editable_text,
+                                                     text=1)
+
+            self.settings_view.append_column(column_editabletext)
+
+        else:
+            self.settings_view.set_model(store)
+
+    def value_changed(self, widget, path, text):
+        self.active_store[path][1] = text
+        setting = self.active_store[path][0]
+        settings = self.plugin_settings[self.name_of_selected]["settings"]
+        settings[setting.strip()] = text.strip()
+
     def on_plugin_selection(self, selection):
         """When the user selects a plugin, it will change the text
         displeyed on the entries to their corresponding values"""
 
         model, treeiter = selection.get_selected()
+        self.id_of_selected = model[treeiter][1]
+        self.name_of_selected = model[treeiter][0]
 
-        self.nameEntry.set_text(model[treeiter][0])
-        self.versionEntry.set_text(model[treeiter][1])
-        self.pluginVersionEntry.set_text(model[treeiter][2])
+        self.setSettingsView()
+
+        self.nameEntry.set_text(model[treeiter][1])
+        self.versionEntry.set_text(model[treeiter][2])
+        self.pluginVersionEntry.set_text(model[treeiter][3])
+
+    def setSettingsView(self):
+        adecuateModel = self.models[self.id_of_selected]
+        self.createAdecuatePluginSettingView(adecuateModel)
+
 
 class NotificationsDialog(Gtk.Window):
     def __init__(self, view, callback):
@@ -276,4 +367,3 @@ class NotificationsDialog(Gtk.Window):
     def on_click_OK(self, button):
         self.destroy_notifications()
         self.destroy()
-

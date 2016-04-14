@@ -39,12 +39,11 @@ function add-output() {
 		if [[ "$code" == "200" ]]; then
 			FARADAY_PLUGIN=`echo $json_response | env python2.7 -c "import sys, json; print(json.load(sys.stdin)[\"plugin\"])"`
 			new_cmd=`echo $json_response | env python2.7 -c "import sys, json; print(json.load(sys.stdin)[\"cmd\"])"`
-	        if [[ "$new_cmd" != "null" ]]; then
+	        if [[ "$new_cmd" != "None" ]]; then
 	            BUFFER=" $new_cmd"
-	            FARADAY_OUTPUT=`mktemp`
-	            BUFFER="$BUFFER >&1 >> $FARADAY_OUTPUT"
-
 		    fi
+            FARADAY_OUTPUT=`mktemp`
+            BUFFER="$BUFFER >&1 >> $FARADAY_OUTPUT"
 		fi
 	fi
     zle .accept-line "$@"

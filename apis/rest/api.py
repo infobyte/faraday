@@ -311,7 +311,6 @@ class PluginControllerAPI(RESTApi):
 
     def postCmdInput(self):
         json_data = request.get_json()
-        print json_data
         if 'cmd' in json_data.keys():
             if 'pid' in json_data.keys():
                 cmd = json_data.get('cmd')
@@ -327,7 +326,6 @@ class PluginControllerAPI(RESTApi):
 
     def postCmdOutput(self):
         json_data = request.get_json()
-        print json_data
         if 'pid' in json_data.keys():
             if 'output' in json_data.keys():
                 if 'exit_code' in json_data.keys():

@@ -14,12 +14,12 @@ FARADAY_PLUGIN=
 echo ">>> WELCOME TO FARADAY"
 echo "[+] Current Workspace: $WORKSPACE"
 if [[ -z $STATUS ]]; then
-		echo "[-] API: Warning API unreachable"
+        echo "[-] API: Warning API unreachable"
 
-	elif [[ $STATUS == "200" ]]; then
-		echo "[+] API: OK"
-	else
-		echo "[!] API: $STATUS"
+    elif [[ $STATUS == "200" ]]; then
+        echo "[+] API: OK"
+    else
+        echo "[!] API: $STATUS"
 
 fi
 
@@ -29,47 +29,48 @@ setopt histignorespace
 plugin_controller_client=$HOME/.faraday/zsh/plugin_controller_client.py
 old_cmd=
 
-add-output() {
+function add-output() {
 
-	old_cmd=$BUFFER
+    old_cmd=$BUFFER
     json_response=`$plugin_controller_client send_cmd $$ $BUFFER`
-	FARADAY_PLUGIN=
-	FARADAY_OUTPUT=
+    FARADAY_PLUGIN=
+    FARADAY_OUTPUT=
 
-	if [ "$json_response" != "" ]; then
-		new_cmd=`python -c 'import json;print(json.loads($json_response))["cmd"]'`
-		if [ "$new_cmd" != "null" ]; then
-			BUFFER=" $new_cmd"
-			FARADAY_OUTPUT = `$plugin_controller_client gen_output $$`
-			BUFFER = $BUFFER + " >&1 > $OUTPUT"
-		FARADAY_PLUGIN=`python -c 'import json;print(json.loads($json_response))["plugin"]'`
-
-	zle .accept-line "$@"
+    if [ "$json_response" != "" ]; then
+        new_cmd=`python -c 'import json;print(json.loads($json_response))["cmd"]'`
+        if [ "$new_cmd" != "null" ]; then
+            BUFFER=" $new_cmd"
+            FARADAY_OUTPUT = `$plugin_controller_client gen_output $$`
+            BUFFER = $BUFFER + " >&1 > $OUTPUT"
+        fi
+        FARADAY_PLUGIN=`python -c 'import json;print(json.loads($json_response))["plugin"]'`
+    fi
+    zle .accept-line "$@"
 }
 
-send-output(){
-	if [ ! -z "$FARADAY_PLUGIN" ]; then
-		`$plugin_controller_client send_output $$ $? $FARADAY_OUTPUT`
-	fi
-
-	FARADAY_OUTPUT=
-	FARADAY_PLUGIN=
+function send-output() {
+    if [ ! -z "$FARADAY_PLUGIN" ]; then
+        `$plugin_controller_client send_output $$ $? $FARADAY_OUTPUT`
+    fi
+    FARADAY_OUTPUT=
+    FARADAY_PLUGIN=
 }
 
-function zshaddhistory() {
+zshaddhistory() {
     emulate -L zsh
     print -sr -- "$old_cmd"
     fc -p
     return 1
 }
 
-function precmd(){
-	WORKSPACE=`cat $HOME/.faraday/config/user.xml |  grep '<last_workspace' | cut -d '>' -f 2 | cut -d '<' -f 1`
-	send-output()
+precmd() {
+    send-output
+    WORKSPACE=`cat $HOME/.faraday/config/user.xml |  grep '<last_workspace' | cut -d '>' -f 2 | cut -d '<' -f 1`
+    return 0
 }
 
-function zshexit(){
-	send-output()
+zshexit() {
+    send-output
 }
 
 zle -N accept-line add-output

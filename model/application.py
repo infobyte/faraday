@@ -15,7 +15,7 @@ from model.controller import ModelController
 from persistence.persistence_managers import DbManager
 from controllers.change import ChangeController
 from managers.workspace_manager import WorkspaceManager
-from plugins.core import PluginControllerForApi
+from plugins.controller import PluginControllerForApi
 
 import model.api
 import model.guiapi

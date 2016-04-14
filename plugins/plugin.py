@@ -24,7 +24,7 @@ from model.common import (
     ModelObjectCred
 )
 from model.hosts import Host, Interface, Service
-from plugin.modelactions import modelactions
+from plugins.modelactions import modelactions
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()

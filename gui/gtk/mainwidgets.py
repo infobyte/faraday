@@ -5,7 +5,7 @@ import sys
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-from gi.repository import Gtk, Vte, GLib, GObject
+from gi.repository import Gtk, Vte, GLib
 
 
 class Terminal(Gtk.Widget):
@@ -56,9 +56,12 @@ class Sidebar(Gtk.Widget):
         self.scrollableView.add(self.lst)
 
     def refreshSidebar(self, button):
+        """Function called when the user press the refresh button.
+        Gets an updated copy of the workspaces and checks against
+        the model to see which are already there and which arent"""
         model = self.workspace_list_info
         self.workspaces = self.ws_manager.getWorkspacesNames()
-        added_workspaces = [added_ws[0] for added_ws in model]
+        added_workspaces = [added_ws[0] for added_ws in model]  # <3
         for ws in self.workspaces:
             if ws not in added_workspaces:
                 self.addWorkspace(ws)

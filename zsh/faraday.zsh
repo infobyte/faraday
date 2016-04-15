@@ -52,7 +52,7 @@ function add-output() {
 function send-output() {
     if [ ! -z "$FARADAY_PLUGIN" ]; then
 		output=`env python2.7 -c "import base64; print(base64.b64encode(open(\"$FARADAY_OUTPUT\",'r').read()))"`
-        curl -s -X POST -H "Content-Type: application/json" -d "{\"exit_code\": \"$?\", \"pid\": $$, \"output\": \"$output\" }" http://$FARADAY_ZSH_HOST:$FARADAY_ZSH_RPORT/cmd/output
+        curl=`curl -s -X POST -H "Content-Type: application/json" -d "{\"exit_code\": \"$?\", \"pid\": $$, \"output\": \"$output\" }" http://$FARADAY_ZSH_HOST:$FARADAY_ZSH_RPORT/cmd/output`
     fi
 	if [ -f $FARADAY_OUTPUT ];then
 		rm -f $FARADAY_OUTPUT

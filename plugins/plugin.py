@@ -64,6 +64,9 @@ class PluginBase(object):
         for param, (param_type, value) in self._settings.iteritems():
             yield param, value
 
+    def get_ws(self):
+        return CONF.getLastWorkspace()
+        
     def getSetting(self, name):
         setting_type, value = self._settings[name]
         return value

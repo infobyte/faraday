@@ -373,13 +373,13 @@ class PluginControllerForApi(PluginControllerBase):
         pass
 
     def onCommandFinished(self, pid, exit_code, term_output):
-        """
-        For now we're not doing anything with the exit code,
-        since plugins only parse the output in case of a
-        successful execution
-        """
+
         if pid not in self._active_plugins.keys():
             return False
+        if exit_code != 0:
+            del self._active_plugins[pid]
+            return False
+
         plugin, cmd_info = self._active_plugins.get(pid)
 
         cmd_info.duration = time.time() - cmd_info.itime

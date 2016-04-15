@@ -16,7 +16,6 @@ from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 
-from plugins.core import PluginControllerForApi
 from model.visitor import VulnsLookupVisitor
 
 import utils.logs as logger

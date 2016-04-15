@@ -92,8 +92,7 @@ class Sidebar(Gtk.Widget):
             self.selectDefault.select_iter(self.defaultSelection)
 
         selection = self.lst.get_selection()
-        model, treeiter = selection.get_selected()
-        selection.connect("changed", self.callback, model[treeiter][0])
+        selection.connect("changed", self.callback)
 
     def addWorkspace(self, ws):
         self.workspace_list_info.append([ws])

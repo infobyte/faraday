@@ -26,10 +26,9 @@ from utils.logs import addHandler
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-from gi.repository import Gio, Gtk, GObject
+from gi.repository import Gio, Gtk
 
 CONF = getInstanceConfiguration()
-
 
 
 class GuiApp(Gtk.Application, FaradayUi):
@@ -156,6 +155,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         model.guiapi.notification_center.registerWidget(self.window)
 
     def postEvent(self, receiver, event):
+        print event.type()
         if receiver is None:
             receiver = self.getMainWindow()
         if event.type() == 3131:
@@ -163,6 +163,15 @@ class GuiApp(Gtk.Application, FaradayUi):
         if event.type() == 5100:
             self.notificationsModel.prepend([event.change.getMessage()])
             receiver.emit("new_notif")
+        if event.type() == 3132:
+            print event.text
+            dialog_text = event.text
+            dialog = Gtk.MessageDialog(self.window, 0,
+                                       Gtk.MessageType.INFO,
+                                       Gtk.ButtonsType.OK,
+                                       dialog_text)
+            dialog.run()
+            dialog.destroy()
 
     def on_about(self, action, param):
         """ Defines what happens when you press 'about' on the menu"""
@@ -210,13 +219,16 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.notificationsModel.clear()
         self.window.emit("clear_notifications")
 
-    def changeWorkspace(self, selection, workspaceName):
+    def changeWorkspace(self, selection):
         """Pretty much copy/pasted from QT3 GUI.
         Selection is actually used nowhere, but the connect function is
         Sidebar passes it as an argument so well there it is"""
 
+        tree_model, treeiter = selection.get_selected()
+        workspaceName = tree_model[treeiter][0]
+
         try:
-            ws = self.openWorkspace(workspaceName)
+            ws = super(GuiApp, self).openWorkspace(workspaceName)
         except Exception as e:
             model.guiapi.notification_center.showDialog(str(e))
             ws = self.openDefaultWorkspace()
@@ -243,7 +255,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         CONF.setLastWorkspace(workspace)
         CONF.saveConfig()
         Gtk.Application.run(self)
-
 
     def on_quit(self, action, param):
         self.quit()

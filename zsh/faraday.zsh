@@ -33,7 +33,10 @@ function add-output() {
     old_cmd=$BUFFER
 	FARADAY_PLUGIN=
     FARADAY_OUTPUT=
-	json_response=`curl -s -X POST -H "Content-Type: application/json" -d "{\"cmd\": \"$BUFFER\", \"pid\": $$}" http://$FARADAY_ZSH_HOST:$FARADAY_ZSH_RPORT/cmd/input`
+    cmd_encoded=$(printf "%s" "$BUFFER"| base64)
+    echo $cmd_encoded
+	json_response=`curl -s -X POST -H "Content-Type: application/json" -d "{\"cmd\": \"$cmd_encoded\", \"pid\": $$}" http://$FARADAY_ZSH_HOST:$FARADAY_ZSH_RPORT/cmd/input`
+    echo $json_response
     if [[ $? -eq 0 ]]; then
 		code=`echo $json_response | env python2.7 -c "import sys, json; print(json.load(sys.stdin)[\"code\"])"`
 		if [[ "$code" == "200" ]]; then
@@ -53,6 +56,7 @@ function send-output() {
     if [ ! -z "$FARADAY_PLUGIN" ]; then
 		output=`env python2.7 -c "import base64; print(base64.b64encode(open(\"$FARADAY_OUTPUT\",'r').read()))"`
         curl=`curl -s -X POST -H "Content-Type: application/json" -d "{\"exit_code\": \"$?\", \"pid\": $$, \"output\": \"$output\" }" http://$FARADAY_ZSH_HOST:$FARADAY_ZSH_RPORT/cmd/output`
+        echo $curl
     fi
 	if [ -f $FARADAY_OUTPUT ];then
 		rm -f $FARADAY_OUTPUT

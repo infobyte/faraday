@@ -312,7 +312,12 @@ class PluginControllerAPI(RESTApi):
         json_data = request.get_json()
         if 'cmd' in json_data.keys():
             if 'pid' in json_data.keys():
-                cmd = json_data.get('cmd')
+
+                try:
+                    cmd = base64.b64decode(json_data.get('cmd'))
+                except:
+                    cmd = ''
+
                 pid = json_data.get('pid')
                 plugin, new_cmd = self.plugin_controller.\
                     processCommandInput(pid, cmd)

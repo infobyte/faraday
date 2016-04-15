@@ -376,7 +376,7 @@ class PluginControllerForApi(PluginControllerBase):
 
         if pid not in self._active_plugins.keys():
             return False
-        if exit_code != 0:
+        if exit_code != '0':
             del self._active_plugins[pid]
             return False
 

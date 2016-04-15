@@ -99,7 +99,7 @@ class PluginControllerBase(object):
         plugin_process = PluginProcess(plugin, output_queue, new_elem_queue)
         getLogger(self).debug(
             "Created plugin_process (%d) for plugin instance (%d)" %
-            (id(self), id(plugin_process), id(plugin)))
+            (id(plugin_process), id(plugin)))
 
         plugin_process.start()
 

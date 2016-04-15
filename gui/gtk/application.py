@@ -210,10 +210,11 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.notificationsModel.clear()
         self.window.emit("clear_notifications")
 
-    def changeWorkspace(self, workspaceSelection):
-        """Pretty much copy/pasted from QT3 GUI"""
-        model, treeiter = workspaceSelection.get_selected()
-        workspaceName = model[treeiter][0]
+    def changeWorkspace(self, selection, workspaceName):
+        """Pretty much copy/pasted from QT3 GUI.
+        Selection is actually used nowhere, but the connect function is
+        Sidebar passes it as an argument so well there it is"""
+
         try:
             ws = self.openWorkspace(workspaceName)
         except Exception as e:

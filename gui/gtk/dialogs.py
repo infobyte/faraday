@@ -16,7 +16,12 @@ CONF = getInstanceConfiguration()
 It'd be probably a good idea to make a super class Dialog from which
 all the dialogs inherit from with the common methods used (particularly the
 OK and Cancel buttons). Good starting point if we continue on with the idea
-of using GTK"""
+of using GTK.
+
+Update: so it seems like Gtk actually already provides a Gtk.Dialog class
+which would seem practical. All dialogs are already made and it is a
+convenience class only, but if there's need to add more, it's a good
+thing to know"""
 
 
 class PreferenceWindowDialog(Gtk.Window):
@@ -25,7 +30,7 @@ class PreferenceWindowDialog(Gtk.Window):
 
     def __init__(self):
         Gtk.Window.__init__(self, title="Preferences")
-        self.set_size_request(200, 200)
+        self.set_size_request(50, 50)
         self.timeout_id = None
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -33,11 +38,11 @@ class PreferenceWindowDialog(Gtk.Window):
 
         self.label = Gtk.Label()
         self.label.set_text("Your Couch IP")
-        vbox.pack_start(self.label, True, True, 0)
+        vbox.pack_start(self.label, True, False, 0)
 
         self.entry = Gtk.Entry()
         self.entry.set_text("http://127.0.0.1:5050")
-        vbox.pack_start(self.entry, True, True, 0)
+        vbox.pack_start(self.entry, True, False, 0)
 
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         vbox.pack_end(hbox, False, True, 0)

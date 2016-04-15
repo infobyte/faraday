@@ -5,7 +5,7 @@ import sys
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-from gi.repository import Gtk, Vte, GLib
+from gi.repository import Gtk, Vte, GLib, GObject
 
 
 class Terminal(Gtk.Widget):
@@ -42,6 +42,7 @@ class Sidebar(Gtk.Widget):
         self.callback = callback_to_change_workspace
         self.ws_manager = workspace_manager
         self.lastWorkspace = conf
+        self.workspaces = self.ws_manager.getWorkspacesNames()
         self.workspace_list_info = Gtk.ListStore(str)
 
         self.workspaceModel()
@@ -55,8 +56,12 @@ class Sidebar(Gtk.Widget):
         self.scrollableView.add(self.lst)
 
     def refreshSidebar(self, button):
-        self.clearSidebar()
-        self.workspaceModel()
+        model = self.workspace_list_info
+        self.workspaces = self.ws_manager.getWorkspacesNames()
+        added_workspaces = [added_ws[0] for added_ws in model]
+        for ws in self.workspaces:
+            if ws not in added_workspaces:
+                self.addWorkspace(ws)
 
     def clearSidebar(self):
         self.workspace_list_info.clear()
@@ -67,7 +72,7 @@ class Sidebar(Gtk.Widget):
         return title
 
     def workspaceModel(self):
-        for ws in self.ws_manager.getWorkspacesNames():
+        for ws in self.workspaces:
             treeIter = self.workspace_list_info.append([ws])
             if ws == self.lastWorkspace:
                 self.defaultSelection = treeIter
@@ -83,8 +88,9 @@ class Sidebar(Gtk.Widget):
             self.selectDefault = self.lst.get_selection()
             self.selectDefault.select_iter(self.defaultSelection)
 
-        self.selection = self.lst.get_selection()
-        self.selection.connect("changed", self.callback)
+        selection = self.lst.get_selection()
+        model, treeiter = selection.get_selected()
+        selection.connect("changed", self.callback, model[treeiter][0])
 
     def addWorkspace(self, ws):
         self.workspace_list_info.append([ws])
@@ -139,6 +145,7 @@ class ConsoleLog(Gtk.Widget):
         """Updates the textBuffer with the event sent"""
         last_position = self.textBuffer.get_end_iter()
         self.textBuffer.insert(last_position, event+"\n", len(event + "\n"))
+
 
 class Statusbar(Gtk.Widget):
     def __init__(self, on_button_do):

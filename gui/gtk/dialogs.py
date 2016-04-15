@@ -54,16 +54,16 @@ class PreferenceWindowDialog(Gtk.Window):
     def on_click_OK(self, button):
         """Defines what happens when user clicks OK button"""
         repourl = self.entry.get_text()
-        # TODO: stop printing errors, put them on a dialog window
         if not CouchDbManager.testCouch(repourl):
-            print("NOT A VALID URL")
-        if repourl.startswith("https://"):
+            errorDialog(self, "The provided URL is not valid",
+                        "Are you sure CouchDB is running?")
+        elif repourl.startswith("https://"):
             if not checkSSL(repourl):
-                print("SSL CERTIFICATE VALIDATION FAILED")
-
-        CONF.setCouchUri(repourl)
-        CONF.saveConfig()
-        self.destroy()
+                errorDialog("The SSL certificate validation has failed")
+        else:
+            CONF.setCouchUri(repourl)
+            CONF.saveConfig()
+            self.destroy()
 
     def on_click_cancel(self, button):
         self.destroy()
@@ -140,12 +140,13 @@ class NewWorkspaceDialog(Gtk.Window):
                               self.__type_txt)
                 self.sidebar.addWorkspace(self.__name_txt)
                 self.destroy()
-            else:
-                self._main_window.showPopup("A workspace must be named with "
-                                            "all lowercase letters (a-z), digi"
-                                            "ts(0-9) or any of the _$()+-/ "
-                                            "characters. The name has to start"
-                                            " with a lowercase letter")
+        else:
+            errorDialog(self, "Invalid workspace name",
+                        "A workspace must be named with "
+                        "all lowercase letters (a-z), digi"
+                        "ts(0-9) or any of the _$()+-/ "
+                        "characters. The name has to start"
+                        " with a lowercase letter")
 
     def on_click_cancel(self, button):
         self.destroy()
@@ -366,4 +367,19 @@ class NotificationsDialog(Gtk.Window):
 
     def on_click_OK(self, button):
         self.destroy_notifications()
+        self.destroy()
+
+class errorDialog(Gtk.MessageDialog):
+    """A simple error dialog to show the user where things went wrong.
+    Takes the parent window, (Gtk.Window or Gtk.Dialog, most probably)
+    the error and explanation (strings, nothing fancy) as arguments"""
+
+    def __init__(self, parent_window, error, explanation=None):
+        Gtk.MessageDialog.__init__(self, parent_window, 0,
+                                   Gtk.MessageType.ERROR,
+                                   Gtk.ButtonsType.OK,
+                                   error)
+        if explanation is not None:
+            self.format_secondary_text(explanation)
+        self.run()
         self.destroy()

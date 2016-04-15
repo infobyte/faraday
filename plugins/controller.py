@@ -343,7 +343,7 @@ class PluginControllerForApi(PluginControllerBase):
             self, id, available_plugins, mapper_manager)
         self._active_plugins = {}
 
-    def processCommandInput(self, pid, cmd):
+    def processCommandInput(self, pid, cmd, pwd):
         """
         This method tries to find a plugin to parse the command sent
         by the terminal (identiefied by the process id).
@@ -351,7 +351,7 @@ class PluginControllerForApi(PluginControllerBase):
         plugin = self._get_plugins_by_input(cmd)
 
         if plugin:
-            modified_cmd_string = plugin.processCommandString("", "", cmd)
+            modified_cmd_string = plugin.processCommandString("", pwd, cmd)
             if not self._is_command_malformed(cmd, modified_cmd_string):
                 cmd_info = CommandRunInformation(
                     **{'workspace': model.api.getActiveWorkspace().name,

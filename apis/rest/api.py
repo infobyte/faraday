@@ -312,21 +312,28 @@ class PluginControllerAPI(RESTApi):
         json_data = request.get_json()
         if 'cmd' in json_data.keys():
             if 'pid' in json_data.keys():
+                if 'pwd' in json_data.keys():
+                    try:
+                        cmd = base64.b64decode(json_data.get('cmd'))
+                        pwd = base64.b64decode(json_data.get('pwd'))
+                    except:
+                        cmd = ''
+                        pwd = ''
+                    pid = json_data.get('pid')
+                    plugin, new_cmd = self.plugin_controller.\
+                        processCommandInput(pid, cmd, pwd)
+                    if plugin:
+                        return self.pluginAvailable(plugin, new_cmd)
+                    else:
+                        return self.noContent("no plugin available for cmd")
+                else:
+                    return self.badRequest("pwd parameter not sent")
+            else:
+                return self.badRequest("pid parameter not sent")
+        else:
+            return self.badRequest("cmd parameter not sent")
 
-                try:
-                    cmd = base64.b64decode(json_data.get('cmd'))
-                except:
-                    cmd = ''
 
-                pid = json_data.get('pid')
-                plugin, new_cmd = self.plugin_controller.\
-                    processCommandInput(pid, cmd)
-                if plugin:
-                    return self.pluginAvailable(plugin, new_cmd)
-                return self.noContent("no plugin available for cmd")
-            return self.badRequest("pid parameter not sent")
-        # cmd not sent, bad request
-        return self.badRequest("cmd parameter not sent")
 
     def postCmdOutput(self):
         json_data = request.get_json()

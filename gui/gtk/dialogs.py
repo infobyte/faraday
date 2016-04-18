@@ -382,16 +382,35 @@ class aboutDialog(Gtk.AboutDialog):
     ont the menu. Could be in application.py, but for consistency reasons
     its here"""
     def __init__(self, main_window):
+
+        Gtk.AboutDialog.__init__(self, transient_for=main_window, modal=True)
+        icons = CONF.getImagePath() + "icons/"
+        faraday_icon = GdkPixbuf.Pixbuf.new_from_file(icons+"about.png")
+        self.set_logo(faraday_icon)
+        self.set_program_name("Faraday")
+        self.set_comments("Penetration Test IDE -"
+                          " Infobyte LLC. - All rights reserved")
+        faraday_website = "http://www.infobytesec.com/faraday.html"
+        self.set_website(faraday_website)
+        self.set_website_label("Learn more about Faraday")
+
+class helpDialog(Gtk.AboutDialog):
+    """Using about dialog 'cause they are very similar, but this will
+    display github page, Wiki, and such"""
+    def __init__(self, main_window):
         Gtk.AboutDialog.__init__(self, transient_for=main_window, modal=True)
         icons = CONF.getImagePath() + "icons/"
         faraday_icon = GdkPixbuf.Pixbuf.new_from_file(icons+"faraday_icon.png")
         self.set_logo(faraday_icon)
         self.set_program_name("Faraday")
-        self.set_comments("Penetration Test IDE -"
-                          " Infobyte LLC.")
+        self.set_comments("Farday is a Penetration Test IDE. "
+                          "Just use one of the supported tools on Faraday's "
+                          " terminal and a plugin will capture the output and "
+                          "extract useful information for you.")
         faraday_website = "http://www.infobytesec.com/faraday.html"
         self.set_website(faraday_website)
-        self.set_website_label("Learn more about Faraday")
+        self.set_website_label("Learn more about how to use Faraday")
+
 
 
 class errorDialog(Gtk.MessageDialog):

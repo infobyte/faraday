@@ -15,6 +15,7 @@ from dialogs import NewWorkspaceDialog
 from dialogs import PluginOptionsDialog
 from dialogs import NotificationsDialog
 from dialogs import aboutDialog
+from dialogs import helpDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import ConsoleLog
@@ -102,6 +103,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         action.connect("activate", self.on_about)
         self.add_action(action)
 
+        action = Gio.SimpleAction.new("help", None)
+        action.connect("activate", self.on_help)
+        self.add_action(action)
+
         action = Gio.SimpleAction.new("quit", None)
         action.connect("activate", self.on_quit)
         self.add_action(action)
@@ -156,7 +161,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         model.guiapi.notification_center.registerWidget(self.window)
 
     def postEvent(self, receiver, event):
-        print event.type()
         if receiver is None:
             receiver = self.getMainWindow()
         if event.type() == 3131:
@@ -179,6 +183,13 @@ class GuiApp(Gtk.Application, FaradayUi):
         about_dialog = aboutDialog(self.window)
         about_dialog.run()
         about_dialog.destroy()
+
+    def on_help(self, action, param):
+        """Defines what happens when user press 'help' on the menu"""
+
+        help_dialog = helpDialog(self.window)
+        help_dialog.run()
+        help_dialog.destroy()
 
     def on_preferences(self, action, param):
         """Defines what happens when you press 'preferences' on the menu"""

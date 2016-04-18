@@ -27,7 +27,7 @@ from utils.logs import addHandler
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-from gi.repository import Gio, Gtk, GdkPixbuf
+from gi.repository import Gio, Gtk
 
 CONF = getInstanceConfiguration()
 

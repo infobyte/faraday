@@ -40,8 +40,11 @@ class PreferenceWindowDialog(Gtk.Window):
         self.label.set_text("Your Couch IP")
         vbox.pack_start(self.label, True, False, 0)
 
+
+        couch_uri = CONF.getCouchURI()
         self.entry = Gtk.Entry()
-        self.entry.set_text("http://127.0.0.1:5050")
+        text = couch_uri if couch_uri else "http://127.0.0.1:5050"
+        self.entry.set_text(text)
         vbox.pack_start(self.entry, True, False, 0)
 
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)

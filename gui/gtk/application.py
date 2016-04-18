@@ -156,6 +156,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         model.guiapi.notification_center.registerWidget(self.window)
 
     def postEvent(self, receiver, event):
+        print event.type()
         if receiver is None:
             receiver = self.getMainWindow()
         if event.type() == 3131:

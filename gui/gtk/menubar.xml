@@ -23,16 +23,5 @@
       </item>
     </section>
   </menu>
-  <menu id="Help">
-    <submenu>
-      <attribute name="label">_Help</attribute>
-      <section>
-        <item>
-          <attribute name="label">_About</attribute>
-          <attribute name="action">app.about</attribute>
-        </item>
-      </section>
-    </submenu>
-  </menu>
 </interface>
 

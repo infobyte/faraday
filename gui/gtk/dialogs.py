@@ -412,7 +412,7 @@ class helpDialog(Gtk.AboutDialog):
                           "Just use one of the supported tools on Faraday's "
                           " terminal and a plugin will capture the output and "
                           "extract useful information for you.")
-        faraday_website = "http://www.infobytesec.com/faraday.html"
+        faraday_website = "https://github.com/infobyte/faraday/wiki"
         self.set_website(faraday_website)
         self.set_website_label("Learn more about how to use Faraday")
 

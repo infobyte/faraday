@@ -4,7 +4,7 @@ import re
 
 gi.require_version('Gtk', '3.0')
 
-from gi.repository import Gtk
+from gi.repository import Gtk, GdkPixbuf
 from persistence.persistence_managers import CouchDbManager
 from utils.common import checkSSL
 from config.configuration import getInstanceConfiguration
@@ -39,7 +39,6 @@ class PreferenceWindowDialog(Gtk.Window):
         self.label = Gtk.Label()
         self.label.set_text("Your Couch IP")
         vbox.pack_start(self.label, True, False, 0)
-
 
         couch_uri = CONF.getCouchURI()
         self.entry = Gtk.Entry()
@@ -176,7 +175,7 @@ class PluginOptionsDialog(Gtk.Window):
             self.plugin_settings = {}
 
         self.settings_view = None
-        self.id_of_selected = "Acunetix XML Output Plugin" #just a placeholder
+        self.id_of_selected = "Acunetix XML Output Plugin"  # first one by name
         self.models = self.createPluginsSettingsModel()
         self.setSettingsView()
 
@@ -376,6 +375,24 @@ class NotificationsDialog(Gtk.Window):
     def on_click_OK(self, button):
         self.destroy_notifications()
         self.destroy()
+
+
+class aboutDialog(Gtk.AboutDialog):
+    """The simple about dialog displayed when the user clicks on "about"
+    ont the menu. Could be in application.py, but for consistency reasons
+    its here"""
+    def __init__(self, main_window):
+        Gtk.AboutDialog.__init__(self, transient_for=main_window, modal=True)
+        icons = CONF.getImagePath() + "icons/"
+        faraday_icon = GdkPixbuf.Pixbuf.new_from_file(icons+"faraday_icon.png")
+        self.set_logo(faraday_icon)
+        self.set_program_name("Faraday")
+        self.set_comments("Penetration Test IDE -"
+                          " Infobyte LLC.")
+        faraday_website = "http://www.infobytesec.com/faraday.html"
+        self.set_website(faraday_website)
+        self.set_website_label("Learn more about Faraday")
+
 
 class errorDialog(Gtk.MessageDialog):
     """A simple error dialog to show the user where things went wrong.

@@ -175,7 +175,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
     def getLogConsole(self):
         """Returns the LogConsole. Needed by the GUIHandler logger"""
-        # This explodes everywhere, it is very weird. Pass works for now
         return self.log
 
     def on_maximize_toggle(self, action, value):

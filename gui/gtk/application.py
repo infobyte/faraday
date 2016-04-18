@@ -14,6 +14,7 @@ from dialogs import PreferenceWindowDialog
 from dialogs import NewWorkspaceDialog
 from dialogs import PluginOptionsDialog
 from dialogs import NotificationsDialog
+from dialogs import aboutDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import ConsoleLog
@@ -26,7 +27,7 @@ from utils.logs import addHandler
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-from gi.repository import Gio, Gtk
+from gi.repository import Gio, Gtk, GdkPixbuf
 
 CONF = getInstanceConfiguration()
 
@@ -174,8 +175,9 @@ class GuiApp(Gtk.Application, FaradayUi):
     def on_about(self, action, param):
         """ Defines what happens when you press 'about' on the menu"""
 
-        about_dialog = Gtk.AboutDialog(transient_for=self.window, modal=True)
-        about_dialog.present()
+        about_dialog = aboutDialog(self.window)
+        about_dialog.run()
+        about_dialog.destroy()
 
     def on_preferences(self, action, param):
         """Defines what happens when you press 'preferences' on the menu"""

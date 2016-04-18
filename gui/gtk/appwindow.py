@@ -202,20 +202,27 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         new_button_icon = Gtk.Image.new_from_file(icons + "sync.png")
         new_terminal_icon = Gtk.Image.new_from_file(icons + "newshell.png")
         remove_terminal_icon = Gtk.Image.new_from_file(icons + "exit.png")
+        toggle_log_icon = Gtk.Image.new_from_file(icons + "debug.png")
+
         new_button = Gtk.ToolButton.new(new_button_icon, None)
         new_button.set_is_important(True)
         toolbar.insert(new_button, 0)
         new_button.set_action_name('app.new')
 
+        toggle_log_button = Gtk.ToolButton.new(toggle_log_icon, None)
+        toggle_log_button.set_is_important(True)
+        toggle_log_button.connect("clicked", self.toggle_log)
+        toolbar.insert(toggle_log_button, 1)
+
         new_terminal_button = Gtk.ToolButton.new(new_terminal_icon, None)
         new_terminal_button.set_is_important(True)
         new_terminal_button.set_action_name('app.new_terminal')
-        toolbar.insert(new_terminal_button, 1)
+        toolbar.insert(new_terminal_button, 2)
 
         remove_terminal_button = Gtk.ToolButton.new(remove_terminal_icon, None)
         remove_terminal_button.set_is_important(True)
         remove_terminal_button.connect("clicked", self.delete_tab)
-        toolbar.insert(remove_terminal_button, 2)
+        toolbar.insert(remove_terminal_button, 3)
 
         return toolbar
 
@@ -246,3 +253,8 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
             tab = self.notebook.get_nth_page(n)
             self.notebook.set_tab_label_text(tab, str(n+1))
         self.tab_number = number_of_tabs-1
+
+    def toggle_log(self, button):
+        """Reverses the visibility status of the loggerbox"""
+        current_state = self.loggerBox.is_visible()
+        self.loggerBox.set_visible(not current_state)

@@ -52,7 +52,7 @@ class Sidebar(Gtk.Widget):
         self.sidebar_button.connect("clicked", self.refreshSidebar)
 
         self.scrollableView = Gtk.ScrolledWindow.new(None, None)
-        self.scrollableView.set_min_content_width(140)
+        self.scrollableView.set_min_content_width(160)
         self.scrollableView.add(self.lst)
 
     def refreshSidebar(self, button=None):

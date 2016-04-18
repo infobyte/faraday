@@ -26,12 +26,15 @@ thing to know"""
 
 class PreferenceWindowDialog(Gtk.Window):
     """Sets up a preference dialog with basically nothing more than a
-    label, a text entry to input your CouchDB IP and a couple of buttons"""
+    label, a text entry to input your CouchDB IP and a couple of buttons.
+    Takes a callback function to the mainapp so that it can refresh the
+    workspace list and information"""
 
-    def __init__(self):
+    def __init__(self, callback):
         Gtk.Window.__init__(self, title="Preferences")
         self.set_size_request(50, 50)
         self.timeout_id = None
+        self.reloadWorkspaces = callback
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.add(vbox)
@@ -70,7 +73,9 @@ class PreferenceWindowDialog(Gtk.Window):
         else:
             CONF.setCouchUri(repourl)
             CONF.saveConfig()
+            self.reloadWorkspaces()
             self.destroy()
+
 
     def on_click_cancel(self, button):
         self.destroy()

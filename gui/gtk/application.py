@@ -192,10 +192,22 @@ class GuiApp(Gtk.Application, FaradayUi):
         help_dialog.destroy()
 
     def on_preferences(self, action, param):
-        """Defines what happens when you press 'preferences' on the menu"""
+        """Defines what happens when you press 'preferences' on the menu.
+        Sends as a callback reloadWsManager, so if the user actually
+        changes her Couch URL, the sidebar will reload reflecting the
+        new workspaces available"""
 
-        preference_window = PreferenceWindowDialog()
+        preference_window = PreferenceWindowDialog(self.reloadWorkspaces)
         preference_window.show_all()
+
+    def reloadWorkspaces(self):
+        """Used in close conjunction with on_preferences, close workspace,
+        resources the workspaces available, clears the sidebar of the old
+        workspaces and injects all the new ones in there too"""
+        self.workspace_manager.closeWorkspace()
+        self.workspace_manager.resource()
+        self.sidebar.clearSidebar()
+        self.sidebar.refreshSidebar()
 
     def on_pluginOptions(self, action, param):
         """Defines what happens when you press "Plugins" on the menu"""

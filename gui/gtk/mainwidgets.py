@@ -55,7 +55,7 @@ class Sidebar(Gtk.Widget):
         self.scrollableView.set_min_content_width(140)
         self.scrollableView.add(self.lst)
 
-    def refreshSidebar(self, button):
+    def refreshSidebar(self, button=None):
         """Function called when the user press the refresh button.
         Gets an updated copy of the workspaces and checks against
         the model to see which are already there and which arent"""

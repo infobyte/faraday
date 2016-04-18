@@ -144,9 +144,12 @@ class ConsoleLog(Gtk.Widget):
         self.update(text)
 
     def update(self, event):
-        """Updates the textBuffer with the event sent"""
+        """Updates the textBuffer with the event sent. Also scrolls to last
+        posted automatically"""
         last_position = self.textBuffer.get_end_iter()
         self.textBuffer.insert(last_position, event+"\n", len(event + "\n"))
+        insert = self.textBuffer.get_insert()
+        self.textView.scroll_to_mark(insert, 0, False, 1, 1)
 
 
 class Statusbar(Gtk.Widget):

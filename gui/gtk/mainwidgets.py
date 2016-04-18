@@ -61,7 +61,7 @@ class Sidebar(Gtk.Widget):
         the model to see which are already there and which arent"""
         model = self.workspace_list_info
         self.workspaces = self.ws_manager.getWorkspacesNames()
-        added_workspaces = [added_ws[0] for added_ws in model]  # <3
+        added_workspaces = [added_ws[0] for added_ws in model]
         for ws in self.workspaces:
             if ws not in added_workspaces:
                 self.addWorkspace(ws)
@@ -103,6 +103,9 @@ class Sidebar(Gtk.Widget):
     def selectWs(self, ws):
         self.select = self.lst.get_selection()
         self.select.select_iter(ws)
+
+    def getButton(self):
+        return self.sidebar_button
 
 
 class ConsoleLog(Gtk.Widget):

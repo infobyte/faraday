@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import gi
-from mainwidgets import Terminal
 
 from config.configuration import getInstanceConfiguration
 
@@ -32,7 +31,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     __gsignals__ = {
         "new_log": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
         "new_notif": (GObject.SIGNAL_RUN_FIRST, None, ()),
-        "clear_notifications" : (GObject.SIGNAL_RUN_FIRST, None, ())
+        "clear_notifications": (GObject.SIGNAL_RUN_FIRST, None, ())
     }
 
     def __init__(self, sidebar, terminal, console_log, statusbar,
@@ -51,7 +50,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.log = console_log
         self.statusbar = statusbar
 
-        #sets up the clipboard
+        # sets up the clipboard
         self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         self.selection_clipboard = Gtk.Clipboard.get(Gdk.SELECTION_PRIMARY)
 
@@ -61,16 +60,16 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
                      max_action.set_state(
                          GLib.Variant.new_boolean(obj.props.is_maximized)))
 
-        #TOP BOX: TOOLBAR AND FILTER
+        # TOP BOX: TOOLBAR AND FILTER
         self.topBox = Gtk.Box()
         self.topBox.pack_start(self.create_toolbar(), True, True, 0)
 
-        #SIDEBAR BOX
+        # SIDEBAR BOX
         self.sidebarBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.sidebarBox.pack_start(self.sidebar.scrollableView, True, True, 0)
-        self.sidebarBox.pack_start(self.sidebar.sidebar_button, False, False, 0)
+        self.sidebarBox.pack_start(self.sidebar.getButton(), False, False, 0)
 
-        #TERMINAL BOX
+        # TERMINAL BOX
         self.firstTerminalBox = self.terminalBox(self.terminal.getTerminal())
 
         # MIDDLE BOX: NOTEBOOK AND SIDEBAR
@@ -145,7 +144,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
     def paste_text(self, button):
         """What happens when the user pastes text"""
-        currentTab = self.notebook.get_current_page()
         currentTerminal = self.getCurrentFocusedTerminal()
         currentTerminal.paste_clipboard()
 
@@ -205,22 +203,24 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         toggle_log_icon = Gtk.Image.new_from_file(icons + "debug.png")
 
         new_button = Gtk.ToolButton.new(new_button_icon, None)
-        new_button.set_is_important(True)
+        new_button.set_tooltip_text("Create a new workspace")
         toolbar.insert(new_button, 0)
         new_button.set_action_name('app.new')
 
-        toggle_log_button = Gtk.ToolButton.new(toggle_log_icon, None)
-        toggle_log_button.set_is_important(True)
+        toggle_log_button = Gtk.ToggleToolButton.new()
+        toggle_log_button.set_icon_widget(toggle_log_icon)
+        toggle_log_button.set_active(True)  # log enabled by default
+        toggle_log_button.set_tooltip_text("Toggle log console")
         toggle_log_button.connect("clicked", self.toggle_log)
         toolbar.insert(toggle_log_button, 1)
 
         new_terminal_button = Gtk.ToolButton.new(new_terminal_icon, None)
-        new_terminal_button.set_is_important(True)
+        new_terminal_button.set_tooltip_text("Create a new tab")
         new_terminal_button.set_action_name('app.new_terminal')
         toolbar.insert(new_terminal_button, 2)
 
         remove_terminal_button = Gtk.ToolButton.new(remove_terminal_icon, None)
-        remove_terminal_button.set_is_important(True)
+        remove_terminal_button.set_tooltip_text("Delete current tab")
         remove_terminal_button.connect("clicked", self.delete_tab)
         toolbar.insert(remove_terminal_button, 3)
 
@@ -246,7 +246,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     def reorder_tab_names(self):
         """When a tab is deleted, all other tabs must be renamed to reacomodate
         the numbers"""
-        #Tabs are zero indexed, but their labels start at one
+        # Tabs are zero indexed, but their labels start at one
 
         number_of_tabs = self.notebook.get_n_pages()
         for n in range(number_of_tabs):

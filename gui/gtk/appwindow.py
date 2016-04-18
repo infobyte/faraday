@@ -50,6 +50,8 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.log = console_log
         self.statusbar = statusbar
 
+        self.icons = CONF.getImagePath() + "icons/"
+
         # sets up the clipboard
         self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         self.selection_clipboard = Gtk.Clipboard.get(Gdk.SELECTION_PRIMARY)
@@ -95,6 +97,17 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.mainBox.pack_start(self.middleBox, True, True, 0)
         self.mainBox.pack_start(self.loggerBox, False, False, 0)
         self.mainBox.pack_end(self.notificationBox, False, False, 0)
+
+        remove_terminal_icon = Gtk.Image.new_from_file(self.icons + "exit.png")
+        remove_terminal_button = Gtk.Button()
+        remove_terminal_button.set_tooltip_text("Delete current tab")
+        remove_terminal_button.connect("clicked", self.delete_tab)
+        remove_terminal_button.set_image(remove_terminal_icon)
+        remove_terminal_button.set_relief(Gtk.ReliefStyle.NONE)
+        remove_terminal_button.show()
+        at_end = Gtk.PackType.END
+
+        self.notebook.set_action_widget(remove_terminal_button, at_end)
 
         self.add(self.mainBox)
         self.tab_number = 0  # 0 indexed
@@ -194,17 +207,21 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         toolbar = Gtk.Toolbar()
         toolbar.set_hexpand(True)
         toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR)
-        icons = CONF.getImagePath() + "icons/"
+        icons = self.icons
 
         # new_from_stock is deprecated, but should work fine for now
         new_button_icon = Gtk.Image.new_from_file(icons + "sync.png")
         new_terminal_icon = Gtk.Image.new_from_file(icons + "newshell.png")
-        remove_terminal_icon = Gtk.Image.new_from_file(icons + "exit.png")
         toggle_log_icon = Gtk.Image.new_from_file(icons + "debug.png")
+
+        new_terminal_button = Gtk.ToolButton.new(new_terminal_icon, None)
+        new_terminal_button.set_tooltip_text("Create a new tab")
+        new_terminal_button.set_action_name('app.new_terminal')
+        toolbar.insert(new_terminal_button, 0)
 
         new_button = Gtk.ToolButton.new(new_button_icon, None)
         new_button.set_tooltip_text("Create a new workspace")
-        toolbar.insert(new_button, 0)
+        toolbar.insert(new_button, 1)
         new_button.set_action_name('app.new')
 
         toggle_log_button = Gtk.ToggleToolButton.new()
@@ -212,17 +229,8 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         toggle_log_button.set_active(True)  # log enabled by default
         toggle_log_button.set_tooltip_text("Toggle log console")
         toggle_log_button.connect("clicked", self.toggle_log)
-        toolbar.insert(toggle_log_button, 1)
+        toolbar.insert(toggle_log_button, 2)
 
-        new_terminal_button = Gtk.ToolButton.new(new_terminal_icon, None)
-        new_terminal_button.set_tooltip_text("Create a new tab")
-        new_terminal_button.set_action_name('app.new_terminal')
-        toolbar.insert(new_terminal_button, 2)
-
-        remove_terminal_button = Gtk.ToolButton.new(remove_terminal_icon, None)
-        remove_terminal_button.set_tooltip_text("Delete current tab")
-        remove_terminal_button.connect("clicked", self.delete_tab)
-        toolbar.insert(remove_terminal_button, 3)
 
         return toolbar
 

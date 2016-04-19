@@ -41,12 +41,14 @@ class GuiApp(Gtk.Application, FaradayUi):
     The dialogs are found inside the dialogs module
     """
 
-    def __init__(self, model_controller, plugin_manager, workspace_manager):
+    def __init__(self, model_controller, plugin_manager, workspace_manager,
+                 plugin_controller):
 
         FaradayUi.__init__(self,
                            model_controller,
                            plugin_manager,
-                           workspace_manager)
+                           workspace_manager,
+                           plugin_controller)
 
         Gtk.Application.__init__(self, application_id="org.infobyte.faraday",
                                  flags=Gio.ApplicationFlags.FLAGS_NONE)

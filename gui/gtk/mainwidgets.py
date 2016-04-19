@@ -37,9 +37,11 @@ class Sidebar(Gtk.Widget):
     instance by the application. It only handles the view, all the backend
     word is handled by the application via the callback"""
 
-    def __init__(self, workspace_manager, callback_to_change_workspace, conf):
+    def __init__(self, workspace_manager, callback_to_change_workspace,
+                 callback_to_remove_workspace, conf):
         super(Gtk.Widget, self).__init__()
         self.callback = callback_to_change_workspace
+        self.removeWsCallback = callback_to_remove_workspace
         self.ws_manager = workspace_manager
         self.lastWorkspace = conf
         self.workspaces = self.ws_manager.getWorkspacesNames()
@@ -91,8 +93,26 @@ class Sidebar(Gtk.Widget):
             self.selectDefault = self.lst.get_selection()
             self.selectDefault.select_iter(self.defaultSelection)
 
+        self.lst.connect("button-press-event", self.on_right_click)
         selection = self.lst.get_selection()
         selection.connect("changed", self.callback)
+
+    def on_right_click(self, view, event):
+
+        if event.button == 3:
+            menu = Gtk.Menu()
+            delete_item = Gtk.MenuItem("Delete")
+            menu.append(delete_item)
+
+            path, _, _, _ = view.get_path_at_pos(int(event.x), int(event.y))
+            tree_iter = self.workspace_list_info.get_iter(path)
+            ws_name = self.workspace_list_info[tree_iter][0]
+
+            delete_item.connect("activate", self.removeWsCallback, ws_name)
+
+            delete_item.show()
+            menu.popup(None, None, None, None, event.button, event.time)
+            return True
 
     def addWorkspace(self, ws):
         self.workspace_list_info.append([ws])

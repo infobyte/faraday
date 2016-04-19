@@ -86,6 +86,18 @@ class GuiApp(Gtk.Application, FaradayUi):
             except Exception as e:
                 model.guiapi.notification_center.showDialog(str(e))
 
+    def removeWorkspace(self, button, ws_name):
+        """Removes a workspace. If the workspace to be deleted is the one
+        selected, it moves you first to the default. The clears and refreshes
+        sidebar"""
+
+        model.api.log("Removing Workspace: %s" % ws_name)
+        if CONF.getLastWorkspace() == ws_name:
+            self.openDefaultWorkspace()
+        self.getWorkspaceManager().removeWorkspace(ws_name)
+        self.sidebar.clearSidebar()
+        self.sidebar.refreshSidebar()
+
     def do_startup(self):
         """
         GTK calls this method after Gtk.Application.run()
@@ -96,6 +108,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         self.sidebar = Sidebar(self.workspace_manager,
                                self.changeWorkspace,
+                               self.removeWorkspace,
                                CONF.getLastWorkspace())
 
         self.terminal = Terminal(CONF)

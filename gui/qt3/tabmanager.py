@@ -28,7 +28,7 @@ class ContextMenuTabBar(qt.QTabBar):
         self.connect(self, qt.PYSIGNAL('contextMenu'), self._showContextMenu )
         self.contextPopupMenu = qt.QPopupMenu(self)
         self._setupContextPopupMenu()
-       
+
     def addAction(self, name, func):
         self._actions[name] = func
 
@@ -36,16 +36,9 @@ class ContextMenuTabBar(qt.QTabBar):
         """
         setups all items in the context menu with all its actions
         """
-        #insertItem ( const QString & text,
-        #              const QObject * receiver,
-        #              const char * member,
-        #              const QKeySequence & accel = 0,
-        #              int id = -1,
-        #              int index = -1 )
         self.contextPopupMenu.insertItem("Allow plugins on this shell", self._allowPlugins)
         self._actions["new_shell"].addTo(self.contextPopupMenu);
         self._actions["close_shell"].addTo(self.contextPopupMenu);
-        #self.contextPopupMenu.insertItem("Close tab", self._actions["close_shell"])
 
     def contextMenuEvent(self, event):
         #XXX: emits the signal to show the parent context menu
@@ -63,20 +56,20 @@ class ContextMenuTabBar(qt.QTabBar):
         # e is a qt.QMouseEvent
         if "maximize" in self._actions:
             self._actions["maximize"]()
-            
+
     def _setupActions(self):
         """
         creates some actions needed on some menues and toolbars
         """
         a = self._actions["close_shell"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"newshell.png"))), "&Close Shell", qt.Qt.CTRL + qt.Qt.Key_W, self, "New Shell" )
         self.connect(a, qt.SIGNAL('activated()'), self.destroyShellTab)
-        
+
         a = self._actions["new_shell"] = qt.QAction( qt.QIconSet(qt.QPixmap(os.path.join(CONF.getIconsPath(),"newshell.png"))), "&New Shell", qt.Qt.CTRL + qt.Qt.Key_T, self, "New Shell" )
         self.connect(a, qt.SIGNAL('activated()'), self.createShellTab)
 
     def destroyShellTab(self):
         getMainWindow().destroyShellTab()
-    
+
     def createShellTab(self):
         getMainWindow().createShellTab()
 
@@ -87,16 +80,16 @@ class TabManager(qt.QTabWidget):
         self.views = []
         self.setMargin(10)
         self.connect(self, qt.SIGNAL('currentChanged(QWidget*)'), self._setFocus)
-        
+
         # we replace the tab bar with our own wich handles contextMenu
         tabbar = ContextMenuTabBar(self)
         self.setTabBar(tabbar)
         self._next_id = 0
-    
+
     def getNextId(self):
         self._next_id += 1
         return self._next_id
-        
+
     def addView(self, view):
         if view not in self.views:
             self.views.append(view)

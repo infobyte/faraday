@@ -300,9 +300,6 @@ def startFaraday():
 
     logger.info("All done. Opening environment.")
     #TODO: Handle args in CONF and send only necessary ones.
-    # Force OSX to run no gui
-    if sys.platform == "darwin":
-        args.gui = "no-gui"
 
     main_app = MainApplication(args)
 

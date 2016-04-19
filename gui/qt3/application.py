@@ -18,7 +18,7 @@ except ImportError:
 from gui.gui_app import FaradayUi
 from gui.qt3.mainwindow import MainWindow
 from gui.qt3.customevents import QtCustomEvent
-from gui.qt3.logconsole import GUIHandler
+from gui.loghandler import GUIHandler
 from shell.controller.env import ShellEnvironment
 
 import model.guiapi

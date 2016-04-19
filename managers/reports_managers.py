@@ -46,23 +46,13 @@ class ReportProcessor():
 
         return self._sendReport(parser.report_type, filename)
 
-    def _sendReport(self, rtype, filename):
-        command_string = "./%s %s" % (
-            rtype.lower(),
-            filename)
-
-        has_plugin, _, _ = self.plugin_controller.processCommandInput(
-            command_string)
-        if not has_plugin:
+    def _sendReport(self, plugin_id, filename):
+        getLogger(self).debug(
+            'The file is %s, %s' % (filename, plugin_id))
+        if not self.plugin_controller.processReport(plugin_id, filename):
             getLogger(self).error(
                 'Faraday have not a plugin for this tool... Processing: ABORT')
             return False
-
-        getLogger(self).debug(
-            'The file is %s, %s' % (filename, rtype))
-        getLogger(self).info("Executing %s" % (command_string))
-        output = open(filename, 'r').read()
-        self.plugin_controller.onCommandFinished(command_string, output)
         return True
 
     def onlinePlugin(self, cmd):

@@ -84,7 +84,7 @@ class MainApplication(object):
         # Create a PluginController and send this to UI selected.
         self._plugin_controller = PluginControllerForApi(
             'PluginController',
-            self._plugin_manager.getPlugins(),
+            self._plugin_manager,
             self._mappers_manager
         )
 

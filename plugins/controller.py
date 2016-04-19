@@ -31,8 +31,9 @@ class PluginControllerBase(object):
     """
     TODO: Doc string.
     """
-    def __init__(self, id, available_plugins, mapper_manager):
-        self._plugins = available_plugins
+    def __init__(self, id, plugin_manager, mapper_manager):
+        self.plugin_manager = plugin_manager
+        self._plugins = plugin_manager.getPlugins()
         self.id = id
         self._actionDispatcher = None
         self._setupActionDispatcher()
@@ -206,8 +207,8 @@ class PluginController(PluginControllerBase):
     """
     This class is going to be deprecated once we dump qt3
     """
-    def __init__(self, id, available_plugins, mapper_manager):
-        PluginControllerBase.__init__(self, id, available_plugins, mapper_manager)
+    def __init__(self, id, plugin_manager, mapper_manager):
+        PluginControllerBase.__init__(self, id, plugin_manager, mapper_manager)
         self._active_plugin = None
         self.last_command_information = None
         self._buffer = StringIO()
@@ -313,7 +314,7 @@ class PluginController(PluginControllerBase):
         in charge of giving the plugin the output to be parsed.
         """
         cmd_info = self.last_command_information
-        cmd_info.duration = time() - cmd_info.itime
+        cmd_info.duration = time.time() - cmd_info.itime
         self._mapper_manager.save(cmd_info)
 
         if self._active_plugin.has_custom_output():
@@ -338,21 +339,36 @@ class PluginController(PluginControllerBase):
 
 
 class PluginControllerForApi(PluginControllerBase):
-    def __init__(self, id, available_plugins, mapper_manager):
+    def __init__(self, id, plugin_manager, mapper_manager):
         PluginControllerBase.__init__(
-            self, id, available_plugins, mapper_manager)
+            self, id, plugin_manager, mapper_manager)
         self._active_plugins = {}
+        self.plugin_sets = {}
+        self.plugin_manager.addController(self, self.id)
+
+    def _get_plugins_by_input(self, cmd, plugin_set):
+        for plugin in plugin_set.itervalues():
+            if plugin.canParseCommandString(cmd):
+                return plugin
+        return None
+
+    def createPluginSet(self, id):
+        self.plugin_sets[id] = self.plugin_manager.getPlugins()
 
     def processCommandInput(self, pid, cmd, pwd):
         """
         This method tries to find a plugin to parse the command sent
         by the terminal (identiefied by the process id).
         """
-        plugin = self._get_plugins_by_input(cmd)
+        if pid not in self.plugin_sets:
+            self.createPluginSet(pid)
+
+        plugin = self._get_plugins_by_input(cmd, self.plugin_sets[pid])
 
         if plugin:
             modified_cmd_string = plugin.processCommandString("", pwd, cmd)
             if not self._is_command_malformed(cmd, modified_cmd_string):
+
                 cmd_info = CommandRunInformation(
                     **{'workspace': model.api.getActiveWorkspace().name,
                         'itime': time.time(),
@@ -376,7 +392,7 @@ class PluginControllerForApi(PluginControllerBase):
 
         if pid not in self._active_plugins.keys():
             return False
-        if exit_code != '0':
+        if exit_code != 0:
             del self._active_plugins[pid]
             return False
 
@@ -390,7 +406,17 @@ class PluginControllerForApi(PluginControllerBase):
         return True
 
     def processReport(self, plugin, filepath):
-        pass
+        if plugin in self._plugins:
+            plugin.processReport(filepath)
+            return True
+        return False
 
     def clearActivePlugins(self):
         self._active_plugins = {}
+
+    def updatePluginSettings(self, plugin_id, new_settings):
+        for plugin_set in self.plugin_sets.values():
+            if plugin_id in plugin_set:
+                plugin_set[plugin_id].updateSettings(new_settings)
+        if plugin_id in self._plugins:
+            self._plugins[plugin_id].updateSettings(new_settings)

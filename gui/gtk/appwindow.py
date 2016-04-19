@@ -133,15 +133,17 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         menu.append(paste)
         menu.append(copy)
 
-        accelgroup = Gtk.AccelGroup()
-        self.add_accel_group(accelgroup)
-        accellabel = Gtk.AccelLabel("Ctrl+Shift+C")
-        accellabel.set_hexpand(True)
-        copy.add_accelerator("activate",
-                             accelgroup,
-                             Gdk.keyval_from_name("C"),
-                             Gdk.ModifierType.CONTROL_MASK,
-                             Gtk.AccelFlags.VISIBLE)
+        # TODO: make accelerators for copy paste work. add accel for paste
+        #accelgroup = Gtk.AccelGroup()
+        #self.add_accel_group(accelgroup)
+        #accellabel = Gtk.AccelLabel("Copy/Paste")
+        #accellabel.set_hexpand(True)
+        #copy.add_accelerator("activate",
+        #                     accelgroup,
+        #                     Gdk.keyval_from_name("c"),
+        #                     Gdk.ModifierType.SHIFT_MASK |
+        #                     Gdk.ModifierType.CONTROL_MASK,
+        #                     Gtk.AccelFlags.VISIBLE)
 
         copy.connect("activate", self.copy_text)
         paste.connect("activate", self.paste_text)

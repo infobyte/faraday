@@ -177,7 +177,7 @@ class PluginOptionsDialog(Gtk.Window):
         Gtk.Window.__init__(self, title="Plugins Options")
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
-        self.set_size_request(400, 400)
+        self.set_size_request(800, 300)
 
         if plugin_manager is not None:
             self.plugin_settings = plugin_manager.getSettings()
@@ -193,7 +193,7 @@ class PluginOptionsDialog(Gtk.Window):
         pluginList = self.createPluginListView(plugin_info)
         scroll_pluginList = Gtk.ScrolledWindow(None, None)
         scroll_pluginList.add(pluginList)
-        scroll_pluginList.set_min_content_width(300)
+        #scroll_pluginList.set_min_content_width(300)
         pluginListBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         pluginListBox.pack_start(scroll_pluginList, True, True, 0)
 
@@ -236,7 +236,7 @@ class PluginOptionsDialog(Gtk.Window):
 
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.mainBox.pack_start(pluginListBox, True, True, 5)
-        self.mainBox.pack_end(self.pluginSpecsBox, False, True, 5)
+        self.mainBox.pack_end(self.pluginSpecsBox, True, True, 5)
 
         self.add(self.mainBox)
 

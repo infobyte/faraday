@@ -4,7 +4,7 @@ import re
 
 gi.require_version('Gtk', '3.0')
 
-from gi.repository import Gtk, GdkPixbuf
+from gi.repository import Gtk, GdkPixbuf, Gdk
 from persistence.persistence_managers import CouchDbManager
 from utils.common import checkSSL
 from config.configuration import getInstanceConfiguration
@@ -30,9 +30,11 @@ class PreferenceWindowDialog(Gtk.Window):
     Takes a callback function to the mainapp so that it can refresh the
     workspace list and information"""
 
-    def __init__(self, callback):
+    def __init__(self, callback, parent):
         Gtk.Window.__init__(self, title="Preferences")
         self.set_size_request(50, 50)
+        self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+        self.set_transient_for(parent)
         self.timeout_id = None
         self.reloadWorkspaces = callback
 
@@ -76,7 +78,6 @@ class PreferenceWindowDialog(Gtk.Window):
             self.reloadWorkspaces()
             self.destroy()
 
-
     def on_click_cancel(self, button):
         self.destroy()
 
@@ -86,9 +87,11 @@ class NewWorkspaceDialog(Gtk.Window):
     a description and a type for a new workspace. Also checks that the
     those attributes don't correspond to an existing workspace"""
 
-    def __init__(self, callback,  workspace_manager, sidebar):
+    def __init__(self, callback,  workspace_manager, sidebar, parent):
 
         Gtk.Window.__init__(self, title="Create New Workspace")
+        self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+        self.set_transient_for(parent)
         self.set_size_request(200, 200)
         self.timeout_id = None
         self.callback = callback
@@ -169,10 +172,12 @@ class PluginOptionsDialog(Gtk.Window):
     It is not the prettiest thing in the world but it works.
     Creating and displaying the models of each plugin settings is specially
     messy, there's more info in the appropiate methods"""
-    def __init__(self, plugin_manager):
+    def __init__(self, plugin_manager, parent):
 
         Gtk.Window.__init__(self, title="Plugins Options")
-        self.set_size_request(200, 200)
+        self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+        self.set_transient_for(parent)
+        self.set_size_request(400, 400)
 
         if plugin_manager is not None:
             self.plugin_settings = plugin_manager.getSettings()
@@ -188,6 +193,7 @@ class PluginOptionsDialog(Gtk.Window):
         pluginList = self.createPluginListView(plugin_info)
         scroll_pluginList = Gtk.ScrolledWindow(None, None)
         scroll_pluginList.add(pluginList)
+        scroll_pluginList.set_min_content_width(300)
         pluginListBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         pluginListBox.pack_start(scroll_pluginList, True, True, 0)
 
@@ -230,7 +236,7 @@ class PluginOptionsDialog(Gtk.Window):
 
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.mainBox.pack_start(pluginListBox, True, True, 5)
-        self.mainBox.pack_end(self.pluginSpecsBox, True, True, 5)
+        self.mainBox.pack_end(self.pluginSpecsBox, False, True, 5)
 
         self.add(self.mainBox)
 
@@ -361,8 +367,10 @@ class PluginOptionsDialog(Gtk.Window):
 
 
 class NotificationsDialog(Gtk.Window):
-    def __init__(self, view, callback):
+    def __init__(self, view, callback, parent):
         Gtk.Window.__init__(self, title="Notifications")
+        self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+        self.set_transient_for(parent)
         self.set_size_request(400, 200)
         self.view = view
         self.destroy_notifications = callback
@@ -399,6 +407,7 @@ class aboutDialog(Gtk.AboutDialog):
         self.set_website(faraday_website)
         self.set_website_label("Learn more about Faraday")
 
+
 class helpDialog(Gtk.AboutDialog):
     """Using about dialog 'cause they are very similar, but this will
     display github page, Wiki, and such"""
@@ -415,7 +424,6 @@ class helpDialog(Gtk.AboutDialog):
         faraday_website = "https://github.com/infobyte/faraday/wiki"
         self.set_website(faraday_website)
         self.set_website_label("Learn more about how to use Faraday")
-
 
 
 class errorDialog(Gtk.MessageDialog):

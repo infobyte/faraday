@@ -28,7 +28,7 @@ from utils.logs import addHandler
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-from gi.repository import Gio, Gtk
+from gi.repository import Gio, Gtk, GdkPixbuf
 
 CONF = getInstanceConfiguration()
 
@@ -51,6 +51,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         Gtk.Application.__init__(self, application_id="org.infobyte.faraday",
                                  flags=Gio.ApplicationFlags.FLAGS_NONE)
 
+        icons = CONF.getImagePath() + "icons/"
+        self.icon = GdkPixbuf.Pixbuf.new_from_file(icons + "faraday_icon.png")
         self.window = None
 
     def getMainWindow(self):
@@ -149,6 +151,9 @@ class GuiApp(Gtk.Application, FaradayUi):
                                     self.statusbar,
                                     application=self,
                                     title="Faraday")
+
+        self.window.set_default_icon_list([self.icon])
+        self.window.set_icon(self.icon)
         self.window.present()
 
         self.loghandler = GUIHandler()
@@ -197,7 +202,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         changes her Couch URL, the sidebar will reload reflecting the
         new workspaces available"""
 
-        preference_window = PreferenceWindowDialog(self.reloadWorkspaces)
+        preference_window = PreferenceWindowDialog(self.reloadWorkspaces,
+                                                   self.window)
         preference_window.show_all()
 
     def reloadWorkspaces(self):
@@ -211,14 +217,15 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def on_pluginOptions(self, action, param):
         """Defines what happens when you press "Plugins" on the menu"""
-        pluginsOption_window = PluginOptionsDialog(self.plugin_manager)
+        pluginsOption_window = PluginOptionsDialog(self.plugin_manager,
+                                                   self.window)
         pluginsOption_window.show_all()
 
     def on_new_button(self, action, params):
         "Defines what happens when you press the 'new' button on the toolbar"
         new_workspace_dialog = NewWorkspaceDialog(self.createWorkspace,
                                                   self.workspace_manager,
-                                                  self.sidebar)
+                                                  self.sidebar, self.window)
         new_workspace_dialog.show_all()
 
     def on_new_terminal_button(self, action, params):
@@ -236,7 +243,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         column = Gtk.TreeViewColumn("Notifications", renderer, text=0)
         notifications_view.append_column(column)
         notifications_dialog = NotificationsDialog(notifications_view,
-                                                   self.delete_notifications)
+                                                   self.delete_notifications,
+                                                   self.window)
         notifications_dialog.show_all()
 
     def delete_notifications(self):

@@ -231,7 +231,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         toggle_log_button.connect("clicked", self.toggle_log)
         toolbar.insert(toggle_log_button, 2)
 
-
         return toolbar
 
     def new_tab(self, new_terminal):

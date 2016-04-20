@@ -261,57 +261,57 @@ class ReportParser(object):
         :rtype
         """
         if "nmaprun" == tag:
-            return "nmap"
+            return "Nmap"
         elif "w3af-run" == tag:
-            return "w3af"
+            return "W3af"
         elif "NessusClientData_v2" == tag:
-            return "nessus"
+            return "Nessus"
         elif "report" == tag:
 
             if re.search(
                 "https://raw.githubusercontent.com/Arachni/arachni/",
                 output
              ) is not None:
-                return "arachni"
+                return "Arachni"
 
             elif re.search("OpenVAS", output) is not None or re.search(
                 '<omp><version>',
                 output
             ) is not None:
-                return "openvas"
+                return "Openvas"
 
             else:
-                return "zap"
+                return "Zap"
 
         elif "niktoscan" == tag:
-            return "nikto"
+            return "Nikto"
         elif "MetasploitV4" == tag:
-            return "metasploit"
+            return "Metasploit"
         elif "MetasploitV5" == tag:
-            return "metasploit"
+            return "Metasploit"
         elif "issues" == tag:
-            return "burp"
+            return "Burp"
         elif "OWASPZAPReport" == tag:
-            return "zap"
+            return "Zap"
         elif "ScanGroup" == tag:
-            return "acunetix"
+            return "Acunetix"
         elif "session" == tag:
-            return "x1"
+            return "X1"
         elif "landscapePolicy" == tag:
-            return "x1"
+            return "X1"
         elif "entities" == tag:
-            return "impact"
+            return "Core Impact"
         elif "NeXposeSimpleXML" == tag:
-            return "nexpose"
+            return "Nexpose"
         elif "NexposeReport" == tag:
-            return "nexpose-full"
+            return "Nexpose-full"
         elif "ASSET_DATA_REPORT" == tag:
-            return "qualysguard"
+            return "Qualysguard"
         elif "scanJob" == tag:
-            return "retina"
+            return "Retina"
         elif "netsparker" == tag:
-            return "netsparker"
+            return "Netsparker"
         elif "maltego" == tag:
-            return "maltego"
+            return "Maltego"
         else:
             return None

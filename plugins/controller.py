@@ -93,11 +93,13 @@ class PluginControllerBase(object):
         """
         return self._plugins
 
-    def processOutput(self, plugin, output):
+    def processOutput(self, plugin, output, isReport=False):
         output_queue = multiprocessing.JoinableQueue()
         new_elem_queue = multiprocessing.Queue()
 
-        plugin_process = PluginProcess(plugin, output_queue, new_elem_queue)
+        plugin_process = PluginProcess(
+            plugin, output_queue, new_elem_queue, isReport)
+
         getLogger(self).debug(
             "Created plugin_process (%d) for plugin instance (%d)" %
             (id(plugin_process), id(plugin)))
@@ -407,7 +409,7 @@ class PluginControllerForApi(PluginControllerBase):
 
     def processReport(self, plugin, filepath):
         if plugin in self._plugins:
-            plugin.processReport(filepath)
+            self.processOutput(self._plugins[plugin], filepath, True)
             return True
         return False
 

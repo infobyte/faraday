@@ -66,7 +66,7 @@ class PluginBase(object):
 
     def get_ws(self):
         return CONF.getLastWorkspace()
-        
+
     def getSetting(self, name):
         setting_type, value = self._settings[name]
         return value
@@ -352,11 +352,12 @@ class PluginCustomOutput(PluginBase):
 
 
 class PluginProcess(multiprocessing.Process):
-    def __init__(self, plugin_instance, output_queue, new_elem_queue):
+    def __init__(self, plugin_instance, output_queue, new_elem_queue, isReport=False):
         multiprocessing.Process.__init__(self)
         self.output_queue = output_queue
         self.new_elem_queue = new_elem_queue
         self.plugin = plugin_instance
+        self.isReport = isReport
 
     def run(self):
         proc_name = self.name
@@ -372,7 +373,10 @@ class PluginProcess(multiprocessing.Process):
             if output is not None:
                 model.api.devlog('%s: %s' % (proc_name, "New Output"))
                 try:
-                    self.plugin.processOutput(output)
+                    if self.isReport:
+                        self.plugin.processReport(output)
+                    else:
+                        self.plugin.processOutput(output)
                 except Exception:
                     model.api.devlog("Plugin raised an exception:")
                     model.api.devlog(traceback.format_exc())

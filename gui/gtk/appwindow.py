@@ -139,11 +139,11 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         # accellabel = Gtk.AccelLabel("Copy/Paste")
         # accellabel.set_hexpand(True)
         # copy.add_accelerator("activate",
-                             accelgroup,
-                             Gdk.keyval_from_name("c"),
-                             Gdk.ModifierType.SHIFT_MASK |
-                             Gdk.ModifierType.CONTROL_MASK,
-                             Gtk.AccelFlags.VISIBLE)
+        #                     accelgroup,
+        #                     Gdk.keyval_from_name("c"),
+        #                     Gdk.ModifierType.SHIFT_MASK |
+        #                     Gdk.ModifierType.CONTROL_MASK,
+        #                     Gtk.AccelFlags.VISIBLE)
 
         copy.connect("activate", self.copy_text)
         paste.connect("activate", self.paste_text)

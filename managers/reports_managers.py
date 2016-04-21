@@ -51,7 +51,7 @@ class ReportProcessor():
             'The file is %s, %s' % (filename, plugin_id))
         if not self.plugin_controller.processReport(plugin_id, filename):
             getLogger(self).error(
-                'Faraday have not a plugin for this tool... Processing: ABORT')
+                "Faraday doesn't have a plugin for this tool... Processing: ABORT")
             return False
         return True
 
@@ -304,7 +304,7 @@ class ReportParser(object):
         elif "NeXposeSimpleXML" == tag:
             return "Nexpose"
         elif "NexposeReport" == tag:
-            return "Nexpose-full"
+            return "NexposeFull"
         elif "ASSET_DATA_REPORT" == tag:
             return "Qualysguard"
         elif "scanJob" == tag:

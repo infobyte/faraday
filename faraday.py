@@ -397,7 +397,7 @@ def setupZSH():
         f.seek(0, 0)
         f.write('ZDOTDIR=$OLDZDOTDIR' + '\n' + content)
     with open(FARADAY_USER_ZSHRC, "a") as f:
-        f.write("source %s" % FARADAY_BASE_ZSH)
+        f.write("source \"%s\"" % FARADAY_BASE_ZSH)
     shutil.copy(FARADAY_BASE_ZSH, FARADAY_USER_ZSH_PATH)
     shutil.copy(FARADAY_BASE_ZSH_PLUGIN, FARADAY_USER_ZSH_PATH)
 

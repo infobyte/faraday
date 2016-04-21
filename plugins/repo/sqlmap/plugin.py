@@ -11,7 +11,7 @@ from __future__ import with_statement
 import sys
 import os
 
-from plugins import core
+from plugins.plugin import PluginTerminalOutput
 from model import api
 import re
 import os
@@ -26,7 +26,7 @@ import shlex
 from BaseHTTPServer import BaseHTTPRequestHandler
 from StringIO import StringIO
 
-                                                 
+
 try:
     import xml.etree.cElementTree as ET
     import xml.etree.ElementTree as ET_ORIG
@@ -34,7 +34,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
     ETREE_VERSION = ET.VERSION
-                      
+
 ETREE_VERSION = [int(i) for i in ETREE_VERSION.split(".")]
 
 current_path = os.path.abspath(os.getcwd())
@@ -76,12 +76,12 @@ class Database(object):
         if statement.lstrip().upper().startswith("SELECT"):
             return self.cursor.fetchall()
 
-class SqlmapPlugin(core.PluginBase):
+class SqlmapPlugin(PluginTerminalOutput):
     """
     Example plugin to parse sqlmap output.
     """
     def __init__(self):
-        core.PluginBase.__init__(self)
+        PluginTerminalOutput.__init__(self)
         self.id              = "Sqlmap"
         self.name            = "Sqlmap"
         self.plugin_version         = "0.0.2"
@@ -97,7 +97,7 @@ class SqlmapPlugin(core.PluginBase):
         self.path=""
 
         self.addSetting("Sqlmap path", str, "/root/tools/sqlmap")
-        
+
         self.db_port = { "MySQL" : 3306, "PostgreSQL":"", "Microsoft SQL Server" : 1433,
                  "Oracle" : 1521, "Firebird" : 3050,"SAP MaxDB":7210, "Sybase" : 5000,
                  "IBM DB2" : 50000, "HSQLDB" :9001}
@@ -109,7 +109,7 @@ class SqlmapPlugin(core.PluginBase):
                     5: "LIKE double quoted string",
                 }
 
-        self._command_regex  = re.compile(r'^(sudo sqlmap|sqlmap|sudo python sqlmap|python sqlmap|\.\/sqlmap).*?')
+        self._command_regex  = re.compile(r'^(python2.7 ./sqlmap.py|sudo sqlmap|sqlmap|sudo python sqlmap|python sqlmap|\.\/sqlmap).*?')
 
         global current_path
         self._output_path = ""
@@ -278,14 +278,14 @@ class SqlmapPlugin(core.PluginBase):
                                 "--purge-output":"Safely remove all content from output directory",
                                 "--smart":"Conduct through tests only if positive heuristic(s)",
                                 "--wizard":"Simple wizard interface for beginner users",
-                            }        
+                            }
     class HTTPRequest(BaseHTTPRequestHandler):
         def __init__(self, request_text):
             self.rfile = StringIO(request_text)
             self.raw_requestline = self.rfile.readline()
             self.error_code = self.error_message = None
             self.parse_request()
-    
+
         def send_error(self, code, message):
             self.error_code = code
             self.error_message = message
@@ -299,10 +299,10 @@ class SqlmapPlugin(core.PluginBase):
         """
         Helper function for restoring session data from HashDB
         """
-    
+
         key = "%s%s%s" % (self.url or "%s%s" % (self.hostname, self.port), key, self.HASHDB_MILESTONE_VALUE)
         retVal=""
-        
+
         hash_ = self.hashKey(key)
         # print "hash_" + str(hash_) + "key=" + key
         if not retVal:
@@ -320,36 +320,36 @@ class SqlmapPlugin(core.PluginBase):
     def base64decode(self,value):
         """
         Decodes string value from Base64 to plain format
-    
+
         >>> base64decode('Zm9vYmFy')
         'foobar'
         """
-    
+
         return value.decode("base64")
-    
+
     def base64encode(self,value):
         """
         Encodes string value from plain to Base64 format
-    
+
         >>> base64encode('foobar')
         'Zm9vYmFy'
         """
-    
+
         return value.encode("base64")[:-1].replace("\n", "")
-    
+
     def base64unpickle(self,value):
         """
         Decodes value from Base64 to plain format and deserializes (with pickle) its content
-    
+
         >>> base64unpickle('gAJVBmZvb2JhcnEALg==')
         'foobar'
         """
         if value:
             return pickle.loads(self.base64decode(value))
-    
-    
+
+
     def xmlvalue(self,db,name,value="query"):
-    
+
         filepath = "%s" % os.path.join(current_path, "plugins/repo/sqlmap/queries.xml")
         with open(filepath,"r") as f:
             try:
@@ -357,7 +357,7 @@ class SqlmapPlugin(core.PluginBase):
             except SyntaxError, err:
                 print "SyntaxError: %s. %s" % (err, filepath)
                 return None
-    
+
         for node in tree.findall("dbms[@value='"+db+"']/"+name+""):
             return node.attrib[value]
 
@@ -365,7 +365,7 @@ class SqlmapPlugin(core.PluginBase):
         users = re.findall('database management system users \[[\d]+\]:\r\n(.*?)\r\n\r\n',data, re.S)
         if users:
             return map((lambda x: x.replace("[*] ","")), users[0].split("\r\n"))
-    
+
     def getdbs(self,data):
         dbs = re.findall('available databases \[[\d]+\]:\r\n(.*?)\r\n\r\n',data, re.S)
         if dbs:
@@ -375,13 +375,13 @@ class SqlmapPlugin(core.PluginBase):
         password = re.findall('database management system users password hashes:\r\n(.*?)\r\n\r\n',data, re.S)
         if password:
             for p in password[0].split("[*] ")[1::]:
-                               
+
                 user=re.findall("^(.*?) \[",p)[0]
                 mpass=re.findall("password hash: (.*?)$",p, re.S)
                 mpass=map((lambda x: re.sub(r"[ \r\n]", "", x)), mpass[0].split("password hash: "))
                 users[user]=mpass
         return users
-    
+
     def getAddress(self, hostname):
         """
         Returns remote IP address from hostname.
@@ -389,9 +389,9 @@ class SqlmapPlugin(core.PluginBase):
         try:
             return socket.gethostbyname(hostname)
         except socket.error, msg:
-                                                        
+
             return self.hostname
-        
+
     def parseOutputString(self, output, debug = False):
         """
         This method will discard the output the shell sends, it will read it from
@@ -400,7 +400,7 @@ class SqlmapPlugin(core.PluginBase):
         NOTE: if 'debug' is true then it is being run from a test case and the
         output being sent is valid.
         """
-        
+
         sys.path.append(self.getSetting("Sqlmap path"))
 
         from lib.core.settings import HASHDB_MILESTONE_VALUE
@@ -409,7 +409,7 @@ class SqlmapPlugin(core.PluginBase):
         self.HASHDB_MILESTONE_VALUE = HASHDB_MILESTONE_VALUE
         self.HASHDB_KEYS = HASHDB_KEYS
         self.UNICODE_ENCODING = UNICODE_ENCODING
-                                                                          
+
         password = self.getpassword(output)
         webserver = re.search("web application technology: (.*?)\n",output)
         if webserver:
@@ -417,24 +417,24 @@ class SqlmapPlugin(core.PluginBase):
         users = self.getuser(output)
         # print users
         dbs = self.getdbs(output)
-        
+
         # print "webserver = " + webserver
         # print "dbs = " + str(dbs)
         # print "users = " + str(users)
         # print "password = " + str(password)
-                                         
+
 
         db = Database(self._output_path)
-        db.connect()                                                        
-                                                                                         
+        db.connect()
+
         absFilePaths = self.hashDBRetrieve(self.HASHDB_KEYS.KB_ABS_FILE_PATHS, True, db)
         tables = self.hashDBRetrieve(self.HASHDB_KEYS.KB_BRUTE_TABLES, True, db)
         columns = self.hashDBRetrieve(self.HASHDB_KEYS.KB_BRUTE_COLUMNS, True, db)
         xpCmdshellAvailable = self.hashDBRetrieve(self.HASHDB_KEYS.KB_XP_CMDSHELL_AVAILABLE, True, db)
-        dbms_version = self.hashDBRetrieve(self.HASHDB_KEYS.DBMS, False, db)        
-        
-        os = self.hashDBRetrieve(self.HASHDB_KEYS.OS, False, db)           
-        
+        dbms_version = self.hashDBRetrieve(self.HASHDB_KEYS.DBMS, False, db)
+
+        os = self.hashDBRetrieve(self.HASHDB_KEYS.OS, False, db)
+
         self.ip=self.getAddress(self.hostname)
 
         dbms=str(dbms_version.split(" ")[0])
@@ -448,9 +448,9 @@ class SqlmapPlugin(core.PluginBase):
                                             version=webserver)
         n_id = self.createAndAddNoteToService(h_id,s_id,"website","")
         n2_id = self.createAndAddNoteToNote(h_id,s_id,n_id,self.hostname,"")
-        
+
         db_port=self.db_port[dbms]
-        
+
         s_id2 = self.createAndAddServiceToInterface(h_id, i_id,
                                                     name=dbms ,
                                                     protocol="tcp",
@@ -461,12 +461,12 @@ class SqlmapPlugin(core.PluginBase):
         if users:
             for v in users:
                 self.createAndAddCredToService(h_id,s_id2,v,"")
-                
+
         if password:
             for k,v in password.iteritems():
                 for p in v:
                     self.createAndAddCredToService(h_id,s_id2,k,p)
-                    
+
         if absFilePaths:
             n_id2 = self.createAndAddNoteToService(h_id,s_id2,"sqlmap.absFilePaths",str(absFilePaths))
         if tables:
@@ -475,22 +475,22 @@ class SqlmapPlugin(core.PluginBase):
             n_id2 = self.createAndAddNoteToService(h_id,s_id2,"sqlmap.brutecolumns",str(columns))
         if xpCmdshellAvailable:
             n_id2 = self.createAndAddNoteToService(h_id,s_id2,"sqlmap.xpCmdshellAvailable",str(xpCmdshellAvailable))
-            
+
         for inj in self.hashDBRetrieve(self.HASHDB_KEYS.KB_INJECTIONS, True,db) or []:
             # print inj
-            # print inj.dbms    
-            # print inj.dbms_version           
-            # print inj.place        
-            # print inj.os       
-            # print inj.parameter                
-            
+            # print inj.dbms
+            # print inj.dbms_version
+            # print inj.place
+            # print inj.os
+            # print inj.parameter
+
             dbversion = self.hashDBRetrieve("None"+self.xmlvalue(dbms,"banner"), False, db)
             user = self.hashDBRetrieve("None"+self.xmlvalue(dbms,"current_user"), False, db)
             dbname = self.hashDBRetrieve("None"+self.xmlvalue(dbms,"current_db"), False, db)
             hostname = self.hashDBRetrieve("None"+self.xmlvalue(dbms,"hostname"), False, db)
 
             # print "username = " + user
-            
+
             if user:
                 n_id2 = self.createAndAddNoteToService(h_id,s_id2,"db.user",user)
             if dbname:
@@ -501,7 +501,7 @@ class SqlmapPlugin(core.PluginBase):
                 n_id2 = self.createAndAddNoteToService(h_id,s_id2,"db.version",dbversion)
             if dbs:
                 n_id2 = self.createAndAddNoteToService(h_id,s_id2,"db.databases",str(dbs))
-            
+
             for k,v in inj.data.items():
                 v_id = self.createAndAddVulnWebToService(h_id, s_id,
                                                          website=self.hostname,
@@ -509,42 +509,42 @@ class SqlmapPlugin(core.PluginBase):
                                                          desc="Payload:" + str(inj.data[k]['payload'])+
                                                         "\nVector:"+ str(inj.data[k]['vector'])+
                                                         "\nParam type:" + str(self.ptype[inj.ptype]),
-                                                         ref=[],                
+                                                         ref=[],
                                                          pname=inj.parameter,
                                                          severity="high",
                                                          method=inj.place,
                                                          params=self.params,
                                                          path=self.fullpath)
-                                                         
-                                             
-                                                  
-                                  
-                          
+
+
+
+
+
 
     def processCommandString(self, username, current_path, command_string):
-        
-             
-        
+
+
+
         parser = argparse.ArgumentParser(conflict_handler='resolve')
-        
+
         parser.add_argument('-h')
         parser.add_argument('-u')
         parser.add_argument('-s')
         parser.add_argument('-r')
-        
-                                          
+
+
         try:
             args, unknown = parser.parse_known_args(shlex.split(re.sub(r'\-h|\-\-help', r'', command_string)))
         except SystemExit:
-            pass        
-        
-        if args.r:         
+            pass
+
+        if args.r:
             with open(args.r, 'r') as f:
                 request = self.HTTPRequest(f.read())
                 args.u="http://"+request.headers['host']+ request.path
                 f.close()
-        
-        if args.u:      
+
+        if args.u:
             reg = re.search("(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp;%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|localhost|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))[\:]*([0-9]+)*([/]*($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+)).*?$", args.u)
             self.protocol = reg.group(1)
             self.hostname = reg.group(4)
@@ -553,20 +553,20 @@ class SqlmapPlugin(core.PluginBase):
                 self.port=443
             if reg.group(11) is not None:
                 self.port = reg.group(11)
-            
+
             if reg.group(12) is not None:
                 tmp=re.search("/(.*)\?(.*?$)",reg.group(12))
                 self.path = "/"+tmp.group(1)
                 self.params=tmp.group(2)
-            
+
             self.url=self.protocol+"://"+self.hostname+":"+self.port + self.path
             self.fullpath=self.url+"?"+self.params
             self._output_path="%s%s" % (os.path.join(self.data_path, "sqlmap_output-"),
                                         re.sub(r'[\n\/]', r'', args.u.encode("base64")[:-1]))
-        
+
         if not args.s:
-            return "%s -s %s\n" % (command_string,self._output_path)            
-        
+            return "%s -s %s" % (command_string,self._output_path)
+
 
     def setHost(self):
         pass
@@ -574,4 +574,3 @@ class SqlmapPlugin(core.PluginBase):
 
 def createPlugin():
     return SqlmapPlugin()
-

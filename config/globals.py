@@ -13,7 +13,7 @@ CONST_FARADAY_PLUGINS_REPO_PATH = 'plugins/repo'
 CONST_FARADAY_QTRC_PATH = 'deps/qtrc'
 CONST_FARADAY_IMAGES = 'images/'
 CONST_FARADAY_LOGS_PATH = 'logs/'
-CONST_FARADAY_FOLDER_LIST = [ "config", "data", "images", 
+CONST_FARADAY_FOLDER_LIST = [ "config", "data", "images",
                         "persistence", "plugins",
                         "report", "temp", "zsh", "logs" ]
 
@@ -24,7 +24,6 @@ CONST_USER_QTRC_BACKUP = '~/.qt/.qtrc_original.bak'
 CONST_FARADAY_QTRC_BACKUP = '~/.qt/.qtrc_faraday.bak'
 CONST_FARADAY_ZSHRC = "zsh/.zshrc"
 CONST_FARADAY_ZSH_FARADAY = "zsh/faraday.zsh"
-CONST_FARADAY_ZSH_PLUGIN = "zsh/plugin_controller_client.py"
 CONST_FARADAY_ZSH_OUTPUT_PATH = "zsh/output"
 CONST_FARADAY_BASE_CFG = "config/default.xml"
 CONST_FARADAY_USER_CFG = "config/config.xml"

@@ -26,7 +26,6 @@ fi
 setopt multios
 setopt histignorespace
 
-plugin_controller_client=$HOME/.faraday/zsh/plugin_controller_client.py
 old_cmd=
 
 function add-output() {

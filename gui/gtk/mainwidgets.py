@@ -77,20 +77,28 @@ class Sidebar(Gtk.Widget):
                 self.addWorkspace(ws)
 
     def clearSidebar(self):
+        """Brutaly clear all the information from the model.
+        No one survives"""
         self.workspace_list_info.clear()
 
     def createTitle(self):
+        """Return a label with the text "Workspaces"""
         title = Gtk.Label()
         title.set_text("Workspaces")
         return title
 
     def workspaceModel(self):
+        """Populates the workspace model. Also assigns self.defaultSelection
+        to the treeIter which represents the last active workspace"""
         for ws in self.workspaces:
             treeIter = self.workspace_list_info.append([ws])
             if ws == self.lastWorkspace:
                 self.defaultSelection = treeIter
 
     def workspaceView(self):
+        """Populate the workspace view. Also selected by default
+        self.defaultSelection (see workspaceModel method). Also connect
+        a selection with the change workspace callback"""
         self.lst = Gtk.TreeView(self.workspace_list_info)
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("Workspaces", renderer, text=0)
@@ -106,11 +114,21 @@ class Sidebar(Gtk.Widget):
         selection.connect("changed", self.callback)
 
     def on_right_click(self, view, event):
+        """On click, check if it was a right click. If it was,
+        create a menu with the delete option. On click on that option,
+        delete the workspace that occupied the position where the user
+        clicked. Returns True if it was a right click"""
 
-        if event.button == 3:
+        if event.button == 3:  # 3 represents right click
             menu = Gtk.Menu()
             delete_item = Gtk.MenuItem("Delete")
             menu.append(delete_item)
+
+            # underscores mean "i don't 'care 'cause i won't use them
+            # thank haskell for that
+            # get the path of the item where the user clicked
+            # then get its tree_iter. then get its name. then delete
+            # that workspace
 
             path, _, _, _ = view.get_path_at_pos(int(event.x), int(event.y))
             tree_iter = self.workspace_list_info.get_iter(path)
@@ -120,19 +138,23 @@ class Sidebar(Gtk.Widget):
 
             delete_item.show()
             menu.popup(None, None, None, None, event.button, event.time)
-            return True
+            return True  # prevents the click from selecting a workspace
 
     def addWorkspace(self, ws):
+        """Append ws workspace to the model"""
         self.workspace_list_info.append([ws])
 
     def getSelectedWs(self):
+        """Returns the current selected workspace"""
         return self.lst.get_selection()
 
     def selectWs(self, ws):
+        """Selects workspace ws in the list"""
         self.select = self.lst.get_selection()
         self.select.select_iter(ws)
 
     def getButton(self):
+        """Returns the refresh sidebar button"""
         return self.sidebar_button
 
 
@@ -185,6 +207,11 @@ class ConsoleLog(Gtk.Widget):
 
 
 class Statusbar(Gtk.Widget):
+    """Defines a statusbar, which is actually more quite like a button.
+    The button has a label that tells how many notifications are there.
+    Takes an on_button_do callback, so it can tell the application what
+    to do when the user presses the button"""
+
     def __init__(self, on_button_do):
         super(Gtk.Widget, self).__init__()
         """Creates a button with zero ("0") as label"""

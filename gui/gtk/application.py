@@ -109,6 +109,8 @@ class GuiApp(Gtk.Application, FaradayUi):
     def do_startup(self):
         """
         GTK calls this method after Gtk.Application.run()
+        Creates instances of the sidebar, terminal, console log and
+        statusbar to be added to the app window.
         Sets up necesary acttions on menu and toolbar buttons
         Also reads the .xml file from menubar.xml
         """
@@ -230,7 +232,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         preference_window.show_all()
 
     def reloadWorkspaces(self):
-        """Used in close conjunction with on_preferences, close workspace,
+        """Used in conjunction with on_preferences: close workspace,
         resources the workspaces available, clears the sidebar of the old
         workspaces and injects all the new ones in there too"""
         self.workspace_manager.closeWorkspace()
@@ -260,6 +262,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         AppWindow.new_tab(self.window, the_new_terminal)
 
     def on_click_notifications(self, button):
+        """Defines what happens when the user clicks on the notifications
+        button."""
 
         notifications_view = Gtk.TreeView(self.notificationsModel)
         renderer = Gtk.CellRendererText()
@@ -274,7 +278,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.notificationsModel.clear()
         self.window.emit("clear_notifications")
 
-    def changeWorkspace(self, selection):
+    def changeWorkspace(self, selection=None):
         """Pretty much copy/pasted from QT3 GUI.
         Selection is actually used nowhere, but the connect function is
         Sidebar passes it as an argument so well there it is"""

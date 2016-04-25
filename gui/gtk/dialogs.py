@@ -179,6 +179,8 @@ class PluginOptionsDialog(Gtk.Window):
     It is not the prettiest thing in the world but it works.
     Creating and displaying the models of each plugin settings is specially
     messy, there's more info in the appropiate methods"""
+    # TODO: probably stop hardcoding the first plugin, right?
+
     def __init__(self, plugin_manager, parent):
 
         Gtk.Window.__init__(self, title="Plugins Options")
@@ -200,7 +202,7 @@ class PluginOptionsDialog(Gtk.Window):
         pluginList = self.createPluginListView(plugin_info)
         scroll_pluginList = Gtk.ScrolledWindow(None, None)
         scroll_pluginList.add(pluginList)
-        #scroll_pluginList.set_min_content_width(300)
+        # scroll_pluginList.set_min_content_width(300)
         pluginListBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         pluginListBox.pack_start(scroll_pluginList, True, True, 0)
 
@@ -248,45 +250,28 @@ class PluginOptionsDialog(Gtk.Window):
         self.add(self.mainBox)
 
     def on_click_OK(self, button, plugin_manager):
+        """On click OK button update the plugins settings and then destroy"""
         if plugin_manager is not None:
             plugin_manager.updateSettings(self.plugin_settings)
         self.destroy()
 
     def on_click_cancel(self, button):
+        """On click cancel button, destroy brutally. No mercy"""
         self.destroy()
-
-    def create_entry_box(self, plugin_name, plugin_tool, plugin_version):
-        entry_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-
-        self.name_entry = Gtk.Entry()
-        self.name_entry.set_text(plugin_name)
-        self.name_entry.set_editable(False)
-
-        self.tool_entry = Gtk.Entry()
-        self.tool_entry.set_text(plugin_tool)
-        self.tool_entry.set_editable(False)
-
-        self.version_entry = Gtk.Entry()
-        self.version_entry.set_text(plugin_version)
-        self.version_entry.set_editable(False)
-
-        entry_box.pack_start(self.name_entry, True, True, 6)
-        entry_box.pack_start(self.tool_entry, True, True, 6)
-        entry_box.pack_end(self.version_entry, True, True, 6)
-
-        return entry_box
 
     def createPluginInfo(self, plugin_manager):
         """Creates and return a TreeStore where the basic information about
-        the plugins live"""
+        the plugins: the plugin ID, name, intended version of the tool
+        and plugin version"""
         plugin_info = Gtk.TreeStore(str, str, str, str)
 
         for plugin_id, params in self.plugin_settings.iteritems():
             plugin_info.append(None, [plugin_id,
                                       params["name"],
-                                      params["version"],
+                                      params["version"],  # tool version
                                       params["plugin_version"]])
 
+        # Sort it!
         sorted_plugin_info = Gtk.TreeModelSort(model=plugin_info)
         sorted_plugin_info.set_sort_column_id(1, Gtk.SortType.ASCENDING)
         return sorted_plugin_info
@@ -315,19 +300,23 @@ class PluginOptionsDialog(Gtk.Window):
         models = {}
 
         for plugin_id in self.plugin_settings.iteritems():
-            plugin_info = plugin_id[1]
-            store = Gtk.ListStore(str, str)
+            # iter through the plugins
+            plugin_info = plugin_id[1]  # get dictionary associated to plugin
+            store = Gtk.ListStore(str, str)  # create the store for that plugin
+
+            # iter through settings dictionary
             for setting in plugin_info["settings"].items():
                 setting_name = setting[0]
                 setting_value = setting[1]
                 store.append([setting_name, setting_value])
-            models[plugin_id[1]["name"]] = store
+
+            models[plugin_id[1]["name"]] = store  # populate dict with store
         return models
 
     def createAdecuatePluginSettingView(self, store):
         """Create the adecuate plugin settings view. The first time this is
         executed, it will be none and it will tell the view which columns
-        to and such. After that, it will just change the model displayed"""
+        to display. After that, it will just change the model displayed"""
         self.active_store = store
 
         if self.settings_view is None:
@@ -349,6 +338,7 @@ class PluginOptionsDialog(Gtk.Window):
             self.settings_view.set_model(store)
 
     def value_changed(self, widget, path, text):
+        """Save new settings"""
         self.active_store[path][1] = text
         setting = self.active_store[path][0]
         settings = self.plugin_settings[self.name_of_selected]["settings"]
@@ -369,11 +359,16 @@ class PluginOptionsDialog(Gtk.Window):
         self.pluginVersionEntry.set_label(model[treeiter][3])
 
     def setSettingsView(self):
+        """Makes the window match the selected plugin with the settings
+        displayed"""
+
         adecuateModel = self.models[self.id_of_selected]
         self.createAdecuatePluginSettingView(adecuateModel)
 
 
 class NotificationsDialog(Gtk.Window):
+    """Defines a simple notification dialog. It isn't much, really"""
+
     def __init__(self, view, callback, parent):
         Gtk.Window.__init__(self, title="Notifications")
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)

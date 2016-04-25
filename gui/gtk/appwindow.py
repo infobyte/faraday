@@ -21,7 +21,8 @@ CONF = getInstanceConfiguration()
 class _IdleObject(GObject.GObject):
     """
     Override GObject.GObject to always emit signals in the main thread
-    by emmitting on an idle handler
+    by emmitting on an idle handler. Deep magic, do not touch unless
+    you know what you are doing.
     """
     def __init__(self):
         GObject.GObject.__init__(self)
@@ -98,7 +99,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.notificationBox = Gtk.Box()
         self.notificationBox.pack_start(self.statusbar.button, True, True, 0)
 
-        # MAINBOX: THE BIGGER BOX OF ALL THE LITTLE BOXES
+        # MAINBOX: THE BIGGER BOX FOR ALL THE LITTLE BOXES
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.mainBox.pack_start(self.topBox, False, False, 0)
         self.mainBox.pack_start(self.middleBox, True, True, 0)
@@ -117,7 +118,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.notebook.set_action_widget(remove_terminal_button, at_end)
 
         self.add(self.mainBox)
-        self.tab_number = 0  # 0 indexed
+        self.tab_number = 0  # 0 indexed, even when it shows 1 to the user
 
         self.show_all()
 
@@ -174,9 +175,12 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         return self.notebook.get_current_page()
 
     def getCurrentFocusedTerminal(self):
-        """The focused terminal is the only children of the notebook
-        which has as only children an eventbox which has as only
-        children the terminal"""
+        """Returns the current focused terminal"""
+
+        # the focused terminal is the only children of the notebook
+        # thas has only children an event box that has as only children
+        # the terminal. Yeah, I know.
+
         currentTab = self.getFocusedTab()
         currentEventBox = self.notebook.get_children()[currentTab]
         currentBox = currentEventBox.get_children()[0]
@@ -184,13 +188,16 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         return currentTerminal
 
     def do_new_log(self, text):
-        """What should the window do when it gets a new_log signal"""
+        """To be used on a new_log signal. Calls a method on log to append
+        to it"""
         self.log.customEvent(text)
 
     def do_clear_notifications(self):
+        "On clear_notifications signal, it will return the button label to 0"
         self.statusbar.button.set_label("0")
 
     def do_new_notif(self):
+        """On a new notification, increment the button label by one"""
         self.statusbar.inc_button_label()
 
     def getLogConsole(self):
@@ -206,6 +213,9 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
             self.unmaximize()
 
     def refreshSidebar(self):
+        """Call the refresh method on sidebar. It will append new workspaces,
+        but it will *NOT* delete workspaces not found anymore in the current
+        ws anymore"""
         self.sidebar.refresh()
 
     def create_toolbar(self):

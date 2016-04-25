@@ -15,7 +15,7 @@ from model.controller import ModelController
 from persistence.persistence_managers import DbManager
 from controllers.change import ChangeController
 from managers.workspace_manager import WorkspaceManager
-from plugins.core import PluginControllerForApi
+from plugins.controller import PluginControllerForApi
 
 import model.api
 import model.guiapi
@@ -84,7 +84,7 @@ class MainApplication(object):
         # Create a PluginController and send this to UI selected.
         self._plugin_controller = PluginControllerForApi(
             'PluginController',
-            self._plugin_manager.getPlugins(),
+            self._plugin_manager,
             self._mappers_manager
         )
 

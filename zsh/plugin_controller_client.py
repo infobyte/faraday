@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -29,62 +29,79 @@ url_active_plugins = "http://%s:%d/cmd/active-plugins" % (host, port)
 headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
 
-def send_cmd(cmd):
-    data = {"cmd": cmd}
+def send_cmd(pid, cmd):
+
+    data = {'pid': pid, 'cmd': cmd}
     new_cmd = cmd
-    result = False
+    response = ''
+
     try:
-        response = requests.post(url_input,
-                                 data=json.dumps(data),
-                                 headers=headers)
+        request = requests.post(
+            url_input,
+            data=json.dumps(data),
+            headers=headers)
 
-        if response.status_code == 200:
-            json_response = response.json()
-            if "cmd" in json_response.keys():
-                if json_response.get("cmd") is not None:
-                    new_cmd = json_response.get("cmd")
-            if "custom_output_file" in json_response.keys():
-                output_file = json_response.get("custom_output_file")
-                if output_file is None:
-                    output_file = "%s/%s.output" % (output_folder, uuid.uuid4())
-                    new_cmd += " >&1 > %s" % output_file
+        if request.status_code == 200:
 
-                new_cmd += " && python2 %s send_output %s \"%s\"" % (file_path, base64.b64encode(cmd), output_file)
-        result = True
+            response = request.json()
+            if response.get("cmd") is not None:
+                new_cmd = response.get("cmd")
+
+            output_file = "%s/%s%s.output" % (
+                output_folder, data['pid'], uuid.uuid4())
+
+            new_cmd += " >&1 > %s" % output_file
     except:
-        new_cmd = cmd
+        response = ''
     finally:
-        print new_cmd
-        return result
+        print response
+        return 0
 
+def gen_output(pid):
+    print "%s/%s.%s.output" % (output_folder, pid, uuid.uuid4())
+    return 0
 
-def send_output(cmd, output_file):
+def send_output(pid, exit_code, output_file):
     output_file = open(output_file)
     output = output_file.read()
-    data = {"cmd": base64.b64decode(cmd), "output": base64.b64encode(output)}
+
+    data = {
+        'pid': pid,
+        'exit_code': exit_code,
+        'output': base64.b64encode(output)
+    }
+
     response = requests.post(url_output,
                              data=json.dumps(data),
                              headers=headers)
     if response.status_code != 200:
-        print "something wrong"
         print response.json()
-        return True
-    return False
+        return -1
+    return 0
 
 
 def main(argv):
-    if len(argv) < 3:
+    if len(argv) < 2:
         sys.exit(0)
 
     action = argv[1]
 
-    dispatcher = {'send_cmd': send_cmd, 'send_output': send_output}
+    # dispatcher = {
+    #     'send_cmd': send_cmd,
+    #     'send_output': send_output,
+    #     'gen_output': gen_output}
 
-    if action in dispatcher.keys():
-        if len(argv[2:]) > 0:
-            dispatcher[action](*argv[2:])
+    if action == 'send_cmd' and len(argv[2:]) == 2:
+        send_cmd(argv[2], argv[3])
+    if action == 'send_output' and len(argv[2:]) == 3:
+        send_cmd(argv[2], argv[3], argv[4])
+    if action == 'gen_output' and len(argv[2:]) == 1:
+        send_cmd(argv[2])
 
-    #sys.exit(0)
+    # if action in dispatcher.keys():
+    #     if len(argv[2:]) > 0:
+    #         dispatcher[action](*argv[2:])
+
 
 if __name__ == '__main__':
     main(sys.argv)

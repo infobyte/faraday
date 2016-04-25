@@ -55,7 +55,7 @@ angular.module('faradayApp')
             var deferred = $q.defer();
             var self = this;
             this._objects = {};
-            
+
             $http.get(BASEURL + ws + '/_design/hosts/_view/hosts')
                 .success(function(hostsArray) {
                     var hosts = [];
@@ -119,7 +119,7 @@ angular.module('faradayApp')
                 .catch(function() {
                     deferred.reject("Error creating host");
                 });
-            
+
             return deferred.promise;
         };
 
@@ -181,6 +181,28 @@ angular.module('faradayApp')
                 })
                 .error(function() {
                     deferred.reject("Unable to load Vulnerabilities");
+                });
+
+            return deferred.promise;
+        };
+
+        hostsManager.getAllServicesCount = function(ws) {
+            var deferred = $q.defer();
+
+            var url = BASEURL + ws + '/_design/hosts/_view/byservicecount?group=true';
+
+            $http.get(url)
+                .success(function(allrows) {
+                    var services = {};
+
+                    allrows.rows.forEach(function(service) {
+                        services[service.key] = service.value;
+                    });
+
+                    deferred.resolve(services);
+                })
+                .error(function() {
+                    deferred.reject("Unable to load Services");
                 });
 
             return deferred.promise;

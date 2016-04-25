@@ -10,6 +10,10 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+TBA:
+---
+* Added Open services count to Hosts list in WEB UI
+
 Apr 04, 2016
 ---
 * Added cli mode (see wiki for usage instructions)

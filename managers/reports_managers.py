@@ -158,8 +158,8 @@ class ReportParser(object):
         self.report_type = None
         root_tag, output = self.getRootTag(report_path)
 
-        #if root_tag:
-        #    self.report_type = self.rType(root_tag, output)
+        if root_tag:
+            self.report_type = self.rType(root_tag, output)
 
         if self.report_type is None:
 

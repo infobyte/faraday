@@ -169,19 +169,16 @@ class ReportParser(object):
             self.report_type = self.getUserPluginName(report_path)
 
     def getUserPluginName(self, pathFile):
-
-        try:
-
-            nameReport = pathFile[pathFile.rfind('/') + 1: pathFile.rfind('.')]
-            plugin = nameReport[nameReport.rfind('_faraday_') + 9:]
-
-            if plugin is not None or plugin != '':
-                return plugin
-            else:
-                return None
-
-        except:
-            return None
+        rname = pathFile[pathFile.rfind('/') + 1:]
+        ext = rname.rfind('.')
+        if ext < 0:
+            ext = len(rname) + 1
+        rname = rname[0:ext]
+        faraday_index = rname.rfind('_faraday_')
+        if faraday_index > -1:
+            plugin = rname[faraday_index + 9:]
+            return plugin
+        return None
 
     def open_file(self, file_path):
         """

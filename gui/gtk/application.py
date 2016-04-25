@@ -76,12 +76,13 @@ class GuiApp(Gtk.Application, FaradayUi):
         Uses the instance of workspace manager passed into __init__ to
         get all the workspaces names and see if they don't clash with
         the one the user wrote. If everything's fine, it saves the new
-        workspace"""
+        workspace and returns True. If something went wrong, return False"""
 
         if name in self.getWorkspaceManager().getWorkspacesNames():
 
             model.api.log("A workspace with name %s already exists"
                           % name, "ERROR")
+            status = True
         else:
             model.api.log("Creating workspace '%s'" % name)
             model.api.devlog("Looking for the delegation class")
@@ -91,8 +92,12 @@ class GuiApp(Gtk.Application, FaradayUi):
                                             manager.namedTypeToDbType(w_type))
                 CONF.setLastWorkspace(w.name)
                 CONF.saveConfig()
+                status = True
             except Exception as e:
+                status = False
                 model.guiapi.notification_center.showDialog(str(e))
+
+        return status
 
     def removeWorkspace(self, button, ws_name):
         """Removes a workspace. If the workspace to be deleted is the one

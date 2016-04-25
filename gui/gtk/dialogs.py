@@ -157,10 +157,11 @@ class NewWorkspaceDialog(Gtk.Window):
                 self.__name_txt = str(self.name_entry.get_text())
                 self.__desc_txt = str(self.descr_entry.get_text())
                 self.__type_txt = str(self.comboBox.get_active_text())
-                self.callback(self.__name_txt,
-                              self.__desc_txt,
-                              self.__type_txt)
-                self.sidebar.addWorkspace(self.__name_txt)
+                creation_ok = self.callback(self.__name_txt,
+                                            self.__desc_txt,
+                                            self.__type_txt)
+                if creation_ok:
+                    self.sidebar.addWorkspace(self.__name_txt)
                 self.destroy()
         else:
             errorDialog(self, "Invalid workspace name",

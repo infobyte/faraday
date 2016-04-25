@@ -182,7 +182,6 @@ class GuiApp(Gtk.Application, FaradayUi):
                                     application=self,
                                     title="Faraday")
 
-        self.window.set_default_icon_list([self.icon])
         self.window.set_icon(self.icon)
         self.window.present()
 

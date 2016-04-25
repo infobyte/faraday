@@ -55,7 +55,8 @@ class ReportProcessor():
             command_string)
         if not has_plugin:
             getLogger(self).error(
-                'Faraday have not a plugin for this tool... Processing: ABORT')
+                "Faraday doesn't have a plugin for this tool...
+                 Processing: ABORT")
             return False
 
         getLogger(self).debug(

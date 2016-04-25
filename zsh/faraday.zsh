@@ -43,7 +43,7 @@ function add-output() {
 	        if [[ "$new_cmd" != "None" ]]; then
 	            BUFFER=" $new_cmd"
 		    fi
-            FARADAY_OUTPUT=`mktemp`
+            FARADAY_OUTPUT=`mktemp tmp.XXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
             BUFFER="$BUFFER >&1 >> $FARADAY_OUTPUT"
 		fi
 	fi
@@ -53,7 +53,7 @@ function add-output() {
 function send-output() {
     if [ ! -z "$FARADAY_PLUGIN" ]; then
 		output=`env python2.7 -c "import base64; print(base64.b64encode(open(\"$FARADAY_OUTPUT\",'r').read()))"`
-        temp_file=`mktemp`
+        temp_file=`mktemp tmp.XXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
         echo "{\"exit_code\": $?, \"pid\": $$, \"output\": \"$output\" }" >> $temp_file
         curl=`curl -s -X POST -H "Content-Type: application/json" -d @$temp_file http://$FARADAY_ZSH_HOST:$FARADAY_ZSH_RPORT/cmd/output`
         rm -f $temp_file

@@ -39,6 +39,7 @@ class PreferenceWindowDialog(Gtk.Window):
 
     def __init__(self, callback, parent):
         Gtk.Window.__init__(self, title="Preferences")
+        self.parent = parent
         self.set_size_request(400, 100)
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)

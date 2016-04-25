@@ -51,8 +51,8 @@ class ReportProcessor():
             'The file is %s, %s' % (filename, plugin_id))
         if not self.plugin_controller.processReport(plugin_id, filename):
             getLogger(self).error(
-                "Faraday doesn't have a plugin for this tool...
-                 Processing: ABORT")
+                "Faraday doesn't have a plugin for this tool..."
+                " Processing: ABORT")
             return False
         return True
 
@@ -158,8 +158,8 @@ class ReportParser(object):
         self.report_type = None
         root_tag, output = self.getRootTag(report_path)
 
-        if root_tag:
-            self.report_type = self.rType(root_tag, output)
+        #if root_tag:
+        #    self.report_type = self.rType(root_tag, output)
 
         if self.report_type is None:
 
@@ -173,7 +173,9 @@ class ReportParser(object):
         try:
 
             nameReport = pathFile[pathFile.rfind('/') + 1: pathFile.rfind('.')]
-            plugin = nameReport[nameReport.find('_faraday_') + 9:]
+            plugin = nameReport[nameReport.rfind('_faraday_') + 9:]
+            print "Trying plugin", plugin
+            import ipdb; ipdb.set_trace()
 
             if plugin is not None or plugin != '':
                 return plugin

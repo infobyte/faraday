@@ -22,7 +22,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
     ETREE_VERSION = ET.VERSION
-                      
+
 ETREE_VERSION = [int(i) for i in ETREE_VERSION.split(".")]
 
 current_path = os.path.abspath(os.getcwd())
@@ -36,9 +36,9 @@ __maintainer__ = "Francisco Amato"
 __email__      = "famato@infobytesec.com"
 __status__     = "Development"
 
-                           
-                                                                     
-                      
+
+
+
 
 class OpenvasXmlParser(object):
     """
@@ -56,12 +56,12 @@ class OpenvasXmlParser(object):
         self.host = None
 
         tree = self.parse_xml(xml_output)
-        
+
         if tree:
             self.items = [data for data in self.get_items(tree)]
         else:
             self.items = []
-            
+
 
     def parse_xml(self, xml_output):
         """
@@ -85,17 +85,17 @@ class OpenvasXmlParser(object):
         @return items A list of Host instances
         """
         bugtype=""
-        
-                                           
+
+
         node = tree.findall('report')[0]
         node2 = node.findall('results')[0]
-            
+
         for node in node2.findall('result'):
             yield Item(node)
-                                  
 
 
-                 
+
+
 def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
     """
     Finds a subnode in the item node and the retrieves a value from it
@@ -104,9 +104,9 @@ def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
     """
     global ETREE_VERSION
     node = None
-    
+
     if ETREE_VERSION[0] <= 1 and ETREE_VERSION[1] < 3:
-                                                           
+
         match_obj = re.search("([^\@]+?)\[\@([^=]*?)=\'([^\']*?)\'",subnode_xpath_expr)
         if match_obj is not None:
             node_to_find = match_obj.group(1)
@@ -128,7 +128,7 @@ def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
     return None
 
 
-                 
+
 
 
 class Item(object):
@@ -154,7 +154,7 @@ class Item(object):
         self.service=""
         self.protocol=""
         port = self.get_text_from_subnode('port')
-       
+
         if (re.search("^general",port) is None):
             mregex = re.search("([\w]+) \(([\d]+)\/([\w]+)\)",port)
             if mregex is not None:
@@ -164,27 +164,27 @@ class Item(object):
             else:
                 info = port.split("/")
                 self.port = info[0]
-                self.protocol = info[1]                
+                self.protocol = info[1]
         else:
             info = port.split("/")
             self.service = info[0]
             self.protocol = info[1]
-            
-            
+
+
         self.nvt = self.node.findall('nvt')[0]
-        self.node = self.nvt 
+        self.node = self.nvt
         self.id=self.node.get('oid')
         self.name = self.get_text_from_subnode('name')
         self.cve = self.get_text_from_subnode('cve') if self.get_text_from_subnode('cve') != "NOCVE" else ""
         self.bid = self.get_text_from_subnode('bid') if self.get_text_from_subnode('bid') != "NOBID" else ""
         self.xref = self.get_text_from_subnode('xref') if self.get_text_from_subnode('xref') != "NOXREF" else ""
-        
+
     def do_clean(self,value):
         myreturn =""
         if value is not None:
             myreturn = re.sub("\n","",value)
         return myreturn
-        
+
     def get_text_from_subnode(self, subnode_xpath_expr):
         """
         Finds a subnode in the host node and the retrieves a value from it.
@@ -218,7 +218,7 @@ class OpenvasPlugin(core.PluginBase):
         global current_path
         self._output_file_path = os.path.join(self.data_path,
                                              "openvas_output-%s.xml" % self._rid)
-                                  
+
 
     def parseOutputString(self, output, debug = False):
         """
@@ -227,7 +227,7 @@ class OpenvasPlugin(core.PluginBase):
 
         NOTE: if 'debug' is true then it is being run from a test case and the
         output being sent is valid.
-        """                                                                               
+        """
 
         parser = OpenvasXmlParser(output)
 
@@ -242,41 +242,42 @@ class OpenvasPlugin(core.PluginBase):
                     ref.append(item.bid.encode("utf-8"))
                 if item.xref:
                     ref.append(item.xref.encode("utf-8"))
-                
+
                 if ids.has_key(item.subnet):
                     h_id=ids[item.host]
                 else:
                     h_id = self.createAndAddHost(item.subnet)
                     ids[item.subnet] = h_id
-                    
+
                 if item.port == "None":
                     v_id = self.createAndAddVulnToHost(h_id,item.name.encode("utf-8"),desc=item.description.encode("utf-8"),
+                                                       severity=item.severity.encode("utf-8"),
                                                        ref=ref)
                 else:
-                    
+
                     if item.service:
                         web=True if re.search(r'^(www|http)',item.service) else False
                     else:
                         web=True if item.port in ('80','443','8080') else False
-                    
+
                     if ids.has_key(item.subnet+"_"+item.subnet):
                         i_id=ids[item.subnet+"_"+item.subnet]
                     else:
 
-                                        
+
                         if self._isIPV4(item.subnet):
                             i_id = self.createAndAddInterface(h_id, item.subnet, ipv4_address=item.subnet,hostname_resolution=item.host)
                         else:
                             i_id = self.createAndAddInterface(h_id, item.subnet, ipv6_address=item.subnet,hostname_resolution=item.host)
-                            
+
                         ids[item.subnet+"_"+item.subnet] = i_id
-                        
-                    
+
+
                     if ids.has_key(item.subnet+"_"+item.port):
                         s_id=ids[item.subnet+"_"+item.port]
                     else:
                         s_id = self.createAndAddServiceToInterface(h_id, i_id, item.service,
-                                   item.protocol, 
+                                   item.protocol,
                                    ports = [str(item.port)],
                                    status = "open")
                         ids[item.subnet+"_"+item.port] = s_id
@@ -284,7 +285,7 @@ class OpenvasPlugin(core.PluginBase):
                             n_id = self.createAndAddNoteToService(h_id,s_id,"website","")
                             n2_id = self.createAndAddNoteToNote(h_id,s_id,n_id,item.host,"")
 
-                    if item.name:                                        
+                    if item.name:
                         if web:
                             v_id = self.createAndAddVulnWebToService(h_id, s_id, item.name.encode("utf-8"),
                                                     desc=item.description.encode("utf-8"),website=item.host,
@@ -294,10 +295,10 @@ class OpenvasPlugin(core.PluginBase):
                                                     desc=item.description.encode("utf-8"),severity=item.severity.encode("utf-8"),ref=ref)
 
         del parser
-        
-                      
-                                             
-                    
+
+
+
+
 
     def _isIPV4(self, ip):
         if len(ip.split(".")) == 4:
@@ -305,10 +306,10 @@ class OpenvasPlugin(core.PluginBase):
         else:
             return False
 
-                                                                              
+
     def processCommandString(self, username, current_path, command_string):
         return None
-        
+
 
     def setHost(self):
         pass

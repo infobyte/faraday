@@ -146,7 +146,7 @@ class ConsoleLog(Gtk.Widget):
         self.textBuffer = Gtk.TextBuffer()
         self.textBuffer.new()
         self.textBuffer.set_text("LOG. Please run Faraday with the --debug "
-                                 "flag for more verbose output \0", -1)
+                                 "flag for more verbose output \n \0", -1)
 
         self.textView = Gtk.TextView()
         self.textView.set_editable(False)

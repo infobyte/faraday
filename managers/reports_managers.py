@@ -174,8 +174,6 @@ class ReportParser(object):
 
             nameReport = pathFile[pathFile.rfind('/') + 1: pathFile.rfind('.')]
             plugin = nameReport[nameReport.rfind('_faraday_') + 9:]
-            print "Trying plugin", plugin
-            import ipdb; ipdb.set_trace()
 
             if plugin is not None or plugin != '':
                 return plugin

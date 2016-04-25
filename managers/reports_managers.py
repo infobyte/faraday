@@ -51,7 +51,8 @@ class ReportProcessor():
             'The file is %s, %s' % (filename, plugin_id))
         if not self.plugin_controller.processReport(plugin_id, filename):
             getLogger(self).error(
-                "Faraday doesn't have a plugin for this tool... Processing: ABORT")
+                "Faraday doesn't have a plugin for this tool...
+                 Processing: ABORT")
             return False
         return True
 

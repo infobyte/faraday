@@ -37,7 +37,11 @@ class Terminal(Gtk.Widget):
         self.terminal.feed_child(self.command + '\n', len(self.command)+1)
 
     def getTerminal(self):
-        return self.terminal
+        """Returns a scrolled_window with the terminal inside it"""
+        scrolled_window = Gtk.ScrolledWindow.new(None, None)
+        scrolled_window.set_overlay_scrolling(False)
+        scrolled_window.add(self.terminal)
+        return scrolled_window
 
 
 class Sidebar(Gtk.Widget):

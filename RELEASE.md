@@ -13,6 +13,12 @@ New features in the latest update
 TBA:
 ---
 * Added Open services count to Hosts list in WEB UI
+* Improved zsh integration
+* Added GTK3 interface prototype
+* Added plugin detection through report name
+* Fixed syntax error in wcscan script
+* Fixed nikto plugin
+* Fixed openvas plugin
 
 Apr 04, 2016
 ---

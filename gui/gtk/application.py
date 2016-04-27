@@ -21,8 +21,8 @@ try:
     gi.require_version('Gtk', '3.0')
     gi.require_version('Vte', '2.91')
 except ValueError:
-    print "WARNING: You don't seem to have installed the recommended versions
-           of GTK and VTE. Check install of VTE 2.91 and GTK+3"
+    print "WARNING: You don't seem to have installed the recommended versions"
+          " of GTK and VTE. Check install of VTE 2.91 and GTK+3"
 
 try:
     from gi.repository import Gio, Gtk, GdkPixbuf, Vte, GLib, GObject, Gdk

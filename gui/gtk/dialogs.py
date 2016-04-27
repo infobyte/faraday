@@ -95,7 +95,8 @@ class NewWorkspaceDialog(Gtk.Window):
     a description and a type for a new workspace. Also checks that the
     those attributes don't correspond to an existing workspace"""
 
-    def __init__(self, callback,  workspace_manager, sidebar, parent):
+    def __init__(self, callback,  workspace_manager, sidebar, parent,
+                 title=None):
 
         Gtk.Window.__init__(self, title="Create New Workspace")
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
@@ -111,6 +112,8 @@ class NewWorkspaceDialog(Gtk.Window):
         self.name_label = Gtk.Label()
         self.name_label.set_text("Name: ")
         self.name_entry = Gtk.Entry()
+        if title is not None:
+            self.name_entry.set_text(title)
         self.nameBox.pack_start(self.name_label, False, False, 10)
         self.nameBox.pack_end(self.name_entry, True, True, 10)
         self.nameBox.show()

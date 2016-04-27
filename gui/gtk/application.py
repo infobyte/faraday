@@ -9,6 +9,22 @@ See the file 'doc/LICENSE' for the license information
 
 import os
 
+try:
+    import gi
+except ImportError:
+    raise ImportError("You are missing Gobject Instrospection. Please "
+                      "install version 3.14 or above")
+
+gi.require_version('Gtk', '3.0')
+gi.require_version('Vte', '2.91')
+
+try:
+    from gi.repository import Gio, Gtk, GdkPixbuf, Vte, GLib, GObject, Gdk
+except ImportError:
+    raise ImportError("You are missing some of the required dependencies. "
+                      "Check that you have GTK+3 and Vte 2.91 installed "
+                      "as well as Python bindings for Gobject Instrospection")
+
 import model.guiapi
 import model.api
 import model.log
@@ -32,23 +48,6 @@ from mainwidgets import Statusbar
 
 from gui.loghandler import GUIHandler
 from utils.logs import addHandler
-
-try:
-    import gi
-except ImportError:
-    raise ImportError("You are missing Gobject Instrospection. Please "
-                      "install version 3.14 or above")
-
-gi.require_version('Gtk', '3.0')
-gi.require_version('Vte', '2.91')
-
-try:
-    from gi.repository import Gio, Gtk, GdkPixbuf, Vte, GLib, GObject, Gdk
-except ImportError:
-    raise ImportError("You are missing some of the required dependencies. "
-                      "Check that you have GTK+3 and Vte 2.91 installed "
-                      "as well as Python bindings for Gobject Instrospection")
-
 
 CONF = getInstanceConfiguration()
 

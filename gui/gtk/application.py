@@ -8,22 +8,29 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
+import sys
 
 try:
     import gi
-except ImportError:
-    raise ImportError("You are missing Gobject Instrospection. Please "
-                      "install version 3.14 or above")
+except ImportError as e:
+    print "You are missing Gobject Instrospection. Please install "
+          " version 3.14 or above")
+    sys.exit(1)
 
-gi.require_version('Gtk', '3.0')
-gi.require_version('Vte', '2.91')
+try:
+    gi.require_version('Gtk', '3.0')
+    gi.require_version('Vte', '2.91')
+except ValueError:
+    print "WARNING: You don't seem to have installed the recommended versions
+           of GTK and VTE. Check install of VTE 2.91 and GTK+3"
 
 try:
     from gi.repository import Gio, Gtk, GdkPixbuf, Vte, GLib, GObject, Gdk
-except ImportError:
-    raise ImportError("You are missing some of the required dependencies. "
-                      "Check that you have GTK+3 and Vte 2.91 installed "
-                      "as well as Python bindings for Gobject Instrospection")
+except ImportError as e:
+    print "You are missing some of the required dependencies. "
+          "Check that you have GTK+3 and Vte installed."
+    sys.exit(1)
+
 
 import model.guiapi
 import model.api

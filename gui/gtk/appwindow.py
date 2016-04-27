@@ -83,14 +83,15 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         # TERMINAL BOX
         self.firstTerminalBox = self.terminalBox(self.terminal.getTerminal())
 
-        # MIDDLE BOX: NOTEBOOK AND SIDEBAR
+        # MIDDLE PANE: NOTEBOOK AND SIDEBAR
         self.notebook = Gtk.Notebook()
         self.notebook.set_scrollable(True)
         self.notebook.append_page(self.firstTerminalBox, Gtk.Label("1"))
 
-        self.middleBox = Gtk.Box()
-        self.middleBox.pack_start(self.notebook, True, True, 0)
-        self.middleBox.pack_start(self.sidebarBox, False, False, 0)
+        self.middlePane = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
+        self.middlePane.pack1(self.notebook, True, False)
+        self.middlePane.pack2(self.sidebarBox, False, True)
+        self.middlePane.set_position(750)
 
         # LOGGER BOX: THE LOGGER, DUH
         self.loggerBox = Gtk.Box()
@@ -103,7 +104,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         # MAINBOX: THE BIGGER BOX FOR ALL THE LITTLE BOXES
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.mainBox.pack_start(self.topBox, False, False, 0)
-        self.mainBox.pack_start(self.middleBox, True, True, 0)
+        self.mainBox.pack_start(self.middlePane, True, True, 0)
         self.mainBox.pack_start(self.loggerBox, False, False, 0)
         self.mainBox.pack_end(self.notificationBox, False, False, 0)
 
@@ -114,8 +115,8 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         remove_terminal_button.set_image(remove_terminal_icon)
         remove_terminal_button.set_relief(Gtk.ReliefStyle.NONE)
         remove_terminal_button.show()
-        at_end = Gtk.PackType.END
 
+        at_end = Gtk.PackType.END
         self.notebook.set_action_widget(remove_terminal_button, at_end)
 
         self.add(self.mainBox)

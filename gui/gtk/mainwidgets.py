@@ -172,8 +172,10 @@ class ConsoleLog(Gtk.Widget):
 
         self.textView = Gtk.TextView()
         self.textView.set_editable(False)
-        self.textView.set_monospace(True)
+        # TODO: only execute monospace if Gi >= 3.16
+        # self.textView.set_monospace(True)
         self.textView.set_justification(Gtk.Justification.LEFT)
+
         self.textView.set_buffer(self.textBuffer)
 
         self.logger = Gtk.ScrolledWindow.new(None, None)

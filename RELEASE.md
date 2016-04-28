@@ -16,7 +16,7 @@ TBA:
 * Improved zsh integration
 * Added GTK3 interface prototype
 * Added plugin detection through report name
-* Fixed syntax error in wcscan script
+* Fixed an error in wcscan script
 * Fixed nikto plugin
 * Fixed openvas plugin
 

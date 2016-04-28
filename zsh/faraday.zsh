@@ -7,7 +7,8 @@
 
 WORKSPACE=`cat $HOME/.faraday/config/user.xml |  grep '<last_workspace' | cut -d '>' -f 2 | cut -d '<' -f 1`
 STATUS=`curl -s $FARADAY_ZSH_HOST:$FARADAY_ZSH_RPORT/status/check |  sed "s/[^0-9]//g" | grep -v '^[[:space:]]*$'`
-PS1="%{${fg_bold[red]}%}[faraday]($WORKSPACE)%{${reset_color}%} $PS1"
+USERPS1=$PS1
+PS1="%{${fg_bold[red]}%}[faraday]($WORKSPACE)%{${reset_color}%} $USERPS1"
 export FARADAY_OUTPUT=
 export FARADAY_PLUGIN=
 
@@ -75,6 +76,7 @@ zshaddhistory() {
 precmd() {
     send-output
     WORKSPACE=`cat $HOME/.faraday/config/user.xml |  grep '<last_workspace' | cut -d '>' -f 2 | cut -d '<' -f 1`
+    PS1="%{${fg_bold[red]}%}[faraday]($WORKSPACE)%{${reset_color}%} $USERPS1"
     return 0
 }
 

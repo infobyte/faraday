@@ -52,7 +52,7 @@
                                 <tr>
                                     <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
                                     <th>
-                                        <a href="">Services</a>
+                                        <a href="">Open Services</a>
                                     </th>
                                     <th>
                                         <a href="" ng-click="toggleSort('name')">Name</a>
@@ -78,7 +78,7 @@
                                     selection-model-selected-class="multi-selected"
                                     selection-model-on-change="selectedHosts()">
                                     <td><input type="checkbox" name="{{host._id}}"/></td>
-                                    <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}">View</a></td>
+                                    <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="servicesCount[host._id] || 'None'"></a></td>
                                     <td>
                                         {{host.name}}
                                         <a href="//www.shodan.io/search?query={{host.name}}" uib-tooltip="Search in Shodan" target="_blank">

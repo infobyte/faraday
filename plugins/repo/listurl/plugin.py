@@ -25,9 +25,9 @@ __maintainer__ = "Francisco Amato"
 __email__      = "famato@infobytesec.com"
 __status__     = "Development"
 
-                           
-                                                                     
-                      
+
+
+
 
 class ListurlsParser(object):
     """
@@ -46,7 +46,7 @@ class ListurlsParser(object):
         if re.search("Could not reach",output) is not None:
             self.fail = True
             return
-            
+
         for line in lists:
             if i > 8:
                 print line
@@ -79,10 +79,10 @@ class ListurlsPlugin(core.PluginBase):
         }
 
         global current_path
-        self.output_path = os.path.join(self.data_path,
+        self.output_file_path = os.path.join(self.data_path,
                                              "listurls_output-%s.txt" % self._rid)
-        
-                                  
+
+
 
     def canParseCommandString(self, current_input):
         if self._command_regex.match(current_input.strip()):
@@ -99,54 +99,11 @@ class ListurlsPlugin(core.PluginBase):
         NOTE: if 'debug' is true then it is being run from a test case and the
         output being sent is valid.
         """
-         
-                                                
-                                                 
-             
-                  
-                                            
-              
-             
-                                                       
-                                            
-         
-         
-                                                                         
-              
-                                  
-                       
-             
-                                  
-                               
-                 
-                                                                  
-                                                                                               
-             
-                 
-                                      
-                                               
-                 
-                                                                              
-                                                          
-                                                                    
-                                                                          
-                                                                            
-                                                                               
-                      
-         
-                   
-        
-                      
-                                             
-                    
 
-     
-                                                                           
-                                                                                     
     def processCommandString(self, username, current_path, command_string):
-                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+
         host = re.search("(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp;%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|localhost|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))[\:]*([0-9]+)*([/]*($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+)).*?$", command_string)
-                            
+
         self.protocol = host.group(1)
         self.host = host.group(4)
         if self.protocol == 'https':
@@ -154,7 +111,7 @@ class ListurlsPlugin(core.PluginBase):
         if host.group(11) is not None:
             self.port = host.group(11)
         return None
-    
+
     def setHost(self):
         pass
 

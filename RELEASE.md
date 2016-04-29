@@ -10,6 +10,16 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+Apr 29, 2016:
+---
+* Added Open services count to Hosts list in WEB UI
+* Improved zsh integration
+* Added GTK3 interface prototype
+* Added plugin detection through report name
+* Fixed an error in wcscan script
+* Fixed nikto plugin
+* Fixed openvas plugin
+
 Apr 04, 2016
 ---
 * Added cli mode (see wiki for usage instructions)

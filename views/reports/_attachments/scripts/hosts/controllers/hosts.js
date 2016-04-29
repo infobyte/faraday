@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('hostsCtrl', 
+    .controller('hostsCtrl',
         ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact',
         function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact) {
 
@@ -26,6 +26,11 @@ angular.module('faradayApp')
                     $scope.hosts = hosts;
                     $scope.loadedVulns = true;
                     $scope.loadIcons();
+                });
+
+            hostsManager.getAllServicesCount($scope.workspace)
+                .then(function(servicesCount) {
+                    $scope.servicesCount = servicesCount;
                 });
 
             hostsManager.getAllVulnsCount($scope.workspace)

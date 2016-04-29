@@ -18,7 +18,7 @@ except ImportError:
 from gui.gui_app import FaradayUi
 from gui.qt3.mainwindow import MainWindow
 from gui.qt3.customevents import QtCustomEvent
-from gui.qt3.logconsole import GUIHandler
+from gui.loghandler import GUIHandler
 from shell.controller.env import ShellEnvironment
 
 import model.guiapi
@@ -32,11 +32,12 @@ CONF = getInstanceConfiguration()
 
 
 class GuiApp(qt.QApplication, FaradayUi):
-    def __init__(self, model_controller, plugin_manager, workspace_manager):
+    def __init__(self, model_controller, plugin_manager, workspace_manager, plugin_controller):
         FaradayUi.__init__(self,
                            model_controller,
                            plugin_manager,
-                           workspace_manager)
+                           workspace_manager,
+                           plugin_controller)
         qt.QApplication.__init__(self, [])
 
         self._shell_envs = dict()

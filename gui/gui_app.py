@@ -14,7 +14,7 @@ CONF = getInstanceConfiguration()
 
 class UiFactory(object):
     @staticmethod
-    def create(model_controller, plugin_manager, workspace_manager, gui="gtk"):
+    def create(model_controller, plugin_manager, workspace_manager, plugin_controller, gui="gtk"):
         if gui == "gtk":
             from gui.gtk.application import GuiApp
         elif gui == "qt3":
@@ -22,15 +22,16 @@ class UiFactory(object):
         else:
             from gui.nogui.application import GuiApp
 
-        return GuiApp(model_controller, plugin_manager, workspace_manager)
+        return GuiApp(model_controller, plugin_manager, workspace_manager, plugin_controller)
 
 
 class FaradayUi(object):
-    def __init__(self, model_controller=None, plugin_manager=None,
-                 workspace_manager=None, gui="qt3"):
+    def __init__(self, model_controller, plugin_manager,
+                 workspace_manager, plugin_controller, gui="qt3"):
         self.model_controller = model_controller
         self.plugin_manager = plugin_manager
         self.workspace_manager = workspace_manager
+        self.plugin_controller = plugin_controller
         self.report_manager = None
 
     def getModelController(self):
@@ -78,7 +79,10 @@ class FaradayUi(object):
         try:
             ws = self.getWorkspaceManager().openWorkspace(name)
             self.report_manager = ReportManager(
-                10, name)
+                10,
+                name,
+                self.plugin_controller
+            )
             self.report_manager.start()
         except Exception as e:
             raise e
@@ -97,6 +101,9 @@ class FaradayUi(object):
             self.report_manager.join()
         ws = self.getWorkspaceManager().openDefaultWorkspace()
         self.report_manager = ReportManager(
-                10, ws.name)
+                10,
+                ws.name,
+                self.plugin_controller
+        )
         self.report_manager.start()
         return ws

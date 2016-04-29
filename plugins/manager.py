@@ -14,7 +14,7 @@ import re
 import sys
 import traceback
 
-import plugins.core
+from plugins.controller import PluginController
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
 
@@ -35,12 +35,14 @@ class PluginManager(object):
         """
         Creates a new plugin controller and adds it into the controllers list.
         """
-        plugs = self._instancePlugins()
-        new_controller = plugins.core.PluginController(
-            id, plugs, self._mapper_manager)
+        new_controller = PluginController(
+            id, self, self._mapper_manager)
         self._controllers[new_controller.id] = new_controller
         self.updateSettings(self._plugin_settings)
         return new_controller
+
+    def addController(self, controller, id):
+        self._controllers[id] = controller
 
     def _loadSettings(self):
         _plugin_settings = CONF.getPluginSettings()
@@ -99,7 +101,6 @@ class PluginManager(object):
         try:
             os.stat(plugin_repo_path)
         except OSError:
-
             pass
 
         sys.path.append(plugin_repo_path)
@@ -122,7 +123,11 @@ class PluginManager(object):
                 pass
 
     def getPlugins(self):
-        return self._instancePlugins()
+        plugins = self._instancePlugins()
+        for id, plugin in plugins.items():
+            if id in self._plugin_settings:
+                plugin.updateSettings(self._plugin_settings[id]["settings"])
+        return plugins
 
     def _updatePluginSettings(self, new_plugin_id):
         pass

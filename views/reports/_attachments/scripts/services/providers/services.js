@@ -68,7 +68,7 @@ angular.module('faradayApp')
                 })
             return deferred.promise;
         }
-        
+
         servicesManager.getServicesByHost = function(ws, host_id) {
             var deferred = $q.defer();
             var url = BASEURL + "/" + ws + "/_design/services/_view/byhost?key=\"" + host_id + "\"";
@@ -123,7 +123,7 @@ angular.module('faradayApp')
                     })
                 });
             });
-            
+
             return deferred.promise;
         }
 

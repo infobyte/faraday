@@ -54,8 +54,6 @@ FARADAY_USER_IMAGES = os.path.join(FARADAY_USER_HOME,
 FARADAY_USER_ZSHRC = os.path.join(FARADAY_USER_HOME, CONST_FARADAY_ZSHRC)
 FARADAY_USER_ZSH_PATH = os.path.join(FARADAY_USER_HOME, CONST_ZSH_PATH)
 FARADAY_BASE_ZSH = os.path.join(FARADAY_BASE, CONST_FARADAY_ZSH_FARADAY)
-FARADAY_BASE_ZSH_PLUGIN = os.path.join(FARADAY_BASE,
-                            CONST_FARADAY_ZSH_PLUGIN)
 
 USER_QT = os.path.expanduser(CONST_USER_QT_PATH)
 USER_QTRC = os.path.expanduser(CONST_USER_QTRC_PATH)
@@ -141,7 +139,8 @@ def getParserArgs():
 
     parser.add_argument('--gui', action="store", dest="gui",
         default="qt3",
-        help="Select interface to start faraday. Default = qt3")
+        help="Select interface to start faraday. Supported values are "
+              "qt3 (deprecated), gtk and 'no' (no GUI at all). Defaults to qt3")
 
     parser.add_argument('--cli', action="store_true",
         dest="cli",
@@ -300,9 +299,6 @@ def startFaraday():
 
     logger.info("All done. Opening environment.")
     #TODO: Handle args in CONF and send only necessary ones.
-    # Force OSX to run no gui
-    if sys.platform == "darwin":
-        args.gui = "no-gui"
 
     main_app = MainApplication(args)
 
@@ -400,10 +396,8 @@ def setupZSH():
         f.seek(0, 0)
         f.write('ZDOTDIR=$OLDZDOTDIR' + '\n' + content)
     with open(FARADAY_USER_ZSHRC, "a") as f:
-        f.write("source %s" % FARADAY_BASE_ZSH)
+        f.write("source \"%s\"" % FARADAY_BASE_ZSH)
     shutil.copy(FARADAY_BASE_ZSH, FARADAY_USER_ZSH_PATH)
-    shutil.copy(FARADAY_BASE_ZSH_PLUGIN, FARADAY_USER_ZSH_PATH)
-
 
 def setupXMLConfig():
     """Checks user configuration file status.

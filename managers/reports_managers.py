@@ -7,11 +7,13 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
-import model.api
+#import model.api
 import threading
 import time
 import traceback
 import re
+
+from utils.logs import getLogger
 
 try:
     import xml.etree.cElementTree as ET
@@ -19,59 +21,67 @@ try:
 except ImportError:
     print "cElementTree could not be imported. Using ElementTree instead"
     import xml.etree.ElementTree as ET
-from apis.rest.client import PluginControllerAPIClient
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
 
 class ReportProcessor():
-    def __init__(self):
-        host = CONF.getApiConInfoHost()
-        port_rest = int(CONF.getApiRestfulConInfoPort())
-
-        self.client = PluginControllerAPIClient(host, port_rest)
+    def __init__(self, plugin_controller):
+        self.plugin_controller = plugin_controller
 
     def processReport(self, filename):
         """
         Process one Report
         """
-        model.api.log("Report file is %s" % filename)
+        getLogger(self).debug("Report file is %s" % filename)
 
         parser = ReportParser(filename)
-        if (parser.report_type is not None):
-            model.api.log(
-                "The file is %s, %s" % (filename, parser.report_type))
 
-            command_string = "./%s %s" % (parser.report_type.lower(),
-                                          filename)
-            model.api.log("Executing %s" % (command_string))
+        if parser.report_type is None:
+            getLogger(self).error(
+                'Plugin not found: automatic and manual try!'
+            )
+            return False
 
-            new_cmd, output_file = self.client.send_cmd(command_string)
-            self.client.send_output(command_string, filename)
-            return True
-        return False
+        return self._sendReport(parser.report_type, filename)
+
+    def _sendReport(self, plugin_id, filename):
+        getLogger(self).debug(
+            'The file is %s, %s' % (filename, plugin_id))
+        if not self.plugin_controller.processReport(plugin_id, filename):
+            getLogger(self).error(
+                "Faraday doesn't have a plugin for this tool..."
+                " Processing: ABORT")
+            return False
+        return True
 
     def onlinePlugin(self, cmd):
-        new_cmd, output_file = self.client.send_cmd(cmd)
-        self.client.send_output(cmd)
+
+        _, new_cmd, output_file = self.plugin_controller.processCommandInput(
+            cmd)
+        self.plugin_controller.onCommandFinished(cmd, '')
 
 
 class ReportManager(threading.Thread):
-    def __init__(self, timer, ws_name):
+    def __init__(self, timer, ws_name, plugin_controller):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.timer = timer
         self._stop = False
         self._report_path = os.path.join(CONF.getReportPath(), ws_name)
         self._report_ppath = os.path.join(self._report_path, "process")
-        self.processor = ReportProcessor()
+        self._report_upath = os.path.join(self._report_path, "unprocessed")
+        self.processor = ReportProcessor(plugin_controller)
 
         if not os.path.exists(self._report_path):
             os.mkdir(self._report_path)
 
         if not os.path.exists(self._report_ppath):
             os.mkdir(self._report_ppath)
+
+        if not os.path.exists(self._report_upath):
+            os.mkdir(self._report_upath)
 
     def run(self):
         tmp_timer = 0
@@ -83,7 +93,10 @@ class ReportManager(threading.Thread):
                 try:
                     self.syncReports()
                 except Exception:
-                    model.api.log("An exception was captured while saving reports\n%s" % traceback.format_exc())
+                    getLogger(self).error(
+                        "An exception was captured while saving reports\n%s"
+                        % traceback.format_exc()
+                    )
                 finally:
                     tmp_timer = 0
 
@@ -102,9 +115,18 @@ class ReportManager(threading.Thread):
                 for name in files:
                     filename = os.path.join(root, name)
 
-                    self.processor.processReport(filename)
+                    # If plugin not is detected... move to unprocessed
+                    if self.processor.processReport(filename) is False:
 
-                    os.rename(filename, os.path.join(self._report_ppath, name))
+                        os.rename(
+                            filename,
+                            os.path.join(self._report_upath, name)
+                        )
+                    else:
+                        os.rename(
+                            filename,
+                            os.path.join(self._report_ppath, name)
+                        )
 
         self.onlinePlugins()
 
@@ -133,11 +155,30 @@ class ReportParser(object):
     """
 
     def __init__(self, report_path):
-        self.report_type = ""
+        self.report_type = None
         root_tag, output = self.getRootTag(report_path)
 
         if root_tag:
             self.report_type = self.rType(root_tag, output)
+
+        if self.report_type is None:
+
+            getLogger(self).debug(
+                'Automatical detection FAILED... Trying manual...')
+
+            self.report_type = self.getUserPluginName(report_path)
+
+    def getUserPluginName(self, pathFile):
+        rname = pathFile[pathFile.rfind('/') + 1:]
+        ext = rname.rfind('.')
+        if ext < 0:
+            ext = len(rname) + 1
+        rname = rname[0:ext]
+        faraday_index = rname.rfind('_faraday_')
+        if faraday_index > -1:
+            plugin = rname[faraday_index + 9:]
+            return plugin
+        return None
 
     def open_file(self, file_path):
         """
@@ -155,8 +196,8 @@ class ReportParser(object):
         f = result = None
 
         signatures = {
-         "\x50\x4B" : "zip" ,
-         "\x3C\x3F\x78\x6D\x6C" : "xml"
+         "\x50\x4B": "zip",
+         "\x3C\x3F\x78\x6D\x6C": "xml"
         }
 
         try:
@@ -168,12 +209,13 @@ class ReportParser(object):
                 if file_signature.find(key) == 0:
 
                     result = signatures[key]
-                    model.api.log("Report type detected: %s" %result)
+                    getLogger(self).debug("Report type detected: %s" % result)
                     break
 
         except IOError, err:
             self.report_type = None
-            model.api.log("Error while opening file.\n%s. %s" % (err, file_path))
+            getLogger(self).error(
+                "Error while opening file.\n%s. %s" % (err, file_path))
 
         return f, result
 
@@ -183,12 +225,12 @@ class ReportParser(object):
 
         f, report_type = self.open_file(file_path)
 
-        #Check error in open_file()
-        if f == None and report_type == None:
+        # Check error in open_file()
+        if f is None and report_type is None:
             self.report_type = None
             return None, None
 
-        #Find root tag based in report_type
+        # Find root tag based in report_type
         if report_type == "zip":
             result = "maltego"
 
@@ -201,11 +243,12 @@ class ReportParser(object):
 
             except SyntaxError, err:
                 self.report_type = None
-                model.api.log("Not an xml file.\n %s" % (err))
+                getLogger(self).error("Not an xml file.\n %s" % (err))
 
         f.seek(0)
         output = f.read()
-        if f: f.close()
+        if f:
+            f.close()
 
         return result, output
 
@@ -216,47 +259,57 @@ class ReportParser(object):
         :rtype
         """
         if "nmaprun" == tag:
-            return "nmap"
+            return "Nmap"
         elif "w3af-run" == tag:
-            return "w3af"
+            return "W3af"
         elif "NessusClientData_v2" == tag:
-            return "nessus"
+            return "Nessus"
         elif "report" == tag:
-            if re.search("https://raw.githubusercontent.com/Arachni/arachni/", output) != None:
-                return "arachni_faraday"
-            elif re.search("OpenVAS", output) != None or re.search('<omp><version>', output) != None:
-                return "openvas"
+
+            if re.search(
+                "https://raw.githubusercontent.com/Arachni/arachni/",
+                output
+             ) is not None:
+                return "Arachni"
+
+            elif re.search("OpenVAS", output) is not None or re.search(
+                '<omp><version>',
+                output
+            ) is not None:
+                return "Openvas"
+
             else:
-                return "zap"
+                return "Zap"
+
         elif "niktoscan" == tag:
-            return "nikto"
+            return "Nikto"
         elif "MetasploitV4" == tag:
-            return "metasploit"
+            return "Metasploit"
         elif "MetasploitV5" == tag:
-            return "metasploit"
+            return "Metasploit"
         elif "issues" == tag:
-            return "burp"
+            return "Burp"
         elif "OWASPZAPReport" == tag:
-            return "zap"
+            return "Zap"
         elif "ScanGroup" == tag:
-            return "acunetix"
+            return "Acunetix"
         elif "session" == tag:
-            return "x1"
+            return "X1"
         elif "landscapePolicy" == tag:
-            return "x1"
+            return "X1"
         elif "entities" == tag:
-            return "impact"
+            return "Core Impact"
         elif "NeXposeSimpleXML" == tag:
-            return "nexpose"
+            return "Nexpose"
         elif "NexposeReport" == tag:
-            return "nexpose-full"
+            return "NexposeFull"
         elif "ASSET_DATA_REPORT" == tag:
-            return "qualysguard"
+            return "Qualysguard"
         elif "scanJob" == tag:
-            return "retina"
+            return "Retina"
         elif "netsparker" == tag:
-            return "netsparker"
+            return "Netsparker"
         elif "maltego" == tag:
-            return "maltego_faraday"
+            return "Maltego"
         else:
             return None

@@ -8,10 +8,8 @@ See the file 'doc/LICENSE' for the license information
 
 from __future__ import with_statement
 from plugins import core
-from model import api
 import re
 import os
-import pprint
 import sys
 import random
 import HTMLParser
@@ -77,8 +75,12 @@ class NiktoXmlParser(object):
         """
         @return items A list of Host instances
         """
-        for host_node in tree.find('niktoscan').findall('scandetails'):
-            yield Host(host_node)
+        if tree.find('niktoscan'):
+            for host_node in tree.find('niktoscan').findall('scandetails'):
+                yield Host(host_node)
+        else:
+            for host_node in tree.findall('scandetails'):
+                yield Host(host_node)
 
 
 def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):

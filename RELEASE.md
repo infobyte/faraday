@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA:
+Apr 29, 2016:
 ---
 * Added Open services count to Hosts list in WEB UI
 * Improved zsh integration

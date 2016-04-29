@@ -11,6 +11,11 @@ USERPS1=$PS1
 PS1="%{${fg_bold[red]}%}[faraday]($WORKSPACE)%{${reset_color}%} $USERPS1"
 export FARADAY_OUTPUT=
 export FARADAY_PLUGIN=
+alias faraday_b64='base64 -w 0'
+
+if [[ $(uname) == 'Darwin' ]]; then
+     alias faraday_b64='base64'
+fi
 
 echo ">>> WELCOME TO FARADAY"
 echo "[+] Current Workspace: $WORKSPACE"
@@ -33,8 +38,8 @@ function add-output() {
     old_cmd=$BUFFER
 	FARADAY_PLUGIN=
     FARADAY_OUTPUT=
-    pwd_actual=$(printf "%s" "$(pwd)"| base64 -w 0)
-    cmd_encoded=$(printf "%s" "$BUFFER"| base64 -w 0)
+    pwd_actual=$(printf "%s" "$(pwd)"| faraday_b64)
+    cmd_encoded=$(printf "%s" "$BUFFER"| faraday_b64)
 	json_response=`curl -s -X POST -H "Content-Type: application/json" -d "{\"cmd\": \"$cmd_encoded\", \"pid\": $$, \"pwd\": \"$pwd_actual\"}" http://$FARADAY_ZSH_HOST:$FARADAY_ZSH_RPORT/cmd/input`
     if [[ $? -eq 0 ]]; then
 		code=`echo $json_response|env python2.7 -c "import sys, json;print(json.load(sys.stdin)[\"code\"])"`

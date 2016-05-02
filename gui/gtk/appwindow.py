@@ -234,6 +234,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         # new_from_stock is deprecated, but should work fine for now
         new_button_icon = Gtk.Image.new_from_file(icons + "sync.png")
         new_terminal_icon = Gtk.Image.new_from_file(icons + "newshell.png")
+        preferences_icon = Gtk.Image.new_from_file(icons + "config.png")
         toggle_log_icon = Gtk.Image.new_from_file(icons + "debug.png")
 
         new_terminal_button = Gtk.ToolButton.new(new_terminal_icon, None)
@@ -246,12 +247,17 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         toolbar.insert(new_button, 1)
         new_button.set_action_name('app.new')
 
+        preferences_button = Gtk.ToolButton.new(preferences_icon, None)
+        preferences_button.set_tooltip_text("Preferences")
+        toolbar.insert(preferences_button, 2)
+        preferences_button.set_action_name('app.preferences')
+
         toggle_log_button = Gtk.ToggleToolButton.new()
         toggle_log_button.set_icon_widget(toggle_log_icon)
         toggle_log_button.set_active(True)  # log enabled by default
         toggle_log_button.set_tooltip_text("Toggle log console")
         toggle_log_button.connect("clicked", self.toggle_log)
-        toolbar.insert(toggle_log_button, 2)
+        toolbar.insert(toggle_log_button, 3)
 
         return toolbar
 

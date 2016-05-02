@@ -58,6 +58,9 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.log = console_log
         self.statusbar = statusbar
 
+        import ipdb; ipdb.set_trace()
+        self.terminal.connect("child_exited", self.on_terminal_exit)
+
         self.icons = CONF.getImagePath() + "icons/"
 
         # sets up the clipboard
@@ -264,11 +267,17 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.notebook.append_page(pageN, Gtk.Label(str(tab_number+1)))
         self.show_all()
 
-    def delete_tab(self, button):
-        """Deletes the current tab"""
-        current_page = self.notebook.get_current_page()
-        self.notebook.remove_page(current_page)
-        self.reorder_tab_names()
+    def delete_tab(self, button=None):
+        """Deletes the current tab or closes the window if tab is only tab"""
+        if self.tab_number == 0:
+            # this is confusing but its how gtks handles delete_event
+            # if user said YES to confirmation, do_delete_event returns False
+            if not self.do_delete_event():
+                self.destroy()
+        else:
+            current_page = self.notebook.get_current_page()
+            self.notebook.remove_page(current_page)
+            self.reorder_tab_names()
 
     def reorder_tab_names(self):
         """When a tab is deleted, all other tabs must be renamed to reacomodate
@@ -285,3 +294,26 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         """Reverses the visibility status of the loggerbox"""
         current_state = self.loggerBox.is_visible()
         self.loggerBox.set_visible(not current_state)
+
+    def do_delete_event(self, event=None, status=None):
+        """Override delete_event signal to show a confirmation dialog first"""
+        dialog = Gtk.MessageDialog(transient_for=self,
+                                   modal=True,
+                                   buttons=Gtk.ButtonsType.YES_NO)
+        dialog.props.text = "Are you sure you want to quit Faraday?"
+        response = dialog.run()
+        dialog.destroy()
+
+        if response == Gtk.ResponseType.YES:
+            return False  # keep on going and destroy
+        else:
+            return True  # user said stop
+
+    def on_terminal_exit(self, terminal, status):
+        if not self.do_delete_event():
+            self.destroy()
+        else:
+            self.delete_tab()
+            terminal.__init__(terminal)
+            self.new_tab(terminal)
+

@@ -16,38 +16,45 @@ gi.require_version('Vte', '2.91')
 from gi.repository import Gtk, Vte, GLib, Gdk
 
 
-class Terminal(Gtk.Widget):
+class Terminal(Vte.Terminal):
     """Defines a simple terminal that will execute faraday-terminal with the
     corresponding host and port as specified by the CONF"""
     def __init__(self, CONF):
-        super(Gtk.Widget, self).__init__()
+        super(Vte.Terminal, self).__init__()
 
-        self.terminal = Vte.Terminal()
+        self.pty = self.pty_new_sync(Vte.PtyFlags.DEFAULT, None)
+        self.set_pty(self.pty)
+
         faraday_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
-        self.terminal.spawn_sync(Vte.PtyFlags.DEFAULT,
-                                 faraday_directory, ['/bin/zsh'],
-                                 [],
-                                 GLib.SpawnFlags.DO_NOT_REAP_CHILD,
-                                 None,
-                                 None)
-
         host, port = CONF.getApiRestfulConInfo()
-        faraday_exec = './faraday-terminal.zsh'
-        self.command = (faraday_exec + " " + host + " " + str(port))
-        self.terminal.feed_child(self.command + '\n', len(self.command)+1)
+        faraday_exec = '/faraday-terminal.zsh'
+        command = (faraday_exec + " " + host + " " + str(port))
+
+        process = self.spawn_sync(Vte.PtyFlags.DEFAULT,
+                                  '$HOME',
+                                  ["/home/joaquin/faraday-assembla/faraday/faraday-terminal.zsh", "host"],
+                                  ["FARADAY_ZSH_RPORT="+str(port), "FARADAY_ZSH_HOST="+str(host)],
+                                  GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+                                  None,
+                                  None)
+
+        pid = process[1]
+        self.watch_child(pid)
 
     def getTerminal(self):
         """Returns a scrolled_window with the terminal inside it"""
         scrolled_window = Gtk.ScrolledWindow.new(None, None)
         scrolled_window.set_overlay_scrolling(False)
-        scrolled_window.add(self.terminal)
+        scrolled_window.add(self)
         return scrolled_window
 
+    def getPID(self):
+        return self.pid
 
 class Sidebar(Gtk.Widget):
     """Defines the sidebar widget to be used by the AppWindow, passed as an
-    instance by the application. It only handles the view, all the backend
-    word is handled by the application via the callback"""
+    instance to itby the application. It only handles the view and the model,
+    all the backend word is handled by the application via the callback"""
 
     def __init__(self, workspace_manager, callback_to_change_workspace,
                  callback_to_remove_workspace, callback_to_create_workspace,
@@ -167,13 +174,11 @@ class Sidebar(Gtk.Widget):
             delete_item = Gtk.MenuItem("Delete")
             menu.append(delete_item)
 
-            # underscores mean "i don't 'care 'cause i won't use them
-            # thank haskell for that
             # get the path of the item where the user clicked
             # then get its tree_iter. then get its name. then delete
             # that workspace
 
-            path, _, _, _ = view.get_path_at_pos(int(event.x), int(event.y))
+            path = view.get_path_at_pos(int(event.x), int(event.y))[0]
             tree_iter = self.workspace_model.get_iter(path)
             ws_name = self.workspace_model[tree_iter][0]
 

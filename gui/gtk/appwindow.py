@@ -58,7 +58,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.log = console_log
         self.statusbar = statusbar
 
-        import ipdb; ipdb.set_trace()
         self.terminal.connect("child_exited", self.on_terminal_exit)
 
         self.icons = CONF.getImagePath() + "icons/"

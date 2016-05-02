@@ -256,21 +256,23 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         return toolbar
 
-    def new_tab(self, new_terminal):
+    def new_tab(self, scrolled_window):
         """The on_new_terminal_button redirects here. Tells the window
         to create pretty much a clone of itself when the user wants a new
         tab"""
 
+        terminal = scrolled_window.get_children()[0]
+        terminal.connect("child_exited", self.on_terminal_exit)
         self.tab_number += 1
         tab_number = self.tab_number
-        pageN = self.terminalBox(new_terminal)
+        pageN = self.terminalBox(scrolled_window)
         self.notebook.append_page(pageN, Gtk.Label(str(tab_number+1)))
         self.show_all()
 
     def delete_tab(self, button=None):
         """Deletes the current tab or closes the window if tab is only tab"""
         if self.tab_number == 0:
-            # this is confusing but its how gtks handles delete_event
+            # the following confusing but its how gtks handles delete_event
             # if user said YES to confirmation, do_delete_event returns False
             if not self.do_delete_event():
                 self.destroy()
@@ -307,13 +309,13 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         if response == Gtk.ResponseType.YES:
             return False  # keep on going and destroy
         else:
-            return True  # user said stop
+            # user say you know what i don't want to exit
+            return True
 
     def on_terminal_exit(self, terminal, status):
-        if not self.do_delete_event():
-            self.destroy()
-        else:
-            self.delete_tab()
-            terminal.__init__(terminal)
-            self.new_tab(terminal)
+        """Really, it is *very* similar to delete_tab, but in this case
+        we want to make sure that we restart Faraday is the user
+        is not sure if he wants to exit"""
 
+        self.delete_tab()
+        terminal.startFaraday()

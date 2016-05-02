@@ -25,21 +25,11 @@ class Terminal(Vte.Terminal):
         self.pty = self.pty_new_sync(Vte.PtyFlags.DEFAULT, None)
         self.set_pty(self.pty)
 
-        faraday_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
-        host, port = CONF.getApiRestfulConInfo()
-        faraday_exec = '/faraday-terminal.zsh'
-        command = (faraday_exec + " " + host + " " + str(port))
+        self.faraday_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
+        self.host, self.port = CONF.getApiRestfulConInfo()
+        self.faraday_exec = self.faraday_directory + "/faraday-terminal.zsh"
 
-        process = self.spawn_sync(Vte.PtyFlags.DEFAULT,
-                                  '$HOME',
-                                  ["/home/joaquin/faraday-assembla/faraday/faraday-terminal.zsh", "host"],
-                                  ["FARADAY_ZSH_RPORT="+str(port), "FARADAY_ZSH_HOST="+str(host)],
-                                  GLib.SpawnFlags.DO_NOT_REAP_CHILD,
-                                  None,
-                                  None)
-
-        pid = process[1]
-        self.watch_child(pid)
+        self.startFaraday()
 
     def getTerminal(self):
         """Returns a scrolled_window with the terminal inside it"""
@@ -48,8 +38,18 @@ class Terminal(Vte.Terminal):
         scrolled_window.add(self)
         return scrolled_window
 
-    def getPID(self):
-        return self.pid
+    def startFaraday(self):
+        """Starts a Faraday process with the appropiate host and port."""
+
+        self.spawn_sync(Vte.PtyFlags.DEFAULT,
+                        '$HOME',
+                        [self.faraday_exec, str(self.host), str(self.port)],
+                        [],
+                        GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+                        None,
+                        None)
+
+
 
 class Sidebar(Gtk.Widget):
     """Defines the sidebar widget to be used by the AppWindow, passed as an

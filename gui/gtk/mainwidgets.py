@@ -50,7 +50,6 @@ class Terminal(Vte.Terminal):
                         None)
 
 
-
 class Sidebar(Gtk.Widget):
     """Defines the sidebar widget to be used by the AppWindow, passed as an
     instance to itby the application. It only handles the view and the model,
@@ -119,12 +118,6 @@ class Sidebar(Gtk.Widget):
         No one survives"""
         self.workspace_model.clear()
 
-    def createTitle(self):
-        """Return a label with the text "Workspaces"""
-        title = Gtk.Label()
-        title.set_text("Workspaces")
-        return title
-
     def createWsModel(self):
         """Creates and the workspace model. Also assigns self.defaultSelection
         to the treeIter which represents the last active workspace"""
@@ -138,7 +131,7 @@ class Sidebar(Gtk.Widget):
         return workspace_model
 
     def createWsView(self, model):
-        """Populate the workspace view. Also selected by default
+        """Populate the workspace view. Also select by default
         self.defaultSelection (see workspaceModel method). Also connect
         a selection with the change workspace callback"""
         view = Gtk.TreeView(model)

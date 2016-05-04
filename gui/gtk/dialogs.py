@@ -396,7 +396,6 @@ class NotificationsDialog(Gtk.Window):
         self.destroy_notifications()
         self.destroy()
 
-
 class aboutDialog(Gtk.AboutDialog):
     """The simple about dialog displayed when the user clicks on "about"
     ont the menu. Could be in application.py, but for consistency reasons
@@ -447,3 +446,27 @@ class errorDialog(Gtk.MessageDialog):
             self.format_secondary_text(explanation)
         self.run()
         self.destroy()
+
+class ImportantErrorDialog(Gtk.Dialog):
+
+    def __init__(self, parent_window, error):
+        Gtk.Dialog.__init__(self, "Error!", parent_window, 0)
+        self.add_button("Send report to developers...", 42)
+        self.add_button("Ignore", 0)
+        self.set_size_request(200, 200)
+
+        textBuffer = Gtk.TextBuffer()
+        textBuffer.set_text(error)
+
+        textView = Gtk.TextView()
+        textView.set_editable(False)
+        textView.set_buffer(textBuffer)
+
+        box = self.get_content_area()
+        scrolled_text = Gtk.ScrolledWindow.new(None, None)
+        scrolled_text.set_min_content_height(200)
+        scrolled_text.set_min_content_width(200)
+        scrolled_text.add(textView)
+
+        box.pack_start(scrolled_text, True, True, 0)
+        self.show_all()

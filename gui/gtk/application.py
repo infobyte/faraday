@@ -24,6 +24,7 @@ from dialogs import PluginOptionsDialog
 from dialogs import NotificationsDialog
 from dialogs import aboutDialog
 from dialogs import helpDialog
+from dialogs import ImportantErrorDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import ConsoleLog
@@ -51,6 +52,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def __init__(self, model_controller, plugin_manager, workspace_manager,
                  plugin_controller):
+
 
         FaradayUi.__init__(self,
                            model_controller,
@@ -211,6 +213,15 @@ class GuiApp(Gtk.Application, FaradayUi):
                                        dialog_text)
             dialog.run()
             dialog.destroy()
+        if event.type() == 3134:
+            dialog_text = event.text
+            dialog = ImportantErrorDialog(self.window, dialog_text)
+            response = dialog.run()
+            if response == 42:
+                error = event.error_name
+                event.callback(error, *event.exception_objects)
+            dialog.destroy()
+
 
     def on_about(self, action, param):
         """ Defines what happens when you press 'about' on the menu"""
@@ -321,6 +332,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         CONF.setLastWorkspace(workspace)
         CONF.saveConfig()
         Gtk.Application.run(self)
+
 
     def on_quit(self, action, param):
         self.quit()

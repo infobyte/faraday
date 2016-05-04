@@ -13,6 +13,7 @@ New features in the latest update
 TBA:
 ---
 * Removed description from Hosts list in WEB UI
+* Modified false values in Hosts list in WEB UI
 
 Apr 29, 2016:
 ---

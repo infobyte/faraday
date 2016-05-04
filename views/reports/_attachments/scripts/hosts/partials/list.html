@@ -75,7 +75,7 @@
                                     selection-model-selected-class="multi-selected"
                                     selection-model-on-change="selectedHosts()">
                                     <td><input type="checkbox" name="{{host._id}}"/></td>
-                                    <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="servicesCount[host._id] || 'None'"></a></td>
+                                    <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="servicesCount[host._id] || '-'"></a></td>
                                     <td>
                                         {{host.name}}
                                         <a href="//www.shodan.io/search?query={{host.name}}" uib-tooltip="Search in Shodan" target="_blank">
@@ -87,7 +87,7 @@
                                         <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
                                         <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
                                     </td>
-                                    <td ng-bind="host.owned"></td>
+                                    <td ng-bind="host.owned || '-'"></td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->

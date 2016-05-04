@@ -26,27 +26,30 @@ angular.module('faradayApp')
                     $scope.hosts = hosts;
                     $scope.loadedVulns = true;
                     $scope.loadIcons();
-                });
 
-            hostsManager.getAllServicesCount($scope.workspace)
-                .then(function(servicesCount) {
-                    $scope.servicesCount = servicesCount;
-                });
+                    hostsManager.getAllServicesCount($scope.workspace)
+                        .then(function(servicesCount) {
+                            $scope.servicesCount = servicesCount;
+                            $scope.hosts.forEach(function(host) {
+                                host.services = servicesCount[host._id];
+                            });
+                        });
 
-            hostsManager.getAllVulnsCount($scope.workspace)
-                .then(function(vulns) {
-                    $scope.vulnsCount = {};
-                    vulns.forEach(function(vuln) {
-                        var parts = vuln.key.split("."),
-                        parent = parts[0];
+                    hostsManager.getAllVulnsCount($scope.workspace)
+                        .then(function(vulns) {
+                            $scope.vulnsCount = {};
+                            vulns.forEach(function(vuln) {
+                                var parts = vuln.key.split("."),
+                                parent = parts[0];
 
-                        if(parts.length > 1) $scope.vulnsCount[vuln.key] = vuln.value;
-                        if($scope.vulnsCount[parent] == undefined) $scope.vulnsCount[parent] = 0;
-                        $scope.vulnsCount[parent] += vuln.value;
-                    });
-                })
-                .catch(function(e) {
-                    console.log(e);
+                                if(parts.length > 1) $scope.vulnsCount[vuln.key] = vuln.value;
+                                if($scope.vulnsCount[parent] == undefined) $scope.vulnsCount[parent] = 0;
+                                $scope.vulnsCount[parent] += vuln.value;
+                            });
+                        })
+                        .catch(function(e) {
+                            console.log(e);
+                        });
                 });
 
             $scope.pageSize = 10;

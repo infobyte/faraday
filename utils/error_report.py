@@ -47,10 +47,10 @@ def exception_handler(type, value, tb):
 
     text = StringIO()
     traceback.print_exception(type, value, tb, file=text)
-     
-                          
+    error_name = text.getvalue().split('\n')[-2]
 
-        
+
+
     excepts = """
     Traceback: %s
     """ % (text.getvalue() )
@@ -58,13 +58,15 @@ def exception_handler(type, value, tb):
     exception_hash = hashlib.sha256(excepts).hexdigest()
     os_dist = " ".join(platform.dist())
     python_version = platform.python_version()
+    faraday_version = CONF.getVersion()
+
     modules_info = ""
     try:
         import pip
         modules_info = ",".join([ "%s=%s" % (x.key, x.version)
                             for x in pip.get_installed_distributions()])
     except ImportError:
-        pass    
+        pass
 
 
     python_dist = "Python %s \n Modules: [ %s ]" % (python_version, modules_info)
@@ -72,25 +74,21 @@ def exception_handler(type, value, tb):
     description = """
     Exception: %s
     Identifier: %s
-    Versions: OS: %s, 
+    Versions: OS: %s,
+              Faraday Version: %s
               Python Versions: %s
-    """ % (excepts, exception_hash, os_dist, python_dist)
-        
+    """ % (excepts, exception_hash, os_dist, faraday_version, python_dist)
 
 
-    event = ShowExceptionCustomEvent(description, reportToDevelopers)
+
+    event = ShowExceptionCustomEvent(description, reportToDevelopers, error_name)
     model.guiapi.postCustomEvent(event)
     text.seek(0)
     text.truncate()
     del text
 
-                      
-                                             
-                                                                                                   
-                                                                                                
 
-
-def reportToDevelopers(self, *description):
+def reportToDevelopers(name=None, *description):
     try:
         import requests
         import hashlib
@@ -101,13 +99,17 @@ def reportToDevelopers(self, *description):
         params = json.loads(CONF.getApiParams())
 
         params['description'] = description[0]
-        params['summary'] = 'autoreport %s' % time.time()
 
-        resp = requests.post(uri, 
+        if name is not None:
+            params['summary'] = name
+        else:
+            params['summary'] = 'autoreport %s' % time.time()
+
+        resp = requests.post(uri,
                             headers = headers,
                             data = params, timeout = 1, verify=True)
         model.api.devlog("Report sent it to faraday server")
-    except Exception as e: 
+    except Exception as e:
         model.api.devlog("Error reporting to developers:")
         model.api.devlog(e)
 

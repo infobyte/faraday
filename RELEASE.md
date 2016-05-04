@@ -13,6 +13,8 @@ New features in the latest update
 TBA:
 ---
 * Removed description from Hosts list in WEB UI
+* Removed description from Services list in WEB UI
+* Added version to Services list in WEB UI
 
 Apr 29, 2016:
 ---

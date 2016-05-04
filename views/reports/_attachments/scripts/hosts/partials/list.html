@@ -58,9 +58,6 @@
                                         <a href="" ng-click="toggleSort('name')">Name</a>
                                     </th>
                                     <th>
-                                        <a href="" ng-click="toggleSort('description')">Description</a>
-                                    </th>
-                                    <th>
                                         <a href="" ng-click="toggleSort('vulns')">Vulns</a>
                                     </th>
                                     <th>
@@ -85,7 +82,6 @@
                                             <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                         </a>
                                     </td>
-                                    <td ng-bind="host.description || '-'"></td>
                                     <td> <a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="vulnsCount[host._id] || '-'"></a></td>
                                     <td>
                                         <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>

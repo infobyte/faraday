@@ -99,13 +99,15 @@ class Sidebar(Gtk.Widget):
             self.callbackCreateWs(title=entry.get_text())
             entry.set_text("")
         else:
-            self.callbackChangeWs(selection)
+            ws = self.callbackChangeWs(selection)
+            selection.select_iter(ws)
             entry.set_text("")
 
     def refreshSidebar(self, button=None):
         """Function called when the user press the refresh button.
         Gets an updated copy of the workspaces and checks against
         the model to see which are already there and which arent"""
+
         model = self.workspace_model
         self.workspaces = self.ws_manager.getWorkspacesNames()
         added_workspaces = [added_ws[0] for added_ws in model]
@@ -134,6 +136,7 @@ class Sidebar(Gtk.Widget):
         """Populate the workspace view. Also select by default
         self.defaultSelection (see workspaceModel method). Also connect
         a selection with the change workspace callback"""
+
         view = Gtk.TreeView(model)
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("Workspaces", renderer, text=0)
@@ -145,6 +148,9 @@ class Sidebar(Gtk.Widget):
             self.selectDefault = view.get_selection()
             self.selectDefault.select_iter(self.defaultSelection)
 
+        selection = view.get_selection()
+        selection.set_mode(Gtk.SelectionMode.BROWSE)
+
         view.connect("button-press-event", self.on_click)
 
         return view
@@ -155,12 +161,26 @@ class Sidebar(Gtk.Widget):
         delete the workspace that occupied the position where the user
         clicked. Returns True if it was a right click"""
 
-        if event.button != 1 and event.button != 3:
+        # it it isnt right click or left click just do nothing
+        if event.button != 3 and event.button != 1:
             return False
 
+        # we really do care about where the user clicked, that is our
+        # connection to the soon to be selection. if this didn't exist,
+        # we couldn't do much: the selection of the view is still
+        # whatever the user had selected beofre clicking
+        path = view.get_path_at_pos(int(event.x), int(event.y))[0]
+
+        # left click:
         if event.button == 1:
-            selection = view.get_selection()
-            selection.connect("changed", self.callbackChangeWs)
+
+            # force selection of newly selected
+            # before actually changing workspace
+            select = view.get_selection()
+            select.select_path(path)
+
+            # change the workspace to the newly selected
+            self.callbackChangeWs(self.getSelectedWs())
 
         if event.button == 3:  # 3 represents right click
             menu = Gtk.Menu()
@@ -171,7 +191,6 @@ class Sidebar(Gtk.Widget):
             # then get its tree_iter. then get its name. then delete
             # that workspace
 
-            path = view.get_path_at_pos(int(event.x), int(event.y))[0]
             tree_iter = self.workspace_model.get_iter(path)
             ws_name = self.workspace_model[tree_iter][0]
 

@@ -284,10 +284,11 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.notificationsModel.clear()
         self.window.emit("clear_notifications")
 
-    def changeWorkspace(self, selection=None):
+    def changeWorkspace(self, selection):
         """Pretty much copy/pasted from QT3 GUI.
         Selection is actually used nowhere, but the connect function is
         Sidebar passes it as an argument so well there it is"""
+
 
         tree_model, treeiter = selection.get_selected()
         workspaceName = tree_model[treeiter][0]

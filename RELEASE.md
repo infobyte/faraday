@@ -10,6 +10,10 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+TBA:
+---
+* Removed description from Hosts list in WEB UI
+
 Apr 29, 2016:
 ---
 * Added Open services count to Hosts list in WEB UI

@@ -87,7 +87,7 @@
                                         <a href="" ng-click="toggleSort('name')">Name</a>
                                     </th>
                                     <th>
-                                        <a href="" ng-click="toggleSort('description')">Description</a>
+                                        <a href="" ng-click="toggleSort('version')">Version</a>
                                     </th>
                                     <th>
                                         <a href="" ng-click="toggleSort('ports')">Ports</a>
@@ -115,7 +115,7 @@
                                             <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                         </a>
                                     </td>
-                                    <td ng-bind="service.description || '-'"></td>
+                                    <td ng-bind="service.version || '-'"></td>
                                     <td>
                                         <li ng-repeat="p in service.ports">
                                             {{p}}

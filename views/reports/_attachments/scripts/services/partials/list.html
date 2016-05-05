@@ -6,7 +6,7 @@
 
                 <div class="right-main"><div id="reports-main" class="fila clearfix">
                     <h2 class="ws-label">
-                        <span id="ws-name" title="Hosts">Services from {{host.name}}</span><!-- WS name -->
+                        <span id="ws-name" title="Hosts">Viewing {{host.name}} in {{workspace}}</span><!-- WS name -->
                         <div id="ws-control" class="btn-group">
                             <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
                                 <span class="glyphicon glyphicon-refresh"></span>
@@ -19,20 +19,21 @@
                             </ul><!-- WS navigation -->
                         </div><!-- #ws-control -->
                     </h2>
+                    <h3>Host details</h3>
                     <div class="reports col-md-12 col-sm-12 col-xs-12">
                         <div class="form-horizontal">
                             <div class="form-group">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <h5>Name</h5>
                                     <label class="sr-only" for="name">Name</label>
                                     <input type="text" class="form-control" id="name" placeholder="Name" ng-model="host.name" disabled/>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <h5>Description</h5>
                                     <label class="sr-only" for="description">Description</label>
                                     <textarea class="form-control" id="description" placeholder="Description" ng-model="host.description" disabled></textarea>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <h5>Operating System</h5>
                                     <label class="sr-only" for="os">Operating System</label>
                                     <input type="text" class="form-control" id="os" placeholder="Operating System" ng-model="host.os" disabled/>
@@ -40,6 +41,7 @@
                             </div><!-- .form-group -->
                         </div>
                     </div>
+                    <h3>Host services</h3>
                     <h2 class="ws-label">
                         <button id="delete" type="button" class="btn btn-default" title="Delete selected hosts" ng-click="delete()">
                             <span class="glyphicon glyphicon-trash"></span>
@@ -55,12 +57,12 @@
                         </button>
                     </h2><!-- .ws-label -->
                     <div class="reports col-md-9 col-sm-9 col-xs-12">
-                        <div class="col-md-6 col-sm-3 col-xs-11">
+                        <div class="col-md-4 col-sm-3 col-xs-11">
                             <form role="form" ng-submit="searchFor(true, searchParams)">
                                 <div class="form-group">
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
-                                        <input type="text" class="form-control" id="filter-by" 
+                                        <input type="text" class="form-control" id="filter-by"
                                         placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
                                         <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
                                             <i class="fa fa-search" ng-if="services.length > 0 || !loadedServices"></i>

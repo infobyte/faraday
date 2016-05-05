@@ -15,7 +15,6 @@ gi.require_version('Vte', '2.91')
 
 from gi.repository import Gtk, Vte, GLib, Gdk, Pango
 
-
 class Terminal(Vte.Terminal):
     """Defines a simple terminal that will execute faraday-terminal with the
     corresponding host and port as specified by the CONF"""
@@ -169,12 +168,15 @@ class Sidebar(Gtk.Widget):
         # we really do care about where the user clicked, that is our
         # connection to the soon to be selection. if this didn't exist,
         # we couldn't do much: the selection of the view is still
-        # whatever the user had selected beofre clicking
-        path = view.get_path_at_pos(int(event.x), int(event.y))[0]
+        # whatever the user had selected before clicking
+        try:
+            path = view.get_path_at_pos(int(event.x), int(event.y))[0]
+        except TypeError:
+            # if the user didn't click on a workspace there no path to work on
+            return False
 
         # left click:
         if event.button == 1:
-
             # force selection of newly selected
             # before actually changing workspace
             select = view.get_selection()

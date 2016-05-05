@@ -111,7 +111,7 @@
                                     <td><input type="checkbox" name="{{s._id}}"/></td>
                                     <td>
                                         {{service.name}}
-                                        <a href="//www.shodan.io/search?query={{service.name}}" uib-tooltip="Search in Shodan" target="_blank">
+                                        <a ng-href="//www.shodan.io/search?query={{service.name}}" uib-tooltip="Search in Shodan" target="_blank">
                                             <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                         </a>
                                     </td>
@@ -119,14 +119,18 @@
                                     <td>
                                         <li ng-repeat="p in service.ports">
                                             {{p}}
-                                            <a href="//www.shodan.io/search?query=port:{{p}}" uib-tooltip="Search in Shodan" target="_blank">
+                                            <a ng-href="//www.shodan.io/search?query=port:{{p}}" uib-tooltip="Search in Shodan" target="_blank">
                                                 <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                             </a>
                                         </li>
                                     </td>
                                     <td ng-bind="service.protocol"></td>
                                     <td ng-bind="service.status || '-'"></td>
-                                    <td ng-bind="service.vulns || '-'"></td>
+                                    <td>
+                                        <a ng-href="#/status/ws/{{workspace}}/search/service={{service.uri}}">
+                                            <span ng-bind="service.vulns || '-'"></span>
+                                        </a>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->

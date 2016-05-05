@@ -99,9 +99,10 @@ class Sidebar(Gtk.Widget):
             self.callbackCreateWs(title=entry.get_text())
             entry.set_text("")
         else:
-            ws = self.callbackChangeWs(selection)
-            selection.select_iter(ws)
+            self.callbackChangeWs(selection)
+            ws_iter = self.getSelectedWsIter()
             entry.set_text("")
+            self.selectWs(ws_iter)
 
     def refreshSidebar(self, button=None):
         """Function called when the user press the refresh button.
@@ -205,8 +206,15 @@ class Sidebar(Gtk.Widget):
         self.workspace_model.append([ws])
 
     def getSelectedWs(self):
-        """Returns the current selected workspace"""
-        return self.workspace_view.get_selection()
+        """Returns the name of the current selected workspace"""
+        selection =  self.workspace_view.get_selection()
+        return selection
+
+    def getSelectedWsIter(self):
+        """Returns the TreeIter of the current selected workspace"""
+        selection = self.getSelectedWs()
+        _iter = selection.get_selected()[1]
+        return _iter
 
     def selectWs(self, ws):
         """Selects workspace ws in the list"""
@@ -233,6 +241,8 @@ class ConsoleLog(Gtk.Widget):
         self.bold = self.textBuffer.create_tag("bold", weight=Pango.Weight.BOLD)
         self.red = self.textBuffer.create_tag("error", foreground='Red')
         self.green = self.textBuffer.create_tag("debug", foreground='Green')
+        self.blue = self.textBuffer.create_tag("notif", foreground="Blue")
+        self.orange = self.textBuffer.create_tag("warning", foreground="#F5760F")
 
         self.textView = Gtk.TextView()
         self.textView.set_editable(False)
@@ -264,9 +274,12 @@ class ConsoleLog(Gtk.Widget):
             self.update("[ " + text[0] + "]", self.bold)
         if text[0] == "DEBUG ":
             self.update("[ " + text[0] + "]", self.bold, self.green)
-        if text[0] == "ERROR ":
+        if text[0] == "ERROR " or text[0] == "CRITICAL: ":
             self.update("[ " + text[0] + "]", self.bold, self.red)
-
+        if text[0] == "WARNING ":
+            self.update("[ " + text[0] + "]", self.bold, self.orange)
+        if text[0] == "NOTIFICATION ":
+            self.update("[ " + text[0] + "]", self.bold, self.blue)
 
         self.update("-" + '-'.join(text[1:]) + "\n")
 
@@ -301,13 +314,26 @@ class Statusbar(Gtk.Widget):
 
     def __init__(self, on_button_do):
         super(Gtk.Widget, self).__init__()
-        """Creates a button with zero ("0") as label"""
+        """Initialices a button with a label on zero"""
         self.callback = on_button_do
-        self.button_label_int = 0
-        self.button = Gtk.Button.new_with_label(str(self.button_label_int))
+
+        self.button = Gtk.Button.new()
+        self.set_default_label()
         self.button.connect("clicked", self.callback)
 
     def inc_button_label(self):
-        """increments the label by one"""
+        """Increments the button label, sets bold so user knows there are
+        unread notifications"""
+
         self.button_label_int += 1
+        child = self.button.get_child()
+        self.button.remove(child)
+        label = Gtk.Label.new()
+        label.set_markup("<b> %s </b>" % (str(self.button_label_int)))
+        label.show()
+        self.button.add(label)
+
+    def set_default_label(self):
+        """Creates the default label"""
+        self.button_label_int = 0
         self.button.set_label(str(self.button_label_int))

@@ -199,7 +199,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
     def do_clear_notifications(self):
         "On clear_notifications signal, it will return the button label to 0"
-        self.statusbar.button.set_label("0")
+        self.statusbar.set_default_label()
 
     def do_new_notif(self):
         """On a new notification, increment the button label by one"""

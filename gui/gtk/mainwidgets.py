@@ -24,6 +24,9 @@ class Terminal(Vte.Terminal):
         self.pty = self.pty_new_sync(Vte.PtyFlags.DEFAULT, None)
         self.set_pty(self.pty)
 
+        self.set_scrollback_lines(-1)
+        self.set_audible_bell(0)
+
         self.faraday_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
         self.host, self.port = CONF.getApiRestfulConInfo()
         self.faraday_exec = self.faraday_directory + "/faraday-terminal.zsh"

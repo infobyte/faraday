@@ -89,7 +89,7 @@
                                             <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
                                         </a>
                                     </td>
-                                    <td ng-bind="host.owned"></td>
+                                    <td ng-bind="host.owned || '-'"></td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->

@@ -17,6 +17,7 @@ TBA:
 * Added search link for OS in Hosts list in WEB UI
 * Removed description from Services list in WEB UI
 * Added version to Services list in WEB UI
+* Modified false values in Hosts list in WEB UI
 
 Apr 29, 2016:
 ---

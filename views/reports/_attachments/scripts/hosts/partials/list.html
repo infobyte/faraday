@@ -52,10 +52,10 @@
                                 <tr>
                                     <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
                                     <th>
-                                        <a href="" ng-click="toggleSort('services')">Open Services</a>
+                                        <a href="" ng-click="toggleSort('name')">Name</a>
                                     </th>
                                     <th>
-                                        <a href="" ng-click="toggleSort('name')">Name</a>
+                                        <a href="" ng-click="toggleSort('services')">Open Services</a>
                                     </th>
                                     <th>
                                         <a href="" ng-click="toggleSort('vulns')">Vulns</a>
@@ -75,14 +75,14 @@
                                     selection-model-selected-class="multi-selected"
                                     selection-model-on-change="selectedHosts()">
                                     <td><input type="checkbox" name="{{host._id}}"/></td>
-                                    <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
                                     <td>
                                         {{host.name}}
                                         <a href="//www.shodan.io/search?query={{host.name}}" uib-tooltip="Search in Shodan" target="_blank">
                                             <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                         </a>
                                     </td>
-                                    <td> <a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns || '-'"></a></td>
+                                    <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
+                                    <td><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns || '-'"></a></td>
                                     <td>
                                         <a ng-href="#/hosts/ws/{{workspace}}/search/os={{host.os}}">
                                             <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>

@@ -31,7 +31,7 @@ angular.module('faradayApp')
                 })
                 .then(function(servicesCount) {
                     $scope.hosts.forEach(function(host) {
-                        host.services = servicesCount[host._id];
+                        host.services = servicesCount[host._id] || 0;
                     });
 
                     return hostsManager.getAllVulnsCount($scope.workspace);

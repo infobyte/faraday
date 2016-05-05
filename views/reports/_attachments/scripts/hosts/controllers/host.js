@@ -49,7 +49,7 @@ angular.module('faradayApp')
                         service.uri = encodeURIComponent(encodeURIComponent("(" + service.ports[0] + "/" + service.protocol + ") " + service.name));
                     });
 
-                    if(services.length > 0) $scope.loadedServices = true;
+                    $scope.loadedServices = true;
 
                     return hostsManager.getAllVulnsCount($scope.workspace);
                 })

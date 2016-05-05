@@ -42,21 +42,28 @@
                         </div>
                     </div>
                     <h3>Host services</h3>
-                    <h2 class="ws-label">
-                        <button id="delete" type="button" class="btn btn-default" title="Delete selected hosts" ng-click="delete()">
-                            <span class="glyphicon glyphicon-trash"></span>
-                            Delete
-                        </button>
-                        <button id="merge" type="button" class="btn btn-default" title="Edit selected hosts" ng-click="edit()">
-                            <span class="glyphicon glyphicon-pencil"></span>
-                            Edit
-                        </button>
-                        <button id="merge" type="button" class="btn btn-success" title="New host" ng-click="new()">
-                            <span class="glyphicon glyphicon-plus-sign"></span>
-                            New
-                        </button>
-                    </h2><!-- .ws-label -->
+                    <div class="reports col-md-9 col-sm-9 col-xs-12" ng-if="services.length == 0">
+                        <h4>No services found for {{host.name}}</h4>
+                    </div>
                     <div class="reports col-md-9 col-sm-9 col-xs-12">
+                        <div class="col-md-4 col-sm-3 col-xs-11">
+                            <h2 class="ws-label">
+                                <button type="button" class="btn btn-success btn-sm" title="New service" ng-click="new()">
+                                    <span class="glyphicon glyphicon-plus-sign"></span>
+                                    New service
+                                </button>
+                                <button type="button" class="btn btn-default btn-sm" title="Edit selected services" ng-click="edit()" ng-disabled="services.length == 0">
+                                    <span class="glyphicon glyphicon-pencil"></span>
+                                    Edit
+                                </button>
+                                <button type="button" class="btn btn-default btn-sm" title="Delete selected services" ng-click="delete()" ng-disabled="services.length == 0">
+                                    <span class="glyphicon glyphicon-trash"></span>
+                                    Delete
+                                </button>
+                            </h2><!-- .ws-label -->
+                        </div>
+                    </div>
+                    <div class="reports col-md-9 col-sm-9 col-xs-12" ng-if="services.length > 0">
                         <div class="col-md-4 col-sm-3 col-xs-11">
                             <form role="form" ng-submit="searchFor(true, searchParams)">
                                 <div class="form-group">
@@ -98,8 +105,8 @@
                             </thead>
                             <tbody>
                                 <tr ng-repeat="service in filtered = (services | filter:expression) | orderBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
-                                    selection-model selection-model-type="checkbox" 
-                                    selection-model-mode="multiple-additive" 
+                                    selection-model selection-model-type="checkbox"
+                                    selection-model-mode="multiple-additive"
                                     selection-model-selected-class="multi-selected">
                                     <td><input type="checkbox" name="{{s._id}}"/></td>
                                     <td>
@@ -110,16 +117,16 @@
                                     </td>
                                     <td ng-bind="service.description || '-'"></td>
                                     <td>
-                                        <li ng-repeat="p in service.ports">   
-                                            {{p}}                                     
+                                        <li ng-repeat="p in service.ports">
+                                            {{p}}
                                             <a href="//www.shodan.io/search?query=port:{{p}}" uib-tooltip="Search in Shodan" target="_blank">
                                                 <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                             </a>
                                         </li>
                                     </td>
                                     <td ng-bind="service.protocol"></td>
-                                    <td ng-bind="service.status"></td>
-                                    <td ng-bind="vulnsCount[service._id] || '-'"></td>
+                                    <td ng-bind="service.status || '-'"></td>
+                                    <td ng-bind="service.vulns || '-'"></td>
                                 </tr>
                             </tbody>
                         </table><!-- #hosts -->

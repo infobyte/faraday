@@ -4,8 +4,10 @@
 
 angular.module('faradayApp')
     .controller('hostCtrl',
-        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager',
-        function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, dashboardSrv, servicesManager) {
+        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', '$q',
+            'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager',
+            function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, $q,
+            hostsManager, workspacesFact, dashboardSrv, servicesManager) {
 
 	    init = function() {
 	    	$scope.selectall_service = false;
@@ -14,34 +16,45 @@ angular.module('faradayApp')
             //ID of current host
             var hostId = $routeParams.hidId;
 
+            $scope.services = [];
             $scope.sortField = "name";
 
             // load all workspaces
-            workspacesFact.list().then(function(wss) {
-                $scope.workspaces = wss;
-            });
-            // current host
-            hostsManager.getHost(hostId, $scope.workspace).then(function(host){
-            	$scope.host = host;
-            });
-            // services by host
-            $scope.services = [];
-            dashboardSrv.getServicesByHost($scope.workspace, hostId)
-                .then(function(services) {
-                    if (services.length > 0) $scope.loadedServices = true;
-                    services.forEach(function(service) {
-                        servicesManager.getService(service.id, $scope.workspace, true)
-                            .then(function(s) {
-                                $scope.services.push(s);
-                            });
-                    });
+            workspacesFact.list()
+                .then(function(wss) {
+                    $scope.workspaces = wss;
                 });
 
-            hostsManager.getAllVulnsCount($scope.workspace)
+            // current host
+            hostsManager.getHost(hostId, $scope.workspace)
+                .then(function(host) {
+                	$scope.host = host;
+                });
+
+            // services by host
+            dashboardSrv.getServicesByHost($scope.workspace, hostId)
+                .then(function(services) {
+                    var pss = [];
+
+                    services.forEach(function(service) {
+                        pss.push(servicesManager.getService(service.id, $scope.workspace, true));
+                    });
+
+                    return $q.all(pss);
+                })
+                .then(function(services) {
+                    $scope.services = services;
+                    if(services.length > 0) $scope.loadedServices = true;
+
+                    return hostsManager.getAllVulnsCount($scope.workspace);
+                })
                 .then(function(vulns) {
-                    $scope.vulnsCount = {};
+                    var vulnsCount = {};
                     vulns.forEach(function(vuln) {
-                        $scope.vulnsCount[vuln.key] = vuln.value;
+                        vulnsCount[vuln.key] = vuln.value;
+                    });
+                    $scope.services.forEach(function(service) {
+                        service.vulns = vulnsCount[service._id];
                     });
                 })
                 .catch(function(e) {

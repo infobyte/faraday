@@ -90,8 +90,8 @@ class QualysguardXmlParser():
         @return xml_tree An xml tree instance. None if error.
         """
 
-        asset_data_report = '<!DOCTYPE ASSET_DATA_REPORT SYSTEM "https://qualysguard.qualys.com/asset_data_report.dtd">'
-        scan_report = '<!DOCTYPE SCAN SYSTEM "https://qualysguard.qualys.eu/scan-1.dtd">'
+        asset_data_report = '<!DOCTYPE ASSET_DATA_REPORT SYSTEM'
+        scan_report = '<!DOCTYPE SCAN SYSTEM'
 
         try:
             tree = ET.fromstring(xml_output)
@@ -259,6 +259,9 @@ class ItemScanReport():
         """
         for self.issues in tree.findall('VULNS/CAT'):
             for v in self.issues.findall('VULN'):
+                yield ResultsScanReport(v, self.issues)
+        for self.issues in tree.findall('INFOS/CAT'):
+            for v in self.issues.findall('INFO'):
                 yield ResultsScanReport(v, self.issues)
 
     def get_text_from_subnode(self, subnode_xpath_expr):

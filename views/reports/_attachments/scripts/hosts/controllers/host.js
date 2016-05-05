@@ -44,6 +44,11 @@ angular.module('faradayApp')
                 })
                 .then(function(services) {
                     $scope.services = services;
+
+                    $scope.services.forEach(function(service) {
+                        service.uri = encodeURIComponent(encodeURIComponent("(" + service.ports[0] + "/" + service.protocol + ") " + service.name));
+                    });
+
                     if(services.length > 0) $scope.loadedServices = true;
 
                     return hostsManager.getAllVulnsCount($scope.workspace);

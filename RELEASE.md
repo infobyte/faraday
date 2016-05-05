@@ -18,6 +18,7 @@ TBA:
 * Removed description from Services list in WEB UI
 * Added version to Services list in WEB UI
 * Modified false values in Hosts list in WEB UI
+* Added search links in Services list in WEB UI
 
 Apr 29, 2016:
 ---

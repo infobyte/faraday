@@ -42,7 +42,7 @@
                         </div>
                     </div>
                     <h3>Host services</h3>
-                    <div class="reports col-md-9 col-sm-9 col-xs-12" ng-if="services.length == 0">
+                    <div class="reports col-md-9 col-sm-9 col-xs-12" ng-if="loadedServices && services.length == 0">
                         <h4>No services found for {{host.name}}</h4>
                     </div>
                     <div class="reports col-md-9 col-sm-9 col-xs-12">
@@ -63,7 +63,7 @@
                             </h2><!-- .ws-label -->
                         </div>
                     </div>
-                    <div class="reports col-md-9 col-sm-9 col-xs-12" ng-if="services.length > 0">
+                    <div class="reports col-md-9 col-sm-9 col-xs-12" ng-if="loadedServices && services.length > 0">
                         <div class="col-md-4 col-sm-3 col-xs-11">
                             <form role="form" ng-submit="searchFor(true, searchParams)">
                                 <div class="form-group">
@@ -110,7 +110,9 @@
                                     selection-model-selected-class="multi-selected">
                                     <td><input type="checkbox" name="{{s._id}}"/></td>
                                     <td>
-                                        {{service.name}}
+                                        <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/name={{service.name}}">
+                                            <span ng-bind="service.name"></span>
+                                        </a>
                                         <a ng-href="//www.shodan.io/search?query={{service.name}}" uib-tooltip="Search in Shodan" target="_blank">
                                             <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                         </a>
@@ -118,13 +120,17 @@
                                     <td ng-bind="service.version || '-'"></td>
                                     <td>
                                         <li ng-repeat="p in service.ports">
-                                            {{p}}
+                                            <span ng-bind="p"></span>
                                             <a ng-href="//www.shodan.io/search?query=port:{{p}}" uib-tooltip="Search in Shodan" target="_blank">
                                                 <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
                                             </a>
                                         </li>
                                     </td>
-                                    <td ng-bind="service.protocol"></td>
+                                    <td>
+                                        <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/protocol={{service.protocol}}">
+                                            <span ng-bind="service.protocol"></span>
+                                        </a>
+                                    </td>
                                     <td ng-bind="service.status || '-'"></td>
                                     <td>
                                         <a ng-href="#/status/ws/{{workspace}}/search/service={{service.uri}}">

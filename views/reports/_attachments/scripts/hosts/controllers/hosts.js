@@ -50,6 +50,9 @@ angular.module('faradayApp')
                             host.vulns = vulnsCount[host._id];
                         });
                     });
+                })
+                .catch(function(e) {
+                    console.log(e);
                 });
 
             $scope.pageSize = 10;

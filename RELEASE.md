@@ -14,6 +14,7 @@ TBA:
 ---
 * Removed description from Hosts list in WEB UI
 * Fix sort in Hosts list in WEB UI
+* Added search link for OS in Hosts list in WEB UI
 
 Apr 29, 2016:
 ---

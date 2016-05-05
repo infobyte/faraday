@@ -354,14 +354,24 @@ class PluginOptionsDialog(Gtk.Window):
         displeyed on the entries to their corresponding values"""
 
         model, treeiter = selection.get_selected()
-        self.id_of_selected = model[treeiter][1]
-        self.name_of_selected = model[treeiter][0]
+        name = model[treeiter][0]
+        plugin_id = model[treeiter][1]
+        tool_version = model[treeiter][2]
+        plugin_version = model[treeiter][3]
 
         self.setSettingsView()
 
-        self.nameEntry.set_label(model[treeiter][1])
-        self.versionEntry.set_label(model[treeiter][2])
-        self.pluginVersionEntry.set_label(model[treeiter][3])
+        self.nameEntry.set_label(name)
+
+        if tool_version:
+            self.versionEntry.set_label(tool_version)
+        else:
+            self.versionEntry.set_label("")
+
+        if plugin_version:
+            self.pluginVersionEntry.set_label(plugin_version)
+        else:
+            self.pluginVersionEntry.set_label("")
 
     def setSettingsView(self):
         """Makes the window match the selected plugin with the settings

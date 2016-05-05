@@ -182,12 +182,14 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         # the focused terminal is the only children of the notebook
         # thas has only children an event box that has as only children
-        # the terminal. Yeah, I know.
+        # the scrolled window that has as only children the
+        # terminal. Yeah, I know.
 
         currentTab = self.getFocusedTab()
         currentEventBox = self.notebook.get_children()[currentTab]
         currentBox = currentEventBox.get_children()[0]
-        currentTerminal = currentBox.get_children()[0]
+        currentScrolledWindow = currentBox.get_children()[0]
+        currentTerminal = currentScrolledWindow.get_child()
         return currentTerminal
 
     def do_new_log(self, text):

@@ -13,7 +13,7 @@ import sys
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-from gi.repository import Gtk, Vte, GLib, Gdk
+from gi.repository import Gtk, Vte, GLib, Gdk, Pango
 
 
 class Terminal(Vte.Terminal):
@@ -228,7 +228,11 @@ class ConsoleLog(Gtk.Widget):
         self.textBuffer = Gtk.TextBuffer()
         self.textBuffer.new()
         self.textBuffer.set_text("LOG. Please run Faraday with the --debug "
-                                 "flag for more verbose output \n \0", -1)
+                                 "flag for more verbose output \n\0", -1)
+
+        self.bold = self.textBuffer.create_tag("bold", weight=Pango.Weight.BOLD)
+        self.red = self.textBuffer.create_tag("error", foreground='Red')
+        self.green = self.textBuffer.create_tag("debug", foreground='Green')
 
         self.textView = Gtk.TextView()
         self.textView.set_editable(False)
@@ -255,14 +259,37 @@ class ConsoleLog(Gtk.Widget):
 
     def customEvent(self, text):
         """Filters event so that only those with type 3131 get to the log"""
-        self.update(text)
+        text = text.split('-')
+        if text[0] == "INFO ":
+            self.update("[ " + text[0] + "]", self.bold)
+        if text[0] == "DEBUG ":
+            self.update("[ " + text[0] + "]", self.bold, self.green)
+        if text[0] == "ERROR ":
+            self.update("[ " + text[0] + "]", self.bold, self.red)
 
-    def update(self, event):
+
+        self.update("-" + '-'.join(text[1:]) + "\n")
+
+    def update(self, text, *tags):
         """Updates the textBuffer with the event sent. Also scrolls to last
         posted automatically"""
         last_position = self.textBuffer.get_end_iter()
-        self.textBuffer.insert(last_position, event+"\n", len(event + "\n"))
-        insert = self.textBuffer.get_insert()
+        self.textBuffer.insert(last_position, text, len(text))
+
+        # we need to take 1 from the lines to compensate for the default line
+        lines = self.textBuffer.get_line_count()
+        begin = self.textBuffer.get_iter_at_line(lines-1)
+
+        # update last position, it isn't the same as when the funcion started
+        last_position = self.textBuffer.get_end_iter()
+
+        for tag in tags:
+            self.textBuffer.apply_tag(tag, begin, last_position)
+
+        self.scroll_to_insert(self.textBuffer.get_insert())
+
+    def scroll_to_insert(self, insert):
+        """Scrolls the view to a particular insert point"""
         self.textView.scroll_to_mark(insert, 0, False, 1, 1)
 
 

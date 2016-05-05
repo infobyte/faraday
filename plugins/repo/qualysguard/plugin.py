@@ -95,7 +95,6 @@ class QualysguardXmlParser():
 
         try:
             tree = ET.fromstring(xml_output)
-            print tree.text
 
             if asset_data_report in xml_output:
                 type_report = 'ASSET_DATA_REPORT'

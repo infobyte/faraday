@@ -110,7 +110,7 @@ class PluginControllerBase(object):
         output_queue.put(None)
         output_queue.join()
 
-        self._processAction(modelactions.PLUGINSTART, [])
+        self._processAction(modelactions.PLUGINSTART, [plugin.id])
 
         while True:
             try:
@@ -141,7 +141,7 @@ class PluginControllerBase(object):
                     "something strange happened... "
                     "unhandled exception?")
                 break
-        self._processAction(modelactions.PLUGINEND, [])
+        self._processAction(modelactions.PLUGINEND, [plugin.id])
 
     def _processAction(self, action, parameters):
         """

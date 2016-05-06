@@ -656,21 +656,21 @@ class ModelController(threading.Thread):
             res = True
         return res
 
-    def addPluginStart(self):
-        self.__addPendingAction(modelactions.PLUGINSTART)
+    def addPluginStart(self, name):
+        self.__addPendingAction(modelactions.PLUGINSTART, name)
 
-    def addPluginEnd(self):
-        self.__addPendingAction(modelactions.PLUGINEND)
+    def addPluginEnd(self, name):
+        self.__addPendingAction(modelactions.PLUGINEND, name)
 
-    def _pluginStart(self):
+    def _pluginStart(self, name):
         self.active_plugins_count_lock.acquire()
-        getLogger(self).info("Plugin Started")
+        getLogger(self).info("Plugin Started: " + name)
         self.active_plugins_count += 1
         self.active_plugins_count_lock.release()
 
-    def _pluginEnd(self):
+    def _pluginEnd(self, name):
         self.active_plugins_count_lock.acquire()
-        getLogger(self).info("Plugin Ended")
+        getLogger(self).info("Plugin Ended: " + name)
         self.active_plugins_count -= 1
         self.active_plugins_count_lock.release()
 

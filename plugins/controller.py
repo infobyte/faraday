@@ -408,8 +408,18 @@ class PluginControllerForApi(PluginControllerBase):
         return True
 
     def processReport(self, plugin, filepath):
+
+        cmd_info = CommandRunInformation(
+            **{'workspace': model.api.getActiveWorkspace().name,
+                'itime': time.time(),
+                'command': 'Import %s:' % plugin,
+                'params': filepath})
+        self._mapper_manager.save(cmd_info)
+
         if plugin in self._plugins:
             self.processOutput(self._plugins[plugin], filepath, True)
+            cmd_info.duration = time.time() - cmd_info.itime
+            self._mapper_manager.save(cmd_info)
             return True
         return False
 

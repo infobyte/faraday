@@ -317,14 +317,26 @@ class Statusbar(Gtk.Widget):
     Takes an on_button_do callback, so it can tell the application what
     to do when the user presses the button"""
 
-    def __init__(self, on_button_do):
+    def __init__(self, on_button_do, host_count, service_count, vuln_count):
         super(Gtk.Widget, self).__init__()
         """Initialices a button with a label on zero"""
         self.callback = on_button_do
+        initial_strings = self.create_strings(host_count, service_count,
+                                              vuln_count)
+
+        self.host_count_str = initial_strings[0]
+        self.service_count_str = initial_strings[1]
+        self.vuln_count_str = initial_strings[2]
+
+        self.ws_info = self.create_initial_ws_info()
 
         self.button = Gtk.Button.new()
         self.set_default_label()
         self.button.connect("clicked", self.callback)
+
+        self.mainBox = Gtk.Box()
+        self.mainBox.pack_start(self.button, False, False, 5)
+        self.mainBox.pack_start(self.ws_info, False, True, 5)
 
     def inc_button_label(self):
         """Increments the button label, sets bold so user knows there are
@@ -342,3 +354,33 @@ class Statusbar(Gtk.Widget):
         """Creates the default label"""
         self.button_label_int = 0
         self.button.set_label(str(self.button_label_int))
+
+    def create_initial_ws_info(self):
+
+        box = Gtk.Box()
+        self.explain = Gtk.Label.new("Workspace status: ")
+        self.host_label = Gtk.Label.new(self.host_count_str)
+        self.service_label = Gtk.Label.new(self.service_count_str)
+        self.vuln_label = Gtk.Label.new(self.vuln_count_str)
+
+        box.pack_start(self.explain, True, True, 0)
+        box.pack_start(self.host_label, True, True, 0)
+        box.pack_start(self.service_label, True, True, 0)
+        box.pack_start(self.vuln_label, True, True, 0)
+        return box
+
+    def update_ws_info(self, new_host_count, new_service_count, new_vuln_count):
+        host, service, vuln = self.create_strings(new_host_count,
+                                                  new_service_count,
+                                                  new_vuln_count)
+        self.host_label.set_text(host)
+        self.service_label.set_text(service)
+        self.vuln_label.set_text(vuln)
+
+    def create_strings(self, host_count, service_count, vuln_count):
+        host_string = str(host_count) + " hosts, "
+        service_string = str(service_count) + " services, "
+        vuln_string = str(vuln_count) + " vulnerabilities."
+
+        return host_string, service_string, vuln_string
+

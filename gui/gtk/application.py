@@ -66,6 +66,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         icons = CONF.getImagePath() + "icons/"
         self.icon = GdkPixbuf.Pixbuf.new_from_file(icons + "faraday_icon.png")
         self.window = None
+        self.model_controller = model_controller
 
     def getMainWindow(self):
         """Returns the main window. This is none only at the
@@ -129,9 +130,13 @@ class GuiApp(Gtk.Application, FaradayUi):
                                self.on_new_button,
                                CONF.getLastWorkspace())
 
+        host_count, service_count, vuln_count = self.update_counts()
+
         self.terminal = Terminal(CONF)
         self.console_log = ConsoleLog()
-        self.statusbar = Statusbar(self.on_click_notifications)
+        self.statusbar = Statusbar(self.on_click_notifications, host_count,
+                                   service_count, vuln_count)
+
         self.notificationsModel = Gtk.ListStore(str)
 
         action = Gio.SimpleAction.new("about", None)
@@ -205,6 +210,12 @@ class GuiApp(Gtk.Application, FaradayUi):
         if event.type() == 5100:
             self.notificationsModel.prepend([event.change.getMessage()])
             receiver.emit("new_notif")
+        if event.type() == 4100 or event.type() == 3140:
+            host_count, service_count, vuln_count = self.update_counts()
+
+            receiver.emit("update_ws_info", host_count,
+                          service_count, vuln_count)
+
         if event.type() == 3132:
             dialog_text = event.text
             dialog = Gtk.MessageDialog(self.window, 0,
@@ -222,6 +233,11 @@ class GuiApp(Gtk.Application, FaradayUi):
                 event.callback(error, *event.exception_objects)
             dialog.destroy()
 
+    def update_counts(self):
+        host_count = self.model_controller.getHostsCount()
+        service_count = self.model_controller.getServicesCount()
+        vuln_count = self.model_controller.getVulnsCount()
+        return host_count, service_count, vuln_count
 
     def on_about(self, action, param):
         """ Defines what happens when you press 'about' on the menu"""
@@ -331,7 +347,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         CONF.setLastWorkspace(workspace)
         CONF.saveConfig()
         Gtk.Application.run(self)
-
 
     def on_quit(self, action, param):
         self.quit()

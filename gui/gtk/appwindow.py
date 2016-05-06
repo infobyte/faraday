@@ -39,7 +39,8 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     __gsignals__ = {
         "new_log": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
         "new_notif": (GObject.SIGNAL_RUN_FIRST, None, ()),
-        "clear_notifications": (GObject.SIGNAL_RUN_FIRST, None, ())
+        "clear_notifications": (GObject.SIGNAL_RUN_FIRST, None, ()),
+        "update_ws_info": (GObject.SIGNAL_RUN_FIRST, None, (int, int, int, ))
     }
 
     def __init__(self, sidebar, terminal, console_log, statusbar,
@@ -101,7 +102,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         # NOTIFACTION BOX: THE BUTTON TO ACCESS NOTIFICATION DIALOG
         self.notificationBox = Gtk.Box()
-        self.notificationBox.pack_start(self.statusbar.button, True, True, 0)
+        self.notificationBox.pack_start(self.statusbar.mainBox, True, True, 0)
 
         # MAINBOX: THE BIGGER BOX FOR ALL THE LITTLE BOXES
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -205,6 +206,9 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     def do_new_notif(self):
         """On a new notification, increment the button label by one"""
         self.statusbar.inc_button_label()
+
+    def do_update_ws_info(self, host_count, service_count, vuln_count):
+        self.statusbar.update_ws_info(host_count, service_count, vuln_count)
 
     def getLogConsole(self):
         """Returns the LogConsole. Needed by the GUIHandler logger"""

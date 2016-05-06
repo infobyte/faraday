@@ -101,3 +101,6 @@ class AbstractMapper(object):
 
     def getAll(self):
         return self.object_map.values()
+
+    def getCount(self):
+       return len(self.object_map.keys())

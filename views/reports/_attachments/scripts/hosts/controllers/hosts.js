@@ -56,7 +56,7 @@ angular.module('faradayApp')
                     console.log(e);
                 });
 
-            $scope.pageSize = 10;
+            $scope.pageSize = 100;
             $scope.currentPage = 0;
             $scope.newCurrentPage = 0;
 

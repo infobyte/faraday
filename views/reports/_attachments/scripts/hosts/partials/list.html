@@ -82,7 +82,7 @@
                                         </a>
                                     </td>
                                     <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
-                                    <td><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns || '-'"></a></td>
+                                    <td><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>
                                     <td>
                                         <a ng-href="#/hosts/ws/{{workspace}}/search/os={{host.os}}">
                                             <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>

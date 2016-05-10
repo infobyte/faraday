@@ -59,7 +59,7 @@ angular.module('faradayApp')
                         vulnsCount[vuln.key] = vuln.value;
                     });
                     $scope.services.forEach(function(service) {
-                        service.vulns = vulnsCount[service._id];
+                        service.vulns = vulnsCount[service._id] || 0;
                     });
                 })
                 .catch(function(e) {

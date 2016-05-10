@@ -64,7 +64,7 @@ elif [ "$os" = "Ubuntu 13.10" ]; then
 elif [ "$os" = "Ubuntu 13.04" ]; then
     version="ubuntu13-04-$arch"
     down=1
-elif [[ "$os" =~ "Ubuntu 14.04".*|"Ubuntu 14.10".*|"Ubuntu Vivid Vervet (development branch)"|"Ubuntu 15".* ]]; then
+elif [[ "$os" =~ "Ubuntu 14.04".*|"Ubuntu 14.10".*|"Ubuntu Vivid Vervet (development branch)"|"Ubuntu 15".*|"Ubuntu 16".*]]; then
     version="ubuntu13-10-$arch"
     down=1
     # Install pip from github.

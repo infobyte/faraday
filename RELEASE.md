@@ -14,6 +14,7 @@ TBA:
 ---
 * Removed description from Hosts list in WEB UI
 * Fixed sort in Hosts list in WEB UI
+* Fixed ports sorting in Host view in WEB UI
 * Added search link for OS in Hosts list in WEB UI
 * Removed description from Services list in WEB UI
 * Added version to Services list in WEB UI

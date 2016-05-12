@@ -891,11 +891,13 @@ class ModelObjectVuln(ModelComposite):
 
         self.publicattrs['Name'] = 'getName'
         self.publicattrs['Description'] = 'getDescription'
+        self.publicattrs['Data'] = "getData"
         self.publicattrs['Severity'] = 'getSeverity'
         self.publicattrs['Refs'] = 'getRefs'
 
         self.publicattrsrefs['Name'] = 'name'
         self.publicattrsrefs['Description'] = '_desc'
+        self.publicattrsrefs['Data'] = "data"
         self.publicattrsrefs['Severity'] = 'severity'
         self.publicattrsrefs['Refs'] = 'refs'
 
@@ -951,11 +953,14 @@ class ModelObjectVuln(ModelComposite):
 
     #@save
     @updateLocalMetadata
-    def updateAttributes(self, name=None, desc=None, severity=None, resolution=None, refs=None):
+    def updateAttributes(self, name=None, desc=None, data=None,
+                         severity=None, resolution=None, refs=None):
         if name is not None:
             self.setName(name)
         if desc is not None:
             self.setDescription(desc)
+        if data is not None:
+            self.setData(data)
         if resolution is not None:
             self.setResolution(resolution)
         if severity is not None:
@@ -1052,6 +1057,7 @@ class ModelObjectVulnWeb(ModelObjectVuln):
 
         self.publicattrs['Name'] = 'getName'
         self.publicattrs['Desc'] = 'getDescription'
+        self.publicattrs['Data'] = 'getData'
         self.publicattrs['Severity'] = 'getSeverity'
         self.publicattrs['Refs'] = 'getRefs'
         self.publicattrs['Path'] = 'getPath'
@@ -1066,6 +1072,7 @@ class ModelObjectVulnWeb(ModelObjectVuln):
 
         self.publicattrsrefs['Name'] = 'name'
         self.publicattrsrefs['Desc'] = '_desc'
+        self.publicattrsrefs['Data'] = 'data'
         self.publicattrsrefs['Severity'] = 'severity'
         self.publicattrsrefs['Refs'] = 'refs'
         self.publicattrsrefs['Path'] = 'path'
@@ -1138,10 +1145,10 @@ class ModelObjectVulnWeb(ModelObjectVuln):
 
     #@save
     @updateLocalMetadata
-    def updateAttributes(self, name=None, desc=None, website=None, path=None, refs=None,
+    def updateAttributes(self, name=None, desc=None, data=None, website=None, path=None, refs=None,
                         severity=None, resolution=None, request=None,response=None, method=None,
                         pname=None, params=None, query=None, category=None):
-        super(ModelObjectVulnWeb, self).updateAttributes(name, desc, severity, resolution, refs)
+        super(ModelObjectVulnWeb, self).updateAttributes(name, desc, data, severity, resolution, refs)
         if website is not None:
             self.website = website
         if path is not None:

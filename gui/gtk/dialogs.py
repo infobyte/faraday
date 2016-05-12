@@ -679,10 +679,11 @@ class ConflictsDialog(Gtk.Window):
         for obj in [obj1, obj2]:
             attr.append((obj.getName(),
                          obj.getDescription(),
+                         obj.getData(),
                          obj.getSeverity(),
                          obj.getRefs()))
 
-        props = ["Name", "Desc", "Severity", "Refs"]
+        props = ["Name", "Desc", "Data", "Severity", "Refs"]
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model
 
@@ -695,6 +696,7 @@ class ConflictsDialog(Gtk.Window):
         for obj in [obj1, obj2]:
             attr.append((obj.getName(),
                          obj.getDescription(),
+                         obj.getData(),
                          obj.getSeverity(),
                          obj.getRefs(),
                          obj.getPath(),
@@ -707,7 +709,7 @@ class ConflictsDialog(Gtk.Window):
                          obj.getQuery(),
                          obj.getCategory()))
 
-        props = ["Name", "Desc", "Severity", "Refs", "Path",
+        props = ["Name", "Desc", "Data", "Severity", "Refs", "Path",
                  "Website", "Request", "Response", "Method", "Pname",
                  "Params", "Query", "Category"]
 

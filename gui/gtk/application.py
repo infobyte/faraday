@@ -54,7 +54,6 @@ class GuiApp(Gtk.Application, FaradayUi):
     def __init__(self, model_controller, plugin_manager, workspace_manager,
                  plugin_controller):
 
-
         FaradayUi.__init__(self,
                            model_controller,
                            plugin_manager,
@@ -215,19 +214,19 @@ class GuiApp(Gtk.Application, FaradayUi):
         if event.type() == 3131:  # new log event
             receiver.emit("new_log", event.text)
 
-        if event.type() == 3141: # new conflict event
+        if event.type() == 3141:  # new conflict event
             receiver.emit("set_conflict_label", event.nconflicts)
 
-        if event.type() == 5100: # new notification event
+        if event.type() == 5100:  # new notification event
             self.notificationsModel.prepend([event.change.getMessage()])
             receiver.emit("new_notif")
 
-        if event.type() == 4100 or event.type() == 3140: # newinfo or changews
+        if event.type() == 4100 or event.type() == 3140:  # newinfo or changews
             host_count, service_count, vuln_count = self.update_counts()
             receiver.emit("update_ws_info", host_count,
                           service_count, vuln_count)
 
-        if event.type() == 3132: #error
+        if event.type() == 3132:  # error
             dialog_text = event.text
             dialog = Gtk.MessageDialog(self.window, 0,
                                        Gtk.MessageType.INFO,
@@ -236,7 +235,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             dialog.run()
             dialog.destroy()
 
-        if event.type() == 3134: #important error, uncaught exception
+        if event.type() == 3134:  # important error, uncaught exception
             dialog_text = event.text
             dialog = ImportantErrorDialog(self.window, dialog_text)
             response = dialog.run()

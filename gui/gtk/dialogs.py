@@ -401,7 +401,6 @@ class ConflictsDialog(Gtk.Window):
         self.current_conflict = self.conflicts[self.conflict_n]
         self.view = None
 
-
         self.views_box = Gtk.Box()
         button_box = self.create_buttons()
 
@@ -721,7 +720,10 @@ class ConflictsDialog(Gtk.Window):
         """
 
         def decide_type(raw_prop):
-            """Totally hackish. This is horrible"""
+            """Returns the name of a type of an object.
+            Keep in mind, type(type("a")) is Type,
+                          type(type("a").__name__) is Str
+            """
             res = type(first_raw_prop).__name__
             return res
 
@@ -736,7 +738,6 @@ class ConflictsDialog(Gtk.Window):
                           "pink" if first_prop != sec_prop else "white",
                           decide_type(first_raw_prop)])
             i += 1
-
 
         return model
 

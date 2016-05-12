@@ -13,7 +13,8 @@ import sys
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-from gi.repository import Gtk, Vte, GLib, Gdk, Pango
+from gi.repository import Gtk, Vte, GLib, Pango
+
 
 class Terminal(Vte.Terminal):
     """Defines a simple terminal that will execute faraday-terminal with the
@@ -212,7 +213,7 @@ class Sidebar(Gtk.Widget):
 
     def getSelectedWs(self):
         """Returns the name of the current selected workspace"""
-        selection =  self.workspace_view.get_selection()
+        selection = self.workspace_view.get_selection()
         return selection
 
     def getSelectedWsIter(self):
@@ -243,11 +244,14 @@ class ConsoleLog(Gtk.Widget):
         self.textBuffer.set_text("LOG. Please run Faraday with the --debug "
                                  "flag for more verbose output \n\0", -1)
 
-        self.bold = self.textBuffer.create_tag("bold", weight=Pango.Weight.BOLD)
+        self.bold = self.textBuffer.create_tag("bold",
+                                               weight=Pango.Weight.BOLD)
+
         self.red = self.textBuffer.create_tag("error", foreground='Red')
         self.green = self.textBuffer.create_tag("debug", foreground='Green')
         self.blue = self.textBuffer.create_tag("notif", foreground="Blue")
-        self.orange = self.textBuffer.create_tag("warning", foreground="#F5760F")
+        self.orange = self.textBuffer.create_tag("warning",
+                                                 foreground="#F5760F")
 
         self.textView = Gtk.TextView()
         self.textView.set_editable(False)
@@ -341,7 +345,7 @@ class Statusbar(Gtk.Widget):
         self.mainBox = Gtk.Box()
         self.mainBox.pack_start(self.notif_button, False, False, 5)
         self.mainBox.pack_start(self.ws_info, False, True, 5)
-        self.mainBox.pack_start(Gtk.Box(), True, True, 5) # space
+        self.mainBox.pack_start(Gtk.Box(), True, True, 5)  # space
         self.mainBox.pack_end(self.conflict_button, False, True, 0)
 
     def inc_notif_button_label(self):
@@ -363,7 +367,6 @@ class Statusbar(Gtk.Widget):
         label = Gtk.Label.new(str(self.conflict_button_label_int))
         label.show()
         self.conflict_button.add(label)
-
 
     def set_default_notif_label(self):
         """Creates the default label"""
@@ -387,7 +390,9 @@ class Statusbar(Gtk.Widget):
         box.pack_start(self.vuln_label, True, True, 0)
         return box
 
-    def update_ws_info(self, new_host_count, new_service_count, new_vuln_count):
+    def update_ws_info(self, new_host_count, new_service_count,
+                       new_vuln_count):
+
         host, service, vuln = self.create_strings(new_host_count,
                                                   new_service_count,
                                                   new_vuln_count)

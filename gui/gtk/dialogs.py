@@ -740,12 +740,14 @@ class ConflictsDialog(Gtk.Window):
             color1 = int(color[0])
             color2 = int(color[1])
             color3 = int(color[2][:-1:])
+            default_bg = '#%02x%02x%02x' % (color1, color2, color3)
 
-            if color1 != color2 != color3 != 255:
-                return '#%02x%02x%02x' % (color1, color2, color3)
+            if color1 > 200 and color2 > 200 and color3 > 200:
+                return "pink" if first_prop != sec_prop else default_bg
+            elif color1 < 100 and color2 < 100 and color3 < 100:
+                return "indigo" if first_prop != sec_prop else default_bg
             else:
-                return "pink" if first_prop != sec_prop else "white"
-
+                return '#%02x%02x%02x' % (color1, color2, color3)
 
         i = 0
         for prop in props:

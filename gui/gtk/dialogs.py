@@ -15,6 +15,7 @@ from gi.repository import Gtk, GdkPixbuf, Gdk
 from persistence.persistence_managers import CouchDbManager
 from utils.common import checkSSL
 from config.configuration import getInstanceConfiguration
+from model import guiapi
 
 
 CONF = getInstanceConfiguration()
@@ -183,7 +184,7 @@ class PluginOptionsDialog(Gtk.Window):
     """The dialog where the user can see details about installed plugins.
     It is not the prettiest thing in the world but it works.
     Creating and displaying the models of each plugin settings is specially
-    messy, there's more info in the appropiate methods"""
+    messy , there's more info in the appropiate methods"""
     # TODO: probably stop hardcoding the first plugin, right?
 
     def __init__(self, plugin_manager, parent):
@@ -355,7 +356,7 @@ class PluginOptionsDialog(Gtk.Window):
 
         model, treeiter = selection.get_selected()
         name = model[treeiter][0]
-        plugin_id = model[treeiter][1]
+        self.id_of_selected = model[treeiter][1]
         tool_version = model[treeiter][2]
         plugin_version = model[treeiter][3]
 
@@ -379,6 +380,419 @@ class PluginOptionsDialog(Gtk.Window):
 
         adecuateModel = self.models[self.id_of_selected]
         self.createAdecuatePluginSettingView(adecuateModel)
+
+
+class ConflictsDialog(Gtk.Window):
+    """Blueprints for a beautiful, colorful, gtk-esque conflicts
+    dialog. The user is confronted with two objects, one at the left,
+    one at the right, and is able to edit any of the object's properties,
+    choosing either one of them with a button"""
+
+    def __init__(self, conflicts, parent):
+        """Inits the window with its title and size, presents the
+        user with the first conflict found. If there aren't conflict
+        an empty window will be presented"""
+
+        Gtk.Window.__init__(self, title="Conflicts")
+        self.set_transient_for(parent)
+        self.set_size_request(600, 400)
+        self.conflicts = conflicts
+        self.conflict_n = 0
+        self.current_conflict = self.conflicts[self.conflict_n]
+        self.view = None
+
+
+        self.views_box = Gtk.Box()
+        button_box = self.create_buttons()
+
+        self.models = self.create_conflicts_models(conflicts)
+        self.set_conflict_view(self.conflict_n)
+        self.current_conflict_model = self.models[self.conflict_n]
+
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        main_box.pack_start(self.views_box, True, True, 5)
+        main_box.pack_start(button_box, False, True, 5)
+
+        self.add(main_box)
+
+    def update_current_conflict_model(self):
+        self.current_conflict_model = self.models[self.conflict_n]
+
+    def update_current_conflict(self):
+        self.current_conflict = self.conflicts[self.conflict_n]
+
+    def create_buttons(self):
+        """Creates and connects the button for the window"""
+        button_box = Gtk.Box()
+        keep_right = Gtk.Button.new_with_label("Keep RIGHT")
+        keep_left = Gtk.Button.new_with_label("Keep LEFT")
+        quit = Gtk.Button.new_with_label("Quit")
+
+        keep_right.connect("clicked", self.save, "right")
+        keep_left.connect("clicked", self.save, "left")
+        quit.connect("clicked", self.on_quit)
+
+        space = Gtk.Box()
+        button_box.pack_start(quit, False, False, 5)
+        button_box.pack_start(space, True, True, 5)
+        button_box.pack_start(keep_left, False, False, 5)
+        button_box.pack_start(keep_right, False, False, 5)
+        return button_box
+
+    def save(self, button, keeper):
+        """Saves information to Faraday. Keeper is needed to know if user
+        wanted to keep left or right view"""
+        current_conflict_type = self.current_conflict.getModelObjectType()
+
+        # right is represented by column 2 of the model, left by column 1
+        if keeper == "right":
+            n = 2
+        elif keeper == "left":
+            n = 1
+
+        # interface needs a special case, 'cause it's the only object
+        # which resolveConflict() will expect its solution to have a
+        # dicitionary inside the solution dictionary
+        if current_conflict_type != "Interface":
+            solution = {}
+            for row in self.current_conflict_model:
+                solution[row[0].lower()] = self.uncook(row[n], row[4])
+        else:
+            solution = self.case_for_interfaces(self.current_conflict_model, n)
+
+        try:
+            guiapi.resolveConflict(self.current_conflict, solution)
+            # if this isn't the last conflict...
+            if len(self.conflicts)-1 > self.conflict_n:
+                self.conflict_n += 1
+                self.update_current_conflict()
+                self.update_current_conflict_model()
+                self.set_conflict_view(self.conflict_n)
+            else:
+                self.destroy()
+
+        except ValueError:
+            dialog = Gtk.MessageDialog(self, 0,
+                                       Gtk.MessageType.INFO,
+                                       Gtk.ButtonsType.OK,
+                                       ("You tried to set some invalid "
+                                        "information. Make sure all True/False"
+                                        " settings are either True or False, "
+                                        "all values that should be numbers are"
+                                        " numbers, and so on"))
+            dialog.run()
+            dialog.destroy()
+
+    def case_for_interfaces(self, model, n):
+        """The custom case for the interfaces. Plays a little
+        with the information in the given model to create a solution acceptable
+        by resolveConflict. n is the right or left view, should be
+        either 1 or 2 as integers"""
+        solution = {}
+        solution["ipv4"] = {}
+        solution["ipv6"] = {}
+        for row in model:
+            prop_name = row[0].lower()
+            if prop_name.startswith("ipv4"):
+                prop_name = prop_name.split(" ")[1]
+                if not prop_name.startswith("dns"):
+                    solution["ipv4"][prop_name] = self.uncook(row[n], row[4])
+                elif prop_name.startswith("dns"):
+                    solution["ipv4"]["DNS"] = self.uncook(row[n], row[4])
+
+            elif prop_name.startswith("ipv6"):
+                prop_name = prop_name.split(" ")[1]
+                if not prop_name.startswith("dns"):
+                    solution["ipv6"][prop_name] = self.uncook(row[n], row[4])
+                elif prop_name.startswith("dns"):
+                    solution["ipv6"]["DNS"] = self.uncook(row[n], row[4])
+            else:
+                solution[prop_name] = self.uncook(row[n], row[4])
+        return solution
+
+    def on_quit(self, button):
+        """Exits the window"""
+        self.destroy()
+
+    def set_conflict_view(self, conflict_n):
+        """Creates two views for the model corresponding to the conflict number
+        n. If first conflict, self.view will be none. If user is past the first
+        conflict, self.view will not be none"""
+
+        if self.view is None:
+
+            renderer = Gtk.CellRendererText()
+
+            original_renderer = Gtk.CellRendererText()
+            original_renderer.set_property("editable", True)
+            original_renderer.connect("edited", self.value_changed, "original")
+
+            conflict_renderer = Gtk.CellRendererText()
+            conflict_renderer.set_property("editable", True)
+            conflict_renderer.connect("edited", self.value_changed, "conflict")
+
+            prop_column = Gtk.TreeViewColumn("", renderer, text=0,
+                                             background=3)
+
+            obj_column = Gtk.TreeViewColumn("ORIGINAL", original_renderer,
+                                            text=1, background=3)
+
+            prop2_column = Gtk.TreeViewColumn("", renderer, text=0,
+                                              background=3)
+            obj2_column = Gtk.TreeViewColumn("CONFLICTING", conflict_renderer,
+                                             text=2, background=3)
+
+            self.view = Gtk.TreeView(self.models[conflict_n])
+            self.view.append_column(prop_column)
+            self.view.append_column(obj_column)
+            self.second_view = Gtk.TreeView(self.models[conflict_n])
+
+            self.second_view.append_column(prop2_column)
+            self.second_view.append_column(obj2_column)
+
+            self.views_box.pack_start(self.view, True, True, 5)
+            self.views_box.pack_start(self.second_view, True, True, 5)
+
+        else:
+            self.view.set_model(self.models[conflict_n])
+            self.second_view.set_model(self.models[conflict_n])
+
+    def value_changed(self, widget, path, text, which_changed):
+        """Sets the model to keep the information which the user gave on
+        Return Key"""
+        active_store = self.current_conflict_model
+        if which_changed == "original":
+            active_store[path][1] = text
+        elif which_changed == "conflict":
+            active_store[path][2] = text
+
+    def create_conflicts_models(self, conflicts):
+        """ Creates a list of models, one for each conflict. Each model has
+        five columns, as shown in an example with only two rows below:
+        | PROPERTY | OBJECT 1 | OBJECT 2 | ROW COLOR | INPUT TYPE |
+        -----------------------------------------------------------
+        | NAME     |    A     |    A     |  RED      |  STRING    |
+        | PORTS    | 5050, 20 | 5050, 20 | WHITE     |  LIST      |
+        ===========================================================
+        ROW COLOR and INPUT TYPE are never shown to the user.
+        """
+
+        models = []
+        for conflict in conflicts:
+            model = Gtk.ListStore(str, str, str, str, str)
+            obj1 = conflict.getFirstObject()
+            obj2 = conflict.getSecondObject()
+            conflict_type = conflict.getModelObjectType()
+
+            if conflict_type == "Service":
+                self.fill_service_conflict_model(model, obj1, obj2)
+            elif conflict_type == "Interface":
+                self.fill_interface_conflict_model(model, obj1, obj2)
+            elif conflict_type == "Host":
+                self.fill_host_conflict_model(model, obj1, obj2)
+            elif conflict_type == "Vulnerability":
+                self.fill_vuln_conflict_model(model, obj1, obj2)
+            elif conflict_type == "VulnerabilityWeb":
+                self.fill_webvuln_conflict_model(model, obj1, obj2)
+
+            models.append(model)
+
+        return models
+
+    def fill_service_conflict_model(self, model, obj1, obj2):
+        """
+        Precondition: the model has 5 string columns, obj1 && obj2 are services
+        Will get a model and two objects and return a
+        model with all the appropiate information"""
+        attr = []
+        for obj in [obj1, obj2]:
+            attr.append((obj.getName(),
+                         obj.getDescription(),
+                         obj.getProtocol(),
+                         obj.getPorts(),
+                         obj.getVersion(),
+                         obj.getVersion(),
+                         obj.isOwned()))
+
+        props = ["Name", "Description", "Protocol", "Ports", "Status",
+                 "Version", "Owned"]
+
+        model = self.fill_model_from_props_and_attr(model, attr, props)
+        return model
+
+    def fill_host_conflict_model(self, model, obj1, obj2):
+        """
+        Precondition: the model has 5 string columns, obj1 && obj2 are hosts
+        Will get a model and two objects and return a
+        model with all the appropiate information"""
+        attr = []
+        for obj in [obj1, obj2]:
+            attr.append((obj.getName(),
+                         obj.getDescription(),
+                         obj.getOS(),
+                         obj.isOwned()))
+
+        props = ["Name", "Description", "OS", "Owned"]
+        model = self.fill_model_from_props_and_attr(model, attr, props)
+        return model
+
+    def fill_interface_conflict_model(self, model, obj1, obj2):
+        """
+        Precondition: the model has 5 string columns, obj1 && obj2 are
+        interfaces
+        Will get a model and two objects and return a
+        model with all the appropiate information"""
+        attr = []
+        for obj in [obj1, obj2]:
+            attr.append((obj.getName(),
+                         obj.getDescription(),
+                         obj.getHostnames(),
+                         obj.getMAC(),
+                         obj.getIPv4Address(),
+                         obj.getIPv4Mask(),
+                         obj.getIPv4Gateway(),
+                         obj.getIPv4DNS(),
+                         obj.getIPv6Address(),
+                         obj.getIPv6Gateway(),
+                         obj.getIPv6DNS(),
+                         obj.isOwned()))
+
+        props = ["Name", "Description", "Hostnames", "MAC", "IPv4 Address",
+                 "IPv4 Mask", "IPv4 Gateway", "IPv4 DNS", "IPv6 Address",
+                 "IPv6 Gateway", "IPv6 DNS", "Owned"]
+
+        model = self.fill_model_from_props_and_attr(model, attr, props)
+        return model
+
+    def fill_vuln_conflict_model(self, model, obj1, obj2):
+        """
+        Precondition: the model has 5 string columns, obj1 && obj2 are vulns
+        Will get a model and two objects and return a
+        model with all the appropiate information"""
+        attr = []
+        for obj in [obj1, obj2]:
+            attr.append((obj.getName(),
+                         obj.getDescription(),
+                         obj.getSeverity(),
+                         obj.getRefs()))
+
+        props = ["Name", "Desc", "Severity", "Refs"]
+        model = self.fill_model_from_props_and_attr(model, attr, props)
+        return model
+
+    def fill_webvuln_conflict_model(self, model, obj1, obj2):
+        """
+        Precondition: the model has 5 string columns, obj1 && obj2 are web vuln
+        Will get a model and two objects and return a
+        model with all the appropiate information"""
+        attr = []
+        for obj in [obj1, obj2]:
+            attr.append((obj.getName(),
+                         obj.getDescription(),
+                         obj.getSeverity(),
+                         obj.getRefs(),
+                         obj.getPath(),
+                         obj.getWebsite(),
+                         obj.getRequest(),
+                         obj.getResponse(),
+                         obj.getMethod(),
+                         obj.getPname(),
+                         obj.getParams(),
+                         obj.getQuery(),
+                         obj.getCategory()))
+
+        props = ["Name", "Desc", "Severity", "Refs", "Path",
+                 "Website", "Request", "Response", "Method", "Pname",
+                 "Params", "Query", "Category"]
+
+        model = self.fill_model_from_props_and_attr(model, attr, props)
+        return model
+
+    def fill_model_from_props_and_attr(self, model, attr, props):
+        """Preconditions: the model has 5 string columns,
+        len(attr[0]) == len(attr[1]) == len(props),
+        type(attr[0][i]) == type(attr[1][i]) for every i
+        attr is a list of two tuples. the first tuple holds info about obj1,
+        the second about obj2.
+        props is the list with names of such attributes
+
+        Will return a model filled up with information as detailed in
+        self.create_conflicts_models.
+        """
+
+        def decide_type(raw_prop):
+            """Totally hackish. This is horrible"""
+            res = type(first_raw_prop).__name__
+            return res
+
+        i = 0
+        for prop in props:
+            first_raw_prop = attr[0][i]
+            sec_raw_prop = attr[1][i]
+            first_prop = self.cook(first_raw_prop)
+            sec_prop = self.cook(sec_raw_prop)
+
+            model.append([prop, first_prop, sec_prop,
+                          "pink" if first_prop != sec_prop else "white",
+                          decide_type(first_raw_prop)])
+            i += 1
+
+
+        return model
+
+    def cook(self, raw_prop):
+        """We need to cook our properties: not all of them are strings by
+        default, and Gtk's models refuse to deal with lists or dictionaries.
+        Returns a string from a list, a bool, a float, or a string.
+        DO NOT use for dictionaries"""
+
+        if type(raw_prop) is list:
+            cooked_prop = ",".join([str(p) for p in raw_prop])
+
+        elif type(raw_prop) is bool:
+            cooked_prop = str(raw_prop)
+
+        elif type(raw_prop) is int or type(raw_prop) is float:
+            cooked_prop = str(raw_prop)
+
+        else:
+            cooked_prop = raw_prop
+
+        return cooked_prop
+
+    def uncook(self, prop, original_type):
+        """We need to get our raw information again: Gtk may like strings,
+        but Faraday needs lists, booleans, floats, and such.
+        Do not try to use for dictionaries.
+        """
+
+        if original_type == "list" or original_type == "NoneType":
+            if prop:
+                prop = prop.replace(" ", "")
+                raw_prop = prop.split(",")
+            else:
+                raw_prop = []
+
+        elif original_type == "bool":
+            prop = prop.replace(" ", "")
+            if prop.lower() == "true":
+                raw_prop = True
+            elif prop.lower() == "false":
+                raw_prop = False
+
+        elif original_type == "int":
+            raw_prop = int(prop)
+
+        elif original_type == "float":
+            raw_prop = float(prop)
+
+        elif original_type == "str" or original_type == "unicode":
+            raw_prop = prop
+
+        else:
+            raw_prop = prop
+
+        return raw_prop
 
 
 class NotificationsDialog(Gtk.Window):
@@ -405,6 +819,7 @@ class NotificationsDialog(Gtk.Window):
     def on_click_OK(self, button):
         self.destroy_notifications()
         self.destroy()
+
 
 class aboutDialog(Gtk.AboutDialog):
     """The simple about dialog displayed when the user clicks on "about"
@@ -456,6 +871,7 @@ class errorDialog(Gtk.MessageDialog):
             self.format_secondary_text(explanation)
         self.run()
         self.destroy()
+
 
 class ImportantErrorDialog(Gtk.Dialog):
 

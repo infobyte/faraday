@@ -317,10 +317,10 @@ class Statusbar(Gtk.Widget):
     Takes an on_button_do callback, so it can tell the application what
     to do when the user presses the button"""
 
-    def __init__(self, on_button_do, host_count, service_count, vuln_count):
+    def __init__(self, notif_callback, conflict_callback,
+                 host_count, service_count, vuln_count):
         super(Gtk.Widget, self).__init__()
         """Initialices a button with a label on zero"""
-        self.callback = on_button_do
         initial_strings = self.create_strings(host_count, service_count,
                                               vuln_count)
 
@@ -330,33 +330,51 @@ class Statusbar(Gtk.Widget):
 
         self.ws_info = self.create_initial_ws_info()
 
-        self.button = Gtk.Button.new()
-        self.set_default_label()
-        self.button.connect("clicked", self.callback)
+        self.notif_button = Gtk.Button.new()
+        self.set_default_notif_label()
+        self.notif_button.connect("clicked", notif_callback)
+
+        self.conflict_button = Gtk.Button.new()
+        self.set_default_conflict_label()
+        self.conflict_button.connect("clicked", conflict_callback)
 
         self.mainBox = Gtk.Box()
-        self.mainBox.pack_start(self.button, False, False, 5)
+        self.mainBox.pack_start(self.notif_button, False, False, 5)
         self.mainBox.pack_start(self.ws_info, False, True, 5)
+        self.mainBox.pack_start(Gtk.Box(), True, True, 5) # space
+        self.mainBox.pack_end(self.conflict_button, False, True, 0)
 
-    def inc_button_label(self):
+    def inc_notif_button_label(self):
         """Increments the button label, sets bold so user knows there are
         unread notifications"""
 
-        self.button_label_int += 1
-        child = self.button.get_child()
-        self.button.remove(child)
+        self.notif_button_label_int += 1
+        child = self.notif_button.get_child()
+        self.notif_button.remove(child)
         label = Gtk.Label.new()
-        label.set_markup("<b> %s </b>" % (str(self.button_label_int)))
+        label.set_markup("<b> %s </b>" % (str(self.notif_button_label_int)))
         label.show()
-        self.button.add(label)
+        self.notif_button.add(label)
 
-    def set_default_label(self):
+    def update_conflict_button_label(self, n):
+        self.conflict_button_label_int += n
+        child = self.conflict_button.get_child()
+        self.conflict_button.remove(child)
+        label = Gtk.Label.new(str(self.conflict_button_label_int))
+        label.show()
+        self.conflict_button.add(label)
+
+
+    def set_default_notif_label(self):
         """Creates the default label"""
-        self.button_label_int = 0
-        self.button.set_label(str(self.button_label_int))
+        self.notif_button_label_int = 0
+        self.notif_button.set_label(str(self.notif_button_label_int))
+
+    def set_default_conflict_label(self):
+        self.conflict_button_label_int = 0
+        self.conflict_button.set_label(str(self.conflict_button_label_int))
 
     def create_initial_ws_info(self):
-
         box = Gtk.Box()
         self.explain = Gtk.Label.new("Workspace status: ")
         self.host_label = Gtk.Label.new(self.host_count_str)
@@ -383,4 +401,3 @@ class Statusbar(Gtk.Widget):
         vuln_string = str(vuln_count) + " vulnerabilities."
 
         return host_string, service_string, vuln_string
-

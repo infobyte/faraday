@@ -25,6 +25,7 @@ from dialogs import NotificationsDialog
 from dialogs import aboutDialog
 from dialogs import helpDialog
 from dialogs import ImportantErrorDialog
+from dialogs import ConflictsDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import ConsoleLog
@@ -67,12 +68,16 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.icon = GdkPixbuf.Pixbuf.new_from_file(icons + "faraday_icon.png")
         self.window = None
         self.model_controller = model_controller
+        self.conflicts = self.model_controller.getConflicts()
 
     def getMainWindow(self):
         """Returns the main window. This is none only at the
         the startup, the GUI will create one as soon as do_activate() is called
         """
         return self.window
+
+    def updateConflicts(self):
+        self.conflicts = self.model_controller.getConflicts()
 
     def createWorkspace(self, name, description="", w_type=""):
         """Pretty much copy/pasted from the QT3 GUI.
@@ -134,8 +139,9 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         self.terminal = Terminal(CONF)
         self.console_log = ConsoleLog()
-        self.statusbar = Statusbar(self.on_click_notifications, host_count,
-                                   service_count, vuln_count)
+        self.statusbar = Statusbar(self.on_click_notifications,
+                                   self.on_click_conflicts,
+                                   host_count, service_count, vuln_count)
 
         self.notificationsModel = Gtk.ListStore(str)
 
@@ -205,18 +211,23 @@ class GuiApp(Gtk.Application, FaradayUi):
     def postEvent(self, receiver, event):
         if receiver is None:
             receiver = self.getMainWindow()
-        if event.type() == 3131:
+
+        if event.type() == 3131:  # new log event
             receiver.emit("new_log", event.text)
-        if event.type() == 5100:
+
+        if event.type() == 3141: # new conflict event
+            receiver.emit("set_conflict_label", event.nconflicts)
+
+        if event.type() == 5100: # new notification event
             self.notificationsModel.prepend([event.change.getMessage()])
             receiver.emit("new_notif")
-        if event.type() == 4100 or event.type() == 3140:
-            host_count, service_count, vuln_count = self.update_counts()
 
+        if event.type() == 4100 or event.type() == 3140: # newinfo or changews
+            host_count, service_count, vuln_count = self.update_counts()
             receiver.emit("update_ws_info", host_count,
                           service_count, vuln_count)
 
-        if event.type() == 3132:
+        if event.type() == 3132: #error
             dialog_text = event.text
             dialog = Gtk.MessageDialog(self.window, 0,
                                        Gtk.MessageType.INFO,
@@ -224,7 +235,8 @@ class GuiApp(Gtk.Application, FaradayUi):
                                        dialog_text)
             dialog.run()
             dialog.destroy()
-        if event.type() == 3134:
+
+        if event.type() == 3134: #important error, uncaught exception
             dialog_text = event.text
             dialog = ImportantErrorDialog(self.window, dialog_text)
             response = dialog.run()
@@ -306,6 +318,23 @@ class GuiApp(Gtk.Application, FaradayUi):
                                                    self.delete_notifications,
                                                    self.window)
         notifications_dialog.show_all()
+
+    def on_click_conflicts(self, button=None):
+        """Doesn't use the button at all. Shows the conflict dialog"""
+        self.updateConflicts()
+        if self.conflicts:
+            dialog = ConflictsDialog(self.conflicts,
+                                     self.window)
+            dialog.show_all()
+            self.updateConflicts()
+
+        else:
+            dialog = Gtk.MessageDialog(self.window, 0,
+                                       Gtk.MessageType.INFO,
+                                       Gtk.ButtonsType.OK,
+                                       "No conflicts to fix!")
+            dialog.run()
+            dialog.destroy()
 
     def delete_notifications(self):
         self.notificationsModel.clear()

@@ -887,6 +887,18 @@ class ModelObjectVuln(ModelComposite):
         self.severity = self.standarize(severity)
         self.resolution = resolution
 
+    def _updatePublicAttributes(self):
+
+        self.publicattrs['Name'] = 'getName'
+        self.publicattrs['Description'] = 'getDescription'
+        self.publicattrs['Severity'] = 'getSeverity'
+        self.publicattrs['Refs'] = 'getRefs'
+
+        self.publicattrsrefs['Name'] = 'name'
+        self.publicattrsrefs['Description'] = '_desc'
+        self.publicattrsrefs['Severity'] = 'severity'
+        self.publicattrsrefs['Refs'] = 'refs'
+
     def standarize(self, severity):
         # Transform all severities into lower strings
         severity = str(severity).lower()
@@ -1035,6 +1047,36 @@ class ModelObjectVulnWeb(ModelObjectVuln):
         self.params = params
         self.query = query
         self.category = category
+
+    def _updatePublicAttributes(self):
+
+        self.publicattrs['Name'] = 'getName'
+        self.publicattrs['Desc'] = 'getDescription'
+        self.publicattrs['Severity'] = 'getSeverity'
+        self.publicattrs['Refs'] = 'getRefs'
+        self.publicattrs['Path'] = 'getPath'
+        self.publicattrs['Website'] = 'getWebsite'
+        self.publicattrs['Request'] = 'getRequest'
+        self.publicattrs['Response'] = 'getResponse'
+        self.publicattrs['Method'] = 'getMethod'
+        self.publicattrs['Pname'] = 'getPname'
+        self.publicattrs['Params'] = 'getParams'
+        self.publicattrs['Query'] = 'getQuery'
+        self.publicattrs['Category'] = 'getCategory'
+
+        self.publicattrsrefs['Name'] = 'name'
+        self.publicattrsrefs['Desc'] = '_desc'
+        self.publicattrsrefs['Severity'] = 'severity'
+        self.publicattrsrefs['Refs'] = 'refs'
+        self.publicattrsrefs['Path'] = 'path'
+        self.publicattrsrefs['Website'] = 'website'
+        self.publicattrsrefs['Request'] = 'request'
+        self.publicattrsrefs['Response'] = 'response'
+        self.publicattrsrefs['Method'] = 'method'
+        self.publicattrsrefs['Pname'] = 'pname'
+        self.publicattrsrefs['Params'] = 'params'
+        self.publicattrsrefs['Query'] = 'query'
+        self.publicattrsrefs['Category'] = 'category'
 
     def updateID(self):
         self._id = get_hash([self.name, self.website, self.path, self.desc ])

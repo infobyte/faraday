@@ -40,7 +40,8 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         "new_log": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
         "new_notif": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "clear_notifications": (GObject.SIGNAL_RUN_FIRST, None, ()),
-        "update_ws_info": (GObject.SIGNAL_RUN_FIRST, None, (int, int, int, ))
+        "update_ws_info": (GObject.SIGNAL_RUN_FIRST, None, (int, int, int, )),
+        "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, ))
     }
 
     def __init__(self, sidebar, terminal, console_log, statusbar,
@@ -201,11 +202,14 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
     def do_clear_notifications(self):
         "On clear_notifications signal, it will return the button label to 0"
-        self.statusbar.set_default_label()
+        self.statusbar.set_default_notif_label()
 
     def do_new_notif(self):
         """On a new notification, increment the button label by one"""
-        self.statusbar.inc_button_label()
+        self.statusbar.inc_notif_button_label()
+
+    def do_set_conflict_label(self, conflict_number):
+        self.statusbar.update_conflict_button_label(conflict_number)
 
     def do_update_ws_info(self, host_count, service_count, vuln_count):
         self.statusbar.update_ws_info(host_count, service_count, vuln_count)

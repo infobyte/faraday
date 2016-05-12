@@ -403,6 +403,10 @@ class ConflictsDialog(Gtk.Window):
 
         self.views_box = Gtk.Box()
 
+        # TODO: FIX THIS
+        # this is the wrong way to do it, I'm creating a useless gtk.tree
+        # so I can know the user's default color background
+        # that not being bad enought, get_background_color is deprecated
         dumpy_tree = Gtk.TreeView()
         style = dumpy_tree.get_style_context()
         self.bg_color = style.get_background_color(Gtk.StateFlags.NORMAL)
@@ -737,11 +741,16 @@ class ConflictsDialog(Gtk.Window):
             return res
 
         def decide_bg():
+            """Decides which background should the row have depending on
+            the uses default theme (light, dark, or unknown abomination)
+            Pretty ugly, but it works"""
             color = self.bg_color.split("(")[1]
             color = color.split(",")
             color1 = int(color[0])
             color2 = int(color[1])
             color3 = int(color[2][:-1:])
+
+            # that weird string formats from rgb to hexa
             default_bg = '#%02x%02x%02x' % (color1, color2, color3)
 
             if color1 > 200 and color2 > 200 and color3 > 200:
@@ -749,6 +758,8 @@ class ConflictsDialog(Gtk.Window):
             elif color1 < 100 and color2 < 100 and color3 < 100:
                 return "darkred" if first_prop != sec_prop else default_bg
             else:
+                # if your theme doesn't go for either dark or light
+                # just use that color, screw highlights
                 return '#%02x%02x%02x' % (color1, color2, color3)
 
         i = 0

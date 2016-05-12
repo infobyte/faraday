@@ -402,6 +402,14 @@ class ConflictsDialog(Gtk.Window):
         self.view = None
 
         self.views_box = Gtk.Box()
+
+        dumpy_tree = Gtk.TreeView()
+        style = dumpy_tree.get_style_context()
+        self.bg_color = style.get_background_color(Gtk.StateFlags.NORMAL)
+        self.bg_color = self.bg_color.to_string()
+        print self.bg_color
+
+
         button_box = self.create_buttons()
 
         self.models = self.create_conflicts_models(conflicts)
@@ -545,6 +553,7 @@ class ConflictsDialog(Gtk.Window):
             self.view.append_column(prop_column)
             self.view.append_column(obj_column)
             self.second_view = Gtk.TreeView(self.models[conflict_n])
+
 
             self.second_view.append_column(prop2_column)
             self.second_view.append_column(obj2_column)
@@ -727,6 +736,15 @@ class ConflictsDialog(Gtk.Window):
             res = type(first_raw_prop).__name__
             return res
 
+        def default_bg():
+            color = self.bg_color.split("(")[1]
+            color = color.split(",")
+            color1 = int(color[0])
+            color2 = int(color[1])
+            color3 = int(color[2][:-1:])
+
+            return '#%02x%02x%02x' % (color1, color2, color3)
+
         i = 0
         for prop in props:
             first_raw_prop = attr[0][i]
@@ -735,7 +753,7 @@ class ConflictsDialog(Gtk.Window):
             sec_prop = self.cook(sec_raw_prop)
 
             model.append([prop, first_prop, sec_prop,
-                          "pink" if first_prop != sec_prop else "white",
+                          "pink" if first_prop != sec_prop else default_bg(),
                           decide_type(first_raw_prop)])
             i += 1
 

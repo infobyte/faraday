@@ -745,7 +745,7 @@ class ConflictsDialog(Gtk.Window):
             if color1 > 200 and color2 > 200 and color3 > 200:
                 return "pink" if first_prop != sec_prop else default_bg
             elif color1 < 100 and color2 < 100 and color3 < 100:
-                return "indigo" if first_prop != sec_prop else default_bg
+                return "tomato" if first_prop != sec_prop else default_bg
             else:
                 return '#%02x%02x%02x' % (color1, color2, color3)
 

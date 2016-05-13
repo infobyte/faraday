@@ -95,7 +95,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         self.middlePane = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
         self.middlePane.pack1(self.notebook, True, False)
-        self.middlePane.pack2(self.sidebarBox, False, True)
+        self.middlePane.pack2(self.sidebarBox, False, False)
 
         # LOGGER BOX: THE LOGGER, DUH
         self.loggerBox = Gtk.Box()

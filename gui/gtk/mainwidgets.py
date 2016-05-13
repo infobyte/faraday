@@ -76,7 +76,7 @@ class Sidebar(Gtk.Widget):
         self.workspace_model = self.createWsModel()
         self.workspace_view = self.createWsView(self.workspace_model)
 
-        self.sidebar_button = Gtk.Button.new_with_label("Refresh")
+        self.sidebar_button = Gtk.Button.new_with_label("Refresh workspaces")
         self.sidebar_button.connect("clicked", self.refreshSidebar)
 
         self.scrollableView = Gtk.ScrolledWindow.new(None, None)

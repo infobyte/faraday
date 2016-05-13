@@ -251,14 +251,10 @@ class ConsoleLog(Gtk.Widget):
         self.bold = self.textBuffer.create_tag("bold",
                                                weight=Pango.Weight.BOLD)
 
-        center = Gtk.Justification.CENTER
-        self.center = self.textBuffer.create_tag("center_text",
-                                                 justification=center)
-
-        self.textBuffer.set_text("Welcome to Faraday. Happy hacking!\n\n\0",
+        self.textBuffer.set_text("Welcome to Faraday. Happy hacking!\n \0",
                                  -1)
 
-        self.textBuffer.apply_tag(self.center,
+        self.textBuffer.apply_tag(self.bold,
                                   self.textBuffer.get_iter_at_line(0),
                                   self.textBuffer.get_end_iter())
 

@@ -54,6 +54,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
                                                    glib_variant)
         max_action.connect("change-state", self.on_maximize_toggle)
         self.add_action(max_action)
+        self.maximize()
 
         self.sidebar = sidebar
         self.terminal = terminal

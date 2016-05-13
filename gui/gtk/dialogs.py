@@ -41,6 +41,7 @@ class PreferenceWindowDialog(Gtk.Window):
     def __init__(self, callback, parent):
         Gtk.Window.__init__(self, title="Preferences")
         self.parent = parent
+        self.set_modal(True)
         self.set_size_request(400, 100)
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
@@ -102,6 +103,7 @@ class NewWorkspaceDialog(Gtk.Window):
         Gtk.Window.__init__(self, title="Create New Workspace")
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
+        self.set_modal(True)
         self.set_size_request(200, 200)
         self.timeout_id = None
         self.callback = callback
@@ -192,6 +194,7 @@ class PluginOptionsDialog(Gtk.Window):
         Gtk.Window.__init__(self, title="Plugins Options")
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
+        self.set_modal(True)
         self.set_size_request(800, 300)
 
         if plugin_manager is not None:
@@ -402,6 +405,7 @@ class ConflictsDialog(Gtk.Window):
         Gtk.Window.__init__(self, title="Conflicts")
         self.set_transient_for(parent)
         self.set_size_request(600, 400)
+        self.set_modal(True)
         self.conflicts = conflicts
         self.conflict_n = 0
         self.current_conflict = self.conflicts[self.conflict_n]
@@ -845,6 +849,7 @@ class NotificationsDialog(Gtk.Window):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_size_request(400, 200)
+        self.set_modal(True)
         self.view = view
         self.destroy_notifications = callback
 

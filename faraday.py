@@ -432,13 +432,13 @@ def setupLibs():
             helpers += ".i386"
         else:
             logger.fatal("Linux architecture could not be determined.")
-            exit()
+            sys.exit()
     elif sys.platform == "darwin":
         logger.info("OS X detected.")
         helpers += ".darwin"
     else:
         logger.fatal("Plaftorm not supported yet.")
-        exit()
+        sys.exit()
 
     if os.path.isfile(FARADAY_BASE_LIB_HELPERS):
         os.remove(FARADAY_BASE_LIB_HELPERS)
@@ -577,7 +577,7 @@ def checkVersion():
             if getInstanceConfiguration().getVersion() != None and getInstanceConfiguration().getVersion() != f_version:
                 logger.warning("You have different version of Faraday since your last run.\nRun ./faraday.py --update to update configuration!")
                 if query_yes_no('Do you want to close Faraday?', 'yes'):
-                    exit(-1)
+                    sys.exit(-1)
 
         getInstanceConfiguration().setVersion(f_version)
         f.close()
@@ -590,7 +590,7 @@ def checkVersion():
             json.dump(doc, doc_file)
     except Exception as e:
         getLogger("launcher").error("It seems that something's wrong with your version\nPlease contact customer support")
-        exit(-1)
+        sys.exit(-1)
 
 
 def init():

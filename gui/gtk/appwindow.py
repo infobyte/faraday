@@ -243,7 +243,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         icons = self.icons
 
         # new_from_stock is deprecated, but should work fine for now
-        new_button_icon = Gtk.Image.new_from_file(icons + "sync.png")
+        new_button_icon = Gtk.Image.new_from_file(icons + "Documentation.png")
         new_terminal_icon = Gtk.Image.new_from_file(icons + "newshell.png")
         preferences_icon = Gtk.Image.new_from_file(icons + "config.png")
         toggle_log_icon = Gtk.Image.new_from_file(icons + "debug.png")

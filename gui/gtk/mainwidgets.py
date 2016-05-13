@@ -241,17 +241,25 @@ class ConsoleLog(Gtk.Widget):
 
         self.textBuffer = Gtk.TextBuffer()
         self.textBuffer.new()
-        self.textBuffer.set_text("LOG. Please run Faraday with the --debug "
-                                 "flag for more verbose output \n\0", -1)
-
-        self.bold = self.textBuffer.create_tag("bold",
-                                               weight=Pango.Weight.BOLD)
 
         self.red = self.textBuffer.create_tag("error", foreground='Red')
         self.green = self.textBuffer.create_tag("debug", foreground='Green')
         self.blue = self.textBuffer.create_tag("notif", foreground="Blue")
         self.orange = self.textBuffer.create_tag("warning",
                                                  foreground="#F5760F")
+        self.bold = self.textBuffer.create_tag("bold",
+                                               weight=Pango.Weight.BOLD)
+
+        center = Gtk.Justification.CENTER
+        self.center = self.textBuffer.create_tag("center_text",
+                                                 justification=center)
+
+        self.textBuffer.set_text("Welcome to Faraday. Happy hacking!\n\n\0",
+                                 -1)
+
+        self.textBuffer.apply_tag(self.center,
+                                  self.textBuffer.get_iter_at_line(0),
+                                  self.textBuffer.get_end_iter())
 
         self.textView = Gtk.TextView()
         self.textView.set_editable(False)
@@ -327,6 +335,8 @@ class Statusbar(Gtk.Widget):
         """Initialices a button with a label on zero"""
         initial_strings = self.create_strings(host_count, service_count,
                                               vuln_count)
+        self.notif_text = "Notifications: "
+        self.conflict_text = "Conflicts: "
 
         self.host_count_str = initial_strings[0]
         self.service_count_str = initial_strings[1]
@@ -356,7 +366,9 @@ class Statusbar(Gtk.Widget):
         child = self.notif_button.get_child()
         self.notif_button.remove(child)
         label = Gtk.Label.new()
-        label.set_markup("<b> %s </b>" % (str(self.notif_button_label_int)))
+        label.set_markup("<b> %s %s </b>"
+                         % (self.notif_text, str(self.notif_button_label_int)))
+
         label.show()
         self.notif_button.add(label)
 
@@ -364,18 +376,21 @@ class Statusbar(Gtk.Widget):
         self.conflict_button_label_int += n
         child = self.conflict_button.get_child()
         self.conflict_button.remove(child)
-        label = Gtk.Label.new(str(self.conflict_button_label_int))
+        label = Gtk.Label.new(self.conflict_text +
+                              str(self.conflict_button_label_int))
         label.show()
         self.conflict_button.add(label)
 
     def set_default_notif_label(self):
         """Creates the default label"""
         self.notif_button_label_int = 0
-        self.notif_button.set_label(str(self.notif_button_label_int))
+        self.notif_button.set_label(self.notif_text +
+                                    str(self.notif_button_label_int))
 
     def set_default_conflict_label(self):
         self.conflict_button_label_int = 0
-        self.conflict_button.set_label(str(self.conflict_button_label_int))
+        self.conflict_button.set_label(self.conflict_text +
+                                       str(self.conflict_button_label_int))
 
     def create_initial_ws_info(self):
         box = Gtk.Box()

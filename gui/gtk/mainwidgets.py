@@ -44,8 +44,9 @@ class Terminal(Vte.Terminal):
     def startFaraday(self):
         """Starts a Faraday process with the appropiate host and port."""
 
+        home_dir = os.path.expanduser('~')
         self.spawn_sync(Vte.PtyFlags.DEFAULT,
-                        '$HOME',
+                        home_dir,
                         [self.faraday_exec, str(self.host), str(self.port)],
                         [],
                         GLib.SpawnFlags.DO_NOT_REAP_CHILD,

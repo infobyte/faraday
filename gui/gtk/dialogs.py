@@ -44,6 +44,7 @@ class PreferenceWindowDialog(Gtk.Window):
         self.set_modal(True)
         self.set_size_request(400, 100)
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+        self.connect("key_press_event", on_scape)
         self.set_transient_for(parent)
         self.timeout_id = None
         self.reloadWorkspaces = callback
@@ -104,6 +105,7 @@ class NewWorkspaceDialog(Gtk.Window):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_modal(True)
+        self.connect("key_press_event", on_scape)
         self.set_size_request(200, 200)
         self.timeout_id = None
         self.callback = callback
@@ -195,6 +197,7 @@ class PluginOptionsDialog(Gtk.Window):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_modal(True)
+        self.connect("key_press_event", on_scape)
         self.set_size_request(800, 300)
 
         if plugin_manager is not None:
@@ -406,6 +409,7 @@ class ConflictsDialog(Gtk.Window):
         self.set_transient_for(parent)
         self.set_size_request(600, 400)
         self.set_modal(True)
+        self.connect("key_press_event", on_scape)
         self.conflicts = conflicts
         self.conflict_n = 0
         self.current_conflict = self.conflicts[self.conflict_n]
@@ -850,6 +854,8 @@ class NotificationsDialog(Gtk.Window):
         self.set_transient_for(parent)
         self.set_size_request(400, 200)
         self.set_modal(True)
+        self.connect("key_press_event", on_scape)
+
         self.view = view
         self.destroy_notifications = callback
 
@@ -943,3 +949,14 @@ class ImportantErrorDialog(Gtk.Dialog):
 
         box.pack_start(scrolled_text, True, True, 0)
         self.show_all()
+
+def on_scape(window, event):
+    """Silly function to destroy a window on escape key, to use
+    with all the dialogs that should be Gtk.Dialogs but are Gtk.Windows
+    or with windows that are too complex for gtk dialogs but should behave
+    as a dialog too"""
+    if event.get_keycode()[1] == 9:
+        window.destroy()
+        return True
+    else:
+        return False

@@ -64,7 +64,9 @@ class GuiApp(Gtk.Application, FaradayUi):
                                  flags=Gio.ApplicationFlags.FLAGS_NONE)
 
         icons = CONF.getImagePath() + "icons/"
-        self.icon = GdkPixbuf.Pixbuf.new_from_file(icons + "faraday_icon.png")
+        faraday_icon = icons + "faraday_icon.png"
+        self.icon = GdkPixbuf.Pixbuf.new_from_file_at_scale(faraday_icon, 16,
+                                                            16, False)
         self.window = None
         self.model_controller = model_controller
         self.conflicts = self.model_controller.getConflicts()

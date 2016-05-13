@@ -208,7 +208,7 @@ class PluginOptionsDialog(Gtk.Window):
         pluginList = self.createPluginListView(plugin_info)
         scroll_pluginList = Gtk.ScrolledWindow(None, None)
         scroll_pluginList.add(pluginList)
-        # scroll_pluginList.set_min_content_width(300)
+        scroll_pluginList.set_min_content_width(300)
         pluginListBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         pluginListBox.pack_start(scroll_pluginList, True, True, 0)
 
@@ -250,7 +250,7 @@ class PluginOptionsDialog(Gtk.Window):
         self.pluginSpecsBox.pack_start(self.settings_view, True, True, 0)
 
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.mainBox.pack_start(pluginListBox, True, True, 10)
+        self.mainBox.pack_start(pluginListBox, False, True, 10)
         self.mainBox.pack_end(self.pluginSpecsBox, True, True, 10)
 
         self.add(self.mainBox)
@@ -354,25 +354,31 @@ class PluginOptionsDialog(Gtk.Window):
         """When the user selects a plugin, it will change the text
         displeyed on the entries to their corresponding values"""
 
-        model, treeiter = selection.get_selected()
-        name = model[treeiter][0]
-        self.id_of_selected = model[treeiter][1]
-        tool_version = model[treeiter][2]
-        plugin_version = model[treeiter][3]
+        # if the user searches for something that doesn't exists,
+        # for example, the plugin 'jsaljfdlajs', this avoids
+        # the program trying to get settings for that non-existing plugin
+        try:
+            model, treeiter = selection.get_selected()
+            name = model[treeiter][0]
+            self.id_of_selected = model[treeiter][1]
+            tool_version = model[treeiter][2]
+            plugin_version = model[treeiter][3]
 
-        self.setSettingsView()
+            self.setSettingsView()
 
-        self.nameEntry.set_label(name)
+            self.nameEntry.set_label(name)
 
-        if tool_version:
-            self.versionEntry.set_label(tool_version)
-        else:
-            self.versionEntry.set_label("")
+            if tool_version:
+                self.versionEntry.set_label(tool_version)
+            else:
+                self.versionEntry.set_label("")
 
-        if plugin_version:
-            self.pluginVersionEntry.set_label(plugin_version)
-        else:
-            self.pluginVersionEntry.set_label("")
+            if plugin_version:
+                self.pluginVersionEntry.set_label(plugin_version)
+            else:
+                self.pluginVersionEntry.set_label("")
+        except TypeError:
+            pass
 
     def setSettingsView(self):
         """Makes the window match the selected plugin with the settings
@@ -581,7 +587,7 @@ class ConflictsDialog(Gtk.Window):
         five columns, as shown in an example with only two rows below:
         | PROPERTY | OBJECT 1 | OBJECT 2 | ROW COLOR | INPUT TYPE |
         -----------------------------------------------------------
-        | NAME     |    A     |    A     |  RED      |  STRING    |
+        | NAME     |    A     |    B     |  RED      |  STRING    |
         | PORTS    | 5050, 20 | 5050, 20 | WHITE     |  LIST      |
         ===========================================================
         ROW COLOR and INPUT TYPE are never shown to the user.

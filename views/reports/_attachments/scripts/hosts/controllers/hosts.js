@@ -14,7 +14,8 @@ angular.module('faradayApp')
             // current workspace
             $scope.workspace = $routeParams.wsId;
 
-            $scope.sortField = "name";
+            $scope.sortField = "vulns";
+            $scope.reverse = true;
 
             // load all workspaces
             workspacesFact.list().then(function(wss) {
@@ -47,7 +48,7 @@ angular.module('faradayApp')
                         vulnsCount[parent] += vuln.value;
 
                         $scope.hosts.forEach(function(host) {
-                            host.vulns = vulnsCount[host._id];
+                            host.vulns = vulnsCount[host._id] || 0;
                         });
                     });
                 })
@@ -55,7 +56,7 @@ angular.module('faradayApp')
                     console.log(e);
                 });
 
-            $scope.pageSize = 10;
+            $scope.pageSize = 100;
             $scope.currentPage = 0;
             $scope.newCurrentPage = 0;
 

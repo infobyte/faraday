@@ -119,12 +119,10 @@
                                     </td>
                                     <td ng-bind="service.version || '-'"></td>
                                     <td>
-                                        <li ng-repeat="p in service.ports">
-                                            <span ng-bind="p"></span>
-                                            <a ng-href="//www.shodan.io/search?query=port:{{p}}" uib-tooltip="Search in Shodan" target="_blank">
-                                                <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
-                                            </a>
-                                        </li>
+                                        <span ng-bind="service.ports"></span>
+                                        <a ng-href="//www.shodan.io/search?query=port:{{service.ports}}" uib-tooltip="Search in Shodan" target="_blank">
+                                            <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                                        </a>
                                     </td>
                                     <td>
                                         <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/protocol={{service.protocol}}">
@@ -134,7 +132,7 @@
                                     <td ng-bind="service.status || '-'"></td>
                                     <td>
                                         <a ng-href="#/status/ws/{{workspace}}/search/service={{service.uri}}">
-                                            <span ng-bind="service.vulns || '-'"></span>
+                                            <span ng-bind="service.vulns"></span>
                                         </a>
                                     </td>
                                 </tr>

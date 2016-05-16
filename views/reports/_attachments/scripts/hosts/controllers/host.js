@@ -47,6 +47,7 @@ angular.module('faradayApp')
 
                     $scope.services.forEach(function(service) {
                         service.uri = encodeURIComponent(encodeURIComponent("(" + service.ports[0] + "/" + service.protocol + ") " + service.name));
+                        service.ports = service.ports[0];
                     });
 
                     $scope.loadedServices = true;
@@ -59,7 +60,7 @@ angular.module('faradayApp')
                         vulnsCount[vuln.key] = vuln.value;
                     });
                     $scope.services.forEach(function(service) {
-                        service.vulns = vulnsCount[service._id];
+                        service.vulns = vulnsCount[service._id] || 0;
                     });
                 })
                 .catch(function(e) {

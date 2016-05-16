@@ -51,25 +51,25 @@ class PreferenceWindowDialog(Gtk.Window):
 
         self.label = Gtk.Label()
         self.label.set_text("Your Couch IP")
-        vbox.pack_start(self.label, True, False, 0)
+        vbox.pack_start(self.label, True, False, 10)
 
         couch_uri = CONF.getCouchURI()
         self.entry = Gtk.Entry()
         text = couch_uri if couch_uri else "http://127.0.0.1:5050"
         self.entry.set_text(text)
-        vbox.pack_start(self.entry, True, False, 0)
+        vbox.pack_start(self.entry, True, False, 10)
 
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        vbox.pack_end(hbox, False, True, 0)
+        vbox.pack_end(hbox, False, True, 10)
 
         self.OK_button = Gtk.Button.new_with_label("OK")
         self.OK_button.connect("clicked", self.on_click_OK)
 
-        hbox.pack_start(self.OK_button, False, True, 0)
+        hbox.pack_start(self.OK_button, False, True, 10)
 
         self.cancel_button = Gtk.Button.new_with_label("Cancel")
         self.cancel_button.connect("clicked", self.on_click_cancel)
-        hbox.pack_end(self.cancel_button, False, True, 0)
+        hbox.pack_end(self.cancel_button, False, True, 10)
 
     def on_click_OK(self, button):
         """Defines what happens when user clicks OK button"""
@@ -142,10 +142,10 @@ class NewWorkspaceDialog(Gtk.Window):
         self.buttonBox.pack_end(self.cancel_button, False, False, 10)
         self.buttonBox.show()
 
-        self.mainBox.pack_start(self.nameBox, False, False, 0)
-        self.mainBox.pack_start(self.descrBox, False, False, 0)
-        self.mainBox.pack_start(self.typeBox, False, False, 0)
-        self.mainBox.pack_end(self.buttonBox, False, False, 0)
+        self.mainBox.pack_start(self.nameBox, False, False, 10)
+        self.mainBox.pack_start(self.descrBox, False, False, 10)
+        self.mainBox.pack_start(self.typeBox, False, False, 10)
+        self.mainBox.pack_end(self.buttonBox, False, False, 10)
 
         self.mainBox.show()
         self.add(self.mainBox)
@@ -213,9 +213,9 @@ class PluginOptionsDialog(Gtk.Window):
         cancel_button = Gtk.Button.new_with_label("Cancel")
         OK_button.connect("clicked", self.on_click_OK, plugin_manager)
         cancel_button.connect("clicked", self.on_click_cancel)
-        buttonBox.pack_start(OK_button, True, True, 0)
-        buttonBox.pack_start(cancel_button, True, True, 0)
-        pluginListBox.pack_start(buttonBox, False, False, 0)
+        buttonBox.pack_start(OK_button, True, True, 10)
+        buttonBox.pack_start(cancel_button, True, True, 10)
+        pluginListBox.pack_start(buttonBox, False, False, 10)
 
         infoBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         nameBox, versionBox, pluginVersionBox = [Gtk.Box() for i in range(3)]
@@ -246,8 +246,8 @@ class PluginOptionsDialog(Gtk.Window):
         self.pluginSpecsBox.pack_start(self.settings_view, True, True, 0)
 
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.mainBox.pack_start(pluginListBox, True, True, 5)
-        self.mainBox.pack_end(self.pluginSpecsBox, True, True, 5)
+        self.mainBox.pack_start(pluginListBox, True, True, 10)
+        self.mainBox.pack_end(self.pluginSpecsBox, True, True, 10)
 
         self.add(self.mainBox)
 

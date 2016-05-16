@@ -20,6 +20,8 @@ TBA:
 * Added version to Services list in WEB UI
 * Modified false values in Hosts list in WEB UI
 * Added search links in Services list in WEB UI
+* Added scrollbar in Gtk Terminal.
+* Added support for resize workspace bar.
 
 Apr 29, 2016:
 ---

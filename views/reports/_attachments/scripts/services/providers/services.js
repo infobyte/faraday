@@ -55,9 +55,9 @@ angular.module('faradayApp')
             this._objects = {};
 
             $http.get(BASEURL + '/' + ws + '/_design/services/_view/services')
-                .success(function(servicesArray){
+                .success(function(servicesArray) {
                     var services = [];
-                    servicesArray.rows.forEach(function(serviceData){
+                    servicesArray.rows.forEach(function(serviceData) {
                         var service = self._get(serviceData.value._id, serviceData.value);
                         services.push(service);
                     });

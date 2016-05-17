@@ -46,8 +46,7 @@ angular.module('faradayApp')
                     $scope.services = services;
 
                     $scope.services.forEach(function(service) {
-                        service.uri = encodeURIComponent(encodeURIComponent("(" + service.ports[0] + "/" + service.protocol + ") " + service.name));
-                        service.ports = service.ports[0];
+                        service.uri = encodeURIComponent(encodeURIComponent("(" + service.ports + "/" + service.protocol + ") " + service.name));
                     });
 
                     $scope.loadedServices = true;

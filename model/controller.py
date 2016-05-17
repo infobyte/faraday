@@ -667,12 +667,14 @@ class ModelController(threading.Thread):
         getLogger(self).info("Plugin Started: " + name)
         self.active_plugins_count += 1
         self.active_plugins_count_lock.release()
+        return True
 
     def _pluginEnd(self, name):
         self.active_plugins_count_lock.acquire()
         getLogger(self).info("Plugin Ended: " + name)
         self.active_plugins_count -= 1
         self.active_plugins_count_lock.release()
+        return True
 
     def addVulnToInterfaceASYNC(self, host, intId, newVuln):
         self.__addPendingAction(modelactions.ADDVULNINT, newVuln, intId)

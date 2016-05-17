@@ -296,7 +296,8 @@ class ReportItem(object):
 				continue
 
 			# If it's not a multi-valued att, store it as a string
-			setattr(self, n.tag, n.text.strip())
+			if n.text is not None:
+				setattr(self, n.tag, n.text.strip())
 
 		xml_report_item.clear()
 

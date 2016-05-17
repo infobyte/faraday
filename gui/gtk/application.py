@@ -222,6 +222,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         if event.type() == 5100:  # new notification event
             self.notificationsModel.prepend([event.change.getMessage()])
             receiver.emit("new_notif")
+            host_count, service_count, vuln_count = self.update_counts()
+            receiver.emit("update_ws_info", host_count,
+                          service_count, vuln_count)
 
         if event.type() == 4100 or event.type() == 3140:  # newinfo or changews
             host_count, service_count, vuln_count = self.update_counts()

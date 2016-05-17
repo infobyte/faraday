@@ -651,12 +651,12 @@ def showPopup(msg, level="Information"):
 
 # Plugin status
 
-def pluginStart():
-    __model_controller.addPluginStart()
+def pluginStart(name):
+    __model_controller.addPluginStart(name)
 
 
-def pluginEnd():
-    __model_controller.addPluginEnd()
+def pluginEnd(name):
+    __model_controller.addPluginEnd(name)
 
 #-------------------------------------------------------------------------------
 def getLoggedUser():

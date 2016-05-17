@@ -303,7 +303,7 @@ class ReportParser(object):
             return "Nexpose"
         elif "NexposeReport" == tag:
             return "NexposeFull"
-        elif "ASSET_DATA_REPORT" == tag:
+        elif "ASSET_DATA_REPORT" == tag or "SCAN" == tag:
             return "Qualysguard"
         elif "scanJob" == tag:
             return "Retina"

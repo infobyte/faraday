@@ -863,8 +863,13 @@ class NotificationsDialog(Gtk.Window):
         self.button.set_label("OK")
         self.button.connect("clicked", self.on_click_OK)
 
+        scrolled_list = Gtk.ScrolledWindow.new(None, None)
+        scrolled_list.set_min_content_width(200)
+        scrolled_list.set_min_content_height(350)
+        scrolled_list.add(self.view)
+
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.mainBox.pack_start(self.view, True, True, 0)
+        self.mainBox.pack_start(scrolled_list, True, True, 0)
         self.mainBox.pack_start(self.button, False, False, 0)
 
         self.add(self.mainBox)

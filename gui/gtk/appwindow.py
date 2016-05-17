@@ -39,7 +39,9 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     __gsignals__ = {
         "new_log": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
         "new_notif": (GObject.SIGNAL_RUN_FIRST, None, ()),
-        "clear_notifications": (GObject.SIGNAL_RUN_FIRST, None, ())
+        "clear_notifications": (GObject.SIGNAL_RUN_FIRST, None, ()),
+        "update_ws_info": (GObject.SIGNAL_RUN_FIRST, None, (int, int, int, )),
+        "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, ))
     }
 
     def __init__(self, sidebar, terminal, console_log, statusbar,
@@ -47,16 +49,19 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         super(Gtk.ApplicationWindow, self).__init__(*args, **kwargs)
 
         # This will be in the windows group and have the "win" prefix
-        glib_variant = GLib.Variant.new_boolean(False)
+        glib_variant = GLib.Variant.new_boolean(True)
         max_action = Gio.SimpleAction.new_stateful("maximize", None,
                                                    glib_variant)
         max_action.connect("change-state", self.on_maximize_toggle)
         self.add_action(max_action)
+        self.maximize()
 
         self.sidebar = sidebar
         self.terminal = terminal
         self.log = console_log
         self.statusbar = statusbar
+
+        self.terminal.connect("child_exited", self.on_terminal_exit)
 
         self.icons = CONF.getImagePath() + "icons/"
 
@@ -66,7 +71,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         # Keep it in sync with the actual state. Deep dark GTK magic
         self.connect("notify::is-maximized",
-                     lambda obj:
+                     lambda obj, pspec:
                      max_action.set_state(
                          GLib.Variant.new_boolean(obj.props.is_maximized)))
 
@@ -75,7 +80,9 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.topBox.pack_start(self.create_toolbar(), True, True, 0)
 
         # SIDEBAR BOX
+        search = self.sidebar.getSearchEntry()
         self.sidebarBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.sidebarBox.pack_start(search, False, False, 0)
         self.sidebarBox.pack_start(self.sidebar.scrollableView, True, True, 0)
         self.sidebarBox.pack_start(self.sidebar.getButton(), False, False, 0)
 
@@ -89,8 +96,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         self.middlePane = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
         self.middlePane.pack1(self.notebook, True, False)
-        self.middlePane.pack2(self.sidebarBox, False, True)
-        self.middlePane.set_position(750)
+        self.middlePane.pack2(self.sidebarBox, False, False)
 
         # LOGGER BOX: THE LOGGER, DUH
         self.loggerBox = Gtk.Box()
@@ -98,7 +104,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         # NOTIFACTION BOX: THE BUTTON TO ACCESS NOTIFICATION DIALOG
         self.notificationBox = Gtk.Box()
-        self.notificationBox.pack_start(self.statusbar.button, True, True, 0)
+        self.notificationBox.pack_start(self.statusbar.mainBox, True, True, 0)
 
         # MAINBOX: THE BIGGER BOX FOR ALL THE LITTLE BOXES
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -180,12 +186,14 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         # the focused terminal is the only children of the notebook
         # thas has only children an event box that has as only children
-        # the terminal. Yeah, I know.
+        # the scrolled window that has as only children the
+        # terminal. Yeah, I know.
 
         currentTab = self.getFocusedTab()
         currentEventBox = self.notebook.get_children()[currentTab]
         currentBox = currentEventBox.get_children()[0]
-        currentTerminal = currentBox.get_children()[0]
+        currentScrolledWindow = currentBox.get_children()[0]
+        currentTerminal = currentScrolledWindow.get_child()
         return currentTerminal
 
     def do_new_log(self, text):
@@ -195,11 +203,17 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
     def do_clear_notifications(self):
         "On clear_notifications signal, it will return the button label to 0"
-        self.statusbar.button.set_label("0")
+        self.statusbar.set_default_notif_label()
 
     def do_new_notif(self):
         """On a new notification, increment the button label by one"""
-        self.statusbar.inc_button_label()
+        self.statusbar.inc_notif_button_label()
+
+    def do_set_conflict_label(self, conflict_number):
+        self.statusbar.update_conflict_button_label(conflict_number)
+
+    def do_update_ws_info(self, host_count, service_count, vuln_count):
+        self.statusbar.update_ws_info(host_count, service_count, vuln_count)
 
     def getLogConsole(self):
         """Returns the LogConsole. Needed by the GUIHandler logger"""
@@ -230,8 +244,9 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         icons = self.icons
 
         # new_from_stock is deprecated, but should work fine for now
-        new_button_icon = Gtk.Image.new_from_file(icons + "sync.png")
+        new_button_icon = Gtk.Image.new_from_file(icons + "Documentation.png")
         new_terminal_icon = Gtk.Image.new_from_file(icons + "newshell.png")
+        preferences_icon = Gtk.Image.new_from_file(icons + "config.png")
         toggle_log_icon = Gtk.Image.new_from_file(icons + "debug.png")
 
         new_terminal_button = Gtk.ToolButton.new(new_terminal_icon, None)
@@ -244,31 +259,44 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         toolbar.insert(new_button, 1)
         new_button.set_action_name('app.new')
 
+        preferences_button = Gtk.ToolButton.new(preferences_icon, None)
+        preferences_button.set_tooltip_text("Preferences")
+        toolbar.insert(preferences_button, 2)
+        preferences_button.set_action_name('app.preferences')
+
         toggle_log_button = Gtk.ToggleToolButton.new()
         toggle_log_button.set_icon_widget(toggle_log_icon)
         toggle_log_button.set_active(True)  # log enabled by default
         toggle_log_button.set_tooltip_text("Toggle log console")
         toggle_log_button.connect("clicked", self.toggle_log)
-        toolbar.insert(toggle_log_button, 2)
+        toolbar.insert(toggle_log_button, 3)
 
         return toolbar
 
-    def new_tab(self, new_terminal):
+    def new_tab(self, scrolled_window):
         """The on_new_terminal_button redirects here. Tells the window
         to create pretty much a clone of itself when the user wants a new
         tab"""
 
+        terminal = scrolled_window.get_children()[0]
+        terminal.connect("child_exited", self.on_terminal_exit)
         self.tab_number += 1
         tab_number = self.tab_number
-        pageN = self.terminalBox(new_terminal)
+        pageN = self.terminalBox(scrolled_window)
         self.notebook.append_page(pageN, Gtk.Label(str(tab_number+1)))
         self.show_all()
 
-    def delete_tab(self, button):
-        """Deletes the current tab"""
-        current_page = self.notebook.get_current_page()
-        self.notebook.remove_page(current_page)
-        self.reorder_tab_names()
+    def delete_tab(self, button=None):
+        """Deletes the current tab or closes the window if tab is only tab"""
+        if self.tab_number == 0:
+            # the following confusing but its how gtks handles delete_event
+            # if user said YES to confirmation, do_delete_event returns False
+            if not self.do_delete_event():
+                self.destroy()
+        else:
+            current_page = self.notebook.get_current_page()
+            self.notebook.remove_page(current_page)
+            self.reorder_tab_names()
 
     def reorder_tab_names(self):
         """When a tab is deleted, all other tabs must be renamed to reacomodate
@@ -285,3 +313,26 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         """Reverses the visibility status of the loggerbox"""
         current_state = self.loggerBox.is_visible()
         self.loggerBox.set_visible(not current_state)
+
+    def do_delete_event(self, event=None, status=None):
+        """Override delete_event signal to show a confirmation dialog first"""
+        dialog = Gtk.MessageDialog(transient_for=self,
+                                   modal=True,
+                                   buttons=Gtk.ButtonsType.YES_NO)
+        dialog.props.text = "Are you sure you want to quit Faraday?"
+        response = dialog.run()
+        dialog.destroy()
+
+        if response == Gtk.ResponseType.YES:
+            return False  # keep on going and destroy
+        else:
+            # user say you know what i don't want to exit
+            return True
+
+    def on_terminal_exit(self, terminal, status):
+        """Really, it is *very* similar to delete_tab, but in this case
+        we want to make sure that we restart Faraday is the user
+        is not sure if he wants to exit"""
+
+        self.delete_tab()
+        terminal.startFaraday()

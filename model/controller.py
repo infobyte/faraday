@@ -906,12 +906,12 @@ class ModelController(threading.Thread):
             username, password=password, parent_id=parent_id)
 
     def getHost(self, name):
-        hosts_mapper = self.mappers_manager.getMapper(model.hosts.Host.__name__)
+        hosts_mapper = self.mappers_manager.getMapper(model.hosts.Host.class_signature)
         return hosts_mapper.find(name)
 
     def getAllHosts(self):
         hosts = self.mappers_manager.getMapper(
-            model.hosts.Host.__name__).getAll()
+            model.hosts.Host.class_signature).getAll()
         return hosts
 
     def getWebVulns(self):
@@ -935,3 +935,17 @@ class ModelController(threading.Thread):
 
                 for hostname in intr.getHostnames():
                     self.treeWordsTries.addWord(hostname)
+
+    def getHostsCount(self):
+        hosts = model.hosts.Host.class_signature
+        return self.mappers_manager.getMapper(hosts).getCount()
+
+    def getServicesCount(self):
+        services = model.hosts.Service.class_signature
+        return self.mappers_manager.getMapper(services).getCount()
+
+    def getVulnsCount(self):
+        vulns = model.common.ModelObjectVuln.class_signature
+        web_vulns = model.common.ModelObjectVulnWeb.class_signature
+        return (self.mappers_manager.getMapper(vulns).getCount() +
+                self.mappers_manager.getMapper(web_vulns).getCount())

@@ -49,8 +49,6 @@ def exception_handler(type, value, tb):
     traceback.print_exception(type, value, tb, file=text)
     error_name = text.getvalue().split('\n')[-2]
 
-
-
     excepts = """
     Traceback: %s
     """ % (text.getvalue() )
@@ -98,7 +96,7 @@ def reportToDevelopers(name=None, *description):
         headers = json.loads(CONF.getApiParams())
         params = json.loads(CONF.getApiParams())
 
-        params['description'] = description[0]
+        params['description'] = description[1]
 
         if name is not None:
             params['summary'] = name
@@ -108,7 +106,9 @@ def reportToDevelopers(name=None, *description):
         resp = requests.post(uri,
                             headers = headers,
                             data = params, timeout = 1, verify=True)
+
         model.api.devlog("Report sent it to faraday server")
+
     except Exception as e:
         model.api.devlog("Error reporting to developers:")
         model.api.devlog(e)

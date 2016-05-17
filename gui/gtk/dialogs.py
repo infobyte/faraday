@@ -633,8 +633,8 @@ class ConflictsDialog(Gtk.Window):
             attr.append((obj.getName(),
                          obj.getDescription(),
                          obj.getProtocol(),
+                         obj.getStatus(),
                          obj.getPorts(),
-                         obj.getVersion(),
                          obj.getVersion(),
                          obj.isOwned()))
 

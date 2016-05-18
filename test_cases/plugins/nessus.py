@@ -12,7 +12,7 @@ import unittest
 import sys
 import os
 sys.path.append(os.path.abspath(os.getcwd()))
-from plugins.repo.acunetix.plugin import AcunetixPlugin
+from plugins.repo.nessus.plugin import NessusPlugin
 from model.common import (
     factory, ModelObjectVuln, ModelObjectCred,
     ModelObjectVulnWeb, ModelObjectNote
@@ -21,14 +21,13 @@ from model.hosts import (
     Host, Service, Interface
 )
 from plugins.modelactions import modelactions
+import test_common
 
-
-class AcunetixParserTest(unittest.TestCase):
-
+class NessusParserTest(unittest.TestCase):
     cd = os.path.dirname(os.path.realpath(__file__))
 
     def setUp(self):
-        self.plugin = AcunetixPlugin()
+        self.plugin = NessusPlugin()
         factory.register(Host)
         factory.register(Interface)
         factory.register(Service)
@@ -37,26 +36,23 @@ class AcunetixParserTest(unittest.TestCase):
         factory.register(ModelObjectNote)
         factory.register(ModelObjectCred)
 
-    def test_Plugin_creates_apropiate_objects(self):
-        self.plugin.processReport(self.cd + '/acunetix_xml')
+    def test_Plugin_Calls_createAndAddHost(self):
+        self.plugin.processReport(self.cd + '/nessus_xml')
         action = self.plugin._pending_actions.get(block=True)
         self.assertEqual(action[0], modelactions.CADDHOST)
-        self.assertEqual(action[1], "87.230.29.167")
+        self.assertEqual(action[1], "12.233.108.201")
         action = self.plugin._pending_actions.get(block=True)
         self.assertEqual(action[0], modelactions.CADDINTERFACE)
-        self.assertEqual(action[2], "87.230.29.167")
+        self.assertEqual(action[2], "12.233.108.201")
+        action = self.plugin._pending_actions.get(block=True)
+        self.assertEqual(action[0], modelactions.CADDVULNHOST)
+        self.assertEqual(action[2], "Nessus Scan Information")
+        test_common.skip(self, 4)
         action = self.plugin._pending_actions.get(block=True)
         self.assertEqual(action[0], modelactions.CADDSERVICEINT)
-        self.assertEqual(action[5], ['80'])
-        self.assertEqual(action[3], 'http')
+        self.assertEqual(action[5], ['443'])
+        self.assertEqual(action[3], 'https?')
         self.assertEqual(action[4], 'tcp')
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.CADDNOTESRV)
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.CADDNOTENOTE)
-        action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.CADDVULNWEBSRV)
-        self.assertEqual(action[3], "ASP.NET error message")
 
 if __name__ == '__main__':
     unittest.main()

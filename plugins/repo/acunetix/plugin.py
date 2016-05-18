@@ -166,7 +166,7 @@ class Site(object):
             return socket.gethostbyname(host)
         except:
             api.log(
-                '[ERROR] Acunetix XML Plugin: Ip of host unknown' + host,
+                '[ERROR] Acunetix XML Plugin: Ip of host unknown ' + host,
                 level='ERROR')
             return None
         return host

@@ -282,14 +282,14 @@ angular.module('faradayApp')
                     size: 'sm',
                     resolve: {
                         msg: function() {
-                            return 'No hosts were selected to delete';
+                            return 'No services were selected to delete';
                         }
                     }
                 })
             } else {
-                var message = "A host will be deleted";
+                var message = "A service will be deleted";
                 if(selected.length > 1) {
-                    message = selected.length  + " hosts will be deleted";
+                    message = selected.length  + " services will be deleted";
                 }
                 message = message.concat(" along with all of its children. This operation cannot be undone. Are you sure you want to proceed?");
                 $uibModal.open(config = {

@@ -18,6 +18,7 @@ angular.module('faradayApp')
 
             $scope.services = [];
             $scope.sortField = "name";
+            $scope.reverse = false;
 
             // load all workspaces
             workspacesFact.list()

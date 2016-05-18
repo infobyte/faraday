@@ -225,10 +225,9 @@ angular.module('faradayApp')
         };
 
         $scope.update = function(services, data) {
-            services.forEach(function(service){
-                delete service.selected;
+            services.forEach(function(service) {
 	            servicesManager.updateService(service, data, $scope.workspace).then(function(s) {
-	            }, function(message){
+	            }, function(message) {
 	                console.log(message);
 	            });
             });

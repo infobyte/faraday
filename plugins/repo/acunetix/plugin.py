@@ -9,6 +9,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 from __future__ import with_statement
 from plugins import core
+from model import api
 import socket
 import sys
 import re
@@ -164,7 +165,10 @@ class Site(object):
         try:
             return socket.gethostbyname(host)
         except:
-            pass
+            api.log(
+                '[ERROR] Acunetix XML Plugin: Ip of host unknown ' + host,
+                level='ERROR')
+            return None
         return host
 
 
@@ -249,9 +253,14 @@ class AcunetixPlugin(core.PluginBase):
         parser = AcunetixXmlParser(output)
 
         for site in parser.sites:
+
+            if site.ip is None:
+                continue
+
             host = []
             if site.host != site.ip:
                 host = [site.host]
+
             h_id = self.createAndAddHost(site.ip, site.os)
             i_id = self.createAndAddInterface(
                 h_id,

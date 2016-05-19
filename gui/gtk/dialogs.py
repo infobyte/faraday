@@ -365,14 +365,14 @@ class PluginOptionsDialog(Gtk.Window):
         # the program trying to get settings for that non-existing plugin
         try:
             model, treeiter = selection.get_selected()
-            name = model[treeiter][0]
+            self.name_of_selected = model[treeiter][0]
             self.id_of_selected = model[treeiter][1]
             tool_version = model[treeiter][2]
             plugin_version = model[treeiter][3]
 
             self.setSettingsView()
 
-            self.nameEntry.set_label(name)
+            self.nameEntry.set_label(self.name_of_selected)
 
             if tool_version:
                 self.versionEntry.set_label(tool_version)

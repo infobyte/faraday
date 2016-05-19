@@ -494,7 +494,7 @@ class ConflictsDialog(Gtk.Window):
             else:
                 self.destroy()
 
-        except ValueError:
+        except ValueError as e:
             dialog = Gtk.MessageDialog(self, 0,
                                        Gtk.MessageType.INFO,
                                        Gtk.ButtonsType.OK,
@@ -502,7 +502,7 @@ class ConflictsDialog(Gtk.Window):
                                         "information. Make sure all True/False"
                                         " settings are either True or False, "
                                         "all values that should be numbers are"
-                                        " numbers, and so on"))
+                                        " numbers, and so on."))
             dialog.run()
             dialog.destroy()
 
@@ -638,7 +638,7 @@ class ConflictsDialog(Gtk.Window):
                          obj.getVersion(),
                          obj.isOwned()))
 
-        props = ["Name", "Description", "Protocol", "Ports", "Status",
+        props = ["Name", "Description", "Protocol", "Status", "Ports",
                  "Version", "Owned"]
 
         model = self.fill_model_from_props_and_attr(model, attr, props)

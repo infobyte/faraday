@@ -195,8 +195,7 @@ class Sidebar(Gtk.Widget):
             delete_item = Gtk.MenuItem("Delete")
             menu.append(delete_item)
 
-            # get the path of the item where the user clicked
-            # then get its tree_iter. then get its name. then delete
+            # get tree_iter from path. then get its name. then delete
             # that workspace
 
             tree_iter = self.workspace_model.get_iter(path)

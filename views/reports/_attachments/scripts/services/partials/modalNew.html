@@ -37,9 +37,9 @@
             <div class="form-group">
                 <div class="col-md-3">
                     <h5>Port</h5>
-                    <div class="input-margin" ng-repeat="port in service.ports" ng-class="{'has-error': form.port.$invalid }">
-                        <label class="sr-only" for="port">Port</label>
-                        <input type="number" class="form-control" id="port" name="port" placeholder="Port" ng-model="port.key" required/>
+                    <div class="input-margin" ng-class="{'has-error': form.ports.$invalid }">
+                        <label class="sr-only" for="ports">Port</label>
+                        <input type="number" class="form-control" id="ports" name="ports" placeholder="Port" ng-model="service.ports" required/>
                     </div>
                 </div>
                 <div class="col-md-3 protocol" ng-class="{'has-error': form.protocol.$invalid }">

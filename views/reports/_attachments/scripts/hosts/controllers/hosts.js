@@ -279,7 +279,6 @@ angular.module('faradayApp')
         };
 
         $scope.update = function(host, hostdata, interfaceData) {
-            delete host.selected;
             hostsManager.updateHost(host, hostdata, interfaceData, $scope.workspace).then(function() {
                 // load icons in case an operating system changed
                 $scope.loadIcons();

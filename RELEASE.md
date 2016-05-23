@@ -22,6 +22,9 @@ TBA:
 * Added search links in Services list in WEB UI
 * Added scrollbar in Gtk Terminal.
 * Added support for resize workspace bar.
+* Added a quote for imported reports in WEB UI.
+* Added support for a new type of report in Qualysguard plugin.
+* Fixed bugs in plugins: Acunetix - Nmap - Nikto. 
 
 Apr 29, 2016:
 ---

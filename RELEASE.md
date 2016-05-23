@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA:
+May 23, 2016:
 ---
 * Removed description from Hosts list in WEB UI
 * Fixed sort in Hosts list in WEB UI

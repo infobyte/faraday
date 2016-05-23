@@ -21,6 +21,13 @@ TBA:
 * Modified false values in Hosts list in WEB UI
 * Added search links in Services list in WEB UI
 * Added scrollbar in Gtk Terminal.
+* Added workspace status in Gtk interface
+* Added conflict resolution support for the Gtk interface
+* Added search entry for workspaces in Gtk
+* Added support for 'exit' command inside Faraday's Gtk terminal
+* Improved handling of uncaught exceptions in Gtk interface
+* Improved text formatting in Gtk's log console
+* Fixed several small bugs in Faraday GTK
 * Added support for resize workspace bar.
 
 Apr 29, 2016:

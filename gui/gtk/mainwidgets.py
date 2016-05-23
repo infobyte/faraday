@@ -207,6 +207,12 @@ class Sidebar(Gtk.Widget):
             menu.popup(None, None, None, None, event.button, event.time)
             return True  # prevents the click from selecting a workspace
 
+    def change_label(self, new_label):
+        self.sidebar_button.set_label(new_label)
+
+    def restore_label(self):
+        self.sidebar_button.set_label("Refresh workspaces")
+
     def addWorkspace(self, ws):
         """Append ws workspace to the model"""
         self.workspace_model.append([ws])
@@ -283,7 +289,10 @@ class ConsoleLog(Gtk.Widget):
         return self.textBuffer
 
     def customEvent(self, text):
-        """Filters event so that only those with type 3131 get to the log"""
+        """Filters event so that only those with type 3131 get to the log.
+        Also split them, so we can add the correct formatting to the first
+        part of the message"""
+
         text = text.split('-')
         if text[0] == "INFO ":
             self.update("[ " + text[0] + "]", self.bold)

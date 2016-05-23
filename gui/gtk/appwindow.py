@@ -184,10 +184,10 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     def getCurrentFocusedTerminal(self):
         """Returns the current focused terminal"""
 
-        # the focused terminal is the only children of the notebook
-        # thas has only children an event box that has as only children
-        # the scrolled window that has as only children the
-        # terminal. Yeah, I know.
+        # the focused terminal is the child of the event box which is
+        # the top widget of the focused tab. that event box has as only child
+        # a box, which has as only child a scrolled window, which has as
+        # only child the terminal. yeah. I know.
 
         currentTab = self.getFocusedTab()
         currentEventBox = self.notebook.get_children()[currentTab]
@@ -284,7 +284,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         tab_number = self.tab_number
         pageN = self.terminalBox(scrolled_window)
         self.notebook.append_page(pageN, Gtk.Label(str(tab_number+1)))
-        self.show_all()
+        self.notebook.show_all()
 
     def delete_tab(self, button=None):
         """Deletes the current tab or closes the window if tab is only tab"""

@@ -25,6 +25,8 @@ except ValueError:
            " of GTK and VTE. Check install of VTE 2.91 and GTK+3")
 
 try:
+    # there are several imports not needed here, but they're needed in other
+    # modules. this just checks for every dependence when starting the app
     from gi.repository import Gio, Gtk, GdkPixbuf, Vte, GLib, GObject, Gdk
 except ImportError as e:
     print ("You are missing some of the required dependencies. "
@@ -60,12 +62,14 @@ from utils.logs import addHandler
 
 CONF = getInstanceConfiguration()
 
+
 class GuiApp(Gtk.Application, FaradayUi):
     """
     Creates the application and has the necesary callbacks to FaradayUi
     Right now handles by itself only the menu, everything is else is
-    appWindow's resposibility as far as the initial UI goes.
-    The dialogs are found inside the dialogs module
+    appWindow's resposibility as far as the UI goes. All logic by the main
+    window should be done here. Some of the logic on the dialogs is
+    implemented in the dialogs own class.
     """
 
     def __init__(self, model_controller, plugin_manager, workspace_manager,
@@ -95,6 +99,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         return self.window
 
     def updateConflicts(self):
+        """Reassings self.conflicts with an updated list of conflicts"""
         self.conflicts = self.model_controller.getConflicts()
 
     def createWorkspace(self, name, description="", w_type=""):
@@ -227,6 +232,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         model.guiapi.notification_center.registerWidget(self.window)
 
     def postEvent(self, receiver, event):
+        """Handles the events from gui/customevents."""
         if receiver is None:
             receiver = self.getMainWindow()
 
@@ -267,6 +273,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             dialog.destroy()
 
     def update_counts(self):
+        """Update the counts for host, services and vulns"""
         host_count = self.model_controller.getHostsCount()
         service_count = self.model_controller.getServicesCount()
         vuln_count = self.model_controller.getVulnsCount()
@@ -358,13 +365,15 @@ class GuiApp(Gtk.Application, FaradayUi):
             dialog.destroy()
 
     def delete_notifications(self):
+        """Clear the notifications model of all info, also send a signal
+        to get the notification label to 0 on the main window's button
+        """
         self.notificationsModel.clear()
         self.window.emit("clear_notifications")
 
     def changeWorkspace(self, selection):
-        """Pretty much copy/pasted from QT3 GUI.
-        Selection is actually used nowhere, but the connect function is
-        Sidebar passes it as an argument so well there it is"""
+        """Pretty much copy/pasted from QT3 GUI. Gets the workspace
+        name from the selection passed on by the sidebar"""
 
         tree_model, treeiter = selection.get_selected()
         workspaceName = tree_model[treeiter][0]
@@ -374,9 +383,11 @@ class GuiApp(Gtk.Application, FaradayUi):
         except Exception as e:
             model.guiapi.notification_center.showDialog(str(e))
             ws = self.openDefaultWorkspace()
+
         workspace = ws.name
         CONF.setLastWorkspace(workspace)
         CONF.saveConfig()
+
         return ws
 
     def run(self, args):

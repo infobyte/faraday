@@ -494,7 +494,7 @@ class ConflictsDialog(Gtk.Window):
             else:
                 self.destroy()
 
-        except ValueError as e:
+        except ValueError:
             dialog = Gtk.MessageDialog(self, 0,
                                        Gtk.MessageType.INFO,
                                        Gtk.ButtonsType.OK,
@@ -569,7 +569,6 @@ class ConflictsDialog(Gtk.Window):
             self.view.append_column(prop_column)
             self.view.append_column(obj_column)
             self.second_view = Gtk.TreeView(self.models[conflict_n])
-
 
             self.second_view.append_column(prop2_column)
             self.second_view.append_column(obj2_column)
@@ -932,6 +931,9 @@ class errorDialog(Gtk.MessageDialog):
 
 
 class ImportantErrorDialog(Gtk.Dialog):
+    """Blueprints for an uncaught exception handler. Presents the
+    traceback and has option to send error report to developers.
+    """
 
     def __init__(self, parent_window, error):
         Gtk.Dialog.__init__(self, "Error!", parent_window, 0)
@@ -954,6 +956,7 @@ class ImportantErrorDialog(Gtk.Dialog):
 
         box.pack_start(scrolled_text, True, True, 0)
         self.show_all()
+
 
 def on_scape(window, event):
     """Silly function to destroy a window on escape key, to use

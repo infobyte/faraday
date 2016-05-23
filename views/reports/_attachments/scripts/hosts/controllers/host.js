@@ -18,6 +18,9 @@ angular.module('faradayApp')
 
             $scope.services = [];
             $scope.sortField = "name";
+            $scope.reverse = false;
+
+            $scope.loadedServices = false;
 
             // load all workspaces
             workspacesFact.list()
@@ -46,8 +49,7 @@ angular.module('faradayApp')
                     $scope.services = services;
 
                     $scope.services.forEach(function(service) {
-                        service.uri = encodeURIComponent(encodeURIComponent("(" + service.ports[0] + "/" + service.protocol + ") " + service.name));
-                        service.ports = service.ports[0];
+                        service.uri = encodeURIComponent(encodeURIComponent("(" + service.ports + "/" + service.protocol + ") " + service.name));
                     });
 
                     $scope.loadedServices = true;
@@ -226,10 +228,9 @@ angular.module('faradayApp')
         };
 
         $scope.update = function(services, data) {
-            services.forEach(function(service){
-                delete service.selected;
+            services.forEach(function(service) {
 	            servicesManager.updateService(service, data, $scope.workspace).then(function(s) {
-	            }, function(message){
+	            }, function(message) {
 	                console.log(message);
 	            });
             });
@@ -283,14 +284,14 @@ angular.module('faradayApp')
                     size: 'sm',
                     resolve: {
                         msg: function() {
-                            return 'No hosts were selected to delete';
+                            return 'No services were selected to delete';
                         }
                     }
                 })
             } else {
-                var message = "A host will be deleted";
+                var message = "A service will be deleted";
                 if(selected.length > 1) {
-                    message = selected.length  + " hosts will be deleted";
+                    message = selected.length  + " services will be deleted";
                 }
                 message = message.concat(" along with all of its children. This operation cannot be undone. Are you sure you want to proceed?");
                 $uibModal.open(config = {

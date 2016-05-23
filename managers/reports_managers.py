@@ -58,9 +58,8 @@ class ReportProcessor():
 
     def onlinePlugin(self, cmd):
 
-        _, new_cmd, output_file = self.plugin_controller.processCommandInput(
-            cmd)
-        self.plugin_controller.onCommandFinished(cmd, '')
+        _, new_cmd = self.plugin_controller.processCommandInput('0', cmd, './')
+        self.plugin_controller.onCommandFinished('0', 0, cmd)
 
 
 class ReportManager(threading.Thread):

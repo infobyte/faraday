@@ -10,10 +10,6 @@ angular.module('faradayApp')
         init = function() {
             // current Workspace
             var ws = $routeParams.wsId;
-            // default scope (service)
-            $scope.service = {
-                "ports": []
-            };
 
             if(service.length == 1) {
                 $scope.service = {
@@ -21,7 +17,7 @@ angular.module('faradayApp')
                     "description": service[0].description,
                     "owned": service[0].owned,
                     "owner": service[0].owner,
-                    "ports": commons.arrayToObject(service[0].ports),
+                    "ports": service[0].ports,
                     "protocol": service[0].protocol,
                     "parent": service[0].parent,
                     "status": service[0].status,
@@ -33,33 +29,18 @@ angular.module('faradayApp')
         };
 
         $scope.ok = function() {
-            var ports = [];
             var date = new Date(),
             timestamp = date.getTime()/1000.0;
 
-            if($scope.service.ports.length !== 0) {
-                $scope.service.ports.forEach(function(port){
-                    ports.push(port.key);
-                });
-                $scope.service.ports = ports.filter(Boolean);
-            } else {
-                delete $scope.service.ports;
-            }
-            
             $modalInstance.close($scope.service);
         };
 
-        $scope.newPort = function($event){
-            $scope.service.ports.push({key:''});
-            $event.preventDefault();
-        };
-
-        $scope.call = function(service){
+        $scope.call = function(service) {
             $scope.service = {
                 "name": service.name,
                 "description": service.description,
                 "owned": service.owned,
-                "ports": commons.arrayToObject(service.ports),
+                "ports": service.ports,
                 "protocol": service.protocol,
                 "status": service.status,
                 "version": service.version,

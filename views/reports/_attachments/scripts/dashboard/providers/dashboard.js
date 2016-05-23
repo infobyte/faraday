@@ -9,7 +9,7 @@ angular.module('faradayApp')
         dashboardSrv._getView = function(url) {
             var deferred = $q.defer();
 
-            $http.get(url).then(function(response){
+            $http.get(url).then(function(response) {
                 res = response.data.rows;
                 deferred.resolve(res);
             }, function(){
@@ -118,7 +118,7 @@ angular.module('faradayApp')
                 res.forEach(function(service){
                     var _service = service.value;
                     _service["id"] = service.id;
-                    _service["port"] = _service.ports[0];
+                    _service["port"] = _service.ports;
                     tmp.push(_service);
                 });
                 deferred.resolve(tmp);

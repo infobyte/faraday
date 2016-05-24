@@ -41,7 +41,8 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         "new_notif": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "clear_notifications": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "update_ws_info": (GObject.SIGNAL_RUN_FIRST, None, (int, int, int, )),
-        "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, ))
+        "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, )),
+        "loading_workspace": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
     }
 
     def __init__(self, sidebar, terminal, console_log, statusbar,
@@ -184,10 +185,10 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     def getCurrentFocusedTerminal(self):
         """Returns the current focused terminal"""
 
-        # the focused terminal is the only children of the notebook
-        # thas has only children an event box that has as only children
-        # the scrolled window that has as only children the
-        # terminal. Yeah, I know.
+        # the focused terminal is the child of the event box which is
+        # the top widget of the focused tab. that event box has as only child
+        # a box, which has as only child a scrolled window, which has as
+        # only child the terminal. yeah. I know.
 
         currentTab = self.getFocusedTab()
         currentEventBox = self.notebook.get_children()[currentTab]
@@ -214,6 +215,24 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
     def do_update_ws_info(self, host_count, service_count, vuln_count):
         self.statusbar.update_ws_info(host_count, service_count, vuln_count)
+
+    def do_loading_workspace(self, status):
+        """Called by changeWorkspace on the application. Presents
+        a silly loading dialog.
+        Preconditions: show must have been called before destroy can be called
+        """
+        if status == "show":
+            self.loading_dialog = Gtk.MessageDialog(self, 0,
+                                                    Gtk.MessageType.INFO,
+                                                    Gtk.ButtonsType.NONE,
+                                                    ("Loading workspace. \n"
+                                                    "Please wait."))
+
+            self.loading_dialog.set_modal(True)
+            self.loading_dialog.show_all()
+        if status == "destroy":
+            self.loading_dialog.destroy()
+
 
     def getLogConsole(self):
         """Returns the LogConsole. Needed by the GUIHandler logger"""
@@ -284,7 +303,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         tab_number = self.tab_number
         pageN = self.terminalBox(scrolled_window)
         self.notebook.append_page(pageN, Gtk.Label(str(tab_number+1)))
-        self.show_all()
+        self.notebook.show_all()
 
     def delete_tab(self, button=None):
         """Deletes the current tab or closes the window if tab is only tab"""

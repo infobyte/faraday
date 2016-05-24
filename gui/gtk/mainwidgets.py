@@ -195,8 +195,7 @@ class Sidebar(Gtk.Widget):
             delete_item = Gtk.MenuItem("Delete")
             menu.append(delete_item)
 
-            # get the path of the item where the user clicked
-            # then get its tree_iter. then get its name. then delete
+            # get tree_iter from path. then get its name. then delete
             # that workspace
 
             tree_iter = self.workspace_model.get_iter(path)
@@ -207,6 +206,12 @@ class Sidebar(Gtk.Widget):
             delete_item.show()
             menu.popup(None, None, None, None, event.button, event.time)
             return True  # prevents the click from selecting a workspace
+
+    def change_label(self, new_label):
+        self.sidebar_button.set_label(new_label)
+
+    def restore_label(self):
+        self.sidebar_button.set_label("Refresh workspaces")
 
     def addWorkspace(self, ws):
         """Append ws workspace to the model"""
@@ -284,7 +289,10 @@ class ConsoleLog(Gtk.Widget):
         return self.textBuffer
 
     def customEvent(self, text):
-        """Filters event so that only those with type 3131 get to the log"""
+        """Filters event so that only those with type 3131 get to the log.
+        Also split them, so we can add the correct formatting to the first
+        part of the message"""
+
         text = text.split('-')
         if text[0] == "INFO ":
             self.update("[ " + text[0] + "]", self.bold)

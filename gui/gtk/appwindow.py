@@ -41,7 +41,8 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         "new_notif": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "clear_notifications": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "update_ws_info": (GObject.SIGNAL_RUN_FIRST, None, (int, int, int, )),
-        "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, ))
+        "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, )),
+        "loading_workspace": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
     }
 
     def __init__(self, sidebar, terminal, console_log, statusbar,
@@ -214,6 +215,24 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
     def do_update_ws_info(self, host_count, service_count, vuln_count):
         self.statusbar.update_ws_info(host_count, service_count, vuln_count)
+
+    def do_loading_workspace(self, status):
+        """Called by changeWorkspace on the application. Presents
+        a silly loading dialog.
+        Preconditions: show must have been called before destroy can be called
+        """
+        if status == "show":
+            self.loading_dialog = Gtk.MessageDialog(self, 0,
+                                                    Gtk.MessageType.INFO,
+                                                    Gtk.ButtonsType.NONE,
+                                                    ("Loading workspace. \n"
+                                                    "Please wait."))
+
+            self.loading_dialog.set_modal(True)
+            self.loading_dialog.show_all()
+        if status == "destroy":
+            self.loading_dialog.destroy()
+
 
     def getLogConsole(self):
         """Returns the LogConsole. Needed by the GUIHandler logger"""

@@ -9,6 +9,7 @@ See the file 'doc/LICENSE' for the license information
 
 import os
 import sys
+import threading
 
 try:
     import gi
@@ -372,23 +373,31 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.window.emit("clear_notifications")
 
     def changeWorkspace(self, selection):
-        """Pretty much copy/pasted from QT3 GUI. Gets the workspace
-        name from the selection passed on by the sidebar"""
+        """Changes workspace in a separate thread. Emits a signal
+        to present a 'Loading workspace' dialog while Faraday processes
+        the change"""
 
         tree_model, treeiter = selection.get_selected()
         workspaceName = tree_model[treeiter][0]
 
-        try:
-            ws = super(GuiApp, self).openWorkspace(workspaceName)
-        except Exception as e:
-            model.guiapi.notification_center.showDialog(str(e))
-            ws = self.openDefaultWorkspace()
+        def background_process():
+            self.window.emit("loading_workspace", 'show')
+            try:
+                ws = super(GuiApp, self).openWorkspace(workspaceName)
+            except Exception as e:
+                model.guiapi.notification_center.showDialog(str(e))
+                ws = self.openDefaultWorkspace()
 
-        workspace = ws.name
-        CONF.setLastWorkspace(workspace)
-        CONF.saveConfig()
+            workspace = ws.name
+            CONF.setLastWorkspace(workspace)
+            CONF.saveConfig()
+            self.window.emit("loading_workspace", "destroy")
 
-        return ws
+            return True
+
+        thread = threading.Thread(target=background_process)
+        thread.daemon = True
+        thread.start()
 
     def run(self, args):
         """First method to run, as defined by FaradayUi. This method is

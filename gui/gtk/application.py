@@ -52,6 +52,7 @@ from dialogs import aboutDialog
 from dialogs import helpDialog
 from dialogs import ImportantErrorDialog
 from dialogs import ConflictsDialog
+from dialogs import HostInfoDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import WorkspaceSidebar
@@ -104,6 +105,12 @@ class GuiApp(Gtk.Application, FaradayUi):
     def updateConflicts(self):
         """Reassings self.conflicts with an updated list of conflicts"""
         self.conflicts = self.model_controller.getConflicts()
+
+    def updateHosts(self):
+        """Reassings the value of self.all_hosts to a current one to
+        catch workspace changes, new hosts added via plugins or any other
+        external interference with out host list"""
+        self.all_hosts = self.model_controller.getAllHosts()
 
     def createWorkspace(self, name, description="", w_type=""):
         """Pretty much copy/pasted from the QT3 GUI.
@@ -161,7 +168,10 @@ class GuiApp(Gtk.Application, FaradayUi):
                                            self.on_new_button,
                                            CONF.getLastWorkspace())
 
-        self.hosts_sidebar = HostsSidebar()
+        self.updateHosts()
+        self.hosts_sidebar = HostsSidebar(self.show_host_info)
+        default_model = self.hosts_sidebar.create_model(self.all_hosts)
+        default_view = self.hosts_sidebar.create_view(default_model)
 
         self.sidebar = Sidebar(self.ws_sidebar.get_box(),
                                self.hosts_sidebar.get_box())
@@ -311,6 +321,18 @@ class GuiApp(Gtk.Application, FaradayUi):
                                                    self.window)
         preference_window.show_all()
 
+    def show_host_info(self, host_id):
+
+        for host in self.all_hosts:
+            if host_id == host.id:
+                selected_host = host
+                break
+
+        print selected_host
+
+        info_window = HostInfoDialog(self.window, selected_host)
+        info_window.show_all()
+
     def reloadWorkspaces(self):
         """Used in conjunction with on_preferences: close workspace,
         resources the workspaces available, clears the sidebar of the old
@@ -391,6 +413,9 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.window.emit("loading_workspace", 'show')
             try:
                 ws = super(GuiApp, self).openWorkspace(workspaceName)
+                self.updateHosts()
+                new_model = self.hosts_sidebar.create_model(self.all_hosts)
+                self.hosts_sidebar.update_view(new_model)
             except Exception as e:
                 model.guiapi.notification_center.showDialog(str(e))
                 ws = self.openDefaultWorkspace()

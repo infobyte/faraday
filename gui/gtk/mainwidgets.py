@@ -75,12 +75,41 @@ class Sidebar(Gtk.Notebook):
         return box
 
 class HostsSidebar(Gtk.Widget):
-    def __init__(self):
+    def __init__(self, open_dialog_callback):
         super(Gtk.Widget, self).__init__()
+        self.open_dialog_callback = open_dialog_callback
+        self.current_model = None
+
+    def create_model(self, hosts):
+        hosts_model = Gtk.ListStore(str, str)
+        for host in hosts:
+            display_str = host.name + " (" + str(len(host.getVulns())) + ")"
+            hosts_model.append([host.id, display_str])
+        self.current_model = hosts_model
+        return hosts_model
+
+    def create_view(self, model):
+        self.view = Gtk.TreeView(model)
+        self.view.set_activate_on_single_click(True)
+        renderer = Gtk.CellRendererText()
+        column = Gtk.TreeViewColumn("Hosts", renderer, text=1)
+        self.view.append_column(column)
+        self.view.connect("row_activated", self.on_click)
+        return self.view
+
+    def update_view(self, model):
+        self.view.set_model(model)
+
+    def on_click(self, tree_view, path, column):
+        tree_iter = self.current_model.get_iter(path)
+        host_id = self.current_model[tree_iter][0]
+        self.open_dialog_callback(host_id)
 
     def get_box(self):
         box = Gtk.Box()
-        box.pack_start(Gtk.Label("HOALLASLD"), True, True, 0)
+        scrolled_view = Gtk.ScrolledWindow(None, None)
+        scrolled_view.add(self.view)
+        box.pack_start(scrolled_view, True, True, 0)
         return box
 
 class WorkspaceSidebar(Gtk.Widget):

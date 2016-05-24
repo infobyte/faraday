@@ -393,6 +393,76 @@ class PluginOptionsDialog(Gtk.Window):
         adecuateModel = self.models[self.id_of_selected]
         self.createAdecuatePluginSettingView(adecuateModel)
 
+class HostInfoDialog(Gtk.Window):
+    def __init__(self, parent, host):
+        Gtk.Window.__init__(self,
+                            title="Host " + host.name + " information")
+        self.set_transient_for(parent)
+        self.set_size_request(400, 200)
+        self.set_modal(True)
+        self.connect("key_press_event", on_scape)
+
+        basic_info = self.create_basic_info_box(host)
+        tree = self.create_tree_box(host)
+        button = Gtk.Button.new_with_label("OK")
+        button.connect("clicked", self.on_click_ok)
+
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        info_box = Gtk.Box()
+        info_box.pack_start(basic_info, False, False, 10)
+        info_box.pack_start(tree, True, True, 10)
+        main_box.pack_start(info_box, True, True, 10)
+        button_box = Gtk.Box()
+        button_box.pack_start(button, False, False, 10)
+        main_box.pack_start(button_box, False, True, 10)
+
+        self.add(main_box)
+
+    def create_basic_info_box(self, host):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+
+        name_box = Gtk.Box()
+        name = Gtk.Label("Name: " + host.getName())
+        name_box.pack_start(name, False, False, 5)
+
+        os_box = Gtk.Box()
+        os = Gtk.Label("OS: " + host.getOS())
+        os_box.pack_start(os, False, False, 5)
+
+        owned_box = Gtk.Box()
+        owned = Gtk.Label("Owned?: " + ("Yes" if host.isOwned() else "No"))
+        owned_box.pack_start(owned, False, False, 5)
+
+        vulns_box = Gtk.Box()
+        vulns = Gtk.Label("Vulnerabilities: " + str(len(host.getVulns())))
+        vulns_box.pack_start(vulns, False, False, 5)
+
+        box.pack_start(name_box, False, True, 0)
+        box.pack_start(os_box, False, True, 0)
+        box.pack_start(owned_box, False, True, 0)
+        box.pack_start(vulns_box, False, False, 0)
+
+        return box
+
+    def create_tree_box(self, host):
+        box = Gtk.Box()
+        interfaces = host.getAllInterfaces()
+        model = Gtk.TreeStore(str)
+        for interface in interfaces:
+            tree_iter = model.append(None, [interface.getName()])
+            services = interface.getAllServices()
+            for service in services:
+                model.append(tree_iter, [service.getName()])
+
+        view = Gtk.TreeView(model)
+        renderer = Gtk.CellRendererText()
+        column = Gtk.TreeViewColumn("Interfaces & services", renderer, text=0)
+        view.append_column(column)
+        box.pack_start(view, True, True, 10)
+        return box
+
+    def on_click_ok(self, button):
+        self.destroy()
 
 class ConflictsDialog(Gtk.Window):
     """Blueprints for a beautiful, colorful, gtk-esque conflicts

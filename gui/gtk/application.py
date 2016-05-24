@@ -54,6 +54,8 @@ from dialogs import ImportantErrorDialog
 from dialogs import ConflictsDialog
 
 from mainwidgets import Sidebar
+from mainwidgets import WorkspaceSidebar
+from mainwidgets import HostsSidebar
 from mainwidgets import ConsoleLog
 from mainwidgets import Terminal
 from mainwidgets import Statusbar
@@ -140,8 +142,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         if CONF.getLastWorkspace() == ws_name:
             self.openDefaultWorkspace()
         self.getWorkspaceManager().removeWorkspace(ws_name)
-        self.sidebar.clearSidebar()
-        self.sidebar.refreshSidebar()
+        self.ws_sidebar.clearSidebar()
+        self.ws_sidebar.refreshSidebar()
 
     def do_startup(self):
         """
@@ -153,11 +155,16 @@ class GuiApp(Gtk.Application, FaradayUi):
         """
         Gtk.Application.do_startup(self)  # deep GTK magic
 
-        self.sidebar = Sidebar(self.workspace_manager,
-                               self.changeWorkspace,
-                               self.removeWorkspace,
-                               self.on_new_button,
-                               CONF.getLastWorkspace())
+        self.ws_sidebar = WorkspaceSidebar(self.workspace_manager,
+                                           self.changeWorkspace,
+                                           self.removeWorkspace,
+                                           self.on_new_button,
+                                           CONF.getLastWorkspace())
+
+        self.hosts_sidebar = HostsSidebar()
+
+        self.sidebar = Sidebar(self.ws_sidebar.get_box(),
+                               self.hosts_sidebar.get_box())
 
         host_count, service_count, vuln_count = self.update_counts()
 
@@ -310,8 +317,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         workspaces and injects all the new ones in there too"""
         self.workspace_manager.closeWorkspace()
         self.workspace_manager.resource()
-        self.sidebar.clearSidebar()
-        self.sidebar.refreshSidebar()
+        self.ws_sidebar.clearSidebar()
+        self.ws_sidebar.refreshSidebar()
 
     def on_pluginOptions(self, action, param):
         """Defines what happens when you press "Plugins" on the menu"""
@@ -323,7 +330,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         "Defines what happens when you press the 'new' button on the toolbar"
         new_workspace_dialog = NewWorkspaceDialog(self.createWorkspace,
                                                   self.workspace_manager,
-                                                  self.sidebar, self.window,
+                                                  self.ws_sidebar, self.window,
                                                   title)
         new_workspace_dialog.show_all()
 

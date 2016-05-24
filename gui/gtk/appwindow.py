@@ -81,11 +81,13 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.topBox.pack_start(self.create_toolbar(), True, True, 0)
 
         # SIDEBAR BOX
-        search = self.sidebar.getSearchEntry()
-        self.sidebarBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.sidebarBox.pack_start(search, False, False, 0)
-        self.sidebarBox.pack_start(self.sidebar.scrollableView, True, True, 0)
-        self.sidebarBox.pack_start(self.sidebar.getButton(), False, False, 0)
+#       search = self.sidebar.getSearchEntry()
+#       self.sidebarBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+#       self.sidebarBox.pack_start(search, False, False, 0)
+       # self.sidebarBox.pack_start(self.sidebar.scrollableView, True, True, 0)
+       # self.sidebarBox.pack_start(self.sidebar.getButton(), False, False, 0)
+
+        self.sidebarBox = self.sidebar.get_box()
 
         # TERMINAL BOX
         self.firstTerminalBox = self.terminalBox(self.terminal.getTerminal())

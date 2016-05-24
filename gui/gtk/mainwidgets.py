@@ -53,10 +53,39 @@ class Terminal(Vte.Terminal):
                         None,
                         None)
 
+class Sidebar(Gtk.Notebook):
+    """Defines the bigger sidebar in a notebook. One of its tabs will contain
+    the workspace view, listing all the workspaces (WorkspaceSidebar) and the
+    other will contain the information about hosts, services, and vulns
+    (HostsSidebar)
+    """
 
-class Sidebar(Gtk.Widget):
+    def __init__(self, workspace_sidebar, hosts_sidebar):
+        super(Gtk.Notebook, self).__init__()
+        self.workspace_sidebar = workspace_sidebar
+        self.hosts_sidebar = hosts_sidebar
+        self.set_tab_pos(Gtk.PositionType.BOTTOM)
+
+        self.append_page(self.workspace_sidebar, Gtk.Label("Workspaces"))
+        self.append_page(self.hosts_sidebar, Gtk.Label("Hosts"))
+
+    def get_box(self):
+        box = Gtk.Box()
+        box.pack_start(self, True, True, 0)
+        return box
+
+class HostsSidebar(Gtk.Widget):
+    def __init__(self):
+        super(Gtk.Widget, self).__init__()
+
+    def get_box(self):
+        box = Gtk.Box()
+        box.pack_start(Gtk.Label("HOALLASLD"), True, True, 0)
+        return box
+
+class WorkspaceSidebar(Gtk.Widget):
     """Defines the sidebar widget to be used by the AppWindow, passed as an
-    instance to itby the application. It only handles the view and the model,
+    instance to the application. It only handles the view and the model,
     all the backend word is handled by the application via the callback"""
 
     def __init__(self, workspace_manager, callback_to_change_workspace,
@@ -83,6 +112,13 @@ class Sidebar(Gtk.Widget):
         self.scrollableView.set_min_content_width(160)
         self.scrollableView.add(self.workspace_view)
 
+    def get_box(self):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        box.pack_start(self.getSearchEntry(), False, False, 0)
+        box.pack_start(self.getScrollableView(), True, True, 0)
+        box.pack_start(self.getButton(), False, False, 0)
+        return box
+
     def createSearchEntry(self):
         """Returns a simple search entry"""
         searchEntry = Gtk.Entry()
@@ -93,6 +129,9 @@ class Sidebar(Gtk.Widget):
     def getSearchEntry(self):
         """Returns the search entry of the sidebar"""
         return self.searchEntry
+
+    def getScrollableView(self):
+        return self.scrollableView
 
     def onSearchEnterKey(self, entry):
         """When the users preses enter, if the workspace exists,

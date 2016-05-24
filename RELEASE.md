@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA:
+May 23, 2016:
 ---
 * Removed description from Hosts list in WEB UI
 * Fixed sort in Hosts list in WEB UI
@@ -29,6 +29,9 @@ TBA:
 * Improved text formatting in Gtk's log console
 * Fixed several small bugs in Faraday GTK
 * Added support for resize workspace bar.
+* Added a quote for imported reports in WEB UI.
+* Added support for a new type of report in Qualysguard plugin.
+* Fixed bugs in plugins: Acunetix - Nmap - Nikto. 
 
 Apr 29, 2016:
 ---

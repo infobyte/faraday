@@ -90,7 +90,7 @@ class CmdNetcatPlugin(core.PluginBase):
         ip_address, hostname = self.resolveHost(attr_dict['host'])
 
         # When service does not match anything in /etc/services, we get those
-        if attr_dict['service'] == '*' or attr_dict['service'] == '?':
+        if attr_dict['service'] == '*' or attr_dict['service'] == '?' or attr_dict['service'] is None:
             attr_dict['service'] = 'unknown'
 
         if 'protocol' not in attr_dict:
@@ -121,7 +121,7 @@ class CmdNetcatPlugin(core.PluginBase):
         will try to cover both cases.
         """
         nc_bsd_rx = re.compile(r'^Connection\s+to\s+(?P<host>\S+)\s+(?P<port>\d+)\s+port\s+\[(?P<protocol>tcp|udp)/(?P<service>[^\]]+)\]\s+succeeded.*')
-        nc_sys_rx = re.compile(r'^(?P<host>\S+)\s+\[(?P<address>[0-9\.]+)\]\s+(?P<port>\d+)\s+\((?P<service>[^)]+)\)\s+open.*')
+        nc_sys_rx = re.compile(r'^(?P<host>\S+)\s+\[(?P<address>[0-9\.]+)\]\s+(?P<port>\d+)(?:\s+\((?P<service>[^)]+)\))?\s+open.*')
 
         nc_bsd_match = self.matchInOutput(nc_bsd_rx, output)
         if nc_bsd_match is not None:

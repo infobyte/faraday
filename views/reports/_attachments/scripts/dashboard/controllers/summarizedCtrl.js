@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('summarizedCtrl', 
+    .controller('summarizedCtrl',
         ['$scope', '$route', '$routeParams', '$uibModal', '$filter', '$cookies', 'dashboardSrv', 'vulnsManager', 'workspacesFact',
         function($scope, $route, $routeParams, $uibModal, $filter, $cookies, dashboardSrv, vulnsManager, workspacesFact) {
             //current workspace
@@ -24,7 +24,7 @@ angular.module('faradayApp')
             $scope.topServices; // previously known as treemapData
             $scope.topHosts; // previously known as barData
             $scope.vulnsCount;
-            $scope.vulnsCountClass; // classified vulns count 
+            $scope.vulnsCountClass; // classified vulns count
 
             // vulnsByPrice
             $scope.workspaceWorth;
@@ -450,86 +450,4 @@ angular.module('faradayApp')
             };
 
             init();
-    }]);
-
-angular.module('faradayApp')
-    .controller('summarizedCtrlServicesModal', 
-        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'host',
-        function($scope, $modalInstance, dashboardSrv, workspace, host) {
-
-            $scope.host = host
-            $scope.sortField = 'port';
-            $scope.sortReverse = false;
-            
-            // toggles sort field and order
-            $scope.toggleSort = function(field) {
-                $scope.toggleSortField(field);
-                $scope.toggleReverse();
-            };
-
-            // toggles column sort field
-            $scope.toggleSortField = function(field) {
-                $scope.sortField = field;
-            };
-
-            // toggle column sort order
-            $scope.toggleReverse = function() {
-                $scope.sortReverse = !$scope.sortReverse;
-            }
-
-            dashboardSrv.getServicesByHost(workspace, host._id).then(function(services){
-                dashboardSrv.getName(workspace, host._id).then(function(name){
-                    $scope.name = name;
-                    $scope.services = services;
-                })
-            });
-
-            $scope.ok = function(){
-                $modalInstance.close();
-            }
-
-    }]);
-
-angular.module('faradayApp')
-    .controller('summarizedCtrlHostsModal', 
-        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'srv_name',
-        function($scope, $modalInstance, dashboardSrv, workspace, srv_name) {
-
-            $scope.sortField = 'name';
-            $scope.sortReverse = false;
-            $scope.clipText = "Copy to Clipboard";
-            
-            // toggles sort field and order
-            $scope.toggleSort = function(field) {
-                $scope.toggleSortField(field);
-                $scope.toggleReverse();
-            };
-
-            // toggles column sort field
-            $scope.toggleSortField = function(field) {
-                $scope.sortField = field;
-            };
-
-            // toggle column sort order
-            $scope.toggleReverse = function() {
-                $scope.sortReverse = !$scope.sortReverse;
-            }
-
-            dashboardSrv.getHostsByServicesName(workspace, srv_name).then(function(hosts){
-                $scope.name = srv_name;
-                $scope.hosts = hosts;
-                $scope.clip = "";
-                $scope.hosts.forEach(function(h){
-                    $scope.clip += h.name + "\n";
-                });
-            });
-
-            $scope.messageCopied = function(){
-                $scope.clipText = "Copied!";
-            }
-
-            $scope.ok = function(){
-                $modalInstance.close();
-            }
-
     }]);

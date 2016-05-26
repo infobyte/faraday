@@ -417,9 +417,11 @@ class HostInfoDialog(Gtk.Window):
 
         main_box = Gtk.Box()
         left_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        left_box.pack_start(Gtk.Label("Host information: \n"), False, False, 0)
+        host_label = Gtk.Label()
+        host_label.set_markup("<big>Host information</big>")
+        left_box.pack_start(host_label, False, False, 10)
         left_box.pack_start(basic_info, False, False, 10)
-        left_box.pack_start(self.specific_info, True, False, 10)
+        left_box.pack_start(self.specific_info, True, True, 10)
         left_box.pack_start(button, False, False, 10)
         right_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         right_box.pack_start(tree, True, True, 10)
@@ -438,20 +440,28 @@ class HostInfoDialog(Gtk.Window):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 
         name_box = Gtk.Box()
-        name = Gtk.Label("Name: " + host.getName())
-        name_box.pack_start(name, False, False, 5)
+        name_label = Gtk.Label()
+        name_label.set_markup("<b>%s</b>: %s" % ("Name", host.getName()))
+        name_box.pack_start(name_label, False, False, 5)
 
         os_box = Gtk.Box()
-        os = Gtk.Label("OS: " + host.getOS())
-        os_box.pack_start(os, False, False, 5)
+        os_label = Gtk.Label()
+        os_label.set_markup("<b>%s</b>: %s" % ("OS", host.getOS()))
+        os_box.pack_start(os_label, False, False, 5)
 
         owned_box = Gtk.Box()
-        owned = Gtk.Label("Owned?: " + ("Yes" if host.isOwned() else "No"))
-        owned_box.pack_start(owned, False, False, 5)
+        owned_label = Gtk.Label()
+        owned_status = ("Yes" if host.isOwned() else "No")
+        owned_label.set_markup("<b>%s: </b>%s" % ("Owned", owned_status))
+        owned_box.pack_start(owned_label, False, False, 5)
 
         vulns_box = Gtk.Box()
-        vulns = Gtk.Label("Vulnerabilities: " + str(len(host.getVulns())))
-        vulns_box.pack_start(vulns, False, False, 5)
+        vulns_label = Gtk.Label()
+        vulns_count = str(len(host.getVulns()))
+        vulns_label.set_markup("<b>%s</b>: %s" %
+                              ("Vulnerabilities", vulns_count))
+
+        vulns_box.pack_start(vulns_label, False, False, 5)
 
         box.pack_start(name_box, False, True, 0)
         box.pack_start(os_box, False, True, 0)
@@ -544,7 +554,8 @@ class HostInfoDialog(Gtk.Window):
         """Creates labels for each of the properties of an interface. Appends
         them to the specific_info_box.
         """
-        interface_label = Gtk.Label("Interface information: \n")
+        interface_label = Gtk.Label()
+        interface_label.set_markup("<big>Interace information:</big>")
         self.specific_info.pack_start(interface_label, False, False, 0)
         for prop in enumerate(["Name: ", "Description: ", "MAC: ",
                                "IPv4 Mask: ", "IPv4 Gateway: ", "IPv4 DNS: ",
@@ -557,7 +568,8 @@ class HostInfoDialog(Gtk.Window):
         """Creates labels for each of the properties of a service. Appends
         them to the specific_info_box.
         """
-        service_label = Gtk.Label("Service information: \n")
+        service_label = Gtk.Label()
+        service_label.set_markup("<big>Service information:</big>")
         self.specific_info.pack_start(service_label, False, False, 0)
         for prop in enumerate(["Name: ", "Description: ", "Protocol: ",
                                "Status: ", "Ports: ", "Version: ",
@@ -571,8 +583,11 @@ class HostInfoDialog(Gtk.Window):
         """
 
         prop_box = Gtk.Box()
-        prop_label = Gtk.Label(prop[1])
+        prop_label = Gtk.Label()
+        prop_label.set_markup("<b> %s </b>" % (prop[1]))
         value_label = Gtk.Label(selected[prop[0]])
+        value_label.set_selectable(True)
+        value_label.set_line_wrap_mode(True)
         prop_box.pack_start(prop_label, False, False, 0)
         prop_box.pack_start(value_label, False, False, 0)
         self.specific_info.pack_start(prop_box, True, True, 0)

@@ -515,7 +515,8 @@ class HostInfoDialog(Gtk.Window):
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("Interfaces & services", renderer, text=0)
         self.view.append_column(column)
-        self.view.connect("row_activated", self.on_selection)
+        selection = self.view.get_selection()
+        selection.connect("changed", self.on_selection)
 
         scrolled_view = Gtk.ScrolledWindow(None, None)
         scrolled_view.add(self.view)
@@ -524,14 +525,13 @@ class HostInfoDialog(Gtk.Window):
 
         return box
 
-    def on_selection(self, tree_view, path, columns):
+    def on_selection(self, tree_selection):
         """Defines what happens when the user clicks on a row. Shows
         the interface or service information according to what the user
         selected. Before calling the corresponding functions, will clear
         the current specific_info box.
         """
-        model = tree_view.get_model()
-        tree_iter = model.get_iter(path)
+        model, tree_iter = tree_selection.get_selected()
         iter_depth = model.iter_depth(tree_iter)
         selected = model[tree_iter]
         self.specific_info.foreach(self.reset_info)

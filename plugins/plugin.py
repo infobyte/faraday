@@ -104,13 +104,14 @@ class PluginBase(object):
 
     def processOutput(self, term_output):
         output = term_output
-        if self.has_custom_output():
+        if self.has_custom_output() and os.path.isfile(self.get_custom_file_path()):
             output = open(self.get_custom_file_path(), 'r').read()
         self.parseOutputString(output)
 
     def processReport(self, filepath):
-        output = open(filepath, 'r').read()
-        self.parseOutputString(output)
+        if os.path.isfile(filepath):
+            output = open(filepath, 'r').read()
+            self.parseOutputString(output)
 
     def parseOutputString(self, output):
         """

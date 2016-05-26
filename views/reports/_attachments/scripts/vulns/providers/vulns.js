@@ -33,7 +33,7 @@ angular.module('faradayApp')
             var res = {};
 
             services.forEach(function(service) {
-                res[service._id] = "(" + service['ports'].join(",") + "/" + service['protocol'] + ") " + service['name'];
+                res[service._id] = "(" + service['ports'] + "/" + service['protocol'] + ") " + service['name'];
             });
 
             return res;

@@ -14,7 +14,8 @@ angular.module('faradayApp')
             // current workspace
             $scope.workspace = $routeParams.wsId;
 
-            $scope.sortField = "name";
+            $scope.sortField = "vulns";
+            $scope.reverse = true;
 
             // load all workspaces
             workspacesFact.list().then(function(wss) {
@@ -26,30 +27,36 @@ angular.module('faradayApp')
                     $scope.hosts = hosts;
                     $scope.loadedVulns = true;
                     $scope.loadIcons();
-                });
 
-            hostsManager.getAllServicesCount($scope.workspace)
+                    return hostsManager.getAllServicesCount($scope.workspace);
+                })
                 .then(function(servicesCount) {
-                    $scope.servicesCount = servicesCount;
-                });
+                    $scope.hosts.forEach(function(host) {
+                        host.services = servicesCount[host._id] || 0;
+                    });
 
-            hostsManager.getAllVulnsCount($scope.workspace)
+                    return hostsManager.getAllVulnsCount($scope.workspace);
+                })
                 .then(function(vulns) {
-                    $scope.vulnsCount = {};
+                    var vulnsCount = {};
                     vulns.forEach(function(vuln) {
                         var parts = vuln.key.split("."),
                         parent = parts[0];
 
-                        if(parts.length > 1) $scope.vulnsCount[vuln.key] = vuln.value;
-                        if($scope.vulnsCount[parent] == undefined) $scope.vulnsCount[parent] = 0;
-                        $scope.vulnsCount[parent] += vuln.value;
+                        if(parts.length > 1) vulnsCount[vuln.key] = vuln.value;
+                        if(vulnsCount[parent] == undefined) vulnsCount[parent] = 0;
+                        vulnsCount[parent] += vuln.value;
+
+                        $scope.hosts.forEach(function(host) {
+                            host.vulns = vulnsCount[host._id] || 0;
+                        });
                     });
                 })
                 .catch(function(e) {
                     console.log(e);
                 });
 
-            $scope.pageSize = 10;
+            $scope.pageSize = 100;
             $scope.currentPage = 0;
             $scope.newCurrentPage = 0;
 
@@ -272,7 +279,6 @@ angular.module('faradayApp')
         };
 
         $scope.update = function(host, hostdata, interfaceData) {
-            delete host.selected;
             hostsManager.updateHost(host, hostdata, interfaceData, $scope.workspace).then(function() {
                 // load icons in case an operating system changed
                 $scope.loadIcons();

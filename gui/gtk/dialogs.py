@@ -15,6 +15,7 @@ from gi.repository import Gtk, GdkPixbuf, Gdk
 from persistence.persistence_managers import CouchDbManager
 from utils.common import checkSSL
 from config.configuration import getInstanceConfiguration
+from model import guiapi
 
 
 CONF = getInstanceConfiguration()
@@ -40,8 +41,10 @@ class PreferenceWindowDialog(Gtk.Window):
     def __init__(self, callback, parent):
         Gtk.Window.__init__(self, title="Preferences")
         self.parent = parent
+        self.set_modal(True)
         self.set_size_request(400, 100)
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+        self.connect("key_press_event", on_scape)
         self.set_transient_for(parent)
         self.timeout_id = None
         self.reloadWorkspaces = callback
@@ -51,25 +54,25 @@ class PreferenceWindowDialog(Gtk.Window):
 
         self.label = Gtk.Label()
         self.label.set_text("Your Couch IP")
-        vbox.pack_start(self.label, True, False, 0)
+        vbox.pack_start(self.label, True, False, 10)
 
         couch_uri = CONF.getCouchURI()
         self.entry = Gtk.Entry()
         text = couch_uri if couch_uri else "http://127.0.0.1:5050"
         self.entry.set_text(text)
-        vbox.pack_start(self.entry, True, False, 0)
+        vbox.pack_start(self.entry, True, False, 10)
 
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        vbox.pack_end(hbox, False, True, 0)
+        vbox.pack_end(hbox, False, True, 10)
 
         self.OK_button = Gtk.Button.new_with_label("OK")
         self.OK_button.connect("clicked", self.on_click_OK)
 
-        hbox.pack_start(self.OK_button, False, True, 0)
+        hbox.pack_start(self.OK_button, False, True, 10)
 
         self.cancel_button = Gtk.Button.new_with_label("Cancel")
         self.cancel_button.connect("clicked", self.on_click_cancel)
-        hbox.pack_end(self.cancel_button, False, True, 0)
+        hbox.pack_end(self.cancel_button, False, True, 10)
 
     def on_click_OK(self, button):
         """Defines what happens when user clicks OK button"""
@@ -95,11 +98,14 @@ class NewWorkspaceDialog(Gtk.Window):
     a description and a type for a new workspace. Also checks that the
     those attributes don't correspond to an existing workspace"""
 
-    def __init__(self, callback,  workspace_manager, sidebar, parent):
+    def __init__(self, callback,  workspace_manager, sidebar, parent,
+                 title=None):
 
         Gtk.Window.__init__(self, title="Create New Workspace")
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
+        self.set_modal(True)
+        self.connect("key_press_event", on_scape)
         self.set_size_request(200, 200)
         self.timeout_id = None
         self.callback = callback
@@ -111,6 +117,8 @@ class NewWorkspaceDialog(Gtk.Window):
         self.name_label = Gtk.Label()
         self.name_label.set_text("Name: ")
         self.name_entry = Gtk.Entry()
+        if title is not None:
+            self.name_entry.set_text(title)
         self.nameBox.pack_start(self.name_label, False, False, 10)
         self.nameBox.pack_end(self.name_entry, True, True, 10)
         self.nameBox.show()
@@ -142,10 +150,10 @@ class NewWorkspaceDialog(Gtk.Window):
         self.buttonBox.pack_end(self.cancel_button, False, False, 10)
         self.buttonBox.show()
 
-        self.mainBox.pack_start(self.nameBox, False, False, 0)
-        self.mainBox.pack_start(self.descrBox, False, False, 0)
-        self.mainBox.pack_start(self.typeBox, False, False, 0)
-        self.mainBox.pack_end(self.buttonBox, False, False, 0)
+        self.mainBox.pack_start(self.nameBox, False, False, 10)
+        self.mainBox.pack_start(self.descrBox, False, False, 10)
+        self.mainBox.pack_start(self.typeBox, False, False, 10)
+        self.mainBox.pack_end(self.buttonBox, False, False, 10)
 
         self.mainBox.show()
         self.add(self.mainBox)
@@ -180,7 +188,7 @@ class PluginOptionsDialog(Gtk.Window):
     """The dialog where the user can see details about installed plugins.
     It is not the prettiest thing in the world but it works.
     Creating and displaying the models of each plugin settings is specially
-    messy, there's more info in the appropiate methods"""
+    messy , there's more info in the appropiate methods"""
     # TODO: probably stop hardcoding the first plugin, right?
 
     def __init__(self, plugin_manager, parent):
@@ -188,6 +196,8 @@ class PluginOptionsDialog(Gtk.Window):
         Gtk.Window.__init__(self, title="Plugins Options")
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
+        self.set_modal(True)
+        self.connect("key_press_event", on_scape)
         self.set_size_request(800, 300)
 
         if plugin_manager is not None:
@@ -204,7 +214,7 @@ class PluginOptionsDialog(Gtk.Window):
         pluginList = self.createPluginListView(plugin_info)
         scroll_pluginList = Gtk.ScrolledWindow(None, None)
         scroll_pluginList.add(pluginList)
-        # scroll_pluginList.set_min_content_width(300)
+        scroll_pluginList.set_min_content_width(300)
         pluginListBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         pluginListBox.pack_start(scroll_pluginList, True, True, 0)
 
@@ -213,9 +223,9 @@ class PluginOptionsDialog(Gtk.Window):
         cancel_button = Gtk.Button.new_with_label("Cancel")
         OK_button.connect("clicked", self.on_click_OK, plugin_manager)
         cancel_button.connect("clicked", self.on_click_cancel)
-        buttonBox.pack_start(OK_button, True, True, 0)
-        buttonBox.pack_start(cancel_button, True, True, 0)
-        pluginListBox.pack_start(buttonBox, False, False, 0)
+        buttonBox.pack_start(OK_button, True, True, 10)
+        buttonBox.pack_start(cancel_button, True, True, 10)
+        pluginListBox.pack_start(buttonBox, False, False, 10)
 
         infoBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         nameBox, versionBox, pluginVersionBox = [Gtk.Box() for i in range(3)]
@@ -246,8 +256,8 @@ class PluginOptionsDialog(Gtk.Window):
         self.pluginSpecsBox.pack_start(self.settings_view, True, True, 0)
 
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.mainBox.pack_start(pluginListBox, True, True, 5)
-        self.mainBox.pack_end(self.pluginSpecsBox, True, True, 5)
+        self.mainBox.pack_start(pluginListBox, False, True, 10)
+        self.mainBox.pack_end(self.pluginSpecsBox, True, True, 10)
 
         self.add(self.mainBox)
 
@@ -350,15 +360,31 @@ class PluginOptionsDialog(Gtk.Window):
         """When the user selects a plugin, it will change the text
         displeyed on the entries to their corresponding values"""
 
-        model, treeiter = selection.get_selected()
-        self.id_of_selected = model[treeiter][1]
-        self.name_of_selected = model[treeiter][0]
+        # if the user searches for something that doesn't exists,
+        # for example, the plugin 'jsaljfdlajs', this avoids
+        # the program trying to get settings for that non-existing plugin
+        try:
+            model, treeiter = selection.get_selected()
+            self.name_of_selected = model[treeiter][0]
+            self.id_of_selected = model[treeiter][1]
+            tool_version = model[treeiter][2]
+            plugin_version = model[treeiter][3]
 
-        self.setSettingsView()
+            self.setSettingsView()
 
-        self.nameEntry.set_label(model[treeiter][1])
-        self.versionEntry.set_label(model[treeiter][2])
-        self.pluginVersionEntry.set_label(model[treeiter][3])
+            self.nameEntry.set_label(self.name_of_selected)
+
+            if tool_version:
+                self.versionEntry.set_label(tool_version)
+            else:
+                self.versionEntry.set_label("")
+
+            if plugin_version:
+                self.pluginVersionEntry.set_label(plugin_version)
+            else:
+                self.pluginVersionEntry.set_label("")
+        except TypeError:
+            pass
 
     def setSettingsView(self):
         """Makes the window match the selected plugin with the settings
@@ -366,6 +392,457 @@ class PluginOptionsDialog(Gtk.Window):
 
         adecuateModel = self.models[self.id_of_selected]
         self.createAdecuatePluginSettingView(adecuateModel)
+
+
+class ConflictsDialog(Gtk.Window):
+    """Blueprints for a beautiful, colorful, gtk-esque conflicts
+    dialog. The user is confronted with two objects, one at the left,
+    one at the right, and is able to edit any of the object's properties,
+    choosing either one of them with a button"""
+
+    def __init__(self, conflicts, parent):
+        """Inits the window with its title and size, presents the
+        user with the first conflict found. If there aren't conflict
+        an empty window will be presented"""
+
+        Gtk.Window.__init__(self, title="Conflicts")
+        self.set_transient_for(parent)
+        self.set_size_request(600, 400)
+        self.set_modal(True)
+        self.connect("key_press_event", on_scape)
+        self.conflicts = conflicts
+        self.conflict_n = 0
+        self.current_conflict = self.conflicts[self.conflict_n]
+        self.view = None
+
+        self.views_box = Gtk.Box()
+
+        # TODO: FIX THIS
+        # this is the wrong way to do it, I'm creating a useless gtk.tree
+        # so I can know the user's default color background
+        # that not being bad enought, get_background_color is deprecated
+        dumpy_tree = Gtk.TreeView()
+        style = dumpy_tree.get_style_context()
+        self.bg_color = style.get_background_color(Gtk.StateFlags.NORMAL)
+        self.bg_color = self.bg_color.to_string()
+
+        button_box = self.create_buttons()
+
+        self.models = self.create_conflicts_models(conflicts)
+        self.set_conflict_view(self.conflict_n)
+        self.current_conflict_model = self.models[self.conflict_n]
+
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        main_box.pack_start(self.views_box, True, True, 5)
+        main_box.pack_start(button_box, False, True, 5)
+
+        self.add(main_box)
+
+    def update_current_conflict_model(self):
+        self.current_conflict_model = self.models[self.conflict_n]
+
+    def update_current_conflict(self):
+        self.current_conflict = self.conflicts[self.conflict_n]
+
+    def create_buttons(self):
+        """Creates and connects the button for the window"""
+        button_box = Gtk.Box()
+        keep_right = Gtk.Button.new_with_label("Keep RIGHT")
+        keep_left = Gtk.Button.new_with_label("Keep LEFT")
+        quit = Gtk.Button.new_with_label("Quit")
+
+        keep_right.connect("clicked", self.save, "right")
+        keep_left.connect("clicked", self.save, "left")
+        quit.connect("clicked", self.on_quit)
+
+        space = Gtk.Box()
+        button_box.pack_start(quit, False, False, 5)
+        button_box.pack_start(space, True, True, 5)
+        button_box.pack_start(keep_left, False, False, 5)
+        button_box.pack_start(keep_right, False, False, 5)
+        return button_box
+
+    def save(self, button, keeper):
+        """Saves information to Faraday. Keeper is needed to know if user
+        wanted to keep left or right view"""
+        current_conflict_type = self.current_conflict.getModelObjectType()
+
+        # right is represented by column 2 of the model, left by column 1
+        if keeper == "right":
+            n = 2
+        elif keeper == "left":
+            n = 1
+
+        # interface needs a special case, 'cause it's the only object
+        # which resolveConflict() will expect its solution to have a
+        # dicitionary inside the solution dictionary
+        if current_conflict_type != "Interface":
+            solution = {}
+            for row in self.current_conflict_model:
+                solution[row[0].lower()] = self.uncook(row[n], row[4])
+        else:
+            solution = self.case_for_interfaces(self.current_conflict_model, n)
+
+        try:
+            guiapi.resolveConflict(self.current_conflict, solution)
+            # if this isn't the last conflict...
+            if len(self.conflicts)-1 > self.conflict_n:
+                self.conflict_n += 1
+                self.update_current_conflict()
+                self.update_current_conflict_model()
+                self.set_conflict_view(self.conflict_n)
+            else:
+                self.destroy()
+
+        except ValueError as e:
+            dialog = Gtk.MessageDialog(self, 0,
+                                       Gtk.MessageType.INFO,
+                                       Gtk.ButtonsType.OK,
+                                       ("You tried to set some invalid "
+                                        "information. Make sure all True/False"
+                                        " settings are either True or False, "
+                                        "all values that should be numbers are"
+                                        " numbers, and so on."))
+            dialog.run()
+            dialog.destroy()
+
+    def case_for_interfaces(self, model, n):
+        """The custom case for the interfaces. Plays a little
+        with the information in the given model to create a solution acceptable
+        by resolveConflict. n is the right or left view, should be
+        either 1 or 2 as integers"""
+        solution = {}
+        solution["ipv4"] = {}
+        solution["ipv6"] = {}
+        for row in model:
+            prop_name = row[0].lower()
+            if prop_name.startswith("ipv4"):
+                prop_name = prop_name.split(" ")[1]
+                if not prop_name.startswith("dns"):
+                    solution["ipv4"][prop_name] = self.uncook(row[n], row[4])
+                elif prop_name.startswith("dns"):
+                    solution["ipv4"]["DNS"] = self.uncook(row[n], row[4])
+
+            elif prop_name.startswith("ipv6"):
+                prop_name = prop_name.split(" ")[1]
+                if not prop_name.startswith("dns"):
+                    solution["ipv6"][prop_name] = self.uncook(row[n], row[4])
+                elif prop_name.startswith("dns"):
+                    solution["ipv6"]["DNS"] = self.uncook(row[n], row[4])
+            else:
+                solution[prop_name] = self.uncook(row[n], row[4])
+        return solution
+
+    def on_quit(self, button):
+        """Exits the window"""
+        self.destroy()
+
+    def set_conflict_view(self, conflict_n):
+        """Creates two views for the model corresponding to the conflict number
+        n. If first conflict, self.view will be none. If user is past the first
+        conflict, self.view will not be none"""
+
+        if self.view is None:
+
+            renderer = Gtk.CellRendererText()
+
+            original_renderer = Gtk.CellRendererText()
+            original_renderer.set_property("editable", True)
+            original_renderer.connect("edited", self.value_changed, "original")
+
+            conflict_renderer = Gtk.CellRendererText()
+            conflict_renderer.set_property("editable", True)
+            conflict_renderer.connect("edited", self.value_changed, "conflict")
+
+            prop_column = Gtk.TreeViewColumn("", renderer, text=0,
+                                             background=3)
+
+            obj_column = Gtk.TreeViewColumn("ORIGINAL", original_renderer,
+                                            text=1, background=3)
+
+            prop2_column = Gtk.TreeViewColumn("", renderer, text=0,
+                                              background=3)
+            obj2_column = Gtk.TreeViewColumn("CONFLICTING", conflict_renderer,
+                                             text=2, background=3)
+
+            self.view = Gtk.TreeView(self.models[conflict_n])
+            self.view.append_column(prop_column)
+            self.view.append_column(obj_column)
+            self.second_view = Gtk.TreeView(self.models[conflict_n])
+
+
+            self.second_view.append_column(prop2_column)
+            self.second_view.append_column(obj2_column)
+
+            self.views_box.pack_start(self.view, True, True, 5)
+            self.views_box.pack_start(self.second_view, True, True, 5)
+
+        else:
+            self.view.set_model(self.models[conflict_n])
+            self.second_view.set_model(self.models[conflict_n])
+
+    def value_changed(self, widget, path, text, which_changed):
+        """Sets the model to keep the information which the user gave on
+        Return Key"""
+        active_store = self.current_conflict_model
+        if which_changed == "original":
+            active_store[path][1] = text
+        elif which_changed == "conflict":
+            active_store[path][2] = text
+
+    def create_conflicts_models(self, conflicts):
+        """ Creates a list of models, one for each conflict. Each model has
+        five columns, as shown in an example with only two rows below:
+        | PROPERTY | OBJECT 1 | OBJECT 2 | ROW COLOR | INPUT TYPE |
+        -----------------------------------------------------------
+        | NAME     |    A     |    B     |  RED      |  STRING    |
+        | PORTS    | 5050, 20 | 5050, 20 | WHITE     |  LIST      |
+        ===========================================================
+        ROW COLOR and INPUT TYPE are never shown to the user.
+        """
+
+        models = []
+        for conflict in conflicts:
+            model = Gtk.ListStore(str, str, str, str, str)
+            obj1 = conflict.getFirstObject()
+            obj2 = conflict.getSecondObject()
+            conflict_type = conflict.getModelObjectType()
+
+            if conflict_type == "Service":
+                self.fill_service_conflict_model(model, obj1, obj2)
+            elif conflict_type == "Interface":
+                self.fill_interface_conflict_model(model, obj1, obj2)
+            elif conflict_type == "Host":
+                self.fill_host_conflict_model(model, obj1, obj2)
+            elif conflict_type == "Vulnerability":
+                self.fill_vuln_conflict_model(model, obj1, obj2)
+            elif conflict_type == "VulnerabilityWeb":
+                self.fill_webvuln_conflict_model(model, obj1, obj2)
+
+            models.append(model)
+
+        return models
+
+    def fill_service_conflict_model(self, model, obj1, obj2):
+        """
+        Precondition: the model has 5 string columns, obj1 && obj2 are services
+        Will get a model and two objects and return a
+        model with all the appropiate information"""
+        attr = []
+        for obj in [obj1, obj2]:
+            attr.append((obj.getName(),
+                         obj.getDescription(),
+                         obj.getProtocol(),
+                         obj.getStatus(),
+                         obj.getPorts(),
+                         obj.getVersion(),
+                         obj.isOwned()))
+
+        props = ["Name", "Description", "Protocol", "Status", "Ports",
+                 "Version", "Owned"]
+
+        model = self.fill_model_from_props_and_attr(model, attr, props)
+        return model
+
+    def fill_host_conflict_model(self, model, obj1, obj2):
+        """
+        Precondition: the model has 5 string columns, obj1 && obj2 are hosts
+        Will get a model and two objects and return a
+        model with all the appropiate information"""
+        attr = []
+        for obj in [obj1, obj2]:
+            attr.append((obj.getName(),
+                         obj.getDescription(),
+                         obj.getOS(),
+                         obj.isOwned()))
+
+        props = ["Name", "Description", "OS", "Owned"]
+        model = self.fill_model_from_props_and_attr(model, attr, props)
+        return model
+
+    def fill_interface_conflict_model(self, model, obj1, obj2):
+        """
+        Precondition: the model has 5 string columns, obj1 && obj2 are
+        interfaces
+        Will get a model and two objects and return a
+        model with all the appropiate information"""
+        attr = []
+        for obj in [obj1, obj2]:
+            attr.append((obj.getName(),
+                         obj.getDescription(),
+                         obj.getHostnames(),
+                         obj.getMAC(),
+                         obj.getIPv4Address(),
+                         obj.getIPv4Mask(),
+                         obj.getIPv4Gateway(),
+                         obj.getIPv4DNS(),
+                         obj.getIPv6Address(),
+                         obj.getIPv6Gateway(),
+                         obj.getIPv6DNS(),
+                         obj.isOwned()))
+
+        props = ["Name", "Description", "Hostnames", "MAC", "IPv4 Address",
+                 "IPv4 Mask", "IPv4 Gateway", "IPv4 DNS", "IPv6 Address",
+                 "IPv6 Gateway", "IPv6 DNS", "Owned"]
+
+        model = self.fill_model_from_props_and_attr(model, attr, props)
+        return model
+
+    def fill_vuln_conflict_model(self, model, obj1, obj2):
+        """
+        Precondition: the model has 5 string columns, obj1 && obj2 are vulns
+        Will get a model and two objects and return a
+        model with all the appropiate information"""
+        attr = []
+        for obj in [obj1, obj2]:
+            attr.append((obj.getName(),
+                         obj.getDescription(),
+                         obj.getData(),
+                         obj.getSeverity(),
+                         obj.getRefs()))
+
+        props = ["Name", "Desc", "Data", "Severity", "Refs"]
+        model = self.fill_model_from_props_and_attr(model, attr, props)
+        return model
+
+    def fill_webvuln_conflict_model(self, model, obj1, obj2):
+        """
+        Precondition: the model has 5 string columns, obj1 && obj2 are web vuln
+        Will get a model and two objects and return a
+        model with all the appropiate information"""
+        attr = []
+        for obj in [obj1, obj2]:
+            attr.append((obj.getName(),
+                         obj.getDescription(),
+                         obj.getData(),
+                         obj.getSeverity(),
+                         obj.getRefs(),
+                         obj.getPath(),
+                         obj.getWebsite(),
+                         obj.getRequest(),
+                         obj.getResponse(),
+                         obj.getMethod(),
+                         obj.getPname(),
+                         obj.getParams(),
+                         obj.getQuery(),
+                         obj.getCategory()))
+
+        props = ["Name", "Desc", "Data", "Severity", "Refs", "Path",
+                 "Website", "Request", "Response", "Method", "Pname",
+                 "Params", "Query", "Category"]
+
+        model = self.fill_model_from_props_and_attr(model, attr, props)
+        return model
+
+    def fill_model_from_props_and_attr(self, model, attr, props):
+        """Preconditions: the model has 5 string columns,
+        len(attr[0]) == len(attr[1]) == len(props),
+        type(attr[0][i]) == type(attr[1][i]) for every i
+        attr is a list of two tuples. the first tuple holds info about obj1,
+        the second about obj2.
+        props is the list with names of such attributes
+
+        Will return a model filled up with information as detailed in
+        self.create_conflicts_models.
+        """
+
+        def decide_type(raw_prop):
+            """Returns the name of a type of an object.
+            Keep in mind, type(type("a")) is Type,
+                          type(type("a").__name__) is Str
+            """
+            res = type(first_raw_prop).__name__
+            return res
+
+        def decide_bg():
+            """Decides which background should the row have depending on
+            the uses default theme (light, dark, or unknown abomination)
+            Pretty ugly, but it works"""
+            color = self.bg_color.split("(")[1]
+            color = color.split(",")
+            color1 = int(color[0])
+            color2 = int(color[1])
+            color3 = int(color[2][:-1:])
+
+            # that weird string formats from rgb to hexa
+            default_bg = '#%02x%02x%02x' % (color1, color2, color3)
+
+            if color1 > 200 and color2 > 200 and color3 > 200:
+                return "pink" if first_prop != sec_prop else default_bg
+            elif color1 < 100 and color2 < 100 and color3 < 100:
+                return "darkred" if first_prop != sec_prop else default_bg
+            else:
+                # if your theme doesn't go for either dark or light
+                # just use that color, screw highlights
+                return '#%02x%02x%02x' % (color1, color2, color3)
+
+        i = 0
+        for prop in props:
+            first_raw_prop = attr[0][i]
+            sec_raw_prop = attr[1][i]
+            first_prop = self.cook(first_raw_prop)
+            sec_prop = self.cook(sec_raw_prop)
+
+            model.append([prop, first_prop, sec_prop,
+                          decide_bg(),
+                          decide_type(first_raw_prop)])
+            i += 1
+
+        return model
+
+    def cook(self, raw_prop):
+        """We need to cook our properties: not all of them are strings by
+        default, and Gtk's models refuse to deal with lists or dictionaries.
+        Returns a string from a list, a bool, a float, or a string.
+        DO NOT use for dictionaries"""
+
+        if type(raw_prop) is list:
+            cooked_prop = ",".join([str(p) for p in raw_prop])
+
+        elif type(raw_prop) is bool:
+            cooked_prop = str(raw_prop)
+
+        elif type(raw_prop) is int or type(raw_prop) is float:
+            cooked_prop = str(raw_prop)
+
+        else:
+            cooked_prop = raw_prop
+
+        return cooked_prop
+
+    def uncook(self, prop, original_type):
+        """We need to get our raw information again: Gtk may like strings,
+        but Faraday needs lists, booleans, floats, and such.
+        Do not try to use for dictionaries.
+        """
+
+        if original_type == "list" or original_type == "NoneType":
+            if prop:
+                prop = prop.replace(" ", "")
+                raw_prop = prop.split(",")
+            else:
+                raw_prop = []
+
+        elif original_type == "bool":
+            prop = prop.replace(" ", "")
+            if prop.lower() == "true":
+                raw_prop = True
+            elif prop.lower() == "false":
+                raw_prop = False
+
+        elif original_type == "int":
+            raw_prop = int(prop)
+
+        elif original_type == "float":
+            raw_prop = float(prop)
+
+        elif original_type == "str" or original_type == "unicode":
+            raw_prop = prop
+
+        else:
+            raw_prop = prop
+
+        return raw_prop
 
 
 class NotificationsDialog(Gtk.Window):
@@ -376,6 +853,9 @@ class NotificationsDialog(Gtk.Window):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_size_request(400, 200)
+        self.set_modal(True)
+        self.connect("key_press_event", on_scape)
+
         self.view = view
         self.destroy_notifications = callback
 
@@ -383,8 +863,13 @@ class NotificationsDialog(Gtk.Window):
         self.button.set_label("OK")
         self.button.connect("clicked", self.on_click_OK)
 
+        scrolled_list = Gtk.ScrolledWindow.new(None, None)
+        scrolled_list.set_min_content_width(200)
+        scrolled_list.set_min_content_height(350)
+        scrolled_list.add(self.view)
+
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.mainBox.pack_start(self.view, True, True, 0)
+        self.mainBox.pack_start(scrolled_list, True, True, 0)
         self.mainBox.pack_start(self.button, False, False, 0)
 
         self.add(self.mainBox)
@@ -444,3 +929,39 @@ class errorDialog(Gtk.MessageDialog):
             self.format_secondary_text(explanation)
         self.run()
         self.destroy()
+
+
+class ImportantErrorDialog(Gtk.Dialog):
+
+    def __init__(self, parent_window, error):
+        Gtk.Dialog.__init__(self, "Error!", parent_window, 0)
+        self.add_button("Send report to developers...", 42)
+        self.add_button("Ignore", 0)
+        self.set_size_request(200, 200)
+
+        textBuffer = Gtk.TextBuffer()
+        textBuffer.set_text(error)
+
+        textView = Gtk.TextView()
+        textView.set_editable(False)
+        textView.set_buffer(textBuffer)
+
+        box = self.get_content_area()
+        scrolled_text = Gtk.ScrolledWindow.new(None, None)
+        scrolled_text.set_min_content_height(200)
+        scrolled_text.set_min_content_width(200)
+        scrolled_text.add(textView)
+
+        box.pack_start(scrolled_text, True, True, 0)
+        self.show_all()
+
+def on_scape(window, event):
+    """Silly function to destroy a window on escape key, to use
+    with all the dialogs that should be Gtk.Dialogs but are Gtk.Windows
+    or with windows that are too complex for gtk dialogs but should behave
+    as a dialog too"""
+    if event.get_keycode()[1] == 9:
+        window.destroy()
+        return True
+    else:
+        return False

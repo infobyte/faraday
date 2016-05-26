@@ -27,13 +27,11 @@
                 </td>
                 <td>{{srv.description}}</td>
                 <td>
-                    <li ng-repeat="p in srv.ports">   
-                        {{p}}                                     
-                        <a href="//www.shodan.io/search?query=port:{{p}}" uib-tooltip="Search in Shodan" target="_blank">
-                            <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
-                        </a>
-                    </li>
-                </td>                
+                    {{srv.ports}}
+                    <a href="//www.shodan.io/search?query=port:{{srv.ports}}" uib-tooltip="Search in Shodan" target="_blank">
+                        <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                    </a>
+                </td>
                 <td>{{srv.protocol}}</td>
                 <td>{{srv.status}}</td>
             </tr>

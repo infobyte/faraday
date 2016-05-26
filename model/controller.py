@@ -656,23 +656,25 @@ class ModelController(threading.Thread):
             res = True
         return res
 
-    def addPluginStart(self):
-        self.__addPendingAction(modelactions.PLUGINSTART)
+    def addPluginStart(self, name):
+        self.__addPendingAction(modelactions.PLUGINSTART, name)
 
-    def addPluginEnd(self):
-        self.__addPendingAction(modelactions.PLUGINEND)
+    def addPluginEnd(self, name):
+        self.__addPendingAction(modelactions.PLUGINEND, name)
 
-    def _pluginStart(self):
+    def _pluginStart(self, name):
         self.active_plugins_count_lock.acquire()
-        getLogger(self).info("Plugin Started")
+        getLogger(self).info("Plugin Started: " + name)
         self.active_plugins_count += 1
         self.active_plugins_count_lock.release()
+        return True
 
-    def _pluginEnd(self):
+    def _pluginEnd(self, name):
         self.active_plugins_count_lock.acquire()
-        getLogger(self).info("Plugin Ended")
+        getLogger(self).info("Plugin Ended: " + name)
         self.active_plugins_count -= 1
         self.active_plugins_count_lock.release()
+        return True
 
     def addVulnToInterfaceASYNC(self, host, intId, newVuln):
         self.__addPendingAction(modelactions.ADDVULNINT, newVuln, intId)
@@ -906,12 +908,12 @@ class ModelController(threading.Thread):
             username, password=password, parent_id=parent_id)
 
     def getHost(self, name):
-        hosts_mapper = self.mappers_manager.getMapper(model.hosts.Host.__name__)
+        hosts_mapper = self.mappers_manager.getMapper(model.hosts.Host.class_signature)
         return hosts_mapper.find(name)
 
     def getAllHosts(self):
         hosts = self.mappers_manager.getMapper(
-            model.hosts.Host.__name__).getAll()
+            model.hosts.Host.class_signature).getAll()
         return hosts
 
     def getWebVulns(self):
@@ -935,3 +937,17 @@ class ModelController(threading.Thread):
 
                 for hostname in intr.getHostnames():
                     self.treeWordsTries.addWord(hostname)
+
+    def getHostsCount(self):
+        hosts = model.hosts.Host.class_signature
+        return self.mappers_manager.getMapper(hosts).getCount()
+
+    def getServicesCount(self):
+        services = model.hosts.Service.class_signature
+        return self.mappers_manager.getMapper(services).getCount()
+
+    def getVulnsCount(self):
+        vulns = model.common.ModelObjectVuln.class_signature
+        web_vulns = model.common.ModelObjectVulnWeb.class_signature
+        return (self.mappers_manager.getMapper(vulns).getCount() +
+                self.mappers_manager.getMapper(web_vulns).getCount())

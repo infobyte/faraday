@@ -110,7 +110,7 @@ class PluginControllerBase(object):
         output_queue.put(None)
         output_queue.join()
 
-        self._processAction(modelactions.PLUGINSTART, [])
+        self._processAction(modelactions.PLUGINSTART, [plugin.id])
 
         while True:
             try:
@@ -141,7 +141,7 @@ class PluginControllerBase(object):
                     "something strange happened... "
                     "unhandled exception?")
                 break
-        self._processAction(modelactions.PLUGINEND, [])
+        self._processAction(modelactions.PLUGINEND, [plugin.id])
 
     def _processAction(self, action, parameters):
         """
@@ -408,8 +408,18 @@ class PluginControllerForApi(PluginControllerBase):
         return True
 
     def processReport(self, plugin, filepath):
+
+        cmd_info = CommandRunInformation(
+            **{'workspace': model.api.getActiveWorkspace().name,
+                'itime': time.time(),
+                'command': 'Import %s:' % plugin,
+                'params': filepath})
+        self._mapper_manager.save(cmd_info)
+
         if plugin in self._plugins:
             self.processOutput(self._plugins[plugin], filepath, True)
+            cmd_info.duration = time.time() - cmd_info.itime
+            self._mapper_manager.save(cmd_info)
             return True
         return False
 

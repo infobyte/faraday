@@ -887,6 +887,20 @@ class ModelObjectVuln(ModelComposite):
         self.severity = self.standarize(severity)
         self.resolution = resolution
 
+    def _updatePublicAttributes(self):
+
+        self.publicattrs['Name'] = 'getName'
+        self.publicattrs['Description'] = 'getDescription'
+        self.publicattrs['Data'] = "getData"
+        self.publicattrs['Severity'] = 'getSeverity'
+        self.publicattrs['Refs'] = 'getRefs'
+
+        self.publicattrsrefs['Name'] = 'name'
+        self.publicattrsrefs['Description'] = '_desc'
+        self.publicattrsrefs['Data'] = "data"
+        self.publicattrsrefs['Severity'] = 'severity'
+        self.publicattrsrefs['Refs'] = 'refs'
+
     def standarize(self, severity):
         # Transform all severities into lower strings
         severity = str(severity).lower()
@@ -939,11 +953,14 @@ class ModelObjectVuln(ModelComposite):
 
     #@save
     @updateLocalMetadata
-    def updateAttributes(self, name=None, desc=None, severity=None, resolution=None, refs=None):
+    def updateAttributes(self, name=None, desc=None, data=None,
+                         severity=None, resolution=None, refs=None):
         if name is not None:
             self.setName(name)
         if desc is not None:
             self.setDescription(desc)
+        if data is not None:
+            self.setData(data)
         if resolution is not None:
             self.setResolution(resolution)
         if severity is not None:
@@ -1036,6 +1053,38 @@ class ModelObjectVulnWeb(ModelObjectVuln):
         self.query = query
         self.category = category
 
+    def _updatePublicAttributes(self):
+
+        self.publicattrs['Name'] = 'getName'
+        self.publicattrs['Desc'] = 'getDescription'
+        self.publicattrs['Data'] = 'getData'
+        self.publicattrs['Severity'] = 'getSeverity'
+        self.publicattrs['Refs'] = 'getRefs'
+        self.publicattrs['Path'] = 'getPath'
+        self.publicattrs['Website'] = 'getWebsite'
+        self.publicattrs['Request'] = 'getRequest'
+        self.publicattrs['Response'] = 'getResponse'
+        self.publicattrs['Method'] = 'getMethod'
+        self.publicattrs['Pname'] = 'getPname'
+        self.publicattrs['Params'] = 'getParams'
+        self.publicattrs['Query'] = 'getQuery'
+        self.publicattrs['Category'] = 'getCategory'
+
+        self.publicattrsrefs['Name'] = 'name'
+        self.publicattrsrefs['Desc'] = '_desc'
+        self.publicattrsrefs['Data'] = 'data'
+        self.publicattrsrefs['Severity'] = 'severity'
+        self.publicattrsrefs['Refs'] = 'refs'
+        self.publicattrsrefs['Path'] = 'path'
+        self.publicattrsrefs['Website'] = 'website'
+        self.publicattrsrefs['Request'] = 'request'
+        self.publicattrsrefs['Response'] = 'response'
+        self.publicattrsrefs['Method'] = 'method'
+        self.publicattrsrefs['Pname'] = 'pname'
+        self.publicattrsrefs['Params'] = 'params'
+        self.publicattrsrefs['Query'] = 'query'
+        self.publicattrsrefs['Category'] = 'category'
+
     def updateID(self):
         self._id = get_hash([self.name, self.website, self.path, self.desc ])
         self._prependParentId()
@@ -1096,10 +1145,10 @@ class ModelObjectVulnWeb(ModelObjectVuln):
 
     #@save
     @updateLocalMetadata
-    def updateAttributes(self, name=None, desc=None, website=None, path=None, refs=None,
+    def updateAttributes(self, name=None, desc=None, data=None, website=None, path=None, refs=None,
                         severity=None, resolution=None, request=None,response=None, method=None,
                         pname=None, params=None, query=None, category=None):
-        super(ModelObjectVulnWeb, self).updateAttributes(name, desc, severity, resolution, refs)
+        super(ModelObjectVulnWeb, self).updateAttributes(name, desc, data, severity, resolution, refs)
         if website is not None:
             self.website = website
         if path is not None:

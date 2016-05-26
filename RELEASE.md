@@ -10,6 +10,29 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+May 23, 2016:
+---
+* Removed description from Hosts list in WEB UI
+* Fixed sort in Hosts list in WEB UI
+* Fixed ports sorting in Host view in WEB UI
+* Added search link for OS in Hosts list in WEB UI
+* Removed description from Services list in WEB UI
+* Added version to Services list in WEB UI
+* Modified false values in Hosts list in WEB UI
+* Added search links in Services list in WEB UI
+* Added scrollbar in Gtk Terminal.
+* Added workspace status in Gtk interface
+* Added conflict resolution support for the Gtk interface
+* Added search entry for workspaces in Gtk
+* Added support for 'exit' command inside Faraday's Gtk terminal
+* Improved handling of uncaught exceptions in Gtk interface
+* Improved text formatting in Gtk's log console
+* Fixed several small bugs in Faraday GTK
+* Added support for resize workspace bar.
+* Added a quote for imported reports in WEB UI.
+* Added support for a new type of report in Qualysguard plugin.
+* Fixed bugs in plugins: Acunetix - Nmap - Nikto. 
+
 Apr 29, 2016:
 ---
 * Added Open services count to Hosts list in WEB UI

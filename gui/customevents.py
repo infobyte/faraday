@@ -65,11 +65,14 @@ class ShowPopupCustomEvent(CustomEvent):
 
 
 class ShowExceptionCustomEvent(CustomEvent):
-    def __init__(self, text, callback):
+    def __init__(self, text, callback, error_name=None):
         CustomEvent.__init__(self, EXCEPTION_ID)
         self.text = text
         self.exception_objects = [None, text]
         self.callback = callback
+        if error_name is not None:
+            self.error_name = error_name
+
 
 
 class RenameHostsRootCustomEvent(CustomEvent):

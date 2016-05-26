@@ -58,9 +58,8 @@ class ReportProcessor():
 
     def onlinePlugin(self, cmd):
 
-        _, new_cmd, output_file = self.plugin_controller.processCommandInput(
-            cmd)
-        self.plugin_controller.onCommandFinished(cmd, '')
+        _, new_cmd = self.plugin_controller.processCommandInput('0', cmd, './')
+        self.plugin_controller.onCommandFinished('0', 0, cmd)
 
 
 class ReportManager(threading.Thread):
@@ -303,7 +302,7 @@ class ReportParser(object):
             return "Nexpose"
         elif "NexposeReport" == tag:
             return "NexposeFull"
-        elif "ASSET_DATA_REPORT" == tag:
+        elif "ASSET_DATA_REPORT" == tag or "SCAN" == tag:
             return "Qualysguard"
         elif "scanJob" == tag:
             return "Retina"

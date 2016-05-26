@@ -80,10 +80,6 @@ angular.module('faradayApp')
                         $scope.objectsCount = res;
                     });
 
-                    // dashboardSrv.getVulnerabilitiesCount(workspace).then(function(res) {
-                    //     console.log(res);
-                    // });
-
                     createGraphics = function(res) {
                         if(res.length > 0) {
                             var tmp = [

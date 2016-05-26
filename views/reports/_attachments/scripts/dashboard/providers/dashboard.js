@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('dashboardSrv', ['BASEURL', '$q', '$http', function(BASEURL, $q, $http) {
+    .factory('dashboardSrv', ['BASEURL', '$cookies', '$q', '$http', function(BASEURL, $cookies, $q, $http) {
         var dashboardSrv = {};
 
         dashboardSrv._getView = function(url) {
@@ -17,6 +17,13 @@ angular.module('faradayApp')
             });
 
             return deferred.promise;
+        };
+
+        dashboardSrv._areConfirmed = $cookies.get('confirmed') === 'true';
+
+        dashboardSrv.setConfirmed = function(val) {
+            dashboardSrv._areConfirmed = val;
+            $cookies.put('confirmed', val);
         };
 
         dashboardSrv.vulnPrices = {

@@ -88,8 +88,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         Gtk.Application.__init__(self, application_id="org.infobyte.faraday",
                                  flags=Gio.ApplicationFlags.FLAGS_NONE)
 
-        icons = CONF.getImagePath() + "icons/"
-        faraday_icon = icons + "faraday_icon.png"
+        self.icons = CONF.getImagePath() + "icons/"
+        faraday_icon = self.icons + "faraday_icon.png"
         self.icon = GdkPixbuf.Pixbuf.new_from_file_at_scale(faraday_icon, 16,
                                                             16, False)
         self.window = None
@@ -169,7 +169,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                                            CONF.getLastWorkspace())
 
         self.updateHosts()
-        self.hosts_sidebar = HostsSidebar(self.show_host_info)
+        self.hosts_sidebar = HostsSidebar(self.show_host_info, self.icons)
         default_model = self.hosts_sidebar.create_model(self.all_hosts)
         default_view = self.hosts_sidebar.create_view(default_model)
 
@@ -269,6 +269,10 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         if event.type() == 4100 or event.type() == 3140:  # newinfo or changews
             host_count, service_count, vuln_count = self.update_counts()
+
+            self.updateHosts()
+            self.hosts_sidebar.update(self.all_hosts)
+
             receiver.emit("update_ws_info", host_count,
                           service_count, vuln_count)
 
@@ -322,13 +326,13 @@ class GuiApp(Gtk.Application, FaradayUi):
         preference_window.show_all()
 
     def show_host_info(self, host_id):
+        """Looks up the host selected in the HostSidebar by id and shows
+        its information on the HostInfoDialog"""
 
         for host in self.all_hosts:
             if host_id == host.id:
                 selected_host = host
                 break
-
-        print selected_host
 
         info_window = HostInfoDialog(self.window, selected_host)
         info_window.show_all()
@@ -414,8 +418,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             try:
                 ws = super(GuiApp, self).openWorkspace(workspaceName)
                 self.updateHosts()
-                new_model = self.hosts_sidebar.create_model(self.all_hosts)
-                self.hosts_sidebar.update_view(new_model)
+                self.hosts_sidebar.update(self.all_hosts)
             except Exception as e:
                 model.guiapi.notification_center.showDialog(str(e))
                 ws = self.openDefaultWorkspace()

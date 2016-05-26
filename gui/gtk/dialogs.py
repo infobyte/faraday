@@ -393,32 +393,48 @@ class PluginOptionsDialog(Gtk.Window):
         adecuateModel = self.models[self.id_of_selected]
         self.createAdecuatePluginSettingView(adecuateModel)
 
+
 class HostInfoDialog(Gtk.Window):
+    """Sets the blueprints for a simple host info window. It will display
+    basic information in labels as well as interfaces/services in a treeview
+    """
     def __init__(self, parent, host):
+        """Creates a window with the information about a given hosts.
+        The parent is needed so the window can set transient for
+        """
         Gtk.Window.__init__(self,
                             title="Host " + host.name + " information")
         self.set_transient_for(parent)
-        self.set_size_request(400, 200)
+        self.set_size_request(700, 500)
         self.set_modal(True)
         self.connect("key_press_event", on_scape)
 
+        self.specific_info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         basic_info = self.create_basic_info_box(host)
         tree = self.create_tree_box(host)
         button = Gtk.Button.new_with_label("OK")
         button.connect("clicked", self.on_click_ok)
 
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        info_box = Gtk.Box()
-        info_box.pack_start(basic_info, False, False, 10)
-        info_box.pack_start(tree, True, True, 10)
-        main_box.pack_start(info_box, True, True, 10)
-        button_box = Gtk.Box()
-        button_box.pack_start(button, False, False, 10)
-        main_box.pack_start(button_box, False, True, 10)
+        main_box = Gtk.Box()
+        left_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        left_box.pack_start(Gtk.Label("Host information: \n"), False, False, 0)
+        left_box.pack_start(basic_info, False, False, 10)
+        left_box.pack_start(self.specific_info, True, False, 10)
+        left_box.pack_start(button, False, False, 10)
+        right_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        right_box.pack_start(tree, True, True, 10)
+        right_box.pack_start(Gtk.Box(), False, False, 10)
+
+        main_box.pack_start(left_box, True, True, 10)
+        main_box.pack_start(right_box, False, True, 10)
 
         self.add(main_box)
 
     def create_basic_info_box(self, host):
+        """Creates a box where the basic information about the host
+        lives in labels. It include names, OS, Owned status and vulnarability
+        count.
+        """
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 
         name_box = Gtk.Box()
@@ -445,24 +461,131 @@ class HostInfoDialog(Gtk.Window):
         return box
 
     def create_tree_box(self, host):
+        """Creates a model and a view for the interfaces/services of the host.
+        Puts a scrolled window containing the view into a box and returns
+        that. The models holds quite a bit of information. It has 11 columns
+        holding all the information about the interfaces of the host.
+        The hosts have a children another 11 columns (7 real + 4 just
+        cause GTK asks for it) holding the information about each interface.
+        """
+
         box = Gtk.Box()
         interfaces = host.getAllInterfaces()
-        model = Gtk.TreeStore(str)
+        model = Gtk.TreeStore(str, str, str, str, str, str, str,
+                              str, str, str, str)
+
+        def lst_to_str(lst):
+            """Convenient function to avoid this long line everywhere"""
+            return ', '.join([str(word) for word in lst if word])
+
         for interface in interfaces:
-            tree_iter = model.append(None, [interface.getName()])
+            ipv4_dic = interface.getIPv4()
+            ipv6_dic = interface.getIPv6()
+
+            tree_iter = model.append(None, [interface.getName(),
+                                            interface.getDescription(),
+                                            interface.getMAC(),
+                                            ipv4_dic['mask'],
+                                            ipv4_dic['gateway'],
+                                            lst_to_str(ipv4_dic['DNS']),
+                                            ipv4_dic['address'],
+                                            ipv6_dic['prefix'],
+                                            ipv6_dic['gateway'],
+                                            lst_to_str(ipv6_dic['DNS']),
+                                            ipv6_dic['address']])
+
             services = interface.getAllServices()
             for service in services:
-                model.append(tree_iter, [service.getName()])
+                # GTK requieres that the parent and the children rows
+                # of the model have the same number of columns. that's
+                # why the service children have four empty strings added
+                # at the end
+                model.append(tree_iter, [service.getName(),
+                                         service.getDescription(),
+                                         service.getProtocol(),
+                                         service.getStatus(),
+                                         lst_to_str(service.getPorts()),
+                                         service.getVersion(),
+                                         "Yes" if service.isOwned() else "No",
+                                         "", "", "", ""])
 
-        view = Gtk.TreeView(model)
+        self.view = Gtk.TreeView(model)
+        self.view.set_activate_on_single_click(True)
+
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("Interfaces & services", renderer, text=0)
-        view.append_column(column)
-        box.pack_start(view, True, True, 10)
+        self.view.append_column(column)
+        self.view.connect("row_activated", self.on_selection)
+
+        scrolled_view = Gtk.ScrolledWindow(None, None)
+        scrolled_view.add(self.view)
+        scrolled_view.set_min_content_width(250)
+        box.pack_start(scrolled_view, True, True, 10)
+
         return box
+
+    def on_selection(self, tree_view, path, columns):
+        """Defines what happens when the user clicks on a row. Shows
+        the interface or service information according to what the user
+        selected. Before calling the corresponding functions, will clear
+        the current specific_info box.
+        """
+        model = tree_view.get_model()
+        tree_iter = model.get_iter(path)
+        iter_depth = model.iter_depth(tree_iter)
+        selected = model[tree_iter]
+        self.specific_info.foreach(self.reset_info)
+        if iter_depth == 0:
+            self.show_interface_info(selected)
+        elif iter_depth == 1:
+            self.show_service_info(selected)
+
+    def show_interface_info(self, selected):
+        """Creates labels for each of the properties of an interface. Appends
+        them to the specific_info_box.
+        """
+        interface_label = Gtk.Label("Interface information: \n")
+        self.specific_info.pack_start(interface_label, False, False, 0)
+        for prop in enumerate(["Name: ", "Description: ", "MAC: ",
+                               "IPv4 Mask: ", "IPv4 Gateway: ", "IPv4 DNS: ",
+                               "IPv4 Address: ", "IPv6 Prefix: ",
+                               "IPv6 Gateway", "IPv6 DNS: ",
+                               "IPv6 Address: "]):
+            self.create_specific_info_box(selected, prop)
+
+    def show_service_info(self, selected):
+        """Creates labels for each of the properties of a service. Appends
+        them to the specific_info_box.
+        """
+        service_label = Gtk.Label("Service information: \n")
+        self.specific_info.pack_start(service_label, False, False, 0)
+        for prop in enumerate(["Name: ", "Description: ", "Protocol: ",
+                               "Status: ", "Ports: ", "Version: ",
+                               "Is Owned?: "]):
+            self.create_specific_info_box(selected, prop)
+
+    def create_specific_info_box(self, selected, prop):
+        """Gets selected and prop and creates a label and appends
+        them to specific_info_box. Just so to avoid repeating code on
+        show_service_info and show_interface_info.
+        """
+
+        prop_box = Gtk.Box()
+        prop_label = Gtk.Label(prop[1])
+        value_label = Gtk.Label(selected[prop[0]])
+        prop_box.pack_start(prop_label, False, False, 0)
+        prop_box.pack_start(value_label, False, False, 0)
+        self.specific_info.pack_start(prop_box, True, True, 0)
+        self.specific_info.show_all()
+
+    def reset_info(self, widget):
+        """Removes a widget from self.specific_info. Used to clear all
+        the information before displaying new"""
+        self.specific_info.remove(widget)
 
     def on_click_ok(self, button):
         self.destroy()
+
 
 class ConflictsDialog(Gtk.Window):
     """Blueprints for a beautiful, colorful, gtk-esque conflicts

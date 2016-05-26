@@ -146,6 +146,9 @@ class HostsSidebar(Gtk.Widget):
 
         self.view.connect("row_activated", self.on_click)
 
+        self.view.set_enable_search(True)
+        self.view.set_search_column(2)
+
         return self.view
 
     def update(self, hosts):

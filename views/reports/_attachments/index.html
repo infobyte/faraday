@@ -1,7 +1,7 @@
 <!-- Faraday Penetration Test IDE -->
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
-<!DOCTYPE html>   
+<!DOCTYPE html>
 <!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
 <!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
 <!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
@@ -64,7 +64,7 @@
             <header class="head">
                 <a href="#" class="ws-dashboard"><img class="logo animated fadeInDown" title="{{version}}" src="images/logo-faraday.svg" alt="Faraday home | WS Dashboard"/></a>
             </header>
-            
+
             <div ng-controller="navigationCtrl" ng-include="'scripts/navigation/partials/leftBar.html'"></div>
 
             <div ng-view></div>
@@ -118,6 +118,8 @@
     <script type="text/javascript" src="scripts/dashboard/controllers/dashboard.js"></script>
     <script type="text/javascript" src="scripts/dashboard/controllers/treemapModalCtrl.js"></script>
     <script type="text/javascript" src="scripts/dashboard/controllers/summarizedCtrl.js"></script>
+    <script type="text/javascript" src="scripts/dashboard/controllers/summarizedCtrlServicesModal.js"></script>
+    <script type="text/javascript" src="scripts/dashboard/controllers/summarizedCtrlHostsModal.js"></script>
     <script type="text/javascript" src="scripts/dashboard/providers/dashboard.js"></script>
     <script type="text/javascript" src="scripts/d3/providers/d3.js"></script>
     <script type="text/javascript" src="scripts/d3/directives/treemap.js"></script>
@@ -125,4 +127,4 @@
     <script type="text/javascript" src="scripts/d3/directives/cake.js"></script>
     <script type="text/javascript" src="scripts/d3/directives/stackedbar.js"></script>
 </body>
-</html> 
+</html>

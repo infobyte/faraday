@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('dashboardCtrl', 
+    .controller('dashboardCtrl',
         ['$scope', '$filter', '$route', '$routeParams', '$location', 'workspacesFact',
         function($scope, $filter, $route, $routeParams, $location, workspacesFact) {
             init = function() {

@@ -4,8 +4,10 @@
 
 angular.module('faradayApp')
     .controller('dashboardCtrl',
-        ['$scope', '$filter', '$route', '$routeParams', '$location', 'workspacesFact',
-        function($scope, $filter, $route, $routeParams, $location, workspacesFact) {
+        ['$scope', '$filter', '$route', '$routeParams', '$location', 'dashboardSrv', 'workspacesFact',
+        function($scope, $filter, $route, $routeParams, $location, dashboardSrv, workspacesFact) {
+            $scope._areConfirmed = dashboardSrv._areConfirmed;
+
             init = function() {
                 //current workspace
                 $scope.workspace = $routeParams.wsId;

@@ -43,6 +43,59 @@ angular.module('faradayApp')
             return dashboardSrv._getView(url);
         };
 
+        dashboardSrv.getTopHosts = function(ws, colors) {
+            var deferred = $q.defer();
+
+            dashboardSrv.getHostsByServicesCount(ws)
+                .then(function(servicesCount) {
+                    if(servicesCount.length > 2) {
+                        var hosts = [],
+                        tmp = {key:[], colors:[], value:[]};
+
+                        if(colors == undefined) {
+                            colors = ["rgb(57, 59, 121)", "rgb(82, 84, 163)", "rgb(107, 110, 207)"];
+                        }
+
+                        servicesCount.sort(function(a, b) {
+                            return b.value-a.value;
+                        });
+
+                        tmp.options = {
+                            showScale : false,
+                            maintainAspectRatio: false
+                        };
+
+                        servicesCount = servicesCount.slice(0, 3);
+
+                        servicesCount.forEach(function(host) {
+                            hosts.push(dashboardSrv.getHost(ws, host.key));
+                        });
+
+                        $q.all(hosts)
+                            .then(function(res) {
+                                var hs = {};
+
+                                res.forEach(function(host) {
+                                    hs[host._id] = host.name;
+                                });
+
+                                servicesCount.forEach(function(srv) {
+                                    tmp.colors.push(colors.shift());
+                                    tmp.value.push(srv.value);
+                                    tmp.key.push(hs[srv.key]);
+                                });
+                                deferred.resolve(tmp);
+                            }, function() {
+                                deferred.reject("Unable to get Top Hosts");
+                            });
+                    }
+                }, function() {
+                    deferred.reject("Unable to get Services count for Top Hosts");
+                });
+
+            return deferred.promise;
+        };
+
         dashboardSrv.getServicesCount = function(ws) {
             var deferred = $q.defer(),
             url = BASEURL + "/" + ws + "/_design/hosts/_view/byservices?group=true";
@@ -130,28 +183,30 @@ angular.module('faradayApp')
         dashboardSrv.getHosts = function(ws) {
             var deferred = $q.defer();
             var url = BASEURL + "/" + ws + "/_design/hosts/_view/hosts";
-            dashboardSrv._getView(url).then(function(res){
-                var tmp = [];
-                res.forEach(function(host){
-                    var _host = host.value;
-                    _host["id"] = host.key;
-                    tmp.push(_host);
+            dashboardSrv._getView(url)
+                .then(function(res) {
+                    var tmp = [];
+                    res.forEach(function(host) {
+                        var _host = host.value;
+                        _host["id"] = host.key;
+                        tmp.push(_host);
+                    });
+                    deferred.resolve(tmp);
+                }, function() {
+                    deferred.reject();
                 });
-                deferred.resolve(tmp);
-            }, function(){
-                deferred.reject();
-            });
             return deferred.promise;
         };
 
         dashboardSrv.getHost = function(ws, host_id) {
             var deferred = $q.defer();
             var url = BASEURL + "/" + ws + "/" + host_id;
-            $http.get(url).then(function(res){
-                deferred.resolve(res.data);
-            }, function(){
-                deferred.reject();
-            });
+            $http.get(url)
+                .then(function(res) {
+                    deferred.resolve(res.data);
+                }, function() {
+                    deferred.reject();
+                });
             return deferred.promise;
         };
 
@@ -176,13 +231,13 @@ angular.module('faradayApp')
         dashboardSrv.getHostsByServicesName = function(ws, srv_name) {
             var deferred = $q.defer();
             var url = BASEURL + "/" + ws + "/_design/services/_view/byname?key=\"" + srv_name + "\"";
-            dashboardSrv._getView(url).then(function(res){
+            dashboardSrv._getView(url).then(function(res) {
                 var dict = {};
                 var tmp = [];
-                res.forEach(function(srv){
+                res.forEach(function(srv) {
                     tmp.push(dashboardSrv.getHost(ws, srv.value.hid));
                 });
-                $q.all(tmp).then(function(hosts){
+                $q.all(tmp).then(function(hosts) {
                     var res = [];
                     hosts.sort(function(a, b){
                         if(a.name < b.name) return -1;
@@ -196,7 +251,7 @@ angular.module('faradayApp')
                     }
                     deferred.resolve(res);
                 });
-            }, function(){
+            }, function() {
                 deferred.reject();
             });
             return deferred.promise;

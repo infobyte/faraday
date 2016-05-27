@@ -447,9 +447,9 @@ class HostInfoDialog(Gtk.Window):
         right_box.pack_start(self.create_vuln_tree_box(), True, True, 10)
         right_box.pack_start(Gtk.Box(), False, False, 10)
 
-        main_box.pack_start(left_box, True, True, 10)
-        main_box.pack_start(middle_box, False, False, 10)
-        main_box.pack_start(right_box, False, False, 10)
+        main_box.pack_start(left_box, True, True, 5)
+        main_box.pack_start(middle_box, False, False, 5)
+        main_box.pack_start(right_box, False, False, 0)
 
         self.add(main_box)
 
@@ -463,17 +463,20 @@ class HostInfoDialog(Gtk.Window):
         name_box = Gtk.Box()
         name_label = Gtk.Label()
         name_label.set_markup("<b>%s</b>: %s" % ("Name", host.getName()))
+        name_label.set_selectable(True)
         name_box.pack_start(name_label, False, False, 5)
 
         os_box = Gtk.Box()
         os_label = Gtk.Label()
         os_label.set_markup("<b>%s</b>: %s" % ("OS", host.getOS()))
+        os_label.set_selectable(True)
         os_box.pack_start(os_label, False, False, 5)
 
         owned_box = Gtk.Box()
         owned_label = Gtk.Label()
         owned_status = ("Yes" if host.isOwned() else "No")
         owned_label.set_markup("<b>%s: </b>%s" % ("Owned", owned_status))
+        owned_label.set_selectable(True)
         owned_box.pack_start(owned_label, False, False, 5)
 
         vulns_box = Gtk.Box()
@@ -481,6 +484,7 @@ class HostInfoDialog(Gtk.Window):
         vulns_count = str(len(host.getVulns()))
         vulns_label.set_markup("<b>%s</b>: %s" %
                                ("Vulnerabilities", vulns_count))
+        vulns_label.set_selectable(True)
 
         vulns_box.pack_start(vulns_label, False, False, 5)
 
@@ -494,6 +498,7 @@ class HostInfoDialog(Gtk.Window):
         return scrollable_box
 
     def create_vuln_tree_box(self):
+        """Creates a simple view a vulnerabilities"""
         box = Gtk.Box()
         self.vuln_list = Gtk.TreeView()
         self.vuln_list.set_activate_on_single_click(True)
@@ -515,9 +520,9 @@ class HostInfoDialog(Gtk.Window):
         """Creates a model and a view for the interfaces/services of the host.
         Puts a scrolled window containing the view into a box and returns
         that. The models holds quite a bit of information. It has 11 columns
-        holding all the information about the interfaces of the host.
-        The hosts have a children another 11 columns (7 real + 4 just
-        cause GTK asks for it) holding the information about each interface.
+        holding the host ID and name as parent, all the information about
+        the interfaces of that host and all the information about
+        the services of those interfaces.
         """
 
         box = Gtk.Box()
@@ -630,6 +635,7 @@ class HostInfoDialog(Gtk.Window):
         self.vuln_list.set_model(model)
 
     def create_vuln_model(self, obj):
+        """Creates a model for the vulnerabilities of the selected object"""
         # those are 15 strings
         model = Gtk.ListStore(str, str, str, str, str, str, str, str,
                               str, str, str, str, str, str, str)
@@ -644,7 +650,6 @@ class HostInfoDialog(Gtk.Window):
                               "", "", "", "", "", "", "", "", ""])
 
             elif _type == "VulnerabilityWeb":
-                print "WEB"
                 model.append([_type, vuln.getName(), vuln.getDescription(),
                               vuln.getData(), vuln.getSeverity(),
                               ", ".join(vuln.getRefs()), vuln.getPath(),
@@ -675,6 +680,9 @@ class HostInfoDialog(Gtk.Window):
             self.append_info_to_box(selected, prop, self.specific_info)
 
     def show_vuln_info(self, selected):
+        """Sends the information about the selected vuln to
+        append_info_to_box.
+        """
         if selected[0] == "Vulnerability":
             for prop in enumerate(["Name: ", "Description: ",
                                    "Data: ", "Severity: ",
@@ -694,12 +702,12 @@ class HostInfoDialog(Gtk.Window):
 
     def append_info_to_box(self, selected, prop, box):
         """Gets selected and prop and creates a label and appends
-        them to specific_info_box. Just so to avoid repeating code on
-        show_service_info and show_interface_info.
+        them to the box parameter.
         """
         prop_box = Gtk.Box()
         prop_label = Gtk.Label()
         prop_label.set_markup("<b> %s </b>" % (prop[1]))
+        prop_label.set_selectable(True)
         value_label = Gtk.Label(selected[prop[0]])
         value_label.set_selectable(True)
         prop_box.pack_start(prop_label, False, False, 0)
@@ -713,6 +721,8 @@ class HostInfoDialog(Gtk.Window):
         self.specific_info.remove(widget)
 
     def reset_vuln_info(self, widget):
+        """Removes a widget from self.specific_vuln_info. Used to clear
+        all the information before displaying new"""
         self.specific_vuln_info.remove(widget)
 
     def on_click_ok(self, button):

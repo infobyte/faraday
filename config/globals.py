@@ -5,6 +5,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
+CONST_VERSION_FILE = 'VERSION'
 CONST_REQUIREMENTS_FILE = 'requirements.txt'
 CONST_CONFIG = 'views/reports/_attachments/scripts/config/config.json'
 CONST_FARADAY_HOME_PATH = '~/.faraday'

@@ -60,7 +60,9 @@ USER_QTRC = os.path.expanduser(CONST_USER_QTRC_PATH)
 USER_QTRCBAK = os.path.expanduser(CONST_USER_QTRC_BACKUP)
 FARADAY_QTRC = os.path.join(FARADAY_BASE, CONST_FARADAY_QTRC_PATH)
 FARADAY_QTRCBAK = os.path.expanduser(CONST_FARADAY_QTRC_BACKUP)
-CONST_VERSION_FILE = os.path.join(FARADAY_BASE,"VERSION")
+FARADAY_VERSION_FILE = os.path.join(FARADAY_BASE, CONST_VERSION_FILE)
+FARADAY_CONFIG = os.path.join(FARADAY_BASE, CONST_CONFIG)
+FARADAY_REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, CONST_REQUIREMENTS_FILE)
 
 REQUESTS_CA_BUNDLE_VAR = "REQUESTS_CA_BUNDLE"
 FARADAY_DEFAULT_PORT_XMLRPC = 9876
@@ -214,7 +216,7 @@ def checkDependencies():
         try:
             import pip
             modules = []
-            f = open(CONST_REQUIREMENTS_FILE)
+            f = open(FARADAY_REQUIREMENTS_FILE)
             for line in f:
                 if not line.find('#'):
                     break
@@ -537,7 +539,7 @@ def checkUpdates():
     uri = getInstanceConfiguration().getUpdatesUri()
     resp = u"OK"
     try:
-        f = open(CONST_VERSION_FILE)
+        f = open(FARADAY_VERSION_FILE)
 
         getInstanceConfiguration().setVersion(f.read().strip())
         getInstanceConfiguration().setAppname("Faraday - Penetration Test IDE Community")
@@ -571,7 +573,7 @@ def checkCouchUrl():
 
 def checkVersion():
     try:
-        f = open(CONST_VERSION_FILE)
+        f = open(FARADAY_VERSION_FILE)
         f_version = f.read().strip()
         if not args.update:
             if getInstanceConfiguration().getVersion() != None and getInstanceConfiguration().getVersion() != f_version:
@@ -584,9 +586,9 @@ def checkVersion():
 
         doc = {"ver": getInstanceConfiguration().getVersion()}
 
-        if os.path.isfile(CONST_CONFIG):
-            os.remove(CONST_CONFIG)
-        with open(CONST_CONFIG, "w") as doc_file:
+        if os.path.isfile(FARADAY_CONFIG):
+            os.remove(FARADAY_CONFIG)
+        with open(FARADAY_CONFIG, "w") as doc_file:
             json.dump(doc, doc_file)
     except Exception as e:
         getLogger("launcher").error("It seems that something's wrong with your version\nPlease contact customer support")
@@ -616,6 +618,8 @@ def main():
     Main function for launcher.
 
     """
+
+    os.chdir(FARADAY_BASE)
 
     init()
     if checkDependencies():

@@ -14,6 +14,11 @@ angular.module('faradayApp')
                 if($routeParams.wsId != undefined) {
                     $scope.workspace = $routeParams.wsId;
                 }
+
+                dashboardSrv.getTopHosts($scope.workspace)
+                    .then(function(topHosts) {
+                        $scope.topHosts = topHosts;
+                    });
             };
 
             init();

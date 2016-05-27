@@ -129,8 +129,8 @@ class HostsSidebar(Gtk.Widget):
         def set_icon(col, cell, model, _iter, user_data):
             icon = model.get_value(_iter, 1)
             if icon != "None":
-                print icon
-                cell.set_property('pixbuf', GdkPixbuf.Pixbuf.new_from_file(icon))
+                cell.set_property('pixbuf',
+                                  GdkPixbuf.Pixbuf.new_from_file(icon))
 
         self.view = Gtk.TreeView(model)
         self.view.set_activate_on_single_click(True)

@@ -10,6 +10,13 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+TO BE RELEASED
+---
+* Added a 'Loading workspace...' dialog to Faraday GTK
+* Added host sidebar to Faraday GTK
+* Added host information dialog to Faraday GTK with the full data about a host, its interfaces, services and vulnerabilities
+* Fixed log reapparing after being disabled if user created a new tab
+
 May 23, 2016:
 ---
 * Removed description from Hosts list in WEB UI

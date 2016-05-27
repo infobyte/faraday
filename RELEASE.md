@@ -10,6 +10,11 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+TBA:
+---
+* Add support for run faraday from other directories.
+
+
 May 23, 2016:
 ---
 * Removed description from Hosts list in WEB UI

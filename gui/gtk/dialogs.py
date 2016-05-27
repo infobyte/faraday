@@ -549,6 +549,7 @@ class HostInfoDialog(Gtk.Window):
 
         box = Gtk.Box()
         interfaces = host.getAllInterfaces()
+        # those are 15 strings
         model = Gtk.TreeStore(str, str, str, str, str, str, str,
                               str, str, str, str, str, str)
 

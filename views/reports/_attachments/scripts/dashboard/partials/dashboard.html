@@ -2,7 +2,7 @@
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
 
-<section id="main" class="seccion clearfix" ng-controller="summarizedCtrl">
+<section id="main" class="seccion clearfix">
     <div class="right-main">
         <div id="reports-main" class="fila clearfix">
             <h2 class="ws-label">
@@ -27,7 +27,7 @@
             <div class="reports">
             </div><!-- .reports -->
             <div>
-                <div ng-include="'scripts/dashboard/partials/graphics-bar.html'"></div>
+                <div ng-include="'scripts/dashboard/partials/graphics-bar.html'"  ng-controller="graphicsBarCtrl"></div>
                 <div ng-include="'scripts/dashboard/partials/summarized.html'"></div>
                 <div class="row">
                     <div class="col-lg-6 col-lg-left">

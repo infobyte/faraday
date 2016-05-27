@@ -12,7 +12,7 @@ angular.module('faradayApp')
             $http.get(url).then(function(response) {
                 res = response.data.rows;
                 deferred.resolve(res);
-            }, function(){
+            }, function() {
                 deferred.reject();
             });
 
@@ -44,8 +44,46 @@ angular.module('faradayApp')
         };
 
         dashboardSrv.getServicesCount = function(ws) {
-            var url = BASEURL + "/" + ws + "/_design/hosts/_view/byservices?group=true";
-            return dashboardSrv._getView(url);
+            var deferred = $q.defer(),
+            url = BASEURL + "/" + ws + "/_design/hosts/_view/byservices?group=true";
+
+            dashboardSrv._getView(url)
+                .then(function(res) {
+                    res.sort(function(a, b) {
+                        return b.value - a.value;
+                    });
+
+                    deferred.resolve(res);
+                }, function() {
+                    deferred.reject("Unable to get Services Count");
+                });
+
+            return deferred.promise;
+        };
+
+        dashboardSrv.getTopServices = function(ws, colors) {
+            var deferred = $q.defer();
+
+            dashboardSrv.getServicesCount(ws)
+                .then(function(res) {
+                    if(res.length > 4) {
+                        var tmp = [];
+
+                        if(colors == undefined) {
+                            colors = ["#FA5882", "#FF0040", "#B40431", "#610B21", "#2A0A1B"];
+                        }
+
+                        res.slice(0, 5).forEach(function(srv) {
+                            srv.color = colors.shift();
+                            tmp.push(srv);
+                        });
+                        deferred.resolve(tmp);
+                    }
+                }, function() {
+                    deferred.reject("Unable to get Top Services");
+                });
+
+            return deferred.promise;
         };
 
         dashboardSrv.getVulnerabilities = function(ws) {

@@ -13,7 +13,7 @@ import sys
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-from gi.repository import Gtk, Vte, GLib, Pango
+from gi.repository import Gtk, Vte, GLib, Pango, GdkPixbuf
 
 
 class Terminal(Vte.Terminal):
@@ -53,10 +53,131 @@ class Terminal(Vte.Terminal):
                         None,
                         None)
 
+class Sidebar(Gtk.Notebook):
+    """Defines the bigger sidebar in a notebook. One of its tabs will contain
+    the workspace view, listing all the workspaces (WorkspaceSidebar) and the
+    other will contain the information about hosts, services, and vulns
+    (HostsSidebar)
+    """
 
-class Sidebar(Gtk.Widget):
+    def __init__(self, workspace_sidebar, hosts_sidebar):
+        super(Gtk.Notebook, self).__init__()
+        self.workspace_sidebar = workspace_sidebar
+        self.hosts_sidebar = hosts_sidebar
+        self.set_tab_pos(Gtk.PositionType.BOTTOM)
+
+        self.append_page(self.workspace_sidebar, Gtk.Label("Workspaces"))
+        self.append_page(self.hosts_sidebar, Gtk.Label("Hosts"))
+
+    def get_box(self):
+        box = Gtk.Box()
+        box.pack_start(self, True, True, 0)
+        return box
+
+class HostsSidebar(Gtk.Widget):
+    """Defines the widget displayed when the user is in the "Hosts" tab of
+    the Sidebar notebook. Will list all the host, and when clicking on one,
+    will open a window with more information about it"""
+
+    def __init__(self, open_dialog_callback, icons):
+        """Initializes the HostsSidebar. Initialization by itself does
+        almost nothing, the application will inmediatly call create_model
+        with the last workspace and create_view with that model upon startup.
+        """
+
+        super(Gtk.Widget, self).__init__()
+        self.open_dialog_callback = open_dialog_callback
+        self.current_model = None
+        self.linux_icon = icons + "tux.png"
+        self.windows_icon = icons + "windows.png"
+        self.mac_icon = icons + "Apple.png"
+
+    def create_model(self, hosts):
+        """Creates a model for a lists of hosts. The model contians the
+        host_id in the first column, the icon as a GdkPixbuf.Pixbuf()
+        in the second column and a display_str with the host_name and the
+        vulnerability count on the third column, like this:
+        | HOST_ID | HOST_OS_PIXBUF   | DISPLAY_STR      |
+        =================================================
+        | a923fd  |  LINUX_ICON      | 192.168.1.2 (5)  |
+        """
+        def decide_icon(os):
+            if os.startswith("Linux") or os.startswith("Unix"):
+                return GdkPixbuf.Pixbuf.new_from_file(self.linux_icon)
+            elif os.startswith("Windows"):
+                return GdkPixbuf.Pixbuf.new_from_file(self.windows_icon)
+            elif os.startswith("Mac"):
+                return GdkPixbuf.Pixbuf.new_from_file(self.mac_icon)
+
+        hosts_model = Gtk.ListStore(str, GdkPixbuf.Pixbuf(), str)
+        for host in hosts:
+            display_str = host.name + " (" + str(len(host.getVulns())) + ")"
+            os = host.getOS()
+            hosts_model.append([host.id, decide_icon(os), display_str])
+        self.current_model = hosts_model
+        return hosts_model
+
+    def create_view(self, model):
+        """Creates a view displaying the third column of the given model as
+        a text, and using an icon representing its second column.
+        Will connect activation of a row with the on_click method
+        """
+
+        def display_str(col, cell, model, _iter, user_data):
+            cell.set_property('text', model.get_value(_iter, 2))
+
+        def set_icon(col, cell, model, _iter, user_data):
+            icon = model.get_value(_iter, 1)
+            if icon != "None":
+                cell.set_property('pixbuf',
+                                  GdkPixbuf.Pixbuf.new_from_file(icon))
+
+        self.view = Gtk.TreeView(model)
+        self.view.set_activate_on_single_click(True)
+
+        text_renderer = Gtk.CellRendererText()
+        icon_renderer = Gtk.CellRendererPixbuf()
+
+        column_hosts = Gtk.TreeViewColumn("Hosts", text_renderer, text=2)
+        column_os = Gtk.TreeViewColumn("", icon_renderer, pixbuf=1)
+
+        self.view.append_column(column_os)
+        self.view.append_column(column_hosts)
+
+        self.view.connect("row_activated", self.on_click)
+
+        self.view.set_enable_search(True)
+        self.view.set_search_column(2)
+
+        return self.view
+
+    def update(self, hosts):
+        """Creates a new model from an updated list of hosts and adapts
+        the view to reflect the changes"""
+        model = self.create_model(hosts)
+        self.update_view(model)
+
+    def update_view(self, model):
+        """Updates the view of the object with a new model"""
+        self.view.set_model(model)
+
+    def on_click(self, tree_view, path, column):
+        """Sends the host_id of the clicked host back to the application"""
+        tree_iter = self.current_model.get_iter(path)
+        host_id = self.current_model[tree_iter][0]
+        self.open_dialog_callback(host_id)
+
+    def get_box(self):
+        """Returns the box to be displayed in the appwindow"""
+        box = Gtk.Box()
+        scrolled_view = Gtk.ScrolledWindow(None, None)
+        scrolled_view.add(self.view)
+        box.pack_start(scrolled_view, True, True, 0)
+        return box
+
+class WorkspaceSidebar(Gtk.Widget):
     """Defines the sidebar widget to be used by the AppWindow, passed as an
-    instance to itby the application. It only handles the view and the model,
+    instance to the application. It only handles the view and the model,
     all the backend word is handled by the application via the callback"""
 
     def __init__(self, workspace_manager, callback_to_change_workspace,
@@ -83,6 +204,13 @@ class Sidebar(Gtk.Widget):
         self.scrollableView.set_min_content_width(160)
         self.scrollableView.add(self.workspace_view)
 
+    def get_box(self):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        box.pack_start(self.getSearchEntry(), False, False, 0)
+        box.pack_start(self.getScrollableView(), True, True, 0)
+        box.pack_start(self.getButton(), False, False, 0)
+        return box
+
     def createSearchEntry(self):
         """Returns a simple search entry"""
         searchEntry = Gtk.Entry()
@@ -93,6 +221,9 @@ class Sidebar(Gtk.Widget):
     def getSearchEntry(self):
         """Returns the search entry of the sidebar"""
         return self.searchEntry
+
+    def getScrollableView(self):
+        return self.scrollableView
 
     def onSearchEnterKey(self, entry):
         """When the users preses enter, if the workspace exists,

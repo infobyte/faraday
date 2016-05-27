@@ -587,7 +587,7 @@ class HostInfoDialog(Gtk.Window):
 
             services = interface.getAllServices()
             for service in services:
-                # Same as with the host, last 4 strings are there
+                # Same as with the host, empty strings are there
                 # just to agree with the number of columns the model should
                 # have
                 vulns = service.getVulns()

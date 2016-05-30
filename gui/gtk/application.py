@@ -53,6 +53,7 @@ from dialogs import helpDialog
 from dialogs import ImportantErrorDialog
 from dialogs import ConflictsDialog
 from dialogs import HostInfoDialog
+from dialogs import errorDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import WorkspaceSidebar
@@ -307,24 +308,42 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def on_open_report_button(self, action, param):
 
-        def on_files_selected(files):
-            print self.report_manager
-            for _file in files:
-                self.model_controller
+        def select_plugin():
+            plugins_id = [_id for _id in self.plugin_manager.getPlugins()]
+            plugins_id = sorted(plugins_id)
+            dialog = Gtk.Dialog("Select plugin", self.window, 0)
 
+            combo_box = Gtk.ComboBoxText()
+            for plugin_id in plugins_id:
+                combo_box.append_text(plugin_id)
+            combo_box.show()
 
+            dialog.vbox.pack_start(combo_box, True, True, 10)
 
-        print "i'm opening a report"
-        dialog = Gtk.FileChooserNative()
-        dialog.set_title("Import a report")
-        dialog.set_modal(True)
-        dialog.set_transient_for(self.window)
-        dialog.set_action(Gtk.FileChooserAction.OPEN)
-        dialog.set_select_multiple(True)
+            dialog.add_button("Cancel", Gtk.ResponseType.DELETE_EVENT)
+            dialog.add_button("OK", Gtk.ResponseType.ACCEPT)
 
-        res = dialog.run()
-        if res == Gtk.ResponseType.ACCEPT:
-            on_files_selected(dialog.get_filenames())
+            response = dialog.run()
+            selected = combo_box.get_active_text()
+            dialog.destroy()
+
+            return response, selected
+
+        def on_file_selected(plugin_id, report):
+            self.report_manager.sendReportToPluginById(plugin_id, report)
+
+        plugin_response, plugin_id = select_plugin()
+        if plugin_response == Gtk.ResponseType.ACCEPT:
+            dialog = Gtk.FileChooserNative()
+            dialog.set_title("Import a report")
+            dialog.set_modal(True)
+            dialog.set_transient_for(self.window)
+            dialog.set_action(Gtk.FileChooserAction.OPEN)
+
+            res = dialog.run()
+            if res == Gtk.ResponseType.ACCEPT:
+                on_file_selected(plugin_id, dialog.get_filename())
+            dialog.destroy()
 
     def on_about(self, action, param):
         """ Defines what happens when you press 'about' on the menu"""

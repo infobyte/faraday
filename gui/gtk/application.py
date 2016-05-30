@@ -307,8 +307,14 @@ class GuiApp(Gtk.Application, FaradayUi):
         return host_count, service_count, vuln_count
 
     def on_open_report_button(self, action, param):
+        """What happens when the user clicks the open report button.
+        A dialog will present itself with a combobox to select a plugin.
+        Then a file chooser to select a report. The report will be processed
+        with the selected plugin.
+        """
 
         def select_plugin():
+            """Creates a simple dialog with a combo box to select a plugin"""
             plugins_id = [_id for _id in self.plugin_manager.getPlugins()]
             plugins_id = sorted(plugins_id)
             dialog = Gtk.Dialog("Select plugin", self.window, 0)
@@ -325,15 +331,23 @@ class GuiApp(Gtk.Application, FaradayUi):
 
             response = dialog.run()
             selected = combo_box.get_active_text()
-            dialog.destroy()
 
+            dialog.destroy()
             return response, selected
 
         def on_file_selected(plugin_id, report):
+            """Send the plugin_id and the report file to be processed"""
             self.report_manager.sendReportToPluginById(plugin_id, report)
 
         plugin_response, plugin_id = select_plugin()
+
         if plugin_response == Gtk.ResponseType.ACCEPT:
+            while plugin_id is None:
+                # force user to select a plugin if he did not do it
+                errorDialog(self.window,
+                            "Please select a plugin to parse your report!")
+                plugin_response, plugin_id = select_plugin()
+
             dialog = Gtk.FileChooserNative()
             dialog.set_title("Import a report")
             dialog.set_modal(True)

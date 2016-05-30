@@ -53,6 +53,7 @@ from dialogs import helpDialog
 from dialogs import ImportantErrorDialog
 from dialogs import ConflictsDialog
 from dialogs import HostInfoDialog
+from dialogs import errorDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import WorkspaceSidebar
@@ -214,6 +215,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         action.connect("activate", self.on_new_terminal_button)
         self.add_action(action)
 
+        action = Gio.SimpleAction.new("open_report")
+        action.connect("activate", self.on_open_report_button)
+        self.add_action(action)
+
         dirname = os.path.dirname(os.path.abspath(__file__))
         builder = Gtk.Builder.new_from_file(dirname + '/menubar.xml')
         builder.connect_signals(self)
@@ -300,6 +305,45 @@ class GuiApp(Gtk.Application, FaradayUi):
         service_count = self.model_controller.getServicesCount()
         vuln_count = self.model_controller.getVulnsCount()
         return host_count, service_count, vuln_count
+
+    def on_open_report_button(self, action, param):
+
+        def select_plugin():
+            plugins_id = [_id for _id in self.plugin_manager.getPlugins()]
+            plugins_id = sorted(plugins_id)
+            dialog = Gtk.Dialog("Select plugin", self.window, 0)
+
+            combo_box = Gtk.ComboBoxText()
+            for plugin_id in plugins_id:
+                combo_box.append_text(plugin_id)
+            combo_box.show()
+
+            dialog.vbox.pack_start(combo_box, True, True, 10)
+
+            dialog.add_button("Cancel", Gtk.ResponseType.DELETE_EVENT)
+            dialog.add_button("OK", Gtk.ResponseType.ACCEPT)
+
+            response = dialog.run()
+            selected = combo_box.get_active_text()
+            dialog.destroy()
+
+            return response, selected
+
+        def on_file_selected(plugin_id, report):
+            self.report_manager.sendReportToPluginById(plugin_id, report)
+
+        plugin_response, plugin_id = select_plugin()
+        if plugin_response == Gtk.ResponseType.ACCEPT:
+            dialog = Gtk.FileChooserNative()
+            dialog.set_title("Import a report")
+            dialog.set_modal(True)
+            dialog.set_transient_for(self.window)
+            dialog.set_action(Gtk.FileChooserAction.OPEN)
+
+            res = dialog.run()
+            if res == Gtk.ResponseType.ACCEPT:
+                on_file_selected(plugin_id, dialog.get_filename())
+            dialog.destroy()
 
     def on_about(self, action, param):
         """ Defines what happens when you press 'about' on the menu"""

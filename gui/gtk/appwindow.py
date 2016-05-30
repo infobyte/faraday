@@ -263,6 +263,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         new_terminal_icon = Gtk.Image.new_from_file(icons + "newshell.png")
         preferences_icon = Gtk.Image.new_from_file(icons + "config.png")
         toggle_log_icon = Gtk.Image.new_from_file(icons + "debug.png")
+        open_report_icon = Gtk.Image.new_from_file(icons + "FolderSteel-20.png")
 
         new_terminal_button = Gtk.ToolButton.new(new_terminal_icon, None)
         new_terminal_button.set_tooltip_text("Create a new tab")
@@ -286,6 +287,15 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         toggle_log_button.connect("clicked", self.toggle_log)
         toolbar.insert(toggle_log_button, 3)
 
+        space = Gtk.ToolItem()
+        space.set_expand(True)
+        toolbar.insert(space, 4)
+
+        open_report_button = Gtk.ToolButton.new(open_report_icon, None)
+        open_report_button.set_tooltip_text("Import report")
+        open_report_button.set_action_name('app.open_report')
+        toolbar.insert(open_report_button, 5)
+
         return toolbar
 
     def new_tab(self, scrolled_window):
@@ -304,7 +314,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     def delete_tab(self, button=None):
         """Deletes the current tab or closes the window if tab is only tab"""
         if self.tab_number == 0:
-            # the following confusing but its how gtks handles delete_event
+            # the following is confusing but its how gtks handles delete_event
             # if user said YES to confirmation, do_delete_event returns False
             if not self.do_delete_event():
                 self.destroy()

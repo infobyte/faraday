@@ -35,6 +35,15 @@ angular.module('faradayApp')
             "unclassified": "0"
         };
 
+        dashboard.vulnColors = [
+            "#932EBE",  // critical
+            "#DF3936",  // high
+            "#DFBF35",  // med
+            "#A1CE31",  // low
+            "#428BCA",  // info
+            "#999999"   // unclassified
+        ];
+
         dashboardSrv.getHostsByServicesCount = function(ws, id) {
             var url = BASEURL + "/" + ws + "/_design/hosts/_view/byservicecount?group=true";
             if (id != undefined){

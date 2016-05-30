@@ -14,6 +14,7 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
 from gi.repository import GLib, Gio, Gtk, GObject, Gdk
+from dialogs import ImportantErrorDialog
 
 CONF = getInstanceConfiguration()
 
@@ -43,6 +44,9 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         "update_ws_info": (GObject.SIGNAL_RUN_FIRST, None, (int, int, int, )),
         "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, )),
         "loading_workspace": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
+        "normal_error": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
+        "important_error": (GObject.SIGNAL_RUN_FIRST, None, ()),
+        "lost_db_connection": (GObject.SIGNAL_RUN_FIRST, None, ())
     }
 
     def __init__(self, sidebar, terminal, console_log, statusbar,
@@ -192,6 +196,47 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         currentScrolledWindow = currentBox.get_children()[0]
         currentTerminal = currentScrolledWindow.get_child()
         return currentTerminal
+
+    def prepare_important_error(self, event):
+        """Attaches an event to the class, so it can be used by the signal
+        callbacks even if they cannot be passed directly.
+        """
+        self.event = event
+
+    def do_important_error(self):
+        """Creates an importan error dialog with a callback to send
+        the developers the error traceback.
+        """
+        dialog_text = self.event.text
+        dialog = ImportantErrorDialog(self, dialog_text)
+        response = dialog.run()
+        if response == 42:
+            error = self.event.error_name
+            event.callback(error, *self.event.exception_objects)
+        dialog.destroy()
+
+    def do_normal_error(self, dialog_text):
+        """Just a simple, normal, ignorable error"""
+        dialog = Gtk.MessageDialog(self, 0,
+                                   Gtk.MessageType.ERROR,
+                                   Gtk.ButtonsType.OK,
+                                   dialog_text)
+        dialog.run()
+        dialog.destroy()
+
+    def do_lost_db_connection(self):
+        dialog = Gtk.MessageDialog(self, 0,
+                                   Gtk.MessageType.ERROR,
+                                   Gtk.ButtonsType.OK,
+                                   "Faraday has lost connection to CouchDB. "
+                                   "Faraday will exit. You have to fix your "
+                                   "connection to the database in order to "
+                                   "use Faraday normally. \n"
+                                   "Once you've fixed the problem, go "
+                                   " to Settings and input your correct "
+                                   "CouchDB URL again.")
+        dialog.run()
+        dialog.destroy()
 
     def do_new_log(self, text):
         """To be used on a new_log signal. Calls a method on log to append

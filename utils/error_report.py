@@ -107,7 +107,7 @@ def reportToDevelopers(name=None, *description):
                             headers = headers,
                             data = params, timeout = 1, verify=True)
 
-        model.api.devlog("Report sent it to faraday server")
+        model.api.devlog("Report sent to faraday server")
 
     except Exception as e:
         model.api.devlog("Error reporting to developers:")

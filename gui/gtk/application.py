@@ -214,6 +214,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         action.connect("activate", self.on_new_terminal_button)
         self.add_action(action)
 
+        action = Gio.SimpleAction.new("open_report")
+        action.connect("activate", self.on_open_report_button)
+        self.add_action(action)
+
         dirname = os.path.dirname(os.path.abspath(__file__))
         builder = Gtk.Builder.new_from_file(dirname + '/menubar.xml')
         builder.connect_signals(self)
@@ -300,6 +304,27 @@ class GuiApp(Gtk.Application, FaradayUi):
         service_count = self.model_controller.getServicesCount()
         vuln_count = self.model_controller.getVulnsCount()
         return host_count, service_count, vuln_count
+
+    def on_open_report_button(self, action, param):
+
+        def on_files_selected(files):
+            print self.report_manager
+            for _file in files:
+                self.model_controller
+
+
+
+        print "i'm opening a report"
+        dialog = Gtk.FileChooserNative()
+        dialog.set_title("Import a report")
+        dialog.set_modal(True)
+        dialog.set_transient_for(self.window)
+        dialog.set_action(Gtk.FileChooserAction.OPEN)
+        dialog.set_select_multiple(True)
+
+        res = dialog.run()
+        if res == Gtk.ResponseType.ACCEPT:
+            on_files_selected(dialog.get_filenames())
 
     def on_about(self, action, param):
         """ Defines what happens when you press 'about' on the menu"""

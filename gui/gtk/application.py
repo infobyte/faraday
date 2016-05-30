@@ -259,20 +259,20 @@ class GuiApp(Gtk.Application, FaradayUi):
         if receiver is None:
             receiver = self.getMainWindow()
 
-        if event.type() == 3131:  # new log event
+        elif event.type() == 3131:  # new log event
             receiver.emit("new_log", event.text)
 
-        if event.type() == 3141:  # new conflict event
+        elif event.type() == 3141:  # new conflict event
             receiver.emit("set_conflict_label", event.nconflicts)
 
-        if event.type() == 5100:  # new notification event
+        elif event.type() == 5100:  # new notification event
             self.notificationsModel.prepend([event.change.getMessage()])
             receiver.emit("new_notif")
             host_count, service_count, vuln_count = self.update_counts()
             receiver.emit("update_ws_info", host_count,
                           service_count, vuln_count)
 
-        if event.type() == 4100 or event.type() == 3140:  # newinfo or changews
+        elif event.type() == 4100 or event.type() == 3140:  # newinfo or changews
             host_count, service_count, vuln_count = self.update_counts()
 
             self.updateHosts()
@@ -281,23 +281,12 @@ class GuiApp(Gtk.Application, FaradayUi):
             receiver.emit("update_ws_info", host_count,
                           service_count, vuln_count)
 
-        if event.type() == 3132:  # error
-            dialog_text = event.text
-            dialog = Gtk.MessageDialog(self.window, 0,
-                                       Gtk.MessageType.INFO,
-                                       Gtk.ButtonsType.OK,
-                                       dialog_text)
-            dialog.run()
-            dialog.destroy()
+        elif event.type() == 3132:  # error
+            self.window.emit("normal_error", event.text)
 
-        if event.type() == 3134:  # important error, uncaught exception
-            dialog_text = event.text
-            dialog = ImportantErrorDialog(self.window, dialog_text)
-            response = dialog.run()
-            if response == 42:
-                error = event.error_name
-                event.callback(error, *event.exception_objects)
-            dialog.destroy()
+        elif event.type() == 3134:  # important error, uncaught exception
+            self.window.prepare_important_error(event)
+            self.window.emit("important_error")
 
     def update_counts(self):
         """Update the counts for host, services and vulns"""
@@ -440,7 +429,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         notifications_dialog.show_all()
 
     def on_click_conflicts(self, button=None):
-        """Doesn't use the button at all. Shows the conflict dialog"""
+        """Doesn't use the button at all, there cause GTK likes it.
+        Shows the conflict dialog.
+        """
         self.updateConflicts()
         if self.conflicts:
             dialog = ConflictsDialog(self.conflicts,

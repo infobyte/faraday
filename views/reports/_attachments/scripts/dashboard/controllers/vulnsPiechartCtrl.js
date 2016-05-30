@@ -7,12 +7,15 @@ angular.module('faradayApp')
         ['$scope', '$routeParams', 'dashboardSrv',
         function($scope, $routeParams, dashboardSrv) {
 
+            $scope.doughnut;
             $scope.topServices;
             $scope.workspace;
 
             init = function() {
                 if($routeParams.wsId != undefined) {
                     $scope.workspace = $routeParams.wsId;
+
+                    $scope.doughnut = {key: [], value: [], colors: [], options: {maintainAspectRatio: false}};
                 }
             };
 

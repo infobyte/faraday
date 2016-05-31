@@ -35,7 +35,7 @@ angular.module('faradayApp')
             "unclassified": "0"
         };
 
-        dashboard.vulnColors = [
+        dashboardSrv.vulnColors = [
             "#932EBE",  // critical
             "#DF3936",  // high
             "#DFBF35",  // med
@@ -163,8 +163,23 @@ angular.module('faradayApp')
         };
 
         dashboardSrv.getVulnerabilitiesCount = function(ws) {
-            var url = BASEURL + "/" + ws + "/_design/hosts/_view/vulns?group=true";
-            return dashboardSrv._getView(url);
+            var deferred = $q.defer(),
+            url = BASEURL + "/" + ws + "/_design/vulns/_view/byseverity?group=true";
+
+            dashboardSrv._getView(url)
+                .then(function(vulns) {
+                    var vs = {};
+
+                    vulns.forEach(function(vuln) {
+                        vs[vuln.key] = vuln.value;
+                    });
+
+                    deferred.resolve(vs);
+                }, function() {
+                    deferred.reject("Unable to get Vulnerabilities count");
+                });
+
+            return deferred.promise;
         };
 
         dashboardSrv.getObjectsCount = function(ws) {

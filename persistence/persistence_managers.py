@@ -388,7 +388,7 @@ class CouchDbConnector(DbConnector):
                 if tolerance == 3:
                     event = ShowExceptionConnectionRefusedCustomEvent()
                     model.guiapi.postCustomEvent(event)
-                    break
+                    return False
 
     #@trap_timeout
     def _compactDatabase(self):

@@ -470,14 +470,15 @@ class GuiApp(Gtk.Application, FaradayUi):
                 ws = super(GuiApp, self).openWorkspace(workspaceName)
                 self.updateHosts()
                 self.hosts_sidebar.update(self.all_hosts)
+                self.window.emit("loading_workspace", "destroy")
             except Exception as e:
+                self.window.emit("loading_workspace", "destroy")
                 model.guiapi.notification_center.showDialog(str(e))
                 ws = self.openDefaultWorkspace()
 
             workspace = ws.name
             CONF.setLastWorkspace(workspace)
             CONF.saveConfig()
-            self.window.emit("loading_workspace", "destroy")
 
             return True
 

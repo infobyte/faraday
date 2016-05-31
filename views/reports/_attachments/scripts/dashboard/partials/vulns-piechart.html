@@ -17,7 +17,7 @@
             </button>
             <p>No vulnerabilities found yet</p>
         </div>
-        <div id="data" ng-if="loaded && data.value.length !== 0">
+        <div id="doughnut" ng-if="loaded && data.value.length !== 0">
             <canvas id="doughnut" class="chart chart-doughnut" chart-data="data.value" chart-labels="data.key"
             chart-colours="data.colors" chart-options="data.options"></canvas>
         </div>

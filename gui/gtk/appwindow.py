@@ -229,12 +229,10 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
                                    Gtk.MessageType.ERROR,
                                    Gtk.ButtonsType.OK,
                                    "Faraday has lost connection to CouchDB. "
-                                   "Faraday will exit. You have to fix your "
-                                   "connection to the database in order to "
-                                   "use Faraday normally. \n"
-                                   "Once you've fixed the problem, go "
-                                   " to Settings and input your correct "
-                                   "CouchDB URL again.")
+                                   "The program WILL NOT FUNCTION correctly "
+                                   "until you fix the problem and reconnect "
+                                   "to a valid CouchDB via the Preferences "
+                                   "dialog.")
         dialog.run()
         dialog.destroy()
 

@@ -291,6 +291,11 @@ class GuiApp(Gtk.Application, FaradayUi):
         elif event.type() == 42424: # lost connection to couch db
             self.window.prepare_important_error(event)
             self.window.emit("lost_db_connection")
+            self.reloadWorkspaces()
+            ws = self.openDefaultWorkspace()
+            workspace = ws.name
+            CONF.setLastWorkspace(workspace)
+            CONF.saveConfig()
 
     def update_counts(self):
         """Update the counts for host, services and vulns"""

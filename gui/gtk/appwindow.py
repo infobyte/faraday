@@ -15,6 +15,7 @@ gi.require_version('Vte', '2.91')
 
 from gi.repository import GLib, Gio, Gtk, GObject, Gdk
 from dialogs import ImportantErrorDialog
+from dialogs import errorDialog
 
 CONF = getInstanceConfiguration()
 
@@ -229,12 +230,13 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
                                    Gtk.MessageType.ERROR,
                                    Gtk.ButtonsType.OK,
                                    "Faraday has lost connection to CouchDB. "
-                                   "The program WILL NOT FUNCTION correctly "
-                                   "until you fix the problem and reconnect "
-                                   "to a valid CouchDB via the Preferences "
-                                   "dialog.")
+                                   "The program has reverted back to the "
+                                   "filesystem database. Fix the connection "
+                                   "and re-enter the CouchDB URL in the "
+                                   "preferences settings")
         dialog.run()
         dialog.destroy()
+
 
     def do_new_log(self, text):
         """To be used on a new_log signal. Calls a method on log to append

@@ -295,8 +295,16 @@ class CouchDbConnector(DbConnector):
         return res
 
     def forceUpdate(self):
+        """It will try to update the information on the DB if it can.
+        The except clause is necesary to catch the case where we've lost
+        the connection to the DB.
+        """
+
         doc = self.getDocument(self.db.dbname)
-        return self.db.save_doc(doc, use_uuids=True, force_update=True)
+        try:
+            return self.db.save_doc(doc, use_uuids=True, force_update=True)
+        except:
+            return False
 
     #@trap_timeout
     def getDocument(self, document_id):

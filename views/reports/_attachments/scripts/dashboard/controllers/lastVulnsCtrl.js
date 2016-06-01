@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('lastVulnsCtrl',
-        ['$scope', '$routeParams', 'dashboardSrv', 'vulnsManager',
-        function($scope, $routeParams, dashboardSrv, vulnsManager) {
+        ['$scope', '$routeParams', 'vulnsManager',
+        function($scope, $routeParams, vulnsManager) {
             $scope.vulns;
             $scope.vulnSortField = "metadata.create_time";
             $scope.vulnSortReverse = true;

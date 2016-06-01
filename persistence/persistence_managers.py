@@ -550,11 +550,18 @@ class CouchDbManager(AbstractPersistenceManager):
     #@trap_timeout
     def _loadDbs(self):
         conditions = lambda x: not x.startswith("_") and x not in CONST_BLACKDBS
-        for dbname in filter(conditions, self.__serv.all_dbs()):
-            if dbname not in self.dbs.keys():
-                getLogger(self).debug(
-                    "Asking for dbname[%s], registering for lazy initialization" % dbname)
-                self.dbs[dbname] = lambda x: self._loadDb(x)
+        try:
+            for dbname in filter(conditions, self.__serv.all_dbs()):
+                if dbname not in self.dbs.keys():
+                    getLogger(self).debug(
+                        "Asking for dbname[%s], registering for lazy initialization" % dbname)
+                    self.dbs[dbname] = lambda x: self._loadDb(x)
+        except restkit.errors.RequestError as req_error:
+            getLogger(self).error("Couldn't load databases. "
+                                  "The connection to the CouchDB was probably lost. ")
+            event = ShowExceptionConnectionRefusedCustomEvent()
+            model.guiapi.postCustomEvent(event)
+            return False
 
     def _loadDb(self, dbname):
         db = self.__serv.get_db(dbname)

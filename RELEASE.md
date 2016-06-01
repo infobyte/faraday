@@ -12,11 +12,14 @@ New features in the latest update
 TO BE RELEASED
 
 ---
+* Added Import Report dialog to Faraday GTK
 * Added a 'Loading workspace...' dialog to Faraday GTK
 * Added host sidebar to Faraday GTK
 * Added host information dialog to Faraday GTK with the full data about a host, its interfaces, services and vulnerabilities
+* Added support for run faraday from other directories.
 * Fixed log reapparing after being disabled if user created a new tab
-* Add support for run faraday from other directories.
+* Fixed bug regarding exception handling in Faraday GTK
+* Faraday will now not crash if you suddenly lose connection to your CouchDB
 
 May 23, 2016:
 ---

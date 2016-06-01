@@ -17,7 +17,7 @@ angular.module('faradayApp')
 
                     vulnsManager.getVulns($scope.workspace)
                         .then(function(vulns) {
-                            $scope.vulns = vulnsManager.vulns;
+                            $scope.vulns = vulns;
                         });
                 }
             };

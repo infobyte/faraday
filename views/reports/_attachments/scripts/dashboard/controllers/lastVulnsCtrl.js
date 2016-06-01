@@ -7,6 +7,8 @@ angular.module('faradayApp')
         ['$scope', '$routeParams', 'dashboardSrv', 'vulnsManager',
         function($scope, $routeParams, dashboardSrv, vulnsManager) {
             $scope.vulns;
+            $scope.vulnSortField = "metadata.create_time";
+            $scope.vulnSortReverse = true;
             $scope.workspace;
 
             init = function() {
@@ -18,6 +20,22 @@ angular.module('faradayApp')
                             $scope.vulns = vulnsManager.vulns;
                         });
                 }
+            };
+
+            // toggles sort field and order
+            $scope.vulnToggleSort = function(field) {
+                $scope.vulnToggleSortField(field);
+                $scope.vulnToggleReverse();
+            };
+
+            // toggles column sort field
+            $scope.vulnToggleSortField = function(field) {
+                $scope.vulnSortField = field;
+            };
+
+            // toggle column sort order
+            $scope.vulnToggleReverse = function() {
+                $scope.vulnSortReverse = !$scope.vulnSortReverse;
             };
 
             init();

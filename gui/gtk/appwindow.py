@@ -248,6 +248,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
                                    "filesystem database. Fix the connection "
                                    "and re-enter the CouchDB URL in the "
                                    "preferences settings")
+        dialog.set_modal(True)
 
         retry_button = dialog.add_button("Retry connection?", 42)
         retry_button.connect("clicked", handle_connection_lost, dialog)

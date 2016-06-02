@@ -74,7 +74,8 @@ class GuiApp(Gtk.Application, FaradayUi):
     Right now handles by itself only the menu, everything is else is
     appWindow's resposibility as far as the UI goes. All logic by the main
     window should be done here. Some of the logic on the dialogs is
-    implemented in the dialogs own class.
+    implemented in the dialogs own class. Some dialogs are shown by the
+    appwindow to handle errors coming from other threads outside GTK's.
     """
 
     def __init__(self, model_controller, plugin_manager, workspace_manager,
@@ -385,9 +386,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         info_window.show_all()
 
     def reloadWorkspaces(self):
-        """Used in conjunction with on_preferences: close workspace,
-        resources the workspaces available, clears the sidebar of the old
-        workspaces and injects all the new ones in there too"""
+        """Close workspace, resources the workspaces available,
+        clears the sidebar of the old workspaces and injects all the new ones
+        in there too"""
         self.workspace_manager.closeWorkspace()
         self.workspace_manager.resource()
         self.ws_sidebar.clearSidebar()
@@ -417,7 +418,8 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def on_click_notifications(self, button):
         """Defines what happens when the user clicks on the notifications
-        button."""
+        button: just show a silly window with a treeview containing
+        all the notifications"""
 
         notifications_view = Gtk.TreeView(self.notificationsModel)
         renderer = Gtk.CellRendererText()

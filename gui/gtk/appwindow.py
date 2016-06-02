@@ -15,6 +15,7 @@ gi.require_version('Vte', '2.91')
 
 from gi.repository import GLib, Gio, Gtk, GObject, Gdk
 from dialogs import ImportantErrorDialog
+from dialogs import errorDialog
 
 CONF = getInstanceConfiguration()
 
@@ -237,17 +238,19 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.statusbar.inc_notif_button_label()
 
     def do_set_conflict_label(self, conflict_number):
+        """Sets the conflict label to the appropiate conflict_number"""
         self.statusbar.update_conflict_button_label(conflict_number)
 
     def do_update_ws_info(self, host_count, service_count, vuln_count):
+        """Sets the statusbar workspace info to the appropiate numbers"""
         self.statusbar.update_ws_info(host_count, service_count, vuln_count)
 
-    def do_loading_workspace(self, status):
+    def do_loading_workspace(self, action):
         """Called by changeWorkspace on the application. Presents
         a silly loading dialog.
         Preconditions: show must have been called before destroy can be called
         """
-        if status == "show":
+        if action == "show":
             self.loading_dialog = Gtk.MessageDialog(self, 0,
                                                     Gtk.MessageType.INFO,
                                                     Gtk.ButtonsType.NONE,
@@ -255,8 +258,9 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
                                                     "Please wait."))
 
             self.loading_dialog.set_modal(True)
-            self.loading_dialog.show_all()
-        if status == "destroy":
+
+            self.loading_dialog.run()
+        if action == "destroy":
             self.loading_dialog.destroy()
 
 

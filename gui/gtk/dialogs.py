@@ -20,18 +20,6 @@ from model import guiapi
 
 CONF = getInstanceConfiguration()
 
-"""This could probably be made much better with just a little effort.
-It'd be probably a good idea to make a super class Dialog from which
-all the dialogs inherit from with the common methods used (particularly the
-OK and Cancel buttons). Good starting point if we continue on with the idea
-of using GTK.
-
-Update: so it seems like Gtk actually already provides a Gtk.Dialog class
-which would seem practical. All dialogs are already made and it is a
-convenience class only, but if there's need to add more, it's a good
-thing to know"""
-
-
 class PreferenceWindowDialog(Gtk.Window):
     """Sets up a preference dialog with basically nothing more than a
     label, a text entry to input your CouchDB IP and a couple of buttons.
@@ -44,7 +32,7 @@ class PreferenceWindowDialog(Gtk.Window):
         self.set_modal(True)
         self.set_size_request(400, 100)
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
-        self.connect("key_press_event", on_scape)
+        self.connect("key_press_event", on_scape_destroy)
         self.set_transient_for(parent)
         self.timeout_id = None
         self.reloadWorkspaces = callback
@@ -105,7 +93,7 @@ class NewWorkspaceDialog(Gtk.Window):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape)
+        self.connect("key_press_event", on_scape_destroy)
         self.set_size_request(200, 200)
         self.timeout_id = None
         self.callback = callback
@@ -197,7 +185,7 @@ class PluginOptionsDialog(Gtk.Window):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape)
+        self.connect("key_press_event", on_scape_destroy)
         self.set_size_request(800, 300)
 
         if plugin_manager is not None:
@@ -407,7 +395,7 @@ class HostInfoDialog(Gtk.Window):
         self.set_transient_for(parent)
         self.set_size_request(1200, 500)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape)
+        self.connect("key_press_event", on_scape_destroy)
         self.host = host
 
         self.service_label = Gtk.Label()
@@ -776,7 +764,7 @@ class ConflictsDialog(Gtk.Window):
         self.set_transient_for(parent)
         self.set_size_request(600, 400)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape)
+        self.connect("key_press_event", on_scape_destroy)
         self.conflicts = conflicts
         self.conflict_n = 0
         self.current_conflict = self.conflicts[self.conflict_n]
@@ -1220,7 +1208,7 @@ class NotificationsDialog(Gtk.Window):
         self.set_transient_for(parent)
         self.set_size_request(400, 200)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape)
+        self.connect("key_press_event", on_scape_destroy)
 
         self.view = view
         self.destroy_notifications = callback
@@ -1325,7 +1313,7 @@ class ImportantErrorDialog(Gtk.Dialog):
         self.show_all()
 
 
-def on_scape(window, event):
+def on_scape_destroy(window, event):
     """Silly function to destroy a window on escape key, to use
     with all the dialogs that should be Gtk.Dialogs but are Gtk.Windows
     or with windows that are too complex for gtk dialogs but should behave

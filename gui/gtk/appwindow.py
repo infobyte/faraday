@@ -70,10 +70,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         self.icons = CONF.getImagePath() + "icons/"
 
-        # sets up the clipboard
-        self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-        self.selection_clipboard = Gtk.Clipboard.get(Gdk.SELECTION_PRIMARY)
-
         # Keep it in sync with the actual state. Deep dark GTK magic
         self.connect("notify::is-maximized",
                      lambda obj, pspec:
@@ -144,37 +140,25 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         """Defines the menu created when a user rightclicks on the
         terminal eventbox"""
         menu = Gtk.Menu()
-        copy = Gtk.MenuItem("Copy")
-        paste = Gtk.MenuItem("Paste")
-        menu.append(paste)
-        menu.append(copy)
+        self.copy = Gtk.MenuItem("Copy")
+        self.paste = Gtk.MenuItem("Paste")
+        menu.append(self.paste)
+        menu.append(self.copy)
 
-        # TODO: make accelerators for copy paste work. add accel for paste
-        # accelgroup = Gtk.AccelGroup()
-        # self.add_accel_group(accelgroup)
-        # accellabel = Gtk.AccelLabel("Copy/Paste")
-        # accellabel.set_hexpand(True)
-        # copy.add_accelerator("activate",
-        #                     accelgroup,
-        #                     Gdk.keyval_from_name("c"),
-        #                     Gdk.ModifierType.SHIFT_MASK |
-        #                     Gdk.ModifierType.CONTROL_MASK,
-        #                     Gtk.AccelFlags.VISIBLE)
+        self.copy.connect("activate", self.copy_text)
+        self.paste.connect("activate", self.paste_text)
 
-        copy.connect("activate", self.copy_text)
-        paste.connect("activate", self.paste_text)
-
-        copy.show()
-        paste.show()
+        self.copy.show()
+        self.paste.show()
         menu.popup(None, None, None, None, event.button, event.time)
 
-    def copy_text(self, button):
-        """What happens when the user copies text"""
-        content = self.selection_clipboard.wait_for_text()
-        self.clipboard.set_text(content, -1)
+    def copy_text(self, _, __, ___, ____):
+        """When the user presses on the copy button on the menu..."""
+        currentTerminal = self.getCurrentFocusedTerminal()
+        currentTerminal.copy_clipboard()
 
     def paste_text(self, button):
-        """What happens when the user pastes text"""
+        """When the user presses on the paste button on the menu..."""
         currentTerminal = self.getCurrentFocusedTerminal()
         currentTerminal.paste_clipboard()
 

@@ -250,7 +250,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
                                    "preferences settings")
 
         retry_button = dialog.add_button("Retry connection?", 42)
-        retry_button.connect("clicked", handle_connection_lost)
+        retry_button.connect("clicked", handle_connection_lost, dialog)
 
         cancel_button = dialog.add_button("Cancel", 0)
         cancel_button.connect("clicked", destroy_dialog)

@@ -321,10 +321,12 @@ class GuiApp(Gtk.Application, FaradayUi):
             success = True
         return success
 
-    def handle_connection_lost(self, button=None):
+    def handle_connection_lost(self, button=None, dialog=None):
         """Tries to connect to Couch using the same URI"""
-        couch_uri = CONF.getCouchURI
+        couch_uri = CONF.getCouchURI()
         if self.connect_to_couch(couch_uri):
+            if dialog is not None:
+                dialog.destroy()
             reconnected = True
         else:
             reconnected = False

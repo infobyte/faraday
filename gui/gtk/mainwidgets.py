@@ -13,7 +13,7 @@ import sys
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-from gi.repository import Gtk, Vte, GLib, Pango, GdkPixbuf
+from gi.repository import Gtk, Gdk, Vte, GLib, Pango, GdkPixbuf
 
 
 class Terminal(Vte.Terminal):
@@ -24,6 +24,7 @@ class Terminal(Vte.Terminal):
 
         self.pty = self.pty_new_sync(Vte.PtyFlags.DEFAULT, None)
         self.set_pty(self.pty)
+        self.connect("key_press_event", self.copy_or_paste)
 
         self.set_scrollback_lines(-1)
         self.set_audible_bell(0)
@@ -52,6 +53,23 @@ class Terminal(Vte.Terminal):
                         GLib.SpawnFlags.DO_NOT_REAP_CHILD,
                         None,
                         None)
+
+    def copy_or_paste(self, widget, event):
+        """Decides if the Ctrl+Shift is pressed, in which case returns True.
+        If Ctrl+Shift+C or Ctrl+Shift+V are pressed, copies or pastes,
+        acordingly. Return necesary so it doesn't perform other action,
+        like killing the process, on Ctrl+C.
+        """
+
+        control_key = Gdk.ModifierType.CONTROL_MASK
+        shift_key = Gdk.ModifierType.SHIFT_MASK
+        if event.type == Gdk.EventType.KEY_PRESS:
+            if event.state == shift_key | control_key:
+                if event.keyval == 67:
+                    self.copy_clipboard()
+                elif event.keyval == 86:
+                    self.paste_clipboard()
+                return True
 
 class Sidebar(Gtk.Notebook):
     """Defines the bigger sidebar in a notebook. One of its tabs will contain

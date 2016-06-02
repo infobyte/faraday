@@ -198,11 +198,14 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         currentTerminal = currentScrolledWindow.get_child()
         return currentTerminal
 
-    def prepare_important_error(self, event):
+    def prepare_important_error(self, event, *callbacks):
         """Attaches an event to the class, so it can be used by the signal
-        callbacks even if they cannot be passed directly.
+        do_ functions even if they cannot be passed directly. It takes
+        an optional arbitrary amout of callbacks which will be stored in
+        self.error_callbacks as a tuple
         """
         self.event = event
+        self.error_callbacks = callbacks
 
     def do_important_error(self):
         """Creates an importan error dialog with a callback to send
@@ -210,10 +213,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         """
         dialog_text = self.event.text
         dialog = ImportantErrorDialog(self, dialog_text)
-        response = dialog.run()
-        if response == 42:
-            error = self.event.error_name
-            event.callback(error, *self.event.exception_objects)
+        dialog.run()
         dialog.destroy()
 
     def do_normal_error(self, dialog_text):
@@ -226,17 +226,36 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         dialog.destroy()
 
     def do_lost_db_connection(self):
+        """Creates a simple dialog with an error message to inform the user
+        some kind of problem has happened and the connection was lost.
+        Uses the first callback on self.error_callbacks, which should
+        point to the application's handle_connection_lost method.
+        """
+
+
+        def destroy_dialog(button=None):
+            """Necessary 'cause button.connect method passes the button
+            as a paramether even when I don't need it.
+            """
+            dialog.destroy()
+
+        handle_connection_lost = self.error_callbacks[0]
         dialog = Gtk.MessageDialog(self, 0,
                                    Gtk.MessageType.ERROR,
-                                   Gtk.ButtonsType.OK,
+                                   Gtk.ButtonsType.NONE,
                                    "Faraday has lost connection to CouchDB. "
                                    "The program has reverted back to the "
                                    "filesystem database. Fix the connection "
                                    "and re-enter the CouchDB URL in the "
                                    "preferences settings")
-        dialog.run()
-        dialog.destroy()
 
+        retry_button = dialog.add_button("Retry connection?", 42)
+        retry_button.connect("clicked", handle_connection_lost)
+
+        cancel_button = dialog.add_button("Cancel", 0)
+        cancel_button.connect("clicked", destroy_dialog)
+
+        dialog.run()
 
     def do_new_log(self, text):
         """To be used on a new_log signal. Calls a method on log to append

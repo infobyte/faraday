@@ -42,6 +42,7 @@ import model.log
 from gui.gui_app import FaradayUi
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
+from persistence.persistence_managers import CouchDbManager
 from appwindow import AppWindow
 
 from dialogs import PreferenceWindowDialog
@@ -50,10 +51,10 @@ from dialogs import PluginOptionsDialog
 from dialogs import NotificationsDialog
 from dialogs import aboutDialog
 from dialogs import helpDialog
-from dialogs import ImportantErrorDialog
 from dialogs import ConflictsDialog
 from dialogs import HostInfoDialog
 from dialogs import errorDialog
+from dialogs import ImportantErrorDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import WorkspaceSidebar
@@ -289,13 +290,45 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.window.emit("important_error")
 
         elif event.type() == 42424: # lost connection to couch db
-            self.window.prepare_important_error(event)
+            self.window.prepare_important_error(event,
+                                                self.handle_connection_lost)
+
             self.window.emit("lost_db_connection")
             self.reloadWorkspaces()
             ws = self.openDefaultWorkspace()
             workspace = ws.name
             CONF.setLastWorkspace(workspace)
             CONF.saveConfig()
+
+    def connect_to_couch(self, couch_uri):
+        """Tries to connect to a CouchDB on a specified Couch URI.
+        Returns the success status of the operation, False for not successful,
+        True for successful
+        """
+        if not CouchDbManager.testCouch(couch_uri):
+            errorDialog(self.window, "The provided URL is not valid",
+                        "Are you sure CouchDB is running?")
+            success = False
+        elif couch_uri.startswith("https://"):
+            if not checkSSL(couch_uri):
+                errorDialog(self.window,
+                            "The SSL certificate validation has failed")
+            success = False
+        else:
+            CONF.setCouchUri(couch_uri)
+            CONF.saveConfig()
+            self.reloadWorkspaces()
+            success = True
+        return success
+
+    def handle_connection_lost(self, button=None):
+        """Tries to connect to Couch using the same URI"""
+        couch_uri = CONF.getCouchURI
+        if self.connect_to_couch(couch_uri):
+            reconnected = True
+        else:
+            reconnected = False
+        return reconnected
 
     def update_counts(self):
         """Update the counts for host, services and vulns"""
@@ -378,6 +411,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         new workspaces available"""
 
         preference_window = PreferenceWindowDialog(self.reloadWorkspaces,
+                                                   self.connect_to_couch,
                                                    self.window)
         preference_window.show_all()
 

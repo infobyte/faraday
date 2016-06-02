@@ -38,7 +38,7 @@ class PreferenceWindowDialog(Gtk.Window):
     Takes a callback function to the mainapp so that it can refresh the
     workspace list and information"""
 
-    def __init__(self, callback, parent):
+    def __init__(self, reload_ws_callback, connect_to_couch, parent):
         Gtk.Window.__init__(self, title="Preferences")
         self.parent = parent
         self.set_modal(True)
@@ -47,7 +47,8 @@ class PreferenceWindowDialog(Gtk.Window):
         self.connect("key_press_event", on_scape)
         self.set_transient_for(parent)
         self.timeout_id = None
-        self.reloadWorkspaces = callback
+        self.reloadWorkspaces = reload_ws_callback
+        self.connectCouchCallback = connect_to_couch
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.add(vbox)
@@ -77,16 +78,7 @@ class PreferenceWindowDialog(Gtk.Window):
     def on_click_OK(self, button):
         """Defines what happens when user clicks OK button"""
         repourl = self.entry.get_text()
-        if not CouchDbManager.testCouch(repourl):
-            errorDialog(self, "The provided URL is not valid",
-                        "Are you sure CouchDB is running?")
-        elif repourl.startswith("https://"):
-            if not checkSSL(repourl):
-                errorDialog("The SSL certificate validation has failed")
-        else:
-            CONF.setCouchUri(repourl)
-            CONF.saveConfig()
-            self.reloadWorkspaces()
+        if self.connectCouchCallback(repourl): #success!
             self.destroy()
 
     def on_click_cancel(self, button):

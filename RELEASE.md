@@ -19,6 +19,7 @@ TO BE RELEASED
 * Added support for run faraday from other directories.
 * Fixed log reapparing after being disabled if user created a new tab
 * Fixed bug regarding exception handling in Faraday GTK
+* Now Faraday GTK supports Ctrl+Shift+C / Ctrl+Shift+V to Copy/Paste
 * Faraday will now not crash if you suddenly lose connection to your CouchDB
 
 May 23, 2016:

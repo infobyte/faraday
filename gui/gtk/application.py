@@ -71,15 +71,17 @@ CONF = getInstanceConfiguration()
 class GuiApp(Gtk.Application, FaradayUi):
     """
     Creates the application and has the necesary callbacks to FaradayUi
-    Right now handles by itself only the menu, everything is else is
-    appWindow's resposibility as far as the UI goes. All logic by the main
-    window should be done here. Some of the logic on the dialogs is
-    implemented in the dialogs own class. Some dialogs are shown by the
-    appwindow to handle errors coming from other threads outside GTK's.
+    As far as the GUI goes, this handles only the menu, everything is else is
+    appWindow's resposibility. All logic by the main window should be done
+    here. Some of the logic on the dialogs is implemented in the dialogs own
+    class. Some dialogs are shown by the appwindow to handle errors coming
+    from other threads outside GTK's.
     """
 
     def __init__(self, model_controller, plugin_manager, workspace_manager,
                  plugin_controller):
+        """Does not do much. Most of the initialization work is actually
+        done by the run() method, as specified in FaradayUi."""
 
         FaradayUi.__init__(self,
                            model_controller,
@@ -159,7 +161,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         GTK calls this method after Gtk.Application.run()
         Creates instances of the sidebar, terminal, console log and
         statusbar to be added to the app window.
-        Sets up necesary acttions on menu and toolbar buttons
+        Sets up necesary actions on menu and toolbar buttons
         Also reads the .xml file from menubar.xml
         """
         Gtk.Application.do_startup(self)  # deep GTK magic
@@ -456,13 +458,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.notificationsModel.clear()
         self.window.emit("clear_notifications")
 
-    def changeWorkspace(self, selection):
+    def changeWorkspace(self, workspaceName):
         """Changes workspace in a separate thread. Emits a signal
         to present a 'Loading workspace' dialog while Faraday processes
         the change"""
-
-        tree_model, treeiter = selection.get_selected()
-        workspaceName = tree_model[treeiter][0]
 
         def background_process():
             self.window.emit("loading_workspace", 'show')

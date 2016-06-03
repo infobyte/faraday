@@ -234,6 +234,15 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         a silly loading dialog.
         Preconditions: show must have been called before destroy can be called
         """
+        def do_nothing(widget, event):
+            """Do nothing. Well, technically, return True.
+
+            Avoids the user to interact with the dialog in anyway, for example,
+            via the Escape key.
+            You'll have to wait for my dialog to exit by itself, cowboy.
+            """
+            return True
+
         if action == "show":
             self.loading_dialog = Gtk.MessageDialog(self, 0,
                                                     Gtk.MessageType.INFO,
@@ -242,8 +251,9 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
                                                     "Please wait."))
 
             self.loading_dialog.set_modal(True)
+            self.loading_dialog.connect("key_press_event", do_nothing)
 
-            self.loading_dialog.run()
+            self.loading_dialog.show_all()
         if action == "destroy":
             self.loading_dialog.destroy()
 
@@ -262,14 +272,13 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
     def refreshSidebar(self):
         """Call the refresh method on sidebar. It will append new workspaces,
-        but it will *NOT* delete workspaces not found anymore in the current
-        ws anymore"""
+        but it will *NOT* delete workspaces not found in the current
+        ws"""
         self.sidebar.refresh()
 
     def create_toolbar(self):
         """ Creates toolbar with an open and new button, getting the icons
-        from the stock. The method by which it does this is deprecated,
-        this could be improved"""
+        from the stock. """
 
         toolbar = Gtk.Toolbar()
         toolbar.set_hexpand(True)
@@ -369,7 +378,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         if response == Gtk.ResponseType.YES:
             return False  # keep on going and destroy
         else:
-            # user say you know what i don't want to exit
+            # user said "you know what i don't want to exit"
             return True
 
     def on_terminal_exit(self, terminal, status):

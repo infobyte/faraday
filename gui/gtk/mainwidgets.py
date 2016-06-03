@@ -79,6 +79,7 @@ class Sidebar(Gtk.Notebook):
     """
 
     def __init__(self, workspace_sidebar, hosts_sidebar):
+        """Attach to the notebok the workspace sidebar and the host_sidebar"""
         super(Gtk.Notebook, self).__init__()
         self.workspace_sidebar = workspace_sidebar
         self.hosts_sidebar = hosts_sidebar
@@ -120,6 +121,7 @@ class HostsSidebar(Gtk.Widget):
         | a923fd  |  LINUX_ICON      | 192.168.1.2 (5)  |
         """
         def decide_icon(os):
+            """Decided which Pixbuf (icon) should go with the given os"""
             if os.startswith("Linux") or os.startswith("Unix"):
                 return GdkPixbuf.Pixbuf.new_from_file(self.linux_icon)
             elif os.startswith("Windows"):
@@ -252,7 +254,7 @@ class WorkspaceSidebar(Gtk.Widget):
             self.callbackCreateWs(title=entry.get_text())
             entry.set_text("")
         else:
-            self.callbackChangeWs(selection)
+            self.callbackChangeWs(self.getSelectedWsName())
             ws_iter = self.getSelectedWsIter()
             entry.set_text("")
             self.selectWs(ws_iter)
@@ -337,7 +339,8 @@ class WorkspaceSidebar(Gtk.Widget):
             select.select_path(path)
 
             # change the workspace to the newly selected
-            self.callbackChangeWs(self.getSelectedWs())
+
+            self.callbackChangeWs(self.getSelectedWsName())
 
         if event.button == 3:  # 3 represents right click
             menu = Gtk.Menu()
@@ -367,7 +370,8 @@ class WorkspaceSidebar(Gtk.Widget):
         self.workspace_model.append([ws])
 
     def getSelectedWs(self):
-        """Returns the name of the current selected workspace"""
+        """Returns the selection of of the view.
+        To retrieve the name, see getSelectedWsName"""
         selection = self.workspace_view.get_selection()
         return selection
 
@@ -376,6 +380,13 @@ class WorkspaceSidebar(Gtk.Widget):
         selection = self.getSelectedWs()
         _iter = selection.get_selected()[1]
         return _iter
+
+    def getSelectedWsName(self):
+        """Return the name of the selected workspace"""
+        selection = self.getSelectedWs()
+        tree_model, treeiter = selection.get_selected()
+        workspaceName = tree_model[treeiter][0]
+        return workspaceName
 
     def selectWs(self, ws):
         """Selects workspace ws in the list"""

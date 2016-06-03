@@ -410,59 +410,67 @@ class HostInfoDialog(Gtk.Window):
         self.connect("key_press_event", on_scape)
         self.host = host
 
-        self.service_label = Gtk.Label()
-        self.service_label.set_markup("<big>Service information</big>")
-
-        self.interface_label = Gtk.Label()
-        self.interface_label.set_markup("<big>Interface information</big>")
-
         self.specific_info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.specific_info_frame = self.create_scroll_frame(
+                                       self.specific_info,
+                                       "Service Information")
+
         self.specific_vuln_info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-
-        self.specific_info_scroll = Gtk.ScrolledWindow(None, None)
-        self.specific_info_scroll.set_overlay_scrolling(False)
-        self.specific_info_scroll.set_policy(Gtk.PolicyType.AUTOMATIC,
-                                             Gtk.PolicyType.ALWAYS)
-        self.specific_info_scroll.add(self.specific_info)
-
-        self.specific_vuln_info_scroll = Gtk.ScrolledWindow(None, None)
-        self.specific_vuln_info_scroll.set_overlay_scrolling(False)
-        self.specific_vuln_info_scroll.set_policy(Gtk.PolicyType.AUTOMATIC,
-                                                  Gtk.PolicyType.ALWAYS)
-        self.specific_vuln_info_scroll.add(self.specific_vuln_info)
+        self.specific_vuln_info_frame = self.create_scroll_frame(
+                                            self.specific_vuln_info,
+                                            "Vulnerability Information")
 
         basic_info_frame = self.create_basic_info_box(host)
-        tree = self.create_display_tree_box(host)
+        children_of_host_tree = self.create_display_tree_box(host)
         button = Gtk.Button.new_with_label("OK")
         button.connect("clicked", self.on_click_ok)
 
         main_box = Gtk.Box()
+
+        info_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        info_box.pack_start(basic_info_frame, True, True, 10)
+        info_box.pack_start(self.specific_info_frame, True, True, 10)
+        info_box.pack_start(self.specific_vuln_info_frame, True, True, 10)
+        info_box.pack_start(button, False, False, 10)
+
         main_tree_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        main_tree_box.pack_start(basic_info_frame, True, True, 10)
-        self.specific_info_frame = Gtk.Frame()
-        self.specific_info_frame.set_label_widget(self.interface_label)
-        self.specific_info_frame.add(self.specific_info_scroll)
-        main_tree_box.pack_start(self.specific_info_frame, True, True, 10)
-        vuln_label = Gtk.Label()
-        vuln_label.set_markup("<big>Vulnerability information</big>")
-        self.specific_vuln_info_frame = Gtk.Frame()
-        self.specific_vuln_info_frame.set_label_widget(vuln_label)
-        self.specific_vuln_info_frame.add(self.specific_vuln_info_scroll)
-        main_tree_box.pack_start(self.specific_vuln_info_frame, True, True, 10)
-        main_tree_box.pack_start(button, False, False, 10)
+        main_tree_box.pack_start(children_of_host_tree, True, True, 10)
+        main_tree_box.pack_start(Gtk.Box(), False, False, 10)
 
-        vuln_tree_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        vuln_tree_box.pack_start(tree, True, True, 10)
-        vuln_tree_box.pack_start(Gtk.Box(), False, False, 10)
-        info_boxes_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        info_boxes_box.pack_start(self.create_vuln_tree_box(), True, True, 10)
-        info_boxes_box.pack_start(Gtk.Box(), False, False, 10)
+        vuln_list_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        vuln_list_box.pack_start(self.create_vuln_tree_box(), True, True, 10)
+        vuln_list_box.pack_start(Gtk.Box(), False, False, 10)
 
-        main_box.pack_start(vuln_tree_box, False, False, 5)
-        main_box.pack_start(info_boxes_box, False, False, 0)
-        main_box.pack_start(main_tree_box, True, True, 5)
+        main_box.pack_start(main_tree_box, False, False, 5)
+        main_box.pack_start(vuln_list_box, False, False, 0)
+        main_box.pack_start(info_box, True, True, 5)
 
         self.add(main_box)
+
+    def create_scroll_frame(self, inner_box, label_str):
+        """Create a scrollable frame.
+
+        inner_box will be the scrollable frame content.
+        label_str will be the scrollable frame title.
+
+        Scrollable will be set to always show vertical scrollbars and will
+        have disabled overlay scrolling
+        """
+        label = Gtk.Label()
+        label.set_markup("<big>" + label_str + "</big>")
+
+        scroll_box = Gtk.ScrolledWindow(None, None)
+        scroll_box.set_overlay_scrolling(False)
+        scroll_box.set_policy(Gtk.PolicyType.AUTOMATIC,
+                              Gtk.PolicyType.ALWAYS)
+
+        scroll_box.add(inner_box)
+
+        frame = Gtk.Frame()
+        frame.set_label_widget(label)
+        frame.add(scroll_box)
+
+        return frame
 
     def create_basic_info_box(self, host):
         """Creates a box where the basic information about the host
@@ -504,18 +512,7 @@ class HostInfoDialog(Gtk.Window):
         box.pack_start(owned_box, False, True, 0)
         box.pack_start(vulns_box, False, False, 0)
 
-        scrollable_box = Gtk.ScrolledWindow(None, None)
-        scrollable_box.set_overlay_scrolling(False)
-        scrollable_box.set_policy(Gtk.PolicyType.AUTOMATIC,
-                                  Gtk.PolicyType.ALWAYS)
-        scrollable_box.add(box)
-
-        host_label = Gtk.Label()
-        host_label.set_markup("<big>Host information</big>")
-
-        basic_info_frame = Gtk.Frame()
-        basic_info_frame.set_label_widget(host_label)
-        basic_info_frame.add(scrollable_box)
+        basic_info_frame = self.create_scroll_frame(box, "Host Information")
 
         return basic_info_frame
 

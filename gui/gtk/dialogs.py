@@ -435,7 +435,7 @@ class HostInfoDialog(Gtk.Window):
 
         self.add(main_box)
 
-    def create_scroll_frame(self, inner_box, label_str):
+    def create_scroll_frame(self, inner_data_box, title_str, edit_url):
         """Create a scrollable frame.
 
         inner_box will be the scrollable frame content.
@@ -444,18 +444,25 @@ class HostInfoDialog(Gtk.Window):
         Scrollable will be set to always show vertical scrollbars and will
         have disabled overlay scrolling
         """
-        label = Gtk.Label()
-        label.set_markup("<big>" + label_str + "</big>")
+        box = Gtk.Box()
+        edit_label = Gtk.Label()
+        edit_label.set_markup('<a href="%s">Edit</a>', edit_url)
+
+        box.pack_start(inner_data_box)
+        box.pack_start(edit_label)
+
+        title_label = Gtk.Label()
+        title_label.set_markup("<big>" + title_str + "</big>")
 
         scroll_box = Gtk.ScrolledWindow(None, None)
         scroll_box.set_overlay_scrolling(False)
         scroll_box.set_policy(Gtk.PolicyType.AUTOMATIC,
                               Gtk.PolicyType.ALWAYS)
 
-        scroll_box.add(inner_box)
+        scroll_box.add(box)
 
         frame = Gtk.Frame()
-        frame.set_label_widget(label)
+        frame.set_label_widget(title_label)
         frame.add(scroll_box)
 
         return frame

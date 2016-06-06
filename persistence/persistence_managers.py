@@ -22,9 +22,6 @@ from managers.all import ViewsManager
 #from persistence.change import change_factory
 from config.globals import CONST_BLACKDBS
 from config.configuration import getInstanceConfiguration
-from gui.customevents import CONNECTION_REFUSED
-from gui.customevents import ShowExceptionConnectionRefusedCustomEvent
-import model.guiapi
 
 CONF = getInstanceConfiguration()
 
@@ -394,9 +391,7 @@ class CouchDbConnector(DbConnector):
                 getLogger(self).info("  The exception was: %s" % e)
                 tolerance += 1
                 if tolerance == 3:
-                    event = ShowExceptionConnectionRefusedCustomEvent()
-                    model.guiapi.postCustomEvent(event)
-                    return False
+                    raise NoCouchDBError
 
     #@trap_timeout
     def _compactDatabase(self):
@@ -487,7 +482,8 @@ class FileSystemManager(AbstractPersistenceManager):
 
 
 class NoCouchDBError(Exception):
-    pass
+    def __init__(self):
+        Exception.__init__(self, "NoCouchDBError")
 
 
 class NoConectionServer(object):
@@ -559,9 +555,10 @@ class CouchDbManager(AbstractPersistenceManager):
         except restkit.errors.RequestError as req_error:
             getLogger(self).error("Couldn't load databases. "
                                   "The connection to the CouchDB was probably lost. ")
-            event = ShowExceptionConnectionRefusedCustomEvent()
-            model.guiapi.postCustomEvent(event)
-            return False
+#            raise NoCouchDBError
+            #event = ShowExceptionConnectionRefusedCustomEvent()
+            #model.guiapi.postCustomEvent(event)
+            #return False
 
     def _loadDb(self, dbname):
         db = self.__serv.get_db(dbname)

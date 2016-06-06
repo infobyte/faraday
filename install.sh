@@ -42,8 +42,10 @@ fi
 
 #Check if python2 is already installed
 if ! which python2 > /dev/null; then
-    echo "[-] Please install Python2 or make sure it is in your path"
-    exit 1
+    if ! which python2.7 > /dev/null; then
+     echo "[-] Please install Python2 or make sure it is in your path"
+     exit 1
+    fi
 fi
 
 echo "[+] Install $os $arch"

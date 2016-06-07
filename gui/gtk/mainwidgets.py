@@ -526,6 +526,7 @@ class Statusbar(Gtk.Widget):
         self.notif_button = Gtk.Button.new()
         self.set_default_notif_label()
         self.notif_button.connect("clicked", notif_callback)
+        self.notif_button.connect("clicked", self.set_default_notif_label)
 
         self.conflict_button = Gtk.Button.new()
         self.set_default_conflict_label()
@@ -560,7 +561,7 @@ class Statusbar(Gtk.Widget):
         label.show()
         self.conflict_button.add(label)
 
-    def set_default_notif_label(self):
+    def set_default_notif_label(self, button=None):
         """Creates the default label"""
         self.notif_button_label_int = 0
         self.notif_button.set_label(self.notif_text +

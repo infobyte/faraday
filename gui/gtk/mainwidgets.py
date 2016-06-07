@@ -21,17 +21,13 @@ class Terminal(Vte.Terminal):
     corresponding host and port as specified by the CONF"""
     def __init__(self, CONF):
         super(Vte.Terminal, self).__init__()
-
-        self.pty = self.pty_new_sync(Vte.PtyFlags.DEFAULT, None)
-        self.set_pty(self.pty)
-        self.connect("key_press_event", self.copy_or_paste)
-
         self.set_scrollback_lines(-1)
         self.set_audible_bell(0)
-
-        self.faraday_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
+        self.connect("key_press_event", self.copy_or_paste)
         self.host, self.port = CONF.getApiRestfulConInfo()
-        self.faraday_exec = self.faraday_directory + "/faraday-terminal.zsh"
+
+        faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
+        self.faraday_exec = faraday_directory + "/faraday-terminal.zsh"
 
         self.startFaraday()
 

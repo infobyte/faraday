@@ -101,17 +101,34 @@ class HostsSidebar(Gtk.Widget):
         =================================================
         | a923fd  |  LINUX_ICON      | 192.168.1.2 (5)  |
         """
+        def compute_vuln_count(host):
+            """Returns the total vulnerability count for a given host"""
+            vuln_count = 0
+            vuln_count += len(host.getVulns())
+            for interface in host.getAllInterfaces():
+                vuln_count += len(interface.getVulns())
+                for service in interface.getAllServices():
+                    vuln_count += len(service.getVulns())
+            return str(vuln_count)
+
         def decide_icon(os):
+            """Decides the correct icon for a OS. None if OS not found or
+            not recognized.
+            """
             if os.startswith("Linux") or os.startswith("Unix"):
-                return GdkPixbuf.Pixbuf.new_from_file(self.linux_icon)
+                icon = GdkPixbuf.Pixbuf.new_from_file(self.linux_icon)
             elif os.startswith("Windows"):
-                return GdkPixbuf.Pixbuf.new_from_file(self.windows_icon)
+                icon =  GdkPixbuf.Pixbuf.new_from_file(self.windows_icon)
             elif os.startswith("Mac"):
-                return GdkPixbuf.Pixbuf.new_from_file(self.mac_icon)
+                icon =  GdkPixbuf.Pixbuf.new_from_file(self.mac_icon)
+            else:
+                icon = None
+            return icon
 
         hosts_model = Gtk.ListStore(str, GdkPixbuf.Pixbuf(), str)
         for host in hosts:
-            display_str = host.name + " (" + str(len(host.getVulns())) + ")"
+            vuln_count = compute_vuln_count(host)
+            display_str = host.name + " (" + vuln_count + ")"
             os = host.getOS()
             hosts_model.append([host.id, decide_icon(os), display_str])
         self.current_model = hosts_model

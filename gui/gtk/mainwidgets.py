@@ -130,11 +130,12 @@ class HostsSidebar(Gtk.Widget):
             """Decides the correct Pixbuf icon for a OS. None if OS not
             found or not recognized.
             """
-            if os.startswith("Linux") or os.startswith("Unix"):
+            os = os.lower()
+            if "linux" in os or "unix" in os:
                 icon = GdkPixbuf.Pixbuf.new_from_file(self.linux_icon)
-            elif os.startswith("Windows"):
+            elif "windows" in os:
                 icon =  GdkPixbuf.Pixbuf.new_from_file(self.windows_icon)
-            elif os.startswith("Mac"):
+            elif "mac" in os:
                 icon =  GdkPixbuf.Pixbuf.new_from_file(self.mac_icon)
             else:
                 icon = None

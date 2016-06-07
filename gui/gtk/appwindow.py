@@ -152,12 +152,12 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.paste.show()
         menu.popup(None, None, None, None, event.button, event.time)
 
-    def copy_text(self, _, __, ___, ____):
+    def copy_text(self, _):
         """When the user presses on the copy button on the menu..."""
         currentTerminal = self.getCurrentFocusedTerminal()
         currentTerminal.copy_clipboard()
 
-    def paste_text(self, button):
+    def paste_text(self, _):
         """When the user presses on the paste button on the menu..."""
         currentTerminal = self.getCurrentFocusedTerminal()
         currentTerminal.paste_clipboard()

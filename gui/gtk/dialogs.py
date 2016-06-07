@@ -925,8 +925,13 @@ class ConflictsDialog(Gtk.Window):
             self.second_view.append_column(prop2_column)
             self.second_view.append_column(obj2_column)
 
-            self.views_box.pack_start(self.view, True, True, 5)
-            self.views_box.pack_start(self.second_view, True, True, 5)
+            scrolled_view = Gtk.ScrolledWindow(None, None)
+            second_scrolled_view = Gtk.ScrolledWindow(None, None)
+            scrolled_view.add(self.view)
+            second_scrolled_view.add(self.second_view)
+
+            self.views_box.pack_start(scrolled_view, True, True, 5)
+            self.views_box.pack_start(second_scrolled_view, True, True, 5)
 
         else:
             self.view.set_model(self.models[conflict_n])

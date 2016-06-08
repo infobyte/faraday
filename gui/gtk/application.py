@@ -232,7 +232,8 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def do_activate(self):
         """If there's no window, create one and present it (show it to user).
-        If there's a window, just present it"""
+        If there's a window, just present it. Also add the log handler
+        and the notifier to the application"""
 
         # We only allow a single window and raise any existing ones
         if not self.window:
@@ -277,10 +278,8 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         elif event.type() == 4100 or event.type() == 3140:  # newinfo or changews
             host_count, service_count, vuln_count = self.update_counts()
-
             self.updateHosts()
             self.hosts_sidebar.update(self.all_hosts)
-
             receiver.emit("update_ws_info", host_count,
                           service_count, vuln_count)
 
@@ -467,8 +466,6 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.window.emit("loading_workspace", 'show')
             try:
                 ws = super(GuiApp, self).openWorkspace(workspaceName)
-                self.updateHosts()
-                self.hosts_sidebar.update(self.all_hosts)
             except Exception as e:
                 model.guiapi.notification_center.showDialog(str(e))
                 ws = self.openDefaultWorkspace()

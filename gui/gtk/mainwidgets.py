@@ -8,7 +8,6 @@ See the file 'doc/LICENSE' for the license information
 '''
 import gi
 import os
-import sys
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
@@ -60,12 +59,13 @@ class Terminal(Vte.Terminal):
         control_key = Gdk.ModifierType.CONTROL_MASK
         shift_key = Gdk.ModifierType.SHIFT_MASK
         if event.type == Gdk.EventType.KEY_PRESS:
-            if event.state == shift_key | control_key: #both shift and control
-                if event.keyval == 67: # that's the C key
+            if event.state == shift_key | control_key:  # shift AND control
+                if event.keyval == 67:  # that's the C key
                     self.copy_clipboard()
-                elif event.keyval == 86: # and that's the V key
+                elif event.keyval == 86:  # and that's the V key
                     self.paste_clipboard()
                 return True
+
 
 class Sidebar(Gtk.Notebook):
     """Defines the bigger sidebar in a notebook. One of its tabs will contain
@@ -89,6 +89,7 @@ class Sidebar(Gtk.Notebook):
         box.pack_start(self, True, True, 0)
         return box
 
+
 class HostsSidebar(Gtk.Widget):
     """Defines the widget displayed when the user is in the "Hosts" tab of
     the Sidebar notebook. Will list all the host, and when clicking on one,
@@ -99,7 +100,6 @@ class HostsSidebar(Gtk.Widget):
         almost nothing, the application will inmediatly call create_model
         with the last workspace and create_view with that model upon startup.
         """
-
         super(Gtk.Widget, self).__init__()
         self.open_dialog_callback = open_dialog_callback
         self.current_model = None
@@ -112,58 +112,94 @@ class HostsSidebar(Gtk.Widget):
         host_id in the first column, the icon as a GdkPixbuf.Pixbuf()
         in the second column and a display_str with the host_name and the
         vulnerability count on the third column, like this:
-        | HOST_ID | HOST_OS_PIXBUF   | DISPLAY_STR      |
-        =================================================
-        | a923fd  |  LINUX_ICON      | 192.168.1.2 (5)  |
+        | HOST_ID | HOST_OS_PIXBUF   | OS_STR | DISPLAY_STR      | VULN_COUNT|
+        ======================================================================
+        | a923fd  | PixBufIcon(linux)| linux  | 192.168.1.2 (5)  |      5    |
         """
         def compute_vuln_count(host):
-            """Returns the total vulnerability count for a given host"""
+            """Return the total vulnerability count for a given host"""
             vuln_count = 0
             vuln_count += len(host.getVulns())
             for interface in host.getAllInterfaces():
                 vuln_count += len(interface.getVulns())
                 for service in interface.getAllServices():
                     vuln_count += len(service.getVulns())
-            return str(vuln_count)
+            return vuln_count
 
         def decide_icon(os):
-            """Decides the correct Pixbuf icon for a OS. None if OS not
-            found or not recognized.
+            """Return the GdkPixbuf icon according to 'os' paramather string
+            and a str_id to that GdkPixbuf for easy comparison and ordering
+            of the view ('os' paramether string is complicated and has caps).
             """
             os = os.lower()
             if "linux" in os or "unix" in os:
                 icon = GdkPixbuf.Pixbuf.new_from_file(self.linux_icon)
+                str_id = "linux"
             elif "windows" in os:
-                icon =  GdkPixbuf.Pixbuf.new_from_file(self.windows_icon)
+                icon = GdkPixbuf.Pixbuf.new_from_file(self.windows_icon)
+                str_id = "windows"
             elif "mac" in os:
-                icon =  GdkPixbuf.Pixbuf.new_from_file(self.mac_icon)
+                icon = GdkPixbuf.Pixbuf.new_from_file(self.mac_icon)
+                str_id = "mac"
             else:
                 icon = None
-            return icon
+                str_id = "unknown"
+            return icon, str_id
 
-        hosts_model = Gtk.ListStore(str, GdkPixbuf.Pixbuf(), str)
+        def compare_os_strings(model, an_os, other_os, user_data):
+            """Compare an_os with other_os so the model knows how to sort them.
+            user_data is not used.
+            Forces 'unknown' OS to be always at the bottom of the model.
+            Return values:
+            1 means an_os should come after other_os
+            0 means they are the same
+            -1 means an_os should come before other_os
+            It helps to think about it like the relative position of an_os
+            in respect to other_os (-1 'left' in a list, 1 'right' in a list)
+            """
+            sort_column = 2
+            an_os = model.get_value(an_os, sort_column)
+            other_os = model.get_value(other_os, sort_column)
+            if an_os == "unknown":
+                order = 1
+            elif an_os < other_os or other_os == "unknown":
+                order = -1
+            elif an_os == other_os:
+                order = 0
+            else:
+                order = 1
+            return order
+
+        hosts_model = Gtk.ListStore(str, GdkPixbuf.Pixbuf(), str, str, int)
+
         for host in hosts:
             vuln_count = compute_vuln_count(host)
-            display_str = host.name + " (" + vuln_count + ")"
-            os = host.getOS()
-            hosts_model.append([host.id, decide_icon(os), display_str])
-        self.current_model = hosts_model
-        return hosts_model
+            os_icon, os_str = decide_icon(host.getOS())
+            display_str = host.name + " (" + str(vuln_count) + ")"
+            hosts_model.append([host.id, os_icon, os_str,
+                                display_str, vuln_count])
+
+        # sort the model by default according to column 4 (num of vulns)
+        sorted_model = Gtk.TreeModelSort(model=hosts_model)
+        sorted_model.set_sort_column_id(4, Gtk.SortType.DESCENDING)
+
+        # set the sorting function of column 2
+        sorted_model.set_sort_func(2, compare_os_strings, None)
+
+        self.current_model = sorted_model
+
+        return self.current_model
 
     def create_view(self, model):
-        """Creates a view displaying the third column of the given model as
-        a text, and using an icon representing its second column.
+        """Creates a view for the hosts model.
+        It will contain two columns, the first with the OS icon given in
+        the second column of the model. The second column of the view will
+        be the string contained in the fourth column of the model.
+        The first column of the view will be orderer according to the
+        second column of the model, and the second column of the view will
+        be ordered according to its fifth column.
         Will connect activation of a row with the on_click method
         """
-
-        def display_str(col, cell, model, _iter, user_data):
-            cell.set_property('text', model.get_value(_iter, 2))
-
-        def set_icon(col, cell, model, _iter, user_data):
-            icon = model.get_value(_iter, 1)
-            if icon != "None":
-                cell.set_property('pixbuf',
-                                  GdkPixbuf.Pixbuf.new_from_file(icon))
 
         self.view = Gtk.TreeView(model)
         self.view.set_activate_on_single_click(True)
@@ -171,8 +207,10 @@ class HostsSidebar(Gtk.Widget):
         text_renderer = Gtk.CellRendererText()
         icon_renderer = Gtk.CellRendererPixbuf()
 
-        column_hosts = Gtk.TreeViewColumn("Hosts", text_renderer, text=2)
+        column_hosts = Gtk.TreeViewColumn("Hosts", text_renderer, text=3)
         column_os = Gtk.TreeViewColumn("", icon_renderer, pixbuf=1)
+        column_os.set_sort_column_id(2)
+        column_hosts.set_sort_column_id(4)
 
         self.view.append_column(column_os)
         self.view.append_column(column_hosts)
@@ -207,6 +245,7 @@ class HostsSidebar(Gtk.Widget):
         scrolled_view.add(self.view)
         box.pack_start(scrolled_view, True, True, 0)
         return box
+
 
 class WorkspaceSidebar(Gtk.Widget):
     """Defines the sidebar widget to be used by the AppWindow, passed as an

@@ -20,6 +20,7 @@ from model import guiapi
 
 CONF = getInstanceConfiguration()
 
+
 class PreferenceWindowDialog(Gtk.Window):
     """Sets up a preference dialog with basically nothing more than a
     label, a text entry to input your CouchDB IP and a couple of buttons.
@@ -619,29 +620,19 @@ class HostInfoDialog(Gtk.Window):
         if iter_depth == 0:
             self.set_vuln_model(self.create_vuln_model(self.host))
         elif iter_depth == 1:
-            label = self.specific_info_frame.get_label_widget()
-            label.set_markup("<big>Interface information</big>")
             self.show_interface_info(selected)
-            interface = self.host.getInterface(selected[0])
-            self.set_vuln_model(self.create_vuln_model(interface))
         elif iter_depth == 2:
-            label = self.specific_info_frame.get_label_widget()
-            label.set_markup("<big>Service information</big>")
             self.show_service_info(selected)
-            parent_interface_iter = selected.get_parent()
-            parent_interface_id = parent_interface_iter[0]
-            parent_interface = self.host.getInterface(parent_interface_id)
-            service = parent_interface.childs.get(selected[0], None)
-            self.set_vuln_model(self.create_vuln_model(service))
 
     def on_vuln_selection(self, vuln_selection):
-        """Sets up the information necesarry to show the detailed information
-        of the vulnerability. The try/except block is necesary 'cause GTK
-        is silly and will emit the selection changed signal if the model
-        changes even if nothing is selected"""
+        """Sends the selected vuln to show_vuln_info.
+        The try/except block is necesary 'cause GTK
+        is silly (ie: doesn't behave like it would be best for me now)
+        and will emit the selection changed signal if the model
+        changes even if nothing is selected.
+        """
 
         model, vuln_iter = vuln_selection.get_selected()
-        self.specific_vuln_info.foreach(self.reset_vuln_info)
         try:
             selected = model[vuln_iter]
             self.show_vuln_info(selected)
@@ -661,6 +652,7 @@ class HostInfoDialog(Gtk.Window):
         for vuln in vulns:
             _type = vuln.class_signature
             if _type == "Vulnerability":
+                # again filling up the model with dumb strings
                 model.append([_type, vuln.getName(), vuln.getDescription(),
                               vuln.getData(), vuln.getSeverity(),
                               ', '.join(vuln.getRefs()),
@@ -677,69 +669,118 @@ class HostInfoDialog(Gtk.Window):
         return model
 
     def show_interface_info(self, selected):
-        """Creates labels for each of the properties of an interface. Appends
-        them to the specific_info_box.
+        """Set up the window to display the selected interface information.
+        It changes the label to "Interface Information" and sends
+        the props_name with their corresponding index (starting at 1) to
+        append_info_to_box. This works because the model holds each
+        property value with an offset of 1 to the right (because
+        the first value of the model is the _type).
+        It also shows the corresponding vuln_model for this interface
         """
-        for prop in enumerate(["Name: ", "Description: ", "MAC: ",
-                               "IPv4 Mask: ", "IPv4 Gateway: ", "IPv4 DNS: ",
-                               "IPv4 Address: ", "IPv6 Prefix: ",
-                               "IPv6 Gateway", "IPv6 DNS: ",
-                               "IPv6 Address: "], start=1):
-            self.append_info_to_box(selected, prop, self.specific_info)
+
+        label = self.specific_info_frame.get_label_widget()
+        label.set_markup("<big>Interface information</big>")
+
+        props_names = ["Name: ", "Description: ", "MAC: ",
+                      "IPv4 Mask: ", "IPv4 Gateway: ", "IPv4 DNS: ",
+                      "IPv4 Address: ", "IPv6 Prefix: ",
+                      "IPv6 Gateway", "IPv6 DNS: ",
+                      "IPv6 Address: "]
+
+        for index, prop_name in enumerate(props_names, start=1):
+            self.append_info_to_box(selected, prop_name, index,
+                                    self.specific_info)
+
+        interface = self.host.getInterface(selected[0])
+        self.set_vuln_model(self.create_vuln_model(interface))
 
     def show_service_info(self, selected):
-        """Creates labels for each of the properties of a service. Appends
-        them to the specific_info_box.
+        """Set up the window to display the selected servce information.
+        It changes the label to "Service Information" and sends
+        the props_name with their corresponding index (starting at 1) to
+        append_info_to_box. This works because the model holds each
+        property value with an offset of 1 to the right (because
+        the first value of the model is the _type).
+        It also shows the corresponding vuln_model for this service
         """
-        for prop in enumerate(["Name: ", "Description: ", "Protocol: ",
-                               "Status: ", "Port: ", "Version: ",
-                               "Is Owned?: "], start=1):
-            self.append_info_to_box(selected, prop, self.specific_info)
+
+        label = self.specific_info_frame.get_label_widget()
+        label.set_markup("<big>Service information</big>")
+
+        props_names =  ["Name: ", "Description: ",
+                        "Protocol: ",
+                        "Status: ", "Port: ", "Version: ",
+                        "Is Owned?: "]
+
+        for index, prop_name in enumerate(props_names, start=1):
+            self.append_info_to_box(selected, prop_name, index,
+                                    self.specific_info)
+
+        parent_interface_iter = selected.get_parent()
+        parent_interface_id = parent_interface_iter[0]
+        parent_interface = self.host.getInterface(parent_interface_id)
+        service = parent_interface.childs.get(selected[0], None)
+        self.set_vuln_model(self.create_vuln_model(service))
 
     def show_vuln_info(self, selected):
         """Sends the information about the selected vuln to
         append_info_to_box.
         """
+        self.specific_vuln_info.foreach(self.reset_vuln_info)
+
         if selected[0] == "Vulnerability":
-            for prop in enumerate(["Name: ", "Description: ",
-                                   "Data: ", "Severity: ",
-                                   "Refs: "], start=1):
-                self.append_info_to_box(selected, prop,
-                                        self.specific_vuln_info)
-        if selected[0] == "VulnerabilityWeb":
-            for prop in enumerate(["Name: ", "Description: ",
-                                   "Data: ", "Severity: ",
-                                   "Refs: ", "Path: ",
-                                   "Website: ", "Request: ",
-                                   "Response: ", "Method: ",
-                                   "Pname: ", "Params: ",
-                                   "Query: ", "Category: "], start=1):
-                self.append_info_to_box(selected, prop,
+            props_names = ["Name: ", "Description: ",
+                           "Data: ", "Severity: ",
+                           "Refs: "]
+
+            for index, prop_name in enumerate(props_names, start=1):
+                self.append_info_to_box(selected, prop_name, index,
                                         self.specific_vuln_info)
 
-    def append_info_to_box(self, selected, prop, box):
-        """Gets selected and prop and creates a label and appends
-        them to the box parameter.
+        if selected[0] == "VulnerabilityWeb":
+            props_names = ["Name: ", "Description: ",
+                           "Data: ", "Severity: ",
+                           "Refs: ", "Path: ",
+                           "Website: ", "Request: ",
+                           "Response: ", "Method: ",
+                           "Pname: ", "Params: ",
+                           "Query: ", "Category: "]
+
+            for index, prop_name in enumerate(props_names, start=1):
+                self.append_info_to_box(selected, prop_name, index,
+                                        self.specific_vuln_info)
+
+    def append_info_to_box(self, selected, prop_name, index, box):
+        """For every prop_name and value (selected[index]), appends
+        a label with this format: "<b>prop_name: </b> value". For example,
+        "<b>Name: </b>Eowyn
+
+        Keep in mind that it is not the responsability of this method
+        to clear the box before appending. You can use reset_info()
+        or reset_vuln_info() or create your own method to clear a box.
         """
         prop_box = Gtk.Box()
         prop_label = Gtk.Label()
-        prop_label.set_markup("<b> %s </b>" % (prop[1]))
+        prop_label.set_markup("<b> %s </b>" % (prop_name))
         prop_label.set_selectable(True)
-        value_label = Gtk.Label(selected[prop[0]])
+
+        prop_value = selected[index]
+        value_label = Gtk.Label(prop_value)
         value_label.set_selectable(True)
         prop_box.pack_start(prop_label, False, False, 0)
         prop_box.pack_start(value_label, False, False, 0)
         box.pack_start(prop_box, True, True, 0)
+
         box.show_all()
 
     def reset_info(self, widget):
         """Removes a widget from self.specific_info. Used to clear all
-        the information before displaying new"""
+        the information before displaying anything new"""
         self.specific_info.remove(widget)
 
     def reset_vuln_info(self, widget):
         """Removes a widget from self.specific_vuln_info. Used to clear
-        all the information before displaying new"""
+        all the information before displaying anything new"""
         self.specific_vuln_info.remove(widget)
 
     def on_click_ok(self, button):

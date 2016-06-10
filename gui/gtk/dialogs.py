@@ -652,6 +652,7 @@ class HostInfoDialog(Gtk.Window):
             return False
 
     def set_vuln_model(self, model):
+        """Sets the vulnerability view to show the given model"""
         self.vuln_list.set_model(model)
 
     def create_vuln_model(self, obj):
@@ -682,6 +683,7 @@ class HostInfoDialog(Gtk.Window):
         return model
 
     def change_label_in_frame(self, frame, string):
+        """Changes the label in the given frame to 'string Information'"""
         label = frame.get_label_widget()
         label.set_markup("<big>" + string + " " + "Information"+ "</big>")
 

@@ -12,7 +12,7 @@ Please read the [RELEASE notes](https://github.com/infobyte/faraday/blob/master/
 
 Plugins
 ---
-Don't change the way you work today! Faraday plays well with others, right now it has more than [40 supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among them you will find: 
+Don't change the way you work today! Faraday plays well with others, right now it has more than [50 supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among them you will find: 
 
 ![](https://raw.github.com/wiki/infobyte/faraday/images/plugins/Plugins.png)
 

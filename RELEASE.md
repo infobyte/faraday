@@ -12,7 +12,7 @@ New features in the latest update
 
 TBA:
 --
-
+* Added new plugin : Netcat (Gnu netcat - OpenBSD netcat - Original netcat)
 
 Jun 13, 2016:
 ---

@@ -311,11 +311,12 @@ class GuiApp(Gtk.Application, FaradayUi):
             dialog = Gtk.Dialog("Select plugin", self.window, 0)
 
             combo_box = Gtk.ComboBoxText()
+            combo_box.set_wrap_width(3)
             for plugin_id in plugins_id:
                 combo_box.append_text(plugin_id)
             combo_box.show()
 
-            dialog.vbox.pack_start(combo_box, True, True, 10)
+            dialog.vbox.pack_start(combo_box, False, True, 10)
 
             dialog.add_button("Cancel", Gtk.ResponseType.DELETE_EVENT)
             dialog.add_button("OK", Gtk.ResponseType.ACCEPT)

@@ -58,11 +58,12 @@ class Terminal(Vte.Terminal):
 
         control_key = Gdk.ModifierType.CONTROL_MASK
         shift_key = Gdk.ModifierType.SHIFT_MASK
+        pressed_key = Gdk.keyval_name(event.get_keyval()[1])
         if event.type == Gdk.EventType.KEY_PRESS:
             if event.state == shift_key | control_key:  # shift AND control
-                if event.keyval == 67:  # that's the C key
+                if pressed_key == 'C':
                     self.copy_clipboard()
-                elif event.keyval == 86:  # and that's the V key
+                elif pressed_key == 'V':
                     self.paste_clipboard()
                 return True
 

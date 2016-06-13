@@ -1357,8 +1357,7 @@ def on_scape_destroy(window, event):
     with all the dialogs that should be Gtk.Dialogs but are Gtk.Windows
     or with windows that are too complex for gtk dialogs but should behave
     as a dialog too"""
-    if event.get_keycode()[1] == 9:
+    key = Gdk.keyval_name(event.get_keyval()[1])
+    if key == 'Escape':
         window.destroy()
         return True
-    else:
-        return False

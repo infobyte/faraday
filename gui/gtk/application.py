@@ -339,11 +339,13 @@ class GuiApp(Gtk.Application, FaradayUi):
             plugin_response, plugin_id = select_plugin()
         else:
             if plugin_response == Gtk.ResponseType.ACCEPT:
-                dialog = Gtk.FileChooserNative()
-                dialog.set_title("Import a report")
+                dialog = Gtk.FileChooserDialog(title="Import a report",
+                                               parent=self.window,
+                                               action=Gtk.FileChooserAction.OPEN,
+                                               buttons=("Open", Gtk.ResponseType.ACCEPT,
+                                                        "Cancel", Gtk.ResponseType.CANCEL)
+                                               )
                 dialog.set_modal(True)
-                dialog.set_transient_for(self.window)
-                dialog.set_action(Gtk.FileChooserAction.OPEN)
 
                 res = dialog.run()
                 if res == Gtk.ResponseType.ACCEPT:

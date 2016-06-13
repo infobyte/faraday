@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA:
+Jun 13, 2016:
 ---
 * Added Import Report dialog to Faraday GTK
 * Added a 'Loading workspace...' dialog to Faraday GTK

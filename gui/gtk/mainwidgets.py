@@ -13,7 +13,7 @@ import sys
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-from gi.repository import Gtk, Vte, GLib, Pango
+from gi.repository import Gtk, Gdk, Vte, GLib, Pango, GdkPixbuf
 
 
 class Terminal(Vte.Terminal):
@@ -21,16 +21,13 @@ class Terminal(Vte.Terminal):
     corresponding host and port as specified by the CONF"""
     def __init__(self, CONF):
         super(Vte.Terminal, self).__init__()
-
-        self.pty = self.pty_new_sync(Vte.PtyFlags.DEFAULT, None)
-        self.set_pty(self.pty)
-
         self.set_scrollback_lines(-1)
         self.set_audible_bell(0)
-
-        self.faraday_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
+        self.connect("key_press_event", self.copy_or_paste)
         self.host, self.port = CONF.getApiRestfulConInfo()
-        self.faraday_exec = self.faraday_directory + "/faraday-terminal.zsh"
+
+        faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
+        self.faraday_exec = faraday_directory + "/faraday-terminal.zsh"
 
         self.startFaraday()
 
@@ -53,10 +50,167 @@ class Terminal(Vte.Terminal):
                         None,
                         None)
 
+    def copy_or_paste(self, widget, event):
+        """Decides if the Ctrl+Shift is pressed, in which case returns True.
+        If Ctrl+Shift+C or Ctrl+Shift+V are pressed, copies or pastes,
+        acordingly. Return necesary so it doesn't perform other action,
+        like killing the process, on Ctrl+C.
+        """
 
-class Sidebar(Gtk.Widget):
+        control_key = Gdk.ModifierType.CONTROL_MASK
+        shift_key = Gdk.ModifierType.SHIFT_MASK
+        if event.type == Gdk.EventType.KEY_PRESS:
+            if event.state == shift_key | control_key: #both shift and control
+                if event.keyval == 67: # that's the C key
+                    self.copy_clipboard()
+                elif event.keyval == 86: # and that's the V key
+                    self.paste_clipboard()
+                return True
+
+class Sidebar(Gtk.Notebook):
+    """Defines the bigger sidebar in a notebook. One of its tabs will contain
+    the workspace view, listing all the workspaces (WorkspaceSidebar) and the
+    other will contain the information about hosts, services, and vulns
+    (HostsSidebar)
+    """
+
+    def __init__(self, workspace_sidebar, hosts_sidebar):
+        """Attach to the notebok the workspace sidebar and the host_sidebar"""
+        super(Gtk.Notebook, self).__init__()
+        self.workspace_sidebar = workspace_sidebar
+        self.hosts_sidebar = hosts_sidebar
+        self.set_tab_pos(Gtk.PositionType.BOTTOM)
+
+        self.append_page(self.workspace_sidebar, Gtk.Label("Workspaces"))
+        self.append_page(self.hosts_sidebar, Gtk.Label("Hosts"))
+
+    def get_box(self):
+        box = Gtk.Box()
+        box.pack_start(self, True, True, 0)
+        return box
+
+class HostsSidebar(Gtk.Widget):
+    """Defines the widget displayed when the user is in the "Hosts" tab of
+    the Sidebar notebook. Will list all the host, and when clicking on one,
+    will open a window with more information about it"""
+
+    def __init__(self, open_dialog_callback, icons):
+        """Initializes the HostsSidebar. Initialization by itself does
+        almost nothing, the application will inmediatly call create_model
+        with the last workspace and create_view with that model upon startup.
+        """
+
+        super(Gtk.Widget, self).__init__()
+        self.open_dialog_callback = open_dialog_callback
+        self.current_model = None
+        self.linux_icon = icons + "tux.png"
+        self.windows_icon = icons + "windows.png"
+        self.mac_icon = icons + "Apple.png"
+
+    def create_model(self, hosts):
+        """Creates a model for a lists of hosts. The model contians the
+        host_id in the first column, the icon as a GdkPixbuf.Pixbuf()
+        in the second column and a display_str with the host_name and the
+        vulnerability count on the third column, like this:
+        | HOST_ID | HOST_OS_PIXBUF   | DISPLAY_STR      |
+        =================================================
+        | a923fd  |  LINUX_ICON      | 192.168.1.2 (5)  |
+        """
+        def compute_vuln_count(host):
+            """Returns the total vulnerability count for a given host"""
+            vuln_count = 0
+            vuln_count += len(host.getVulns())
+            for interface in host.getAllInterfaces():
+                vuln_count += len(interface.getVulns())
+                for service in interface.getAllServices():
+                    vuln_count += len(service.getVulns())
+            return str(vuln_count)
+
+        def decide_icon(os):
+            """Decides the correct Pixbuf icon for a OS. None if OS not
+            found or not recognized.
+            """
+            os = os.lower()
+            if "linux" in os or "unix" in os:
+                icon = GdkPixbuf.Pixbuf.new_from_file(self.linux_icon)
+            elif "windows" in os:
+                icon =  GdkPixbuf.Pixbuf.new_from_file(self.windows_icon)
+            elif "mac" in os:
+                icon =  GdkPixbuf.Pixbuf.new_from_file(self.mac_icon)
+            else:
+                icon = None
+            return icon
+
+        hosts_model = Gtk.ListStore(str, GdkPixbuf.Pixbuf(), str)
+        for host in hosts:
+            vuln_count = compute_vuln_count(host)
+            display_str = host.name + " (" + vuln_count + ")"
+            os = host.getOS()
+            hosts_model.append([host.id, decide_icon(os), display_str])
+        self.current_model = hosts_model
+        return hosts_model
+
+    def create_view(self, model):
+        """Creates a view displaying the third column of the given model as
+        a text, and using an icon representing its second column.
+        Will connect activation of a row with the on_click method
+        """
+
+        def display_str(col, cell, model, _iter, user_data):
+            cell.set_property('text', model.get_value(_iter, 2))
+
+        def set_icon(col, cell, model, _iter, user_data):
+            icon = model.get_value(_iter, 1)
+            if icon != "None":
+                cell.set_property('pixbuf',
+                                  GdkPixbuf.Pixbuf.new_from_file(icon))
+
+        self.view = Gtk.TreeView(model)
+        self.view.set_activate_on_single_click(True)
+
+        text_renderer = Gtk.CellRendererText()
+        icon_renderer = Gtk.CellRendererPixbuf()
+
+        column_hosts = Gtk.TreeViewColumn("Hosts", text_renderer, text=2)
+        column_os = Gtk.TreeViewColumn("", icon_renderer, pixbuf=1)
+
+        self.view.append_column(column_os)
+        self.view.append_column(column_hosts)
+
+        self.view.connect("row_activated", self.on_click)
+
+        self.view.set_enable_search(True)
+        self.view.set_search_column(2)
+
+        return self.view
+
+    def update(self, hosts):
+        """Creates a new model from an updated list of hosts and adapts
+        the view to reflect the changes"""
+        model = self.create_model(hosts)
+        self.update_view(model)
+
+    def update_view(self, model):
+        """Updates the view of the object with a new model"""
+        self.view.set_model(model)
+
+    def on_click(self, tree_view, path, column):
+        """Sends the host_id of the clicked host back to the application"""
+        tree_iter = self.current_model.get_iter(path)
+        host_id = self.current_model[tree_iter][0]
+        self.open_dialog_callback(host_id)
+
+    def get_box(self):
+        """Returns the box to be displayed in the appwindow"""
+        box = Gtk.Box()
+        scrolled_view = Gtk.ScrolledWindow(None, None)
+        scrolled_view.add(self.view)
+        box.pack_start(scrolled_view, True, True, 0)
+        return box
+
+class WorkspaceSidebar(Gtk.Widget):
     """Defines the sidebar widget to be used by the AppWindow, passed as an
-    instance to itby the application. It only handles the view and the model,
+    instance to the application. It only handles the view and the model,
     all the backend word is handled by the application via the callback"""
 
     def __init__(self, workspace_manager, callback_to_change_workspace,
@@ -83,6 +237,13 @@ class Sidebar(Gtk.Widget):
         self.scrollableView.set_min_content_width(160)
         self.scrollableView.add(self.workspace_view)
 
+    def get_box(self):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        box.pack_start(self.getSearchEntry(), False, False, 0)
+        box.pack_start(self.getScrollableView(), True, True, 0)
+        box.pack_start(self.getButton(), False, False, 0)
+        return box
+
     def createSearchEntry(self):
         """Returns a simple search entry"""
         searchEntry = Gtk.Entry()
@@ -94,6 +255,9 @@ class Sidebar(Gtk.Widget):
         """Returns the search entry of the sidebar"""
         return self.searchEntry
 
+    def getScrollableView(self):
+        return self.scrollableView
+
     def onSearchEnterKey(self, entry):
         """When the users preses enter, if the workspace exists,
         select it. If not, present the window to create a workspace with
@@ -103,7 +267,7 @@ class Sidebar(Gtk.Widget):
             self.callbackCreateWs(title=entry.get_text())
             entry.set_text("")
         else:
-            self.callbackChangeWs(selection)
+            self.callbackChangeWs(self.getSelectedWsName())
             ws_iter = self.getSelectedWsIter()
             entry.set_text("")
             self.selectWs(ws_iter)
@@ -188,15 +352,15 @@ class Sidebar(Gtk.Widget):
             select.select_path(path)
 
             # change the workspace to the newly selected
-            self.callbackChangeWs(self.getSelectedWs())
+
+            self.callbackChangeWs(self.getSelectedWsName())
 
         if event.button == 3:  # 3 represents right click
             menu = Gtk.Menu()
             delete_item = Gtk.MenuItem("Delete")
             menu.append(delete_item)
 
-            # get the path of the item where the user clicked
-            # then get its tree_iter. then get its name. then delete
+            # get tree_iter from path. then get its name. then delete
             # that workspace
 
             tree_iter = self.workspace_model.get_iter(path)
@@ -208,12 +372,19 @@ class Sidebar(Gtk.Widget):
             menu.popup(None, None, None, None, event.button, event.time)
             return True  # prevents the click from selecting a workspace
 
+    def change_label(self, new_label):
+        self.sidebar_button.set_label(new_label)
+
+    def restore_label(self):
+        self.sidebar_button.set_label("Refresh workspaces")
+
     def addWorkspace(self, ws):
         """Append ws workspace to the model"""
         self.workspace_model.append([ws])
 
     def getSelectedWs(self):
-        """Returns the name of the current selected workspace"""
+        """Returns the selection of of the view.
+        To retrieve the name, see getSelectedWsName"""
         selection = self.workspace_view.get_selection()
         return selection
 
@@ -222,6 +393,13 @@ class Sidebar(Gtk.Widget):
         selection = self.getSelectedWs()
         _iter = selection.get_selected()[1]
         return _iter
+
+    def getSelectedWsName(self):
+        """Return the name of the selected workspace"""
+        selection = self.getSelectedWs()
+        tree_model, treeiter = selection.get_selected()
+        workspaceName = tree_model[treeiter][0]
+        return workspaceName
 
     def selectWs(self, ws):
         """Selects workspace ws in the list"""
@@ -284,7 +462,10 @@ class ConsoleLog(Gtk.Widget):
         return self.textBuffer
 
     def customEvent(self, text):
-        """Filters event so that only those with type 3131 get to the log"""
+        """Filters event so that only those with type 3131 get to the log.
+        Also split them, so we can add the correct formatting to the first
+        part of the message"""
+
         text = text.split('-')
         if text[0] == "INFO ":
             self.update("[ " + text[0] + "]", self.bold)
@@ -346,6 +527,7 @@ class Statusbar(Gtk.Widget):
         self.notif_button = Gtk.Button.new()
         self.set_default_notif_label()
         self.notif_button.connect("clicked", notif_callback)
+        self.notif_button.connect("clicked", self.set_default_notif_label)
 
         self.conflict_button = Gtk.Button.new()
         self.set_default_conflict_label()
@@ -380,7 +562,7 @@ class Statusbar(Gtk.Widget):
         label.show()
         self.conflict_button.add(label)
 
-    def set_default_notif_label(self):
+    def set_default_notif_label(self, button=None):
         """Creates the default label"""
         self.notif_button_label_int = 0
         self.notif_button.set_label(self.notif_text +

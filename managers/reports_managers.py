@@ -44,9 +44,10 @@ class ReportProcessor():
             )
             return False
 
-        return self._sendReport(parser.report_type, filename)
+        return self.sendReport(parser.report_type, filename)
 
-    def _sendReport(self, plugin_id, filename):
+    def sendReport(self, plugin_id, filename):
+        """Sends a report to the appropiate plugin specified by plugin_id"""
         getLogger(self).debug(
             'The file is %s, %s' % (filename, plugin_id))
         if not self.plugin_controller.processReport(plugin_id, filename):
@@ -141,6 +142,10 @@ class ReportManager(threading.Thread):
             if name in psettings:
                 if psettings[name]['settings']['Enable'] == "1":
                     self.processor.onlinePlugin(cmd)
+
+    def sendReportToPluginById(self, plugin_id, filename):
+        """Sends a report to be processed by the specified plugin_id"""
+        self.processor.sendReport(plugin_id, filename)
 
 
 class ReportParser(object):

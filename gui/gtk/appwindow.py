@@ -14,6 +14,8 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
 from gi.repository import GLib, Gio, Gtk, GObject, Gdk
+from dialogs import ImportantErrorDialog
+from dialogs import errorDialog
 
 CONF = getInstanceConfiguration()
 
@@ -41,7 +43,10 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         "new_notif": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "clear_notifications": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "update_ws_info": (GObject.SIGNAL_RUN_FIRST, None, (int, int, int, )),
-        "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, ))
+        "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, )),
+        "loading_workspace": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
+        "normal_error": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
+        "important_error": (GObject.SIGNAL_RUN_FIRST, None, ()),
     }
 
     def __init__(self, sidebar, terminal, console_log, statusbar,
@@ -65,10 +70,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         self.icons = CONF.getImagePath() + "icons/"
 
-        # sets up the clipboard
-        self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-        self.selection_clipboard = Gtk.Clipboard.get(Gdk.SELECTION_PRIMARY)
-
         # Keep it in sync with the actual state. Deep dark GTK magic
         self.connect("notify::is-maximized",
                      lambda obj, pspec:
@@ -80,11 +81,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.topBox.pack_start(self.create_toolbar(), True, True, 0)
 
         # SIDEBAR BOX
-        search = self.sidebar.getSearchEntry()
-        self.sidebarBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.sidebarBox.pack_start(search, False, False, 0)
-        self.sidebarBox.pack_start(self.sidebar.scrollableView, True, True, 0)
-        self.sidebarBox.pack_start(self.sidebar.getButton(), False, False, 0)
+        self.sidebarBox = self.sidebar.get_box()
 
         # TERMINAL BOX
         self.firstTerminalBox = self.terminalBox(self.terminal.getTerminal())
@@ -143,37 +140,25 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         """Defines the menu created when a user rightclicks on the
         terminal eventbox"""
         menu = Gtk.Menu()
-        copy = Gtk.MenuItem("Copy")
-        paste = Gtk.MenuItem("Paste")
-        menu.append(paste)
-        menu.append(copy)
+        self.copy = Gtk.MenuItem("Copy")
+        self.paste = Gtk.MenuItem("Paste")
+        menu.append(self.paste)
+        menu.append(self.copy)
 
-        # TODO: make accelerators for copy paste work. add accel for paste
-        # accelgroup = Gtk.AccelGroup()
-        # self.add_accel_group(accelgroup)
-        # accellabel = Gtk.AccelLabel("Copy/Paste")
-        # accellabel.set_hexpand(True)
-        # copy.add_accelerator("activate",
-        #                     accelgroup,
-        #                     Gdk.keyval_from_name("c"),
-        #                     Gdk.ModifierType.SHIFT_MASK |
-        #                     Gdk.ModifierType.CONTROL_MASK,
-        #                     Gtk.AccelFlags.VISIBLE)
+        self.copy.connect("activate", self.copy_text)
+        self.paste.connect("activate", self.paste_text)
 
-        copy.connect("activate", self.copy_text)
-        paste.connect("activate", self.paste_text)
-
-        copy.show()
-        paste.show()
+        self.copy.show()
+        self.paste.show()
         menu.popup(None, None, None, None, event.button, event.time)
 
-    def copy_text(self, button):
-        """What happens when the user copies text"""
-        content = self.selection_clipboard.wait_for_text()
-        self.clipboard.set_text(content, -1)
+    def copy_text(self, _):
+        """When the user presses on the copy button on the menu..."""
+        currentTerminal = self.getCurrentFocusedTerminal()
+        currentTerminal.copy_clipboard()
 
-    def paste_text(self, button):
-        """What happens when the user pastes text"""
+    def paste_text(self, _):
+        """When the user presses on the paste button on the menu..."""
         currentTerminal = self.getCurrentFocusedTerminal()
         currentTerminal.paste_clipboard()
 
@@ -184,10 +169,10 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     def getCurrentFocusedTerminal(self):
         """Returns the current focused terminal"""
 
-        # the focused terminal is the only children of the notebook
-        # thas has only children an event box that has as only children
-        # the scrolled window that has as only children the
-        # terminal. Yeah, I know.
+        # the focused terminal is the child of the event box which is
+        # the top widget of the focused tab. that event box has as only child
+        # a box, which has as only child a scrolled window, which has as
+        # only child the terminal. yeah. I know.
 
         currentTab = self.getFocusedTab()
         currentEventBox = self.notebook.get_children()[currentTab]
@@ -195,6 +180,33 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         currentScrolledWindow = currentBox.get_children()[0]
         currentTerminal = currentScrolledWindow.get_child()
         return currentTerminal
+
+    def prepare_important_error(self, event):
+        """Attaches an event to the class, so it can be used by the signal
+        callbacks even if they cannot be passed directly.
+        """
+        self.event = event
+
+    def do_important_error(self):
+        """Creates an importan error dialog with a callback to send
+        the developers the error traceback.
+        """
+        dialog_text = self.event.text
+        dialog = ImportantErrorDialog(self, dialog_text)
+        response = dialog.run()
+        if response == 42:
+            error = self.event.error_name
+            event.callback(error, *self.event.exception_objects)
+        dialog.destroy()
+
+    def do_normal_error(self, dialog_text):
+        """Just a simple, normal, ignorable error"""
+        dialog = Gtk.MessageDialog(self, 0,
+                                   Gtk.MessageType.ERROR,
+                                   Gtk.ButtonsType.OK,
+                                   dialog_text)
+        dialog.run()
+        dialog.destroy()
 
     def do_new_log(self, text):
         """To be used on a new_log signal. Calls a method on log to append
@@ -210,10 +222,41 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.statusbar.inc_notif_button_label()
 
     def do_set_conflict_label(self, conflict_number):
+        """Sets the conflict label to the appropiate conflict_number"""
         self.statusbar.update_conflict_button_label(conflict_number)
 
     def do_update_ws_info(self, host_count, service_count, vuln_count):
+        """Sets the statusbar workspace info to the appropiate numbers"""
         self.statusbar.update_ws_info(host_count, service_count, vuln_count)
+
+    def do_loading_workspace(self, action):
+        """Called by changeWorkspace on the application. Presents
+        a silly loading dialog.
+        Preconditions: show must have been called before destroy can be called
+        """
+        def do_nothing(widget, event):
+            """Do nothing. Well, technically, return True.
+
+            Avoids the user to interact with the dialog in anyway, for example,
+            via the Escape key.
+            You'll have to wait for my dialog to exit by itself, cowboy.
+            """
+            return True
+
+        if action == "show":
+            self.loading_dialog = Gtk.MessageDialog(self, 0,
+                                                    Gtk.MessageType.INFO,
+                                                    Gtk.ButtonsType.NONE,
+                                                    ("Loading workspace. \n"
+                                                    "Please wait."))
+
+            self.loading_dialog.set_modal(True)
+            self.loading_dialog.connect("key_press_event", do_nothing)
+
+            self.loading_dialog.show_all()
+        if action == "destroy":
+            self.loading_dialog.destroy()
+
 
     def getLogConsole(self):
         """Returns the LogConsole. Needed by the GUIHandler logger"""
@@ -229,14 +272,13 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
     def refreshSidebar(self):
         """Call the refresh method on sidebar. It will append new workspaces,
-        but it will *NOT* delete workspaces not found anymore in the current
-        ws anymore"""
+        but it will *NOT* delete workspaces not found in the current
+        ws"""
         self.sidebar.refresh()
 
     def create_toolbar(self):
         """ Creates toolbar with an open and new button, getting the icons
-        from the stock. The method by which it does this is deprecated,
-        this could be improved"""
+        from the stock. """
 
         toolbar = Gtk.Toolbar()
         toolbar.set_hexpand(True)
@@ -248,6 +290,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         new_terminal_icon = Gtk.Image.new_from_file(icons + "newshell.png")
         preferences_icon = Gtk.Image.new_from_file(icons + "config.png")
         toggle_log_icon = Gtk.Image.new_from_file(icons + "debug.png")
+        open_report_icon = Gtk.Image.new_from_file(icons + "FolderSteel-20.png")
 
         new_terminal_button = Gtk.ToolButton.new(new_terminal_icon, None)
         new_terminal_button.set_tooltip_text("Create a new tab")
@@ -271,6 +314,15 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         toggle_log_button.connect("clicked", self.toggle_log)
         toolbar.insert(toggle_log_button, 3)
 
+        space = Gtk.ToolItem()
+        space.set_expand(True)
+        toolbar.insert(space, 4)
+
+        open_report_button = Gtk.ToolButton.new(open_report_icon, None)
+        open_report_button.set_tooltip_text("Import report")
+        open_report_button.set_action_name('app.open_report')
+        toolbar.insert(open_report_button, 5)
+
         return toolbar
 
     def new_tab(self, scrolled_window):
@@ -284,12 +336,12 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         tab_number = self.tab_number
         pageN = self.terminalBox(scrolled_window)
         self.notebook.append_page(pageN, Gtk.Label(str(tab_number+1)))
-        self.show_all()
+        self.notebook.show_all()
 
     def delete_tab(self, button=None):
         """Deletes the current tab or closes the window if tab is only tab"""
         if self.tab_number == 0:
-            # the following confusing but its how gtks handles delete_event
+            # the following is confusing but its how gtks handles delete_event
             # if user said YES to confirmation, do_delete_event returns False
             if not self.do_delete_event():
                 self.destroy()
@@ -326,7 +378,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         if response == Gtk.ResponseType.YES:
             return False  # keep on going and destroy
         else:
-            # user say you know what i don't want to exit
+            # user said "you know what i don't want to exit"
             return True
 
     def on_terminal_exit(self, terminal, status):

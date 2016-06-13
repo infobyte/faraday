@@ -10,6 +10,18 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+Jun 13, 2016:
+---
+* Added Import Report dialog to Faraday GTK
+* Added a 'Loading workspace...' dialog to Faraday GTK
+* Added host sidebar to Faraday GTK
+* Added host information dialog to Faraday GTK with the full data about a host, its interfaces, services and vulnerabilities
+* Added support for run faraday from other directories.
+* Fixed log reapparing after being disabled if user created a new tab
+* Fixed bug regarding exception handling in Faraday GTK
+* Now Faraday GTK supports Ctrl+Shift+C / Ctrl+Shift+V to Copy/Paste
+* Faraday will now not crash if you suddenly lose connection to your CouchDB
+
 May 23, 2016:
 ---
 * Removed description from Hosts list in WEB UI

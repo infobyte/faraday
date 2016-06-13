@@ -201,12 +201,9 @@ class PluginOptionsDialog(Gtk.Window):
         self.setSettingsView()
 
         plugin_info = self.createPluginInfo(plugin_manager)
-        pluginList = self.createPluginListView(plugin_info)
-        scroll_pluginList = Gtk.ScrolledWindow(None, None)
-        scroll_pluginList.add(pluginList)
-        scroll_pluginList.set_min_content_width(300)
-        pluginListBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        pluginListBox.pack_start(scroll_pluginList, True, True, 0)
+        plugin_list = self.createPluginListView(plugin_info)
+        left_side_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        left_side_box.pack_start(plugin_list, True, True, 0)
 
         buttonBox = Gtk.Box()
         OK_button = Gtk.Button.new_with_label("OK")
@@ -215,7 +212,8 @@ class PluginOptionsDialog(Gtk.Window):
         cancel_button.connect("clicked", self.on_click_cancel)
         buttonBox.pack_start(OK_button, True, True, 10)
         buttonBox.pack_start(cancel_button, True, True, 10)
-        pluginListBox.pack_start(buttonBox, False, False, 10)
+
+        left_side_box.pack_start(buttonBox, False, False, 10)
 
         infoBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         nameBox, versionBox, pluginVersionBox = [Gtk.Box() for i in range(3)]
@@ -246,7 +244,7 @@ class PluginOptionsDialog(Gtk.Window):
         self.pluginSpecsBox.pack_start(self.settings_view, True, True, 0)
 
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.mainBox.pack_start(pluginListBox, False, True, 10)
+        self.mainBox.pack_start(left_side_box, False, True, 10)
         self.mainBox.pack_end(self.pluginSpecsBox, True, True, 10)
 
         self.add(self.mainBox)
@@ -278,6 +276,7 @@ class PluginOptionsDialog(Gtk.Window):
         sorted_plugin_info.set_sort_column_id(1, Gtk.SortType.ASCENDING)
         return sorted_plugin_info
 
+    @scrollable(width=300)
     def createPluginListView(self, plugin_info):
         """Creates the view for the left-hand side list of the dialog.
         It uses an instance of the plugin manager to get a list
@@ -600,8 +599,8 @@ class HostInfoDialog(Gtk.Window):
 
     @scrollable(width=250)
     def create_main_tree_view(self, model):
-        """Return a box containing a ScrolledWindow with the main tree
-        (the one showing Host/Interfaces/Services) as its content.
+        """Return a box containing the main tree (the one showing
+        Host/Interfaces/Services) as its content.
         """
         view = Gtk.TreeView(model)
         view.set_activate_on_single_click(True)
@@ -929,6 +928,10 @@ class ConflictsDialog(Gtk.Window):
         n. If first conflict, self.view will be none. If user is past the first
         conflict, self.view will not be none"""
 
+        @scrollable()
+        def make_scrollable(view):
+            return view
+
         if self.view is None:
 
             renderer = Gtk.CellRendererText()
@@ -960,10 +963,8 @@ class ConflictsDialog(Gtk.Window):
             self.second_view.append_column(prop2_column)
             self.second_view.append_column(obj2_column)
 
-            scrolled_view = Gtk.ScrolledWindow(None, None)
-            second_scrolled_view = Gtk.ScrolledWindow(None, None)
-            scrolled_view.add(self.view)
-            second_scrolled_view.add(self.second_view)
+            scrolled_view = make_scrollable(self.view)
+            second_scrolled_view = make_scrollable(self.second_view)
 
             self.views_box.pack_start(scrolled_view, True, True, 5)
             self.views_box.pack_start(second_scrolled_view, True, True, 5)
@@ -1248,24 +1249,24 @@ class NotificationsDialog(Gtk.Window):
         self.set_size_request(400, 200)
         self.set_modal(True)
         self.connect("key_press_event", on_scape_destroy)
-
-        self.view = view
         self.destroy_notifications = callback
+
+        scrolled_list = self.create_view_box(view)
 
         self.button = Gtk.Button()
         self.button.set_label("OK")
         self.button.connect("clicked", self.on_click_OK)
-
-        scrolled_list = Gtk.ScrolledWindow.new(None, None)
-        scrolled_list.set_min_content_width(200)
-        scrolled_list.set_min_content_height(350)
-        scrolled_list.add(self.view)
 
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.mainBox.pack_start(scrolled_list, True, True, 0)
         self.mainBox.pack_start(self.button, False, False, 0)
 
         self.add(self.mainBox)
+
+
+    @scrollable(width=250, height=350)
+    def create_view_box(self, view):
+        return view
 
     def on_click_OK(self, button):
         self.destroy_notifications()
@@ -1338,18 +1339,17 @@ class ImportantErrorDialog(Gtk.Dialog):
         textBuffer = Gtk.TextBuffer()
         textBuffer.set_text(error)
 
+        text_view_box = create_text_view_box()
+
+        box.pack_start(text_view_box, True, True, 0)
+        self.show_all()
+
+    @scrollable(width=200, height=200)
+    def create_text_view_box(self):
         textView = Gtk.TextView()
         textView.set_editable(False)
         textView.set_buffer(textBuffer)
-
-        box = self.get_content_area()
-        scrolled_text = Gtk.ScrolledWindow.new(None, None)
-        scrolled_text.set_min_content_height(200)
-        scrolled_text.set_min_content_width(200)
-        scrolled_text.add(textView)
-
-        box.pack_start(scrolled_text, True, True, 0)
-        self.show_all()
+        return textView
 
 
 def on_scape_destroy(window, event):

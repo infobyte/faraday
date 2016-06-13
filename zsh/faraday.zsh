@@ -50,7 +50,7 @@ function add-output() {
 	            BUFFER=" $new_cmd"
 		    fi
             FARADAY_OUTPUT=`mktemp tmp.XXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
-            BUFFER="$BUFFER >&1 >> $FARADAY_OUTPUT"
+            BUFFER="$BUFFER 2>&1 | tee -a $FARADAY_OUTPUT"
 		fi
 	fi
     zle .accept-line "$@"

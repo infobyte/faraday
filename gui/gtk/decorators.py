@@ -1,20 +1,20 @@
 from gi.repository import Gtk
 from functools import wraps
 
+
 def scrollable(width=-1, height=-1):
-   """A function that takes optinal width and height and returns
-   the scrollable decorator. -1 is the default GTK option for both
-   width and height.
-   """
+    """A function that takes optinal width and height and returns
+    the scrollable decorator. -1 is the default GTK option for both
+    width and height."""
 
     def scrollable_decorator(func):
         """Takes a function and returns the scroll_object_wrapper."""
 
-        @wraps(funcs)
+        @wraps(func)
         def scroll_object_wrapper(*args, **kwargs):
             """Takes arguments and obtains the original object from
             func(*args, **kwargs). Creates a box and puts the original
-            inside that box. Created a scrolled window and puts the
+            inside that box. Creates a scrolled window and puts the
             box inside it.
             """
 
@@ -30,4 +30,3 @@ def scrollable(width=-1, height=-1):
         return scroll_object_wrapper
 
     return scrollable_decorator
-

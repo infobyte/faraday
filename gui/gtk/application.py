@@ -463,6 +463,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         the change"""
 
         def background_process():
+            """Change workspace. This function runs on a separated thread
+            created by the parent function. DO NOT call any Gtk methods
+            withing it's scope, except by emiting signals to the window
+            """
             self.window.emit("loading_workspace", 'show')
             try:
                 ws = super(GuiApp, self).openWorkspace(workspaceName)

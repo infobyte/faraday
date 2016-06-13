@@ -16,6 +16,7 @@ from persistence.persistence_managers import CouchDbManager
 from utils.common import checkSSL
 from config.configuration import getInstanceConfiguration
 from model import guiapi
+from decorators import scrollable
 
 
 CONF = getInstanceConfiguration()
@@ -385,49 +386,62 @@ class PluginOptionsDialog(Gtk.Window):
 
 class HostInfoDialog(Gtk.Window):
     """Sets the blueprints for a simple host info window. It will display
-    basic information in labels as well as interfaces/services in a treeview
+    basic information in labels as well as interfaces/services in a treeview.
+
+    While working in this class, keep in mind the distinction between
+    selections (which are part of a model that holds data about an object as
+    strings and ints) and the object per se, which are in the model folder and
+    are totally alien to GTK.
     """
     def __init__(self, parent, host):
         """Creates a window with the information about a given hosts.
         The parent is needed so the window can set transient for
         """
-        Gtk.Window.__init__(self,
-                            title="Host " + host.name + " information")
+
+        window_title = "Host " + host.name + " information"
+        Gtk.Window.__init__(self, title=window_title)
+
         self.set_transient_for(parent)
         self.set_size_request(1200, 500)
         self.set_modal(True)
         self.connect("key_press_event", on_scape_destroy)
+
         self.host = host
+        self.model = self.create_model(self.host)
+        host_info = self.model[0]
+
+        host_info_frame = self.create_host_info_frame(host_info)
 
         self.specific_info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.specific_info_frame = self.create_scroll_frame(
                                        self.specific_info,
                                        "Service Information")
 
-        self.specific_vuln_info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.specific_vuln_info_frame = self.create_scroll_frame(
-                                            self.specific_vuln_info,
+        self.vuln_info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.vuln_info_frame = self.create_scroll_frame(
+                                            self.vuln_info,
                                             "Vulnerability Information")
 
-        basic_info_frame = self.create_basic_info_box(host)
-        children_of_host_tree = self.create_main_tree_box(host)
+        main_tree = self.create_main_tree_view(self.model)
+        vuln_list = self.create_vuln_list()
+
         button = Gtk.Button.new_with_label("OK")
         button.connect("clicked", self.on_click_ok)
 
         main_box = Gtk.Box()
 
         info_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        info_box.pack_start(basic_info_frame, True, True, 10)
+        info_box.pack_start(host_info_frame, True, True, 10)
         info_box.pack_start(self.specific_info_frame, True, True, 10)
-        info_box.pack_start(self.specific_vuln_info_frame, True, True, 10)
+        info_box.pack_start(self.vuln_info_frame, True, True, 10)
         info_box.pack_start(button, False, False, 10)
 
         main_tree_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        main_tree_box.pack_start(children_of_host_tree, True, True, 10)
+        main_tree_box.pack_start(main_tree, True, True, 10)
         main_tree_box.pack_start(Gtk.Box(), False, False, 10)
 
         vuln_list_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        vuln_list_box.pack_start(self.create_vuln_tree_box(), True, True, 10)
+        vuln_list_box.pack_start(vuln_list, True, True, 10)
         vuln_list_box.pack_start(Gtk.Box(), False, False, 10)
 
         main_box.pack_start(main_tree_box, False, False, 5)
@@ -437,13 +451,8 @@ class HostInfoDialog(Gtk.Window):
         self.add(main_box)
 
     def create_scroll_frame(self, inner_box, label_str):
-        """Create a scrollable frame.
-
-        inner_box will be the scrollable frame content.
-        label_str will be the scrollable frame title.
-
-        Scrollable will be set to always show vertical scrollbars and will
-        have disabled overlay scrolling
+        """Create a scrollable frame containing inner_box and with label_str
+        as its title.
         """
         label = Gtk.Label()
         label.set_markup("<big>" + label_str + "</big>")
@@ -461,32 +470,26 @@ class HostInfoDialog(Gtk.Window):
 
         return frame
 
-    def create_basic_info_box(self, host):
-        """Creates a box where the basic information about the host
-        lives in labels. It include names, OS, Owned status and vulnarability
+    def create_host_info_frame(self, host_info):
+        """Return a box where the basic information about the host
+        lives in labels. It include names, OS, Owned status and vulnerability
         count.
-        Return a frame containing that box.
         """
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        prop_names = ["Name: ", "OS: ", "Owned: ", "Vulnerabilities: "]
 
-        owned_status = ("Yes" if host.isOwned() else "No")
-        vuln_count = str(len(host.getVulns()))
+        prop_names = self.get_properties_names("Host")
+        self.show_info_in_box(host_info, prop_names, box)
 
-        # show_info_in_box() was created with an ignorable ID or object_type
-        # in a model in mind, so it is set to ignore the first value of
-        # the properties. That why the prop_value list starts with '_'
-        prop_values = ['_', host.getName(), host.getOS(), owned_status,
-                       vuln_count]
-        self.show_info_in_box(prop_values, prop_names, box)
+        host_info_frame = self.create_scroll_frame(box, "Host Information")
 
-        basic_info_frame = self.create_scroll_frame(box, "Host Information")
+        return host_info_frame
 
-        return basic_info_frame
+    @scrollable(width=250)
+    def create_vuln_list(self):
+        """Creates a simple view of vulnerabilities for the object
+        and returns a box containing it.
+        """
 
-    def create_vuln_tree_box(self):
-        """Creates a simple view a vulnerabilities"""
-        box = Gtk.Box()
         self.vuln_list = Gtk.TreeView()
         self.vuln_list.set_activate_on_single_click(True)
         renderer = Gtk.CellRendererText()
@@ -496,25 +499,30 @@ class HostInfoDialog(Gtk.Window):
         vuln_selection = self.vuln_list.get_selection()
         vuln_selection.connect("changed", self.on_vuln_selection)
 
-        scrolled_view = Gtk.ScrolledWindow(None, None)
-        scrolled_view.add(self.vuln_list)
-        scrolled_view.set_min_content_width(250)
-        box.pack_start(scrolled_view, True, True, 10)
+        return self.vuln_list
 
-        return box
+    def create_model(self, host):
+        """Return a model for the given host. It holds quite a bit of info.
+        It has 15 columns holding the host ID and name as parent,
+        all the information about the interfaces of that host and all the
+        information about the services of those interfaces.
 
-    def create_main_tree_box(self, host):
-        """Creates a model and a view for the interfaces/services of the host.
-        Puts a scrolled window containing the view into a box and returns
-        that. The models holds quite a bit of information. It has 11 columns
-        holding the host ID and name as parent, all the information about
-        the interfaces of that host and all the information about
-        the services of those interfaces.
+        The model is difficult to draw because of its nested nature, but
+        you can think of it like this, keeping in mind each node has
+        several columns
+
+          HOST
+          -----> INTERFACE1
+                   ------------> SERVICE1
+                   ------------> SERVICE2
+          -----> INTERFACE2
+                   -----------> SERVICE1
+                   -----------> SERVICE2
+
+        And so on and so on, like Zizek says.
         """
 
-        box = Gtk.Box()
-        interfaces = host.getAllInterfaces()
-        # those are 15 strings
+        # those are 13 strings
         model = Gtk.TreeStore(str, str, str, str, str, str, str,
                               str, str, str, str, str, str)
 
@@ -523,9 +531,12 @@ class HostInfoDialog(Gtk.Window):
         # the other columns with dummy info
 
         display_str = host.getName() + " (" + str(len(host.getVulns())) + ")"
+        owned_status = ("Yes" if host.isOwned() else "No")
         host_position = model.append(None, [host.getID(), host.getName(),
+                                            host.getOS(), owned_status,
+                                            str(len(host.getVulns())), "",
                                             "", "", "", "", "", "",
-                                            "", "", "", "", display_str])
+                                            display_str])
 
         # some convenient functions just to separate and clarify what
         # the code does. they are used in the nested for loop directly
@@ -575,6 +586,7 @@ class HostInfoDialog(Gtk.Window):
                                          "Yes" if service.isOwned() else "No",
                                          "", "", "", "", display_str])
 
+        interfaces = host.getAllInterfaces()
         for interface in interfaces:
             interface_position = add_interface_to_host_in_model(interface,
                                                                 host_position,
@@ -584,33 +596,28 @@ class HostInfoDialog(Gtk.Window):
                 add_service_to_interface_in_model(service, interface_position,
                                                   model)
 
-        self.view = Gtk.TreeView(model)
-        self.view.set_activate_on_single_click(True)
+        return model
+
+    @scrollable(width=250)
+    def create_main_tree_view(self, model):
+        """Return a box containing a ScrolledWindow with the main tree
+        (the one showing Host/Interfaces/Services) as its content.
+        """
+        view = Gtk.TreeView(model)
+        view.set_activate_on_single_click(True)
 
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("Host/Interfaces/Services",
                                     renderer, text=12)
 
-        self.view.append_column(column)
-        selection = self.view.get_selection()
+        view.append_column(column)
+        selection = view.get_selection()
         selection.connect("changed", self.on_main_tree_selection)
 
-        scrolled_view = Gtk.ScrolledWindow(None, None)
-        scrolled_view.add(self.view)
-        scrolled_view.set_min_content_width(250)
-        box.pack_start(scrolled_view, True, True, 10)
-
-        return box
+        return view
 
     def on_main_tree_selection(self, tree_selection):
-        """When the user selects a host, interface or service in the main tree
-        this method decides what to do. If it's a Host, it just
-        sets the vuln_model to the vulns of that host.
-        If it's a service or an interface, it clears the specific_info box
-        and appends the new information to it and updates the frame label
-        besided setiting the vuln_model to the vulnerabilities of the
-        selection.
-        """
+        """Fire up neccesary actions when selection on the main tree changes"""
         model, tree_iter = tree_selection.get_selected()
         object_info = model[tree_iter]
 
@@ -624,14 +631,14 @@ class HostInfoDialog(Gtk.Window):
             self.clear(self.specific_info)
             self.change_label_in_frame(self.specific_info_frame, object_type)
             prop_names = self.get_properties_names(object_type)
-            object_id = object_info[0]
             self.show_info_in_box(object_info, prop_names, self.specific_info)
             actual_object = self.get_object(object_info, object_type)
             vuln_model = self.create_vuln_model(actual_object)
             self.set_vuln_model(vuln_model)
 
     def on_vuln_selection(self, vuln_selection):
-        """Fill the specific_vuln_info box with the vulnerability selected.
+        """Fill the vuln_info box with the vulnerability selected.
+
         The try/except block is necesary 'cause GTK
         is silly (ie: doesn't behave like it would be best for me now)
         and will emit the selection changed signal if the model
@@ -642,12 +649,12 @@ class HostInfoDialog(Gtk.Window):
         try:
             selected = model[vuln_iter]
             vuln_type = selected[0]
-            self.clear(self.specific_vuln_info)
-            self.change_label_in_frame(self.specific_vuln_info_frame,
+            self.clear(self.vuln_info)
+            self.change_label_in_frame(self.vuln_info_frame,
                                        vuln_type)
             prop_names = self.get_properties_names(vuln_type)
             self.show_info_in_box(selected, prop_names,
-                                  self.specific_vuln_info)
+                                  self.vuln_info)
         except TypeError:
             return False
 
@@ -685,7 +692,7 @@ class HostInfoDialog(Gtk.Window):
     def change_label_in_frame(self, frame, string):
         """Changes the label in the given frame to 'string Information'"""
         label = frame.get_label_widget()
-        label.set_markup("<big>" + string + " " + "Information"+ "</big>")
+        label.set_markup("<big>" + string + " " + "Information" + "</big>")
 
     def show_info_in_box(self, object_info, property_names, box):
         """Appends several boxes vertically to the box. The appended boxes will
@@ -734,6 +741,9 @@ class HostInfoDialog(Gtk.Window):
         Interface, Service, Vulnerability and VulnerabilityWeb (passed as a
         string).
         """
+        if object_type == "Host":
+            property_names = ["Name: ", "OS: ", "Owned: ",
+                              "Vulnerabilities: "]
 
         if object_type == "Interface":
             property_names = ["Name: ", "Description: ", "MAC: ",
@@ -1119,9 +1129,11 @@ class ConflictsDialog(Gtk.Window):
         """Preconditions: the model has 5 string columns,
         len(attr[0]) == len(attr[1]) == len(props),
         type(attr[0][i]) == type(attr[1][i]) for every i
-        attr is a list of two tuples. the first tuple holds info about obj1,
-        the second about obj2.
-        props is the list with names of such attributes
+        attr is a list with two tuples. the first tuple holds info about obj1,
+        the second about obj2, for example:
+        [(name_obj1, ports_obj1), (name_obj2, porst_obj2)]
+        props is the list with names of such attributes, for example:
+        ["Name: ", "Ports: "]
 
         Will return a model filled up with information as detailed in
         self.create_conflicts_models.
@@ -1157,17 +1169,17 @@ class ConflictsDialog(Gtk.Window):
                 # just use that color, screw highlights
                 return '#%02x%02x%02x' % (color1, color2, color3)
 
-        i = 0
-        for prop in props:
-            first_raw_prop = attr[0][i]
-            sec_raw_prop = attr[1][i]
+        for index, prop in enumerate(props):
+            # remember props is a list like [(obj1_prop1, obj1_prop2...),
+            #                                (obj2_prop1, obj2, prop2...)]
+            first_raw_prop = attr[0][index]
+            sec_raw_prop = attr[1][index]
             first_prop = self.cook(first_raw_prop)
             sec_prop = self.cook(sec_raw_prop)
 
             model.append([prop, first_prop, sec_prop,
                           decide_bg(),
                           decide_type(first_raw_prop)])
-            i += 1
 
         return model
 

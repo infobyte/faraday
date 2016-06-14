@@ -113,8 +113,9 @@ class GuiApp(Gtk.Application, FaradayUi):
     def updateHosts(self):
         """Reassings the value of self.all_hosts to a current one to
         catch workspace changes, new hosts added via plugins or any other
-        external interference with out host list"""
+        external interference with our host list"""
         self.all_hosts = self.model_controller.getAllHosts()
+        return self.all_hosts
 
     def createWorkspace(self, name, description="", w_type=""):
         """Pretty much copy/pasted from the QT3 GUI.
@@ -240,6 +241,8 @@ class GuiApp(Gtk.Application, FaradayUi):
             # Windows are associated with the application
             # when the last one is closed the application shuts down
             self.window = AppWindow(self.sidebar,
+                                    self.ws_sidebar,
+                                    self.hosts_sidebar,
                                     self.terminal,
                                     self.console_log,
                                     self.statusbar,
@@ -259,7 +262,12 @@ class GuiApp(Gtk.Application, FaradayUi):
         model.guiapi.notification_center.registerWidget(self.window)
 
     def postEvent(self, receiver, event):
-        """Handles the events from gui/customevents."""
+        """Handles the events from gui/customevents.
+
+        DO NOT, AND I REPEAT, DO NOT REDRAW *ANYTHING* FROM THE GUI
+        FROM HERE. If you must do it, you should to it via the emit method
+        to the appwindow."""
+
         if receiver is None:
             receiver = self.getMainWindow()
 
@@ -278,10 +286,9 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         elif event.type() == 4100 or event.type() == 3140:  # newinfo or changews
             host_count, service_count, vuln_count = self.update_counts()
-            self.updateHosts()
-            self.hosts_sidebar.update(self.all_hosts)
-            receiver.emit("update_ws_info", host_count,
-                          service_count, vuln_count)
+            self.window.receive_hosts(self.updateHosts())
+            receiver.emit("update_hosts_sidebar")
+            receiver.emit("update_ws_info", host_count, service_count, vuln_count)
 
         elif event.type() == 3132:  # error
             self.window.emit("normal_error", event.text)

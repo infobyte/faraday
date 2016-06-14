@@ -33,7 +33,7 @@ class _IdleObject(GObject.GObject):
         GObject.idle_add(GObject.GObject.emit, self, *args)
 
 
-class AppWindow(Gtk.ApplicationWindow, _IdleObject):
+class AppWindow(Gtk.ApplicationWindow):
     """The main window of the GUI. Draws the toolbar.
     Positions the terminal, sidebar, consolelog and statusbar received from
     the app and defined in the mainwidgets module"""
@@ -45,12 +45,13 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         "update_ws_info": (GObject.SIGNAL_RUN_FIRST, None, (int, int, int, )),
         "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, )),
         "loading_workspace": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
+        "update_hosts_sidebar": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "normal_error": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
         "important_error": (GObject.SIGNAL_RUN_FIRST, None, ()),
     }
 
-    def __init__(self, sidebar, terminal, console_log, statusbar,
-                 *args, **kwargs):
+    def __init__(self, sidebar, ws_sidebar, hosts_sidebar, terminal,
+                 console_log, statusbar, *args, **kwargs):
         super(Gtk.ApplicationWindow, self).__init__(*args, **kwargs)
 
         # This will be in the windows group and have the "win" prefix
@@ -62,6 +63,8 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.maximize()
 
         self.sidebar = sidebar
+        self.ws_sidebar = ws_sidebar
+        self.hosts_sidebar = hosts_sidebar
         self.terminal = terminal
         self.log = console_log
         self.statusbar = statusbar
@@ -125,6 +128,15 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.tab_number = 0  # 0 indexed, even when it shows 1 to the user
 
         self.show_all()
+
+    def receive_hosts(self, hosts):
+        """Attaches the hosts to an object value, so it can be used by
+        do_update_hosts_sidebar, a signal. GTK won't alow anything
+        more than primitive names to be passed on by signals"""
+        self.current_hosts = hosts
+
+    def do_update_hosts_sidebar(self):
+        self.hosts_sidebar.update([])
 
     def terminalBox(self, terminal):
         """Given a terminal, creates an EventBox for the Box that has as a

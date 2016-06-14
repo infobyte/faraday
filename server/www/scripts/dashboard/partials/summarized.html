@@ -1,0 +1,72 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<div id='byservices'>
+    <div class='col-lg-3'>
+        <article class='panel panel-default'>
+            <header>
+                <h2>Services report
+                    <span class="glyphicon glyphicon-info-sign" uib-tooltip="All services for current WS ordered by host amount"></span>
+                </h2>
+            </header>
+            <div ng-if="servicesCount.length == 0" class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <p>No services found yet</p>
+            </div>
+            <div class='main'>
+                <div class='box'>
+                    <div ng-repeat="srv in servicesCount" class="columna unquinto services">
+                        <article class="dato2">
+                            <span href="" ng-click="showHosts(srv.key)">
+                                <section>
+                                    <div class="nro">{{srv.value}}</div>
+                                    <div class="txt texto-blanco">{{srv.key}}</div>
+                                </section>
+                            </span>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+</div>
+<div id='summarized'>
+    <div class='col-lg-3'>
+        <article class='panel panel-default'>
+            <header>
+                <h2>Workspace summarized report
+                    <span class="glyphicon glyphicon-info-sign" uib-tooltip="WS overview - hosts, notes, services and vulnerabilites counts"></span>
+                </h2>
+            </header>
+            <div ng-if="objectsCount.length == 0" class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <p>Not enough data to generate summarized report yet</p>
+            </div>
+            <div class='main'>
+                <div class='box'>
+                    <div ng-repeat="obj in objectsCount" class="columna unquinto">
+                        <article class="dato2">
+                                <div ng-switch on="obj.key">
+                                    <div class="nro" ng-switch-when="total vulns"><a href="#/status/ws/{{workspace}}">{{obj.value}}</a></div>
+                                    <div class="nro" ng-switch-when="hosts"><a href="#/hosts/ws/{{workspace}}">{{obj.value}}</a></div>
+                                    <div class="nro" ng-switch-when="web vulns"><a href="#/status/ws/{{workspace}}/search/type=VulnerabilityWeb">{{obj.value}}</a></div>
+                                    <div class="nro" ng-switch-when="vulns"><a href="#/status/ws/{{workspace}}/search/type=!VulnerabilityWeb">{{obj.value}}</a></div>
+                                    <!--#/status/ws/cscan/search/severity=high -->
+                                    <div class="nro" ng-switch-default>{{obj.value}}</div>
+                                </div>
+                                <div class="txt texto-blanco">{{obj.key}}</div>
+                            </section>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+</div>

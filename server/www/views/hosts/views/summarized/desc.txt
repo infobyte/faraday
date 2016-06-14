@@ -1,0 +1,1 @@
+cuenta cantidad de items totales, nombreItem, cant para Services, Serv owned, Hosts, Hosts owned, Interfaces, Notes, Total Vulnerabilities, Web Vulns, Common Vulns

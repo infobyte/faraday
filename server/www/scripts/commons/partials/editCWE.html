@@ -1,0 +1,42 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<form name="formCWE">
+	<div class="modal-header">
+	    <h5>{{msg}}</h5>
+	</div>
+	<div class="modal-body">
+			<div class="form-group"> 
+				<h5>Search CWE database by typing in the field below</h5>
+		        <input type="text" ng-model="cwe_selected" class="form-control input-sm" placeholder="Search for CWE" uib-typeahead="cwe as cwe.name for cwe in cweList | filter:{name: $viewValue} | limitTo:10" typeahead-on-select="populate($item, $model, $label)">
+			</div>
+			<div class="form-group">
+				<h5>Name</h5>
+				<input type="text" ng-model="data.name" class="form-control input-sm" placeholder="Name" required/>
+			</div>
+			<div class="form-group">
+				<h5>Description</h5>
+				<textarea ng-model="data.desc" class="form-control" placeholder="Description" required></textarea>
+			</div>
+			<div class="form-group">
+				<h5>Resolution</h5>
+				<textarea ng-model="data.resolution" class="form-control" placeholder="Resolution"></textarea>
+			</div>
+			<div class="form-group editArray">
+				<h5>References</h5>
+			    <div class="input-group margin-bottom-sm">
+			        <input type="text" class="form-control" placeholder="Reference" ng-model="new_ref"/>
+			        <span class="input-group-addon cursor" ng-click="newReference()"><i class="fa fa-plus-circle"></i></span>
+			    </div>
+			    <div class="input-group margin-bottom-sm reference" ng-repeat="reference in data.refs">
+			        <input type="text" class="form-control" placeholder="Reference" ng-model="reference.value"/>
+			        <span class="input-group-addon cursor" ng-click="data.refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+			    </div>
+			</div>
+	</div>
+	<div class="modal-footer">
+	    <button class="btn btn-success" ng-click="ok()" ng-disabled="formCWE.$invalid">OK</button>
+	    <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+	</div>
+</form>

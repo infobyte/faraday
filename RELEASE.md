@@ -9,8 +9,12 @@ Please run ./faraday.py --update
 
 New features in the latest update
 =====================================
-TO BE RELEASED
 
+TBA:
+--
+* Added new plugin : Netcat (Gnu netcat - OpenBSD netcat - Original netcat)
+
+Jun 13, 2016:
 ---
 * Added Import Report dialog to Faraday GTK
 * Added a 'Loading workspace...' dialog to Faraday GTK

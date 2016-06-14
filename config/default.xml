@@ -2,7 +2,7 @@
 <faraday>
 
     <appname>Faraday - Penetration Test IDE</appname>
-    <version>1.0.20</version>
+    <version>1.0.21</version>
     <debug_status>0</debug_status>
     <font>-Misc-Fixed-medium-r-normal-*-12-100-100-100-c-70-iso8859-1</font>
     <home_path>~/</home_path>

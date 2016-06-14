@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('dashboardSrv', ['BASEURL', '$cookies', '$q', '$http', function(BASEURL, $cookies, $q, $http) {
+    .factory('dashboardSrv', ['BASEURL', 'SEVERITIES', '$cookies', '$q', '$http', function(BASEURL, SEVERITIES, $cookies, $q, $http) {
         var dashboardSrv = {};
 
         dashboardSrv._getView = function(url) {
@@ -148,17 +148,24 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        dashboardSrv.getVulnerabilities = function(ws) {
+        dashboardSrv.getVulnsWorth = function(ws) {
             var deferred = $q.defer();
 
-            var url = BASEURL + "/" + ws + "/_design/vulns/_view/all";
-            var AllVulns = [];
-            dashboardSrv._getView(url).then(function(vulns) {
-                vulns.forEach(function(v) {
-                    if(v.confirmed === true) AllVulns.push(v);
+            dashboardSrv.getVulnerabilitiesCount(ws)
+                .then(function(vulns) {
+                    var vs = [];
+
+                    SEVERITIES.forEach(function(severity, ind) {
+                        vs.push({
+                            "amount": dashboardSrv.vulnPrices[severity] * vulns[severity],
+                            "color": dashboardSrv.vulnColors[ind],
+                            "key": severity,
+                            "value": vulns[severity]
+                        });
+                    });
+
+                    deferred.resolve(vs);
                 });
-                deferred.resolve(AllVulns);
-            });
             return deferred.promise;
         };
 
@@ -168,7 +175,7 @@ angular.module('faradayApp')
 
             dashboardSrv._getView(url)
                 .then(function(vulns) {
-                    var vs = {};
+                    var vs = [];
 
                     vulns.forEach(function(vuln) {
                         vs[vuln.key] = vuln.value;

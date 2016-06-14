@@ -1,0 +1,12 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<div class="modal-header">
+    <h4 class="modal-title">This workspace does not exist. Select one of the list</h4>
+</div>
+<div class="modal-body">
+    <ul class="ws-list">
+        <li ng-repeat="ws in wss"><a href="#/{{component}}/ws/{{ws}}" ng-click="cancel()"><span ng-class-even="'label label-unclassified'" ng-class-odd="'label label-high'" style="text-transform: uppercase">{{ws}}</span></a></li>
+    </ul>
+</div><!-- .modal-body -->

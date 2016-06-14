@@ -1,0 +1,53 @@
+<article id="compound" class='panel panel-default'>
+    <header>
+        <h2><a href="#/hosts/ws/{{workspace}}">Hosts</a>
+            <span class="glyphicon glyphicon-info-sign" uib-tooltip="All hosts, each one showing its service count and operating system. By clicking on a host IP you can access a list with all of its services"></span>
+        </h2>
+    </header>
+    <div ng-if="hosts.length == 0" class="alert alert-info alert-dismissible no-margin-bottom">
+        <button type="button" class="close" data-dismiss="alert">
+            <span aria-hidden="true">&times;</span>
+            <span class="sr-only">Close</span>
+        </button>
+        <p>No hosts found yet.</p>
+    </div>
+    <table id="hosts" ng-if="hosts.length > 0" class="tablesorter table table-striped table-fixed">
+        <thead>
+            <tr>
+                <th class="col-xs-6"><a href="" ng-click="hostToggleSort('name')">Host</a></th>
+                <th class="col-xs-4"><a href="" ng-click="hostToggleSort('servicesCount')">Services</a></th>
+                <th class="col-xs-2"><a href="" ng-click="hostToggleSort('os')">OS</a></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="host in hosts | orderBy:hostSortField:hostSortReverse |
+            startFrom:currentPage*pageSize | limitTo:pageSize">
+                <td class="col-xs-6">
+                    <a href="" class="host" ng-click="showServices(host)">{{host.name}}</a>
+                    <a href="//www.shodan.io/search?query={{host.name}}" uib-tooltip="Search in Shodan" target="_blank">
+                        <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                    </a>
+                </td>
+                <td class="col-xs-6">{{host.servicesCount}}</td>
+                <td class="col-xs-4">
+                    <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
+                    <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="showPagination" ng-show="showPagination">
+        <div class="form-group">
+            <ul class="pagination">
+                <li><a ng-hide="currentPage == 0" ng-click="currentPage=currentPage-1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                <li><a>{{currentPage}}/{{numberOfPages()}}</a></li>
+                <li><a ng-hide="currentPage >= numberOfPages()" ng-click="currentPage=currentPage+1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+            </ul>
+            <form name="goToPage" id="goToPageStatus">
+                <input type="number" min="0" max="{{numberOfPages()}}" class="form-control" ng-model="go_page" placeholder="Go to page"/>
+                <button class="btn btn-default" ng-click="go()">GO</button>
+                <input id="vuln-per-page" type="number" min="0" class="form-control vuln_per_page" ng-model="pagination" placeholder="Numbre page" />
+            </form>
+        </div>
+    </div>
+</article>

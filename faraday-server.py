@@ -9,9 +9,10 @@ import functools
 import server.config
 import twisted.web
 
+from twisted.web import proxy
 from twisted.internet import ssl, reactor, error
 from twisted.protocols.tls import TLSMemoryBIOFactory
-from twisted.web import proxy
+from twisted.web.static import File
 
 
 class HTTPProxyClient(proxy.ProxyClient):
@@ -63,6 +64,10 @@ class HTTPProxyResource(proxy.ReverseProxyResource):
 
 
 class FaradayServer(object):
+    UI_URL_PATH = '_ui'
+    API_URL_PATH = '_api'
+    WEB_UI_LOCAL_PATH = os.path.join(server.config.FARADAY_BASE, 'server/www')
+
     def __init__(self, enable_ssl=False):
         self.__ssl_enabled = enable_ssl
         self.__config_server()
@@ -95,12 +100,17 @@ class FaradayServer(object):
 
     def __build_server_tree(self):
         self.__root_resource = self.__build_proxy_resource()
+        self.__root_resource.putChild(
+            FaradayServer.UI_URL_PATH, self.__build_web_resource())
 
     def __build_proxy_resource(self):
         return HTTPProxyResource(
             self.__couchdb_host,
             self.__couchdb_port,
             ssl_enabled=self.__ssl_enabled)
+
+    def __build_web_resource(self):
+        return File(FaradayServer.WEB_UI_LOCAL_PATH)
 
     def run(self):
         site = twisted.web.server.Site(self.__root_resource)

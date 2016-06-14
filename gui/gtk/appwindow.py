@@ -136,7 +136,7 @@ class AppWindow(Gtk.ApplicationWindow):
         self.current_hosts = hosts
 
     def do_update_hosts_sidebar(self):
-        self.hosts_sidebar.update([])
+        self.hosts_sidebar.update(self.current_hosts)
 
     def terminalBox(self, terminal):
         """Given a terminal, creates an EventBox for the Box that has as a

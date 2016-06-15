@@ -492,6 +492,7 @@ class HostInfoDialog(Gtk.Window):
         """Create a scrollable frame containing inner_box and with label_str
         as its title.
         """
+
         label = Gtk.Label()
         label.set_markup("<big>" + label_str + "</big>")
 

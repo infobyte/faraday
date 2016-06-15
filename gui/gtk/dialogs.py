@@ -474,7 +474,8 @@ class HostInfoDialog(Gtk.Window):
         edit_button.connect("clicked", self.on_edit_host)
         if not self.is_ws_couch:
             edit_button.set_sensitive(False)
-            edit_button.set_tooltip_text("You need to be on a CouchDB workspace to edit information")
+            edit_button.set_tooltip_text("You need to be on a CouchDB"
+                                         "workspace to edit information")
 
         button_box.pack_start(edit_button, True, True, 0)
         button_box.pack_start(ok_button, True, True, 0)

@@ -8,6 +8,8 @@ angular.module('faradayApp')
         function($scope, $routeParams, dashboardSrv) {
 
             $scope.commands;
+            $scope.cmdSortField = "date";
+            $scope.cmdSortReverse = true;
 
             init = function() {
                 if($routeParams.wsId != undefined) {
@@ -19,6 +21,22 @@ angular.module('faradayApp')
                         });
                 }
             };
+
+            // toggles sort field and order
+            $scope.cmdToggleSort = function(field) {
+                $scope.cmdToggleSortField(field);
+                $scope.cmdToggleReverse();
+            };
+
+            // toggles column sort field
+            $scope.cmdToggleSortField = function(field) {
+                $scope.cmdSortField = field;
+            };
+
+            // toggle column sort order
+            $scope.cmdToggleReverse = function() {
+                $scope.cmdSortReverse = !$scope.cmdSortReverse;
+            }
 
             init();
     }]);

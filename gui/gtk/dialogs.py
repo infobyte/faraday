@@ -392,7 +392,7 @@ class HostInfoDialog(Gtk.Window):
     strings and ints) and the object per se, which are in the model folder and
     are totally alien to GTK.
     """
-    def __init__(self, parent, host):
+    def __init__(self, parent, active_ws_name, is_ws_couch, host):
         """Creates a window with the information about a given hosts.
         The parent is needed so the window can set transient for
         """
@@ -405,9 +405,17 @@ class HostInfoDialog(Gtk.Window):
         self.set_modal(True)
         self.connect("key_press_event", on_scape_destroy)
 
+        self.is_ws_couch = is_ws_couch
+
         self.host = host
         self.model = self.create_model(self.host)
         host_info = self.model[0]
+
+        host_id = self.model[0][0]
+        couch_url = CONF.getCouchURI()
+        base_url = couch_url + "/reports/_design/reports/index.html#/host/ws/"
+        self.edit_url = base_url + active_ws_name + "/hid/" + host_id
+
 
         host_info_frame = self.create_host_info_frame(host_info)
 
@@ -424,8 +432,7 @@ class HostInfoDialog(Gtk.Window):
         main_tree = self.create_main_tree_view(self.model)
         vuln_list = self.create_vuln_list()
 
-        button = Gtk.Button.new_with_label("OK")
-        button.connect("clicked", self.on_click_ok)
+        button_box = self.create_button_box()
 
         main_box = Gtk.Box()
 
@@ -433,7 +440,7 @@ class HostInfoDialog(Gtk.Window):
         info_box.pack_start(host_info_frame, True, True, 10)
         info_box.pack_start(self.specific_info_frame, True, True, 10)
         info_box.pack_start(self.vuln_info_frame, True, True, 10)
-        info_box.pack_start(button, False, False, 10)
+        info_box.pack_start(button_box, False, False, 10)
 
         main_tree_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         main_tree_box.pack_start(main_tree, True, True, 10)
@@ -449,10 +456,43 @@ class HostInfoDialog(Gtk.Window):
 
         self.add(main_box)
 
+    def create_button_box(self):
+        """Creates an horizontal box to hold the buttons."""
+        button_box = Gtk.Box()
+
+        ok_button = Gtk.Button.new_with_label("OK")
+        ok_button.connect("clicked", self.on_click_ok)
+
+        couch_uri = CONF.getCouchURI()
+        host_id = self.model[0][0]
+
+        html_edit_url = '<a href="' + self.edit_url + '"> Edit host </a>'
+        edit_button = Gtk.Button()
+        edit_label = Gtk.Label()
+        edit_label.set_markup(html_edit_url)
+        edit_button.add(edit_label)
+        edit_button.connect("clicked", self.on_edit_host)
+        if not self.is_ws_couch:
+            edit_button.set_sensitive(False)
+            edit_button.set_tooltip_text("You need to be on a CouchDB"
+                                         "workspace to edit information")
+
+        button_box.pack_start(edit_button, True, True, 0)
+        button_box.pack_start(ok_button, True, True, 0)
+        return button_box
+
+    def on_edit_host(self, button):
+        """Tries to open self.edit_url in the default browser. was_successful
+        holds True/False depending on success.
+        """
+        was_succesful = Gtk.show_uri(None, self.edit_url, Gdk.CURRENT_TIME)
+        return was_succesful
+
     def create_scroll_frame(self, inner_box, label_str):
         """Create a scrollable frame containing inner_box and with label_str
         as its title.
         """
+
         label = Gtk.Label()
         label.set_markup("<big>" + label_str + "</big>")
 

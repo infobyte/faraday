@@ -423,10 +423,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.workspace_manager.resource()
         self.ws_sidebar.clearSidebar()
         self.ws_sidebar.refreshSidebar()
-        import ipdb; ipdb.set_trace()
-        name = self.workspace_manager.getActiveWorkspace().name
-        print name
-        print self.workspace_manager.getWorkspaceType(name)
 
     def on_pluginOptions(self, action, param):
         """Defines what happens when you press "Plugins" on the menu"""

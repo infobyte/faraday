@@ -33,7 +33,7 @@ class _IdleObject(GObject.GObject):
         GObject.idle_add(GObject.GObject.emit, self, *args)
 
 
-class AppWindow(Gtk.ApplicationWindow):
+class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     """The main window of the GUI. Draws the toolbar.
     Positions the terminal, sidebar, consolelog and statusbar received from
     the app and defined in the mainwidgets module"""

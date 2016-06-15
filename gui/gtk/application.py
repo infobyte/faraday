@@ -157,6 +157,21 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.ws_sidebar.clearSidebar()
         self.ws_sidebar.refreshSidebar()
 
+    def is_workspace_couch(self, workspace_name):
+        """Return if the workspace named workspace_name is associated to a
+        CouchDB.
+        """
+        type_ = self.workspace_manager.getWorkspaceType(workspace_name)
+        if type_ == "CouchDB":
+            is_couch = True
+        else:
+            is_couch = False
+        return is_couch
+
+    def get_active_workspace(self):
+        """Return the currently active workspace"""
+        return self.workspace_manager.getActiveWorkspace()
+
     def do_startup(self):
         """
         GTK calls this method after Gtk.Application.run()
@@ -290,6 +305,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             receiver.emit("update_hosts_sidebar")
             receiver.emit("update_ws_info", host_count, service_count, vuln_count)
 
+
         elif event.type() == 3132:  # error
             self.window.emit("normal_error", event.text)
 
@@ -387,13 +403,16 @@ class GuiApp(Gtk.Application, FaradayUi):
     def show_host_info(self, host_id):
         """Looks up the host selected in the HostSidebar by id and shows
         its information on the HostInfoDialog"""
+        current_ws_name = self.get_active_workspace().name
+        is_ws_couch = self.is_workspace_couch(current_ws_name)
 
         for host in self.all_hosts:
             if host_id == host.id:
                 selected_host = host
                 break
 
-        info_window = HostInfoDialog(self.window, selected_host)
+        info_window = HostInfoDialog(self.window, current_ws_name,
+                                     is_ws_couch, selected_host)
         info_window.show_all()
 
     def reloadWorkspaces(self):
@@ -404,6 +423,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.workspace_manager.resource()
         self.ws_sidebar.clearSidebar()
         self.ws_sidebar.refreshSidebar()
+        import ipdb; ipdb.set_trace()
+        name = self.workspace_manager.getActiveWorkspace().name
+        print name
+        print self.workspace_manager.getWorkspaceType(name)
 
     def on_pluginOptions(self, action, param):
         """Defines what happens when you press "Plugins" on the menu"""

@@ -134,6 +134,9 @@ class DbConnector(object):
     def setChangesCallback(self, callback):
         self.changes_callback = callback
 
+    def setExceptionCallback(self, callback):
+        self.exception_callback = callback
+
     def waitForDBChange(self):
         pass
 
@@ -391,7 +394,8 @@ class CouchDbConnector(DbConnector):
                 getLogger(self).info("  The exception was: %s" % e)
                 tolerance += 1
                 if tolerance == 3:
-                    raise NoCouchDBError
+                    self.exception_callback()
+                    return False
 
     #@trap_timeout
     def _compactDatabase(self):

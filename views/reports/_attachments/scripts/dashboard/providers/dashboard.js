@@ -197,17 +197,30 @@ angular.module('faradayApp')
         dashboardSrv.getCommands = function(ws) {
             var deferred = $q.defer();
             var url = BASEURL + "/" + ws + "/_design/commands/_view/list";
-            dashboardSrv._getView(url).then(function(res){
-                var tmp = [];
-                res.forEach(function(cmd){
-                    var _cmd = cmd.value;
-                    _cmd["command"] = cmd.key;
-                    tmp.push(_cmd);
+
+            dashboardSrv._getView(url)
+                .then(function(res) {
+                    var tmp = [];
+                    res.forEach(function(cmd) {
+                        var _cmd = cmd.value;
+                        _cmd["command"] = cmd.key;
+                        _cmd.user = _cmd.user || "unknown";
+                        _cmd.hostname = _cmd.hostname || "unknown";
+                        _cmd.ip = _cmd.ip || "0.0.0.0";
+                        if(_cmd.duration == "0" || _cmd.duration == "") {
+                            _cmd.duration = "In progress";
+                        } else if(_cmd.duration != undefined) {
+                            _cmd.duration = _cmd.duration.toFixed(2) + "s";
+                        }
+                        _cmd.date = _cmd.startdate * 1000;
+                        tmp.push(_cmd);
+                    });
+
+                    deferred.resolve(tmp);
+                }, function() {
+                    deferred.reject();
                 });
-                deferred.resolve(tmp);
-            }, function(){
-                deferred.reject();
-            });
+
             return deferred.promise;
         };
 

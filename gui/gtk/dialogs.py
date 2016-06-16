@@ -1379,13 +1379,15 @@ class ImportantErrorDialog(Gtk.Dialog):
         textBuffer = Gtk.TextBuffer()
         textBuffer.set_text(error)
 
-        text_view_box = create_text_view_box()
+        text_view_box = self.create_text_view_box(textBuffer)
 
-        box.pack_start(text_view_box, True, True, 0)
+        content = self.get_content_area()
+
+        content.pack_start(text_view_box, True, True, 0)
         self.show_all()
 
     @scrollable(width=200, height=200)
-    def create_text_view_box(self):
+    def create_text_view_box(self, textBuffer):
         textView = Gtk.TextView()
         textView.set_editable(False)
         textView.set_buffer(textBuffer)

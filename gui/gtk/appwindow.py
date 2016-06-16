@@ -208,7 +208,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         response = dialog.run()
         if response == 42:
             error = self.event.error_name
-            event.callback(error, *self.event.exception_objects)
+            self.event.callback(error, *self.event.exception_objects)
         dialog.destroy()
 
     def do_normal_error(self, dialog_text):

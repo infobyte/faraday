@@ -310,7 +310,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.window.emit("normal_error", event.text)
 
         elif event.type() == 3134:  # important error, uncaught exception
-            self.window.prepare_important_error(event)
+            GObject.idle_add(self.window.prepare_important_error, event)
             self.window.emit("important_error")
 
     def update_counts(self):

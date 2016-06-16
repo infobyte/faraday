@@ -35,6 +35,7 @@ nosetests.xml
 .project
 .pydevproject
 pushReports.py
+*.swp
 
 # Tests nodejs
 node_modules

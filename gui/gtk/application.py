@@ -292,11 +292,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         elif event.type() == 42424: # lost connection to couch db
             self.window.prepare_important_error(event,
                                                 self.handle_connection_lost)
-            self.window.emit("lost_db_connection")
+            self.window.emit("lost_db_connection", event.problem)
             self.reloadWorkspaces()
             ws = self.openDefaultWorkspace()
-            workspace = ws.name
-            CONF.setLastWorkspace(workspace)
+            CONF.setLastWorkspace(ws.name)
             CONF.saveConfig()
 
     def connect_to_couch(self, couch_uri):

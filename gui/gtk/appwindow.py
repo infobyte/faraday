@@ -47,7 +47,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         "loading_workspace": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
         "normal_error": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
         "important_error": (GObject.SIGNAL_RUN_FIRST, None, ()),
-        "lost_db_connection": (GObject.SIGNAL_RUN_FIRST, None, ())
+        "lost_db_connection": (GObject.SIGNAL_RUN_FIRST, None, (str,))
     }
 
     def __init__(self, sidebar, terminal, console_log, statusbar,
@@ -225,7 +225,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         dialog.run()
         dialog.destroy()
 
-    def do_lost_db_connection(self):
+    def do_lost_db_connection(self, explanatory_message):
         """Creates a simple dialog with an error message to inform the user
         some kind of problem has happened and the connection was lost.
         Uses the first callback on self.error_callbacks, which should
@@ -240,6 +240,11 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
             dialog.destroy()
 
         handle_connection_lost = self.error_callbacks[0]
+        if explanatory_message:
+            explanation = "\n The specific error was: " + explanatory_message
+        else:
+            explanation = ""
+
         dialog = Gtk.MessageDialog(self, 0,
                                    Gtk.MessageType.ERROR,
                                    Gtk.ButtonsType.NONE,
@@ -247,7 +252,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
                                    "The program has reverted back to the "
                                    "filesystem database. Fix the connection "
                                    "and re-enter the CouchDB URL in the "
-                                   "preferences settings")
+                                   "preferences settings." + explanation)
         dialog.set_modal(True)
 
         retry_button = dialog.add_button("Retry connection?", 42)

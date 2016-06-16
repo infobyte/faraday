@@ -9,7 +9,6 @@ angular.module('faradayApp')
 
             dashboardSrv.getTopServices(workspace)
                 .then(function(res) {
-                    console.log(res);
                     $scope.treemapDataModel = {"children": res, "height":300, "width": 500};
                 });
 

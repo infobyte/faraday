@@ -190,8 +190,33 @@ angular.module('faradayApp')
         };
 
         dashboardSrv.getObjectsCount = function(ws) {
-            var url = BASEURL + "/" + ws + "/_design/hosts/_view/summarized?group=true";
-            return dashboardSrv._getView(url);
+            var deferred = $q.defer(),
+            url = BASEURL + "/" + ws + "/_design/hosts/_view/summarized?group=true";
+
+            dashboardSrv._getView(url)
+                .then(function(res) {
+                    var total = {
+                        key: "total vulns",
+                        value: 0
+                    };
+
+                    for(var i = res.length - 1; i >= 0; i--) {
+                        if(res[i].key === "vulns" || res[i].key === "web vulns") {
+                            total.value += res[i].value;
+                        }
+                        if(res[i].key === "interfaces") {
+                           res.splice(i, 1);
+                        }
+                    }
+
+                    res.push(total);
+
+                    deferred.resolve(res);
+                }, function() {
+                    deferred.reject("Unable to get Objects count");
+                });
+
+            return deferred.promise;
         };
 
         dashboardSrv.getCommands = function(ws) {

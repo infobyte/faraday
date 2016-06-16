@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('topServicesCtrl',
-        ['$scope', '$routeParams', 'dashboardSrv',
-        function($scope, $routeParams, dashboardSrv) {
+        ['$scope', '$routeParams', '$uibModal', 'dashboardSrv',
+        function($scope, $routeParams, $uibModal, dashboardSrv) {
 
             $scope.topServices;
             $scope.workspace;

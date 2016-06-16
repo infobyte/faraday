@@ -11,13 +11,15 @@ from twisted.web import proxy
 from twisted.internet import ssl, reactor, error
 from twisted.protocols.tls import TLSMemoryBIOFactory
 from twisted.web.static import File
+from twisted.web.wsgi import WSGIResource
+from server.utils import logger
+from server.app import app
 
 
 class HTTPProxyClient(proxy.ProxyClient):
     def connectionLost(self, reason):
         if not reason.check(error.ConnectionClosed):
-            # XXX(mrocha): Better logging!
-            print "ERROR:", reason.value
+            logger.get_logger(__name__).error("Connection error: {}".format(reason.value))
         return proxy.ProxyClient.connectionLost(self, reason)
 
 
@@ -29,6 +31,10 @@ class HTTPProxyResource(proxy.ReverseProxyResource):
     def __init__(self, host, port, path='', reactor=reactor, ssl_enabled=False):
         proxy.ReverseProxyResource.__init__(self, host, port, path, reactor)
         self.__ssl_enabled = ssl_enabled
+
+    def render(self, request):
+        logger.get_logger(__name__).debug("-> CouchDB: {} {}".format(request.method, request.uri))
+        return proxy.ReverseProxyResource.render(self, request)
 
     def proxyClientFactoryClass(self, *args, **kwargs):
         """
@@ -60,6 +66,7 @@ class HTTPProxyResource(proxy.ReverseProxyResource):
             child.host, child.port, child.path, child.reactor,
             ssl_enabled=self.__ssl_enabled)
 
+
 class WebServer(object):
     UI_URL_PATH = '_ui'
     API_URL_PATH = '_api'
@@ -90,15 +97,16 @@ class WebServer(object):
     def __load_ssl_certs(self):
         certs = (server.config.ssl.keyfile, server.config.ssl.certificate)
         if not all(certs):
-            # XXX(mrocha): Better logging!
-            print "SSL certificates not set"
-            exit(1)
+            logger.get_logger(__name__).critical("HTTPS request but SSL certificates are not configured")
+            exit(1) # Abort web-server startup
         return ssl.DefaultOpenSSLContextFactory(*certs)
 
     def __build_server_tree(self):
         self.__root_resource = self.__build_proxy_resource()
         self.__root_resource.putChild(
             WebServer.UI_URL_PATH, self.__build_web_resource())
+        self.__root_resource.putChild(
+            WebServer.API_URL_PATH, self.__build_api_resource())
 
     def __build_proxy_resource(self):
         return HTTPProxyResource(
@@ -109,11 +117,13 @@ class WebServer(object):
     def __build_web_resource(self):
         return File(WebServer.WEB_UI_LOCAL_PATH)
 
+    def __build_api_resource(self):
+        return WSGIResource(reactor, reactor.getThreadPool(), app)
+
     def run(self):
         site = twisted.web.server.Site(self.__root_resource)
         self.__listen_func(
             self.__listen_port, site,
             interface=self.__bind_address)
         reactor.run()
-
 

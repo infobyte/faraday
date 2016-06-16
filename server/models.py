@@ -1,0 +1,296 @@
+# Faraday Penetration Test IDE
+# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
+# See the file 'doc/LICENSE' for the license information
+
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
+
+
+Base = declarative_base()
+
+class FaradayEntity(object):
+    # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace', u'Interface']
+    @classmethod
+    def parse(cls, document):
+        """Get an instance of a DAO object given a document"""
+        entity_cls = cls.get_entity_class_from_doc(document)
+        if entity_cls is not None:
+            entity = entity_cls(document)
+            metadata = EntityMetadata(document)
+            entity.entity_metadata = metadata
+            return entity
+        return None
+
+    @classmethod
+    def get_entity_class_from_doc(cls, document):
+        return cls.get_entity_class_from_type(document.get('type', None))
+
+    @classmethod
+    def get_entity_class_from_type(cls, doc_type):
+        for entity_cls in cls.__subclasses__():
+            if entity_cls.DOC_TYPE == doc_type:
+                return entity_cls
+        return None
+        
+    def add_relationships_from_dict(self, entities):
+        pass
+
+    def add_relationships_from_db(self, session):
+        pass
+
+
+class DatabaseMetadata(Base):
+    __tablename__ = 'db_metadata'
+    id = Column(Integer, primary_key=True)
+    option = Column(String(250), nullable=False)
+    value = Column(String(250), nullable=False)
+
+
+class EntityMetadata(Base):
+    # Table schema
+    __tablename__ = 'metadata'
+    id = Column(Integer, primary_key=True)
+    update_time = Column(Float)
+    update_user = Column(String(250))
+    update_action = Column(Integer)
+    create_time = Column(Float)
+    update_controller_action = Column(String(250))
+    creator = Column(String(250))
+    owner = Column(String(250))
+
+    couchdb_id = Column(String(250))
+    revision = Column(String(250))
+    document_type = Column(String(250))
+
+    def __init__(self, document):
+        self.update_from_document(document)
+
+    def update_from_document(self, document):
+        metadata = document.get('metadata')
+        self.update_time=metadata.get('update_time')
+        self.update_user=metadata.get('update_user')
+        self.update_action=metadata.get('update_action')
+        self.creator=metadata.get('creator')
+        self.owner=metadata.get('owner')
+        self.create_time=metadata.get('create_time')
+        self.update_controller_action=metadata.get('update_controller_action')
+        self.couchdb_id=document.get('_id')
+        self.revision=document.get('_rev')
+        self.document_type=document.get('type')
+
+
+class Host(FaradayEntity, Base):
+    DOC_TYPE = 'Host'
+
+    # Table schema
+    __tablename__ = 'host'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), nullable=False)
+    description = Column(String(250), nullable=False)
+    os = Column(String(250), nullable=False)
+
+    default_gateway_ip = Column(String(250))
+    default_gateway_mac = Column(String(250))
+
+    entity_metadata = relationship(EntityMetadata, uselist=False)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    interfaces = relationship('Interface')
+    vulnerabilities = relationship('Vulnerability')
+
+    def __init__(self, document):
+        self.update_from_document(document)
+
+    def update_from_document(self, document):
+        default_gateway = self.__get_default_gateway(document)
+
+        self.name=document.get('name')
+        self.description=document.get('description')
+        self.os=document.get('os')
+        self.default_gateway_ip=default_gateway[0]
+        self.default_gateway_mac=default_gateway[1]
+
+    def __get_default_gateway(self, document):
+        default_gateway = document.get('default_gateway', None)
+        if default_gateway:
+            return default_gateway
+        else:
+            return u'', u''
+
+
+class Interface(FaradayEntity, Base):
+    DOC_TYPE = 'Interface'
+    
+    # Table schema
+    __tablename__ = 'interface'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), nullable=False)
+    description = Column(String(250), nullable=False)
+    mac = Column(String(250), nullable=False)
+
+    hostnames = Column(String(250))
+    network_segment = Column(String(250))
+
+    ipv4_address = Column(String(250))
+    ipv4_gateway = Column(String(250))
+    ipv4_dns = Column(String(250))
+    ipv4_mask = Column(String(250))
+
+    ipv6_address = Column(String(250))
+    ipv6_gateway = Column(String(250))
+    ipv6_dns = Column(String(250))
+    ipv6_prefix = Column(String(250))
+
+    ports_filtered = Column(Integer)
+    ports_opened = Column(Integer)
+    ports_closed = Column(Integer)
+
+    entity_metadata = relationship(EntityMetadata, uselist=False)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    host_id = Column(Integer, ForeignKey(Host.id), index=True)
+    host = relationship('Host', back_populates='interfaces')
+
+    services = relationship('Service')
+
+    def __init__(self, document):
+        self.update_from_document(document)
+
+    def update_from_document(self, document):
+        self.name=document.get('name')
+        self.description=document.get('description')
+        self.mac=document.get('mac')
+        self.hostnames=u','.join(document.get('hostnames'))
+        self.network_segment=document.get('network_segment')
+        self.ipv4_address=document.get('ipv4').get('address')
+        self.ipv4_gateway=document.get('ipv4').get('gateway')
+        self.ipv4_dns=u','.join(document.get('ipv4').get('DNS'))
+        self.ipv4_mask=document.get('ipv4').get('mask')
+        self.ipv6_address=document.get('ipv6').get('address')
+        self.ipv6_gateway=document.get('ipv6').get('gateway')
+        self.ipv6_dns=u','.join(document.get('ipv6').get('DNS'))
+        self.ipv6_prefix=document.get('ipv6').get('prefix')
+        self.ports_filtered=document.get('ports').get('filtered')
+        self.ports_opened=document.get('ports').get('opened')
+        self.ports_closed=document.get('ports').get('closed')
+
+    def add_relationships_from_dict(self, entities):
+        host_id = '.'.join(self.entity_metadata.couchdb_id.split('.')[:-1])
+        self.host = entities[host_id]
+
+    def add_relationships_from_db(self, session):
+        host_id = '.'.join(self.entity_metadata.couchdb_id.split('.')[:-1])
+        query = session.query(Host).join(EntityMetadata).filter(EntityMetadata.couchdb_id == host_id)
+        self.host = query.one()
+
+class Service(FaradayEntity, Base):
+    DOC_TYPE = 'Service'
+
+    # Table schema
+    __tablename__ = 'service'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), nullable=False)
+    description = Column(String(250), nullable=False)
+    ports = Column(String(250), nullable=False)
+
+    protocol = Column(String(250))
+    status = Column(String(250))
+    version = Column(String(250))
+
+    entity_metadata = relationship(EntityMetadata, uselist=False)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    interface_id = Column(Integer, ForeignKey(Interface.id), index=True)
+    interface = relationship('Interface', back_populates='services')
+
+    vulnerabilities = relationship('Vulnerability')
+
+    def __init__(self, document):
+        self.update_from_document(document)
+
+    def update_from_document(self, document):
+        self.name=document.get('name')
+        self.description=document.get('description')
+        self.ports=u','.join(map(str, document.get('ports')))
+        self.protocol=document.get('protocol')
+        self.status=document.get('status')
+        self.version=document.get('version')
+
+    def add_relationships_from_dict(self, entities):
+        interface_id = '.'.join(self.entity_metadata.couchdb_id.split('.')[:-1])
+        self.interface = entities[interface_id]
+
+    def add_relationships_from_db(self, session):
+        interface_id = '.'.join(self.entity_metadata.couchdb_id.split('.')[:-1])
+        query = session.query(Interface).join(EntityMetadata).filter(EntityMetadata.couchdb_id == interface_id)
+        self.interface = query.one()
+
+
+class Vulnerability(FaradayEntity, Base):
+    DOC_TYPE = 'Vulnerability'
+
+    # Table schema
+    __tablename__ = 'vulnerability'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), nullable=False)
+    description = Column(String(250), nullable=False)
+
+    confirmed = Column(Boolean)
+    data = Column(String(250))
+    easeofresolution = Column(String(250))
+    refs = Column(String(250))
+    resolution = Column(String(250))
+    severity = Column(String(250))
+
+    impact_accountability = Column(Boolean)
+    impact_availability = Column(Boolean)
+    impact_confidentiality = Column(Boolean)
+    impact_integrity = Column(Boolean)
+
+    entity_metadata = relationship(EntityMetadata, uselist=False)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    host_id = Column(Integer, ForeignKey(Host.id), index=True)
+    host = relationship('Host', back_populates='vulnerabilities')
+
+    service_id = Column(Integer, ForeignKey(Service.id), index=True)
+    service = relationship('Service', back_populates='vulnerabilities')
+
+    def __init__(self, document):
+        self.update_from_document(document)
+
+    def update_from_document(self, document):
+        self.name = document.get('name')
+        self.description=document.get('desc')
+        self.confirmed=document.get('confirmed')
+        self.data=document.get('data')
+        self.easeofresolution=document.get('easeofresolution')
+        self.refs=u','.join(document.get('refs'))
+        self.resolution=document.get('resolution')
+        self.severity=document.get('severity')
+        self.impact_accountability=document.get('impact', {}).get('accountability')
+        self.impact_availability=document.get('impact', {}).get('availability')
+        self.impact_confidentiality=document.get('impact', {}).get('confidentiality')
+        self.impact_integrity=document.get('impact', {}).get('integrity')
+
+    def add_relationships_from_dict(self, entities):
+        couchdb_id = self.entity_metadata.couchdb_id
+        host_id = couchdb_id.split('.')[0]
+        self.host = entities[host_id]
+
+        parent_id = '.'.join(couchdb_id.split('.')[:-1])
+        if parent_id != host_id:
+            self.service = entities[parent_id]
+
+    def add_relationships_from_db(self, session):
+        couchdb_id = self.entity_metadata.couchdb_id
+        host_id = couchdb_id.split('.')[0]
+        query = session.query(Host).join(EntityMetadata).filter(EntityMetadata.couchdb_id == host_id)
+        self.host = query.one()
+
+        parent_id = '.'.join(couchdb_id.split('.')[:-1])
+        if parent_id != host_id:
+            query = session.query(Service).join(EntityMetadata).filter(EntityMetadata.couchdb_id == parent_id)
+            self.service = query.one()
+

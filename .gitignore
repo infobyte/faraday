@@ -34,6 +34,7 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+*.swp
 
 # Tests nodejs
 node_modules

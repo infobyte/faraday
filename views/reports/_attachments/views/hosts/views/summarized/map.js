@@ -3,9 +3,9 @@
 // See the file 'doc/LICENSE' for the license information
 function(doc) {
   if(doc.type=="Service") {
-    emit("services", 1); 
+    emit("services", 1);
   } else if(doc.type=="Service" && doc.owned == "True") {
-    emit("services owned", 1); 
+    emit("services owned", 1);
   } else if(doc.type=="Host") {
     emit("hosts", 1);
   } else if(doc.type=="Host" && doc.owned == "True") {
@@ -14,5 +14,9 @@ function(doc) {
     emit("interfaces", 1);
   } else if(doc.type=="Note") {
     emit("notes", 1);
+  } else if(doc.type=="Vulnerability") {
+    emit("vulns", 1);
+  } else if(doc.type=="VulnerabilityWeb") {
+    emit("web vulns", 1);
   }
 }

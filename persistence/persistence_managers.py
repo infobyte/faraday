@@ -241,6 +241,7 @@ class CouchDbConnector(DbConnector):
         self.seq_num = self.db.info()['update_seq']
         print "yeah here"
         self.thread = threading.Thread(target=self.check_connection)
+        self.thread.daemon = True
         self.thread.start()
 
     def getDocs(self):
@@ -362,15 +363,16 @@ class CouchDbConnector(DbConnector):
         self.seq_num = seq_num
 
     def check_connection(self):
-        print "checking"
         import time
         while True:
             time.sleep(1)
-            print "testing"
             test = self.testCouch(self.db.server_uri)
             if not test:
-                self.exception_callback()
-                return False
+                try:
+                    self.exception_callback()
+                    return False
+                except:
+                    pass
 
     def testCouch(self, uri):
         if uri is not None:
@@ -404,10 +406,6 @@ class CouchDbConnector(DbConnector):
                 heartbeat=True)
             try:
                 for change in self.stream:
-                    is_db_avalilable = self.checkDBAvailability()
-                    if not is_db_available:
-                        self.exception_callback()
-                        return False
                     if not self.changes_callback:
                         return
                     if not change.get('last_seq', None):

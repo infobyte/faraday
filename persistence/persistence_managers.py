@@ -239,6 +239,9 @@ class CouchDbConnector(DbConnector):
             getLogger(self).warn(
                 "You're not authorized to upload views to this database")
         self.seq_num = self.db.info()['update_seq']
+        print "yeah here"
+        self.thread = threading.Thread(target=self.check_connection)
+        self.thread.start()
 
     def getDocs(self):
         if len(self._docs.keys()) == 0:
@@ -358,6 +361,35 @@ class CouchDbConnector(DbConnector):
     def setSeqNumber(self, seq_num):
         self.seq_num = seq_num
 
+    def check_connection(self):
+        print "checking"
+        import time
+        while True:
+            time.sleep(1)
+            print "testing"
+            test = self.testCouch(self.db.server_uri)
+            if not test:
+                self.exception_callback()
+                return False
+
+    def testCouch(self, uri):
+        if uri is not None:
+            host, port = None, None
+            try:
+                import socket
+                url = urlparse(uri)
+                proto = url.scheme
+                host = url.hostname
+                port = url.port
+
+                port = port if port else socket.getservbyname(proto)
+                s = socket.socket()
+                s.settimeout(1)
+                s.connect((host, int(port)))
+                return True
+            except:
+                return False
+
     #@trap_timeout
     def waitForDBChange(self, since=0):
         getLogger(self).debug(
@@ -372,6 +404,10 @@ class CouchDbConnector(DbConnector):
                 heartbeat=True)
             try:
                 for change in self.stream:
+                    is_db_avalilable = self.checkDBAvailability()
+                    if not is_db_available:
+                        self.exception_callback()
+                        return False
                     if not self.changes_callback:
                         return
                     if not change.get('last_seq', None):
@@ -538,6 +574,8 @@ class CouchDbManager(AbstractPersistenceManager):
             getLogger(self).warn("No route to couchdb server on: %s" % uri)
             getLogger(self).debug(traceback.format_exc())
 
+
+
     #@trap_timeout
     def _create(self, name):
         db = self.__serv.create_db(name.lower())
@@ -559,10 +597,7 @@ class CouchDbManager(AbstractPersistenceManager):
         except restkit.errors.RequestError as req_error:
             getLogger(self).error("Couldn't load databases. "
                                   "The connection to the CouchDB was probably lost. ")
-#            raise NoCouchDBError
-            #event = ShowExceptionConnectionRefusedCustomEvent()
-            #model.guiapi.postCustomEvent(event)
-            #return False
+            self.exception_callback()
 
     def _loadDb(self, dbname):
         db = self.__serv.get_db(dbname)

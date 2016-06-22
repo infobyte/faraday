@@ -5,7 +5,7 @@
             <span class="glyphicon glyphicon-info-sign" uib-tooltip="Total net worth of Workspace, according to current vulnerabilities' prices"></span>
         </h2>
     </header>
-    <div ng-if="vulns == undefined || vulns.length == 0" class="alert alert-info alert-dismissible no-margin-bottom">
+    <div ng-if="workspaceWorth == 0" class="alert alert-info alert-dismissible no-margin-bottom">
         <button type="button" class="close" data-dismiss="alert">
             <span aria-hidden="true">&times;</span>
             <span class="sr-only">Close</span>

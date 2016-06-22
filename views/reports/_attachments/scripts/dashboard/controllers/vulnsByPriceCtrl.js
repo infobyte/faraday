@@ -10,7 +10,7 @@ angular.module('faradayApp')
             $scope.vulnPrices;
             $scope.vulns;
             $scope.workspace;
-            $scope.workspaceWorth;
+            $scope.workspaceWorth = 0;
 
             init = function() {
                 if($routeParams.wsId != undefined) {

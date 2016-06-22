@@ -156,11 +156,19 @@ angular.module('faradayApp')
                     var vs = [];
 
                     SEVERITIES.forEach(function(severity, ind) {
+                        var amount = 0,
+                        value = 0;
+
+                        if(vulns[severity] != undefined) {
+                            amount = dashboardSrv.vulnPrices[severity] * vulns[severity];
+                            value = vulns[severity];
+                        }
+
                         vs.push({
-                            "amount": dashboardSrv.vulnPrices[severity] * vulns[severity],
+                            "amount": amount,
                             "color": dashboardSrv.vulnColors[ind],
                             "key": severity,
-                            "value": vulns[severity]
+                            "value": value
                         });
                     });
 

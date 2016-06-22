@@ -420,10 +420,11 @@ class CouchDbConnector(DbConnector):
                                     doc = self.db.get(obj_id)
                                     self.addDoc(doc)
                                 self.changes_callback(obj_id, revision, deleted)
-                tolerance = 0
             except Exception as e:
                 getLogger(self).info("Some exception happened while waiting for changes")
                 getLogger(self).info("  The exception was: %s" % e)
+                return False # kill thread, it's failed... if reconnection
+                             # another one will be created, don't worry
 
     #@trap_timeout
     def _compactDatabase(self):

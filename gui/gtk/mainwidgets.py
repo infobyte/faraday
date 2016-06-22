@@ -8,12 +8,11 @@ See the file 'doc/LICENSE' for the license information
 '''
 import gi
 import os
-import sys
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
-from gi.repository import Gtk, Vte, GLib, Pango, GdkPixbuf
+from gi.repository import Gtk, Gdk, Vte, GLib, Pango, GdkPixbuf
 
 
 class Terminal(Vte.Terminal):
@@ -21,16 +20,13 @@ class Terminal(Vte.Terminal):
     corresponding host and port as specified by the CONF"""
     def __init__(self, CONF):
         super(Vte.Terminal, self).__init__()
-
-        self.pty = self.pty_new_sync(Vte.PtyFlags.DEFAULT, None)
-        self.set_pty(self.pty)
-
         self.set_scrollback_lines(-1)
         self.set_audible_bell(0)
-
-        self.faraday_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
+        self.connect("key_press_event", self.copy_or_paste)
         self.host, self.port = CONF.getApiRestfulConInfo()
-        self.faraday_exec = self.faraday_directory + "/faraday-terminal.zsh"
+
+        faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
+        self.faraday_exec = faraday_directory + "/faraday-terminal.zsh"
 
         self.startFaraday()
 
@@ -53,6 +49,25 @@ class Terminal(Vte.Terminal):
                         None,
                         None)
 
+    def copy_or_paste(self, widget, event):
+        """Decides if the Ctrl+Shift is pressed, in which case returns True.
+        If Ctrl+Shift+C or Ctrl+Shift+V are pressed, copies or pastes,
+        acordingly. Return necesary so it doesn't perform other action,
+        like killing the process, on Ctrl+C.
+        """
+
+        control_key = Gdk.ModifierType.CONTROL_MASK
+        shift_key = Gdk.ModifierType.SHIFT_MASK
+        pressed_key = Gdk.keyval_name(event.get_keyval()[1])
+        if event.type == Gdk.EventType.KEY_PRESS:
+            if event.state == shift_key | control_key:  # shift AND control
+                if pressed_key == 'C':
+                    self.copy_clipboard()
+                elif pressed_key == 'V':
+                    self.paste_clipboard()
+                return True
+
+
 class Sidebar(Gtk.Notebook):
     """Defines the bigger sidebar in a notebook. One of its tabs will contain
     the workspace view, listing all the workspaces (WorkspaceSidebar) and the
@@ -61,6 +76,7 @@ class Sidebar(Gtk.Notebook):
     """
 
     def __init__(self, workspace_sidebar, hosts_sidebar):
+        """Attach to the notebok the workspace sidebar and the host_sidebar"""
         super(Gtk.Notebook, self).__init__()
         self.workspace_sidebar = workspace_sidebar
         self.hosts_sidebar = hosts_sidebar
@@ -74,6 +90,7 @@ class Sidebar(Gtk.Notebook):
         box.pack_start(self, True, True, 0)
         return box
 
+
 class HostsSidebar(Gtk.Widget):
     """Defines the widget displayed when the user is in the "Hosts" tab of
     the Sidebar notebook. Will list all the host, and when clicking on one,
@@ -84,7 +101,6 @@ class HostsSidebar(Gtk.Widget):
         almost nothing, the application will inmediatly call create_model
         with the last workspace and create_view with that model upon startup.
         """
-
         super(Gtk.Widget, self).__init__()
         self.open_dialog_callback = open_dialog_callback
         self.current_model = None
@@ -97,40 +113,94 @@ class HostsSidebar(Gtk.Widget):
         host_id in the first column, the icon as a GdkPixbuf.Pixbuf()
         in the second column and a display_str with the host_name and the
         vulnerability count on the third column, like this:
-        | HOST_ID | HOST_OS_PIXBUF   | DISPLAY_STR      |
-        =================================================
-        | a923fd  |  LINUX_ICON      | 192.168.1.2 (5)  |
+        | HOST_ID | HOST_OS_PIXBUF   | OS_STR | DISPLAY_STR      | VULN_COUNT|
+        ======================================================================
+        | a923fd  | PixBufIcon(linux)| linux  | 192.168.1.2 (5)  |      5    |
         """
-        def decide_icon(os):
-            if os.startswith("Linux") or os.startswith("Unix"):
-                return GdkPixbuf.Pixbuf.new_from_file(self.linux_icon)
-            elif os.startswith("Windows"):
-                return GdkPixbuf.Pixbuf.new_from_file(self.windows_icon)
-            elif os.startswith("Mac"):
-                return GdkPixbuf.Pixbuf.new_from_file(self.mac_icon)
+        def compute_vuln_count(host):
+            """Return the total vulnerability count for a given host"""
+            vuln_count = 0
+            vuln_count += len(host.getVulns())
+            for interface in host.getAllInterfaces():
+                vuln_count += len(interface.getVulns())
+                for service in interface.getAllServices():
+                    vuln_count += len(service.getVulns())
+            return vuln_count
 
-        hosts_model = Gtk.ListStore(str, GdkPixbuf.Pixbuf(), str)
+        def decide_icon(os):
+            """Return the GdkPixbuf icon according to 'os' paramather string
+            and a str_id to that GdkPixbuf for easy comparison and ordering
+            of the view ('os' paramether string is complicated and has caps).
+            """
+            os = os.lower()
+            if "linux" in os or "unix" in os:
+                icon = GdkPixbuf.Pixbuf.new_from_file(self.linux_icon)
+                str_id = "linux"
+            elif "windows" in os:
+                icon = GdkPixbuf.Pixbuf.new_from_file(self.windows_icon)
+                str_id = "windows"
+            elif "mac" in os:
+                icon = GdkPixbuf.Pixbuf.new_from_file(self.mac_icon)
+                str_id = "mac"
+            else:
+                icon = None
+                str_id = "unknown"
+            return icon, str_id
+
+        def compare_os_strings(model, an_os, other_os, user_data):
+            """Compare an_os with other_os so the model knows how to sort them.
+            user_data is not used.
+            Forces 'unknown' OS to be always at the bottom of the model.
+            Return values:
+            1 means an_os should come after other_os
+            0 means they are the same
+            -1 means an_os should come before other_os
+            It helps to think about it like the relative position of an_os
+            in respect to other_os (-1 'left' in a list, 1 'right' in a list)
+            """
+            sort_column = 2
+            an_os = model.get_value(an_os, sort_column)
+            other_os = model.get_value(other_os, sort_column)
+            if an_os == "unknown":
+                order = 1
+            elif an_os < other_os or other_os == "unknown":
+                order = -1
+            elif an_os == other_os:
+                order = 0
+            else:
+                order = 1
+            return order
+
+        hosts_model = Gtk.ListStore(str, GdkPixbuf.Pixbuf(), str, str, int)
+
         for host in hosts:
-            display_str = host.name + " (" + str(len(host.getVulns())) + ")"
-            os = host.getOS()
-            hosts_model.append([host.id, decide_icon(os), display_str])
-        self.current_model = hosts_model
-        return hosts_model
+            vuln_count = compute_vuln_count(host)
+            os_icon, os_str = decide_icon(host.getOS())
+            display_str = host.name + " (" + str(vuln_count) + ")"
+            hosts_model.append([host.id, os_icon, os_str,
+                                display_str, vuln_count])
+
+        # sort the model by default according to column 4 (num of vulns)
+        sorted_model = Gtk.TreeModelSort(model=hosts_model)
+        sorted_model.set_sort_column_id(4, Gtk.SortType.DESCENDING)
+
+        # set the sorting function of column 2
+        sorted_model.set_sort_func(2, compare_os_strings, None)
+
+        self.current_model = sorted_model
+
+        return self.current_model
 
     def create_view(self, model):
-        """Creates a view displaying the third column of the given model as
-        a text, and using an icon representing its second column.
+        """Creates a view for the hosts model.
+        It will contain two columns, the first with the OS icon given in
+        the second column of the model. The second column of the view will
+        be the string contained in the fourth column of the model.
+        The first column of the view will be orderer according to the
+        second column of the model, and the second column of the view will
+        be ordered according to its fifth column.
         Will connect activation of a row with the on_click method
         """
-
-        def display_str(col, cell, model, _iter, user_data):
-            cell.set_property('text', model.get_value(_iter, 2))
-
-        def set_icon(col, cell, model, _iter, user_data):
-            icon = model.get_value(_iter, 1)
-            if icon != "None":
-                cell.set_property('pixbuf',
-                                  GdkPixbuf.Pixbuf.new_from_file(icon))
 
         self.view = Gtk.TreeView(model)
         self.view.set_activate_on_single_click(True)
@@ -138,8 +208,10 @@ class HostsSidebar(Gtk.Widget):
         text_renderer = Gtk.CellRendererText()
         icon_renderer = Gtk.CellRendererPixbuf()
 
-        column_hosts = Gtk.TreeViewColumn("Hosts", text_renderer, text=2)
+        column_hosts = Gtk.TreeViewColumn("Hosts", text_renderer, text=3)
         column_os = Gtk.TreeViewColumn("", icon_renderer, pixbuf=1)
+        column_os.set_sort_column_id(2)
+        column_hosts.set_sort_column_id(4)
 
         self.view.append_column(column_os)
         self.view.append_column(column_hosts)
@@ -174,6 +246,7 @@ class HostsSidebar(Gtk.Widget):
         scrolled_view.add(self.view)
         box.pack_start(scrolled_view, True, True, 0)
         return box
+
 
 class WorkspaceSidebar(Gtk.Widget):
     """Defines the sidebar widget to be used by the AppWindow, passed as an
@@ -234,7 +307,7 @@ class WorkspaceSidebar(Gtk.Widget):
             self.callbackCreateWs(title=entry.get_text())
             entry.set_text("")
         else:
-            self.callbackChangeWs(selection)
+            self.callbackChangeWs(self.getSelectedWsName())
             ws_iter = self.getSelectedWsIter()
             entry.set_text("")
             self.selectWs(ws_iter)
@@ -319,7 +392,8 @@ class WorkspaceSidebar(Gtk.Widget):
             select.select_path(path)
 
             # change the workspace to the newly selected
-            self.callbackChangeWs(self.getSelectedWs())
+
+            self.callbackChangeWs(self.getSelectedWsName())
 
         if event.button == 3:  # 3 represents right click
             menu = Gtk.Menu()
@@ -349,7 +423,8 @@ class WorkspaceSidebar(Gtk.Widget):
         self.workspace_model.append([ws])
 
     def getSelectedWs(self):
-        """Returns the name of the current selected workspace"""
+        """Returns the selection of of the view.
+        To retrieve the name, see getSelectedWsName"""
         selection = self.workspace_view.get_selection()
         return selection
 
@@ -358,6 +433,13 @@ class WorkspaceSidebar(Gtk.Widget):
         selection = self.getSelectedWs()
         _iter = selection.get_selected()[1]
         return _iter
+
+    def getSelectedWsName(self):
+        """Return the name of the selected workspace"""
+        selection = self.getSelectedWs()
+        tree_model, treeiter = selection.get_selected()
+        workspaceName = tree_model[treeiter][0]
+        return workspaceName
 
     def selectWs(self, ws):
         """Selects workspace ws in the list"""
@@ -485,6 +567,7 @@ class Statusbar(Gtk.Widget):
         self.notif_button = Gtk.Button.new()
         self.set_default_notif_label()
         self.notif_button.connect("clicked", notif_callback)
+        self.notif_button.connect("clicked", self.set_default_notif_label)
 
         self.conflict_button = Gtk.Button.new()
         self.set_default_conflict_label()
@@ -519,7 +602,7 @@ class Statusbar(Gtk.Widget):
         label.show()
         self.conflict_button.add(label)
 
-    def set_default_notif_label(self):
+    def set_default_notif_label(self, button=None):
         """Creates the default label"""
         self.notif_button_label_int = 0
         self.notif_button.set_label(self.notif_text +

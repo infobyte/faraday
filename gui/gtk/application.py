@@ -72,14 +72,17 @@ CONF = getInstanceConfiguration()
 class GuiApp(Gtk.Application, FaradayUi):
     """
     Creates the application and has the necesary callbacks to FaradayUi
-    Right now handles by itself only the menu, everything is else is
-    appWindow's resposibility as far as the UI goes. All logic by the main
-    window should be done here. Some of the logic on the dialogs is
-    implemented in the dialogs own class.
+    As far as the GUI goes, this handles only the menu, everything is else is
+    appWindow's resposibility. All logic by the main window should be done
+    here. Some of the logic on the dialogs is implemented in the dialogs own
+    class. Some dialogs are shown by the appwindow to handle errors coming
+    from other threads outside GTK's.
     """
 
     def __init__(self, model_controller, plugin_manager, workspace_manager,
                  plugin_controller):
+        """Does not do much. Most of the initialization work is actually
+        done by the run() method, as specified in FaradayUi."""
 
         FaradayUi.__init__(self,
                            model_controller,
@@ -111,8 +114,9 @@ class GuiApp(Gtk.Application, FaradayUi):
     def updateHosts(self):
         """Reassings the value of self.all_hosts to a current one to
         catch workspace changes, new hosts added via plugins or any other
-        external interference with out host list"""
+        external interference with our host list"""
         self.all_hosts = self.model_controller.getAllHosts()
+        return self.all_hosts
 
     def createWorkspace(self, name, description="", w_type=""):
         """Pretty much copy/pasted from the QT3 GUI.
@@ -154,12 +158,27 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.ws_sidebar.clearSidebar()
         self.ws_sidebar.refreshSidebar()
 
+    def is_workspace_couch(self, workspace_name):
+        """Return if the workspace named workspace_name is associated to a
+        CouchDB.
+        """
+        type_ = self.workspace_manager.getWorkspaceType(workspace_name)
+        if type_ == "CouchDB":
+            is_couch = True
+        else:
+            is_couch = False
+        return is_couch
+
+    def get_active_workspace(self):
+        """Return the currently active workspace"""
+        return self.workspace_manager.getActiveWorkspace()
+
     def do_startup(self):
         """
         GTK calls this method after Gtk.Application.run()
         Creates instances of the sidebar, terminal, console log and
         statusbar to be added to the app window.
-        Sets up necesary acttions on menu and toolbar buttons
+        Sets up necesary actions on menu and toolbar buttons
         Also reads the .xml file from menubar.xml
         """
         Gtk.Application.do_startup(self)  # deep GTK magic
@@ -173,7 +192,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.updateHosts()
         self.hosts_sidebar = HostsSidebar(self.show_host_info, self.icons)
         default_model = self.hosts_sidebar.create_model(self.all_hosts)
-        default_view = self.hosts_sidebar.create_view(default_model)
+        self.hosts_sidebar.create_view(default_model)
 
         self.sidebar = Sidebar(self.ws_sidebar.get_box(),
                                self.hosts_sidebar.get_box())
@@ -230,13 +249,16 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def do_activate(self):
         """If there's no window, create one and present it (show it to user).
-        If there's a window, just present it"""
+        If there's a window, just present it. Also add the log handler
+        and the notifier to the application"""
 
         # We only allow a single window and raise any existing ones
         if not self.window:
             # Windows are associated with the application
             # when the last one is closed the application shuts down
             self.window = AppWindow(self.sidebar,
+                                    self.ws_sidebar,
+                                    self.hosts_sidebar,
                                     self.terminal,
                                     self.console_log,
                                     self.statusbar,
@@ -256,7 +278,12 @@ class GuiApp(Gtk.Application, FaradayUi):
         model.guiapi.notification_center.registerWidget(self.window)
 
     def postEvent(self, receiver, event):
-        """Handles the events from gui/customevents."""
+        """Handles the events from gui/customevents.
+
+        DO NOT, AND I REPEAT, DO NOT REDRAW *ANYTHING* FROM THE GUI
+        FROM HERE. If you must do it, you should to it via the emit method
+        to the appwindow."""
+
         if receiver is None:
             receiver = self.getMainWindow()
 
@@ -275,18 +302,15 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         elif event.type() == 4100 or event.type() == 3140:  # newinfo or changews
             host_count, service_count, vuln_count = self.update_counts()
-
-            self.updateHosts()
-            self.hosts_sidebar.update(self.all_hosts)
-
-            receiver.emit("update_ws_info", host_count,
-                          service_count, vuln_count)
+            self.window.receive_hosts(self.updateHosts())
+            receiver.emit("update_hosts_sidebar")
+            receiver.emit("update_ws_info", host_count, service_count, vuln_count)
 
         elif event.type() == 3132:  # error
             self.window.emit("normal_error", event.text)
 
         elif event.type() == 3134:  # important error, uncaught exception
-            self.window.prepare_important_error(event)
+            GObject.idle_add(self.window.prepare_important_error, event)
             self.window.emit("important_error")
 
         elif event.type() == 42424: # lost connection to couch db
@@ -351,11 +375,12 @@ class GuiApp(Gtk.Application, FaradayUi):
             dialog = Gtk.Dialog("Select plugin", self.window, 0)
 
             combo_box = Gtk.ComboBoxText()
+            combo_box.set_wrap_width(3)
             for plugin_id in plugins_id:
                 combo_box.append_text(plugin_id)
             combo_box.show()
 
-            dialog.vbox.pack_start(combo_box, True, True, 10)
+            dialog.vbox.pack_start(combo_box, False, True, 10)
 
             dialog.add_button("Cancel", Gtk.ResponseType.DELETE_EVENT)
             dialog.add_button("OK", Gtk.ResponseType.ACCEPT)
@@ -372,23 +397,25 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         plugin_response, plugin_id = select_plugin()
 
-        if plugin_response == Gtk.ResponseType.ACCEPT:
-            while plugin_id is None:
-                # force user to select a plugin if he did not do it
-                errorDialog(self.window,
-                            "Please select a plugin to parse your report!")
-                plugin_response, plugin_id = select_plugin()
+        while plugin_response == Gtk.ResponseType.ACCEPT and plugin_id is None:
+            # force user to select a plugin if he did not do it
+            errorDialog(self.window,
+                        "Please select a plugin to parse your report!")
+            plugin_response, plugin_id = select_plugin()
+        else:
+            if plugin_response == Gtk.ResponseType.ACCEPT:
+                dialog = Gtk.FileChooserDialog(title="Import a report",
+                                               parent=self.window,
+                                               action=Gtk.FileChooserAction.OPEN,
+                                               buttons=("Open", Gtk.ResponseType.ACCEPT,
+                                                        "Cancel", Gtk.ResponseType.CANCEL)
+                                               )
+                dialog.set_modal(True)
 
-            dialog = Gtk.FileChooserNative()
-            dialog.set_title("Import a report")
-            dialog.set_modal(True)
-            dialog.set_transient_for(self.window)
-            dialog.set_action(Gtk.FileChooserAction.OPEN)
-
-            res = dialog.run()
-            if res == Gtk.ResponseType.ACCEPT:
-                on_file_selected(plugin_id, dialog.get_filename())
-            dialog.destroy()
+                res = dialog.run()
+                if res == Gtk.ResponseType.ACCEPT:
+                    on_file_selected(plugin_id, dialog.get_filename())
+                dialog.destroy()
 
     def on_about(self, action, param):
         """ Defines what happens when you press 'about' on the menu"""
@@ -418,19 +445,22 @@ class GuiApp(Gtk.Application, FaradayUi):
     def show_host_info(self, host_id):
         """Looks up the host selected in the HostSidebar by id and shows
         its information on the HostInfoDialog"""
+        current_ws_name = self.get_active_workspace().name
+        is_ws_couch = self.is_workspace_couch(current_ws_name)
 
         for host in self.all_hosts:
             if host_id == host.id:
                 selected_host = host
                 break
 
-        info_window = HostInfoDialog(self.window, selected_host)
+        info_window = HostInfoDialog(self.window, current_ws_name,
+                                     is_ws_couch, selected_host)
         info_window.show_all()
 
     def reloadWorkspaces(self):
-        """Used in conjunction with on_preferences: close workspace,
-        resources the workspaces available, clears the sidebar of the old
-        workspaces and injects all the new ones in there too"""
+        """Close workspace, resources the workspaces available,
+        clears the sidebar of the old workspaces and injects all the new ones
+        in there too"""
         self.workspace_manager.closeWorkspace()
         self.workspace_manager.resource()
         self.ws_sidebar.clearSidebar()
@@ -460,7 +490,8 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def on_click_notifications(self, button):
         """Defines what happens when the user clicks on the notifications
-        button."""
+        button: just show a silly window with a treeview containing
+        all the notifications"""
 
         notifications_view = Gtk.TreeView(self.notificationsModel)
         renderer = Gtk.CellRendererText()
@@ -472,7 +503,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         notifications_dialog.show_all()
 
     def on_click_conflicts(self, button=None):
-        """Doesn't use the button at all. Shows the conflict dialog"""
+        """Doesn't use the button at all, there cause GTK likes it.
+        Shows the conflict dialog.
+        """
         self.updateConflicts()
         if self.conflicts:
             dialog = ConflictsDialog(self.conflicts,
@@ -495,20 +528,19 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.notificationsModel.clear()
         self.window.emit("clear_notifications")
 
-    def changeWorkspace(self, selection):
+    def changeWorkspace(self, workspaceName):
         """Changes workspace in a separate thread. Emits a signal
         to present a 'Loading workspace' dialog while Faraday processes
         the change"""
 
-        tree_model, treeiter = selection.get_selected()
-        workspaceName = tree_model[treeiter][0]
-
         def background_process():
+            """Change workspace. This function runs on a separated thread
+            created by the parent function. DO NOT call any Gtk methods
+            withing it's scope, except by emiting signals to the window
+            """
             self.window.emit("loading_workspace", 'show')
             try:
                 ws = super(GuiApp, self).openWorkspace(workspaceName)
-                self.updateHosts()
-                self.hosts_sidebar.update(self.all_hosts)
                 self.window.emit("loading_workspace", "destroy")
             except Exception as e:
                 self.window.emit("loading_workspace", "destroy")

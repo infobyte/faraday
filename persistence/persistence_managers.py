@@ -239,7 +239,6 @@ class CouchDbConnector(DbConnector):
             getLogger(self).warn(
                 "You're not authorized to upload views to this database")
         self.seq_num = self.db.info()['update_seq']
-        print "yeah here"
         self.thread = threading.Thread(target=self.check_connection)
         self.thread.daemon = True
         self.thread.start()

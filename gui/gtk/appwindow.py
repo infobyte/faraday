@@ -45,7 +45,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         "update_ws_info": (GObject.SIGNAL_RUN_FIRST, None, (int, int, int, )),
         "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, )),
         "loading_workspace": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
-        "lost_db_connection": (GObject.SIGNAL_RUN_FIRST, None, (str,))
+        "lost_db_connection": (GObject.SIGNAL_RUN_FIRST, None, (str,)),
         "update_hosts_sidebar": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "normal_error": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
         "important_error": (GObject.SIGNAL_RUN_FIRST, None, ()),
@@ -194,22 +194,11 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         currentTerminal = currentScrolledWindow.get_child()
         return currentTerminal
 
-<<<<<<< HEAD
-    def prepare_important_error(self, event, *callbacks):
-        """Attaches an event to the class, so it can be used by the signal
-        do_ functions even if they cannot be passed directly. It takes
-        an optional arbitrary amout of callbacks which will be stored in
-        self.error_callbacks as a tuple
-        """
-        self.event = event
-        self.error_callbacks = callbacks
-=======
     def prepare_important_error(self, event):
         """Attaches an event to the class, so it can be used by the signal
         callbacks even if they cannot be passed directly.
         """
         self.event = event
->>>>>>> white/integracion
 
     def do_important_error(self):
         """Creates an importan error dialog with a callback to send
@@ -217,14 +206,10 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         """
         dialog_text = self.event.text
         dialog = ImportantErrorDialog(self, dialog_text)
-<<<<<<< HEAD
-        dialog.run()
-=======
         response = dialog.run()
         if response == 42:
             error = self.event.error_name
             self.event.callback(error, *self.event.exception_objects)
->>>>>>> white/integracion
         dialog.destroy()
 
     def do_normal_error(self, dialog_text):
@@ -236,7 +221,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         dialog.run()
         dialog.destroy()
 
-<<<<<<< HEAD
     def do_lost_db_connection(self, explanatory_message):
         """Creates a simple dialog with an error message to inform the user
         some kind of problem has happened and the connection was lost.
@@ -275,8 +259,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
         dialog.run()
 
-=======
->>>>>>> white/integracion
     def do_new_log(self, text):
         """To be used on a new_log signal. Calls a method on log to append
         to it"""

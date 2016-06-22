@@ -329,8 +329,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         True for successful
         """
         if not CouchDbManager.testCouch(couch_uri):
-            errorDialog(self.window, "The provided URL is not valid",
-                        "Are you sure CouchDB is running?")
+            errorDialog(self.window, "Could not connect to CouchDB.",
+                        ("Are you sure it is running and that you can "
+                        "connect to it?"))
             success = False
         elif couch_uri.startswith("https://"):
             if not checkSSL(couch_uri):

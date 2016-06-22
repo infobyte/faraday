@@ -363,15 +363,18 @@ class CouchDbConnector(DbConnector):
 
     def check_connection(self):
         import time
+        tolerance = 0
         while True:
             time.sleep(1)
-            test = self.testCouch(self.db.server_uri)
-            if not test:
-                try:
-                    self.exception_callback()
-                    return False
-                except:
-                    continue
+            connection_successful = self.testCouch(self.db.server_uri)
+            if not connection_successful:
+                tolerance += 1
+                if tolerance == 3:
+                    try:
+                        self.exception_callback()
+                        return False
+                    except:
+                        continue
 
     def testCouch(self, uri):
         if uri is not None:

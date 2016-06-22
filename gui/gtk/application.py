@@ -314,10 +314,11 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.window.emit("important_error")
 
         elif event.type() == 42424: # lost connection to couch db
-            self.window.prepare_important_error(event,
-                                                self.handle_connection_lost)
+            GObject.idle_add(self.window.prepare_important_error, event,
+                             self.handle_connection_lost)
+
             self.window.emit("lost_db_connection", event.problem)
-            self.reloadWorkspaces()
+            GObject.idle_add(self.reloadWorkspaces)
             ws = self.openDefaultWorkspace()
             CONF.setLastWorkspace(ws.name)
             CONF.saveConfig()

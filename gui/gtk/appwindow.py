@@ -194,11 +194,12 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         currentTerminal = currentScrolledWindow.get_child()
         return currentTerminal
 
-    def prepare_important_error(self, event):
+    def prepare_important_error(self, event, *callbacks):
         """Attaches an event to the class, so it can be used by the signal
         callbacks even if they cannot be passed directly.
         """
         self.event = event
+        self.error_callbacks = callbacks
 
     def do_important_error(self):
         """Creates an importan error dialog with a callback to send
@@ -227,7 +228,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         Uses the first callback on self.error_callbacks, which should
         point to the application's handle_connection_lost method.
         """
-
 
         def destroy_dialog(button=None):
             """Necessary 'cause button.connect method passes the button

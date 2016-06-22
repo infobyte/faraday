@@ -371,7 +371,7 @@ class CouchDbConnector(DbConnector):
                     self.exception_callback()
                     return False
                 except:
-                    pass
+                    continue
 
     def testCouch(self, uri):
         if uri is not None:
@@ -395,7 +395,6 @@ class CouchDbConnector(DbConnector):
     def waitForDBChange(self, since=0):
         getLogger(self).debug(
             "Watching for changes")
-        tolerance = 0
         while True:
             last_seq = max(self.getSeqNumber(), since)
             self.stream = ChangesStream(
@@ -425,10 +424,6 @@ class CouchDbConnector(DbConnector):
             except Exception as e:
                 getLogger(self).info("Some exception happened while waiting for changes")
                 getLogger(self).info("  The exception was: %s" % e)
-                tolerance += 1
-                if tolerance == 3:
-                    self.exception_callback()
-                    return False
 
     #@trap_timeout
     def _compactDatabase(self):
@@ -594,7 +589,6 @@ class CouchDbManager(AbstractPersistenceManager):
         except restkit.errors.RequestError as req_error:
             getLogger(self).error("Couldn't load databases. "
                                   "The connection to the CouchDB was probably lost. ")
-            self.exception_callback()
 
     def _loadDb(self, dbname):
         db = self.__serv.get_db(dbname)

@@ -72,7 +72,7 @@ class PreferenceWindowDialog(Gtk.Window):
                         "Are you sure CouchDB is running?")
         elif repourl.startswith("https://"):
             if not checkSSL(repourl):
-                errorDialog("The SSL certificate validation has failed")
+                errorDialog(self, "The SSL certificate validation has failed")
         else:
             CONF.setCouchUri(repourl)
             CONF.saveConfig()

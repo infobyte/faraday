@@ -562,7 +562,6 @@ class CouchDbManager(AbstractPersistenceManager):
             getLogger(self).debug(traceback.format_exc())
 
 
-
     #@trap_timeout
     def _create(self, name):
         db = self.__serv.create_db(name.lower())
@@ -591,6 +590,14 @@ class CouchDbManager(AbstractPersistenceManager):
         self.dbs[dbname] = CouchDbConnector(db, seq_num=seq)
         return self.dbs[dbname]
 
+    def refreshDbs(self):
+        """Refresh databases using inherited method. On exception, asume
+        no databases are available.
+        """
+        try:
+            return AbstractPersistenceManager.refreshDbs()
+        except:
+            return []
 
     #@trap_timeout
     def pushReports(self):

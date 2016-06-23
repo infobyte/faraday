@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import gi
 import re
+import webbrowser
 
 gi.require_version('Gtk', '3.0')
 
@@ -482,11 +483,9 @@ class HostInfoDialog(Gtk.Window):
         return button_box
 
     def on_edit_host(self, button):
-        """Tries to open self.edit_url in the default browser. was_successful
-        holds True/False depending on success.
-        """
-        was_succesful = Gtk.show_uri(None, self.edit_url, Gdk.CURRENT_TIME)
-        return was_succesful
+        """Tries to open self.edit_url in the default browser."""
+        webbrowser.open(self.edit_url, new = 2)
+
 
     def create_scroll_frame(self, inner_box, label_str):
         """Create a scrollable frame containing inner_box and with label_str

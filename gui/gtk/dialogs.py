@@ -68,7 +68,7 @@ class PreferenceWindowDialog(Gtk.Window):
     def on_click_OK(self, button):
         """Defines what happens when user clicks OK button"""
         repourl = self.entry.get_text()
-        if self.connectCouchCallback(repourl): #success!
+        if self.connectCouchCallback(repourl):  # success!
             self.destroy()
 
     def on_click_cancel(self, button):

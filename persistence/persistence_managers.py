@@ -366,8 +366,8 @@ class CouchDbConnector(DbConnector):
         tolerance = 0
         while True:
             time.sleep(1)
-            connection_successful = self.testCouch(self.db.server_uri)
-            if not connection_successful:
+            code = self.testCouch(self.db.server_uri)
+            if code != 200:
                 tolerance += 1
                 if tolerance == 3:
                     try:
@@ -377,22 +377,13 @@ class CouchDbConnector(DbConnector):
                         continue
 
     def testCouch(self, uri):
-        if uri is not None:
-            host, port = None, None
-            try:
-                import socket
-                url = urlparse(uri)
-                proto = url.scheme
-                host = url.hostname
-                port = url.port
-
-                port = port if port else socket.getservbyname(proto)
-                s = socket.socket()
-                s.settimeout(1)
-                s.connect((host, int(port)))
-                return True
-            except:
-                return False
+        import requests
+        try:
+            request = requests.get(uri + '/_all_dbs')
+            request_code = request.status_code
+        except requests.adapters.ConnectionError:
+            request_code = -1
+        return request_code
 
     #@trap_timeout
     def waitForDBChange(self, since=0):
@@ -631,23 +622,17 @@ class CouchDbManager(AbstractPersistenceManager):
 
     @staticmethod
     def testCouch(uri):
-        if uri is not None:
-            host, port = None, None
-            try:
-                import socket
-                url = urlparse(uri)
-                proto = url.scheme
-                host = url.hostname
-                port = url.port
-
-                port = port if port else socket.getservbyname(proto)
-                s = socket.socket()
-                s.settimeout(1)
-                s.connect((host, int(port)))
-            except:
-                return False
-            #getLogger(CouchdbManager).info("Connecting Couch to: %s:%s" % (host, port))
+        import requests
+        try:
+            request = requests.get(uri + '/_all_dbs')
+            request_code = request.status_code
+        except requests.adapters.ConnectionError:
+            request_code = -1
+        if request_code == 200:
             return True
+        else:
+            return False
+
 
     def testCouchUrl(self, uri):
         if uri is not None:

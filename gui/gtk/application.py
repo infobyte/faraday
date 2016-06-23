@@ -318,16 +318,21 @@ class GuiApp(Gtk.Application, FaradayUi):
                              self.handle_connection_lost)
 
             self.window.emit("lost_db_connection", event.problem)
-            GObject.idle_add(self.reloadWorkspaces)
-            ws = self.openDefaultWorkspace()
-            CONF.setLastWorkspace(ws.name)
-            CONF.saveConfig()
+            self.change_to_default_ws_on_connection_lost()
+
+    def change_to_default_ws_on_connection_lost(self):
+        """Reloads the workspace and opens the default ws"""
+        self.reloadWorkspaces()
+        ws = self.openDefaultWorkspace()
+        CONF.setLastWorkspace(ws.name)
+        CONF.saveConfig()
 
     def connect_to_couch(self, couch_uri):
         """Tries to connect to a CouchDB on a specified Couch URI.
         Returns the success status of the operation, False for not successful,
         True for successful
         """
+
         if not CouchDbManager.testCouch(couch_uri):
             errorDialog(self.window, "Could not connect to CouchDB.",
                         ("Are you sure it is running and that you can "
@@ -545,9 +550,9 @@ class GuiApp(Gtk.Application, FaradayUi):
                 ws = super(GuiApp, self).openWorkspace(workspaceName)
                 self.window.emit("loading_workspace", "destroy")
             except Exception as e:
-                self.window.emit("loading_workspace", "destroy")
                 model.guiapi.notification_center.showDialog(str(e))
                 ws = self.openDefaultWorkspace()
+                self.window.emit("loading_workspace", "destroy")
 
             workspace = ws.name
             CONF.setLastWorkspace(workspace)

@@ -140,7 +140,7 @@ def getParserArgs():
         help="Path to the valid CouchDB certificate")
 
     parser.add_argument('--gui', action="store", dest="gui",
-        default="qt3",
+        default="gtk",
         help="Select interface to start faraday. Supported values are "
               "qt3 (deprecated), gtk and 'no' (no GUI at all). Defaults to qt3")
 

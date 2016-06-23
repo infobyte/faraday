@@ -39,7 +39,15 @@ class WorkspaceManager(object):
         self.active_workspace = None
 
     def getWorkspacesNames(self):
-        return self.dbManager.getAllDbNames()
+        """Returns the names of the workspaces as a list of strings.
+        If for any reason the dbManager fails to provide the names, it is
+        assumed a problem arose somewhere and we will return the
+        only workspace which we know is available: untitled.
+        """
+        try:
+            return self.dbManager.getAllDbNames()
+        except:
+            return ['untitled']
 
     def createWorkspace(self, name, desc, dbtype=DBTYPE.FS):
         workspace = Workspace(name, desc)

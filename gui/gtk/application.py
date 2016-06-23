@@ -282,7 +282,8 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         DO NOT, AND I REPEAT, DO NOT REDRAW *ANYTHING* FROM THE GUI
         FROM HERE. If you must do it, you should to it via the emit method
-        to the appwindow."""
+        to the appwindow or maybe using Glib.idle_add, a misterious function
+        with outdate documentation."""
 
         if receiver is None:
             receiver = self.getMainWindow()
@@ -322,8 +323,8 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def change_to_default_ws_on_connection_lost(self):
         """Reloads the workspace and opens the default ws"""
-        self.reloadWorkspaces()
         ws = self.openDefaultWorkspace()
+        self.reloadWorkspaces()
         CONF.setLastWorkspace(ws.name)
         CONF.saveConfig()
 

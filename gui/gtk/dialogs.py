@@ -645,12 +645,15 @@ class HostInfoDialog(Gtk.Window):
         """
         view = Gtk.TreeView(model)
         view.set_activate_on_single_click(True)
+        view.set_enable_tree_lines(True)
+        view.expand_all()
 
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("Host/Interfaces/Services",
                                     renderer, text=12)
 
         view.append_column(column)
+        view.set_expander_column(column)
         selection = view.get_selection()
         selection.connect("changed", self.on_main_tree_selection)
 

@@ -34,7 +34,7 @@ class PreferenceWindowDialog(Gtk.Window):
         self.set_modal(True)
         self.set_size_request(400, 100)
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
-        self.connect("key_press_event", on_scape_destroy)
+        self.connect("key_press_event", key_reactions)
         self.set_transient_for(parent)
         self.timeout_id = None
         self.reloadWorkspaces = callback
@@ -56,7 +56,7 @@ class PreferenceWindowDialog(Gtk.Window):
         vbox.pack_end(hbox, False, True, 10)
 
         self.OK_button = Gtk.Button.new_with_label("OK")
-        self.OK_button.connect("clicked", self.on_click_OK)
+        self.OK_button.connect("clicked", self.on_click_ok)
 
         hbox.pack_start(self.OK_button, False, True, 10)
 
@@ -64,7 +64,7 @@ class PreferenceWindowDialog(Gtk.Window):
         self.cancel_button.connect("clicked", self.on_click_cancel)
         hbox.pack_end(self.cancel_button, False, True, 10)
 
-    def on_click_OK(self, button):
+    def on_click_ok(self, button=None):
         """Defines what happens when user clicks OK button"""
         repourl = self.entry.get_text()
         if not CouchDbManager.testCouch(repourl):
@@ -79,7 +79,7 @@ class PreferenceWindowDialog(Gtk.Window):
             self.reloadWorkspaces()
             self.destroy()
 
-    def on_click_cancel(self, button):
+    def on_click_cancel(self, button=None):
         self.destroy()
 
 
@@ -95,7 +95,7 @@ class NewWorkspaceDialog(Gtk.Window):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape_destroy)
+        self.connect("key_press_event", react_to_keys)
         self.set_size_request(200, 200)
         self.timeout_id = None
         self.callback = callback
@@ -133,7 +133,7 @@ class NewWorkspaceDialog(Gtk.Window):
 
         self.buttonBox = Gtk.Box(spacing=6)
         self.OK_button = Gtk.Button.new_with_label("OK")
-        self.OK_button.connect("clicked", self.on_click_OK)
+        self.OK_button.connect("clicked", self.on_click_ok)
         self.cancel_button = Gtk.Button.new_with_label("Cancel")
         self.cancel_button.connect("clicked", self.on_click_cancel)
         self.buttonBox.pack_start(self.OK_button, False, False, 10)
@@ -148,7 +148,7 @@ class NewWorkspaceDialog(Gtk.Window):
         self.mainBox.show()
         self.add(self.mainBox)
 
-    def on_click_OK(self, button):
+    def on_click_ok(self, button=None):
         letters_or_numbers = r"^[a-z][a-z0-9\_\$()\+\-\/]*$"
         res = re.match(letters_or_numbers, str(self.name_entry.get_text()))
         if res:
@@ -170,7 +170,7 @@ class NewWorkspaceDialog(Gtk.Window):
                         "characters. The name has to start"
                         " with a lowercase letter")
 
-    def on_click_cancel(self, button):
+    def on_click_cancel(self, button=None):
         self.destroy()
 
 
@@ -187,8 +187,9 @@ class PluginOptionsDialog(Gtk.Window):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape_destroy)
+        self.connect("key_press_event", key_reactions)
         self.set_size_request(800, 300)
+        self.plugin_manager = plugin_manager
 
         if plugin_manager is not None:
             self.plugin_settings = plugin_manager.getSettings()
@@ -208,7 +209,7 @@ class PluginOptionsDialog(Gtk.Window):
         buttonBox = Gtk.Box()
         OK_button = Gtk.Button.new_with_label("OK")
         cancel_button = Gtk.Button.new_with_label("Cancel")
-        OK_button.connect("clicked", self.on_click_OK, plugin_manager)
+        OK_button.connect("clicked", self.on_click_ok)
         cancel_button.connect("clicked", self.on_click_cancel)
         buttonBox.pack_start(OK_button, True, True, 10)
         buttonBox.pack_start(cancel_button, True, True, 10)
@@ -249,10 +250,10 @@ class PluginOptionsDialog(Gtk.Window):
 
         self.add(self.mainBox)
 
-    def on_click_OK(self, button, plugin_manager):
+    def on_click_ok(self, button):
         """On click OK button update the plugins settings and then destroy"""
-        if plugin_manager is not None:
-            plugin_manager.updateSettings(self.plugin_settings)
+        if self.plugin_manager is not None:
+            self.plugin_manager.updateSettings(self.plugin_settings)
         self.destroy()
 
     def on_click_cancel(self, button):
@@ -403,7 +404,7 @@ class HostInfoDialog(Gtk.Window):
         self.set_transient_for(parent)
         self.set_size_request(1200, 500)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape_destroy)
+        self.connect("key_press_event", key_reactions)
 
         self.is_ws_couch = is_ws_couch
 
@@ -816,7 +817,7 @@ class HostInfoDialog(Gtk.Window):
 
         box.foreach(remove, box)
 
-    def on_click_ok(self, button):
+    def on_click_ok(self, button=None):
         self.destroy()
 
 
@@ -835,7 +836,7 @@ class ConflictsDialog(Gtk.Window):
         self.set_transient_for(parent)
         self.set_size_request(600, 400)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape_destroy)
+        self.connect("key_press_event", key_reactions)
         self.conflicts = conflicts
         self.conflict_n = 0
         self.current_conflict = self.conflicts[self.conflict_n]
@@ -1288,14 +1289,14 @@ class NotificationsDialog(Gtk.Window):
         self.set_transient_for(parent)
         self.set_size_request(400, 200)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape_destroy)
+        self.connect("key_press_event", key_reactions)
         self.destroy_notifications = callback
 
         scrolled_list = self.create_view_box(view)
 
         self.button = Gtk.Button()
         self.button.set_label("OK")
-        self.button.connect("clicked", self.on_click_OK)
+        self.button.connect("clicked", self.on_click_ok)
 
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.mainBox.pack_start(scrolled_list, True, True, 0)
@@ -1308,7 +1309,7 @@ class NotificationsDialog(Gtk.Window):
     def create_view_box(self, view):
         return view
 
-    def on_click_OK(self, button):
+    def on_click_ok(self, button=None):
         self.destroy_notifications()
         self.destroy()
 
@@ -1394,7 +1395,7 @@ class ImportantErrorDialog(Gtk.Dialog):
         return textView
 
 
-def on_scape_destroy(window, event):
+def key_reactions(window, event):
     """Silly function to destroy a window on escape key, to use
     with all the dialogs that should be Gtk.Dialogs but are Gtk.Windows
     or with windows that are too complex for gtk dialogs but should behave
@@ -1402,4 +1403,7 @@ def on_scape_destroy(window, event):
     key = Gdk.keyval_name(event.get_keyval()[1])
     if key == 'Escape':
         window.destroy()
+        return True
+    elif key == 'Return':
+        window.on_click_ok()
         return True

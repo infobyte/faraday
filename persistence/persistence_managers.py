@@ -11,6 +11,8 @@ import shutil
 import mockito
 import restkit
 import threading
+import requests
+import time
 from urlparse import urlparse
 import traceback
 from couchdbkit import Server, ChangesStream, Database
@@ -134,8 +136,8 @@ class DbConnector(object):
     def setChangesCallback(self, callback):
         self.changes_callback = callback
 
-    def setExceptionCallback(self, callback):
-        self.exception_callback = callback
+    def setCouchExceptionCallback(self, callback):
+        self.couch_exception_callback = callback
 
     def waitForDBChange(self):
         pass
@@ -239,9 +241,9 @@ class CouchDbConnector(DbConnector):
             getLogger(self).warn(
                 "You're not authorized to upload views to this database")
         self.seq_num = self.db.info()['update_seq']
-        self.thread = threading.Thread(target=self.check_connection)
-        self.thread.daemon = True
-        self.thread.start()
+        test_couch_thread = threading.Thread(target=self.continuosly_check_connection)
+        test_couch_thread.daemon = True
+        test_couch_thread.start()
 
     def getDocs(self):
         if len(self._docs.keys()) == 0:
@@ -361,41 +363,24 @@ class CouchDbConnector(DbConnector):
     def setSeqNumber(self, seq_num):
         self.seq_num = seq_num
 
-    def check_connection(self):
-        """Intended to use on a separate thread. Call testCouch every second
-        to see if response to the server_uri of the DB is still 200. Call
-        the exception_callback if we can't access the server three times in
-        a row.
+    def continuosly_check_connection(self):
+        """Intended to use on a separate thread. Call module-level
+        function testCouch every second to see if response to the server_uri
+        of the DB is still 200. Call the exception_callback if we can't access
+        the server three times in a row.
         """
-        import time
         tolerance = 0
+        server_uri = self.db.server_uri
         while True:
             time.sleep(1)
-            code = self.testCouch(self.db.server_uri)
-            if code == 200:
+            test_was_successful = test_couch(server_uri)
+            if test_was_successful:
                 tolerance = 0
             else:
                 tolerance += 1
                 if tolerance == 3:
-                    try:
-                        self.exception_callback()
-                        return False
-                    except:
-                        continue
-
-    def testCouch(self, uri):
-        """Return the statuscode for the URL in the form of uri/_all_dbs. If
-        there's a connection error, return -1.
-        """
-        # TODO: this method is *extremely* similar to CouchDbManager. We
-        # need to decide how we are going to handle this duplication of code.
-        import requests
-        try:
-            request = requests.get(uri + '/_all_dbs')
-            request_code = request.status_code
-        except requests.adapters.ConnectionError:
-            request_code = -1
-        return request_code
+                    self.couch_exception_callback()
+                    return False  # kill the thread if something went wrong
 
     #@trap_timeout
     def waitForDBChange(self, since=0):
@@ -439,7 +424,7 @@ class CouchDbConnector(DbConnector):
             except Exception as e:
                 getLogger(self).info("Some exception happened while waiting for changes")
                 getLogger(self).info("  The exception was: %s" % e)
-                return False # kill thread, it's failed... if reconnection
+                return False # kill thread, it's failed... in reconnection
                              # another one will be created, don't worry
 
     #@trap_timeout
@@ -651,17 +636,9 @@ class CouchDbManager(AbstractPersistenceManager):
 
     @staticmethod
     def testCouch(uri):
-        import requests
-        try:
-            request = requests.get(uri + '/_all_dbs')
-            request_code = request.status_code
-        except requests.adapters.ConnectionError:
-            request_code = -1
-        if request_code == 200:
-            return True
-        else:
-            return False
-
+        """Redirect to the module-level function of the name, which
+        serves the same purpose and is used by other classes too."""
+        return test_couch(uri)
 
     def testCouchUrl(self, uri):
         if uri is not None:
@@ -700,3 +677,15 @@ class CouchDbManager(AbstractPersistenceManager):
         self.__serv.replicate(workspace, dst, mutual = mutual, continuous  = continuous, create_target = ct)
         if mutual:
             self.__serv.replicate(dst, src, continuous = continuous, **kwargs)
+
+
+def test_couch(uri):
+    """Return True if we could access uri/_all_dbs, which should happen
+    if we have an Internet connection, Couch is up and we have the correct
+    permissions (response_code == 200)
+    """
+    try:
+        response_code = requests.get(uri + '/_all_dbs').status_code
+        return True if response_code == 200 else False
+    except requests.adapters.ConnectionError:
+        return False

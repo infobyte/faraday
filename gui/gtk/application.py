@@ -337,7 +337,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         if not CouchDbManager.testCouch(couch_uri):
             errorDialog(self.window, "Could not connect to CouchDB.",
                         ("Are you sure it is running and that you can "
-                        "connect to it?"))
+                        "connect to it? \n Make sure your username and "
+                        "password are still valid."))
             success = False
         elif couch_uri.startswith("https://"):
             if not checkSSL(couch_uri):

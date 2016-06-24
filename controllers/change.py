@@ -69,7 +69,7 @@ class ChangeController(object):
         self.dbConnector = dbConnector
         self.changesWatcher = ChangeWatcher(dbConnector.waitForDBChange)
         dbConnector.setChangesCallback(self.loadChange)
-        dbConnector.setExceptionCallback(self.manageConnectionLost)
+        dbConnector.setCouchExceptionCallback(self.manageConnectionLost)
         self.changesWatcher.start()
 
     def unwatch(self):

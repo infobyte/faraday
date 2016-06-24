@@ -46,16 +46,16 @@ class PreferenceWindowDialog(Gtk.Window):
         main_box.pack_start(ip_label, True, False, 10)
 
         couch_uri = CONF.getCouchURI()
-        ip_entry = Gtk.Entry()
+        self.ip_entry = Gtk.Entry()
         text = couch_uri if couch_uri else "http://127.0.0.1:5050"
-        ip_entry.set_text(text)
-        main_box.pack_start(ip_entry, True, False, 10)
+        self.ip_entry.set_text(text)
+        main_box.pack_start(self.ip_entry, True, False, 10)
 
         button_box = Gtk.Box(spacing=6)
         main_box.pack_end(button_box, False, True, 10)
 
         OK_button = Gtk.Button.new_with_label("OK")
-        OK_button.connect("clicked", self.on_click_OK, ip_entry.get_text())
+        OK_button.connect("clicked", self.on_click_ok)
 
         button_box.pack_start(OK_button, False, True, 10)
 
@@ -65,10 +65,11 @@ class PreferenceWindowDialog(Gtk.Window):
 
         self.add(main_box)
 
-    def on_click_OK(self, button, repourl):
-        """Take a button (useless, but the callback from the button makes us)
-        and a repourl and check if the repourl (couch URL) makes sense.
+    def on_click_ok(self, button=None):
+        """Button is useless, only there because GTK likes it. Takes the
+        repourl (Couch IP) from self.ip_entry and connect to it if possible.
         """
+        repourl = self.ip_entry.get_text()
         if not CouchDbManager.testCouch(repourl):
             errorDialog(self, "The provided URL is not valid",
                         "Are you sure CouchDB is running?")

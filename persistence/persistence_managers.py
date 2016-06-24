@@ -362,12 +362,19 @@ class CouchDbConnector(DbConnector):
         self.seq_num = seq_num
 
     def check_connection(self):
+        """Intended to use on a separate thread. Call testCouch every second
+        to see if response to the server_uri of the DB is still 200. Call
+        the exception_callback if we can't access the server three times in
+        a row.
+        """
         import time
         tolerance = 0
         while True:
             time.sleep(1)
             code = self.testCouch(self.db.server_uri)
-            if code != 200:
+            if code == 200:
+                tolerance = 0
+            else:
                 tolerance += 1
                 if tolerance == 3:
                     try:
@@ -377,6 +384,11 @@ class CouchDbConnector(DbConnector):
                         continue
 
     def testCouch(self, uri):
+        """Return the statuscode for the URL in the form of uri/_all_dbs. If
+        there's a connection error, return -1.
+        """
+        # TODO: this method is *extremely* similar to CouchDbManager. We
+        # need to decide how we are going to handle this duplication of code.
         import requests
         try:
             request = requests.get(uri + '/_all_dbs')
@@ -387,6 +399,16 @@ class CouchDbConnector(DbConnector):
 
     #@trap_timeout
     def waitForDBChange(self, since=0):
+        """Listen to the stream of changes provided by CouchDbKit. Process
+        these changes accordingly. If there's an exception while listening
+        to the changes, return inmediatly."""
+
+        # XXX: the while True found here shouldn't be necessary because
+        # changesStream already keeps listening 'for ever'. In a few tests
+        # I ran, this hypothesis was confirmed, but with our current setup
+        # i'm afraid I may be missing something. In any case, it works
+        # as it is, but this definitevely needs revision.
+
         getLogger(self).debug(
             "Watching for changes")
         while True:

@@ -37,13 +37,18 @@ class ModelObjectMapper(AbstractMapper):
         }
 
     def unserialize(self, mobj, doc):
+        mobj_type = mobj.class_signature
         self.children = self.findChildren(mobj.getID())
         mobj.setName(doc.get("name"))
         mobj.setOwned(doc.get("owned"))
         if doc.get("parent", None):
             mobj.setParent(self.mapper_manager.find(doc.get("parent")))
         mobj.setOwner(doc.get("owner"))
-        mobj.setDescription(doc.get("description"))
+        # NOTE: Vulnerability and VulnerabilityWeb have a 'desc' key, not a
+        # description key, which is already handled by their specific
+        # unserialize method
+        if mobj_type != 'Vulnerability' and mobj_type != 'VulnerabilityWeb':
+            mobj.setDescription(doc.get("description"))
         mobj.setMetadata( Metadata('').fromDict(mobj.getMetadata().__dict__))
         if self.children:
             self.setNotes(mobj)

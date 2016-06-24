@@ -8,5 +8,6 @@ requests
 tornado
 flask
 colorama
+twisted
 #extra
 psycopg2

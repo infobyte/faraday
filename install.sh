@@ -33,7 +33,7 @@ fi
 
 echo "[+] Install $os $arch"
 
-if [[ "$os" =~ "Debian 8".* | "stretch/sid".* ]]; then
+if [[ "$os" =~ "Debian 8".*|"stretch/sid".* ]]; then
 
     #Check if user agree with change to experimental
     read -r -p "We need change your debian to experimental - sid branch (If you are not). You agree?[Y/n] " input

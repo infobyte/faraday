@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import gi
 import re
+import webbrowser
 
 gi.require_version('Gtk', '3.0')
 
@@ -34,52 +35,54 @@ class PreferenceWindowDialog(Gtk.Window):
         self.set_modal(True)
         self.set_size_request(400, 100)
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
-        self.connect("key_press_event", on_scape_destroy)
+        self.connect("key_press_event", key_reactions)
         self.set_transient_for(parent)
-        self.timeout_id = None
         self.reloadWorkspaces = callback
 
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        self.add(vbox)
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
 
-        self.label = Gtk.Label()
-        self.label.set_text("Your Couch IP")
-        vbox.pack_start(self.label, True, False, 10)
+        ip_label = Gtk.Label()
+        ip_label.set_text("Your Couch IP")
+        main_box.pack_start(ip_label, True, False, 10)
 
         couch_uri = CONF.getCouchURI()
-        self.entry = Gtk.Entry()
+        self.ip_entry = Gtk.Entry()
         text = couch_uri if couch_uri else "http://127.0.0.1:5050"
-        self.entry.set_text(text)
-        vbox.pack_start(self.entry, True, False, 10)
+        self.ip_entry.set_text(text)
+        main_box.pack_start(self.ip_entry, True, False, 10)
 
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        vbox.pack_end(hbox, False, True, 10)
+        button_box = Gtk.Box(spacing=6)
+        main_box.pack_end(button_box, False, True, 10)
 
-        self.OK_button = Gtk.Button.new_with_label("OK")
-        self.OK_button.connect("clicked", self.on_click_OK)
+        OK_button = Gtk.Button.new_with_label("OK")
+        OK_button.connect("clicked", self.on_click_ok)
 
-        hbox.pack_start(self.OK_button, False, True, 10)
+        button_box.pack_start(OK_button, False, True, 10)
 
-        self.cancel_button = Gtk.Button.new_with_label("Cancel")
-        self.cancel_button.connect("clicked", self.on_click_cancel)
-        hbox.pack_end(self.cancel_button, False, True, 10)
+        cancel_button = Gtk.Button.new_with_label("Cancel")
+        cancel_button.connect("clicked", self.on_click_cancel)
+        button_box.pack_end(cancel_button, False, True, 10)
 
-    def on_click_OK(self, button):
-        """Defines what happens when user clicks OK button"""
-        repourl = self.entry.get_text()
+        self.add(main_box)
+
+    def on_click_ok(self, button=None):
+        """Button is useless, only there because GTK likes it. Takes the
+        repourl (Couch IP) from self.ip_entry and connect to it if possible.
+        """
+        repourl = self.ip_entry.get_text()
         if not CouchDbManager.testCouch(repourl):
             errorDialog(self, "The provided URL is not valid",
                         "Are you sure CouchDB is running?")
         elif repourl.startswith("https://"):
             if not checkSSL(repourl):
-                errorDialog("The SSL certificate validation has failed")
+                errorDialog(self, "The SSL certificate validation has failed")
         else:
             CONF.setCouchUri(repourl)
             CONF.saveConfig()
             self.reloadWorkspaces()
             self.destroy()
 
-    def on_click_cancel(self, button):
+    def on_click_cancel(self, button=None):
         self.destroy()
 
 
@@ -88,80 +91,118 @@ class NewWorkspaceDialog(Gtk.Window):
     a description and a type for a new workspace. Also checks that the
     those attributes don't correspond to an existing workspace"""
 
-    def __init__(self, callback,  workspace_manager, sidebar, parent,
+    def __init__(self, create_ws_callback,  workspace_manager, sidebar, parent,
                  title=None):
 
         Gtk.Window.__init__(self, title="Create New Workspace")
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape_destroy)
+        self.connect("key_press_event", key_reactions)
         self.set_size_request(200, 200)
-        self.timeout_id = None
-        self.callback = callback
+        self.create_ws_callback = create_ws_callback
         self.sidebar = sidebar
+        self.workspace_manager = workspace_manager
+        self.title = title
 
-        self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.warning_label = self.create_warning_label()
+        self.main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
 
-        self.nameBox = Gtk.Box(spacing=6)
-        self.name_label = Gtk.Label()
-        self.name_label.set_text("Name: ")
+        name_box = self.create_name_box()
+        description_box = self.create_description_box()
+        type_box = self.create_type_box()
+        button_box = self.create_button_box()
+
+        self.main_box.pack_start(name_box, False, False, 10)
+        self.main_box.pack_start(description_box, False, False, 10)
+        self.main_box.pack_start(type_box, False, False, 10)
+        self.main_box.pack_start(self.warning_label, False, False, 10)
+        self.main_box.pack_end(button_box, False, False, 10)
+
+        self.main_box.show()
+        self.add(self.main_box)
+
+    def create_name_box(self):
+        """Return a box with a Name label left of an entry."""
+        name_box = Gtk.Box(spacing=6)
+        name_label = Gtk.Label()
+        name_label.set_text("Name: ")
         self.name_entry = Gtk.Entry()
-        if title is not None:
+        if self.title is not None:
             self.name_entry.set_text(title)
-        self.nameBox.pack_start(self.name_label, False, False, 10)
-        self.nameBox.pack_end(self.name_entry, True, True, 10)
-        self.nameBox.show()
+        name_box.pack_start(name_label, False, False, 10)
+        name_box.pack_end(self.name_entry, True, True, 10)
+        return name_box
 
-        self.descrBox = Gtk.Box(spacing=6)
-        self.descr_label = Gtk.Label()
-        self.descr_label.set_text("Description: ")
-        self.descr_entry = Gtk.Entry()
-        self.descrBox.pack_start(self.descr_label, False, False, 10)
-        self.descrBox.pack_end(self.descr_entry, True, True, 10)
-        self.descrBox.show()
+    def create_description_box(self):
+        """Return a box with a Description label left of an entry."""
+        description_box = Gtk.Box(spacing=6)
+        description_label = Gtk.Label()
+        description_label.set_text("Description: ")
+        self.description_entry = Gtk.Entry()
+        description_box.pack_start(description_label, False, False, 10)
+        description_box.pack_end(self.description_entry, True, True, 10)
+        return description_box
 
-        self.typeBox = Gtk.Box(spacing=6)
-        self.type_label = Gtk.Label()
-        self.type_label.set_text("Type: ")
-        self.comboBox = Gtk.ComboBoxText()
-        for w in workspace_manager.getAvailableWorkspaceTypes():
-            self.comboBox.append_text(w)
-        self.typeBox.pack_start(self.type_label, False, False, 10)
-        self.typeBox.pack_end(self.comboBox, True, True, 10)
-        self.typeBox.show()
+    def create_type_box(self):
+        """Return a box with a Type label left of a combo box"""
+        type_box = Gtk.Box(spacing=6)
+        type_label = Gtk.Label()
+        type_label.set_text("Type: ")
+        self.type_comboBox = Gtk.ComboBoxText()
+        self.type_comboBox.connect("changed", self.on_select_ws_type)
+        for w in self.workspace_manager.getAvailableWorkspaceTypes():
+            self.type_comboBox.append_text(w)
+        self.type_comboBox.set_active(0)
+        type_box.pack_start(type_label, False, False, 10)
+        type_box.pack_end(self.type_comboBox, True, True, 10)
+        return type_box
 
-        self.buttonBox = Gtk.Box(spacing=6)
-        self.OK_button = Gtk.Button.new_with_label("OK")
-        self.OK_button.connect("clicked", self.on_click_OK)
-        self.cancel_button = Gtk.Button.new_with_label("Cancel")
-        self.cancel_button.connect("clicked", self.on_click_cancel)
-        self.buttonBox.pack_start(self.OK_button, False, False, 10)
-        self.buttonBox.pack_end(self.cancel_button, False, False, 10)
-        self.buttonBox.show()
+    def create_warning_label(self):
+        """Return a label with a warning if the user has FS selected as the
+        desired WS type.
+        """
+        warning_label = Gtk.Label()
+        warning_label.set_no_show_all(True)
+        warning_label.set_markup("<b>WARNING: </b> The FS (Filesystem) "
+                                 "databases are deprecated and strongly "
+                                 "discouraged. \n You will <b>not</b> be able "
+                                 "to edit the information provided by Faraday "
+                                 "with a FileSystem DB. \n Please "
+                                 "set up CouchDB and use it as the database "
+                                 "for your workspaces.")
+        return warning_label
 
-        self.mainBox.pack_start(self.nameBox, False, False, 10)
-        self.mainBox.pack_start(self.descrBox, False, False, 10)
-        self.mainBox.pack_start(self.typeBox, False, False, 10)
-        self.mainBox.pack_end(self.buttonBox, False, False, 10)
-
-        self.mainBox.show()
-        self.add(self.mainBox)
+    def create_button_box(self):
+        """Return a box with OK and cancel buttons."""
+        button_box = Gtk.Box(spacing=6)
+        OK_button = Gtk.Button.new_with_label("OK")
+        OK_button.connect("clicked", self.on_click_OK)
+        cancel_button = Gtk.Button.new_with_label("Cancel")
+        cancel_button.connect("clicked", self.on_click_cancel)
+        button_box.pack_start(OK_button, False, False, 10)
+        button_box.pack_end(cancel_button, False, False, 10)
+        return button_box
 
     def on_click_OK(self, button):
+        """Check if the name provided for the WS is valid. If so,
+        create it and add it to the sidebar. If not, show error.
+        """
         letters_or_numbers = r"^[a-z][a-z0-9\_\$()\+\-\/]*$"
         res = re.match(letters_or_numbers, str(self.name_entry.get_text()))
         if res:
-            if self.callback is not None:
-                self.__name_txt = str(self.name_entry.get_text())
-                self.__desc_txt = str(self.descr_entry.get_text())
-                self.__type_txt = str(self.comboBox.get_active_text())
-                creation_ok = self.callback(self.__name_txt,
-                                            self.__desc_txt,
-                                            self.__type_txt)
-                if creation_ok:
-                    self.sidebar.addWorkspace(self.__name_txt)
-                self.destroy()
+            ws_name = str(self.name_entry.get_text())
+            ws_desc = str(self.description_entry.get_text())
+            ws_type = str(self.type_comboBox.get_active_text())
+            creation_ok = self.create_ws_callback(ws_name,
+                                                  ws_desc,
+                                                  ws_type)
+            if creation_ok:
+                self.sidebar.addWorkspace(ws_name)
+            else:
+                errorDialog(self, "Something went wrong when creating "
+                                  "the new workspace.")
+            self.destroy()
         else:
             errorDialog(self, "Invalid workspace name",
                         "A workspace must be named with "
@@ -169,6 +210,12 @@ class NewWorkspaceDialog(Gtk.Window):
                         "ts(0-9) or any of the _$()+-/ "
                         "characters. The name has to start"
                         " with a lowercase letter")
+
+    def on_select_ws_type(self, combo_box):
+        if combo_box.get_active_text() == 'FS':
+            self.warning_label.show()
+        else:
+            self.warning_label.hide()
 
     def on_click_cancel(self, button):
         self.destroy()
@@ -187,8 +234,9 @@ class PluginOptionsDialog(Gtk.Window):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape_destroy)
+        self.connect("key_press_event", key_reactions)
         self.set_size_request(800, 300)
+        self.plugin_manager = plugin_manager
 
         if plugin_manager is not None:
             self.plugin_settings = plugin_manager.getSettings()
@@ -208,7 +256,7 @@ class PluginOptionsDialog(Gtk.Window):
         buttonBox = Gtk.Box()
         OK_button = Gtk.Button.new_with_label("OK")
         cancel_button = Gtk.Button.new_with_label("Cancel")
-        OK_button.connect("clicked", self.on_click_OK, plugin_manager)
+        OK_button.connect("clicked", self.on_click_ok)
         cancel_button.connect("clicked", self.on_click_cancel)
         buttonBox.pack_start(OK_button, True, True, 10)
         buttonBox.pack_start(cancel_button, True, True, 10)
@@ -249,10 +297,10 @@ class PluginOptionsDialog(Gtk.Window):
 
         self.add(self.mainBox)
 
-    def on_click_OK(self, button, plugin_manager):
+    def on_click_ok(self, button):
         """On click OK button update the plugins settings and then destroy"""
-        if plugin_manager is not None:
-            plugin_manager.updateSettings(self.plugin_settings)
+        if self.plugin_manager is not None:
+            self.plugin_manager.updateSettings(self.plugin_settings)
         self.destroy()
 
     def on_click_cancel(self, button):
@@ -403,7 +451,7 @@ class HostInfoDialog(Gtk.Window):
         self.set_transient_for(parent)
         self.set_size_request(1200, 500)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape_destroy)
+        self.connect("key_press_event", key_reactions)
 
         self.is_ws_couch = is_ws_couch
 
@@ -415,7 +463,6 @@ class HostInfoDialog(Gtk.Window):
         couch_url = CONF.getCouchURI()
         base_url = couch_url + "/reports/_design/reports/index.html#/host/ws/"
         self.edit_url = base_url + active_ws_name + "/hid/" + host_id
-
 
         host_info_frame = self.create_host_info_frame(host_info)
 
@@ -463,9 +510,6 @@ class HostInfoDialog(Gtk.Window):
         ok_button = Gtk.Button.new_with_label("OK")
         ok_button.connect("clicked", self.on_click_ok)
 
-        couch_uri = CONF.getCouchURI()
-        host_id = self.model[0][0]
-
         html_edit_url = '<a href="' + self.edit_url + '"> Edit host </a>'
         edit_button = Gtk.Button()
         edit_label = Gtk.Label()
@@ -482,11 +526,9 @@ class HostInfoDialog(Gtk.Window):
         return button_box
 
     def on_edit_host(self, button):
-        """Tries to open self.edit_url in the default browser. was_successful
-        holds True/False depending on success.
-        """
-        was_succesful = Gtk.show_uri(None, self.edit_url, Gdk.CURRENT_TIME)
-        return was_succesful
+        """Tries to open self.edit_url in the default browser."""
+        webbrowser.open(self.edit_url, new = 2)
+
 
     def create_scroll_frame(self, inner_box, label_str):
         """Create a scrollable frame containing inner_box and with label_str
@@ -644,12 +686,15 @@ class HostInfoDialog(Gtk.Window):
         """
         view = Gtk.TreeView(model)
         view.set_activate_on_single_click(True)
+        view.set_enable_tree_lines(True)
+        view.expand_all()
 
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("Host/Interfaces/Services",
                                     renderer, text=12)
 
         view.append_column(column)
+        view.set_expander_column(column)
         selection = view.get_selection()
         selection.connect("changed", self.on_main_tree_selection)
 
@@ -816,7 +861,7 @@ class HostInfoDialog(Gtk.Window):
 
         box.foreach(remove, box)
 
-    def on_click_ok(self, button):
+    def on_click_ok(self, button=None):
         self.destroy()
 
 
@@ -835,7 +880,7 @@ class ConflictsDialog(Gtk.Window):
         self.set_transient_for(parent)
         self.set_size_request(600, 400)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape_destroy)
+        self.connect("key_press_event", key_reactions)
         self.conflicts = conflicts
         self.conflict_n = 0
         self.current_conflict = self.conflicts[self.conflict_n]
@@ -1288,14 +1333,14 @@ class NotificationsDialog(Gtk.Window):
         self.set_transient_for(parent)
         self.set_size_request(400, 200)
         self.set_modal(True)
-        self.connect("key_press_event", on_scape_destroy)
+        self.connect("key_press_event", key_reactions)
         self.destroy_notifications = callback
 
         scrolled_list = self.create_view_box(view)
 
         self.button = Gtk.Button()
         self.button.set_label("OK")
-        self.button.connect("clicked", self.on_click_OK)
+        self.button.connect("clicked", self.on_click_ok)
 
         self.mainBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.mainBox.pack_start(scrolled_list, True, True, 0)
@@ -1303,12 +1348,11 @@ class NotificationsDialog(Gtk.Window):
 
         self.add(self.mainBox)
 
-
     @scrollable(width=250, height=350)
     def create_view_box(self, view):
         return view
 
-    def on_click_OK(self, button):
+    def on_click_ok(self, button=None):
         self.destroy_notifications()
         self.destroy()
 
@@ -1394,7 +1438,7 @@ class ImportantErrorDialog(Gtk.Dialog):
         return textView
 
 
-def on_scape_destroy(window, event):
+def key_reactions(window, event):
     """Silly function to destroy a window on escape key, to use
     with all the dialogs that should be Gtk.Dialogs but are Gtk.Windows
     or with windows that are too complex for gtk dialogs but should behave
@@ -1402,4 +1446,7 @@ def on_scape_destroy(window, event):
     key = Gdk.keyval_name(event.get_keyval()[1])
     if key == 'Escape':
         window.destroy()
+        return True
+    elif key == 'Return':
+        window.on_click_ok()
         return True

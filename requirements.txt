@@ -9,5 +9,6 @@ tornado
 flask
 colorama
 twisted
+sqlalchemy
 #extra
 psycopg2

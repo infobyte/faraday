@@ -146,7 +146,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         return status
 
-    def removeWorkspace(self, button, ws_name):
+    def remove_workspace(self, button, ws_name):
         """Removes a workspace. If the workspace to be deleted is the one
         selected, it moves you first to the default. The clears and refreshes
         sidebar"""
@@ -184,8 +184,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         Gtk.Application.do_startup(self)  # deep GTK magic
 
         self.ws_sidebar = WorkspaceSidebar(self.workspace_manager,
-                                           self.changeWorkspace,
-                                           self.removeWorkspace,
+                                           self.change_workspace,
+                                           self.remove_workspace,
                                            self.on_new_button,
                                            CONF.getLastWorkspace())
 
@@ -427,14 +427,12 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def on_about(self, action, param):
         """ Defines what happens when you press 'about' on the menu"""
-
         about_dialog = aboutDialog(self.window)
         about_dialog.run()
         about_dialog.destroy()
 
     def on_help(self, action, param):
         """Defines what happens when user press 'help' on the menu"""
-
         help_dialog = helpDialog(self.window)
         help_dialog.run()
         help_dialog.destroy()
@@ -493,8 +491,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         instance of the Terminal and tells the window to add it as a new tab
         for the notebook"""
         new_terminal = Terminal(CONF)
-        the_new_terminal = new_terminal.getTerminal()
-        AppWindow.new_tab(self.window, the_new_terminal)
+        terminal_scrolled = new_terminal.getTerminal()
+        self.window.new_tab(terminal_scrolled)
 
     def on_click_notifications(self, button):
         """Defines what happens when the user clicks on the notifications
@@ -536,7 +534,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.notificationsModel.clear()
         self.window.emit("clear_notifications")
 
-    def changeWorkspace(self, workspaceName):
+    def change_workspace(self, workspaceName):
         """Changes workspace in a separate thread. Emits a signal
         to present a 'Loading workspace' dialog while Faraday processes
         the change"""
@@ -544,7 +542,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         def background_process():
             """Change workspace. This function runs on a separated thread
             created by the parent function. DO NOT call any Gtk methods
-            withing it's scope, except by emiting signals to the window
+            withing its scope, except by emiting signals to the window
             """
             self.window.emit("loading_workspace", 'show')
             try:

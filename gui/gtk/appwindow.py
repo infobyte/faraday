@@ -377,16 +377,16 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         return toolbar
 
     def new_tab(self, scrolled_window):
-        """The on_new_terminal_button redirects here. Tells the window
-        to create pretty much a clone of itself when the user wants a new
-        tab"""
+        """The on_new_terminal_button redirects here from the application.
+        The scrolled_window will be a scrolled window containing only a VTE
+        terminal.
+        """
 
         terminal = scrolled_window.get_children()[0]
         terminal.connect("child_exited", self.on_terminal_exit)
         self.tab_number += 1
-        tab_number = self.tab_number
         pageN = self.terminalBox(scrolled_window)
-        self.notebook.append_page(pageN, Gtk.Label(str(tab_number+1)))
+        self.notebook.append_page(pageN, Gtk.Label(str(self.tab_number+1)))
         self.notebook.show_all()
 
     def delete_tab(self, button=None):
@@ -434,8 +434,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
     def on_terminal_exit(self, terminal, status):
         """Really, it is *very* similar to delete_tab, but in this case
-        we want to make sure that we restart Faraday is the user
+        we want to make sure that we restart Faraday if the user
         is not sure if he wants to exit"""
-
         self.delete_tab()
         terminal.startFaraday()

@@ -97,7 +97,7 @@ class NewWorkspaceDialog(Gtk.Window):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_modal(True)
-        self.connect("key_press_event", react_to_keys)
+        self.connect("key_press_event", key_reactions)
         self.set_size_request(200, 200)
         self.create_ws_callback = create_ws_callback
         self.sidebar = sidebar

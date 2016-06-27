@@ -737,8 +737,10 @@ class HostInfoDialog(Gtk.Window):
             selected = model[vuln_iter]
             vuln_type = selected[0]
             self.clear(self.vuln_info)
+            is_vuln_web = vuln_type == "VulnerabilityWeb"
+            frame_title = "Vulnerability Web" if is_vuln_web else "Vulnerability"
             self.change_label_in_frame(self.vuln_info_frame,
-                                       vuln_type)
+                                       frame_title)
             prop_names = self.get_properties_names(vuln_type)
             self.show_info_in_box(selected, prop_names,
                                   self.vuln_info)
@@ -790,15 +792,21 @@ class HostInfoDialog(Gtk.Window):
     def show_info_in_box(self, object_info, property_names, box):
         """Appends several boxes vertically to the box. The appended boxes will
         all contain two labels, together forming something like this:
-        '<b>property_name:</b> object_info'. There will be as many
-        of this small boxes as property names minus one, read next paragraph.
+        '<b>property_name:</b> object_info'. It will also append a separator
+        on top of each one of these boxes.
 
         It is important to notice that the first element of object_info
         is ignored. This is because of how the models in this class contain
-        information.
+        information. Thus, there'll be as many of this small boxes as
+        len(property_names) minus one, read next paragraph.
         """
 
         for index, prop_name in enumerate(property_names, start=1):
+            if index != 1:
+                # do not append to the first prop_name
+                separator = Gtk.Separator.new(orientation=Gtk.Orientation.HORIZONTAL)
+                box.pack_start(separator, False, True, 0)
+
             prop_box = Gtk.Box()
             prop_value = object_info[index]
 

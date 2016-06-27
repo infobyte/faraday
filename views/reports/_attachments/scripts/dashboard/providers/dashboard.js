@@ -184,7 +184,13 @@ angular.module('faradayApp')
 
         dashboardSrv.getVulnerabilitiesCount = function(ws) {
             var deferred = $q.defer(),
-            url = BASEURL + "/" + ws + "/_design/vulns/_view/byseverity?group=true";
+            url = BASEURL + "/" + ws + "/_design/vulns/_view/";
+
+            if(dashboardSrv.props['confirmed']) {
+                url += "confirmed";
+            }
+
+            url += "byseverity?group=true";
 
             dashboardSrv._getView(url)
                 .then(function(vulns) {

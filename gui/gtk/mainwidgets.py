@@ -56,14 +56,15 @@ class Terminal(Vte.Terminal):
         like killing the process, on Ctrl+C.
         """
 
-        control_key = Gdk.ModifierType.CONTROL_MASK
-        shift_key = Gdk.ModifierType.SHIFT_MASK
-        pressed_key = Gdk.keyval_name(event.get_keyval()[1])
+        control_key = 'control-mask'
+        shift_key = 'shift-mask'
+        last_pressed_key = Gdk.keyval_name(event.get_keyval()[1])
+        special_keys = event.state.value_nicks
         if event.type == Gdk.EventType.KEY_PRESS:
-            if event.state == shift_key | control_key:  # shift AND control
-                if pressed_key == 'C':
+            if control_key and shift_key in special_keys:
+                if last_pressed_key == 'C':
                     self.copy_clipboard()
-                elif pressed_key == 'V':
+                elif last_pressed_key == 'V':
                     self.paste_clipboard()
                 return True
 
@@ -209,12 +210,16 @@ class HostsSidebar(Gtk.Widget):
         icon_renderer = Gtk.CellRendererPixbuf()
 
         column_hosts = Gtk.TreeViewColumn("Hosts", text_renderer, text=3)
+        column_hosts.set_sort_column_id(4)
+        column_hosts.set_sort_indicator(True)
+
         column_os = Gtk.TreeViewColumn("", icon_renderer, pixbuf=1)
         column_os.set_sort_column_id(2)
-        column_hosts.set_sort_column_id(4)
+        column_os.set_sort_indicator(True)
 
         self.view.append_column(column_os)
         self.view.append_column(column_hosts)
+
 
         self.view.connect("row_activated", self.on_click)
 

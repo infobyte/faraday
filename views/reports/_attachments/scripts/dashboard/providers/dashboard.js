@@ -19,10 +19,15 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        dashboardSrv._areConfirmed = $cookies.get('confirmed') === 'true';
+        dashboardSrv.props = {};
+        dashboardSrv.props["confirmed"] = ($cookies.get('confirmed') == undefined) ? false : JSON.parse($cookies.get('confirmed'));
 
         dashboardSrv.setConfirmed = function(val) {
-            dashboardSrv._areConfirmed = val;
+            if(val == undefined) {
+                val = ($cookies.get('confirmed') == undefined) ? false : !JSON.parse($cookies.get('confirmed'));
+            }
+
+            dashboardSrv.props["confirmed"] = val;
             $cookies.put('confirmed', val);
         };
 

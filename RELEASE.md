@@ -11,7 +11,15 @@ New features in the latest update
 =====================================
 
 TBA:
---
+--:
+* Fixed a bug, a crash for change of workspace.
+* Fixed a bug with Import Reports in GTK GUI from OS X.
+* Fixed a bug with Ctrl+Shift+C and Ctrl+Shift+V in some desktops managers.
+* Fixed a bug with changes of WEB UI, not well reflected in GTK.
+* Hosts detailed view now can be sorted for numbers of vulns or OS.
+* Now Enter key in GTK dialogs, press OK button (Usability!!)
+* Now, you can edit your hosts in GTK.
+* Added new plugin : Ndiff.
 * Added new plugin : Netcat (Gnu netcat - OpenBSD netcat - Original netcat)
 
 Jun 13, 2016:

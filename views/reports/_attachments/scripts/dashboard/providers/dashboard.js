@@ -204,7 +204,13 @@ angular.module('faradayApp')
 
         dashboardSrv.getObjectsCount = function(ws) {
             var deferred = $q.defer(),
-            url = BASEURL + "/" + ws + "/_design/hosts/_view/summarized?group=true";
+            url = BASEURL + "/" + ws + "/_design/hosts/_view/summarized";
+
+            if(dashboardSrv.props['confirmed']) {
+                url += "confirmed";
+            }
+
+            url += "?group=true";
 
             dashboardSrv._getView(url)
                 .then(function(res) {

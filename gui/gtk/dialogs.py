@@ -575,6 +575,7 @@ class HostInfoDialog(Gtk.Window):
         column = Gtk.TreeViewColumn("Vulnerabilities", renderer, text=1)
         column.set_sort_column_id(1)
         self.vuln_list.append_column(column)
+        self.vuln_list.set_search_column(1)
 
         vuln_selection = self.vuln_list.get_selection()
         vuln_selection.connect("changed", self.on_vuln_selection)
@@ -685,6 +686,7 @@ class HostInfoDialog(Gtk.Window):
         """
         view = Gtk.TreeView(model)
         view.set_activate_on_single_click(True)
+        view.set_search_column(-1)
         view.set_enable_tree_lines(True)
         view.expand_all()
 
@@ -702,6 +704,13 @@ class HostInfoDialog(Gtk.Window):
     def on_main_tree_selection(self, tree_selection):
         """Fire up neccesary actions when selection on the main tree changes"""
         model, tree_iter = tree_selection.get_selected()
+
+        if tree_iter is None:
+            # NOTE: GTK returns "None" on the tree_iter when
+            # selection is changed with interactive search and everything
+            # explodes. Just return False if that's the case.
+            return False
+
         object_info = model[tree_iter]
 
         iter_depth = model.iter_depth(tree_iter)
@@ -727,21 +736,21 @@ class HostInfoDialog(Gtk.Window):
         and will emit the selection changed signal if the model
         changes even if nothing is selected.
         """
-
         model, vuln_iter = vuln_selection.get_selected()
-        try:
-            selected = model[vuln_iter]
-            vuln_type = selected[0]
-            self.clear(self.vuln_info)
-            is_vuln_web = vuln_type == "VulnerabilityWeb"
-            frame_title = "Vulnerability Web" if is_vuln_web else "Vulnerability"
-            self.change_label_in_frame(self.vuln_info_frame,
-                                       frame_title)
-            prop_names = self.get_properties_names(vuln_type)
-            self.show_info_in_box(selected, prop_names,
-                                  self.vuln_info)
-        except TypeError:
+        if vuln_iter is None:
+            # NOTE: for some reason, GTK returns "None" on the tree_iter when
+            # selection is changed with interactive search and everything
+            # explodes. Just return False if that's the case.
             return False
+
+        selected = model[vuln_iter]
+        vuln_type = selected[0]
+        self.clear(self.vuln_info)
+        self.change_label_in_frame(self.vuln_info_frame,
+                                   vuln_type)
+        prop_names = self.get_properties_names(vuln_type)
+        self.show_info_in_box(selected, prop_names,
+                              self.vuln_info)
 
     def set_vuln_model(self, model):
         """Sets the vulnerability view to show the given model"""

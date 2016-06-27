@@ -44,9 +44,9 @@ class ModelObjectMapper(AbstractMapper):
         if doc.get("parent", None):
             mobj.setParent(self.mapper_manager.find(doc.get("parent")))
         mobj.setOwner(doc.get("owner"))
-        # NOTE: Vulnerability and VulnerabilityWeb have a 'desc' key, not a
-        # description key, which is already handled by their specific
-        # unserialize method
+        # NOTE: Vulnerability and VulnerabilityWeb, when modified from the web,
+        # have a 'desc' key, not a description key, which is already handled
+        # by their specific  unserialize method
         if mobj_type != 'Vulnerability' and mobj_type != 'VulnerabilityWeb':
             mobj.setDescription(doc.get("description"))
         mobj.setMetadata( Metadata('').fromDict(mobj.getMetadata().__dict__))
@@ -271,6 +271,7 @@ class VulnWebMapper(VulnMapper):
         return doc
 
     def unserialize(self, vuln_web, doc):
+        vuln_web.setDesc(doc.get("desc"))
         vuln_web.setWebsite(doc.get("website"))
         vuln_web.setPath(doc.get("path"))
         vuln_web.setRequest(doc.get("request"))

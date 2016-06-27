@@ -782,7 +782,7 @@ class HostInfoDialog(Gtk.Window):
         """Appends several boxes vertically to the box. The appended boxes will
         all contain two labels, together forming something like this:
         '<b>property_name:</b> object_info'. There will be as many
-        of this small boxes as property names.
+        of this small boxes as property names minus one, read next paragraph.
 
         It is important to notice that the first element of object_info
         is ignored. This is because of how the models in this class contain

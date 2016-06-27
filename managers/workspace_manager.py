@@ -39,6 +39,7 @@ class WorkspaceManager(object):
         self.active_workspace = None
 
     def getWorkspacesNames(self):
+        """Returns the names of the workspaces as a list of strings"""
         return self.dbManager.getAllDbNames()
 
     def createWorkspace(self, name, desc, dbtype=DBTYPE.FS):
@@ -82,7 +83,8 @@ class WorkspaceManager(object):
                  "For example: "
                  "<couch_uri>http://john:password@127.0.0.1:5984</couch_uri>"))
         except Exception as e:
-            raise WorkspaceException(str(e))
+            return notification_center.CouchDBConnectionProblem(e)
+            #raise WorkspaceException(str(e))
         self.mappersManager.createMappers(dbConnector)
         workspace = self.mappersManager.getMapper(
             Workspace.__name__).find(name)

@@ -16,7 +16,8 @@ from gui.customevents import (LOGEVENT_ID, SHOWDIALOG_ID, SHOWPOPUP_ID,
                               CLEARHOSTS_ID, DIFFHOSTS_ID, SYNCFAILED_ID,
                               CONFLICTS_ID, WORKSPACE_CHANGED, CONFLICT_UPDATE,
                               RESOLVECONFLICTS_ID, UPDATEMODEL_ID, ADDHOST,
-                              EDITHOST, DELHOST, CHANGEFROMINSTANCE)
+                              EDITHOST, DELHOST, CHANGEFROMINSTANCE,
+                              CONNECTION_REFUSED)
 
 
 class LogCustomEvent(qt.QCustomEvent):
@@ -113,6 +114,10 @@ class ChangeFromInstanceCustomEvent(qt.QCustomEvent):
         qt.QCustomEvent.__init__(self, e.type())
         self.change = e.change
 
+class ConnectionRefusedEvent(qt.QCustomEvent):
+    def __init__(self, e):
+        qt.QCustomEvent.__init__(self, e.type())
+
 
 class QtCustomEvent(qt.QCustomEvent):
     events = {
@@ -132,7 +137,8 @@ class QtCustomEvent(qt.QCustomEvent):
         ADDHOST: AddHostCustomEvent,
         DELHOST: DeleteHostCustomEvent,
         EDITHOST: EditHostCustomEvent,
-        CHANGEFROMINSTANCE: ChangeFromInstanceCustomEvent
+        CHANGEFROMINSTANCE: ChangeFromInstanceCustomEvent,
+        CONNECTION_REFUSED: ConnectionRefusedEvent
     }
 
     @staticmethod

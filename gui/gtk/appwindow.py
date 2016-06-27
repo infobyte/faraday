@@ -45,6 +45,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         "update_ws_info": (GObject.SIGNAL_RUN_FIRST, None, (int, int, int, )),
         "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, )),
         "loading_workspace": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
+        "lost_db_connection": (GObject.SIGNAL_RUN_FIRST, None, (str,)),
         "update_hosts_sidebar": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "normal_error": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
         "important_error": (GObject.SIGNAL_RUN_FIRST, None, ()),
@@ -193,11 +194,12 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         currentTerminal = currentScrolledWindow.get_child()
         return currentTerminal
 
-    def prepare_important_error(self, event):
+    def prepare_important_error(self, event, *callbacks):
         """Attaches an event to the class, so it can be used by the signal
         callbacks even if they cannot be passed directly.
         """
         self.event = event
+        self.error_callbacks = callbacks
 
     def do_important_error(self):
         """Creates an importan error dialog with a callback to send
@@ -219,6 +221,43 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
                                    dialog_text)
         dialog.run()
         dialog.destroy()
+
+    def do_lost_db_connection(self, explanatory_message):
+        """Creates a simple dialog with an error message to inform the user
+        some kind of problem has happened and the connection was lost.
+        Uses the first callback on self.error_callbacks, which should
+        point to the application's handle_connection_lost method.
+        """
+
+        def destroy_dialog(button=None):
+            """Necessary 'cause button.connect method passes the button
+            as a paramether even when I don't need it.
+            """
+            dialog.destroy()
+
+        handle_connection_lost = self.error_callbacks[0]
+        if explanatory_message:
+            explanation = "\n The specific error was: " + explanatory_message
+        else:
+            explanation = ""
+
+        dialog = Gtk.MessageDialog(self, 0,
+                                   Gtk.MessageType.ERROR,
+                                   Gtk.ButtonsType.NONE,
+                                   "Faraday has lost connection to CouchDB. "
+                                   "The program has reverted back to the "
+                                   "filesystem database. Fix the connection "
+                                   "and re-enter the CouchDB URL in the "
+                                   "preferences settings." + explanation)
+        dialog.set_modal(True)
+
+        retry_button = dialog.add_button("Retry connection?", 42)
+        retry_button.connect("clicked", handle_connection_lost, dialog)
+
+        cancel_button = dialog.add_button("Cancel", 0)
+        cancel_button.connect("clicked", destroy_dialog)
+
+        dialog.run()
 
     def do_new_log(self, text):
         """To be used on a new_log signal. Calls a method on log to append
@@ -338,16 +377,16 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         return toolbar
 
     def new_tab(self, scrolled_window):
-        """The on_new_terminal_button redirects here. Tells the window
-        to create pretty much a clone of itself when the user wants a new
-        tab"""
+        """The on_new_terminal_button redirects here from the application.
+        The scrolled_window will be a scrolled window containing only a VTE
+        terminal.
+        """
 
         terminal = scrolled_window.get_children()[0]
         terminal.connect("child_exited", self.on_terminal_exit)
         self.tab_number += 1
-        tab_number = self.tab_number
         pageN = self.terminalBox(scrolled_window)
-        self.notebook.append_page(pageN, Gtk.Label(str(tab_number+1)))
+        self.notebook.append_page(pageN, Gtk.Label(str(self.tab_number+1)))
         self.notebook.show_all()
 
     def delete_tab(self, button=None):
@@ -395,8 +434,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
 
     def on_terminal_exit(self, terminal, status):
         """Really, it is *very* similar to delete_tab, but in this case
-        we want to make sure that we restart Faraday is the user
+        we want to make sure that we restart Faraday if the user
         is not sure if he wants to exit"""
-
         self.delete_tab()
         terminal.startFaraday()

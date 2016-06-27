@@ -11,6 +11,8 @@ import shutil
 import mockito
 import restkit
 import threading
+import requests
+import time
 from urlparse import urlparse
 import traceback
 from couchdbkit import Server, ChangesStream, Database
@@ -22,6 +24,7 @@ from managers.all import ViewsManager
 #from persistence.change import change_factory
 from config.globals import CONST_BLACKDBS
 from config.configuration import getInstanceConfiguration
+
 CONF = getInstanceConfiguration()
 
 
@@ -133,6 +136,9 @@ class DbConnector(object):
     def setChangesCallback(self, callback):
         self.changes_callback = callback
 
+    def setCouchExceptionCallback(self, callback):
+        self.couch_exception_callback = callback
+
     def waitForDBChange(self):
         pass
 
@@ -235,6 +241,9 @@ class CouchDbConnector(DbConnector):
             getLogger(self).warn(
                 "You're not authorized to upload views to this database")
         self.seq_num = self.db.info()['update_seq']
+        test_couch_thread = threading.Thread(target=self.continuosly_check_connection)
+        test_couch_thread.daemon = True
+        test_couch_thread.start()
 
     def getDocs(self):
         if len(self._docs.keys()) == 0:
@@ -291,8 +300,16 @@ class CouchDbConnector(DbConnector):
         return res
 
     def forceUpdate(self):
+        """It will try to update the information on the DB if it can.
+        The except clause is necesary to catch the case where we've lost
+        the connection to the DB.
+        """
+
         doc = self.getDocument(self.db.dbname)
-        return self.db.save_doc(doc, use_uuids=True, force_update=True)
+        try:
+            return self.db.save_doc(doc, use_uuids=True, force_update=True)
+        except:
+            return False
 
     #@trap_timeout
     def getDocument(self, document_id):
@@ -346,8 +363,37 @@ class CouchDbConnector(DbConnector):
     def setSeqNumber(self, seq_num):
         self.seq_num = seq_num
 
+    def continuosly_check_connection(self):
+        """Intended to use on a separate thread. Call module-level
+        function testCouch every second to see if response to the server_uri
+        of the DB is still 200. Call the exception_callback if we can't access
+        the server three times in a row.
+        """
+        tolerance = 0
+        server_uri = self.db.server_uri
+        while True:
+            time.sleep(1)
+            test_was_successful = test_couch(server_uri)
+            if test_was_successful:
+                tolerance = 0
+            else:
+                tolerance += 1
+                if tolerance == 3:
+                    self.couch_exception_callback()
+                    return False  # kill the thread if something went wrong
+
     #@trap_timeout
     def waitForDBChange(self, since=0):
+        """Listen to the stream of changes provided by CouchDbKit. Process
+        these changes accordingly. If there's an exception while listening
+        to the changes, return inmediatly."""
+
+        # XXX: the while True found here shouldn't be necessary because
+        # changesStream already keeps listening 'for ever'. In a few tests
+        # I ran, this hypothesis was confirmed, but with our current setup
+        # i'm afraid I may be missing something. In any case, it works
+        # as it is, but this definitevely needs revision.
+
         getLogger(self).debug(
             "Watching for changes")
         while True:
@@ -378,6 +424,8 @@ class CouchDbConnector(DbConnector):
             except Exception as e:
                 getLogger(self).info("Some exception happened while waiting for changes")
                 getLogger(self).info("  The exception was: %s" % e)
+                return False # kill thread, it's failed... in reconnection
+                             # another one will be created, don't worry
 
     #@trap_timeout
     def _compactDatabase(self):
@@ -468,7 +516,8 @@ class FileSystemManager(AbstractPersistenceManager):
 
 
 class NoCouchDBError(Exception):
-    pass
+    def __init__(self):
+        Exception.__init__(self, "NoCouchDBError")
 
 
 class NoConectionServer(object):
@@ -519,6 +568,7 @@ class CouchDbManager(AbstractPersistenceManager):
             getLogger(self).warn("No route to couchdb server on: %s" % uri)
             getLogger(self).debug(traceback.format_exc())
 
+
     #@trap_timeout
     def _create(self, name):
         db = self.__serv.create_db(name.lower())
@@ -531,11 +581,15 @@ class CouchDbManager(AbstractPersistenceManager):
     #@trap_timeout
     def _loadDbs(self):
         conditions = lambda x: not x.startswith("_") and x not in CONST_BLACKDBS
-        for dbname in filter(conditions, self.__serv.all_dbs()):
-            if dbname not in self.dbs.keys():
-                getLogger(self).debug(
-                    "Asking for dbname[%s], registering for lazy initialization" % dbname)
-                self.dbs[dbname] = lambda x: self._loadDb(x)
+        try:
+            for dbname in filter(conditions, self.__serv.all_dbs()):
+                if dbname not in self.dbs.keys():
+                    getLogger(self).debug(
+                        "Asking for dbname[%s], registering for lazy initialization" % dbname)
+                    self.dbs[dbname] = lambda x: self._loadDb(x)
+        except restkit.errors.RequestError as req_error:
+            getLogger(self).error("Couldn't load databases. "
+                                  "The connection to the CouchDB was probably lost. ")
 
     def _loadDb(self, dbname):
         db = self.__serv.get_db(dbname)
@@ -543,6 +597,14 @@ class CouchDbManager(AbstractPersistenceManager):
         self.dbs[dbname] = CouchDbConnector(db, seq_num=seq)
         return self.dbs[dbname]
 
+    def refreshDbs(self):
+        """Refresh databases using inherited method. On exception, asume
+        no databases are available.
+        """
+        try:
+            return AbstractPersistenceManager.refreshDbs()
+        except:
+            return []
 
     #@trap_timeout
     def pushReports(self):
@@ -574,23 +636,9 @@ class CouchDbManager(AbstractPersistenceManager):
 
     @staticmethod
     def testCouch(uri):
-        if uri is not None:
-            host, port = None, None
-            try:
-                import socket
-                url = urlparse(uri)
-                proto = url.scheme
-                host = url.hostname
-                port = url.port
-
-                port = port if port else socket.getservbyname(proto)
-                s = socket.socket()
-                s.settimeout(1)
-                s.connect((host, int(port)))
-            except:
-                return False
-            #getLogger(CouchdbManager).info("Connecting Couch to: %s:%s" % (host, port))
-            return True
+        """Redirect to the module-level function of the name, which
+        serves the same purpose and is used by other classes too."""
+        return test_couch(uri)
 
     def testCouchUrl(self, uri):
         if uri is not None:
@@ -629,3 +677,15 @@ class CouchDbManager(AbstractPersistenceManager):
         self.__serv.replicate(workspace, dst, mutual = mutual, continuous  = continuous, create_target = ct)
         if mutual:
             self.__serv.replicate(dst, src, continuous = continuous, **kwargs)
+
+
+def test_couch(uri):
+    """Return True if we could access uri/_all_dbs, which should happen
+    if we have an Internet connection, Couch is up and we have the correct
+    permissions (response_code == 200)
+    """
+    try:
+        response_code = requests.get(uri + '/_all_dbs').status_code
+        return True if response_code == 200 else False
+    except requests.adapters.ConnectionError:
+        return False

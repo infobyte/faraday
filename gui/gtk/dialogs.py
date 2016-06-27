@@ -526,7 +526,8 @@ class HostInfoDialog(Gtk.Window):
         return button_box
 
     def on_edit_host(self, button):
-        """Tries to open self.edit_url in the default browser."""
+        """Tries to open self.edit_url (url which directs to the host in the
+        web ui) in the default browser."""
         webbrowser.open(self.edit_url, new = 2)
 
 
@@ -568,13 +569,15 @@ class HostInfoDialog(Gtk.Window):
     @scrollable(width=250)
     def create_vuln_list(self):
         """Creates a simple view of vulnerabilities for the object
-        and returns a box containing it.
+        and returns a box containing it. The vuln_list will be a value of the
+        instance.
         """
 
         self.vuln_list = Gtk.TreeView()
         self.vuln_list.set_activate_on_single_click(True)
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("Vulnerabilities", renderer, text=1)
+        column.set_sort_column_id(1)
         self.vuln_list.append_column(column)
 
         vuln_selection = self.vuln_list.get_selection()
@@ -747,7 +750,9 @@ class HostInfoDialog(Gtk.Window):
         self.vuln_list.set_model(model)
 
     def create_vuln_model(self, obj):
-        """Return the model for the vulnerabilities of the obj object."""
+        """Return the model for the vulnerabilities of the obj object.
+        It will be sorted alphabetically.
+        """
         # those are 15 strings
         model = Gtk.ListStore(str, str, str, str, str, str, str, str,
                               str, str, str, str, str, str, str)
@@ -771,7 +776,11 @@ class HostInfoDialog(Gtk.Window):
                               vuln.getResponse(), vuln.getMethod(),
                               vuln.getPname(), vuln.getParams(),
                               vuln.getQuery(), vuln.getCategory()])
-        return model
+        #sort it!
+        sorted_model = Gtk.TreeModelSort(model=model)
+        sorted_model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
+
+        return sorted_model
 
     def change_label_in_frame(self, frame, string):
         """Changes the label in the given frame to 'string Information'"""

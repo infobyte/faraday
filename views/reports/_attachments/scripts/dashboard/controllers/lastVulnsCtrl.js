@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('lastVulnsCtrl',
-        ['$scope', '$routeParams', 'vulnsManager',
-        function($scope, $routeParams, vulnsManager) {
+        ['$scope', '$routeParams', 'dashboardSrv', 'vulnsManager',
+        function($scope, $routeParams, dashboardSrv, vulnsManager) {
             $scope.vulns;
             $scope.vulnSortField = "metadata.create_time";
             $scope.vulnSortReverse = true;
@@ -15,11 +15,21 @@ angular.module('faradayApp')
                 if($routeParams.wsId != undefined) {
                     $scope.workspace = $routeParams.wsId;
 
-                    vulnsManager.getVulns($scope.workspace)
-                        .then(function(vulns) {
-                            $scope.vulns = vulns;
-                        });
+                    $scope.loadData();
+
+                    $scope.$watch(function() {
+                        return dashboardSrv.props.confirmed;
+                    }, function() {
+                        $scope.loadData();
+                    }, true);
                 }
+            };
+
+            $scope.loadData = function() {
+                vulnsManager.getVulns($scope.workspace)
+                    .then(function(vulns) {
+                        $scope.vulns = vulns;
+                    });
             };
 
             // toggles sort field and order

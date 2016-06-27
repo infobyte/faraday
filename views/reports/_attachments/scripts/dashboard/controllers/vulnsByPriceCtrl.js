@@ -17,19 +17,20 @@ angular.module('faradayApp')
                     $scope.workspace = $routeParams.wsId;
                     $scope.vulnPrices = dashboardSrv.vulnPrices;
 
-                    dashboardSrv.getVulnsWorth($scope.workspace)
-                        .then(function(vulns) {
-                            $scope.vulns = vulns;
+                    $scope.loadData();
+
+                    $scope.$watch('vulnPrices', function(ps) {
+                        if($scope.vulns != undefined) {
                             $scope.generateVulnPrices($scope.vulns, $scope.vulnPrices);
                             $scope.workspaceWorth = $scope.sumProperty($scope.vulns, "amount");
-                        });
+                        }
+                    }, true);
 
-                        $scope.$watch('vulnPrices', function(ps) {
-                            if($scope.vulns != undefined) {
-                                $scope.generateVulnPrices($scope.vulns, $scope.vulnPrices);
-                                $scope.workspaceWorth = $scope.sumProperty($scope.vulns, "amount");
-                            }
-                        }, true);
+                    $scope.$watch(function() {
+                        return dashboardSrv.props.confirmed;
+                    }, function() {
+                        $scope.loadData();
+                    }, true);
                 }
             };
 
@@ -37,6 +38,15 @@ angular.module('faradayApp')
                 vulns.forEach(function(vuln) {
                     vuln.amount = vuln.value * prices[vuln.key];
                 });
+            };
+
+            $scope.loadData = function() {
+                dashboardSrv.getVulnsWorth($scope.workspace)
+                    .then(function(vulns) {
+                        $scope.vulns = vulns;
+                        $scope.generateVulnPrices($scope.vulns, $scope.vulnPrices);
+                        $scope.workspaceWorth = $scope.sumProperty($scope.vulns, "amount");
+                    });
             };
 
             $scope.sumProperty = function(data, prop) {

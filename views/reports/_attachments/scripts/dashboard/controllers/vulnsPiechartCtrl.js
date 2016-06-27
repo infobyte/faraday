@@ -15,20 +15,29 @@ angular.module('faradayApp')
                 if($routeParams.wsId != undefined) {
                     $scope.workspace = $routeParams.wsId;
 
-                    $scope.data = {key: [], value: [], colors: [], options: {maintainAspectRatio: false}};
+                    $scope.loadData();
 
-                    dashboardSrv.getVulnerabilitiesCount($scope.workspace)
-                        .then(function(vulns) {
-                            $scope.loaded = true;
-                            SEVERITIES.forEach(function(severity, index) {
-                                if(severity != "unclassified" && vulns[severity] != undefined) {
-                                    $scope.data.value.push(vulns[severity]);
-                                    $scope.data.key.push(severity);
-                                    $scope.data.colors.push(dashboardSrv.vulnColors[index]);
-                                }
-                            });
-                        });
+                    $scope.$watch(function() {
+                        return dashboardSrv.props.confirmed;
+                    }, function() {
+                        $scope.loadData();
+                    }, true);
                 }
+            };
+
+            $scope.loadData = function() {
+                dashboardSrv.getVulnerabilitiesCount($scope.workspace)
+                    .then(function(vulns) {
+                        $scope.data = {key: [], value: [], colors: [], options: {maintainAspectRatio: false}};
+                        $scope.loaded = true;
+                        SEVERITIES.forEach(function(severity, index) {
+                            if(severity != "unclassified" && vulns[severity] != undefined) {
+                                $scope.data.value.push(vulns[severity]);
+                                $scope.data.key.push(severity);
+                                $scope.data.colors.push(dashboardSrv.vulnColors[index]);
+                            }
+                        });
+                    });
             };
 
             init();

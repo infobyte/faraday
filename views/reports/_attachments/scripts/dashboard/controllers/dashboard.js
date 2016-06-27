@@ -6,7 +6,7 @@ angular.module('faradayApp')
     .controller('dashboardCtrl',
         ['$scope', '$filter', '$route', '$routeParams', '$location', 'dashboardSrv', 'workspacesFact',
         function($scope, $filter, $route, $routeParams, $location, dashboardSrv, workspacesFact) {
-            $scope._areConfirmed = dashboardSrv._areConfirmed;
+            $scope.props = dashboardSrv.props;
 
             init = function() {
                 //current workspace
@@ -20,6 +20,10 @@ angular.module('faradayApp')
 
             $scope.navigate = function(route) {
                 $location.path(route);
+            };
+
+            $scope.toggleConfirmed = function() {
+                dashboardSrv.setConfirmed();
             };
 
             init();

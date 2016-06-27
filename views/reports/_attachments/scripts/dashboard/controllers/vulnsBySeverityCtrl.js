@@ -14,13 +14,23 @@ angular.module('faradayApp')
                 if($routeParams.wsId != undefined) {
                     $scope.workspace = $routeParams.wsId;
 
-                    dashboardSrv.getVulnerabilitiesCount($scope.workspace)
-                        .then(function(vulns) {
-                            SEVERITIES.forEach(function(severity) {
-                                $scope.vulns[severity] = vulns[severity] || 0;
-                            });
-                        });
+                    $scope.loadData();
+
+                    $scope.$watch(function() {
+                        return dashboardSrv.props.confirmed;
+                    }, function() {
+                        $scope.loadData();
+                    }, true);
                 }
+            };
+
+            $scope.loadData = function() {
+                dashboardSrv.getVulnerabilitiesCount($scope.workspace)
+                    .then(function(vulns) {
+                        SEVERITIES.forEach(function(severity) {
+                            $scope.vulns[severity] = vulns[severity] || 0;
+                        });
+                    });
             };
 
             init();

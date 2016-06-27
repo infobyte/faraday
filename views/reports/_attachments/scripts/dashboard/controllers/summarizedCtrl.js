@@ -13,17 +13,26 @@ angular.module('faradayApp')
             init = function() {
                 if($routeParams.wsId != undefined) {
                     $scope.workspace = $routeParams.wsId;
+                    $scope.loadData();
 
-                    dashboardSrv.getObjectsCount($scope.workspace)
-                        .then(function(res) {
-                            for(var i = res.length - 1; i >= 0; i--) {
-                                if(res[i].key === "interfaces") {
-                                   res.splice(i, 1);
-                                }
-                            }
-                            $scope.objectsCount = res;
-                        });
+                    $scope.$watch(function() {
+                        return dashboardSrv.props.confirmed;
+                    }, function() {
+                        $scope.loadData();
+                    }, true);
                 }
+            };
+
+            $scope.loadData = function() {
+                dashboardSrv.getObjectsCount($scope.workspace)
+                    .then(function(res) {
+                        for(var i = res.length - 1; i >= 0; i--) {
+                            if(res[i].key === "interfaces") {
+                               res.splice(i, 1);
+                            }
+                        }
+                        $scope.objectsCount = res;
+                    });
             };
 
             init();

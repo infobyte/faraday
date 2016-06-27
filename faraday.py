@@ -142,7 +142,7 @@ def getParserArgs():
     parser.add_argument('--gui', action="store", dest="gui",
         default="gtk",
         help="Select interface to start faraday. Supported values are "
-              "qt3 (deprecated), gtk and 'no' (no GUI at all). Defaults to qt3")
+              "qt3 (deprecated), gtk and 'no' (no GUI at all). Defaults to GTK")
 
     parser.add_argument('--cli', action="store_true",
         dest="cli",

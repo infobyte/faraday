@@ -177,14 +177,14 @@ class NewWorkspaceDialog(Gtk.Window):
         """Return a box with OK and cancel buttons."""
         button_box = Gtk.Box(spacing=6)
         OK_button = Gtk.Button.new_with_label("OK")
-        OK_button.connect("clicked", self.on_click_OK)
+        OK_button.connect("clicked", self.on_click_ok)
         cancel_button = Gtk.Button.new_with_label("Cancel")
         cancel_button.connect("clicked", self.on_click_cancel)
         button_box.pack_start(OK_button, False, False, 10)
         button_box.pack_end(cancel_button, False, False, 10)
         return button_box
 
-    def on_click_OK(self, button):
+    def on_click_ok(self, button=None):
         """Check if the name provided for the WS is valid. If so,
         create it and add it to the sidebar. If not, show error.
         """
@@ -297,7 +297,7 @@ class PluginOptionsDialog(Gtk.Window):
 
         self.add(self.mainBox)
 
-    def on_click_ok(self, button):
+    def on_click_ok(self, button=None):
         """On click OK button update the plugins settings and then destroy"""
         if self.plugin_manager is not None:
             self.plugin_manager.updateSettings(self.plugin_settings)

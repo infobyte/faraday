@@ -140,7 +140,7 @@ def getParserArgs():
         help="Path to the valid CouchDB certificate")
 
     parser.add_argument('--gui', action="store", dest="gui",
-        default="qt3",
+        default="gtk",
         help="Select interface to start faraday. Supported values are "
               "qt3 (deprecated), gtk and 'no' (no GUI at all). Defaults to qt3")
 
@@ -221,19 +221,18 @@ def checkDependencies():
                 if not line.find('#'):
                     break
                 else:
-                    modules.append([line[:line.index('=')], (line[line.index('=')+2:]).strip()])
+                    modules.append(line.strip('\n'))
             f.close()
             pip_dist = [dist.project_name.lower() for dist in pip.get_installed_distributions()]
-
             for module in modules:
-                if module[0].lower() not in pip_dist:
+                if module.lower() not in pip_dist:
                     try:
-                        __import__(module[0])
+                        __import__(module)
                     except ImportError:
                         if query_user_bool("Missing module %s."
-                            " Do you wish to install it?" % module[0]):
-                            pip.main(['install', "%s==%s" %
-                                     (module[0], module[1]), '--user'])
+                            " Do you wish to install it?" % module):
+                            pip.main(['install', "%s" %
+                                     module, '--user'])
 
                         else:
                             return False

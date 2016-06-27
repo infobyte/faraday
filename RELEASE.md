@@ -11,11 +11,15 @@ New features in the latest update
 =====================================
 
 TBA:
---:
+---
+* GTK is the default interface now.
 * Added new plugin : Ndiff.
 * Added new plugin : Netcat (Gnu netcat - OpenBSD netcat - Original netcat)
 * Added button to edit your host in the GTK interface.
 * Hosts sidebar now can be sorted by amout of vulnerabilities and OS.
+* Changes in installation: install.sh now installs only GTK, QT is considered deprecated.
+* Changes in installation: Faraday now runs with the last versions of Python modules.
+* Changes in installation: fixed names of packages in setup_server.sh
 * Usability: Enter key in GTK dialogs works as OK button
 * Fixed a bug when workspace was changed
 * Fixed a bug with Import Reports Dialog in GTK GUI on OS X.

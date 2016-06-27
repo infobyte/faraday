@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .factory('vulnsManager',
-        ['Vuln', 'WebVuln', 'BASEURL', '$filter', '$http', '$q', 'attachmentsFact', 'hostsManager', 'servicesManager', 
-        function(Vuln, WebVuln, BASEURL, $filter, $http, $q, attachmentsFact, hostsManager, servicesManager) {
+        ['Vuln', 'WebVuln', 'BASEURL', '$filter', '$http', '$q', 'attachmentsFact', 'dashboardSrv', 'hostsManager', 'servicesManager',
+        function(Vuln, WebVuln, BASEURL, $filter, $http, $q, attachmentsFact, dashboardSrv, hostsManager, servicesManager) {
         var vulnsManager = {};
 
         vulnsManager.vulns = [];
@@ -103,9 +103,14 @@ angular.module('faradayApp')
 
         vulnsManager.getVulns = function(ws) {
             var deferred = $q.defer(),
-            self = this;
+            self = this,
+            url = BASEURL + ws + '/_design/vulns/_view/all';
 
-            $http.get(BASEURL + ws + '/_design/vulns/_view/all')
+            if(dashboardSrv.props['confirmed']) {
+                url += "confirmed";
+            }
+
+            $http.get(url)
                 .success(function(data) {
                     self.vulns.splice(0, self.vulns.length);
                     self.vulns_indexes = {};
@@ -144,7 +149,7 @@ angular.module('faradayApp')
                         });
                 })
                 .error(function() {
-                    deferred.reject("Unable to retrieve vulnerabilities from Couch");
+                    deferred.reject("Unable to retrieve vulnerabilities from DB");
                 });
 
             return deferred.promise;

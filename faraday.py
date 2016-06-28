@@ -455,27 +455,28 @@ def setupImages():
     shutil.copytree(FARADAY_BASE_IMAGES, FARADAY_USER_IMAGES)
 
 
-def checkConfiguration():
+def checkConfiguration(gui_type):
     """Checks if the environment is ready to run Faraday.
 
     Checks different environment requirements and sets them before starting
     Faraday. This includes checking for plugin folders, libraries, QT
     configuration and ZSH integration.
     """
-
     logger.info("Checking configuration.")
     logger.info("Setting up plugins.")
     setupPlugins(args.dev_mode)
-    logger.info("Setting up Qt configuration.")
-    setupQtrc()
+    if gui_type == "qt3":
+        logger.info("Setting up Qt configuration.")
+        setupQtrc()
     logger.info("Setting up ZSH integration.")
     setupZSH()
     logger.info("Setting up  user configuration.")
     setupXMLConfig()
     logger.info("Setting up libraries.")
     setupLibs()
-    logger.info("Setting up icons for QT interface.")
-    setupImages()
+    if gui_type == "qt3":
+        logger.info("Setting up icons for QT interface.")
+        setupImages()
 
 
 def setupFolders(folderlist):
@@ -617,7 +618,6 @@ def main():
     Main function for launcher.
 
     """
-
     os.chdir(FARADAY_BASE)
 
     init()
@@ -626,7 +626,7 @@ def main():
         logger.info("Dependencies met.")
         if args.cert_path:
             os.environ[REQUESTS_CA_BUNDLE_VAR] = args.cert_path
-        checkConfiguration()
+        checkConfiguration(args.gui)
         setConf()
         checkCouchUrl()
         checkVersion()

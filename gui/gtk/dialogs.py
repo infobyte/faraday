@@ -14,7 +14,6 @@ gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk, GdkPixbuf, Gdk
 from persistence.persistence_managers import CouchDbManager
-from utils.common import checkSSL
 from config.configuration import getInstanceConfiguration
 from model import guiapi
 from decorators import scrollable

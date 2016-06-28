@@ -65,6 +65,7 @@ from mainwidgets import Statusbar
 
 from gui.loghandler import GUIHandler
 from utils.logs import addHandler
+from utils.common import checkSSL
 
 CONF = getInstanceConfiguration()
 

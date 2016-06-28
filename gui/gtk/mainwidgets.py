@@ -19,6 +19,9 @@ class Terminal(Vte.Terminal):
     """Defines a simple terminal that will execute faraday-terminal with the
     corresponding host and port as specified by the CONF"""
     def __init__(self, CONF):
+        """Initialize terminal with infinite scrollback, no bell, connecting
+        all keys presses to copy_or_past, and starting faraday-terminal
+        """
         super(Vte.Terminal, self).__init__()
         self.set_scrollback_lines(-1)
         self.set_audible_bell(0)
@@ -53,15 +56,18 @@ class Terminal(Vte.Terminal):
         """Decides if the Ctrl+Shift is pressed, in which case returns True.
         If Ctrl+Shift+C or Ctrl+Shift+V are pressed, copies or pastes,
         acordingly. Return necesary so it doesn't perform other action,
-        like killing the process, on Ctrl+C.
-        """
+        like killing the process on Ctrl+C.
 
+        Note that it won't care about order: Shift+Ctrl+V will work just as
+        Ctrl+Shift+V.
+        """
         control_key = 'control-mask'
         shift_key = 'shift-mask'
         last_pressed_key = Gdk.keyval_name(event.get_keyval()[1])
-        special_keys = event.state.value_nicks
+        set_pressed_special_keys = set(event.state.value_nicks)
         if event.type == Gdk.EventType.KEY_PRESS:
-            if control_key and shift_key in special_keys:
+            if {control_key, shift_key} <= set_pressed_special_keys:
+                # '<=' means 'is a subset of' in sets
                 if last_pressed_key == 'C':
                     self.copy_clipboard()
                 elif last_pressed_key == 'V':

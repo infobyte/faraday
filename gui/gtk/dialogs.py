@@ -820,14 +820,14 @@ class HostInfoDialog(Gtk.Window):
         object_id = selected_object[0]
         if object_type == 'Interface':
             # an interface is a direct child of a host
-            object_ = self.host.findChild(object_id)
+            object_ = self.host.getInterface(object_id)
         elif object_type == 'Service':
             # a service is a grand-child of a host, so we should look
             # for its parent interface and ask her about the child
             parent_interface_iter = selected_object.get_parent()
             parent_interface_id = parent_interface_iter[0]
             parent_interface = self.host.getInterface(parent_interface_id)
-            object_ = parent_interface.findChild(object_id)
+            object_ = parent_interface.getService(object_id)
 
         return object_
 

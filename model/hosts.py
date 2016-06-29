@@ -120,8 +120,8 @@ class Host(ModelComposite):
         return self.getChildsByType(Interface.__name__)
 
     def getInterface(self, ID):
-        """Return the interface of id ID, None if ID wasn't an interface,
-        will raise exception if ID wasn't found among the children.
+        """Return the interface of id ID, None if ID wasn't an interface or
+        wasn't found among the children.
         """
         interface = self.findChild(ID)
         return interface if interface.class_signature == "Interface" else None
@@ -410,8 +410,7 @@ class Interface(ModelComposite):
 
     def getService(self, ID):
         """Get a Service from an ID. Return the service object if found,
-        None if ID wasn't a service and will raise an exception if ID
-        wasn't among the children.
+        None if ID wasn't a service or wasn't found among the children.
         """
         service = self.findChild(ID)
         return service if service.class_signature == "Service" else None
@@ -585,8 +584,8 @@ class Service(ModelComposite):
         return self._getAllValues("_interfaces", mode)
 
     def getInterface(self, ID):
-        """Gets the interface with id ID. If ID isn't a child of Service,
-        raise error. If it's a child but not an interface, return None.
+        """Gets the interface with id ID. If ID isn't found or isn't an
+        interface, return None.
         """
         interface = self.findChild(ID)
         return interface if interface.class_signature == "Interface" else None
@@ -703,7 +702,7 @@ class HostApplication(ModelComposite): # Deprecated
         """
         return self._getAllValues("_services", mode)
 
-    def getService(self, name):
+    def getService(self, ID):
         """
         if name is found it returns the service object
         it returns None otherwise

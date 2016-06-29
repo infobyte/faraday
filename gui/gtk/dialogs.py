@@ -819,14 +819,17 @@ class HostInfoDialog(Gtk.Window):
         """
         object_id = selected_object[0]
         if object_type == 'Interface':
-            _object = self.host.getInterface(object_id)
+            # an interface is a direct child of a host
+            object_ = self.host.findChild(object_id)
         elif object_type == 'Service':
+            # a service is a grand-child of a host, so we should look
+            # for its parent interface and ask her about the child
             parent_interface_iter = selected_object.get_parent()
             parent_interface_id = parent_interface_iter[0]
             parent_interface = self.host.getInterface(parent_interface_id)
-            _object = parent_interface.childs.get(object_id, None)
+            object_ = parent_interface.findChild(object_id)
 
-        return _object
+        return object_
 
     def get_properties_names(self, object_type):
         """Return a list with the property names for objects of type

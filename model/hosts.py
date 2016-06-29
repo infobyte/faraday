@@ -120,9 +120,11 @@ class Host(ModelComposite):
         return self.getChildsByType(Interface.__name__)
 
     def getInterface(self, ID):
-        """Return the interface of id ID, None if Interface not found.
-        Actually, it will return any child of id ID. Name is all wrong."""
-        return self.childs.get(ID, None)
+        """Return the interface of id ID, None if ID wasn't an interface,
+        will raise exception if ID wasn't found among the children.
+        """
+        interface = self.findChild(ID)
+        return interface if interface.class_signature == "Interface" else None
 
     def getService(self, name):
         """
@@ -406,12 +408,13 @@ class Interface(ModelComposite):
     def getAllServices(self, mode = 0):
         return self.getChildsByType(Service.__name__)
 
-    def getService(self, name):
+    def getService(self, ID):
+        """Get a Service from an ID. Return the service object if found,
+        None if ID wasn't a service and will raise an exception if ID
+        wasn't among the children.
         """
-        if name is found it returnsnetwork_segment the service object
-        it returns None otherwise
-        """
-        return self._getValueByID("_services", name)
+        service = self.findChild(ID)
+        return service if service.class_signature == "Service" else None
 
     def setServices(self, services):
         self._addChildsDict(services)
@@ -581,13 +584,12 @@ class Service(ModelComposite):
         """
         return self._getAllValues("_interfaces", mode)
 
-    def getInterface(self, value):
+    def getInterface(self, ID):
+        """Gets the interface with id ID. If ID isn't a child of Service,
+        raise error. If it's a child but not an interface, return None.
         """
-        value can be a mac or ipv4 address
-        if value is found it returns the interface objets
-        it returns None otherwise
-        """
-        return self._getValueByID("_interfaces", value)
+        interface = self.findChild(ID)
+        return interface if interface.class_signature == "Interface" else None
 
     def addApplication(self, newApp, update=False): # Deprecated
         res = self._addValue("_applications", newApp, update=update)

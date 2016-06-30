@@ -21,6 +21,8 @@ TBA:
 * Changes in installation: Faraday now runs with the last versions of Python modules.
 * Changes in installation: fixed names of packages in setup_server.sh
 * Usability: Enter key in GTK dialogs works as OK button
+* Improved handling of lost connection to CouchDB database
+* First steps towards deprecating Filesystem databases
 * Fixed a bug when workspace was changed
 * Fixed a bug with Import Reports Dialog in GTK GUI on OS X.
 * Fixed a bug with Ctrl+Shift+C and Ctrl+Shift+V in some desktops managers.

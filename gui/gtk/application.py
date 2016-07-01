@@ -481,14 +481,17 @@ class GuiApp(Gtk.Application, FaradayUi):
         pluginsOption_window.show_all()
 
     def on_new_button(self, action=None, params=None, title=None):
-        "Defines what happens when you press the 'new' button on the toolbar"
+        """Connected to the 'New' button on the toolbar. Show the new workspace
+        dialog. Action and Params are not used at all, just a side effect
+        of GTK callbacks.
+        """
         new_workspace_dialog = NewWorkspaceDialog(self.createWorkspace,
                                                   self.workspace_manager,
                                                   self.ws_sidebar, self.window,
                                                   title)
         new_workspace_dialog.show_all()
 
-    def on_new_terminal_button(self, action, params):
+    def on_new_terminal_button(self, action=None, params=None):
         """When the user clicks on the new_terminal button, creates a new
         instance of the Terminal and tells the window to add it as a new tab
         for the notebook"""
@@ -496,10 +499,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         terminal_scrolled = new_terminal.getTerminal()
         self.window.new_tab(terminal_scrolled)
 
-    def on_click_notifications(self, button):
+    def on_click_notifications(self, button=None):
         """Defines what happens when the user clicks on the notifications
         button: just show a silly window with a treeview containing
-        all the notifications"""
+        all the notifications. Button not used at all."""
 
         notifications_view = Gtk.TreeView(self.notificationsModel)
         renderer = Gtk.CellRendererText()
@@ -536,7 +539,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.notificationsModel.clear()
         self.window.emit("clear_notifications")
 
-    def change_workspace(self, workspaceName):
+    def change_workspace(self, workspace_name):
         """Changes workspace in a separate thread. Emits a signal
         to present a 'Loading workspace' dialog while Faraday processes
         the change"""
@@ -548,11 +551,11 @@ class GuiApp(Gtk.Application, FaradayUi):
             """
             self.window.emit("loading_workspace", 'show')
             try:
-                ws = super(GuiApp, self).openWorkspace(workspaceName)
+                ws = super(GuiApp, self).openWorkspace(workspace_name)
                 self.window.emit("loading_workspace", "destroy")
             except Exception as e:
-                model.guiapi.notification_center.showDialog(str(e))
                 ws = self.openDefaultWorkspace()
+                model.guiapi.notification_center.showDialog(str(e))
                 self.window.emit("loading_workspace", "destroy")
 
             workspace = ws.name
@@ -567,7 +570,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def run(self, args):
         """First method to run, as defined by FaradayUi. This method is
-        mandatory"""
+        mandatory."""
 
         workspace = args.workspace
         try:

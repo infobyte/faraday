@@ -69,6 +69,9 @@ class WorkspaceManager(object):
         return False
 
     def openWorkspace(self, name):
+        """Open a workspace by name. Returns the workspace. Raises an
+        WorkspaceException if something went wrong along the way.
+        """
         if name not in self.getWorkspacesNames():
             raise WorkspaceException(
                 "Workspace %s wasn't found" % name)
@@ -83,8 +86,8 @@ class WorkspaceManager(object):
                  "For example: "
                  "<couch_uri>http://john:password@127.0.0.1:5984</couch_uri>"))
         except Exception as e:
-            return notification_center.CouchDBConnectionProblem(e)
-            #raise WorkspaceException(str(e))
+            notification_center.CouchDBConnectionProblem(e)
+            raise WorkspaceException(str(e))
         self.mappersManager.createMappers(dbConnector)
         workspace = self.mappersManager.getMapper(
             Workspace.__name__).find(name)

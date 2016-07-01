@@ -1241,12 +1241,12 @@ class ConflictsDialog(Gtk.Window):
             Keep in mind, type(type("a")) is Type,
                           type(type("a").__name__) is Str
             """
-            res = type(first_raw_prop).__name__
-            return res
+            type_as_string = type(first_raw_prop).__name__
+            return type_as_string
 
         def decide_bg():
             """Decides which background should the row have depending on
-            the uses default theme (light, dark, or unknown abomination)
+            the users default theme (light, dark, or unknown abomination)
             Pretty ugly, but it works"""
             color = self.bg_color.split("(")[1]
             color = color.split(",")

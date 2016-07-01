@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA:
+Jul 1, 2016:
 ---
 * GTK is the default interface now.
 * Added new plugin : Ndiff.

@@ -217,7 +217,6 @@ class PluginOptionsDialog(Gtk.Window):
     It is not the prettiest thing in the world but it works.
     Creating and displaying the models of each plugin settings is specially
     messy , there's more info in the appropiate methods"""
-    # TODO: probably stop hardcoding the first plugin, right?
 
     def __init__(self, plugin_manager, parent):
 
@@ -234,15 +233,15 @@ class PluginOptionsDialog(Gtk.Window):
         else:
             self.plugin_settings = {}
 
-        self.settings_view = None
-        self.id_of_selected = "Acunetix XML Output Plugin"  # first one by name
-        self.models = self.createPluginsSettingsModel()
-        self.setSettingsView()
-
         plugin_info = self.createPluginInfo(plugin_manager)
+        self.id_of_selected = plugin_info[0][1]  # default selected is first item in list
         plugin_list = self.createPluginListView(plugin_info)
         left_side_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         left_side_box.pack_start(plugin_list, True, True, 0)
+
+        self.settings_view = None
+        self.models = self.createPluginsSettingsModel()
+        self.setSettingsView()
 
         buttonBox = Gtk.Box()
         OK_button = Gtk.Button.new_with_label("OK")

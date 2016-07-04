@@ -112,8 +112,6 @@ class FPlugin(core.PluginBase):
                 api.devlog ("[Faraday] Can't save faraday plugin output file")
                 return
 
-            print buffer.getvalue()
-
 
         return final
 

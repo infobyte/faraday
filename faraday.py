@@ -140,9 +140,9 @@ def getParserArgs():
         help="Path to the valid CouchDB certificate")
 
     parser.add_argument('--gui', action="store", dest="gui",
-        default="qt3",
+        default="gtk",
         help="Select interface to start faraday. Supported values are "
-              "qt3 (deprecated), gtk and 'no' (no GUI at all). Defaults to qt3")
+              "qt3 (deprecated), gtk and 'no' (no GUI at all). Defaults to GTK")
 
     parser.add_argument('--cli', action="store_true",
         dest="cli",
@@ -221,19 +221,18 @@ def checkDependencies():
                 if not line.find('#'):
                     break
                 else:
-                    modules.append([line[:line.index('=')], (line[line.index('=')+2:]).strip()])
+                    modules.append(line.strip('\n'))
             f.close()
             pip_dist = [dist.project_name.lower() for dist in pip.get_installed_distributions()]
-
             for module in modules:
-                if module[0].lower() not in pip_dist:
+                if module.lower() not in pip_dist:
                     try:
-                        __import__(module[0])
+                        __import__(module)
                     except ImportError:
                         if query_user_bool("Missing module %s."
-                            " Do you wish to install it?" % module[0]):
-                            pip.main(['install', "%s==%s" %
-                                     (module[0], module[1]), '--user'])
+                            " Do you wish to install it?" % module):
+                            pip.main(['install', "%s" %
+                                     module, '--user'])
 
                         else:
                             return False
@@ -456,27 +455,28 @@ def setupImages():
     shutil.copytree(FARADAY_BASE_IMAGES, FARADAY_USER_IMAGES)
 
 
-def checkConfiguration():
+def checkConfiguration(gui_type):
     """Checks if the environment is ready to run Faraday.
 
     Checks different environment requirements and sets them before starting
     Faraday. This includes checking for plugin folders, libraries, QT
     configuration and ZSH integration.
     """
-
     logger.info("Checking configuration.")
     logger.info("Setting up plugins.")
     setupPlugins(args.dev_mode)
-    logger.info("Setting up Qt configuration.")
-    setupQtrc()
+    if gui_type == "qt3":
+        logger.info("Setting up Qt configuration.")
+        setupQtrc()
     logger.info("Setting up ZSH integration.")
     setupZSH()
     logger.info("Setting up  user configuration.")
     setupXMLConfig()
     logger.info("Setting up libraries.")
     setupLibs()
-    logger.info("Setting up icons for QT interface.")
-    setupImages()
+    if gui_type == "qt3":
+        logger.info("Setting up icons for QT interface.")
+        setupImages()
 
 
 def setupFolders(folderlist):
@@ -618,7 +618,6 @@ def main():
     Main function for launcher.
 
     """
-
     os.chdir(FARADAY_BASE)
 
     init()
@@ -627,7 +626,7 @@ def main():
         logger.info("Dependencies met.")
         if args.cert_path:
             os.environ[REQUESTS_CA_BUNDLE_VAR] = args.cert_path
-        checkConfiguration()
+        checkConfiguration(args.gui)
         setConf()
         checkCouchUrl()
         checkVersion()

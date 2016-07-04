@@ -42,6 +42,7 @@ import model.log
 from gui.gui_app import FaradayUi
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
+from persistence.persistence_managers import CouchDbManager
 from appwindow import AppWindow
 
 from dialogs import PreferenceWindowDialog
@@ -50,10 +51,10 @@ from dialogs import PluginOptionsDialog
 from dialogs import NotificationsDialog
 from dialogs import aboutDialog
 from dialogs import helpDialog
-from dialogs import ImportantErrorDialog
 from dialogs import ConflictsDialog
 from dialogs import HostInfoDialog
 from dialogs import errorDialog
+from dialogs import ImportantErrorDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import WorkspaceSidebar
@@ -64,6 +65,7 @@ from mainwidgets import Statusbar
 
 from gui.loghandler import GUIHandler
 from utils.logs import addHandler
+from utils.common import checkSSL
 
 CONF = getInstanceConfiguration()
 
@@ -113,8 +115,9 @@ class GuiApp(Gtk.Application, FaradayUi):
     def updateHosts(self):
         """Reassings the value of self.all_hosts to a current one to
         catch workspace changes, new hosts added via plugins or any other
-        external interference with out host list"""
+        external interference with our host list"""
         self.all_hosts = self.model_controller.getAllHosts()
+        return self.all_hosts
 
     def createWorkspace(self, name, description="", w_type=""):
         """Pretty much copy/pasted from the QT3 GUI.
@@ -144,7 +147,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         return status
 
-    def removeWorkspace(self, button, ws_name):
+    def remove_workspace(self, button, ws_name):
         """Removes a workspace. If the workspace to be deleted is the one
         selected, it moves you first to the default. The clears and refreshes
         sidebar"""
@@ -155,6 +158,21 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.getWorkspaceManager().removeWorkspace(ws_name)
         self.ws_sidebar.clearSidebar()
         self.ws_sidebar.refreshSidebar()
+
+    def is_workspace_couch(self, workspace_name):
+        """Return if the workspace named workspace_name is associated to a
+        CouchDB.
+        """
+        type_ = self.workspace_manager.getWorkspaceType(workspace_name)
+        if type_ == "CouchDB":
+            is_couch = True
+        else:
+            is_couch = False
+        return is_couch
+
+    def get_active_workspace(self):
+        """Return the currently active workspace"""
+        return self.workspace_manager.getActiveWorkspace()
 
     def do_startup(self):
         """
@@ -167,8 +185,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         Gtk.Application.do_startup(self)  # deep GTK magic
 
         self.ws_sidebar = WorkspaceSidebar(self.workspace_manager,
-                                           self.changeWorkspace,
-                                           self.removeWorkspace,
+                                           self.change_workspace,
+                                           self.remove_workspace,
                                            self.on_new_button,
                                            CONF.getLastWorkspace())
 
@@ -240,6 +258,8 @@ class GuiApp(Gtk.Application, FaradayUi):
             # Windows are associated with the application
             # when the last one is closed the application shuts down
             self.window = AppWindow(self.sidebar,
+                                    self.ws_sidebar,
+                                    self.hosts_sidebar,
                                     self.terminal,
                                     self.console_log,
                                     self.statusbar,
@@ -259,7 +279,13 @@ class GuiApp(Gtk.Application, FaradayUi):
         model.guiapi.notification_center.registerWidget(self.window)
 
     def postEvent(self, receiver, event):
-        """Handles the events from gui/customevents."""
+        """Handles the events from gui/customevents.
+
+        DO NOT, AND I REPEAT, DO NOT REDRAW *ANYTHING* FROM THE GUI
+        FROM HERE. If you must do it, you should to it via the emit method
+        to the appwindow or maybe using Glib.idle_add, a misterious function
+        with outdate documentation."""
+
         if receiver is None:
             receiver = self.getMainWindow()
 
@@ -278,17 +304,65 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         elif event.type() == 4100 or event.type() == 3140:  # newinfo or changews
             host_count, service_count, vuln_count = self.update_counts()
-            self.updateHosts()
-            self.hosts_sidebar.update(self.all_hosts)
-            receiver.emit("update_ws_info", host_count,
-                          service_count, vuln_count)
+            self.window.receive_hosts(self.updateHosts())
+            receiver.emit("update_hosts_sidebar")
+            receiver.emit("update_ws_info", host_count, service_count, vuln_count)
 
         elif event.type() == 3132:  # error
             self.window.emit("normal_error", event.text)
 
         elif event.type() == 3134:  # important error, uncaught exception
-            self.window.prepare_important_error(event)
+            GObject.idle_add(self.window.prepare_important_error, event)
             self.window.emit("important_error")
+
+        elif event.type() == 42424: # lost connection to couch db
+            GObject.idle_add(self.window.prepare_important_error, event,
+                             self.handle_connection_lost)
+
+            self.window.emit("lost_db_connection", event.problem)
+            self.change_to_default_ws_on_connection_lost()
+
+    def change_to_default_ws_on_connection_lost(self):
+        """Reloads the workspace and opens the default ws"""
+        ws = self.openDefaultWorkspace()
+        self.reloadWorkspaces()
+        CONF.setLastWorkspace(ws.name)
+        CONF.saveConfig()
+
+    def connect_to_couch(self, couch_uri):
+        """Tries to connect to a CouchDB on a specified Couch URI.
+        Returns the success status of the operation, False for not successful,
+        True for successful
+        """
+
+        if not CouchDbManager.testCouch(couch_uri):
+            errorDialog(self.window, "Could not connect to CouchDB.",
+                        ("Are you sure it is running and that you can "
+                        "connect to it? \n Make sure your username and "
+                        "password are still valid."))
+            success = False
+        elif couch_uri.startswith("https://"):
+            if not checkSSL(couch_uri):
+                errorDialog(self.window,
+                            "The SSL certificate validation has failed")
+            success = False
+        else:
+            CONF.setCouchUri(couch_uri)
+            CONF.saveConfig()
+            self.reloadWorkspaces()
+            success = True
+        return success
+
+    def handle_connection_lost(self, button=None, dialog=None):
+        """Tries to connect to Couch using the same URI"""
+        couch_uri = CONF.getCouchURI()
+        if self.connect_to_couch(couch_uri):
+            if dialog is not None:
+                dialog.destroy()
+            reconnected = True
+        else:
+            reconnected = False
+        return reconnected
 
     def update_counts(self):
         """Update the counts for host, services and vulns"""
@@ -311,11 +385,12 @@ class GuiApp(Gtk.Application, FaradayUi):
             dialog = Gtk.Dialog("Select plugin", self.window, 0)
 
             combo_box = Gtk.ComboBoxText()
+            combo_box.set_wrap_width(3)
             for plugin_id in plugins_id:
                 combo_box.append_text(plugin_id)
             combo_box.show()
 
-            dialog.vbox.pack_start(combo_box, True, True, 10)
+            dialog.vbox.pack_start(combo_box, False, True, 10)
 
             dialog.add_button("Cancel", Gtk.ResponseType.DELETE_EVENT)
             dialog.add_button("OK", Gtk.ResponseType.ACCEPT)
@@ -339,11 +414,13 @@ class GuiApp(Gtk.Application, FaradayUi):
             plugin_response, plugin_id = select_plugin()
         else:
             if plugin_response == Gtk.ResponseType.ACCEPT:
-                dialog = Gtk.FileChooserNative()
-                dialog.set_title("Import a report")
+                dialog = Gtk.FileChooserDialog(title="Import a report",
+                                               parent=self.window,
+                                               action=Gtk.FileChooserAction.OPEN,
+                                               buttons=("Open", Gtk.ResponseType.ACCEPT,
+                                                        "Cancel", Gtk.ResponseType.CANCEL)
+                                               )
                 dialog.set_modal(True)
-                dialog.set_transient_for(self.window)
-                dialog.set_action(Gtk.FileChooserAction.OPEN)
 
                 res = dialog.run()
                 if res == Gtk.ResponseType.ACCEPT:
@@ -352,14 +429,12 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def on_about(self, action, param):
         """ Defines what happens when you press 'about' on the menu"""
-
         about_dialog = aboutDialog(self.window)
         about_dialog.run()
         about_dialog.destroy()
 
     def on_help(self, action, param):
         """Defines what happens when user press 'help' on the menu"""
-
         help_dialog = helpDialog(self.window)
         help_dialog.run()
         help_dialog.destroy()
@@ -371,19 +446,23 @@ class GuiApp(Gtk.Application, FaradayUi):
         new workspaces available"""
 
         preference_window = PreferenceWindowDialog(self.reloadWorkspaces,
+                                                   self.connect_to_couch,
                                                    self.window)
         preference_window.show_all()
 
     def show_host_info(self, host_id):
         """Looks up the host selected in the HostSidebar by id and shows
         its information on the HostInfoDialog"""
+        current_ws_name = self.get_active_workspace().name
+        is_ws_couch = self.is_workspace_couch(current_ws_name)
 
         for host in self.all_hosts:
             if host_id == host.id:
                 selected_host = host
                 break
 
-        info_window = HostInfoDialog(self.window, selected_host)
+        info_window = HostInfoDialog(self.window, current_ws_name,
+                                     is_ws_couch, selected_host)
         info_window.show_all()
 
     def reloadWorkspaces(self):
@@ -414,8 +493,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         instance of the Terminal and tells the window to add it as a new tab
         for the notebook"""
         new_terminal = Terminal(CONF)
-        the_new_terminal = new_terminal.getTerminal()
-        AppWindow.new_tab(self.window, the_new_terminal)
+        terminal_scrolled = new_terminal.getTerminal()
+        self.window.new_tab(terminal_scrolled)
 
     def on_click_notifications(self, button):
         """Defines what happens when the user clicks on the notifications
@@ -457,23 +536,28 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.notificationsModel.clear()
         self.window.emit("clear_notifications")
 
-    def changeWorkspace(self, workspaceName):
+    def change_workspace(self, workspaceName):
         """Changes workspace in a separate thread. Emits a signal
         to present a 'Loading workspace' dialog while Faraday processes
         the change"""
 
         def background_process():
+            """Change workspace. This function runs on a separated thread
+            created by the parent function. DO NOT call any Gtk methods
+            withing its scope, except by emiting signals to the window
+            """
             self.window.emit("loading_workspace", 'show')
             try:
                 ws = super(GuiApp, self).openWorkspace(workspaceName)
+                self.window.emit("loading_workspace", "destroy")
             except Exception as e:
                 model.guiapi.notification_center.showDialog(str(e))
                 ws = self.openDefaultWorkspace()
+                self.window.emit("loading_workspace", "destroy")
 
             workspace = ws.name
             CONF.setLastWorkspace(workspace)
             CONF.saveConfig()
-            self.window.emit("loading_workspace", "destroy")
 
             return True
 

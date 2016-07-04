@@ -30,6 +30,7 @@ DELHOST = 4101
 EDITHOST = 4102
 CHANGEFROMINSTANCE = 5100
 UPDATEMODEL_ID = 54321
+CONNECTION_REFUSED = 42424
 
 
 class CustomEvent(object):
@@ -73,6 +74,12 @@ class ShowExceptionCustomEvent(CustomEvent):
         if error_name is not None:
             self.error_name = error_name
 
+# this is probably a bad name for the class
+# maybe ConnectionRefusedCustomEven would've been better
+class ShowExceptionConnectionRefusedCustomEvent(CustomEvent):
+    def __init__(self, problem=None):
+        CustomEvent.__init__(self, CONNECTION_REFUSED)
+        self.problem = problem
 
 
 class RenameHostsRootCustomEvent(CustomEvent):

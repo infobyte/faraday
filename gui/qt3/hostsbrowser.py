@@ -23,8 +23,8 @@ from whoosh.fields import *
 
 
 class PropertyItem(qt.QListViewItem):
-                                                                
-                         
+
+
     """Item for displaying a preferences-set in HostsBrowser."""
     def __init__(self, settings, number, parent):
         """_plugin_settings is the _plugin_settings class to work for
@@ -60,17 +60,17 @@ class ModelObjectListView(qt.QListView):
         qt.QListView.__init__(self, parent)
         self.setSelectionMode(qt.QListView.Extended)
 
-                          
-                                                                    
-                                                                           
-                                                
-                     
+
+
+
+
+
 
     def selectWidget(self, widget):
         """Find the widget in the list and select it."""
 
-                                                                   
-                       
+
+
         iter = qt.QListViewItemIterator(self)
 
         found = None
@@ -107,16 +107,16 @@ class HostsBrowser(qt.QVBox):
         self._model_controller = model_controller
 
         self.modelUpdateTimer = qt.QTimer(self)
-       
+
         self.__pendingModelObjectRedraws = []
 
         self.reindex_flag_lock = Lock()
         self.reindex_flag = False
 
         self.connect( self.modelUpdateTimer, qt.SIGNAL("timeout()"), self._modelObjectViewUpdater)
-                                        
+
         self.modelUpdateTimer.start( 1000  , False)
-                                                                                 
+
 
         self.setName(caption) if caption else self.setName("")
 
@@ -125,11 +125,11 @@ class HostsBrowser(qt.QVBox):
 
         self._host_items = {}
 
-                                                                                                   
+
         self._category_items = {}
 
-                                                                                                
-                                                                        
+
+
         self._category_tree = {}
 
         self.contextpopups = {}
@@ -137,7 +137,7 @@ class HostsBrowser(qt.QVBox):
 
         self.contextdispatchers = {}
 
-                       
+
         self._filter = ""
         self.ix = None
 
@@ -147,32 +147,32 @@ class HostsBrowser(qt.QVBox):
         split.setOrientation(qt.QSplitter.Vertical)
 
         lv = self.listview = ModelObjectListView(split)
-                                     
-                                       
-                                         
+
+
+
         lv.setRootIsDecorated(True)
 
-                                               
+
         self.connect( lv, qt.SIGNAL("selectionChanged()"), self._itemSelected )
         self.connect( lv, qt.SIGNAL("rightButtonPressed(QListViewItem *,const QPoint&,int)"), self._showContextMenu )
-                                                        
+
         lv.addColumn("Hosts")
         lv.setColumnWidthMode(0,qt.QListView.Maximum)
-                                                                                    
 
-                         
+
+
         lv.setTreeStepSize(20)
 
-                                                                           
-                                                                                                  
-                                                                
-                                                             
+
+
+
+
         self.rootitem = None
 
-                                            
-               
 
-                                                                           
+
+
+
         self.details_table = EditionTable(split)
         hbox = qt.QHBox(self)
         self.object_label = qt.QLabel("", hbox)
@@ -182,8 +182,8 @@ class HostsBrowser(qt.QVBox):
 
         self.prefchilds = []
 
-                              
-                                                       
+
+
 
     def load(self, workspace, workspace_type):
         self.rootitem = WorkspaceListViewItem(self.listview, workspace, workspace_type)
@@ -192,19 +192,19 @@ class HostsBrowser(qt.QVBox):
     def update(self, hosts):
         self.clearTree()
         self.redrawTree(hosts)
-                                         
+
     def sizeHint(self):
         """Returns recommended size of dialog."""
         return qt.QSize(70, 200)
 
     def resizeEvent (self, event ):
-                                                                  
-                                                           
-                                                                 
-                              
+
+
+
+
         self.listview.setColumnWidth(0,self.size().width()-7)
-                                                                              
-                                                                       
+
+
 
     def clearTree(self):
         """
@@ -282,11 +282,11 @@ class HostsBrowser(qt.QVBox):
             viewall=True
             hosts=[]
 
-                                
-                    
+
+
 
         for k in self._host_items.keys():
-                                                  
+
             if (self._host_items[k].object.name in hosts) or viewall==True:
                 self._host_items[k].setVisible(True)
             else:
@@ -294,15 +294,15 @@ class HostsBrowser(qt.QVBox):
 
 
     def _filterHost(self,hosts):
-                                  
+
 
         from whoosh.qparser import QueryParser
         with self.ix.searcher() as searcher:
             query = QueryParser("ip", self.ix.schema).parse(self._filter)
             results = searcher.search(query, limit=None)
-                           
-                        
-                          
+
+
+
             hostv={}
             for r in results:
                 hostv[r['ip']]=1
@@ -416,8 +416,8 @@ class HostsBrowser(qt.QVBox):
             dialog.exec_loop()
 
     def _item_save(self):
-                                                                 
-                         
+
+
         if self._save_callback is not None:
             self._save_callback()
 
@@ -428,7 +428,7 @@ class HostsBrowser(qt.QVBox):
         """
         this is called when a list view item is selected
         """
-                           
+
         i = self.listview.firstChild()
         self.items_selected=[]
         self.items_type={'Host': 0, 'Workspace': 0, 'Service':0,
@@ -448,7 +448,7 @@ class HostsBrowser(qt.QVBox):
 
         self.itemselected = self.listview.currentItem()
 
-                                                                                
+
         self.details_table.clear()
         editor = self.itemselected.getEditor()
         editor.fillEditionTable(self.details_table)
@@ -516,14 +516,14 @@ class HostsBrowser(qt.QVBox):
 
     def _delCategory(self, category, recursive=False):
         if category in self._category_tree:
-            if recursive:                                              
+            if recursive:
                 for id in self._category_tree:
                     host_item = self._getHostListViewItem(id)
                     if host_item is not None:
                         self._delHostFromCategory(host_item.object, category)
             else:
-                                                                                   
-                                               
+
+
                 for id in self._category_tree:
                     host_item = self._getHostListViewItem(id)
                     if host_item is not None:
@@ -541,11 +541,11 @@ class HostsBrowser(qt.QVBox):
         """Pop up a context menu when an item is clicked on the list view."""
         ret = None
 
-        if item is not None:                           
+        if item is not None:
 
-                                  
-                       
-                                                                                                                                                            
+
+
+
             if self.items_type['Interface']:
                 if (self.items_type['Category_General'] or self.items_type['Workspace']):
                     popname="CategoryWorkspace_Interface"
@@ -565,7 +565,7 @@ class HostsBrowser(qt.QVBox):
                     else:
                         popname=item.type
             else:
-                                   
+
                 if item.type is "Category":
                     popname=item.type + "_" + item.name
                 else:
@@ -575,12 +575,12 @@ class HostsBrowser(qt.QVBox):
 
             if ret in self.contextdispatchers:
                 self.contextdispatchers[ret](item)
-                  
-                                                                         
+
+
 
             api.devlog("contextMenuEvent - item: %s - ret %s" % (self.name, ret))
 
-              
+
 
     def _newHost(self, item):
         api.devlog("newHost")
@@ -589,12 +589,12 @@ class HostsBrowser(qt.QVBox):
 
     def _newHostCallback(self, name, os):
         if name:
-                                          
+
             guiapi.createAndAddHost(name, os=os)
 
     def _delHost(self,item):
         api.devlog("delHost")
-        if item is not None and item.object is not None:                                                  
+        if item is not None and item.object is not None:
             dialog = MessageDialog(self,title="Host delete",callback=self._delSelectedCallback)
             dialog.exec_loop()
 
@@ -615,7 +615,7 @@ class HostsBrowser(qt.QVBox):
 
     def _delInterface(self,item):
         api.devlog("delInterface")
-        if item is not None and item.object is not None:                                                  
+        if item is not None and item.object is not None:
             dialog = MessageDialog(self,title="Interface delete",callback=self._delSelectedCallback)
             dialog.exec_loop()
 
@@ -638,7 +638,7 @@ class HostsBrowser(qt.QVBox):
                     guiapi.createAndAddServiceToInterface(host_id, interface_id , name, protocol=protocol, ports=ports)
 
     def _delService(self,item):
-        if item is not None and item.object is not None:                                                  
+        if item is not None and item.object is not None:
             dialog = MessageDialog(self,title="Delete Item(s)",callback=self._delSelectedCallback)
             dialog.exec_loop()
 
@@ -670,7 +670,7 @@ class HostsBrowser(qt.QVBox):
                 parent_interface = self._getParentForType(i, "Interface").object
                 parent_host = self._getParentForType(i, "Host").object
                 guiapi.delServiceFromInterface(parent_host.getID(), parent_interface.getID(), _object.getID())
-                                                       
+
         self.listview.setCurrentItem(self.rootitem)
         self._itemSelected()
 
@@ -689,7 +689,7 @@ class HostsBrowser(qt.QVBox):
 
     def _delCategorymenu(self,item):
         api.devlog("delCategorymenu")
-        if item is not None:                                                  
+        if item is not None:
             dialog = MessageDialog(self,title="Category delete",callback=self._delCategoryCallback,item=item)
             dialog.exec_loop()
 
@@ -735,8 +735,8 @@ class HostsBrowser(qt.QVBox):
                     "save file dialog",
                     "Choose a file to save the vulns" )
         from exporters.tofile import CSVVulnStatusReport
-        CSVVulnStatusReport(path = filename, 
-                            modelobjects = hosts).createCSVVulnStatusReport() 
+        CSVVulnStatusReport(path = filename,
+                            modelobjects = hosts).createCSVVulnStatusReport()
 
     def _importVulnsCvs(self,item):
         filename =  qt.QFileDialog.getOpenFileName(
@@ -745,7 +745,7 @@ class HostsBrowser(qt.QVBox):
                     None,
                     "open file dialog",
                     "Choose a vulnerability file" );
-        
+
         if os.path.isfile(filename):
             with open(filename) as f:
                 data = f.read()
@@ -756,7 +756,7 @@ class HostsBrowser(qt.QVBox):
                 if re.search("^#",l):
                     api.devlog("ERROR FILE")
                     continue
-                
+
                 d = l.split("|")
                 if len(d) <8:
                     api.log("Error vuln line: ("+l+")" )
@@ -776,11 +776,11 @@ class HostsBrowser(qt.QVBox):
             s_id = guiapi.createAndAddServiceToInterface(h_id,i_id,port,protocol,ports=[port])
             if type == "2":
                 v_id = guiapi.createAndAddVulnWebToService(h_id,s_id, name, desc, [], severity, "/", "/")
-            else:                
+            else:
                 v_id = guiapi.createAndAddVulnToService(h_id,s_id, name, desc, [],severity)
 
         api.devlog("type:" + type)
-                                   
+
     def _isIPV4(self, ip):
         if len(ip.split(".")) == 4:
             return True
@@ -788,12 +788,12 @@ class HostsBrowser(qt.QVBox):
             return False
 
     def _listNotes(self, item):
-        if item is not None and item.object is not None:                                                  
+        if item is not None and item.object is not None:
             dialog = NotesDialog(parent=self, model_object=item.object)
             dialog.exec_loop()
 
     def _newNote(self, item):
-        if item is not None and item.object is not None:                                                  
+        if item is not None and item.object is not None:
             dialog = NewNoteDialog(self, callback=self._newNoteSelectedCallback)
             dialog.exec_loop()
 
@@ -832,7 +832,7 @@ class HostsBrowser(qt.QVBox):
                     None,
                     "open file dialog",
                     "Choose a password file" );
-        
+
         if os.path.isfile(filename):
             with open(filename) as f:
                 data = f.read()
@@ -843,11 +843,11 @@ class HostsBrowser(qt.QVBox):
                 if re.search("^#",l):
                     api.devlog("ERROR FILE")
                     continue
-                
+
                 d = l.split(",")
                 if len(d)<=1:
                     d = l.split(":")
-                
+
                 api.devlog(d)
                 if len(d) <=1:
                     api.devlog("Error password line: ("+l+")" )
@@ -865,7 +865,7 @@ class HostsBrowser(qt.QVBox):
             d = WorkspacePropertiesDialog(self, "Workspace Properties", workspace=item.object)
             d.exec_loop()
 
-    def _modelObjectViewUpdater(self): 
+    def _modelObjectViewUpdater(self):
         if len(self.__pendingModelObjectRedraws):
             self.update(self.__pendingModelObjectRedraws.pop().hosts)
             self.__pendingModelObjectRedraws[:] = []
@@ -910,17 +910,17 @@ class HostsBrowser(qt.QVBox):
         Configures a context popup menu for each kind of item shown in the tree.
         This is done because different options may be needed for each item
         """
-                         
+
         popup = qt.QPopupMenu(self)
-                                      
-                                             
-                                            
+
+
+
         popup.insertSeparator()
         popup.insertItem('Resolve Conflicts', 303)
         popup.insertItem('Save Vulns CSV', 402)
         popup.insertItem('Import Vulns CSV', 403)
-                                
-                                              
+
+
         popup.insertSeparator()
         popup.insertItem('Add Host', 800)
 
@@ -928,39 +928,39 @@ class HostsBrowser(qt.QVBox):
 
         self.contextpopups["Category_General"] = self.contextpopups["Workspace"]
 
-                                
+
         popup = qt.QPopupMenu(self)
-                                                  
-                                
-                                       
+
+
+
 
         self.contextpopups["Category_Applications"] = popup
 
-                              
+
         popup = qt.QPopupMenu(self)
         popup.insertItem('Add Interfaces', 600)
-                                
-                                       
+
+
 
         self.contextpopups["Category_Interfaces"] = popup
 
-                        
-                                     
-                                                     
-                                 
-                                              
-                                 
-                                                   
-                                                      
-                                 
-                                           
-                                             
-                                 
-                                        
 
-                                                   
 
-               
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         popup = qt.QPopupMenu(self)
         popup.insertItem('Delete Host', 802)
         popup.insertSeparator()
@@ -975,12 +975,12 @@ class HostsBrowser(qt.QVBox):
         popup.insertItem('New Credential', 550)
         popup.insertItem('Show Credentials', 551)
         popup.insertItem('Import Creds', 561)
-                                
-                                       
+
+
 
         self.contextpopups["Host"] = popup
 
-                    
+
         popup = qt.QPopupMenu(self)
         popup.insertItem('Delete Interface', 602)
         popup.insertSeparator()
@@ -991,12 +991,12 @@ class HostsBrowser(qt.QVBox):
         popup.insertSeparator()
         popup.insertItem('New note', 500)
         popup.insertItem('Show notes', 501)
-                                
-                                       
+
+
 
         self.contextpopups["Interface"] = popup
 
-                  
+
         popup = qt.QPopupMenu(self)
         popup.insertItem('Delete Service', 202)
         popup.insertSeparator()
@@ -1009,19 +1009,19 @@ class HostsBrowser(qt.QVBox):
         popup.insertItem('New Credential', 550)
         popup.insertItem('Show Credentials', 551)
         popup.insertItem('Import Creds', 561)
-                                
-                                       
+
+
 
         self.contextpopups["Service"] = popup
 
-                       
-                       
-                       
-
-                                
 
 
-                     
+
+
+
+
+
+
         popup = qt.QPopupMenu(self)
         popup.insertItem('Delete Items', 202)
         popup.insertSeparator()
@@ -1034,8 +1034,8 @@ class HostsBrowser(qt.QVBox):
 
         self.contextpopups["Service_Host"] = popup
 
-                              
-                        
+
+
         popup = qt.QPopupMenu(self)
         popup.insertItem('Add Service', 200)
         popup.insertSeparator()
@@ -1047,15 +1047,15 @@ class HostsBrowser(qt.QVBox):
         popup.insertSeparator()
         popup.insertItem('New Credential', 550)
         popup.insertItem('Import Creds', 561)
-                                
-                                       
+
+
 
         self.contextpopups["ServiceHost_Interface"] = popup
 
-                                    
+
         popup = qt.QPopupMenu(self)
-                                      
-                                             
+
+
         popup.insertItem('Properties', 302)
         popup.insertSeparator()
         popup.insertItem('Add Host', 800)
@@ -1072,14 +1072,14 @@ class HostsBrowser(qt.QVBox):
         popup.insertSeparator()
         popup.insertItem('New Credential', 550)
         popup.insertItem('Import Creds', 561)
-                                
-                                       
+
+
         self.contextpopups["CategoryWorkspace_Interface"] = popup
 
-                                      
+
         popup = qt.QPopupMenu(self)
-                                      
-                                             
+
+
         popup.insertItem('Properties', 302)
         popup.insertSeparator()
         popup.insertItem('Add Host', 800)
@@ -1092,19 +1092,19 @@ class HostsBrowser(qt.QVBox):
         popup.insertSeparator()
         popup.insertItem('New Credential', 550)
         popup.insertItem('Import Creds', 561)
-                                
-                                       
+
+
         self.contextpopups["CategoryWorkspace_ServiceHost"] = popup
 
 
-                                    
-                              
-                                                
 
-                                                                                             
-                                                             
-                                                                                       
-                                                                                       
+
+
+
+
+
+
+
     def _setupContextDispatchers(self):
         """
         Configures a context dispatcher for each kind of item shown in the tree.
@@ -1117,8 +1117,8 @@ class HostsBrowser(qt.QVBox):
         self.contextdispatchers[200] = self._newService
         self.contextdispatchers[202] = self._delService
 
-                                                           
-                                                           
+
+
         self.contextdispatchers[302] = self._showWorkspaceProperties
         self.contextdispatchers[303] = self._resolveConflicts
 

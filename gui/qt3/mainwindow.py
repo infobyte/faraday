@@ -533,6 +533,23 @@ class MainWindow(qt.QMainWindow):
             self.showConflictsDialog(event.local)
         elif event.type() == CHANGEFROMINSTANCE:
             self.newNotification(event.change)
+        elif event.type() == CONNECTION_REFUSED:
+            self.connectionRefused()
+
+    def connectionRefused(self):
+        self.showSimpleDialog("The connection to the database was lost. "
+                              "Faraday will revert back to the Filesystem. "
+                              "Fix your connection to CouchDB and reconnect "
+                              "via the preferences dialog")
+
+        wm = self._main_app.getWorkspaceManager()
+        wm.closeWorkspace()
+        wm.resource()
+        wm.openWorkspace('untitled')
+
+        mwin = self._main_app.getMainWindow()
+        mwin.getWorkspaceTreeView().loadAllWorkspaces()
+        mwin.getWorkspaceTreeView().setDefaultWorkspace()
 
     def update(self, event):
         if event.type() ==  EXCEPTION_ID:

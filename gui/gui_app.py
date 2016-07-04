@@ -87,23 +87,3 @@ class FaradayUi(object):
         except Exception as e:
             raise e
         return ws
-
-    def openDefaultWorkspace(self):
-        """
-        Opens the default workspace (called 'untitled').
-        This method shouldn't fail, since the default workspace
-        should be always available
-
-        Returns the default workspace
-        """
-        if self.report_manager:
-            self.report_manager.stop()
-            self.report_manager.join()
-        ws = self.getWorkspaceManager().openDefaultWorkspace()
-        self.report_manager = ReportManager(
-                10,
-                ws.name,
-                self.plugin_controller
-        )
-        self.report_manager.start()
-        return ws

@@ -330,7 +330,9 @@ class GuiApp(Gtk.Application, FaradayUi):
             GObject.idle_add(self.reloadWorkspaces)
 
     def force_change_couch_url(self, button=None, dialog=None):
-        """Just an alias for openning the Preferences Dialog."""
+        """Forces the user to change the couch URL. You **will** ended up
+        connected to CouchDB or you will exit my application, cowboy.
+        """
 
         def exit_callback(button=None):
             """A simple exit callback to be used when forcing the user
@@ -338,6 +340,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             if not self.window.do_delete_event():
                 self.window.destroy()
 
+        # destroy the ugly dialog that got us here
         if dialog is not None:
             dialog.destroy()
 

@@ -42,7 +42,7 @@ class WorkspaceManager(object):
         """Returns the names of the workspaces as a list of strings"""
         return self.dbManager.getAllDbNames()
 
-    def createWorkspace(self, name, desc, dbtype=DBTYPE.FS):
+    def createWorkspace(self, name, desc, dbtype=DBTYPE.COUCHDB):
         workspace = Workspace(name, desc)
         try:
             dbConnector = self.dbManager.createDb(name, dbtype)
@@ -128,14 +128,10 @@ class WorkspaceManager(object):
     def _dbTypeToNamedType(self, dbtype):
         if dbtype == DBTYPE.COUCHDB:
             return 'CouchDB'
-        if dbtype == DBTYPE.FS:
-            return 'FS'
 
     def namedTypeToDbType(self, name):
         if name == 'CouchDB':
             return DBTYPE.COUCHDB
-        if name == 'FS':
-            return DBTYPE.FS
 
     def getAvailableWorkspaceTypes(self):
         return [self._dbTypeToNamedType(dbtype) for

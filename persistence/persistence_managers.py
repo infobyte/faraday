@@ -21,7 +21,6 @@ from couchdbkit.resource import ResourceNotFound
 from utils.logs import getLogger
 from managers.all import ViewsManager
 
-#from persistence.change import change_factory
 from config.globals import CONST_BLACKDBS
 from config.configuration import getInstanceConfiguration
 
@@ -30,7 +29,6 @@ CONF = getInstanceConfiguration()
 
 class DBTYPE(object):
     COUCHDB = 1
-    FS = 2
 
 
 class ConnectorContainer(object):
@@ -149,64 +147,6 @@ class DbConnector(object):
 
     def getChildren(self, document_id):
         raise NotImplementedError("DbConnector should not be used directly")
-
-
-class FileSystemConnector(DbConnector):
-    def __init__(self, base_path):
-        super(FileSystemConnector, self).__init__(type=DBTYPE.FS)
-        self.path = base_path
-        self._available = True
-
-    def saveDocument(self, dic):
-        try:
-            filepath = os.path.join(self.path, "%s.json" % dic.get("_id", ))
-            getLogger(self).debug(
-                "Saving document in local db %s" % self.path)
-            with open(filepath, "w") as outfile:
-                json.dump(dic, outfile, indent=2)
-            return True
-        except Exception:
-            #log Exception?
-            return False
-
-    def getDocument(self, document_id):
-        getLogger(self).debug(
-            "Getting document %s for local db %s" % (document_id, self.path))
-        path = os.path.join(self.path, "%s.json" % document_id)
-        doc = None
-        try:
-            doc = open(path, "r")
-            doc = json.loads(doc.read())
-        except IOError:
-            doc = None
-        finally:
-            return doc
-
-    def remove(self, document_id):
-        path = os.path.join(self.path, "%s.json" % document_id)
-        if os.path.isfile(path):
-            os.remove(path)
-
-    def getDocsByFilter(self, parentId, type):
-        result = []
-        for name in os.listdir(self.path):
-            path = os.path.join(self.path, name)
-            document = open(path, "r")
-            data = json.loads(document.read())
-            if data.get("parent", None) == parentId:
-                if data.get("type", None) == type or not type:
-                    result.append(data)
-        return result
-
-    def getChildren(self, document_id):
-        result = []
-        for name in os.listdir(self.path):
-            path = os.path.join(self.path, name)
-            document = open(path, "r")
-            data = json.loads(document.read())
-            if data.get("parent", None) == document_id:
-                result.append(data)
-        return result
 
 
 class CouchDbConnector(DbConnector):
@@ -465,44 +405,6 @@ class AbstractPersistenceManager(object):
 
     def isAvailable(self):
         return self._available
-
-
-class FileSystemManager(AbstractPersistenceManager):
-    """
-    This is a file system manager for the workspace,
-    it will load from the provided FS
-    """
-    def __init__(self, path=CONF.getPersistencePath()):
-        super(FileSystemManager, self).__init__()
-        getLogger(self).debug(
-            "Initializing FileSystemManager for path [%s]" % path)
-        self._path = path
-        if not os.path.exists(self._path):
-            os.mkdir(self._path)
-        self._loadDbs()
-        self._available = True
-
-    def _create(self, name):
-        wpath = os.path.expanduser("~/.faraday/persistence/%s" % name)
-        if not os.path.exists(wpath):
-            os.mkdir(wpath)
-            return FileSystemConnector(wpath)
-        return None
-
-    def _delete(self, name):
-        if os.path.exists(os.path.join(self._path, name)):
-            shutil.rmtree(os.path.join(self._path, name))
-
-    def _loadDbs(self):
-        for name in os.listdir(CONF.getPersistencePath()):
-            if os.path.isdir(os.path.join(CONF.getPersistencePath(), name)):
-                if name not in self.dbs.keys():
-                    self.dbs[name] = lambda x: self._loadDb(x)
-
-    def _loadDb(self, name):
-        self.dbs[name] = FileSystemConnector(os.path.join(self._path,
-                                              name))
-        return self.dbs[name]
 
 
 class NoCouchDBError(Exception):

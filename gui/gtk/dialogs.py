@@ -96,18 +96,14 @@ class NewWorkspaceDialog(Gtk.Window):
         self.workspace_manager = workspace_manager
         self.title = title
 
-        self.warning_label = self.create_warning_label()
         self.main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
 
         name_box = self.create_name_box()
         description_box = self.create_description_box()
-        type_box = self.create_type_box()
         button_box = self.create_button_box()
 
         self.main_box.pack_start(name_box, False, False, 10)
         self.main_box.pack_start(description_box, False, False, 10)
-        self.main_box.pack_start(type_box, False, False, 10)
-        self.main_box.pack_start(self.warning_label, False, False, 10)
         self.main_box.pack_end(button_box, False, False, 10)
 
         self.main_box.show()
@@ -135,35 +131,6 @@ class NewWorkspaceDialog(Gtk.Window):
         description_box.pack_end(self.description_entry, True, True, 10)
         return description_box
 
-    def create_type_box(self):
-        """Return a box with a Type label left of a combo box"""
-        type_box = Gtk.Box(spacing=6)
-        type_label = Gtk.Label()
-        type_label.set_text("Type: ")
-        self.type_comboBox = Gtk.ComboBoxText()
-        self.type_comboBox.connect("changed", self.on_select_ws_type)
-        for w in self.workspace_manager.getAvailableWorkspaceTypes():
-            self.type_comboBox.append_text(w)
-        self.type_comboBox.set_active(0)
-        type_box.pack_start(type_label, False, False, 10)
-        type_box.pack_end(self.type_comboBox, True, True, 10)
-        return type_box
-
-    def create_warning_label(self):
-        """Return a label with a warning if the user has FS selected as the
-        desired WS type.
-        """
-        warning_label = Gtk.Label()
-        warning_label.set_no_show_all(True)
-        warning_label.set_markup("<b>WARNING: </b> The FS (Filesystem) "
-                                 "databases are deprecated and strongly "
-                                 "discouraged. \n You will <b>not</b> be able "
-                                 "to edit the information provided by Faraday "
-                                 "with a FileSystem DB. \n Please "
-                                 "set up CouchDB and use it as the database "
-                                 "for your workspaces.")
-        return warning_label
-
     def create_button_box(self):
         """Return a box with OK and cancel buttons."""
         button_box = Gtk.Box(spacing=6)
@@ -184,10 +151,8 @@ class NewWorkspaceDialog(Gtk.Window):
         if res:
             ws_name = str(self.name_entry.get_text())
             ws_desc = str(self.description_entry.get_text())
-            ws_type = str(self.type_comboBox.get_active_text())
             creation_ok = self.create_ws_callback(ws_name,
-                                                  ws_desc,
-                                                  ws_type)
+                                                  ws_desc)
             if creation_ok:
                 self.sidebar.addWorkspace(ws_name)
             else:
@@ -201,12 +166,6 @@ class NewWorkspaceDialog(Gtk.Window):
                         "ts(0-9) or any of the _$()+-/ "
                         "characters. The name has to start"
                         " with a lowercase letter")
-
-    def on_select_ws_type(self, combo_box):
-        if combo_box.get_active_text() == 'FS':
-            self.warning_label.show()
-        else:
-            self.warning_label.hide()
 
     def on_click_cancel(self, button):
         self.destroy()

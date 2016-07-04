@@ -58,6 +58,7 @@ class DbManager(object):
         self.fsmanager = FileSystemManager()
         self.managers = {
                             DBTYPE.COUCHDB: self.couchmanager,
+                            DBTYPE.FS: self.fsmanager
                         }
         self.dbs = {}
         self._loadDbs()

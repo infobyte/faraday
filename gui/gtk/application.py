@@ -119,9 +119,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.all_hosts = self.model_controller.getAllHosts()
         return self.all_hosts
 
-    def createWorkspace(self, name, description="", w_type=""):
-        """Pretty much copy/pasted from the QT3 GUI.
-        Uses the instance of workspace manager passed into __init__ to
+    def createWorkspace(self, name, description=""):
+        """Uses the instance of workspace manager passed into __init__ to
         get all the workspaces names and see if they don't clash with
         the one the user wrote. If everything's fine, it saves the new
         workspace and returns True. If something went wrong, return False"""
@@ -137,7 +136,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             manager = self.getWorkspaceManager()
             try:
                 w = manager.createWorkspace(name, description,
-                                            manager.namedTypeToDbType(w_type))
+                                            manager.namedTypeToDbType('CouchDB'))
                 CONF.setLastWorkspace(w.name)
                 CONF.saveConfig()
                 status = True

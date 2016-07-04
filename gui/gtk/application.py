@@ -120,8 +120,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         return self.all_hosts
 
     def createWorkspace(self, name, description="", w_type=""):
-        """Pretty much copy/pasted from the QT3 GUI.
-        Uses the instance of workspace manager passed into __init__ to
+        """Uses the instance of workspace manager passed into __init__ to
         get all the workspaces names and see if they don't clash with
         the one the user wrote. If everything's fine, it saves the new
         workspace and returns True. If something went wrong, return False"""

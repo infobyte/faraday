@@ -397,8 +397,8 @@ def checkConfiguration(gui_type):
     """Checks if the environment is ready to run Faraday.
 
     Checks different environment requirements and sets them before starting
-    Faraday. This includes checking for plugin folders, libraries, QT
-    configuration and ZSH integration.
+    Faraday. This includes checking for plugin folders, libraries,
+    and ZSH integration.
     """
     logger.info("Checking configuration.")
     logger.info("Setting up plugins.")

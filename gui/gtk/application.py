@@ -316,10 +316,15 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         elif event.type() == 42424: # lost connection to couch db
             GObject.idle_add(self.window.prepare_important_error, event,
-                             self.handle_connection_lost)
+                             self.handle_connection_lost,
+                             self.change_couch_url)
 
             self.window.emit("lost_db_connection", event.problem)
             self.change_to_default_ws_on_connection_lost()
+
+    def change_couch_url(self, button=None):
+        """Just an alias for openning the Preferences Dialog."""
+        return self.on_preferences()
 
     def change_to_default_ws_on_connection_lost(self):
         """Reloads the workspace and opens the default ws"""
@@ -438,7 +443,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         help_dialog.run()
         help_dialog.destroy()
 
-    def on_preferences(self, action, param):
+    def on_preferences(self, action=None, param=None):
         """Defines what happens when you press 'preferences' on the menu.
         Sends as a callback reloadWsManager, so if the user actually
         changes her Couch URL, the sidebar will reload reflecting the

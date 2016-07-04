@@ -229,13 +229,9 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         point to the application's handle_connection_lost method.
         """
 
-        def destroy_dialog(button=None):
-            """Necessary 'cause button.connect method passes the button
-            as a paramether even when I don't need it.
-            """
-            dialog.destroy()
-
         handle_connection_lost = self.error_callbacks[0]
+        connect_to_a_different_couch = self.error_callbacks[1]
+
         if explanatory_message:
             explanation = "\n The specific error was: " + explanatory_message
         else:
@@ -252,12 +248,18 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         dialog.set_modal(True)
 
         retry_button = dialog.add_button("Retry connection?", 42)
-        retry_button.connect("clicked", handle_connection_lost, dialog)
+        retry_button.connect("clicked", handle_connection_lost)
 
-        cancel_button = dialog.add_button("Cancel", 0)
-        cancel_button.connect("clicked", destroy_dialog)
+        change_couch_url = dialog.add_button("Connect to a different CouchDB?", 43)
+        change_couch_url.connect("clicked", connect_to_a_different_couch)
 
-        dialog.run()
+        cancel_button = dialog.add_button("Exit Faraday", 0)
+        cancel_button.connect("clicked", self.destroy_from_button)
+
+        response = dialog.run()
+        if response == 0:
+            dialog.destroy()
+
 
     def do_new_log(self, text):
         """To be used on a new_log signal. Calls a method on log to append
@@ -308,6 +310,13 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         if action == "destroy":
             self.loading_dialog.destroy()
 
+    def destroy_from_button(self, button=None):
+        """Sometimes this stuff is needed, 'cause it needs to take a button
+        as parameter. See do_delete_event() for explanation on why the
+        _not_ is there.
+        """
+        if not self.do_delete_event():
+            self.destroy()
 
     def getLogConsole(self):
         """Returns the LogConsole. Needed by the GUIHandler logger"""
@@ -418,7 +427,12 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.loggerBox.set_visible(not current_state)
 
     def do_delete_event(self, event=None, status=None):
-        """Override delete_event signal to show a confirmation dialog first"""
+        """Override delete_event signal to show a confirmation dialog first.
+        """
+
+        # NOTE: Return False for 'yes' is weird but that's how gtk likes it
+        #       Don't judge, man. Don't judge.
+
         dialog = Gtk.MessageDialog(transient_for=self,
                                    modal=True,
                                    buttons=Gtk.ButtonsType.YES_NO)

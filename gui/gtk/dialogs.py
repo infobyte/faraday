@@ -30,6 +30,9 @@ class PreferenceWindowDialog(Gtk.Window):
 
     def __init__(self, reload_ws_callback, connect_to_couch, parent,
                  force=False, app_exit_callback=None):
+        """Initializes the simple preferences dialog. If force is set to
+        True, user will NOT be able to cancel the dialog and app_exit_callback
+        must NOT be None"""
 
         Gtk.Window.__init__(self, title="Preferences")
         self.parent = parent

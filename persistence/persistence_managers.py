@@ -55,10 +55,8 @@ class DbManager(object):
 
     def load(self):
         self.couchmanager = CouchDbManager(CONF.getCouchURI())
-        self.fsmanager = FileSystemManager()
         self.managers = {
                             DBTYPE.COUCHDB: self.couchmanager,
-                            DBTYPE.FS: self.fsmanager
                         }
         self.dbs = {}
         self._loadDbs()
@@ -69,16 +67,12 @@ class DbManager(object):
 
     def _loadDbs(self):
         self.dbs = {}
-        for dbname, connector in self.fsmanager.getDbs().items():
-            self.dbs[dbname] = ConnectorContainer(dbname, connector, DBTYPE.FS)
         for dbname, connector in self.couchmanager.getDbs().items():
             self.dbs[dbname] = ConnectorContainer(dbname, connector, DBTYPE.COUCHDB)
 
     def _getManagerByType(self, dbtype):
         if dbtype == DBTYPE.COUCHDB:
             manager = self.couchmanager
-        else:
-            manager = self.fsmanager
         return manager
 
     def getConnector(self, name):
@@ -104,11 +98,7 @@ class DbManager(object):
         return self.dbs.keys()
 
     def refreshDbs(self):
-        self.fsmanager.refreshDbs()
         self.couchmanager.refreshDbs()
-        for dbname, connector in self.fsmanager.getDbs().items():
-            if dbname not in self.dbs.keys():
-                self.dbs[dbname] = ConnectorContainer(dbname, connector, DBTYPE.FS)
         for dbname, connector in self.couchmanager.getDbs().items():
             if dbname not in self.dbs.keys():
                 self.dbs[dbname] = ConnectorContainer(dbname, connector, DBTYPE.COUCHDB)

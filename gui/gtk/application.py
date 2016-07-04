@@ -279,7 +279,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         notifier.widget = self.window
         model.guiapi.notification_center.registerWidget(self.window)
 
-        import ipdb; ipdb.set_trace()
         if not CouchDbManager.testCouch(CONF.getCouchURI()):
             self.window.do_lost_db_connection(
                     handle_connection_lost=self.handle_connection_lost,
@@ -328,11 +327,14 @@ class GuiApp(Gtk.Application, FaradayUi):
                              self.force_change_couch_url)
 
             self.window.emit("lost_db_connection", event.problem)
-            self.change_to_default_ws_on_connection_lost()
+            GObject.idle_add(self.reloadWorkspaces)
 
     def force_change_couch_url(self, button=None, dialog=None):
         """Just an alias for openning the Preferences Dialog."""
+
         def exit_callback(button=None):
+            """A simple exit callback to be used when forcing the user
+            to connect to couch."""
             if not self.window.do_delete_event():
                 self.window.destroy()
 
@@ -345,13 +347,6 @@ class GuiApp(Gtk.Application, FaradayUi):
                                                    force=True,
                                                    app_exit_callback=exit_callback)
         preference_window.show_all()
-
-    def change_to_default_ws_on_connection_lost(self):
-        """Reloads the workspace and opens the default ws"""
-        ws = self.openDefaultWorkspace()
-        self.reloadWorkspaces()
-        CONF.setLastWorkspace(ws.name)
-        CONF.saveConfig()
 
     def connect_to_couch(self, couch_uri):
         """Tries to connect to a CouchDB on a specified Couch URI.
@@ -560,7 +555,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.notificationsModel.clear()
         self.window.emit("clear_notifications")
 
-    def change_workspace(self, workspaceName):
+    def change_workspace(self, workspace_name):
         """Changes workspace in a separate thread. Emits a signal
         to present a 'Loading workspace' dialog while Faraday processes
         the change"""
@@ -572,16 +567,13 @@ class GuiApp(Gtk.Application, FaradayUi):
             """
             self.window.emit("loading_workspace", 'show')
             try:
-                ws = super(GuiApp, self).openWorkspace(workspaceName)
+                ws = super(GuiApp, self).openWorkspace(workspace_name)
                 self.window.emit("loading_workspace", "destroy")
+                GObject.idle_add(CONF.setLastWorkspace, ws.name)
+                GObject.idle_add(CONF.saveConfig)
             except Exception as e:
                 model.guiapi.notification_center.showDialog(str(e))
-                ws = self.openDefaultWorkspace()
                 self.window.emit("loading_workspace", "destroy")
-
-            workspace = ws.name
-            CONF.setLastWorkspace(workspace)
-            CONF.saveConfig()
 
             return True
 
@@ -596,16 +588,15 @@ class GuiApp(Gtk.Application, FaradayUi):
         workspace = args.workspace
         try:
             ws = super(GuiApp, self).openWorkspace(workspace)
+            workspace = ws.name
+            CONF.setLastWorkspace(workspace)
+            CONF.saveConfig()
         except Exception as e:
             getLogger(self).error(
                 ("Your last workspace %s is not accessible, "
                  "check configuration") % workspace)
             getLogger(self).error(str(e))
-            ws = self.openDefaultWorkspace()
-        workspace = ws.name
 
-        CONF.setLastWorkspace(workspace)
-        CONF.saveConfig()
         Gtk.Application.run(self)
 
     def on_quit(self, action, param):

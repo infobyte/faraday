@@ -100,18 +100,6 @@ class WorkspaceManager(object):
         self.changesManager.watch(self.mappersManager, dbConnector)
         return workspace
 
-    def openDefaultWorkspace(self, name='untitled'):
-        # This method opens the default workspace called 'untitled'
-        if name not in self.getWorkspacesNames():
-            workspace = Workspace(name, 'default workspace')
-            dbConnector = self.dbManager.createDb(
-                workspace.getName(), DBTYPE.FS)
-            if self.active_workspace:
-                self.closeWorkspace()
-            self.mappersManager.createMappers(dbConnector)
-            self.mappersManager.save(workspace)
-        return self.openWorkspace(name)
-
     def closeWorkspace(self):
         self.changesManager.unwatch()
 

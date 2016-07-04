@@ -912,8 +912,14 @@ class ModelController(threading.Thread):
         return hosts_mapper.find(name)
 
     def getAllHosts(self):
-        hosts = self.mappers_manager.getMapper(
-            model.hosts.Host.class_signature).getAll()
+        """Return a list with every host. If there's an exception, assume there
+        are no hosts.
+        """
+        try:
+            hosts = self.mappers_manager.getMapper(
+                model.hosts.Host.class_signature).getAll()
+        except:
+            hosts = []
         return hosts
 
     def getWebVulns(self):
@@ -939,15 +945,37 @@ class ModelController(threading.Thread):
                     self.treeWordsTries.addWord(hostname)
 
     def getHostsCount(self):
-        hosts = model.hosts.Host.class_signature
-        return self.mappers_manager.getMapper(hosts).getCount()
+        """Get how many hosts are in the workspace. If it can't, it will
+        return zero."""
+        try:
+            hosts = model.hosts.Host.class_signature
+            count = self.mappers_manager.getMapper(hosts).getCount()
+        except:
+            getLogger(self).warning("Couldn't get host count: assuming it is zero.")
+            count = 0
+        return count
 
     def getServicesCount(self):
-        services = model.hosts.Service.class_signature
-        return self.mappers_manager.getMapper(services).getCount()
+        """Get how many services are in the workspace. If it can't, it will
+        return zero."""
+        try:
+            services = model.hosts.Service.class_signature
+            count = self.mappers_manager.getMapper(services).getCount()
+        except:
+            getLogger(self).warning("Couldn't get services count: assuming it is zero.")
+            count = 0
+        return count
 
     def getVulnsCount(self):
-        vulns = model.common.ModelObjectVuln.class_signature
-        web_vulns = model.common.ModelObjectVulnWeb.class_signature
-        return (self.mappers_manager.getMapper(vulns).getCount() +
-                self.mappers_manager.getMapper(web_vulns).getCount())
+        """Get how many vulns (web + normal) are in the workspace.
+        If it can't, it will return zero."""
+        try:
+            vulns = model.common.ModelObjectVuln.class_signature
+            web_vulns = model.common.ModelObjectVulnWeb.class_signature
+            count = (self.mappers_manager.getMapper(vulns).getCount() +
+                     self.mappers_manager.getMapper(web_vulns).getCount())
+        except:
+            getLogger(self).warning("Couldn't get vulnerabilities count: assuming it is zero.")
+            count = 0
+        return count
+

@@ -28,13 +28,14 @@ class PreferenceWindowDialog(Gtk.Window):
     Takes a callback function to the mainapp so that it can refresh the
     workspace list and information"""
 
-    def __init__(self, reload_ws_callback, connect_to_couch, parent):
+    def __init__(self, reload_ws_callback, connect_to_couch, parent,
+                 force=False, app_exit_callback=None):
+
         Gtk.Window.__init__(self, title="Preferences")
         self.parent = parent
         self.set_modal(True)
         self.set_size_request(400, 100)
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
-        self.connect("key_press_event", key_reactions)
         self.set_transient_for(parent)
         self.reloadWorkspaces = reload_ws_callback
         self.connectCouchCallback = connect_to_couch
@@ -58,11 +59,17 @@ class PreferenceWindowDialog(Gtk.Window):
         OK_button.connect("clicked", self.on_click_ok)
 
         button_box.pack_start(OK_button, False, True, 10)
-
         cancel_button = Gtk.Button.new_with_label("Cancel")
-        cancel_button.connect("clicked", self.on_click_cancel)
-        button_box.pack_end(cancel_button, False, True, 10)
 
+        if force:
+            self.connect("key_press_event", strict_key_reactions)
+            cancel_button.connect("clicked", app_exit_callback)
+
+        else:
+            self.connect("key_press_event", key_reactions)
+            cancel_button.connect("clicked", self.on_click_cancel)
+
+        button_box.pack_end(cancel_button, False, True, 10)
         self.add(main_box)
 
     def on_click_ok(self, button=None):
@@ -1420,3 +1427,13 @@ def key_reactions(window, event):
     elif key == 'Return':
         window.on_click_ok()
         return True
+
+def strict_key_reactions(window, event):
+    """Similar to key_reactions, but will not let the user do anything but
+    press return."""
+    key = Gdk.keyval_name(event.get_keyval()[1])
+    if key == 'Return':
+        window.on_click_ok()
+        return True
+    else:
+        return False

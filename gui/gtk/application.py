@@ -183,6 +183,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         """
         Gtk.Application.do_startup(self)  # deep GTK magic
 
+
         self.ws_sidebar = WorkspaceSidebar(self.workspace_manager,
                                            self.change_workspace,
                                            self.remove_workspace,
@@ -247,6 +248,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         helpMenu = builder.get_object('Help')
         self.set_menubar(helpMenu)
 
+
     def do_activate(self):
         """If there's no window, create one and present it (show it to user).
         If there's a window, just present it. Also add the log handler
@@ -276,6 +278,12 @@ class GuiApp(Gtk.Application, FaradayUi):
         notifier = model.log.getNotifier()
         notifier.widget = self.window
         model.guiapi.notification_center.registerWidget(self.window)
+
+        import ipdb; ipdb.set_trace()
+        if not CouchDbManager.testCouch(CONF.getCouchURI()):
+            self.window.do_lost_db_connection(
+                    handle_connection_lost=self.handle_connection_lost,
+                    connect_to_a_different_couch=self.force_change_couch_url)
 
     def postEvent(self, receiver, event):
         """Handles the events from gui/customevents.
@@ -317,14 +325,26 @@ class GuiApp(Gtk.Application, FaradayUi):
         elif event.type() == 42424: # lost connection to couch db
             GObject.idle_add(self.window.prepare_important_error, event,
                              self.handle_connection_lost,
-                             self.change_couch_url)
+                             self.force_change_couch_url)
 
             self.window.emit("lost_db_connection", event.problem)
             self.change_to_default_ws_on_connection_lost()
 
-    def change_couch_url(self, button=None):
+    def force_change_couch_url(self, button=None, dialog=None):
         """Just an alias for openning the Preferences Dialog."""
-        return self.on_preferences()
+        def exit_callback(button=None):
+            if not self.window.do_delete_event():
+                self.window.destroy()
+
+        if dialog is not None:
+            dialog.destroy()
+
+        preference_window = PreferenceWindowDialog(self.reloadWorkspaces,
+                                                   self.connect_to_couch,
+                                                   self.window,
+                                                   force=True,
+                                                   app_exit_callback=exit_callback)
+        preference_window.show_all()
 
     def change_to_default_ws_on_connection_lost(self):
         """Reloads the workspace and opens the default ws"""

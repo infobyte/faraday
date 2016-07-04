@@ -5,17 +5,14 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import json
 import os
-import shutil
-import mockito
 import restkit
 import threading
 import requests
 import time
 from urlparse import urlparse
 import traceback
-from couchdbkit import Server, ChangesStream, Database
+from couchdbkit import Server, ChangesStream
 from couchdbkit.resource import ResourceNotFound
 
 from utils.logs import getLogger
@@ -60,7 +57,7 @@ class DbManager(object):
         self._loadDbs()
 
     def getAvailableDBs(self):
-        return  [typ for typ, manag in self.managers.items()\
+        return [typ for typ, manag in self.managers.items()
                 if manag.isAvailable()]
 
     def _loadDbs(self):
@@ -112,6 +109,7 @@ class DbManager(object):
 
     def reloadConfig(self):
         self.load()
+
 
 class DbConnector(object):
     def __init__(self, type=None):
@@ -215,7 +213,6 @@ class CouchDbConnector(DbConnector):
     def _ratio(self):
         return self.db.info()['disk_size'] / self.db.info()['doc_count']
 
-    #@trap_timeout
     def saveDocument(self, document):
         self.incrementSeqNumber()
         getLogger(self).debug(
@@ -241,7 +238,6 @@ class CouchDbConnector(DbConnector):
         except:
             return False
 
-    #@trap_timeout
     def getDocument(self, document_id):
         # getLogger(self).debug(
         #     "Getting document %s for couch db %s" % (document_id, self.db))
@@ -252,7 +248,6 @@ class CouchDbConnector(DbConnector):
                 self.addDoc(doc)
         return doc
 
-    #@trap_timeout
     def remove(self, document_id):
         if self.db.doc_exist(document_id):
             self.incrementSeqNumber()
@@ -262,14 +257,12 @@ class CouchDbConnector(DbConnector):
     def getChildren(self, document_id):
         return self._docs[document_id]["children"]
 
-    #@trap_timeout
     def getDocsByFilter(self, parentId, type):
         if not type:
             key = None
             if parentId:
                 key = '%s' % parentId
             view = 'mapper/byparent'
-            #print "query: view -> %s, key -> %s" % (view, key)
         else:
             key = ['%s' % parentId, '%s' % type]
             view = 'mapper/byparentandtype'
@@ -277,7 +270,6 @@ class CouchDbConnector(DbConnector):
         values = [doc.get("value") for doc in self.db.view(view, key=key)]
         return values
 
-    #@trap_timeout
     def getAllDocs(self):
         docs = [doc.get("value") for doc in self.db.view('utils/docs')]
         return docs
@@ -312,7 +304,6 @@ class CouchDbConnector(DbConnector):
                     self.couch_exception_callback()
                     return False  # kill the thread if something went wrong
 
-    #@trap_timeout
     def waitForDBChange(self, since=0):
         """Listen to the stream of changes provided by CouchDbKit. Process
         these changes accordingly. If there's an exception while listening
@@ -354,10 +345,9 @@ class CouchDbConnector(DbConnector):
             except Exception as e:
                 getLogger(self).info("Some exception happened while waiting for changes")
                 getLogger(self).info("  The exception was: %s" % e)
-                return False # kill thread, it's failed... in reconnection
-                             # another one will be created, don't worry
+                return False  # kill thread, it's failed... in reconnection
+                              # another one will be created, don't worry
 
-    #@trap_timeout
     def _compactDatabase(self):
         try:
             self.db.compact()
@@ -407,31 +397,6 @@ class AbstractPersistenceManager(object):
         return self._available
 
 
-class NoCouchDBError(Exception):
-    def __init__(self):
-        Exception.__init__(self, "NoCouchDBError")
-
-
-class NoConectionServer(object):
-    """ Default to this server if no conectivity"""
-    def create_db(*args):
-        pass
-
-    def all_dbs(*args, **kwargs):
-        return []
-
-    def get_db(*args):
-        db_mock = mockito.mock(Database)
-        mockito.when(db_mock).documents().thenReturn([])
-        return db_mock
-
-    def replicate(*args, **kwargs):
-        pass
-
-    def delete_db(*args):
-        pass
-
-
 class CouchDbManager(AbstractPersistenceManager):
     """
     This is a couchdb manager for the workspace,
@@ -443,7 +408,6 @@ class CouchDbManager(AbstractPersistenceManager):
             "Initializing CouchDBManager for url [%s]" % uri)
         self._lostConnection = False
         self.__uri = uri
-        self.__serv = NoConectionServer()
         self._available = False
         try:
             if uri is not None:
@@ -460,19 +424,20 @@ class CouchDbManager(AbstractPersistenceManager):
             getLogger(self).warn("No route to couchdb server on: %s" % uri)
             getLogger(self).debug(traceback.format_exc())
 
-
-    #@trap_timeout
     def _create(self, name):
         db = self.__serv.create_db(name.lower())
         return CouchDbConnector(db)
 
-    #@trap_timeout
     def _delete(self, name):
         self.__serv.delete_db(name)
 
-    #@trap_timeout
     def _loadDbs(self):
-        conditions = lambda x: not x.startswith("_") and x not in CONST_BLACKDBS
+
+        def conditions(database):
+            begins_with_underscore = database.startswith("_")
+            is_blackie = database in CONST_BLACKDBS
+            return not begins_with_underscore and not is_blackie
+
         try:
             for dbname in filter(conditions, self.__serv.all_dbs()):
                 if dbname not in self.dbs.keys():
@@ -498,7 +463,6 @@ class CouchDbManager(AbstractPersistenceManager):
         except:
             return []
 
-    #@trap_timeout
     def pushReports(self):
         vmanager = ViewsManager()
         reports = os.path.join(os.getcwd(), "views", "reports")
@@ -510,22 +474,6 @@ class CouchDbManager(AbstractPersistenceManager):
                 "Reports database couldn't be uploaded. You need to be an admin to do it")
         return self.__uri + "/reports/_design/reports/index.html"
 
-    def lostConnectionResolv(self):
-        self._lostConnection = True
-        self.__dbs.clear()
-        self.__serv = NoConectionServer()
-
-    def reconnect(self):
-        ret_val = False
-        ur = self.__uri
-        if CouchDbManager.testCouch(ur):
-            self.__serv = Server(uri = ur)
-            self.__dbs.clear()
-            self._lostConnection = False
-            ret_val = True
-
-        return ret_val
-
     @staticmethod
     def testCouch(uri):
         """Redirect to the module-level function of the name, which
@@ -535,7 +483,6 @@ class CouchDbManager(AbstractPersistenceManager):
     def testCouchUrl(self, uri):
         if uri is not None:
             url = urlparse(uri)
-            proto = url.scheme
             host = url.hostname
             port = url.port
             self.test(host, int(port))
@@ -546,7 +493,6 @@ class CouchDbManager(AbstractPersistenceManager):
         s.settimeout(1)
         s.connect((address, port))
 
-    #@trap_timeout
     def replicate(self, workspace, *targets_dbs, **kwargs):
         getLogger(self).debug("Targets to replicate %s" % str(targets_dbs))
         for target_db in targets_dbs:

@@ -29,16 +29,12 @@ from utils.user_input import query_yes_no
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 FARADAY_BASE = os.path.dirname(os.path.realpath(__file__))
-QTDIR=os.path.join(FARADAY_BASE, 'external_libs', 'qt')
 
 FARADAY_USER_HOME = os.path.expanduser(CONST_FARADAY_HOME_PATH)
 FARADAY_PLUGINS_PATH = os.path.join(FARADAY_USER_HOME,
                         CONST_FARADAY_PLUGINS_PATH)
 FARADAY_PLUGINS_BASEPATH = os.path.join(FARADAY_BASE,
                             CONST_FARADAY_PLUGINS_REPO_PATH)
-
-FARADAY_BASE_LIB_HELPERS = os.path.join(FARADAY_BASE,
-                            CONST_FARADAY_LIB_HELPERS)
 
 FARADAY_BASE_IMAGES = os.path.join(FARADAY_BASE, "data",
                             CONST_FARADAY_IMAGES)
@@ -55,11 +51,6 @@ FARADAY_USER_ZSHRC = os.path.join(FARADAY_USER_HOME, CONST_FARADAY_ZSHRC)
 FARADAY_USER_ZSH_PATH = os.path.join(FARADAY_USER_HOME, CONST_ZSH_PATH)
 FARADAY_BASE_ZSH = os.path.join(FARADAY_BASE, CONST_FARADAY_ZSH_FARADAY)
 
-USER_QT = os.path.expanduser(CONST_USER_QT_PATH)
-USER_QTRC = os.path.expanduser(CONST_USER_QTRC_PATH)
-USER_QTRCBAK = os.path.expanduser(CONST_USER_QTRC_BACKUP)
-FARADAY_QTRC = os.path.join(FARADAY_BASE, CONST_FARADAY_QTRC_PATH)
-FARADAY_QTRCBAK = os.path.expanduser(CONST_FARADAY_QTRC_BACKUP)
 FARADAY_VERSION_FILE = os.path.join(FARADAY_BASE, CONST_VERSION_FILE)
 FARADAY_CONFIG = os.path.join(FARADAY_BASE, CONST_CONFIG)
 FARADAY_REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, CONST_REQUIREMENTS_FILE)
@@ -142,7 +133,7 @@ def getParserArgs():
     parser.add_argument('--gui', action="store", dest="gui",
         default="gtk",
         help="Select interface to start faraday. Supported values are "
-              "qt3 (deprecated), gtk and 'no' (no GUI at all). Defaults to GTK")
+              "gtk and 'no' (no GUI at all). Defaults to GTK")
 
     parser.add_argument('--cli', action="store_true",
         dest="cli",
@@ -361,24 +352,6 @@ def setupPlugins(dev_mode=False):
 
         shutil.copytree(FARADAY_PLUGINS_BASEPATH, FARADAY_PLUGINS_PATH)
 
-
-def setupQtrc():
-    """Cheks and handles QT configuration file.
-
-    Existing qtrc files will be backed up and faraday qtrc will be set.
-
-    """
-    from ctypes import cdll
-    try:
-        import qt
-    except:
-        try:
-            cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqt.so'))
-            cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqui.so'))
-        except:
-            pass
-
-
 def setupZSH():
     """Cheks and handles Faraday's integration with ZSH.
 
@@ -412,41 +385,6 @@ def setupXMLConfig():
     else:
         logger.info("Using custom user configuration.")
 
-
-def setupLibs():
-    """Checks ELF libraries status."
-
-    Right now it only looks for the right helpers.so from the base path based on
-    system platform and architecture, and creates a symbolic link to it inside
-    the same folder.
-
-    """
-
-    arch = platform.machine()
-    helpers = FARADAY_BASE_LIB_HELPERS
-    if sys.platform == "linux" or sys.platform == "linux2":
-        if arch == "amd64" or arch == "x86_64":
-            logger.info("x86_64 linux detected.")
-            helpers += ".amd64"
-        elif arch == "i686" or arch == "i386":
-            logger.info("i386/686 linux detected.")
-            helpers += ".i386"
-        else:
-            logger.fatal("Linux architecture could not be determined.")
-            sys.exit()
-    elif sys.platform == "darwin":
-        logger.info("OS X detected.")
-        helpers += ".darwin"
-    else:
-        logger.fatal("Plaftorm not supported yet.")
-        sys.exit()
-
-    if os.path.isfile(FARADAY_BASE_LIB_HELPERS):
-        os.remove(FARADAY_BASE_LIB_HELPERS)
-
-    subprocess.call(['ln', '-s', helpers, FARADAY_BASE_LIB_HELPERS])
-
-
 def setupImages():
     """ Copy png icons
     """
@@ -465,19 +403,11 @@ def checkConfiguration(gui_type):
     logger.info("Checking configuration.")
     logger.info("Setting up plugins.")
     setupPlugins(args.dev_mode)
-    if gui_type == "qt3":
-        logger.info("Setting up Qt configuration.")
-        setupQtrc()
     logger.info("Setting up ZSH integration.")
     setupZSH()
     logger.info("Setting up  user configuration.")
     setupXMLConfig()
     logger.info("Setting up libraries.")
-    setupLibs()
-    if gui_type == "qt3":
-        logger.info("Setting up icons for QT interface.")
-        setupImages()
-
 
 def setupFolders(folderlist):
     """Checks if a list of folders exists and creates them otherwise.

@@ -17,8 +17,6 @@ class UiFactory(object):
     def create(model_controller, plugin_manager, workspace_manager, plugin_controller, gui="gtk"):
         if gui == "gtk":
             from gui.gtk.application import GuiApp
-        elif gui == "qt3":
-            from gui.qt3.application import GuiApp
         else:
             from gui.nogui.application import GuiApp
 
@@ -27,7 +25,7 @@ class UiFactory(object):
 
 class FaradayUi(object):
     def __init__(self, model_controller, plugin_manager,
-                 workspace_manager, plugin_controller, gui="qt3"):
+                 workspace_manager, plugin_controller, gui="gtk"):
         self.model_controller = model_controller
         self.plugin_manager = plugin_manager
         self.workspace_manager = workspace_manager

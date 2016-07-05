@@ -172,6 +172,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         can be passed directly OR they can be sent the to the error callbacks
         instance list (specially useful when calling this via signals).
         """
+
         def do_nothing_on_key_stroke(event, key):
             """Do nothing except return True"""
             return True
@@ -318,7 +319,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.set_app_menu(appmenu)
         helpMenu = builder.get_object('Help')
         self.set_menubar(helpMenu)
-
 
     def do_activate(self):
         """If there's no window, create one and present it (show it to user).
@@ -576,7 +576,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         pluginsOption_window.show_all()
 
     def on_new_button(self, action=None, params=None, title=None):
-        "Defines what happens when you press the 'new' button on the toolbar"
+        """Defines what happens when you press the 'new' button on the toolbar
+        """
         new_workspace_dialog = NewWorkspaceDialog(self.createWorkspace,
                                                   self.workspace_manager,
                                                   self.ws_sidebar, self.window,

@@ -25,6 +25,9 @@ CONF = getInstanceConfiguration()
 
 
 class DBTYPE(object):
+    """A simple enumeration of the databases types. CouchDB is the only
+    valid DB right now.
+    """
     COUCHDB = 1
 
 
@@ -124,6 +127,9 @@ class DbConnector(object):
 
     def setCouchExceptionCallback(self, callback):
         self.couch_exception_callback = callback
+
+    def setNoWorkspaceCallback(self, callback):
+        self.no_workspace_callback = callback
 
     def waitForDBChange(self):
         pass
@@ -342,6 +348,12 @@ class CouchDbConnector(DbConnector):
                                     doc = self.db.get(obj_id)
                                     self.addDoc(doc)
                                 self.changes_callback(obj_id, revision, deleted)
+
+            except ResourceNotFound as e:
+                getLogger(self).info("The database couldn't be found")
+                self.no_workspace_callback()
+                return False
+
             except Exception as e:
                 getLogger(self).info("Some exception happened while waiting for changes")
                 getLogger(self).info("  The exception was: %s" % e)

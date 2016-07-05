@@ -222,58 +222,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         dialog.run()
         dialog.destroy()
 
-    def do_nothing_on_key_stroke(self, widget, event):
-        """Do nothing. Well, technically, return True.
-
-        Avoids the user to interact with dialogs in anyway, for example,
-        via the Escape key.
-        You'll have to wait for my dialog to exit by itself, cowboy.
-        """
-        return True
-
-    def do_lost_db_connection(self, explanatory_message=None,
-                              handle_connection_lost=None,
-                              connect_to_a_different_couch=None):
-        """Creates a simple dialog with an error message to inform the user
-        some kind of problem has happened and the connection was lost.
-        Uses the first callback on self.error_callbacks, which should
-        point to the application's handle_connection_lost method.
-
-        Handle connection lost and connect to a different couch callbacks
-        can be passed directly OR they can be sent the to the error callbacks
-        instance list (specially useful when calling this via signals).
-        """
-
-        if handle_connection_lost is None:
-            handle_connection_lost = self.error_callbacks[0]
-        if connect_to_a_different_couch is None:
-            connect_to_a_different_couch = self.error_callbacks[1]
-
-        if explanatory_message:
-            explanation = "\n The specific error was: " + explanatory_message
-        else:
-            explanation = ""
-
-        dialog = Gtk.MessageDialog(self, 0,
-                                   Gtk.MessageType.ERROR,
-                                   Gtk.ButtonsType.NONE,
-                                   "Faraday can't connect to CouchDB. "
-                                   "You can try to reconnect to the last URL "
-                                   "you set up, change it or exit Faraday "
-                                   "until you fix the problem. \n" + explanation)
-        dialog.set_modal(True)
-        dialog.connect("key_press_event", self.do_nothing_on_key_stroke)
-
-        retry_button = dialog.add_button("Retry connection?", 42)
-        retry_button.connect("clicked", handle_connection_lost, dialog)
-
-        change_couch_url = dialog.add_button("Connect to a different CouchDB?", 43)
-        change_couch_url.connect("clicked", connect_to_a_different_couch, dialog)
-
-        cancel_button = dialog.add_button("Exit Faraday", 0)
-        cancel_button.connect("clicked", self.destroy_from_button)
-
-        response = dialog.run()
 
     def do_new_log(self, text):
         """To be used on a new_log signal. Calls a method on log to append
@@ -301,6 +249,14 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         a silly loading dialog.
         Preconditions: show must have been called before destroy can be called
         """
+        def do_nothing_on_key_stroke(self, widget, event):
+            """Do nothing. Well, technically, return True.
+
+            Avoids the user to interact with dialogs in anyway, for example,
+            via the Escape key.
+            You'll have to wait for my dialog to exit by itself, cowboy.
+            """
+            return True
 
         if action == "show":
             self.loading_dialog = Gtk.MessageDialog(self, 0,
@@ -310,7 +266,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
                                                     "Please wait."))
 
             self.loading_dialog.set_modal(True)
-            self.loading_dialog.connect("key_press_event", self.do_nothing_on_key_stroke)
+            self.loading_dialog.connect("key_press_event", do_nothing_on_key_stroke)
 
             self.loading_dialog.show_all()
         if action == "destroy":
@@ -404,16 +360,22 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.notebook.append_page(pageN, Gtk.Label(str(self.tab_number+1)))
         self.notebook.show_all()
 
-    def delete_tab(self, button=None):
-        """Deletes the current tab or closes the window if tab is only tab"""
+    def delete_tab(self, button=None, tab_number=None):
+        """Deletes the tab number tab_number, by default the current,
+        or closes the window if tab is only tab"""
         if self.tab_number == 0:
             # the following is confusing but its how gtks handles delete_event
             # if user said YES to confirmation, do_delete_event returns False
             if not self.do_delete_event():
                 self.destroy()
+
         else:
-            current_page = self.notebook.get_current_page()
-            self.notebook.remove_page(current_page)
+            if tab_number is None:
+                page = self.notebook.get_current_page()
+            else:
+                page = self.notebook.get_nth_page(tab_number)
+
+            self.notebook.remove_page(page)
             self.reorder_tab_names()
 
     def reorder_tab_names(self):

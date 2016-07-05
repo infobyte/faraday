@@ -64,12 +64,16 @@ class ChangeController(object):
         """All it does is send a notification to the notification center"""
         model.guiapi.notification_center.CouchDBConnectionProblem()
 
+    def revertToNoWorkspace(self):
+        model.guiapi.notification_center.WorkspaceProblem()
+
     def watch(self, mapper, dbConnector):
         self.mapper_manager = mapper
         self.dbConnector = dbConnector
         self.changesWatcher = ChangeWatcher(dbConnector.waitForDBChange)
         dbConnector.setChangesCallback(self.loadChange)
         dbConnector.setCouchExceptionCallback(self.manageConnectionLost)
+        dbConnector.setNoWorkspaceCallback(self.revertToNoWorkspace)
         self.changesWatcher.start()
 
     def unwatch(self):

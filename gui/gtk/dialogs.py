@@ -181,6 +181,21 @@ class NewWorkspaceDialog(Gtk.Window):
         self.destroy()
 
 
+class ForceNewWorkspaceDialog(NewWorkspaceDialog):
+    """A very similar class to new workspace dialog, but this one forces
+    the user to do so."""
+
+    def __init__(self, parent, create_ws_callback, workspace_manager, sidebar):
+        """Init new workspace dialog, but make it so you can't press the
+        cancel button or press scape."""
+        NewWorkspaceDialog.__init__(self, create_ws_callback, workspace_manager,
+                                    sidebar, parent)
+        self.connect("key_press_event", strict_key_reactions)
+        button_box = self.main_box.get_children()[2]
+        cancel_button = button_box.get_children()[1]
+        cancel_button.set_sensitive(False)
+
+
 class PluginOptionsDialog(Gtk.Window):
     """The dialog where the user can see details about installed plugins.
     It is not the prettiest thing in the world but it works.
@@ -1303,6 +1318,70 @@ class ConflictsDialog(Gtk.Window):
 
         return raw_prop
 
+class ForceChooseWorkspaceDialog(Gtk.Dialog):
+    """A dialog to force the user to choose a workspace in case he suddenly
+    finds himself without an active workspace.
+    """
+
+    def __init__(self, parent_window, available_workspaces, change_ws_callback):
+        """Initializes a simple modal dialog which forces the user to choose
+        a workspace from a list. In case no workspaces are selectable,
+        it will force him to create a workspace."""
+        Gtk.Dialog.__init__(self, title="Choose a Workspace")
+        self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+        self.set_transient_for(parent_window)
+        self.set_modal(True)
+        self.connect("key_press_event", strict_key_reactions)
+
+        self.change_ws_callback = change_ws_callback
+
+        message = self.create_explanation_message()
+        scroll_view = self.create_view(self.create_model(available_workspaces))
+
+        content_box = self.get_content_area()
+        content_box.pack_start(message, True, True, 6)
+        content_box.pack_start(scroll_view, True, True, 6)
+
+        button = self.add_button("Choose workspace", 42)
+        button.connect("clicked", self.on_click_ok)
+
+    def create_explanation_message(self):
+        """Returns a simple explanatory message inside a Label"""
+        message = Gtk.Label()
+        message.set_text("Your last workspace is not accessible. \n"
+                         "You must select one of the below workspaces to "
+                         "continue using Faraday.")
+        return message
+
+    def create_model(self, workspace_list):
+        """Creates a model of the workspaces containing only the workspaces
+        names given a workspace_list with the workspaces names.
+        """
+        workspace_model = Gtk.ListStore(str)
+        for ws in workspace_list:
+            workspace_model.append([ws])
+        return workspace_model
+
+    @scrollable(height=200)
+    def create_view(self, workspace_model):
+        """Returns and assigns to the instance a view listing all the
+        workspaces names.
+        """
+        self.ws_view = Gtk.TreeView(workspace_model)
+        renderer = Gtk.CellRendererText()
+        column = Gtk.TreeViewColumn("Workspaces", renderer, text=0)
+        self.ws_view.append_column(column)
+        return self.ws_view
+
+    def on_click_ok(self, button=None):
+        """On click ok, change the workspace in the app with out selection
+        and destroy.
+        """
+        selection = self.ws_view.get_selection()
+        model, iter_ = selection.get_selected()
+        ws_name = model[iter_][0]
+        self.change_ws_callback(ws_name)
+        self.destroy()
 
 class NotificationsDialog(Gtk.Window):
     """Defines a simple notification dialog. It isn't much, really"""

@@ -31,6 +31,7 @@ EDITHOST = 4102
 CHANGEFROMINSTANCE = 5100
 UPDATEMODEL_ID = 54321
 CONNECTION_REFUSED = 42424
+WORKSPACE_PROBLEM = 24242
 
 
 class CustomEvent(object):
@@ -79,6 +80,11 @@ class ShowExceptionCustomEvent(CustomEvent):
 class ShowExceptionConnectionRefusedCustomEvent(CustomEvent):
     def __init__(self, problem=None):
         CustomEvent.__init__(self, CONNECTION_REFUSED)
+        self.problem = problem
+
+class WorkspaceProblemCustomEvent(CustomEvent):
+    def __init__(self, problem=None):
+        CustomEvent.__init__(self, WORKSPACE_PROBLEM)
         self.problem = problem
 
 

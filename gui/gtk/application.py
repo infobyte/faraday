@@ -53,6 +53,8 @@ from dialogs import aboutDialog
 from dialogs import helpDialog
 from dialogs import ConflictsDialog
 from dialogs import HostInfoDialog
+from dialogs import ForceChooseWorkspaceDialog
+from dialogs import ForceNewWorkspaceDialog
 from dialogs import errorDialog
 from dialogs import ImportantErrorDialog
 
@@ -152,11 +154,80 @@ class GuiApp(Gtk.Application, FaradayUi):
         sidebar"""
 
         model.api.log("Removing Workspace: %s" % ws_name)
-        if CONF.getLastWorkspace() == ws_name:
-            self.openDefaultWorkspace()
         self.getWorkspaceManager().removeWorkspace(ws_name)
         self.ws_sidebar.clearSidebar()
         self.ws_sidebar.refreshSidebar()
+        if CONF.getLastWorkspace() == ws_name:
+            self.handle_no_active_workspace()
+
+    def lost_db_connection(self, explanatory_message=None,
+                           handle_connection_lost=None,
+                           connect_to_a_different_couch=None):
+        """Creates a simple dialog with an error message to inform the user
+        some kind of problem has happened and the connection was lost.
+        Uses the first callback on self.error_callbacks, which should
+        point to the application's handle_connection_lost method.
+
+        Handle connection lost and connect to a different couch callbacks
+        can be passed directly OR they can be sent the to the error callbacks
+        instance list (specially useful when calling this via signals).
+        """
+        def do_nothing_on_key_stroke(event, key):
+            """Do nothing except return True"""
+            return True
+
+        if explanatory_message:
+            explanation = "\n The specific error was: " + explanatory_message
+        else:
+            explanation = ""
+
+        dialog = Gtk.MessageDialog(self.window, 0,
+                                   Gtk.MessageType.ERROR,
+                                   Gtk.ButtonsType.NONE,
+                                   "Faraday can't connect to CouchDB. "
+                                   "You can try to reconnect to the last URL "
+                                   "you set up, change it or exit Faraday "
+                                   "until you fix the problem. \n" + explanation)
+
+        dialog.set_modal(True)
+        dialog.connect("key_press_event", do_nothing_on_key_stroke)
+
+        retry_button = dialog.add_button("Retry connection?", 42)
+        retry_button.connect("clicked", handle_connection_lost, dialog)
+
+        change_couch_url = dialog.add_button("Connect to a different CouchDB?", 43)
+        change_couch_url.connect("clicked", connect_to_a_different_couch, dialog)
+
+        cancel_button = dialog.add_button("Exit Faraday", 0)
+        cancel_button.connect("clicked", self.on_quit)
+
+        dialog.run()
+        return False
+
+    def handle_no_active_workspace(self):
+        """If there's been a problem opening a workspace or for some reason
+        we suddenly find our selves without one, force the user
+        to select one if possible, or if not, to create one.
+        """
+
+        if not CouchDbManager.testCouch(CONF.getCouchURI()):
+            # make sure it is not because we're not connected to Couch
+            # there's another whole strategy for that.
+            return False
+
+        available_workspaces = self.workspace_manager.getWorkspacesNames()
+
+        if available_workspaces:
+            dialog = ForceChooseWorkspaceDialog(self.window,
+                                                available_workspaces,
+                                                self.change_workspace)
+            dialog.show_all()
+        else:
+            dialog = ForceNewWorkspaceDialog(self.window,
+                                             self.createWorkspace,
+                                             self.workspace_manager,
+                                             self.ws_sidebar)
+            dialog.show_all()
 
     def is_workspace_couch(self, workspace_name):
         """Return if the workspace named workspace_name is associated to a
@@ -266,6 +337,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                                     self.statusbar,
                                     application=self,
                                     title="Faraday")
+            self.open_last_workspace()
 
         self.window.set_icon(self.icon)
         self.window.present()
@@ -280,9 +352,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         model.guiapi.notification_center.registerWidget(self.window)
 
         if not CouchDbManager.testCouch(CONF.getCouchURI()):
-            self.window.do_lost_db_connection(
-                    handle_connection_lost=self.handle_connection_lost,
-                    connect_to_a_different_couch=self.force_change_couch_url)
+            self.lost_db_connection(
+                handle_connection_lost=self.handle_connection_lost,
+                connect_to_a_different_couch=self.force_change_couch_url)
 
     def postEvent(self, receiver, event):
         """Handles the events from gui/customevents.
@@ -322,12 +394,13 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.window.emit("important_error")
 
         elif event.type() == 42424: # lost connection to couch db
-            GObject.idle_add(self.window.prepare_important_error, event,
+            GObject.idle_add(self.lost_db_connection, event.problem,
                              self.handle_connection_lost,
                              self.force_change_couch_url)
-
-            self.window.emit("lost_db_connection", event.problem)
             GObject.idle_add(self.reloadWorkspaces)
+
+        elif event.type() == 24244:  # workspace not accesible
+            GObject.idle_add(self.handle_no_active_workspace)
 
     def force_change_couch_url(self, button=None, dialog=None):
         """Forces the user to change the couch URL. You **will** ended up
@@ -575,6 +648,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                 GObject.idle_add(CONF.setLastWorkspace, ws.name)
                 GObject.idle_add(CONF.saveConfig)
             except Exception as e:
+                self.handle_no_active_workspace()
                 model.guiapi.notification_center.showDialog(str(e))
                 self.window.emit("loading_workspace", "destroy")
 
@@ -584,23 +658,26 @@ class GuiApp(Gtk.Application, FaradayUi):
         thread.daemon = True
         thread.start()
 
-    def run(self, args):
-        """First method to run, as defined by FaradayUi. This method is
-        mandatory"""
-
-        workspace = args.workspace
+    def open_last_workspace(self):
+        """Tries to open the last workspace the user had opened."""
+        workspace = self.args.workspace
         try:
             ws = super(GuiApp, self).openWorkspace(workspace)
             workspace = ws.name
             CONF.setLastWorkspace(workspace)
             CONF.saveConfig()
         except Exception as e:
+            self.handle_no_active_workspace()
             getLogger(self).error(
                 ("Your last workspace %s is not accessible, "
                  "check configuration") % workspace)
             getLogger(self).error(str(e))
 
+    def run(self, args):
+        """First method to run, as defined by FaradayUi. This method is
+        mandatory"""
+        self.args = args
         Gtk.Application.run(self)
 
-    def on_quit(self, action, param):
+    def on_quit(self, action=None, param=None):
         self.quit()

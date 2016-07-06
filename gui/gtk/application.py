@@ -164,8 +164,11 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.getWorkspaceManager().removeWorkspace(ws_name)
         self.ws_sidebar.clearSidebar()
         self.ws_sidebar.refreshSidebar()
-        if CONF.getLastWorkspace() == ws_name:
-            self.handle_no_active_workspace()
+
+        # NOTE: this is not neccesary anymore. There's a signal which
+        # handles this already: 24242.
+        # if CONF.getLastWorkspace() == ws_name:
+        #    self.handle_no_active_workspace()
 
     def lost_db_connection(self, explanatory_message=None,
                            handle_connection_lost=None,

@@ -69,6 +69,7 @@ class ChangeController(object):
         self.dbConnector = dbConnector
         self.changesWatcher = ChangeWatcher(dbConnector.waitForDBChange)
         dbConnector.setChangesCallback(self.loadChange)
+        dbConnector.setNoWorkspacesCallback(self.revertToNoWorkspace)
         self.changesWatcher.start()
 
     def unwatch(self):

@@ -71,7 +71,6 @@ from utils.common import checkSSL
 
 CONF = getInstanceConfiguration()
 
-
 class GuiApp(Gtk.Application, FaradayUi):
     """
     Creates the application and has the necesary callbacks to FaradayUi
@@ -80,6 +79,13 @@ class GuiApp(Gtk.Application, FaradayUi):
     here. Some of the logic on the dialogs is implemented in the dialogs own
     class. Some dialogs are shown by the appwindow to handle errors coming
     from other threads outside GTK's.
+
+    Please respect the following structure:
+    TOP: __init__
+    UPPER-MIDDLE: all conflict, mostly not inhertid fom Gtk.Application logic
+    LOWER-MIDDLE: all do_-starting, gtk related methods
+    BOTTOM: all on_-starting, dialog opener methods
+
     """
 
     def __init__(self, model_controller, plugin_manager, workspace_manager,
@@ -96,6 +102,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         Gtk.Application.__init__(self, application_id="org.infobyte.faraday",
                                  flags=Gio.ApplicationFlags.FLAGS_NONE)
 
+        self.lost_connection_dialog_already_raised = None
         self.icons = CONF.getImagePath() + "icons/"
         faraday_icon = self.icons + "faraday_icon.png"
         self.icon = GdkPixbuf.Pixbuf.new_from_file_at_scale(faraday_icon, 16,
@@ -105,9 +112,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.conflicts = self.model_controller.getConflicts()
 
     def getMainWindow(self):
-        """Returns the main window. This is none only at the
-        the startup, the GUI will create one as soon as do_activate() is called
-        """
+        """Useless mostly, but guiapi uses this method to access the main
+        window."""
         return self.window
 
     def updateConflicts(self):
@@ -165,17 +171,20 @@ class GuiApp(Gtk.Application, FaradayUi):
                            connect_to_a_different_couch=None):
         """Creates a simple dialog with an error message to inform the user
         some kind of problem has happened and the connection was lost.
-        Uses the first callback on self.error_callbacks, which should
-        point to the application's handle_connection_lost method.
-
-        Handle connection lost and connect to a different couch callbacks
-        can be passed directly OR they can be sent the to the error callbacks
-        instance list (specially useful when calling this via signals).
         """
+
+        # NOTE: if we start faraday without CouchDB, both the signal coming
+        # from CouchDB manager AND our test in do_activate will try
+        # to raise the dialog. This avoids more than one dialog to be raised.
+        # DO REMEMBER to change this flag when you destroy the dialog.
+        if self.lost_connection_dialog_already_raised:
+            return False
 
         def do_nothing_on_key_stroke(event, key):
             """Do nothing except return True"""
             return True
+
+        self.lost_connection_dialog_already_raised = True
 
         if explanatory_message:
             explanation = "\n The specific error was: " + explanatory_message
@@ -203,7 +212,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         cancel_button.connect("clicked", self.on_quit)
 
         dialog.run()
-        return False
 
     def handle_no_active_workspace(self):
         """If there's been a problem opening a workspace or for some reason
@@ -244,6 +252,206 @@ class GuiApp(Gtk.Application, FaradayUi):
     def get_active_workspace(self):
         """Return the currently active workspace"""
         return self.workspace_manager.getActiveWorkspace()
+
+
+    def postEvent(self, receiver, event):
+        """Handles the events from gui/customevents.
+
+        DO NOT, AND I REPEAT, DO NOT REDRAW *ANYTHING* FROM THE GUI
+        FROM HERE. If you must do it, you should to it via the emit method
+        to the appwindow or maybe using Glib.idle_add, a misterious function
+        with outdate documentation."""
+
+        if receiver is None:
+            receiver = self.window
+
+        elif event.type() == 3131:  # new log event
+            receiver.emit("new_log", event.text)
+
+        elif event.type() == 3141:  # new conflict event
+            receiver.emit("set_conflict_label", event.nconflicts)
+
+        elif event.type() == 5100:  # new notification event
+            self.notificationsModel.prepend([event.change.getMessage()])
+            receiver.emit("new_notif")
+            host_count, service_count, vuln_count = self.update_counts()
+            receiver.emit("update_ws_info", host_count,
+                          service_count, vuln_count)
+
+        elif event.type() == 4100 or event.type() == 3140:  # newinfo or changews
+            host_count, service_count, vuln_count = self.update_counts()
+            self.window.receive_hosts(self.updateHosts())
+            receiver.emit("update_hosts_sidebar")
+            receiver.emit("update_ws_info", host_count, service_count, vuln_count)
+
+        elif event.type() == 3132:  # error
+            self.window.emit("normal_error", event.text)
+
+        elif event.type() == 3134:  # important error, uncaught exception
+            GObject.idle_add(self.window.prepare_important_error, event)
+            self.window.emit("important_error")
+
+        elif event.type() == 42424: # lost connection to couch db
+            GObject.idle_add(self.lost_db_connection, event.problem,
+                             self.handle_connection_lost,
+                             self.force_change_couch_url)
+            GObject.idle_add(self.reload_worskpaces_no_connection)
+
+        elif event.type() == 24242:  # workspace not accesible
+            GObject.idle_add(self.handle_no_active_workspace)
+
+    def force_change_couch_url(self, button=None, dialog=None):
+        """Forces the user to change the couch URL. You **will** ended up
+        connected to CouchDB or you will exit my application, cowboy.
+        """
+
+        def exit_callback(button=None):
+            """A simple exit callback to be used when forcing the user
+            to connect to couch."""
+            if not self.window.do_delete_event():
+                self.window.destroy()
+
+        # destroy the ugly dialog that got us here
+        if dialog is not None:
+            dialog.destroy()
+            self.lost_connection_dialog_already_raised = True
+
+        preference_window = PreferenceWindowDialog(self.reloadWorkspaces,
+                                                   self.connect_to_couch,
+                                                   self.window,
+                                                   force=True,
+                                                   app_exit_callback=exit_callback)
+        preference_window.show_all()
+
+    def connect_to_couch(self, couch_uri):
+        """Tries to connect to a CouchDB on a specified Couch URI.
+        Returns the success status of the operation, False for not successful,
+        True for successful
+        """
+
+        if not CouchDbManager.testCouch(couch_uri):
+            errorDialog(self.window, "Could not connect to CouchDB.",
+                        ("Are you sure it is running and that you can "
+                        "connect to it? \n Make sure your username and "
+                        "password are still valid."))
+            success = False
+        elif couch_uri.startswith("https://"):
+            if not checkSSL(couch_uri):
+                errorDialog(self.window,
+                            "The SSL certificate validation has failed")
+            success = False
+        else:
+            CONF.setCouchUri(couch_uri)
+            CONF.saveConfig()
+            self.reloadWorkspaces()
+            success = True
+        return success
+
+    def handle_connection_lost(self, button=None, dialog=None):
+        """Tries to connect to Couch using the same URI"""
+        couch_uri = CONF.getCouchURI()
+        if self.connect_to_couch(couch_uri):
+            reconnected = True
+            if dialog is not None:
+                dialog.destroy()
+                self.lost_connection_dialog_already_raised = False
+        else:
+            reconnected = False
+        return reconnected
+
+    def update_counts(self):
+        """Update the counts for host, services and vulns"""
+        host_count = self.model_controller.getHostsCount()
+        service_count = self.model_controller.getServicesCount()
+        vuln_count = self.model_controller.getVulnsCount()
+        return host_count, service_count, vuln_count
+
+
+    def show_host_info(self, host_id):
+        """Looks up the host selected in the HostSidebar by id and shows
+        its information on the HostInfoDialog"""
+        current_ws_name = self.get_active_workspace().name
+        is_ws_couch = self.is_workspace_couch(current_ws_name)
+
+        for host in self.all_hosts:
+            if host_id == host.id:
+                selected_host = host
+                break
+
+        info_window = HostInfoDialog(self.window, current_ws_name,
+                                     is_ws_couch, selected_host)
+        info_window.show_all()
+
+    def reload_worskpaces_no_connection(self):
+        """Very similar to reloadWorkspaces, but doesn't resource the
+        workspace_manager to avoid asking for information to a database
+        we can't access."""
+        self.workspace_manager.closeWorkspace()
+        self.ws_sidebar.clearSidebar()
+
+    def reloadWorkspaces(self):
+        """Close workspace, resources the workspaces available,
+        clears the sidebar of the old workspaces and injects all the new ones
+        in there too"""
+        self.workspace_manager.closeWorkspace()
+        self.workspace_manager.resource()
+        self.ws_sidebar.clearSidebar()
+        self.ws_sidebar.refreshSidebar()
+
+    def delete_notifications(self):
+        """Clear the notifications model of all info, also send a signal
+        to get the notification label to 0 on the main window's button
+        """
+        self.notificationsModel.clear()
+        self.window.emit("clear_notifications")
+
+    def change_workspace(self, workspace_name):
+        """Changes workspace in a separate thread. Emits a signal
+        to present a 'Loading workspace' dialog while Faraday processes
+        the change"""
+
+        def background_process():
+            """Change workspace. This function runs on a separated thread
+            created by the parent function. DO NOT call any Gtk methods
+            withing its scope, except by emiting signals to the window
+            """
+            self.window.emit("loading_workspace", 'show')
+            try:
+                ws = super(GuiApp, self).openWorkspace(workspace_name)
+                self.window.emit("loading_workspace", "destroy")
+                GObject.idle_add(CONF.setLastWorkspace, ws.name)
+                GObject.idle_add(CONF.saveConfig)
+            except Exception as e:
+                self.handle_no_active_workspace()
+                model.guiapi.notification_center.showDialog(str(e))
+                self.window.emit("loading_workspace", "destroy")
+
+            return True
+
+        thread = threading.Thread(target=background_process)
+        thread.daemon = True
+        thread.start()
+
+    def open_last_workspace(self):
+        """Tries to open the last workspace the user had opened."""
+        workspace = self.args.workspace
+        try:
+            ws = super(GuiApp, self).openWorkspace(workspace)
+            workspace = ws.name
+            CONF.setLastWorkspace(workspace)
+            CONF.saveConfig()
+        except Exception as e:
+            self.handle_no_active_workspace()
+            getLogger(self).error(
+                ("Your last workspace %s is not accessible, "
+                 "check configuration") % workspace)
+            getLogger(self).error(str(e))
+
+    def run(self, args):
+        """First method to run, as defined by FaradayUi. This method is
+        mandatory"""
+        self.args = args
+        Gtk.Application.run(self)
 
     def do_startup(self):
         """
@@ -297,7 +505,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.add_action(action)
 
         action = Gio.SimpleAction.new("pluginOptions", None)
-        action.connect("activate", self.on_pluginOptions)
+        action.connect("activate", self.on_plugin_options)
         self.add_action(action)
 
         action = Gio.SimpleAction.new("new", None)
@@ -356,115 +564,64 @@ class GuiApp(Gtk.Application, FaradayUi):
                 handle_connection_lost=self.handle_connection_lost,
                 connect_to_a_different_couch=self.force_change_couch_url)
 
-    def postEvent(self, receiver, event):
-        """Handles the events from gui/customevents.
+    def on_quit(self, action=None, param=None):
+        self.quit()
 
-        DO NOT, AND I REPEAT, DO NOT REDRAW *ANYTHING* FROM THE GUI
-        FROM HERE. If you must do it, you should to it via the emit method
-        to the appwindow or maybe using Glib.idle_add, a misterious function
-        with outdate documentation."""
+    def on_plugin_options(self, action, param):
+        """Defines what happens when you press "Plugins" on the menu"""
+        pluginsOption_window = PluginOptionsDialog(self.plugin_manager,
+                                                   self.window)
+        pluginsOption_window.show_all()
 
-        if receiver is None:
-            receiver = self.getMainWindow()
-
-        elif event.type() == 3131:  # new log event
-            receiver.emit("new_log", event.text)
-
-        elif event.type() == 3141:  # new conflict event
-            receiver.emit("set_conflict_label", event.nconflicts)
-
-        elif event.type() == 5100:  # new notification event
-            self.notificationsModel.prepend([event.change.getMessage()])
-            receiver.emit("new_notif")
-            host_count, service_count, vuln_count = self.update_counts()
-            receiver.emit("update_ws_info", host_count,
-                          service_count, vuln_count)
-
-        elif event.type() == 4100 or event.type() == 3140:  # newinfo or changews
-            host_count, service_count, vuln_count = self.update_counts()
-            self.window.receive_hosts(self.updateHosts())
-            receiver.emit("update_hosts_sidebar")
-            receiver.emit("update_ws_info", host_count, service_count, vuln_count)
-
-        elif event.type() == 3132:  # error
-            self.window.emit("normal_error", event.text)
-
-        elif event.type() == 3134:  # important error, uncaught exception
-            GObject.idle_add(self.window.prepare_important_error, event)
-            self.window.emit("important_error")
-
-        elif event.type() == 42424: # lost connection to couch db
-            GObject.idle_add(self.lost_db_connection, event.problem,
-                             self.handle_connection_lost,
-                             self.force_change_couch_url)
-            GObject.idle_add(self.reloadWorkspaces)
-
-        elif event.type() == 24244:  # workspace not accesible
-            GObject.idle_add(self.handle_no_active_workspace)
-
-    def force_change_couch_url(self, button=None, dialog=None):
-        """Forces the user to change the couch URL. You **will** ended up
-        connected to CouchDB or you will exit my application, cowboy.
+    def on_new_button(self, action=None, params=None, title=None):
+        """Defines what happens when you press the 'new' button on the toolbar
         """
+        new_workspace_dialog = NewWorkspaceDialog(self.createWorkspace,
+                                                  self.workspace_manager,
+                                                  self.ws_sidebar, self.window,
+                                                  title)
+        new_workspace_dialog.show_all()
 
-        def exit_callback(button=None):
-            """A simple exit callback to be used when forcing the user
-            to connect to couch."""
-            if not self.window.do_delete_event():
-                self.window.destroy()
+    def on_new_terminal_button(self, action, params):
+        """When the user clicks on the new_terminal button, creates a new
+        instance of the Terminal and tells the window to add it as a new tab
+        for the notebook"""
+        new_terminal = Terminal(CONF)
+        terminal_scrolled = new_terminal.getTerminal()
+        self.window.new_tab(terminal_scrolled)
 
-        # destroy the ugly dialog that got us here
-        if dialog is not None:
+    def on_click_notifications(self, button):
+        """Defines what happens when the user clicks on the notifications
+        button: just show a silly window with a treeview containing
+        all the notifications"""
+
+        notifications_view = Gtk.TreeView(self.notificationsModel)
+        renderer = Gtk.CellRendererText()
+        column = Gtk.TreeViewColumn("Notifications", renderer, text=0)
+        notifications_view.append_column(column)
+        notifications_dialog = NotificationsDialog(notifications_view,
+                                                   self.delete_notifications,
+                                                   self.window)
+        notifications_dialog.show_all()
+
+    def on_click_conflicts(self, button=None):
+        """Doesn't use the button at all, there cause GTK likes it.
+        Shows the conflict dialog.
+        """
+        self.updateConflicts()
+        if self.conflicts:
+            dialog = ConflictsDialog(self.conflicts,
+                                     self.window)
+            dialog.show_all()
+            self.updateConflicts()
+
+        else:
+            dialog = Gtk.MessageDialog(self.window, 0,
+                                       Gtk.MessageType.INFO,
+                                       Gtk.ButtonsType.OK,
+                                       "No conflicts to fix!")
+            dialog.run()
             dialog.destroy()
-
-        preference_window = PreferenceWindowDialog(self.reloadWorkspaces,
-                                                   self.connect_to_couch,
-                                                   self.window,
-                                                   force=True,
-                                                   app_exit_callback=exit_callback)
-        preference_window.show_all()
-
-    def connect_to_couch(self, couch_uri):
-        """Tries to connect to a CouchDB on a specified Couch URI.
-        Returns the success status of the operation, False for not successful,
-        True for successful
-        """
-
-        if not CouchDbManager.testCouch(couch_uri):
-            errorDialog(self.window, "Could not connect to CouchDB.",
-                        ("Are you sure it is running and that you can "
-                        "connect to it? \n Make sure your username and "
-                        "password are still valid."))
-            success = False
-        elif couch_uri.startswith("https://"):
-            if not checkSSL(couch_uri):
-                errorDialog(self.window,
-                            "The SSL certificate validation has failed")
-            success = False
-        else:
-            CONF.setCouchUri(couch_uri)
-            CONF.saveConfig()
-            self.reloadWorkspaces()
-            success = True
-        return success
-
-    def handle_connection_lost(self, button=None, dialog=None):
-        """Tries to connect to Couch using the same URI"""
-        couch_uri = CONF.getCouchURI()
-        if self.connect_to_couch(couch_uri):
-            if dialog is not None:
-                dialog.destroy()
-            reconnected = True
-        else:
-            reconnected = False
-        return reconnected
-
-    def update_counts(self):
-        """Update the counts for host, services and vulns"""
-        host_count = self.model_controller.getHostsCount()
-        service_count = self.model_controller.getServicesCount()
-        vuln_count = self.model_controller.getVulnsCount()
-        return host_count, service_count, vuln_count
 
     def on_open_report_button(self, action, param):
         """What happens when the user clicks the open report button.
@@ -544,141 +701,3 @@ class GuiApp(Gtk.Application, FaradayUi):
                                                    self.connect_to_couch,
                                                    self.window)
         preference_window.show_all()
-
-    def show_host_info(self, host_id):
-        """Looks up the host selected in the HostSidebar by id and shows
-        its information on the HostInfoDialog"""
-        current_ws_name = self.get_active_workspace().name
-        is_ws_couch = self.is_workspace_couch(current_ws_name)
-
-        for host in self.all_hosts:
-            if host_id == host.id:
-                selected_host = host
-                break
-
-        info_window = HostInfoDialog(self.window, current_ws_name,
-                                     is_ws_couch, selected_host)
-        info_window.show_all()
-
-    def reloadWorkspaces(self):
-        """Close workspace, resources the workspaces available,
-        clears the sidebar of the old workspaces and injects all the new ones
-        in there too"""
-        self.workspace_manager.closeWorkspace()
-        self.workspace_manager.resource()
-        self.ws_sidebar.clearSidebar()
-        self.ws_sidebar.refreshSidebar()
-
-    def on_pluginOptions(self, action, param):
-        """Defines what happens when you press "Plugins" on the menu"""
-        pluginsOption_window = PluginOptionsDialog(self.plugin_manager,
-                                                   self.window)
-        pluginsOption_window.show_all()
-
-    def on_new_button(self, action=None, params=None, title=None):
-        """Defines what happens when you press the 'new' button on the toolbar
-        """
-        new_workspace_dialog = NewWorkspaceDialog(self.createWorkspace,
-                                                  self.workspace_manager,
-                                                  self.ws_sidebar, self.window,
-                                                  title)
-        new_workspace_dialog.show_all()
-
-    def on_new_terminal_button(self, action, params):
-        """When the user clicks on the new_terminal button, creates a new
-        instance of the Terminal and tells the window to add it as a new tab
-        for the notebook"""
-        new_terminal = Terminal(CONF)
-        terminal_scrolled = new_terminal.getTerminal()
-        self.window.new_tab(terminal_scrolled)
-
-    def on_click_notifications(self, button):
-        """Defines what happens when the user clicks on the notifications
-        button: just show a silly window with a treeview containing
-        all the notifications"""
-
-        notifications_view = Gtk.TreeView(self.notificationsModel)
-        renderer = Gtk.CellRendererText()
-        column = Gtk.TreeViewColumn("Notifications", renderer, text=0)
-        notifications_view.append_column(column)
-        notifications_dialog = NotificationsDialog(notifications_view,
-                                                   self.delete_notifications,
-                                                   self.window)
-        notifications_dialog.show_all()
-
-    def on_click_conflicts(self, button=None):
-        """Doesn't use the button at all, there cause GTK likes it.
-        Shows the conflict dialog.
-        """
-        self.updateConflicts()
-        if self.conflicts:
-            dialog = ConflictsDialog(self.conflicts,
-                                     self.window)
-            dialog.show_all()
-            self.updateConflicts()
-
-        else:
-            dialog = Gtk.MessageDialog(self.window, 0,
-                                       Gtk.MessageType.INFO,
-                                       Gtk.ButtonsType.OK,
-                                       "No conflicts to fix!")
-            dialog.run()
-            dialog.destroy()
-
-    def delete_notifications(self):
-        """Clear the notifications model of all info, also send a signal
-        to get the notification label to 0 on the main window's button
-        """
-        self.notificationsModel.clear()
-        self.window.emit("clear_notifications")
-
-    def change_workspace(self, workspace_name):
-        """Changes workspace in a separate thread. Emits a signal
-        to present a 'Loading workspace' dialog while Faraday processes
-        the change"""
-
-        def background_process():
-            """Change workspace. This function runs on a separated thread
-            created by the parent function. DO NOT call any Gtk methods
-            withing its scope, except by emiting signals to the window
-            """
-            self.window.emit("loading_workspace", 'show')
-            try:
-                ws = super(GuiApp, self).openWorkspace(workspace_name)
-                self.window.emit("loading_workspace", "destroy")
-                GObject.idle_add(CONF.setLastWorkspace, ws.name)
-                GObject.idle_add(CONF.saveConfig)
-            except Exception as e:
-                self.handle_no_active_workspace()
-                model.guiapi.notification_center.showDialog(str(e))
-                self.window.emit("loading_workspace", "destroy")
-
-            return True
-
-        thread = threading.Thread(target=background_process)
-        thread.daemon = True
-        thread.start()
-
-    def open_last_workspace(self):
-        """Tries to open the last workspace the user had opened."""
-        workspace = self.args.workspace
-        try:
-            ws = super(GuiApp, self).openWorkspace(workspace)
-            workspace = ws.name
-            CONF.setLastWorkspace(workspace)
-            CONF.saveConfig()
-        except Exception as e:
-            self.handle_no_active_workspace()
-            getLogger(self).error(
-                ("Your last workspace %s is not accessible, "
-                 "check configuration") % workspace)
-            getLogger(self).error(str(e))
-
-    def run(self, args):
-        """First method to run, as defined by FaradayUi. This method is
-        mandatory"""
-        self.args = args
-        Gtk.Application.run(self)
-
-    def on_quit(self, action=None, param=None):
-        self.quit()

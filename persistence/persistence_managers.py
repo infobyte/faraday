@@ -54,7 +54,6 @@ class DbManager(object):
 
     def load(self):
         self.couchmanager = CouchDbManager(CONF.getCouchURI(), self.couch_exc_callback)
-        self.fsmanager = FileSystemManager()
         self.managers = {
                             DBTYPE.COUCHDB: self.couchmanager,
                         }
@@ -126,6 +125,9 @@ class DbConnector(object):
 
     def setChangesCallback(self, callback):
         self.changes_callback = callback
+
+    def setNoWorkspacesCallback(self, callback):
+        self.no_workspace_callback = callback
 
     def waitForDBChange(self):
         pass
@@ -415,6 +417,25 @@ class CouchDbManager(AbstractPersistenceManager):
             getLogger(self).warn("No route to couchdb server on: %s" % uri)
             getLogger(self).debug(traceback.format_exc())
 
+    def continuosly_check_connection(self):
+        """Intended to use on a separate thread. Call module-level
+        function testCouch every second to see if response to the server_uri
+        of the DB is still 200. Call the exception_callback if we can't access
+        the server three times in a row.
+        """
+        tolerance = 0
+        server_uri = self.__uri
+        while True:
+            time.sleep(1)
+            test_was_successful = test_couch(server_uri)
+            if test_was_successful:
+                tolerance = 0
+            else:
+                tolerance += 1
+                if tolerance == 3:
+                    self.couch_exception_callback()
+                    return False  # kill the thread if something went wrong
+
     def _create(self, name):
         db = self.__serv.create_db(name.lower())
         return CouchDbConnector(db)
@@ -426,8 +447,8 @@ class CouchDbManager(AbstractPersistenceManager):
 
         def conditions(database):
             begins_with_underscore = database.startswith("_")
-            is_blackie = database in CONST_BLACKDBS
-            return not begins_with_underscore and not is_blackie
+            is_blacklisted = database in CONST_BLACKDBS
+            return not begins_with_underscore and not is_blacklisted
 
         try:
             for dbname in filter(conditions, self.__serv.all_dbs()):

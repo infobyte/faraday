@@ -71,8 +71,9 @@ class FaradayUi(object):
         pass
 
     def openWorkspace(self, name):
-        # The method openWorkspace can return a workspace or
-        # raise en Exception. For now, just raise it to the caller
+        """Open a workspace by name. Returns the workspace of raises an
+        exception if for some reason it couldn't.
+        """
         if self.report_manager:
             self.report_manager.stop()
             self.report_manager.join()

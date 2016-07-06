@@ -3,16 +3,17 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('summarizedCtrl',
-        ['$scope', '$routeParams', 'dashboardSrv',
-        function($scope, $routeParams, dashboardSrv) {
+    .controller('vulnsBySeverityCtrl',
+        ['$scope', '$routeParams', 'dashboardSrv', 'SEVERITIES',
+        function($scope, $routeParams, dashboardSrv, SEVERITIES) {
 
-            $scope.objectsCount;
+            $scope.vulns = {};
             $scope.workspace;
 
             init = function() {
                 if($routeParams.wsId != undefined) {
                     $scope.workspace = $routeParams.wsId;
+
                     $scope.loadData();
 
                     $scope.$watch(function() {
@@ -24,14 +25,11 @@ angular.module('faradayApp')
             };
 
             $scope.loadData = function() {
-                dashboardSrv.getObjectsCount($scope.workspace)
-                    .then(function(res) {
-                        for(var i = res.length - 1; i >= 0; i--) {
-                            if(res[i].key === "interfaces") {
-                               res.splice(i, 1);
-                            }
-                        }
-                        $scope.objectsCount = res;
+                dashboardSrv.getVulnerabilitiesCount($scope.workspace)
+                    .then(function(vulns) {
+                        SEVERITIES.forEach(function(severity) {
+                            $scope.vulns[severity] = vulns[severity] || 0;
+                        });
                     });
             };
 

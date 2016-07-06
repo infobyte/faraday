@@ -14,9 +14,9 @@ function(doc) {
     emit("interfaces", 1);
   } else if(doc.type=="Note") {
     emit("notes", 1);
-  } else if(doc.type=="Vulnerability") {
+  } else if(doc.type=="Vulnerability" && doc.confirmed) {
     emit("vulns", 1);
-  } else if(doc.type=="VulnerabilityWeb") {
+  } else if(doc.type=="VulnerabilityWeb" && doc.confirmed) {
     emit("web vulns", 1);
   }
 }

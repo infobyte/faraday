@@ -28,9 +28,7 @@ class PreferenceWindowDialog(Gtk.Window):
     Takes a callback function to the mainapp so that it can refresh the
     workspace list and information"""
 
-    # TODO: implement ForcePreferenceWindowDialog
-    def __init__(self, reload_ws_callback, connect_to_couch, parent,
-                 force=False, app_exit_callback=None):
+    def __init__(self, reload_ws_callback, connect_to_couch, parent):
         """Initializes the simple preferences dialog. If force is set to
         True, user will NOT be able to cancel the dialog and app_exit_callback
         must NOT be None"""
@@ -64,13 +62,8 @@ class PreferenceWindowDialog(Gtk.Window):
         button_box.pack_start(OK_button, False, True, 10)
         cancel_button = Gtk.Button.new_with_label("Cancel")
 
-        if force:
-            self.connect("key_press_event", strict_key_reactions)
-            cancel_button.connect("clicked", app_exit_callback)
-
-        else:
-            self.connect("key_press_event", key_reactions)
-            cancel_button.connect("clicked", self.on_click_cancel)
+        self.connect("key_press_event", key_reactions)
+        cancel_button.connect("clicked", self.on_click_cancel)
 
         button_box.pack_end(cancel_button, False, True, 10)
         self.add(main_box)
@@ -85,6 +78,30 @@ class PreferenceWindowDialog(Gtk.Window):
 
     def on_click_cancel(self, button=None):
         self.destroy()
+
+class ForcePreferenceWindowDialog(PreferenceWindowDialog):
+    """A _forced_ version of the preference window, which means
+    the user won't be able to exit it by any key combo or any cancel
+    button. The cancel button now should redirect to a callback to
+    exit the application.
+    """
+
+    def __init__(self, reload_ws_callback, connect_to_couch, parent,
+                 exit_faraday_callback):
+        """Inits just the same as preference window dialog, but
+        disconnect from key_reactions and connect to strict_key_reaction."""
+        PreferenceWindowDialog.__init__(self, reload_ws_callback,
+                                        connect_to_couch,
+                                        parent)
+
+        self.exit_faraday = exit_faraday_callback
+        self.disconnect_by_func(key_reactions)
+        self.connect("key_press_event", strict_key_reactions)
+
+    def on_click_cancel(self, button=None):
+        """Override on_click_cancel to make it exit Faraday."""
+        self.exit_faraday()
+
 
 class NewWorkspaceDialog(Gtk.Window):
     """Sets up the New Workspace Dialog, where the user can set a name,
@@ -192,13 +209,14 @@ class ForceNewWorkspaceDialog(NewWorkspaceDialog):
         self.set_keep_above(True)
         self.disconnect_by_func(key_reactions)
         self.connect("key_press_event", strict_key_reactions)
+        self.exit_faraday = exit_faraday_callback
         explanation_message = self.create_explanation_message()
         self.main_box.pack_start(explanation_message, True, True, 6)
         self.main_box.reorder_child(explanation_message, 0)
-        button_box = self.main_box.get_children()[3]
-        cancel_button = button_box.get_children()[1]
-        cancel_button.disconnect_by_func(self.on_click_cancel)
-        cancel_button.connect("clicked", exit_faraday_callback)
+
+    def on_click_cancel(self, button):
+        """Override parent's class cancel callback so it exits faraday."""
+        self.exit_faraday()
 
     def create_explanation_message(self):
         """Returns a simple explanatory message inside a Label"""
@@ -426,7 +444,7 @@ class HostInfoDialog(Gtk.Window):
     strings and ints) and the object per se, which are in the model folder and
     are totally alien to GTK.
     """
-    def __init__(self, parent, active_ws_name, is_ws_couch, host):
+    def __init__(self, parent, active_ws_name, host):
         """Creates a window with the information about a given hosts.
         The parent is needed so the window can set transient for
         """
@@ -438,8 +456,6 @@ class HostInfoDialog(Gtk.Window):
         self.set_size_request(1200, 500)
         self.set_modal(True)
         self.connect("key_press_event", key_reactions)
-
-        self.is_ws_couch = is_ws_couch
 
         self.host = host
         self.model = self.create_model(self.host)
@@ -502,10 +518,6 @@ class HostInfoDialog(Gtk.Window):
         edit_label.set_markup(html_edit_url)
         edit_button.add(edit_label)
         edit_button.connect("clicked", self.on_edit_host)
-        if not self.is_ws_couch:
-            edit_button.set_sensitive(False)
-            edit_button.set_tooltip_text("You need to be on a CouchDB "
-                                         "workspace to edit information")
 
         button_box.pack_start(edit_button, True, True, 0)
         button_box.pack_start(ok_button, True, True, 0)

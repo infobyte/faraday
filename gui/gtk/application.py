@@ -55,6 +55,7 @@ from dialogs import ConflictsDialog
 from dialogs import HostInfoDialog
 from dialogs import ForceChooseWorkspaceDialog
 from dialogs import ForceNewWorkspaceDialog
+from dialogs import ForcePreferenceWindowDialog
 from dialogs import errorDialog
 from dialogs import ImportantErrorDialog
 
@@ -176,7 +177,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         # NOTE: if we start faraday without CouchDB, both the signal coming
         # from CouchDB manager AND our test in do_activate will try
         # to raise the dialog. This avoids more than one dialog to be raised.
-        # DO REMEMBER to change this flag when you destroy the dialog.
+        # DO REMEMBER to change this flag when necesary...
+        # this is kind of messy, but oh well.
         if self.lost_connection_dialog_already_raised:
             return False
 
@@ -213,6 +215,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         dialog.run()
 
+
     def handle_no_active_workspace(self):
         """If there's been a problem opening a workspace or for some reason
         we suddenly find our selves without one, force the user
@@ -222,12 +225,6 @@ class GuiApp(Gtk.Application, FaradayUi):
             # make sure it is not because we're not connected to Couch
             # there's another whole strategy for that.
             return False
-
-        def exit_callback(button=None):
-            """A simple exit callback to be used when forcing the user
-            to connect to couch."""
-            if not self.window.do_delete_event():
-                self.window.destroy()
 
         available_workspaces = self.workspace_manager.getWorkspacesNames()
 
@@ -241,94 +238,32 @@ class GuiApp(Gtk.Application, FaradayUi):
                                              self.createWorkspace,
                                              self.workspace_manager,
                                              self.ws_sidebar,
-                                             exit_callback)
+                                             self.exit_faraday)
 
         dialog.show_all()
-
-
-    def is_workspace_couch(self, workspace_name):
-        """Return if the workspace named workspace_name is associated to a
-        CouchDB.
-        """
-        type_ = self.workspace_manager.getWorkspaceType(workspace_name)
-        if type_ == "CouchDB":
-            is_couch = True
-        else:
-            is_couch = False
-        return is_couch
 
     def get_active_workspace(self):
         """Return the currently active workspace"""
         return self.workspace_manager.getActiveWorkspace()
 
-
-    def postEvent(self, receiver, event):
-        """Handles the events from gui/customevents.
-
-        DO NOT, AND I REPEAT, DO NOT REDRAW *ANYTHING* FROM THE GUI
-        FROM HERE. If you must do it, you should to it via the emit method
-        to the appwindow or maybe using Glib.idle_add, a misterious function
-        with outdate documentation."""
-
-        if receiver is None:
-            receiver = self.window
-
-        elif event.type() == 3131:  # new log event
-            receiver.emit("new_log", event.text)
-
-        elif event.type() == 3141:  # new conflict event
-            receiver.emit("set_conflict_label", event.nconflicts)
-
-        elif event.type() == 5100:  # new notification event
-            self.notificationsModel.prepend([event.change.getMessage()])
-            receiver.emit("new_notif")
-            host_count, service_count, vuln_count = self.update_counts()
-            receiver.emit("update_ws_info", host_count,
-                          service_count, vuln_count)
-
-        elif event.type() == 4100 or event.type() == 3140:  # newinfo or changews
-            host_count, service_count, vuln_count = self.update_counts()
-            self.window.receive_hosts(self.updateHosts())
-            receiver.emit("update_hosts_sidebar")
-            receiver.emit("update_ws_info", host_count, service_count, vuln_count)
-
-        elif event.type() == 3132:  # error
-            self.window.emit("normal_error", event.text)
-
-        elif event.type() == 3134:  # important error, uncaught exception
-            GObject.idle_add(self.window.prepare_important_error, event)
-            self.window.emit("important_error")
-
-        elif event.type() == 42424: # lost connection to couch db
-            GObject.idle_add(self.lost_db_connection, event.problem,
-                             self.handle_connection_lost,
-                             self.force_change_couch_url)
-            GObject.idle_add(self.reload_worskpaces_no_connection)
-
-        elif event.type() == 24242:  # workspace not accesible
-            GObject.idle_add(self.handle_no_active_workspace)
+    def exit_faraday(self, button=None):
+        """A simple exit which will ask for confirmation."""
+        if not self.window.do_delete_event():
+            self.window.destroy()
 
     def force_change_couch_url(self, button=None, dialog=None):
         """Forces the user to change the couch URL. You **will** ended up
         connected to CouchDB or you will exit my application, cowboy.
         """
 
-        def exit_callback(button=None):
-            """A simple exit callback to be used when forcing the user
-            to connect to couch."""
-            if not self.window.do_delete_event():
-                self.window.destroy()
-
         # destroy the ugly dialog that got us here
         if dialog is not None:
             dialog.destroy()
-            self.lost_connection_dialog_already_raised = True
 
-        preference_window = PreferenceWindowDialog(self.reloadWorkspaces,
-                                                   self.connect_to_couch,
-                                                   self.window,
-                                                   force=True,
-                                                   app_exit_callback=exit_callback)
+        preference_window = ForcePreferenceWindowDialog(self.reload_workspaces,
+                                                        self.connect_to_couch,
+                                                        self.window,
+                                                        self.exit_faraday)
         preference_window.show_all()
 
     def connect_to_couch(self, couch_uri):
@@ -351,8 +286,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         else:
             CONF.setCouchUri(couch_uri)
             CONF.saveConfig()
-            self.reloadWorkspaces()
+            self.reload_workspaces()
             self.open_last_workspace()
+            self.lost_connection_dialog_already_raised = False
             success = True
         return success
 
@@ -376,30 +312,27 @@ class GuiApp(Gtk.Application, FaradayUi):
         vuln_count = self.model_controller.getVulnsCount()
         return host_count, service_count, vuln_count
 
-
     def show_host_info(self, host_id):
         """Looks up the host selected in the HostSidebar by id and shows
         its information on the HostInfoDialog"""
         current_ws_name = self.get_active_workspace().name
-        is_ws_couch = self.is_workspace_couch(current_ws_name)
 
         for host in self.all_hosts:
             if host_id == host.id:
                 selected_host = host
                 break
 
-        info_window = HostInfoDialog(self.window, current_ws_name,
-                                     is_ws_couch, selected_host)
+        info_window = HostInfoDialog(self.window, current_ws_name, selected_host)
         info_window.show_all()
 
     def reload_worskpaces_no_connection(self):
-        """Very similar to reloadWorkspaces, but doesn't resource the
+        """Very similar to reload_workspaces, but doesn't resource the
         workspace_manager to avoid asking for information to a database
         we can't access."""
         self.workspace_manager.closeWorkspace()
         self.ws_sidebar.clearSidebar()
 
-    def reloadWorkspaces(self):
+    def reload_workspaces(self):
         """Close workspace, resources the workspaces available,
         clears the sidebar of the old workspaces and injects all the new ones
         in there too"""
@@ -462,6 +395,60 @@ class GuiApp(Gtk.Application, FaradayUi):
         mandatory"""
         self.args = args
         Gtk.Application.run(self)
+
+    ##########################################################################
+    ### NOTE: uninteresting part below. do not touch unless you have a very###
+    ### good reason, or you wan't to connect a new button on the toolbar,  ###
+    ### or, maybe most probably, you wanna register a new signal on        ###
+    ### postEvent().                                                       ###
+    ### Remember! -- even the best advice must sometimes not be heeded.    ###
+    ##########################################################################
+
+    def postEvent(self, receiver, event):
+        """Handles the events from gui/customevents.
+
+        DO NOT, AND I REPEAT, DO NOT REDRAW *ANYTHING* FROM THE GUI
+        FROM HERE. If you must do it, you should to it via the emit method
+        to the appwindow or maybe using Glib.idle_add, a misterious function
+        with outdate documentation."""
+
+        if receiver is None:
+            receiver = self.window
+
+        elif event.type() == 3131:  # new log event
+            receiver.emit("new_log", event.text)
+
+        elif event.type() == 3141:  # new conflict event
+            receiver.emit("set_conflict_label", event.nconflicts)
+
+        elif event.type() == 5100:  # new notification event
+            self.notificationsModel.prepend([event.change.getMessage()])
+            receiver.emit("new_notif")
+            host_count, service_count, vuln_count = self.update_counts()
+            receiver.emit("update_ws_info", host_count,
+                          service_count, vuln_count)
+
+        elif event.type() == 4100 or event.type() == 3140:  # newinfo or changews
+            host_count, service_count, vuln_count = self.update_counts()
+            self.window.receive_hosts(self.updateHosts())
+            receiver.emit("update_hosts_sidebar")
+            receiver.emit("update_ws_info", host_count, service_count, vuln_count)
+
+        elif event.type() == 3132:  # error
+            self.window.emit("normal_error", event.text)
+
+        elif event.type() == 3134:  # important error, uncaught exception
+            GObject.idle_add(self.window.prepare_important_error, event)
+            self.window.emit("important_error")
+
+        elif event.type() == 42424: # lost connection to couch db
+            GObject.idle_add(self.lost_db_connection, event.problem,
+                             self.handle_connection_lost,
+                             self.force_change_couch_url)
+            GObject.idle_add(self.reload_worskpaces_no_connection)
+
+        elif event.type() == 24242:  # workspace not accesible
+            GObject.idle_add(self.handle_no_active_workspace)
 
     def do_startup(self):
         """
@@ -707,7 +694,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         changes her Couch URL, the sidebar will reload reflecting the
         new workspaces available"""
 
-        preference_window = PreferenceWindowDialog(self.reloadWorkspaces,
+        preference_window = PreferenceWindowDialog(self.reload_workspaces,
                                                    self.connect_to_couch,
                                                    self.window)
         preference_window.show_all()

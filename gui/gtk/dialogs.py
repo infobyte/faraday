@@ -73,7 +73,7 @@ class PreferenceWindowDialog(Gtk.Window):
         repourl (Couch IP) from self.ip_entry and connect to it if possible.
         """
         repourl = self.ip_entry.get_text()
-        if self.connectCouchCallback(repourl):  # success!
+        if self.connectCouchCallback(repourl, parent=self):  # success!
             self.destroy()
 
     def on_click_cancel(self, button=None):

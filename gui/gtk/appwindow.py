@@ -406,6 +406,8 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         dialog = Gtk.MessageDialog(transient_for=parent,
                                    modal=True,
                                    buttons=Gtk.ButtonsType.YES_NO)
+        dialog.set_keep_above(True)
+        dialog.set_modal(True)
         dialog.props.text = "Are you sure you want to quit Faraday?"
         response = dialog.run()
         dialog.destroy()

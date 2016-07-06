@@ -394,14 +394,16 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         current_state = self.loggerBox.is_visible()
         self.loggerBox.set_visible(not current_state)
 
-    def do_delete_event(self, event=None, status=None):
+    def do_delete_event(self, event=None, status=None, parent=None):
         """Override delete_event signal to show a confirmation dialog first.
         """
+        if parent is None:
+            parent = self
 
         # NOTE: Return False for 'yes' is weird but that's how gtk likes it
         #       Don't judge, man. Don't judge.
 
-        dialog = Gtk.MessageDialog(transient_for=self,
+        dialog = Gtk.MessageDialog(transient_for=parent,
                                    modal=True,
                                    buttons=Gtk.ButtonsType.YES_NO)
         dialog.props.text = "Are you sure you want to quit Faraday?"

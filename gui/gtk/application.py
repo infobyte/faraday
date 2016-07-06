@@ -247,9 +247,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Return the currently active workspace"""
         return self.workspace_manager.getActiveWorkspace()
 
-    def exit_faraday(self, button=None):
+    def exit_faraday(self, button=None, parent=None):
         """A simple exit which will ask for confirmation."""
-        if not self.window.do_delete_event():
+        if not self.window.do_delete_event(parent):
             self.window.destroy()
 
     def force_change_couch_url(self, button=None, dialog=None):

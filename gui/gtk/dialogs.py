@@ -101,7 +101,7 @@ class ForcePreferenceWindowDialog(PreferenceWindowDialog):
 
     def on_click_cancel(self, button=None):
         """Override on_click_cancel to make it exit Faraday."""
-        self.exit_faraday()
+        self.exit_faraday(parent=self)
 
 
 class NewWorkspaceDialog(Gtk.Window):
@@ -218,7 +218,7 @@ class ForceNewWorkspaceDialog(NewWorkspaceDialog):
 
     def on_click_cancel(self, button):
         """Override parent's class cancel callback so it exits faraday."""
-        self.exit_faraday()
+        self.exit_faraday(parent=self)
 
     def create_explanation_message(self):
         """Returns a simple explanatory message inside a Label"""

@@ -28,6 +28,7 @@ class PreferenceWindowDialog(Gtk.Window):
     Takes a callback function to the mainapp so that it can refresh the
     workspace list and information"""
 
+    # TODO: implement ForcePreferenceWindowDialog
     def __init__(self, reload_ws_callback, connect_to_couch, parent,
                  force=False, app_exit_callback=None):
         """Initializes the simple preferences dialog. If force is set to
@@ -60,7 +61,6 @@ class PreferenceWindowDialog(Gtk.Window):
 
         OK_button = Gtk.Button.new_with_label("OK")
         OK_button.connect("clicked", self.on_click_ok)
-
         button_box.pack_start(OK_button, False, True, 10)
         cancel_button = Gtk.Button.new_with_label("Cancel")
 
@@ -85,7 +85,6 @@ class PreferenceWindowDialog(Gtk.Window):
 
     def on_click_cancel(self, button=None):
         self.destroy()
-
 
 class NewWorkspaceDialog(Gtk.Window):
     """Sets up the New Workspace Dialog, where the user can set a name,
@@ -116,7 +115,6 @@ class NewWorkspaceDialog(Gtk.Window):
         self.main_box.pack_start(description_box, False, False, 10)
         self.main_box.pack_end(button_box, False, False, 10)
 
-        self.main_box.show()
         self.add(self.main_box)
 
     def create_name_box(self):
@@ -185,16 +183,29 @@ class ForceNewWorkspaceDialog(NewWorkspaceDialog):
     """A very similar class to new workspace dialog, but this one forces
     the user to do so."""
 
-    def __init__(self, parent, create_ws_callback, workspace_manager, sidebar):
+    def __init__(self, parent, create_ws_callback, workspace_manager, sidebar,
+                 exit_faraday_callback):
         """Init new workspace dialog, but make it so you can't press the
         cancel button or press scape."""
         NewWorkspaceDialog.__init__(self, create_ws_callback, workspace_manager,
                                     sidebar, parent)
+        self.set_keep_above(True)
+        self.disconnect_by_func(key_reactions)
         self.connect("key_press_event", strict_key_reactions)
-        button_box = self.main_box.get_children()[2]
+        explanation_message = self.create_explanation_message()
+        self.main_box.pack_start(explanation_message, True, True, 6)
+        self.main_box.reorder_child(explanation_message, 0)
+        button_box = self.main_box.get_children()[3]
         cancel_button = button_box.get_children()[1]
-        cancel_button.set_sensitive(False)
+        cancel_button.disconnect_by_func(self.on_click_cancel)
+        cancel_button.connect("clicked", exit_faraday_callback)
 
+    def create_explanation_message(self):
+        """Returns a simple explanatory message inside a Label"""
+        message = Gtk.Label()
+        message.set_text("There are no workspaces available. You must "
+                         "create one to continue using Faraday.")
+        return message
 
 class PluginOptionsDialog(Gtk.Window):
     """The dialog where the user can see details about installed plugins.
@@ -1331,6 +1342,7 @@ class ForceChooseWorkspaceDialog(Gtk.Dialog):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent_window)
         self.set_modal(True)
+        self.disconnect(key_reactions)
         self.connect("key_press_event", strict_key_reactions)
 
         self.change_ws_callback = change_ws_callback

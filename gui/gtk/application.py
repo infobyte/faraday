@@ -82,9 +82,9 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     Please respect the following structure:
     TOP: __init__
-    UPPER-MIDDLE: all conflict, mostly not inhertid fom Gtk.Application logic
-    LOWER-MIDDLE: all do_-starting, gtk related methods
-    BOTTOM: all on_-starting, dialog opener methods
+    UPPER-MIDDLE: all logic mostly not inherited fom Gtk.Application
+    LOWER-MIDDLE: all do_ starting, gtk related methods
+    BOTTOM: all on_ starting, dialog opener methods
 
     """
 
@@ -218,11 +218,16 @@ class GuiApp(Gtk.Application, FaradayUi):
         we suddenly find our selves without one, force the user
         to select one if possible, or if not, to create one.
         """
-
         if not CouchDbManager.testCouch(CONF.getCouchURI()):
             # make sure it is not because we're not connected to Couch
             # there's another whole strategy for that.
             return False
+
+        def exit_callback(button=None):
+            """A simple exit callback to be used when forcing the user
+            to connect to couch."""
+            if not self.window.do_delete_event():
+                self.window.destroy()
 
         available_workspaces = self.workspace_manager.getWorkspacesNames()
 
@@ -230,13 +235,16 @@ class GuiApp(Gtk.Application, FaradayUi):
             dialog = ForceChooseWorkspaceDialog(self.window,
                                                 available_workspaces,
                                                 self.change_workspace)
-            dialog.show_all()
+
         else:
             dialog = ForceNewWorkspaceDialog(self.window,
                                              self.createWorkspace,
                                              self.workspace_manager,
-                                             self.ws_sidebar)
-            dialog.show_all()
+                                             self.ws_sidebar,
+                                             exit_callback)
+
+        dialog.show_all()
+
 
     def is_workspace_couch(self, workspace_name):
         """Return if the workspace named workspace_name is associated to a
@@ -344,6 +352,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             CONF.setCouchUri(couch_uri)
             CONF.saveConfig()
             self.reloadWorkspaces()
+            self.open_last_workspace()
             success = True
         return success
 
@@ -354,6 +363,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             reconnected = True
             if dialog is not None:
                 dialog.destroy()
+                self.open_last_workspace()
                 self.lost_connection_dialog_already_raised = False
         else:
             reconnected = False

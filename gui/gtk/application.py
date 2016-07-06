@@ -202,7 +202,6 @@ class GuiApp(Gtk.Application, FaradayUi):
                                    "until you fix the problem. \n" + explanation)
 
         dialog.set_deletable(False)
-        dialog.set_keep_above(True)
         dialog.set_modal(True)
         dialog.connect("key_press_event", do_nothing_on_key_stroke)
 
@@ -268,14 +267,16 @@ class GuiApp(Gtk.Application, FaradayUi):
                                                         self.exit_faraday)
         preference_window.show_all()
 
-    def connect_to_couch(self, couch_uri):
+    def connect_to_couch(self, couch_uri, parent=None):
         """Tries to connect to a CouchDB on a specified Couch URI.
         Returns the success status of the operation, False for not successful,
         True for successful
         """
+        if parent is None:
+            parent = self.window
 
         if not CouchDbManager.testCouch(couch_uri):
-            errorDialog(self.window, "Could not connect to CouchDB.",
+            errorDialog(parent, "Could not connect to CouchDB.",
                         ("Are you sure it is running and that you can "
                         "connect to it? \n Make sure your username and "
                         "password are still valid."))
@@ -297,7 +298,7 @@ class GuiApp(Gtk.Application, FaradayUi):
     def handle_connection_lost(self, button=None, dialog=None):
         """Tries to connect to Couch using the same URI"""
         couch_uri = CONF.getCouchURI()
-        if self.connect_to_couch(couch_uri):
+        if self.connect_to_couch(couch_uri, parent=dialog):
             reconnected = True
             if dialog is not None:
                 dialog.destroy()

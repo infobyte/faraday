@@ -1329,7 +1329,7 @@ class ConflictsDialog(Gtk.Window):
 
         return raw_prop
 
-class ForceChooseWorkspaceDialog(Gtk.Dialog):
+class ForceChooseWorkspaceDialog(Gtk.Window):
     """A dialog to force the user to choose a workspace in case he suddenly
     finds himself without an active workspace.
     """
@@ -1338,24 +1338,32 @@ class ForceChooseWorkspaceDialog(Gtk.Dialog):
         """Initializes a simple modal dialog which forces the user to choose
         a workspace from a list. In case no workspaces are selectable,
         it will force him to create a workspace."""
-        Gtk.Dialog.__init__(self, title="Choose a Workspace")
+        Gtk.Window.__init__(self, title="Choose a Workspace")
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent_window)
         self.set_modal(True)
-        self.disconnect(key_reactions)
         self.connect("key_press_event", strict_key_reactions)
 
         self.change_ws_callback = change_ws_callback
 
         message = self.create_explanation_message()
         scroll_view = self.create_view(self.create_model(available_workspaces))
+        button_box = self.create_button_box()
 
-        content_box = self.get_content_area()
+        content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         content_box.pack_start(message, True, True, 6)
         content_box.pack_start(scroll_view, True, True, 6)
+        content_box.pack_start(button_box, True, True, 6)
 
-        button = self.add_button("Choose workspace", 42)
-        button.connect("clicked", self.on_click_ok)
+        self.add(content_box)
+
+    def create_button_box(self):
+        button_box = Gtk.Box()
+        OK_button = Gtk.Button.new_with_label("OK")
+        OK_button.connect("clicked", self.on_click_ok)
+        button_box.pack_start(OK_button, False, False, 6)
+        button_box.pack_start(Gtk.Box(), True, True, 6)
+        return button_box
 
     def create_explanation_message(self):
         """Returns a simple explanatory message inside a Label"""
@@ -1394,6 +1402,7 @@ class ForceChooseWorkspaceDialog(Gtk.Dialog):
         ws_name = model[iter_][0]
         self.change_ws_callback(ws_name)
         self.destroy()
+
 
 class NotificationsDialog(Gtk.Window):
     """Defines a simple notification dialog. It isn't much, really"""

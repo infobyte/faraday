@@ -60,16 +60,12 @@ class ChangeController(object):
         elif (change.getChangeType() != CHANGETYPE.UNKNOWN):
             model.guiapi.notification_center.editHost(host)
 
-    def manageConnectionLost(self):
-        """All it does is send a notification to the notification center"""
-        model.guiapi.notification_center.CouchDBConnectionProblem()
 
     def watch(self, mapper, dbConnector):
         self.mapper_manager = mapper
         self.dbConnector = dbConnector
         self.changesWatcher = ChangeWatcher(dbConnector.waitForDBChange)
         dbConnector.setChangesCallback(self.loadChange)
-        dbConnector.setCouchExceptionCallback(self.manageConnectionLost)
         self.changesWatcher.start()
 
     def unwatch(self):

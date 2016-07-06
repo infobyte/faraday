@@ -201,6 +201,8 @@ class GuiApp(Gtk.Application, FaradayUi):
                                    "you set up, change it or exit Faraday "
                                    "until you fix the problem. \n" + explanation)
 
+        dialog.set_deletable(False)
+        dialog.set_keep_above(True)
         dialog.set_modal(True)
         dialog.connect("key_press_event", do_nothing_on_key_stroke)
 

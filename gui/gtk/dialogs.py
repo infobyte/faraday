@@ -94,6 +94,7 @@ class ForcePreferenceWindowDialog(PreferenceWindowDialog):
                                         connect_to_couch,
                                         parent)
 
+        self.set_deletable(False)
         self.exit_faraday = exit_faraday_callback
         self.disconnect_by_func(key_reactions)
         self.connect("key_press_event", strict_key_reactions)
@@ -206,6 +207,7 @@ class ForceNewWorkspaceDialog(NewWorkspaceDialog):
         cancel button or press scape."""
         NewWorkspaceDialog.__init__(self, create_ws_callback, workspace_manager,
                                     sidebar, parent)
+        self.set_deletable(False)
         self.set_keep_above(True)
         self.disconnect_by_func(key_reactions)
         self.connect("key_press_event", strict_key_reactions)
@@ -1352,6 +1354,7 @@ class ForceChooseWorkspaceDialog(Gtk.Window):
         it will force him to create a workspace."""
         Gtk.Window.__init__(self, title="Choose a Workspace")
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+        self.set_deletable(False)
         self.set_transient_for(parent_window)
         self.set_modal(True)
         self.connect("key_press_event", strict_key_reactions)

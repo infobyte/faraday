@@ -48,11 +48,13 @@ class ConnectorContainer(object):
 
 class DbManager(object):
 
-    def __init__(self):
+    def __init__(self, couch_exc_callback):
+        self.couch_exc_callback = couch_exc_callback
         self.load()
 
     def load(self):
-        self.couchmanager = CouchDbManager(CONF.getCouchURI())
+        self.couchmanager = CouchDbManager(CONF.getCouchURI(), self.couch_exc_callback)
+        self.fsmanager = FileSystemManager()
         self.managers = {
                             DBTYPE.COUCHDB: self.couchmanager,
                         }
@@ -125,12 +127,6 @@ class DbConnector(object):
     def setChangesCallback(self, callback):
         self.changes_callback = callback
 
-    def setCouchExceptionCallback(self, callback):
-        self.couch_exception_callback = callback
-
-    def setNoWorkspaceCallback(self, callback):
-        self.no_workspace_callback = callback
-
     def waitForDBChange(self):
         pass
 
@@ -175,9 +171,6 @@ class CouchDbConnector(DbConnector):
             getLogger(self).warn(
                 "You're not authorized to upload views to this database")
         self.seq_num = self.db.info()['update_seq']
-        test_couch_thread = threading.Thread(target=self.continuosly_check_connection)
-        test_couch_thread.daemon = True
-        test_couch_thread.start()
 
     def getDocs(self):
         if len(self._docs.keys()) == 0:
@@ -291,24 +284,6 @@ class CouchDbConnector(DbConnector):
     def setSeqNumber(self, seq_num):
         self.seq_num = seq_num
 
-    def continuosly_check_connection(self):
-        """Intended to use on a separate thread. Call module-level
-        function testCouch every second to see if response to the server_uri
-        of the DB is still 200. Call the exception_callback if we can't access
-        the server three times in a row.
-        """
-        tolerance = 0
-        server_uri = self.db.server_uri
-        while True:
-            time.sleep(1)
-            test_was_successful = test_couch(server_uri)
-            if test_was_successful:
-                tolerance = 0
-            else:
-                tolerance += 1
-                if tolerance == 3:
-                    self.couch_exception_callback()
-                    return False  # kill the thread if something went wrong
 
     def waitForDBChange(self, since=0):
         """Listen to the stream of changes provided by CouchDbKit. Process
@@ -414,13 +389,17 @@ class CouchDbManager(AbstractPersistenceManager):
     This is a couchdb manager for the workspace,
     it will load from the couchdb databases
     """
-    def __init__(self, uri):
+    def __init__(self, uri, couch_exception_callback):
         super(CouchDbManager, self).__init__()
         getLogger(self).debug(
             "Initializing CouchDBManager for url [%s]" % uri)
         self._lostConnection = False
         self.__uri = uri
         self._available = False
+        self.couch_exception_callback = couch_exception_callback
+        test_couch_thread = threading.Thread(target=self.continuosly_check_connection)
+        test_couch_thread.daemon = True
+        test_couch_thread.start()
         try:
             if uri is not None:
                 self.testCouchUrl(uri)

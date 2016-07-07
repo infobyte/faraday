@@ -12,6 +12,7 @@ import os
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
 
+from decorators import scrollable
 from gi.repository import Gtk, Gdk, Vte, GLib, Pango, GdkPixbuf
 
 
@@ -268,7 +269,7 @@ class WorkspaceSidebar(Gtk.Widget):
                  callback_to_remove_workspace, callback_to_create_workspace,
                  last_workspace):
 
-        super(Gtk.Widget, self).__init__()
+        Gtk.Widget.__init__(self)
         self.change_ws = callback_to_change_workspace
         self.remove_ws = callback_to_remove_workspace
         self.create_ws = callback_to_create_workspace
@@ -284,14 +285,13 @@ class WorkspaceSidebar(Gtk.Widget):
         self.sidebar_button = Gtk.Button.new_with_label("Refresh workspaces")
         self.sidebar_button.connect("clicked", self.refresh_sidebar)
 
-        self.scrollable_view = Gtk.ScrolledWindow.new(None, None)
-        self.scrollable_view.set_min_content_width(160)
-        self.scrollable_view.add(self.workspace_view)
-
     def get_box(self):
+        """Creates a return a simple vertical box containing all the widgets
+        that make the sidebar.
+        """
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         box.pack_start(self.search_entry, False, False, 0)
-        box.pack_start(self.scrollable_view, True, True, 0)
+        box.pack_start(self.workspace_view, True, True, 0)
         box.pack_start(self.sidebar_button, False, False, 0)
         return box
 
@@ -306,15 +306,17 @@ class WorkspaceSidebar(Gtk.Widget):
         """When the users preses enter, if the workspace exists,
         select it. If not, present the window to create a workspace with
         that name"""
-        selection = self.get_selected_ws()
-        if selection.get_selected()[1] is None:
+        selection = self.ws_view.get_selection()
+        model, ws_iter = selection.get_selected()
+
+        if ws_iter is None:
             self.create_ws(title=entry.get_text())
             entry.set_text("")
         else:
             self.change_ws(self.get_selected_ws_name())
             ws_iter = self.get_selected_ws_iter()
             entry.set_text("")
-            self.select_ws(ws_iter)
+            self.select_ws_by_iter(ws_iter)
 
     def refresh_sidebar(self, button=None):
         """Function called when the user press the refresh button.
@@ -326,11 +328,13 @@ class WorkspaceSidebar(Gtk.Widget):
         added_workspaces = [added_ws[0] for added_ws in model]
         for ws in self.workspaces:
             if ws not in added_workspaces:
-                self.add_workspace(ws)
+                ws_iter = self.workspace_model.append(ws)
+                self.valid_ws_iters.append(ws_iter)
 
     def clear_sidebar(self):
         """Brutaly clear all the information from the model.
         No one survives"""
+        self.valid_ws_iters = []
         self.workspace_model.clear()
 
     def create_ws_model(self):
@@ -339,36 +343,39 @@ class WorkspaceSidebar(Gtk.Widget):
         last active workspace"""
         workspace_model = Gtk.ListStore(str)
         self.default_selection = None
+        self.valid_ws_iters = []
 
         for ws in self.workspaces:
             tree_iter = workspace_model.append([ws])
+            self.valid_ws_iters.append(tree_iter)
             if ws == self.last_workspace:
                 self.default_selection = tree_iter
 
         return workspace_model
 
+    @scrollable(width=160)
     def create_ws_view(self, model):
         """Populate the workspace view. Also select by default
         self.default_selection (see workspace_model method). Also connect
         a selection with the change workspace callback"""
 
-        view = Gtk.TreeView(model)
+        self.ws_view = Gtk.TreeView(model)
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("Workspaces", renderer, text=0)
-        view.append_column(column)
-        view.set_search_entry(self.search_entry)
+        self.ws_view.append_column(column)
+        self.ws_view.set_search_entry(self.search_entry)
 
         # select by default the last active workspace
         if self.default_selection is not None:
-            self.select_default = view.get_selection()
+            self.select_default = self.ws_view.get_selection()
             self.select_default.select_iter(self.default_selection)
 
-        selection = view.get_selection()
+        selection = self.ws_view.get_selection()
         selection.set_mode(Gtk.SelectionMode.BROWSE)
 
-        view.connect("button-press-event", self.on_click)
+        self.ws_view.connect("button-press-event", self.on_click)
 
-        return view
+        return self.ws_view
 
     def on_click(self, view, event):
         """On click, check if it was a right click. If it was,
@@ -418,39 +425,44 @@ class WorkspaceSidebar(Gtk.Widget):
             menu.popup(None, None, None, None, event.button, event.time)
             return True  # prevents the click from selecting a workspace
 
-    def change_label(self, new_label):
-        self.sidebar_button.set_label(new_label)
-
-    def restore_label(self):
-        self.sidebar_button.set_label("Refresh workspaces")
-
-    def add_workspace(self, ws):
-        """Append ws workspace to the model"""
-        self.workspace_model.append([ws])
-
-    def get_selected_ws(self):
-        """Returns the selection of of the view.
-        To retrieve the name, see get_selected_ws_name"""
-        selection = self.workspace_view.get_selection()
-        return selection
-
     def get_selected_ws_iter(self):
         """Returns the tree_iter of the current selected workspace"""
-        selection = self.get_selected_ws()
+        selection = self.ws_view.get_selection()
         _iter = selection.get_selected()[1]
         return _iter
 
     def get_selected_ws_name(self):
         """Return the name of the selected workspace"""
-        selection = self.get_selected_ws()
-        tree_model, treeiter = selection.get_selected()
-        workspace_name = tree_model[treeiter][0]
+        selection = self.ws_view.get_selection()
+        model, ws_iter = selection.get_selected()
+        workspace_name = model[ws_iter][0]
         return workspace_name
 
-    def select_ws(self, ws):
-        """Selects workspace ws in the list"""
-        self.select = self.workspace_view.get_selection()
-        self.select.select_iter(ws)
+    def select_ws_by_iter(self, ws_iter):
+        """Selects workspace of iter ws_iter in the list"""
+        selection = self.ws_view.get_selection()
+        selection.select_iter(ws_iter)
+
+    def get_iter_by_name(self, ws_name):
+        """Returns the iter associated to the workspace ws_name or None
+        if not found.
+        """
+        for ws_iter in self.valid_ws_iters:
+            if self.workspace_model[ws_iter][0] == ws_name:
+                return ws_iter
+        else:
+            return None
+
+    def select_ws_by_name(self, ws_name):
+        """Selects the workspace by name ws_name"""
+        ws_iter = self.get_iter_by_name(ws_name)
+        if ws_iter is not None:
+            self.select_ws_by_iter(ws_iter)
+
+    def add_workspace(self, ws):
+        """Adds a workspace to the model and to the list of valid iters."""
+        ws_iter = self.workspace_model.append([ws])
+        self.valid_ws_iters.append(ws_iter)
 
 
 class ConsoleLog(Gtk.Widget):

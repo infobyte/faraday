@@ -206,7 +206,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         dialog.connect("destroy", change_flag)
 
         retry_button = dialog.add_button("Retry connection?", 42)
-        retry_button.connect("clicked", handle_connect)
+        retry_button.connect("clicked", handle_connection_lost, dialog)
 
         change_couch_url = dialog.add_button("Connect to a different CouchDB?", 43)
         change_couch_url.connect("clicked", connect_to_a_different_couch, dialog)

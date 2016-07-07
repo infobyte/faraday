@@ -103,7 +103,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         Gtk.Application.__init__(self, application_id="org.infobyte.faraday",
                                  flags=Gio.ApplicationFlags.FLAGS_NONE)
 
-        self.lost_connection_dialog_already_raised = None
+        self.lost_connection_dialog_raised = None
+        self.workspace_dialogs_raised = None
         self.icons = CONF.getImagePath() + "icons/"
         faraday_icon = self.icons + "faraday_icon.png"
         self.icon = GdkPixbuf.Pixbuf.new_from_file_at_scale(faraday_icon, 16,
@@ -171,20 +172,20 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Creates a simple dialog with an error message to inform the user
         some kind of problem has happened and the connection was lost.
         """
+        def change_flag(widget):
+            self.lost_connection_dialog_raised = not self.lost_connection_dialog_raised
 
         # NOTE: if we start faraday without CouchDB, both the signal coming
         # from CouchDB manager AND our test in do_activate will try
         # to raise the dialog. This avoids more than one dialog to be raised.
-        # DO REMEMBER to change this flag when necesary...
-        # this is kind of messy, but oh well.
-        if self.lost_connection_dialog_already_raised:
+        if self.lost_connection_dialog_raised:
             return False
 
         def do_nothing_on_key_stroke(event, key):
             """Do nothing except return True"""
             return True
 
-        self.lost_connection_dialog_already_raised = True
+        self.lost_connection_dialog_raised = True
 
         if explanatory_message:
             explanation = "\n The specific error was: " + explanatory_message
@@ -202,9 +203,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         dialog.set_deletable(False)
         dialog.set_modal(True)
         dialog.connect("key_press_event", do_nothing_on_key_stroke)
+        dialog.connect("destroy", change_flag)
 
         retry_button = dialog.add_button("Retry connection?", 42)
-        retry_button.connect("clicked", handle_connection_lost, dialog)
+        retry_button.connect("clicked", handle_connect)
 
         change_couch_url = dialog.add_button("Connect to a different CouchDB?", 43)
         change_couch_url.connect("clicked", connect_to_a_different_couch, dialog)
@@ -221,10 +223,18 @@ class GuiApp(Gtk.Application, FaradayUi):
         we suddenly find our selves without one, force the user
         to select one if possible, or if not, to create one.
         """
+        def change_flag(widget):
+            self.workspace_dialogs_raised = not self.workspace_dialogs_raised
+
+        if self.workspace_dialogs_raised:
+            return False
+
         if not CouchDbManager.testCouch(CONF.getCouchURI()):
             # make sure it is not because we're not connected to Couch
             # there's another whole strategy for that.
             return False
+
+        self.workspace_dialogs_raised = True
 
         available_workspaces = self.workspace_manager.getWorkspacesNames()
 
@@ -240,6 +250,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                                              self.ws_sidebar,
                                              self.exit_faraday)
 
+        dialog.connect("destroy", change_flag)
         dialog.show_all()
 
     def get_active_workspace(self):
@@ -304,7 +315,6 @@ class GuiApp(Gtk.Application, FaradayUi):
             CONF.saveConfig()
             self.reload_workspaces()
             self.open_last_workspace()
-            self.lost_connection_dialog_already_raised = False
             success = True
         return success
 
@@ -316,7 +326,6 @@ class GuiApp(Gtk.Application, FaradayUi):
             if dialog is not None:
                 dialog.destroy()
                 self.open_last_workspace()
-                self.lost_connection_dialog_already_raised = False
         else:
             reconnected = False
         return reconnected
@@ -426,7 +435,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         DO NOT, AND I REPEAT, DO NOT REDRAW *ANYTHING* FROM THE GUI
         FROM HERE. If you must do it, you should to it via the emit method
         to the appwindow or maybe using Glib.idle_add, a misterious function
-        with outdate documentation."""
+        with outdated documentation. Good luck."""
 
         if receiver is None:
             receiver = self.window

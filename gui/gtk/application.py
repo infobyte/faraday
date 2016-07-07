@@ -57,7 +57,6 @@ from dialogs import ForceChooseWorkspaceDialog
 from dialogs import ForceNewWorkspaceDialog
 from dialogs import ForcePreferenceWindowDialog
 from dialogs import errorDialog
-from dialogs import ImportantErrorDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import WorkspaceSidebar
@@ -71,6 +70,7 @@ from utils.logs import addHandler
 from utils.common import checkSSL
 
 CONF = getInstanceConfiguration()
+
 
 class GuiApp(Gtk.Application, FaradayUi):
     """
@@ -165,11 +165,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.ws_sidebar.clearSidebar()
         self.ws_sidebar.refreshSidebar()
 
-        # NOTE: this is not neccesary anymore. There's a signal which
-        # handles this already: 24242.
-        # if CONF.getLastWorkspace() == ws_name:
-        #    self.handle_no_active_workspace()
-
     def lost_db_connection(self, explanatory_message=None,
                            handle_connection_lost=None,
                            connect_to_a_different_couch=None):
@@ -217,8 +212,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         cancel_button = dialog.add_button("Exit Faraday", 0)
         cancel_button.connect("clicked", self.on_quit)
 
-        dialog.run()
-
+        response = dialog.run()
+        if response == Gtk.ResponseType.DELETE_EVENT:
+            GObject.idle_add(self.exit_faraday_without_confirm)
 
     def handle_no_active_workspace(self):
         """If there's been a problem opening a workspace or for some reason
@@ -253,7 +249,19 @@ class GuiApp(Gtk.Application, FaradayUi):
     def exit_faraday(self, button=None, parent=None):
         """A simple exit which will ask for confirmation."""
         if not self.window.do_delete_event(parent):
-            self.window.destroy()
+            if parent is not None:
+                GObject.idle_add(parent.destroy)
+            GObject.idle_add(self.window.destroy)
+
+    def exit_faraday_without_confirm(self, widget=None):
+        """Exits faraday without confirm. Used as a middle-man between
+        connect callbacks (which will send the widget as an argument and
+        self.window.destroy, which takes none.
+        """
+        getLogger(self).error("Faraday exited because you didn't connect "
+                              "to a valid CouchDB.")
+        GObject.idle_add(self.window.destroy)
+        GObject.idle_add(self.on_quit)
 
     def force_change_couch_url(self, button=None, dialog=None):
         """Forces the user to change the couch URL. You **will** ended up
@@ -268,7 +276,9 @@ class GuiApp(Gtk.Application, FaradayUi):
                                                         self.connect_to_couch,
                                                         self.window,
                                                         self.exit_faraday)
-        preference_window.show_all()
+
+        preference_window.connect("destroy", self.exit_faraday_without_confirm)
+        preference_window.run()
 
     def connect_to_couch(self, couch_uri, parent=None):
         """Tries to connect to a CouchDB on a specified Couch URI.
@@ -281,8 +291,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         if not CouchDbManager.testCouch(couch_uri):
             errorDialog(parent, "Could not connect to CouchDB.",
                         ("Are you sure it is running and that you can "
-                        "connect to it? \n Make sure your username and "
-                        "password are still valid."))
+                         "connect to it? \n Make sure your username and "
+                         "password are still valid."))
             success = False
         elif couch_uri.startswith("https://"):
             if not checkSSL(couch_uri):
@@ -403,11 +413,11 @@ class GuiApp(Gtk.Application, FaradayUi):
         Gtk.Application.run(self)
 
     ##########################################################################
-    ### NOTE: uninteresting part below. do not touch unless you have a very###
-    ### good reason, or you wan't to connect a new button on the toolbar,  ###
-    ### or, maybe most probably, you wanna register a new signal on        ###
-    ### postEvent().                                                       ###
-    ### Remember! -- even the best advice must sometimes not be heeded.    ###
+    # NOTE: uninteresting part below. do not touch unless you have a very    #
+    # good reason, or you wan't to connect a new button on the toolbar,      #
+    # or, maybe most probably, you wanna register a new signal on            #
+    # postEvent().                                                           #
+    # Remember! -- even the best advice must sometimes not be heeded.        #
     ##########################################################################
 
     def postEvent(self, receiver, event):
@@ -447,7 +457,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             GObject.idle_add(self.window.prepare_important_error, event)
             self.window.emit("important_error")
 
-        elif event.type() == 42424: # lost connection to couch db
+        elif event.type() == 42424:  # lost connection to couch db
             GObject.idle_add(self.lost_db_connection, event.problem,
                              self.handle_connection_lost,
                              self.force_change_couch_url)
@@ -465,7 +475,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         Also reads the .xml file from menubar.xml
         """
         Gtk.Application.do_startup(self)  # deep GTK magic
-
 
         self.ws_sidebar = WorkspaceSidebar(self.workspace_manager,
                                            self.change_workspace,

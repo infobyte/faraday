@@ -22,7 +22,7 @@ from decorators import scrollable
 CONF = getInstanceConfiguration()
 
 
-class PreferenceWindowDialog(Gtk.Window):
+class PreferenceWindowDialog(Gtk.Dialog):
     """Sets up a preference dialog with basically nothing more than a
     label, a text entry to input your CouchDB IP and a couple of buttons.
     Takes a callback function to the mainapp so that it can refresh the
@@ -33,7 +33,7 @@ class PreferenceWindowDialog(Gtk.Window):
         True, user will NOT be able to cancel the dialog and app_exit_callback
         must NOT be None"""
 
-        Gtk.Window.__init__(self, title="Preferences")
+        Gtk.Dialog.__init__(self, title="Preferences")
         self.parent = parent
         self.set_modal(True)
         self.set_size_request(400, 100)
@@ -42,7 +42,7 @@ class PreferenceWindowDialog(Gtk.Window):
         self.reloadWorkspaces = reload_ws_callback
         self.connectCouchCallback = connect_to_couch
 
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        main_box = self.get_content_area()
 
         ip_label = Gtk.Label()
         ip_label.set_text("Your Couch IP")
@@ -66,7 +66,7 @@ class PreferenceWindowDialog(Gtk.Window):
         cancel_button.connect("clicked", self.on_click_cancel)
 
         button_box.pack_end(cancel_button, False, True, 10)
-        self.add(main_box)
+        self.show_all()
 
     def on_click_ok(self, button=None):
         """Button is useless, only there because GTK likes it. Takes the

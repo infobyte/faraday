@@ -26,6 +26,13 @@ except ValueError:
            " check your install of GTK+3")
 
 try:
+    gi.require_version('Vte', '2.91')
+    old_vte = False
+except ValueError:
+    gi.require_version('Vte', '2.90')
+    old_vte = True
+
+try:
     # there are several imports not needed here, but they're needed in other
     # modules. this just checks for every dependence when starting the app
     from gi.repository import Gio, Gtk, GdkPixbuf, Vte, GLib, GObject, Gdk

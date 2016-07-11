@@ -7,10 +7,22 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import gi
+if gi.__version__ == '3.12.0':
+    old_gi = True
+else:
+    old_gi = False
+
 import os
 
 gi.require_version('Gtk', '3.0')
-gi.require_version('Vte', '2.91')
+
+try:
+    gi.require_version('Vte', '2.91')
+except ValueError:
+    print ("WARNING: You don't seem to have installed the recommended version"
+           " of VTE. You can still use the program, but we recommend you
+           check your install of VTE 2.91")
+    old_vte = True
 
 from gi.repository import Gtk, Gdk, Vte, GLib, Pango, GdkPixbuf
 
@@ -36,7 +48,8 @@ class Terminal(Vte.Terminal):
     def getTerminal(self):
         """Returns a scrolled_window with the terminal inside it"""
         scrolled_window = Gtk.ScrolledWindow.new(None, None)
-        scrolled_window.set_overlay_scrolling(False)
+        if not old_gi:
+            scrolled_window.set_overlay_scrolling(False)
         scrolled_window.add(self)
         return scrolled_window
 
@@ -44,13 +57,23 @@ class Terminal(Vte.Terminal):
         """Starts a Faraday process with the appropiate host and port."""
 
         home_dir = os.path.expanduser('~')
-        self.spawn_sync(Vte.PtyFlags.DEFAULT,
-                        home_dir,
-                        [self.faraday_exec, str(self.host), str(self.port)],
-                        [],
-                        GLib.SpawnFlags.DO_NOT_REAP_CHILD,
-                        None,
-                        None)
+        if not old_vte:
+            self.spawn_sync(Vte.PtyFlags.DEFAULT,
+                            home_dir,
+                            [self.faraday_exec, str(self.host), str(self.port)],
+                            [],
+                            GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+                            None,
+                            None)
+
+        else:
+            self.fork_command_full(Vte.PtyFlags.DEFAULT,
+                               home_dir,
+                               [self.faraday_exec, str(self.host), str(self.port)],
+                               [],
+                               GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+                               None,
+                               None)
 
     def copy_or_paste(self, widget, event):
         """Decides if the Ctrl+Shift is pressed, in which case returns True.

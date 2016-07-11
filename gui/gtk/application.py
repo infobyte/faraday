@@ -15,15 +15,15 @@ try:
     import gi
 except ImportError as e:
     print ("You are missing Gobject Instrospection. Please install "
-           "version 3.14 or above")
+           "version 3.14 or above (recommended) or 3.12")
     sys.exit(1)
 
 try:
     gi.require_version('Gtk', '3.0')
-    gi.require_version('Vte', '2.91')
 except ValueError:
-    print ("WARNING: You don't seem to have installed the recommended versions"
-           " of GTK and VTE. Check install of VTE 2.91 and GTK+3")
+    print ("WARNING: You don't seem to have installed the recommended version"
+           " of GTK. You can still use the program, but we recommend you
+           check your install of GTK+3")
 
 try:
     # there are several imports not needed here, but they're needed in other

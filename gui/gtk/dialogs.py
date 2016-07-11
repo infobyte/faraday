@@ -10,6 +10,11 @@ import gi
 import re
 import webbrowser
 
+if gi.__version__ == '3.12':
+    old_gi = True
+else:
+    old_gi = False
+
 gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk, GdkPixbuf, Gdk
@@ -530,7 +535,8 @@ class HostInfoDialog(Gtk.Window):
         label.set_markup("<big>" + label_str + "</big>")
 
         scroll_box = Gtk.ScrolledWindow(None, None)
-        scroll_box.set_overlay_scrolling(False)
+        if not old_gi:
+            scroll_box.set_overlay_scrolling(False)
         scroll_box.set_policy(Gtk.PolicyType.AUTOMATIC,
                               Gtk.PolicyType.ALWAYS)
 

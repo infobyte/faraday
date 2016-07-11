@@ -371,7 +371,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.workspace_manager.closeWorkspace()
         self.workspace_manager.resource()
         self.ws_sidebar.clear_sidebar()
-        self.ws_sidebar.refersh_sidebar()
+        self.ws_sidebar.refresh_sidebar()
 
     def delete_notifications(self):
         """Clear the notifications model of all info, also send a signal
@@ -384,7 +384,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Changes workspace in a separate thread. Emits a signal
         to present a 'Loading workspace' dialog while Faraday processes
         the change"""
-        GObject.idle_add(self.ws_sidebar.select_ws_by_name, workspace_name)
+        self.ws_sidebar.select_ws_by_name(workspace_name)
 
         def background_process():
             """Change workspace. This function runs on a separated thread

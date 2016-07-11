@@ -407,7 +407,10 @@ def checkConfiguration(gui_type):
     setupZSH()
     logger.info("Setting up  user configuration.")
     setupXMLConfig()
-    logger.info("Setting up libraries.")
+    logger.info("Setting up icons for GTK interface")
+    setupImages()
+
+
 
 def setupFolders(folderlist):
     """Checks if a list of folders exists and creates them otherwise.

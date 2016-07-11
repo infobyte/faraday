@@ -11,7 +11,6 @@ import gi
 from config.configuration import getInstanceConfiguration
 
 gi.require_version('Gtk', '3.0')
-gi.require_version('Vte', '2.91')
 
 from gi.repository import GLib, Gio, Gtk, GObject, Gdk
 from dialogs import ImportantErrorDialog

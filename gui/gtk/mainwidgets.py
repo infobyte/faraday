@@ -18,6 +18,7 @@ gi.require_version('Gtk', '3.0')
 
 try:
     gi.require_version('Vte', '2.91')
+    old_vte = False
 except ValueError:
     print ("WARNING: You don't seem to have installed the recommended version"
            " of VTE. You can still use the program, but we recommend you"

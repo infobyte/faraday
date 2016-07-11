@@ -22,8 +22,8 @@ try:
     gi.require_version('Gtk', '3.0')
 except ValueError:
     print ("WARNING: You don't seem to have installed the recommended version"
-           " of GTK. You can still use the program, but we recommend you
-           check your install of GTK+3")
+           " of GTK. You can still use the program, but we recommend you"
+           " check your install of GTK+3")
 
 try:
     # there are several imports not needed here, but they're needed in other

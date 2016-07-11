@@ -10,7 +10,7 @@ import gi
 import re
 import webbrowser
 
-if gi.__version__ == '3.12':
+if gi.__version__ == '3.12.0':
     old_gi = True
 else:
     old_gi = False

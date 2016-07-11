@@ -431,7 +431,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
             # user said "you know what i don't want to exit"
             return True
 
-    def on_terminal_exit(self, terminal, status):
+    def on_terminal_exit(self, terminal=None, status=None):
         """Really, it is *very* similar to delete_tab, but in this case
         we want to make sure that we restart Faraday if the user
         is not sure if he wants to exit"""

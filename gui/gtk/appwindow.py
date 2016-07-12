@@ -248,7 +248,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         a silly loading dialog.
         Preconditions: show must have been called before destroy can be called
         """
-        def do_nothing_on_key_stroke(self, widget, event):
+        def do_nothing_on_key_stroke(self, event):
             """Do nothing. Well, technically, return True.
 
             Avoids the user to interact with dialogs in anyway, for example,

@@ -7,35 +7,30 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import gi
-if gi.__version__ == '3.12.0':
-    old_gi = True
-else:
-    old_gi = False
-
 import os
 
 gi.require_version('Gtk', '3.0')
 
 try:
     gi.require_version('Vte', '2.91')
-    old_vte = False
 except ValueError:
-    print ("WARNING: You don't seem to have installed the recommended version"
-           " of VTE. You can still use the program, but we recommend you"
-           " check your install of VTE 2.91")
-    old_vte = True
+    gi.require_version('Vte', '2.90')
 
-from gi.repository import Gtk, Gdk, Vte, GLib, Pango, GdkPixbuf
+from gi.repository import Gtk, Gdk, GLib, Pango, GdkPixbuf, Vte
 
+from compatibility import CompatibleVteTerminal as VteTerminal
+from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
 
-class Terminal(Vte.Terminal):
+class Terminal(VteTerminal):
     """Defines a simple terminal that will execute faraday-terminal with the
-    corresponding host and port as specified by the CONF"""
+    corresponding host and port as specified by the CONF.
+    Inherits from Compatibility.Vte, which is just Vte.Terminal with
+    spawn_sync overrode to function with API 2.90 and 2.91"""
     def __init__(self, CONF):
         """Initialize terminal with infinite scrollback, no bell, connecting
         all keys presses to copy_or_past, and starting faraday-terminal
         """
-        super(Vte.Terminal, self).__init__()
+        VteTerminal.__init__(self)
         self.set_scrollback_lines(-1)
         self.set_audible_bell(0)
         self.connect("key_press_event", self.copy_or_paste)
@@ -48,9 +43,8 @@ class Terminal(Vte.Terminal):
 
     def getTerminal(self):
         """Returns a scrolled_window with the terminal inside it"""
-        scrolled_window = Gtk.ScrolledWindow.new(None, None)
-        if not old_gi:
-            scrolled_window.set_overlay_scrolling(False)
+        scrolled_window = GtkScrolledWindow.new(None, None)
+        scrolled_window.set_overlay_scrolling(False)
         scrolled_window.add(self)
         return scrolled_window
 
@@ -58,23 +52,14 @@ class Terminal(Vte.Terminal):
         """Starts a Faraday process with the appropiate host and port."""
 
         home_dir = os.path.expanduser('~')
-        if not old_vte:
-            self.spawn_sync(Vte.PtyFlags.DEFAULT,
-                            home_dir,
-                            [self.faraday_exec, str(self.host), str(self.port)],
-                            [],
-                            GLib.SpawnFlags.DO_NOT_REAP_CHILD,
-                            None,
-                            None)
+        self.spawn_sync(Vte.PtyFlags.DEFAULT,
+                        home_dir,
+                        [self.faraday_exec, str(self.host), str(self.port)],
+                        [],
+                        GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+                        None,
+                        None)
 
-        else:
-            self.fork_command_full(Vte.PtyFlags.DEFAULT,
-                               home_dir,
-                               [self.faraday_exec, str(self.host), str(self.port)],
-                               [],
-                               GLib.SpawnFlags.DO_NOT_REAP_CHILD,
-                               None,
-                               None)
 
     def copy_or_paste(self, widget, event):
         """Decides if the Ctrl+Shift is pressed, in which case returns True.
@@ -277,7 +262,7 @@ class HostsSidebar(Gtk.Widget):
     def get_box(self):
         """Returns the box to be displayed in the appwindow"""
         box = Gtk.Box()
-        scrolled_view = Gtk.ScrolledWindow(None, None)
+        scrolled_view = GtkScrolledWindow(None, None)
         scrolled_view.add(self.view)
         box.pack_start(scrolled_view, True, True, 0)
         return box
@@ -308,7 +293,7 @@ class WorkspaceSidebar(Gtk.Widget):
         self.sidebar_button = Gtk.Button.new_with_label("Refresh workspaces")
         self.sidebar_button.connect("clicked", self.refreshSidebar)
 
-        self.scrollableView = Gtk.ScrolledWindow.new(None, None)
+        self.scrollableView = GtkScrolledWindow.new(None, None)
         self.scrollableView.set_min_content_width(160)
         self.scrollableView.add(self.workspace_view)
 
@@ -519,7 +504,7 @@ class ConsoleLog(Gtk.Widget):
 
         self.textView.set_buffer(self.textBuffer)
 
-        self.logger = Gtk.ScrolledWindow.new(None, None)
+        self.logger = GtkScrolledWindow.new(None, None)
         self.logger.set_min_content_height(100)
         self.logger.set_min_content_width(100)
         self.logger.add(self.textView)

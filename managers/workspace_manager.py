@@ -42,7 +42,7 @@ class WorkspaceManager(object):
         """Returns the names of the workspaces as a list of strings"""
         return self.dbManager.getAllDbNames()
 
-    def createWorkspace(self, name, desc, dbtype=DBTYPE.FS):
+    def createWorkspace(self, name, desc, dbtype=DBTYPE.COUCHDB):
         workspace = Workspace(name, desc)
         try:
             dbConnector = self.dbManager.createDb(name, dbtype)
@@ -103,18 +103,6 @@ class WorkspaceManager(object):
         self.changesManager.watch(self.mappersManager, dbConnector)
         return workspace
 
-    def openDefaultWorkspace(self, name='untitled'):
-        # This method opens the default workspace called 'untitled'
-        if name not in self.getWorkspacesNames():
-            workspace = Workspace(name, 'default workspace')
-            dbConnector = self.dbManager.createDb(
-                workspace.getName(), DBTYPE.FS)
-            if self.active_workspace:
-                self.closeWorkspace()
-            self.mappersManager.createMappers(dbConnector)
-            self.mappersManager.save(workspace)
-        return self.openWorkspace(name)
-
     def closeWorkspace(self):
         self.changesManager.unwatch()
 
@@ -143,14 +131,10 @@ class WorkspaceManager(object):
     def _dbTypeToNamedType(self, dbtype):
         if dbtype == DBTYPE.COUCHDB:
             return 'CouchDB'
-        if dbtype == DBTYPE.FS:
-            return 'FS'
 
     def namedTypeToDbType(self, name):
         if name == 'CouchDB':
             return DBTYPE.COUCHDB
-        if name == 'FS':
-            return DBTYPE.FS
 
     def getAvailableWorkspaceTypes(self):
         return [self._dbTypeToNamedType(dbtype) for

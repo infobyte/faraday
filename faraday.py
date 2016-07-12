@@ -20,7 +20,6 @@ import subprocess
 import json
 
 from utils.logs import getLogger, setUpLogger
-sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/external_libs/lib/python2.7/dist-packages')
 from config.configuration import getInstanceConfiguration
 from config.globals import *
 from utils.profilehooks import profile
@@ -31,8 +30,10 @@ USER_HOME = os.path.expanduser(CONST_USER_HOME)
 FARADAY_BASE = os.path.dirname(os.path.realpath(__file__))
 
 FARADAY_USER_HOME = os.path.expanduser(CONST_FARADAY_HOME_PATH)
+
 FARADAY_PLUGINS_PATH = os.path.join(FARADAY_USER_HOME,
                         CONST_FARADAY_PLUGINS_PATH)
+
 FARADAY_PLUGINS_BASEPATH = os.path.join(FARADAY_BASE,
                             CONST_FARADAY_PLUGINS_REPO_PATH)
 
@@ -41,12 +42,15 @@ FARADAY_BASE_IMAGES = os.path.join(FARADAY_BASE, "data",
 
 FARADAY_USER_CONFIG_XML = os.path.join(FARADAY_USER_HOME,
                             CONST_FARADAY_USER_CFG)
+
 FARADAY_BASE_CONFIG_XML = os.path.join(FARADAY_BASE,
                             CONST_FARADAY_BASE_CFG)
 
 USER_ZSHRC = os.path.expanduser(CONST_USER_ZSHRC)
+
 FARADAY_USER_IMAGES = os.path.join(FARADAY_USER_HOME,
                             CONST_FARADAY_IMAGES)
+
 FARADAY_USER_ZSHRC = os.path.join(FARADAY_USER_HOME, CONST_FARADAY_ZSHRC)
 FARADAY_USER_ZSH_PATH = os.path.join(FARADAY_USER_HOME, CONST_ZSH_PATH)
 FARADAY_BASE_ZSH = os.path.join(FARADAY_BASE, CONST_FARADAY_ZSH_FARADAY)
@@ -295,7 +299,7 @@ def startFaraday():
     main_app = MainApplication(args)
 
     if not args.disable_excepthook:
-            logger.warning("Main application ExceptHook enabled.")
+            logger.info("Main application ExceptHook enabled.")
             main_app.enableExceptHook()
 
     if args.profile:
@@ -345,7 +349,7 @@ def setupPlugins(dev_mode=False):
         logger.warning("Using user plugins folder")
     else:
         if os.path.isdir(FARADAY_PLUGINS_PATH):
-            logger.info("Removing old plugins folder")
+            logger.info("Removing old plugins folder.")
             shutil.rmtree(FARADAY_PLUGINS_PATH)
         else:
             logger.info("No plugins folder detected. Creating new one.")
@@ -405,9 +409,9 @@ def checkConfiguration(gui_type):
     setupPlugins(args.dev_mode)
     logger.info("Setting up ZSH integration.")
     setupZSH()
-    logger.info("Setting up  user configuration.")
+    logger.info("Setting up user configuration.")
     setupXMLConfig()
-    logger.info("Setting up icons for GTK interface")
+    logger.info("Setting up icons for GTK interface.")
     setupImages()
 
 
@@ -486,7 +490,7 @@ def checkUpdates():
     if not resp == u'OK':
         logger.info("You have available updates. Run ./faraday.py --update to catchup!")
     else:
-        logger.info("No updates available, enjoy Faraday")
+        logger.info("No updates available, enjoy Faraday.")
 
 
 def checkCouchUrl():

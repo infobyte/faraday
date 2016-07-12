@@ -27,7 +27,7 @@ from config.globals import (
     CONST_FARADAY_ZSH_OUTPUT_PATH)
 
 
-class PluginControllerBase(object):
+class PluginController(object):
     """
     TODO: Doc string.
     """
@@ -41,6 +41,9 @@ class PluginControllerBase(object):
         self.output_path = os.path.join(
             os.path.expanduser(CONST_FARADAY_HOME_PATH),
             CONST_FARADAY_ZSH_OUTPUT_PATH)
+        self._active_plugins = {}
+        self.plugin_sets = {}
+        self.plugin_manager.addController(self, self.id)
 
     def _find_plugin(self, plugin_id):
         return self._plugins.get(plugin_id, None)
@@ -76,13 +79,9 @@ class PluginControllerBase(object):
 
         return block_flag
 
-    def _get_plugins_by_input(self, current_input):
-        """
-        Finds a plugin that can parse the current input and returns
-        the plugin object. Otherwise returns None.
-        """
-        for plugin in self._plugins.itervalues():
-            if plugin.canParseCommandString(current_input):
+    def _get_plugins_by_input(self, cmd, plugin_set):
+        for plugin in plugin_set.itervalues():
+            if plugin.canParseCommandString(cmd):
                 return plugin
         return None
 
@@ -201,23 +200,11 @@ class PluginControllerBase(object):
         }
 
     def updatePluginSettings(self, plugin_id, new_settings):
+        for plugin_set in self.plugin_sets.values():
+            if plugin_id in plugin_set:
+                plugin_set[plugin_id].updateSettings(new_settings)
         if plugin_id in self._plugins:
             self._plugins[plugin_id].updateSettings(new_settings)
-
-
-class PluginControllerForApi(PluginControllerBase):
-    def __init__(self, id, plugin_manager, mapper_manager):
-        PluginControllerBase.__init__(
-            self, id, plugin_manager, mapper_manager)
-        self._active_plugins = {}
-        self.plugin_sets = {}
-        self.plugin_manager.addController(self, self.id)
-
-    def _get_plugins_by_input(self, cmd, plugin_set):
-        for plugin in plugin_set.itervalues():
-            if plugin.canParseCommandString(cmd):
-                return plugin
-        return None
 
     def createPluginSet(self, id):
         self.plugin_sets[id] = self.plugin_manager.getPlugins()
@@ -247,13 +234,6 @@ class PluginControllerForApi(PluginControllerBase):
                 return plugin.id, modified_cmd_string
 
         return None, None
-
-    def getPluginAutocompleteOptions(self, command_string):
-        """
-        Not implementend right now. Maybe it's better to use
-        zsh autocomplete features
-        """
-        pass
 
     def onCommandFinished(self, pid, exit_code, term_output):
 
@@ -290,10 +270,3 @@ class PluginControllerForApi(PluginControllerBase):
 
     def clearActivePlugins(self):
         self._active_plugins = {}
-
-    def updatePluginSettings(self, plugin_id, new_settings):
-        for plugin_set in self.plugin_sets.values():
-            if plugin_id in plugin_set:
-                plugin_set[plugin_id].updateSettings(new_settings)
-        if plugin_id in self._plugins:
-            self._plugins[plugin_id].updateSettings(new_settings)

@@ -60,6 +60,9 @@ class NotificationCenter():
     def CouchDBConnectionProblem(self, problem=None):
         self._notifyWidgets(events.ShowExceptionConnectionRefusedCustomEvent(problem))
 
+    def WorkspaceProblem(self, problem=None):
+        self._notifyWidgets(events.WorkspaceProblemCustomEvent(problem))
+
     def addHost(self, host):
         self._notifyWidgets(events.AddHostCustomEvent(host))
 

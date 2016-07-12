@@ -38,20 +38,3 @@ def updateLocalMetadata(func):
         return func(self, *args, **kwargs)
     return wrapper
 
-
-@simple_decorator
-def trap_timeout(func):
-    def wrapper(self, *args, **kwargs):
-        try:
-            if self._lostConnection:
-                # REFACTOR
-                WorkspacePersister.addPendingAction(self, func, args, kwargs)
-            return func(self, *args, **kwargs)
-        except restkit.errors.RequestError as req_error:
-            self.lostConnectionResolv()
-            WorkspacePersister.stopThreads()
-            WorkspacePersister.addPendingAction(self, func, args, kwargs)
-            WorkspacePersister.notifyPersisterConnectionLost()
-            model.api.devlog("Operation [%s] timeout" % func.__name__)
-            return func(self, *args, **kwargs)
-    return wrapper

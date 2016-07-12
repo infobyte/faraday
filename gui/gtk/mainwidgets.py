@@ -350,9 +350,10 @@ class WorkspaceSidebar(Gtk.Widget):
         self.workspace_model.clear()
 
     def createWsModel(self):
-        """Creates and the workspace model. Also assigns self.defaultSelection
-        to the treeIter which represents the last active workspace"""
+        """Creates and the workspace model. Also tries to assign
+        self.defaultSelection to the treeIter which represents the last active workspace"""
         workspace_model = Gtk.ListStore(str)
+        self.defaultSelection = None
 
         for ws in self.workspaces:
             treeIter = workspace_model.append([ws])

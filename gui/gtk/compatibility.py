@@ -63,7 +63,3 @@ class CompatibleScrolledWindow(Gtk.ScrolledWindow):
             return None
         else:
             return Gtk.ScrolledWindow.set_overlay_scrolling(self, boolean)
-
-
-
-

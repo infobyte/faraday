@@ -859,7 +859,7 @@ class HostInfoDialog(Gtk.Window):
             property_names = ["Name: ", "OS: ", "Owned: ",
                               "Vulnerabilities: "]
 
-        if object_type == "Interface":
+        elif object_type == "Interface":
             property_names = ["Name: ", "Description: ", "MAC: ",
                               "IPv4 Mask: ", "IPv4 Gateway: ", "IPv4 DNS: ",
                               "IPv4 Address: ", "IPv6 Prefix: ",

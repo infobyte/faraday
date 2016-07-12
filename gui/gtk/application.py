@@ -168,8 +168,9 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         model.api.log("Removing Workspace: %s" % ws_name)
         self.getWorkspaceManager().removeWorkspace(ws_name)
-        self.ws_sidebar.clearSidebar()
-        self.ws_sidebar.refreshSidebar()
+        self.ws_sidebar.clear_sidebar()
+        self.ws_sidebar.refresh_sidebar()
+        self.select_active_workspace()
 
     def lost_db_connection(self, explanatory_message=None,
                            handle_connection_lost=None,
@@ -242,10 +243,11 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.workspace_dialogs_raised = True
 
         available_workspaces = self.workspace_manager.getWorkspacesNames()
+        workspace_model = self.ws_sidebar.workspace_model
 
         if available_workspaces:
             dialog = ForceChooseWorkspaceDialog(self.window,
-                                                available_workspaces,
+                                                workspace_model,
                                                 self.change_workspace)
 
         else:
@@ -257,6 +259,11 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         dialog.connect("destroy", change_flag)
         dialog.show_all()
+
+    def select_active_workspace(self):
+        """Selects on the sidebar the currently active workspace."""
+        active_ws_name = self.get_active_workspace().name
+        self.ws_sidebar.select_ws_by_name(active_ws_name)
 
     def get_active_workspace(self):
         """Return the currently active workspace"""
@@ -360,7 +367,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         workspace_manager to avoid asking for information to a database
         we can't access."""
         self.workspace_manager.closeWorkspace()
-        self.ws_sidebar.clearSidebar()
+        self.ws_sidebar.clear_sidebar()
 
     def reload_workspaces(self):
         """Close workspace, resources the workspaces available,
@@ -368,8 +375,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         in there too"""
         self.workspace_manager.closeWorkspace()
         self.workspace_manager.resource()
-        self.ws_sidebar.clearSidebar()
-        self.ws_sidebar.refreshSidebar()
+        self.ws_sidebar.clear_sidebar()
+        self.ws_sidebar.refresh_sidebar()
 
     def delete_notifications(self):
         """Clear the notifications model of all info, also send a signal
@@ -382,6 +389,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Changes workspace in a separate thread. Emits a signal
         to present a 'Loading workspace' dialog while Faraday processes
         the change"""
+        self.ws_sidebar.select_ws_by_name(workspace_name)
 
         def background_process():
             """Change workspace. This function runs on a separated thread
@@ -463,6 +471,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.window.receive_hosts(self.updateHosts())
             receiver.emit("update_hosts_sidebar")
             receiver.emit("update_ws_info", host_count, service_count, vuln_count)
+            GObject.idle_add(self.select_active_workspace)
 
         elif event.type() == 3132:  # error
             self.window.emit("normal_error", event.text)

@@ -144,7 +144,7 @@ class NewWorkspaceDialog(Gtk.Window):
         name_label.set_text("Name: ")
         self.name_entry = Gtk.Entry()
         if self.title is not None:
-            self.name_entry.set_text(title)
+            self.name_entry.set_text(self.title)
         name_box.pack_start(name_label, False, False, 10)
         name_box.pack_end(self.name_entry, True, True, 10)
         return name_box
@@ -182,7 +182,7 @@ class NewWorkspaceDialog(Gtk.Window):
             creation_ok = self.create_ws_callback(ws_name,
                                                   ws_desc)
             if creation_ok:
-                self.sidebar.addWorkspace(ws_name)
+                self.sidebar.add_workspace(ws_name)
             else:
                 errorDialog(self, "Something went wrong when creating "
                                   "the new workspace.")
@@ -1349,10 +1349,9 @@ class ForceChooseWorkspaceDialog(Gtk.Window):
     finds himself without an active workspace.
     """
 
-    def __init__(self, parent_window, available_workspaces, change_ws_callback):
+    def __init__(self, parent_window, workspaces_model, change_ws_callback):
         """Initializes a simple modal dialog which forces the user to choose
-        a workspace from a list. In case no workspaces are selectable,
-        it will force him to create a workspace."""
+        a workspace from a list."""
         Gtk.Window.__init__(self, title="Choose a Workspace")
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_deletable(False)
@@ -1363,7 +1362,7 @@ class ForceChooseWorkspaceDialog(Gtk.Window):
         self.change_ws_callback = change_ws_callback
 
         message = self.create_explanation_message()
-        scroll_view = self.create_view(self.create_model(available_workspaces))
+        scroll_view = self.create_view(workspaces_model)
         button_box = self.create_button_box()
 
         content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -1388,15 +1387,6 @@ class ForceChooseWorkspaceDialog(Gtk.Window):
                          "You must select one of the below workspaces to "
                          "continue using Faraday.")
         return message
-
-    def create_model(self, workspace_list):
-        """Creates a model of the workspaces containing only the workspaces
-        names given a workspace_list with the workspaces names.
-        """
-        workspace_model = Gtk.ListStore(str)
-        for ws in workspace_list:
-            workspace_model.append([ws])
-        return workspace_model
 
     @scrollable(height=200)
     def create_view(self, workspace_model):

@@ -178,8 +178,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Creates a simple dialog with an error message to inform the user
         some kind of problem has happened and the connection was lost.
         """
-        def change_flag(widget):
-            self.lost_connection_dialog_raised = not self.lost_connection_dialog_raised
 
         # NOTE: if we start faraday without CouchDB, both the signal coming
         # from CouchDB manager AND our test in do_activate will try
@@ -209,7 +207,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         dialog.set_deletable(False)
         dialog.set_modal(True)
         dialog.connect("key_press_event", do_nothing_on_key_stroke)
-        dialog.connect("destroy", change_flag)
 
         retry_button = dialog.add_button("Retry connection?", 42)
         retry_button.connect("clicked", handle_connection_lost, dialog)
@@ -223,6 +220,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         response = dialog.run()
         if response == Gtk.ResponseType.DELETE_EVENT:
             GObject.idle_add(self.exit_faraday_without_confirm)
+
 
     def handle_no_active_workspace(self):
         """If there's been a problem opening a workspace or for some reason
@@ -295,6 +293,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         if dialog is not None:
             dialog.destroy()
 
+
         preference_window = ForcePreferenceWindowDialog(self.reload_workspaces,
                                                         self.connect_to_couch,
                                                         self.window,
@@ -328,6 +327,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.reload_workspaces()
             self.open_last_workspace()
             success = True
+            self.lost_connection_dialog_raised = False
         return success
 
     def handle_connection_lost(self, button=None, dialog=None):
@@ -338,6 +338,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             if dialog is not None:
                 dialog.destroy()
                 self.open_last_workspace()
+                self.lost_connection_dialog_raised = False
         else:
             reconnected = False
         return reconnected

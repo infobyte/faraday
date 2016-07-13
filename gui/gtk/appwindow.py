@@ -11,7 +11,6 @@ import gi
 from config.configuration import getInstanceConfiguration
 
 gi.require_version('Gtk', '3.0')
-gi.require_version('Vte', '2.91')
 
 from gi.repository import GLib, Gio, Gtk, GObject, Gdk
 from dialogs import ImportantErrorDialog
@@ -222,42 +221,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         dialog.run()
         dialog.destroy()
 
-    def do_lost_db_connection(self, explanatory_message):
-        """Creates a simple dialog with an error message to inform the user
-        some kind of problem has happened and the connection was lost.
-        Uses the first callback on self.error_callbacks, which should
-        point to the application's handle_connection_lost method.
-        """
-
-        def destroy_dialog(button=None):
-            """Necessary 'cause button.connect method passes the button
-            as a paramether even when I don't need it.
-            """
-            dialog.destroy()
-
-        handle_connection_lost = self.error_callbacks[0]
-        if explanatory_message:
-            explanation = "\n The specific error was: " + explanatory_message
-        else:
-            explanation = ""
-
-        dialog = Gtk.MessageDialog(self, 0,
-                                   Gtk.MessageType.ERROR,
-                                   Gtk.ButtonsType.NONE,
-                                   "Faraday has lost connection to CouchDB. "
-                                   "The program has reverted back to the "
-                                   "filesystem database. Fix the connection "
-                                   "and re-enter the CouchDB URL in the "
-                                   "preferences settings." + explanation)
-        dialog.set_modal(True)
-
-        retry_button = dialog.add_button("Retry connection?", 42)
-        retry_button.connect("clicked", handle_connection_lost, dialog)
-
-        cancel_button = dialog.add_button("Cancel", 0)
-        cancel_button.connect("clicked", destroy_dialog)
-
-        dialog.run()
 
     def do_new_log(self, text):
         """To be used on a new_log signal. Calls a method on log to append
@@ -285,10 +248,10 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         a silly loading dialog.
         Preconditions: show must have been called before destroy can be called
         """
-        def do_nothing(widget, event):
+        def do_nothing_on_key_stroke(self, event):
             """Do nothing. Well, technically, return True.
 
-            Avoids the user to interact with the dialog in anyway, for example,
+            Avoids the user to interact with dialogs in anyway, for example,
             via the Escape key.
             You'll have to wait for my dialog to exit by itself, cowboy.
             """
@@ -302,12 +265,19 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
                                                     "Please wait."))
 
             self.loading_dialog.set_modal(True)
-            self.loading_dialog.connect("key_press_event", do_nothing)
+            self.loading_dialog.connect("key_press_event", do_nothing_on_key_stroke)
 
             self.loading_dialog.show_all()
         if action == "destroy":
             self.loading_dialog.destroy()
 
+    def destroy_from_button(self, button=None):
+        """Sometimes this stuff is needed, 'cause it needs to take a button
+        as parameter. See do_delete_event() for explanation on why the
+        _not_ is there.
+        """
+        if not self.do_delete_event():
+            self.destroy()
 
     def getLogConsole(self):
         """Returns the LogConsole. Needed by the GUIHandler logger"""
@@ -389,16 +359,22 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         self.notebook.append_page(pageN, Gtk.Label(str(self.tab_number+1)))
         self.notebook.show_all()
 
-    def delete_tab(self, button=None):
-        """Deletes the current tab or closes the window if tab is only tab"""
+    def delete_tab(self, button=None, tab_number=None):
+        """Deletes the tab number tab_number, by default the current,
+        or closes the window if tab is only tab"""
         if self.tab_number == 0:
             # the following is confusing but its how gtks handles delete_event
             # if user said YES to confirmation, do_delete_event returns False
             if not self.do_delete_event():
                 self.destroy()
+
         else:
-            current_page = self.notebook.get_current_page()
-            self.notebook.remove_page(current_page)
+            if tab_number is None:
+                page = self.notebook.get_current_page()
+            else:
+                page = self.notebook.get_nth_page(tab_number)
+
+            self.notebook.remove_page(page)
             self.reorder_tab_names()
 
     def reorder_tab_names(self):
@@ -417,11 +393,20 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         current_state = self.loggerBox.is_visible()
         self.loggerBox.set_visible(not current_state)
 
-    def do_delete_event(self, event=None, status=None):
-        """Override delete_event signal to show a confirmation dialog first"""
-        dialog = Gtk.MessageDialog(transient_for=self,
+    def do_delete_event(self, event=None, status=None, parent=None):
+        """Override delete_event signal to show a confirmation dialog first.
+        """
+        if parent is None:
+            parent = self
+
+        # NOTE: Return False for 'yes' is weird but that's how gtk likes it
+        #       Don't judge, man. Don't judge.
+
+        dialog = Gtk.MessageDialog(transient_for=parent,
                                    modal=True,
                                    buttons=Gtk.ButtonsType.YES_NO)
+        dialog.set_keep_above(True)
+        dialog.set_modal(True)
         dialog.props.text = "Are you sure you want to quit Faraday?"
         response = dialog.run()
         dialog.destroy()
@@ -432,7 +417,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
             # user said "you know what i don't want to exit"
             return True
 
-    def on_terminal_exit(self, terminal, status):
+    def on_terminal_exit(self, terminal=None, status=None):
         """Really, it is *very* similar to delete_tab, but in this case
         we want to make sure that we restart Faraday if the user
         is not sure if he wants to exit"""

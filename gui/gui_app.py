@@ -17,8 +17,6 @@ class UiFactory(object):
     def create(model_controller, plugin_manager, workspace_manager, plugin_controller, gui="gtk"):
         if gui == "gtk":
             from gui.gtk.application import GuiApp
-        elif gui == "qt3":
-            from gui.qt3.application import GuiApp
         else:
             from gui.nogui.application import GuiApp
 
@@ -27,7 +25,7 @@ class UiFactory(object):
 
 class FaradayUi(object):
     def __init__(self, model_controller, plugin_manager,
-                 workspace_manager, plugin_controller, gui="qt3"):
+                 workspace_manager, plugin_controller, gui="gtk"):
         self.model_controller = model_controller
         self.plugin_manager = plugin_manager
         self.workspace_manager = workspace_manager
@@ -87,24 +85,4 @@ class FaradayUi(object):
             self.report_manager.start()
         except Exception as e:
             raise e
-        return ws
-
-    def openDefaultWorkspace(self):
-        """
-        Opens the default workspace (called 'untitled').
-        This method shouldn't fail, since the default workspace
-        should be always available
-
-        Returns the default workspace
-        """
-        if self.report_manager:
-            self.report_manager.stop()
-            self.report_manager.join()
-        ws = self.getWorkspaceManager().openDefaultWorkspace()
-        self.report_manager = ReportManager(
-                10,
-                ws.name,
-                self.plugin_controller
-        )
-        self.report_manager.start()
         return ws

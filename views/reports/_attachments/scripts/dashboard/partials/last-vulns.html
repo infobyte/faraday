@@ -1,4 +1,4 @@
-<article class='panel panel-default left-big-box'>
+<article class='panel panel-default left-big-box' ng-controller="lastVulnsCtrl">
         <header>
             <h2>Last Vulnerabilities
                 <span class="glyphicon glyphicon-info-sign" uib-tooltip="Last vulnerabilities added"></span>
@@ -29,7 +29,7 @@
                         {{vuln.target}}
                         <a href="//www.shodan.io/search?query={{vuln.target}}" uib-tooltip="Search in Shodan" target="_blank">
                             <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
-                        </a>                        
+                        </a>
                     </td>
                     <td>{{vuln.severity}}</td>
                     <td class="wrapword">{{vuln.name}}</td>

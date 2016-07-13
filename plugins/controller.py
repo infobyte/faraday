@@ -27,7 +27,7 @@ from config.globals import (
     CONST_FARADAY_ZSH_OUTPUT_PATH)
 
 
-class PluginControllerBase(object):
+class PluginController(object):
     """
     TODO: Doc string.
     """
@@ -41,6 +41,9 @@ class PluginControllerBase(object):
         self.output_path = os.path.join(
             os.path.expanduser(CONST_FARADAY_HOME_PATH),
             CONST_FARADAY_ZSH_OUTPUT_PATH)
+        self._active_plugins = {}
+        self.plugin_sets = {}
+        self.plugin_manager.addController(self, self.id)
 
     def _find_plugin(self, plugin_id):
         return self._plugins.get(plugin_id, None)
@@ -76,13 +79,9 @@ class PluginControllerBase(object):
 
         return block_flag
 
-    def _get_plugins_by_input(self, current_input):
-        """
-        Finds a plugin that can parse the current input and returns
-        the plugin object. Otherwise returns None.
-        """
-        for plugin in self._plugins.itervalues():
-            if plugin.canParseCommandString(current_input):
+    def _get_plugins_by_input(self, cmd, plugin_set):
+        for plugin in plugin_set.itervalues():
+            if plugin.canParseCommandString(cmd):
                 return plugin
         return None
 
@@ -201,158 +200,11 @@ class PluginControllerBase(object):
         }
 
     def updatePluginSettings(self, plugin_id, new_settings):
+        for plugin_set in self.plugin_sets.values():
+            if plugin_id in plugin_set:
+                plugin_set[plugin_id].updateSettings(new_settings)
         if plugin_id in self._plugins:
             self._plugins[plugin_id].updateSettings(new_settings)
-
-
-class PluginController(PluginControllerBase):
-    """
-    This class is going to be deprecated once we dump qt3
-    """
-    def __init__(self, id, plugin_manager, mapper_manager):
-        PluginControllerBase.__init__(self, id, plugin_manager, mapper_manager)
-        self._active_plugin = None
-        self.last_command_information = None
-        self._buffer = StringIO()
-
-    def setActivePlugin(self, plugin):
-        self._active_plugin = plugin
-
-    def processCommandInput(self, prompt, username, current_path, command_string, interactive):
-        """
-        Receives the prompt that the current session has, the actual command_string that
-        the user typed and if the command is interactive. If it is interactive the
-        plugin controller does not choose a new active plugin but use the one the
-        is already set (if none is set it raises an exeception).
-
-        If always returns an string. It could be modified by the active plugin or, if
-        there is none available, it will return the original command_string.
-        """
-
-        if interactive:
-            return None
-        else:
-            self._disable_active_plugin()
-
-        choosen_plugin = self._get_plugins_by_input(command_string)
-        if choosen_plugin is None:
-            model.api.devlog("There is no active plugin to handle current command/user input")
-            return None
-        self._active_plugin = choosen_plugin
-
-        modified_cmd_string = self._active_plugin.processCommandString(
-                                                                username,
-                                                                current_path,
-                                                                command_string)
-
-        if self._is_command_malformed(command_string, modified_cmd_string):
-            return None
-        else:
-            cmd_info = CommandRunInformation(
-                **{'workspace': model.api.getActiveWorkspace().name,
-                    'itime': time.time(),
-                    'command': command_string.split()[0],
-                    'params': ' '.join(command_string.split()[1:])})
-            self._mapper_manager.save(cmd_info)
-
-            self.last_command_information = cmd_info
-
-            return modified_cmd_string if isinstance(modified_cmd_string, basestring) else None
-
-    def storeCommandOutput(self, output):
-        """
-        Receives and output string and stores it in the buffer. Returns False
-        if the output was not added to the plugin controllers buffer. Returns
-        True otherwise.
-        """
-        if not self.getActivePluginStatus():
-            return False
-        else:
-            self._buffer.write(output)
-            return True
-
-    def getPluginAutocompleteOptions(self, prompt, username, current_path, command_string, interactive):
-        """
-        This method should return a list of possible completitions based on the
-        current output.
-        TODO: We should think how to actually implement this...
-        May be checking which plugin should handle the command in the current input
-        and then passing it to the plugin to return a list of possible values.
-        Each plugin implementation should return possible option according to
-        what was received since it's the plugin the one it knows the command line
-        parameters, etc.
-        """
-        if interactive:
-            return None
-        else:
-            self._disable_active_plugin()
-
-        choosen_plugin = self._get_plugins_by_input(command_string)
-        if choosen_plugin is None:
-            model.api.devlog("There is no active plugin to handle current command/user input")
-            return None
-
-        self._active_plugin = choosen_plugin
-
-        new_options = self._active_plugin.getCompletitionSuggestionsList(command_string)
-        return new_options
-
-    def getActivePluginStatus(self):
-        """
-        Returns true if an active plugin is set, otherwise return False.
-        """
-        return (self._active_plugin is not None)
-
-    def _disable_active_plugin(self):
-        """
-        This method is suppose to disable the active plugin.
-        """
-        model.api.devlog("Disabling active plugin")
-        self._active_plugin = None
-
-    def onCommandFinished(self):
-        """
-        This method is called when the last executed command has finished. It's
-        in charge of giving the plugin the output to be parsed.
-        """
-        cmd_info = self.last_command_information
-        cmd_info.duration = time.time() - cmd_info.itime
-        self._mapper_manager.save(cmd_info)
-
-        if self._active_plugin.has_custom_output():
-            if not os.path.isfile(self._active_plugin.get_custom_file_path()):
-                model.api.devlog("Report file PluginController output file (%s) not created" % self._active_plugin.get_custom_file_path())
-                return False
-            output_file = open(self._active_plugin.get_custom_file_path(), 'r')
-            output = output_file.read()
-            self._buffer.seek(0)
-            self._buffer.truncate()
-            self._buffer.write(output)
-
-        self.processOutput(self._active_plugin, self._buffer.getvalue())
-
-        self._buffer.seek(0)
-        self._buffer.truncate()
-        model.api.devlog("PluginController buffer cleared")
-
-        self._disable_active_plugin()
-
-        return True
-
-
-class PluginControllerForApi(PluginControllerBase):
-    def __init__(self, id, plugin_manager, mapper_manager):
-        PluginControllerBase.__init__(
-            self, id, plugin_manager, mapper_manager)
-        self._active_plugins = {}
-        self.plugin_sets = {}
-        self.plugin_manager.addController(self, self.id)
-
-    def _get_plugins_by_input(self, cmd, plugin_set):
-        for plugin in plugin_set.itervalues():
-            if plugin.canParseCommandString(cmd):
-                return plugin
-        return None
 
     def createPluginSet(self, id):
         self.plugin_sets[id] = self.plugin_manager.getPlugins()
@@ -382,13 +234,6 @@ class PluginControllerForApi(PluginControllerBase):
                 return plugin.id, modified_cmd_string
 
         return None, None
-
-    def getPluginAutocompleteOptions(self, command_string):
-        """
-        Not implementend right now. Maybe it's better to use
-        zsh autocomplete features
-        """
-        pass
 
     def onCommandFinished(self, pid, exit_code, term_output):
 
@@ -425,10 +270,3 @@ class PluginControllerForApi(PluginControllerBase):
 
     def clearActivePlugins(self):
         self._active_plugins = {}
-
-    def updatePluginSettings(self, plugin_id, new_settings):
-        for plugin_set in self.plugin_sets.values():
-            if plugin_id in plugin_set:
-                plugin_set[plugin_id].updateSettings(new_settings)
-        if plugin_id in self._plugins:
-            self._plugins[plugin_id].updateSettings(new_settings)

@@ -3,9 +3,11 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('dashboardCtrl', 
-        ['$scope', '$filter', '$route', '$routeParams', '$location', 'workspacesFact',
-        function($scope, $filter, $route, $routeParams, $location, workspacesFact) {
+    .controller('dashboardCtrl',
+        ['$scope', '$filter', '$route', '$routeParams', '$location', 'dashboardSrv', 'workspacesFact',
+        function($scope, $filter, $route, $routeParams, $location, dashboardSrv, workspacesFact) {
+            $scope.props = dashboardSrv.props;
+
             init = function() {
                 //current workspace
                 $scope.workspace = $routeParams.wsId;
@@ -18,6 +20,10 @@ angular.module('faradayApp')
 
             $scope.navigate = function(route) {
                 $location.path(route);
+            };
+
+            $scope.toggleConfirmed = function() {
+                dashboardSrv.setConfirmed();
             };
 
             init();

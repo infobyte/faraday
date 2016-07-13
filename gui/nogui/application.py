@@ -36,9 +36,12 @@ class GuiApp(FaradayUi):
         except Exception as e:
             getLogger(self).error(
                 ("Your last workspace %s is not accessible, "
-                 "check configuration") % workspace)
+                 "check configuration.") % workspace)
+            getLogger(self).error(
+                    "You may try and go to ~/.faraday/config/user.xml "
+                    "to set a valid couch_uri and last_workspace")
             getLogger(self).error(str(e))
-            ws = self.openDefaultWorkspace()
+            return -1
         workspace = ws.name
         CONF.setLastWorkspace(workspace)
         CONF.saveConfig()

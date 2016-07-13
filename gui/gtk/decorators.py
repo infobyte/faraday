@@ -1,5 +1,6 @@
 from gi.repository import Gtk
 from functools import wraps
+from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
 
 
 def scrollable(width=-1, height=-1):
@@ -20,7 +21,7 @@ def scrollable(width=-1, height=-1):
 
             box = Gtk.Box()
             original = func(*args, **kwargs)
-            scrolled_box = Gtk.ScrolledWindow(None, None)
+            scrolled_box = GtkScrolledWindow(None, None)
             scrolled_box.set_min_content_width(width)
             scrolled_box.set_min_content_height(height)
             scrolled_box.add(original)

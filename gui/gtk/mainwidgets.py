@@ -337,7 +337,7 @@ class WorkspaceSidebar(Gtk.Widget):
         added_workspaces = [added_ws[0] for added_ws in model]
         for ws in self.workspaces:
             if ws not in added_workspaces:
-                ws_iter = self.workspace_model.append(ws)
+                ws_iter = self.workspace_model.append([ws])
                 self.valid_ws_iters.append(ws_iter)
 
     def clear_sidebar(self):

@@ -471,7 +471,7 @@ class ModelController(threading.Thread):
                  model.common.ModelObjectVulnWeb.class_signature,
                  model.common.ModelObjectCred.class_signature] and object_parent is None):
                 # TODO: refactor log module. We need to log twice to see it in
-                # qt and in the terminal. Ugly.
+                # gui and in the terminal. Ugly.
                 msg = "A parent is needed for %s objects" % obj.class_signature
                 getLogger(self).error(msg)
                 return False
@@ -925,24 +925,6 @@ class ModelController(threading.Thread):
     def getWebVulns(self):
         return self.mappers_manager.getMapper(
             model.common.ModelObjectVulnWeb.class_signature).getAll()
-
-    def createIndex(self, hosts):
-        self.treeWordsTries = TreeWordsTries()
-        self.treeWordsTries.clear()
-        for k in hosts.keys():
-            h = hosts[k]
-            self.treeWordsTries.addWord(h.getName())
-            for intr in h.getAllInterfaces():
-                ipv4 = intr.ipv4
-                ipv6 = intr.ipv6
-                if not ipv4['address'] in ["0.0.0.0", None]:
-                    self.treeWordsTries.addWord(ipv4['address'])
-
-                if not ipv6['address'] in ["0000:0000:0000:0000:0000:0000:0000:0000", None]:
-                    self.treeWordsTries.addWord(ipv6['address'])
-
-                for hostname in intr.getHostnames():
-                    self.treeWordsTries.addWord(hostname)
 
     def getHostsCount(self):
         """Get how many hosts are in the workspace. If it can't, it will

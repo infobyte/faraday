@@ -500,6 +500,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         """
         Gtk.Application.do_startup(self)  # deep GTK magic
 
+        self.open_last_workspace()
         self.ws_sidebar = WorkspaceSidebar(self.workspace_manager,
                                            self.change_workspace,
                                            self.remove_workspace,
@@ -581,7 +582,6 @@ class GuiApp(Gtk.Application, FaradayUi):
                                     self.statusbar,
                                     application=self,
                                     title="Faraday")
-            self.open_last_workspace()
 
         self.window.set_icon(self.icon)
         self.window.present()

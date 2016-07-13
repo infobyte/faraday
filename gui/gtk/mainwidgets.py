@@ -22,6 +22,7 @@ from decorators import scrollable
 from compatibility import CompatibleVteTerminal as VteTerminal
 from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
 
+
 class Terminal(VteTerminal):
     """Defines a simple terminal that will execute faraday-terminal with the
     corresponding host and port as specified by the CONF.
@@ -60,7 +61,6 @@ class Terminal(VteTerminal):
                         GLib.SpawnFlags.DO_NOT_REAP_CHILD,
                         None,
                         None)
-
 
     def copy_or_paste(self, widget, event):
         """Decides if the Ctrl+Shift is pressed, in which case returns True.
@@ -235,7 +235,6 @@ class HostsSidebar(Gtk.Widget):
 
         self.view.append_column(column_os)
         self.view.append_column(column_hosts)
-
 
         self.view.connect("row_activated", self.on_click)
 

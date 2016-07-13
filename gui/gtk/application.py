@@ -221,7 +221,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         if response == Gtk.ResponseType.DELETE_EVENT:
             GObject.idle_add(self.exit_faraday_without_confirm)
 
-
     def handle_no_active_workspace(self):
         """If there's been a problem opening a workspace or for some reason
         we suddenly find our selves without one, force the user
@@ -292,7 +291,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         # destroy the ugly dialog that got us here
         if dialog is not None:
             dialog.destroy()
-
 
         preference_window = ForcePreferenceWindowDialog(self.reload_workspaces,
                                                         self.connect_to_couch,

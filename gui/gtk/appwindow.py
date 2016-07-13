@@ -14,7 +14,6 @@ gi.require_version('Gtk', '3.0')
 
 from gi.repository import GLib, Gio, Gtk, GObject, Gdk
 from dialogs import ImportantErrorDialog
-from dialogs import errorDialog
 
 CONF = getInstanceConfiguration()
 
@@ -221,7 +220,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         dialog.run()
         dialog.destroy()
 
-
     def do_new_log(self, text):
         """To be used on a new_log signal. Calls a method on log to append
         to it"""
@@ -262,7 +260,7 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
                                                     Gtk.MessageType.INFO,
                                                     Gtk.ButtonsType.NONE,
                                                     ("Loading workspace. \n"
-                                                    "Please wait."))
+                                                     "Please wait."))
 
             self.loading_dialog.set_modal(True)
             self.loading_dialog.connect("key_press_event", do_nothing_on_key_stroke)

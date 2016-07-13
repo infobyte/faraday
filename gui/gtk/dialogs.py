@@ -13,7 +13,6 @@ import webbrowser
 gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk, GdkPixbuf, Gdk
-from persistence.persistence_managers import CouchDbManager
 from config.configuration import getInstanceConfiguration
 from model import guiapi
 from decorators import scrollable
@@ -80,6 +79,7 @@ class PreferenceWindowDialog(Gtk.Dialog):
 
     def on_click_cancel(self, button=None):
         self.destroy()
+
 
 class ForcePreferenceWindowDialog(PreferenceWindowDialog):
     """A _forced_ version of the preference window, which means
@@ -228,6 +228,7 @@ class ForceNewWorkspaceDialog(NewWorkspaceDialog):
         message.set_text("There are no workspaces available. You must "
                          "create one to continue using Faraday.")
         return message
+
 
 class PluginOptionsDialog(Gtk.Window):
     """The dialog where the user can see details about installed plugins.
@@ -529,8 +530,7 @@ class HostInfoDialog(Gtk.Window):
     def on_edit_host(self, button):
         """Tries to open self.edit_url (url which directs to the host in the
         web ui) in the default browser."""
-        webbrowser.open(self.edit_url, new = 2)
-
+        webbrowser.open(self.edit_url, new=2)
 
     def create_scroll_frame(self, inner_box, label_str):
         """Create a scrollable frame containing inner_box and with label_str
@@ -788,7 +788,7 @@ class HostInfoDialog(Gtk.Window):
                               vuln.getResponse(), vuln.getMethod(),
                               vuln.getPname(), vuln.getParams(),
                               vuln.getQuery(), vuln.getCategory()])
-        #sort it!
+        # sort it!
         sorted_model = Gtk.TreeModelSort(model=model)
         sorted_model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
 
@@ -1353,6 +1353,7 @@ class ConflictsDialog(Gtk.Window):
 
         return raw_prop
 
+
 class ForceChooseWorkspaceDialog(Gtk.Window):
     """A dialog to force the user to choose a workspace in case he suddenly
     finds himself without an active workspace.
@@ -1545,6 +1546,7 @@ def key_reactions(window, event):
     elif key == 'Return':
         window.on_click_ok()
         return True
+
 
 def strict_key_reactions(window, event):
     """Similar to key_reactions, but will not let the user do anything but

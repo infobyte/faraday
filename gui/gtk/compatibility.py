@@ -24,6 +24,7 @@ except ValueError:
 
 from gi.repository import Vte, Gtk
 
+
 class CompatibleVteTerminal(Vte.Terminal):
     """A simple VTE terminal modified to be compatible with both 2.90
     and 2.91 API"""
@@ -46,6 +47,7 @@ class CompatibleVteTerminal(Vte.Terminal):
                                                   argument_vector, env_variables,
                                                   glib_spawn_flags, child_setup,
                                                   child_setup_data, cancellable)
+
 
 class CompatibleScrolledWindow(Gtk.ScrolledWindow):
     """A simple Gtk.ScrolledWindow, replacing set_overlay_scrolling for None

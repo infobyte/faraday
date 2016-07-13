@@ -28,6 +28,7 @@ class Terminal(VteTerminal):
     corresponding host and port as specified by the CONF.
     Inherits from Compatibility.Vte, which is just Vte.Terminal with
     spawn_sync overrode to function with API 2.90 and 2.91"""
+
     def __init__(self, CONF):
         """Initialize terminal with infinite scrollback, no bell, connecting
         all keys presses to copy_or_past, and starting faraday-terminal
@@ -41,16 +42,15 @@ class Terminal(VteTerminal):
         faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
         self.faraday_exec = faraday_directory + "/faraday-terminal.zsh"
 
-        self.startFaraday()
+        self.start_faraday()
 
-    def getTerminal(self):
-        """Returns a scrolled_window with the terminal inside it"""
-        scrolled_window = GtkScrolledWindow.new(None, None)
-        scrolled_window.set_overlay_scrolling(False)
-        scrolled_window.add(self)
-        return scrolled_window
+    @scrollable(overlay_scrolling=True)
+    def create_scrollable_terminal(self):
+        """Returns a scrolled_window with the terminal inside it thanks
+        to the scrollable decorator."""
+        return self
 
-    def startFaraday(self):
+    def start_faraday(self):
         """Starts a Faraday process with the appropiate host and port."""
 
         home_dir = os.path.expanduser('~')
@@ -102,7 +102,8 @@ class Sidebar(Gtk.Notebook):
         self.append_page(self.workspace_sidebar, Gtk.Label("Workspaces"))
         self.append_page(self.hosts_sidebar, Gtk.Label("Hosts"))
 
-    def get_box(self):
+    def box_it(self):
+        """Wraps the notebook inside a little box."""
         box = Gtk.Box()
         box.pack_start(self, True, True, 0)
         return box
@@ -506,22 +507,10 @@ class ConsoleLog(Gtk.Widget):
 
         self.textView.set_buffer(self.textBuffer)
 
-        self.logger = GtkScrolledWindow.new(None, None)
-        self.logger.set_min_content_height(100)
-        self.logger.set_min_content_width(100)
-        self.logger.add(self.textView)
-
-    def getLogger(self):
+    @scrollable(height=100, width=100)
+    def create_scrollable_logger(self):
         """Returns the ScrolledWindow used to contain the view"""
-        return self.logger
-
-    def getView(self):
-        """Returns the text view"""
         return self.textView
-
-    def getBuffer(self):
-        """Returns the buffer"""
-        return self.textBuffer
 
     def customEvent(self, text):
         """Filters event so that only those with type 3131 get to the log.
@@ -566,15 +555,17 @@ class ConsoleLog(Gtk.Widget):
 
 
 class Statusbar(Gtk.Widget):
-    """Defines a statusbar, which is actually more quite like a button.
-    The button has a label that tells how many notifications are there.
-    Takes an on_button_do callback, so it can tell the application what
-    to do when the user presses the button"""
+    """Defines a statusbar. Will have a notifications button,
+    a string informing of how many hosts/services/vulns are in the
+    current workspace nad the conflicts button."""
 
     def __init__(self, notif_callback, conflict_callback,
                  host_count, service_count, vuln_count):
-        super(Gtk.Widget, self).__init__()
-        """Initialices a button with a label on zero"""
+        """Initializes the statusbar. Takes a notification_callback
+        to open the notifiacion window, conflick_callback to open
+        the conclifcts window, and a host, service and vuln counts
+        to be displayed"""
+        Gtk.Widget.__init__(self)
         initial_strings = self.create_strings(host_count, service_count,
                                               vuln_count)
         self.notif_text = "Notifications: "
@@ -598,8 +589,8 @@ class Statusbar(Gtk.Widget):
         self.mainBox = Gtk.Box()
         self.mainBox.pack_start(self.notif_button, False, False, 5)
         self.mainBox.pack_start(self.ws_info, False, True, 5)
-        self.mainBox.pack_start(Gtk.Box(), True, True, 5)  # space
-        self.mainBox.pack_end(self.conflict_button, False, True, 0)
+        self.mainBox.pack_start(Gtk.Box(), True, True, 5)  # blank space
+        self.mainBox.pack_end(self.conflict_button, False, True, 5)
 
     def inc_notif_button_label(self):
         """Increments the button label, sets bold so user knows there are

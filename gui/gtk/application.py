@@ -621,7 +621,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         instance of the Terminal and tells the window to add it as a new tab
         for the notebook"""
         new_terminal = Terminal(CONF)
-        terminal_scrolled = new_terminal.getTerminal()
+        terminal_scrolled = new_terminal.create_scrollable_terminal()
         self.window.new_tab(terminal_scrolled)
 
     def on_click_notifications(self, button):

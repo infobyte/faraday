@@ -64,11 +64,11 @@ angular.module('faradayApp')
                         $http.delete(url)
                             .then(function(resp) {
                                 deferred.resolve(resp);
-                            }, function() {
-                                deferred.reject("Unable to delete License from database.");
+                            }, function(data, status, headers, config) {
+                                deferred.reject("Unable to delete License from database. " + status);
                             });
-                    }, function() {
-                        deferred.reject("Unable to load configuration to delete License.");
+                    }, function(reason) {
+                        deferred.reject(reason);
                     });
 
                 return deferred.promise;
@@ -86,10 +86,10 @@ angular.module('faradayApp')
                                 self._rev = data.rev;
                                 deferred.resolve(self);
                             }, function(data, status, headers, config) {
-                                deferred.reject(status);
+                                deferred.reject("Unable to update the License. " + status);
                             });
-                    }, function() {
-                        deferred.reject("Unable to load configuration to update License.");
+                    }, function(reason) {
+                        deferred.reject(reason);
                     });
 
                 return deferred.promise;
@@ -107,10 +107,10 @@ angular.module('faradayApp')
                                 self._rev = data.rev;
                                 deferred.resolve(self);
                             }, function(data, status, headers, config) {
-                                deferred.reject(status);
+                                deferred.reject("Unable to save the License. " + status);
                             });
-                    }, function() {
-                        deferred.reject("Unable to load configuration to save License.");
+                    }, function(reason) {
+                        deferred.reject(reason);
                     });
 
                 return deferred.promise;

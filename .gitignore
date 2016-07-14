@@ -40,3 +40,5 @@ node_modules
 
 # Couch
 .couchadmin
+pushReports.py
+.gitignore

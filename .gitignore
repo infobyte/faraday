@@ -34,11 +34,11 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+pushReports.py
 
 # Tests nodejs
 node_modules
 
 # Couch
 .couchadmin
-pushReports.py
-.gitignore
+

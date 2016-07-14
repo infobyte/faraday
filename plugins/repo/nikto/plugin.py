@@ -175,9 +175,9 @@ class Item(object):
             return desc
 
     def get_params(self, uri):
-
+        """Return the paramethers as a string"""
         try:
-            params = [i.split("=")[0] for i in uri.split('?')[1].split('&')]
+            params = uri.split('?')[1].replace('&', ',')
         except Exception as e:
             params = ''
 

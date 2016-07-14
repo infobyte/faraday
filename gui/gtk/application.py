@@ -110,6 +110,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         self.lost_connection_dialog_raised = None
         self.workspace_dialogs_raised = None
+        self.loading_dialog_raised = None
         self.icons = CONF.getImagePath() + "icons/"
         faraday_icon = self.icons + "faraday_icon.png"
         self.icon = GdkPixbuf.Pixbuf.new_from_file_at_scale(faraday_icon, 16,
@@ -388,26 +389,50 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Changes workspace in a separate thread. Emits a signal
         to present a 'Loading workspace' dialog while Faraday processes
         the change"""
-        self.ws_sidebar.select_ws_by_name(workspace_name)
+
+        def loading_workspace(action):
+            """Function to be called via GObject.idle_add by the background
+            process.  Preconditions: show must have been called before destroy
+            can be called.
+            """
+
+            if action == "show" and not self.loading_dialog_raised:
+                self.loading_dialog_raised = True
+                self.loading_dialog = Gtk.MessageDialog(self.window, 0,
+                                                        Gtk.MessageType.INFO,
+                                                        Gtk.ButtonsType.NONE,
+                                                        ("Loading workspace. \n"
+                                                         "Please wait."))
+
+                self.loading_dialog.set_modal(True)
+
+                # on every key stroke just return true, wont allow user
+                # to press scape
+                self.loading_dialog.connect("key_press_event", lambda _, __: True)
+                self.loading_dialog.show_all()
+
+            if action == "destroy":
+                self.loading_dialog.destroy()
+                self.loading_dialog_raised = False
 
         def background_process():
             """Change workspace. This function runs on a separated thread
             created by the parent function. DO NOT call any Gtk methods
             withing its scope, except by emiting signals to the window
             """
-            self.window.emit("loading_workspace", 'show')
+            GObject.idle_add(loading_workspace, 'show')
             try:
                 ws = super(GuiApp, self).openWorkspace(workspace_name)
-                self.window.emit("loading_workspace", "destroy")
                 GObject.idle_add(CONF.setLastWorkspace, ws.name)
                 GObject.idle_add(CONF.saveConfig)
             except Exception as e:
-                self.handle_no_active_workspace()
+                GObject.idle_add(self.handle_no_active_workspace)
                 model.guiapi.notification_center.showDialog(str(e))
-                self.window.emit("loading_workspace", "destroy")
 
+            GObject.idle_add(loading_workspace, 'destroy')
             return True
 
+        self.ws_sidebar.select_ws_by_name(workspace_name)
         thread = threading.Thread(target=background_process)
         thread.daemon = True
         thread.start()

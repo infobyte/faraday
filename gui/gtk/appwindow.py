@@ -42,7 +42,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         "clear_notifications": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "update_ws_info": (GObject.SIGNAL_RUN_FIRST, None, (int, int, int, )),
         "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, )),
-        "loading_workspace": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
         "lost_db_connection": (GObject.SIGNAL_RUN_FIRST, None, (str,)),
         "update_hosts_sidebar": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "normal_error": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
@@ -231,34 +230,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     def do_update_ws_info(self, host_count, service_count, vuln_count):
         """Sets the statusbar workspace info to the appropiate numbers"""
         self.statusbar.update_ws_info(host_count, service_count, vuln_count)
-
-    def do_loading_workspace(self, action):
-        """Called by changeWorkspace on the application. Presents
-        a silly loading dialog.
-        Preconditions: show must have been called before destroy can be called
-        """
-        def do_nothing_on_key_stroke(self, event):
-            """Do nothing. Well, technically, return True.
-
-            Avoids the user to interact with dialogs in anyway, for example,
-            via the Escape key.
-            You'll have to wait for my dialog to exit by itself, cowboy.
-            """
-            return True
-
-        if action == "show":
-            self.loading_dialog = Gtk.MessageDialog(self, 0,
-                                                    Gtk.MessageType.INFO,
-                                                    Gtk.ButtonsType.NONE,
-                                                    ("Loading workspace. \n"
-                                                     "Please wait."))
-
-            self.loading_dialog.set_modal(True)
-            self.loading_dialog.connect("key_press_event", do_nothing_on_key_stroke)
-
-            self.loading_dialog.show_all()
-        if action == "destroy":
-            self.loading_dialog.destroy()
 
     def destroy_from_button(self, button=None):
         """Sometimes this stuff is needed, 'cause it needs to take a button

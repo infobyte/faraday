@@ -490,12 +490,17 @@ class GuiApp(Gtk.Application, FaradayUi):
             receiver.emit("update_ws_info", host_count,
                           service_count, vuln_count)
 
-        elif event.type() == 4100 or event.type() == 3140:  # newinfo or changews
+        #                   addhost                 delhost                changews
+        elif event.type() == 4100 or event.type() == 4101 or event.type() == 3140:
             host_count, service_count, vuln_count = self.update_counts()
             self.window.receive_hosts(self.updateHosts())
             receiver.emit("update_hosts_sidebar")
             receiver.emit("update_ws_info", host_count, service_count, vuln_count)
             GObject.idle_add(self.select_active_workspace)
+
+        elif event.type() == 4101:  # edit host
+            self.window.receive_hosts(self.updateHosts())
+            receiver.emit("update_hosts_sidebar")
 
         elif event.type() == 3132:  # error
             self.window.emit("normal_error", event.text)

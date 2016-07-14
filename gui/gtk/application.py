@@ -498,13 +498,17 @@ class GuiApp(Gtk.Application, FaradayUi):
         """
         Gtk.Application.do_startup(self)  # deep GTK magic
 
-        self.open_last_workspace()
         self.ws_sidebar = WorkspaceSidebar(self.workspace_manager,
                                            self.change_workspace,
                                            self.remove_workspace,
                                            self.on_new_button,
                                            CONF.getLastWorkspace())
 
+        # XXX: do not move next line, it is very important it stays there,
+        # just after the creation of the sidebar and before updateHosts.
+        # correct fix: move the creation of the ws_model to the application
+
+        self.open_last_workspace()
         self.updateHosts()
         self.hosts_sidebar = HostsSidebar(self.show_host_info, self.icons)
         default_model = self.hosts_sidebar.create_model(self.all_hosts)

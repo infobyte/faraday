@@ -91,7 +91,9 @@ class ForcePreferenceWindowDialog(PreferenceWindowDialog):
     def __init__(self, reload_ws_callback, connect_to_couch, parent,
                  exit_faraday_callback):
         """Inits just the same as preference window dialog, but
-        disconnect from key_reactions and connect to strict_key_reaction."""
+        disconnect from key_reactions and connect to strict_key_reaction.
+        Also connect destroy with the OK function: if the user manages
+        to close the dialog, that'd be just as pressing OK"""
         PreferenceWindowDialog.__init__(self, reload_ws_callback,
                                         connect_to_couch,
                                         parent)
@@ -99,6 +101,7 @@ class ForcePreferenceWindowDialog(PreferenceWindowDialog):
         self.set_deletable(False)
         self.exit_faraday = exit_faraday_callback
         self.disconnect_by_func(key_reactions)
+        self.connect("destroy", self.on_click_ok)
         self.connect("key_press_event", strict_key_reactions)
 
     def on_click_cancel(self, button=None):
@@ -212,6 +215,7 @@ class ForceNewWorkspaceDialog(NewWorkspaceDialog):
         self.set_deletable(False)
         self.set_keep_above(True)
         self.disconnect_by_func(key_reactions)
+        self.destroy("destroy", self._on_click_ok)
         self.connect("key_press_event", strict_key_reactions)
         self.exit_faraday = exit_faraday_callback
         explanation_message = self.create_explanation_message()
@@ -1367,6 +1371,7 @@ class ForceChooseWorkspaceDialog(Gtk.Window):
         self.set_deletable(False)
         self.set_transient_for(parent_window)
         self.set_modal(True)
+        self.connect("destroy", self.on_click_ok)
         self.connect("key_press_event", strict_key_reactions)
 
         self.change_ws_callback = change_ws_callback

@@ -10,7 +10,26 @@ angular.module('faradayApp')
 
         licensesManager.licenses = [];
 
-        licensesManager.createLicense = function(data) {
+        licensesManager.products = [
+            "Faraday",
+            "Metasploit",
+            "Nessus",
+            "Acunetix",
+            "Burp",
+            "Canvas",
+            "Maltego",
+            "Core Impact",
+            "Nexpose",
+            "Netsparker",
+            "Retina",
+            "Onapsis Security Platform",
+            "Qualys",
+            "Fortify",
+            "Checkmarx",
+            "Other"
+        ];
+
+        licensesManager.create = function(data) {
             var deferred = $q.defer(),
             self = this;
 
@@ -19,7 +38,7 @@ angular.module('faradayApp')
 
                 license.save()
                     .then(function(resp) {
-                        licensesManager.getLicenses()
+                        licensesManager.get()
                             .then(function() {
                                 deferred.resolve(self);
                             }, function(reason) {
@@ -35,13 +54,13 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        licensesManager.deleteLicense = function(license) {
+        licensesManager.delete = function(license) {
             var deferred = $q.defer(),
             self = this;
 
             license.remove()
                 .then(function() {
-                    licensesManager.getLicenses()
+                    licensesManager.get()
                         .then(function(resp) {
                             deferred.resolve(resp);
                         }, function(reason) {
@@ -54,25 +73,28 @@ angular.module('faradayApp')
             return deferred.promise
         };
 
-        licensesManager.getLicenses = function() {
+        licensesManager.get = function() {
             var deferred = $q.defer(),
             self = this;
 
             configSrv.promise
                 .then(function() {
-                    var url = BASEURL + configSrv.license_db;
+                    var url = BASEURL + configSrv.license_db + "/_all_docs?include_docs=true";
 
                     $http.get(url)
-                        .then(function(data) {
+                        .then(function(res) {
+                            var data = res.data;
                             var licenses = [];
 
-                            data.rows.forEach(function(license) {
-                                try {
-                                    licenses.push(new License(license));
-                                } catch(e) {
-                                    console.log(e.stack);
-                                }
-                            });
+                            if(data.hasOwnProperty("rows")) {
+                                data.rows.forEach(function(row) {
+                                    try {
+                                        licenses.push(new License(row.doc));
+                                    } catch(e) {
+                                        console.log(e.stack);
+                                    }
+                                });
+                            }
 
                             angular.copy(licenses, self.licenses);
                             deferred.resolve(licenses);
@@ -84,13 +106,13 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        licensesManager.updateLicense = function(license, data) {
+        licensesManager.update = function(license, data) {
             var deferred = $q.defer(),
             self = this;
 
             license.update(data)
                 .then(function() {
-                    licensesManager.getLicenses()
+                    licensesManager.get()
                         .then(function(resp) {
                             deferred.resolve(resp);
                         }, function(reason) {

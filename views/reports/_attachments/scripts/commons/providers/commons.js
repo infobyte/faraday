@@ -3,7 +3,9 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('commonsFact', function() {
+    .factory('commonsFact',
+        ['$uibModal',
+        function($uibModal) {
         var commonsFact = {};
 
         // receives a dictionary of files whose keys are names
@@ -11,7 +13,7 @@ angular.module('faradayApp')
         commonsFact.loadIcons = function(files) {
             var icons = {},
             type = "";
-            
+
             for(var name in files) {
                 // first lets load the type prop
                 if(files[name].hasOwnProperty("type")) {
@@ -227,7 +229,92 @@ angular.module('faradayApp')
             }
 
             return hash_map;
-        }
+        };
+
+       // encodes search string in order to send it through URL
+        commonsFact.encodeSearch = function(search) {
+            var i = -1,
+            encode = "",
+            params = search.split(" "),
+            chunks = {};
+
+            params.forEach(function(chunk) {
+                i = chunk.indexOf(":");
+                if(i > 0) {
+                    chunks[chunk.slice(0, i)] = chunk.slice(i+1);
+                } else {
+                    if(!chunks.hasOwnProperty("free")) {
+                        chunks.free = "";
+                    }
+                    chunks.free += " ".concat(chunk);
+                }
+            });
+
+            if(chunks.hasOwnProperty("free")) {
+                chunks.free = chunks.free.slice(1);
+            }
+
+            for(var prop in chunks) {
+                if(chunks.hasOwnProperty(prop)) {
+                    if(chunks.prop != "") {
+                        encode += "&" + encodeURIComponent(prop) + "=" + encodeURIComponent(chunks[prop]);
+                    }
+                }
+            }
+            return encode.slice(1);
+        };
+
+        // decodes search parameters to object in order to use in filter
+        commonsFact.decodeSearch = function(search) {
+            var i = -1,
+            decode = {},
+            params = search.split("&");
+
+            params.forEach(function(param) {
+                i = param.indexOf("=");
+                decode[decodeURIComponent(param.slice(0,i))] = decodeURIComponent(param.slice(i+1));
+            });
+
+            if(decode.hasOwnProperty("free")) {
+                decode['$'] = decode.free;
+                delete decode.free;
+            }
+
+            return decode;
+        };
+
+        // converts current search object to string to be displayed in search field
+        commonsFact.stringSearch = function(obj) {
+            var search = "";
+
+            for(var prop in obj) {
+                if(obj.hasOwnProperty(prop)) {
+                    if(search != "") {
+                        search += " ";
+                    }
+                    if(prop == "$") {
+                        search += obj[prop];
+                    } else {
+                        search += prop + ":" + obj[prop];
+                    }
+                }
+            }
+
+            return search;
+        };
+
+        commonsFact.errorDialog = function(message) {
+            $uibModal.open(config = {
+                templateUrl: 'scripts/commons/partials/modalKO.html',
+                controller: 'commonsModalKoCtrl',
+                size: 'sm',
+                resolve: {
+                    msg: function() {
+                        return message;
+                    }
+                }
+            });
+        };
 
         return commonsFact;
-    });
+    }]);

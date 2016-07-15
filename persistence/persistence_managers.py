@@ -537,5 +537,5 @@ def test_couch(uri):
     try:
         response_code = requests.get(uri + '/_all_dbs').status_code
         return True if response_code == 200 else False
-    except requests.adapters.ConnectionError:
+    except:
         return False

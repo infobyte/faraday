@@ -631,7 +631,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                                     self.console_log,
                                     self.statusbar,
                                     application=self,
-                                    title="Faraday")
+                                    title="Faraday " + str(CONF.getVersion()))
 
         self.window.set_icon(self.icon)
         self.window.present()

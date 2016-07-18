@@ -79,15 +79,17 @@ angular.module('faradayApp')
 
                 configSrv.promise
                     .then(function() {
-                        var url = BASEURL + configSrv.license_db;
+                        var url = BASEURL + configSrv.license_db + "/" + self._id;
 
-                        $http.put(url, self)
-                            .then(function(data) {
-                                self._rev = data.rev;
+                        $http.put(url, data)
+                            .then(function(res) {
+                                self.set(data);
+                                self._rev = res.rev;
                                 deferred.resolve(self);
-                            }, function(data, status, headers, config) {
-                                deferred.reject("Unable to update the License. " + status);
+                            }, function(res) {
+                                deferred.reject("Unable to update the License. " + res.data.reason);
                             });
+
                     }, function(reason) {
                         deferred.reject(reason);
                     });
@@ -107,6 +109,7 @@ angular.module('faradayApp')
 
                         $http.post(url, self)
                             .then(function(data) {
+                                self._id = data._id;
                                 self._rev = data.rev;
                                 deferred.resolve(self);
                             }, function(res) {

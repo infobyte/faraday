@@ -125,6 +125,7 @@ class HostsSidebar(Gtk.Widget):
         self.linux_icon = icons + "tux.png"
         self.windows_icon = icons + "windows.png"
         self.mac_icon = icons + "Apple.png"
+        self.no_os_icon = icons + "TreeHost.png"
 
     def create_model(self, hosts):
         """Creates a model for a lists of hosts. The model contians the
@@ -161,7 +162,7 @@ class HostsSidebar(Gtk.Widget):
                 icon = GdkPixbuf.Pixbuf.new_from_file(self.mac_icon)
                 str_id = "mac"
             else:
-                icon = None
+                icon = GdkPixbuf.Pixbuf.new_from_file(self.no_os_icon)
                 str_id = "unknown"
             return icon, str_id
 

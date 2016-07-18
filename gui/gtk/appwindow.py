@@ -18,35 +18,10 @@ from dialogs import ImportantErrorDialog
 CONF = getInstanceConfiguration()
 
 
-class _IdleObject(GObject.GObject):
-    """
-    Override GObject.GObject to always emit signals in the main thread
-    by emmitting on an idle handler. Deep magic, do not touch unless
-    you know what you are doing.
-    """
-    def __init__(self):
-        GObject.GObject.__init__(self)
-
-    def emit(self, *args):
-        GObject.idle_add(GObject.GObject.emit, self, *args)
-
-
-class AppWindow(Gtk.ApplicationWindow, _IdleObject):
+class AppWindow(Gtk.ApplicationWindow):
     """The main window of the GUI. Draws the toolbar.
     Positions the terminal, sidebar, consolelog and statusbar received from
     the app and defined in the mainwidgets module"""
-
-    __gsignals__ = {
-        "new_log": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
-        "new_notif": (GObject.SIGNAL_RUN_FIRST, None, ()),
-        "clear_notifications": (GObject.SIGNAL_RUN_FIRST, None, ()),
-        "update_ws_info": (GObject.SIGNAL_RUN_FIRST, None, (int, int, int, )),
-        "set_conflict_label": (GObject.SIGNAL_RUN_FIRST, None, (int, )),
-        "lost_db_connection": (GObject.SIGNAL_RUN_FIRST, None, (str,)),
-        "update_hosts_sidebar": (GObject.SIGNAL_RUN_FIRST, None, ()),
-        "normal_error": (GObject.SIGNAL_RUN_FIRST, None, (str, )),
-        "important_error": (GObject.SIGNAL_RUN_FIRST, None, ()),
-    }
 
     def __init__(self, sidebar, ws_sidebar, hosts_sidebar, terminal,
                  console_log, statusbar, *args, **kwargs):
@@ -132,9 +107,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         more than primitive names to be passed on by signals"""
         self.current_hosts = hosts
 
-    def do_update_hosts_sidebar(self):
-        self.hosts_sidebar.update(self.current_hosts)
-
     def create_event_box(self, widget):
         """Given a terminal, creates an EventBox for the Box that has as a
         children said terminal"""
@@ -182,56 +154,6 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         current_scrolled_window = current_event_box.get_children()[0]
         current_terminal = current_scrolled_window.get_child()
         return current_terminal
-
-    def prepare_important_error(self, event, *callbacks):
-        """Attaches an event to the class, so it can be used by the signal
-        callbacks even if they cannot be passed directly.
-        """
-        self.event = event
-        self.error_callbacks = callbacks
-
-    def do_important_error(self):
-        """Creates an importan error dialog with a callback to send
-        the developers the error traceback.
-        """
-        dialog_text = self.event.text
-        dialog = ImportantErrorDialog(self, dialog_text)
-        response = dialog.run()
-        if response == 42:
-            error = self.event.error_name
-            self.event.callback(error, *self.event.exception_objects)
-        dialog.destroy()
-
-    def do_normal_error(self, dialog_text):
-        """Just a simple, normal, ignorable error"""
-        dialog = Gtk.MessageDialog(self, 0,
-                                   Gtk.MessageType.ERROR,
-                                   Gtk.ButtonsType.OK,
-                                   dialog_text)
-        dialog.run()
-        dialog.destroy()
-
-    def do_new_log(self, text):
-        """To be used on a new_log signal. Calls a method on log to append
-        to it"""
-        self.log.customEvent(text)
-
-    def do_clear_notifications(self):
-        """On clear_notifications signal, it will return the button label to 0
-        """
-        self.statusbar.set_default_notif_label()
-
-    def do_new_notif(self):
-        """On a new notification, increment the button label by one"""
-        self.statusbar.inc_notif_button_label()
-
-    def do_set_conflict_label(self, conflict_number):
-        """Sets the conflict label to the appropiate conflict_number"""
-        self.statusbar.update_conflict_button_label(conflict_number)
-
-    def do_update_ws_info(self, host_count, service_count, vuln_count):
-        """Sets the statusbar workspace info to the appropiate numbers"""
-        self.statusbar.update_ws_info(host_count, service_count, vuln_count)
 
     def destroy_from_button(self, button=None):
         """Sometimes this stuff is needed, 'cause it needs to take a button
@@ -330,8 +252,8 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
     def reorder_tab_names(self):
         """When a tab is deleted, all other tabs must be renamed to reacomodate
         the numbers"""
-        # Tabs are zero indexed, but their labels start at one
 
+        # Tabs are zero indexed, but their labels start at one
         number_of_tabs = self.notebook.get_n_pages()
         for n in range(number_of_tabs):
             tab = self.notebook.get_nth_page(n)

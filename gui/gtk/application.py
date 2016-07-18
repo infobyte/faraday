@@ -62,6 +62,7 @@ from dialogs import ForceChooseWorkspaceDialog
 from dialogs import ForceNewWorkspaceDialog
 from dialogs import ForcePreferenceWindowDialog
 from dialogs import errorDialog
+from dialogs import ImportantErrorDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import WorkspaceSidebar
@@ -383,7 +384,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         to get the notification label to 0 on the main window's button
         """
         self.notificationsModel.clear()
-        self.window.emit("clear_notifications")
+        GObject.idle_add(self.statusbar.set_default_notif_label)
 
     def change_workspace(self, workspace_name):
         """Changes workspace in a separate thread. Emits a signal
@@ -470,41 +471,40 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Handles the events from gui/customevents.
 
         DO NOT, AND I REPEAT, DO NOT REDRAW *ANYTHING* FROM THE GUI
-        FROM HERE. If you must do it, you should to it via the emit method
-        to the appwindow or maybe using Glib.idle_add, a misterious function
-        with outdated documentation. Good luck."""
+        FROM HERE. If you must do it, you should to it sing Glib.idle_add,
+        a misterious function with outdated documentation. Good luck."""
 
         type_ = event.type()
         if receiver is None:
             receiver = self.window
 
         elif type_ == 3131:  # new log event
-            receiver.emit("new_log", event.text)
+            GObject.idle_add(self.console_log.customEvent, event.text)
 
         elif type_ == 3141:  # new conflict event
-            receiver.emit("set_conflict_label", event.nconflicts)
+            GObject.idle_add(self.statusbar.update_conflict_button_label,
+                             event.nconflicts)
 
         elif type_ == 5100:  # new notification event
             self.notificationsModel.prepend([event.change.getMessage()])
-            receiver.emit("new_notif")
+            GObject.idle_add(self.statusbar.inc_notif_button_label)
             host_count, service_count, vuln_count = self.update_counts()
-            receiver.emit("update_ws_info", host_count,
-                          service_count, vuln_count)
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
 
         # in order: add host, delete host, edit host, workspace_change
         elif type_ in {4100, 4101, 4102, 3140}:
             host_count, service_count, vuln_count = self.update_counts()
-            self.window.receive_hosts(self.updateHosts())
-            receiver.emit("update_hosts_sidebar")
-            receiver.emit("update_ws_info", host_count, service_count, vuln_count)
+            GObject.idle_add(self.hosts_sidebar.update, self.updateHosts())
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
             GObject.idle_add(self.select_active_workspace)
 
         elif type_ == 3132:  # error
-            self.window.emit("normal_error", event.text)
+            GObject.idle_add(self.show_normal_error, event.text)
 
         elif type_ == 3134:  # important error, uncaught exception
-            GObject.idle_add(self.window.prepare_important_error, event)
-            self.window.emit("important_error")
+            GObject.idle_add(self.show_important_error, event)
 
         elif type_ == 42424:  # lost connection to couch db
             GObject.idle_add(self.lost_db_connection, event.problem,
@@ -514,6 +514,27 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         elif type_ == 24242:  # workspace not accesible
             GObject.idle_add(self.handle_no_active_workspace)
+
+    def show_normal_error(self, dialog_text):
+        """Just a simple, normal, ignorable error"""
+        dialog = Gtk.MessageDialog(self, 0,
+                                   Gtk.MessageType.ERROR,
+                                   Gtk.ButtonsType.OK,
+                                   dialog_text)
+        dialog.run()
+        dialog.destroy()
+
+    def show_important_error(self, event):
+        """Creates an importan error dialog with a callback to send
+        the developers the error traceback.
+        """
+        dialog_text = event.text
+        dialog = ImportantErrorDialog(self.window, dialog_text)
+        response = dialog.run()
+        if response == 42:
+            error = event.error_name
+            event.callback(error, *self.event.exception_objects)
+        dialog.destroy()
 
     def do_startup(self):
         """

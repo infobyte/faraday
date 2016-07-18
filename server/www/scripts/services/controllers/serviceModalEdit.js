@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('serviceModalEdit',
-        ['$scope', '$modalInstance', '$routeParams', 'services','service', 'servicesManager', 'commonsFact', 'dashboardSrv',
-        function($scope, $modalInstance, $routeParams, services, service, servicesManager, commons, dashboardSrv) {
+        ['$scope', '$modalInstance', '$routeParams', 'services','service', 'servicesManager', 'commonsFact',
+        function($scope, $modalInstance, $routeParams, services, service, servicesManager, commons) {
 
         init = function() {
             // current Workspace

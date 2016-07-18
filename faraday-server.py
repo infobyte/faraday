@@ -13,17 +13,9 @@ def main():
     server.utils.logger.setup()
     server.database.setup()
 
-    #test()
-
     web_server = server.web.WebServer(enable_ssl=cli_arguments.ssl)
     web_server.run()
     
-def test():
-    from server.models import Vulnerability, Host
-    db = server.database.get('asdasdasd').database
-    for result in db.session.query(Host).all():
-        print result.name
-
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--ssl', action='store_true', help='Enable HTTPS')

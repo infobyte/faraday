@@ -11,10 +11,12 @@ angular.module('faradayApp')
             $scope.selectall_hosts = false;
             // hosts list
             $scope.hosts = [];
+            $scope.totalHosts = 0;
             // current workspace
             $scope.workspace = $routeParams.wsId;
 
             $scope.sortField = "vulns";
+            $scope.sortDirection = "desc";
             $scope.reverse = true;
 
             // load all workspaces
@@ -22,57 +24,48 @@ angular.module('faradayApp')
                 $scope.workspaces = wss;
             });
 
-            hostsManager.getHosts($scope.workspace)
-                .then(function(hosts) {
-                    $scope.hosts = hosts;
-                    $scope.loadedVulns = true;
-                    $scope.loadIcons();
-
-                    return hostsManager.getAllServicesCount($scope.workspace);
-                })
-                .then(function(servicesCount) {
-                    $scope.hosts.forEach(function(host) {
-                        host.services = servicesCount[host._id] || 0;
-                    });
-
-                    return hostsManager.getAllVulnsCount($scope.workspace);
-                })
-                .then(function(vulns) {
-                    var vulnsCount = {};
-                    vulns.forEach(function(vuln) {
-                        var parts = vuln.key.split("."),
-                        parent = parts[0];
-
-                        if(parts.length > 1) vulnsCount[vuln.key] = vuln.value;
-                        if(vulnsCount[parent] == undefined) vulnsCount[parent] = 0;
-                        vulnsCount[parent] += vuln.value;
-
-                        $scope.hosts.forEach(function(host) {
-                            host.vulns = vulnsCount[host._id] || 0;
-                        });
-                    });
-                })
-                .catch(function(e) {
-                    console.log(e);
-                });
-
+            // paging
             $scope.pageSize = 100;
-            $scope.currentPage = 0;
-            $scope.newCurrentPage = 0;
+            $scope.currentPage = 1;
+            $scope.newCurrentPage = 1;
 
             if(!isNaN(parseInt($cookies.pageSize))) $scope.pageSize = parseInt($cookies.pageSize);
             $scope.newPageSize = $scope.pageSize;
 
-            // current search
+            decodeSearchFromURL();
+
+            loadHosts();
+        };
+
+        var decodeSearchFromURL = function() {
             $scope.search = $routeParams.search;
             $scope.searchParams = "";
             $scope.expression = {};
+
             if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
                 // search expression for filter
                 $scope.expression = $scope.decodeSearch($scope.search);
                 // search params for search field, which shouldn't be used for filtering
                 $scope.searchParams = $scope.stringSearch($scope.expression);
+                // TODO: This sucks man
+                $scope.expression = prepareFilter($scope.searchParams);
             }
+        };
+
+        var loadHosts = function() {
+            hostsManager.getHosts(
+                $scope.workspace, $scope.currentPage - 1,
+                $scope.pageSize, $scope.expression,
+                $scope.sortField, $scope.sortDirection)
+                .then(function(batch) {
+                    $scope.hosts = batch.hosts;
+                    $scope.totalHosts = batch.total;
+                    $scope.loadedVulns = true;
+                    $scope.loadIcons();
+                })
+                .catch(function(e) {
+                    console.log(e);
+                });
         };
 
         $scope.loadIcons = function() {
@@ -94,25 +87,47 @@ angular.module('faradayApp')
             });
         };
 
+        var prepareFilter = function(searchText) {
+            var params = searchText.split(" ");
+            var chunks = {};
+            var i = -1;
+
+            params.forEach(function(chunk) {
+                i = chunk.indexOf(":");
+                if (i > 0) {
+                    chunks[chunk.slice(0, i)] = chunk.slice(i+1);
+                } else {
+                    if (!chunks.hasOwnProperty("search")) {
+                        chunks.search  = chunk;
+                    } else {
+                        chunks.search += ' ' + chunk;
+                    }
+                }
+            });
+
+            return chunks;
+        };
+
         // changes the URL according to search params
         $scope.searchFor = function(search, params) {
-            var url = "/hosts/ws/" + $routeParams.wsId;
-
-            if(search && params != "" && params != undefined) {
-                url += "/search/" + $scope.encodeSearch(params);
+            if (search && params != "" && params != undefined) {
+                $scope.expression = prepareFilter(params);
+            } else {
+                $scope.expression = {};
             }
 
-            $location.path(url);
+            loadHosts();
         };
 
         $scope.go = function() {
             $scope.pageSize = $scope.newPageSize;
             $cookies.pageSize = $scope.pageSize;
             $scope.currentPage = 0;
-            if($scope.newCurrentPage <= parseInt($scope.hosts.length/$scope.pageSize)
-                    && $scope.newCurrentPage > -1 && !isNaN(parseInt($scope.newCurrentPage))) {
+            if ($scope.newCurrentPage <= $scope.pageCount() && $scope.newCurrentPage > -1 &&
+                !isNaN(parseInt($scope.newCurrentPage))) {
                 $scope.currentPage = $scope.newCurrentPage;
             }
+            loadHosts();
         };
 
         // encodes search string in order to send it through URL
@@ -387,26 +402,53 @@ angular.module('faradayApp')
 
         // toggles sort field and order
         $scope.toggleSort = function(field) {
-            $scope.toggleSortField(field);
-            $scope.toggleReverse();
-        };
-
-        // toggles column sort field
-        $scope.toggleSortField = function(field) {
+            if ($scope.sortField != field) {
+                $scope.sortDirection = "desc";
+            } else {
+                $scope.toggleReverse();
+            }
             $scope.sortField = field;
+            loadHosts();
         };
 
         // toggle column sort order
         $scope.toggleReverse = function() {
-            $scope.reverse = !$scope.reverse;
+            if ($scope.sortDirection == "asc") {
+                $scope.sortDirection = "desc";
+            } else {
+                $scope.sortDirection = "asc";
+            }
         }
 
         filter = function(data) {
             var tmp_data = $filter('orderBy')(data, $scope.sortField, $scope.reverse);
             tmp_data = $filter('filter')(tmp_data, $scope.expression);
-            tmp_data = tmp_data.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
+            tmp_data = tmp_data.splice($scope.pageSize * ($scope.currentPage - 1), $scope.pageSize);
 
             return tmp_data;
+        };
+
+        // paging
+        $scope.prevPage = function() {
+            $scope.currentPage -= 1;
+            loadHosts();
+        };
+
+        $scope.prevPageDisabled = function() {
+            return $scope.currentPage <= 1;
+        };
+
+        $scope.nextPage = function() {
+            $scope.currentPage += 1;
+            loadHosts();
+        };
+
+        $scope.nextPageDisabled = function() {
+            return $scope.currentPage >= $scope.pageCount();
+        };
+
+        $scope.pageCount = function() {
+            return Math.ceil($scope.totalHosts / $scope.pageSize);
         };
 
         init();

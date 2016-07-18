@@ -29,6 +29,7 @@ angular.module('faradayApp')
         };
 
         dashboardSrv.getHostsByServicesCount = function(ws, id) {
+            // List amount of services per host (doesn't show hosts without registered services)
             var url = BASEURL + "/" + ws + "/_design/hosts/_view/byservicecount?group=true";
             if (id != undefined){
                 url += "&key=\"" + id + "\"";
@@ -37,6 +38,7 @@ angular.module('faradayApp')
         };
 
         dashboardSrv.getServicesCount = function(ws) {
+            // List services by name and how many times are they referenced from hosts
             var url = BASEURL + "/" + ws + "/_design/hosts/_view/byservices?group=true";
             return dashboardSrv._getView(url);
         };

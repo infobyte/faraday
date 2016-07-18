@@ -2,7 +2,7 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -29,8 +29,12 @@ class FaradayEntity(object):
     @classmethod
     def get_entity_class_from_type(cls, doc_type):
         for entity_cls in cls.__subclasses__():
-            if entity_cls.DOC_TYPE == doc_type:
-                return entity_cls
+            if isinstance(entity_cls.DOC_TYPE, basestring):
+                if entity_cls.DOC_TYPE == doc_type:
+                    return entity_cls
+            else:
+                if doc_type in entity_cls.DOC_TYPE:
+                    return entity_cls
         return None
         
     def add_relationships_from_dict(self, entities):
@@ -87,7 +91,7 @@ class Host(FaradayEntity, Base):
     __tablename__ = 'host'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False)
-    description = Column(String(250), nullable=False)
+    description = Column(Text(), nullable=False)
     os = Column(String(250), nullable=False)
 
     default_gateway_ip = Column(String(250))
@@ -97,6 +101,7 @@ class Host(FaradayEntity, Base):
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
     interfaces = relationship('Interface')
+    services = relationship('Service')
     vulnerabilities = relationship('Vulnerability')
 
     def __init__(self, document):
@@ -201,6 +206,9 @@ class Service(FaradayEntity, Base):
     entity_metadata = relationship(EntityMetadata, uselist=False)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
+    host_id = Column(Integer, ForeignKey(Host.id), index=True)
+    host = relationship('Host', back_populates='services')
+
     interface_id = Column(Integer, ForeignKey(Interface.id), index=True)
     interface = relationship('Interface', back_populates='services')
 
@@ -218,17 +226,26 @@ class Service(FaradayEntity, Base):
         self.version=document.get('version')
 
     def add_relationships_from_dict(self, entities):
-        interface_id = '.'.join(self.entity_metadata.couchdb_id.split('.')[:-1])
+        couchdb_id = self.entity_metadata.couchdb_id
+        host_id = couchdb_id.split('.')[0]
+        self.host = entities[host_id]
+
+        interface_id = '.'.join(couchdb_id.split('.')[:-1])
         self.interface = entities[interface_id]
 
     def add_relationships_from_db(self, session):
-        interface_id = '.'.join(self.entity_metadata.couchdb_id.split('.')[:-1])
+        couchdb_id = self.entity_metadata.couchdb_id
+        host_id = couchdb_id.split('.')[0]
+        query = session.query(Host).join(EntityMetadata).filter(EntityMetadata.couchdb_id == host_id)
+        self.host = query.one()
+
+        interface_id = '.'.join(couchdb_id.split('.')[:-1])
         query = session.query(Interface).join(EntityMetadata).filter(EntityMetadata.couchdb_id == interface_id)
         self.interface = query.one()
 
 
 class Vulnerability(FaradayEntity, Base):
-    DOC_TYPE = 'Vulnerability'
+    DOC_TYPE = ['Vulnerability', 'VulnerabilityWeb']
 
     # Table schema
     __tablename__ = 'vulnerability'
@@ -237,6 +254,7 @@ class Vulnerability(FaradayEntity, Base):
     description = Column(String(250), nullable=False)
 
     confirmed = Column(Boolean)
+    web_vulnerability = Column(Boolean)
     data = Column(String(250))
     easeofresolution = Column(String(250))
     refs = Column(String(250))
@@ -264,6 +282,7 @@ class Vulnerability(FaradayEntity, Base):
         self.name = document.get('name')
         self.description=document.get('desc')
         self.confirmed=document.get('confirmed')
+        self.web_vulnerability=(document.get('type', 'Vulnerability') == 'VulnerabilityWeb')
         self.data=document.get('data')
         self.easeofresolution=document.get('easeofresolution')
         self.refs=u','.join(document.get('refs'))

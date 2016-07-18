@@ -83,6 +83,9 @@ class WebServer(object):
         self.__listen_port = int(server.config.faraday_server.port)
 
     def __config_couchdb_conn(self):
+        """
+        CouchDB connection setup for proxying
+        """
         self.__couchdb_host = server.config.couchdb.host
 
         if self.__ssl_enabled:

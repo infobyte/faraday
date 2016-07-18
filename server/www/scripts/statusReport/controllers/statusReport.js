@@ -33,6 +33,15 @@ angular.module('faradayApp')
         $scope.confirmed = false;
         var allVulns;
 
+        var searchFilter = {};
+        var paginationOptions = {
+            page: 0,
+            pageSize: 10,
+            defaultPageSizes: [10, 50, 75, 100],
+            sortColumn: null,
+            sortDirection: null
+        };
+
         init = function() {
             $scope.baseurl = BASEURL;
             $scope.severities = SEVERITIES;
@@ -49,8 +58,10 @@ angular.module('faradayApp')
                 enableColumnMenus: false,
                 enableRowSelection: true,
                 enableRowHeaderSelection: false,
-                paginationPageSizes: [10, 50, 75, 100],
-                paginationPageSize: 10,
+                useExternalPagination: true,
+                useExternalSorting: true,
+                paginationPageSizes: paginationOptions.defaultPageSizes,
+                paginationPageSize: paginationOptions.pageSize,
                 enableHorizontalScrollbar: 0,
                 treeRowHeaderAlwaysVisible: false,
                 enableGroupHeaderSelection: true,
@@ -58,11 +69,19 @@ angular.module('faradayApp')
             };
             $scope.gridOptions.columnDefs = [];
 
-            if ($cookies.get('pageSize') !== undefined) $scope.gridOptions.paginationPageSize = parseInt($cookies.get('pageSize'));
+            if ($cookies.get('pageSize') !== undefined) {
+                paginationOptions.pageSize = parseInt($cookies.get('pageSize'));
+                $scope.gridOptions.paginationPageSize = paginationOptions.pageSize;
+            }
+
+            if($cookies.get('confirmed') === 'true') {
+                $scope.confirmed = true;
+            }
 
             $scope.gridOptions.onRegisterApi = function(gridApi){
                 //set gridApi on scope
                 $scope.gridApi = gridApi;
+
                 $scope.gridApi.selection.on.rowSelectionChanged( $scope, function ( rowChanged ) {
                     $scope.selectionChange();
                     if ( typeof(rowChanged.treeLevel) !== 'undefined' && rowChanged.treeLevel > -1 ) {
@@ -77,9 +96,29 @@ angular.module('faradayApp')
                         });
                     }
                 });
+
                 $scope.gridApi.pagination.on.paginationChanged($scope, function (pageNumber, pageSize) {
+                    // Save new page size in cookie
                     $cookies.put('pageSize', pageSize);
+
+                    // Clear selection
                     $scope.gridApi.selection.clearSelectedRows();
+
+                    // ui-grid pages are numbered starting from 1, server-side paging starts at 0
+                    paginationOptions.page = pageNumber - 1;
+                    paginationOptions.pageSize = pageSize;
+
+                    // Load new page
+                    loadVulns();
+                });
+
+                $scope.gridApi.core.on.sortChanged($scope, function(grid, sortColumns) {
+                    if (sortColumns.length == 0) {
+                        sortRowsBy(null, null);
+                    } else {
+                        sortRowsBy(sortColumns[0].name, sortColumns[0].sort.direction);
+                    }
+                    loadVulns();
                 });
             };
 
@@ -95,7 +134,6 @@ angular.module('faradayApp')
             $scope.search = $routeParams.search;
             $scope.searchParams = "";
             $scope.expression = {};
-            if($cookies.get('confirmed') === 'true') $scope.confirmed = true;
             if($scope.confirmed === true) {
                 if($scope.search !== undefined) {
                     $scope.search = $scope.search.concat("&confirmed=true");
@@ -103,25 +141,12 @@ angular.module('faradayApp')
                     $scope.search = "confirmed=true";
                 }
             }
-            if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
-                // search expression for filter
-                $scope.expression = $scope.decodeSearch($scope.search);
-                // search params for search field, which shouldn't be used for filtering
-                $scope.searchParams = $scope.stringSearch($scope.expression);
-            }
-            $scope.hash = window.location.hash;
-            if(window.location.hash.substring(1).indexOf('search') !== -1) {
-                $scope.hash = $scope.hash.slice(0, window.location.hash.indexOf('search') - 1);
-            }
 
-            // load all vulnerabilities
-            vulnsManager.getVulns($scope.workspace).then(function(vulns) {
-                $scope.filterVulns();
-                $scope.gridOptions.total = vulns.length;
-                if($scope.gridOptions.total > $scope.gridOptions.paginationPageSize && $scope.gridOptions.total > 100) {
-                    $scope.gridOptions.paginationPageSizes.push($scope.gridOptions.total);
-                }
-            });
+            if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
+                search_obj = $scope.decodeSearch($scope.search);
+                search_exp = $scope.stringSearch(search_obj);
+                searchFilter = prepareFilter(search_exp);
+            }
 
             $scope.columns = {
                 "date":             true,
@@ -160,6 +185,17 @@ angular.module('faradayApp')
                 });
             }
 
+            defineColumns();
+
+            $scope.vulnWebSelected = false;
+
+            groupByColumn();
+
+            loadVulns();
+
+        };
+
+        var defineColumns = function() {
             $scope.gridOptions.columnDefs.push({ name: 'selectAll', width: '20', headerCellTemplate: "<i class=\"fa fa-check cursor\" ng-click=\"grid.appScope.selectAll()\" ng-style=\"{'opacity':(grid.appScope.selected === true) ? '1':'0.6'}\"></i>", pinnedLeft:true });
             $scope.gridOptions.columnDefs.push({ name: 'confirmVuln', width: '40', headerCellTemplate: "<div></div>", cellTemplate: 'scripts/statusReport/partials/ui-grid/confirmbutton.html' });
             $scope.gridOptions.columnDefs.push({ name: 'deleteVuln', width: '40', headerCellTemplate: "<div></div>", cellTemplate: 'scripts/statusReport/partials/ui-grid/deletebutton.html' });
@@ -305,9 +341,10 @@ angular.module('faradayApp')
                 width: '80',
                 visible: $scope.columns["web"]
             });
+        };
 
-            $scope.vulnWebSelected = false;
 
+        var groupByColumn = function() {
             var count = 0;
             for(key in $scope.columns) {
                 if($scope.columns.hasOwnProperty(key) && $scope.columns[key] == true) {
@@ -319,6 +356,11 @@ angular.module('faradayApp')
                 }
             }
         };
+
+        var sortRowsBy = function(columnName, sortDirection) {
+            paginationOptions.sortColumn = columnName;
+            paginationOptions.sortDirection = sortDirection;
+        }
 
         $scope.ifTooltip = function(text) {
             if(text !== undefined && text.length > 450) {
@@ -542,7 +584,7 @@ angular.module('faradayApp')
                 });
                 modal.result.then(function(data) {
                     vulnsManager.updateVuln(vulns[0], data).then(function(){
-                        $scope.filterVulns();
+                        loadVulns();
                     }, function(errorMsg){
                         showMessage("Error updating vuln " + vulns[0].name + " (" + vulns[0]._id + "): " + errorMsg);
                     });
@@ -580,7 +622,7 @@ angular.module('faradayApp')
                     }
 
                     vulnsManager.updateVuln(vuln, obj).then(function(vulns){
-                        $scope.filterVulns();
+                        loadVulns();
                     }, function(errorMsg){
                         // TODO: show errors somehow
                         console.log("Error updating vuln " + vuln._id + ": " + errorMsg);
@@ -588,11 +630,6 @@ angular.module('faradayApp')
                 });
             });
         }
-
-        $scope.filterVulns = function() {
-            tmp_data = $filter('orderObjectBy')(vulnsManager.vulns, $scope.propertyGroupBy, true);
-            $scope.gridOptions.data = $filter('filter')(tmp_data, $scope.expression);
-        };
 
         $scope.editSeverity = function() {
             editProperty(
@@ -760,11 +797,24 @@ angular.module('faradayApp')
             */
         };
 
-        loadVulns = function(property) {
+        loadVulns = function() {
             // load all vulnerabilities
-            if (!property) property = "name";
-            tmp_data = $filter('orderObjectBy')(vulnsManager.vulns, property, true);
-            $scope.gridOptions.data = $filter('filter')(tmp_data, $scope.expression);
+            vulnsManager.getVulns($scope.workspace,
+                                  paginationOptions.page,
+                                  paginationOptions.pageSize,
+                                  searchFilter,
+                                  paginationOptions.sortColumn,
+                                  paginationOptions.sortDirection)
+            .then(function(response) {
+                $scope.gridOptions.data = response.vulnerabilities;
+                $scope.gridOptions.totalItems = response.count;
+
+                // Add the total amount of vulnerabilities as an option for pagination
+                // if it is larger than our biggest page size
+                if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
+                    $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
+                }
+            });
         };
 
         $scope.new = function() {
@@ -861,19 +911,33 @@ angular.module('faradayApp')
             return search;
         };
 
+        var prepareFilter = function(searchText) {
+            var params = searchText.split(" ");
+            var chunks = {};
+            var i = -1;
+
+            params.forEach(function(chunk) {
+                i = chunk.indexOf(":");
+                if (i > 0) {
+                    chunks[chunk.slice(0, i)] = chunk.slice(i+1);
+                } else {
+                    if (!chunks.hasOwnProperty("search")) {
+                        chunks.search  = chunk;
+                    } else {
+                        chunks.search += ' ' + chunk;
+                    }
+                }
+            });
+
+            return chunks;
+        };
+
         // changes the URL according to search params
         $scope.searchFor = function(search, params) {
-            if(window.location.hash.substring(1).indexOf('groupby') === -1) {
-                var url = "/status/ws/" + $routeParams.wsId;
-            } else {
-                var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
+            if (search) {
+                searchFilter = prepareFilter(params);
             }
-
-            if(search && params != "" && params != undefined) {
-                url += "/search/" + $scope.encodeSearch(params);
-            }
-
-            $location.path(url);
+            loadVulns();
         };
 
         // toggles column show property

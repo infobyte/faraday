@@ -205,7 +205,7 @@ angular.module('faradayApp')
                     });
 
                     vulnsManager.getVulns(workspace).then(function(vulns) {
-                        confirmed_filter = { "confirmed":true };
+                        confirmed_filter = { "confirmed": true };
                         filteredVulns = $filter('filter')(vulnsManager.vulns, confirmed_filter);
 
                         if($scope._areConfirmed === true) {

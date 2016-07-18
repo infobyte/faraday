@@ -1,6 +1,6 @@
 <div ng-if="row.entity._id != undefined">
     <div class="ui-grid-cell-contents center">
-        <p ng-repeat="hostname in COL_FIELD"><a href='//www.shodan.io/search?query={{hostname}}' class="pos-middle crop-text" uib-tooltip="Search in Shodan" target="_blank"><img src="../././reports/images/shodan.png" height="15px" width="15px" style="margin-left:5px"/></a><a href="{{grid.appScope.hash}}/search/hostnames={{hostname}}">{{hostname}}</a></p>
+        <p ng-repeat="hostname in COL_FIELD"><a href='//www.shodan.io/search?query={{hostname}}' class="pos-middle crop-text" uib-tooltip="Search in Shodan" target="_blank"><img src="images/shodan.png" height="15px" width="15px" style="margin-left:5px"/></a><a href="{{grid.appScope.hash}}/search/hostnames={{hostname}}">{{hostname}}</a></p>
     </div>
 </div>
 <div ng-if="row.groupHeader && col.grouping.groupPriority !== undefined" class="ui-grid-cell-contents white-space">{{COL_FIELD.split('(')[0] !== ' ' ? COL_FIELD : 'EMPTY' + COL_FIELD}}</div>

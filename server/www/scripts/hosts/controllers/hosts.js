@@ -122,8 +122,8 @@ angular.module('faradayApp')
         $scope.go = function() {
             $scope.pageSize = $scope.newPageSize;
             $cookies.pageSize = $scope.pageSize;
-            $scope.currentPage = 0;
-            if ($scope.newCurrentPage <= $scope.pageCount() && $scope.newCurrentPage > -1 &&
+            $scope.currentPage = 1;
+            if ($scope.newCurrentPage <= $scope.pageCount() && $scope.newCurrentPage > 0 &&
                 !isNaN(parseInt($scope.newCurrentPage))) {
                 $scope.currentPage = $scope.newCurrentPage;
             }

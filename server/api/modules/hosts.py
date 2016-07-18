@@ -30,7 +30,7 @@ def list_hosts(workspace=None):
     host_filter = {}
     for arg in flask.request.args:
         if arg not in ['page', 'page_size', 'search', 'sort', 'sort_dir']:
-            vuln_filter[arg] = flask.request.args.get(arg)
+            host_filter[arg] = flask.request.args.get(arg)
 
     dao = HostDAO(workspace)
     result = dao.list(search=search,

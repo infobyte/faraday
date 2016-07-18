@@ -474,48 +474,45 @@ class GuiApp(Gtk.Application, FaradayUi):
         to the appwindow or maybe using Glib.idle_add, a misterious function
         with outdated documentation. Good luck."""
 
+        type_ = event.type()
         if receiver is None:
             receiver = self.window
 
-        elif event.type() == 3131:  # new log event
+        elif type_ == 3131:  # new log event
             receiver.emit("new_log", event.text)
 
-        elif event.type() == 3141:  # new conflict event
+        elif type_ == 3141:  # new conflict event
             receiver.emit("set_conflict_label", event.nconflicts)
 
-        elif event.type() == 5100:  # new notification event
+        elif type_ == 5100:  # new notification event
             self.notificationsModel.prepend([event.change.getMessage()])
             receiver.emit("new_notif")
             host_count, service_count, vuln_count = self.update_counts()
             receiver.emit("update_ws_info", host_count,
                           service_count, vuln_count)
 
-        #                   addhost                 delhost                changews
-        elif event.type() == 4100 or event.type() == 4101 or event.type() == 3140:
+        # in order: add host, delete host, edit host, workspace_change
+        elif type_ in {4100, 4101, 4102, 3140}:
             host_count, service_count, vuln_count = self.update_counts()
             self.window.receive_hosts(self.updateHosts())
             receiver.emit("update_hosts_sidebar")
             receiver.emit("update_ws_info", host_count, service_count, vuln_count)
             GObject.idle_add(self.select_active_workspace)
 
-        elif event.type() == 4101:  # edit host
-            self.window.receive_hosts(self.updateHosts())
-            receiver.emit("update_hosts_sidebar")
-
-        elif event.type() == 3132:  # error
+        elif type_ == 3132:  # error
             self.window.emit("normal_error", event.text)
 
-        elif event.type() == 3134:  # important error, uncaught exception
+        elif type_ == 3134:  # important error, uncaught exception
             GObject.idle_add(self.window.prepare_important_error, event)
             self.window.emit("important_error")
 
-        elif event.type() == 42424:  # lost connection to couch db
+        elif type_ == 42424:  # lost connection to couch db
             GObject.idle_add(self.lost_db_connection, event.problem,
                              self.handle_connection_lost,
                              self.force_change_couch_url)
             GObject.idle_add(self.reload_worskpaces_no_connection)
 
-        elif event.type() == 24242:  # workspace not accesible
+        elif type_ == 24242:  # workspace not accesible
             GObject.idle_add(self.handle_no_active_workspace)
 
     def do_startup(self):

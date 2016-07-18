@@ -156,29 +156,30 @@ angular.module('faradayApp')
 
         $scope.update = function(license, data) {
             licensesManager.update(license, data)
-            .catch(function(message) {
-                commonsFact.errorDialog(message);
-            });
+                .catch(function(message) {
+                    commonsFact.errorDialog(message);
+                });
         };
 
         $scope.edit = function() {
             if($scope.selectedLicenses().length == 1) {
+                var license = $scope.selectedLicenses()[0];
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/licenses/partials/modalEdit.html',
                     controller: 'licensesModalEdit',
                     size: 'lg',
                     resolve: {
                         license: function() {
-                            return $scope.selectedLicenses()[0];
+                            return license;
                         }
                     }
                  });
 
                 modal.result.then(function(data) {
-                    $scope.update($scope.selectedLicenses()[0], data);
+                    $scope.update(license, data);
                 });
             } else {
-                commonsFact.errorDialog('No licenses were selected to edit');
+                commonsFact.errorDialog("No licenses were selected to edit.");
             }
         };
 

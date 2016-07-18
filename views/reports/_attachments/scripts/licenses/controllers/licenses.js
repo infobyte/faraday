@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('licensesCtrl',
-        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'commonsFact', 'licensesManager',
-        function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, commonsFact, licensesManager) {
+        ['$scope', '$cookies', '$filter', '$location', '$q', '$route', '$routeParams', '$uibModal', 'commonsFact', 'licensesManager',
+        function($scope, $cookies, $filter, $location, $q, $route, $routeParams, $uibModal, commonsFact, licensesManager) {
 
             $scope.currentPage;
             $scope.expression;
@@ -93,11 +93,7 @@ angular.module('faradayApp')
         };
 
         $scope.delete = function() {
-            var selected = [];
-
-            $scope.selectedLicenses().forEach(function(license) {
-                selected.push(license._id);
-            });
+            var selected = $scope.selectedLicenses();
 
             if(selected.length == 0) {
                 $uibModal.open(config = {

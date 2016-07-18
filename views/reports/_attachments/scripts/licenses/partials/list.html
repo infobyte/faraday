@@ -69,8 +69,8 @@
                                     </td>
                                     <td>{{license.type}}</td>
                                     <td>{{license.notes}}</td>
-                                    <td>{{license.start}}</td>
-                                    <td>{{license.end}}</td>
+                                    <td>{{license.start | date:'MM/dd/yyyy'}}</td>
+                                    <td>{{license.end|date:'MM/dd/yyyy'}}</td>
                                 </tr>
                             </tbody>
                         </table><!-- #licenses -->

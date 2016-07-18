@@ -213,7 +213,7 @@ function load_all_hosts(design) {
 			if(icon === "") {
 				os = "<span class=\"fa fa-laptop faraday-qtips\" title="+v.os+"></span>";
 			} else {
-				os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+v.os+"\"/>";
+				os = "<img src=\"images/"+icon+".png\" class=\"faraday-qtips\" title=\""+v.os+"\"/>";
 			}
 			table += "<tr id=\"host-"+k+"\">"+
 				"<td>"+hname+"</td>"+
@@ -264,7 +264,7 @@ function load_all_hosts(design) {
 				if(icon === "") {
 					os = "<span class=\"fa fa-laptop faraday-qtips\" title="+cleanOs+"></span>";
 				} else {
-					os = "<img src=\"../././reports/images/"+icon+".png\" class=\"faraday-qtips\" title=\""+cleanOs+"\"/>";
+					os = "<img src=\"images/"+icon+".png\" class=\"faraday-qtips\" title=\""+cleanOs+"\"/>";
 				}
                 tmp = htmlentities(v['name']);
 				if($.inArray(id, hids) > -1) {

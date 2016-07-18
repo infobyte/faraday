@@ -229,5 +229,31 @@ angular.module('faradayApp')
             return hash_map;
         }
 
+        commonsFact.addPresentationParams = function(url, page, page_size, filter, sort, sort_direction) {
+            var param_conn = '?';
+
+            if(page !== undefined && page_size !== undefined) {
+                url = url + param_conn + 'page=' + page + '&page_size=' + page_size;
+                param_conn = '&';
+            }
+
+            if(filter !== undefined) {
+                for(var param in filter) {
+                    if (filter.hasOwnProperty(param)) {
+                        url = url + param_conn + encodeURIComponent(param) + '=' + encodeURIComponent(filter[param]);
+                        param_conn = '&';
+                    }
+                }
+            }
+
+            if(sort && sort_direction) {
+                url = url + param_conn + 'sort=' + sort;
+                param_conn = '&';
+                url = url + param_conn + 'sort_dir=' + sort_direction;
+            }
+
+            return url;
+        };
+
         return commonsFact;
     });

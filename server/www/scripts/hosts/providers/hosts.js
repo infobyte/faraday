@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('hostsManager', ['BASEURL', '$http', '$q', 'Host', function(BASEURL, $http, $q, Host) {
+    .factory('hostsManager', ['BASEURL', '$http', '$q', 'Host', 'commonsFact', function(BASEURL, $http, $q, Host, commonsFact) {
         var hostsManager = {};
 
         hostsManager._objects = {};
@@ -51,23 +51,27 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        hostsManager.getHosts = function(ws) {
+        hostsManager.getHosts = function(ws, page, page_size, filter, sort, sort_direction) {
             var deferred = $q.defer();
-            var self = this;
-            this._objects = {};
+            var url = BASEURL + '_api/ws/' + ws + '/hosts';
 
-            $http.get(BASEURL + ws + '/_design/hosts/_view/hosts')
-                .success(function(hostsArray) {
-                    var hosts = [];
-                    hostsArray.rows.forEach(function(hostData) {
-                        var host = self._get(hostData.value._id, hostData.value);
-                        hosts.push(host);
+            url = commonsFact.addPresentationParams(url, page, page_size, filter, sort, sort_direction);
+
+            $http.get(url)
+                .then(function(response) {
+                    var result = { hosts: [], total: 0 };
+                    response.data.rows.forEach(function(host_data) {
+                        host = new Host(host_data.value);
+                        result.hosts.push(host);
                     });
-                    deferred.resolve(hosts);
-                })
-                .error(function() {
+
+                    result.total = response.data.total_rows;
+
+                    deferred.resolve(result);
+                }, function(response) {
                     deferred.reject();
                 });
+
             return deferred.promise;
         };
 

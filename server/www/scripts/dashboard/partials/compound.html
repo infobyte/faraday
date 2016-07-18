@@ -25,12 +25,12 @@
                 <td class="col-xs-6">
                     <a href="" class="host" ng-click="showServices(host)">{{host.name}}</a>
                     <a href="//www.shodan.io/search?query={{host.name}}" uib-tooltip="Search in Shodan" target="_blank">
-                        <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                        <img ng-src="images/shodan.png" height="15px" width="15px" />
                     </a>
                 </td>
                 <td class="col-xs-6">{{host.servicesCount}}</td>
                 <td class="col-xs-4">
-                    <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
+                    <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
                     <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
                 </td>
             </tr>

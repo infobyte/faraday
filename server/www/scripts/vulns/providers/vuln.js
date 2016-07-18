@@ -54,9 +54,11 @@ angular.module('faradayApp')
         };
 
         Vuln.prototype = {
+            // TODO(mrocha): Added properties should not be saved into a CouchDB document
             public_properties: [
                 '_attachments', 'confirmed', 'data', 'desc', 'easeofresolution', 
-                'impact', 'name', 'owned', 'refs', 'resolution', 'severity'
+                'impact', 'name', 'owned', 'refs', 'resolution', 'severity',
+                'target', 'hostnames', 'service'
             ],
             set: function(ws, data) {
                 var self = this;

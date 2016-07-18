@@ -30,5 +30,5 @@ def minify_json_output(app):
 app = create_app()
 
 # Load APIs
-#import server.api
+import server.api
 

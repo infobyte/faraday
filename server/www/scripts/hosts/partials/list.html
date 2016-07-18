@@ -6,7 +6,7 @@
 
                 <div class="right-main"><div id="reports-main" class="fila clearfix">
                     <h2 class="ws-label">
-                        <span id="ws-name" title="Hosts">Hosts for {{workspace}} ({{hosts.length}})</span><!-- WS name -->
+                        <span id="ws-name" title="Hosts">Hosts for {{workspace}} ({{totalHosts}})</span><!-- WS name -->
                         <div id="ws-control" class="btn-group">
                             <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
                                 <span class="glyphicon glyphicon-refresh"></span>
@@ -69,7 +69,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="host in filtered = (hosts | filter:expression) | orderBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
+                                <tr ng-repeat="host in hosts"
                                     selection-model selection-model-type="checkbox"
                                     selection-model-mode="multiple-additive"
                                     selection-model-selected-class="multi-selected"
@@ -78,14 +78,14 @@
                                     <td>
                                         {{host.name}}
                                         <a href="//www.shodan.io/search?query={{host.name}}" uib-tooltip="Search in Shodan" target="_blank">
-                                            <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                                            <img ng-src="images/shodan.png" height="15px" width="15px" />
                                         </a>
                                     </td>
                                     <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
                                     <td><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>
                                     <td>
                                         <a ng-href="#/hosts/ws/{{workspace}}/search/os={{host.os}}">
-                                            <img ng-if="host.icon != undefined" ng-src="../././reports/images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
+                                            <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
                                             <span ng-if="host.icon == undefined" class="fa fa-laptop" uib-tooltip="{{host.os}}"></span>
                                         </a>
                                     </td>
@@ -99,13 +99,13 @@
                         <div class="showPagination">
                             <div class="form-group">
                                 <ul class="pagination">
-                                    <li><a ng-hide="currentPage <= 0" ng-click="currentPage = currentPage - 1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
-                                    <li><a>{{currentPage}}/{{ ((filtered.length / pageSize) | integer)}}</a></li>
-                                    <li><a ng-hide="currentPage >= ((filtered.length / pageSize) | integer)" ng-click="currentPage = currentPage + 1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                                    <li><a ng-hide="prevPageDisabled()" ng-click="prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                                    <li><a>{{currentPage}}/{{pageCount()}}</a></li>
+                                    <li><a ng-hide="nextPageDisabled()" ng-click="nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
                                 </ul>
                                 <form name="goToPage" id="goToPageStatus">
                                     <div class="col-md-2">
-                                        <input type="number" min="0" max="{{ (filtered.length / pageSize) | integer }}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
+                                        <input type="number" min="1" max="{{pageCount()}}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
                                     </div>
                                     <button class="btn btn-default" ng-click="go()">GO</button>
                                     <input type="number" min="0" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />

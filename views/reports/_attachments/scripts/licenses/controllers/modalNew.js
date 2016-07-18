@@ -16,26 +16,14 @@ angular.module('faradayApp')
             $scope.products = licensesManager.products;
         };
 
+        $scope.open = function($event, isStart) {
+            $event.preventDefault();
+            $event.stopPropagation();
+
+            if(isStart) $scope.openedStart = true; else $scope.openedEnd = true;
+        };
+
         $scope.ok = function() {
-            var date = new Date(),
-            timestamp = date.getTime()/1000.0;
-
-            $scope.interfaceData.licensenames.forEach(function(hname){
-                licensenames.push(hname.licensename);
-            });
-
-            $scope.interfaceData.licensenames = licensenames.filter(Boolean);
-            $scope.licensedata.interfaceName = $scope.licensedata.name;
-            $scope.licensedata.metadata = {
-                "update_time": timestamp,
-                "update_user":  "",
-                "update_action": 0,
-                "creator": "",
-                "create_time": timestamp,
-                "update_controller_action": "UI Web New",
-                "owner": ""
-            };
-
             $modalInstance.close($scope.data);
         };
 

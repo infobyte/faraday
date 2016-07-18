@@ -12,7 +12,7 @@
     </div>
     <div class="modal-body">
         <div class="form-horizontal">
-            <div class="form-group" ng-class="{'has-error': data.product === undefined }">
+            <div class="form-group" ng-class="{'has-error': data.product === '' }">
                 <div class="col-md-6">
                     <label class="sr-only" for="name">Product</label>
                     <select class="form-control" ng-model="data.product" ng-options="product for product in products">
@@ -22,57 +22,35 @@
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
-                    <label class="sr-only" for="description">Description</label>
-                    <textarea class="form-control" id="description" placeholder="Description" ng-model="hostdata.description"></textarea>
+                    <label class="sr-only" for="lictype">Type</label>
+                    <textarea class="form-control" id="lictype" placeholder="Type" ng-model="data.lictype"></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
-                    <label class="sr-only" for="os">Operating System</label>
-                    <input type="text" class="form-control" id="os" placeholder="Operating System" ng-model="hostdata.os"/>
-                    <span class="help-block normal-size">
-                        Example: Linux 3.18.6-1-ARCH
-                    </span>
+                    <label class="sr-only" for="notes">Notes</label>
+                    <textarea class="form-control" id="notes" placeholder="Notes" ng-model="data.notes"></textarea>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
-                <div class="col-md-12">
-                    <div class="checkbox">
-                        <label>
-                            <input type="checkbox" id="owned" ng-model="hostdata.owned"/>
-                            <span class="normal-size">Owned</span>
-                        </label>
-                    </div><!-- .checkbox -->
-                </div>
-            </div><!-- .form-group -->
-            <div class="form-group">
-                <div class="col-md-12">
-                    <h5>Hostnames</h5>
-                    <span class="input-group-addon button-radius" ng-click="newHostnames($event)">Add Hostname</span>
-                </div>
-                <div class="col-md-12 input-margin" ng-repeat="hostname in interfaceData.hostnames">
-                    <div class="input-group margin-bottom-sm col-md-12">
-                        <label class="sr-only" for="hostsnames">Hostname</label>
-                        <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname.hostname"/>
-                        <span class="input-group-addon" ng-click="interfaceData.hostnames.splice($index, 1)" ng-hide="interfaceData.hostnames.length == 1"><i class="fa fa-minus-circle"></i></span>
+                    <div class="col-md-6 datepicker">
+                        <label class="sr-only" for="work-start">Start Date</label>
+                        <p class="input-group">
+                          <input type="text" class="form-control" uib-datepicker-popup="MM/dd/yyyy" ng-model="data.start" is-open="openedStart" close-text="Close" placeholder="Start Date" />
+                          <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" ng-click="open($event,true)"><i class="glyphicon glyphicon-calendar"></i></button>
+                          </span>
+                        </p>
                     </div>
-                </div>
-            </div><!-- .form-group -->
-            <div class="form-group">
-                <div class="col-md-6" ng-class="{'has-error': form.ipv6.$invalid }">
-                    <label class="sr-only" for="ipv4">IP v4</label>
-                    <input type="text" class="form-control" id="ipv4" name="ipv6" placeholder="IP v4" ng-model="interfaceData.ipv4" ng-required="!interfaceData.ipv6"/>
-                </div>
-                <div class="col-md-6" ng-class="{'has-error': form.ipv4.$invalid }">
-                    <label class="sr-only" for="ipv6">IP v6</label>
-                    <input type="text" class="form-control" id="ipv6" name="ipv4" placeholder="IP v6" ng-model="interfaceData.ipv6" ng-required="!interfaceData.ipv4"/>
-                </div>
-            </div><!-- .form-group -->
-            <div class="form-group">
-                <div class="col-md-12">
-                    <label class="sr-only" for="mac">MAC</label>
-                    <input type="text" class="form-control" id="mac" placeholder="MAC" ng-model="interfaceData.mac"/>
-                </div>
+                    <div class="col-md-6 datepicker">
+                        <label class="sr-only" for="work-end">End Date</label>
+                        <p class="input-group">
+                          <input type="text" class="form-control" uib-datepicker-popup="MM/dd/yyyy" ng-model="data.end" is-open="openedEnd" min-date="data.start" close-text="Close" placeholder="End Date" />
+                          <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                          </span>
+                        </p>
+                    </div>
             </div><!-- .form-group -->
         </div>
     </div><!-- .modal-body -->

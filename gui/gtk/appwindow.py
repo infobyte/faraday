@@ -105,10 +105,12 @@ class AppWindow(Gtk.ApplicationWindow, _IdleObject):
         middle_pane.pack1(self.notebook, True, False)
         middle_pane.pack2(self.sidebar.box_it(), False, False)
 
+        self.log_box = self.log.create_scrollable_logger()
+
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         main_box.pack_start(self.create_toolbar(), False, False, 0)
         main_box.pack_start(middle_pane, True, True, 0)
-        main_box.pack_start(self.log.create_scrollable_logger(), False, False, 0)
+        main_box.pack_start(self.log_box, False, False, 0)
         main_box.pack_start(self.statusbar.mainBox, False, False, 0)
         return main_box
 

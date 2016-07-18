@@ -333,8 +333,10 @@ class WorkspaceSidebar(Gtk.Widget):
         Gets an updated copy of the workspaces and checks against
         the model to see which are already there and which arent"""
 
-        model = self.workspace_model
+        self.ws_manager.resource()
         self.workspaces = self.ws_manager.getWorkspacesNames()
+
+        model = self.workspace_model
         added_workspaces = [added_ws[0] for added_ws in model]
         for ws in self.workspaces:
             if ws not in added_workspaces:

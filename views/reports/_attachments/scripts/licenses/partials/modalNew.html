@@ -12,7 +12,7 @@
     </div>
     <div class="modal-body">
         <div class="form-horizontal">
-            <div class="form-group" ng-class="{'has-error': data.product === '' }">
+            <div class="form-group" ng-class="{'has-error': data.product === ''}">
                 <div class="col-md-6">
                     <label for="name">Product</label>
                     <select class="form-control" ng-model="data.product" ng-options="product for product in products">
@@ -32,7 +32,7 @@
                     <textarea class="form-control" id="notes" placeholder="Notes" ng-model="data.notes"></textarea>
                 </div>
             </div><!-- .form-group -->
-            <div class="form-group">
+            <div class="form-group" ng-class="{'has-error': data.start === '' || data.end === ''}">
                 <div class="col-md-6 datepicker">
                     <label for="start">Start Date</label>
                     <p class="input-group">

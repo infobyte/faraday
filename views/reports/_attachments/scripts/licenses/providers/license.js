@@ -98,6 +98,9 @@ angular.module('faradayApp')
                 var deferred = $q.defer(),
                 self = this;
 
+                delete this._id;
+                delete this._rev;
+
                 configSrv.promise
                     .then(function() {
                         var url = BASEURL + configSrv.license_db;
@@ -106,8 +109,8 @@ angular.module('faradayApp')
                             .then(function(data) {
                                 self._rev = data.rev;
                                 deferred.resolve(self);
-                            }, function(data, status, headers, config) {
-                                deferred.reject("Unable to save the License. " + status);
+                            }, function(res) {
+                                deferred.reject("Unable to save the License. " + res.data.reason);
                             });
                     }, function(reason) {
                         deferred.reject(reason);

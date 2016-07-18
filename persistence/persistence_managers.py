@@ -250,10 +250,12 @@ class CouchDbConnector(DbConnector):
         return doc
 
     def remove(self, document_id):
+        """Remove a document from existence, both from the database
+        and from the mappers."""
         if self.db.doc_exist(document_id):
             self.incrementSeqNumber()
             self.db.delete_doc(document_id)
-            self.delDoc(document_id)
+        self.delDoc(document_id)
 
     def getChildren(self, document_id):
         return self._docs[document_id]["children"]

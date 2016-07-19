@@ -39,6 +39,7 @@ Download the [latest tarball](https://github.com/infobyte/faraday/tarball/master
 $ git clone https://github.com/infobyte/faraday.git faraday-dev
 $ cd faraday-dev
 $ ./install.sh
+$ mkdir ~/.faraday && cd data && cp -r images ~/.faraday/ && cd ..
 $ ./faraday.py
 ```
 

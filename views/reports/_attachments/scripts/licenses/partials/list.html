@@ -29,8 +29,8 @@
                                         <input type="text" class="form-control" id="filter-by"
                                         placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
                                         <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                            <i class="fa fa-search" ng-if="loadedVulns"></i>
-                                            <i class="fa fa-refresh fa-spin" ng-if="!loadedVulns"></i>
+                                            <i class="fa fa-search" ng-if="loaded_licenses"></i>
+                                            <i class="fa fa-refresh fa-spin" ng-if="!loaded_licenses"></i>
                                         </span>
                                     </div>
                                 </div>

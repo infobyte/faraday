@@ -10,6 +10,7 @@ angular.module('faradayApp')
             $scope.currentPage;
             $scope.expression;
             $scope.licenses = [];
+            $scope.loaded_licenses = false;
             $scope.newCurrentPage;
             $scope.newPageSize;
             $scope.pageSize;
@@ -49,6 +50,7 @@ angular.module('faradayApp')
             licensesManager.get()
                 .then(function() {
                     $scope.licenses = licensesManager.licenses;
+                    $scope.loaded_licenses = true;
                 });
         };
 

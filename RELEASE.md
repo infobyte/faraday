@@ -9,6 +9,18 @@ Please run ./faraday.py --update
 
 New features in the latest update
 =====================================
+TBA:
+---
+* Totally removed QT3, GTK is now the only GUI
+* Deprecated FileSystem databses: now Faraday works exclusively with CouchDB
+* Added a button to go to the Faraday Web directly from GTK
+* Fixed bug when deleting objects from Faraday Web
+* Fixed bug where icons where not copied to correct folder on initialization
+* Fixed bug where current workspace wouldn't correspond to selected workspace on the sidebar on GTK
+* Fixed bug in 'Refresh Workspace' button on GTK
+* Fixed bug where Host Sidebar and Statusbar information wasn't correctly updated on GTK
+
+
 
 Jul 1, 2016:
 ---

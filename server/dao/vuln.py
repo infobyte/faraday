@@ -14,7 +14,7 @@ from server.utils.debug import Timer, profiled
 class VulnerabilityDAO(FaradayDAO):
     MAPPED_ENTITY = Vulnerability
     COLUMNS_MAP = {
-        "date":             [],
+        "date":             [EntityMetadata.create_time], # TODO: fix search for this field
         "confirmed":        [Vulnerability.confirmed],
         "name":             [Vulnerability.name],
         "severity":         [Vulnerability.severity],

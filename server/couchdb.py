@@ -16,7 +16,7 @@ from server import config
 logger = server.utils.logger.get_logger(__name__)
 
 class CouchDBServer(object):
-    WS_BLACKLIST = ['reports'] #, 'cajval_nterno', 'h_i_srvv_10000', 'h_i_srvv_200_000']
+    WS_BLACKLIST = ['reports', 'cajval_nterno', 'h_i_srvv_10000', 'h_i_srvv_200_000']
 
     def __init__(self):
         self.__get_server_uri()

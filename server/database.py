@@ -99,9 +99,14 @@ class WorkspaceDatabase(object):
                     flush_changes()
                     should_flush_changes = False
 
-                host_entities[doc.get('key')] = entity
-                entity.add_relationships_from_dict(host_entities)
-                self.database.session.add(entity)
+                try:
+                    entity.add_relationships_from_dict(host_entities)
+                except server.models.EntityNotFound as e:
+                    logger.warning("Ignoring %s entity (%s) because its parent wasn't found" %
+                        (entity.entity_metadata.document_type, entity.entity_metadata.couchdb_id))
+                else:
+                    host_entities[doc.get('key')] = entity
+                    self.database.session.add(entity)
 
         flush_changes()
 

@@ -9,6 +9,10 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
+class EntityNotFound(Exception):
+    def __init__(self, entity_id):
+        super(EntityNotFound, self).__init__("Entity (%s) wasn't found" % entity_id)
+
 class FaradayEntity(object):
     # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace', u'Interface']
     @classmethod
@@ -182,6 +186,8 @@ class Interface(FaradayEntity, Base):
 
     def add_relationships_from_dict(self, entities):
         host_id = '.'.join(self.entity_metadata.couchdb_id.split('.')[:-1])
+        if host_id not in entities:
+            raise EntityNotFound(host_id)
         self.host = entities[host_id]
 
     def add_relationships_from_db(self, session):
@@ -227,10 +233,15 @@ class Service(FaradayEntity, Base):
 
     def add_relationships_from_dict(self, entities):
         couchdb_id = self.entity_metadata.couchdb_id
+
         host_id = couchdb_id.split('.')[0]
+        if host_id not in entities:
+            raise EntityNotFound(host_id)
         self.host = entities[host_id]
 
         interface_id = '.'.join(couchdb_id.split('.')[:-1])
+        if interface_id not in entities:
+            raise EntityNotFound(interface_id)
         self.interface = entities[interface_id]
 
     def add_relationships_from_db(self, session):
@@ -296,10 +307,14 @@ class Vulnerability(FaradayEntity, Base):
     def add_relationships_from_dict(self, entities):
         couchdb_id = self.entity_metadata.couchdb_id
         host_id = couchdb_id.split('.')[0]
+        if host_id not in entities:
+            raise EntityNotFound(host_id)
         self.host = entities[host_id]
 
         parent_id = '.'.join(couchdb_id.split('.')[:-1])
         if parent_id != host_id:
+            if parent_id not in entities:
+                raise EntityNotFound(parent_id)
             self.service = entities[parent_id]
 
     def add_relationships_from_db(self, session):

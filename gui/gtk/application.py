@@ -10,6 +10,7 @@ See the file 'doc/LICENSE' for the license information
 import os
 import sys
 import threading
+import webbrowser
 
 try:
     import gi
@@ -611,6 +612,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         action.connect("activate", self.on_open_report_button)
         self.add_action(action)
 
+        action = Gio.SimpleAction.new("go_to_web_ui")
+        action.connect("activate", self.on_click_go_to_web_ui_button)
+        self.add_action(action)
+
         dirname = os.path.dirname(os.path.abspath(__file__))
         builder = Gtk.Builder.new_from_file(dirname + '/menubar.xml')
         builder.connect_signals(self)
@@ -791,3 +796,13 @@ class GuiApp(Gtk.Application, FaradayUi):
                                                    self.connect_to_couch,
                                                    self.window)
         preference_window.show_all()
+
+    def on_click_go_to_web_ui_button(self, action=None, param=None):
+        """Opens the dashboard of the current workspace on a new tab of
+        the user's default browser
+        """
+        couch_url = CONF.getCouchURI()
+        ws_name = self.workspace_manager.getActiveWorkspace().name
+        ws_url = couch_url + "/reports/_design/reports/index.html#/dashboard/ws/" + ws_name
+        webbrowser.open(ws_url, new=2)
+

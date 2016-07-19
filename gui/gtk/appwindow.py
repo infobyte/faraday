@@ -184,6 +184,7 @@ class AppWindow(Gtk.ApplicationWindow):
         preferences_icon = Gtk.Image.new_from_file(icons + "config.png")
         toggle_log_icon = Gtk.Image.new_from_file(icons + "debug.png")
         open_report_icon = Gtk.Image.new_from_file(icons + "FolderSteel-20.png")
+        go_to_web_ui_icon = Gtk.Image.new_from_file(icons + "TreeOffRoot-20.png")
 
         new_terminal_button = Gtk.ToolButton.new(new_terminal_icon, None)
         new_terminal_button.set_tooltip_text("Create a new tab")
@@ -211,10 +212,15 @@ class AppWindow(Gtk.ApplicationWindow):
         space.set_expand(True)
         toolbar.insert(space, 4)
 
+        go_to_web_ui_button = Gtk.ToolButton.new(go_to_web_ui_icon, None)
+        go_to_web_ui_button.set_tooltip_text("Go to Faraday Web")
+        go_to_web_ui_button.set_action_name("app.go_to_web_ui")
+        toolbar.insert(go_to_web_ui_button, 5)
+
         open_report_button = Gtk.ToolButton.new(open_report_icon, None)
         open_report_button.set_tooltip_text("Import report")
         open_report_button.set_action_name('app.open_report')
-        toolbar.insert(open_report_button, 5)
+        toolbar.insert(open_report_button, 6)
 
         return toolbar
 

@@ -3,10 +3,10 @@
 # See the file 'doc/LICENSE' for the license information
 
 import flask
-import server.dao
 
 from server.app import app
 from server.utils.web import validate_workspace
+from server.dao import service
 
 
 @app.route('/ws/<workspace>/services', methods=['GET'])
@@ -22,6 +22,18 @@ def list_services(workspace=None):
     services_by_host = services_dao.list(port)
 
     result = { 'hosts': services_by_host }
+
+    return flask.jsonify(result)
+
+@app.route('/ws/<workspace>/services/count', methods=['GET'])
+def count_services(workspace=None):
+    validate_workspace(workspace)
+    field = flask.request.args.get('group_by')
+
+    services_dao = service.ServiceDAO(workspace)
+    result = services_dao.count(group_by=field)
+    if result is None:
+        flask.abort(400)
 
     return flask.jsonify(result)
 

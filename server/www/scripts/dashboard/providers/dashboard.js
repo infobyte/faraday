@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('dashboardSrv', ['BASEURL', 'SEVERITIES', '$cookies', '$q', '$http', function(BASEURL, SEVERITIES, $cookies, $q, $http) {
+    .factory('dashboardSrv', ['BASEURL', 'SEVERITIES', '$cookies', '$q', '$http', 'hostsManager', function(BASEURL, SEVERITIES, $cookies, $q, $http, hostsManager) {
         var dashboardSrv = {};
 
         dashboardSrv._getView = function(url) {
@@ -60,48 +60,30 @@ angular.module('faradayApp')
         dashboardSrv.getTopHosts = function(ws, colors) {
             var deferred = $q.defer();
 
-            dashboardSrv.getHostsByServicesCount(ws)
-                .then(function(servicesCount) {
-                    if(servicesCount.length > 2) {
-                        var hosts = [],
-                        tmp = {key:[], colors:[], value:[]};
+            hostsManager.getHosts(ws, 0, 3, null, "services", "desc")
+                .then(function(res) {
+                    var hosts = res.hosts;
+                    if(hosts.length == 3) {
+                        var tmp = {key:[], colors:[], value:[]};
 
                         if(colors == undefined) {
                             colors = ["rgb(57, 59, 121)", "rgb(82, 84, 163)", "rgb(107, 110, 207)"];
                         }
-
-                        servicesCount.sort(function(a, b) {
-                            return b.value-a.value;
-                        });
 
                         tmp.options = {
                             showScale : false,
                             maintainAspectRatio: false
                         };
 
-                        servicesCount = servicesCount.slice(0, 3);
-
-                        servicesCount.forEach(function(host) {
-                            hosts.push(dashboardSrv.getHost(ws, host.key));
+                        hosts.forEach(function(host) {
+                            tmp.colors.push(colors.shift());
+                            tmp.value.push(host.services);
+                            tmp.key.push(host.name);
                         });
 
-                        $q.all(hosts)
-                            .then(function(res) {
-                                var hs = {};
-
-                                res.forEach(function(host) {
-                                    hs[host._id] = host.name;
-                                });
-
-                                servicesCount.forEach(function(srv) {
-                                    tmp.colors.push(colors.shift());
-                                    tmp.value.push(srv.value);
-                                    tmp.key.push(hs[srv.key]);
-                                });
-                                deferred.resolve(tmp);
-                            }, function() {
-                                deferred.reject("Unable to get Top Hosts");
-                            });
+                        deferred.resolve(tmp);
+                    } else {
+                        deferred.reject("Not enough hosts");
                     }
                 }, function() {
                     deferred.reject("Unable to get Services count for Top Hosts");

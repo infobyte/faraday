@@ -5,29 +5,30 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import json
 import os
-import shutil
-import mockito
 import restkit
 import threading
+import requests
+import time
 from urlparse import urlparse
 import traceback
-from couchdbkit import Server, ChangesStream, Database
+from couchdbkit import Server, ChangesStream
 from couchdbkit.resource import ResourceNotFound
 
 from utils.logs import getLogger
 from managers.all import ViewsManager
 
-#from persistence.change import change_factory
 from config.globals import CONST_BLACKDBS
 from config.configuration import getInstanceConfiguration
+
 CONF = getInstanceConfiguration()
 
 
 class DBTYPE(object):
+    """A simple enumeration of the databases types. CouchDB is the only
+    valid DB right now.
+    """
     COUCHDB = 1
-    FS = 2
 
 
 class ConnectorContainer(object):
@@ -47,35 +48,30 @@ class ConnectorContainer(object):
 
 class DbManager(object):
 
-    def __init__(self):
+    def __init__(self, couch_exc_callback):
+        self.couch_exc_callback = couch_exc_callback
         self.load()
 
     def load(self):
-        self.couchmanager = CouchDbManager(CONF.getCouchURI())
-        self.fsmanager = FileSystemManager()
+        self.couchmanager = CouchDbManager(CONF.getCouchURI(), self.couch_exc_callback)
         self.managers = {
                             DBTYPE.COUCHDB: self.couchmanager,
-                            DBTYPE.FS: self.fsmanager
                         }
         self.dbs = {}
         self._loadDbs()
 
     def getAvailableDBs(self):
-        return  [typ for typ, manag in self.managers.items()\
+        return [typ for typ, manag in self.managers.items()
                 if manag.isAvailable()]
 
     def _loadDbs(self):
         self.dbs = {}
-        for dbname, connector in self.fsmanager.getDbs().items():
-            self.dbs[dbname] = ConnectorContainer(dbname, connector, DBTYPE.FS)
         for dbname, connector in self.couchmanager.getDbs().items():
             self.dbs[dbname] = ConnectorContainer(dbname, connector, DBTYPE.COUCHDB)
 
     def _getManagerByType(self, dbtype):
         if dbtype == DBTYPE.COUCHDB:
             manager = self.couchmanager
-        else:
-            manager = self.fsmanager
         return manager
 
     def getConnector(self, name):
@@ -101,11 +97,7 @@ class DbManager(object):
         return self.dbs.keys()
 
     def refreshDbs(self):
-        self.fsmanager.refreshDbs()
         self.couchmanager.refreshDbs()
-        for dbname, connector in self.fsmanager.getDbs().items():
-            if dbname not in self.dbs.keys():
-                self.dbs[dbname] = ConnectorContainer(dbname, connector, DBTYPE.FS)
         for dbname, connector in self.couchmanager.getDbs().items():
             if dbname not in self.dbs.keys():
                 self.dbs[dbname] = ConnectorContainer(dbname, connector, DBTYPE.COUCHDB)
@@ -122,6 +114,7 @@ class DbManager(object):
     def reloadConfig(self):
         self.load()
 
+
 class DbConnector(object):
     def __init__(self, type=None):
         self.changes_callback = None
@@ -132,6 +125,9 @@ class DbConnector(object):
 
     def setChangesCallback(self, callback):
         self.changes_callback = callback
+
+    def setNoWorkspacesCallback(self, callback):
+        self.no_workspace_callback = callback
 
     def waitForDBChange(self):
         pass
@@ -153,64 +149,6 @@ class DbConnector(object):
 
     def getChildren(self, document_id):
         raise NotImplementedError("DbConnector should not be used directly")
-
-
-class FileSystemConnector(DbConnector):
-    def __init__(self, base_path):
-        super(FileSystemConnector, self).__init__(type=DBTYPE.FS)
-        self.path = base_path
-        self._available = True
-
-    def saveDocument(self, dic):
-        try:
-            filepath = os.path.join(self.path, "%s.json" % dic.get("_id", ))
-            getLogger(self).debug(
-                "Saving document in local db %s" % self.path)
-            with open(filepath, "w") as outfile:
-                json.dump(dic, outfile, indent=2)
-            return True
-        except Exception:
-            #log Exception?
-            return False
-
-    def getDocument(self, document_id):
-        getLogger(self).debug(
-            "Getting document %s for local db %s" % (document_id, self.path))
-        path = os.path.join(self.path, "%s.json" % document_id)
-        doc = None
-        try:
-            doc = open(path, "r")
-            doc = json.loads(doc.read())
-        except IOError:
-            doc = None
-        finally:
-            return doc
-
-    def remove(self, document_id):
-        path = os.path.join(self.path, "%s.json" % document_id)
-        if os.path.isfile(path):
-            os.remove(path)
-
-    def getDocsByFilter(self, parentId, type):
-        result = []
-        for name in os.listdir(self.path):
-            path = os.path.join(self.path, name)
-            document = open(path, "r")
-            data = json.loads(document.read())
-            if data.get("parent", None) == parentId:
-                if data.get("type", None) == type or not type:
-                    result.append(data)
-        return result
-
-    def getChildren(self, document_id):
-        result = []
-        for name in os.listdir(self.path):
-            path = os.path.join(self.path, name)
-            document = open(path, "r")
-            data = json.loads(document.read())
-            if data.get("parent", None) == document_id:
-                result.append(data)
-        return result
 
 
 class CouchDbConnector(DbConnector):
@@ -276,7 +214,6 @@ class CouchDbConnector(DbConnector):
     def _ratio(self):
         return self.db.info()['disk_size'] / self.db.info()['doc_count']
 
-    #@trap_timeout
     def saveDocument(self, document):
         self.incrementSeqNumber()
         getLogger(self).debug(
@@ -291,10 +228,17 @@ class CouchDbConnector(DbConnector):
         return res
 
     def forceUpdate(self):
-        doc = self.getDocument(self.db.dbname)
-        return self.db.save_doc(doc, use_uuids=True, force_update=True)
+        """It will try to update the information on the DB if it can.
+        The except clause is necesary to catch the case where we've lost
+        the connection to the DB.
+        """
 
-    #@trap_timeout
+        doc = self.getDocument(self.db.dbname)
+        try:
+            return self.db.save_doc(doc, use_uuids=True, force_update=True)
+        except:
+            return False
+
     def getDocument(self, document_id):
         # getLogger(self).debug(
         #     "Getting document %s for couch db %s" % (document_id, self.db))
@@ -305,24 +249,23 @@ class CouchDbConnector(DbConnector):
                 self.addDoc(doc)
         return doc
 
-    #@trap_timeout
     def remove(self, document_id):
+        """Remove a document from existence, both from the database
+        and from the mappers."""
         if self.db.doc_exist(document_id):
             self.incrementSeqNumber()
             self.db.delete_doc(document_id)
-            self.delDoc(document_id)
+        self.delDoc(document_id)
 
     def getChildren(self, document_id):
         return self._docs[document_id]["children"]
 
-    #@trap_timeout
     def getDocsByFilter(self, parentId, type):
         if not type:
             key = None
             if parentId:
                 key = '%s' % parentId
             view = 'mapper/byparent'
-            #print "query: view -> %s, key -> %s" % (view, key)
         else:
             key = ['%s' % parentId, '%s' % type]
             view = 'mapper/byparentandtype'
@@ -330,7 +273,6 @@ class CouchDbConnector(DbConnector):
         values = [doc.get("value") for doc in self.db.view(view, key=key)]
         return values
 
-    #@trap_timeout
     def getAllDocs(self):
         docs = [doc.get("value") for doc in self.db.view('utils/docs')]
         return docs
@@ -346,8 +288,18 @@ class CouchDbConnector(DbConnector):
     def setSeqNumber(self, seq_num):
         self.seq_num = seq_num
 
-    #@trap_timeout
+
     def waitForDBChange(self, since=0):
+        """Listen to the stream of changes provided by CouchDbKit. Process
+        these changes accordingly. If there's an exception while listening
+        to the changes, return inmediatly."""
+
+        # XXX: the while True found here shouldn't be necessary because
+        # changesStream already keeps listening 'for ever'. In a few tests
+        # I ran, this hypothesis was confirmed, but with our current setup
+        # i'm afraid I may be missing something. In any case, it works
+        # as it is, but this definitevely needs revision.
+
         getLogger(self).debug(
             "Watching for changes")
         while True:
@@ -375,11 +327,18 @@ class CouchDbConnector(DbConnector):
                                     doc = self.db.get(obj_id)
                                     self.addDoc(doc)
                                 self.changes_callback(obj_id, revision, deleted)
+
+            except ResourceNotFound as e:
+                getLogger(self).info("The database couldn't be found")
+                self.no_workspace_callback()
+                return False
+
             except Exception as e:
                 getLogger(self).info("Some exception happened while waiting for changes")
                 getLogger(self).info("  The exception was: %s" % e)
+                return False  # kill thread, it's failed... in reconnection
+                              # another one will be created, don't worry
 
-    #@trap_timeout
     def _compactDatabase(self):
         try:
             self.db.compact()
@@ -429,81 +388,22 @@ class AbstractPersistenceManager(object):
         return self._available
 
 
-class FileSystemManager(AbstractPersistenceManager):
-    """
-    This is a file system manager for the workspace,
-    it will load from the provided FS
-    """
-    def __init__(self, path=CONF.getPersistencePath()):
-        super(FileSystemManager, self).__init__()
-        getLogger(self).debug(
-            "Initializing FileSystemManager for path [%s]" % path)
-        self._path = path
-        if not os.path.exists(self._path):
-            os.mkdir(self._path)
-        self._loadDbs()
-        self._available = True
-
-    def _create(self, name):
-        wpath = os.path.expanduser("~/.faraday/persistence/%s" % name)
-        if not os.path.exists(wpath):
-            os.mkdir(wpath)
-            return FileSystemConnector(wpath)
-        return None
-
-    def _delete(self, name):
-        if os.path.exists(os.path.join(self._path, name)):
-            shutil.rmtree(os.path.join(self._path, name))
-
-    def _loadDbs(self):
-        for name in os.listdir(CONF.getPersistencePath()):
-            if os.path.isdir(os.path.join(CONF.getPersistencePath(), name)):
-                if name not in self.dbs.keys():
-                    self.dbs[name] = lambda x: self._loadDb(x)
-
-    def _loadDb(self, name):
-        self.dbs[name] = FileSystemConnector(os.path.join(self._path,
-                                              name))
-        return self.dbs[name]
-
-
-class NoCouchDBError(Exception):
-    pass
-
-
-class NoConectionServer(object):
-    """ Default to this server if no conectivity"""
-    def create_db(*args):
-        pass
-
-    def all_dbs(*args, **kwargs):
-        return []
-
-    def get_db(*args):
-        db_mock = mockito.mock(Database)
-        mockito.when(db_mock).documents().thenReturn([])
-        return db_mock
-
-    def replicate(*args, **kwargs):
-        pass
-
-    def delete_db(*args):
-        pass
-
-
 class CouchDbManager(AbstractPersistenceManager):
     """
     This is a couchdb manager for the workspace,
     it will load from the couchdb databases
     """
-    def __init__(self, uri):
+    def __init__(self, uri, couch_exception_callback):
         super(CouchDbManager, self).__init__()
         getLogger(self).debug(
             "Initializing CouchDBManager for url [%s]" % uri)
         self._lostConnection = False
         self.__uri = uri
-        self.__serv = NoConectionServer()
         self._available = False
+        self.couch_exception_callback = couch_exception_callback
+        test_couch_thread = threading.Thread(target=self.continuosly_check_connection)
+        test_couch_thread.daemon = True
+        test_couch_thread.start()
         try:
             if uri is not None:
                 self.testCouchUrl(uri)
@@ -519,23 +419,48 @@ class CouchDbManager(AbstractPersistenceManager):
             getLogger(self).warn("No route to couchdb server on: %s" % uri)
             getLogger(self).debug(traceback.format_exc())
 
-    #@trap_timeout
+    def continuosly_check_connection(self):
+        """Intended to use on a separate thread. Call module-level
+        function testCouch every second to see if response to the server_uri
+        of the DB is still 200. Call the exception_callback if we can't access
+        the server three times in a row.
+        """
+        tolerance = 0
+        server_uri = self.__uri
+        while True:
+            time.sleep(1)
+            test_was_successful = test_couch(server_uri)
+            if test_was_successful:
+                tolerance = 0
+            else:
+                tolerance += 1
+                if tolerance == 3:
+                    self.couch_exception_callback()
+                    return False  # kill the thread if something went wrong
+
     def _create(self, name):
         db = self.__serv.create_db(name.lower())
         return CouchDbConnector(db)
 
-    #@trap_timeout
     def _delete(self, name):
         self.__serv.delete_db(name)
 
-    #@trap_timeout
     def _loadDbs(self):
-        conditions = lambda x: not x.startswith("_") and x not in CONST_BLACKDBS
-        for dbname in filter(conditions, self.__serv.all_dbs()):
-            if dbname not in self.dbs.keys():
-                getLogger(self).debug(
-                    "Asking for dbname[%s], registering for lazy initialization" % dbname)
-                self.dbs[dbname] = lambda x: self._loadDb(x)
+
+        def conditions(database):
+            begins_with_underscore = database.startswith("_")
+            is_blacklisted = database in CONST_BLACKDBS
+            return not begins_with_underscore and not is_blacklisted
+
+        try:
+            for dbname in filter(conditions, self.__serv.all_dbs()):
+                if dbname not in self.dbs.keys():
+                    getLogger(self).debug(
+                        "Asking for dbname[%s], registering for lazy initialization" % dbname)
+                    self.dbs[dbname] = lambda x: self._loadDb(x)
+        except restkit.errors.RequestError as req_error:
+            getLogger(self).error("Couldn't load databases. "
+                                  "The connection to the CouchDB was probably lost. ")
 
     def _loadDb(self, dbname):
         db = self.__serv.get_db(dbname)
@@ -543,8 +468,15 @@ class CouchDbManager(AbstractPersistenceManager):
         self.dbs[dbname] = CouchDbConnector(db, seq_num=seq)
         return self.dbs[dbname]
 
+    def refreshDbs(self):
+        """Refresh databases using inherited method. On exception, asume
+        no databases are available.
+        """
+        try:
+            return AbstractPersistenceManager.refreshDbs()
+        except:
+            return []
 
-    #@trap_timeout
     def pushReports(self):
         vmanager = ViewsManager()
         reports = os.path.join(os.getcwd(), "views", "reports")
@@ -556,46 +488,15 @@ class CouchDbManager(AbstractPersistenceManager):
                 "Reports database couldn't be uploaded. You need to be an admin to do it")
         return self.__uri + "/reports/_design/reports/index.html"
 
-    def lostConnectionResolv(self):
-        self._lostConnection = True
-        self.__dbs.clear()
-        self.__serv = NoConectionServer()
-
-    def reconnect(self):
-        ret_val = False
-        ur = self.__uri
-        if CouchDbManager.testCouch(ur):
-            self.__serv = Server(uri = ur)
-            self.__dbs.clear()
-            self._lostConnection = False
-            ret_val = True
-
-        return ret_val
-
     @staticmethod
     def testCouch(uri):
-        if uri is not None:
-            host, port = None, None
-            try:
-                import socket
-                url = urlparse(uri)
-                proto = url.scheme
-                host = url.hostname
-                port = url.port
-
-                port = port if port else socket.getservbyname(proto)
-                s = socket.socket()
-                s.settimeout(1)
-                s.connect((host, int(port)))
-            except:
-                return False
-            #getLogger(CouchdbManager).info("Connecting Couch to: %s:%s" % (host, port))
-            return True
+        """Redirect to the module-level function of the name, which
+        serves the same purpose and is used by other classes too."""
+        return test_couch(uri)
 
     def testCouchUrl(self, uri):
         if uri is not None:
             url = urlparse(uri)
-            proto = url.scheme
             host = url.hostname
             port = url.port
             self.test(host, int(port))
@@ -606,7 +507,6 @@ class CouchDbManager(AbstractPersistenceManager):
         s.settimeout(1)
         s.connect((address, port))
 
-    #@trap_timeout
     def replicate(self, workspace, *targets_dbs, **kwargs):
         getLogger(self).debug("Targets to replicate %s" % str(targets_dbs))
         for target_db in targets_dbs:
@@ -629,3 +529,15 @@ class CouchDbManager(AbstractPersistenceManager):
         self.__serv.replicate(workspace, dst, mutual = mutual, continuous  = continuous, create_target = ct)
         if mutual:
             self.__serv.replicate(dst, src, continuous = continuous, **kwargs)
+
+
+def test_couch(uri):
+    """Return True if we could access uri/_all_dbs, which should happen
+    if we have an Internet connection, Couch is up and we have the correct
+    permissions (response_code == 200)
+    """
+    try:
+        response_code = requests.get(uri + '/_all_dbs').status_code
+        return True if response_code == 200 else False
+    except:
+        return False

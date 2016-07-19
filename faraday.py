@@ -20,7 +20,6 @@ import subprocess
 import json
 
 from utils.logs import getLogger, setUpLogger
-sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/external_libs/lib/python2.7/dist-packages')
 from config.configuration import getInstanceConfiguration
 from config.globals import *
 from utils.profilehooks import profile
@@ -29,37 +28,33 @@ from utils.user_input import query_yes_no
 
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 FARADAY_BASE = os.path.dirname(os.path.realpath(__file__))
-QTDIR=os.path.join(FARADAY_BASE, 'external_libs', 'qt')
 
 FARADAY_USER_HOME = os.path.expanduser(CONST_FARADAY_HOME_PATH)
+
 FARADAY_PLUGINS_PATH = os.path.join(FARADAY_USER_HOME,
                         CONST_FARADAY_PLUGINS_PATH)
+
 FARADAY_PLUGINS_BASEPATH = os.path.join(FARADAY_BASE,
                             CONST_FARADAY_PLUGINS_REPO_PATH)
-
-FARADAY_BASE_LIB_HELPERS = os.path.join(FARADAY_BASE,
-                            CONST_FARADAY_LIB_HELPERS)
 
 FARADAY_BASE_IMAGES = os.path.join(FARADAY_BASE, "data",
                             CONST_FARADAY_IMAGES)
 
 FARADAY_USER_CONFIG_XML = os.path.join(FARADAY_USER_HOME,
                             CONST_FARADAY_USER_CFG)
+
 FARADAY_BASE_CONFIG_XML = os.path.join(FARADAY_BASE,
                             CONST_FARADAY_BASE_CFG)
 
 USER_ZSHRC = os.path.expanduser(CONST_USER_ZSHRC)
+
 FARADAY_USER_IMAGES = os.path.join(FARADAY_USER_HOME,
                             CONST_FARADAY_IMAGES)
+
 FARADAY_USER_ZSHRC = os.path.join(FARADAY_USER_HOME, CONST_FARADAY_ZSHRC)
 FARADAY_USER_ZSH_PATH = os.path.join(FARADAY_USER_HOME, CONST_ZSH_PATH)
 FARADAY_BASE_ZSH = os.path.join(FARADAY_BASE, CONST_FARADAY_ZSH_FARADAY)
 
-USER_QT = os.path.expanduser(CONST_USER_QT_PATH)
-USER_QTRC = os.path.expanduser(CONST_USER_QTRC_PATH)
-USER_QTRCBAK = os.path.expanduser(CONST_USER_QTRC_BACKUP)
-FARADAY_QTRC = os.path.join(FARADAY_BASE, CONST_FARADAY_QTRC_PATH)
-FARADAY_QTRCBAK = os.path.expanduser(CONST_FARADAY_QTRC_BACKUP)
 FARADAY_VERSION_FILE = os.path.join(FARADAY_BASE, CONST_VERSION_FILE)
 FARADAY_CONFIG = os.path.join(FARADAY_BASE, CONST_CONFIG)
 FARADAY_REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, CONST_REQUIREMENTS_FILE)
@@ -140,9 +135,9 @@ def getParserArgs():
         help="Path to the valid CouchDB certificate")
 
     parser.add_argument('--gui', action="store", dest="gui",
-        default="qt3",
+        default="gtk",
         help="Select interface to start faraday. Supported values are "
-              "qt3 (deprecated), gtk and 'no' (no GUI at all). Defaults to qt3")
+              "gtk and 'no' (no GUI at all). Defaults to GTK")
 
     parser.add_argument('--cli', action="store_true",
         dest="cli",
@@ -221,19 +216,18 @@ def checkDependencies():
                 if not line.find('#'):
                     break
                 else:
-                    modules.append([line[:line.index('=')], (line[line.index('=')+2:]).strip()])
+                    modules.append(line.strip('\n'))
             f.close()
             pip_dist = [dist.project_name.lower() for dist in pip.get_installed_distributions()]
-
             for module in modules:
-                if module[0].lower() not in pip_dist:
+                if module.lower() not in pip_dist:
                     try:
-                        __import__(module[0])
+                        __import__(module)
                     except ImportError:
                         if query_user_bool("Missing module %s."
-                            " Do you wish to install it?" % module[0]):
-                            pip.main(['install', "%s==%s" %
-                                     (module[0], module[1]), '--user'])
+                            " Do you wish to install it?" % module):
+                            pip.main(['install', "%s" %
+                                     module, '--user'])
 
                         else:
                             return False
@@ -305,7 +299,7 @@ def startFaraday():
     main_app = MainApplication(args)
 
     if not args.disable_excepthook:
-            logger.warning("Main application ExceptHook enabled.")
+            logger.info("Main application ExceptHook enabled.")
             main_app.enableExceptHook()
 
     if args.profile:
@@ -355,30 +349,12 @@ def setupPlugins(dev_mode=False):
         logger.warning("Using user plugins folder")
     else:
         if os.path.isdir(FARADAY_PLUGINS_PATH):
-            logger.info("Removing old plugins folder")
+            logger.info("Removing old plugins folder.")
             shutil.rmtree(FARADAY_PLUGINS_PATH)
         else:
             logger.info("No plugins folder detected. Creating new one.")
 
         shutil.copytree(FARADAY_PLUGINS_BASEPATH, FARADAY_PLUGINS_PATH)
-
-
-def setupQtrc():
-    """Cheks and handles QT configuration file.
-
-    Existing qtrc files will be backed up and faraday qtrc will be set.
-
-    """
-    from ctypes import cdll
-    try:
-        import qt
-    except:
-        try:
-            cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqt.so'))
-            cdll.LoadLibrary(os.path.join(QTDIR, 'lib', 'libqui.so'))
-        except:
-            pass
-
 
 def setupZSH():
     """Cheks and handles Faraday's integration with ZSH.
@@ -413,41 +389,6 @@ def setupXMLConfig():
     else:
         logger.info("Using custom user configuration.")
 
-
-def setupLibs():
-    """Checks ELF libraries status."
-
-    Right now it only looks for the right helpers.so from the base path based on
-    system platform and architecture, and creates a symbolic link to it inside
-    the same folder.
-
-    """
-
-    arch = platform.machine()
-    helpers = FARADAY_BASE_LIB_HELPERS
-    if sys.platform == "linux" or sys.platform == "linux2":
-        if arch == "amd64" or arch == "x86_64":
-            logger.info("x86_64 linux detected.")
-            helpers += ".amd64"
-        elif arch == "i686" or arch == "i386":
-            logger.info("i386/686 linux detected.")
-            helpers += ".i386"
-        else:
-            logger.fatal("Linux architecture could not be determined.")
-            sys.exit()
-    elif sys.platform == "darwin":
-        logger.info("OS X detected.")
-        helpers += ".darwin"
-    else:
-        logger.fatal("Plaftorm not supported yet.")
-        sys.exit()
-
-    if os.path.isfile(FARADAY_BASE_LIB_HELPERS):
-        os.remove(FARADAY_BASE_LIB_HELPERS)
-
-    subprocess.call(['ln', '-s', helpers, FARADAY_BASE_LIB_HELPERS])
-
-
 def setupImages():
     """ Copy png icons
     """
@@ -456,27 +397,23 @@ def setupImages():
     shutil.copytree(FARADAY_BASE_IMAGES, FARADAY_USER_IMAGES)
 
 
-def checkConfiguration():
+def checkConfiguration(gui_type):
     """Checks if the environment is ready to run Faraday.
 
     Checks different environment requirements and sets them before starting
-    Faraday. This includes checking for plugin folders, libraries, QT
-    configuration and ZSH integration.
+    Faraday. This includes checking for plugin folders, libraries,
+    and ZSH integration.
     """
-
     logger.info("Checking configuration.")
     logger.info("Setting up plugins.")
     setupPlugins(args.dev_mode)
-    logger.info("Setting up Qt configuration.")
-    setupQtrc()
     logger.info("Setting up ZSH integration.")
     setupZSH()
-    logger.info("Setting up  user configuration.")
+    logger.info("Setting up user configuration.")
     setupXMLConfig()
-    logger.info("Setting up libraries.")
-    setupLibs()
-    logger.info("Setting up icons for QT interface.")
+    logger.info("Setting up icons for GTK interface.")
     setupImages()
+
 
 
 def setupFolders(folderlist):
@@ -553,7 +490,7 @@ def checkUpdates():
     if not resp == u'OK':
         logger.info("You have available updates. Run ./faraday.py --update to catchup!")
     else:
-        logger.info("No updates available, enjoy Faraday")
+        logger.info("No updates available, enjoy Faraday.")
 
 
 def checkCouchUrl():
@@ -618,7 +555,6 @@ def main():
     Main function for launcher.
 
     """
-
     os.chdir(FARADAY_BASE)
 
     init()
@@ -627,7 +563,7 @@ def main():
         logger.info("Dependencies met.")
         if args.cert_path:
             os.environ[REQUESTS_CA_BUNDLE_VAR] = args.cert_path
-        checkConfiguration()
+        checkConfiguration(args.gui)
         setConf()
         checkCouchUrl()
         checkVersion()

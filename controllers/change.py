@@ -60,11 +60,16 @@ class ChangeController(object):
         elif (change.getChangeType() != CHANGETYPE.UNKNOWN):
             model.guiapi.notification_center.editHost(host)
 
+
+    def revertToNoWorkspace(self):
+        model.guiapi.notification_center.WorkspaceProblem()
+
     def watch(self, mapper, dbConnector):
         self.mapper_manager = mapper
         self.dbConnector = dbConnector
         self.changesWatcher = ChangeWatcher(dbConnector.waitForDBChange)
         dbConnector.setChangesCallback(self.loadChange)
+        dbConnector.setNoWorkspacesCallback(self.revertToNoWorkspace)
         self.changesWatcher.start()
 
     def unwatch(self):

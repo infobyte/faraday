@@ -39,9 +39,10 @@ class WorkspaceManager(object):
         self.active_workspace = None
 
     def getWorkspacesNames(self):
+        """Returns the names of the workspaces as a list of strings"""
         return self.dbManager.getAllDbNames()
 
-    def createWorkspace(self, name, desc, dbtype=DBTYPE.FS):
+    def createWorkspace(self, name, desc, dbtype=DBTYPE.COUCHDB):
         workspace = Workspace(name, desc)
         try:
             dbConnector = self.dbManager.createDb(name, dbtype)
@@ -68,6 +69,9 @@ class WorkspaceManager(object):
         return False
 
     def openWorkspace(self, name):
+        """Open a workspace by name. Returns the workspace. Raises an
+        WorkspaceException if something went wrong along the way.
+        """
         if name not in self.getWorkspacesNames():
             raise WorkspaceException(
                 "Workspace %s wasn't found" % name)
@@ -82,6 +86,7 @@ class WorkspaceManager(object):
                  "For example: "
                  "<couch_uri>http://john:password@127.0.0.1:5984</couch_uri>"))
         except Exception as e:
+            notification_center.CouchDBConnectionProblem(e)
             raise WorkspaceException(str(e))
         self.mappersManager.createMappers(dbConnector)
         workspace = self.mappersManager.getMapper(
@@ -97,18 +102,6 @@ class WorkspaceManager(object):
         notification_center.workspaceLoad(workspace.getHosts())
         self.changesManager.watch(self.mappersManager, dbConnector)
         return workspace
-
-    def openDefaultWorkspace(self, name='untitled'):
-        # This method opens the default workspace called 'untitled'
-        if name not in self.getWorkspacesNames():
-            workspace = Workspace(name, 'default workspace')
-            dbConnector = self.dbManager.createDb(
-                workspace.getName(), DBTYPE.FS)
-            if self.active_workspace:
-                self.closeWorkspace()
-            self.mappersManager.createMappers(dbConnector)
-            self.mappersManager.save(workspace)
-        return self.openWorkspace(name)
 
     def closeWorkspace(self):
         self.changesManager.unwatch()
@@ -138,14 +131,10 @@ class WorkspaceManager(object):
     def _dbTypeToNamedType(self, dbtype):
         if dbtype == DBTYPE.COUCHDB:
             return 'CouchDB'
-        if dbtype == DBTYPE.FS:
-            return 'FS'
 
     def namedTypeToDbType(self, name):
         if name == 'CouchDB':
             return DBTYPE.COUCHDB
-        if name == 'FS':
-            return DBTYPE.FS
 
     def getAvailableWorkspaceTypes(self):
         return [self._dbTypeToNamedType(dbtype) for

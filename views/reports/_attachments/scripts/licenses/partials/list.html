@@ -55,6 +55,7 @@
                                     <th>
                                         <a href="" ng-click="toggleSort('end')">End date</a>
                                     </th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -71,6 +72,9 @@
                                     <td>{{license.notes}}</td>
                                     <td>{{license.start | date:'MM/dd/yyyy'}}</td>
                                     <td>{{license.end|date:'MM/dd/yyyy'}}</td>
+                                    <td><i class="fa fa-history" aria-hidden="true">
+                                        <a ng-href="{{store}}search/?q={{license.product}}" target="_blank">renew</a>
+                                    </i></td>
                                 </tr>
                             </tbody>
                         </table><!-- #licenses -->

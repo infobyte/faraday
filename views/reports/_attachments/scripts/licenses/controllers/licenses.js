@@ -10,7 +10,6 @@ angular.module('faradayApp')
             $scope.currentPage;
             $scope.expression;
             $scope.licenses = [];
-            $scope.licenses_store;
             $scope.newCurrentPage;
             $scope.newPageSize;
             $scope.pageSize;
@@ -19,9 +18,10 @@ angular.module('faradayApp')
             $scope.searchParams;
             $scope.selectall_licenses;
             $scope.sortField;
+            $scope.store;
 
         init = function() {
-            $scope.licenses_store = "http://ts557851-container.zoeysite.com/";
+            $scope.store = "http://ts557851-container.zoeysite.com/";
 
             // table stuff
             $scope.selectall_licenses = false;

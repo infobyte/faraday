@@ -25,6 +25,7 @@ class VulnerabilityDAO(FaradayDAO):
         "data":             [Vulnerability.data],
         "owner":            [],
         "easeofresolution": [Vulnerability.easeofresolution],
+        "type":             [EntityMetadata.document_type],
         "status":           [],
         "website":          [],
         "path":             [],

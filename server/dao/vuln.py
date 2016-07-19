@@ -67,7 +67,7 @@ class VulnerabilityDAO(FaradayDAO):
             Vulnerability.refs, Vulnerability.resolution, Vulnerability.severity, EntityMetadata.couchdb_id,\
             EntityMetadata.revision, EntityMetadata.create_time, EntityMetadata.creator, EntityMetadata.owner,\
             EntityMetadata.update_action, EntityMetadata.update_controller_action, EntityMetadata.update_time,\
-            EntityMetadata.update_user, Vulnerability.web_vulnerability)
+            EntityMetadata.update_user, Vulnerability.vulnerability_type)
         service_bundle = Bundle('service', Service.name.label('s_name'), Service.ports, Service.protocol)
         host_bundle = Bundle('host', Host.name)
 
@@ -138,7 +138,7 @@ class VulnerabilityDAO(FaradayDAO):
                 'resolution': vuln.resolution,
                 'severity': vuln.severity,
                 'tags': [],
-                'type': 'VulnerabilityWeb' if vuln.web_vulnerability else 'Vulnerability',
+                'type': vuln.vulnerability_type,
                 'target': host.name,
                 'hostnames': hostnames.split(','),
                 'service': "(%s/%s) %s" % (service.ports, service.protocol, service.s_name) if service.ports else ''
@@ -146,11 +146,21 @@ class VulnerabilityDAO(FaradayDAO):
 
     def count(self, group_by=None):
         with Timer('query.total_count'):
-            total_count = self._session.query(func.count(Vulnerability.id)).scalar()
+            vuln_count = self._session.query(Vulnerability.vuln_type, func.count())\
+                                      .group_by(Vulnerability.vuln_type).all()
+            vuln_count = dict(vuln_count)
+
+            std_vuln_count = vuln_count.get('Vulnerability', 0)
+            web_vuln_count = vuln_count.get('VulnerabilityWeb', 0)
+            total_count = std_vuln_count + web_vuln_count
 
         # Return total amount of services if no group-by field was provided
+        result_count = { 'total_count':    total_count,
+                         'web_vuln_count': web_vuln_count,
+                         'vuln_count':     std_vuln_count }
+
         if group_by is None:
-            return { 'total_count': total_count }
+            return result_count
 
         # Otherwise return the amount of services grouped by the field specified
         # Don't perform group-by counting on fields with less or more than 1 column mapped to it
@@ -165,7 +175,7 @@ class VulnerabilityDAO(FaradayDAO):
         with Timer('query.group_count'):
             res = query.all()
 
-        return { 'total_count': total_count,
-                 'groups': [ { group_by: value, 'count': count } for value, count in res ] }
-        
+        result_count['groups'] = [ { group_by: value, 'count': count } for value, count in res ]
+
+        return result_count
 

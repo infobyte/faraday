@@ -265,7 +265,7 @@ class Vulnerability(FaradayEntity, Base):
     description = Column(String(250), nullable=False)
 
     confirmed = Column(Boolean)
-    web_vulnerability = Column(Boolean)
+    vuln_type = Column(String(250))
     data = Column(String(250))
     easeofresolution = Column(String(250))
     refs = Column(String(250))
@@ -293,7 +293,7 @@ class Vulnerability(FaradayEntity, Base):
         self.name = document.get('name')
         self.description=document.get('desc')
         self.confirmed=document.get('confirmed')
-        self.web_vulnerability=(document.get('type', 'Vulnerability') == 'VulnerabilityWeb')
+        self.vuln_type=document.get('type')
         self.data=document.get('data')
         self.easeofresolution=document.get('easeofresolution')
         self.refs=u','.join(document.get('refs'))

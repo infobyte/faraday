@@ -914,7 +914,6 @@ class ConflictsDialog(Gtk.Window):
         self.set_transient_for(parent)
         self.set_size_request(600, 400)
         self.set_modal(True)
-        self.connect("key_press_event", key_reactions)
         self.conflicts = conflicts
         self.conflict_n = 0
         self.current_conflict = self.conflicts[self.conflict_n]
@@ -1049,7 +1048,21 @@ class ConflictsDialog(Gtk.Window):
 
         @scrollable()
         def make_scrollable(view):
+            """Just a function to wrap around a target _view_ so as to use
+            the scrollable decorator.
+            """
             return view
+
+        def on_selection(selection, target):
+            """Connected to the view of both the view and the secon view.
+            Target should be either 'first' or 'second' for clarity.
+            Whenever a view selection changes, change the selection
+            of target accordingly.
+            """
+            target = self.view if target == 'first' else self.second_view
+            original_selection = selection.get_selected()[1]
+            target_selection = target.get_selection()
+            target_selection.select_iter(original_selection)
 
         if self.view is None:
 
@@ -1081,6 +1094,11 @@ class ConflictsDialog(Gtk.Window):
 
             self.second_view.append_column(prop2_column)
             self.second_view.append_column(obj2_column)
+
+            view_selection = self.view.get_selection()
+            second_view_selection = self.second_view.get_selection()
+            view_selection.connect("changed", on_selection, 'second')
+            second_view_selection.connect("changed", on_selection, 'first')
 
             scrolled_view = make_scrollable(self.view)
             second_scrolled_view = make_scrollable(self.second_view)

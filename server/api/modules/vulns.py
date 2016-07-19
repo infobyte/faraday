@@ -51,3 +51,16 @@ def get_vulnerabilities(workspace=None):
 
     return json
 
+@app.route('/ws/<workspace>/vulns/count', methods=['GET'])
+@gzipped
+def count_vulnerabilities(workspace=None):
+    validate_workspace(workspace)
+    field = request.args.get('group_by')
+
+    vuln_dao = VulnerabilityDAO(workspace)
+    result = vuln_dao.count(group_by=field)
+    if result is None:
+        flask.abort(400)
+
+    return flask.jsonify(result)
+

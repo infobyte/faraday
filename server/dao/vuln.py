@@ -143,3 +143,28 @@ class VulnerabilityDAO(FaradayDAO):
                 'service': "(%s/%s) %s" % (service.ports, service.protocol, service.s_name) if service.ports else ''
             }}
 
+    def count(self, group_by=None):
+        with Timer('query.total_count'):
+            total_count = self._session.query(func.count(Vulnerability.id)).scalar()
+
+        # Return total amount of services if no group-by field was provided
+        if group_by is None:
+            return { 'total_count': total_count }
+
+        # Otherwise return the amount of services grouped by the field specified
+        # Don't perform group-by counting on fields with less or more than 1 column mapped to it
+        if group_by not in VulnerabilityDAO.COLUMNS_MAP or\
+           len(VulnerabilityDAO.COLUMNS_MAP.get(group_by)) != 1:
+            return None
+
+        col = VulnerabilityDAO.COLUMNS_MAP.get(group_by)[0]
+        query = self._session.query(col, func.count())\
+                             .group_by(col)
+
+        with Timer('query.group_count'):
+            res = query.all()
+
+        return { 'total_count': total_count,
+                 'groups': [ { group_by: value, 'count': count } for value, count in res ] }
+        
+

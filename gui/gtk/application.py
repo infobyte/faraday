@@ -517,7 +517,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def show_normal_error(self, dialog_text):
         """Just a simple, normal, ignorable error"""
-        dialog = Gtk.MessageDialog(self, 0,
+        dialog = Gtk.MessageDialog(self.window, 0,
                                    Gtk.MessageType.ERROR,
                                    Gtk.ButtonsType.OK,
                                    dialog_text)

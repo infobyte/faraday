@@ -96,7 +96,7 @@ class Change(object):
         self.deleted = bool(change_doc.get('deleted', False))
         self.updated = (int(self.revision.split('-')[0]) > 1)
         self.added = (not self.deleted and not self.updated)
-    
+
 class ChangesMonitorThread(threading.Thread):
     def __init__(self, ws_stream, changes_callback):
         super(ChangesMonitorThread, self).__init__()

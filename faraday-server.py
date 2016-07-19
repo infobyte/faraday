@@ -14,6 +14,8 @@ def main():
     server.database.setup()
 
     web_server = server.web.WebServer(enable_ssl=cli_arguments.ssl)
+    logger = server.utils.logger.get_logger(__name__)
+    logger.info('Faraday Server is ready')
     web_server.run()
     
 def parse_arguments():

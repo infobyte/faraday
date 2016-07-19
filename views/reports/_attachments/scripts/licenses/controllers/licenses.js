@@ -11,6 +11,7 @@ angular.module('faradayApp')
             $scope.expression;
             $scope.licenses = [];
             $scope.loaded_licenses = false;
+            $scope.expiration_month = false;
             $scope.newCurrentPage;
             $scope.newPageSize;
             $scope.pageSize;
@@ -51,7 +52,25 @@ angular.module('faradayApp')
                 .then(function() {
                     $scope.licenses = licensesManager.licenses;
                     $scope.loaded_licenses = true;
+
+                    $scope.expiration_month = $scope.isExpirationMonth($scope.licenses);
                 });
+
+            $scope.$watch(function() {
+                return licensesManager.licenses;
+            }, function(newVal, oldVal) {
+                $scope.expiration_month = $scope.isExpirationMonth(newVal);
+            }, true);
+        };
+
+        $scope.almostExpired = function(end) {
+            return (new Date(end)).getMonth() == (new Date()).getMonth();
+        };
+
+        $scope.isExpirationMonth = function(licenses) {
+            return licenses.some(function(elem, index, array) {
+                return $scope.almostExpired(elem.end);
+            });
         };
 
         // changes the URL according to search params

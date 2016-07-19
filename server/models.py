@@ -41,6 +41,12 @@ class FaradayEntity(object):
                     return entity_cls
         return None
         
+    def __init__(self, document):
+        self.update_from_document(document)
+
+    def update_from_document(self, document):
+        raise Exception('MUST IMPLEMENT')
+
     def add_relationships_from_dict(self, entities):
         pass
 
@@ -108,9 +114,6 @@ class Host(FaradayEntity, Base):
     services = relationship('Service')
     vulnerabilities = relationship('Vulnerability')
 
-    def __init__(self, document):
-        self.update_from_document(document)
-
     def update_from_document(self, document):
         default_gateway = self.__get_default_gateway(document)
 
@@ -162,9 +165,6 @@ class Interface(FaradayEntity, Base):
     host = relationship('Host', back_populates='interfaces')
 
     services = relationship('Service')
-
-    def __init__(self, document):
-        self.update_from_document(document)
 
     def update_from_document(self, document):
         self.name=document.get('name')
@@ -219,9 +219,6 @@ class Service(FaradayEntity, Base):
     interface = relationship('Interface', back_populates='services')
 
     vulnerabilities = relationship('Vulnerability')
-
-    def __init__(self, document):
-        self.update_from_document(document)
 
     def update_from_document(self, document):
         self.name=document.get('name')
@@ -286,9 +283,6 @@ class Vulnerability(FaradayEntity, Base):
     service_id = Column(Integer, ForeignKey(Service.id), index=True)
     service = relationship('Service', back_populates='vulnerabilities')
 
-    def __init__(self, document):
-        self.update_from_document(document)
-
     def update_from_document(self, document):
         self.name = document.get('name')
         self.description=document.get('desc')
@@ -327,4 +321,22 @@ class Vulnerability(FaradayEntity, Base):
         if parent_id != host_id:
             query = session.query(Service).join(EntityMetadata).filter(EntityMetadata.couchdb_id == parent_id)
             self.service = query.one()
+
+class Note(FaradayEntity, Base):
+    DOC_TYPE = 'Note'
+
+    # Table schema
+    __tablename__ = 'note'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), nullable=False)
+    text = Column(Text(), nullable=False)
+    description = Column(Text(), nullable=False)
+
+    entity_metadata = relationship(EntityMetadata, uselist=False)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    def update_from_document(self, document):
+        self.name=document.get('name')
+        self.text=document.get('text')
+        self.description=document.get('description')
 

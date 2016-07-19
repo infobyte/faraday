@@ -438,20 +438,21 @@ class GuiApp(Gtk.Application, FaradayUi):
         thread.daemon = True
         thread.start()
 
+    def open_workspace_from_args(self):
+        """Opens the workspace specified in the arguemnts, if possible.
+        Return True if args.workspace is set, False if not."""
+        if self.args.workspace:
+            workspace_name = self.args.workspace
+            self.change_workspace(workspace_name)
+            return True
+        else:
+            return False
+
     def open_last_workspace(self):
-        """Tries to open the last workspace the user had opened."""
-        workspace = self.args.workspace
-        try:
-            ws = super(GuiApp, self).openWorkspace(workspace)
-            workspace = ws.name
-            CONF.setLastWorkspace(workspace)
-            CONF.saveConfig()
-        except Exception as e:
-            self.handle_no_active_workspace()
-            getLogger(self).error(
-                ("Your last workspace %s is not accessible, "
-                 "check configuration") % workspace)
-            getLogger(self).error(str(e))
+        """Tries to open the last workspace the user had opened. Return
+        None."""
+        workspace_name = CONF.getLastWorkspace()
+        self.change_workspace(workspace_name)
 
     def run(self, args):
         """First method to run, as defined by FaradayUi. This method is
@@ -556,7 +557,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         # just after the creation of the sidebar and before updateHosts.
         # correct fix: move the creation of the ws_model to the application
 
-        self.open_last_workspace()
+        workspace_argument_set = self.open_workspace_from_args()
+        if not workspace_argument_set:
+            self.open_last_workspace()
+
         self.updateHosts()
         self.hosts_sidebar = HostsSidebar(self.show_host_info, self.icons)
         default_model = self.hosts_sidebar.create_model(self.all_hosts)

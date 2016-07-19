@@ -86,4 +86,24 @@ class HostDAO(FaradayDAO):
                 'vulns': host.vuln_count,
                 'services': host.open_services_count }}
 
+    def count(self, group_by=None):
+        total_count = self._session.query(func.count(Host.id)).scalar()
+
+        # Return total amount of services if no group-by field was provided
+        result_count = { 'total_count': total_count }
+        if group_by is None:
+            return result_count
+
+        # Otherwise return the amount of services grouped by the field specified
+        # Strict restriction is applied for this entity
+        if group_by not in ['name', 'os']:
+            return None
+
+        col = HostDAO.COLUMNS_MAP.get(group_by)[0]
+        query = self._session.query(col, func.count()).group_by(col)
+        res = query.all()
+
+        result_count['groups'] = [ { group_by: value, 'count': count } for value, count in res ]
+
+        return result_count
 

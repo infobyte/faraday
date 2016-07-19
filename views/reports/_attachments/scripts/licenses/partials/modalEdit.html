@@ -5,7 +5,7 @@
 <form name="form" novalidate>
     <div class="modal-header">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
+            <button class="btn btn-success" ng-click="ok()">OK</button>
             <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
         </div>
         <h3 class="modal-title">Edit {{data.product}} license</h3>
@@ -49,7 +49,7 @@
     <div class="modal-footer">
         <div class="modal-button">
             <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
-            <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
+            <button class="btn btn-success" ng-click="ok()">OK</button>
         </div>
     </div>
 </form>

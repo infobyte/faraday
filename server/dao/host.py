@@ -16,11 +16,13 @@ class HostDAO(FaradayDAO):
     MAPPED_ENTITY = Host
     COLUMNS_MAP = {
         "name":     [Host.name],
+        "service":  [Service.name],
         "services": ["open_services_count"],
         "vulns":    ["vuln_count"],
         "os":       [Host.os],
         "owned":    [],
     }
+    STRICT_FILTERING = ["service"]
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, host_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, host_filter)
@@ -50,7 +52,7 @@ class HostDAO(FaradayDAO):
 
         # Apply pagination, sorting and filtering options to the query
         query = sort_results(query, self.COLUMNS_MAP, order_by, order_dir, default=Host.id)
-        query = apply_search_filter(query, self.COLUMNS_MAP, search, host_filter)
+        query = apply_search_filter(query, self.COLUMNS_MAP, search, host_filter, self.STRICT_FILTERING)
         count = get_count(query, count_col=Host.id)
 
         if page_size:

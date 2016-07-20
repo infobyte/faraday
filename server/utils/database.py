@@ -40,7 +40,7 @@ def sort_results(query, field_to_col_map, order_field, order_dir, default=None):
 
     return query.order_by(*order_cols) if order_cols else query
 
-def apply_search_filter(query, field_to_col_map, free_text_search=None, field_filter={}):
+def apply_search_filter(query, field_to_col_map, free_text_search=None, field_filter={}, strict_filter=[]):
     """
     Build the filter for a SQL query from a free-text-search term or based on individual
     filters applied to labeled columns declared in field_to_col_map.
@@ -84,7 +84,13 @@ def apply_search_filter(query, field_to_col_map, free_text_search=None, field_fi
                 if search_term is None:
                     continue
             else:
-                search_term = column.like(like_str)
+                # Strict filtering can be applied for fields. FTS will
+                # ignore this list since its purpose is clearly to
+                # match anything it can find.
+                if attribute in field_filter and attribute in strict_filter:
+                    search_term = column.is_(field_filter.get(attribute))
+                else:
+                    search_term = column.like(like_str)
 
             # Concatenate multiple search terms
             if sql_filter is None:

@@ -57,14 +57,14 @@ angular.module('faradayApp')
             var treemap = d3.layout.treemap()
               .size([width - margin.left - margin.right, height - margin.top - margin.bottom])
               .sticky(true)
-              .value(function(d) {return d.value});
+              .value(function(d) {return d.count});
 
             var node = div.datum(data_cp).selectAll(".node")
               .data(treemap.nodes)
             .enter().append("div")
               .attr("class", function(d) {
                   var ret = "node treemap-tooltip";
-                  if(d.key) ret += " tm-" + d.key;
+                  if(d.name) ret += " tm-" + d.name;
                   return ret;
               })
               .call(position)
@@ -72,23 +72,23 @@ angular.module('faradayApp')
               .style('opacity', 0)
               .text(function(d, i) {
                 if(data.width){
-                  var total = d3.sum(data.children, function(d){return d.value;});
-                  return (d.key+ " ( " + d3.round(100* d.value / total, 1) + "% " + ")" ) ; 
+                  var total = d3.sum(data.children, function(d){return d.count;});
+                  return (d.name+ " ( " + d3.round(100* d.count / total, 1) + "% " + ")" ) ; 
                 }
               })
               .on('mouseover', function(d){
                 if (!data.width){
-                  document.getElementById("treemapText").innerHTML = "<div style='background-color:" + d.color + "'>" + d.key + '</div>' + d.value;
+                  document.getElementById("treemapText").innerHTML = "<div style='background-color:" + d.color + "'>" + d.name + '</div>' + d.count;
                 }else{
-                  document.getElementById("treemapTextModel").innerHTML = "<div style='background-color:" + d.color + "'>" + d.key + '</div>' + d.value;
+                  document.getElementById("treemapTextModel").innerHTML = "<div style='background-color:" + d.color + "'>" + d.name + '</div>' + d.count;
                 }
               })
               .on('mouseenter', function(d) {
-                var line = d3.select('.tm-'+d.key)
+                var line = d3.select('.tm-'+d.name)
                     .style("opacity", 1);
               })
               .on('mouseleave', function(d) {
-                var line = d3.select('.tm-'+d.key)
+                var line = d3.select('.tm-'+d.name)
                     .style("opacity", 0.8);
                 document.getElementById("treemapText").innerHTML = "";
               })

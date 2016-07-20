@@ -94,15 +94,15 @@ angular.module('faradayApp')
 
         dashboardSrv.getServicesCount = function(ws) {
             var deferred = $q.defer(),
-            url = BASEURL + "/" + ws + "/_design/hosts/_view/byservices?group=true";
+            url = BASEURL + "_api/ws/" + ws + "/services/count?group_by=name";
 
-            dashboardSrv._getView(url)
+            $http.get(url)
                 .then(function(res) {
-                    res.sort(function(a, b) {
-                        return b.value - a.value;
+                    var tmp =[];
+                    res.data.groups.sort(function(a, b) {
+                        return b.count - a.count;
                     });
-
-                    deferred.resolve(res);
+                    deferred.resolve(res.data.groups);
                 }, function() {
                     deferred.reject("Unable to get Services Count");
                 });

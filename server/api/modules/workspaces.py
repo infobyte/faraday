@@ -19,7 +19,7 @@ def workspace_summary(workspace=None):
     validate_workspace(workspace)
 
     services_count = ServiceDAO(workspace).count()
-    vuln_count = VulnerabilityDAO(workspace).count()
+    vuln_count = VulnerabilityDAO(workspace).count(vuln_filter=flask.request.args)
     host_count = HostDAO(workspace).count()
     iface_count = InterfaceDAO(workspace).count()
     note_count = NoteDAO(workspace).count()

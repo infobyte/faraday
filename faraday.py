@@ -474,9 +474,8 @@ def checkConfiguration(gui_type):
     setupXMLConfig()
     logger.info("Setting up libraries.")
     setupLibs()
-    if gui_type == "qt3":
-        logger.info("Setting up icons for QT interface.")
-        setupImages()
+    logger.info("Setting up icons for GUI interface.")
+    setupImages()
 
 
 def setupFolders(folderlist):

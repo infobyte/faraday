@@ -67,7 +67,7 @@ class VulnerabilityDAO(FaradayDAO):
             Vulnerability.refs, Vulnerability.resolution, Vulnerability.severity, EntityMetadata.couchdb_id,\
             EntityMetadata.revision, EntityMetadata.create_time, EntityMetadata.creator, EntityMetadata.owner,\
             EntityMetadata.update_action, EntityMetadata.update_controller_action, EntityMetadata.update_time,\
-            EntityMetadata.update_user, Vulnerability.vulnerability_type)
+            EntityMetadata.update_user, EntityMetadata.document_type)
         service_bundle = Bundle('service', Service.name.label('s_name'), Service.ports, Service.protocol)
         host_bundle = Bundle('host', Host.name)
 
@@ -138,7 +138,7 @@ class VulnerabilityDAO(FaradayDAO):
                 'resolution': vuln.resolution,
                 'severity': vuln.severity,
                 'tags': [],
-                'type': vuln.vulnerability_type,
+                'type': vuln.document_type,
                 'target': host.name,
                 'hostnames': hostnames.split(','),
                 'service': "(%s/%s) %s" % (service.ports, service.protocol, service.s_name) if service.ports else ''

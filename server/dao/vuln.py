@@ -146,18 +146,23 @@ class VulnerabilityDAO(FaradayDAO):
 
     def count(self, group_by=None):
         with Timer('query.total_count'):
-            vuln_count = self._session.query(Vulnerability.vuln_type, func.count())\
-                                      .group_by(Vulnerability.vuln_type).all()
-            vuln_count = dict(vuln_count)
+            query = self._session.query(Vulnerability.vuln_type, func.count())\
+                                 .group_by(Vulnerability.vuln_type)
+            total_count = dict(query.all())
 
-            std_vuln_count = vuln_count.get('Vulnerability', 0)
-            web_vuln_count = vuln_count.get('VulnerabilityWeb', 0)
-            total_count = std_vuln_count + web_vuln_count
+            query = query.filter(Vulnerability.confirmed.is_(True))
+            confirmed_count = dict(query.all())
 
         # Return total amount of services if no group-by field was provided
-        result_count = { 'total_count':    total_count,
-                         'web_vuln_count': web_vuln_count,
-                         'vuln_count':     std_vuln_count }
+        result_count = { 'total_count':    sum(total_count.values()),
+                         'web_vuln_count': total_count.get('VulnerabilityWeb', 0),
+                         'vuln_count':     total_count.get('Vulnerability', 0),
+                         'confirmed': {
+                            'total_count':    sum(confirmed_count.values()),
+                            'web_vuln_count': confirmed_count.get('VulnerabilityWeb', 0),
+                            'vuln_count':     confirmed_count.get('Vulnerability', 0),
+                         }
+                       }
 
         if group_by is None:
             return result_count

@@ -41,6 +41,7 @@ def after_cursor_execute(conn, cursor, statement,
 
 class WorkspaceDatabase(object):
     LAST_SEQ_CONFIG = 'last_seq'
+    MIGRATION_SUCCESS = 'migration'
 
     def __init__(self, name):
         self.__workspace = name
@@ -53,26 +54,41 @@ class WorkspaceDatabase(object):
         self.couchdb.start_changes_monitor(self.__process_change, last_seq=self.get_last_seq())
 
     def __open_or_create_database(self):
-        """
-        TODO: ADD DATABASE INTEGRITY PROPERTY ON CREATIION
-        """
         if not self.database.exists():
-            logger.info('Creating database for workspace %s' % self.__workspace)
-            self.database.create()
-            self.database.open_session()
-
-            try:
-                self.set_last_seq(self.couchdb.get_last_seq())
-                self.import_from_couchdb()
-            except Exception, e:
-                import traceback
-                traceback.print_exc()
-                logger.error('Error while importing workspace {}: {}'.format(self.__workspace, str(e)))
-                self.database.delete()
-                raise e
-
+            self.create_database()
         else:
             self.database.open_session()
+            self.check_database_integrity()
+
+    def check_database_integrity(self):
+        if not self.was_migration_successful():
+            logger.info("Workspace %s wasn't migrated successfully. Trying again..." % self.__workspace)
+
+            self.database.close()
+            self.database.delete()
+            self.database = Database(self.__workspace)
+
+            self.create_database()
+    
+    def create_database(self):
+        logger.info('Creating database for workspace %s' % self.__workspace)
+        self.database.create()
+        self.database.open_session()
+
+        try:
+            self.set_last_seq(self.couchdb.get_last_seq())
+            self.set_migration_status(False)
+            self.import_from_couchdb()
+            self.set_migration_status(True)
+
+        except Exception, e:
+            import traceback
+            traceback.print_exc()
+            logger.error('Error while importing workspace {}: {}'.format(self.__workspace, str(e)))
+            self.database.close()
+            self.database.delete()
+            raise e
+
     
     def import_from_couchdb(self):
         total_amount = self.couchdb.get_total_amount_of_documents()
@@ -203,6 +219,10 @@ class WorkspaceDatabase(object):
         last_seq = int(config.value)
         return last_seq
 
+    def was_migration_successful(self):
+        config = self.get_config(WorkspaceDatabase.MIGRATION_SUCCESS)
+        return (config is not None and config.value == 'true')
+
     def get_config(self, option):
         query = self.database.session.query(server.models.DatabaseMetadata)
         query = query.filter(server.models.DatabaseMetadata.option == option)
@@ -216,6 +236,9 @@ class WorkspaceDatabase(object):
 
     def set_last_seq(self, last_seq):
         self.set_config(WorkspaceDatabase.LAST_SEQ_CONFIG, last_seq)
+
+    def set_migration_status(self, was_successful):
+        self.set_config(WorkspaceDatabase.MIGRATION_SUCCESS, 'true' if was_successful else 'false')
 
     def set_config(self, option, value):
         config = self.get_config(option)

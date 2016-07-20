@@ -55,10 +55,16 @@ def get_vulnerabilities(workspace=None):
 @gzipped
 def count_vulnerabilities(workspace=None):
     validate_workspace(workspace)
+
     field = request.args.get('group_by')
+    search = request.args.get('search')
+    vuln_filter = {}
+    for arg in request.args:
+        if arg not in ['search', 'group_by']:
+            vuln_filter[arg] = request.args.get(arg)
 
     vuln_dao = VulnerabilityDAO(workspace)
-    result = vuln_dao.count(group_by=field)
+    result = vuln_dao.count(group_by=field, search=search, vuln_filter=vuln_filter)
     if result is None:
         flask.abort(400)
 

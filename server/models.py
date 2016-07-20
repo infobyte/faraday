@@ -7,6 +7,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
+SCHEMA_VERSION = '0.1'
+
 Base = declarative_base()
 
 class EntityNotFound(Exception):

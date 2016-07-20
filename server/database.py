@@ -42,6 +42,7 @@ def after_cursor_execute(conn, cursor, statement,
 class WorkspaceDatabase(object):
     LAST_SEQ_CONFIG = 'last_seq'
     MIGRATION_SUCCESS = 'migration'
+    SCHEMA_VERSION = 'version'
 
     def __init__(self, name):
         self.__workspace = name
@@ -63,7 +64,12 @@ class WorkspaceDatabase(object):
     def check_database_integrity(self):
         if not self.was_migration_successful():
             logger.info("Workspace %s wasn't migrated successfully. Trying again..." % self.__workspace)
+            self.remigrate_database()
+        elif self.get_schema_version() != server.models.SCHEMA_VERSION:
+            logger.info("Workspace %s has an old schema version (%s != %s). Remigrating workspace..." % (self.__workspace, self.get_schema_version(), server.models.SCHEMA_VERSION))
+            self.remigrate_database()
 
+    def remigrate_database(self):
             self.database.close()
             self.database.delete()
             self.database = Database(self.__workspace)
@@ -78,7 +84,10 @@ class WorkspaceDatabase(object):
         try:
             self.set_last_seq(self.couchdb.get_last_seq())
             self.set_migration_status(False)
+            self.set_schema_version()
+
             self.import_from_couchdb()
+
             self.set_migration_status(True)
 
         except Exception, e:
@@ -223,6 +232,10 @@ class WorkspaceDatabase(object):
         config = self.get_config(WorkspaceDatabase.MIGRATION_SUCCESS)
         return (config is not None and config.value == 'true')
 
+    def get_schema_version(self):
+        config = self.get_config(WorkspaceDatabase.SCHEMA_VERSION)
+        return config.value if config is not None else None
+
     def get_config(self, option):
         query = self.database.session.query(server.models.DatabaseMetadata)
         query = query.filter(server.models.DatabaseMetadata.option == option)
@@ -239,6 +252,9 @@ class WorkspaceDatabase(object):
 
     def set_migration_status(self, was_successful):
         self.set_config(WorkspaceDatabase.MIGRATION_SUCCESS, 'true' if was_successful else 'false')
+
+    def set_schema_version(self):
+        self.set_config(WorkspaceDatabase.SCHEMA_VERSION, server.models.SCHEMA_VERSION)
 
     def set_config(self, option, value):
         config = self.get_config(option)

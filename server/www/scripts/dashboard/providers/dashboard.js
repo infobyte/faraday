@@ -166,20 +166,17 @@ angular.module('faradayApp')
 
         dashboardSrv.getVulnerabilitiesCount = function(ws) {
             var deferred = $q.defer(),
-            url = BASEURL + "/" + ws + "/_design/vulns/_view/";
+            url = BASEURL + "_api/ws/" + ws + "/vulns/count?group_by=severity";
 
             if(dashboardSrv.props['confirmed']) {
-                url += "confirmed";
+                url += "&confirmed=true";
             }
 
-            url += "byseverity?group=true";
-
-            dashboardSrv._getView(url)
-                .then(function(vulns) {
+            $http.get(url)
+                .then(function(res) {
                     var vs = [];
-
-                    vulns.forEach(function(vuln) {
-                        vs[vuln.key] = vuln.value;
+                    res.data.groups.forEach(function(vuln) {
+                        vs[vuln.severity] = vuln.count;
                     });
 
                     deferred.resolve(vs);
@@ -192,33 +189,16 @@ angular.module('faradayApp')
 
         dashboardSrv.getObjectsCount = function(ws) {
             var deferred = $q.defer(),
-            url = BASEURL + "/" + ws + "/_design/hosts/_view/summarized";
+            url = BASEURL + "_api/ws/" + ws + "/summary";
 
             if(dashboardSrv.props['confirmed']) {
-                url += "confirmed";
+                url += "?confirmed=true";
             }
 
-            url += "?group=true";
-
-            dashboardSrv._getView(url)
+            $http.get(url)
                 .then(function(res) {
-                    var total = {
-                        key: "total vulns",
-                        value: 0
-                    };
-
-                    for(var i = res.length - 1; i >= 0; i--) {
-                        if(res[i].key === "vulns" || res[i].key === "web vulns") {
-                            total.value += res[i].value;
-                        }
-                        if(res[i].key === "interfaces") {
-                           res.splice(i, 1);
-                        }
-                    }
-
-                    res.push(total);
-
-                    deferred.resolve(res);
+                    delete res.data.stats["interfaces"];
+                    deferred.resolve(res.data.stats);
                 }, function() {
                     deferred.reject("Unable to get Objects count");
                 });
@@ -306,27 +286,9 @@ angular.module('faradayApp')
 
         dashboardSrv.getHostsByServicesName = function(ws, srv_name) {
             var deferred = $q.defer();
-            var url = BASEURL + "/" + ws + "/_design/services/_view/byname?key=\"" + srv_name + "\"";
-            dashboardSrv._getView(url).then(function(res) {
-                var dict = {};
-                var tmp = [];
-                res.forEach(function(srv) {
-                    tmp.push(dashboardSrv.getHost(ws, srv.value.hid));
-                });
-                $q.all(tmp).then(function(hosts) {
-                    var res = [];
-                    hosts.sort(function(a, b){
-                        if(a.name < b.name) return -1;
-                        if(a.name > b.name) return 1;
-                        return 0;
-                    });
-                    for (var i = 0; i < hosts.length; i++){
-                        if (res.length == 0 || hosts[i].name != res[res.length - 1].name) {
-                            res.push(hosts[i]);
-                        }
-                    }
-                    deferred.resolve(res);
-                });
+            hostsManager.getHosts(ws, null, null, {"service": srv_name}, "name", "desc")
+                .then(function(res) {
+                    deferred.resolve(res.hosts);
             }, function() {
                 deferred.reject();
             });

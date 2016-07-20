@@ -232,7 +232,7 @@ angular.module('faradayApp')
         commonsFact.addPresentationParams = function(url, page, page_size, filter, sort, sort_direction) {
             var param_conn = '?';
 
-            if(page !== undefined && page_size !== undefined) {
+            if(page !== null && page_size !== null && page !== undefined && page_size !== undefined){
                 url = url + param_conn + 'page=' + page + '&page_size=' + page_size;
                 param_conn = '&';
             }

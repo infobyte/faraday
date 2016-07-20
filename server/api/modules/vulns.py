@@ -2,21 +2,12 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-import flask
-
-from flask import request, jsonify
+from flask import request, jsonify, abort
 from server.app import app
 from server.utils.debug import Timer
-from server.utils.web import gzipped, validate_workspace
+from server.utils.web import gzipped, validate_workspace, get_integer_parameter
 from server.dao.vuln import VulnerabilityDAO
 
-
-def get_integer_parameter(query_parameter, default=None):
-    param = request.args.get(query_parameter)
-    try:
-        return int(param) if param is not None else default
-    except ValueError:
-        flask.abort(400)
 
 @app.route('/ws/<workspace>/vulns', methods=['GET'])
 @gzipped
@@ -47,7 +38,7 @@ def get_vulnerabilities(workspace=None):
                                vuln_filter=vuln_filter)
 
     with Timer('jsonify'):
-        json = flask.jsonify(result)
+        json = jsonify(result)
 
     return json
 
@@ -66,7 +57,7 @@ def count_vulnerabilities(workspace=None):
     vuln_dao = VulnerabilityDAO(workspace)
     result = vuln_dao.count(group_by=field, search=search, vuln_filter=vuln_filter)
     if result is None:
-        flask.abort(400)
+        abort(400)
 
-    return flask.jsonify(result)
+    return jsonify(result)
 

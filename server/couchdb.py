@@ -6,6 +6,7 @@ import couchdbkit
 import restkit
 import threading
 import server.utils.logger
+import requests
 
 from couchdbkit import Server
 from couchdbkit.exceptions import ResourceNotFound
@@ -111,4 +112,13 @@ class ChangesMonitorThread(threading.Thread):
                 import traceback
                 logger.debug(traceback.format_exc())
                 raise e
+
+def has_permissions_for(workspace_name, cookies):
+    # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
+    couchdb_port = config.couchdb.port if config.couchdb.protocol == 'http' else config.couchdb.ssl_port
+    couchdb_url = "%s://%s:%s/%s" %\
+         (config.couchdb.protocol, config.couchdb.host, couchdb_port, workspace_name)
+
+    response = requests.get(couchdb_url, verify=False, cookies=cookies)
+    return (response.status_code == requests.codes.ok)
 

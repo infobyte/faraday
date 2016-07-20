@@ -5,15 +5,9 @@
 import flask
 
 from server.app import app
-from server.utils.web import gzipped, validate_workspace
+from server.utils.web import gzipped, validate_workspace, get_integer_parameter
 from server.dao.host import HostDAO
 
-def get_integer_parameter(query_parameter, default=None):
-    param = flask.request.args.get(query_parameter)
-    try:
-        return int(param) if param is not None else default
-    except ValueError:
-        flask.abort(400)
 
 @gzipped
 @app.route('/ws/<workspace>/hosts', methods=['GET'])

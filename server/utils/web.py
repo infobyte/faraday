@@ -5,10 +5,18 @@
 import gzip
 import functools 
 import server.database
+import server.couchdb
 
 from flask import after_this_request, request, abort
 from cStringIO import StringIO as IO
 
+
+def get_integer_parameter(query_parameter, default=None):
+    param = request.args.get(query_parameter)
+    try:
+        return int(param) if param is not None else default
+    except ValueError:
+        abort(400)
 
 def gzipped(f):
     @functools.wraps(f)
@@ -46,4 +54,7 @@ def gzipped(f):
 def validate_workspace(workspace_name):
     if not server.database.is_valid_workspace(workspace_name):
         abort(404)
+
+    if not server.couchdb.has_permissions_for(workspace_name, request.cookies):
+        abort(401)
 

@@ -176,7 +176,6 @@ class AppWindow(Gtk.ApplicationWindow):
 
         toolbar = Gtk.Toolbar()
         toolbar.set_hexpand(True)
-        toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR)
         icons = self.icons
 
         new_button_icon = Gtk.Image.new_from_file(icons + "Documentation.png")
@@ -184,20 +183,23 @@ class AppWindow(Gtk.ApplicationWindow):
         preferences_icon = Gtk.Image.new_from_file(icons + "config.png")
         toggle_log_icon = Gtk.Image.new_from_file(icons + "debug.png")
         open_report_icon = Gtk.Image.new_from_file(icons + "FolderSteel-20.png")
-        go_to_web_ui_icon = Gtk.Image.new_from_file(icons + "TreeOffRoot-20.png")
+        go_to_web_ui_icon = Gtk.Image.new_from_file(icons + "visualize.png")
 
         new_terminal_button = Gtk.ToolButton.new(new_terminal_icon, None)
         new_terminal_button.set_tooltip_text("Create a new tab")
+        new_terminal_button.set_label("New tab")
         new_terminal_button.set_action_name('app.new_terminal')
         toolbar.insert(new_terminal_button, 0)
 
         new_button = Gtk.ToolButton.new(new_button_icon, None)
         new_button.set_tooltip_text("Create a new workspace")
+        new_button.set_label("New Workspace")
         toolbar.insert(new_button, 1)
         new_button.set_action_name('app.new')
 
         preferences_button = Gtk.ToolButton.new(preferences_icon, None)
         preferences_button.set_tooltip_text("Preferences")
+        preferences_button.set_label("Preferences")
         toolbar.insert(preferences_button, 2)
         preferences_button.set_action_name('app.preferences')
 
@@ -205,19 +207,22 @@ class AppWindow(Gtk.ApplicationWindow):
         toggle_log_button.set_icon_widget(toggle_log_icon)
         toggle_log_button.set_active(True)  # log enabled by default
         toggle_log_button.set_tooltip_text("Toggle log console")
+        toggle_log_button.set_label("Toggle log")
         toggle_log_button.connect("clicked", self.toggle_log)
         toolbar.insert(toggle_log_button, 3)
 
-        space = Gtk.ToolItem()
-        space.set_expand(True)
-        toolbar.insert(space, 4)
-
         go_to_web_ui_button = Gtk.ToolButton.new(go_to_web_ui_icon, None)
         go_to_web_ui_button.set_tooltip_text("Go to Faraday Web")
+        go_to_web_ui_button.set_label("Faraday Web")
         go_to_web_ui_button.set_action_name("app.go_to_web_ui")
-        toolbar.insert(go_to_web_ui_button, 5)
+        toolbar.insert(go_to_web_ui_button, 4)
+
+        space = Gtk.ToolItem()
+        space.set_expand(True)
+        toolbar.insert(space, 5)
 
         open_report_button = Gtk.ToolButton.new(open_report_icon, None)
+        open_report_button.set_label("Import report")
         open_report_button.set_tooltip_text("Import report")
         open_report_button.set_action_name('app.open_report')
         toolbar.insert(open_report_button, 6)

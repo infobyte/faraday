@@ -463,24 +463,25 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     ##########################################################################
     # NOTE: uninteresting part below. do not touch unless you have a very    #
-    # good reason, or you wan't to connect a new button on the toolbar,      #
+    # good reason, or you want to connect a new button on the toolbar,       #
     # or, maybe most probably, you wanna register a new signal on            #
     # postEvent().                                                           #
     # Remember! -- even the best advice must sometimes not be heeded.        #
     ##########################################################################
 
-    def postEvent(self, receiver, event):
-        """Handles the events from gui/customevents.
+    def postEvent(self, _, event):
+        """Handles the events from gui/customevents. The second
+        argument is the 'receiver', but as this was made for QT3 it is now
+        deprecated and we must manually set the receiver until the
+        events module is updated.
 
         DO NOT, AND I REPEAT, DO NOT REDRAW *ANYTHING* FROM THE GUI
         FROM HERE. If you must do it, you should to it sing Glib.idle_add,
         a misterious function with outdated documentation. Good luck."""
 
         type_ = event.type()
-        if receiver is None:
-            receiver = self.window
 
-        elif type_ == 3131:  # new log event
+        if type_ == 3131:  # new log event
             GObject.idle_add(self.console_log.customEvent, event.text)
 
         elif type_ == 3141:  # new conflict event
@@ -580,41 +581,21 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         self.notificationsModel = Gtk.ListStore(str)
 
-        action = Gio.SimpleAction.new("about", None)
-        action.connect("activate", self.on_about)
-        self.add_action(action)
+        action_to_method = {"about" : self.on_about,
+                            "help" : self.on_help,
+                            "quit" : self.on_quit,
+                            "preferences" : self.on_preferences,
+                            "pluginOptions" : self.on_plugin_options,
+                            "new" : self.on_new_button,
+                            "new_terminal" : self.on_new_terminal_button,
+                            "open_report" : self.on_open_report_button,
+                            "go_to_web_ui" : self.on_click_go_to_web_ui_button
+                            }
 
-        action = Gio.SimpleAction.new("help", None)
-        action.connect("activate", self.on_help)
-        self.add_action(action)
-
-        action = Gio.SimpleAction.new("quit", None)
-        action.connect("activate", self.on_quit)
-        self.add_action(action)
-
-        action = Gio.SimpleAction.new("preferences", None)
-        action.connect("activate", self.on_preferences)
-        self.add_action(action)
-
-        action = Gio.SimpleAction.new("pluginOptions", None)
-        action.connect("activate", self.on_plugin_options)
-        self.add_action(action)
-
-        action = Gio.SimpleAction.new("new", None)
-        action.connect("activate", self.on_new_button)
-        self.add_action(action)
-
-        action = Gio.SimpleAction.new("new_terminal")  # new terminal = new tab
-        action.connect("activate", self.on_new_terminal_button)
-        self.add_action(action)
-
-        action = Gio.SimpleAction.new("open_report")
-        action.connect("activate", self.on_open_report_button)
-        self.add_action(action)
-
-        action = Gio.SimpleAction.new("go_to_web_ui")
-        action.connect("activate", self.on_click_go_to_web_ui_button)
-        self.add_action(action)
+        for action, method in action_to_method.items():
+            gio_action = Gio.SimpleAction.new(action, None)
+            gio_action.connect("activate", method)
+            self.add_action(gio_action)
 
         dirname = os.path.dirname(os.path.abspath(__file__))
         builder = Gtk.Builder.new_from_file(dirname + '/menubar.xml')
@@ -805,4 +786,3 @@ class GuiApp(Gtk.Application, FaradayUi):
         ws_name = self.workspace_manager.getActiveWorkspace().name
         ws_url = couch_url + "/reports/_design/reports/index.html#/dashboard/ws/" + ws_name
         webbrowser.open(ws_url, new=2)
-

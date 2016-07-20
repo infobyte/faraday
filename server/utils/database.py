@@ -5,7 +5,7 @@
 import server.database
 import server.utils.logger
 
-from sqlalchemy import distinct
+from sqlalchemy import distinct, Boolean
 from sqlalchemy.sql import func, asc, desc
 from server.utils.debug import Timer
 
@@ -74,13 +74,33 @@ def apply_search_filter(query, field_to_col_map, free_text_search=None, field_fi
             if isinstance(column, basestring):
                 continue
 
+            # Prepare a SQL search term according to the columns type.
+            # As default we treat every column as an string and therefore
+            # we use 'like' to search through them.
+            if isinstance(column.type, Boolean) and attribute in field_filter:
+                field_search_term = field_filter.get(attribute).lower()
+                search_term = prepare_boolean_filter(column, field_search_term)
+                # Ignore filter for this field if the values weren't expected
+                if search_term is None:
+                    continue
+            else:
+                search_term = column.like(like_str)
+
             # Concatenate multiple search terms
             if sql_filter is None:
-                sql_filter = column.like(like_str)
+                sql_filter = search_term
             else:
-                sql_filter = sql_filter | column.like(like_str)
+                sql_filter = sql_filter | search_term
 
     return query if sql_filter is None else query.filter(sql_filter)
+
+def prepare_boolean_filter(column, search_term):
+    if search_term in ['true', '1']:
+        return column.is_(True)
+    elif search_term in ['false', '0']:
+        return column.is_(False) | column.is_(None)
+    else:
+        return None
 
 def get_count(query, count_col=None):
     """

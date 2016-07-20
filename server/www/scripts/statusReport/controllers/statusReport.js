@@ -142,6 +142,11 @@ angular.module('faradayApp')
                 }
             }
 
+            $scope.hash = window.location.hash;
+            if(window.location.hash.substring(1).indexOf('search') !== -1) {
+                $scope.hash = $scope.hash.slice(0, window.location.hash.indexOf('search') - 1);
+            }
+
             if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
                 search_obj = $scope.decodeSearch($scope.search);
                 search_exp = $scope.stringSearch(search_obj);

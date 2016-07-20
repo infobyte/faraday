@@ -24,7 +24,11 @@ angular.module('faradayApp')
             };
 
             $scope.loadData = function() {
-                vulnsManager.getVulns($scope.workspace, 0, 5, null, "date", "desc")
+                var filter = {};
+                if (dashboardSrv.props.confirmed) {
+                    filter.confirmed = true;
+                }
+                vulnsManager.getVulns($scope.workspace, 0, 5, filter, "date", "desc")
                     .then(function(res) {
                         $scope.vulns = res.vulnerabilities;
                     });

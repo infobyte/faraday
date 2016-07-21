@@ -14,11 +14,11 @@ from couchdbkit.resource import CouchdbResource
 from couchdbkit.changes import ChangesStream
 from server import config
 
+WS_BLACKLIST = ['reports']
+
 logger = server.utils.logger.get_logger(__name__)
 
 class CouchDBServer(object):
-    WS_BLACKLIST = ['reports']
-
     def __init__(self):
         self.__get_server_uri()
         self.__authenticate()
@@ -40,9 +40,7 @@ class CouchDBServer(object):
         self.__server = Server(uri=self.__couchdb_uri, resource_instance=self.__auth_resource)
 
     def list_workspaces(self):
-        def workspace_filter(ws_name):
-            return not ws_name.startswith('_') and ws_name not in CouchDBServer.WS_BLACKLIST
-        return filter(workspace_filter, self.__server.all_dbs())
+        return filter(is_usable_workspace, self.__server.all_dbs())
 
     def get_workspace_handler(self, ws_name):
         return self.__server.get_db(ws_name)
@@ -113,12 +111,28 @@ class ChangesMonitorThread(threading.Thread):
                 logger.debug(traceback.format_exc())
                 raise e
 
+def get_couchdb_url():
+    couchdb_port = config.couchdb.port if config.couchdb.protocol == 'http' else config.couchdb.ssl_port
+    couchdb_url = "%s://%s:%s" % (config.couchdb.protocol, config.couchdb.host, couchdb_port)
+    return couchdb_url
+
+def is_usable_workspace(ws_name):
+    return not ws_name.startswith('_') and ws_name not in WS_BLACKLIST
+
+def list_workspaces_as_user(cookies):
+    all_dbs_url = get_couchdb_url() + '/_all_dbs'
+    response = requests.get(all_dbs_url, verify=False, cookies=cookies)
+    if response.status_code != requests.codes.ok:
+        raise Exception("Couldn't obtain workspaces list")
+
+    workspaces = filter(lambda ws_name: is_usable_workspace(ws_name) and has_permissions_for(ws_name, cookies),\
+                        response.json())
+
+    return { 'workspaces': workspaces }
+
 def has_permissions_for(workspace_name, cookies):
     # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
-    couchdb_port = config.couchdb.port if config.couchdb.protocol == 'http' else config.couchdb.ssl_port
-    couchdb_url = "%s://%s:%s/%s" %\
-         (config.couchdb.protocol, config.couchdb.host, couchdb_port, workspace_name)
-
-    response = requests.get(couchdb_url, verify=False, cookies=cookies)
+    ws_url = get_couchdb_url() + ('/%s' % workspace_name)
+    response = requests.get(ws_url, verify=False, cookies=cookies)
     return (response.status_code == requests.codes.ok)
 

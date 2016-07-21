@@ -11,7 +11,13 @@ from server.dao.service import ServiceDAO
 from server.dao.interface import InterfaceDAO
 from server.dao.note import NoteDAO
 from server.utils.web import gzipped, validate_workspace
+from server.couchdb import list_workspaces_as_user
 
+
+@app.route('/ws', methods=['GET'])
+@gzipped
+def workspace_list():
+    return flask.jsonify(list_workspaces_as_user(flask.request.cookies))
 
 @app.route('/ws/<workspace>/summary', methods=['GET'])
 @gzipped

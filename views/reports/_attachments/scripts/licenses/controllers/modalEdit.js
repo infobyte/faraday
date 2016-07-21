@@ -4,14 +4,19 @@
 
 angular.module('faradayApp')
     .controller('licensesModalEdit',
-        ['$scope', '$modalInstance', 'licensesManager', 'license',
-        function($scope, $modalInstance, licensesManager, license) {
+        ['$scope', '$modalInstance', 'license',
+        function($scope, $modalInstance, license) {
 
-        $scope.data = {};
+        $scope.data;
+        $scope.openedStart;
+        $scope.openedEnd;
 
         init = function() {
             $scope.data = new License;
-            angular.copy(license, $scope.data);
+            $scope.data.set(license);
+
+            $scope.data.end = new Date(license.end);
+            $scope.data.start = new Date(license.start);
         };
 
         $scope.ok = function() {

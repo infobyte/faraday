@@ -10,8 +10,8 @@ angular.module('faradayApp')
             var deferred = $q.defer();
             var res = [];
             var hosts_dict = {};
-            hostsManager.getHosts(workspace).then(function(hosts) {
-                hosts.forEach(function(host) {
+            hostsManager.getHosts(workspace).then(function(resp) {
+                resp.hosts.forEach(function(host) {
                     host.hostnames = [];
                     host.services = [];
                     hosts_dict[host._id] = host;

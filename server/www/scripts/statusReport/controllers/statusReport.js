@@ -462,8 +462,8 @@ angular.module('faradayApp')
                 expression["confirmed"] = true;
                 $scope.expression = expression;
                 $cookies.put('confirmed', $scope.expression.confirmed);
-                loadVulns();
                 $scope.confirmed = true;
+                loadVulns();
             } else {
                 $scope.expression = {};
                 for(key in expression) {
@@ -474,8 +474,8 @@ angular.module('faradayApp')
                     }
                 }
                 $cookies.put('confirmed', $scope.expression.confirmed);
-                loadVulns();
                 $scope.confirmed = false;
+                loadVulns();
             }
         };
 
@@ -803,6 +803,9 @@ angular.module('faradayApp')
         };
 
         loadVulns = function() {
+            delete searchFilter.confirmed;
+            if ($scope.confirmed)
+                searchFilter.confirmed = true;
             // load all vulnerabilities
             vulnsManager.getVulns($scope.workspace,
                                   paginationOptions.page,

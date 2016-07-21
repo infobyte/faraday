@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = '0.1'
+SCHEMA_VERSION = '0.2'
 
 Base = declarative_base()
 
@@ -109,7 +109,7 @@ class Host(FaradayEntity, Base):
     default_gateway_ip = Column(String(250))
     default_gateway_mac = Column(String(250))
 
-    entity_metadata = relationship(EntityMetadata, uselist=False)
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
     interfaces = relationship('Interface')
@@ -160,7 +160,7 @@ class Interface(FaradayEntity, Base):
     ports_opened = Column(Integer)
     ports_closed = Column(Integer)
 
-    entity_metadata = relationship(EntityMetadata, uselist=False)
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
     host_id = Column(Integer, ForeignKey(Host.id), index=True)
@@ -211,7 +211,7 @@ class Service(FaradayEntity, Base):
     status = Column(String(250))
     version = Column(String(250))
 
-    entity_metadata = relationship(EntityMetadata, uselist=False)
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
     host_id = Column(Integer, ForeignKey(Host.id), index=True)
@@ -276,7 +276,7 @@ class Vulnerability(FaradayEntity, Base):
     impact_confidentiality = Column(Boolean)
     impact_integrity = Column(Boolean)
 
-    entity_metadata = relationship(EntityMetadata, uselist=False)
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
     host_id = Column(Integer, ForeignKey(Host.id), index=True)
@@ -334,7 +334,7 @@ class Note(FaradayEntity, Base):
     text = Column(Text(), nullable=False)
     description = Column(Text(), nullable=False)
 
-    entity_metadata = relationship(EntityMetadata, uselist=False)
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
     def update_from_document(self, document):

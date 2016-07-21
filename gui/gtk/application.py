@@ -300,8 +300,9 @@ class GuiApp(Gtk.Application, FaradayUi):
                                                         self.window,
                                                         self.exit_faraday)
 
-        preference_window.connect("destroy", self.exit_faraday_without_confirm)
-        preference_window.run()
+        response = preference_window.run()
+        if response == Gtk.ResponseType.DELETE_EVENT:
+            GObject.idle_add(self.exit_faraday_without_confirm)
 
     def connect_to_couch(self, couch_uri, parent=None):
         """Tries to connect to a CouchDB on a specified Couch URI.

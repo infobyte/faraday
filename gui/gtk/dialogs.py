@@ -246,7 +246,6 @@ class PluginOptionsDialog(Gtk.Window):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_modal(True)
-        self.connect("key_press_event", key_reactions)
         self.set_size_request(800, 300)
         self.plugin_manager = plugin_manager
 

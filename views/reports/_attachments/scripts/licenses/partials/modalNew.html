@@ -12,12 +12,15 @@
     </div>
     <div class="modal-body">
         <div class="form-horizontal">
-            <div class="form-group" ng-class="{'has-error': data.product === ''}">
+            <div class="form-group" ng-class="{'has-error': form.product.$touched && form.product.$invalid}">
                 <div class="col-md-6">
-                    <label for="name">Product</label>
-                    <select class="form-control" ng-model="data.product" ng-options="product for product in products">
+                    <label for="product">Product *</label>
+                    <select name="product" class="form-control" ng-model="data.product" ng-options="product for product in products" required>
                         <option value=""></option>
                     </select>
+                    <p class="has-error" ng-show="form.product.$touched && form.product.$error.required">
+                        <span class="help-block">Product name is required</span>
+                    </p>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
@@ -32,27 +35,34 @@
                     <textarea class="form-control" id="notes" placeholder="Notes" ng-model="data.notes"></textarea>
                 </div>
             </div><!-- .form-group -->
-            <div class="form-group" ng-class="{'has-error': data.start === '' || data.end === ''}">
+            <div class="form-group">
                 <div class="col-md-6 datepicker">
-                    <label for="start">Start Date</label>
-                    <p class="input-group">
-                      <input type="text" id="start" class="form-control" uib-datepicker-popup="MM/dd/yyyy" ng-model="data.start" is-open="openedStart" close-text="Close" placeholder="Start Date" />
+                    <label for="start">Start Date *</label>
+                    <p class="input-group" ng-class="{'has-error': form.start.$touched && form.start.$invalid}">
+                      <input type="text" name="start" class="form-control" uib-datepicker-popup="MM/dd/yyyy" ng-model="data.start" is-open="openedStart" close-text="Close" placeholder="Start Date" required />
                       <span class="input-group-btn">
                         <button type="button" class="btn btn-default" ng-click="open($event,true)"><i class="glyphicon glyphicon-calendar"></i></button>
                       </span>
                     </p>
+                    <p class="has-error" ng-show="form.start.$touched && form.start.$error.required">
+                        <span class="help-block">Start date is required</span>
+                    </p>
                 </div>
                 <div class="col-md-6 datepicker">
-                    <label for="end">End Date</label>
-                    <p class="input-group">
-                      <input type="text" id="end" class="form-control" uib-datepicker-popup="MM/dd/yyyy" ng-model="data.end" is-open="openedEnd" min-date="data.start" close-text="Close" placeholder="End Date" />
+                    <label for="end">End Date *</label>
+                    <p class="input-group" ng-class="{'has-error': form.end.$touched && form.end.$invalid}">
+                      <input type="text" name="end" class="form-control" uib-datepicker-popup="MM/dd/yyyy" ng-model="data.end" is-open="openedEnd" min-date="data.start" close-text="Close" placeholder="End Date" required />
                       <span class="input-group-btn">
                         <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
                       </span>
                     </p>
+                    <p class="has-error" ng-show="form.end.$touched && form.end.$error.required">
+                        <span class="help-block">End date is required</span>
+                    </p>
                 </div>
             </div><!-- .form-group -->
-        </div>
+            <p>All fields marked * are required</p>
+        </div><!-- .form-horizontal -->
     </div><!-- .modal-body -->
     <div class="modal-footer">
         <div class="modal-button">

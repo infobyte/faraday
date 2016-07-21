@@ -299,23 +299,57 @@ class Database(object):
     def teardown_context(self):
         self.session.remove()
 
-
 def setup():
+    setup_workspaces()
+    server.couchdb.start_dbs_monitor(process_db_change)
+
+def setup_workspaces():
     couchdb = server.couchdb.CouchDBServer()
+
     for ws in couchdb.list_workspaces():
-        logger.info('Setting up workspace %s' % ws)
-        workspace[ws] = WorkspaceDatabase(ws)
+        setup_workspace(ws)
+
     atexit.register(server.database.close_databases)
 
+def setup_workspace(ws_name):
+    logger.info('Setting up workspace %s' % ws_name)
+    workspace[ws_name] = WorkspaceDatabase(ws_name)
+
+def close_databases():
+    for ws in workspace.values():
+        ws.close()
+
+def process_db_change(change):
+    if change.created:
+        logger.info('Workspace %s was created' % change.db_name)
+        process_new_workspace(change.db_name)
+    elif change.deleted:
+        logger.info('Workspace %s was deleted' % change.db_name)
+        process_delete_workspace(change.db_name)
+
+def process_new_workspace(ws_name):
+    if ws_name in workspace:
+        logger.info("Workspace %s was already migrated. Ignoring change." % ws_name)
+    else:
+        setup_workspace(ws_name)
+
+def process_delete_workspace(ws_name):
+    if ws_name not in workspace:
+        logger.info("Workspace %s wasn't migrated at startup. Ignoring change." % ws_name)
+    else:
+        logger.info("Deleting workspace %s from Faraday Server" % ws_name)
+        delete_workspace(ws_name)
+
+def delete_workspace(ws_name):
+    get(ws_name).database.close()
+    get(ws_name).database.delete()
+    del workspace[ws_name]
+ 
 def teardown_context():
     """ This is called by Flask to cleanup sessions created in the context of a request """
     for ws in workspace.values():
         ws.database.teardown_context()
 
-def close_databases():
-    for ws in workspace.values():
-        ws.close()
- 
 class WorkspaceNotFound(Exception):
     def __init__(self, workspace_name):
         super(WorkspaceNotFound, self).__init__('Workspace "%s" not found' % workspace_name)

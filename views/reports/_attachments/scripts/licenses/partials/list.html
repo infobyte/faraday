@@ -68,9 +68,7 @@
                         selection-model-on-change="selectedLicenses()"
                         ng-class="{'almost-expired': almostExpired(license.end)}">
                         <td><input type="checkbox" name="{{license._id}}"/></td>
-                        <td>
-                            <a href="#/license/lid/{{license._id}}" ng-bind="license.product"></a>
-                        </td>
+                        <td>{{license.product}}</td>
                         <td>{{license.lictype}}</td>
                         <td>{{license.notes}}</td>
                         <td>{{license.start | date:'MM/dd/yyyy'}}</td>

@@ -2,6 +2,8 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
+import json
+
 from server.dao.base import FaradayDAO
 from server.utils.database import paginate, sort_results, apply_search_filter, get_count
 
@@ -52,7 +54,7 @@ class VulnerabilityDAO(FaradayDAO):
 
         response = {
             'vulnerabilities': vuln_list,
-            'count': count 
+            'count': count
         }
 
         return response
@@ -74,7 +76,7 @@ class VulnerabilityDAO(FaradayDAO):
         # IMPORTANT: OUTER JOINS on those tables is IMPERATIVE. Changing them could result in loss of
         # data. For example, on vulnerabilities not associated with any service and instead to its host
         # directly.
-        query = self._session.query(vuln_bundle, 
+        query = self._session.query(vuln_bundle,
                                     service_bundle,
                                     host_bundle,
                                     func.group_concat(Interface.hostnames))\

@@ -38,7 +38,7 @@
                                     <td><a href="#/{{hash}}dashboard/ws/{{ws.name}}"><span ng-class-even="'label label-unclassified'" ng-class-odd="'label label-high'">{{ws.name}}</span></td>
                                     <td ng-bind="ws.duration.start || '-' | date:'MM/dd/yyyy'"></td>
                                     <td ng-bind="ws.duration.end || '-' | date:'MM/dd/yyyy'"></td>
-                                    <td><a href="#/status/ws/{{ws.name}}">{{objects[ws.name]['total vulns']}}</a></td>
+                                    <td><a href="#/status/ws/{{ws.name}}">{{objects[ws.name]['total_vulns']}}</a></td>
                                     <td><a href="#/hosts/ws/{{ws.name}}">{{objects[ws.name]['hosts']}}</a></td>
                                     <td ng-bind="objects[ws.name]['services']"></td>
                                 </tr>

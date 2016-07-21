@@ -45,7 +45,7 @@ angular.module('faradayApp')
                     for(var workspace in os) {
                         if(os.hasOwnProperty(workspace)) {
                             $scope.objects[workspace] = {
-                                "total vulns": "-",
+                                "total_vulns": "-",
                                 "hosts": "-",
                                 "services": "-"
                             };
@@ -55,6 +55,7 @@ angular.module('faradayApp')
                                         $scope.objects[workspace][stat] = os[workspace][stat];
                                 }
                             };
+                            console.log($scope.objects[workspace]);
                         }
                     }
                 });

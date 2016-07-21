@@ -2,12 +2,14 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
+import json
+
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = '0.2'
+SCHEMA_VERSION = '0.3'
 
 Base = declarative_base()
 
@@ -270,6 +272,7 @@ class Vulnerability(FaradayEntity, Base):
     refs = Column(String(250))
     resolution = Column(String(250))
     severity = Column(String(250))
+    attachments = Column(Text(), nullable=True)
 
     impact_accountability = Column(Boolean)
     impact_availability = Column(Boolean)
@@ -295,6 +298,7 @@ class Vulnerability(FaradayEntity, Base):
         self.refs=u','.join(document.get('refs'))
         self.resolution=document.get('resolution')
         self.severity=document.get('severity')
+        self.attachments = json.dumps(document.get('_attachments', {}))
         self.impact_accountability=document.get('impact', {}).get('accountability')
         self.impact_availability=document.get('impact', {}).get('availability')
         self.impact_confidentiality=document.get('impact', {}).get('confidentiality')

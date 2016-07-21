@@ -14,7 +14,7 @@ from couchdbkit.resource import CouchdbResource
 from couchdbkit.changes import ChangesStream
 from server import config
 
-WS_BLACKLIST = ['reports']
+WS_BLACKLIST = ['reports', 'cwe']
 
 logger = server.utils.logger.get_logger(__name__)
 
@@ -132,7 +132,7 @@ def list_workspaces_as_user(cookies):
 
 def has_permissions_for(workspace_name, cookies):
     # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
-    ws_url = get_couchdb_url() + ('/%s' % workspace_name)
+    ws_url = get_couchdb_url() + ('/%s/%s' % (workspace_name, workspace_name))
     response = requests.get(ws_url, verify=False, cookies=cookies)
     return (response.status_code == requests.codes.ok)
 

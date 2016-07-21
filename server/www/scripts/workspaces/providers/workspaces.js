@@ -7,35 +7,10 @@ angular.module('faradayApp')
         var workspacesFact = {};
 
         workspacesFact.list = function() {
-            var url = BASEURL + "_all_dbs",
+            var url = BASEURL + "_api/ws",
             deferred = $q.defer();
-            deferred.resolve(
-                $http.get(url).
-                    then(filterReservedWorkspaces, errorHandler).
-                    then(filterInaccesibleWorkspaces, errorHandler)
-            );
-            return deferred.promise;
-        };
-
-        filterReservedWorkspaces = function(wss) {
-            var deferred = $q.defer();
-            deferred.resolve(wss.data.filter(function(ws) {
-                return ws.search(/^_/) < 0 && ws.search("^cwe$") < 0 && ws.search("^reports$") < 0;
-            }));
-            return deferred.promise;
-        };
-
-        filterInaccesibleWorkspaces = function(wss) {
-            var workspaces = [],
-            deferred = $q.defer();
-            wss.forEach(function(ws) {
-                workspaces.push($http.get(BASEURL + ws + "/" + ws).then(returnStatus, returnStatus));
-            });
-            $q.all(workspaces).then(function(resp) {
-                deferred.resolve(wss.filter(function(ws, index) {
-                    return resp[index] == 200;
-                }));
-            });
+            $http.get(url).
+                then(function(response) { deferred.resolve(response.data.workspaces) }, errorHandler);
             return deferred.promise;
         };
 

@@ -49,9 +49,12 @@ angular.module('faradayApp')
                                 "hosts": "-",
                                 "services": "-"
                             };
-                            os[workspace].forEach(function(o) {
-                                $scope.objects[workspace][o.key] = o.value;
-                            });
+                            for (var stat in os[workspace]) {
+                                if (os[workspace].hasOwnProperty(stat)) {
+                                    if ($scope.objects[workspace].hasOwnProperty(stat))
+                                        $scope.objects[workspace][stat] = os[workspace][stat];
+                                }
+                            };
                         }
                     }
                 });

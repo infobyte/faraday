@@ -1,0 +1,6 @@
+<div ng-if="row.entity._id != undefined">
+    <div class="ui-grid-cell-contents center">
+        <p ng-repeat="(key, value) in COL_FIELD" class='pos-middle crop-text' ng-if='value === true'>{{key}}</p>
+    </div>
+</div>
+<div ng-if="row.groupHeader && col.grouping.groupPriority !== undefined" class="ui-grid-cell-contents white-space">{{COL_FIELD.split('(')[0] !== ' ' ? COL_FIELD : 'EMPTY' + COL_FIELD}}</div>

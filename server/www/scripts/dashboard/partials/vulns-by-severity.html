@@ -1,0 +1,25 @@
+<article id='vulns' class='panel panel-default' ng-controller="vulnsBySeverityCtrl">
+    <header>
+        <h2>
+            <a href="../././reports/index.html#/status/ws/{{workspace}}" class="status-report">Vulnerabilities</a>
+            <span class="glyphicon glyphicon-info-sign" uib-tooltip="Vulnerabilities count arranged by severity"></span>
+        </h2>
+    </header>
+    <div ng-if="vulns == undefined || vulns.length == 0" class="alert alert-info alert-dismissible no-margin-bottom">
+        <button type="button" class="close" data-dismiss="alert">
+            <span aria-hidden="true">&times;</span>
+            <span class="sr-only">Close</span>
+        </button>
+        <p>No vulnerabilities found yet.</p>
+    </div>
+    <div class='main box'>
+        <div ng-repeat="(severity, count) in vulns" class="columna unsexto cursor">
+            <article class="dato2 background-{{severity}}" ng-click="navigate('/status/ws/'+workspace+'/search/severity='+severity)">
+                <section>
+                    <div class="nro text-{{severity}}">{{count}}</div>
+                    <div class="txt text-{{severity}}">{{severity}}</div>
+                </section>
+            </article>
+        </div>
+    </div>
+</article>

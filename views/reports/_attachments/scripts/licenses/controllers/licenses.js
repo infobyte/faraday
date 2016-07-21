@@ -8,6 +8,7 @@ angular.module('faradayApp')
         function($scope, $cookies, $filter, $location, $q, $route, $routeParams, $uibModal, commonsFact, licensesManager) {
 
             $scope.currentPage;
+            $scope.DBExists = false;
             $scope.expression;
             $scope.licenses = [];
             $scope.loaded_licenses = false;
@@ -48,17 +49,37 @@ angular.module('faradayApp')
                 $scope.searchParams = commonsFact.stringSearch($scope.expression);
             }
 
-            licensesManager.get()
-                .then(function() {
-                    $scope.licenses = licensesManager.licenses;
-                    $scope.loaded_licenses = true;
+            licensesManager.DBExists()
+                .then(function(exists) {
+                    if(!exists) {
+                        $uibModal.open(config = {
+                            templateUrl: 'scripts/licenses/partials/modalCreateDB.html',
+                            controller: 'licensesModalCreateDB',
+                            size: 'lg'
+                        }).result.then(function() {
+                            $scope.DBExists = true;
+                        }, function(message) {
+                            // The user didn't create the DB, do nothing!
+                        });
+                    } else {
+                        $scope.DBExists = true;
+                        licensesManager.get()
+                            .then(function() {
+                                $scope.licenses = licensesManager.licenses;
+                                $scope.loaded_licenses = true;
 
-                    $scope.expiration_month = $scope.isExpirationMonth($scope.licenses);
+                                $scope.expiration_month = $scope.isExpirationMonth($scope.licenses);
+                            });
+                    }
+                }, function(message) {
+                    commonsFact.errorDialog(message);
                 });
 
             $scope.$watch(function() {
                 return licensesManager.licenses;
             }, function(newVal, oldVal) {
+                $scope.licenses = licensesManager.licenses;
+                $scope.loaded_licenses = true;
                 $scope.expiration_month = $scope.isExpirationMonth(newVal);
             }, true);
         };
@@ -126,7 +147,7 @@ angular.module('faradayApp')
                             return 'No licenses were selected to delete';
                         }
                     }
-                })
+                });
             } else {
                 var message = "A license will be deleted";
                 if(selected.length > 1) {

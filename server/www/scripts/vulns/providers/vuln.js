@@ -53,13 +53,17 @@ angular.module('faradayApp')
             }
         };
 
+        var public_properties: [
+            '_attachments', 'confirmed', 'data', 'desc', 'easeofresolution', 
+            'impact', 'name', 'owned', 'refs', 'resolution', 'severity',
+        ];
+
+        var saved_properties = public_properties.concat(
+            ['_id', '_rev', 'metadata', 'obj_id', 'owner', 'parent', 'type']);
+
         Vuln.prototype = {
-            // TODO(mrocha): Added properties should not be saved into a CouchDB document
-            public_properties: [
-                '_attachments', 'confirmed', 'data', 'desc', 'easeofresolution', 
-                'impact', 'name', 'owned', 'refs', 'resolution', 'severity',
-                'target', 'hostnames', 'service'
-            ],
+            public_properties: public_properties,
+            saved_properties: saved_properties,
             set: function(ws, data) {
                 var self = this;
 
@@ -72,7 +76,10 @@ angular.module('faradayApp')
                     self._id = data._id;
                     self.obj_id = data.obj_id;
                     if(data._rev !== undefined) self._rev = data._rev;
-                    if(data.metadata !== undefined) self.metadata = data.metadata; 
+                    if(data.metadata !== undefined) self.metadata = data.metadata;
+                    if(data.target !== undefined) self.target = data.target;
+                    if(data.hostnames !== undefined) self.hostnames = data.hostnames;
+                    if(data.service !== undefined) self.service = data.service;
                 }
 
                 if(data.owner !== undefined) self.owner = data.owner;
@@ -124,7 +131,7 @@ angular.module('faradayApp')
                     angular.extend(vuln._attachments, stubs);
                     attachmentsFact.loadAttachments(files).then(function(atts) {
                         angular.extend(vuln._attachments, atts);
-                        $http.put(url, vuln)
+                        self._save(vuln)
                             .success(function(response) {
                                 self.set(self.ws, vuln);
                                 self._rev = response.rev;
@@ -135,7 +142,7 @@ angular.module('faradayApp')
                             });
                     });
                 } else {
-                    $http.put(url, vuln)
+                    self._save(vuln)
                         .success(function(response) {
                             self.set(self.ws, vuln);
                             self._rev = response.rev;
@@ -164,6 +171,7 @@ angular.module('faradayApp')
                 vuln.owner = self.owner;
                 vuln.parent = self.parent;
                 vuln.type = self.type;
+                vuln.ws = self.ws;
 
                 self.public_properties.forEach(function(prop) {
                     if(prop !== "_attachments") vuln[prop] = self[prop];
@@ -189,7 +197,7 @@ angular.module('faradayApp')
                 url = BASEURL + self.ws + "/" + self._id;
 
                 self.populate().then(function(resp) {
-                    $http.put(url, resp)
+                    self._save(resp)
                         .success(function(data) {
                             self._rev = data.rev;
                             deferred.resolve(self);
@@ -202,6 +210,16 @@ angular.module('faradayApp')
                 });
 
                 return deferred.promise;
+            },
+            _save: function(data) {
+                var doc = {};
+                var url = BASEURL + this.ws + "/" + this._id;
+                for (property in data) {
+                    if (this.saved_properties.indexOf(property) != -1) {
+                        doc[property] = data[property];
+                    }
+                };
+                return $http.put(url, doc);
             }
         };
 

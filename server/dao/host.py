@@ -20,7 +20,7 @@ class HostDAO(FaradayDAO):
         "services": ["open_services_count"],
         "vulns":    ["vuln_count"],
         "os":       [Host.os],
-        "owned":    [],
+        "owned":    [Host.owned],
     }
     STRICT_FILTERING = ["service"]
 
@@ -37,7 +37,7 @@ class HostDAO(FaradayDAO):
         return result
 
     def __query_database(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, host_filter={}):
-        host_bundle = Bundle('host', Host.name, Host.os, Host.description, EntityMetadata.couchdb_id,\
+        host_bundle = Bundle('host', Host.name, Host.os, Host.description, Host.owned, EntityMetadata.couchdb_id,\
             EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
             EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
             EntityMetadata.update_controller_action,\
@@ -72,7 +72,7 @@ class HostDAO(FaradayDAO):
                 '_rev': host.revision,
                 'name': host.name,
                 'os': host.os,
-                'owned': '',
+                'owned': host.owned,
                 'owner': False,
                 'description': host.description,
                 'default_gateway': None,

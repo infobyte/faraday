@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = '0.4'
+SCHEMA_VERSION = '0.4.1'
 
 Base = declarative_base()
 
@@ -108,6 +108,8 @@ class Host(FaradayEntity, Base):
     description = Column(Text(), nullable=False)
     os = Column(String(250), nullable=False)
 
+    owned = Column(Boolean)
+
     default_gateway_ip = Column(String(250))
     default_gateway_mac = Column(String(250))
 
@@ -126,6 +128,7 @@ class Host(FaradayEntity, Base):
         self.os=document.get('os')
         self.default_gateway_ip=default_gateway[0]
         self.default_gateway_mac=default_gateway[1]
+        self.owned=document.get('owned', False)
 
     def __get_default_gateway(self, document):
         default_gateway = document.get('default_gateway', None)
@@ -315,7 +318,7 @@ class Vulnerability(FaradayEntity, Base):
         self.impact_confidentiality=document.get('impact', {}).get('confidentiality')
         self.impact_integrity=document.get('impact', {}).get('integrity')
         self.method=document.get('method')
-        self.params=document.get('params')
+        self.params=str(document.get('params', ''))
         self.path=document.get('path')
         self.pname=document.get('pname')
         self.query=document.get('query')

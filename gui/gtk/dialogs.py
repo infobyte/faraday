@@ -182,9 +182,6 @@ class NewWorkspaceDialog(Gtk.Window):
             creation_ok = self.create_ws_callback(ws_name, ws_desc)
             if creation_ok:
                 self.sidebar.add_workspace(ws_name)
-            else:
-                errorDialog(self, "Something went wrong when creating "
-                                  "the new workspace.")
             self.destroy()
         else:
             errorDialog(self, "Invalid workspace name",
@@ -211,7 +208,7 @@ class ForceNewWorkspaceDialog(NewWorkspaceDialog):
         self.set_deletable(False)
         self.set_keep_above(True)
         self.disconnect_by_func(key_reactions)
-        self.destroy("destroy", self._on_click_ok)
+        self.connect("destroy", self.on_click_ok)
         self.connect("key_press_event", strict_key_reactions)
         self.exit_faraday = exit_faraday_callback
         explanation_message = self.create_explanation_message()

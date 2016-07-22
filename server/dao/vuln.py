@@ -25,7 +25,7 @@ class VulnerabilityDAO(FaradayDAO):
         "desc":             [Vulnerability.description],
         "resolution":       [Vulnerability.resolution],
         "data":             [Vulnerability.data],
-        "owner":            [],
+        "owner":            [EntityMetadata.owner],
         "easeofresolution": [Vulnerability.easeofresolution],
         "type":             [EntityMetadata.document_type],
         "status":           [],
@@ -169,13 +169,16 @@ class VulnerabilityDAO(FaradayDAO):
             return None
 
         col = VulnerabilityDAO.COLUMNS_MAP.get(group_by)[0]
-        query = self._session.query(col, func.count()).group_by(col)
+        vuln_bundle = Bundle('vuln', Vulnerability.id, col)
+        query = self._session.query(vuln_bundle, func.count())\
+                             .group_by(col)\
+                             .outerjoin(EntityMetadata, EntityMetadata.id == Vulnerability.entity_metadata_id)
+
         query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter)
 
         with Timer('query.group_count'):
             res = query.all()
-
-        result_count['groups'] = [ { group_by: value, 'count': count } for value, count in res ]
+        result_count['groups'] = [ { group_by: value[1], 'count': count } for value, count in res ]
 
         return result_count
 

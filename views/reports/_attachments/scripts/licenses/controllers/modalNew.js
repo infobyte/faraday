@@ -8,12 +8,24 @@ angular.module('faradayApp')
         function($scope, $modalInstance, licensesManager) {
 
         $scope.data;
+        $scope.other = false;
+        $scope.other_product;
         $scope.products;
 
         init = function() {
             $scope.data = new License;
 
             $scope.products = licensesManager.products;
+
+            $scope.$watch(function() {
+                return $scope.data.product;
+            }, function(newVal, oldVal) {
+                if(newVal == "Other") {
+                    $scope.other = true;
+                } else if(oldVal == "Other") {
+                    $scope.other = false;
+                }
+            }, true);
         };
 
         $scope.open = function($event, isStart) {
@@ -24,6 +36,10 @@ angular.module('faradayApp')
         };
 
         $scope.ok = function() {
+            if($scope.other) {
+                $scope.data.product = $scope.other_product;
+            }
+
             $modalInstance.close($scope.data);
         };
 

@@ -5,7 +5,7 @@
 <form name="form" novalidate>
     <div class="modal-header">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
+            <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid || (data.product == 'Other' && other_product == undefined)">OK</button>
             <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
         </div>
         <h3 class="modal-title">New license</h3>
@@ -18,10 +18,16 @@
                     <select name="product" class="form-control" ng-model="data.product" ng-options="product for product in products" required>
                         <option value=""></option>
                     </select>
-                    <p class="has-error" ng-show="form.product.$touched && form.product.$error.required">
+                </div><!-- .col-md-6 -->
+                <div class="col-md-3" ng-show="other" ng-class="{'has-error': data.product == 'Other' && other_product == undefined}">
+                    <label for="other-product">Custom product</label>
+                    <input type="text" name="other-product" class="form-control" ng-model="other_product" placeholder="Custom product name" />
+                </div><!-- .col-md-3 -->
+                <div class="col-md-12">
+                    <p class="has-error" ng-show="(form.product.$touched && form.product.$error.required) || (data.product == 'Other' && other_product == undefined)">
                         <span class="help-block">Product name is required</span>
                     </p>
-                </div>
+                </div><!-- .col-md-12 -->
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
@@ -66,7 +72,7 @@
     </div><!-- .modal-body -->
     <div class="modal-footer">
         <div class="modal-button">
-            <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
+            <button class="btn btn-success" ng-disabled="form.$invalid || (data.product == 'Other' && other_product == undefined)" ng-click="ok()">OK</button>
             <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
         </div>
     </div>

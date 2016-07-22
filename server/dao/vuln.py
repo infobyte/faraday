@@ -26,22 +26,23 @@ class VulnerabilityDAO(FaradayDAO):
         "resolution":       [Vulnerability.resolution],
         "data":             [Vulnerability.data],
         "owner":            [EntityMetadata.owner],
+        "owned":            [Vulnerability.owned],
         "easeofresolution": [Vulnerability.easeofresolution],
         "type":             [EntityMetadata.document_type],
         "status":           [],
-        "website":          [],
-        "path":             [],
-        "request":          [],
+        "website":          [Vulnerability.website],
+        "path":             [Vulnerability.path],
+        "request":          [Vulnerability.request],
         "refs":             [Vulnerability.refs],
         "tags":             [],
         "evidence":         [],
         "hostnames":        [Interface.hostnames],
         "impact":           [],
-        "method":           [],
-        "params":           [],
-        "pname":            [],
-        "query":            [],
-        "response":         [],
+        "method":           [Vulnerability.method],
+        "params":           [Vulnerability.params],
+        "pname":            [Vulnerability.pname],
+        "query":            [Vulnerability.query],
+        "response":         [Vulnerability.response],
         "web":              [],
         "issuetracker":     []
     }
@@ -66,10 +67,12 @@ class VulnerabilityDAO(FaradayDAO):
         vuln_bundle = Bundle('vuln', Vulnerability.name.label('v_name'), Vulnerability.confirmed, Vulnerability.data,\
             Vulnerability.description, Vulnerability.easeofresolution, Vulnerability.impact_accountability,\
             Vulnerability.impact_availability, Vulnerability.impact_confidentiality, Vulnerability.impact_integrity,\
-            Vulnerability.refs, Vulnerability.resolution, Vulnerability.severity, EntityMetadata.couchdb_id,\
-            EntityMetadata.revision, EntityMetadata.create_time, EntityMetadata.creator, EntityMetadata.owner,\
-            EntityMetadata.update_action, EntityMetadata.update_controller_action, EntityMetadata.update_time,\
-            EntityMetadata.update_user, EntityMetadata.document_type, Vulnerability.attachments)
+            Vulnerability.refs, Vulnerability.resolution, Vulnerability.severity, Vulnerability.owned,\
+            Vulnerability.website, Vulnerability.path, Vulnerability.request, Vulnerability.response,\
+            Vulnerability.method, Vulnerability.params, Vulnerability.pname, Vulnerability.query,\
+            EntityMetadata.couchdb_id, EntityMetadata.revision, EntityMetadata.create_time, EntityMetadata.creator,\
+            EntityMetadata.owner, EntityMetadata.update_action, EntityMetadata.update_controller_action,\
+            EntityMetadata.update_time, EntityMetadata.update_user, EntityMetadata.document_type, Vulnerability.attachments)
         service_bundle = Bundle('service', Service.name.label('s_name'), Service.ports, Service.protocol)
         host_bundle = Bundle('host', Host.name)
 
@@ -134,10 +137,19 @@ class VulnerabilityDAO(FaradayDAO):
                 '_attachments': json.loads(vuln.attachments),
                 'name': vuln.v_name,
                 'obj_id': get_own_id(vuln.couchdb_id),
-                'owned': False,
+                'owned': vuln.owned,
                 'owner': vuln.owner,
                 'parent': get_parent_id(vuln.couchdb_id),
-                'refs': vuln.refs.split(',') if vuln.refs else [],
+                'refs': json.loads(vuln.refs),
+                'status': '',
+                'website': vuln.website,
+                'path': vuln.path,
+                'request': vuln.request,
+                'response': vuln.response,
+                'method': vuln.method,
+                'params': vuln.params,
+                'pname': vuln.pname,
+                'query': vuln.query,
                 'resolution': vuln.resolution,
                 'severity': vuln.severity,
                 'tags': [],

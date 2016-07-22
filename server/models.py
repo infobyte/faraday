@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = '0.3'
+SCHEMA_VERSION = '0.4'
 
 Base = declarative_base()
 
@@ -263,21 +263,31 @@ class Vulnerability(FaradayEntity, Base):
     __tablename__ = 'vulnerability'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False)
-    description = Column(String(250), nullable=False)
+    description = Column(Text(), nullable=False)
 
     confirmed = Column(Boolean)
     vuln_type = Column(String(250))
-    data = Column(String(250))
-    easeofresolution = Column(String(250))
-    refs = Column(String(250))
-    resolution = Column(String(250))
-    severity = Column(String(250))
+    data = Column(Text())
+    easeofresolution = Column(String(50))
+    refs = Column(Text())
+    resolution = Column(Text())
+    severity = Column(String(50))
+    owned = Column(Boolean)
     attachments = Column(Text(), nullable=True)
 
     impact_accountability = Column(Boolean)
     impact_availability = Column(Boolean)
     impact_confidentiality = Column(Boolean)
     impact_integrity = Column(Boolean)
+
+    method = Column(String(50))
+    params = Column(String(500))
+    path = Column(String(500))
+    pname = Column(String(250))
+    query = Column(Text())
+    request = Column(Text())
+    response = Column(Text())
+    website = Column(String(250))
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
@@ -295,14 +305,23 @@ class Vulnerability(FaradayEntity, Base):
         self.vuln_type=document.get('type')
         self.data=document.get('data')
         self.easeofresolution=document.get('easeofresolution')
-        self.refs=u','.join(document.get('refs'))
+        self.refs=json.dumps(document.get('refs', []))
         self.resolution=document.get('resolution')
         self.severity=document.get('severity')
+        self.owned=document.get('owned', False)
         self.attachments = json.dumps(document.get('_attachments', {}))
         self.impact_accountability=document.get('impact', {}).get('accountability')
         self.impact_availability=document.get('impact', {}).get('availability')
         self.impact_confidentiality=document.get('impact', {}).get('confidentiality')
         self.impact_integrity=document.get('impact', {}).get('integrity')
+        self.method=document.get('method')
+        self.params=document.get('params')
+        self.path=document.get('path')
+        self.pname=document.get('pname')
+        self.query=document.get('query')
+        self.request=document.get('request')
+        self.response=document.get('response')
+        self.website=document.get('website')
 
     def add_relationships_from_dict(self, entities):
         couchdb_id = self.entity_metadata.couchdb_id

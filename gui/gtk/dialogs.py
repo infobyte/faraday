@@ -7,7 +7,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import gi
-import re
 import webbrowser
 
 gi.require_version('Gtk', '3.0')
@@ -177,13 +176,10 @@ class NewWorkspaceDialog(Gtk.Window):
         """Check if the name provided for the WS is valid. If so,
         create it and add it to the sidebar. If not, show error.
         """
-        letters_or_numbers = r"^[a-z][a-z0-9\_\$()\+\-\/]*$"
-        res = re.match(letters_or_numbers, str(self.name_entry.get_text()))
-        if res:
-            ws_name = str(self.name_entry.get_text())
-            ws_desc = str(self.description_entry.get_text())
-            creation_ok = self.create_ws_callback(ws_name,
-                                                  ws_desc)
+        ws_name = self.name_entry.get_text()
+        if self.workspace_manager.isWorkspaceNameValid(ws_name):
+            ws_desc = self.description_entry.get_text()
+            creation_ok = self.create_ws_callback(ws_name, ws_desc)
             if creation_ok:
                 self.sidebar.add_workspace(ws_name)
             else:

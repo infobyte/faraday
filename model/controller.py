@@ -933,7 +933,7 @@ class ModelController(threading.Thread):
             hosts = model.hosts.Host.class_signature
             count = self.mappers_manager.getMapper(hosts).getCount()
         except:
-            getLogger(self).warning("Couldn't get host count: assuming it is zero.")
+            getLogger(self).debug("Couldn't get host count: assuming it is zero.")
             count = 0
         return count
 
@@ -944,7 +944,7 @@ class ModelController(threading.Thread):
             services = model.hosts.Service.class_signature
             count = self.mappers_manager.getMapper(services).getCount()
         except:
-            getLogger(self).warning("Couldn't get services count: assuming it is zero.")
+            getLogger(self).debug("Couldn't get services count: assuming it is zero.")
             count = 0
         return count
 
@@ -957,7 +957,6 @@ class ModelController(threading.Thread):
             count = (self.mappers_manager.getMapper(vulns).getCount() +
                      self.mappers_manager.getMapper(web_vulns).getCount())
         except:
-            getLogger(self).warning("Couldn't get vulnerabilities count: assuming it is zero.")
+            getLogger(self).debug("Couldn't get vulnerabilities count: assuming it is zero.")
             count = 0
         return count
-

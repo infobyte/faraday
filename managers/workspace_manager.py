@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import restkit
+import re
 
 from model.workspace import Workspace
 from persistence.persistence_managers import DBTYPE
@@ -14,6 +15,7 @@ from persistence.persistence_managers import DBTYPE
 from model.guiapi import notification_center
 
 from config.configuration import getInstanceConfiguration
+from config.globals import CONST_BLACKDBS
 CONF = getInstanceConfiguration()
 
 
@@ -139,3 +141,12 @@ class WorkspaceManager(object):
     def getAvailableWorkspaceTypes(self):
         return [self._dbTypeToNamedType(dbtype) for
                 dbtype in self.dbManager.getAvailableDBs()]
+
+    def isWorkspaceNameValid(self, ws_name):
+        """Returns True if the ws_name is valid, else if it's not"""
+        letters_or_numbers = r"^[a-z][a-z0-9\_\$()\+\-\/]*$"
+        regex_name = re.match(letters_or_numbers, ws_name)
+        if regex_name and regex_name.string not in CONST_BLACKDBS:
+            return True
+        else:
+            return False

@@ -261,13 +261,10 @@ class HostsSidebar(Gtk.Widget):
         host_id = self.current_model[tree_iter][0]
         self.open_dialog_callback(host_id)
 
+    @scrollable(width=160)
     def get_box(self):
         """Returns the box to be displayed in the appwindow"""
-        box = Gtk.Box()
-        scrolled_view = GtkScrolledWindow(None, None)
-        scrolled_view.add(self.view)
-        box.pack_start(scrolled_view, True, True, 0)
-        return box
+        return self.view
 
 
 class WorkspaceSidebar(Gtk.Widget):

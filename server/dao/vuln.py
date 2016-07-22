@@ -135,7 +135,7 @@ class VulnerabilityDAO(FaradayDAO):
                 'name': vuln.v_name,
                 'obj_id': get_own_id(vuln.couchdb_id),
                 'owned': False,
-                'owner': None,
+                'owner': vuln.owner,
                 'parent': get_parent_id(vuln.couchdb_id),
                 'refs': vuln.refs.split(',') if vuln.refs else [],
                 'resolution': vuln.resolution,

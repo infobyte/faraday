@@ -761,6 +761,21 @@ class HostInfoDialog(Gtk.Window):
         """Return the model for the vulnerabilities of the obj object.
         It will be sorted alphabetically.
         """
+
+        def params_to_string(params):  # XXX
+            """Converts params to a string, in case it gets here as a list.
+            It's pretty anoyting, but needed for backwards compatibility.
+            """
+            if isinstance(params, basestring):
+                params_string = params
+            elif isinstance(params, list):
+                params_string = " ".join(params)
+            elif params is None:
+                params_string = ""
+            else:  # just make sure that if params is anything else just crash
+                raise TypeError
+            return params_string
+
         # those are 15 strings
         model = Gtk.ListStore(str, str, str, str, str, str, str, str,
                               str, str, str, str, str, str, str)
@@ -782,7 +797,8 @@ class HostInfoDialog(Gtk.Window):
                               ", ".join(vuln.getRefs()), vuln.getPath(),
                               vuln.getWebsite(), vuln.getRequest(),
                               vuln.getResponse(), vuln.getMethod(),
-                              vuln.getPname(), vuln.getParams(),
+                              vuln.getPname(),
+                              params_to_string(vuln.getParams()),
                               vuln.getQuery(), vuln.getCategory()])
         # sort it!
         sorted_model = Gtk.TreeModelSort(model=model)
@@ -1339,6 +1355,12 @@ class ConflictsDialog(Gtk.Window):
         Do not try to use for dictionaries.
         """
 
+        # XXX: params is a weird stupid thing that can come up as a string,
+        # a list, a nonetype, whatever. but we're making it _always_ be a list
+        # across faraday, so just force it to be so
+        if prop == "params":
+            original_type = "string"
+
         if original_type == "list" or original_type == "NoneType":
             if prop:
                 prop = prop.replace(" ", "")
@@ -1361,10 +1383,8 @@ class ConflictsDialog(Gtk.Window):
 
         elif original_type == "str" or original_type == "unicode":
             raw_prop = prop
-
         else:
             raw_prop = prop
-
         return raw_prop
 
 

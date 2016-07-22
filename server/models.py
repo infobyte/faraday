@@ -147,6 +147,7 @@ class Interface(FaradayEntity, Base):
     name = Column(String(250), nullable=False)
     description = Column(String(250), nullable=False)
     mac = Column(String(250), nullable=False)
+    owned = Column(Boolean)
 
     hostnames = Column(String(250))
     network_segment = Column(String(250))
@@ -177,6 +178,7 @@ class Interface(FaradayEntity, Base):
         self.name=document.get('name')
         self.description=document.get('description')
         self.mac=document.get('mac')
+        self.owned=document.get('owned', False)
         self.hostnames=u','.join(document.get('hostnames'))
         self.network_segment=document.get('network_segment')
         self.ipv4_address=document.get('ipv4').get('address')
@@ -211,6 +213,7 @@ class Service(FaradayEntity, Base):
     name = Column(String(250), nullable=False)
     description = Column(String(250), nullable=False)
     ports = Column(String(250), nullable=False)
+    owned = Column(Boolean)
 
     protocol = Column(String(250))
     status = Column(String(250))
@@ -231,6 +234,7 @@ class Service(FaradayEntity, Base):
         self.name=document.get('name')
         self.description=document.get('description')
         self.ports=u','.join(map(str, document.get('ports')))
+        self.owned=document.get('owned', False)
         self.protocol=document.get('protocol')
         self.status=document.get('status')
         self.version=document.get('version')

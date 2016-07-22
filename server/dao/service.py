@@ -12,6 +12,10 @@ class ServiceDAO(FaradayDAO):
     MAPPED_ENTITY = Service
     COLUMNS_MAP = {
         "name": Service.name,
+        "protocol": Service.protocol,
+        "version": Service.version,
+        "status": Service.status,
+        "owned": Service.owned
     }
 
     def list(self, port=None):

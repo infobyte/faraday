@@ -53,7 +53,7 @@ angular.module('faradayApp')
             }
         };
 
-        var public_properties: [
+        var public_properties = [
             '_attachments', 'confirmed', 'data', 'desc', 'easeofresolution', 
             'impact', 'name', 'owned', 'refs', 'resolution', 'severity',
         ];

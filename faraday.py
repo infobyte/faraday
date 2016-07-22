@@ -521,7 +521,7 @@ def checkVersion():
         getInstanceConfiguration().setVersion(f_version)
         f.close()
 
-        doc = {"ver": getInstanceConfiguration().getVersion()}
+        doc = {"ver": getInstanceConfiguration().getVersion(), "lic_db": CONST_LICENSES_DB}
 
         if os.path.isfile(FARADAY_CONFIG):
             os.remove(FARADAY_CONFIG)

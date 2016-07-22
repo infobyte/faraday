@@ -93,6 +93,31 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, 
             controller: 'hostCtrl',
             title: 'Services | '
         }).
+        when('/license/lid/:lidId', {
+            templateUrl: 'scripts/licenses/partials/license.html',
+            controller: 'licenseCtrl',
+            title: 'License | '
+        }).
+        when('/license', {
+            templateUrl: 'scripts/licenses/partials/list.html',
+            controller: 'licensesCtrl',
+            title: 'Licenses | '
+        }).
+        when('/licenses', {
+            templateUrl: 'scripts/licenses/partials/list.html',
+            controller: 'licensesCtrl',
+            title: 'Licenses | '
+        }).
+        when('/licenses/search/:search', {
+            templateUrl: 'scripts/licenses/partials/list.html',
+            controller: 'licensesCtrl',
+            title: 'Licenses | '
+        }).
+        when('/licenses/search', {
+            templateUrl: 'scripts/licenses/partials/list.html',
+            controller: 'licensesCtrl',
+            title: 'Licenses | '
+        }).
         when('/status/ws/:wsId/groupby/:groupbyId', {
             templateUrl: 'scripts/statusReport/partials/statusReport.html',
             controller: 'statusReportCtrl',

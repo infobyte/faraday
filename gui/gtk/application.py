@@ -537,7 +537,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         response = dialog.run()
         if response == 42:
             error = event.error_name
-            event.callback(error, *self.event.exception_objects)
+            event.callback(error, *event.exception_objects)
         dialog.destroy()
 
     def do_startup(self):

@@ -5,12 +5,15 @@
 angular.module('faradayApp')
     .factory('configSrv', ['BASEURL', '$http', function(BASEURL, $http) {
 
-        var p = $http.get('/reports/_design/reports/scripts/config/config.json').then(function(conf) {
-            configSrv.faraday_version = conf.data.ver;
-        });
+        var p = $http.get('/reports/_design/reports/scripts/config/config.json')
+            .then(function(conf) {
+                configSrv.faraday_version = conf.data.ver;
+                configSrv.license_db = conf.data.lic_db;
+            });
 
         configSrv = {
             faraday_version: null,
+            license_db: null,
             promise: p
         }
 

@@ -23,7 +23,8 @@ CONST_FARADAY_ZSH_FARADAY = "zsh/faraday.zsh"
 CONST_FARADAY_ZSH_OUTPUT_PATH = "zsh/output"
 CONST_FARADAY_BASE_CFG = "config/default.xml"
 CONST_FARADAY_USER_CFG = "config/config.xml"
-CONST_BLACKDBS = ('cwe','reports')
+CONST_LICENSES_DB = "faraday_licenses"
+CONST_BLACKDBS = ('cwe','reports', CONST_LICENSES_DB)
 
 CONST_USER_HOME = "~"
 CONST_USER_ZSHRC = "~/.zshrc"

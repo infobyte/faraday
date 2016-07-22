@@ -1,0 +1,75 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<form name="form" novalidate>
+    <div class="modal-header">
+        <div class="modal-button">
+            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+            <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid || form.start.$viewValue == '' || form.end.$viewValue == '' || (data.start > data.end)">OK</button>
+        </div>
+        <h3 class="modal-title">Edit {{data.product}} license</h3>
+    </div>
+    <div class="modal-body">
+        <div class="form-horizontal">
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label for="lictype">Type</label>
+                    <input type="text" class="form-control" name="lictype" placeholder="Type" ng-model="data.lictype" />
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label for="notes">Notes</label>
+                    <textarea class="form-control" name="notes" placeholder="Notes" ng-model="data.notes"></textarea>
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-6 datepicker">
+                    <label for="start">Start Date *</label>
+                    <p class="input-group" ng-class="{'has-error': form.start.$touched && (data.start == undefined || data.start == '')}">
+                        <input type="text" name="start" class="form-control" uib-datepicker-popup="MM/dd/yyyy" ng-model="data.start" is-open="openedStart" close-text="Close" placeholder="Start Date" />
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" ng-click="open($event,true)">
+                                <i class="glyphicon glyphicon-calendar"></i>
+                            </button>
+                        </span>
+                    </p>
+                    <p class="help-block normal-size" ng-class="{'has-error': form.start.$touched && !(data.start == undefined || data.start == '') && form.start.$invalid}">
+                        <span class="help-block">Date format mm/dd/yyyy</span>
+                    </p>
+                    <p class="has-error" ng-show="form.start.$touched && (data.start == undefined || data.start == '')">
+                        <span class="help-block">Start date is required</span>
+                    </p>
+                </div>
+                <div class="col-md-6 datepicker">
+                    <label for="end">End Date *</label>
+                    <p class="input-group" ng-class="{'has-error': (form.end.$touched && (form.end.$invalid || form.end.$viewValue == '')) || (data.start > data.end && form.end.$viewValue != '')}">
+                        <input type="text" name="end" class="form-control" uib-datepicker-popup="MM/dd/yyyy" ng-model="data.end" is-open="openedEnd" min-date="data.start" close-text="Close" placeholder="End Date" />
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" ng-click="open($event)">
+                                <i class="glyphicon glyphicon-calendar"></i>
+                            </button>
+                        </span>
+                    </p>
+                    <p class="help-block normal-size" ng-class="{'has-error': form.end.$touched && form.end.$invalid}">
+                        <span class="help-block">Date format mm/dd/yyyy</span>
+                    </p>
+                    <p class="has-error" ng-show="form.end.$touched && form.end.$viewValue == ''">
+                        <span class="help-block">End date is required</span>
+                    </p>
+                    <p class="has-error" ng-show="data.start > data.end && form.end.$viewValue != ''">
+                        <span class="help-block">End date must be greater than start date</span>
+                    </p>
+                </div>
+            </div><!-- .form-group -->
+            <p>All fields marked * are required</p>
+        </div><!-- .form-horizontal -->
+    </div><!-- .modal-body -->
+    <div class="modal-footer">
+        <div class="modal-button">
+            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+            <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid || form.start.$viewValue == '' || form.end.$viewValue == '' || (data.start > data.end)">OK</button>
+        </div>
+    </div>
+</form>

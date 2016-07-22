@@ -1054,7 +1054,8 @@ class ConflictsDialog(Gtk.Window):
             target = self.view if target == 'first' else self.second_view
             original_selection = selection.get_selected()[1]
             target_selection = target.get_selection()
-            target_selection.select_iter(original_selection)
+            if original_selection is not None:
+                target_selection.select_iter(original_selection)
 
         if self.view is None:
 

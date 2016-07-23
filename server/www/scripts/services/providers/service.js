@@ -10,7 +10,17 @@ angular.module('faradayApp')
             }
         };
 
+        var public_properties = [
+            'description', 'name', 'owned', 'ports', 'protocol',
+            'status', 'version'
+        ];
+
+        var saved_properties = public_properties.concat(
+            ['_id', '_rev', 'metadata', 'owner', 'parent', 'type']);
+
         Service.prototype = {
+            public_properties: public_properties,
+            saved_properties: saved_properties,
             // TODO: instead of using angular.extend, we should check
             // the attributes we're assigning to the Service
             set: function(data) {
@@ -26,7 +36,11 @@ angular.module('faradayApp')
                 }
                 data.type = "Service";
                 angular.extend(this, data);
-                this.ports = data.ports[0];
+                if( typeof(data.ports) === 'number' ) {
+                    this.ports = data.ports;
+                } else {
+                    this.ports = data.ports[0];
+                }
             },
             delete: function(ws) {
                 var self = this,
@@ -51,7 +65,7 @@ angular.module('faradayApp')
                     self.ports = [self.ports];
                 }
 
-                return ($http.put(BASEURL + ws + '/' + self._id + "?rev=" + self._rev, self).success(function(data) {
+                return (self._save(ws, self).success(function(data) {
                     self._rev = data.rev;
                 }));
             },
@@ -62,9 +76,19 @@ angular.module('faradayApp')
                     self.ports = [self.ports];
                 }
 
-                return ($http.put(BASEURL + ws + '/' + self._id, self).success(function(data){
+                return (self._save(ws, self).success(function(data){
                     self._rev = data.rev;
                 }));
+            },
+            _save: function(ws, data) {
+                var doc = {};
+                var url = BASEURL + ws + '/' + this._id
+                for (property in data) {
+                    if (this.saved_properties.indexOf(property) != -1) {
+                        doc[property] = data[property];
+                    }
+                };
+                return $http.put(url, doc);
             }
         }
 

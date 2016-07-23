@@ -94,7 +94,7 @@
                                     placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
                                     <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
                                         <i class="fa fa-search" ng-if="gridOptions.data.length > 0 || gridOptions.total >= 0"></i>
-                                        <i class="fa fa-refresh fa-spin" ng-if="gridOptions.total === undefined"></i>
+                                        <i class="fa fa-refresh fa-spin" ng-if="gridOptions.totalItems === null"></i>
                                     </span>
                                 </div>
                             </div>

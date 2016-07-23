@@ -174,7 +174,7 @@ angular.module('faradayApp')
 
             $http.get(url)
                 .then(function(res) {
-                    var vs = [];
+                    var vs = {};
                     res.data.groups.forEach(function(vuln) {
                         vs[vuln.severity] = vuln.count;
                     });

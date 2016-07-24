@@ -918,7 +918,7 @@ angular.module('faradayApp')
                 }
             }
 
-            return search;
+            return search.trim();
         };
 
         var prepareFilter = function(searchText) {
@@ -944,10 +944,19 @@ angular.module('faradayApp')
 
         // changes the URL according to search params
         $scope.searchFor = function(search, params) {
-            if (search) {
-                searchFilter = prepareFilter(params);
+            // TODO: It would be nice to find a way for changing
+            // the url without reloading the controller
+            if(window.location.hash.substring(1).indexOf('groupby') === -1) {
+                var url = "/status/ws/" + $routeParams.wsId;
+            } else {
+                var url = "/status/ws/" + $routeParams.wsId + "/groupby/" + $routeParams.groupbyId;
             }
-            loadVulns();
+
+            if(search && params != "" && params != undefined) {
+                url += "/search/" + $scope.encodeSearch(params);
+            }
+
+            $location.path(url);
         };
 
         // toggles column show property

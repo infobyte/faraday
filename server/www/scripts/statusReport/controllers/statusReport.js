@@ -150,6 +150,7 @@ angular.module('faradayApp')
             if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
                 search_obj = $scope.decodeSearch($scope.search);
                 search_exp = $scope.stringSearch(search_obj);
+                $scope.searchParams = search_exp;
                 searchFilter = prepareFilter(search_exp);
             }
 

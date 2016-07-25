@@ -53,19 +53,24 @@ def apply_search_filter(query, field_to_col_map, free_text_search=None, field_fi
     if any(map(lambda attr: attr not in field_to_col_map, field_filter)):
         raise Exception('invalid field to filter')
 
-    sql_filter = None
+    fts_sql_filter = None
+    dfs_sql_filter = None
 
     # Iterate over every searchable field declared in the mapping
     # to then apply a filter on the query if required
     for attribute in field_to_col_map:
+        is_direct_filter_search = attribute in field_filter
+        is_free_text_search = not is_direct_filter_search and free_text_search
+
         # Add wildcards to both ends of a search term
-        if attribute in field_filter:
+        if is_direct_filter_search:
             like_str = u'%' + field_filter.get(attribute) + u'%'
-        elif free_text_search:
+        elif is_free_text_search:
             like_str = u'%' + free_text_search + u'%'
         else:
             continue
 
+        search_term_sql_filter = None
         for column in field_to_col_map.get(attribute):
             # Labels are expressed as strings in the mapping,
             # currently we are not supporting searches on this
@@ -77,7 +82,7 @@ def apply_search_filter(query, field_to_col_map, free_text_search=None, field_fi
             # Prepare a SQL search term according to the columns type.
             # As default we treat every column as an string and therefore
             # we use 'like' to search through them.
-            if isinstance(column.type, Boolean) and attribute in field_filter:
+            if is_direct_filter_search and isinstance(column.type, Boolean):
                 field_search_term = field_filter.get(attribute).lower()
                 search_term = prepare_boolean_filter(column, field_search_term)
                 # Ignore filter for this field if the values weren't expected
@@ -87,18 +92,42 @@ def apply_search_filter(query, field_to_col_map, free_text_search=None, field_fi
                 # Strict filtering can be applied for fields. FTS will
                 # ignore this list since its purpose is clearly to
                 # match anything it can find.
-                if attribute in field_filter and attribute in strict_filter:
+                if is_direct_filter_search and attribute in strict_filter:
                     search_term = column.is_(field_filter.get(attribute))
                 else:
                     search_term = column.like(like_str)
 
-            # Concatenate multiple search terms
-            if sql_filter is None:
-                sql_filter = search_term
-            else:
-                sql_filter = sql_filter | search_term
+            search_term_sql_filter = concat_or_search_term(search_term_sql_filter, search_term)
 
-    return query if sql_filter is None else query.filter(sql_filter)
+        # Concatenate multiple search terms on its proper filter
+        if is_direct_filter_search:
+            dfs_sql_filter = concat_and_search_term(dfs_sql_filter, search_term_sql_filter)
+        elif is_free_text_search:
+            fts_sql_filter = concat_or_search_term(fts_sql_filter, search_term_sql_filter)
+
+    sql_filter = concat_and_search_term(fts_sql_filter, dfs_sql_filter)
+    return query.filter(sql_filter) if sql_filter is not None else query
+
+def concat_and_search_term(left, right):
+    return concat_search_terms(left, right, operator='and')
+
+def concat_or_search_term(left, right):
+    return concat_search_terms(left, right, operator='or')
+
+def concat_search_terms(sql_filter_left, sql_filter_right, operator='and'):
+    if sql_filter_left is None and sql_filter_right is None:
+        return None
+    elif sql_filter_left is None:
+        return sql_filter_right
+    elif sql_filter_right is None:
+        return sql_filter_left
+    else:
+        if operator == 'and':
+            return sql_filter_left & sql_filter_right
+        elif operator == 'or':
+            return sql_filter_left | sql_filter_right
+        else:
+            return None
 
 def prepare_boolean_filter(column, search_term):
     if search_term in ['true', '1']:

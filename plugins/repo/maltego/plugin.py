@@ -83,7 +83,6 @@ class MaltegoMtgxParser():
         self.relations = {}
 
     def getRelations(self):
-
         """
         Get relations between nodes.
         Two ways: Source-> Target
@@ -315,6 +314,7 @@ class MaltegoMtgxParser():
 
 
 class MaltegoPlugin(core.PluginBase):
+
     def __init__(self):
         core.PluginBase.__init__(self)
         self.id = "Maltego"

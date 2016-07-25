@@ -25,35 +25,37 @@ class FPlugin(core.PluginBase):
     """
     Example plugin to parse f output.
     """
+
     def __init__(self):
         core.PluginBase.__init__(self)
-        self.id              = "faraday"
-        self.name            = "Faraday Output Plugin"
-        self.plugin_version         = "0.0.2"
-        self.version   = "1.0.0"
-        self.options         = None
+        self.id = "faraday"
+        self.name = "Faraday Output Plugin"
+        self.plugin_version = "0.0.2"
+        self.version = "1.0.0"
+        self.options = None
         self._current_output = None
-        self._command_regex  = re.compile(r'^(sudo fplugin|sudo \./fplugin|\./fplugin).*?')
-        self._hosts          = []
-        self.args=None
+        self._command_regex = re.compile(
+            r'^(sudo fplugin|sudo \./fplugin|\./fplugin).*?')
+        self._hosts = []
+        self.args = None
         self._completition = {
-                                "":"f [i &lt;Python Code&gt;]",
-                                "-e":"execute model directly",
-                                "-o":"output command",
+            "": "f [i &lt;Python Code&gt;]",
+            "-e": "execute model directly",
+            "-o": "output command",
         }
 
-
-    def parseOutputString(self, output, debug = False):
+    def parseOutputString(self, output, debug=False):
         pass
 
-
     file_arg_re = re.compile(r"^.*(-o\s*[^\s]+).*$")
+
     def processCommandString(self, username, current_path, command_string):
         """
         Adds the -m parameter to get machine readable output.
         """
         arg_match = self.file_arg_re.match(command_string)
-        self._file_output_path=os.path.join(self.data_path,"f_output-%s.txt" % random.uniform(1,10))
+        self._file_output_path = os.path.join(
+            self.data_path, "f_output-%s.txt" % random.uniform(1, 10))
 
         parser = argparse.ArgumentParser()
 
@@ -61,19 +63,19 @@ class FPlugin(core.PluginBase):
         parser.add_argument('-f')
         parser.add_argument('-o')
 
-        #NO support -h --help style parameters.
-        #Need "" in all parameter. Example script.py -p "parameter1 parameter2"
+        # NO support -h --help style parameters.
+        # Need "" in all parameter. Example script.py -p "parameter1
+        # parameter2"
         parser.add_argument('-p')
 
         if arg_match is None:
             final = re.sub(r"(^.*?fplugin)",
-                          r"\1 -o %s" % self._file_output_path,
-                          command_string)
+                           r"\1 -o %s" % self._file_output_path,
+                           command_string)
         else:
             final = re.sub(arg_match.group(1),
-                          r"-o %s" % self._file_output_path,
-                          command_string)
-
+                           r"-o %s" % self._file_output_path,
+                           command_string)
 
         cmd = shlex.split(re.sub(r'\-h|\-\-help', r'', final))
         try:
@@ -95,7 +97,7 @@ class FPlugin(core.PluginBase):
 
             try:
                 locales = locals()
-                locales.update({'script_parameters' : self.args.p})
+                locales.update({'script_parameters': self.args.p})
                 exec(codeEx, globals(), locales)
 
             except Exception:
@@ -105,21 +107,20 @@ class FPlugin(core.PluginBase):
             sys.stdout = sys.__stdout__
 
             try:
-                f=open(self._file_output_path,"w")
+                f = open(self._file_output_path, "w")
                 f.write(buffer.getvalue())
                 f.close()
             except:
-                api.devlog ("[Faraday] Can't save faraday plugin output file")
+                api.devlog("[Faraday] Can't save faraday plugin output file")
                 return
 
             print buffer.getvalue()
 
-
         return final
-
 
     def setHost(self):
         pass
+
 
 def createPlugin():
     return FPlugin()

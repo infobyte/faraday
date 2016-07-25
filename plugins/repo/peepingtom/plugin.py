@@ -25,13 +25,15 @@ class PeepingTomPlugin(core.PluginBase):
     """
     Handle PeepingTom (https://bitbucket.org/LaNMaSteR53/peepingtom) output
     """
+
     def __init__(self):
         core.PluginBase.__init__(self)
         self.id = "peepingtom"
         self.name = "PeepingTom"
         self.plugin_version = "0.0.1"
         self.version = "02.19.15"
-        self._command_regex = re.compile(r'^(python peepingtom.py|\./peepingtom.py).*?')
+        self._command_regex = re.compile(
+            r'^(python peepingtom.py|\./peepingtom.py).*?')
         self._path = None
 
     def parseOutputString(self, output):
@@ -50,18 +52,20 @@ class PeepingTomPlugin(core.PluginBase):
                 url_parsed = urlparse(url)
                 address = socket.gethostbyname(url_parsed.netloc)
                 host = self.createAndAddHost(address)
-                iface = self.createAndAddInterface(host, address, ipv4_address=address)
+                iface = self.createAndAddInterface(
+                    host, address, ipv4_address=address)
                 service = self.createAndAddServiceToInterface(
                     host, iface, "http", protocol="tcp", ports=80
                 )
-                note = self.createAndAddNoteToService(
+                self.createAndAddNoteToService(
                     host,
                     service,
                     'screenshot',
                     path.join(
                         self._path,
                         data_path_search.groups()[0],
-                        "{}.png".format(url.replace("://", "").replace("/", "").replace(".", ""))
+                        "{}.png".format(url.replace(
+                            "://", "").replace("/", "").replace(".", ""))
                     )
                 )
 
@@ -74,4 +78,3 @@ class PeepingTomPlugin(core.PluginBase):
 
 def createPlugin():
     return PeepingTomPlugin()
-

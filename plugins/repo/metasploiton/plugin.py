@@ -47,6 +47,7 @@ class MetasploitOnPlugin(core.PluginBase):
     """
     Example plugin to parse metasploiton output.
     """
+
     def __init__(self):
 
         core.PluginBase.__init__(self)
@@ -100,7 +101,8 @@ class MetasploitOnPlugin(core.PluginBase):
             print "Error getting database data\n"
             return
 
-        self.path = self.data_path + "/"+api.getActiveWorkspace().name + "_metasploit_last"
+        self.path = self.data_path + "/" + api.getActiveWorkspace().name + \
+            "_metasploit_last"
 
         if os.path.isfile(self.path):
             f = open(self.path, "r")
@@ -134,7 +136,7 @@ class MetasploitOnPlugin(core.PluginBase):
 
             cur = self._doSql(
                 cur,
-                "select * from vulns where host_id="+str(h[0])+" and service_id is null" + self._mwhere + ";")
+                "select * from vulns where host_id=" + str(h[0]) + " and service_id is null" + self._mwhere + ";")
             if cur is None:
                 return
 
@@ -174,7 +176,7 @@ class MetasploitOnPlugin(core.PluginBase):
 
             cur = self._doSql(
                 cur,
-                "select * from services where host_id="+str(h[0]))
+                "select * from services where host_id=" + str(h[0]))
             if cur is None:
                 return
 
@@ -210,7 +212,8 @@ class MetasploitOnPlugin(core.PluginBase):
                         h_id,
                         s_id,
                         "Weak Credentials",
-                        "[metasploit found the following credentials]\nuser:%s\npass:%s" % (c[4], c[5]),
+                        "[metasploit found the following credentials]\nuser:%s\npass:%s" % (c[4], c[
+                                                                                            5]),
                         severity="high")
 
                 cur = self._doSql(
@@ -312,7 +315,7 @@ class MetasploitOnPlugin(core.PluginBase):
             api.devlog("SQL:" + sql)
             db.execute(sql)
         except Exception, e:
-            print ("Error SQL[" + e.pgcode+"] - " + e.pgerror)
+            print ("Error SQL[" + e.pgcode + "] - " + e.pgerror)
             return None
 
         return db
@@ -333,7 +336,8 @@ class MetasploitOnPlugin(core.PluginBase):
             msave = False
 
         if self._sdate:
-            self._mwhere = " and updated_at > to_timestamp('" + self._sdate + "','YYYY-MM-DD HH24:MI:SS.US');"
+            self._mwhere = " and updated_at > to_timestamp('" + \
+                self._sdate + "','YYYY-MM-DD HH24:MI:SS.US');"
 
         if msave:
             try:

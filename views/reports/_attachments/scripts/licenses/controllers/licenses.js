@@ -24,7 +24,7 @@ angular.module('faradayApp')
             $scope.store;
 
         init = function() {
-            $scope.store = "http://ts557851-container.zoeysite.com/";
+            $scope.store = "https://appstore.faradaysec.com/";
 
             // table stuff
             $scope.selectall_licenses = false;

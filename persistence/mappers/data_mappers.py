@@ -190,7 +190,7 @@ class ServiceMapper(ModelObjectMapper):
         srv.setStatus(doc.get("status"))
         srv.setVersion(doc.get("version"))
         for port in doc.get("ports"):
-            srv.addPort(int(port))
+            srv.setPorts(int(port))
         super(ServiceMapper, self).unserialize(srv, doc)
         return srv
 

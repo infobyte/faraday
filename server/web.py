@@ -81,6 +81,8 @@ class WebServer(object):
     def __config_server(self):
         self.__bind_address = server.config.faraday_server.bind_address
         self.__listen_port = int(server.config.faraday_server.port)
+        if self.__ssl_enabled:
+            self.__listen_port = int(server.config.ssl.port)
 
     def __config_couchdb_conn(self):
         """

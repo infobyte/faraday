@@ -11,6 +11,7 @@ import server.utils.logger
 def main():
     cli_arguments = parse_arguments()
     server.utils.logger.setup()
+    server.config.gen_web_config()
     server.database.setup()
 
     web_server = server.web.WebServer(enable_ssl=cli_arguments.ssl)

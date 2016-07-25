@@ -7,7 +7,7 @@ angular.module('faradayApp')
         var indexFact = {};
 
         indexFact.getConf = function() {
-        	return $http.get('/reports/_design/reports/scripts/config/config.json');
+        	return $http.get('config/config.json');
         };
 
         return indexFact;

@@ -271,4 +271,4 @@ angular.module('faradayApp')
         };
 
         return commonsFact;
-    });
+    }]);

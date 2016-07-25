@@ -3,7 +3,9 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('commonsFact', function() {
+    .factory('commonsFact',
+        ['$uibModal',
+        function($uibModal) {
         var commonsFact = {};
 
         // receives a dictionary of files whose keys are names
@@ -11,7 +13,7 @@ angular.module('faradayApp')
         commonsFact.loadIcons = function(files) {
             var icons = {},
             type = "";
-            
+
             for(var name in files) {
                 // first lets load the type prop
                 if(files[name].hasOwnProperty("type")) {
@@ -227,7 +229,7 @@ angular.module('faradayApp')
             }
 
             return hash_map;
-        }
+        };
 
         commonsFact.addPresentationParams = function(url, page, page_size, filter, sort, sort_direction) {
             var param_conn = '?';
@@ -253,6 +255,19 @@ angular.module('faradayApp')
             }
 
             return url;
+        };
+
+        commonsFact.errorDialog = function(message) {
+            $uibModal.open(config = {
+                templateUrl: 'scripts/commons/partials/modalKO.html',
+                controller: 'commonsModalKoCtrl',
+                size: 'sm',
+                resolve: {
+                    msg: function() {
+                        return message;
+                    }
+                }
+            });
         };
 
         return commonsFact;

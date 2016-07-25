@@ -1361,7 +1361,7 @@ class ConflictsDialog(Gtk.Window):
         if prop == "params":
             original_type = "string"
 
-        if original_type == "list" or original_type == "NoneType":
+        if original_type == "list":
             if prop:
                 prop = prop.replace(" ", "")
                 raw_prop = prop.split(",")

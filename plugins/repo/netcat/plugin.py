@@ -13,14 +13,14 @@ import re
 import os
 import socket
 
-__author__     = "Ulisses Albuquerque"
-__copyright__  = "Copyright (c) 2016, Securus Global"
-__credits__    = ["Ulisses Albuquerque"]
-__license__    = ""
-__version__    = "1.0.0"
+__author__ = "Ulisses Albuquerque"
+__copyright__ = "Copyright (c) 2016, Securus Global"
+__credits__ = ["Ulisses Albuquerque"]
+__license__ = ""
+__version__ = "1.0.0"
 __maintainer__ = "Ulisses Albuquerque"
-__email__      = "ulisses.albuquerque@securusglobal.com"
-__status__     = "Development"
+__email__ = "ulisses.albuquerque@securusglobal.com"
+__status__ = "Development"
 
 
 class CmdNetcatPlugin(core.PluginBase):
@@ -28,13 +28,15 @@ class CmdNetcatPlugin(core.PluginBase):
     This plugin handles ping command.
     Basically detects if user was able to connect to a device
     """
+
     def __init__(self):
         core.PluginBase.__init__(self)
-        self.id              = "netcat"
-        self.name            = "Netcat"
-        self.plugin_version  = "0.0.1"
-        self.version         = "1.0.0"
-        self._command_regex  = re.compile(r'^(?:.*\|)?\s*(?:nc|netcat|nc.openbsd|nc.traditional)\s+.*$')
+        self.id = "netcat"
+        self.name = "Netcat"
+        self.plugin_version = "0.0.1"
+        self.version = "1.0.0"
+        self._command_regex = re.compile(
+            r'^(?:.*\|)?\s*(?:nc|netcat|nc.openbsd|nc.traditional)\s+.*$')
         self._completition = {
             "": "[-bhklnrtuvCz] [-c shell] [-e filename] [-g gateway] [-G num] [-i secs] [-o file] [-p port] [-q secs] [-s addr] [-T tos] [-w secs]",
             "-c": "shell",
@@ -97,16 +99,18 @@ class CmdNetcatPlugin(core.PluginBase):
             attr_dict['protocol'] = 'tcp'
 
         h_id = self.createAndAddHost(hostname)
-        i_id = self.createAndAddInterface(h_id, ip_address, ipv4_address = ip_address)
+        i_id = self.createAndAddInterface(
+            h_id, ip_address, ipv4_address=ip_address)
         s_id = self.createAndAddServiceToInterface(h_id, i_id, attr_dict['service'],
-            protocol = attr_dict['protocol'], ports = [ int(attr_dict['port']) ])
+                                                   protocol=attr_dict['protocol'], ports=[int(attr_dict['port'])])
 
     def matchInOutput(self, regexp, output):
         """
         We take a split & filter approach to matching our regexps to the
         command output
         """
-        mapped_list = map(lambda s: re.search(regexp, s), re.split(r'(\r|\n)', output))
+        mapped_list = map(lambda s: re.search(regexp, s),
+                          re.split(r'(\r|\n)', output))
         filtered_list = filter(lambda s: s is not None, mapped_list)
 
         if len(filtered_list) > 0:
@@ -114,15 +118,17 @@ class CmdNetcatPlugin(core.PluginBase):
         else:
             return None
 
-    def parseOutputString(self, output, debug = False):
+    def parseOutputString(self, output, debug=False):
         """
         There are at least two variants of netcat, the OpenBSD version and the
         'traditional' version. The verbose output differs between them, so we
         will try to cover both cases.
         """
         print output
-	nc_bsd_rx = re.compile(r'^Connection\s+to\s+(?P<host>\S+)\s+(?P<port>\d+)\s+port\s+\[(?P<protocol>tcp|udp)/(?P<service>[^\]]+)\]\s+succeeded.*')
-        nc_sys_rx = re.compile(r'^(?P<host>\S+)\s+\[(?P<address>[0-9\.]+)\]\s+(?P<port>\d+)(?:\s+\((?P<service>[^)]+)\))?\s+open.*')
+        nc_bsd_rx = re.compile(
+            r'^Connection\s+to\s+(?P<host>\S+)\s+(?P<port>\d+)\s+port\s+\[(?P<protocol>tcp|udp)/(?P<service>[^\]]+)\]\s+succeeded.*')
+        nc_sys_rx = re.compile(
+            r'^(?P<host>\S+)\s+\[(?P<address>[0-9\.]+)\]\s+(?P<port>\d+)(?:\s+\((?P<service>[^)]+)\))?\s+open.*')
 
         nc_bsd_match = self.matchInOutput(nc_bsd_rx, output)
         if nc_bsd_match is not None:
@@ -145,6 +151,7 @@ class CmdNetcatPlugin(core.PluginBase):
             return re.sub(r'(nc(?:\.traditional|\.openbsd)?|netcat)', r'\1 -v', command_string)
 
         return command_string
+
 
 def createPlugin():
     return CmdNetcatPlugin()

@@ -23,27 +23,32 @@ class SSHDefaultScanPlugin(core.PluginBase):
     Handle sshdefaultscan (https://github.com/atarantini/sshdefaultscan) output
     using --batch and --batch-template; supports --username and --password
     """
+
     def __init__(self):
         core.PluginBase.__init__(self)
         self.id = "sshdefaultscan"
         self.name = "sshdefaultscan"
         self.plugin_version = "0.0.1"
         self.version = "1.0.0"
-        self._command_regex = re.compile(r'^(python sshdefaultscan.py|\./sshdefaultscan.py).*?')
+        self._command_regex = re.compile(
+            r'^(python sshdefaultscan.py|\./sshdefaultscan.py).*?')
         self._completition = {"--fast": "Fast scan mode"}
 
     def parseOutputString(self, output, debug=False):
         for line in [l.strip() for l in output.split("\n")]:
-            output_rexeg_match = re.match(r".*:.*@\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", line)
+            output_rexeg_match = re.match(
+                r".*:.*@\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", line)
             if output_rexeg_match:
                 credentials, address = line.split("@")
                 host = self.createAndAddHost(address)
-                iface = self.createAndAddInterface(host, address, ipv4_address=address)
+                iface = self.createAndAddInterface(
+                    host, address, ipv4_address=address)
                 service = self.createAndAddServiceToInterface(
                     host, iface, "ssh", protocol="tcp", ports=22
                 )
                 username, password = credentials.split(":")
-                cred = self.createAndAddCredToService(host, service, username, password)
+                cred = self.createAndAddCredToService(
+                    host, service, username, password)
                 vuln = self.createAndAddVulnToService(
                     host,
                     service,

@@ -69,13 +69,13 @@ class EntityMetadata(Base):
     # Table schema
     __tablename__ = 'metadata'
     id = Column(Integer, primary_key=True)
-    update_time = Column(Float)
-    update_user = Column(String(250))
-    update_action = Column(Integer)
-    create_time = Column(Float)
-    update_controller_action = Column(String(250))
-    creator = Column(String(250))
-    owner = Column(String(250))
+    update_time = Column(Float, nullable=True)
+    update_user = Column(String(250), nullable=True)
+    update_action = Column(Integer, nullable=True)
+    create_time = Column(Float, nullable=True)
+    update_controller_action = Column(String(250), nullable=True)
+    creator = Column(String(250), nullable=True)
+    owner = Column(String(250), nullable=True)
 
     couchdb_id = Column(String(250))
     revision = Column(String(250))
@@ -85,14 +85,14 @@ class EntityMetadata(Base):
         self.update_from_document(document)
 
     def update_from_document(self, document):
-        metadata = document.get('metadata')
-        self.update_time=metadata.get('update_time')
-        self.update_user=metadata.get('update_user')
-        self.update_action=metadata.get('update_action')
-        self.creator=metadata.get('creator')
-        self.owner=metadata.get('owner')
-        self.create_time=metadata.get('create_time')
-        self.update_controller_action=metadata.get('update_controller_action')
+        metadata = document.get('metadata', dict())
+        self.update_time=metadata.get('update_time', None)
+        self.update_user=metadata.get('update_user', None)
+        self.update_action=metadata.get('update_action', None)
+        self.creator=metadata.get('creator', None)
+        self.owner=metadata.get('owner', None)
+        self.create_time=metadata.get('create_time', None)
+        self.update_controller_action=metadata.get('update_controller_action', None)
         self.couchdb_id=document.get('_id')
         self.revision=document.get('_rev')
         self.document_type=document.get('type')
@@ -361,14 +361,14 @@ class Note(FaradayEntity, Base):
     __tablename__ = 'note'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False)
-    text = Column(Text(), nullable=False)
-    description = Column(Text(), nullable=False)
+    text = Column(Text(), nullable=True)
+    description = Column(Text(), nullable=True)
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
     def update_from_document(self, document):
         self.name=document.get('name')
-        self.text=document.get('text')
-        self.description=document.get('description')
+        self.text=document.get('text', None)
+        self.description=document.get('description', None)
 

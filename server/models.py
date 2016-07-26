@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = '0.4.1'
+SCHEMA_VERSION = 'W.0.2'
 
 Base = declarative_base()
 
@@ -233,11 +233,16 @@ class Service(FaradayEntity, Base):
     def update_from_document(self, document):
         self.name=document.get('name')
         self.description=document.get('description')
-        self.ports=u','.join(map(str, document.get('ports')))
         self.owned=document.get('owned', False)
         self.protocol=document.get('protocol')
         self.status=document.get('status')
         self.version=document.get('version')
+
+        # We found workspaces where ports are defined as an integer
+        if isinstance(document.get('ports', None), (int, long)):
+            self.ports = str(document.get('ports'))
+        else:
+            self.ports = u','.join(map(str, document.get('ports')))
 
     def add_relationships_from_dict(self, entities):
         couchdb_id = self.entity_metadata.couchdb_id

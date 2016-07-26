@@ -5,39 +5,40 @@
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-
 '''
-import re
+
 import os
-import pprint
-import sys
 import argparse
-import shlex
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    
-    # executes received code
-    parser.add_argument('-e')
-    # where to store fplugin's output
-    parser.add_argument('-o')
+    description = (
+        'Using our plugin you can do different actions in the command line'
+        ' and interact with Faraday. Faraday comes with some presets for bulk'
+        ' actions such as object removal, get object information, etc.')
+
+    parser = argparse.ArgumentParser(description=description)
+
+    parser.add_argument(
+        '-e',
+        '--execute',
+        help='Execute code received in this parameter.'
+        ' Example:\n./fplugin -e "for h in api.__model_controller.getAllHosts(): print h.name"')
+
+    parser.add_argument(
+        '-o',
+        '--output',
+        help='Store output of fplugin in a file.')
+
     # file with code to execute
-    parser.add_argument('-f')
-    
-    #get all hosts
-    #./fplugin -e 'for h in api.__model_controller.getAllHosts(): print h.name'
-    #create a new host
-    #./fplugin -e 'for h in api.createAndAddHost("8.8.8.8","Linux")'
-    #get all creds
-    #get all hostname
-    #get all ip port http/https
+    parser.add_argument(
+        '-f',
+        '--file',
+        help='File with code to execute.'
+        ' Example:\n./fplugin -f getAllIps.py ')
 
     args, unknown = parser.parse_known_args()
-    
-    if args.o:
-        if os.path.isfile(args.o):
-            with open(args.o) as f:
+    if args.output:
+        if os.path.isfile(args.output):
+            with open(args.output) as f:
                 data = f.read()
                 print data
-        
-    

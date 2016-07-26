@@ -100,8 +100,8 @@ class ForcePreferenceWindowDialog(PreferenceWindowDialog):
         self.set_deletable(False)
         self.exit_faraday = exit_faraday_callback
         self.disconnect_by_func(key_reactions)
-        self.connect("destroy", self.on_click_ok)
         self.connect("key_press_event", strict_key_reactions)
+        self.connect("delete_event", lambda _, __: True)
 
     def on_click_cancel(self, button=None):
         """Override on_click_cancel to make it exit Faraday."""
@@ -208,8 +208,8 @@ class ForceNewWorkspaceDialog(NewWorkspaceDialog):
         self.set_deletable(False)
         self.set_keep_above(True)
         self.disconnect_by_func(key_reactions)
-        self.connect("destroy", self.on_click_ok)
         self.connect("key_press_event", strict_key_reactions)
+        self.connect("delete_event", lambda _, __: True)
         self.exit_faraday = exit_faraday_callback
         explanation_message = self.create_explanation_message()
         self.main_box.pack_start(explanation_message, True, True, 6)
@@ -463,7 +463,7 @@ class HostInfoDialog(Gtk.Window):
 
         host_id = self.model[0][0]
         couch_url = CONF.getCouchURI()
-        base_url = couch_url + "/reports/_design/reports/index.html#/host/ws/"
+        base_url = couch_url + "/_ui/#/host/ws/"
         self.edit_url = base_url + active_ws_name + "/hid/" + host_id
 
         host_info_frame = self.create_host_info_frame(host_info)
@@ -1402,8 +1402,8 @@ class ForceChooseWorkspaceDialog(Gtk.Window):
         self.set_deletable(False)
         self.set_transient_for(parent_window)
         self.set_modal(True)
-        self.connect("destroy", self.on_click_ok)
         self.connect("key_press_event", strict_key_reactions)
+        self.connect("delete_event", lambda _, __: True)
 
         self.change_ws_callback = change_ws_callback
 

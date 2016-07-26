@@ -300,9 +300,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                                                         self.window,
                                                         self.exit_faraday)
 
-        response = preference_window.run()
-        if response == Gtk.ResponseType.DELETE_EVENT:
-            GObject.idle_add(self.exit_faraday_without_confirm)
+        preference_window.run()
 
     def connect_to_couch(self, couch_uri, parent=None):
         """Tries to connect to a CouchDB on a specified Couch URI.
@@ -400,18 +398,22 @@ class GuiApp(Gtk.Application, FaradayUi):
             """
 
             if action == "show" and not self.loading_dialog_raised:
+                message_string = ("Loading workspace {0}. Please wait. \n"
+                                 "To cancel, press Alt+F4 or a similar shorcut."
+                                 .format(workspace_name))
+
                 self.loading_dialog_raised = True
                 self.loading_dialog = Gtk.MessageDialog(self.window, 0,
                                                         Gtk.MessageType.INFO,
                                                         Gtk.ButtonsType.NONE,
-                                                        ("Loading workspace. \n"
-                                                         "Please wait."))
+                                                        message_string)
 
                 self.loading_dialog.set_modal(True)
 
                 # on every key stroke just return true, wont allow user
                 # to press scape
                 self.loading_dialog.connect("key_press_event", lambda _, __: True)
+                self.loading_dialog.connect("delete_event", lambda _, __: self.handle_no_active_workspace())
                 self.loading_dialog.show_all()
 
             if action == "destroy":
@@ -785,5 +787,5 @@ class GuiApp(Gtk.Application, FaradayUi):
         """
         couch_url = CONF.getCouchURI()
         ws_name = self.workspace_manager.getActiveWorkspace().name
-        ws_url = couch_url + "/reports/_design/reports/index.html#/dashboard/ws/" + ws_name
+        ws_url = couch_url + "/_ui/#/dashboard/ws/" + ws_name
         webbrowser.open(ws_url, new=2)

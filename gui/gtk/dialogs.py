@@ -463,7 +463,7 @@ class HostInfoDialog(Gtk.Window):
 
         host_id = self.model[0][0]
         couch_url = CONF.getCouchURI()
-        base_url = couch_url + "/reports/_design/reports/index.html#/host/ws/"
+        base_url = couch_url + "/_ui/#/host/ws/"
         self.edit_url = base_url + active_ws_name + "/hid/" + host_id
 
         host_info_frame = self.create_host_info_frame(host_info)

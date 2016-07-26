@@ -787,5 +787,5 @@ class GuiApp(Gtk.Application, FaradayUi):
         """
         couch_url = CONF.getCouchURI()
         ws_name = self.workspace_manager.getActiveWorkspace().name
-        ws_url = couch_url + "/reports/_design/reports/index.html#/dashboard/ws/" + ws_name
+        ws_url = couch_url + "/_ui/#/dashboard/ws/" + ws_name
         webbrowser.open(ws_url, new=2)

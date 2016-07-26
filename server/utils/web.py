@@ -51,10 +51,16 @@ def gzipped(f):
 
     return view_func
 
-def validate_workspace(workspace_name):
+def validate_workspace(workspace_name, timeout_sync=0.1):
     if not server.database.is_valid_workspace(workspace_name):
         abort(404)
 
     if not server.couchdb.has_permissions_for(workspace_name, request.cookies):
         abort(401)
+
+    wait_for_ws_sync_with_couchdb(workspace_name, timeout_sync)
+
+def wait_for_ws_sync_with_couchdb(workspace_name, timeout_sync):
+    workspace = server.database.get(workspace_name)
+    workspace.wait_until_sync(timeout_sync)
 

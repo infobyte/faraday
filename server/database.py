@@ -5,6 +5,7 @@
 import os, sys
 import atexit
 import logging
+import threading
 import server.models
 import server.config
 import server.couchdb
@@ -46,13 +47,13 @@ class WorkspaceDatabase(object):
 
     def __init__(self, name):
         self.__workspace = name
+
         self.database = Database(self.__workspace)
         self.couchdb = server.couchdb.Workspace(self.__workspace)
 
+        self.__setup_database_synchronization()
         self.__open_or_create_database()
-
-        logger.debug('Workspace %s last update: %s' % (self.__workspace, self.get_last_seq()))
-        self.couchdb.start_changes_monitor(self.__process_change, last_seq=self.get_last_seq())
+        self.__start_database_synchronization()
 
     def __open_or_create_database(self):
         if not self.database.exists():
@@ -139,10 +140,24 @@ class WorkspaceDatabase(object):
         sys.stdout.write('{}: {}%\r'.format(msg, percentage))
         sys.stdout.flush()
 
+    def __setup_database_synchronization(self):
+        self.__sync_seq_milestone = 0
+
+        # As far as we know, before the changes monitor is
+        # launched the data is synchronized with CouchDB
+        self.__data_sync_lock = threading.Lock()
+        self.__data_sync_event = threading.Event()
+        self.__data_sync_event.set()
+
+    def __start_database_synchronization(self):
+        self.__last_seq = self.get_last_seq()
+        logger.debug('Workspace %s last update: %s' % (self.__workspace, self.__last_seq))
+        # Start changes monitor thread
+        self.couchdb.start_changes_monitor(self.__process_change, last_seq=self.__last_seq)
+
     # CHA, CHA, CHA, CHANGESSSS
     def __process_change(self, change):
         logger.debug('New change for %s: %s' % (self.__workspace, change.change_doc))
-        self.__update_last_seq(change)
 
         if change.deleted:
             logger.debug('Doc %s was deleted' % change.doc_id)
@@ -155,6 +170,8 @@ class WorkspaceDatabase(object):
         elif change.added:
             logger.debug('Doc %s was added' % change.doc_id)
             self.__process_add(change)
+
+        self.__update_last_seq(change)
 
     def __process_del(self, change):
         """
@@ -249,6 +266,11 @@ class WorkspaceDatabase(object):
 
     def set_last_seq(self, last_seq):
         self.set_config(WorkspaceDatabase.LAST_SEQ_CONFIG, last_seq)
+        self.__last_seq = last_seq
+        # Set sync event when the database is updated relative
+        # to the milestone set
+        if self.__last_seq >= self.__sync_seq_milestone:
+            self.__data_sync_event.set()
 
     def set_migration_status(self, was_successful):
         self.set_config(WorkspaceDatabase.MIGRATION_SUCCESS, 'true' if was_successful else 'false')
@@ -272,6 +294,67 @@ class WorkspaceDatabase(object):
     def close(self):
         self.database.close()
 
+    def wait_until_sync(self, timeout):
+        """
+        Wait a maximum of <timeout> seconds for Faraday server to
+        synchronize its database with CouchDB. This is intended to
+        provide a solution to data inconsistencies between CouchDB
+        and the server on short windows of time between an update
+        and its importation into Faraday server's database.
+        Currently, this case is commonly seen when entities are
+        updated or added and, immediately afterwards, a query for
+        them is made.
+        """
+        # Synchronize access to data synchronization to avoid race
+        # conditions on heavy workload (mainly because multiple
+        # threads could set different milestones and clear the sync
+        # event on unexpected moments, rendering the possibility that
+        # this function returns False when data is in fact synchronized
+        # or to wait <timeout> seconds without need). (PS: maybe this
+        # not necessary given its current use and cause overhead for a
+        # situation that may not be troublesome)
+        # This may cause performance issues if processing CouchDB
+        # changes is taking a lot of time. If that is a persistent
+        # issue adjust the timeout to a lower value to minimize its
+        # impact
+        with self.__data_sync_lock:
+            self.__wait_until_database_is_sync(timeout)
+
+    def __wait_until_database_is_sync(self, timeout):
+        """
+        This function will establish a milestone by asking CouchDB's last
+        update sequence number to then wait for an event signal from the
+        changes monitor when its last procesed change is newer or as new
+        as this milestone.
+        If synchronization isn't achieved in <timeout> seconds it will
+        return False, communicating that data consistency can be ensured
+        after this call.
+        """
+        self.__set_sync_milestone()
+
+        logger.debug("Waiting until synchronization with CouchDB (ws: %d, couchdb: %d)" %\
+            (self.__last_seq, self.__sync_seq_milestone))
+
+        self.__data_sync_event.wait(timeout)
+        is_sync = self.__data_sync_event.is_set()
+
+        if is_sync:
+            logger.debug("Synchronized with CouchDB to seq %d" % self.__last_seq)
+        else:
+            logger.debug("Synchronization timed out. Working with outdated database")
+
+        return is_sync
+
+    def __set_sync_milestone(self):
+        """
+        Set a milestone from where we can check if data is synchronized
+        between the server and CouchDB
+        """
+        self.__sync_seq_milestone = self.couchdb.get_last_seq()
+        # Clear event if last database seq version is outdated
+        # relative to CouchDB
+        if self.__last_seq < self.__sync_seq_milestone:
+            self.__data_sync_event.clear()
 
 class Database(object):
     def __init__(self, db_name):

@@ -1,5 +1,6 @@
 import ConfigParser
 import logging
+import json
 import os, shutil
 import errno
 
@@ -8,6 +9,9 @@ LOGGING_LEVEL = logging.DEBUG
 FARADAY_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 DEFAULT_CONFIG_FILE = os.path.join(FARADAY_BASE, 'server/default.ini')
+VERSION_FILE = os.path.join(FARADAY_BASE, 'VERSION')
+CONST_LICENSES_DB = "faraday_licenses"
+WEB_CONFIG_FILE = os.path.join(FARADAY_BASE, 'server/www/config/config.json')
 LOCAL_CONFIG_FILE = os.path.expanduser('~/.faraday/config/server.ini')
 
 CONFIG_FILES = [ DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE ]
@@ -42,6 +46,23 @@ def parse_and_bind_configuration():
 
     for section in __parser.sections():
         globals()[section] = ConfigSection(section, __parser)
+
+def __get_version():
+    try:
+        version = open(VERSION_FILE, 'r').read().strip()
+    except:
+        version = ''
+    return version
+
+def gen_web_config():
+    doc = {
+        'ver': __get_version(),
+        'lic_db': CONST_LICENSES_DB
+    }
+    if os.path.isfile(WEB_CONFIG_FILE):
+        os.remove(WEB_CONFIG_FILE)
+    with open(WEB_CONFIG_FILE, "w") as doc_file:
+        json.dump(doc, doc_file)
 
 copy_default_config_to_local()
 parse_and_bind_configuration()

@@ -51,8 +51,9 @@ class WorkspaceDatabase(object):
         self.database = Database(self.__workspace)
         self.couchdb = server.couchdb.Workspace(self.__workspace)
 
-        self.__open_or_create_database()
         self.__setup_database_synchronization()
+        self.__open_or_create_database()
+        self.__start_database_synchronization()
 
     def __open_or_create_database(self):
         if not self.database.exists():
@@ -141,8 +142,6 @@ class WorkspaceDatabase(object):
 
     def __setup_database_synchronization(self):
         self.__sync_seq_milestone = 0
-        self.__last_seq = self.get_last_seq()
-        logger.debug('Workspace %s last update: %s' % (self.__workspace, self.__last_seq))
 
         # As far as we know, before the changes monitor is
         # launched the data is synchronized with CouchDB
@@ -150,6 +149,9 @@ class WorkspaceDatabase(object):
         self.__data_sync_event = threading.Event()
         self.__data_sync_event.set()
 
+    def __start_database_synchronization(self):
+        self.__last_seq = self.get_last_seq()
+        logger.debug('Workspace %s last update: %s' % (self.__workspace, self.__last_seq))
         # Start changes monitor thread
         self.couchdb.start_changes_monitor(self.__process_change, last_seq=self.__last_seq)
 

@@ -805,7 +805,6 @@ angular.module('faradayApp')
 
         loadVulns = function() {
             delete searchFilter.confirmed;
-            $scope.gridOptions.totalItems = null;
             if ($scope.confirmed)
                 searchFilter.confirmed = true;
             // load all vulnerabilities

@@ -2,11 +2,11 @@
 <!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
 <!-- See the file 'doc/LICENSE' for the license information -->
 
-<form name="form" novalidate>
+<form name="form" ng-submit="ok()" novalidate>
     <div class="modal-header">
         <div class="modal-button">
-            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
             <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid || form.start.$viewValue == '' || form.end.$viewValue == '' || (data.start > data.end)">OK</button>
+            <button type="button" class="btn btn-danger" ng-click="cancel()">Cancel</button>
         </div>
         <h3 class="modal-title">Edit {{data.product}} license</h3>
     </div>
@@ -68,7 +68,7 @@
     </div><!-- .modal-body -->
     <div class="modal-footer">
         <div class="modal-button">
-            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+            <button type="button" class="btn btn-danger" ng-click="cancel()">Cancel</button>
             <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid || form.start.$viewValue == '' || form.end.$viewValue == '' || (data.start > data.end)">OK</button>
         </div>
     </div>

@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = 'W.0.2'
+SCHEMA_VERSION = 'W.0.3'
 
 Base = declarative_base()
 
@@ -188,7 +188,7 @@ class Interface(FaradayEntity, Base):
         self.ipv6_address=document.get('ipv6').get('address')
         self.ipv6_gateway=document.get('ipv6').get('gateway')
         self.ipv6_dns=u','.join(document.get('ipv6').get('DNS'))
-        self.ipv6_prefix=document.get('ipv6').get('prefix')
+        self.ipv6_prefix=str(document.get('ipv6').get('prefix'))
         self.ports_filtered=document.get('ports').get('filtered')
         self.ports_opened=document.get('ports').get('opened')
         self.ports_closed=document.get('ports').get('closed')

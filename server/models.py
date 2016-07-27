@@ -44,7 +44,7 @@ class FaradayEntity(object):
                 if doc_type in entity_cls.DOC_TYPE:
                     return entity_cls
         return None
-        
+
     def __init__(self, document):
         self.update_from_document(document)
 
@@ -140,7 +140,7 @@ class Host(FaradayEntity, Base):
 
 class Interface(FaradayEntity, Base):
     DOC_TYPE = 'Interface'
-    
+
     # Table schema
     __tablename__ = 'interface'
     id = Column(Integer, primary_key=True)
@@ -327,13 +327,18 @@ class Vulnerability(FaradayEntity, Base):
         self.impact_confidentiality=document.get('impact', {}).get('confidentiality')
         self.impact_integrity=document.get('impact', {}).get('integrity')
         self.method=document.get('method')
-        self.params=str(document.get('params', ''))
         self.path=document.get('path')
         self.pname=document.get('pname')
         self.query=document.get('query')
         self.request=document.get('request')
         self.response=document.get('response')
         self.website=document.get('website')
+
+        params = document.get('params', u'')
+        if isinstance(params, (list, tuple)):
+            self.params = (u' '.join(params)).strip()
+        else:
+            self.params = params if params is not None else u''
 
     def add_relationships_from_dict(self, entities):
         couchdb_id = self.entity_metadata.couchdb_id

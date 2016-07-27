@@ -297,6 +297,7 @@ angular.module('faradayApp')
             hostsManager.updateHost(host, hostdata, interfaceData, $scope.workspace).then(function() {
                 // load icons in case an operating system changed
                 $scope.loadIcons();
+                loadHosts();
             }, function(message){
                 console.log(message);
             });

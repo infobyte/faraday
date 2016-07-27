@@ -55,7 +55,6 @@ angular.module('faradayApp')
                                         $scope.objects[workspace][stat] = os[workspace][stat];
                                 }
                             };
-                            console.log($scope.objects[workspace]);
                         }
                     }
                 });
@@ -63,7 +62,9 @@ angular.module('faradayApp')
         };
 
         $scope.onSuccessGet = function(workspace){
-            if(workspace.sdate.toString().indexOf(".") != -1) workspace.sdate = workspace.sdate * 1000;
+            if (workspace.sdate !== undefined) {
+                if(workspace.sdate.toString().indexOf(".") != -1) workspace.sdate = workspace.sdate * 1000;
+            }
             workspace.selected = false;
             $scope.workspaces.push(workspace);
         };

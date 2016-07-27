@@ -95,8 +95,7 @@ class WorkspaceDatabase(object):
             import traceback
             traceback.print_exc()
             logger.error('Error while importing workspace {}: {}'.format(self.__workspace, str(e)))
-            self.database.close()
-            self.database.delete()
+            self.delete()
             raise e
 
     
@@ -294,6 +293,10 @@ class WorkspaceDatabase(object):
     def close(self):
         self.database.close()
 
+    def delete(self):
+        self.database.close()
+        self.database.delete()
+
     def wait_until_sync(self, timeout):
         """
         Wait a maximum of <timeout> seconds for Faraday server to
@@ -424,8 +427,7 @@ def process_delete_workspace(ws_name):
         delete_workspace(ws_name)
 
 def delete_workspace(ws_name):
-    get(ws_name).database.close()
-    get(ws_name).database.delete()
+    get(ws_name).delete()
     del workspace[ws_name]
  
 def teardown_context():

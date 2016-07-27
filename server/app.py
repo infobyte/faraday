@@ -31,4 +31,5 @@ app = create_app()
 
 # Load APIs
 import server.api
+import server.modules.info
 

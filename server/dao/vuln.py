@@ -46,6 +46,8 @@ class VulnerabilityDAO(FaradayDAO):
         "web":              [],
         "issuetracker":     []
     }
+    
+    STRICT_FILTERING = ["type"]
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, vuln_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, vuln_filter)
@@ -91,7 +93,7 @@ class VulnerabilityDAO(FaradayDAO):
 
         # Apply pagination, sorting and filtering options to the query
         query = sort_results(query, self.COLUMNS_MAP, order_by, order_dir, default=Vulnerability.id)
-        query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter)
+        query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter, self.STRICT_FILTERING)
         count = get_count(query)
 
         if page_size:
@@ -186,7 +188,7 @@ class VulnerabilityDAO(FaradayDAO):
                              .group_by(col)\
                              .outerjoin(EntityMetadata, EntityMetadata.id == Vulnerability.entity_metadata_id)
 
-        query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter)
+        query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter, self.STRICT_FILTERING)
 
         with Timer('query.group_count'):
             res = query.all()

@@ -155,8 +155,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             try:
                 w = manager.createWorkspace(name, description,
                                             manager.namedTypeToDbType('CouchDB'))
-                CONF.setLastWorkspace(w.name)
-                CONF.saveConfig()
+                self.change_workspace(w.name)
                 creation_ok = True
             except Exception as e:
                 model.guiapi.notification_center.showDialog(str(e))
@@ -412,8 +411,12 @@ class GuiApp(Gtk.Application, FaradayUi):
 
                 # on every key stroke just return true, wont allow user
                 # to press scape
-                self.loading_dialog.connect("key_press_event", lambda _, __: True)
-                self.loading_dialog.connect("delete_event", lambda _, __: self.handle_no_active_workspace())
+                self.loading_dialog.connect("key_press_event",
+                                            lambda _, __: True)
+
+                self.loading_dialog.connect("delete_event",
+                                            lambda _, __: self.handle_no_active_workspace())
+
                 self.loading_dialog.show_all()
 
             if action == "destroy":

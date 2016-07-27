@@ -157,7 +157,7 @@ class VulnerabilityDAO(FaradayDAO):
                 'tags': [],
                 'type': vuln.document_type,
                 'target': host.name,
-                'hostnames': hostnames.split(','),
+                'hostnames': hostnames.split(',') if hostnames else '',
                 'service': "(%s/%s) %s" % (service.ports, service.protocol, service.s_name) if service.ports else ''
             }}
 

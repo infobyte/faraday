@@ -986,5 +986,11 @@ angular.module('faradayApp')
             });
         };
 
+        $scope.serviceSearch = function(srvStr) {
+            //TODO: this is horrible
+            srvName = srvStr.split(') ')[1];
+            return $scope.encodeUrl(srvName);
+        }
+
         init();
     }]);

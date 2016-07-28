@@ -48,7 +48,7 @@ class VulnerabilityDAO(FaradayDAO):
         "issuetracker":     []
     }
     
-    STRICT_FILTERING = ["type"]
+    STRICT_FILTERING = ["type", "service"]
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, vuln_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, vuln_filter)

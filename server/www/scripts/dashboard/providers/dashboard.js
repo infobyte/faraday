@@ -49,14 +49,6 @@ angular.module('faradayApp')
             "#999999"   // unclassified
         ];
 
-        dashboardSrv.getHostsByServicesCount = function(ws, id) {
-            var url = BASEURL + "/" + ws + "/_design/hosts/_view/byservicecount?group=true";
-            if (id != undefined){
-                url += "&key=\"" + id + "\"";
-            }
-            return dashboardSrv._getView(url);
-        };
-
         dashboardSrv.getTopHosts = function(ws, colors) {
             var deferred = $q.defer();
 

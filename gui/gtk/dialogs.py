@@ -24,7 +24,7 @@ CONF = getInstanceConfiguration()
 
 class PreferenceWindowDialog(Gtk.Dialog):
     """Sets up a preference dialog with basically nothing more than a
-    label, a text entry to input your CouchDB IP and a couple of buttons.
+    label, a text entry to input your Faraday server IP and a couple of buttons.
     Takes a callback function to the mainapp so that it can refresh the
     workspace list and information"""
 
@@ -45,7 +45,7 @@ class PreferenceWindowDialog(Gtk.Dialog):
         main_box = self.get_content_area()
 
         ip_label = Gtk.Label()
-        ip_label.set_text("Your Couch IP")
+        ip_label.set_text("Faraday Server IP or URL")
         main_box.pack_start(ip_label, True, False, 10)
 
         couch_uri = CONF.getCouchURI()

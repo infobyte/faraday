@@ -155,8 +155,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             try:
                 w = manager.createWorkspace(name, description,
                                             manager.namedTypeToDbType('CouchDB'))
-                CONF.setLastWorkspace(w.name)
-                CONF.saveConfig()
+                self.change_workspace(w.name)
                 creation_ok = True
             except Exception as e:
                 model.guiapi.notification_center.showDialog(str(e))
@@ -214,7 +213,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         retry_button = dialog.add_button("Retry connection?", 42)
         retry_button.connect("clicked", handle_connection_lost, dialog)
 
-        change_couch_url = dialog.add_button("Connect to a different CouchDB?", 43)
+        change_couch_url = dialog.add_button("Change server IP?", 43)
         change_couch_url.connect("clicked", connect_to_a_different_couch, dialog)
 
         cancel_button = dialog.add_button("Exit Faraday", 0)
@@ -282,7 +281,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.window.destroy, which takes none.
         """
         getLogger(self).error("Faraday exited because you didn't connect "
-                              "to a valid CouchDB.")
+                              "to a valid Faraday Server.")
         GObject.idle_add(self.window.destroy)
         GObject.idle_add(self.on_quit)
 
@@ -311,7 +310,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             parent = self.window
 
         if not CouchDbManager.testCouch(couch_uri):
-            errorDialog(parent, "Could not connect to CouchDB.",
+            errorDialog(parent, "Could not connect to Faraday Server.",
                         ("Are you sure it is running and that you can "
                          "connect to it? \n Make sure your username and "
                          "password are still valid."))
@@ -412,8 +411,12 @@ class GuiApp(Gtk.Application, FaradayUi):
 
                 # on every key stroke just return true, wont allow user
                 # to press scape
-                self.loading_dialog.connect("key_press_event", lambda _, __: True)
-                self.loading_dialog.connect("delete_event", lambda _, __: self.handle_no_active_workspace())
+                self.loading_dialog.connect("key_press_event",
+                                            lambda _, __: True)
+
+                self.loading_dialog.connect("delete_event",
+                                            lambda _, __: self.handle_no_active_workspace())
+
                 self.loading_dialog.show_all()
 
             if action == "destroy":

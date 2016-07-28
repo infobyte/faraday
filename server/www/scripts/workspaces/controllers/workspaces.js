@@ -91,6 +91,8 @@ angular.module('faradayApp')
                 if($scope.workspaces[i].name == workspace.name){
                     $scope.workspaces[i]._rev = workspace._rev;
                     $scope.workspaces[i].description = workspace.description;
+                    if ($scope.workspaces[i].duration === undefined)
+                        $scope.workspaces[i].duration = {};
                     $scope.workspaces[i].duration.start = workspace.duration.start;
                     $scope.workspaces[i].duration.end = workspace.duration.end;
                     $scope.workspaces[i].scope = workspace.scope;

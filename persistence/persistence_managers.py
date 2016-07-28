@@ -532,12 +532,12 @@ class CouchDbManager(AbstractPersistenceManager):
 
 
 def test_couch(uri):
-    """Return True if we could access uri/_all_dbs, which should happen
-    if we have an Internet connection, Couch is up and we have the correct
+    """Return True if we could access uri/_api/info, which should happen
+    if we have an Internet connection, the server is up and we have the correct
     permissions (response_code == 200)
     """
     try:
-        response_code = requests.get(uri + '/_all_dbs').status_code
+        response_code = requests.get(uri + '/_api/info', timeout=3).status_code
         return True if response_code == 200 else False
     except:
         return False

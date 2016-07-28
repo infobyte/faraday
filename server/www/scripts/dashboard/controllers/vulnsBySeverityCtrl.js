@@ -18,8 +18,9 @@ angular.module('faradayApp')
 
                     $scope.$watch(function() {
                         return dashboardSrv.props.confirmed;
-                    }, function() {
-                        $scope.loadData();
+                    }, function(newValue, oldValue) {
+                        if (oldValue != newValue)
+                            $scope.loadData();
                     }, true);
                 }
             };

@@ -7,6 +7,7 @@ import errno
 DEBUG = True
 LOGGING_LEVEL = logging.DEBUG
 FARADAY_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, 'requirements_server.txt')
 
 DEFAULT_CONFIG_FILE = os.path.join(FARADAY_BASE, 'server/default.ini')
 VERSION_FILE = os.path.join(FARADAY_BASE, 'VERSION')

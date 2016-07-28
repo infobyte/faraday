@@ -6,7 +6,7 @@ import logging
 
 ROOT_LOGGER = 'faraday-server'
 
-def setup():
+def setup_logging():
     logger = logging.getLogger(ROOT_LOGGER)
     logger.propagate = False
     #logger.setLevel(server.config.LOGGING_LEVEL)

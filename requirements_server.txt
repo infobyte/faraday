@@ -1,0 +1,4 @@
+flask>=0.10.1
+twisted>=16.1.1
+sqlalchemy>=1.0.12
+pyopenssl>=16.0.0

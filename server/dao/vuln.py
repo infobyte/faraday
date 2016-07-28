@@ -7,8 +7,9 @@ import json
 from server.dao.base import FaradayDAO
 from server.utils.database import paginate, sort_results, apply_search_filter, get_count
 
-from sqlalchemy.orm.query import Bundle
+from sqlalchemy import case
 from sqlalchemy.sql import func
+from sqlalchemy.orm.query import Bundle
 from server.models import Host, Interface, Service, Vulnerability, EntityMetadata
 from server.utils.debug import Timer, profiled
 
@@ -92,7 +93,7 @@ class VulnerabilityDAO(FaradayDAO):
                              .join(Interface, Interface.host_id == Host.id)
 
         # Apply pagination, sorting and filtering options to the query
-        query = sort_results(query, self.COLUMNS_MAP, order_by, order_dir, default=Vulnerability.id)
+        query = self.__specialized_sort(query, order_by, order_dir)
         query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter, self.STRICT_FILTERING)
         count = get_count(query)
 
@@ -103,6 +104,28 @@ class VulnerabilityDAO(FaradayDAO):
             results = query.all()
 
         return results, count
+
+    def __specialized_sort(self, query, order_by, order_dir):
+        """ Before using sort_results(), handle special ordering cases
+        for some fields """
+        if order_by == 'severity':
+            # For severity only, we choose a risk-based ordering
+            # instead of a lexicographycally one
+            column_map = {
+                'severity': [case(
+                    { 'unclassified': 0,
+                      'info': 1,
+                      'low': 2,
+                      'med': 3,
+                      'high': 4,
+                      'critical': 5 },
+                    value=Vulnerability.severity
+                )]
+            }
+        else:
+            column_map = self.COLUMNS_MAP
+
+        return sort_results(query, column_map, order_by, order_dir, default=Vulnerability.id)
 
     def __get_vuln_data(self, vuln, service, host, hostnames):
         def get_own_id(couchdb_id):
@@ -157,7 +180,7 @@ class VulnerabilityDAO(FaradayDAO):
                 'tags': [],
                 'type': vuln.document_type,
                 'target': host.name,
-                'hostnames': hostnames.split(','),
+                'hostnames': hostnames.split(',') if hostnames else '',
                 'service': "(%s/%s) %s" % (service.ports, service.protocol, service.s_name) if service.ports else ''
             }}
 

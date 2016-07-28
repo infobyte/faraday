@@ -537,7 +537,7 @@ def test_couch(uri):
     permissions (response_code == 200)
     """
     try:
-        response_code = requests.get(uri + '/_api/info').status_code
+        response_code = requests.get(uri + '/_api/info', timeout=3).status_code
         return True if response_code == 200 else False
     except:
         return False

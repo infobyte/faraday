@@ -19,7 +19,7 @@ angular.module('faradayApp')
                 .then(function() {
                     $modalInstance.close($scope.data);
                 }, function() {
-                    $scope.message = "";
+                    $scope.message = "There's been a problem creating the database.";
                 });
         };
 

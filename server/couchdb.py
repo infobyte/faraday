@@ -14,6 +14,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.resource import CouchdbResource
 from server import config
 
+# TODO(mrocha): use config.globals
 WS_BLACKLIST = ['reports', 'cwe']
 
 logger = server.utils.logger.get_logger(__name__)
@@ -88,6 +89,7 @@ class Workspace(object):
     def close(self):
         if self.__changes_monitor_thread:
             self.__changes_monitor_thread.stop()
+            self.__changes_monitor_thread = None
 
 class ChangesStream(object):
     ALL_DBS = "__ALL_WORKSPACES__"

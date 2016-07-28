@@ -351,14 +351,12 @@ angular.module('faradayApp')
 
 
         var groupByColumn = function() {
-            var count = 0;
-            for(key in $scope.columns) {
-                if($scope.columns.hasOwnProperty(key) && $scope.columns[key] == true) {
-                    count++;
-                    if(key === $scope.propertyGroupBy) {
-                        $scope.gridOptions.columnDefs[count + 3].grouping = { groupPriority: 0 };
-                        $scope.gridOptions.columnDefs[count + 3].sort = { priority: 0, direction: 'asc' }
-                    }
+            for (var i = 0; i < $scope.gridOptions.columnDefs.length; i++) {
+                var column = $scope.gridOptions.columnDefs[i];
+                if ( column.name == $scope.propertyGroupBy && $scope.columns[column.name] == true) {
+                    column.grouping = { groupPriority: 0 };
+                    paginationOptions.sortColumn = column.name;
+                    paginationOptions.sortDirection = 'asc';
                 }
             }
         };

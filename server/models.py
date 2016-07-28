@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = 'W.0.2'
+SCHEMA_VERSION = 'W.0.3'
 
 Base = declarative_base()
 
@@ -44,7 +44,7 @@ class FaradayEntity(object):
                 if doc_type in entity_cls.DOC_TYPE:
                     return entity_cls
         return None
-        
+
     def __init__(self, document):
         self.update_from_document(document)
 
@@ -140,7 +140,7 @@ class Host(FaradayEntity, Base):
 
 class Interface(FaradayEntity, Base):
     DOC_TYPE = 'Interface'
-    
+
     # Table schema
     __tablename__ = 'interface'
     id = Column(Integer, primary_key=True)
@@ -188,7 +188,7 @@ class Interface(FaradayEntity, Base):
         self.ipv6_address=document.get('ipv6').get('address')
         self.ipv6_gateway=document.get('ipv6').get('gateway')
         self.ipv6_dns=u','.join(document.get('ipv6').get('DNS'))
-        self.ipv6_prefix=document.get('ipv6').get('prefix')
+        self.ipv6_prefix=str(document.get('ipv6').get('prefix'))
         self.ports_filtered=document.get('ports').get('filtered')
         self.ports_opened=document.get('ports').get('opened')
         self.ports_closed=document.get('ports').get('closed')
@@ -327,13 +327,18 @@ class Vulnerability(FaradayEntity, Base):
         self.impact_confidentiality=document.get('impact', {}).get('confidentiality')
         self.impact_integrity=document.get('impact', {}).get('integrity')
         self.method=document.get('method')
-        self.params=str(document.get('params', ''))
         self.path=document.get('path')
         self.pname=document.get('pname')
         self.query=document.get('query')
         self.request=document.get('request')
         self.response=document.get('response')
         self.website=document.get('website')
+
+        params = document.get('params', u'')
+        if isinstance(params, (list, tuple)):
+            self.params = (u' '.join(params)).strip()
+        else:
+            self.params = params if params is not None else u''
 
     def add_relationships_from_dict(self, entities):
         couchdb_id = self.entity_metadata.couchdb_id

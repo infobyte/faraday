@@ -85,7 +85,9 @@ angular.module('faradayApp')
         };
 
         $scope.almostExpired = function(end) {
-            return (new Date(end)).getMonth() == (new Date()).getMonth();
+            var end_date = new Date(end),
+            today = new Date();
+            return (end_date.getMonth() == today.getMonth()) && (end_date.getYear() == today.getYear());
         };
 
         $scope.isExpirationMonth = function(licenses) {

@@ -213,7 +213,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         retry_button = dialog.add_button("Retry connection?", 42)
         retry_button.connect("clicked", handle_connection_lost, dialog)
 
-        change_couch_url = dialog.add_button("Connect to a different CouchDB?", 43)
+        change_couch_url = dialog.add_button("Change server IP?", 43)
         change_couch_url.connect("clicked", connect_to_a_different_couch, dialog)
 
         cancel_button = dialog.add_button("Exit Faraday", 0)
@@ -281,7 +281,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.window.destroy, which takes none.
         """
         getLogger(self).error("Faraday exited because you didn't connect "
-                              "to a valid CouchDB.")
+                              "to a valid Faraday Server.")
         GObject.idle_add(self.window.destroy)
         GObject.idle_add(self.on_quit)
 
@@ -310,7 +310,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             parent = self.window
 
         if not CouchDbManager.testCouch(couch_uri):
-            errorDialog(parent, "Could not connect to CouchDB.",
+            errorDialog(parent, "Could not connect to Faraday Server.",
                         ("Are you sure it is running and that you can "
                          "connect to it? \n Make sure your username and "
                          "password are still valid."))

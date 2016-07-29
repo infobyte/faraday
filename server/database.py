@@ -185,7 +185,7 @@ class WorkspaceDatabase(object):
         """
         entity = self.__get_modified_entity(change)
         if entity is not None:
-            logger.info('A {} ({}) will be deleted'.format(entity.DOC_TYPE, entity.name))
+            logger.info(u'A {} ({}) will be deleted'.format(entity.DOC_TYPE, entity.name))
             self.database.session.delete(entity)
             self.database.session.commit()
 
@@ -196,7 +196,7 @@ class WorkspaceDatabase(object):
         """
         entity = self.__get_modified_entity(change)
         if entity is not None:
-            logger.info('A {} ({}) will be updated'.format(entity.DOC_TYPE, entity.name))
+            logger.info(u'A {} ({}) will be updated'.format(entity.DOC_TYPE, entity.name))
             entity.update_from_document(change.doc)
             entity.entity_metadata.update_from_document(change.doc)
             self.database.session.commit()
@@ -231,7 +231,7 @@ class WorkspaceDatabase(object):
         """
         entity = server.models.FaradayEntity.parse(change.doc)
         if entity is not None:
-            logger.info('New {} ({}) will be added'.format(entity.DOC_TYPE, entity.name))
+            logger.info(u'New {} ({}) will be added'.format(entity.DOC_TYPE, entity.name))
             entity.add_relationships_from_db(self.database.session)
             self.database.session.add(entity)
             self.database.session.commit()

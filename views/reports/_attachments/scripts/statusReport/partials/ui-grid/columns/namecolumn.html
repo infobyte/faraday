@@ -1,4 +1,0 @@
-<div ng-if="row.entity._id != undefined">
-    <div ng-if="!col.grouping || col.grouping.groupPriority === undefined || col.grouping.groupPriority === null || ( row.groupHeader && col.grouping.groupPriority === row.treeLevel )" class="ui-grid-cell-contents white-space" uib-tooltip="{{COL_FIELD}}"><a ng-href="{{grid.appScope.hash}}/search/name={{grid.appScope.encodeUrl(row.entity.name)}}">{{COL_FIELD CUSTOM_FILTERS}}</a></div>
-</div>
-<div ng-if="row.groupHeader && col.grouping.groupPriority !== undefined" class="ui-grid-cell-contents white-space">{{COL_FIELD CUSTOM_FILTERS}}</div>

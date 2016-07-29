@@ -1,18 +1,17 @@
 MIT:
 - AngularJS - (https://angularjs.org/)
-- Bootstrap - (http://getbootstrap.com/)
-- jQuery - (http://jquery.com/)
-- normalize.css
-- font awesome code
-- jQuery Qtip (http://qtip2.com)
-- jQuery Tablesorter (http://tablesorter.com)
 - Angular-route
 - Angular-selection-model (https://github.com/jtrussell/angular-selection-model)
+- Bootstrap - (http://getbootstrap.com/)
+- Font Awesome code (http://fontawesome.io/)
+- normalize.css (http://git.io/normalize)
+- jQuery - (http://jquery.com/)
+- jQuery Tablesorter (http://tablesorter.com)
 - ui-bootstrap-tpls (http://angular-ui.github.io/bootstrap/)
 - cryptojs-sha1 (https://code.google.com/p/crypto-js/)
 
 SIL OFL 1.1:
-- font awesome fonts (http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL)
+- Font Awesome fonts (http://fontawesome.io/)
 
 BSD:
 - views/reports/_attachments/script/cryptojs-sha1.js 

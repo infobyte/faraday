@@ -201,7 +201,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         dialog = Gtk.MessageDialog(self.window, 0,
                                    Gtk.MessageType.ERROR,
                                    Gtk.ButtonsType.NONE,
-                                   "Faraday can't connect to CouchDB. "
+                                   "Faraday can't connect to Faraday Server. "
                                    "You can try to reconnect to the last URL "
                                    "you set up, change it or exit Faraday "
                                    "until you fix the problem. \n" + explanation)

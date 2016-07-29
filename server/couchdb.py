@@ -57,11 +57,18 @@ class Workspace(object):
     def __get_workspace(self):
         self.__workspace = self.__server.get_workspace_handler(self.__ws_name)
 
+    def get_info(self):
+        return self.get_document(self.__ws_name)
+
     def get_last_seq(self):
         return self.__workspace.info().get('update_seq', 0) # 'update_seq' / 'committed_update_seq'
 
     def get_document(self, doc_id):
-        return self.__workspace.get(doc_id)
+        try:
+            return self.__workspace.get(doc_id)
+        except ResourceNotFound:
+            logger.warning("Document {} was not found in CouchDB for Workspace {}".format(doc_id, self.__ws_name))
+            return {}
 
     def get_total_amount_of_documents(self):
         return self.__get_all_docs(0).total_rows
@@ -90,6 +97,11 @@ class Workspace(object):
         if self.__changes_monitor_thread:
             self.__changes_monitor_thread.stop()
             self.__changes_monitor_thread = None
+
+    def create_doc(self, doc_content):
+        # Remember to add "_id" in the doc if you want
+        # to specify an arbitrary id
+        return self.__workspace.save_doc(doc_content)
 
 class ChangesStream(object):
     ALL_DBS = "__ALL_WORKSPACES__"

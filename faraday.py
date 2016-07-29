@@ -521,12 +521,6 @@ def checkVersion():
         getInstanceConfiguration().setVersion(f_version)
         f.close()
 
-        doc = {"ver": getInstanceConfiguration().getVersion(), "lic_db": CONST_LICENSES_DB}
-
-        if os.path.isfile(FARADAY_CONFIG):
-            os.remove(FARADAY_CONFIG)
-        with open(FARADAY_CONFIG, "w") as doc_file:
-            json.dump(doc, doc_file)
     except Exception as e:
         getLogger("launcher").error("It seems that something's wrong with your version\nPlease contact customer support")
         sys.exit(-1)

@@ -1,32 +1,15 @@
-MIT:
-- AngularJS - (https://angularjs.org/)
-- Angular-route
-- Angular-selection-model (https://github.com/jtrussell/angular-selection-model)
-- Bootstrap - (http://getbootstrap.com/)
-- Font Awesome code (http://fontawesome.io/)
-- normalize.css (http://git.io/normalize)
-- jQuery - (http://jquery.com/)
-- jQuery Tablesorter (http://tablesorter.com)
-- ui-bootstrap-tpls (http://angular-ui.github.io/bootstrap/)
-- cryptojs-sha1 (https://code.google.com/p/crypto-js/)
-
-SIL OFL 1.1:
-- Font Awesome fonts (http://fontawesome.io/)
+Apache 2.0:
+- Mousetrap (https://github.com/ccampbell/mousetrap)
 
 BSD:
-- views/reports/_attachments/script/cryptojs-sha1.js 
+- Angular-chart (https://github.com/jtblin/angular-chart.js)
 
 BSD 3-clause:
-- D3 - (http://d3js.org)
-
-Public Domain:
-- json2
-
-Apache 2.0:
-- jquery couch
+- cryptojs-sha1 (https://code.google.com/p/crypto-js/)
+- D3 (http://d3js.org)
 
 CeCILL-V2:
-- pyqonsole - (http://www.logilab.fr/)
+- pyqonsole (http://www.logilab.fr/)
 
 GPL-3:
 - Qt3
@@ -35,4 +18,28 @@ GPL-3:
 GPL-2:
 - dotnessus_v2.py - (http://code.google.com/p/pynessus/)
 
+MIT:
+- AngularJS (https://angularjs.org/)
+- Angular-cookies
+- Angular-file-upload (https://github.com/danialfarid/ng-file-upload)
+- Angular-hotkeys (https://github.com/chieffancypants/angular-hotkeys/)
+- Angular-route
+- Angular-selection-model (https://github.com/jtrussell/angular-selection-model)
+- animate.css (http://daneden.me/animate)
+- Bootstrap (http://getbootstrap.com/)
+- Chart.js (http://www.chartjs.org/)
+- Font Awesome code (http://fontawesome.io/)
+- jQuery (http://jquery.com/)
+- jQuery Tablesorter (http://tablesorter.com)
+- ng-clipboard (https://github.com/asafdav/ng-clip)
+- ng-sanitize
+- normalize.css (http://git.io/normalize)
+- UI Bootstrap (https://github.com/angular-ui/bootstrap)
+- UI Grid (https://github.com/angular-ui/ui-grid)
+- ZeroClipboard (http://zeroclipboard.org/)
 
+Public Domain:
+- json2
+
+SIL OFL 1.1:
+- Font Awesome fonts (http://fontawesome.io/)

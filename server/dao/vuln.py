@@ -11,7 +11,6 @@ from sqlalchemy import case
 from sqlalchemy.sql import func
 from sqlalchemy.orm.query import Bundle
 from server.models import Host, Interface, Service, Vulnerability, EntityMetadata
-from server.utils.debug import Timer, profiled
 
 
 class VulnerabilityDAO(FaradayDAO):
@@ -52,9 +51,7 @@ class VulnerabilityDAO(FaradayDAO):
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, vuln_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, vuln_filter)
-
-        with Timer('query.build_list'):
-            vuln_list = [self.__get_vuln_data(v, s, h, hn) for v, s, h, hn in results]
+        vuln_list = [self.__get_vuln_data(v, s, h, hn) for v, s, h, hn in results]
 
         response = {
             'vulnerabilities': vuln_list,
@@ -100,8 +97,7 @@ class VulnerabilityDAO(FaradayDAO):
         if page_size:
             query = paginate(query, page, page_size)
 
-        with profiled():
-            results = query.all()
+        results = query.all()
 
         return results, count
 
@@ -185,11 +181,10 @@ class VulnerabilityDAO(FaradayDAO):
             }}
 
     def count(self, group_by=None, search=None, vuln_filter={}):
-        with Timer('query.total_count'):
-            query = self._session.query(Vulnerability.vuln_type, func.count())\
-                                 .group_by(Vulnerability.vuln_type)
-            query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter)
-            total_count = dict(query.all())
+        query = self._session.query(Vulnerability.vuln_type, func.count())\
+                             .group_by(Vulnerability.vuln_type)
+        query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter)
+        total_count = dict(query.all())
 
         # Return total amount of services if no group-by field was provided
         result_count = { 'total_count':    sum(total_count.values()),
@@ -212,10 +207,9 @@ class VulnerabilityDAO(FaradayDAO):
                              .outerjoin(EntityMetadata, EntityMetadata.id == Vulnerability.entity_metadata_id)
 
         query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter, self.STRICT_FILTERING)
+        result = query.all()
 
-        with Timer('query.group_count'):
-            res = query.all()
-        result_count['groups'] = [ { group_by: value[1], 'count': count } for value, count in res ]
+        result_count['groups'] = [ { group_by: value[1], 'count': count } for value, count in result ]
 
         return result_count
 

@@ -13,11 +13,8 @@ class FaradayDAO(object):
     COLUMNS_MAP = {}
 
     def __init__(self, workspace):
-        self._logger = server.utils.logger.get_logger(__name__)
-        try:
-            self._session = server.database.get(workspace).database.session
-        except KeyError:
-            raise WorkspaceNotFound(workspace)
+        self._logger = server.utils.logger.get_logger(self)
+        self._session = server.database.get(workspace).database.session
 
     def get_all(self):
         self.__check_valid_operation()
@@ -25,7 +22,7 @@ class FaradayDAO(object):
 
     def __check_valid_operation(self):
         if self.MAPPED_ENTITY is None:
-            raise Exception('Invalid operation')
+            raise RuntimeError('Invalid operation')
 
     def get_by_couchdb_id(self, couchdb_id):
         self.__check_valid_operation()

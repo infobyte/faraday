@@ -65,17 +65,20 @@ class WorkspaceDatabase(object):
         self.database.open_session()
 
         try:
+            # Add metadata information to database
             self.set_last_seq(self.couchdb.get_last_seq())
             self.set_migration_status(False)
             self.set_schema_version()
 
             self.import_from_couchdb()
 
+            # Reaching this far without errors means a successful migration
             self.set_migration_status(True)
 
         except Exception, e:
             import traceback
-            logger.error(u'Error while importing workspace {}: {}'.format(self.__workspace, traceback.format_exc()))
+            logger.debug(traceback.format_exc())
+            logger.error(u'Error while importing workspace {}: {!s}'.format(self.__workspace, e))
             self.delete()
             raise e
     
@@ -131,7 +134,6 @@ class WorkspaceDatabase(object):
     def __start_database_synchronization(self):
         self.__last_seq = self.get_last_seq()
         logger.debug(u'Workspace {} last update: {}'.format(self.__workspace, self.__last_seq))
-        # Start changes monitor thread
         self.couchdb.start_changes_monitor(self.__process_change, last_seq=self.__last_seq)
 
     # CHA, CHA, CHA, CHANGESSSS
@@ -167,7 +169,8 @@ class WorkspaceDatabase(object):
         if entity is not None:
             self.database.session.delete(entity)
             self.database.session.commit()
-            logger.info(u'A {} ({}) was deleted'.format(entity.DOC_TYPE, entity.name))
+            logger.info(u'A {} ({}) was deleted'.format(
+                entity.entity_metadata.document_type, entity.name))
 
     def __process_update(self, change):
         """
@@ -179,12 +182,18 @@ class WorkspaceDatabase(object):
             entity.update_from_document(change.doc)
             entity.entity_metadata.update_from_document(change.doc)
             self.database.session.commit()
-            logger.info(u'A {} ({}) was updated'.format(entity.DOC_TYPE, entity.name))
+            logger.info(u'A {} ({}) was updated'.format(
+                entity.entity_metadata.document_type, entity.name))
 
     def __get_modified_entity(self, change):
-        metadata = self.database.session.query(server.models.EntityMetadata)\
-            .filter(server.models.EntityMetadata.couchdb_id == change.doc_id)\
-            .one_or_none()
+        try:
+            metadata = self.database.session.query(server.models.EntityMetadata)\
+                .filter(server.models.EntityMetadata.couchdb_id == change.doc_id)\
+                .one_or_none()
+        except MultipleResultsFound:
+            logger.warning(u'Multiple entities were found for doc {}.'\
+                'Ignoring change'.format(change.doc_id))
+            return None
 
         if metadata is not None:
             # Obtain the proper table on which to perform the entity operation
@@ -214,7 +223,8 @@ class WorkspaceDatabase(object):
             entity.add_relationships_from_db(self.database.session)
             self.database.session.add(entity)
             self.database.session.commit()
-            logger.info(u'New {} ({}) was added'.format(entity.DOC_TYPE, entity.name))
+            logger.info(u'New {} ({}) was added'.format(
+                entity.entity_metadata.document_type, entity.name))
 
     def get_last_seq(self):
         config = self.get_config(WorkspaceDatabase.LAST_SEQ_CONFIG)

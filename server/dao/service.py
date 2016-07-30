@@ -5,7 +5,6 @@
 from sqlalchemy.sql import func
 from server.dao.base import FaradayDAO
 from server.models import Host, Interface, Service
-from server.utils.debug import Timer
 
 
 class ServiceDAO(FaradayDAO):
@@ -50,8 +49,7 @@ class ServiceDAO(FaradayDAO):
         return hosts.values()
 
     def count(self, group_by=None):
-        with Timer('query.total_count'):
-            total_count = self._session.query(func.count(Service.id)).scalar()
+        total_count = self._session.query(func.count(Service.id)).scalar()
 
         # Return total amount of services if no group-by field was provided
         if group_by is None:
@@ -66,8 +64,7 @@ class ServiceDAO(FaradayDAO):
                              .filter(Service.status.in_(('open', 'running')))\
                              .group_by(col)
 
-        with Timer('query.group_count'):
-            res = query.all()
+        res = query.all()
 
         return { 'total_count': total_count,
                  'groups': [ { group_by: value, 'count': count } for value, count in res ] }

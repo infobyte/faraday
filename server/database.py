@@ -98,7 +98,7 @@ class WorkspaceDatabase(object):
             processed_docs = processed_docs + 1
             current_progress = (processed_docs * 100) / total_amount 
             if current_progress > progress:
-                self.__show_progress(u'  * Importation of {} from CouchDB progress'.format(
+                self.__show_progress(u'  * Importing {} from CouchDB'.format(
                     self.__workspace), progress)
                 progress = current_progress
                 should_flush_changes = True

@@ -44,7 +44,8 @@ class WorkspaceDatabase(object):
 
     def check_database_integrity(self):
         if not self.was_migration_successful():
-            logger.info(u"Workspace {} wasn't migrated successfully. Remigrating workspace...".format(self.__workspace))
+            logger.info(u"Workspace {} wasn't migrated successfully. Remigrating workspace...".format(
+                self.__workspace))
             self.remigrate_database()
 
         elif self.get_schema_version() != server.models.SCHEMA_VERSION:
@@ -97,7 +98,8 @@ class WorkspaceDatabase(object):
             processed_docs = processed_docs + 1
             current_progress = (processed_docs * 100) / total_amount 
             if current_progress > progress:
-                self.__show_progress('Importing', progress)
+                self.__show_progress(u'  * Importation of {} from CouchDB progress'.format(
+                    self.__workspace), progress)
                 progress = current_progress
                 should_flush_changes = True
 
@@ -119,7 +121,7 @@ class WorkspaceDatabase(object):
         flush_changes()
 
     def __show_progress(self, msg, percentage):
-        sys.stdout.write('{}: {:%}\r'.format(msg, percentage))
+        sys.stdout.write('{}: {}%\r'.format(msg, percentage))
         sys.stdout.flush()
 
     def __setup_database_synchronization(self):

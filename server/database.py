@@ -15,29 +15,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound
 
-
 logger = server.utils.logger.get_logger(__name__)
 workspace = {}
-
-"""
-
-from sqlalchemy import event
-from sqlalchemy.engine import Engine
-import time
-
-@event.listens_for(Engine, "before_cursor_execute")
-def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-    context._query_start_time = time.time()
-    logger.debug("Start Query:\n%s" % statement)
-    logger.debug("Parameters:\n%r" % (parameters,))
-
-@event.listens_for(Engine, "after_cursor_execute")
-def after_cursor_execute(conn, cursor, statement, 
-    parameters, context, executemany):
-    total = time.time() - context._query_start_time
-    logger.debug("Query Complete!")
-    logger.debug("Total Time: %.02fms" % (total*1000))
-"""
 
 
 class WorkspaceDatabase(object):
@@ -64,21 +43,23 @@ class WorkspaceDatabase(object):
 
     def check_database_integrity(self):
         if not self.was_migration_successful():
-            logger.info("Workspace %s wasn't migrated successfully. Trying again..." % self.__workspace)
+            logger.info(u"Workspace {} wasn't migrated successfully. Remigrating workspace...".format(self.__workspace))
             self.remigrate_database()
+
         elif self.get_schema_version() != server.models.SCHEMA_VERSION:
-            logger.info("Workspace %s has an old schema version (%s != %s). Remigrating workspace..." % (self.__workspace, self.get_schema_version(), server.models.SCHEMA_VERSION))
+            logger.info(u"Workspace {} has an old schema version ({} != {}). Remigrating workspace...".format(
+                self.__workspace, self.get_schema_version(), server.models.SCHEMA_VERSION))
             self.remigrate_database()
 
     def remigrate_database(self):
-            self.database.close()
-            self.database.delete()
-            self.database = Database(self.__workspace)
+        self.database.close()
+        self.database.delete()
+        self.database = Database(self.__workspace)
 
-            self.create_database()
+        self.create_database()
     
     def create_database(self):
-        logger.info('Creating database for workspace %s' % self.__workspace)
+        logger.info(u'Creating database for workspace {}'.format(self.__workspace))
         self.database.create()
         self.database.open_session()
 
@@ -93,11 +74,9 @@ class WorkspaceDatabase(object):
 
         except Exception, e:
             import traceback
-            traceback.print_exc()
-            logger.error('Error while importing workspace {}: {}'.format(self.__workspace, str(e)))
+            logger.error(u'Error while importing workspace {}: {}'.format(self.__workspace, traceback.format_exc()))
             self.delete()
             raise e
-
     
     def import_from_couchdb(self):
         total_amount = self.couchdb.get_total_amount_of_documents()
@@ -127,8 +106,8 @@ class WorkspaceDatabase(object):
                 try:
                     entity.add_relationships_from_dict(host_entities)
                 except server.models.EntityNotFound as e:
-                    logger.warning("Ignoring %s entity (%s) because its parent wasn't found" %
-                        (entity.entity_metadata.document_type, entity.entity_metadata.couchdb_id))
+                    logger.warning(u"Ignoring {} entity ({}) because its parent wasn't found".format(
+                        entity.entity_metadata.document_type, entity.entity_metadata.couchdb_id))
                 else:
                     host_entities[doc.get('key')] = entity
                     self.database.session.add(entity)
@@ -136,38 +115,38 @@ class WorkspaceDatabase(object):
         flush_changes()
 
     def __show_progress(self, msg, percentage):
-        sys.stdout.write('{}: {}%\r'.format(msg, percentage))
+        sys.stdout.write('{}: {:%}\r'.format(msg, percentage))
         sys.stdout.flush()
 
     def __setup_database_synchronization(self):
         self.__sync_seq_milestone = 0
 
         # As far as we know, before the changes monitor is
-        # launched the data is synchronized with CouchDB
+        # running, the data is synchronized with CouchDB
         self.__data_sync_lock = threading.Lock()
         self.__data_sync_event = threading.Event()
         self.__data_sync_event.set()
 
     def __start_database_synchronization(self):
         self.__last_seq = self.get_last_seq()
-        logger.debug('Workspace %s last update: %s' % (self.__workspace, self.__last_seq))
+        logger.debug(u'Workspace {} last update: {}'.format(self.__workspace, self.__last_seq))
         # Start changes monitor thread
         self.couchdb.start_changes_monitor(self.__process_change, last_seq=self.__last_seq)
 
     # CHA, CHA, CHA, CHANGESSSS
     def __process_change(self, change):
-        logger.debug('New change for %s: %s' % (self.__workspace, change.change_doc))
+        logger.debug(u'New change for {}: {}'.format(self.__workspace, change.change_doc))
 
         if change.deleted:
-            logger.debug('Doc %s was deleted' % change.doc_id)
+            logger.debug(u'Doc {} was deleted'.format(change.doc_id))
             self.__process_del(change)
 
         elif change.updated:
-            logger.debug('Doc %s was updated' % change.doc_id)
+            logger.debug(u'Doc {} was updated'.format(change.doc_id))
             self.__process_update(change)
 
         elif change.added:
-            logger.debug('Doc %s was added' % change.doc_id)
+            logger.debug(u'Doc {} was added'.format(change.doc_id))
             self.__process_add(change)
 
         self.__update_last_seq(change)
@@ -185,9 +164,9 @@ class WorkspaceDatabase(object):
         """
         entity = self.__get_modified_entity(change)
         if entity is not None:
-            logger.info(u'A {} ({}) will be deleted'.format(entity.DOC_TYPE, entity.name))
             self.database.session.delete(entity)
             self.database.session.commit()
+            logger.info(u'A {} ({}) was deleted'.format(entity.DOC_TYPE, entity.name))
 
     def __process_update(self, change):
         """
@@ -196,10 +175,10 @@ class WorkspaceDatabase(object):
         """
         entity = self.__get_modified_entity(change)
         if entity is not None:
-            logger.info(u'A {} ({}) will be updated'.format(entity.DOC_TYPE, entity.name))
             entity.update_from_document(change.doc)
             entity.entity_metadata.update_from_document(change.doc)
             self.database.session.commit()
+            logger.info(u'A {} ({}) was updated'.format(entity.DOC_TYPE, entity.name))
 
     def __get_modified_entity(self, change):
         metadata = self.database.session.query(server.models.EntityMetadata)\
@@ -219,7 +198,7 @@ class WorkspaceDatabase(object):
             return entity
 
         else:
-            logger.info('Doc {} was not found in the database'.format(change.doc_id))
+            logger.info(u'Doc {} was not found in the database'.format(change.doc_id))
             return None
 
     def __process_add(self, change):
@@ -231,10 +210,10 @@ class WorkspaceDatabase(object):
         """
         entity = server.models.FaradayEntity.parse(change.doc)
         if entity is not None:
-            logger.info(u'New {} ({}) will be added'.format(entity.DOC_TYPE, entity.name))
             entity.add_relationships_from_db(self.database.session)
             self.database.session.add(entity)
             self.database.session.commit()
+            logger.info(u'New {} ({}) was added'.format(entity.DOC_TYPE, entity.name))
 
     def get_last_seq(self):
         config = self.get_config(WorkspaceDatabase.LAST_SEQ_CONFIG)
@@ -259,7 +238,9 @@ class WorkspaceDatabase(object):
         try:
             result = query.one_or_none()
         except MultipleResultsFound:
-            raise Exception('Database Inconsistency: Should not have the option %s defined multiple times' % option)
+            msg = u'Database {} should not have the option {} defined multiple times'.format(self.__workspace, option)
+            logger.error(msg)
+            raise RuntimeError(msg)
 
         return result
 
@@ -335,16 +316,16 @@ class WorkspaceDatabase(object):
         """
         self.__set_sync_milestone()
 
-        logger.debug("Waiting until synchronization with CouchDB (ws: %d, couchdb: %d)" %\
-            (self.__last_seq, self.__sync_seq_milestone))
+        logger.debug(u"Waiting until synchronization with CouchDB (ws: {}, couchdb: {})".format(
+            self.__last_seq, self.__sync_seq_milestone))
 
         self.__data_sync_event.wait(timeout)
         is_sync = self.__data_sync_event.is_set()
 
         if is_sync:
-            logger.debug("Synchronized with CouchDB to seq %d" % self.__last_seq)
+            logger.debug(u"Synchronized with CouchDB to seq {}".format(self.__last_seq))
         else:
-            logger.debug("Synchronization timed out. Working with outdated database")
+            logger.debug(u"Synchronization timed out. Working with outdated database")
 
         return is_sync
 
@@ -398,7 +379,7 @@ def setup_workspaces():
     atexit.register(server.database.close_databases)
 
 def setup_workspace(ws_name):
-    logger.info('Setting up workspace %s' % ws_name)
+    logger.info(u'Setting up workspace {}'.format(ws_name))
     workspace[ws_name] = WorkspaceDatabase(ws_name)
 
 def close_databases():
@@ -407,23 +388,23 @@ def close_databases():
 
 def process_db_change(change):
     if change.created:
-        logger.info('Workspace %s was created' % change.db_name)
+        logger.info(u'Workspace {} was created'.format(change.db_name))
         process_new_workspace(change.db_name)
     elif change.deleted:
-        logger.info('Workspace %s was deleted' % change.db_name)
+        logger.info(u'Workspace {} was deleted'.format(change.db_name))
         process_delete_workspace(change.db_name)
 
 def process_new_workspace(ws_name):
     if ws_name in workspace:
-        logger.info("Workspace %s was already migrated. Ignoring change." % ws_name)
+        logger.info(u"Workspace {} was already migrated. Ignoring change.".format(ws_name))
     else:
         setup_workspace(ws_name)
 
 def process_delete_workspace(ws_name):
     if ws_name not in workspace:
-        logger.info("Workspace %s wasn't migrated at startup. Ignoring change." % ws_name)
+        logger.info(u"Workspace {} wasn't migrated at startup. Ignoring change.".format(ws_name))
     else:
-        logger.info("Deleting workspace %s from Faraday Server" % ws_name)
+        logger.info(u"Deleting workspace {} from Faraday Server".format(ws_name))
         delete_workspace(ws_name)
 
 def delete_workspace(ws_name):
@@ -447,4 +428,22 @@ def get(ws_name):
         return workspace[ws_name]
     except KeyError:
         raise WorkspaceNotFound(ws_name)
+
+# Profile queries performance on debug mode
+if server.config.is_debug_mode():
+    from sqlalchemy import event
+    from sqlalchemy.engine import Engine
+    import time
+
+    @event.listens_for(Engine, "before_cursor_execute")
+    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        context._query_start_time = time.time()
+        logger.debug(u"Start Query:\n{}".format(statement))
+        logger.debug(u"Parameters:\n{!r}".format(parameters))
+
+    @event.listens_for(Engine, "after_cursor_execute")
+    def after_cursor_execute(conn, cursor, statement, 
+        parameters, context, executemany):
+        total = time.time() - context._query_start_time
+        logger.debug(u"Query Complete. Total Time: {:.02f}ms".format(total*1000))
 

@@ -4,15 +4,15 @@ from __future__ import absolute_import
 # See the file 'doc/LICENSE' for the license information
 
 import ConfigParser
-import logging
 import json
 import os, shutil
 import errno
 
+from logging import NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL
 from config import globals as CONSTANTS
 
-DEBUG = True
-LOGGING_LEVEL = logging.DEBUG
+
+LOGGING_LEVEL = DEBUG
 
 FARADAY_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, 'requirements_server.txt')
@@ -74,6 +74,9 @@ def gen_web_config():
         os.remove(WEB_CONFIG_FILE)
     with open(WEB_CONFIG_FILE, "w") as doc_file:
         json.dump(doc, doc_file)
+
+def is_debug_mode():
+    return LOGGING_LEVEL is DEBUG
 
 copy_default_config_to_local()
 parse_and_bind_configuration()

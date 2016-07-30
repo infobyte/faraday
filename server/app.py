@@ -12,7 +12,7 @@ def create_app():
     return app
 
 def configure(app):
-    app.debug = server.config.DEBUG
+    app.debug = server.config.is_debug_mode()
     minify_json_output(app)
 
     @app.teardown_appcontext

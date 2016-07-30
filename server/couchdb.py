@@ -65,7 +65,7 @@ class Workspace(object):
         try:
             return self.__workspace.get(doc_id)
         except ResourceNotFound:
-            logger.warning("Document {} was not found in CouchDB for Workspace {}".format(doc_id, self.__ws_name))
+            logger.warning(u"Document {} was not found in CouchDB for Workspace {}".format(doc_id, self.__ws_name))
             return {}
 
     def get_total_amount_of_documents(self):
@@ -84,7 +84,7 @@ class Workspace(object):
         return self.__workspace.all_docs(include_docs=True, limit=limit, skip=offset)
 
     def start_changes_monitor(self, changes_callback, last_seq=0):
-        logger.debug('Starting changes monitor for workspace {} since {}'.format(self.__ws_name, last_seq))
+        logger.debug(u'Starting changes monitor for workspace {} since {}'.format(self.__ws_name, last_seq))
         ws_stream = ChangesStream(self.__ws_name, feed='continuous',
             since=last_seq, include_docs='true', heartbeat='true')
         self.__changes_monitor_thread = ChangesMonitorThread(ws_stream, changes_callback)
@@ -153,9 +153,9 @@ class ChangesStream(object):
                 self.stop()
                 self.__stop = True
 
-                logger.warning("Lost connection to CouchDB. Retrying in 5 seconds...")
+                logger.warning(u"Lost connection to CouchDB. Retrying in 5 seconds...")
                 time.sleep(5)
-                logger.info("Retrying...")
+                logger.info(u"Retrying...")
 
     def __get_auth_info(self):
         user, passwd = config.couchdb.user, config.couchdb.password
@@ -232,7 +232,7 @@ class MonitorThread(threading.Thread):
             except Exception, e:
                 import traceback
                 logger.debug(traceback.format_exc())
-                logger.warning("Error while processing change. Ignoring. Offending change: %r" % change_doc)
+                logger.warning(u"Error while processing change. Ignoring. Offending change: {}".format(change_doc))
 
                 # TODO: A proper fix is needed here
                 if change_doc.get('reason', None) and change_doc.get('reason') == 'no_db_file':
@@ -274,7 +274,7 @@ def has_permissions_for(workspace_name, cookies):
     return (response.status_code == requests.codes.ok)
 
 def start_dbs_monitor(changes_callback):
-    logger.debug('Starting DBs monitor')
+    logger.debug(u'Starting global workspaces monitor')
     dbs_stream = ChangesStream(ChangesStream.ALL_DBS, feed='continuous', heartbeat='true')
     monitor_thread = DBsMonitorThread(dbs_stream, changes_callback)
     monitor_thread.daemon = True

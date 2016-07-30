@@ -14,8 +14,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.resource import CouchdbResource
 from server import config
 
-# TODO(mrocha): use config.globals
-WS_BLACKLIST = ['reports', 'cwe']
 
 logger = server.utils.logger.get_logger(__name__)
 
@@ -256,7 +254,7 @@ def get_couchdb_url():
     return couchdb_url
 
 def is_usable_workspace(ws_name):
-    return not ws_name.startswith('_') and ws_name not in WS_BLACKLIST
+    return not ws_name.startswith('_') and ws_name not in config.WS_BLACKLIST
 
 def list_workspaces_as_user(cookies):
     all_dbs_url = get_couchdb_url() + '/_all_dbs'

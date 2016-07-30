@@ -6,9 +6,8 @@
 import argparse
 import sys
 
-from server.utils.logger import setup_logging, get_logger
 from server.config import REQUIREMENTS_FILE
-
+from server.utils.logger import setup_logging, get_logger
 from utils.dependencies import DependencyChecker
 from utils.user_input import query_yes_no
 
@@ -27,17 +26,18 @@ def check_dependencies():
             missing = checker.check_dependencies()
     return len(missing) == 0
 
-
 def main():
     cli_arguments = parse_arguments()
     setup_logging()
     logger = get_logger(__name__)
+
     if not check_dependencies():
         logger.error("Dependencies not met")
         sys.exit(1)
+
     import server.web
     import server.database
-    server.config.gen_web_config()
+
     server.database.setup()
 
     web_server = server.web.WebServer(enable_ssl=cli_arguments.ssl)

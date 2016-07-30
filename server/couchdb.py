@@ -61,6 +61,9 @@ class Workspace(object):
     def get_last_seq(self):
         return self.__workspace.info().get('update_seq', 0) # 'update_seq' / 'committed_update_seq'
 
+    def get_view(self, view_name):
+        return self.__workspace.view(view_name)
+
     def get_document(self, doc_id):
         try:
             return self.__workspace.get(doc_id)
@@ -96,10 +99,19 @@ class Workspace(object):
             self.__changes_monitor_thread.stop()
             self.__changes_monitor_thread = None
 
+    def save_doc(self, document):
+        return self.__workspace.save_doc(document)
+
     def create_doc(self, doc_content):
         # Remember to add "_id" in the doc if you want
         # to specify an arbitrary id
         return self.__workspace.save_doc(doc_content)
+
+    def put_attachment(self, doc, content, name=None, content_type=None, content_length=None):
+        return self.__workspace.put_attachment(doc, content, name, content_type, content_length)
+
+    def fetch_attachment(self, doc, name):
+        return self.__workspace.fetch_attachment(doc, name)
 
 class ChangesStream(object):
     ALL_DBS = "__ALL_WORKSPACES__"

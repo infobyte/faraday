@@ -14,7 +14,9 @@ class FaradayDAO(object):
 
     def __init__(self, workspace):
         self._logger = server.utils.logger.get_logger(self)
-        self._session = server.database.get(workspace).database.session
+        ws_instance = server.database.get(workspace)
+        self._session = ws_instance.database.session
+        self._couchdb = ws_instance.couchdb
 
     def get_all(self):
         self.__check_valid_operation()

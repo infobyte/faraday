@@ -48,13 +48,14 @@ def process_run_commands(cli_arguments):
         sys.exit(1)
 
 def setup_environment(cli_arguments):
+    logger = get_logger(__name__)
     server.config.copy_default_config_to_local()
 
     if cli_arguments.debug:
         set_logging_level(server.config.DEBUG)
 
     if not check_dependencies():
-        get_logger().error("Dependencies not met")
+        logger.error("Dependencies not met")
         sys.exit(1)
 
     server.config.gen_web_config()

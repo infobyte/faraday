@@ -35,6 +35,7 @@ def setup_console_logging(formatter):
     LVL_SETTABLE_HANDLERS.append(console_handler)
 
 def setup_file_logging(formatter):
+    create_logging_folder()
     file_handler = logging.handlers.RotatingFileHandler(
         LOG_FILE, maxBytes=MAX_LOG_FILE_SIZE, backupCount=MAX_LOG_FILE_BACKUP_COUNT)
     file_handler.setFormatter(formatter)
@@ -66,3 +67,9 @@ def set_logging_level(level):
     for handler in LVL_SETTABLE_HANDLERS:
         handler.setLevel(level)
 
+def create_logging_folder():
+    try:
+        os.makedirs(os.path.dirname(LOG_FILE))
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise

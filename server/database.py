@@ -14,6 +14,7 @@ import server.utils.logger
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound
+from restkit.errors import RequestError, Unauthorized
 
 logger = server.utils.logger.get_logger(__name__)
 workspace = {}
@@ -371,16 +372,35 @@ def setup():
     server.couchdb.start_dbs_monitor(process_db_change)
 
 def setup_workspaces():
-    couchdb = server.couchdb.CouchDBServer()
+    try:
+        couchdb = server.couchdb.CouchDBServer()
+        workspaces_list = couchdb.list_workspaces()
+    except RequestError:
+        logger.error(u"CouchDB is not running at {}. Check faraday-server's"\
+            " configuration and make sure CouchDB is running".format(
+            server.couchdb.get_couchdb_url()))
+        sys.exit(1)
+    except Unauthorized:
+        logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
+            " configuration file has CouchDB admin's credentials set")
+        sys.exit(1)
 
-    for ws in couchdb.list_workspaces():
+    for ws in workspaces_list:
         setup_workspace(ws)
 
     atexit.register(server.database.close_databases)
 
 def setup_workspace(ws_name):
     logger.info(u'Setting up workspace {}'.format(ws_name))
+    check_access_to(ws_name)
     workspace[ws_name] = WorkspaceDatabase(ws_name)
+
+def check_access_to(ws_name):
+    if not server.couchdb.has_permissions_for(ws_name,
+        credentials=server.couchdb.get_auth_info()):
+        logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
+            " configuration file has CouchDB admin's credentials set")
+        sys.exit(1)
 
 def close_databases():
     for ws in workspace.values():
@@ -429,7 +449,10 @@ def get(ws_name):
     except KeyError:
         raise WorkspaceNotFound(ws_name)
 
+#
 # Profile queries performance on debug mode
+# Debug utility extracted from http://docs.sqlalchemy.org/en/latest/faq/performance.html
+#
 if server.config.is_debug_mode():
     from sqlalchemy import event
     from sqlalchemy.engine import Engine

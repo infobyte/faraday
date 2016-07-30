@@ -25,6 +25,9 @@ class Timer(object):
         diff = (self.__end - self.__start) * 1000
         self.__logger.debug('elapsed time in {}: {} ms'.format(self.__tag, diff))
 
+#
+# Debug utility extracted from http://docs.sqlalchemy.org/en/latest/faq/performance.html
+#
 @contextlib.contextmanager
 def profiled():
     pr = cProfile.Profile()

@@ -12,7 +12,7 @@ from logging import NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL
 from config import globals as CONSTANTS
 
 
-LOGGING_LEVEL = DEBUG
+LOGGING_LEVEL = INFO
 
 FARADAY_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, 'requirements_server.txt')
@@ -27,18 +27,21 @@ WS_BLACKLIST = CONSTANTS.CONST_BLACKDBS
 
 
 def copy_default_config_to_local():
-    if not os.path.exists(LOCAL_CONFIG_FILE):
-        # Create directory if it doesn't exist
-        try:
-            os.makedirs(os.path.dirname(LOCAL_CONFIG_FILE))
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
+    if os.path.exists(LOCAL_CONFIG_FILE):
+        return
 
-        # Copy default config file into faraday local config
-        shutil.copyfile(DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE)
+    # Create directory if it doesn't exist
+    try:
+        os.makedirs(os.path.dirname(LOCAL_CONFIG_FILE))
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
 
-        print("[!] Local Faraday-Server configuration created in %s" % LOCAL_CONFIG_FILE)
+    # Copy default config file into faraday local config
+    shutil.copyfile(DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE)
+
+    from server.utils.logger import get_logger
+    get_logger(__name__).info(u"Local faraday-server configuration created at {}".format(LOCAL_CONFIG_FILE))
 
 def parse_and_bind_configuration():
     """Load configuration from files declared in this module and put them
@@ -78,7 +81,5 @@ def gen_web_config():
 def is_debug_mode():
     return LOGGING_LEVEL is DEBUG
 
-copy_default_config_to_local()
 parse_and_bind_configuration()
-gen_web_config()
 

@@ -2,10 +2,10 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-import time, json
+import sys, time, json
 import couchdbkit
 import restkit
-import threading
+import threading, thread
 import server.utils.logger
 import requests
 
@@ -132,7 +132,7 @@ class ChangesStream(object):
                 # TODO: Connection timeout is too long.
                 self.__response = requests.get(
                     self.__url, params=self.__params,
-                    stream=True, auth=self.__get_auth_info())
+                    stream=True, auth=get_auth_info())
 
                 for raw_line in self.__response.iter_lines():
                     line = self.__sanitize(raw_line) 
@@ -156,13 +156,6 @@ class ChangesStream(object):
                 logger.warning(u"Lost connection to CouchDB. Retrying in 5 seconds...")
                 time.sleep(5)
                 logger.info(u"Retrying...")
-
-    def __get_auth_info(self):
-        user, passwd = config.couchdb.user, config.couchdb.password
-        if (all((user, passwd))):
-            return (user, passwd)
-        else:
-            return None
 
     def __sanitize(self, raw_line):
         if not isinstance(raw_line, basestring):
@@ -234,10 +227,16 @@ class MonitorThread(threading.Thread):
                 logger.debug(traceback.format_exc())
                 logger.warning(u"Error while processing change. Ignoring. Offending change: {}".format(change_doc))
 
-                # TODO: A proper fix is needed here
-                if change_doc.get('reason', None) and change_doc.get('reason') == 'no_db_file':
-                    self.__stream.stop()
-                    break
+                if change_doc.get('error', None):
+                    if change_doc.get('error') == 'unauthorized':
+                        logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
+                            " configuration file has CouchDB admin's credentials set")
+                        thread.interrupt_main()
+
+                    # TODO: A proper fix is needed here
+                    elif change_doc.get('reason') == 'no_db_file':
+                        self.__stream.stop()
+                        break
     
     def stop(self):
         self.__stream.stop()
@@ -253,6 +252,13 @@ def get_couchdb_url():
     couchdb_url = "%s://%s:%s" % (config.couchdb.protocol, config.couchdb.host, couchdb_port)
     return couchdb_url
 
+def get_auth_info():
+    user, passwd = config.couchdb.user, config.couchdb.password
+    if (all((user, passwd))):
+        return (user, passwd)
+    else:
+        return None
+
 def is_usable_workspace(ws_name):
     return not ws_name.startswith('_') and ws_name not in config.WS_BLACKLIST
 
@@ -267,10 +273,10 @@ def list_workspaces_as_user(cookies):
 
     return { 'workspaces': workspaces }
 
-def has_permissions_for(workspace_name, cookies):
+def has_permissions_for(workspace_name, cookies=None, credentials=None):
     # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
     ws_url = get_couchdb_url() + ('/%s/%s' % (workspace_name, workspace_name))
-    response = requests.get(ws_url, verify=False, cookies=cookies)
+    response = requests.get(ws_url, verify=False, cookies=cookies, auth=credentials)
     return (response.status_code == requests.codes.ok)
 
 def start_dbs_monitor(changes_callback):

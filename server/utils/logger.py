@@ -5,6 +5,7 @@
 import os
 import logging
 import server.config
+import errno
 
 LOG_FILE = os.path.expanduser(os.path.join(
     server.config.CONSTANTS.CONST_FARADAY_HOME_PATH,

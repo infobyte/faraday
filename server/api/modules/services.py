@@ -5,19 +5,19 @@
 import flask
 
 from server.app import app
+from server.utils.logger import get_logger
 from server.dao.service import ServiceDAO
-from server.utils.web import gzipped, validate_workspace
+from server.utils.web import gzipped, validate_workspace, get_integer_parameter
 
 
 @app.route('/ws/<workspace>/services', methods=['GET'])
 @gzipped
 def list_services(workspace=None):
     validate_workspace(workspace)
-    port = flask.request.args.get('port')
-    try:
-        port = int(port) if port is not None else None
-    except:
-        flask.abort(400)
+    get_logger(__name__).debug("Request parameters: {!r}"\
+        .format(flask.request.args))
+
+    port = get_integer_parameter('port', default=None)
 
     services_dao = ServiceDAO(workspace)
     services_by_host = services_dao.list(port)
@@ -30,6 +30,9 @@ def list_services(workspace=None):
 @gzipped
 def count_services(workspace=None):
     validate_workspace(workspace)
+    get_logger(__name__).debug("Request parameters: {!r}"\
+        .format(flask.request.args))
+
     field = flask.request.args.get('group_by')
 
     services_dao = ServiceDAO(workspace)

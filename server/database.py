@@ -392,10 +392,10 @@ def setup_workspaces():
 
 def setup_workspace(ws_name):
     logger.info(u'Setting up workspace {}'.format(ws_name))
-    check_access_to(ws_name)
+    check_admin_access_to(ws_name)
     workspace[ws_name] = WorkspaceDatabase(ws_name)
 
-def check_access_to(ws_name):
+def check_admin_access_to(ws_name):
     if not server.couchdb.has_permissions_for(ws_name,
         credentials=server.couchdb.get_auth_info()):
         logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\

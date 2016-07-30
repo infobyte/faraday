@@ -13,6 +13,7 @@ LOG_FILE = os.path.expanduser(os.path.join(
 MAX_LOG_FILE_SIZE = 5 * 1024 * 1024     # 5 MB
 MAX_LOG_FILE_BACKUP_COUNT = 5
 ROOT_LOGGER = u'faraday-server'
+LOGGING_HANDLERS = []
 
 def setup_logging():
     logger = logging.getLogger(ROOT_LOGGER)
@@ -39,6 +40,7 @@ def setup_file_logging(formatter):
 def add_handler(handler):
     logger = logging.getLogger(ROOT_LOGGER)
     logger.addHandler(handler)
+    LOGGING_HANDLERS.append(handler)
 
 def get_logger(obj=None):
     """Creates a logger named by a string or an object's class name.

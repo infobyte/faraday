@@ -14,11 +14,12 @@ MAX_LOG_FILE_SIZE = 5 * 1024 * 1024     # 5 MB
 MAX_LOG_FILE_BACKUP_COUNT = 5
 ROOT_LOGGER = u'faraday-server'
 LOGGING_HANDLERS = []
+LVL_SETTABLE_HANDLERS = []
 
 def setup_logging():
     logger = logging.getLogger(ROOT_LOGGER)
     logger.propagate = False
-    logger.setLevel(server.config.LOGGING_LEVEL)
+    logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -29,12 +30,15 @@ def setup_logging():
 def setup_console_logging(formatter):
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
+    console_handler.setLevel(server.config.LOGGING_LEVEL)
     add_handler(console_handler)
+    LVL_SETTABLE_HANDLERS.append(console_handler)
 
 def setup_file_logging(formatter):
     file_handler = logging.handlers.RotatingFileHandler(
         LOG_FILE, maxBytes=MAX_LOG_FILE_SIZE, backupCount=MAX_LOG_FILE_BACKUP_COUNT)
     file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.DEBUG)
     add_handler(file_handler)
 
 def add_handler(handler):
@@ -59,6 +63,6 @@ def get_logger(obj=None):
 
 def set_logging_level(level):
     server.config.LOGGING_LEVEL = level
-    logger = logging.getLogger(ROOT_LOGGER)
-    logger.setLevel(level)
+    for handler in LVL_SETTABLE_HANDLERS:
+        handler.setLevel(level)
 

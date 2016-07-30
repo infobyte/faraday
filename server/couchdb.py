@@ -289,7 +289,10 @@ def has_permissions_for(workspace_name, cookies=None, credentials=None):
     # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
     ws_url = get_couchdb_url() + ('/%s/%s' % (workspace_name, workspace_name))
     response = requests.get(ws_url, verify=False, cookies=cookies, auth=credentials)
-    return (response.status_code == requests.codes.ok)
+
+    # Even if the document doesn't exist, CouchDB will
+    # respond 401 if it doesn't have access to it
+    return (response.status_code != requests.codes.unauthorized)
 
 def start_dbs_monitor(changes_callback):
     logger.debug(u'Starting global workspaces monitor')

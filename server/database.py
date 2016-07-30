@@ -118,6 +118,7 @@ class WorkspaceDatabase(object):
                     host_entities[doc.get('key')] = entity
                     self.database.session.add(entity)
 
+        logger.info(u'{} importation done!'.format(self.__workspace))
         flush_changes()
 
     def __show_progress(self, msg, percentage):

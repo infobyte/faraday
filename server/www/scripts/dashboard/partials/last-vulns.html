@@ -19,25 +19,20 @@
                     <th><a>Severity</a></th>
                     <th><a>Name</a></th>
                     <th><a>Web</a></th>
-                    <th><a>Ease of resolution</a></th>
                 </tr>
             </thead>
             <tbody>
                 <tr ng-repeat="vuln in vulns">
-                    <td>{{vuln.metadata.create_time * 1000 | date:"MM/dd/yyyy 'at' h:mma"}}</td>
+                    <td><span am-time-ago="vuln.metadata.create_time * 1000"></span></td>
                     <td>
                         {{vuln.target}}
-                        <a href="//www.shodan.io/search?query={{vuln.target}}" uib-tooltip="Search in Shodan" target="_blank">
-                            <img ng-src="images/shodan.png" height="15px" width="15px" />
-                        </a>
                     </td>
-                    <td>{{vuln.severity}}</td>
+                    <td><span class="label vuln fondo-{{vuln.severity}}">{{vuln.severity | uppercase}}</span></td>
                     <td class="wrapword">{{vuln.name}}</td>
                     <td>
                         <span class="glyphicon glyphicon-ok" ng-show="vuln.web"></span>
                         <span class="glyphicon glyphicon-remove" ng-show="!vuln.web"></span>
                     </td>
-                    <td>{{vuln.easeofresolution}}</td>
                 </tr>
             </tbody>
         </table>

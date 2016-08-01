@@ -3,12 +3,13 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('workspacesCtrl', ['$uibModal', '$scope', '$q', 'workspacesFact', 'dashboardSrv',
-            function($uibModal, $scope, $q, workspacesFact, dashboardSrv) {
+    .controller('workspacesCtrl', ['$uibModal', '$scope', '$q', 'workspacesFact', 'dashboardSrv', '$location',
+            function($uibModal, $scope, $q, workspacesFact, dashboardSrv, $location) {
         $scope.hash;
         $scope.objects;
         $scope.workspaces;
         $scope.wss;
+        $scope.search;
 
         $scope.init = function() {
             $scope.objects = [];
@@ -282,6 +283,10 @@ angular.module('faradayApp')
             };
             return(workspace);
 
+        };
+
+        $scope.redirect = function(path){
+            $location.path("/dashboard/ws/"+path);
         };
 
         $scope.init();

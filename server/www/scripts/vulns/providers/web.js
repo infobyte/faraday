@@ -23,6 +23,8 @@ angular.module('faradayApp')
 
         WebVuln.prototype.public_properties = Vuln.prototype.public_properties.concat(public_properties);
 
+        WebVuln.prototype.saved_properties = Vuln.prototype.saved_properties.concat(public_properties);
+
         WebVuln.prototype.set = function(ws, data) {
             var self = this;
 

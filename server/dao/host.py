@@ -9,7 +9,6 @@ from sqlalchemy import distinct
 from sqlalchemy.orm.query import Bundle
 from sqlalchemy.sql import func
 from server.models import Host, Interface, Service, Vulnerability, EntityMetadata
-from server.utils.debug import profiled
 
 
 class HostDAO(FaradayDAO):
@@ -58,8 +57,7 @@ class HostDAO(FaradayDAO):
         if page_size:
             query = paginate(query, page, page_size)
 
-        with profiled():
-            results = query.all()
+        results = query.all()
 
         return results, count
 

@@ -2,10 +2,10 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-import time, json
+import sys, time, json
 import couchdbkit
 import restkit
-import threading
+import threading, thread
 import server.utils.logger
 import requests
 
@@ -14,8 +14,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.resource import CouchdbResource
 from server import config
 
-# TODO(mrocha): use config.globals
-WS_BLACKLIST = ['reports', 'cwe']
 
 logger = server.utils.logger.get_logger(__name__)
 
@@ -57,11 +55,21 @@ class Workspace(object):
     def __get_workspace(self):
         self.__workspace = self.__server.get_workspace_handler(self.__ws_name)
 
+    def get_info(self):
+        return self.get_document(self.__ws_name)
+
     def get_last_seq(self):
         return self.__workspace.info().get('update_seq', 0) # 'update_seq' / 'committed_update_seq'
 
+    def get_view(self, view_name):
+        return self.__workspace.view(view_name)
+
     def get_document(self, doc_id):
-        return self.__workspace.get(doc_id)
+        try:
+            return self.__workspace.get(doc_id)
+        except ResourceNotFound:
+            logger.warning(u"Document {} was not found in CouchDB for Workspace {}".format(doc_id, self.__ws_name))
+            return {}
 
     def get_total_amount_of_documents(self):
         return self.__get_all_docs(0).total_rows
@@ -79,7 +87,7 @@ class Workspace(object):
         return self.__workspace.all_docs(include_docs=True, limit=limit, skip=offset)
 
     def start_changes_monitor(self, changes_callback, last_seq=0):
-        logger.debug('Starting changes monitor for workspace {} since {}'.format(self.__ws_name, last_seq))
+        logger.debug(u'Starting changes monitor for workspace {} since {}'.format(self.__ws_name, last_seq))
         ws_stream = ChangesStream(self.__ws_name, feed='continuous',
             since=last_seq, include_docs='true', heartbeat='true')
         self.__changes_monitor_thread = ChangesMonitorThread(ws_stream, changes_callback)
@@ -90,6 +98,20 @@ class Workspace(object):
         if self.__changes_monitor_thread:
             self.__changes_monitor_thread.stop()
             self.__changes_monitor_thread = None
+
+    def save_doc(self, document):
+        return self.__workspace.save_doc(document)
+
+    def create_doc(self, doc_content):
+        # Remember to add "_id" in the doc if you want
+        # to specify an arbitrary id
+        return self.__workspace.save_doc(doc_content)
+
+    def put_attachment(self, doc, content, name=None, content_type=None, content_length=None):
+        return self.__workspace.put_attachment(doc, content, name, content_type, content_length)
+
+    def fetch_attachment(self, doc, name):
+        return self.__workspace.fetch_attachment(doc, name)
 
 class ChangesStream(object):
     ALL_DBS = "__ALL_WORKSPACES__"
@@ -122,7 +144,7 @@ class ChangesStream(object):
                 # TODO: Connection timeout is too long.
                 self.__response = requests.get(
                     self.__url, params=self.__params,
-                    stream=True, auth=self.__get_auth_info())
+                    stream=True, auth=get_auth_info())
 
                 for raw_line in self.__response.iter_lines():
                     line = self.__sanitize(raw_line) 
@@ -143,16 +165,9 @@ class ChangesStream(object):
                 self.stop()
                 self.__stop = True
 
-                logger.warning("Lost connection to CouchDB. Retrying in 5 seconds...")
+                logger.warning(u"Lost connection to CouchDB. Retrying in 5 seconds...")
                 time.sleep(5)
-                logger.info("Retrying...")
-
-    def __get_auth_info(self):
-        user, passwd = config.couchdb.user, config.couchdb.password
-        if (all((user, passwd))):
-            return (user, passwd)
-        else:
-            return None
+                logger.info(u"Retrying...")
 
     def __sanitize(self, raw_line):
         if not isinstance(raw_line, basestring):
@@ -222,12 +237,18 @@ class MonitorThread(threading.Thread):
             except Exception, e:
                 import traceback
                 logger.debug(traceback.format_exc())
-                logger.warning("Error while processing change. Ignoring. Offending change: %r" % change_doc)
+                logger.warning(u"Error while processing change. Ignoring. Offending change: {}".format(change_doc))
 
-                # TODO: A proper fix is needed here
-                if change_doc.get('reason', None) and change_doc.get('reason') == 'no_db_file':
-                    self.__stream.stop()
-                    break
+                if change_doc.get('error', None):
+                    if change_doc.get('error') == 'unauthorized':
+                        logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
+                            " configuration file has CouchDB admin's credentials set")
+                        thread.interrupt_main()
+
+                    # TODO: A proper fix is needed here
+                    elif change_doc.get('reason') == 'no_db_file':
+                        self.__stream.stop()
+                        break
     
     def stop(self):
         self.__stream.stop()
@@ -243,8 +264,15 @@ def get_couchdb_url():
     couchdb_url = "%s://%s:%s" % (config.couchdb.protocol, config.couchdb.host, couchdb_port)
     return couchdb_url
 
+def get_auth_info():
+    user, passwd = config.couchdb.user, config.couchdb.password
+    if (all((user, passwd))):
+        return (user, passwd)
+    else:
+        return None
+
 def is_usable_workspace(ws_name):
-    return not ws_name.startswith('_') and ws_name not in WS_BLACKLIST
+    return not ws_name.startswith('_') and ws_name not in config.WS_BLACKLIST
 
 def list_workspaces_as_user(cookies):
     all_dbs_url = get_couchdb_url() + '/_all_dbs'
@@ -257,14 +285,17 @@ def list_workspaces_as_user(cookies):
 
     return { 'workspaces': workspaces }
 
-def has_permissions_for(workspace_name, cookies):
+def has_permissions_for(workspace_name, cookies=None, credentials=None):
     # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
     ws_url = get_couchdb_url() + ('/%s/%s' % (workspace_name, workspace_name))
-    response = requests.get(ws_url, verify=False, cookies=cookies)
-    return (response.status_code == requests.codes.ok)
+    response = requests.get(ws_url, verify=False, cookies=cookies, auth=credentials)
+
+    # Even if the document doesn't exist, CouchDB will
+    # respond 401 if it doesn't have access to it
+    return (response.status_code != requests.codes.unauthorized)
 
 def start_dbs_monitor(changes_callback):
-    logger.debug('Starting DBs monitor')
+    logger.debug(u'Starting global workspaces monitor')
     dbs_stream = ChangesStream(ChangesStream.ALL_DBS, feed='continuous', heartbeat='true')
     monitor_thread = DBsMonitorThread(dbs_stream, changes_callback)
     monitor_thread.daemon = True

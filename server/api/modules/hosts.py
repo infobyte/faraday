@@ -5,7 +5,9 @@
 import flask
 
 from server.app import app
-from server.utils.web import gzipped, validate_workspace, get_integer_parameter
+from server.utils.logger import get_logger
+from server.utils.web import gzipped, validate_workspace,\
+    get_integer_parameter, filter_request_args
 from server.dao.host import HostDAO
 
 
@@ -13,7 +15,8 @@ from server.dao.host import HostDAO
 @app.route('/ws/<workspace>/hosts', methods=['GET'])
 def list_hosts(workspace=None):
     validate_workspace(workspace)
-    print "REQUEST: %r" % (flask.request.args,)
+    get_logger(__name__).debug("Request parameters: {!r}"\
+        .format(flask.request.args))
 
     page = get_integer_parameter('page', default=0)
     page_size = get_integer_parameter('page_size', default=0)
@@ -21,10 +24,7 @@ def list_hosts(workspace=None):
     order_by = flask.request.args.get('sort')
     order_dir = flask.request.args.get('sort_dir')
 
-    host_filter = {}
-    for arg in flask.request.args:
-        if arg not in ['page', 'page_size', 'search', 'sort', 'sort_dir']:
-            host_filter[arg] = flask.request.args.get(arg)
+    host_filter = filter_request_args('page', 'page_size', 'search', 'sort', 'sort_dir')
 
     dao = HostDAO(workspace)
     result = dao.list(search=search,
@@ -34,7 +34,5 @@ def list_hosts(workspace=None):
                       order_dir=order_dir,
                       host_filter=host_filter)
 
-    json = flask.jsonify(result)
-
-    return json
+    return flask.jsonify(result)
 

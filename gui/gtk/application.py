@@ -202,6 +202,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                                    Gtk.MessageType.ERROR,
                                    Gtk.ButtonsType.NONE,
                                    "The client can't connect to Faraday Server. "
+                                   "Faraday can't connect to Faraday Server. "
                                    "You can try to reconnect to the last URL "
                                    "you set up, change it or exit Faraday "
                                    "until you fix the problem. \n"

@@ -8,8 +8,5 @@ requests
 tornado
 flask
 colorama
-twisted
-sqlalchemy
-pyopenssl
 #extra
 psycopg2

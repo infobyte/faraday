@@ -10,7 +10,7 @@ from server.models import Interface
 class InterfaceDAO(FaradayDAO):
     MAPPED_ENTITY = Interface
 
-    def count(self, group_by=None):
+    def count(self):
         total_count = self._session.query(func.count(Interface.id)).scalar()
         return { 'total_count': total_count }
 

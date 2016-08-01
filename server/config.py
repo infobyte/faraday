@@ -1,38 +1,53 @@
+from __future__ import absolute_import
+# Faraday Penetration Test IDE
+# Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
+# See the file 'doc/LICENSE' for the license information
+
 import ConfigParser
-import logging
 import json
 import os, shutil
 import errno
 
-DEBUG = True
-LOGGING_LEVEL = logging.DEBUG
-FARADAY_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+from logging import NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL
+from config import globals as CONSTANTS
 
+
+LOGGING_LEVEL = INFO
+
+FARADAY_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+FARADAY_SERVER_PID_FILE = os.path.join(FARADAY_BASE, 'server/.faraday-server.pid')
+REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, 'requirements_server.txt')
 DEFAULT_CONFIG_FILE = os.path.join(FARADAY_BASE, 'server/default.ini')
-VERSION_FILE = os.path.join(FARADAY_BASE, 'VERSION')
-CONST_LICENSES_DB = "faraday_licenses"
+VERSION_FILE = os.path.join(FARADAY_BASE, CONSTANTS.CONST_VERSION_FILE)
 WEB_CONFIG_FILE = os.path.join(FARADAY_BASE, 'server/www/config/config.json')
-LOCAL_CONFIG_FILE = os.path.expanduser('~/.faraday/config/server.ini')
+LOCAL_CONFIG_FILE = os.path.expanduser(
+    os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'config/server.ini'))
 
 CONFIG_FILES = [ DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE ]
+WS_BLACKLIST = CONSTANTS.CONST_BLACKDBS
+
 
 def copy_default_config_to_local():
-    if not os.path.exists(LOCAL_CONFIG_FILE):
-        # Create directory if it doesn't exist
-        try:
-            os.makedirs(os.path.dirname(LOCAL_CONFIG_FILE))
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
+    if os.path.exists(LOCAL_CONFIG_FILE):
+        return
 
-        # Copy default config file into faraday local config
-        shutil.copyfile(DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE)
+    # Create directory if it doesn't exist
+    try:
+        os.makedirs(os.path.dirname(LOCAL_CONFIG_FILE))
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
 
-        print("[!] Local Faraday-Server configuration created in %s" % LOCAL_CONFIG_FILE)
+    # Copy default config file into faraday local config
+    shutil.copyfile(DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE)
+
+    from server.utils.logger import get_logger
+    get_logger(__name__).info(u"Local faraday-server configuration created at {}".format(LOCAL_CONFIG_FILE))
 
 def parse_and_bind_configuration():
-    # Load configuration from files declared above and put them
-    # on this module's namespace for convenient access
+    """Load configuration from files declared in this module and put them
+    on this module's namespace for convenient access"""
+
     __parser = ConfigParser.SafeConfigParser()
     __parser.read(CONFIG_FILES)
 
@@ -57,13 +72,15 @@ def __get_version():
 def gen_web_config():
     doc = {
         'ver': __get_version(),
-        'lic_db': CONST_LICENSES_DB
+        'lic_db': CONSTANTS.CONST_LICENSES_DB
     }
     if os.path.isfile(WEB_CONFIG_FILE):
         os.remove(WEB_CONFIG_FILE)
     with open(WEB_CONFIG_FILE, "w") as doc_file:
         json.dump(doc, doc_file)
 
-copy_default_config_to_local()
+def is_debug_mode():
+    return LOGGING_LEVEL is DEBUG
+
 parse_and_bind_configuration()
 

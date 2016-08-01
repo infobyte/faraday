@@ -10,7 +10,7 @@ from server.models import Note
 class NoteDAO(FaradayDAO):
     MAPPED_ENTITY = Note
 
-    def count(self, group_by=None):
+    def count(self):
         total_count = self._session.query(func.count(Note.id)).scalar()
         return { 'total_count': total_count }
 

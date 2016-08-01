@@ -7,7 +7,6 @@ import server.utils.logger
 
 from sqlalchemy import distinct, Boolean
 from sqlalchemy.sql import func, asc, desc
-from server.utils.debug import Timer
 
 
 class ORDER_DIRECTIONS:
@@ -147,10 +146,9 @@ def get_count(query, count_col=None):
     else:
         count_filter = [func.count(distinct(count_col))]
     
-    with Timer('query.count'):
-        count_q = query.statement.with_only_columns(count_filter).\
-                  order_by(None).group_by(None)
-        count = query.session.execute(count_q).scalar()
+    count_q = query.statement.with_only_columns(count_filter).\
+              order_by(None).group_by(None)
+    count = query.session.execute(count_q).scalar()
 
     return count
 

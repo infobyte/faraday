@@ -43,3 +43,5 @@ node_modules
 # Couch
 .couchadmin
 
+# Ignore faraday server pid
+server/.faraday-server.pid

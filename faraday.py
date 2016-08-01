@@ -583,7 +583,7 @@ def checkVersion():
         getInstanceConfiguration().setVersion(f_version)
         f.close()
 
-        doc = {"ver": getInstanceConfiguration().getVersion()}
+        doc = {"ver": getInstanceConfiguration().getVersion(), "osint": getInstanceConfiguration().getOsint()}
 
         if os.path.isfile(FARADAY_CONFIG):
             os.remove(FARADAY_CONFIG)

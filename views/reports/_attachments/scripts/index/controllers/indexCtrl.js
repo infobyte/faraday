@@ -8,6 +8,7 @@ angular.module('faradayApp')
         function($scope, indexFact) {
         	indexFact.getConf().then(function(conf) {
         		$scope.version = conf.data.ver;
+			$scope.osint = conf.data.osint;
         	});
 
         }]);

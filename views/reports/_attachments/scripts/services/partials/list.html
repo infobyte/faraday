@@ -113,15 +113,15 @@
                                         <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/name={{service.name}}">
                                             <span ng-bind="service.name"></span>
                                         </a>
-                                        <a ng-href="//www.shodan.io/search?query={{service.name}}" uib-tooltip="Search in Shodan" target="_blank">
-                                            <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                                        <a ng-href="//{{osint.host}}/search?query={{service.name}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
+                                            <img ng-src="../././reports/images/{{osint.icon}}.png" height="15px" width="15px" />
                                         </a>
                                     </td>
                                     <td ng-bind="service.version || '-'"></td>
                                     <td>
                                         <span ng-bind="service.ports"></span>
-                                        <a ng-href="//www.shodan.io/search?query=port:{{service.ports}}" uib-tooltip="Search in Shodan" target="_blank">
-                                            <img ng-src="../././reports/images/shodan.png" height="15px" width="15px" />
+                                        <a ng-href="//{{osint.host}}/search?query=port:{{service.ports}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
+                                            <img ng-src="../././reports/images/{{osint.icon}}.png" height="15px" width="15px" />
                                         </a>
                                     </td>
                                     <td>

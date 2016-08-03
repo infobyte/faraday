@@ -21,16 +21,6 @@ except ImportError:
 
 import time
 
-try:
-    import xml.etree.cElementTree as ET
-    import xml.etree.ElementTree as ET_ORIG
-    ETREE_VERSION = ET_ORIG.VERSION
-except ImportError:
-    import xml.etree.ElementTree as ET
-    ETREE_VERSION = ET.VERSION
-
-ETREE_VERSION = [int(i) for i in ETREE_VERSION.split(".")]
-
 current_path = os.path.abspath(os.getcwd())
 
 __author__ = "Francisco Amato"
@@ -53,7 +43,7 @@ class MetasploitOnPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id = "MetasploitOn"
         self.name = "Metasploit Online Service Plugin"
-        self.plugin_version = "0.0.2"
+        self.plugin_version = "0.0.3"
         self.version = "Metasploit 4.10.0"
         self.framework_version = "1.0.0"
         self.options = None
@@ -64,12 +54,13 @@ class MetasploitOnPlugin(core.PluginBase):
 
         global current_path
 
-        self.addSetting("Database", str, "msf3")
-        self.addSetting("User", str, "msf3")
-        self.addSetting("Password", str, "EKO-1919755b")
+        self.addSetting("Database", str, "db")
+        self.addSetting("User", str, "user")
+        self.addSetting("Password", str, "pass")
         self.addSetting("Server", str, "localhost")
-        self.addSetting("Port", str, "7337")
-        self.addSetting("Wordspace", str, "%%")
+        self.addSetting("Port", str, "5432")
+        ### NOTE: do _not_ correct the typo, it's used by the user.xml
+        self.addSetting("Wordspace", str, "a_workspace")
         self.addSetting("Enable", str, "0")
 
         self._sdate = ""
@@ -86,12 +77,23 @@ class MetasploitOnPlugin(core.PluginBase):
         """
 
         try:
-            conn = psycopg2.connect(
-                "dbname='" + self.getSetting("Database") + "' user='" + self.getSetting("User") + "' password='" + self.getSetting("Password") + "' host='" + self.getSetting("Server") + "' port='" + self.getSetting("Port") + "'")
+            conn = psycopg2.connect(dbname=self.getSetting("Database"),
+                                    user=self.getSetting("User"),
+                                    password=self.getSetting("Password"),
+                                    host=self.getSetting("Server"),
+                                    port=self.getSetting("Port"))
+
+            # conn = psycopg2.connect("dbname='" + self.getSetting("Database") +
+            #                         "' user='" + self.getSetting("User") +
+            #                         "' password='" + self.getSetting("Password") +
+            #                         "' host='" + self.getSetting("Server") +
+            #                         "' port='" + self.getSetting("Port") +
+            #                         "'")
+
             cur = conn.cursor()
         except Exception as e:
             print e
-            print "Error Connection database\n"
+            print "Error Connecting to the database\n"
             return
 
         cur = self._doSql(
@@ -250,24 +252,49 @@ class MetasploitOnPlugin(core.PluginBase):
 
                 cur = self._doSql(
                     cur,
-                    "select * from web_vulns INNER JOIN web_sites ON (web_vulns.web_site_id=web_sites.id) INNER JOIN web_vuln_category_metasploits as category ON (web_vulns.category_id=category.id) where web_sites.service_id=" + str(s[0]) + mwhere + ";")
+                    "select * from web_vulns INNER JOIN web_sites ON (web_vulns.web_site_id=web_sites.id) where web_sites.service_id=" + str(s[0]) + mwhere + ";")
+
+                if cur is None:
+                    return
+
 
                 for v in cur.fetchall():
-
                     self._checkDate(str(v[3]))
+
+                    #TODO: should be nice to stop hardcoding the positions
+                    # of the information and instead make it depend
+                    # on the column name
+
+                    # beware, next silly coder, the table as it stands
+                    # right holds information in each position like this:
+                    # v[0] = id, v[1] = web_site_id, v[2] = created_at
+                    # v[3] = updated_at, v[4] = path, v[5] = method,
+                    # v[6] = params, v[7] = pname, v[8] = risk, v[9] = name
+                    # v[10] = query, v[11] = category, v[12] = confidence,
+                    # v[13] = description, v[14] = blame, v[15] = request,
+                    # v[16] = proof, v[17] = owner, v[18] = payload, v[19] = id,
+                    # v[20] = service_id, v[21] = created_at, v[22] = updated_at
+                    # v[23] = vhost, v[24] = comments, v[25] = options
+
+                    # if the plugin breakes, check that everything is in the
+                    # same position
+
+                    # metasploit doesn't give us a website, but the vhost +
+                    # path is kinda the same
+                    website = str(v[23]) + str(v[4])
 
                     self.createAndAddVulnWebToService(
                         h_id,
                         s_id,
-                        name=str(v[28]),
-                        desc=str(v[29]),
-                        website=str(v[24]),
-                        path=str(v[4]),
-                        request=str(v[15]),
-                        method=str(v[5]),
-                        pname=str(v[7]),
-                        params=str(v[6]),
-                        query=str(v[10]))
+                        name=str(v[9]),
+                        desc=str(v[13]),
+                        website=website,
+                        path=str(v[5]),
+                        request=str(v[16]),
+                        method=str(v[6]),
+                        pname=str(v[8]),
+                        params=str(v[7]),
+                        query=str(v[11]))
 
                 cur = self._doSql(
                     cur,

@@ -213,6 +213,7 @@ angular.module('faradayApp')
                         }
                     }
                     $scope.hosts.splice(index, 1);
+                    $scope.totalHosts--;
                 }, function(message) {
                     console.log(message);
                 });

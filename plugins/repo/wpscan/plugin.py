@@ -94,7 +94,7 @@ class WPScanPlugin(core.PluginBase):
                                 "file exists exposing a version number|",
                                 "Full Path Disclosure|",
                                 "Registration is enabled|",
-                                "Upload directory has directory listing enabled|",
+                                "(Upload|Includes) directory has directory listing enabled|",
                                 "Default first Wordpress username 'admin' is still used",
                                 potential_vuln)
         if info_search:

@@ -7,24 +7,22 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 from __future__ import with_statement
-import sys
-import os
 
-from plugins.plugin import PluginTerminalOutput
 from model import api
+from urlparse import urlparse
+from StringIO import StringIO
+from plugins.plugin import PluginTerminalOutput
+from BaseHTTPServer import BaseHTTPRequestHandler
+
 import re
 import os
+import sys
+import shlex
+import socket
 import pickle
 import sqlite3
 import hashlib
-import socket
 import argparse
-import shlex
-
-import pprint
-
-from BaseHTTPServer import BaseHTTPRequestHandler
-from StringIO import StringIO
 
 try:
     import xml.etree.cElementTree as ET
@@ -54,10 +52,10 @@ class Database(object):
         self.database = database
 
     def connect(self, who="server"):
-        
+
         self.connection = sqlite3.connect(
             self.database, timeout=3, isolation_level=None)
-        
+
         self.cursor = self.connection.cursor()
 
     def disconnect(self):
@@ -131,8 +129,13 @@ class SqlmapPlugin(PluginTerminalOutput):
             self.error_message = message
 
     def hashKey(self, key):
-        key = key.encode(self.UNICODE_ENCODING)
-        retVal = int(hashlib.md5(key).hexdigest()[:12], 16)
+        if isinstance(key, unicode):
+            key = key.encode(UNICODE_ENCODING)
+        else:
+            key = repr(key).strip("'")
+        
+        print key
+        retVal = int(hashlib.md5(key).hexdigest(), 16) & 0x7fffffffffffffff
         return retVal
 
     def hashDBRetrieve(self, key, unserialize=False, db=False):
@@ -145,18 +148,20 @@ class SqlmapPlugin(PluginTerminalOutput):
         retVal = ''
 
         hash_ = self.hashKey(key)
+        
+        print hash_
+        
         if not retVal:
-            print 'hashDBRetrive'
             while True:
                 try:
                     for row in db.execute("SELECT value FROM storage WHERE id=?", (hash_,)):
-                        print row
                         retVal = row[0]
                 except sqlite3.OperationalError, ex:
                     if not 'locked' in ex.message:
                         raise
                 else:
                     break
+        
         return retVal if not unserialize else self.base64unpickle(retVal)
 
     def base64decode(self, value):
@@ -204,30 +209,36 @@ class SqlmapPlugin(PluginTerminalOutput):
             return node.attrib[value]
 
     def getuser(self, data):
-        users = re.findall(
-            'database management system users \[[\d]+\]:\r\n(.*?)\r\n\r\n', data, re.S)
+        
+        users = re.search(
+            r'database management system users \[[\d]+\]:\n((\[\*\] (.*)\n)*)',
+            data)
+        
         if users:
-            return map((lambda x: x.replace("[*] ", "")), users[0].split("\r\n"))
+            return map((lambda x: x.replace("[*] ", "")), users.group(1).split("\n"))
 
     def getdbs(self, data):
-        dbs = re.findall(
-            'available databases \[[\d]+\]:\r\n(.*?)\r\n\r\n', data, re.S)
+        
+        dbs = re.search(
+            r'available databases \[[\d]+\]:\n(((\[\*\] (.*)\n)*))',
+            data)
+        
         if dbs:
-            return map((lambda x: x.replace("[*] ", "")), dbs[0].split("\r\n"))
+            return map((lambda x: x.replace("[*] ", "")), dbs.group(1).split("\n"))
 
     def getpassword(self, data):
 
         users = {}
         
         password = re.findall(
-            r"(\n\[\*\] (.*) \[\d]:\s*password hash: (.*))+?",
+            r"\n\[\*\] (.*) \[\d\]:\n\s*password hash: (.*)",
             data)   
 
         if password:
             for credential in password:
 
-                user = credential[1]
-                mpass = credential[2]
+                user = credential[0]
+                mpass = credential[1]
                 users[user] = mpass
         
         return users
@@ -251,7 +262,6 @@ class SqlmapPlugin(PluginTerminalOutput):
         output being sent is valid.
         """
 
-        print self.getSetting("Sqlmap path")
         sys.path.append(self.getSetting("Sqlmap path"))
 
         from lib.core.settings import HASHDB_MILESTONE_VALUE
@@ -268,8 +278,6 @@ class SqlmapPlugin(PluginTerminalOutput):
         if webserver:
             webserver = webserver.group(1)
 
-        print webserver
-        
         users = self.getuser(output)
         dbs = self.getdbs(output)
 
@@ -462,32 +470,27 @@ class SqlmapPlugin(PluginTerminalOutput):
 
         if args.u:
 
-            reg = re.search(
-                "(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp;%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|localhost|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))[\:]*([0-9]+)*([/]*($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+)).*?$", args.u)
-            
-            self.protocol = reg.group(1)
-            
-            self.hostname = reg.group(4)
-            
-            self.path = "/"
-            
-            if self.protocol == 'https':
-                self.port = 443
-            
-            if reg.group(11) is not None:
-                self.port = reg.group(11)
+            urlComponents = urlparse(args.u)
 
-            if reg.group(12) is not None:
+            self.protocol = urlComponents.scheme
+            self.hostname = urlComponents.netloc
+            
+            if urlComponents.port:
+                self.port = urlComponents.port
+            else:
+                self.port = '80'
 
-                tmp = re.search("/(.*)\?(.*?$)", reg.string)
-                self.path = "/" + tmp.group(1)
-                self.params = tmp.group(2)
+            if urlComponents.query:
+                self.path = urlComponents.path
+                self.params = urlComponents.query
 
             self.url = self.protocol + "://" + self.hostname + ":" + self.port + self.path
             self.fullpath = self.url + "?" + self.params
 
-            self._output_path = "%s%s" % (os.path.join(self.data_path, "sqlmap_output-"),
-                                          re.sub(r'[\n\/]', r'', args.u.encode("base64")[:-1]))
+            self._output_path = "%s%s" % (
+                os.path.join(self.data_path, "sqlmap_output-"),
+                re.sub(r'[\n\/]', r'',
+                args.u.encode("base64")[:-1]))
 
         if not args.s:
             return "%s -s %s" % (command_string, self._output_path)

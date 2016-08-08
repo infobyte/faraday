@@ -1357,10 +1357,10 @@ class ConflictsDialog(Gtk.Window):
         """
 
         # XXX: params is a weird stupid thing that can come up as a string,
-        # a list, a nonetype, whatever. but we're making it _always_ be a list
+        # a list, a nonetype, whatever. but we're making it _always_ be a string
         # across faraday, so just force it to be so
         if prop == "params":
-            original_type = "string"
+            original_type = "str"
 
         if original_type == "list":
             if prop:

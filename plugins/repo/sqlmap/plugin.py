@@ -128,12 +128,9 @@ class SqlmapPlugin(PluginTerminalOutput):
             self.error_message = message
 
     def hashKey(self, key):
-        if isinstance(key, unicode):
-            key = key.encode(UNICODE_ENCODING)
-        else:
-            key = repr(key).strip("'")
-
+        key = repr(key).strip("'")
         retVal = int(hashlib.md5(key).hexdigest(), 16) & 0x7fffffffffffffff
+
         return retVal
 
     def hashDBRetrieve(self, key, unserialize=False, db=False):
@@ -157,7 +154,6 @@ class SqlmapPlugin(PluginTerminalOutput):
                         raise
                 else:
                     break
-
         return retVal if not unserialize else self.base64unpickle(retVal)
 
     def base64decode(self, value):
@@ -326,7 +322,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             "website",
             '')
 
-        n2_id = self.createAndAddNoteToNote(
+        self.createAndAddNoteToNote(
             h_id,
             s_id,
             n_id,
@@ -383,7 +379,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             for element in columns:
                 text += str(element[2]) + '\n'
 
-            n_id2 = self.createAndAddNoteToService(
+            self.createAndAddNoteToService(
                 h_id,
                 s_id2,
                 "sqlmap.brutecolumns",
@@ -391,11 +387,19 @@ class SqlmapPlugin(PluginTerminalOutput):
 
         # sqlmap.py  --os-shell
         if xpCmdshellAvailable:
-            n_id2 = self.createAndAddNoteToService(
+            self.createAndAddNoteToService(
                 h_id,
                 s_id2,
                 "sqlmap.xpCmdshellAvailable",
                 str(xpCmdshellAvailable))
+
+        # sqlmap.py --dbs
+        if dbs:
+            self.createAndAddNoteToService(
+                h_id,
+                s_id2,
+                "db.databases",
+                str(dbs))
 
         for inj in self.hashDBRetrieve(self.HASHDB_KEYS.KB_INJECTIONS, True, db) or []:
 
@@ -412,42 +416,35 @@ class SqlmapPlugin(PluginTerminalOutput):
                 "None" + self.xmlvalue(dbms, "hostname"), False, db)
 
             if user:
-                n_id2 = self.createAndAddNoteToService(
+                self.createAndAddNoteToService(
                     h_id,
                     s_id2,
                     "db.user",
                     user)
 
             if dbname:
-                n_id2 = self.createAndAddNoteToService(
+                self.createAndAddNoteToService(
                     h_id,
                     s_id2,
                     "db.name",
                     dbname)
 
             if hostname:
-                n_id2 = self.createAndAddNoteToService(
+                self.createAndAddNoteToService(
                     h_id,
                     s_id2,
                     "db.hostname",
                     hostname)
 
             if dbversion:
-                n_id2 = self.createAndAddNoteToService(
+                self.createAndAddNoteToService(
                     h_id,
                     s_id2,
                     "db.version",
                     dbversion)
 
-            if dbs:
-                n_id2 = self.createAndAddNoteToService(
-                    h_id,
-                    s_id2,
-                    "db.databases",
-                    str(dbs))
-
             for k, v in inj.data.items():
-                v_id = self.createAndAddVulnWebToService(
+                self.createAndAddVulnWebToService(
                     h_id,
                     s_id,
                     website=self.hostname,

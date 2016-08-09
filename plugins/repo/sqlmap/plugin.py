@@ -8,21 +8,20 @@ See the file 'doc/LICENSE' for the license information
 
 from __future__ import with_statement
 
-from model import api
-from urlparse import urlparse
-from StringIO import StringIO
-from plugins.plugin import PluginTerminalOutput
-from BaseHTTPServer import BaseHTTPRequestHandler
-
-import re
+import argparse
+import hashlib
 import os
-import sys
+import pickle
+import re
 import shlex
 import socket
-import pickle
 import sqlite3
-import hashlib
-import argparse
+import sys
+from BaseHTTPServer import BaseHTTPRequestHandler
+from StringIO import StringIO
+from urlparse import urlparse
+
+from plugins.plugin import PluginTerminalOutput
 
 try:
     import xml.etree.cElementTree as ET
@@ -77,7 +76,6 @@ class Database(object):
 
 class SqlmapPlugin(PluginTerminalOutput):
     # Plugin for Sqlmap Tool
-    
     def __init__(self):
 
         PluginTerminalOutput.__init__(self)
@@ -99,9 +97,10 @@ class SqlmapPlugin(PluginTerminalOutput):
 
         self.db_port = {
             "MySQL": 3306, "PostgreSQL": "", "Microsoft SQL Server": 1433,
-            "Oracle": 1521, "Firebird": 3050, "SAP MaxDB": 7210, "Sybase": 5000,
+            "Oracle": 1521, "Firebird": 3050,
+            "SAP MaxDB": 7210, "Sybase": 5000,
             "IBM DB2": 50000, "HSQLDB": 9001}
-        
+
         self.ptype = {
             1: "Unescaped numeric",
             2: "Single quoted string",
@@ -133,8 +132,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             key = key.encode(UNICODE_ENCODING)
         else:
             key = repr(key).strip("'")
-        
-        print key
+
         retVal = int(hashlib.md5(key).hexdigest(), 16) & 0x7fffffffffffffff
         return retVal
 
@@ -148,9 +146,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         retVal = ''
 
         hash_ = self.hashKey(key)
-        
-        print hash_
-        
+
         if not retVal:
             while True:
                 try:
@@ -161,7 +157,7 @@ class SqlmapPlugin(PluginTerminalOutput):
                         raise
                 else:
                     break
-        
+
         return retVal if not unserialize else self.base64unpickle(retVal)
 
     def base64decode(self, value):
@@ -209,30 +205,30 @@ class SqlmapPlugin(PluginTerminalOutput):
             return node.attrib[value]
 
     def getuser(self, data):
-        
+
         users = re.search(
             r'database management system users \[[\d]+\]:\n((\[\*\] (.*)\n)*)',
             data)
-        
+
         if users:
             return map((lambda x: x.replace("[*] ", "")), users.group(1).split("\n"))
 
     def getdbs(self, data):
-        
+
         dbs = re.search(
             r'available databases \[[\d]+\]:\n(((\[\*\] (.*)\n)*))',
             data)
-        
+
         if dbs:
             return map((lambda x: x.replace("[*] ", "")), dbs.group(1).split("\n"))
 
     def getpassword(self, data):
 
         users = {}
-        
+
         password = re.findall(
             r"\n\[\*\] (.*) \[\d\]:\n\s*password hash: (.*)",
-            data)   
+            data)
 
         if password:
             for credential in password:
@@ -240,7 +236,7 @@ class SqlmapPlugin(PluginTerminalOutput):
                 user = credential[0]
                 mpass = credential[1]
                 users[user] = mpass
-        
+
         return users
 
     def getAddress(self, hostname):
@@ -249,8 +245,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         """
         try:
             return socket.gethostbyname(hostname)
-        except socket.error, msg:
-
+        except socket.error:
             return self.hostname
 
     def parseOutputString(self, output, debug=False):
@@ -264,9 +259,13 @@ class SqlmapPlugin(PluginTerminalOutput):
 
         sys.path.append(self.getSetting("Sqlmap path"))
 
-        from lib.core.settings import HASHDB_MILESTONE_VALUE
-        from lib.core.enums import HASHDB_KEYS
-        from lib.core.settings import UNICODE_ENCODING
+        try:
+            from lib.core.settings import HASHDB_MILESTONE_VALUE
+            from lib.core.enums import HASHDB_KEYS
+            from lib.core.settings import UNICODE_ENCODING
+        except:
+            print 'ERROR: Remember set your Sqlmap Path Setting!... Abort plugin.'
+            sys.exit(-1)
 
         self.HASHDB_MILESTONE_VALUE = HASHDB_MILESTONE_VALUE
         self.HASHDB_KEYS = HASHDB_KEYS
@@ -326,13 +325,13 @@ class SqlmapPlugin(PluginTerminalOutput):
             s_id,
             "website",
             '')
-        
+
         n2_id = self.createAndAddNoteToNote(
             h_id,
             s_id,
             n_id,
             self.hostname,
-            "")
+            '')
 
         db_port = self.db_port[dbms]
 
@@ -346,14 +345,16 @@ class SqlmapPlugin(PluginTerminalOutput):
             ports=[str(db_port)],
             description="DB detect by SQLi")
 
+        # sqlmap.py --users
         if users:
             for v in users:
-                self.createAndAddCredToService(h_id, s_id2, v, '')
+                if v:
+                    self.createAndAddCredToService(h_id, s_id2, v, '')
 
+        # sqlmap.py --passwords
         if password:
             for k, v in password.iteritems():
-                for p in v:
-                    self.createAndAddCredToService(h_id, s_id2, k, p)
+                self.createAndAddCredToService(h_id, s_id2, k, v)
 
         if absFilePaths:
             n_id2 = self.createAndAddNoteToService(
@@ -362,20 +363,33 @@ class SqlmapPlugin(PluginTerminalOutput):
                 "sqlmap.absFilePaths",
                 str(absFilePaths))
 
+        # sqlmap.py --common-tables
         if tables:
-            n_id2 = self.createAndAddNoteToService(
-                h_id,
-                s_id2,
-                "sqlmap.brutetables",
-                str(tables))
+            for item in tables:
+                n_id2 = self.createAndAddNoteToService(
+                    h_id,
+                    s_id2,
+                    "sqlmap.brutetables",
+                    item[1])
 
+        # sqlmap.py --common-columns
         if columns:
+
+            text = (
+                'Db: ' + columns[0][0] +
+                '\nTable: ' + columns[0][1] +
+                '\nColumns:')
+
+            for element in columns:
+                text += str(element[2]) + '\n'
+
             n_id2 = self.createAndAddNoteToService(
                 h_id,
                 s_id2,
                 "sqlmap.brutecolumns",
-                str(columns))
+                text)
 
+        # sqlmap.py  --os-shell
         if xpCmdshellAvailable:
             n_id2 = self.createAndAddNoteToService(
                 h_id,
@@ -403,14 +417,14 @@ class SqlmapPlugin(PluginTerminalOutput):
                     s_id2,
                     "db.user",
                     user)
-        
+
             if dbname:
                 n_id2 = self.createAndAddNoteToService(
                     h_id,
                     s_id2,
                     "db.name",
                     dbname)
-            
+
             if hostname:
                 n_id2 = self.createAndAddNoteToService(
                     h_id,
@@ -474,7 +488,7 @@ class SqlmapPlugin(PluginTerminalOutput):
 
             self.protocol = urlComponents.scheme
             self.hostname = urlComponents.netloc
-            
+
             if urlComponents.port:
                 self.port = urlComponents.port
             else:

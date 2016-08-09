@@ -293,8 +293,6 @@ class SqlmapPlugin(PluginTerminalOutput):
 
         dbms_version = self.hashDBRetrieve(self.HASHDB_KEYS.DBMS, False, db)
 
-        os = self.hashDBRetrieve(self.HASHDB_KEYS.OS, False, db)
-
         self.ip = self.getAddress(self.hostname)
 
         dbms = str(dbms_version.split(" ")[0])
@@ -351,9 +349,10 @@ class SqlmapPlugin(PluginTerminalOutput):
         if password:
             for k, v in password.iteritems():
                 self.createAndAddCredToService(h_id, s_id2, k, v)
-
+        
+        # sqlmap.py --file-dest
         if absFilePaths:
-            n_id2 = self.createAndAddNoteToService(
+            self.createAndAddNoteToService(
                 h_id,
                 s_id2,
                 "sqlmap.absFilePaths",
@@ -362,7 +361,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         # sqlmap.py --common-tables
         if tables:
             for item in tables:
-                n_id2 = self.createAndAddNoteToService(
+                self.createAndAddNoteToService(
                     h_id,
                     s_id2,
                     "sqlmap.brutetables",
@@ -402,46 +401,6 @@ class SqlmapPlugin(PluginTerminalOutput):
                 str(dbs))
 
         for inj in self.hashDBRetrieve(self.HASHDB_KEYS.KB_INJECTIONS, True, db) or []:
-
-            dbversion = self.hashDBRetrieve(
-                "None" + self.xmlvalue(dbms, "banner"), False, db)
-
-            user = self.hashDBRetrieve(
-                "None" + self.xmlvalue(dbms, "current_user"), False, db)
-
-            dbname = self.hashDBRetrieve(
-                "None" + self.xmlvalue(dbms, "current_db"), False, db)
-
-            hostname = self.hashDBRetrieve(
-                "None" + self.xmlvalue(dbms, "hostname"), False, db)
-
-            if user:
-                self.createAndAddNoteToService(
-                    h_id,
-                    s_id2,
-                    "db.user",
-                    user)
-
-            if dbname:
-                self.createAndAddNoteToService(
-                    h_id,
-                    s_id2,
-                    "db.name",
-                    dbname)
-
-            if hostname:
-                self.createAndAddNoteToService(
-                    h_id,
-                    s_id2,
-                    "db.hostname",
-                    hostname)
-
-            if dbversion:
-                self.createAndAddNoteToService(
-                    h_id,
-                    s_id2,
-                    "db.version",
-                    dbversion)
 
             for k, v in inj.data.items():
                 self.createAndAddVulnWebToService(

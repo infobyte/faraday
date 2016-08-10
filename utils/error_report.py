@@ -39,7 +39,7 @@ def exception_handler(type, value, tb):
     decide wether to send the developers a report with additional info.
     The report is created and sent using the callback.
     Since this handler may be called from threads, the dialog must be created
-    using qt custom events to avoid issues.
+    using gtk idle_add or signals to avoid issues.
     """
     import requests
     import hashlib

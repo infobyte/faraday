@@ -471,7 +471,7 @@ class ModelController(threading.Thread):
                  model.common.ModelObjectVulnWeb.class_signature,
                  model.common.ModelObjectCred.class_signature] and object_parent is None):
                 # TODO: refactor log module. We need to log twice to see it in
-                # qt and in the terminal. Ugly.
+                # gui and in the terminal. Ugly.
                 msg = "A parent is needed for %s objects" % obj.class_signature
                 getLogger(self).error(msg)
                 return False
@@ -912,42 +912,51 @@ class ModelController(threading.Thread):
         return hosts_mapper.find(name)
 
     def getAllHosts(self):
-        hosts = self.mappers_manager.getMapper(
-            model.hosts.Host.class_signature).getAll()
+        """Return a list with every host. If there's an exception, assume there
+        are no hosts.
+        """
+        try:
+            hosts = self.mappers_manager.getMapper(
+                model.hosts.Host.class_signature).getAll()
+        except:
+            hosts = []
         return hosts
 
     def getWebVulns(self):
         return self.mappers_manager.getMapper(
             model.common.ModelObjectVulnWeb.class_signature).getAll()
 
-    def createIndex(self, hosts):
-        self.treeWordsTries = TreeWordsTries()
-        self.treeWordsTries.clear()
-        for k in hosts.keys():
-            h = hosts[k]
-            self.treeWordsTries.addWord(h.getName())
-            for intr in h.getAllInterfaces():
-                ipv4 = intr.ipv4
-                ipv6 = intr.ipv6
-                if not ipv4['address'] in ["0.0.0.0", None]:
-                    self.treeWordsTries.addWord(ipv4['address'])
-
-                if not ipv6['address'] in ["0000:0000:0000:0000:0000:0000:0000:0000", None]:
-                    self.treeWordsTries.addWord(ipv6['address'])
-
-                for hostname in intr.getHostnames():
-                    self.treeWordsTries.addWord(hostname)
-
     def getHostsCount(self):
-        hosts = model.hosts.Host.class_signature
-        return self.mappers_manager.getMapper(hosts).getCount()
+        """Get how many hosts are in the workspace. If it can't, it will
+        return zero."""
+        try:
+            hosts = model.hosts.Host.class_signature
+            count = self.mappers_manager.getMapper(hosts).getCount()
+        except:
+            getLogger(self).debug("Couldn't get host count: assuming it is zero.")
+            count = 0
+        return count
 
     def getServicesCount(self):
-        services = model.hosts.Service.class_signature
-        return self.mappers_manager.getMapper(services).getCount()
+        """Get how many services are in the workspace. If it can't, it will
+        return zero."""
+        try:
+            services = model.hosts.Service.class_signature
+            count = self.mappers_manager.getMapper(services).getCount()
+        except:
+            getLogger(self).debug("Couldn't get services count: assuming it is zero.")
+            count = 0
+        return count
 
     def getVulnsCount(self):
-        vulns = model.common.ModelObjectVuln.class_signature
-        web_vulns = model.common.ModelObjectVulnWeb.class_signature
-        return (self.mappers_manager.getMapper(vulns).getCount() +
-                self.mappers_manager.getMapper(web_vulns).getCount())
+        """Get how many vulns (web + normal) are in the workspace.
+        If it can't, it will return zero."""
+        try:
+            vulns = model.common.ModelObjectVuln.class_signature
+            web_vulns = model.common.ModelObjectVulnWeb.class_signature
+            count = (self.mappers_manager.getMapper(vulns).getCount() +
+                     self.mappers_manager.getMapper(web_vulns).getCount())
+        except:
+            getLogger(self).debug("Couldn't get vulnerabilities count: assuming it is zero.")
+            count = 0
+        return count

@@ -10,19 +10,30 @@ import gi
 import os
 
 gi.require_version('Gtk', '3.0')
-gi.require_version('Vte', '2.91')
 
-from gi.repository import Gtk, Gdk, Vte, GLib, Pango, GdkPixbuf
+try:
+    gi.require_version('Vte', '2.91')
+except ValueError:
+    gi.require_version('Vte', '2.90')
+
+from gi.repository import Gtk, Gdk, GLib, Pango, GdkPixbuf, Vte
+
+from decorators import scrollable
+from compatibility import CompatibleVteTerminal as VteTerminal
+from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
 
 
-class Terminal(Vte.Terminal):
+class Terminal(VteTerminal):
     """Defines a simple terminal that will execute faraday-terminal with the
-    corresponding host and port as specified by the CONF"""
+    corresponding host and port as specified by the CONF.
+    Inherits from Compatibility.Vte, which is just Vte.Terminal with
+    spawn_sync overrode to function with API 2.90 and 2.91"""
+
     def __init__(self, CONF):
         """Initialize terminal with infinite scrollback, no bell, connecting
         all keys presses to copy_or_past, and starting faraday-terminal
         """
-        super(Vte.Terminal, self).__init__()
+        VteTerminal.__init__(self)
         self.set_scrollback_lines(-1)
         self.set_audible_bell(0)
         self.connect("key_press_event", self.copy_or_paste)
@@ -31,16 +42,15 @@ class Terminal(Vte.Terminal):
         faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
         self.faraday_exec = faraday_directory + "/faraday-terminal.zsh"
 
-        self.startFaraday()
+        self.start_faraday()
 
-    def getTerminal(self):
-        """Returns a scrolled_window with the terminal inside it"""
-        scrolled_window = Gtk.ScrolledWindow.new(None, None)
-        scrolled_window.set_overlay_scrolling(False)
-        scrolled_window.add(self)
-        return scrolled_window
+    @scrollable(overlay_scrolling=True)
+    def create_scrollable_terminal(self):
+        """Returns a scrolled_window with the terminal inside it thanks
+        to the scrollable decorator."""
+        return self
 
-    def startFaraday(self):
+    def start_faraday(self):
         """Starts a Faraday process with the appropiate host and port."""
 
         home_dir = os.path.expanduser('~')
@@ -92,7 +102,8 @@ class Sidebar(Gtk.Notebook):
         self.append_page(self.workspace_sidebar, Gtk.Label("Workspaces"))
         self.append_page(self.hosts_sidebar, Gtk.Label("Hosts"))
 
-    def get_box(self):
+    def box_it(self):
+        """Wraps the notebook inside a little box."""
         box = Gtk.Box()
         box.pack_start(self, True, True, 0)
         return box
@@ -114,6 +125,7 @@ class HostsSidebar(Gtk.Widget):
         self.linux_icon = icons + "tux.png"
         self.windows_icon = icons + "windows.png"
         self.mac_icon = icons + "Apple.png"
+        self.no_os_icon = icons + "TreeHost.png"
 
     def create_model(self, hosts):
         """Creates a model for a lists of hosts. The model contians the
@@ -150,7 +162,7 @@ class HostsSidebar(Gtk.Widget):
                 icon = GdkPixbuf.Pixbuf.new_from_file(self.mac_icon)
                 str_id = "mac"
             else:
-                icon = None
+                icon = GdkPixbuf.Pixbuf.new_from_file(self.no_os_icon)
                 str_id = "unknown"
             return icon, str_id
 
@@ -226,7 +238,6 @@ class HostsSidebar(Gtk.Widget):
         self.view.append_column(column_os)
         self.view.append_column(column_hosts)
 
-
         self.view.connect("row_activated", self.on_click)
 
         self.view.set_enable_search(True)
@@ -250,13 +261,10 @@ class HostsSidebar(Gtk.Widget):
         host_id = self.current_model[tree_iter][0]
         self.open_dialog_callback(host_id)
 
+    @scrollable(width=160)
     def get_box(self):
         """Returns the box to be displayed in the appwindow"""
-        box = Gtk.Box()
-        scrolled_view = Gtk.ScrolledWindow(None, None)
-        scrolled_view.add(self.view)
-        box.pack_start(scrolled_view, True, True, 0)
-        return box
+        return self.view
 
 
 class WorkspaceSidebar(Gtk.Widget):
@@ -268,112 +276,115 @@ class WorkspaceSidebar(Gtk.Widget):
                  callback_to_remove_workspace, callback_to_create_workspace,
                  last_workspace):
 
-        super(Gtk.Widget, self).__init__()
-        self.callbackChangeWs = callback_to_change_workspace
-        self.callbackRemoveWs = callback_to_remove_workspace
-        self.callbackCreateWs = callback_to_create_workspace
-        self.lastWorkspace = last_workspace
+        Gtk.Widget.__init__(self)
+        self.change_ws = callback_to_change_workspace
+        self.remove_ws = callback_to_remove_workspace
+        self.create_ws = callback_to_create_workspace
+        self.last_workspace = last_workspace
         self.ws_manager = workspace_manager
 
         self.workspaces = self.ws_manager.getWorkspacesNames()
-        self.searchEntry = self.createSearchEntry()
+        self.search_entry = self.create_search_entry()
 
-        self.workspace_model = self.createWsModel()
-        self.workspace_view = self.createWsView(self.workspace_model)
+        self.workspace_model = self.create_ws_model()
+        self.workspace_view = self.create_ws_view(self.workspace_model)
 
         self.sidebar_button = Gtk.Button.new_with_label("Refresh workspaces")
-        self.sidebar_button.connect("clicked", self.refreshSidebar)
-
-        self.scrollableView = Gtk.ScrolledWindow.new(None, None)
-        self.scrollableView.set_min_content_width(160)
-        self.scrollableView.add(self.workspace_view)
+        self.sidebar_button.connect("clicked", self.refresh_sidebar)
 
     def get_box(self):
+        """Creates a return a simple vertical box containing all the widgets
+        that make the sidebar.
+        """
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        box.pack_start(self.getSearchEntry(), False, False, 0)
-        box.pack_start(self.getScrollableView(), True, True, 0)
-        box.pack_start(self.getButton(), False, False, 0)
+        box.pack_start(self.search_entry, False, False, 0)
+        box.pack_start(self.workspace_view, True, True, 0)
+        box.pack_start(self.sidebar_button, False, False, 0)
         return box
 
-    def createSearchEntry(self):
+    def create_search_entry(self):
         """Returns a simple search entry"""
-        searchEntry = Gtk.Entry()
-        searchEntry.set_placeholder_text("Search...")
-        searchEntry.connect("activate", self.onSearchEnterKey)
-        return searchEntry
+        search_entry = Gtk.Entry()
+        search_entry.set_placeholder_text("Search...")
+        search_entry.connect("activate", self.on_search_enter_key)
+        return search_entry
 
-    def getSearchEntry(self):
-        """Returns the search entry of the sidebar"""
-        return self.searchEntry
-
-    def getScrollableView(self):
-        return self.scrollableView
-
-    def onSearchEnterKey(self, entry):
+    def on_search_enter_key(self, entry):
         """When the users preses enter, if the workspace exists,
         select it. If not, present the window to create a workspace with
         that name"""
-        selection = self.getSelectedWs()
-        if selection.get_selected()[1] is None:
-            self.callbackCreateWs(title=entry.get_text())
+        selection = self.ws_view.get_selection()
+        model, ws_iter = selection.get_selected()
+
+        if ws_iter is None:
+            self.create_ws(title=entry.get_text())
             entry.set_text("")
         else:
-            self.callbackChangeWs(self.getSelectedWsName())
-            ws_iter = self.getSelectedWsIter()
+            self.change_ws(self.get_selected_ws_name())
+            ws_iter = self.get_selected_ws_iter()
             entry.set_text("")
-            self.selectWs(ws_iter)
+            self.select_ws_by_iter(ws_iter)
 
-    def refreshSidebar(self, button=None):
+    def refresh_sidebar(self, button=None):
         """Function called when the user press the refresh button.
         Gets an updated copy of the workspaces and checks against
         the model to see which are already there and which arent"""
 
-        model = self.workspace_model
+        self.ws_manager.resource()
         self.workspaces = self.ws_manager.getWorkspacesNames()
+
+        model = self.workspace_model
         added_workspaces = [added_ws[0] for added_ws in model]
         for ws in self.workspaces:
             if ws not in added_workspaces:
-                self.addWorkspace(ws)
+                ws_iter = self.workspace_model.append([ws])
+                self.valid_ws_iters.append(ws_iter)
 
-    def clearSidebar(self):
+    def clear_sidebar(self):
         """Brutaly clear all the information from the model.
         No one survives"""
+        self.valid_ws_iters = []
         self.workspace_model.clear()
 
-    def createWsModel(self):
-        """Creates and the workspace model. Also assigns self.defaultSelection
-        to the treeIter which represents the last active workspace"""
+    def create_ws_model(self):
+        """Creates and the workspace model. Also tries to assign
+        self.default_selection to the tree_iter which represents the
+        last active workspace"""
         workspace_model = Gtk.ListStore(str)
+        self.default_selection = None
+        self.valid_ws_iters = []
 
         for ws in self.workspaces:
-            treeIter = workspace_model.append([ws])
-            if ws == self.lastWorkspace:
-                self.defaultSelection = treeIter
+            tree_iter = workspace_model.append([ws])
+            self.valid_ws_iters.append(tree_iter)
+            if ws == self.last_workspace:
+                self.default_selection = tree_iter
 
         return workspace_model
 
-    def createWsView(self, model):
+    @scrollable(width=160)
+    def create_ws_view(self, model):
         """Populate the workspace view. Also select by default
-        self.defaultSelection (see workspaceModel method). Also connect
+        self.default_selection (see workspace_model method). Also connect
         a selection with the change workspace callback"""
 
-        view = Gtk.TreeView(model)
+        self.ws_view = Gtk.TreeView(model)
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("Workspaces", renderer, text=0)
-        view.append_column(column)
-        view.set_search_entry(self.searchEntry)
+        self.ws_view.append_column(column)
+        self.ws_view.set_search_entry(self.search_entry)
 
         # select by default the last active workspace
-        if self.defaultSelection is not None:
-            self.selectDefault = view.get_selection()
-            self.selectDefault.select_iter(self.defaultSelection)
+        if self.default_selection is not None:
+            self.select_default = self.ws_view.get_selection()
+            self.select_default.select_iter(self.default_selection)
 
-        selection = view.get_selection()
+        selection = self.ws_view.get_selection()
         selection.set_mode(Gtk.SelectionMode.BROWSE)
 
-        view.connect("button-press-event", self.on_click)
+        self.ws_view.connect("button-press-event", self.on_click)
 
-        return view
+        return self.ws_view
 
     def on_click(self, view, event):
         """On click, check if it was a right click. If it was,
@@ -404,7 +415,7 @@ class WorkspaceSidebar(Gtk.Widget):
 
             # change the workspace to the newly selected
 
-            self.callbackChangeWs(self.getSelectedWsName())
+            self.change_ws(self.get_selected_ws_name())
 
         if event.button == 3:  # 3 represents right click
             menu = Gtk.Menu()
@@ -417,49 +428,50 @@ class WorkspaceSidebar(Gtk.Widget):
             tree_iter = self.workspace_model.get_iter(path)
             ws_name = self.workspace_model[tree_iter][0]
 
-            delete_item.connect("activate", self.callbackRemoveWs, ws_name)
+            delete_item.connect("activate", self.remove_ws, ws_name)
 
             delete_item.show()
             menu.popup(None, None, None, None, event.button, event.time)
             return True  # prevents the click from selecting a workspace
 
-    def change_label(self, new_label):
-        self.sidebar_button.set_label(new_label)
-
-    def restore_label(self):
-        self.sidebar_button.set_label("Refresh workspaces")
-
-    def addWorkspace(self, ws):
-        """Append ws workspace to the model"""
-        self.workspace_model.append([ws])
-
-    def getSelectedWs(self):
-        """Returns the selection of of the view.
-        To retrieve the name, see getSelectedWsName"""
-        selection = self.workspace_view.get_selection()
-        return selection
-
-    def getSelectedWsIter(self):
-        """Returns the TreeIter of the current selected workspace"""
-        selection = self.getSelectedWs()
+    def get_selected_ws_iter(self):
+        """Returns the tree_iter of the current selected workspace"""
+        selection = self.ws_view.get_selection()
         _iter = selection.get_selected()[1]
         return _iter
 
-    def getSelectedWsName(self):
+    def get_selected_ws_name(self):
         """Return the name of the selected workspace"""
-        selection = self.getSelectedWs()
-        tree_model, treeiter = selection.get_selected()
-        workspaceName = tree_model[treeiter][0]
-        return workspaceName
+        selection = self.ws_view.get_selection()
+        model, ws_iter = selection.get_selected()
+        workspace_name = model[ws_iter][0]
+        return workspace_name
 
-    def selectWs(self, ws):
-        """Selects workspace ws in the list"""
-        self.select = self.workspace_view.get_selection()
-        self.select.select_iter(ws)
+    def select_ws_by_iter(self, ws_iter):
+        """Selects workspace of iter ws_iter in the list"""
+        selection = self.ws_view.get_selection()
+        selection.select_iter(ws_iter)
 
-    def getButton(self):
-        """Returns the refresh sidebar button"""
-        return self.sidebar_button
+    def get_iter_by_name(self, ws_name):
+        """Returns the iter associated to the workspace ws_name or None
+        if not found.
+        """
+        for ws_iter in self.valid_ws_iters:
+            if self.workspace_model[ws_iter][0] == ws_name:
+                return ws_iter
+        else:
+            return None
+
+    def select_ws_by_name(self, ws_name):
+        """Selects the workspace by name ws_name"""
+        ws_iter = self.get_iter_by_name(ws_name)
+        if ws_iter is not None:
+            self.select_ws_by_iter(ws_iter)
+
+    def add_workspace(self, ws):
+        """Adds a workspace to the model and to the list of valid iters."""
+        ws_iter = self.workspace_model.append([ws])
+        self.valid_ws_iters.append(ws_iter)
 
 
 class ConsoleLog(Gtk.Widget):
@@ -495,22 +507,10 @@ class ConsoleLog(Gtk.Widget):
 
         self.textView.set_buffer(self.textBuffer)
 
-        self.logger = Gtk.ScrolledWindow.new(None, None)
-        self.logger.set_min_content_height(100)
-        self.logger.set_min_content_width(100)
-        self.logger.add(self.textView)
-
-    def getLogger(self):
+    @scrollable(height=100, width=100)
+    def create_scrollable_logger(self):
         """Returns the ScrolledWindow used to contain the view"""
-        return self.logger
-
-    def getView(self):
-        """Returns the text view"""
         return self.textView
-
-    def getBuffer(self):
-        """Returns the buffer"""
-        return self.textBuffer
 
     def customEvent(self, text):
         """Filters event so that only those with type 3131 get to the log.
@@ -555,15 +555,17 @@ class ConsoleLog(Gtk.Widget):
 
 
 class Statusbar(Gtk.Widget):
-    """Defines a statusbar, which is actually more quite like a button.
-    The button has a label that tells how many notifications are there.
-    Takes an on_button_do callback, so it can tell the application what
-    to do when the user presses the button"""
+    """Defines a statusbar. Will have a notifications button,
+    a string informing of how many hosts/services/vulns are in the
+    current workspace nad the conflicts button."""
 
     def __init__(self, notif_callback, conflict_callback,
                  host_count, service_count, vuln_count):
-        super(Gtk.Widget, self).__init__()
-        """Initialices a button with a label on zero"""
+        """Initializes the statusbar. Takes a notification_callback
+        to open the notifiacion window, conflick_callback to open
+        the conclifcts window, and a host, service and vuln counts
+        to be displayed"""
+        Gtk.Widget.__init__(self)
         initial_strings = self.create_strings(host_count, service_count,
                                               vuln_count)
         self.notif_text = "Notifications: "
@@ -587,8 +589,8 @@ class Statusbar(Gtk.Widget):
         self.mainBox = Gtk.Box()
         self.mainBox.pack_start(self.notif_button, False, False, 5)
         self.mainBox.pack_start(self.ws_info, False, True, 5)
-        self.mainBox.pack_start(Gtk.Box(), True, True, 5)  # space
-        self.mainBox.pack_end(self.conflict_button, False, True, 0)
+        self.mainBox.pack_start(Gtk.Box(), True, True, 5)  # blank space
+        self.mainBox.pack_end(self.conflict_button, False, True, 5)
 
     def inc_notif_button_label(self):
         """Increments the button label, sets bold so user knows there are

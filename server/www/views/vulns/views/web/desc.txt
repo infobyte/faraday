@@ -1,0 +1,1 @@
+gets all web vulns from workspace.

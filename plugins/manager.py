@@ -31,16 +31,6 @@ class PluginManager(object):
         self._plugin_settings = {}
         self._loadSettings()
 
-    def createController(self, id):
-        """
-        Creates a new plugin controller and adds it into the controllers list.
-        """
-        new_controller = PluginController(
-            id, self, self._mapper_manager)
-        self._controllers[new_controller.id] = new_controller
-        self.updateSettings(self._plugin_settings)
-        return new_controller
-
     def addController(self, controller, id):
         self._controllers[id] = controller
 

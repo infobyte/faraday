@@ -57,7 +57,7 @@ if [ "$update" -eq 0 ]; then
     update=1
 fi
 
-apt-get --ignore-missing -y install ipython python-setuptools python-pip python-dev libpq-dev libffi-dev couchdb gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
+apt-get --ignore-missing -y install build-essential ipython python-setuptools python-pip python-dev libpq-dev libffi-dev couchdb gir1.2-gtk-3.0 gir1.2-vte-2.91 python-gobject zsh curl
 
 pip2 install -r requirements.txt
 

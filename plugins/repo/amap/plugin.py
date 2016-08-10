@@ -21,6 +21,7 @@ current_path = os.path.abspath(os.getcwd())
 
 class AmapPlugin(core.PluginBase):
     """ Example plugin to parse amap output."""
+
     def __init__(self):
         core.PluginBase.__init__(self)
         self.id = "Amap"

@@ -1,0 +1,74 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<form novalidate>
+    <section id="main" class="seccion clearfix">
+                <div class="right-main"><div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="col-md-4">
+                                    <span id="ws-name" title="Workspaces">Workspaces</span><!-- WS name -->
+                                </div>
+                                <div class="col-md-3 pull-right">
+                                    <button id="delete" type="button" class="btn btn-default" title="Delete selected Workspaces" ng-click="delete()">
+                                        <span class="glyphicon glyphicon-trash"></span>
+                                        Delete
+                                    </button>
+                                    <button id="merge" type="button" class="btn btn-default" title="Edit selected Workspaces" ng-click="edit()">
+                                        <span class="glyphicon glyphicon-pencil"></span>
+                                        Edit
+                                    </button>
+                                    <button id="merge" type="button" class="btn btn-success" title="New Workspace" ng-click="new()">
+                                        <span class="glyphicon glyphicon-plus-sign"></span>
+                                        New
+                                    </button>
+                                </div>
+                                <div class="col-md-4 pull-right">
+                                    <div id="custom-search-input">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control input-md" ng-model="search" placeholder="Search" />
+                                            <span class="input-group-btn">
+                                                <button class="btn btn-info btn-md" type="button">
+                                                    <i class="glyphicon glyphicon-search"></i>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </h2><!-- .ws-label -->
+                    <div class="reports">
+                        <table class="status-report table table-responsive">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Vulns</th>
+                                    <th>Hosts</th>
+                                    <th>Services</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="ws in workspaces | filter:query | filter:search | orderBy:sortField:reverse"
+                                    selection-model selection-model-selected-class="multi-selected"> 
+                                    <td>
+                                        <span class="onhover upsize" ng-click="redirect(ws.name)">
+                                           <b>{{ws.name}}</b>
+                                        </span>
+                                    </td>
+                                    <td ng-bind="ws.duration.start || '-' | date:'MM/dd/yyyy'"></td>
+                                    <td ng-bind="ws.duration.end || '-' | date:'MM/dd/yyyy'"></td>
+                                    <td><a href="#/status/ws/{{ws.name}}">{{objects[ws.name]['total_vulns']}}</a></td>
+                                    <td><a href="#/hosts/ws/{{ws.name}}">{{objects[ws.name]['hosts']}}</a></td>
+                                    <td ng-bind="objects[ws.name]['services']"></td>
+                                </tr>
+                            </tbody>
+                        </table><!-- #hosts -->
+                    </div><!-- .reports -->
+                </div><!-- #reports-main --></div><!-- .right-main -->
+            </section><!-- #main -->
+</form>

@@ -7,9 +7,17 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
 /**/
 html#no-overflow{overflow-x:hidden;}
 body {
-    font:62.5%/1.5 ,Helvetica,Arial,sans-serif!important;
+    font-family: "Open Sans" !important;
     color: #2D2F31;
+    height: 100%;
+    width: 100%;
     background: #F5F5F5 !important;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Open Sans" !important;
+}
+p, div {
+    font-family: "Open Sans" !important;
 }
 ul{padding:0 0 0 0;margin-bottom: 20px;}
 a {
@@ -51,7 +59,7 @@ p {margin-bottom: 1em;}
         .unsexto {width: 85px;}
 
 header.head {
-    background: #000;
+    background: #3a3a3a;
     height: 50px;
     text-align: left;
     position: fixed;
@@ -93,7 +101,6 @@ aside {
     background: #3A3A3A;
     width: 76px;
     height: 100%;
-    border-right: 4px solid #DF3936;
     position: fixed;
     top:0px;
     height: 100%;
@@ -802,6 +809,13 @@ span.input-group-addon.button-radius{
 .normal-size {
     font-size: 14px !important;
 }
+.upsize {
+    font-size: 13px;
+    cursor: pointer;
+}
+.onhover:hover {
+    text-decoration: underline;
+}
 div.input-margin{margin: 4px 0;}
 div.col-md-8.protocol input#protocol{margin-top: 35px}
 div#treemap_container{margin: 5% auto 0}
@@ -1044,3 +1058,52 @@ div.alert.alert-danger.alert-dismissible .ws-list{text-align: center; text-trans
 div.alert.alert-danger.alert-dismissible .ws-list a:hover{text-decoration: none}
 a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .almost-expired{background-color: #dca7a7 !important}
+
+#custom-search-input{
+    border: solid 1px #E4E4E4;
+    border-radius: 6px;
+    background-color: #fff;
+    margin-top: 1%;
+}
+
+#custom-search-input input{
+    border: 0;
+    box-shadow: none;
+}
+
+#custom-search-input button{
+    margin: 2px 0 0 0;
+    background: none;
+    box-shadow: none;
+    border: 0;
+    color: #666666;
+    padding: 0 8px 0 10px;
+    border-left: solid 1px #ccc;
+}
+
+#custom-search-input button:hover{
+    border: 0;
+    box-shadow: none;
+    border-left: solid 1px #ccc;
+}
+
+#custom-search-input .glyphicon-search{
+    font-size: 23px;
+}
+
+.search_align {
+    margin-right: 25%;
+}
+.workspace_label {
+    display: inline;
+    padding: 0.05em 0.6em 0.3em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    color: rgb(107, 105, 105);
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: .25em;
+}
+

@@ -54,25 +54,35 @@ def setup_environment(cli_arguments):
     if cli_arguments.debug:
         set_logging_level(server.config.DEBUG)
 
-    if not check_dependencies():
-        logger.error("Dependencies not met")
-        sys.exit(1)
+    missing_packages = check_dependencies()
+
+    if len(missing_packages) > 0:
+        answer = ask_to_install(missing_packages)
+        if answer:
+            logger.info(
+                "Dependencies installed. Please launch Faraday Server again")
+            sys.exit(0)
+        else:
+            logger.error("Dependencies not met")
+            sys.exit(1)
 
     server.config.gen_web_config()
 
 def check_dependencies():
-    logger = get_logger(__name__)
     checker = DependencyChecker(server.config.REQUIREMENTS_FILE)
     missing = checker.check_dependencies()
-    if len(missing) > 0:
-        logger.warning("The following packages are not installed:")
-        for package in missing:
-            logger.warning("%s" % package)
-        res = query_yes_no("Do you want to install them?", default="no")
-        if res:
-            checker.install_packages(missing)
-            missing = checker.check_dependencies()
-    return len(missing) == 0
+    return missing
+
+def ask_to_install(missing_packages):
+    logger = get_logger(__name__)
+    logger.warning("The following packages are not installed:")
+    for package in missing_packages:
+        logger.warning("%s" % package)
+    res = query_yes_no("Do you want to install them?", default="no")
+    if res:
+        checker = DependencyChecker(server.config.REQUIREMENTS_FILE)
+        checker.install_packages(missing_packages)
+    return res
 
 def setup_and_run_server(cli_arguments):
     import server.web

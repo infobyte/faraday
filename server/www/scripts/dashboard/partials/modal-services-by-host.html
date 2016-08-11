@@ -38,7 +38,7 @@
         </tbody>
             <div class="col md-12" style="border-top:1px solid #e5e5e5">
                 <h5><span class="fa fa-laptop"></span> Operating System: <b>{{host.os}}</b></h5>
-                <h6><span class="glyphicon glyphicon-user"></span> Created on the <b>{{host.metadata.create_time * 1000 | date:'MM/dd/yyyy'}} </b></h6>
+                <h6><span class="glyphicon glyphicon-user"></span> Created <b><span am-time-ago="host.metadata.create_time * 1000"></span></b></h6>
             </div><!-- .col md-12 -->
     </table>
 </div>

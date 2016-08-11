@@ -19,7 +19,11 @@
                 </thead>
                 <tbody>
                     <tr ng-repeat="ws in wss">
-                        <td><a href="#/{{hash}}/ws/{{ws}}"><span ng-class-even="'label label-unclassified'" ng-class-odd="'label label-high'">{{ws}}</span></a></td>
+                        <td>
+                            <span class="onhover upsize" ng-click="redirect(ws)">
+                                <b>{{ws}}</b>
+                            </span>
+                        </td>
                         <td ng-bind="objects[ws]['total_vulns']"></td>
                         <td ng-bind="objects[ws]['hosts']"></td>
                         <td ng-bind="objects[ws]['services']"></td>

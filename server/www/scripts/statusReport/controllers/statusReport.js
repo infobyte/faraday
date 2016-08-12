@@ -47,7 +47,7 @@ angular.module('faradayApp')
             $scope.severities = SEVERITIES;
             $scope.easeofresolution = EASEOFRESOLUTION;
             $scope.propertyGroupBy = $routeParams.groupbyId;
-            $scope.sortField = 'metadata.create_time';
+            $scope.sortField = 'date';
             $scope.reverse = true;
             $scope.vulns = [];
             $scope.selected = false;
@@ -220,7 +220,7 @@ angular.module('faradayApp')
                     '       <div ui-grid-filter></div>'+
                     '   </div>';
 
-            $scope.gridOptions.columnDefs.push({ name : 'metadata.create_time',
+            $scope.gridOptions.columnDefs.push({ name : 'date',
                 displayName : "date",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/datecolumn.html',
                 headerCellTemplate: header,

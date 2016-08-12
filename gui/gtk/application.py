@@ -402,8 +402,8 @@ class GuiApp(Gtk.Application, FaradayUi):
 
             if action == "show" and not self.loading_dialog_raised:
                 message_string = ("Loading workspace {0}. Please wait. \n"
-                                 "To cancel, press Alt+F4 or a similar shorcut."
-                                 .format(workspace_name))
+                                  "To cancel, press Alt+F4 or a similar shorcut."
+                                  .format(workspace_name))
 
                 self.loading_dialog_raised = True
                 self.loading_dialog = Gtk.MessageDialog(self.window, 0,
@@ -489,44 +489,75 @@ class GuiApp(Gtk.Application, FaradayUi):
         FROM HERE. If you must do it, you should to it sing Glib.idle_add,
         a misterious function with outdated documentation. Good luck."""
 
-        type_ = event.type()
-
-        if type_ == 3131:  # new log event
+        def new_log_event():
             GObject.idle_add(self.console_log.customEvent, event.text)
 
-        elif type_ == 3141:  # new conflict event
+        def new_conflict_event():
             GObject.idle_add(self.statusbar.update_conflict_button_label,
                              event.nconflicts)
 
-        elif type_ == 5100:  # new notification event
+        def new_notification_event():
             self.notificationsModel.prepend([event.change.getMessage()])
             GObject.idle_add(self.statusbar.inc_notif_button_label)
             host_count, service_count, vuln_count = self.update_counts()
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)
 
-        # in order: add host, delete host, edit host, workspace_change
-        elif type_ in {4100, 4101, 4102, 3140}:
+        def host_added_event():
+            GObject.idle_add(self.hosts_sidebar.update, 'add', event.host)
             host_count, service_count, vuln_count = self.update_counts()
-            GObject.idle_add(self.hosts_sidebar.update, self.updateHosts())
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
+
+        def host_deleted_event():
+            GObject.idle_add(self.hosts_sidebar.update, 'deleted', event.host)
+            host_count, service_count, vuln_count = self.update_counts()
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
+
+        def host_updated_event():
+            GObject.idle_add(self.hosts_sidebar.update, 'updated', event.host)
+            host_count, service_count, vuln_count = self.update_counts()
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
+
+        def workspace_changed_event():
+            host_count, service_count, vuln_count = self.update_counts()
+            GObject.idle_add(self.hosts_sidebar.redo, self.updateHosts())
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)
             GObject.idle_add(self.select_active_workspace)
 
-        elif type_ == 3132:  # error
+        def normal_error_event():
             GObject.idle_add(self.show_normal_error, event.text)
 
-        elif type_ == 3134:  # important error, uncaught exception
+        def important_error_event():
             GObject.idle_add(self.show_important_error, event)
 
-        elif type_ == 42424:  # lost connection to couch db
+        def lost_connection_to_server_event():
             GObject.idle_add(self.lost_db_connection, event.problem,
                              self.handle_connection_lost,
                              self.force_change_couch_url)
             GObject.idle_add(self.reload_worskpaces_no_connection)
 
-        elif type_ == 24242:  # workspace not accesible
+        def workspace_not_accessible_event():
             GObject.idle_add(self.handle_no_active_workspace)
+
+        dispatch = {3131: new_log_event,
+                    3141: new_conflict_event,
+                    5100: new_notification_event,
+                    4100: host_added_event,
+                    4101: host_deleted_event,
+                    4102: host_updated_event,
+                    3140: workspace_changed_event,
+                    3132: normal_error_event,
+                    3134: important_error_event,
+                    42424: lost_connection_to_server_event,
+                    24242: workspace_not_accessible_event}
+
+        function = dispatch.get(event.type())
+        if function is not None:
+            function()
 
     def show_normal_error(self, dialog_text):
         """Just a simple, normal, ignorable error"""
@@ -573,7 +604,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         if not workspace_argument_set:
             self.open_last_workspace()
 
-        self.updateHosts()
+        # XXX: this will create an empty model, really, but oh well.
+        # the model will be created correctly on workspace load
+        all_hosts = self.updateHosts()
         self.hosts_sidebar = HostsSidebar(self.show_host_info, self.icons)
         default_model = self.hosts_sidebar.create_model(self.all_hosts)
         self.hosts_sidebar.create_view(default_model)
@@ -591,15 +624,15 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         self.notificationsModel = Gtk.ListStore(str)
 
-        action_to_method = {"about" : self.on_about,
-                            "help" : self.on_help,
-                            "quit" : self.on_quit,
-                            "preferences" : self.on_preferences,
-                            "pluginOptions" : self.on_plugin_options,
-                            "new" : self.on_new_button,
-                            "new_terminal" : self.on_new_terminal_button,
-                            "open_report" : self.on_open_report_button,
-                            "go_to_web_ui" : self.on_click_go_to_web_ui_button
+        action_to_method = {"about": self.on_about,
+                            "help": self.on_help,
+                            "quit": self.on_quit,
+                            "preferences": self.on_preferences,
+                            "pluginOptions": self.on_plugin_options,
+                            "new": self.on_new_button,
+                            "new_terminal": self.on_new_terminal_button,
+                            "open_report": self.on_open_report_button,
+                            "go_to_web_ui": self.on_click_go_to_web_ui_button
                             }
 
         for action, method in action_to_method.items():

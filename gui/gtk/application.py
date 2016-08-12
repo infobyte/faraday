@@ -358,6 +358,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         its information on the HostInfoDialog"""
         current_ws_name = self.get_active_workspace().name
 
+        self.updateHosts()
         for host in self.all_hosts:
             if host_id == host.id:
                 selected_host = host

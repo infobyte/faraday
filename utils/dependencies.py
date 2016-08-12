@@ -35,12 +35,12 @@ class DependencyChecker(object):
             return False
 
     def check_dependencies(self, with_optional=True):
+        print "Checking dependencies"
         missing = []
         dependencies = self.mandatory
         if with_optional:
             dependencies += self.optional
         for package in dependencies:
-            print "Checking if %s is installed" % package
             if not self.__check_dependency(package):
                 missing.append(package)
         return missing

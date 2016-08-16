@@ -308,7 +308,7 @@ class CouchDbConnector(DbConnector):
                 self.db,
                 feed="continuous",
                 since=last_seq,
-                heartbeat=True)
+                heartbeat=1000)
             try:
                 for change in self.stream:
                     if not self.changes_callback:

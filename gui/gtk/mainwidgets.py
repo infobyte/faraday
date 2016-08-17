@@ -148,17 +148,17 @@ class HostsSidebar(Gtk.Widget):
         self.host_id_to_iter[host.id] = host_iter
         return host_iter
 
-    def __delete_host_from_model(self, model, host):
+    def __delete_host_from_model(self, model, host_id):
         """Deletes a host from the model given as parameter."""
-        host_iter = self.host_id_to_iter[host.id]
+        host_iter = self.host_id_to_iter[host_id]
         could_be_removed = model.remove(host_iter)
-        del self.host_id_to_iter[host.id]
+        del self.host_id_to_iter[host_id]
         return could_be_removed
 
     def __update_host_info_in_model(self, model, host):
         """Updates the model with new information about the host. In practice,
         this means remove the host and add it again with new information."""
-        self.__delete_host_from_model(model, host)
+        self.__delete_host_from_model(model, host.id)
         self.__add_host_to_model(model, host)
 
     def __decide_icon(self, os):
@@ -266,17 +266,20 @@ class HostsSidebar(Gtk.Widget):
 
         return self.view
 
-    def update(self, event, host):
+    def update(self, event, host_info):
         """Updated the model in case a host was added, deleted or modified.
         event must be a string, either 'add', 'update' or 'delete'
         host must be a valid host object.
         """
         if event == 'add':
-            self.__add_host_to_model(self.current_model, host)
+            self.__add_host_to_model(self.current_model, host_info)
         elif event == 'update':
-            self.__update_host_info_in_model(self.current_model, host)
+            self.__update_host_info_in_model(self.current_model, host_info)
         elif event == 'delete':
-            self.__delete_host_from_model(self.current_model, hsot)
+            self.__delete_host_from_model(self.current_model, host_info)
+        else:
+            raise ValueError("event parameter must be a string such that "
+                             "event == 'add' or 'update' or 'delete'")
 
     def redo(self, hosts):
         """Creates a new model from an updated list of hosts and adapts

@@ -507,13 +507,13 @@ class GuiApp(Gtk.Application, FaradayUi):
                              service_count, vuln_count)
 
         def host_deleted_event():
-            GObject.idle_add(self.hosts_sidebar.update, 'deleted', event.host)
+            GObject.idle_add(self.hosts_sidebar.update, 'delete', event.host_id)
             host_count, service_count, vuln_count = self.update_counts()
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)
 
         def host_updated_event():
-            GObject.idle_add(self.hosts_sidebar.update, 'updated', event.host)
+            GObject.idle_add(self.hosts_sidebar.update, 'update', event.host)
             host_count, service_count, vuln_count = self.update_counts()
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)

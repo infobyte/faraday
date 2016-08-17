@@ -122,10 +122,64 @@ class HostsSidebar(Gtk.Widget):
         super(Gtk.Widget, self).__init__()
         self.open_dialog_callback = open_dialog_callback
         self.current_model = None
+        self.current_sorted_model = None
+        self.host_id_to_iter = {}
         self.linux_icon = icons + "tux.png"
         self.windows_icon = icons + "windows.png"
         self.mac_icon = icons + "Apple.png"
         self.no_os_icon = icons + "TreeHost.png"
+
+    def __compute_vuln_count(self, host):
+        """Return the total vulnerability count for a given host"""
+        vuln_count = 0
+        vuln_count += len(host.getVulns())
+        for interface in host.getAllInterfaces():
+            vuln_count += len(interface.getVulns())
+            for service in interface.getAllServices():
+                vuln_count += len(service.getVulns())
+        return vuln_count
+
+    def __add_host_to_model(self, model, host):
+        """Adds host to the model given as parameter."""
+        vuln_count = self.__compute_vuln_count(host)
+        os_icon, os_str = self.__decide_icon(host.getOS())
+        display_str = '{0} ({1})'.format(host.name, str(vuln_count))
+        host_iter = model.append([host.id, os_icon, os_str, display_str, vuln_count])
+        self.host_id_to_iter[host.id] = host_iter
+        return host_iter
+
+    def __delete_host_from_model(self, model, host_id):
+        """Deletes a host from the model given as parameter."""
+        host_iter = self.host_id_to_iter[host_id]
+        could_be_removed = model.remove(host_iter)
+        del self.host_id_to_iter[host_id]
+        return could_be_removed
+
+    def __update_host_info_in_model(self, model, host):
+        """Updates the model with new information about the host. In practice,
+        this means remove the host and add it again with new information."""
+        self.__delete_host_from_model(model, host.id)
+        self.__add_host_to_model(model, host)
+
+    def __decide_icon(self, os):
+        """Return the GdkPixbuf icon according to 'os' paramather string
+        and a str_id to that GdkPixbuf for easy comparison and ordering
+        of the view ('os' paramether string is complicated and has caps).
+        """
+        os = os.lower()
+        if "linux" in os or "unix" in os:
+            icon = GdkPixbuf.Pixbuf.new_from_file(self.linux_icon)
+            str_id = "linux"
+        elif "windows" in os:
+            icon = GdkPixbuf.Pixbuf.new_from_file(self.windows_icon)
+            str_id = "windows"
+        elif "mac" in os:
+            icon = GdkPixbuf.Pixbuf.new_from_file(self.mac_icon)
+            str_id = "mac"
+        else:
+            icon = GdkPixbuf.Pixbuf.new_from_file(self.no_os_icon)
+            str_id = "unknown"
+        return icon, str_id
 
     def create_model(self, hosts):
         """Creates a model for a lists of hosts. The model contians the
@@ -136,35 +190,6 @@ class HostsSidebar(Gtk.Widget):
         ======================================================================
         | a923fd  | PixBufIcon(linux)| linux  | 192.168.1.2 (5)  |      5    |
         """
-        def compute_vuln_count(host):
-            """Return the total vulnerability count for a given host"""
-            vuln_count = 0
-            vuln_count += len(host.getVulns())
-            for interface in host.getAllInterfaces():
-                vuln_count += len(interface.getVulns())
-                for service in interface.getAllServices():
-                    vuln_count += len(service.getVulns())
-            return vuln_count
-
-        def decide_icon(os):
-            """Return the GdkPixbuf icon according to 'os' paramather string
-            and a str_id to that GdkPixbuf for easy comparison and ordering
-            of the view ('os' paramether string is complicated and has caps).
-            """
-            os = os.lower()
-            if "linux" in os or "unix" in os:
-                icon = GdkPixbuf.Pixbuf.new_from_file(self.linux_icon)
-                str_id = "linux"
-            elif "windows" in os:
-                icon = GdkPixbuf.Pixbuf.new_from_file(self.windows_icon)
-                str_id = "windows"
-            elif "mac" in os:
-                icon = GdkPixbuf.Pixbuf.new_from_file(self.mac_icon)
-                str_id = "mac"
-            else:
-                icon = GdkPixbuf.Pixbuf.new_from_file(self.no_os_icon)
-                str_id = "unknown"
-            return icon, str_id
 
         def compare_os_strings(model, an_os, other_os, user_data):
             """Compare an_os with other_os so the model knows how to sort them.
@@ -191,13 +216,8 @@ class HostsSidebar(Gtk.Widget):
             return order
 
         hosts_model = Gtk.ListStore(str, GdkPixbuf.Pixbuf(), str, str, int)
-
         for host in hosts:
-            vuln_count = compute_vuln_count(host)
-            os_icon, os_str = decide_icon(host.getOS())
-            display_str = host.name + " (" + str(vuln_count) + ")"
-            hosts_model.append([host.id, os_icon, os_str,
-                                display_str, vuln_count])
+            self.__add_host_to_model(hosts_model, host)
 
         # sort the model by default according to column 4 (num of vulns)
         sorted_model = Gtk.TreeModelSort(model=hosts_model)
@@ -206,9 +226,10 @@ class HostsSidebar(Gtk.Widget):
         # set the sorting function of column 2
         sorted_model.set_sort_func(2, compare_os_strings, None)
 
-        self.current_model = sorted_model
+        self.current_model = hosts_model
+        self.current_sorted_model = sorted_model
 
-        return self.current_model
+        return self.current_sorted_model
 
     def create_view(self, model):
         """Creates a view for the hosts model.
@@ -245,20 +266,36 @@ class HostsSidebar(Gtk.Widget):
 
         return self.view
 
-    def update(self, hosts):
+    def update(self, event, host_info):
+        """Updated the model in case a host was added, deleted or modified.
+        event must be a string, either 'add', 'update' or 'delete'
+        host must be a valid host object.
+        """
+        if event == 'add':
+            self.__add_host_to_model(self.current_model, host_info)
+        elif event == 'update':
+            self.__update_host_info_in_model(self.current_model, host_info)
+        elif event == 'delete':
+            self.__delete_host_from_model(self.current_model, host_info)
+        else:
+            raise ValueError("event parameter must be a string such that "
+                             "event == 'add' or 'update' or 'delete'")
+
+    def redo(self, hosts):
         """Creates a new model from an updated list of hosts and adapts
         the view to reflect the changes"""
+        self.host_id_to_iter = {}
         model = self.create_model(hosts)
-        self.update_view(model)
+        self.redo_view(model)
 
-    def update_view(self, model):
+    def redo_view(self, model):
         """Updates the view of the object with a new model"""
         self.view.set_model(model)
 
     def on_click(self, tree_view, path, column):
         """Sends the host_id of the clicked host back to the application"""
-        tree_iter = self.current_model.get_iter(path)
-        host_id = self.current_model[tree_iter][0]
+        tree_iter = self.current_sorted_model.get_iter(path)
+        host_id = self.current_sorted_model[tree_iter][0]
         self.open_dialog_callback(host_id)
 
     @scrollable(width=160)

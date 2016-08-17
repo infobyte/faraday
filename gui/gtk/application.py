@@ -119,23 +119,11 @@ class GuiApp(Gtk.Application, FaradayUi):
                                                             16, False)
         self.window = None
         self.model_controller = model_controller
-        self.conflicts = self.model_controller.getConflicts()
 
     def getMainWindow(self):
         """Useless mostly, but guiapi uses this method to access the main
         window."""
         return self.window
-
-    def updateConflicts(self):
-        """Reassings self.conflicts with an updated list of conflicts"""
-        self.conflicts = self.model_controller.getConflicts()
-
-    def updateHosts(self):
-        """Reassings the value of self.all_hosts to a current one to
-        catch workspace changes, new hosts added via plugins or any other
-        external interference with our host list"""
-        self.all_hosts = self.model_controller.getAllHosts()
-        return self.all_hosts
 
     def createWorkspace(self, name, description=""):
         """Uses the instance of workspace manager passed into __init__ to
@@ -355,16 +343,25 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def show_host_info(self, host_id):
         """Looks up the host selected in the HostSidebar by id and shows
-        its information on the HostInfoDialog"""
+        its information on the HostInfoDialog.
+
+        Return True if everything went OK, False if there was a problem
+        looking for the host."""
         current_ws_name = self.get_active_workspace().name
 
-        for host in self.all_hosts:
+        for host in self.model_controller.getAllHosts():
             if host_id == host.id:
                 selected_host = host
                 break
+        else:
+            self.show_normal_error("The host you clicked isn't accessible. "
+                                   "This is most probably due to an internal "
+                                   "error.")
+            return False
 
         info_window = HostInfoDialog(self.window, current_ws_name, selected_host)
         info_window.show_all()
+        return True
 
     def reload_worskpaces_no_connection(self):
         """Very similar to reload_workspaces, but doesn't resource the
@@ -402,8 +399,8 @@ class GuiApp(Gtk.Application, FaradayUi):
 
             if action == "show" and not self.loading_dialog_raised:
                 message_string = ("Loading workspace {0}. Please wait. \n"
-                                 "To cancel, press Alt+F4 or a similar shorcut."
-                                 .format(workspace_name))
+                                  "To cancel, press Alt+F4 or a similar shorcut."
+                                  .format(workspace_name))
 
                 self.loading_dialog_raised = True
                 self.loading_dialog = Gtk.MessageDialog(self.window, 0,
@@ -489,44 +486,75 @@ class GuiApp(Gtk.Application, FaradayUi):
         FROM HERE. If you must do it, you should to it sing Glib.idle_add,
         a misterious function with outdated documentation. Good luck."""
 
-        type_ = event.type()
-
-        if type_ == 3131:  # new log event
+        def new_log_event():
             GObject.idle_add(self.console_log.customEvent, event.text)
 
-        elif type_ == 3141:  # new conflict event
+        def new_conflict_event():
             GObject.idle_add(self.statusbar.update_conflict_button_label,
                              event.nconflicts)
 
-        elif type_ == 5100:  # new notification event
+        def new_notification_event():
             self.notificationsModel.prepend([event.change.getMessage()])
             GObject.idle_add(self.statusbar.inc_notif_button_label)
             host_count, service_count, vuln_count = self.update_counts()
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)
 
-        # in order: add host, delete host, edit host, workspace_change
-        elif type_ in {4100, 4101, 4102, 3140}:
+        def host_added_event():
+            GObject.idle_add(self.hosts_sidebar.update, 'add', event.host)
             host_count, service_count, vuln_count = self.update_counts()
-            GObject.idle_add(self.hosts_sidebar.update, self.updateHosts())
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
+
+        def host_deleted_event():
+            GObject.idle_add(self.hosts_sidebar.update, 'delete', event.host_id)
+            host_count, service_count, vuln_count = self.update_counts()
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
+
+        def host_updated_event():
+            GObject.idle_add(self.hosts_sidebar.update, 'update', event.host)
+            host_count, service_count, vuln_count = self.update_counts()
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
+
+        def workspace_changed_event():
+            host_count, service_count, vuln_count = self.update_counts()
+            GObject.idle_add(self.hosts_sidebar.redo, self.model_controller.getAllHosts())
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)
             GObject.idle_add(self.select_active_workspace)
 
-        elif type_ == 3132:  # error
+        def normal_error_event():
             GObject.idle_add(self.show_normal_error, event.text)
 
-        elif type_ == 3134:  # important error, uncaught exception
+        def important_error_event():
             GObject.idle_add(self.show_important_error, event)
 
-        elif type_ == 42424:  # lost connection to couch db
+        def lost_connection_to_server_event():
             GObject.idle_add(self.lost_db_connection, event.problem,
                              self.handle_connection_lost,
                              self.force_change_couch_url)
             GObject.idle_add(self.reload_worskpaces_no_connection)
 
-        elif type_ == 24242:  # workspace not accesible
+        def workspace_not_accessible_event():
             GObject.idle_add(self.handle_no_active_workspace)
+
+        dispatch = {3131: new_log_event,
+                    3141: new_conflict_event,
+                    5100: new_notification_event,
+                    4100: host_added_event,
+                    4101: host_deleted_event,
+                    4102: host_updated_event,
+                    3140: workspace_changed_event,
+                    3132: normal_error_event,
+                    3134: important_error_event,
+                    42424: lost_connection_to_server_event,
+                    24242: workspace_not_accessible_event}
+
+        function = dispatch.get(event.type())
+        if function is not None:
+            function()
 
     def show_normal_error(self, dialog_text):
         """Just a simple, normal, ignorable error"""
@@ -565,24 +593,18 @@ class GuiApp(Gtk.Application, FaradayUi):
                                            self.on_new_button,
                                            CONF.getLastWorkspace())
 
-        # XXX: do not move next line, it is very important it stays there,
-        # just after the creation of the sidebar and before updateHosts.
-        # correct fix: move the creation of the ws_model to the application
-
         workspace_argument_set = self.open_workspace_from_args()
         if not workspace_argument_set:
             self.open_last_workspace()
 
-        self.updateHosts()
+        # the dummy values here will be updated as soon as the ws is loaded.
         self.hosts_sidebar = HostsSidebar(self.show_host_info, self.icons)
-        default_model = self.hosts_sidebar.create_model(self.all_hosts)
+        default_model = self.hosts_sidebar.create_model([]) # dummy empty list
         self.hosts_sidebar.create_view(default_model)
-
         self.sidebar = Sidebar(self.ws_sidebar.get_box(),
                                self.hosts_sidebar.get_box())
 
-        host_count, service_count, vuln_count = self.update_counts()
-
+        host_count, service_count, vuln_count = 0, 0, 0  # dummy values
         self.terminal = Terminal(CONF)
         self.console_log = ConsoleLog()
         self.statusbar = Statusbar(self.on_click_notifications,
@@ -591,15 +613,15 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         self.notificationsModel = Gtk.ListStore(str)
 
-        action_to_method = {"about" : self.on_about,
-                            "help" : self.on_help,
-                            "quit" : self.on_quit,
-                            "preferences" : self.on_preferences,
-                            "pluginOptions" : self.on_plugin_options,
-                            "new" : self.on_new_button,
-                            "new_terminal" : self.on_new_terminal_button,
-                            "open_report" : self.on_open_report_button,
-                            "go_to_web_ui" : self.on_click_go_to_web_ui_button
+        action_to_method = {"about": self.on_about,
+                            "help": self.on_help,
+                            "quit": self.on_quit,
+                            "preferences": self.on_preferences,
+                            "pluginOptions": self.on_plugin_options,
+                            "new": self.on_new_button,
+                            "new_terminal": self.on_new_terminal_button,
+                            "open_report": self.on_open_report_button,
+                            "go_to_web_ui": self.on_click_go_to_web_ui_button
                             }
 
         for action, method in action_to_method.items():
@@ -694,12 +716,11 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Doesn't use the button at all, there cause GTK likes it.
         Shows the conflict dialog.
         """
-        self.updateConflicts()
-        if self.conflicts:
-            dialog = ConflictsDialog(self.conflicts,
+        conflicts = self.model_controller.getConflicts()
+        if conflicts:
+            dialog = ConflictsDialog(conflicts,
                                      self.window)
             dialog.show_all()
-            self.updateConflicts()
 
         else:
             dialog = Gtk.MessageDialog(self.window, 0,

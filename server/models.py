@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = 'W.0.3'
+SCHEMA_VERSION = 'W.0.4'
 
 Base = declarative_base()
 
@@ -382,3 +382,18 @@ class Note(FaradayEntity, Base):
         self.text=document.get('text', None)
         self.description=document.get('description', None)
 
+class Credential(FaradayEntity, Base):
+    DOC_TYPE = 'Cred'
+
+    # Table schema
+    __tablename__ = 'credential'
+    id = Column(Integer, primary_key=True)
+    username = Column(String(250), nullable=False)
+    password = Column(Text(), nullable=False)
+
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    def update_from_document(self, document):
+        self.username=document.get('username')
+        self.password=document.get('password', '')

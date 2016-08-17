@@ -7,42 +7,45 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import gi
-import re
 import webbrowser
 
 gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk, GdkPixbuf, Gdk
-from persistence.persistence_managers import CouchDbManager
 from config.configuration import getInstanceConfiguration
 from model import guiapi
 from decorators import scrollable
+
+from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
 
 
 CONF = getInstanceConfiguration()
 
 
-class PreferenceWindowDialog(Gtk.Window):
+class PreferenceWindowDialog(Gtk.Dialog):
     """Sets up a preference dialog with basically nothing more than a
-    label, a text entry to input your CouchDB IP and a couple of buttons.
+    label, a text entry to input your Faraday server IP and a couple of buttons.
     Takes a callback function to the mainapp so that it can refresh the
     workspace list and information"""
 
     def __init__(self, reload_ws_callback, connect_to_couch, parent):
-        Gtk.Window.__init__(self, title="Preferences")
+        """Initializes the simple preferences dialog. If force is set to
+        True, user will NOT be able to cancel the dialog and app_exit_callback
+        must NOT be None"""
+
+        Gtk.Dialog.__init__(self, title="Preferences")
         self.parent = parent
         self.set_modal(True)
         self.set_size_request(400, 100)
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
-        self.connect("key_press_event", key_reactions)
         self.set_transient_for(parent)
         self.reloadWorkspaces = reload_ws_callback
         self.connectCouchCallback = connect_to_couch
 
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        main_box = self.get_content_area()
 
         ip_label = Gtk.Label()
-        ip_label.set_text("Your Couch IP")
+        ip_label.set_text("Faraday Server IP or URL")
         main_box.pack_start(ip_label, True, False, 10)
 
         couch_uri = CONF.getCouchURI()
@@ -56,25 +59,53 @@ class PreferenceWindowDialog(Gtk.Window):
 
         OK_button = Gtk.Button.new_with_label("OK")
         OK_button.connect("clicked", self.on_click_ok)
-
         button_box.pack_start(OK_button, False, True, 10)
-
         cancel_button = Gtk.Button.new_with_label("Cancel")
-        cancel_button.connect("clicked", self.on_click_cancel)
-        button_box.pack_end(cancel_button, False, True, 10)
 
-        self.add(main_box)
+        self.connect("key_press_event", key_reactions)
+        cancel_button.connect("clicked", self.on_click_cancel)
+
+        button_box.pack_end(cancel_button, False, True, 10)
+        self.show_all()
 
     def on_click_ok(self, button=None):
         """Button is useless, only there because GTK likes it. Takes the
         repourl (Couch IP) from self.ip_entry and connect to it if possible.
         """
         repourl = self.ip_entry.get_text()
-        if self.connectCouchCallback(repourl):  # success!
+        if self.connectCouchCallback(repourl, parent=self):  # success!
             self.destroy()
 
     def on_click_cancel(self, button=None):
         self.destroy()
+
+
+class ForcePreferenceWindowDialog(PreferenceWindowDialog):
+    """A _forced_ version of the preference window, which means
+    the user won't be able to exit it by any key combo or any cancel
+    button. The cancel button now should redirect to a callback to
+    exit the application.
+    """
+
+    def __init__(self, reload_ws_callback, connect_to_couch, parent,
+                 exit_faraday_callback):
+        """Inits just the same as preference window dialog, but
+        disconnect from key_reactions and connect to strict_key_reaction.
+        Also connect destroy with the OK function: if the user manages
+        to close the dialog, that'd be just as pressing OK"""
+        PreferenceWindowDialog.__init__(self, reload_ws_callback,
+                                        connect_to_couch,
+                                        parent)
+
+        self.set_deletable(False)
+        self.exit_faraday = exit_faraday_callback
+        self.disconnect_by_func(key_reactions)
+        self.connect("key_press_event", strict_key_reactions)
+        self.connect("delete_event", lambda _, __: True)
+
+    def on_click_cancel(self, button=None):
+        """Override on_click_cancel to make it exit Faraday."""
+        self.exit_faraday(parent=self)
 
 
 class NewWorkspaceDialog(Gtk.Window):
@@ -96,21 +127,16 @@ class NewWorkspaceDialog(Gtk.Window):
         self.workspace_manager = workspace_manager
         self.title = title
 
-        self.warning_label = self.create_warning_label()
         self.main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
 
         name_box = self.create_name_box()
         description_box = self.create_description_box()
-        type_box = self.create_type_box()
         button_box = self.create_button_box()
 
         self.main_box.pack_start(name_box, False, False, 10)
         self.main_box.pack_start(description_box, False, False, 10)
-        self.main_box.pack_start(type_box, False, False, 10)
-        self.main_box.pack_start(self.warning_label, False, False, 10)
         self.main_box.pack_end(button_box, False, False, 10)
 
-        self.main_box.show()
         self.add(self.main_box)
 
     def create_name_box(self):
@@ -120,7 +146,7 @@ class NewWorkspaceDialog(Gtk.Window):
         name_label.set_text("Name: ")
         self.name_entry = Gtk.Entry()
         if self.title is not None:
-            self.name_entry.set_text(title)
+            self.name_entry.set_text(self.title)
         name_box.pack_start(name_label, False, False, 10)
         name_box.pack_end(self.name_entry, True, True, 10)
         return name_box
@@ -134,35 +160,6 @@ class NewWorkspaceDialog(Gtk.Window):
         description_box.pack_start(description_label, False, False, 10)
         description_box.pack_end(self.description_entry, True, True, 10)
         return description_box
-
-    def create_type_box(self):
-        """Return a box with a Type label left of a combo box"""
-        type_box = Gtk.Box(spacing=6)
-        type_label = Gtk.Label()
-        type_label.set_text("Type: ")
-        self.type_comboBox = Gtk.ComboBoxText()
-        self.type_comboBox.connect("changed", self.on_select_ws_type)
-        for w in self.workspace_manager.getAvailableWorkspaceTypes():
-            self.type_comboBox.append_text(w)
-        self.type_comboBox.set_active(0)
-        type_box.pack_start(type_label, False, False, 10)
-        type_box.pack_end(self.type_comboBox, True, True, 10)
-        return type_box
-
-    def create_warning_label(self):
-        """Return a label with a warning if the user has FS selected as the
-        desired WS type.
-        """
-        warning_label = Gtk.Label()
-        warning_label.set_no_show_all(True)
-        warning_label.set_markup("<b>WARNING: </b> The FS (Filesystem) "
-                                 "databases are deprecated and strongly "
-                                 "discouraged. \n You will <b>not</b> be able "
-                                 "to edit the information provided by Faraday "
-                                 "with a FileSystem DB. \n Please "
-                                 "set up CouchDB and use it as the database "
-                                 "for your workspaces.")
-        return warning_label
 
     def create_button_box(self):
         """Return a box with OK and cancel buttons."""
@@ -179,20 +176,12 @@ class NewWorkspaceDialog(Gtk.Window):
         """Check if the name provided for the WS is valid. If so,
         create it and add it to the sidebar. If not, show error.
         """
-        letters_or_numbers = r"^[a-z][a-z0-9\_\$()\+\-\/]*$"
-        res = re.match(letters_or_numbers, str(self.name_entry.get_text()))
-        if res:
-            ws_name = str(self.name_entry.get_text())
-            ws_desc = str(self.description_entry.get_text())
-            ws_type = str(self.type_comboBox.get_active_text())
-            creation_ok = self.create_ws_callback(ws_name,
-                                                  ws_desc,
-                                                  ws_type)
+        ws_name = self.name_entry.get_text()
+        if self.workspace_manager.isWorkspaceNameValid(ws_name):
+            ws_desc = self.description_entry.get_text()
+            creation_ok = self.create_ws_callback(ws_name, ws_desc)
             if creation_ok:
-                self.sidebar.addWorkspace(ws_name)
-            else:
-                errorDialog(self, "Something went wrong when creating "
-                                  "the new workspace.")
+                self.sidebar.add_workspace(ws_name)
             self.destroy()
         else:
             errorDialog(self, "Invalid workspace name",
@@ -202,14 +191,40 @@ class NewWorkspaceDialog(Gtk.Window):
                         "characters. The name has to start"
                         " with a lowercase letter")
 
-    def on_select_ws_type(self, combo_box):
-        if combo_box.get_active_text() == 'FS':
-            self.warning_label.show()
-        else:
-            self.warning_label.hide()
-
     def on_click_cancel(self, button):
         self.destroy()
+
+
+class ForceNewWorkspaceDialog(NewWorkspaceDialog):
+    """A very similar class to new workspace dialog, but this one forces
+    the user to do so."""
+
+    def __init__(self, parent, create_ws_callback, workspace_manager, sidebar,
+                 exit_faraday_callback):
+        """Init new workspace dialog, but make it so you can't press the
+        cancel button or press scape."""
+        NewWorkspaceDialog.__init__(self, create_ws_callback, workspace_manager,
+                                    sidebar, parent)
+        self.set_deletable(False)
+        self.set_keep_above(True)
+        self.disconnect_by_func(key_reactions)
+        self.connect("key_press_event", strict_key_reactions)
+        self.connect("delete_event", lambda _, __: True)
+        self.exit_faraday = exit_faraday_callback
+        explanation_message = self.create_explanation_message()
+        self.main_box.pack_start(explanation_message, True, True, 6)
+        self.main_box.reorder_child(explanation_message, 0)
+
+    def on_click_cancel(self, button):
+        """Override parent's class cancel callback so it exits faraday."""
+        self.exit_faraday(parent=self)
+
+    def create_explanation_message(self):
+        """Returns a simple explanatory message inside a Label"""
+        message = Gtk.Label()
+        message.set_text("There are no workspaces available. You must "
+                         "create one to continue using Faraday.")
+        return message
 
 
 class PluginOptionsDialog(Gtk.Window):
@@ -217,7 +232,6 @@ class PluginOptionsDialog(Gtk.Window):
     It is not the prettiest thing in the world but it works.
     Creating and displaying the models of each plugin settings is specially
     messy , there's more info in the appropiate methods"""
-    # TODO: probably stop hardcoding the first plugin, right?
 
     def __init__(self, plugin_manager, parent):
 
@@ -225,7 +239,6 @@ class PluginOptionsDialog(Gtk.Window):
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_transient_for(parent)
         self.set_modal(True)
-        self.connect("key_press_event", key_reactions)
         self.set_size_request(800, 300)
         self.plugin_manager = plugin_manager
 
@@ -234,15 +247,15 @@ class PluginOptionsDialog(Gtk.Window):
         else:
             self.plugin_settings = {}
 
-        self.settings_view = None
-        self.id_of_selected = "Acunetix XML Output Plugin"  # first one by name
-        self.models = self.createPluginsSettingsModel()
-        self.setSettingsView()
-
         plugin_info = self.createPluginInfo(plugin_manager)
+        self.id_of_selected = plugin_info[0][1]  # default selected is first item in list
         plugin_list = self.createPluginListView(plugin_info)
         left_side_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         left_side_box.pack_start(plugin_list, True, True, 0)
+
+        self.settings_view = None
+        self.models = self.createPluginsSettingsModel()
+        self.setSettingsView()
 
         buttonBox = Gtk.Box()
         OK_button = Gtk.Button.new_with_label("OK")
@@ -431,7 +444,7 @@ class HostInfoDialog(Gtk.Window):
     strings and ints) and the object per se, which are in the model folder and
     are totally alien to GTK.
     """
-    def __init__(self, parent, active_ws_name, is_ws_couch, host):
+    def __init__(self, parent, active_ws_name, host):
         """Creates a window with the information about a given hosts.
         The parent is needed so the window can set transient for
         """
@@ -444,15 +457,13 @@ class HostInfoDialog(Gtk.Window):
         self.set_modal(True)
         self.connect("key_press_event", key_reactions)
 
-        self.is_ws_couch = is_ws_couch
-
         self.host = host
         self.model = self.create_model(self.host)
         host_info = self.model[0]
 
         host_id = self.model[0][0]
         couch_url = CONF.getCouchURI()
-        base_url = couch_url + "/reports/_design/reports/index.html#/host/ws/"
+        base_url = couch_url + "/_ui/#/host/ws/"
         self.edit_url = base_url + active_ws_name + "/hid/" + host_id
 
         host_info_frame = self.create_host_info_frame(host_info)
@@ -507,10 +518,6 @@ class HostInfoDialog(Gtk.Window):
         edit_label.set_markup(html_edit_url)
         edit_button.add(edit_label)
         edit_button.connect("clicked", self.on_edit_host)
-        if not self.is_ws_couch:
-            edit_button.set_sensitive(False)
-            edit_button.set_tooltip_text("You need to be on a CouchDB "
-                                         "workspace to edit information")
 
         button_box.pack_start(edit_button, True, True, 0)
         button_box.pack_start(ok_button, True, True, 0)
@@ -519,8 +526,7 @@ class HostInfoDialog(Gtk.Window):
     def on_edit_host(self, button):
         """Tries to open self.edit_url (url which directs to the host in the
         web ui) in the default browser."""
-        webbrowser.open(self.edit_url, new = 2)
-
+        webbrowser.open(self.edit_url, new=2)
 
     def create_scroll_frame(self, inner_box, label_str):
         """Create a scrollable frame containing inner_box and with label_str
@@ -530,7 +536,7 @@ class HostInfoDialog(Gtk.Window):
         label = Gtk.Label()
         label.set_markup("<big>" + label_str + "</big>")
 
-        scroll_box = Gtk.ScrolledWindow(None, None)
+        scroll_box = GtkScrolledWindow(None, None)
         scroll_box.set_overlay_scrolling(False)
         scroll_box.set_policy(Gtk.PolicyType.AUTOMATIC,
                               Gtk.PolicyType.ALWAYS)
@@ -570,6 +576,7 @@ class HostInfoDialog(Gtk.Window):
         column = Gtk.TreeViewColumn("Vulnerabilities", renderer, text=1)
         column.set_sort_column_id(1)
         self.vuln_list.append_column(column)
+        self.vuln_list.set_search_column(1)
 
         vuln_selection = self.vuln_list.get_selection()
         vuln_selection.connect("changed", self.on_vuln_selection)
@@ -680,6 +687,7 @@ class HostInfoDialog(Gtk.Window):
         """
         view = Gtk.TreeView(model)
         view.set_activate_on_single_click(True)
+        view.set_search_column(-1)
         view.set_enable_tree_lines(True)
         view.expand_all()
 
@@ -697,6 +705,13 @@ class HostInfoDialog(Gtk.Window):
     def on_main_tree_selection(self, tree_selection):
         """Fire up neccesary actions when selection on the main tree changes"""
         model, tree_iter = tree_selection.get_selected()
+
+        if tree_iter is None:
+            # NOTE: GTK returns "None" on the tree_iter when
+            # selection is changed with interactive search and everything
+            # explodes. Just return False if that's the case.
+            return False
+
         object_info = model[tree_iter]
 
         iter_depth = model.iter_depth(tree_iter)
@@ -722,21 +737,21 @@ class HostInfoDialog(Gtk.Window):
         and will emit the selection changed signal if the model
         changes even if nothing is selected.
         """
-
         model, vuln_iter = vuln_selection.get_selected()
-        try:
-            selected = model[vuln_iter]
-            vuln_type = selected[0]
-            self.clear(self.vuln_info)
-            is_vuln_web = vuln_type == "VulnerabilityWeb"
-            frame_title = "Vulnerability Web" if is_vuln_web else "Vulnerability"
-            self.change_label_in_frame(self.vuln_info_frame,
-                                       frame_title)
-            prop_names = self.get_properties_names(vuln_type)
-            self.show_info_in_box(selected, prop_names,
-                                  self.vuln_info)
-        except TypeError:
+        if vuln_iter is None:
+            # NOTE: for some reason, GTK returns "None" on the tree_iter when
+            # selection is changed with interactive search and everything
+            # explodes. Just return False if that's the case.
             return False
+
+        selected = model[vuln_iter]
+        vuln_type = selected[0]
+        self.clear(self.vuln_info)
+        self.change_label_in_frame(self.vuln_info_frame,
+                                   vuln_type)
+        prop_names = self.get_properties_names(vuln_type)
+        self.show_info_in_box(selected, prop_names,
+                              self.vuln_info)
 
     def set_vuln_model(self, model):
         """Sets the vulnerability view to show the given model"""
@@ -746,6 +761,21 @@ class HostInfoDialog(Gtk.Window):
         """Return the model for the vulnerabilities of the obj object.
         It will be sorted alphabetically.
         """
+
+        def params_to_string(params):  # XXX
+            """Converts params to a string, in case it gets here as a list.
+            It's pretty anoyting, but needed for backwards compatibility.
+            """
+            if isinstance(params, basestring):
+                params_string = params
+            elif isinstance(params, list):
+                params_string = " ".join(params)
+            elif params is None:
+                params_string = ""
+            else:  # just make sure that if params is anything else just crash
+                raise TypeError
+            return params_string
+
         # those are 15 strings
         model = Gtk.ListStore(str, str, str, str, str, str, str, str,
                               str, str, str, str, str, str, str)
@@ -767,9 +797,10 @@ class HostInfoDialog(Gtk.Window):
                               ", ".join(vuln.getRefs()), vuln.getPath(),
                               vuln.getWebsite(), vuln.getRequest(),
                               vuln.getResponse(), vuln.getMethod(),
-                              vuln.getPname(), vuln.getParams(),
+                              vuln.getPname(),
+                              params_to_string(vuln.getParams()),
                               vuln.getQuery(), vuln.getCategory()])
-        #sort it!
+        # sort it!
         sorted_model = Gtk.TreeModelSort(model=model)
         sorted_model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
 
@@ -840,7 +871,7 @@ class HostInfoDialog(Gtk.Window):
             property_names = ["Name: ", "OS: ", "Owned: ",
                               "Vulnerabilities: "]
 
-        if object_type == "Interface":
+        elif object_type == "Interface":
             property_names = ["Name: ", "Description: ", "MAC: ",
                               "IPv4 Mask: ", "IPv4 Gateway: ", "IPv4 DNS: ",
                               "IPv4 Address: ", "IPv6 Prefix: ",
@@ -891,7 +922,6 @@ class ConflictsDialog(Gtk.Window):
         self.set_transient_for(parent)
         self.set_size_request(600, 400)
         self.set_modal(True)
-        self.connect("key_press_event", key_reactions)
         self.conflicts = conflicts
         self.conflict_n = 0
         self.current_conflict = self.conflicts[self.conflict_n]
@@ -1026,7 +1056,22 @@ class ConflictsDialog(Gtk.Window):
 
         @scrollable()
         def make_scrollable(view):
+            """Just a function to wrap around a target _view_ so as to use
+            the scrollable decorator.
+            """
             return view
+
+        def on_selection(selection, target):
+            """Connected to the view of both the view and the secon view.
+            Target should be either 'first' or 'second' for clarity.
+            Whenever a view selection changes, change the selection
+            of target accordingly.
+            """
+            target = self.view if target == 'first' else self.second_view
+            original_selection = selection.get_selected()[1]
+            target_selection = target.get_selection()
+            if original_selection is not None:
+                target_selection.select_iter(original_selection)
 
         if self.view is None:
 
@@ -1058,6 +1103,11 @@ class ConflictsDialog(Gtk.Window):
 
             self.second_view.append_column(prop2_column)
             self.second_view.append_column(obj2_column)
+
+            view_selection = self.view.get_selection()
+            second_view_selection = self.second_view.get_selection()
+            view_selection.connect("changed", on_selection, 'second')
+            second_view_selection.connect("changed", on_selection, 'first')
 
             scrolled_view = make_scrollable(self.view)
             second_scrolled_view = make_scrollable(self.second_view)
@@ -1241,12 +1291,12 @@ class ConflictsDialog(Gtk.Window):
             Keep in mind, type(type("a")) is Type,
                           type(type("a").__name__) is Str
             """
-            res = type(first_raw_prop).__name__
-            return res
+            type_as_string = type(first_raw_prop).__name__
+            return type_as_string
 
         def decide_bg():
             """Decides which background should the row have depending on
-            the uses default theme (light, dark, or unknown abomination)
+            the users default theme (light, dark, or unknown abomination)
             Pretty ugly, but it works"""
             color = self.bg_color.split("(")[1]
             color = color.split(",")
@@ -1306,7 +1356,13 @@ class ConflictsDialog(Gtk.Window):
         Do not try to use for dictionaries.
         """
 
-        if original_type == "list" or original_type == "NoneType":
+        # XXX: params is a weird stupid thing that can come up as a string,
+        # a list, a nonetype, whatever. but we're making it _always_ be a string
+        # across faraday, so just force it to be so
+        if prop == "params":
+            original_type = "str"
+
+        if original_type == "list":
             if prop:
                 prop = prop.replace(" ", "")
                 raw_prop = prop.split(",")
@@ -1328,11 +1384,76 @@ class ConflictsDialog(Gtk.Window):
 
         elif original_type == "str" or original_type == "unicode":
             raw_prop = prop
-
         else:
             raw_prop = prop
-
         return raw_prop
+
+
+class ForceChooseWorkspaceDialog(Gtk.Window):
+    """A dialog to force the user to choose a workspace in case he suddenly
+    finds himself without an active workspace.
+    """
+
+    def __init__(self, parent_window, workspaces_model, change_ws_callback):
+        """Initializes a simple modal dialog which forces the user to choose
+        a workspace from a list."""
+        Gtk.Window.__init__(self, title="Choose a Workspace")
+        self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+        self.set_deletable(False)
+        self.set_transient_for(parent_window)
+        self.set_modal(True)
+        self.connect("key_press_event", strict_key_reactions)
+        self.connect("delete_event", lambda _, __: True)
+
+        self.change_ws_callback = change_ws_callback
+
+        message = self.create_explanation_message()
+        scroll_view = self.create_view(workspaces_model)
+        button_box = self.create_button_box()
+
+        content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        content_box.pack_start(message, True, True, 6)
+        content_box.pack_start(scroll_view, True, True, 6)
+        content_box.pack_start(button_box, True, True, 6)
+
+        self.add(content_box)
+
+    def create_button_box(self):
+        button_box = Gtk.Box()
+        OK_button = Gtk.Button.new_with_label("OK")
+        OK_button.connect("clicked", self.on_click_ok)
+        button_box.pack_start(OK_button, False, False, 6)
+        button_box.pack_start(Gtk.Box(), True, True, 6)
+        return button_box
+
+    def create_explanation_message(self):
+        """Returns a simple explanatory message inside a Label"""
+        message = Gtk.Label()
+        message.set_text("Your last workspace is not accessible. \n"
+                         "You must select one of the below workspaces to "
+                         "continue using Faraday.")
+        return message
+
+    @scrollable(height=200)
+    def create_view(self, workspace_model):
+        """Returns and assigns to the instance a view listing all the
+        workspaces names.
+        """
+        self.ws_view = Gtk.TreeView(workspace_model)
+        renderer = Gtk.CellRendererText()
+        column = Gtk.TreeViewColumn("Workspaces", renderer, text=0)
+        self.ws_view.append_column(column)
+        return self.ws_view
+
+    def on_click_ok(self, button=None):
+        """On click ok, change the workspace in the app with out selection
+        and destroy.
+        """
+        selection = self.ws_view.get_selection()
+        model, iter_ = selection.get_selected()
+        ws_name = model[iter_][0]
+        self.change_ws_callback(ws_name)
+        self.destroy()
 
 
 class NotificationsDialog(Gtk.Window):
@@ -1461,3 +1582,14 @@ def key_reactions(window, event):
     elif key == 'Return':
         window.on_click_ok()
         return True
+
+
+def strict_key_reactions(window, event):
+    """Similar to key_reactions, but will not let the user do anything but
+    press return."""
+    key = Gdk.keyval_name(event.get_keyval()[1])
+    if key == 'Return':
+        window.on_click_ok()
+        return True
+    else:
+        return False

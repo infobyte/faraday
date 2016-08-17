@@ -10,6 +10,24 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+August 12, 2016:
+---
+* Added Faraday Server
+* Improved performance in web UI
+* Added some basic APIs to Faraday Server
+* Added licenses management section in web UI
+* Totally removed QT3, GTK is now the only GUI
+* Deprecated FileSystem databses: now Faraday works exclusively with Faraday Server and CouchDB
+* Added a button to go to the Faraday Web directly from GTK
+* Fixed bug when deleting objects from Faraday Web
+* Fixed bug where icons where not copied to correct folder on initialization
+* Fixed bug where current workspace wouldn't correspond to selected workspace on the sidebar on GTK
+* Fixed bug in 'Refresh Workspace' button on GTK
+* Fixed bug where Host Sidebar and Statusbar information wasn't correctly updated on GTK
+* Fixed bug in service editing
+* Fixed sqlmap plugin
+* Fixed metapsloit plugin
+
 Jul 1, 2016:
 ---
 * GTK is the default interface now.

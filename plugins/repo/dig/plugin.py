@@ -8,7 +8,6 @@ import re
 
 from plugins import core
 
-
 __author__ = u"Andres Tarantini"
 __copyright__ = u"Copyright (c) 2015 Andres Tarantini"
 __credits__ = [u"Andres Tarantini"]
@@ -23,6 +22,7 @@ class DigPlugin(core.PluginBase):
     """
     Handle DiG (http://linux.die.net/man/1/dig) output
     """
+
     def __init__(self):
         core.PluginBase.__init__(self)
         self.id = u"dig"
@@ -33,13 +33,15 @@ class DigPlugin(core.PluginBase):
 
     def parseOutputString(self, output):
         # Ignore all lines that start with ";"
-        parsed_output = [line for line in output.splitlines() if line and line[0] != u";"]
+        parsed_output = [line for line in output.splitlines() if line and line[
+            0] != u";"]
         if not parsed_output:
             return True
 
         # Parse results
         results = []
-        answer_section_columns = [u"domain", u"ttl", u"class", u"type", u"address"]
+        answer_section_columns = [u"domain",
+                                  u"ttl", u"class", u"type", u"address"]
         for line in parsed_output:
             results.append(dict(zip(answer_section_columns, line.split())))
 
@@ -59,15 +61,13 @@ class DigPlugin(core.PluginBase):
                         host,
                         ip_address,
                         ipv4_address=ip_address,
-                        hostname_resolution=[domain]
-                    )
+                        hostname_resolution=[domain])
                 else:
                     iface = self.createAndAddInterface(
                         host,
                         ip_address,
                         ipv6_address=ip_address,
-                        hostname_resolution=[domain]
-                    )
+                        hostname_resolution=[domain])
 
         return True
 

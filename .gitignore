@@ -34,9 +34,14 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+pushReports.py
+*.swp
 
 # Tests nodejs
 node_modules
 
 # Couch
 .couchadmin
+
+# Ignore faraday server pid
+server/.faraday-server.pid

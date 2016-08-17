@@ -1,0 +1,1 @@
+gets vulnerability count by severity for all vulns available in the workspace

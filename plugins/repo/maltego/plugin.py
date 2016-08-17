@@ -71,19 +71,16 @@ class MaltegoMtgxParser():
 
         self.nodes = self.xml.findall(
             "{http://graphml.graphdrawing.org/xmlns}graph/"
-            "{http://graphml.graphdrawing.org/xmlns}node"
-        )
+            "{http://graphml.graphdrawing.org/xmlns}node")
 
         self.edges = self.xml.findall(
             "{http://graphml.graphdrawing.org/xmlns}graph/"
-            "{http://graphml.graphdrawing.org/xmlns}edge"
-        )
+            "{http://graphml.graphdrawing.org/xmlns}edge")
 
         self.list_hosts = []
         self.relations = {}
 
     def getRelations(self):
-
         """
         Get relations between nodes.
         Two ways: Source-> Target
@@ -114,8 +111,7 @@ class MaltegoMtgxParser():
         node_id = node.get("id")
         entity = node.find(
             "{http://graphml.graphdrawing.org/xmlns}data/"
-            "{http://maltego.paterva.com/xml/mtgx}MaltegoEntity"
-        )
+            "{http://maltego.paterva.com/xml/mtgx}MaltegoEntity")
 
         # Check if is IPv4Address
         if entity.get("type") != "maltego.IPv4Address":
@@ -125,8 +121,7 @@ class MaltegoMtgxParser():
         value = entity.find(
             "{http://maltego.paterva.com/xml/mtgx}Properties/"
             "{http://maltego.paterva.com/xml/mtgx}Property/"
-            "{http://maltego.paterva.com/xml/mtgx}Value"
-        )
+            "{http://maltego.paterva.com/xml/mtgx}Value")
 
         return {"node_id": node_id, "ip": value.text}
 
@@ -143,8 +138,7 @@ class MaltegoMtgxParser():
         # Get type of this node
         entity = node.find(
             "{http://graphml.graphdrawing.org/xmlns}data/"
-            "{http://maltego.paterva.com/xml/mtgx}MaltegoEntity"
-        )
+            "{http://maltego.paterva.com/xml/mtgx}MaltegoEntity")
 
         return entity.get("type")
 
@@ -156,8 +150,7 @@ class MaltegoMtgxParser():
         props = target_node.find(
             "{http://graphml.graphdrawing.org/xmlns}data/"
             "{http://maltego.paterva.com/xml/mtgx}MaltegoEntity/"
-            "{http://maltego.paterva.com/xml/mtgx}Properties"
-        )
+            "{http://maltego.paterva.com/xml/mtgx}Properties")
 
         for prop in props:
 
@@ -182,8 +175,7 @@ class MaltegoMtgxParser():
         props = target_node.find(
             "{http://graphml.graphdrawing.org/xmlns}data/"
             "{http://maltego.paterva.com/xml/mtgx}MaltegoEntity/"
-            "{http://maltego.paterva.com/xml/mtgx}Properties"
-        )
+            "{http://maltego.paterva.com/xml/mtgx}Properties")
 
         for prop in props:
 
@@ -230,8 +222,7 @@ class MaltegoMtgxParser():
         props = target_node.find(
             "{http://graphml.graphdrawing.org/xmlns}data/"
             "{http://maltego.paterva.com/xml/mtgx}MaltegoEntity/"
-            "{http://maltego.paterva.com/xml/mtgx}Properties"
-        )
+            "{http://maltego.paterva.com/xml/mtgx}Properties")
 
         for prop in props:
 
@@ -264,8 +255,7 @@ class MaltegoMtgxParser():
             "{http://maltego.paterva.com/xml/mtgx}MaltegoEntity/"
             "{http://maltego.paterva.com/xml/mtgx}Properties/"
             "{http://maltego.paterva.com/xml/mtgx}Property/"
-            "{http://maltego.paterva.com/xml/mtgx}Value"
-        )
+            "{http://maltego.paterva.com/xml/mtgx}Value")
 
         result["value"] = value.text
         return result
@@ -315,7 +305,9 @@ class MaltegoMtgxParser():
 
 
 class MaltegoPlugin(core.PluginBase):
+
     def __init__(self):
+
         core.PluginBase.__init__(self)
         self.id = "Maltego"
         self.name = "Maltego MTGX Output Plugin"
@@ -325,8 +317,10 @@ class MaltegoPlugin(core.PluginBase):
         self.current_path = None
         self.options = None
         self._current_output = None
+
         self._command_regex = re.compile(
             r'^(sudo maltego|maltego|\.\/maltego).*?')
+
         global current_path
 
     def parseOutputString(self, filename, debug=False):
@@ -411,8 +405,7 @@ class MaltegoPlugin(core.PluginBase):
                 name=host.website["name"],
                 protocol="TCP:HTTP",
                 ports=[80],
-                description=description
-            )
+                description=description)
 
             try:
                 text = "Urls:\n" + host.website["urls"]

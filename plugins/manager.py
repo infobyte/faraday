@@ -42,15 +42,13 @@ class PluginManager(object):
 
         activep = self._instancePlugins()
         for plugin_id, plugin in activep.iteritems():
-
-            if plugin_id not in _plugin_settings:
-                self._plugin_settings[plugin_id] = {
-                    "name": plugin.name,
-                    "description": plugin.description,
-                    "version": plugin.version,
-                    "plugin_version": plugin.plugin_version,
-                    "settings": dict(plugin.getSettings())
-                    }
+            self._plugin_settings[plugin_id] = {
+                "name": plugin.name,
+                "description": plugin.description,
+                "version": plugin.version,
+                "plugin_version": plugin.plugin_version,
+                "settings": dict(plugin.getSettings())
+                }
 
         dplugins = []
         for k, v in self._plugin_settings.iteritems():

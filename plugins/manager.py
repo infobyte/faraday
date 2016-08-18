@@ -37,11 +37,12 @@ class PluginManager(object):
     def _loadSettings(self):
         _plugin_settings = CONF.getPluginSettings()
         if _plugin_settings:
-
             self._plugin_settings = _plugin_settings
 
         activep = self._instancePlugins()
         for plugin_id, plugin in activep.iteritems():
+            if plugin_id in _plugin_settings:
+                plugin.updateSettings(_plugin_settings[plugin_id]["settings"])
             self._plugin_settings[plugin_id] = {
                 "name": plugin.name,
                 "description": plugin.description,
@@ -116,9 +117,6 @@ class PluginManager(object):
             if id in self._plugin_settings:
                 plugin.updateSettings(self._plugin_settings[id]["settings"])
         return plugins
-
-    def _updatePluginSettings(self, new_plugin_id):
-        pass
 
     def _verifyPlugin(self, new_plugin):
         """

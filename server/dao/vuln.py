@@ -16,6 +16,7 @@ from server.models import Host, Interface, Service, Vulnerability, EntityMetadat
 class VulnerabilityDAO(FaradayDAO):
     MAPPED_ENTITY = Vulnerability
     COLUMNS_MAP = {
+        "couchid":          [EntityMetadata.couchdb_id],
         "date":             [EntityMetadata.create_time], # TODO: fix search for this field
         "confirmed":        [Vulnerability.confirmed],
         "name":             [Vulnerability.name],
@@ -47,7 +48,7 @@ class VulnerabilityDAO(FaradayDAO):
         "issuetracker":     []
     }
     
-    STRICT_FILTERING = ["type", "service"]
+    STRICT_FILTERING = ["type", "service", "couchid"]
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, vuln_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, vuln_filter)

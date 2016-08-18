@@ -18,18 +18,10 @@ def list_services(workspace=None):
         .format(flask.request.args))
 
     services_dao = ServiceDAO(workspace)
-    interface_id = flask.request.args.get('interface_id')
-    if interface_id:
-        services_by_parent = services_dao.get_services_by_parent(interface_id)
-        return flask.jsonify(services_by_parent)
 
-    port = get_integer_parameter('port', default=None)
+    services = services_dao.list(service_filter=flask.request.args)
 
-    services_by_host = services_dao.list(port)
-
-    result = { 'hosts': services_by_host }
-
-    return flask.jsonify(result)
+    return flask.jsonify(services)
 
 @app.route('/ws/<workspace>/services/count', methods=['GET'])
 @gzipped

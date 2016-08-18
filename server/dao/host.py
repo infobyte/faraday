@@ -14,6 +14,7 @@ from server.models import Host, Interface, Service, Vulnerability, EntityMetadat
 class HostDAO(FaradayDAO):
     MAPPED_ENTITY = Host
     COLUMNS_MAP = {
+        "couchid":  [EntityMetadata.couchdb_id],
         "name":     [Host.name],
         "service":  [Service.name],
         "services": ["open_services_count"],
@@ -21,7 +22,7 @@ class HostDAO(FaradayDAO):
         "os":       [Host.os],
         "owned":    [Host.owned],
     }
-    STRICT_FILTERING = ["service"]
+    STRICT_FILTERING = ["service", "couchid"]
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, host_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, host_filter)

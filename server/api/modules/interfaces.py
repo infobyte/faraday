@@ -19,10 +19,8 @@ def list_interfaces(workspace=None):
     get_logger(__name__).debug("Request parameters: {!r}"\
         .format(flask.request.args))
 
-    host_id = get_mandatory_integer_parameter('host')
-
     dao = InterfaceDAO(workspace)
-    result = dao.list(host_id=host_id)
+    result = dao.list(interface_filter=flask.request.args)
 
     return flask.jsonify(result)
 

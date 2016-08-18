@@ -4,35 +4,40 @@
 
 from sqlalchemy.sql import func
 from sqlalchemy.orm.query import Bundle
+
 from server.dao.base import FaradayDAO
 from server.models import Host, Interface, Service, EntityMetadata
-
+from server.utils.database import apply_search_filter
 
 class ServiceDAO(FaradayDAO):
     MAPPED_ENTITY = Service
     COLUMNS_MAP = {
-        "name": Service.name,
-        "protocol": Service.protocol,
-        "version": Service.version,
-        "status": Service.status,
-        "owned": Service.owned
+        "interface":    [Service.interface_id],
+        "couchid":      [EntityMetadata.couchdb_id],
+        "name":         [Service.name],
+        "protocol":     [Service.protocol],
+        "version":      [Service.version],
+        "status":       [Service.status],
+        "owned":        [Service.owned]
     }
+    STRICT_FILTERING = ["couchid", "interface"]    
 
-    def list(self, port=None):
-        return self.__get_services_by_host(port)
-
-    def get_services_by_parent(self, parent):
-        interface_bundle = Bundle('service',
+    def list(self, service_filter={}):
+        service_bundle = Bundle('service',
                 Service.id, Service.name, Service.description, Service.protocol,
                 Service.status, Service.ports, Service.version, Service.owned,
+                Service.interface_id,
                 EntityMetadata.couchdb_id, EntityMetadata.revision)
 
-        query = self._session.query(interface_bundle).\
-                outerjoin(EntityMetadata, EntityMetadata.id == Interface.entity_metadata_id)\
-                .filter(Interface.id == parent)
+        query = self._session.query(service_bundle).\
+                outerjoin(EntityMetadata, EntityMetadata.id == Service.entity_metadata_id)
+
+        query = apply_search_filter(query, self.COLUMNS_MAP, None, service_filter, self.STRICT_FILTERING)
+        
         raw_services = query.all()
         services = [self.__get_service_data(r.service) for r in raw_services]
         result = {'services': services}
+
         return result
 
     def __get_service_data(self, service):
@@ -52,36 +57,6 @@ class ServiceDAO(FaradayDAO):
                 'owned': service.owned}
             }
 
-
-
-    def __get_services_by_host(self, port=None):
-        result = self._session.query(Host.name,
-                                     Host.os,
-                                     Interface.ipv4_address,
-                                     Interface.ipv6_address,
-                                     Service.name,
-                                     Service.ports).join(Host.interfaces, Interface.services).all()
-
-        hosts = {}
-        for service in result:
-            service_ports = map(int, service[5].split(','))
-            if port is not None and port not in service_ports:
-                continue
-
-            host = hosts.get(service[0], None)
-            if not host:
-                hosts[service[0]] = {
-                    'name': service[0],
-                    'os': service[1],
-                    'ipv4': service[2],
-                    'ipv6': service[3],
-                    'services': [] }
-                host = hosts[service[0]]
-
-            host['services'].append({ 'name': service[4], 'ports': service_ports })
-
-        return hosts.values()
-
     def count(self, group_by=None):
         total_count = self._session.query(func.count(Service.id)).scalar()
 
@@ -93,7 +68,7 @@ class ServiceDAO(FaradayDAO):
         if group_by not in ServiceDAO.COLUMNS_MAP:
             return None
 
-        col = ServiceDAO.COLUMNS_MAP.get(group_by)
+        col = ServiceDAO.COLUMNS_MAP.get(group_by)[0]
         query = self._session.query(col, func.count())\
                              .filter(Service.status.in_(('open', 'running')))\
                              .group_by(col)

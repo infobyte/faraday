@@ -3,7 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 
 import gzip
-import functools 
+import functools
 import server.database
 import server.couchdb
 
@@ -16,6 +16,15 @@ def get_integer_parameter(query_parameter, default=None):
     param = request.args.get(query_parameter)
     try:
         return int(param) if param is not None else default
+    except ValueError:
+        abort(400)
+
+def get_mandatory_integer_parameter(query_parameter):
+    """Obtains an integer parameter and ensures its type, if it can't
+    will raise an 400 response"""
+    param = request.args[query_parameter]
+    try:
+        return int(param)
     except ValueError:
         abort(400)
 
@@ -44,7 +53,7 @@ def gzipped(f):
                 'Content-Encoding' in response.headers):
                 return response
             gzip_buffer = IO()
-            gzip_file = gzip.GzipFile(mode='wb', 
+            gzip_file = gzip.GzipFile(mode='wb',
                                       fileobj=gzip_buffer)
             gzip_file.write(response.data)
             gzip_file.close()

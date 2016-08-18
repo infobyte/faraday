@@ -3,8 +3,9 @@
 # See the file 'doc/LICENSE' for the license information
 
 from sqlalchemy.sql import func
+from sqlalchemy.orm.query import Bundle
 from server.dao.base import FaradayDAO
-from server.models import Host, Interface, Service
+from server.models import Host, Interface, Service, EntityMetadata
 
 
 class ServiceDAO(FaradayDAO):
@@ -19,6 +20,39 @@ class ServiceDAO(FaradayDAO):
 
     def list(self, port=None):
         return self.__get_services_by_host(port)
+
+    def get_services_by_parent(self, parent):
+        interface_bundle = Bundle('service',
+                Service.id, Service.name, Service.description, Service.protocol,
+                Service.status, Service.ports, Service.version, Service.owned,
+                EntityMetadata.couchdb_id, EntityMetadata.revision)
+
+        query = self._session.query(interface_bundle).\
+                outerjoin(EntityMetadata, EntityMetadata.id == Interface.entity_metadata_id)\
+                .filter(Interface.id == parent)
+        raw_services = query.all()
+        services = [self.__get_service_data(r.service) for r in raw_services]
+        result = {'services': services}
+        return result
+
+    def __get_service_data(self, service):
+        return {
+            'id': service.couchdb_id,
+            'key': service.couchdb_id,
+            '_id': service.id,
+            'value': {
+                '_id': service.couchdb_id,
+                '_rev': service.revision,
+                'name': service.name,
+                'description': service.description,
+                'protocol': service.protocol,
+                'status': service.status,
+                'ports': service.ports,
+                'version': service.version,
+                'owned': service.owned}
+            }
+
+
 
     def __get_services_by_host(self, port=None):
         result = self._session.query(Host.name,

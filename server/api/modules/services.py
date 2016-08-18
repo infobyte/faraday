@@ -17,9 +17,14 @@ def list_services(workspace=None):
     get_logger(__name__).debug("Request parameters: {!r}"\
         .format(flask.request.args))
 
+    services_dao = ServiceDAO(workspace)
+    interface_id = flask.request.args.get('interface_id')
+    if interface_id:
+        services_by_parent = services_dao.get_services_by_parent(interface_id)
+        return flask.jsonify(services_by_parent)
+
     port = get_integer_parameter('port', default=None)
 
-    services_dao = ServiceDAO(workspace)
     services_by_host = services_dao.list(port)
 
     result = { 'hosts': services_by_host }

@@ -36,15 +36,17 @@ class HostDAO(FaradayDAO):
         return result
 
     def __query_database(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, host_filter={}):
-        host_bundle = Bundle('host', Host.name, Host.os, Host.description, Host.owned, EntityMetadata.couchdb_id,\
+        host_bundle = Bundle('host', Host.id, Host.name, Host.os, Host.description, Host.owned, EntityMetadata.couchdb_id,\
             EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
             EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
             EntityMetadata.update_controller_action,\
+            func.group_concat(distinct(Interface.id)).label('interfaces'),\
             func.count(distinct(Vulnerability.id)).label('vuln_count'),\
             func.count(distinct(Service.id)).label('open_services_count'))
 
         query = self._session.query(host_bundle)\
                              .outerjoin(EntityMetadata, EntityMetadata.id == Host.entity_metadata_id)\
+                             .outerjoin(Interface, Host.id == Interface.host_id)\
                              .outerjoin(Vulnerability, Host.id == Vulnerability.host_id)\
                              .outerjoin(Service, (Host.id == Service.host_id) & (Service.status.in_(('open', 'running', 'opened'))))\
                              .group_by(Host.id)
@@ -65,6 +67,7 @@ class HostDAO(FaradayDAO):
         return {
             'id': host.couchdb_id,
             'key': host.couchdb_id,
+            '_id': host.id,
             'value': {
                 '_id': host.couchdb_id,
                 '_rev': host.revision,
@@ -84,7 +87,8 @@ class HostDAO(FaradayDAO):
                     'owner': ''
                 },
                 'vulns': host.vuln_count,
-                'services': host.open_services_count }}
+                'services': host.open_services_count,
+                'interfaces': map(int, host.interfaces.split(',')) }}
 
     def count(self, group_by=None):
         total_count = self._session.query(func.count(Host.id)).scalar()

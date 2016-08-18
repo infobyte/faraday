@@ -36,7 +36,7 @@ class NoteDAO(FaradayDAO):
         query = self._session.query(note_bundle)\
                              .outerjoin(EntityMetadata, EntityMetadata.id == Note.entity_metadata_id)
 
-        # Apply pagination, sorting and filtering options to the query
+        # Apply filtering options to the query
         query = apply_search_filter(query, self.COLUMNS_MAP, search, note_filter, self.STRICT_FILTERING)
 
         results = query.all()

@@ -226,8 +226,8 @@ class WorkspaceDatabase(object):
             entity.add_relationships_from_db(self.database.session)
             self.database.session.add(entity)
             self.database.session.commit()
-            logger.info(u'New {} ({}) was added'.format(
-                entity.entity_metadata.document_type, entity.name))
+            logger.info(u'New {} was added'.format(
+               entity.entity_metadata.document_type))
 
     def get_last_seq(self):
         config = self.get_config(WorkspaceDatabase.LAST_SEQ_CONFIG)

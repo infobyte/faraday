@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = 'W.0.4'
+SCHEMA_VERSION = 'W.0.5'
 
 Base = declarative_base()
 
@@ -119,6 +119,7 @@ class Host(FaradayEntity, Base):
     interfaces = relationship('Interface')
     services = relationship('Service')
     vulnerabilities = relationship('Vulnerability')
+    credentials = relationship('Credential')
 
     def update_from_document(self, document):
         default_gateway = self.__get_default_gateway(document)
@@ -229,6 +230,7 @@ class Service(FaradayEntity, Base):
     interface = relationship('Interface', back_populates='services')
 
     vulnerabilities = relationship('Vulnerability')
+    credentials = relationship('Credential')
 
     def update_from_document(self, document):
         self.name=document.get('name')
@@ -393,6 +395,12 @@ class Credential(FaradayEntity, Base):
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    host_id = Column(Integer, ForeignKey(Host.id), index=True)
+    host = relationship('Host', back_populates='credentials')
+
+    service_id = Column(Integer, ForeignKey(Service.id), index=True)
+    service = relationship('Service', back_populates='credentials')
 
     def update_from_document(self, document):
         self.username=document.get('username')

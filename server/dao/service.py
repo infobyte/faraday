@@ -32,15 +32,14 @@ class ServiceDAO(FaradayDAO):
                 EntityMetadata.couchdb_id, EntityMetadata.revision)
 
         query = self._session.query(service_bundle).\
-                outerjoin(EntityMetadata, EntityMetadata.id == Service.entity_metadata_id)\
-                .outerjoin(Vulnerability, Service.id == Vulnerability.service_id)
+                outerjoin(EntityMetadata, EntityMetadata.id == Service.entity_metadata_id).\
+                outerjoin(Vulnerability, Service.id == Vulnerability.service_id).group_by(Service.id)
 
         query = apply_search_filter(query, self.COLUMNS_MAP, None, service_filter, self.STRICT_FILTERING)
         
         raw_services = query.all()
         services = [self.__get_service_data(r.service) for r in raw_services]
         result = {'services': services}
-
         return result
 
     def __get_service_data(self, service):

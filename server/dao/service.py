@@ -2,11 +2,12 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
+from sqlalchemy import distinct
 from sqlalchemy.sql import func
 from sqlalchemy.orm.query import Bundle
 
 from server.dao.base import FaradayDAO
-from server.models import Host, Interface, Service, EntityMetadata
+from server.models import Host, Interface, Service, EntityMetadata, Vulnerability
 from server.utils.database import apply_search_filter
 
 class ServiceDAO(FaradayDAO):
@@ -27,10 +28,12 @@ class ServiceDAO(FaradayDAO):
                 Service.id, Service.name, Service.description, Service.protocol,
                 Service.status, Service.ports, Service.version, Service.owned,
                 Service.interface_id,
+                func.count(distinct(Vulnerability.id)).label('vuln_count'),
                 EntityMetadata.couchdb_id, EntityMetadata.revision)
 
         query = self._session.query(service_bundle).\
-                outerjoin(EntityMetadata, EntityMetadata.id == Service.entity_metadata_id)
+                outerjoin(EntityMetadata, EntityMetadata.id == Service.entity_metadata_id)\
+                .outerjoin(Vulnerability, Service.id == Vulnerability.service_id)
 
         query = apply_search_filter(query, self.COLUMNS_MAP, None, service_filter, self.STRICT_FILTERING)
         
@@ -54,7 +57,9 @@ class ServiceDAO(FaradayDAO):
                 'status': service.status,
                 'ports': service.ports,
                 'version': service.version,
-                'owned': service.owned}
+                'owned': service.owned
+                },
+            'vulns': service.vuln_count,
             }
 
     def count(self, group_by=None):

@@ -15,13 +15,14 @@ class ServiceDAO(FaradayDAO):
     COLUMNS_MAP = {
         "interface":    [Service.interface_id],
         "couchid":      [EntityMetadata.couchdb_id],
+        'id':           [Service.id],
         "name":         [Service.name],
         "protocol":     [Service.protocol],
         "version":      [Service.version],
         "status":       [Service.status],
         "owned":        [Service.owned]
     }
-    STRICT_FILTERING = ["couchid", "interface"]    
+    STRICT_FILTERING = ["couchid", "interface", 'id']
 
     def list(self, service_filter={}):
         service_bundle = Bundle('service',
@@ -36,7 +37,7 @@ class ServiceDAO(FaradayDAO):
                 outerjoin(Vulnerability, Service.id == Vulnerability.service_id).group_by(Service.id)
 
         query = apply_search_filter(query, self.COLUMNS_MAP, None, service_filter, self.STRICT_FILTERING)
-        
+
         raw_services = query.all()
         services = [self.__get_service_data(r.service) for r in raw_services]
         result = {'services': services}

@@ -34,11 +34,10 @@ class _Host:
     def getVulns(self):
         return get_all_vulns(self._workspace_name, target=self.name)
     def getInterface(self, interface_couch_id):
-        interfaces = self.getAllInterfaces()
-        desired_interface = [i for i in interfaces if i.id == interface_couch_id]
-        return desired_interface[0] if desired_interface else None
+        service = get_interfaces(self._workspace_name, couchid=interface_couch_id)
+        return service[0]
     def getAllInterfaces(self):
-        return get_interfaces(self._workspace_name, self.server_id)
+        return get_interfaces(self._workspace_name, host=self.server_id)
     def getServices(self):
         services = []
         interfaces = self.getAllInterfaces()
@@ -62,6 +61,7 @@ class _Interface:
         self.owned = interface['value']['owned']
         self.ports = interface['value']['ports']
 
+    def __str__(self): return "{0}".format(self.name)
     def getID(self): return self.id
     def getName(self): return self.name
     def getDescription(self): return self.description
@@ -72,14 +72,17 @@ class _Interface:
     def getNetworkSegment(self): return self.network_segment
     def isOwned(self): return self.owned
     def getService(self, service_couch_id):
-        services = self.getAllServices()
+        service = get_services(self._workspace_name, couchid=service_couch_id)
+        return service[0]
     def getAllServices(self):
-        return get_services(self._workspace_name, self._server_id)
+        return get_services(self._workspace_name, interface=self._server_id)
     def getVulns(self):
         vulns = []
-        #services = self.getAllServices()
-        #for service in services:
-        #    vulns.append(service.getVulns())
+        services = self.getAllServices()
+        for service in services:
+            vulns_in_service = service.getVulns()
+            for vuln in vulns_in_service:
+                vulns.append(vuln)
         return vulns
 
 class _Service:
@@ -95,7 +98,9 @@ class _Service:
         self.description = service['value']['description']
         self.version = service['value']['version']
         self.status = service['value']['status']
+        self.vuln_amount = int(service['vulns'])
 
+    def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
     def getID(self): return self.id
     def getName(self): return self.name
     def getDescription(self): return self.description
@@ -105,7 +110,7 @@ class _Service:
     def getProtocol(self): return self.protocol
     def isOwned(self): return self.owned
     def getVulns(self):
-        return get_vulns(self._workspace_name, parent=self.id)
+        return get_all_vulns(self._workspace_name, service=self.name)
 
 class _Vuln:
     def __init__(self, vuln, workspace_name):
@@ -190,12 +195,12 @@ def _get_raw_vulns(workspace_name, **params):
     request_uri = _create_request_uri(workspace_name, 'vulns')
     return _get(request_uri, **params)
 
-def _get_raw_interfaces(workspace_name, host_id, **params):
-    request_uri = _create_request_uri(workspace_name, 'interfaces', params='host={0}'.format(host_id))
+def _get_raw_interfaces(workspace_name, **params):
+    request_uri = _create_request_uri(workspace_name, 'interfaces')
     return _get(request_uri, **params)
 
-def _get_raw_services(workspace_name, service_id, **params):
-    request_uri = _create_request_uri(workspace_name, 'services', params='interface_id={0}'.format(service_id))
+def _get_raw_services(workspace_name, **params):
+    request_uri = _create_request_uri(workspace_name, 'services')
     return _get(request_uri, **params)
 
 def _get_faraday_ready_objects(workspace_name, faraday_object, row_name_in_table, host_id=None, interface_id=None, **params):
@@ -206,12 +211,7 @@ def _get_faraday_ready_objects(workspace_name, faraday_object, row_name_in_table
                        'interfaces': (_get_raw_interfaces, _Interface),
                        'services': (_get_raw_services, _Service)}
     appropiate_function, appropiate_class = object_to_func[faraday_object]
-    if faraday_object == 'hosts' or faraday_object == 'vulns':
-        appropiate_dictionary = appropiate_function(workspace_name, **params)
-    elif faraday_object == 'interfaces':
-        appropiate_dictionary = appropiate_function(workspace_name, host_id, **params)
-    elif faraday_object == 'services':
-        appropiate_dictionary = appropiate_function(workspace_name, interface_id, **params)
+    appropiate_dictionary = appropiate_function(workspace_name, **params)
     faraday_objects = []
     if appropiate_dictionary:
         for raw_object in appropiate_dictionary[row_name_in_table]:
@@ -230,8 +230,8 @@ def get_vulns(workspace_name, **params):
 def get_vulns_web(workspace_name, **params):
     return get_all_vulns(workspace_name, type='VulnerabilityWeb', **params)
 
-def get_interfaces(workspace_name, parent_host_id, **params):
-    return _get_faraday_ready_objects(workspace_name, 'interfaces', 'interfaces', host_id=parent_host_id, **params)
+def get_interfaces(workspace_name, **params):
+    return _get_faraday_ready_objects(workspace_name, 'interfaces', 'interfaces', **params)
 
-def get_services(workspace_name, parent_interface_id, **params):
-    return _get_faraday_ready_objects(workspace_name, 'services', 'services', interface_id=parent_interface_id, **params)
+def get_services(workspace_name, **params):
+    return _get_faraday_ready_objects(workspace_name, 'services', 'services', **params)

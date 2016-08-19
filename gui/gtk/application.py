@@ -338,9 +338,12 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def update_counts(self):
         """Update the counts for host, services and vulns"""
-        host_count = self.model_controller.getHostsCount()
-        service_count = self.model_controller.getServicesCount()
-        vuln_count = self.model_controller.getVulnsCount()
+        # host_count = self.model_controller.getHostsCount()
+        # service_count = self.model_controller.getServicesCount()
+        # vuln_count = self.model_controller.getVulnsCount()
+        host_count = len(server.get_hosts(self.get_active_workspace()))
+        service_count = len(server.get_interfaces(self.get_active_workspace()))
+        vuln_count = len(server.get_all_vulns(self.get_active_workspace()))
         return host_count, service_count, vuln_count
 
     def show_host_info(self, host_id):

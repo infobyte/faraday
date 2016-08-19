@@ -636,9 +636,8 @@ class HostInfoDialog(Gtk.Window):
             """
             ipv4_dic = interface.getIPv4()
             ipv6_dic = interface.getIPv6()
-            #vulns = interface.getVulns()
             #display_str = interface.getName() + " (" + str(len(vulns)) + ")"
-            display_str = "bye"
+            display_str = str(interface)
 
             position = model.append(host_pos, [interface.getID(),
                                                interface.getName(),
@@ -660,7 +659,7 @@ class HostInfoDialog(Gtk.Window):
             model. Return None. Modifies the model"""
             #vulns = service.getVulns()
             #display_str = service.getName() + " (" + str(len(vulns)) + ")"
-            display_str = "hello"
+            display_str = str(service)
             model.append(interface_pos, [service.getID(),
                                          service.getName(),
                                          service.getDescription(),
@@ -764,6 +763,7 @@ class HostInfoDialog(Gtk.Window):
         """Return the model for the vulnerabilities of the obj object.
         It will be sorted alphabetically.
         """
+        print("creating vuln model")
 
         def params_to_string(params):  # XXX
             """Converts params to a string, in case it gets here as a list.
@@ -783,6 +783,7 @@ class HostInfoDialog(Gtk.Window):
         model = Gtk.ListStore(str, str, str, str, str, str, str, str,
                               str, str, str, str, str, str, str)
 
+        print obj
         vulns = obj.getVulns()
         for vuln in vulns:
             _type = vuln.class_signature

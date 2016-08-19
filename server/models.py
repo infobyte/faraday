@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = 'W.0.5'
+SCHEMA_VERSION = 'W.0.3'
 
 Base = declarative_base()
 
@@ -405,3 +405,32 @@ class Credential(FaradayEntity, Base):
     def update_from_document(self, document):
         self.username=document.get('username')
         self.password=document.get('password', '')
+
+class Command(FaradayEntity, Base):
+    DOC_TYPE = 'CommandRunInformation'
+
+    # Table schema
+    __tablename__ = 'command'
+    id = Column(Integer, primary_key=True)
+    command = Column(String(250), nullable=True)
+    duration = Column(Float(), nullable=True)
+    itime = Column(Float(), nullable=True)
+    ip = Column(String(250), nullable=True)
+    hostname = Column(String(250), nullable=True)
+    params = Column(String(250), nullable=True)
+    user = Column(String(250), nullable=True)
+    workspace = Column(String(250), nullable=True)
+
+
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    def update_from_document(self, document):
+        self.command = document.get('command', None)
+        self.duration = document.get('duration', None)
+        self.itime = document.get('itime', None)
+        self.ip = document.get('ip', None)
+        self.hostname = document.get('hostname', None)
+        self.params = document.get('params', None)
+        self.user = document.get('user', None)
+        self.workspace = document.get('workspace', None)

@@ -89,7 +89,7 @@ class HostDAO(FaradayDAO):
                 },
                 'vulns': host.vuln_count,
                 'services': host.open_services_count,
-                'interfaces': map(int, host.interfaces.split(',')) }}
+                'interfaces': map(int, host.interfaces.split(',')) if host.interfaces else []  }}
 
     def count(self, group_by=None):
         total_count = self._session.query(func.count(Host.id)).scalar()

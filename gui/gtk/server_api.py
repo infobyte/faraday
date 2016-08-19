@@ -44,15 +44,13 @@ class CantCommunicateWithServerError(Exception):
     def __str__(self):
         return "Couldn't get a valid response from the server."
 
-def set_server_uri():
-    CONF = getInstanceConfiguration()
+CONF = getInstanceConfiguration()
+def _get_server_api_uri():
     server_uri = CONF.getCouchURI()
     if not server_uri:
         raise CantCommunicateWithServerError()
     server_api_uri = "{0}/_api".format(server_uri)
     return server_api_uri
-
-server_uri = set_server_uri()
 
 def _create_request_uri(workspace_name, get_this):
     """Creates a request URI for the server. Takes the workspace name
@@ -61,7 +59,8 @@ def _create_request_uri(workspace_name, get_this):
 
     Return the request_uri as a string.
     """
-    request_uri = '{0}/ws/{1}/{2}'.format(server_uri, workspace_name, get_this)
+    server_api_uri = _get_server_api_uri()
+    request_uri = '{0}/ws/{1}/{2}'.format(server_api_uri, workspace_name, get_this)
     return request_uri
 
 def _get(request_uri, **params):

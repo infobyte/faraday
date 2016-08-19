@@ -128,9 +128,10 @@ class SqlmapPlugin(PluginTerminalOutput):
             self.error_message = message
 
     def hashKey(self, key):
-        key = repr(key).strip("'")
+        # from sqlmap/lib/utils/hashdb.py
+        # we don't sanitize key, because we only work
+        # with plain string
         retVal = int(hashlib.md5(key).hexdigest(), 16) & 0x7fffffffffffffff
-
         return retVal
 
     def hashDBRetrieve(self, key, unserialize=False, db=False):

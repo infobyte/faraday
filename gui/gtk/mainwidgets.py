@@ -529,7 +529,7 @@ class ConsoleLog(Gtk.Widget):
         self.bold = self.textBuffer.create_tag("bold",
                                                weight=Pango.Weight.BOLD)
 
-        self.textBuffer.set_text("Welcome to Faraday. Happy hacking!\n\0",
+        self.textBuffer.set_text("Welcome to Faraday!\n\0",
                                  -1)
 
         self.textBuffer.apply_tag(self.bold,

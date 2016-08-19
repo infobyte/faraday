@@ -76,8 +76,9 @@ class PluginBase(object):
 
     def updateSettings(self, new_settings):
         for name, value in new_settings.iteritems():
-            setting_type, curr_value = self._settings[name]
-            self._settings[name] = setting_type, setting_type(value)
+            if name in self._settings:
+                setting_type, curr_value = self._settings[name]
+                self._settings[name] = setting_type, setting_type(value)
 
     def canParseCommandString(self, current_input):
         """

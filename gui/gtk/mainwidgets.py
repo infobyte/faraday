@@ -131,19 +131,20 @@ class HostsSidebar(Gtk.Widget):
 
     def __compute_vuln_count(self, host):
         """Return the total vulnerability count for a given host"""
-        vuln_count = 0
-        vuln_count += len(host.getVulns())
-        for interface in host.getAllInterfaces():
-            vuln_count += len(interface.getVulns())
-            for service in interface.getAllServices():
-                vuln_count += len(service.getVulns())
-        return vuln_count
+         # vuln_count = 0
+         # vuln_count += len(host.getVulns())
+         # for interface in host.getAllInterfaces():
+         #    vuln_count += len(interface.getVulns())
+         #     for service in interface.getAllServices():
+         #         vuln_count += len(service.getVulns())
+        return host.getVulnAmount()
 
     def __add_host_to_model(self, model, host):
         """Adds host to the model given as parameter."""
         vuln_count = self.__compute_vuln_count(host)
         os_icon, os_str = self.__decide_icon(host.getOS())
-        display_str = '{0} ({1})'.format(host.name, str(vuln_count))
+        #display_str = '{0} ({1})'.format(host.name, str(vuln_count))
+        display_str = str(host)
         host_iter = model.append([host.id, os_icon, os_str, display_str, vuln_count])
         self.host_id_to_iter[host.id] = host_iter
         return host_iter

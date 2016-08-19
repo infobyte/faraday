@@ -76,6 +76,8 @@ from gui.loghandler import GUIHandler
 from utils.logs import addHandler
 from utils.common import checkSSL
 
+from gui.gtk import server_api as server
+
 CONF = getInstanceConfiguration()
 
 
@@ -349,7 +351,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         looking for the host."""
         current_ws_name = self.get_active_workspace().name
 
-        for host in self.model_controller.getAllHosts():
+        #for host in self.model_controller.getAllHosts():
+        for host in server.get_hosts(self.get_active_workspace()):
             if host_id == host.id:
                 selected_host = host
                 break
@@ -520,7 +523,8 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         def workspace_changed_event():
             host_count, service_count, vuln_count = self.update_counts()
-            GObject.idle_add(self.hosts_sidebar.redo, self.model_controller.getAllHosts())
+            #GObject.idle_add(self.hosts_sidebar.redo, self.model_controller.getAllHosts())
+            GObject.idle_add(self.hosts_sidebar.redo, server.get_hosts(self.get_active_workspace()))
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)
             GObject.idle_add(self.select_active_workspace)

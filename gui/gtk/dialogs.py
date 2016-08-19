@@ -612,7 +612,8 @@ class HostInfoDialog(Gtk.Window):
         # only the ID and the name are needed, but i still need to 'fill'
         # the other columns with dummy info
 
-        display_str = host.getName() + " (" + str(len(host.getVulns())) + ")"
+        # display_str = host.getName() + " (" + str(len(host.getVulns())) + ")"
+        display_str = str(host)
         owned_status = ("Yes" if host.isOwned() else "No")
         host_position = model.append(None, [host.getID(), host.getName(),
                                             host.getOS(), owned_status,
@@ -635,8 +636,9 @@ class HostInfoDialog(Gtk.Window):
             """
             ipv4_dic = interface.getIPv4()
             ipv6_dic = interface.getIPv6()
-            vulns = interface.getVulns()
-            display_str = interface.getName() + " (" + str(len(vulns)) + ")"
+            #vulns = interface.getVulns()
+            #display_str = interface.getName() + " (" + str(len(vulns)) + ")"
+            display_str = "bye"
 
             position = model.append(host_pos, [interface.getID(),
                                                interface.getName(),
@@ -656,8 +658,9 @@ class HostInfoDialog(Gtk.Window):
         def add_service_to_interface_in_model(service, interface_pos, model):
             """Append a service to an interface at interface_pos in the given
             model. Return None. Modifies the model"""
-            vulns = service.getVulns()
-            display_str = service.getName() + " (" + str(len(vulns)) + ")"
+            #vulns = service.getVulns()
+            #display_str = service.getName() + " (" + str(len(vulns)) + ")"
+            display_str = "hello"
             model.append(interface_pos, [service.getID(),
                                          service.getName(),
                                          service.getDescription(),

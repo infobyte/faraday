@@ -1,20 +1,198 @@
+"""This module is intended as a brige between the client objects and
+the server. It implements classes with the same
+interface as those in the client, intended to mimic the behavior
+of the Faraday Objects. These classes are private to the module, as the
+user should never create one: they are used as a wrapper to share
+an interface between the Faraday objects and the information you get
+from the server via the requests.
+
+This way, you can write a function that deals with hosts abstractly,
+without worring if you are gonna call it with a host from memory or request
+the server for that host.
+
+>> def get_host_vulns(host):
+>>     return host.getVulns()
+
+>> host_from_memory = ModelController.getHost('127.0.0.1')
+>> host_from_server = ServerAPI.get_hosts('workspace', name='127.0.0.1')
+>> vulns_from_memory = get_host_vulns(host_from_memory)
+>> vuln_from_server = get_host_vulns(host_from_server)
+>> print(vulns_from_memory == vulns_from_server)
+True
+
+The only public utilities exposed by the module are
+* get_hosts
+* get_all_vulns
+* get_vulns
+* get_vulns_web
+* get_interfaces
+* get_services
+
+They all take a workspace's name as a string and an arbitrary numbers of
+params, to filter your search. For example, if you want only the first
+50 hosts ordered descendently by amount of vulns:
+
+ServerAPI.get_hosts('workspace_name', page_size='50', sort='vulns', dir='desc')
+
+Their docstring have more specific information.
+"""
+
 import requests, json
-from functools import wraps
-from pprint import pprint
-#from config.configuration import getInstanceConfiguration
+from config.configuration import getInstanceConfiguration
+
 class CantCommunicateWithServerError(Exception):
     def __str__(self):
         return "Couldn't get a valid response from the server."
 
+def set_server_uri():
+    CONF = getInstanceConfiguration()
+    server_uri = CONF.getCouchURI()
+    if not server_uri:
+        raise CantCommunicateWithServerError()
+    server_api_uri = "{0}/_api".format(server_uri)
+    return server_api_uri
 
-#CONF = getInstanceConfiguration()
-#server_uri = CONF.getCouchURI()
-server_uri = 'http://127.0.0.1:5984/_api'
-if not server_uri:
-    raise ValueError("No server configured!")
+server_uri = set_server_uri()
 
+def _create_request_uri(workspace_name, get_this):
+    """Creates a request URI for the server. Takes the workspace name
+    as a string, a get_this paramter which is the object you want to
+    query as a string ('host', 'interface', etc) .
+
+    Return the request_uri as a string.
+    """
+    request_uri = '{0}/ws/{1}/{2}'.format(server_uri, workspace_name, get_this)
+    return request_uri
+
+def _get(request_uri, **params):
+    """Get from the request_uri. Takes an arbitrary number of paramethers
+    to customize the request_uri if necessary.
+
+    Will raise a CantCommunicateWithServerError if requests can stablish
+    connection to server or if response is not equal to 200.
+
+    Return a dictionary with the information in the json.
+    """
+    payload = {}
+    for param in params:
+        payload[param] = params[param]
+    try:
+        answer = requests.get(request_uri, params=payload)
+        if answer.status_code != 200:
+            raise requests.exceptions.ConnectionError()
+    except requests.exceptions.ConnectionError:
+        raise CantCommunicateWithServerError()
+    try:
+        dictionary = answer.json()
+    except ValueError:
+        dictionary = {}
+    return dictionary
+
+def _get_raw_hosts(workspace_name, **params):
+    """Take a workspace_name and an arbitrary number of params and return
+    a dictionary with the hosts table."""
+    request_uri = _create_request_uri(workspace_name, 'hosts')
+    return _get(request_uri, **params)
+
+def _get_raw_vulns(workspace_name, **params):
+    """Take a workspace_name and an arbitrary number of params and return
+    a dictionary with the vulns table."""
+    request_uri = _create_request_uri(workspace_name, 'vulns')
+    return _get(request_uri, **params)
+
+def _get_raw_interfaces(workspace_name, **params):
+    """Take a workspace_name and an arbitrary number of params and return
+    a dictionary with the interfaces table."""
+    request_uri = _create_request_uri(workspace_name, 'interfaces')
+    return _get(request_uri, **params)
+
+def _get_raw_services(workspace_name, **params):
+    """Take a workspace_name and an arbitrary number of params and return
+    a dictionary with the services table."""
+    request_uri = _create_request_uri(workspace_name, 'services')
+    return _get(request_uri, **params)
+
+def _get_faraday_ready_objects(workspace_name, faraday_object, row_name, **params):
+    """Takes a workspace name, a faraday object ('hosts', 'vulns',
+    'interfaces' or 'services') a row_name (the name of the row where
+    the information about the objects live) and an arbitray number
+    of params to customize to request.
+
+    Return a list of faraday objects
+    (_Host, _Interface, _Service, _Vuln, _WevVuln) which the same interface
+    for getting attribuetes than those defined my the ModelController.
+    """
+    if not isinstance(workspace_name, basestring):
+        workspace_name = workspace_name.name
+    object_to_func_and_class =  {'hosts': (_get_raw_hosts, _Host),
+                                 'vulns': (_get_raw_vulns, _Vuln),
+                                 'interfaces': (_get_raw_interfaces, _Interface),
+                                 'services': (_get_raw_services, _Service)}
+
+    appropiate_function, appropiate_class = object_to_func_and_class[faraday_object]
+    appropiate_dictionary = appropiate_function(workspace_name, **params)
+    faraday_objects = []
+    if appropiate_dictionary:
+        for raw_object in appropiate_dictionary[row_name]:
+            faraday_objects.append(appropiate_class(raw_object, workspace_name))
+    return faraday_objects
+
+def get_hosts(workspace_name, **params):
+    """Take a workspace name and a arbitrary number of params to customize the
+    request.
+
+    Return a list of Host objects.
+    """
+    return _get_faraday_ready_objects(workspace_name, 'hosts', 'rows', **params)
+
+def get_all_vulns(workspace_name, **params):
+    """Take a workspace name and a arbitrary number of params to customize the
+    request.
+
+    Return a list of Vuln and VulnWeb objects.
+    """
+    return _get_faraday_ready_objects(workspace_name, 'vulns', 'vulnerabilities', **params)
+
+def get_vulns(workspace_name, **params):
+    """Take a workspace name and a arbitrary number of params to customize the
+    request.
+
+    Return a list of Vuln.
+
+    If you want to get Vulns and WebVulns, use get_all_vulns function.
+    """
+    return get_all_vulns(workspace_name, type='Vulnerability', **params)
+
+def get_vulns_web(workspace_name, **params):
+    """Take a workspace name and a arbitrary number of params to customize the
+    request.
+
+    Return a list of VulnWeb objects.
+    """
+    return get_all_vulns(workspace_name, type='VulnerabilityWeb', **params)
+
+def get_interfaces(workspace_name, **params):
+    """Take a workspace name and a arbitrary number of params to customize the
+    request.
+
+    Return a list of Interfaces objects
+    """
+    return _get_faraday_ready_objects(workspace_name, 'interfaces', 'interfaces', **params)
+
+def get_services(workspace_name, **params):
+    """Take a workspace name and a arbitrary number of params to customize the
+    request.
+
+    Return a list of Services objects
+    """
+    return _get_faraday_ready_objects(workspace_name, 'services', 'services', **params)
 
 class _Host:
+    """A simple Host class. Should implement all the methods of the
+    Host object in Model.Host
+    Any method here more than a couple of lines long probably represent
+    a search the server is missing.
+    """
     def __init__(self, host, workspace_name):
         self._workspace_name = workspace_name
         self.class_signature = 'Host'
@@ -46,6 +224,11 @@ class _Host:
         return interfaces
 
 class _Interface:
+    """A simple Interface class. Should implement all the methods of the
+    Interface object in Model.Host
+    Any method here more than a couple of lines long probably represent
+    a search the server is missing.
+    """
     def __init__(self, interface, workspace_name):
         self._workspace_name = workspace_name
         self.class_signature = 'Interface'
@@ -71,6 +254,7 @@ class _Interface:
     def getMAC(self): return self.mac
     def getNetworkSegment(self): return self.network_segment
     def isOwned(self): return self.owned
+
     def getService(self, service_couch_id):
         service = get_services(self._workspace_name, couchid=service_couch_id)
         return service[0]
@@ -86,6 +270,11 @@ class _Interface:
         return vulns
 
 class _Service:
+    """A simple Service class. Should implement all the methods of the
+    Service object in Model.Host
+    Any method here more than a couple of lines long probably represent
+    a search the server is missing.
+    """
     def __init__(self, service, workspace_name):
         self._workspace_name = workspace_name
         self.class_signature = 'Service'
@@ -109,10 +298,14 @@ class _Service:
     def getVersion(self): return self.version
     def getProtocol(self): return self.protocol
     def isOwned(self): return self.owned
-    def getVulns(self):
-        return get_all_vulns(self._workspace_name, service=self.name)
+    def getVulns(self): return get_all_vulns(self._workspace_name, service=self.name)
 
 class _Vuln:
+    """A simple Vuln class. Should implement all the methods of the
+    Vuln object in Model.Common
+    Any method here more than a couple of lines long probably represent
+    a search the server is missing.
+    """
     def __init__(self, vuln, workspace_name):
         self._workspace_name = workspace_name
         self.class_signature = 'Vulnerability'
@@ -131,8 +324,14 @@ class _Vuln:
     def getRefs(self): return self.refs
 
 class _VulnWeb:
+    """A simple VulnWeb class. Should implement all the methods of the
+    VulnWeb object in Model.Common
+    Any method here more than a couple of lines long probably represent
+    a search the server is missing.
+    """
     def __init__(self, vuln_web, workspace_name):
         self._workspace_name = workspace_name
+        self.class_signature = 'VulnerabilityWeb'
         self.name = vuln_web['value']['name']
         self.description = vuln_web['value']['desc']
         self.desc = vuln_web['value']['desc']
@@ -164,74 +363,3 @@ class _VulnWeb:
     def getParams(self): return self.params
     def getQuery(self): return self.query
     def getCategory(self): return self.category
-
-def _create_request_uri(workspace_name, get_this, params=""):
-    params = '?{0}'.format(params) if params else ""
-    request_uri = '{0}/ws/{1}/{2}{3}'.format(server_uri, workspace_name,
-                                              get_this, params)
-    return request_uri
-
-def _get(request_uri, **params):
-    payload = {}
-    for param in params:
-        payload[param] = params[param]
-    try:
-        print request_uri, params
-        answer = requests.get(request_uri, params=payload)
-    except requests.exceptions.ConnectionError:
-        raise CantCommunicateWithServerError()
-    try:
-        dictionary = answer.json()
-    except ValueError:
-        dictionary = {}
-        #raise ValueError("Server response can't be parsed as a json")
-    return dictionary
-
-def _get_raw_hosts(workspace_name, **params):
-    request_uri = _create_request_uri(workspace_name, 'hosts')
-    return _get(request_uri, **params)
-
-def _get_raw_vulns(workspace_name, **params):
-    request_uri = _create_request_uri(workspace_name, 'vulns')
-    return _get(request_uri, **params)
-
-def _get_raw_interfaces(workspace_name, **params):
-    request_uri = _create_request_uri(workspace_name, 'interfaces')
-    return _get(request_uri, **params)
-
-def _get_raw_services(workspace_name, **params):
-    request_uri = _create_request_uri(workspace_name, 'services')
-    return _get(request_uri, **params)
-
-def _get_faraday_ready_objects(workspace_name, faraday_object, row_name_in_table, host_id=None, interface_id=None, **params):
-    if not isinstance(workspace_name, basestring):
-        workspace_name = workspace_name.name
-    object_to_func =  {'hosts': (_get_raw_hosts, _Host),
-                       'vulns': (_get_raw_vulns, _Vuln),
-                       'interfaces': (_get_raw_interfaces, _Interface),
-                       'services': (_get_raw_services, _Service)}
-    appropiate_function, appropiate_class = object_to_func[faraday_object]
-    appropiate_dictionary = appropiate_function(workspace_name, **params)
-    faraday_objects = []
-    if appropiate_dictionary:
-        for raw_object in appropiate_dictionary[row_name_in_table]:
-            faraday_objects.append(appropiate_class(raw_object, workspace_name))
-    return faraday_objects
-
-def get_hosts(workspace_name, **params):
-    return _get_faraday_ready_objects(workspace_name, 'hosts', 'rows', **params)
-
-def get_all_vulns(workspace_name, **params):
-    return _get_faraday_ready_objects(workspace_name, 'vulns', 'vulnerabilities', **params)
-
-def get_vulns(workspace_name, **params):
-    return get_all_vulns(workspace_name, type='Vulnerability', **params)
-
-def get_vulns_web(workspace_name, **params):
-    return get_all_vulns(workspace_name, type='VulnerabilityWeb', **params)
-
-def get_interfaces(workspace_name, **params):
-    return _get_faraday_ready_objects(workspace_name, 'interfaces', 'interfaces', **params)
-
-def get_services(workspace_name, **params):
-    return _get_faraday_ready_objects(workspace_name, 'services', 'services', **params)

@@ -636,7 +636,6 @@ class HostInfoDialog(Gtk.Window):
             """
             ipv4_dic = interface.getIPv4()
             ipv6_dic = interface.getIPv6()
-            #display_str = interface.getName() + " (" + str(len(vulns)) + ")"
             display_str = str(interface)
 
             position = model.append(host_pos, [interface.getID(),
@@ -657,8 +656,6 @@ class HostInfoDialog(Gtk.Window):
         def add_service_to_interface_in_model(service, interface_pos, model):
             """Append a service to an interface at interface_pos in the given
             model. Return None. Modifies the model"""
-            #vulns = service.getVulns()
-            #display_str = service.getName() + " (" + str(len(vulns)) + ")"
             display_str = str(service)
             model.append(interface_pos, [service.getID(),
                                          service.getName(),
@@ -763,8 +760,6 @@ class HostInfoDialog(Gtk.Window):
         """Return the model for the vulnerabilities of the obj object.
         It will be sorted alphabetically.
         """
-        print("creating vuln model")
-
         def params_to_string(params):  # XXX
             """Converts params to a string, in case it gets here as a list.
             It's pretty anoyting, but needed for backwards compatibility.
@@ -783,7 +778,6 @@ class HostInfoDialog(Gtk.Window):
         model = Gtk.ListStore(str, str, str, str, str, str, str, str,
                               str, str, str, str, str, str, str)
 
-        print obj
         vulns = obj.getVulns()
         for vuln in vulns:
             _type = vuln.class_signature

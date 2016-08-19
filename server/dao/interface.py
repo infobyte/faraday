@@ -14,7 +14,7 @@ class InterfaceDAO(FaradayDAO):
         "host":    [Interface.host_id],
         "couchid": [EntityMetadata.couchdb_id],
     }
-    STRICT_FILTERING = ["couchid"]
+    STRICT_FILTERING = ["host", "couchid"]
 
     def count(self):
         total_count = self._session.query(func.count(Interface.id)).scalar()

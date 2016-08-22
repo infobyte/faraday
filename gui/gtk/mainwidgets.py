@@ -155,11 +155,17 @@ class HostsSidebar(Gtk.Widget):
         del self.host_id_to_iter[host_id]
         return could_be_removed
 
-    def __update_host_info_in_model(self, model, host):
+    def __update_host_info_in_model(self, model, host_id):
         """Updates the model with new information about the host. In practice,
         this means remove the host and add it again with new information."""
+        host = self.get_host_function(couchid=host_id)[0]
         self.__delete_host_from_model(model, host.id)
-        self.__add_host_to_model(model, host, changes=True)
+        self.__add_host_to_model(model, host)
+
+    def __find_host_id(self, object_info):
+        object_id = object_info.getID()
+        host_id = object_id.split(".")[0]
+        return host_id
 
     def __decide_icon(self, os):
         """Return the GdkPixbuf icon according to 'os' paramather string
@@ -274,7 +280,8 @@ class HostsSidebar(Gtk.Widget):
         if event == 'add':
             self.__add_host_to_model(self.current_model, host_info, changes=True)
         elif event == 'update':
-            self.__update_host_info_in_model(self.current_model, host_info)
+            host_id = self.__find_host_id(host_info)
+            self.__update_host_info_in_model(self.current_model, host_id)
         elif event == 'delete':
             self.__delete_host_from_model(self.current_model, host_info)
         else:

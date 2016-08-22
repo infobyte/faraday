@@ -122,6 +122,33 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.window = None
         self.model_controller = model_controller
 
+    def active_ws_name(self):
+        return self.get_active_workspace().name
+
+    def get_hosts(self, **params):
+        return server.get_hosts(self.active_ws_name(), **params)
+
+    def get_host_amount(self):
+        return server.get_hosts_amount(self.active_ws_name())
+
+    def get_interfaces(self, **params):
+        return server.get_interfaces(self.active_ws_name(), **params)
+
+    def get_interface_amount(self):
+        return server.get_interfaces_amount(self.active_ws_name())
+
+    def get_services(self, **params):
+        return server.get_services(self.active_ws_name(), **params)
+
+    def get_services_amount(self):
+        return server.get_services_amount(self.active_ws_name())
+
+    def get_vulns(self, **params):
+        return server.get_all_vulns(self.active_ws_name(), **params)
+
+    def get_vulns_amount(self):
+        return server.get_all_vulns_amount(self.active_ws_name())
+
     def getMainWindow(self):
         """Useless mostly, but guiapi uses this method to access the main
         window."""
@@ -255,8 +282,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def select_active_workspace(self):
         """Selects on the sidebar the currently active workspace."""
-        active_ws_name = self.get_active_workspace().name
-        self.ws_sidebar.select_ws_by_name(active_ws_name)
+        self.ws_sidebar.select_ws_by_name(self.active_ws_name())
 
     def get_active_workspace(self):
         """Return the currently active workspace"""
@@ -341,9 +367,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         # host_count = self.model_controller.getHostsCount()
         # service_count = self.model_controller.getServicesCount()
         # vuln_count = self.model_controller.getVulnsCount()
-        host_count = len(server.get_hosts(self.get_active_workspace()))
-        service_count = len(server.get_interfaces(self.get_active_workspace()))
-        vuln_count = len(server.get_all_vulns(self.get_active_workspace()))
+        host_count = self.get_host_amount()
+        service_count = self.get_services_amount()
+        vuln_count = self.get_vulns_amount()
         return host_count, service_count, vuln_count
 
     def show_host_info(self, host_id):
@@ -355,7 +381,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         current_ws_name = self.get_active_workspace().name
 
         #for host in self.model_controller.getAllHosts():
-        for host in server.get_hosts(self.get_active_workspace()):
+        for host in self.get_hosts():
             if host_id == host.id:
                 selected_host = host
                 break
@@ -526,8 +552,9 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         def workspace_changed_event():
             host_count, service_count, vuln_count = self.update_counts()
-            #GObject.idle_add(self.hosts_sidebar.redo, self.model_controller.getAllHosts())
-            GObject.idle_add(self.hosts_sidebar.redo, server.get_hosts(self.get_active_workspace()))
+            total_host_amount = self.get_host_amount()
+            first_host_page = self.get_hosts(page='0', page_size='20', sort='vulns', sort_dir='desc')
+            GObject.idle_add(self.hosts_sidebar.redo, first_host_page, total_host_amount)
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)
             GObject.idle_add(self.select_active_workspace)
@@ -605,7 +632,8 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.open_last_workspace()
 
         # the dummy values here will be updated as soon as the ws is loaded.
-        self.hosts_sidebar = HostsSidebar(self.show_host_info, self.icons)
+        self.hosts_sidebar = HostsSidebar(self.show_host_info, self.get_hosts,
+                                          self.icons)
         default_model = self.hosts_sidebar.create_model([]) # dummy empty list
         self.hosts_sidebar.create_view(default_model)
         self.sidebar = Sidebar(self.ws_sidebar.get_box(),

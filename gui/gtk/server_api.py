@@ -27,6 +27,12 @@ The only public utilities exposed by the module are
 * get_vulns_web
 * get_interfaces
 * get_services
+* get_host_amount
+* get_all_vuln_amount
+* get_vulns_amounts
+* get_vuln_web_amount
+* get_interface_amount
+* get_service_aount
 
 They all take a workspace's name as a string and an arbitrary numbers of
 params, to filter your search. For example, if you want only the first
@@ -76,6 +82,7 @@ def _get(request_uri, **params):
     for param in params:
         payload[param] = params[param]
     try:
+        print request_uri, payload
         answer = requests.get(request_uri, params=payload)
         if answer.status_code != 200:
             raise requests.exceptions.ConnectionError()
@@ -185,6 +192,21 @@ def get_services(workspace_name, **params):
     Return a list of Services objects
     """
     return _get_faraday_ready_objects(workspace_name, 'services', 'services', **params)
+
+def get_hosts_amount(workspace_name):
+    return int(_get_raw_hosts(workspace_name)['total_rows'])
+
+def get_services_amount(workspace_name):
+    return len(get_services(workspace_name))
+
+def get_interfaces_amount(workspace_name):
+    return len(get_interfaces(wokspace_name))
+
+def get_services_amount(workspace_name):
+    return len(get_services(workspace_name))
+
+def get_all_vulns_amount(workspace_name):
+    return int(_get_raw_vulns(workspace_name)['count'])
 
 class _Host:
     """A simple Host class. Should implement all the methods of the

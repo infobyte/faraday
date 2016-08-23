@@ -16,6 +16,7 @@ angular.module('faradayApp')
                 workspacesFact.list().then(function(wss) {
                     $scope.workspaces = wss;
                 });
+                dashboardSrv.setConfirmedFromCookie();
             };
 
             $scope.navigate = function(route) {

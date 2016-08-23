@@ -15,7 +15,6 @@ angular.module('faradayApp')
         $scope.baseurl;
         $scope.columns;
         $scope.easeofresolution;
-        $scope.expression;
         $scope.interfaces;
         $scope.reverse;
         $scope.severities;
@@ -133,7 +132,6 @@ angular.module('faradayApp')
             // current search
             $scope.search = $routeParams.search;
             $scope.searchParams = "";
-            $scope.expression = {};
             if($scope.confirmed === true) {
                 if($scope.search !== undefined) {
                     $scope.search = $scope.search.concat("&confirmed=true");
@@ -452,30 +450,27 @@ angular.module('faradayApp')
         };
 
         $scope.csv = function() {
-            tmp_vulns = $filter('filter')($scope.gridOptions.data, $scope.expression);
-            return csvService.generator($scope.columns, tmp_vulns, $scope.workspace);
+            deferred = $q.defer();
+            delete searchFilter.confirmed;
+            if ($scope.confirmed)
+                searchFilter.confirmed = true;
+            vulnsManager.getVulns($scope.workspace,
+                                  null,
+                                  null,
+                                  searchFilter,
+                                  null,
+                                  null)
+            .then(function(response) {
+                deferred.resolve(csvService.generator($scope.columns, response.vulnerabilities, $scope.workspace));
+            });
+            return deferred.promise;
         };
 
-        $scope.toggleFilter = function(expression) {
-            if(expression["confirmed"] === undefined) {
-                expression["confirmed"] = true;
-                $scope.expression = expression;
-                $cookies.put('confirmed', $scope.expression.confirmed);
-                $scope.confirmed = true;
-                loadVulns();
-            } else {
-                $scope.expression = {};
-                for(key in expression) {
-                    if(expression.hasOwnProperty(key)) {
-                        if(key !== "confirmed") {
-                            $scope.expression[key] = expression[key];
-                        }
-                    }
-                }
-                $cookies.put('confirmed', $scope.expression.confirmed);
-                $scope.confirmed = false;
-                loadVulns();
-            }
+        $scope.toggleFilter = function() {
+            $scope.confirmed = !$scope.confirmed;
+            $cookies.put('confirmed', $scope.confirmed);
+            console.log($scope.confirmed);
+            loadVulns();
         };
 
         showMessage = function(msg) {

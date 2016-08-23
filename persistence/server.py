@@ -23,46 +23,42 @@ class WrongObjectSignature(Exception):
                 "'interface' 'service', 'credential' or 'note' and it was {0}"
                 .format(self.param))
 
-#SERVER_URI = "http://127.0.0.1:5984"
-SERVER_URI = ""
+SERVER_URI = "http://127.0.0.1:5984"
+#SERVER_URI = ""
 
-def _get_server_api_uri():
+def _get_base_server_uri():
     if not SERVER_URI:
         from config.configuration import getInstanceConfiguration
         CONF = getInstanceConfiguration()
         server_uri = CONF.getCouchURI()
     else:
         server_uri = SERVER_URI
-    server_api_uri = "{0}/_api".format(server_uri)
-    return server_api_uri
+    return server_uri
 
-def _create_uri(workspace_name, object_name):
+def _create_server_api_uri(workspace_name, object_name):
     """Creates a request URI for the server. Takes the workspace name
     as a string, an object_name paramter which is the object you want to
     query as a string ('hosts', 'interfaces', etc) .
 
     Return the request_uri as a string.
     """
-    server_api_uri = _get_server_api_uri()
+    server_api_uri = "{0}/_api".format(_get_base_server_uri())
     request_uri = '{0}/ws/{1}/{2}'.format(server_api_uri, workspace_name,
                                           object_name)
     return request_uri
 
-def _get(request_uri, **params):
-    """Get from the request_uri. Takes an arbitrary number of parameters
-    to customize the request_uri if necessary.
+def _create_server_post_uri(workspace_name, object_id):
+    server_base_uri = _get_base_server_uri()
+    post_uri = '{0}/{1}/{2}'.format(server_base_uri, workspace_name, object_id)
+    return post_uri
 
-    Will raise a CantCommunicateWithServerError if requests can stablish
-    connection to server or if response is not equal to 200.
-
-    Return a dictionary with the information in the json.
-    """
+def _comm_with_server(request_uri, request_function, **params):
     payload = {}
     for param in params:
         payload[param] = params[param]
     try:
-        #print request_uri, payload
-        answer = requests.get(request_uri, params=payload)
+        print request_uri, payload
+        answer = request_function(request_uri, params=payload)
         if answer.status_code != 200:
             raise requests.exceptions.ConnectionError()
     except requests.exceptions.ConnectionError:
@@ -73,52 +69,67 @@ def _get(request_uri, **params):
         dictionary = {}
     return dictionary
 
-def _post(post_uri, **params):
-    payload = {}
-    for param in params:
-        payload[param] = params[param]
-    try:
-        #print post_uri, payload
-        post = requests.post(post_uri, payload)
-    except requests.exceptions.ConnectionError:
-        raise CantCommunicateWithServerError()
-    return post.status_code
+def _get(request_uri, **params):
+    """Get from the request_uri. Takes an arbitrary number of parameters
+    to customize the request_uri if necessary.
+
+    Will raise a CantCommunicateWithServerError if requests can stablish
+    connection to server or if response is not equal to 200.
+
+    Return a dictionary with the information in the json.
+    """
+    return _comm_with_server(request_uri, requests.get, **params)
+
+def _put(post_uri, **params):
+    """Put to the request_uri. Takes an arbitrary number of parameters to
+    put into the post_uri.
+
+    Will raise a CantCommunicateWithServerError if requests can stablish
+    connection to server or if response is not equal to 200.
+
+    Return a dictionary with the response from couchdb.
+    """
+
+    return _comm_with_server(request_uri, requests.put, **params)
 
 def _get_raw_hosts(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the hosts table."""
-    request_uri = _create_uri(workspace_name, 'hosts')
+    request_uri = _create_server_api_uri(workspace_name, 'hosts')
     return _get(request_uri, **params)
 
 def _get_raw_vulns(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the vulns table."""
-    request_uri = _create_uri(workspace_name, 'vulns')
+    request_uri = _create_server_api_uri(workspace_name, 'vulns')
     return _get(request_uri, **params)
 
 def _get_raw_interfaces(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the interfaces table."""
-    request_uri = _create_uri(workspace_name, 'interfaces')
+    request_uri = _create_server_api_uri(workspace_name, 'interfaces')
     return _get(request_uri, **params)
 
 def _get_raw_services(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the services table."""
-    request_uri = _create_uri(workspace_name, 'services')
+    request_uri = _create_server_api_uri(workspace_name, 'services')
     return _get(request_uri, **params)
 
 def _get_raw_notes(workspace_name, **params):
     """Take a workspace name and an arbitrary number of params and
     return a dictionary with the notes table."""
-    request_uri = _create_uri(workspace_name, 'notes')
+    request_uri = _create_server_api_uri(workspace_name, 'notes')
     return _get(request_uri, **params)
 
 def _get_raw_credentials(workspace_name, **params):
     """Take a workspace name and an arbitrary number of params and
     return a dictionary with the credentials table."""
-    request_uri = _create_uri(workspace_name, 'credentials')
+    request_uri = _create_server_api_uri(workspace_name, 'credentials')
     return _get(request_uri, **params)
+
+# def put_host(workspace_name, **params):
+#     post_uri =
 
 def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
                                     faraday_object_row_name, **params):
@@ -146,7 +157,7 @@ def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
     faraday_ready_dictionaries = []
     if appropiate_dictionary:
         for raw_dictionary in appropiate_dictionary[faraday_object_row_name]:
-            faraday_ready_dictionaries.append(raw_dictionary)
+            faraday_ready_dictionaries.append(raw_dictionary['value'])
     return faraday_ready_dictionaries
 
 def _force_unique(lst):

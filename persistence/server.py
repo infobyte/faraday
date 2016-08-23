@@ -57,7 +57,6 @@ def _comm_with_server(request_uri, request_function, **params):
     for param in params:
         payload[param] = params[param]
     try:
-        print request_uri, payload
         answer = request_function(request_uri, params=payload)
         if answer.status_code != 200:
             raise requests.exceptions.ConnectionError()
@@ -90,7 +89,21 @@ def _put(post_uri, **params):
     Return a dictionary with the response from couchdb.
     """
 
-    return _comm_with_server(request_uri, requests.put, **params)
+    payload = {}
+    for param in params:
+        payload[param] = params[param]
+    try:
+        print "PUT", post_uri, payload
+        answer = requests.put(post_uri, json=payload)
+        if answer.status_code != 201:
+            raise requests.exceptions.ConnectionError()
+    except requests.exceptions.ConnectionError:
+        raise CantCommunicateWithServerError()
+    try:
+        dictionary = answer.json()
+    except ValueError:
+        dictionary = {}
+    return dictionary
 
 def _get_raw_hosts(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
@@ -128,8 +141,9 @@ def _get_raw_credentials(workspace_name, **params):
     request_uri = _create_server_api_uri(workspace_name, 'credentials')
     return _get(request_uri, **params)
 
-# def put_host(workspace_name, **params):
-#     post_uri =
+def _save_to_couch(workspace_name, faraday_object, **params):
+    post_uri = _create_server_post_uri(workspace_name, faraday_object.getID())
+    return _put(post_uri, **params)
 
 def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
                                     faraday_object_row_name, **params):
@@ -361,3 +375,39 @@ def get_credential(workspace_name, credential_id):
     This should never happen.
     """
     return _force_unique(get_services(workspace_name, couchid=credential_id))
+
+def save_host(workspace_name, host, **params):
+    return _save_to_couch(workspace_name, host, **params)
+
+def save_interface(workspace_name, interface, **params):
+    return _save_to_couch(workspace_name, interface, **params)
+
+def save_service(workspace_name, service, **params):
+    return _save_to_couch(workspace_name, service, **params)
+
+def save_vuln(workspace_name, vuln, **params):
+    return _save_to_couch(workspace_name, vuln, **params)
+
+def save_note(workspace_name, note, **params):
+    return _save_to_couch(workspace_name, note, **params)
+
+def save_credential(workspace_name, credential, **params):
+    return _save_to_couch(workspace_name, credential, **params)
+
+def update_host(workspace_name, host, rev, **params):
+    return _save_to_couch(workspace_name, host, rev=rev, **params)
+
+def update_interface(workspace_name, interface, rev, **params):
+    return _save_to_couch(workspace_name, interface, rev=rev, **params)
+
+def update_service(workspace_name, service, rev, **params):
+    return _save_to_couch(workspace_name, service, rev=rev, **params)
+
+def update_vuln(workspace_name, vuln, rev, **params):
+    return _save_to_couch(workspace_name, vuln, rev=rev, **params)
+
+def update_note(worksapce_name, note, rev, **params):
+    return _save_to_couch(workspace_name, note, rev=rev, **params)
+
+def update_credential(worksapce_name, credential, rev, **params):
+    return _save_to_couch(workspace_name, credential, rev=rev, **params)

@@ -314,7 +314,7 @@ def startFaraday():
     import string
     couchURL = getInstanceConfiguration().getCouchURI()
     if couchURL:
-        url = "%s/reports/_design/reports/index.html" % couchURL
+        url = "%s/_ui" % couchURL
         print(Fore.WHITE + Style.BRIGHT + \
             "\n*" + string.center("faraday ui is ready", 53 - 6) )
         print(Fore.WHITE + Style.BRIGHT + \

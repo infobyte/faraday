@@ -50,7 +50,7 @@ class CmdPropeciaPlugin(core.PluginBase):
         if host_info is None:
             api.log("No hosts detected")
         else:
-            for host in output.split('\r\n'):
+            for host in output.splitlines():
                 if host != "":
                     h_id = self.createAndAddHost(host)
                     i_id = self.createAndAddInterface(

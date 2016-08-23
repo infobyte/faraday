@@ -23,9 +23,6 @@ class WrongObjectSignature(Exception):
                 "'interface' 'service', 'credential' or 'note' and it was {0}"
                 .format(self.param))
 
-SERVER_URI = "http://127.0.0.1:5984"
-#SERVER_URI = ""
-
 def _get_base_server_uri():
     if not SERVER_URI:
         from config.configuration import getInstanceConfiguration

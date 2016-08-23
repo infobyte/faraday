@@ -5,8 +5,12 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-from persistence.persistence_managers import DbConnector
+import requests
 
+from persistence.persistence_managers import DbConnector
+from config.configuration import getInstanceConfiguration
+
+CONF = getInstanceConfiguration()
 
 class NullPersistenceManager(DbConnector):
     def __init__(self):
@@ -57,14 +61,16 @@ class AbstractMapper(object):
         raise NotImplementedError("AbstractMapper should not be used directly")
 
     def load(self, id):
-        if id in self.object_map.keys():
-            return self.object_map.get(id)
-        doc = self.pmanager.getDocument(id)
-        if not doc or not doc.get("type") == self.mapped_class.class_signature:
+        '''if id in self.object_map.keys():
+            return self.object_map.get(id)'''
+        doc = self.pmanager.find_in_server(self.resource, id)
+        if not doc:
             return None
+        
         obj = self.mapped_class(*self.dummy_args, **self.dummy_kwargs)
+
         obj.setID(doc.get("_id"))
-        self.object_map[obj.getID()] = obj
+        # self.object_map[obj.getID()] = obj
         self.unserialize(obj, doc)
         return obj
 
@@ -85,11 +91,13 @@ class AbstractMapper(object):
         return obj
 
     def find(self, id, with_load=True):
-        if not id or id == "None":
+        return self.load(id)
+
+        '''if not id or id == "None":
             return None
         if self.object_map.get(id) or not with_load:
             return self.object_map.get(id)
-        return self.load(id)
+        return self.load(id)'''
 
     def findByFilter(self, parent, type):
         res = self.pmanager.getDocsByFilter(parent, type)

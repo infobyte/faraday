@@ -2,7 +2,6 @@
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-
 '''
 
 import os
@@ -14,6 +13,7 @@ from urlparse import urlparse
 import traceback
 from couchdbkit import Server, ChangesStream
 from couchdbkit.resource import ResourceNotFound
+from persistence import server
 
 from utils.logs import getLogger
 from managers.all import ViewsManager
@@ -346,7 +346,9 @@ class CouchDbConnector(DbConnector):
             getLogger(self).warn(
                 "You're not authorized to compact this database")
 
-
+    def find_in_server(self, resource, id):
+        return server.get_object(self.db.dbname, resource, id)
+        
 class AbstractPersistenceManager(object):
     def __init__(self):
         self.dbs = {}

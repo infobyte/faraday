@@ -38,11 +38,11 @@ class ModelObjectMapper(AbstractMapper):
 
     def unserialize(self, mobj, doc):
         mobj_type = mobj.class_signature
-        self.children = self.findChildren(mobj.getID())
+        # self.children = self.findChildren(mobj.getID())
         mobj.setName(doc.get("name"))
         mobj.setOwned(doc.get("owned"))
-        if doc.get("parent", None):
-            mobj.setParent(self.mapper_manager.find(doc.get("parent")))
+        # if doc.get("parent", None):
+        #     mobj.setParent(self.mapper_manager.find(doc.get("parent")))
         mobj.setOwner(doc.get("owner"))
         # NOTE: Vulnerability and VulnerabilityWeb, when modified from the web,
         # have a 'desc' key, not a description key, which is already handled
@@ -50,10 +50,10 @@ class ModelObjectMapper(AbstractMapper):
         if mobj_type != 'Vulnerability' and mobj_type != 'VulnerabilityWeb':
             mobj.setDescription(doc.get("description"))
         mobj.setMetadata( Metadata('').fromDict(mobj.getMetadata().__dict__))
-        if self.children:
-            self.setNotes(mobj)
-            self.setVulns(mobj)
-            self.setCreds(mobj)
+        # if self.children:
+        #     self.setNotes(mobj)
+        #     self.setVulns(mobj)
+        #     self.setCreds(mobj)
         return mobj
 
     def delete(self, mobj_id):
@@ -99,6 +99,7 @@ class HostMapper(ModelObjectMapper):
     mapped_class = Host
     dummy_args = []
     dummy_kwargs = {'name': 'dummy'}
+    resource = 'hosts'
 
     def __init__(self, mmanager, pmanager=None):
         super(HostMapper, self).__init__(mmanager, pmanager)
@@ -115,7 +116,7 @@ class HostMapper(ModelObjectMapper):
         host.setOS(doc.get("os"))
         host.setDefaultGateway(doc.get("default_gateway"))
         super(HostMapper, self).unserialize(host, doc)
-        self.setInterfaces(host)
+        # self.setInterfaces(host)
         return host
 
     def setInterfaces(self, host):
@@ -127,6 +128,7 @@ class InterfaceMapper(ModelObjectMapper):
     mapped_class = Interface
     dummy_args = []
     dummy_kwargs = {'name': 'dummy'}
+    resource = 'interfaces'
 
     def __init__(self, mmanager, pmanager=None):
         super(InterfaceMapper, self).__init__(mmanager, pmanager)
@@ -148,18 +150,19 @@ class InterfaceMapper(ModelObjectMapper):
         return doc
 
     def unserialize(self, iface, doc):
-        iface.setMAC(doc.get("mac"))
-        iface.setNetworkSegment(doc.get("network_segment"))
-        for hostname in doc.get("hostnames"):
-            iface.addHostname(hostname)
-        iface.setIPv4(doc.get("ipv4"))
-        iface.setIPv6(doc.get("ipv6"))
-        iface.setPortsOpened(doc.get("ports").get("opened"))
-        iface.setPortsClosed(doc.get("ports").get("closed"))
-        iface.setPortsFiltered(doc.get("ports").get("filtered"))
-        super(InterfaceMapper, self).unserialize(iface, doc)
-        self.setServices(iface)
-        return iface
+        if doc.get('value'):
+            iface.setMAC(doc.get("mac"))
+            iface.setNetworkSegment(doc.get("network_segment"))
+            for hostname in doc.get("hostnames"):
+                iface.addHostname(hostname)
+            iface.setIPv4(doc.get("ipv4"))
+            iface.setIPv6(doc.get("ipv6"))
+            iface.setPortsOpened(doc.get("ports").get("opened"))
+            iface.setPortsClosed(doc.get("ports").get("closed"))
+            iface.setPortsFiltered(doc.get("ports").get("filtered"))
+            super(InterfaceMapper, self).unserialize(iface, doc)
+            # self.setServices(iface)
+            return iface
 
     def setServices(self, iface):
         iface.setServices(
@@ -170,6 +173,8 @@ class ServiceMapper(ModelObjectMapper):
     mapped_class = Service
     dummy_args = []
     dummy_kwargs = {'name': 'dummy'}
+    resource = 'services'
+
 
     def __init__(self, mmanager, pmanager=None):
         super(ServiceMapper, self).__init__(mmanager, pmanager)
@@ -199,6 +204,7 @@ class NoteMapper(ModelObjectMapper):
     mapped_class = ModelObjectNote
     dummy_args = []
     dummy_kwargs = {'name': 'dummy'}
+    resource = 'notes'
 
     def __init__(self, mmanager, pmanager=None):
         super(NoteMapper, self).__init__(mmanager, pmanager)
@@ -215,11 +221,11 @@ class NoteMapper(ModelObjectMapper):
         super(NoteMapper, self).unserialize(note, doc)
         return note
 
-
 class VulnMapper(ModelObjectMapper):
     mapped_class = ModelObjectVuln
     dummy_args = []
     dummy_kwargs = {'name': 'dummy'}
+    resource = 'vulns'
 
     def __init__(self, mmanager, pmanager=None):
         super(VulnMapper, self).__init__(mmanager, pmanager)
@@ -251,6 +257,7 @@ class VulnWebMapper(VulnMapper):
     mapped_class = ModelObjectVulnWeb
     dummy_args = []
     dummy_kwargs = {'name': 'dummy'}
+    resource = 'vulns'
 
     def __init__(self, mmanager, pmanager=None):
         super(VulnWebMapper, self).__init__(mmanager, pmanager)
@@ -289,6 +296,7 @@ class CredMapper(ModelObjectMapper):
     mapped_class = ModelObjectCred
     dummy_args = []
     dummy_kwargs = {}
+    resource = 'credentials'
 
     def __init__(self, mmanager, pmanager=None):
         super(CredMapper, self).__init__(mmanager, pmanager)
@@ -312,6 +320,7 @@ class CommandRunMapper(AbstractMapper):
     mapped_class = CommandRunInformation
     dummy_args = []
     dummy_kwargs = {}
+    resource = 'commands'
 
     def __init__(self, mmanager, pmanager=None):
         super(CommandRunMapper, self).__init__(mmanager, pmanager)
@@ -355,7 +364,7 @@ class WorkspaceMapper(AbstractMapper):
         workspace.setCustomer(doc.get("customer"))
         workspace.setStartDate(doc.get("sdate"))
         workspace.setFinishDate(doc.get("fdate"))
-        self.setHosts(workspace, children)
+        #self.setHosts(workspace, children)
         return workspace
 
     def setHosts(self, workspace, docs):
@@ -369,6 +378,16 @@ class WorkspaceMapper(AbstractMapper):
             host_dict[host.getID()] = host
 
         workspace.setHosts(host_dict)
+    
+    def load(self, id):
+        doc = self.pmanager.getDocument(id)
+        if not doc or not doc.get("type") == self.mapped_class.class_signature:
+            return None
+        obj = self.mapped_class(*self.dummy_args, **self.dummy_kwargs)
+        obj.setID(doc.get("_id"))
+        # self.object_map[obj.getID()] = obj
+        self.unserialize(obj, doc)
+        return obj
 
 
 Mappers = {

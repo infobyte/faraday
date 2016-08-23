@@ -134,14 +134,14 @@ def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
     faraday_object_row_name must be the key to the dictionary which holds
     the information of the object per se in the table. most times this is 'rows'
     """
-    object_to_func = {'host': _get_raw_hosts,
-                      'vuln': _get_raw_vulns,
-                      'interface': _get_raw_interfaces,
-                      'service': _get_raw_services,
-                      'note': _get_raw_notes,
-                      'credential': _get_raw_credentials}
+    object_to_func = {'hosts': _get_raw_hosts,
+                      'vulns': _get_raw_vulns,
+                      'interfaces': _get_raw_interfaces,
+                      'services': _get_raw_services,
+                      'notes': _get_raw_notes,
+                      'credentials': _get_raw_credentials}
 
-    appropiate_function = object_to_func[faraday_object]
+    appropiate_function = object_to_func[faraday_object_name]
     appropiate_dictionary = appropiate_function(workspace_name, **params)
     faraday_ready_dictionaries = []
     if appropiate_dictionary:
@@ -232,15 +232,15 @@ def get_objects(workspace_name, object_signature, **params):
     'service', 'credential' or 'note'. Will raise an WrongObjectSignature
     error if this condition is not met.
     """
-    object_to_func = {'host': get_hosts,
-                      'vuln': get_not_web_vulns,
+    object_to_func = {'hosts': get_hosts,
+                      'vulns': get_not_web_vulns,
                       'vuln_web': get_vulns_web,
-                      'interface': get_interfaces,
-                      'service': get_services,
-                      'credential': get_credentials,
-                      'note': get_notes}
+                      'interfaces': get_interfaces,
+                      'services': get_services,
+                      'credentials': get_credentials,
+                      'notes': get_notes}
     try:
-        appropiate_function = object_to_funct[object_signature]
+        appropiate_function = object_to_func[object_signature]
     except KeyError:
         raise WrongObjectSignature(object_signature)
 

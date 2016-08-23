@@ -120,6 +120,8 @@ angular.module('faradayApp')
         };
 
         $scope.go = function() {
+            if ($scope.newPageSize === undefined)
+                $scope.newPageSize = 1;
             $scope.pageSize = $scope.newPageSize;
             $cookies.pageSize = $scope.pageSize;
             $scope.currentPage = 1;

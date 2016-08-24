@@ -328,6 +328,7 @@ angular.module('faradayApp')
         }
 
         dashboardSrv.stopTimer = function() {
+            dashboardSrv._callbacks = [];
             if (angular.isDefined(timer)) {
                 $interval.cancel(timer);
                 timer = undefined;

@@ -46,7 +46,7 @@ class HostDAO(FaradayDAO):
         query = self._session.query(host_bundle)\
                              .outerjoin(EntityMetadata, EntityMetadata.id == Host.entity_metadata_id)\
                              .outerjoin(Vulnerability, Host.id == Vulnerability.host_id)\
-                             .outerjoin(Service, (Host.id == Service.host_id) & (Service.status.in_(('open', 'running'))))\
+                             .outerjoin(Service, (Host.id == Service.host_id) & (Service.status.in_(('open', 'running', 'opened'))))\
                              .group_by(Host.id)
 
         # Apply pagination, sorting and filtering options to the query

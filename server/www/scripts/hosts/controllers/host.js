@@ -356,10 +356,10 @@ angular.module('faradayApp')
 	    }
 
         filter = function(data) {
+            // this is going to be replaced by a server query
             var tmp_data = $filter('orderBy')(data, $scope.sortField, $scope.reverse);
             tmp_data = $filter('filter')(tmp_data, $scope.expression);
-            tmp_data = tmp_data.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
-
+            tmp_data = tmp_data.splice($scope.pageSize * ($scope.currentPage - 1), $scope.pageSize);
             return tmp_data;
         };
 
@@ -382,7 +382,9 @@ angular.module('faradayApp')
         };
 
         $scope.pageCount = function() {
-            return Math.ceil($scope.services.length / $scope.pageSize);
+            var tmp_services = $filter('orderBy')($scope.services, $scope.sortField, $scope.reverse);
+            tmp_services = $filter('filter')(tmp_services, $scope.expression);
+            return Math.ceil(tmp_services.length / $scope.pageSize);
         };
 
 	    init();

@@ -51,7 +51,7 @@ def _create_server_post_uri(workspace_name, object_id):
     post_uri = '{0}/{1}/{2}'.format(server_base_uri, workspace_name, object_id)
     return post_uri
 
-def _safe_io_with_server(server_io_function, server_expected_response,
+def _safer_io_with_server(server_io_function, server_expected_response,
                          server_uri, **payload):
     """A wrapper for functions which deals with I/O to or from the server.
     It calls the server_io_function with uri server_uri and the payload,
@@ -82,7 +82,7 @@ def _get(request_uri, **params):
 
     Return a dictionary with the information in the json.
     """
-    return _safe_io_with_server(requests.get, 200, request_uri, params=params)
+    return _safer_io_with_server(requests.get, 200, request_uri, params=params)
 
 def _put(post_uri, **params):
     """Put to the post_uri. Takes an arbitrary number of parameters to
@@ -94,7 +94,7 @@ def _put(post_uri, **params):
     Return a dictionary with the response from couchdb, which looks like this:
     {u'id': u'61', u'ok': True, u'rev': u'1-967a00dff5e02add41819138abb3284d'}
     """
-    return _safe_io_with_server(requests.put, 201,  post_uri, json=params)
+    return _safer_io_with_server(requests.put, 201,  post_uri, json=params)
 
 def _get_raw_hosts(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
@@ -132,16 +132,21 @@ def _get_raw_credentials(workspace_name, **params):
     request_uri = _create_server_api_uri(workspace_name, 'credentials')
     return _get(request_uri, **params)
 
-def _save_to_couch(workspace_name, faraday_object, **params):
-    post_uri = _create_server_post_uri(workspace_name, faraday_object.getID())
+def _save_to_couch(workspace_name, faraday_object_id, **params):
+    post_uri = _create_server_post_uri(workspace_name, faraday_object_id)
     return _put(post_uri, **params)
 
 def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
-                                    faraday_object_row_name, **params):
+                                    faraday_object_row_name, full_table=False,
+                                    **params):
     """Takes a workspace_name (str), a faraday_object_name (str),
     a faraday_object_row_name (str) and an arbitrary number of params.
     Return a list of dictionaries that hold the information for the objects
     in table faraday_object_name.
+
+    The full_table paramether may be used to get the full dictionary instead
+    of just the one inside the 'value' key which holds information about the
+    object.
 
     Preconditions:
     faraday_object_name == 'host', 'vuln', 'interface', 'service', 'note'
@@ -162,7 +167,10 @@ def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
     faraday_ready_dictionaries = []
     if appropiate_dictionary:
         for raw_dictionary in appropiate_dictionary[faraday_object_row_name]:
-            faraday_ready_dictionaries.append(raw_dictionary['value'])
+            if not full_table:
+                faraday_ready_dictionaries.append(raw_dictionary['value'])
+            else:
+                faraday_ready_dictionaries.append(raw_dictionary)
     return faraday_ready_dictionaries
 
 def _force_unique(lst):
@@ -244,13 +252,13 @@ def get_objects(workspace_name, object_signature, **params):
     number of query params, return a list a dictionaries containg information
     about 'object_signature' objects matching the query.
 
-    object_signature must be either 'host', 'vuln', 'vuln_web', 'interface'
-    'service', 'credential' or 'note'. Will raise an WrongObjectSignature
+    object_signature must be either 'hosts', 'vulns', 'vulns_web', 'interfaces'
+    'services', 'credentials' or 'notes'. Will raise an WrongObjectSignature
     error if this condition is not met.
     """
     object_to_func = {'hosts': get_hosts,
                       'vulns': get_not_web_vulns,
-                      'vuln_web': get_vulns_web,
+                      'vulns_web': get_vulns_web,
                       'interfaces': get_interfaces,
                       'services': get_services,
                       'credentials': get_credentials,
@@ -268,8 +276,8 @@ def get_object(workspace_name, object_signature, object_id):
     and matching object_id in the workspace workspace_name, or None if
     no object matching object_id was found.
 
-    object_signature must be either 'host', 'vuln', 'vuln_web', 'interface'
-    'service', 'credential' or 'note'. Will raise an WrongObjectSignature
+    object_signature must be either 'hosts', 'vulns', 'vulns_web', 'interfaces'
+    'services', 'credentials' or 'notes'. Will raise an WrongObjectSignature
     error if this condition is not met.
 
     Will raise a MoreThanOneObjectFoundByID error if for some reason
@@ -367,11 +375,164 @@ def get_credential(workspace_name, credential_id):
     """
     return _force_unique(get_services(workspace_name, couchid=credential_id))
 
-def save_host(workspace_name, host, **params):
-    return _save_to_couch(workspace_name, host, **params)
+def get_hosts_number(workspace_name):
+    return int(server._get_raw_hosts(workspace_name)['total_rows'])
 
-def save_interface(workspace_name, interface, **params):
-    return _save_to_couch(workspace_name, interface, **params)
+def get_services_number(workspace_name):
+    return len(get_services(workspace_name))
+
+def get_interfaces_number(workspace_name):
+    return len(get_interfaces(wokspace_name))
+
+def get_services_number(workspace_name):
+    return len(get_services(workspace_name))
+
+def get_vulns_number(workspace_name):
+    return int(server._get_raw_vulns(workspace_name)['count'])
+
+def save_host(workspace_name, id, name, os, default_gateway,
+              description="", metadata=None, owned=False, owner="",
+              parent=None):
+    return _save_to_couch(workspace_name, id,
+                          name=name, os=os,
+                          default_gateway=default_gateway,
+                          owned=owned,
+                          metadata=metadata,
+                          owner=owner,
+                          parent=parent,
+                          description=description,
+                          type="Host")
+
+def save_interface(workspace_name, id, name, description, mac, owned=False,
+                   hostnames=None, network_segment=None, ipv4_address=None,
+                   ipv4_gateway=None, ipv4_dns=None, ipv4_mask=None,
+                   ipv6_address=None, ipv6_gateway=None, ipv6_dns=None,
+                   ipv6_prefix=None, metadata=None):
+    return _save_to_couch(workspace_name, id,
+                          name=name,
+                          description=description,
+                          mac=mac,
+                          owned=owned,
+                          hostnames=hostnames,
+                          network_segment=network_segment,
+                          ipv4_address=ipv4_address,
+                          ipv4_gateway=ipv4_gateway,
+                          ipv4_dns=ipv4_dns,
+                          ipv4_mask=ipv4_mask,
+                          ipv6_address=ipv6_address,
+                          ipv6_gateway=ipv6_gateway,
+                          ipv6_dns=ipv6_dns,
+                          ipv6_prefix=ipv6_prefix,
+                          type="Interface",
+                          metadata=metadata)
+
+def save_service(workspace_name, id, name, description, ports, owned=False,
+                 protocol="", status="", version="", metadata=None):
+    return _save_to_couch(workspace_name, id,
+                          name=name,
+                          description=description,
+                          ports=ports,
+                          owned=owned,
+                          protocol=protocol,
+                          status=status,
+                          version=version,
+                          type="Service",
+                          metadata=None)
+
+def _save_general_vuln(workspace_name, vuln_type, id, name, description,
+                       ref=None, resolution="", confirmed=False,
+                       attachments=None, data="", easeofresolution=None,
+                       hostnames=None, impact=None, method=None,
+                       owned=False, owner="", params="", parent=None,
+                       path=None, pname=None, query=None, refs=None,
+                       request=None, response=None, service="",
+                       severity="info", status="", tags=None, target="",
+                       website=None, metadata=None):
+    return _save_to_couch(workspace_name, id,
+                          name=name,
+                          description=description,
+                          ref=ref,
+                          severity=severity,
+                          resolution=resolution,
+                          confirmed=confirmed,
+                          hostnames=hostnames,
+                          impact=impact,
+                          method=method,
+                          owned=owned,
+                          owner=owner,
+                          params=params,
+                          parent=parent,
+                          path=path,
+                          pname=pname,
+                          query=query,
+                          refs=refs,
+                          request=request,
+                          response=response,
+                          service=service,
+                          status=status,
+                          tags=tags,
+                          target=target,
+                          website=website,
+                          type=vuln_type,
+                          metadata=metadata)
+
+def save_vuln(workspace_name, id, name, description, confirmed=False,
+              data="", refs=None, severity="info", metadata=None):
+    return _save_general_vuln(workspace_name, 'Vulnerability', id,
+                              name=name,
+                              description=description,
+                              confirmed=confirmed,
+                              data=data,
+                              refs=refs,
+                              severity=severity,
+                              metadata=metadata)
+
+def save_vuln_web(workspace_name, id, name, description,
+                  refs=None, resolution="", confirmed=False,
+                  attachments=None, data="", easeofresolution=None,
+                  hostnames=None, impact=None, method=None,
+                  owned=False, owner="", params="", parent=None,
+                  path=None, pname=None, query=None, refs=None,
+                  request=None, response=None,
+                  service="", severity="info", status="", tags=None,
+                  target="", website=None, metadata=None):
+    return _save_general_vuln(workspace_name, id,
+                          name=name,
+                          description=description,
+                          refs=refs,
+                          severity=severity,
+                          confirmed=confirmed,
+                          hostnames=hostnames,
+                          impact=impact,
+                          method=method,
+                          owned=owned,
+                          owner=owner,
+                          params=params,
+                          parent=parent,
+                          path=path,
+                          pname=pname,
+                          query=query,
+                          refs=refs,
+                          request=request,
+                          resolution=resolution,
+                          response=response,
+                          service=service,
+                          status=status,
+                          tags=tags,
+                          target=target,
+                          website=website,
+                          type='VulnerabilityWeb',
+                          metadata=metadata)
+
+def save_note(workspace_name, id, name, description, text):
+    return _save_to_couch(workspace_name, id, name=name,
+                          description=description,
+                          text=text,
+                          type="Note")
+
+def save_credential(workspace_name, id, username, password):
+    return _save_to_couch(workspace_name, id, username=username,
+                          password=password, type="Credential")
 
 def save_service(workspace_name, service, **params):
     return _save_to_couch(workspace_name, service, **params)

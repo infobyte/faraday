@@ -55,7 +55,7 @@ class ServiceDAO(FaradayDAO):
                 'description': service.description,
                 'protocol': service.protocol,
                 'status': service.status,
-                'ports': service.ports,
+                'ports': service.ports.split(',') if service.ports else [],
                 'version': service.version,
                 'owned': service.owned
                 },

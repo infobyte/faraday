@@ -335,8 +335,6 @@ class Interface(ModelComposite):
     def getName(self):
         return self._name
 
-
-
     def setMAC(self, mac):
         self.mac = mac
 

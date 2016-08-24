@@ -451,7 +451,6 @@ class ModelController(threading.Thread):
     def __add(self, obj, parent_id=None, *args):
         dataMapper = self.mappers_manager.getMapper(obj.class_signature)
         old_obj = dataMapper.find(obj.getID())
-        print '--add', old_obj
         if old_obj:
             if not old_obj.needs_merge(obj):
                 # the object is exactly the same,

@@ -348,7 +348,8 @@ class CouchDbConnector(DbConnector):
 
     def find_in_server(self, resource, id):
         return server.get_object(self.db.dbname, resource, id)
-        
+
+
 class AbstractPersistenceManager(object):
     def __init__(self):
         self.dbs = {}

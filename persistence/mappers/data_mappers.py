@@ -150,19 +150,18 @@ class InterfaceMapper(ModelObjectMapper):
         return doc
 
     def unserialize(self, iface, doc):
-        if doc.get('value'):
-            iface.setMAC(doc.get("mac"))
-            iface.setNetworkSegment(doc.get("network_segment"))
-            for hostname in doc.get("hostnames"):
-                iface.addHostname(hostname)
-            iface.setIPv4(doc.get("ipv4"))
-            iface.setIPv6(doc.get("ipv6"))
-            iface.setPortsOpened(doc.get("ports").get("opened"))
-            iface.setPortsClosed(doc.get("ports").get("closed"))
-            iface.setPortsFiltered(doc.get("ports").get("filtered"))
-            super(InterfaceMapper, self).unserialize(iface, doc)
-            # self.setServices(iface)
-            return iface
+        iface.setMAC(doc.get("mac"))
+        iface.setNetworkSegment(doc.get("network_segment"))
+        for hostname in doc.get('hostnames').split(','):
+            iface.addHostname(hostname)
+        iface.setIPv4(doc.get("ipv4"))
+        iface.setIPv6(doc.get("ipv6"))
+        iface.setPortsOpened(doc.get("ports").get("opened"))
+        iface.setPortsClosed(doc.get("ports").get("closed"))
+        iface.setPortsFiltered(doc.get("ports").get("filtered"))
+        super(InterfaceMapper, self).unserialize(iface, doc)
+        # self.setServices(iface)
+        return iface
 
     def setServices(self, iface):
         iface.setServices(

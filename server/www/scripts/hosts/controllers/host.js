@@ -70,8 +70,8 @@ angular.module('faradayApp')
                 });
 
             $scope.pageSize = 10;
-            $scope.currentPage = 0;
-            $scope.newCurrentPage = 0;
+            $scope.currentPage = 1;
+            $scope.newCurrentPage = 1;
 
             if(!isNaN(parseInt($cookies.pageSize))) $scope.pageSize = parseInt($cookies.pageSize);
             $scope.newPageSize = $scope.pageSize;
@@ -112,11 +112,13 @@ angular.module('faradayApp')
         };
 
         $scope.go = function() {
+            if ($scope.newPageSize === undefined)
+                $scope.newPageSize = 1;
             $scope.pageSize = $scope.newPageSize;
             $cookies.pageSize = $scope.pageSize;
-            $scope.currentPage = 0;
-            if($scope.newCurrentPage <= parseInt($scope.services.length/$scope.pageSize)
-                    && $scope.newCurrentPage > -1 && !isNaN(parseInt($scope.newCurrentPage))) {
+            $scope.currentPage = 1;
+            if ($scope.newCurrentPage <= $scope.pageCount() && $scope.newCurrentPage > 0 &&
+                !isNaN(parseInt($scope.newCurrentPage))) {
                 $scope.currentPage = $scope.newCurrentPage;
             }
         };
@@ -359,6 +361,28 @@ angular.module('faradayApp')
             tmp_data = tmp_data.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
 
             return tmp_data;
+        };
+
+        // paging
+
+        $scope.prevPage = function() {
+            $scope.currentPage -= 1;
+        };
+
+        $scope.prevPageDisabled = function() {
+            return $scope.currentPage <= 1;
+        };
+
+        $scope.nextPage = function() {
+            $scope.currentPage += 1;
+        };
+
+        $scope.nextPageDisabled = function() {
+            return $scope.currentPage >= $scope.pageCount();
+        };
+
+        $scope.pageCount = function() {
+            return Math.ceil($scope.services.length / $scope.pageSize);
         };
 
 	    init();

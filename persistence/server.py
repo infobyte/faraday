@@ -23,6 +23,8 @@ class WrongObjectSignature(Exception):
                 "'interface' 'service', 'credential' or 'note' and it was {0}"
                 .format(self.param))
 
+SERVER_URI = "http://127.0.0.1:5984"
+
 def _get_base_server_uri():
     if not SERVER_URI:
         from config.configuration import getInstanceConfiguration
@@ -49,13 +51,19 @@ def _create_server_post_uri(workspace_name, object_id):
     post_uri = '{0}/{1}/{2}'.format(server_base_uri, workspace_name, object_id)
     return post_uri
 
-def _comm_with_server(request_uri, request_function, **params):
-    payload = {}
-    for param in params:
-        payload[param] = params[param]
+def _safe_io_with_server(server_io_function, server_expected_response,
+                         server_uri, **payload):
+    """A wrapper for functions which deals with I/O to or from the server.
+    It calls the server_io_function with uri server_uri and the payload,
+    raising an CantCommunicateWithServerError if the response wasn't
+    server_expected_response or if there was a Connection Error.
+
+    Return a dictionary with the response from the server. The dictionary
+    may be empty.
+    """
     try:
-        answer = request_function(request_uri, params=payload)
-        if answer.status_code != 200:
+        answer = server_io_function(server_uri, **payload)
+        if answer.status_code != server_expected_response:
             raise requests.exceptions.ConnectionError()
     except requests.exceptions.ConnectionError:
         raise CantCommunicateWithServerError()
@@ -69,38 +77,24 @@ def _get(request_uri, **params):
     """Get from the request_uri. Takes an arbitrary number of parameters
     to customize the request_uri if necessary.
 
-    Will raise a CantCommunicateWithServerError if requests can stablish
+    Will raise a CantCommunicateWithServerError if requests cant stablish
     connection to server or if response is not equal to 200.
 
     Return a dictionary with the information in the json.
     """
-    return _comm_with_server(request_uri, requests.get, **params)
+    return _safe_io_with_server(requests.get, 200, request_uri, params=params)
 
 def _put(post_uri, **params):
-    """Put to the request_uri. Takes an arbitrary number of parameters to
+    """Put to the post_uri. Takes an arbitrary number of parameters to
     put into the post_uri.
 
-    Will raise a CantCommunicateWithServerError if requests can stablish
-    connection to server or if response is not equal to 200.
+    Will raise a CantCommunicateWithServerError if requests cant stablish
+    connection to server or if response is not equal to 201.
 
-    Return a dictionary with the response from couchdb.
+    Return a dictionary with the response from couchdb, which looks like this:
+    {u'id': u'61', u'ok': True, u'rev': u'1-967a00dff5e02add41819138abb3284d'}
     """
-
-    payload = {}
-    for param in params:
-        payload[param] = params[param]
-    try:
-        print "PUT", post_uri, payload
-        answer = requests.put(post_uri, json=payload)
-        if answer.status_code != 201:
-            raise requests.exceptions.ConnectionError()
-    except requests.exceptions.ConnectionError:
-        raise CantCommunicateWithServerError()
-    try:
-        dictionary = answer.json()
-    except ValueError:
-        dictionary = {}
-    return dictionary
+    return _safe_io_with_server(requests.put, 201,  post_uri, json=params)
 
 def _get_raw_hosts(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return

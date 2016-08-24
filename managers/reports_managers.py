@@ -108,25 +108,29 @@ class ReportManager(threading.Thread):
         Synchronize report directory using the DataManager and Plugins online
         We first make sure that all shared reports were added to the repo
         """
+        filenames = []
 
         for root, dirs, files in os.walk(self._report_path, False):
 
             if root == self._report_path:
                 for name in files:
-                    filename = os.path.join(root, name)
+                    filenames.append(os.path.join(root, name))
 
-                    # If plugin not is detected... move to unprocessed
-                    if self.processor.processReport(filename) is False:
+        for filename in filenames:
+            name = os.path.basename(filename)
 
-                        os.rename(
-                            filename,
-                            os.path.join(self._report_upath, name)
-                        )
-                    else:
-                        os.rename(
-                            filename,
-                            os.path.join(self._report_ppath, name)
-                        )
+            # If plugin not is detected... move to unprocessed
+            if self.processor.processReport(filename) is False:
+
+                os.rename(
+                    filename,
+                    os.path.join(self._report_upath, name)
+                )
+            else:
+                os.rename(
+                    filename,
+                    os.path.join(self._report_ppath, name)
+                )
 
         self.onlinePlugins()
 

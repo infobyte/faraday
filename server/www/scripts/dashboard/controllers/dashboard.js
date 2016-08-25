@@ -32,5 +32,9 @@ angular.module('faradayApp')
                 dashboardSrv.stopTimer();
             })
 
+            $scope.reload = function() {
+                dashboardSrv.updateData();
+            }
+
             init();
     }]);

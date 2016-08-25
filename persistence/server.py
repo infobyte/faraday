@@ -33,7 +33,8 @@ class ConflictInDatabase(Exception):
                 "did not provided a _rev argument to your payload. "
                 "The answer from the server was {0}".format(self.answer))
 
-SERVER_URI = "http://127.0.0.1:5984"
+#SERVER_URI = "http://127.0.0.1:5984"
+SERVER_URI=""
 
 def _get_base_server_uri():
     if not SERVER_URI:
@@ -392,21 +393,21 @@ def get_credential(workspace_name, credential_id):
     """
     return _force_unique(get_services(workspace_name, couchid=credential_id))
 
-def get_hosts_number(workspace_name):
+def get_hosts_number(workspace_name, **params):
     """Return the number of host found in workspace workspace_name"""
-    return int(server._get_raw_hosts(workspace_name)['total_rows'])
+    return int(_get_raw_hosts(workspace_name, **params)['total_rows'])
 
-def get_services_number(workspace_name):
+def get_services_number(workspace_name, **params):
     """Return the number of services found in workspace workspace_name"""
-    return len(get_services(workspace_name))
+    return len(get_services(workspace_name, **params))
 
-def get_interfaces_number(workspace_name):
+def get_interfaces_number(workspace_name, **params):
     """Return the number of interfaces found in workspace workspace_name"""
-    return len(get_interfaces(wokspace_name))
+    return len(get_interfaces(wokspace_name, **params))
 
-def get_vulns_number(workspace_name):
+def get_vulns_number(workspace_name, **params):
     """Return the number of vulns found in workspace workspace_name"""
-    return int(server._get_raw_vulns(workspace_name)['count'])
+    return int(_get_raw_vulns(workspace_name, **params)['count'])
 
 def save_host(workspace_name, id, name, os, default_gateway,
               description="", metadata=None, owned=False, owner="",

@@ -200,19 +200,18 @@ def save_credential(workspace_name, credential, rev=None):
                                   username=credential.getUsername(),
                                   password=credential.getPassword())
 
+def get_hosts_number(workspace_name, **params):
+    return server.get_hosts_number(workspace_name, **params)
 
-class SillyHost():
-    def __init__(self) :
-        import random; self.id = random.randint(0, 1000)
-        self.os = "Windows"
-    def getID(self): return self.id
-    def getOS(self): return self.os
-    def getDefaultGateway(self): return '192.168.1.1'
-    def getDescription(self): return "a description"
-    def getName(self): return "my name"
-    def isOwned(self): return False
-    def getOwner(self): return False
-    def getMetadata(self): return {'stuff': 'gives other stuff'}
+def get_services_number(workspace_name, **params):
+    return server.get_services_number(workspace_name, **params)
+
+def get_interfaces_number(workspace_name, **params):
+    return server.get_interfaces_number(workspace_name, **params)
+
+def get_vulns_number(workspace_name, **params):
+    return server.get_vulns_number(workspace_name, **params)
+
 
 class _Host:
     """A simple Host class. Should implement all the methods of the

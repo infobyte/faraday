@@ -18,6 +18,7 @@ except ValueError:
     gi.require_version('Vte', '2.90')
 
 from gi.repository import Gtk, Gdk, GLib, Pango, GdkPixbuf, Vte
+from persistence import models
 
 from decorators import scrollable
 from compatibility import CompatibleVteTerminal as VteTerminal
@@ -396,7 +397,7 @@ class WorkspaceSidebar(Gtk.Widget):
         self.last_workspace = last_workspace
         self.ws_manager = workspace_manager
 
-        self.workspaces = self.ws_manager.getWorkspacesNames()
+        self.workspaces = models.get_workspaces_names()
         self.search_entry = self.create_search_entry()
 
         self.workspace_model = self.create_ws_model()
@@ -444,7 +445,7 @@ class WorkspaceSidebar(Gtk.Widget):
         the model to see which are already there and which arent"""
 
         self.ws_manager.resource()
-        self.workspaces = self.ws_manager.getWorkspacesNames()
+        self.workspaces = get_workspaces_names()
 
         model = self.workspace_model
         added_workspaces = [added_ws[0] for added_ws in model]

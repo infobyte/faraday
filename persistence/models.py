@@ -230,6 +230,8 @@ def delete_note(workspace_name, note_id):
 def delete_credential(workspace_name, credential_id):
     return server.delete_credential(workspace_name, credential_id)
 
+def get_workspaces_names():
+    return server.get_workspaces_names()['workspaces']
 
 class _Host:
     """A simple Host class. Should implement all the methods of the

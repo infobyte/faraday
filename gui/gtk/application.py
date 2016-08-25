@@ -262,7 +262,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         self.workspace_dialogs_raised = True
 
-        available_workspaces = self.workspace_manager.getWorkspacesNames()
+        available_workspaces = models.get_workspaces_names()
         workspace_model = self.ws_sidebar.workspace_model
 
         if available_workspaces:

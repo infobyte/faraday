@@ -44,6 +44,9 @@ def _get_base_server_uri():
         server_uri = SERVER_URI
     return server_uri
 
+def _create_server_api_uri():
+    return "{0}/_api".format(_get_base_server_uri())
+
 def _create_server_get_uri(workspace_name, object_name):
     """Creates a request URI for the server. Takes the workspace name
     as a string, an object_name paramter which is the object you want to
@@ -51,8 +54,8 @@ def _create_server_get_uri(workspace_name, object_name):
 
     Return the request_uri as a string.
     """
-    server_api_uri = "{0}/_api".format(_get_base_server_uri())
-    request_uri = '{0}/ws/{1}/{2}'.format(server_api_uri, workspace_name,
+    request_uri = '{0}/ws/{1}/{2}'.format(_create_server_api_uri(),
+                                          workspace_name,
                                           object_name)
     return request_uri
 
@@ -304,6 +307,10 @@ def get_objects(workspace_name, object_signature, **params):
 
     return appropiate_function(workspace_name, **params)
 
+def get_workspaces_names():
+    """Return a json containing the list with the workspaces names."""
+    return _get("{0}/ws".format(_create_server_api_uri()))
+
 def get_object(workspace_name, object_signature, object_id):
     """Take a workspace_name, an object_signature and an object_id as strings,
     return the dictionary containging the object of type object_signature
@@ -411,7 +418,7 @@ def get_credential(workspace_name, credential_id):
 
 def get_hosts_number(workspace_name, **params):
     """Return the number of host found in workspace workspace_name"""
-    return int(server._get_raw_hosts(workspace_name, **params)['total_rows'])
+    return int(_get_raw_hosts(workspace_name, **params)['total_rows'])
 
 def get_services_number(workspace_name, **params):
     """Return the number of services found in workspace workspace_name"""
@@ -423,7 +430,7 @@ def get_interfaces_number(workspace_name, **params):
 
 def get_vulns_number(workspace_name, **params):
     """Return the number of vulns found in workspace workspace_name"""
-    return int(server._get_raw_vulns(workspace_name, **params)['count'])
+    return int(_get_raw_vulns(workspace_name, **params)['count'])
 
 def save_host(workspace_name, id, name, os, default_gateway,
               description="", metadata=None, owned=False, owner="",

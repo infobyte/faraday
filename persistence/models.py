@@ -212,6 +212,24 @@ def get_interfaces_number(workspace_name, **params):
 def get_vulns_number(workspace_name, **params):
     return server.get_vulns_number(workspace_name, **params)
 
+def delete_host(workspace_name, host_id):
+    return server.delete_host(workspace_name, host_id)
+
+def delete_interface(workspace_name, interface_id):
+    return server.delete_interface(workspace_name, interface_id)
+
+def delete_service(workspace_name, service_id):
+    return server.delete_service(workspace_name, service_id)
+
+def delete_vuln(workspace_name, vuln_id):
+    return server.delete_vuln(workspace_name, vuln_id)
+
+def delete_note(workspace_name, note_id):
+    return server.delete_note(workspace_name, note_id)
+
+def delete_credential(workspace_name, credential_id):
+    return server.delete_credential(workspace_name, credential_id)
+
 
 class _Host:
     """A simple Host class. Should implement all the methods of the
@@ -441,3 +459,17 @@ class _VulnWeb:
     def getTarget(self): return self.target
     def getMetadata(self): return self.metadata
     def getParent(self): return self.parent
+
+# NOTE: uncomment for test
+# class SillyHost():
+#     def __init__(self) :
+#         import random; self.id = random.randint(0, 1000)
+#         self.os = "Windows"
+#     def getID(self): return self.id
+#     def getOS(self): return self.os
+#     def getDefaultGateway(self): return '192.168.1.1'
+#     def getDescription(self): return "a description"
+#     def getName(self): return "my name"
+#     def isOwned(self): return False
+#     def getOwner(self): return False
+#     def getMetadata(self): return {'stuff': 'gives other stuff'}

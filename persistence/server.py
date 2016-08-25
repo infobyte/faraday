@@ -33,8 +33,7 @@ class ConflictInDatabase(Exception):
                 "did not provided a _rev argument to your payload. "
                 "The answer from the server was {0}".format(self.answer))
 
-#SERVER_URI = "http://127.0.0.1:5984"
-SERVER_URI=""
+SERVER_URI = "http://127.0.0.1:5984"
 
 def _get_base_server_uri():
     if not SERVER_URI:
@@ -45,7 +44,7 @@ def _get_base_server_uri():
         server_uri = SERVER_URI
     return server_uri
 
-def _create_server_api_uri(workspace_name, object_name):
+def _create_server_get_uri(workspace_name, object_name):
     """Creates a request URI for the server. Takes the workspace name
     as a string, an object_name paramter which is the object you want to
     query as a string ('hosts', 'interfaces', etc) .
@@ -57,10 +56,16 @@ def _create_server_api_uri(workspace_name, object_name):
                                           object_name)
     return request_uri
 
+# XXX: COUCH IT!
 def _create_server_post_uri(workspace_name, object_id):
     server_base_uri = _get_base_server_uri()
     post_uri = '{0}/{1}/{2}'.format(server_base_uri, workspace_name, object_id)
     return post_uri
+
+# XXX: COUCH IT!
+def _create_server_delete_uri(workspace_name, object_id):
+    return _create_server_post_uri(workspace_name, object_id)
+
 
 def _unsafe_io_with_server(server_io_function, server_expected_response,
                            server_uri, **payload):
@@ -114,45 +119,57 @@ def _put(post_uri, **params):
         last_rev = _get(post_uri)['_rev']
         return _put(post_uri, _rev=last_rev, **params)
 
+def _delete(delete_uri):
+    """Deletes the object on delete_uri."""
+    last_rev = _get(delete_uri)['_rev']
+    return _unsafe_io_with_server(requests.delete, 200, delete_uri,
+                                  params={'rev':last_rev})
+
 def _get_raw_hosts(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the hosts table."""
-    request_uri = _create_server_api_uri(workspace_name, 'hosts')
+    request_uri = _create_server_get_uri(workspace_name, 'hosts')
     return _get(request_uri, **params)
 
 def _get_raw_vulns(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the vulns table."""
-    request_uri = _create_server_api_uri(workspace_name, 'vulns')
+    request_uri = _create_server_get_uri(workspace_name, 'vulns')
     return _get(request_uri, **params)
 
 def _get_raw_interfaces(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the interfaces table."""
-    request_uri = _create_server_api_uri(workspace_name, 'interfaces')
+    request_uri = _create_server_get_uri(workspace_name, 'interfaces')
     return _get(request_uri, **params)
 
 def _get_raw_services(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the services table."""
-    request_uri = _create_server_api_uri(workspace_name, 'services')
+    request_uri = _create_server_get_uri(workspace_name, 'services')
     return _get(request_uri, **params)
 
 def _get_raw_notes(workspace_name, **params):
     """Take a workspace name and an arbitrary number of params and
     return a dictionary with the notes table."""
-    request_uri = _create_server_api_uri(workspace_name, 'notes')
+    request_uri = _create_server_get_uri(workspace_name, 'notes')
     return _get(request_uri, **params)
 
 def _get_raw_credentials(workspace_name, **params):
     """Take a workspace name and an arbitrary number of params and
     return a dictionary with the credentials table."""
-    request_uri = _create_server_api_uri(workspace_name, 'credentials')
+    request_uri = _create_server_get_uri(workspace_name, 'credentials')
     return _get(request_uri, **params)
 
+# XXX: COUCH IT!
 def _save_to_couch(workspace_name, faraday_object_id, **params):
     post_uri = _create_server_post_uri(workspace_name, faraday_object_id)
     return _put(post_uri, **params)
+
+# XXX: COUCH IT!
+def _delete_from_couch(workspace_name, faraday_object_id):
+    delete_uri = _create_server_delete_uri(workspace_name, faraday_object_id)
+    return _delete(delete_uri)
 
 def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
                                     faraday_object_row_name, full_table=False,
@@ -270,13 +287,12 @@ def get_objects(workspace_name, object_signature, **params):
     number of query params, return a list a dictionaries containg information
     about 'object_signature' objects matching the query.
 
-    object_signature must be either 'hosts', 'vulns', 'vulns_web', 'interfaces'
+    object_signature must be either 'hosts', 'vulns', 'interfaces'
     'services', 'credentials' or 'notes'. Will raise an WrongObjectSignature
     error if this condition is not met.
     """
     object_to_func = {'hosts': get_hosts,
-                      'vulns': get_not_web_vulns,
-                      'vulns_web': get_vulns_web,
+                      'vulns': get_vulns,
                       'interfaces': get_interfaces,
                       'services': get_services,
                       'credentials': get_credentials,
@@ -395,7 +411,7 @@ def get_credential(workspace_name, credential_id):
 
 def get_hosts_number(workspace_name, **params):
     """Return the number of host found in workspace workspace_name"""
-    return int(_get_raw_hosts(workspace_name, **params)['total_rows'])
+    return int(server._get_raw_hosts(workspace_name, **params)['total_rows'])
 
 def get_services_number(workspace_name, **params):
     """Return the number of services found in workspace workspace_name"""
@@ -407,7 +423,7 @@ def get_interfaces_number(workspace_name, **params):
 
 def get_vulns_number(workspace_name, **params):
     """Return the number of vulns found in workspace workspace_name"""
-    return int(_get_raw_vulns(workspace_name, **params)['count'])
+    return int(server._get_raw_vulns(workspace_name, **params)['count'])
 
 def save_host(workspace_name, id, name, os, default_gateway,
               description="", metadata=None, owned=False, owner="",
@@ -533,3 +549,21 @@ def save_credential(workspace_name, id, username, password):
     """
     return _save_to_couch(workspace_name, id, username=username,
                           password=password, type="Credential")
+
+def delete_host(workspace_name, host_id):
+    return _delete_from_couch(workspace_name, host_id)
+
+def delete_interface(workspace_name, interface_id):
+    return _delete_from_couch(workspace_name, interface_id)
+
+def delete_service(workspace_name, service_id):
+    return _delete_from_couch(workspace_name, service_id)
+
+def delete_vuln(workspace_name, vuln_id):
+    return _delete_from_couch(workspace_name, vuln_id)
+
+def delete_note(workspace_name, note_id):
+    return _delete_from_couch(workspace_name, note_id)
+
+def delete_credential(workspace_name, credential_id):
+    return _delete_from_couch(workspace_name, credential_id)

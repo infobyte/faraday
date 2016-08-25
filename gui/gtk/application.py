@@ -49,6 +49,7 @@ from gui.gui_app import FaradayUi
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
 from persistence.persistence_managers import CouchDbManager
+from persistence import models
 from appwindow import AppWindow
 
 from dialogs import PreferenceWindowDialog
@@ -75,8 +76,6 @@ from mainwidgets import Statusbar
 from gui.loghandler import GUIHandler
 from utils.logs import addHandler
 from utils.common import checkSSL
-
-from gui.gtk import server_api as server
 
 CONF = getInstanceConfiguration()
 
@@ -122,32 +121,33 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.window = None
         self.model_controller = model_controller
 
+    @property
     def active_ws_name(self):
         return self.get_active_workspace().name
 
     def get_hosts(self, **params):
-        return server.get_hosts(self.active_ws_name(), **params)
+        return models.get_hosts(self.active_ws_name, **params)
 
-    def get_host_amount(self):
-        return server.get_hosts_amount(self.active_ws_name())
+    def get_hosts_number(self):
+        return models.get_hosts_number(self.active_ws_name)
 
     def get_interfaces(self, **params):
-        return server.get_interfaces(self.active_ws_name(), **params)
+        return models.get_interfaces(self.active_ws_name, **params)
 
-    def get_interface_amount(self):
-        return server.get_interfaces_amount(self.active_ws_name())
+    def get_interfaces_number(self):
+        return models.get_interfaces_number(self.active_ws_name)
 
     def get_services(self, **params):
-        return server.get_services(self.active_ws_name(), **params)
+        return models.get_services(self.active_ws_name, **params)
 
-    def get_services_amount(self):
-        return server.get_services_amount(self.active_ws_name())
+    def get_services_number(self):
+        return models.get_services_number(self.active_ws_name)
 
     def get_vulns(self, **params):
-        return server.get_all_vulns(self.active_ws_name(), **params)
+        return models.get_vulns(self.active_ws_name, **params)
 
-    def get_vulns_amount(self):
-        return server.get_all_vulns_amount(self.active_ws_name())
+    def get_vulns_number(self):
+        return models.get_vulns_number(self.active_ws_name)
 
     def getMainWindow(self):
         """Useless mostly, but guiapi uses this method to access the main
@@ -282,7 +282,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def select_active_workspace(self):
         """Selects on the sidebar the currently active workspace."""
-        self.ws_sidebar.select_ws_by_name(self.active_ws_name())
+        self.ws_sidebar.select_ws_by_name(self.active_ws_name)
 
     def get_active_workspace(self):
         """Return the currently active workspace"""
@@ -367,9 +367,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         # host_count = self.model_controller.getHostsCount()
         # service_count = self.model_controller.getServicesCount()
         # vuln_count = self.model_controller.getVulnsCount()
-        host_count = self.get_host_amount()
-        service_count = self.get_services_amount()
-        vuln_count = self.get_vulns_amount()
+        host_count = self.get_hosts_number()
+        service_count = self.get_services_number()
+        vuln_count = self.get_vulns_number()
         return host_count, service_count, vuln_count
 
     def show_host_info(self, host_id):
@@ -552,7 +552,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         def workspace_changed_event():
             host_count, service_count, vuln_count = self.update_counts()
-            total_host_amount = self.get_host_amount()
+            total_host_amount = self.get_hosts_number()
             first_host_page = self.get_hosts(page='0', page_size='20', sort='vulns', sort_dir='desc')
             GObject.idle_add(self.hosts_sidebar.redo, first_host_page, total_host_amount)
             GObject.idle_add(self.statusbar.update_ws_info, host_count,

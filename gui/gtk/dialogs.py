@@ -797,7 +797,7 @@ class HostInfoDialog(Gtk.Window):
                               vuln.getResponse(), vuln.getMethod(),
                               vuln.getPname(),
                               params_to_string(vuln.getParams()),
-                              vuln.getQuery(), vuln.getCategory()])
+                              vuln.getQuery(), ""])
         # sort it!
         sorted_model = Gtk.TreeModelSort(model=model)
         sorted_model.set_sort_column_id(1, Gtk.SortType.ASCENDING)

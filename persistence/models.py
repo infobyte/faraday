@@ -264,7 +264,7 @@ class _Host:
     def getOwner(self): return self.owner
     def getMetadata(self): return self.metadata
     def getVulns(self):
-        return get_all_vulns(self._workspace_name, target=self.name)
+        return get_vulns(self._workspace_name, target=self.name)
     def getInterface(self, interface_couch_id):
         service = get_interfaces(self._workspace_name, couchid=interface_couch_id)
         return service[0]
@@ -298,7 +298,7 @@ class _Interface:
         self.network_segment = interface['value']['network_segment']
         self.owned = interface['value']['owned']
         self.ports = interface['value']['ports']
-        self.metadata = interface['value']['metadata']
+        # XXX FALTA: self.metadata = interface['value']['metadata']
 
     def __str__(self): return "{0}".format(self.name)
     def getID(self): return self.id
@@ -310,7 +310,7 @@ class _Interface:
     def getMAC(self): return self.mac
     def getNetworkSegment(self): return self.network_segment
     def isOwned(self): return self.owned
-    def getMetadata(self): return self.metadata
+    #def getMetadata(self): return self.metadata
 
     def getService(self, service_couch_id):
         service = get_services(self._workspace_name, couchid=service_couch_id)
@@ -346,7 +346,7 @@ class _Service:
         self.version = service['value']['version']
         self.status = service['value']['status']
         self.vuln_amount = int(service['vulns'])
-        self.metadata = service['value']['metadata']
+        #XXX: FALTA self.metadata = service['value']['metadata']
 
     def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
     def getID(self): return self.id
@@ -357,8 +357,8 @@ class _Service:
     def getVersion(self): return self.version
     def getProtocol(self): return self.protocol
     def isOwned(self): return self.owned
-    def getVulns(self): return get_all_vulns(self._workspace_name, service=self.name)
-    def getMetadata(self): return self.metadata
+    def getVulns(self): return get_vulns(self._workspace_name, service=self.name)
+    #def getMetadata(self): return self.metadata
 
 
 class _Vuln:
@@ -429,7 +429,6 @@ class _VulnWeb:
         self.target = vuln_web['value']['target']
         self.metadata = vuln_web['value']['metadata']
         self.parent = vuln_web['value']['parent']
-        #XXX: ME SACARON CATEGORY!!!! D: self.category = vuln_web['value']['category']
 
     def getID(self): return self.id
     def getName(self): return self.name
@@ -446,7 +445,6 @@ class _VulnWeb:
     def getPname(self): return self.pname
     def getParams(self): return self.params
     def getQuery(self): return self.query
-    def getCategory(self): return self.category
     def getConfirmed(self): return self.confirmed
     def getResolution(self): return self.resolution
     def getAttachments(self): return self.attachments

@@ -98,6 +98,10 @@ def get_services(workspace_name, **params):
     return _get_faraday_ready_services(workspace_name, services_interfaces)
 
 def save_host(workspace_name, host):
+    """Take a workspace_name and a host object and save it to the sever.
+
+    Return the server's json response as a dictionary.
+    """
     return server.save_host(workspace_name,
                             id=host.getID(),
                             name=host.getName(),
@@ -108,7 +112,10 @@ def save_host(workspace_name, host):
                             owned=host.isOwned(),
                             owner=host.getOwner())
 
-def save_interface(workspace_name, interface):
+def save_interface(workspace_name, interface, rev=None):
+    """Take a workspace_name and an interface object and save it to the sever.
+    Return the server's json response as a dictionary.
+    """
     return server.save_interface(workspace_name,
                                  id=interface.getID(),
                                  name=interface.getName(),
@@ -128,7 +135,11 @@ def save_interface(workspace_name, interface):
                                  metadata=interface.getMetadata())
 
 
-def save_vuln(workspace_name, vuln):
+def save_vuln(workspace_name, vuln, rev=None):
+    """Take a workspace_name and an vulnerability object and save it to the
+    sever. The rev parameter must be provided if you are updating the object.
+    Return the server's json response as a dictionary.
+    """
     return server.save_vuln(workspace_name,
                             id=vuln.getID(),
                             name=vuln.getName(),
@@ -139,18 +150,21 @@ def save_vuln(workspace_name, vuln):
                             severity=vuln.getSeverity(),
                             metadata=vuln.getMetadata())
 
-def save_vuln_web(workspace_name, vuln_web):
+def save_vuln_web(workspace_name, vuln_web, rev=None):
+    """Take a workspace_name and an vulnerabilityWeb object and save it to the
+    sever.
+    Return the server's json response as a dictionary.
+    """
     return server.save_vuln_web(workspace_name,
                                 id=vuln_web.getID(),
                                 name=vuln_web.getName(),
                                 description=vuln_web.getDescription(),
-                                confirmed=vuln_web.getConfirmed(),
-                                data=vuln_web.getData(),
+                                confirmed=vuln_web.getConfirmed(), data=vuln_web.getData(),
                                 refs=vuln_web.getRefs(),
                                 severity=vuln_web.getSeverity(),
                                 resolution=vuln_web.getResolution(),
                                 attachments=vuln_web.getAttachments(),
-                                easeofresolution=vuln_web.getEasyOfResolution(),
+                                easeofresolution=vuln_web.getEaseOfResolution(),
                                 hostnames=vuln_web.getHostnames(),
                                 impact=vuln_web.getImpact(),
                                 method=vuln_web.getMethod(),
@@ -167,9 +181,32 @@ def save_vuln_web(workspace_name, vuln_web):
                                 website=vuln_web.getWebsite(),
                                 metadata=vuln_web.getMetadata())
 
+def save_note(workspace_name, note, rev=None):
+    """Take a workspace_name and an note object and save it to the sever.
+    Return the server's json response as a dictionary.
+    """
+    return server.save_note(workspace_name,
+                            id=note.getID(),
+                            name=note.getName(),
+                            description=note.getDescription(),
+                            text=note.getText())
+
+def save_credential(workspace_name, credential, rev=None):
+    """Take a workspace_name and an credential object and save it to the sever.
+    Return the server's json response as a dictionary.
+    """
+    return server.save_credential(workspace_name,
+                                  id=credential.getID(),
+                                  username=credential.getUsername(),
+                                  password=credential.getPassword())
+
+
 class SillyHost():
-    def getID(self): import random; return random.randint(0, 1000)
-    def getOS(self): return "Windows"
+    def __init__(self) :
+        import random; self.id = random.randint(0, 1000)
+        self.os = "Windows"
+    def getID(self): return self.id
+    def getOS(self): return self.os
     def getDefaultGateway(self): return '192.168.1.1'
     def getDescription(self): return "a description"
     def getName(self): return "my name"
@@ -189,9 +226,13 @@ class _Host:
         self.id = host['id']
         self.server_id = host['_id']
         self.name = host['value']['name']
+        self.description = host['value']['description']
+        self.default_gateway = host['value']['default_gateway']
         self.os = host['value']['os']
         self.vuln_amount = int(host['value']['vulns'])
         self.owned = host['value']['owned']
+        self.metadata = host['value']['metadata']
+        self.owner = host['value']['owner']
 
     def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
     def getOS(self): return self.os
@@ -199,6 +240,10 @@ class _Host:
     def getVulnAmount(self): return self.vuln_amount
     def isOwned(self): return self.owned
     def getID(self): return self.id
+    def getDescription(self): return self.description
+    def getDefaultGateway(self): return self.default_gateway
+    def getOwner(self): return self.owner
+    def getMetadata(self): return self.metadata
     def getVulns(self):
         return get_all_vulns(self._workspace_name, target=self.name)
     def getInterface(self, interface_couch_id):
@@ -234,6 +279,7 @@ class _Interface:
         self.network_segment = interface['value']['network_segment']
         self.owned = interface['value']['owned']
         self.ports = interface['value']['ports']
+        self.metadata = interface['value']['metadata']
 
     def __str__(self): return "{0}".format(self.name)
     def getID(self): return self.id
@@ -245,6 +291,7 @@ class _Interface:
     def getMAC(self): return self.mac
     def getNetworkSegment(self): return self.network_segment
     def isOwned(self): return self.owned
+    def getMetadata(self): return self.metadata
 
     def getService(self, service_couch_id):
         service = get_services(self._workspace_name, couchid=service_couch_id)
@@ -280,6 +327,7 @@ class _Service:
         self.version = service['value']['version']
         self.status = service['value']['status']
         self.vuln_amount = int(service['vulns'])
+        self.metadata = service['value']['metadata']
 
     def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
     def getID(self): return self.id
@@ -291,6 +339,7 @@ class _Service:
     def getProtocol(self): return self.protocol
     def isOwned(self): return self.owned
     def getVulns(self): return get_all_vulns(self._workspace_name, service=self.name)
+    def getMetadata(self): return self.metadata
 
 
 class _Vuln:
@@ -302,19 +351,25 @@ class _Vuln:
     def __init__(self, vuln, workspace_name):
         self._workspace_name = workspace_name
         self.class_signature = 'Vulnerability'
+        self.id = vuln['id']
         self.name = vuln['value']['name']
         self.description = vuln['value']['desc']
         self.desc = vuln['value']['desc']
         self.data = vuln['value']['data']
         self.severity = vuln['value']['severity']
         self.refs = vuln['value']['refs']
+        self.confirmed = vuln['value']['confirmed']
+        self.metadata = vuln['value']['metadata']
 
+    def getID(self): return self.id
     def getName(self): return self.name
     def getDescription(self): return self.description
     def getDesc(self): return self.desc
     def getData(self): return self.data
     def getSeverity(self): return self.severity
     def getRefs(self): return self.refs
+    def getConfirmed(self): return self.confirmed
+    def getMetadata(self): return self.metadata
 
 
 class _VulnWeb:
@@ -324,9 +379,9 @@ class _VulnWeb:
     a search the server is missing.
     """
     def __init__(self, vuln_web, workspace_name):
-        pprint(vuln_web)
         self._workspace_name = workspace_name
         self.class_signature = 'VulnerabilityWeb'
+        self.id = vuln_web['id']
         self.name = vuln_web['value']['name']
         self.description = vuln_web['value']['desc']
         self.desc = vuln_web['value']['desc']
@@ -341,8 +396,23 @@ class _VulnWeb:
         self.pname = vuln_web['value']['pname']
         self.params = vuln_web['value']['params']
         self.query = vuln_web['value']['query']
+        self.confirmed = vuln_web['value']['confirmed']
+        self.resolution = vuln_web['value']['resolution']
+        self.attachments = vuln_web['value']['_attachments']
+        self.easeofresolution = vuln_web['value']['easeofresolution']
+        self.hostnames = vuln_web['value']['hostnames']
+        self.impact = vuln_web['value']['impact']
+        self.owned = vuln_web['value']['owned']
+        self.owner = vuln_web['value']['owner']
+        self.service = vuln_web['value']['service']
+        self.status = vuln_web['value']['status']
+        self.tags = vuln_web['value']['tags']
+        self.target = vuln_web['value']['target']
+        self.metadata = vuln_web['value']['metadata']
+        self.parent = vuln_web['value']['parent']
         #XXX: ME SACARON CATEGORY!!!! D: self.category = vuln_web['value']['category']
 
+    def getID(self): return self.id
     def getName(self): return self.name
     def getDescription(self): return self.description
     def getDesc(self): return self.desc
@@ -358,3 +428,17 @@ class _VulnWeb:
     def getParams(self): return self.params
     def getQuery(self): return self.query
     def getCategory(self): return self.category
+    def getConfirmed(self): return self.confirmed
+    def getResolution(self): return self.resolution
+    def getAttachments(self): return self.attachments
+    def getEaseOfResolution(self): return self.easeofresolution
+    def getHostnames(self): return self.hostnames
+    def getImpact(self): return self.impact
+    def isOwned(self): return self.owned
+    def getOwner(self): return self.owner
+    def getService(self): return self.service
+    def getStatus(self): return self.status
+    def getTags(self): return self.tags
+    def getTarget(self): return self.target
+    def getMetadata(self): return self.metadata
+    def getParent(self): return self.parent

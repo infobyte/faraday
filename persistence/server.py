@@ -23,6 +23,16 @@ class WrongObjectSignature(Exception):
                 "'interface' 'service', 'credential' or 'note' and it was {0}"
                 .format(self.param))
 
+class ConflictInDatabase(Exception):
+    def __init__(self, answer):
+        self.answer = answer
+
+    def __str__(self):
+        return ("There was a conflict trying to save your document. "
+                "Most probably the document already existed and you "
+                "did not provided a _rev argument to your payload. "
+                "The answer from the server was {0}".format(self.answer))
+
 SERVER_URI = "http://127.0.0.1:5984"
 
 def _get_base_server_uri():
@@ -51,8 +61,8 @@ def _create_server_post_uri(workspace_name, object_id):
     post_uri = '{0}/{1}/{2}'.format(server_base_uri, workspace_name, object_id)
     return post_uri
 
-def _safer_io_with_server(server_io_function, server_expected_response,
-                         server_uri, **payload):
+def _unsafe_io_with_server(server_io_function, server_expected_response,
+                           server_uri, **payload):
     """A wrapper for functions which deals with I/O to or from the server.
     It calls the server_io_function with uri server_uri and the payload,
     raising an CantCommunicateWithServerError if the response wasn't
@@ -63,6 +73,8 @@ def _safer_io_with_server(server_io_function, server_expected_response,
     """
     try:
         answer = server_io_function(server_uri, **payload)
+        if answer.status_code == 409 and answer.json()['error'] == 'conflict':
+            raise ConflictInDatabase(answer)
         if answer.status_code != server_expected_response:
             raise requests.exceptions.ConnectionError()
     except requests.exceptions.ConnectionError:
@@ -82,7 +94,7 @@ def _get(request_uri, **params):
 
     Return a dictionary with the information in the json.
     """
-    return _safer_io_with_server(requests.get, 200, request_uri, params=params)
+    return _unsafe_io_with_server(requests.get, 200, request_uri, params=params)
 
 def _put(post_uri, **params):
     """Put to the post_uri. Takes an arbitrary number of parameters to
@@ -94,7 +106,12 @@ def _put(post_uri, **params):
     Return a dictionary with the response from couchdb, which looks like this:
     {u'id': u'61', u'ok': True, u'rev': u'1-967a00dff5e02add41819138abb3284d'}
     """
-    return _safer_io_with_server(requests.put, 201,  post_uri, json=params)
+    try:
+        return _unsafe_io_with_server(requests.put, 201, post_uri, json=params)
+    except ConflictInDatabase:
+        # if the object already existed, get its revision and update the object
+        last_rev = _get(post_uri)['_rev']
+        return _put(post_uri, _rev=last_rev, **params)
 
 def _get_raw_hosts(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
@@ -376,23 +393,26 @@ def get_credential(workspace_name, credential_id):
     return _force_unique(get_services(workspace_name, couchid=credential_id))
 
 def get_hosts_number(workspace_name):
+    """Return the number of host found in workspace workspace_name"""
     return int(server._get_raw_hosts(workspace_name)['total_rows'])
 
 def get_services_number(workspace_name):
+    """Return the number of services found in workspace workspace_name"""
     return len(get_services(workspace_name))
 
 def get_interfaces_number(workspace_name):
+    """Return the number of interfaces found in workspace workspace_name"""
     return len(get_interfaces(wokspace_name))
 
-def get_services_number(workspace_name):
-    return len(get_services(workspace_name))
-
 def get_vulns_number(workspace_name):
+    """Return the number of vulns found in workspace workspace_name"""
     return int(server._get_raw_vulns(workspace_name)['count'])
 
 def save_host(workspace_name, id, name, os, default_gateway,
               description="", metadata=None, owned=False, owner="",
               parent=None):
+    """Save a host to the server. Return a dictionary with the
+    server's response."""
     return _save_to_couch(workspace_name, id,
                           name=name, os=os,
                           default_gateway=default_gateway,
@@ -408,6 +428,8 @@ def save_interface(workspace_name, id, name, description, mac, owned=False,
                    ipv4_gateway=None, ipv4_dns=None, ipv4_mask=None,
                    ipv6_address=None, ipv6_gateway=None, ipv6_dns=None,
                    ipv6_prefix=None, metadata=None):
+    """Save an interface to the server. Return a dictionary with the
+    server's response."""
     return _save_to_couch(workspace_name, id,
                           name=name,
                           description=description,
@@ -428,6 +450,8 @@ def save_interface(workspace_name, id, name, description, mac, owned=False,
 
 def save_service(workspace_name, id, name, description, ports, owned=False,
                  protocol="", status="", version="", metadata=None):
+    """Save a service to the server. Return a dictionary with the
+    server's response."""
     return _save_to_couch(workspace_name, id,
                           name=name,
                           description=description,
@@ -439,64 +463,34 @@ def save_service(workspace_name, id, name, description, ports, owned=False,
                           type="Service",
                           metadata=None)
 
-def _save_general_vuln(workspace_name, vuln_type, id, name, description,
-                       ref=None, resolution="", confirmed=False,
-                       attachments=None, data="", easeofresolution=None,
-                       hostnames=None, impact=None, method=None,
-                       owned=False, owner="", params="", parent=None,
-                       path=None, pname=None, query=None, refs=None,
-                       request=None, response=None, service="",
-                       severity="info", status="", tags=None, target="",
-                       website=None, metadata=None):
-    return _save_to_couch(workspace_name, id,
-                          name=name,
-                          description=description,
-                          ref=ref,
-                          severity=severity,
-                          resolution=resolution,
-                          confirmed=confirmed,
-                          hostnames=hostnames,
-                          impact=impact,
-                          method=method,
-                          owned=owned,
-                          owner=owner,
-                          params=params,
-                          parent=parent,
-                          path=path,
-                          pname=pname,
-                          query=query,
-                          refs=refs,
-                          request=request,
-                          response=response,
-                          service=service,
-                          status=status,
-                          tags=tags,
-                          target=target,
-                          website=website,
-                          type=vuln_type,
-                          metadata=metadata)
 
 def save_vuln(workspace_name, id, name, description, confirmed=False,
               data="", refs=None, severity="info", metadata=None):
-    return _save_general_vuln(workspace_name, 'Vulnerability', id,
-                              name=name,
-                              description=description,
-                              confirmed=confirmed,
-                              data=data,
-                              refs=refs,
-                              severity=severity,
-                              metadata=metadata)
+    """Save a vulnerability to the server. Return the json with the
+    server's response.
+    """
+    return _save_to_couch(workspace_name, id,
+                          name=name,
+                          description=description,
+                          confirmed=confirmed,
+                          data=data,
+                          refs=refs,
+                          severity=severity,
+                          type="Vulnerability",
+                          metadata=metadata)
 
 def save_vuln_web(workspace_name, id, name, description,
                   refs=None, resolution="", confirmed=False,
                   attachments=None, data="", easeofresolution=None,
                   hostnames=None, impact=None, method=None,
                   owned=False, owner="", params="", parent=None,
-                  path=None, pname=None, query=None, refs=None,
-                  request=None, response=None,
-                  service="", severity="info", status="", tags=None,
-                  target="", website=None, metadata=None):
-    return _save_general_vuln(workspace_name, id,
+                  path=None, pname=None, query=None, request=None,
+                  response=None, service="", severity="info", status="",
+                  tags=None, target="", website=None, metadata=None):
+    """Save a web vulnerability to the server. Return the json with the
+    server's response.
+    """
+    return _save_to_couch(workspace_name, id,
                           name=name,
                           description=description,
                           refs=refs,
@@ -512,7 +506,6 @@ def save_vuln_web(workspace_name, id, name, description,
                           path=path,
                           pname=pname,
                           query=query,
-                          refs=refs,
                           request=request,
                           resolution=resolution,
                           response=response,
@@ -525,41 +518,17 @@ def save_vuln_web(workspace_name, id, name, description,
                           metadata=metadata)
 
 def save_note(workspace_name, id, name, description, text):
+    """Save a note to the server. Return the json with the
+    server's response.
+    """
     return _save_to_couch(workspace_name, id, name=name,
                           description=description,
                           text=text,
                           type="Note")
 
 def save_credential(workspace_name, id, username, password):
+    """Save a credential to the server. Return the json with the
+    server's response.
+    """
     return _save_to_couch(workspace_name, id, username=username,
                           password=password, type="Credential")
-
-def save_service(workspace_name, service, **params):
-    return _save_to_couch(workspace_name, service, **params)
-
-def save_vuln(workspace_name, vuln, **params):
-    return _save_to_couch(workspace_name, vuln, **params)
-
-def save_note(workspace_name, note, **params):
-    return _save_to_couch(workspace_name, note, **params)
-
-def save_credential(workspace_name, credential, **params):
-    return _save_to_couch(workspace_name, credential, **params)
-
-def update_host(workspace_name, host, rev, **params):
-    return _save_to_couch(workspace_name, host, rev=rev, **params)
-
-def update_interface(workspace_name, interface, rev, **params):
-    return _save_to_couch(workspace_name, interface, rev=rev, **params)
-
-def update_service(workspace_name, service, rev, **params):
-    return _save_to_couch(workspace_name, service, rev=rev, **params)
-
-def update_vuln(workspace_name, vuln, rev, **params):
-    return _save_to_couch(workspace_name, vuln, rev=rev, **params)
-
-def update_note(worksapce_name, note, rev, **params):
-    return _save_to_couch(workspace_name, note, rev=rev, **params)
-
-def update_credential(worksapce_name, credential, rev, **params):
-    return _save_to_couch(workspace_name, credential, rev=rev, **params)

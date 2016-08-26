@@ -1,18 +1,10 @@
 import requests, json
 
+from persistence.utils import force_unique
+
 class CantCommunicateWithServerError(Exception):
     def __str__(self):
         return "Couldn't get a valid response from the server."
-
-class MoreThanOneObjectFoundByID(Exception):
-    def __init__(self, object_id, faulty_list):
-        self.object_id = object_id
-        self.faulty_list = faulty_list
-
-    def __str__(self):
-        return ("More than one object has been found with ID {0}."
-                "These are all the objects found with that ID: {1}"
-                .format(self.object_id, self.faulty_list))
 
 class WrongObjectSignature(Exception):
     def __init__(self, param):
@@ -175,7 +167,7 @@ def _delete_from_couch(workspace_name, faraday_object_id):
     return _delete(delete_uri)
 
 def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
-                                    faraday_object_row_name, full_table=False,
+                                    faraday_object_row_name, full_table=True,
                                     **params):
     """Takes a workspace_name (str), a faraday_object_name (str),
     a faraday_object_row_name (str) and an arbitrary number of params.
@@ -210,18 +202,6 @@ def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
             else:
                 faraday_ready_dictionaries.append(raw_dictionary)
     return faraday_ready_dictionaries
-
-def _force_unique(lst):
-    """Takes a list and return its only member if the list len is 1,
-    None if list is empty or raises an MoreThanOneObjectFoundByID error
-    if list has more than one element.
-    """
-    if len(lst) == 1:
-        return lst[0]
-    elif len(lst) == 0:
-        return None
-    else:
-        raise MoreThanOneObjectFoundByID(object_id, lst)
 
 def get_hosts(workspace_name, **params):
     """Given a workspace name and an arbitrary number of query params,
@@ -326,7 +306,7 @@ def get_object(workspace_name, object_signature, object_id):
     should never happen.
     """
     objects = get_objects(workspace_name, object_signature, couchid=object_id)
-    return _force_unique(objects)
+    return force_unique(objects)
 
 def get_host(workspace_name, host_id):
     """Take a workspace name and host_id as strings. Return a dictionary
@@ -337,7 +317,7 @@ def get_host(workspace_name, host_id):
     the host_id is shared by two or more hosts in the workspace. This
     should never happen.
     """
-    return _force_unique(get_hosts(workspace_name, couchid=host_id))
+    return force_unique(get_hosts(workspace_name, couchid=host_id))
 
 def get_vuln(workspace_name, vuln_id):
     """Take a workspace name and vuln_id as strings. Return a dictionary
@@ -348,7 +328,7 @@ def get_vuln(workspace_name, vuln_id):
     the vuln_id is shared by two or more vulns in the workspace. This
     should never happen.
     """
-    return _force_unique(get_vulns(workspace_name, couchid=vuln_id))
+    return force_unique(get_vulns(workspace_name, couchid=vuln_id))
 
 def get_not_web_vuln(workspace_name, vuln_id):
     """Take a workspace name and vuln_id as strings. Return a dictionary
@@ -359,7 +339,7 @@ def get_not_web_vuln(workspace_name, vuln_id):
     the vuln_id is shared by two or more vulns in the workspace. This
     should never happen.
     """
-    return _force_unique(get_not_web_vulns(workspace_name, couchid=vuln_id))
+    return force_unique(get_not_web_vulns(workspace_name, couchid=vuln_id))
 
 def get_web_vuln(workspace_name, vuln_id):
     """Take a workspace name and vuln_id as strings. Return a dictionary
@@ -370,7 +350,7 @@ def get_web_vuln(workspace_name, vuln_id):
     the vuln_id is shared by two or more web vulns in the workspace. This
     should never happen.
     """
-    return _force_unique(get_web_vulns(workspace_name, couchid=vuln_id))
+    return force_unique(get_web_vulns(workspace_name, couchid=vuln_id))
 
 def get_interface(workspace_name, interface_id):
     """Take a workspace name and interface_id as strings. Return a dictionary
@@ -381,7 +361,7 @@ def get_interface(workspace_name, interface_id):
     the interface_id is shared by two or more interfaces in the workspace. This
     should never happen.
     """
-    return _force_unique(get_interfaces(workspace_name, couchid=interface_id))
+    return force_unique(get_interfaces(workspace_name, couchid=interface_id))
 
 def get_service(workspace_name, service_id):
     """Take a workspace name and service_id as strings. Return a dictionary
@@ -392,7 +372,7 @@ def get_service(workspace_name, service_id):
     the service_id is shared by two or more services in the workspace. This
     should never happen.
     """
-    return _force_unique(get_services(workspace_name, couchid=service_id))
+    return force_unique(get_services(workspace_name, couchid=service_id))
 
 def get_note(workspace_name, note_id):
     """Take a workspace name and note_id as strings. Return a dictionary
@@ -403,7 +383,7 @@ def get_note(workspace_name, note_id):
     the note_id is shared by two or more notes in the workspace. This
     should never happen.
     """
-    return _force_unique(get_services(workspace_name, couchid=note_id))
+    return force_unique(get_services(workspace_name, couchid=note_id))
 
 def get_credential(workspace_name, credential_id):
     """Take a workspace name and credential_id as strings. Return a dictionary
@@ -414,7 +394,7 @@ def get_credential(workspace_name, credential_id):
     the credential_id is shared by two or more credentials in the workspace.
     This should never happen.
     """
-    return _force_unique(get_services(workspace_name, couchid=credential_id))
+    return force_unique(get_services(workspace_name, couchid=credential_id))
 
 def get_hosts_number(workspace_name, **params):
     """Return the number of host found in workspace workspace_name"""

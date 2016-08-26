@@ -1,4 +1,5 @@
 from persistence import server
+from persistence.utils import force_unique
 
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
                                faraday_object_name):
@@ -52,6 +53,9 @@ def get_hosts(workspace_name, **params):
     host_dictionaries = server.get_hosts(workspace_name, full_table=True, **params)
     return _get_faraday_ready_hosts(workspace_name, host_dictionaries)
 
+def get_host(workspace_name, host_id):
+    return force_unique(get_hosts(workspace_name, couchid=host_id))
+
 def get_vulns(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
     request.
@@ -70,6 +74,9 @@ def get_not_web_vulns(workspace_name, **params):
     vulns_dictionaries = server.get_not_web_vulns(workspace_name, full_table=True, **params)
     return _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vulns_type='vulns')
 
+def get_vuln(workspace_name, vuln_id):
+    return force_unique(get_not_web_vulns(workspace_name, couchid=vuln_id))
+
 def get_web_vulns(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
     request.
@@ -78,6 +85,9 @@ def get_web_vulns(workspace_name, **params):
     """
     vulns_web_dictionaries = server.get_vulns_web(workspace_name, full_table=True, **params)
     return _get_faraday_ready_vulns(workspace_name, vulns_web_dictionaries, vulns_type='vulns_web')
+
+def get_web_vuln(workspace_name, vuln_id):
+    return force_unique(get_web_vulns(workspace_name, couchid=vuln_id))
 
 def get_interfaces(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
@@ -88,6 +98,9 @@ def get_interfaces(workspace_name, **params):
     interfaces_dictionaries = server.get_interfaces(workspace_name, full_table=True, **params)
     return _get_faraday_ready_interfaces(workspace_name, interfaces_dictionaries)
 
+def get_interface(workspace_name, interface_id):
+    return force_unique(get_interfaces(workspace_name, couchid=interface_id))
+
 def get_services(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
     request.
@@ -96,6 +109,9 @@ def get_services(workspace_name, **params):
     """
     services_interfaces = server.get_services(workspace_name, full_table=True, **params)
     return _get_faraday_ready_services(workspace_name, services_interfaces)
+
+def get_service(workspace_name, service_id):
+    return force_unique(get_services(workspace_name, couchid=service_id))
 
 def save_host(workspace_name, host):
     """Take a workspace_name and a host object and save it to the sever.

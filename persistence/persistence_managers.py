@@ -300,7 +300,7 @@ class CouchDbConnector(DbConnector):
         # i'm afraid I may be missing something. In any case, it works
         # as it is, but this definitevely needs revision.
 
-        getLogger(self).debug(
+        getLogger(self).info(
             "Watching for changes")
         while True:
             last_seq = max(self.getSeqNumber(), since)
@@ -317,7 +317,7 @@ class CouchDbConnector(DbConnector):
                         if change['seq'] > self.getSeqNumber():
                             self.setSeqNumber(change['seq'])
                             if not change['id'].startswith('_design'):
-                                getLogger(self).debug(
+                                getLogger(self).info(
                                     "Changes from another instance")
                                 deleted = bool(change.get('deleted', False))
                                 revision = change.get("changes")[-1].get('rev')

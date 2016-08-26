@@ -280,11 +280,11 @@ class ModelController(threading.Thread):
 
         # finally we notify the widgets about this change
         # if res: # notify only if action was done successfuly
-        # self._notifyModelUpdated(*parameters)
+        #     self._notifyModelUpdated(*parameters)
         # else:
         if not res:
             api.devlog("Action code %d failed. Parameters = %s" %
-                       (action, str(parameters)))
+                    (action, str(parameters)))
         if sync:
             self._sync_api_request = False
 
@@ -437,7 +437,7 @@ class ModelController(threading.Thread):
             if not self.addUpdate(old_obj, obj):
                 return False
             dataMapper.save(old_obj)
-            # notifier.editHost(old_obj)
+            notifier.editHost(old_obj)
         else:
             # object_parent = self.mappers_manager.find(parent_id)
             # if object_parent:
@@ -456,10 +456,11 @@ class ModelController(threading.Thread):
             #     getLogger(self).error(msg)
             #     return False
             dataMapper.save(obj)
-            # if obj.class_signature == model.hosts.Host.class_signature:
-            #     notifier.addHost(obj)
-            # else:
-            #     notifier.editHost(obj)
+            self.treeWordsTries.addWord(obj.getName())
+            if obj.class_signature == model.hosts.Host.class_signature:
+                notifier.addHost(obj)
+            else:
+                notifier.editHost(obj)
 
         return True
 
@@ -468,10 +469,10 @@ class ModelController(threading.Thread):
         obj.updateAttributes(*args, **kwargs)
         dataMapper.save(obj)
 
-        # if obj.class_signature == model.hosts.Host.class_signature:
-        #     notifier.editHost(obj)
-        # else:
-        #     notifier.editHost(obj.getHost())
+        if obj.class_signature == model.hosts.Host.class_signature:
+            notifier.editHost(obj)
+        else:
+            notifier.editHost(obj.getHost())
         return True
 
     def __del(self, objId, *args):

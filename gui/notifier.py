@@ -81,3 +81,11 @@ class NotificationCenter():
     def changeFromInstance(self, change):
         self._notifyWidgets(events.ChangeFromInstanceCustomEvent(change))
 
+    def addHostFromChanges(self, obj):
+        self._notifyWidgets(events.AddHostChangesEvent(obj))
+
+    def deleteHostFromChanges(self, obj):
+        self._notifyWidgets(events.DeleteHostChangesEvent(obj))
+
+    def editHostFromChanges(self, obj):
+        self._notifyWidgets(events.EditHostChangesEvent(obj))

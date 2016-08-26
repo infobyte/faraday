@@ -22,45 +22,51 @@ class ChangeController(object):
 
     def loadChange(self, objid, revision, deleted):
         try:
-            obj = self.mapper_manager.find(objid)
-            change = change_factory.create(obj, revision, deleted)
-
-            if change.getChangeType() == CHANGETYPE.DELETE:
-                # object deleted
+            if not deleted:
+                import ipdb; ipdb.set_trace()
+                obj = self.mapper_manager.find(objid)
+                change = change_factory.create(obj, revision, deleted)
                 if isinstance(change, ChangeModelObject):
-                    obj_parent = obj.getParent()
-                    if obj_parent:
-                        obj_parent.deleteChild(obj.getID())
-                self.mapper_manager.remove(objid)
-            elif change.getChangeType() == CHANGETYPE.UPDATE:
-                # object edited
-                self.mapper_manager.reload(objid)
-            elif change.getChangeType() == CHANGETYPE.ADD:
-                if isinstance(change, ChangeModelObject):
-                    # The child has a parent, but the parent doesn't
-                    # have the child yet...
-                    if obj.getParent():
-                        obj.getParent().addChild(obj)
+                    self._notify_model_object_change(change, obj)
 
-            if isinstance(change, ChangeModelObject):
-                self._notify_model_object_change(change, obj)
+                # if change.getChangeType() == CHANGETYPE.DELETE:
+                #     # object deleted
+                #     if isinstance(change, ChangeModelObject):
+                #         obj_parent = obj.getParent()
+                #         if obj_parent:
+                #             obj_parent.deleteChild(obj.getID())
+                #     self.mapper_manager.remove(objid)
+                # elif change.getChangeType() == CHANGETYPE.UPDATE:
+                #     # object edited
+                #     self.mapper_manager.reload(objid)
+                # elif change.getChangeType() == CHANGETYPE.ADD:
+                #     if isinstance(change, ChangeModelObject):
+                #         # The child has a parent, but the parent doesn't
+                #         # have the child yet...
+                #         if obj.getParent():
+                #             obj.getParent().addChild(obj)
+            else:
+                model.guiapi.notification_center.deleteHostFromChanges(objid)
             model.guiapi.notification_center.changeFromInstance(change)
+
         except:
             getLogger(self).debug(
                 "Change couldn't be processed")
 
     def _notify_model_object_change(self, change, obj):
-        host = obj.getHost()
-        if (change.getChangeType() == CHANGETYPE.ADD and
-           obj.class_signature == model.hosts.Host.class_signature):
-            model.guiapi.notification_center.addHost(host)
-        elif (change.getChangeType() == CHANGETYPE.DELETE and
-              obj.class_signature == model.hosts.Host.class_signature):
-            model.guiapi.notification_center.delHost(host.getID())
+        # host = obj.getHost()
+        if (change.getChangeType() == CHANGETYPE.ADD):
+            model.guiapi.notification_center.addHostFromChanges(obj)
+            # model.guiapi.notification_center.addHost(host)
+        
+        # elif (change.getChangeType() == CHANGETYPE.DELETE ):
+        #     model.guiapi.notification_center.delHost(host.getID())
+        
         elif (change.getChangeType() != CHANGETYPE.UNKNOWN):
-            model.guiapi.notification_center.editHost(host)
+            # model.guiapi.notification_center.editHost(host)
+            model.guiapi.notification_center.editHostFromChanges(obj)
 
-
+            
     def revertToNoWorkspace(self):
         model.guiapi.notification_center.WorkspaceProblem()
 

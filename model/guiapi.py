@@ -456,3 +456,21 @@ def resolveConflict(conflict, kwargs):
 
 def merge(host1, host2):
     return __model_controller.merge(host1, host2)
+
+def addHostFromChanges(obj):
+     if obj is not None:
+         notification_center.addHostFromChanges(obj)
+         return True
+     return False
+
+def deleteHostFromChanges(obj):
+     if obj is not None:
+         notification_center.deleteHostFromChanges(obj)
+         return True
+     return False
+
+def editHostFromChanges(obj):
+     if obj is not None:
+         notification_center.editHostFromChanges(obj)
+         return True
+     return False

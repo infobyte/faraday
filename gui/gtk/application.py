@@ -574,18 +574,31 @@ class GuiApp(Gtk.Application, FaradayUi):
         def workspace_not_accessible_event():
             GObject.idle_add(self.handle_no_active_workspace)
 
-        dispatch = {3131: new_log_event,
-                    3141: new_conflict_event,
-                    5100: new_notification_event,
-                    4100: host_added_event,
-                    4101: host_deleted_event,
-                    4102: host_updated_event,
-                    3140: workspace_changed_event,
-                    3132: normal_error_event,
-                    3134: important_error_event,
-                    42424: lost_connection_to_server_event,
-                    24242: workspace_not_accessible_event}
+        def addHostChanges():
+            print 'ADD EVENT'
+        
+        def deleteHostChanges():
+            print 'DELET EVENT'
 
+        def editHostChanges():
+            print 'EDIT EVENT'
+        
+        dispatch = {3131:  new_log_event,
+                    3141:  new_conflict_event,
+                    5100:  new_notification_event,
+                    4100:  host_added_event,
+                    4101:  host_deleted_event,
+                    4102:  host_updated_event,
+                    3140:  workspace_changed_event,
+                    3132:  normal_error_event,
+                    3134:  important_error_event,
+                    42424: lost_connection_to_server_event,
+                    24242: workspace_not_accessible_event,
+                    7777:  addHostChanges,
+                    8888:  deleteHostChanges,
+                    9999:  editHostChanges}
+        
+        print event.type(), 'EVENTO GTK'
         function = dispatch.get(event.type())
         if function is not None:
             function()

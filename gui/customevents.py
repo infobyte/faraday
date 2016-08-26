@@ -32,7 +32,9 @@ CHANGEFROMINSTANCE = 5100
 UPDATEMODEL_ID = 54321
 CONNECTION_REFUSED = 42424
 WORKSPACE_PROBLEM = 24242
-
+ADDHOST_CHANGES = 7777
+DELETEHOST_CHANGES = 8888
+EDITHOST_CHANGES = 9999
 
 class CustomEvent(object):
     def __init__(self, type):
@@ -153,3 +155,21 @@ class ChangeFromInstanceCustomEvent(CustomEvent):
     def __init__(self, change):
         CustomEvent.__init__(self, CHANGEFROMINSTANCE)
         self.change = change
+
+
+class AddHostChangesEvent(CustomEvent):
+    def __init__(self, obj):
+        CustomEvent.__init__(self, ADDHOST_CHANGES)
+        self.obj = obj
+
+
+class DeleteHostChangesEvent(CustomEvent):
+    def __init__(self, obj):
+        CustomEvent.__init__(self, DELETEHOST_CHANGES)
+        self.obj = obj
+
+
+class EditHostChangesEvent(CustomEvent):
+    def __init__(self, obj):
+        CustomEvent.__init__(self, EDITHOST_CHANGES)
+        self.obj = obj

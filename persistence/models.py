@@ -1,5 +1,9 @@
 from persistence import server
-from persistence.utils import force_unique
+from persistence.utils import (force_unique, get_host_properties,
+                               get_interface_properties, get_service_properties,
+                               get_vuln_properties, get_vuln_web_properties,
+                               get_note_properties, get_credential_properties)
+
 
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
                                faraday_object_name):
@@ -16,7 +20,9 @@ def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries
                        'vulns': _Vuln,
                        'vulns_web': _VulnWeb,
                        'interfaces': _Interface,
-                       'services': _Service}
+                       'services': _Service,
+                       'notes': _Note,
+                       'credentials': _Credential}
 
     appropiate_class = object_to_class[faraday_object_name]
     faraday_objects = []
@@ -44,38 +50,41 @@ def _get_faraday_ready_services(workspace_name, services_dictionaries):
 def _get_faraday_ready_interfaces(workspace_name, interfaces_dictionaries):
     return _get_faraday_ready_objects(workspace_name, interfaces_dictionaries, 'interfaces')
 
+def _get_faraday_ready_credentials(workspace_name, credentials_dictionaries):
+    return _get_faraday_ready_objects(workspace_name, credentials_dictionaries, 'credentials')
+
+def _get_faraday_ready_notes(workspace_name, notes_dictionaries):
+    return _get_faraday_ready_objects(workspace_name, notes_dictionaries, 'notes')
+
 def get_hosts(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
     request.
 
     Return a list of Host objects.
     """
-    host_dictionaries = server.get_hosts(workspace_name, full_table=True, **params)
+    host_dictionaries = server.get_hosts(workspace_name, **params)
     return _get_faraday_ready_hosts(workspace_name, host_dictionaries)
 
 def get_host(workspace_name, host_id):
+    """Return the host by host_id. None if it can't be found."""
     return force_unique(get_hosts(workspace_name, couchid=host_id))
+
+def get_all_vulns(workspace_name, **params):
+    vulns_dictionaries = server.get_all_vulns(workspace_name, **params)
+    return _get_faraday_ready_vulns(workspace_name, vulns_dictionaries)
 
 def get_vulns(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
     request.
 
-    Return a list of Vuln and VulnWeb objects.
+    Return a list of Vuln objects.
     """
-    vulns_dictionaries = server.get_vulns(workspace_name, full_table=True, **params)
-    return _get_faraday_ready_vulns(workspace_name, vulns_dictionaries)
-
-def get_not_web_vulns(workspace_name, **params):
-    """Take a workspace name and a arbitrary number of params to customize the
-    request.
-
-    Return a list of Vulns.
-    """
-    vulns_dictionaries = server.get_not_web_vulns(workspace_name, full_table=True, **params)
-    return _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vulns_type='vulns')
+    vulns_dictionaries = server.get_vulns(workspace_name, **params)
+    return _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vuln_type='vulns')
 
 def get_vuln(workspace_name, vuln_id):
-    return force_unique(get_not_web_vulns(workspace_name, couchid=vuln_id))
+    """Return the Vuln of id vuln_id. None if not found."""
+    return force_unique(get_vulns(workspace_name, couchid=vuln_id))
 
 def get_web_vulns(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
@@ -83,10 +92,11 @@ def get_web_vulns(workspace_name, **params):
 
     Return a list of VulnWeb objects.
     """
-    vulns_web_dictionaries = server.get_vulns_web(workspace_name, full_table=True, **params)
+    vulns_web_dictionaries = server.get_web_vulns(workspace_name, **params)
     return _get_faraday_ready_vulns(workspace_name, vulns_web_dictionaries, vulns_type='vulns_web')
 
 def get_web_vuln(workspace_name, vuln_id):
+    """Return the WebVuln of id vuln_id. None if not found."""
     return force_unique(get_web_vulns(workspace_name, couchid=vuln_id))
 
 def get_interfaces(workspace_name, **params):
@@ -95,10 +105,11 @@ def get_interfaces(workspace_name, **params):
 
     Return a list of Interfaces objects
     """
-    interfaces_dictionaries = server.get_interfaces(workspace_name, full_table=True, **params)
+    interfaces_dictionaries = server.get_interfaces(workspace_name, **params)
     return _get_faraday_ready_interfaces(workspace_name, interfaces_dictionaries)
 
 def get_interface(workspace_name, interface_id):
+    """Return the Interface of id interface_id. None if not found."""
     return force_unique(get_interfaces(workspace_name, couchid=interface_id))
 
 def get_services(workspace_name, **params):
@@ -107,114 +118,106 @@ def get_services(workspace_name, **params):
 
     Return a list of Services objects
     """
-    services_interfaces = server.get_services(workspace_name, full_table=True, **params)
-    return _get_faraday_ready_services(workspace_name, services_interfaces)
+    services_dictionary = server.get_services(workspace_name, **params)
+    return _get_faraday_ready_services(workspace_name, services_dictionary)
 
 def get_service(workspace_name, service_id):
+    """Return the Service of id service_id. None if not found."""
     return force_unique(get_services(workspace_name, couchid=service_id))
 
-def save_host(workspace_name, host):
+def get_credentials(workspace_name, **params):
+    credentials_dictionary = server.get_credentials(workspace_name, **params)
+    return _get_faraday_ready_credentials(workspace_name, credentials_dictionary)
+
+def get_credential(workspace_name, credential_id):
+    return force_unique(get_credentials(workspace_name, couchid=credential_id))
+
+def get_notes(workspace_name, **params):
+    notes_dictionary = server.get_notes(workspace_name, **params)
+    return _get_faraday_ready_notes(workspace_name, notes_dictionary)
+
+def get_note(workspace_name, note_id):
+    return force_unique(get_notes(workspace_name, couchid=credential_id))
+
+def create_host(workspace_name, host):
     """Take a workspace_name and a host object and save it to the sever.
 
     Return the server's json response as a dictionary.
     """
-    return server.save_host(workspace_name,
-                            id=host.getID(),
-                            name=host.getName(),
-                            description=host.getDescription(),
-                            os=host.getOS(),
-                            default_gateway=host.getDefaultGateway(),
-                            metadata=host.getMetadata(),
-                            owned=host.isOwned(),
-                            owner=host.getOwner())
+    host_properties = get_host_properties(host)
+    return server.create_host(workspace_name, **host_properties)
 
-def save_interface(workspace_name, interface, rev=None):
+def update_host(workspace_name, host):
+    host_properties = get_host_properties(host)
+    return server.update_host(workspace_name, **host_properties)
+
+def create_interface(workspace_name, interface):
     """Take a workspace_name and an interface object and save it to the sever.
     Return the server's json response as a dictionary.
     """
-    return server.save_interface(workspace_name,
-                                 id=interface.getID(),
-                                 name=interface.getName(),
-                                 description=interface.getDescription(),
-                                 mac=interface.getMAC(),
-                                 owned=interface.isOwned(),
-                                 hostnames=interface.getHostnames(),
-                                 network_segment=interface.getNetworkSegment(),
-                                 ipv4_address= interface.getIPv4Address(),
-                                 ipv4_gateway=interface.getIPv4Gateway(),
-                                 ipv4_dns=interface.getIPv4DNS(),
-                                 ipv4_mask=interface.getIpv4Mask(),
-                                 ipv6_address= interface.getIPv6Address(),
-                                 ipv6_gateway=interface.getIPv6Gateway(),
-                                 ipv6_dns=interface.getIPv6DNS(),
-                                 ipv6_mask=interface.getIPv6Prefix(),
-                                 metadata=interface.getMetadata())
+    interface_properties = get_interface_properties(interface)
+    return server.save_interface(workspace_name, **interface_properties)
 
+def update_interface(workspace_name, interface):
+    interface_properties = get_interface_properties(interface)
+    return server.update_interface(workspace_name, **interface_properties)
 
-def save_vuln(workspace_name, vuln, rev=None):
+def create_service(workspace_name, service):
+    """Take a workspace_name and a service object and save it to the sever.
+    Return the server's json response as a dictionary.
+    """
+    service_properties = get_service_properties(service)
+    return server.create_service(workspace_name, **service_properties)
+
+def update_service(workspace_name, service):
+    service_properties = get_service_properties(service)
+    return server.update_service(workspace_name, **service_properties)
+
+def create_vuln(workspace_name, vuln):
     """Take a workspace_name and an vulnerability object and save it to the
     sever. The rev parameter must be provided if you are updating the object.
     Return the server's json response as a dictionary.
     """
-    return server.save_vuln(workspace_name,
-                            id=vuln.getID(),
-                            name=vuln.getName(),
-                            description=vuln.getDescription(),
-                            confirmed=vuln.getConfirmed(),
-                            data=vuln.getData(),
-                            refs=vuln.getRefs(),
-                            severity=vuln.getSeverity(),
-                            metadata=vuln.getMetadata())
+    vuln_properties = get_vuln_properties(vuln)
+    return server.create_vuln(workspace_name, **vuln_properties)
 
-def save_vuln_web(workspace_name, vuln_web, rev=None):
+def update_vuln(workspace_name, vuln):
+    vuln_properties = get_vuln_properties(vuln)
+    return server.update_vuln(workspace_name, **vuln_properties)
+
+def create_vuln_web(workspace_name, vuln_web):
     """Take a workspace_name and an vulnerabilityWeb object and save it to the
     sever.
     Return the server's json response as a dictionary.
     """
-    return server.save_vuln_web(workspace_name,
-                                id=vuln_web.getID(),
-                                name=vuln_web.getName(),
-                                description=vuln_web.getDescription(),
-                                confirmed=vuln_web.getConfirmed(), data=vuln_web.getData(),
-                                refs=vuln_web.getRefs(),
-                                severity=vuln_web.getSeverity(),
-                                resolution=vuln_web.getResolution(),
-                                attachments=vuln_web.getAttachments(),
-                                easeofresolution=vuln_web.getEaseOfResolution(),
-                                hostnames=vuln_web.getHostnames(),
-                                impact=vuln_web.getImpact(),
-                                method=vuln_web.getMethod(),
-                                owned=vuln_web.isOwned(),
-                                owner=vuln_web.getOwner(),
-                                params=vuln_web.getParams(),
-                                parent=vuln_web.getParent(),
-                                request=vuln_web.getRequest(),
-                                response=vuln_web.getResponse(),
-                                service=vuln_web.getService(),
-                                status=vuln_web.getStatus(),
-                                tags=vuln_web.getTags(),
-                                target=vuln_web.getTarget(),
-                                website=vuln_web.getWebsite(),
-                                metadata=vuln_web.getMetadata())
+    vuln_web_properties = get_vuln_web_properties(vuln_web)
+    return server.save_vuln_web(workspace_name, **vuln_web_properties)
 
-def save_note(workspace_name, note, rev=None):
+def update_vuln_web(workspace_name, vuln_web):
+    vuln_web_properties = get_vuln_web_properties(vuln_web)
+    return server.update_vuln_web(workspace_name, **vuln_web_properties)
+
+def create_note(workspace_name, note):
     """Take a workspace_name and an note object and save it to the sever.
     Return the server's json response as a dictionary.
     """
-    return server.save_note(workspace_name,
-                            id=note.getID(),
-                            name=note.getName(),
-                            description=note.getDescription(),
-                            text=note.getText())
+    note_properties = get_note_properties(note)
+    return server.create_note(workspace_name, **note_properties)
 
-def save_credential(workspace_name, credential, rev=None):
+def update_note(workspace_name, note):
+    note_properties = get_note_properties(note)
+    return server.update_note(workspace_name, **note_properties)
+
+def create_credential(workspace_name, credential):
     """Take a workspace_name and an credential object and save it to the sever.
     Return the server's json response as a dictionary.
     """
-    return server.save_credential(workspace_name,
-                                  id=credential.getID(),
-                                  username=credential.getUsername(),
-                                  password=credential.getPassword())
+    credential_properties = get_credential_properties(credential)
+    return server.create_credential(workspace_name, **credential_properties)
+
+def update_credential(workspace_name, credential):
+    credential_properties = get_credential_properties(credential)
+    return server.update_credential(workspace_name, **credential_properties)
 
 def get_hosts_number(workspace_name, **params):
     return server.get_hosts_number(workspace_name, **params)
@@ -341,7 +344,6 @@ class _Interface:
             for vuln in vulns_in_service:
                 vulns.append(vuln)
         return vulns
-
 
 class _Service:
     """A simple Service class. Should implement all the methods of the
@@ -475,6 +477,30 @@ class _VulnWeb:
     def getTarget(self): return self.target
     def getMetadata(self): return self.metadata
     def getParent(self): return self.parent
+
+class _Note:
+    def __init__(self, note, workspace_name):
+        self._workspace_name = workspace_name
+        self.id = note['id']
+        self.name = note['value']['name']
+        self.description = note['value']['description']
+        self.text = note['value']['text']
+
+    def getID(self): return self.id
+    def getName(self): return self.name
+    def getDescription(self): return self.description
+    def getText(self): return self.text
+
+class _Credential:
+    def __init__(self, credential, workspace_name):
+        self._workspace_name = workspace_name
+        self.id = note['id']
+        self.username = note['value']['username']
+        self.password = note['value']['password']
+
+    def getID(self): return self.id
+    def getUsername(self): return self.username
+    def getPassword(self): return self.password
 
 # NOTE: uncomment for test
 # class SillyHost():

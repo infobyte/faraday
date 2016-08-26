@@ -84,7 +84,7 @@ def get_vulns(workspace_name, **params):
     Return a list of Vuln objects.
     """
     vulns_dictionaries = server.get_vulns(workspace_name, **params)
-    return _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vuln_type='vulns')
+    return _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vulns_type='vulns')
 
 def get_vuln(workspace_name, vuln_id):
     """Return the Vuln of id vuln_id. None if not found."""
@@ -287,7 +287,7 @@ class _Host:
     def getOwner(self): return self.owner
     def getMetadata(self): return self.metadata
     def getVulns(self):
-        return get_vulns(self._workspace_name, target=self.name)
+        return get_all_vulns(self._workspace_name, target=self.name)
     def getInterface(self, interface_couch_id):
         service = get_interfaces(self._workspace_name, couchid=interface_couch_id)
         return service[0]
@@ -379,7 +379,7 @@ class _Service:
     def getVersion(self): return self.version
     def getProtocol(self): return self.protocol
     def isOwned(self): return self.owned
-    def getVulns(self): return get_vulns(self._workspace_name, service=self.name)
+    def getVulns(self): return get_all_vulns(self._workspace_name, service=self.name)
     #def getMetadata(self): return self.metadata
 
 

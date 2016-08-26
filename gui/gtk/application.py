@@ -143,8 +143,8 @@ class GuiApp(Gtk.Application, FaradayUi):
     def get_services_number(self):
         return models.get_services_number(self.active_ws_name)
 
-    def get_vulns(self, **params):
-        return models.get_vulns(self.active_ws_name, **params)
+    def get_all_vulns(self, **params):
+        return models.get_all_vulns(self.active_ws_name, **params)
 
     def get_vulns_number(self):
         return models.get_vulns_number(self.active_ws_name)

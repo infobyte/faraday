@@ -51,6 +51,11 @@ class CommandRunInformation(object):
         self.user = get_user()
         self.ip = get_private_ip()
         self.hostname = get_hostname()
+        self.itime = None
+        self.duration = None,
+        self.params = None,
+        self.workspace = None
+
         for k, v in kwargs.items():
             setattr(self, k, v)
 

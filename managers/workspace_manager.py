@@ -60,7 +60,7 @@ class WorkspaceManager(object):
             raise WorkspaceException(str(e))
         if dbConnector:
             self.closeWorkspace()
-            self.mappersManager.createMappers(dbConnector)
+            self.mappersManager.createMappers(name)
             self.mappersManager.save(workspace)
             self.setActiveWorkspace(workspace)
             notification_center.workspaceChanged(

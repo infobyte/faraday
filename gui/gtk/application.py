@@ -598,7 +598,6 @@ class GuiApp(Gtk.Application, FaradayUi):
                     8888:  deleteHostChanges,
                     9999:  editHostChanges}
         
-        print event.type(), 'EVENTO GTK'
         function = dispatch.get(event.type())
         if function is not None:
             function()

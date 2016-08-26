@@ -1,12 +1,11 @@
 class MoreThanOneObjectFoundByID(Exception):
-    def __init__(self, object_id, faulty_list):
-        self.object_id = object_id
+    def __init__(self, faulty_list):
         self.faulty_list = faulty_list
 
     def __str__(self):
-        return ("More than one object has been found with ID {0}."
-                "These are all the objects found with that ID: {1}"
-                .format(self.object_id, self.faulty_list))
+        return ("More than one object has been found."
+                "These are all the objects found with the same ID: {0}"
+                .format(self.faulty_list))
 
 def force_unique(lst):
     """Takes a list and return its only member if the list len is 1,
@@ -18,7 +17,7 @@ def force_unique(lst):
     elif len(lst) == 0:
         return None
     else:
-        raise MoreThanOneObjectFoundByID(object_id, lst)
+        raise MoreThanOneObjectFoundByID(lst)
 
 def get_host_properties(host):
     return {'id': host.getID(),
@@ -73,7 +72,8 @@ def get_vuln_web_properties(vuln_web):
     return {'id': vuln_web.getID(),
             'name': vuln_web.getName(),
             'description': vuln_web.getDescription(),
-            'confirmed': vuln_web.getConfirmed(), data: vuln_web.getData(),
+            'confirmed': vuln_web.getConfirmed(),
+            'data': vuln_web.getData(),
             'refs': vuln_web.getRefs(),
             'severity': vuln_web.getSeverity(),
             'resolution': vuln_web.getResolution(),
@@ -105,3 +105,13 @@ def get_credential_properties(credential):
     return {'id': credential.getID(),
             'username': credential.getUsername(),
             'password': credential.getPassword()}
+
+def get_command_properties(command):
+    return {'id': command.getID(),
+            'user': command.user,
+            'ip': command.ip,
+            'hostname': command.hostname,
+            'itime': command.itime,
+            'duration': command.duration,
+            'params': command.params,
+            'workspace': command.workspace}

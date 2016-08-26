@@ -390,7 +390,7 @@ def get_credential(workspace_name, credential_id):
     return force_unique(get_services(workspace_name, couchid=credential_id))
 
 def get_command(workspace_name, command_id):
-    return _force_unique(get_commands(workspace_name, couchid=command_id))
+    return force_unique(get_commands(workspace_name, couchid=command_id))
 
 def get_hosts_number(workspace_name, **params):
     """Return the number of host found in workspace workspace_name"""
@@ -402,7 +402,7 @@ def get_services_number(workspace_name, **params):
 
 def get_interfaces_number(workspace_name, **params):
     """Return the number of interfaces found in workspace workspace_name"""
-    return len(get_interfaces(wokspace_name, **params))
+    return len(get_interfaces(workspace_name, **params))
 
 def get_vulns_number(workspace_name, **params):
     """Return the number of vulns found in workspace workspace_name"""

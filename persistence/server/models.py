@@ -5,8 +5,8 @@ from persistence.server.utils import (force_unique, get_host_properties,
                                       get_vuln_properties,
                                       get_vuln_web_properties,
                                       get_note_properties,
-                                      get_credential_properties)
-
+                                      get_credential_properties,
+                                      get_command_properties)
 
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
                                faraday_object_name):
@@ -141,7 +141,30 @@ def get_notes(workspace_name, **params):
     return _get_faraday_ready_notes(workspace_name, notes_dictionary)
 
 def get_note(workspace_name, note_id):
-    return force_unique(get_notes(workspace_name, couchid=credential_id))
+    return force_unique(get_notes(workspace_name, couchid=note_id))
+
+def get_object(workspace_name, object_signature, object_id):
+    """Given a workspace name, an object_signature as string  and an arbitrary
+    number of query params, return a list a dictionaries containg information
+    about 'object_signature' objects matching the query.
+
+    object_signature must be either 'hosts', 'vulns', 'interfaces'
+    'services', 'credentials', 'notes' or 'commands'.
+    Will raise an WrongObjectSignature error if this condition is not met.
+    """
+    object_to_func = {_Host.class_signature: get_host,
+                      _Vuln.class_signature: get_vuln,
+                      _VulnWeb.class_signature: get_web_vuln,
+                      _Interface.class_signature: get_interface,
+                      _Service.class_signature: get_service,
+                      _Credential.class_signature: get_credential, 
+                      _Note.class_signature: get_note}
+    try:
+        appropiate_function = object_to_func[object_signature]
+    except KeyError:
+        raise WrongObjectSignature(object_signature)
+
+    return appropiate_function(workspace_name, object_id)
 
 def create_host(workspace_name, host):
     """Take a workspace_name and a host object and save it to the sever.
@@ -160,7 +183,7 @@ def create_interface(workspace_name, interface):
     Return the server's json response as a dictionary.
     """
     interface_properties = get_interface_properties(interface)
-    return server.save_interface(workspace_name, **interface_properties)
+    return server.create_interface(workspace_name, **interface_properties)
 
 def update_interface(workspace_name, interface):
     interface_properties = get_interface_properties(interface)
@@ -195,7 +218,7 @@ def create_vuln_web(workspace_name, vuln_web):
     Return the server's json response as a dictionary.
     """
     vuln_web_properties = get_vuln_web_properties(vuln_web)
-    return server.save_vuln_web(workspace_name, **vuln_web_properties)
+    return server.create_vuln_web(workspace_name, **vuln_web_properties)
 
 def update_vuln_web(workspace_name, vuln_web):
     vuln_web_properties = get_vuln_web_properties(vuln_web)
@@ -222,6 +245,46 @@ def create_credential(workspace_name, credential):
 def update_credential(workspace_name, credential):
     credential_properties = get_credential_properties(credential)
     return server.update_credential(workspace_name, **credential_properties)
+
+def create_command(workspace_name, command):
+    command_properties = get_command_properties(command)
+    return server.create_command(workspace_name, **command_properties)
+
+def update_command(workspace_name, command):
+    command_properties = get_command_properties(command)
+    return server.update_command(workspace_name, **command_properties)
+
+def create_object(workspace_name, object_signature, obj):
+    object_to_func = {_Host.class_signature: create_host,
+                      _Vuln.class_signature: create_vuln,
+                      _VulnWeb.class_signature: create_vuln_web,
+                      _Interface.class_signature: create_interface,
+                      _Service.class_signature: create_service,
+                      _Credential.class_signature: create_credential, 
+                      _Note.class_signature: create_note,
+                      _Command.class_signature: create_command}
+    try:
+        appropiate_function = object_to_func[object_signature]
+    except KeyError:
+        raise WrongObjectSignature(object_signature)
+
+    return appropiate_function(workspace_name, obj)
+
+def update_object(workspace_name, object_signature, obj):
+    object_to_func = {_Host.class_signature: update_host,
+                      _Vuln.class_signature: update_vuln,
+                      _VulnWeb.class_signature: update_vuln_web,
+                      _Interface.class_signature: update_interface,
+                      _Service.class_signature: update_service,
+                      _Credential.class_signature: update_credential, 
+                      _Note.class_signature: update_note,
+                      _Command.class_signature: update_command}
+    try:
+        appropiate_function = object_to_func[object_signature]
+    except KeyError:
+        raise WrongObjectSignature(object_signature)
+
+    return appropiate_function(workspace_name, obj)
 
 def get_hosts_number(workspace_name, **params):
     return server.get_hosts_number(workspace_name, **params)
@@ -253,6 +316,28 @@ def delete_note(workspace_name, note_id):
 def delete_credential(workspace_name, credential_id):
     return server.delete_credential(workspace_name, credential_id)
 
+def delete_vuln_web(workspace_name, vuln_web):
+    return server.delete_vuln(workspace_name, vuln_web)
+
+def delete_command(workspace_name, command):
+    return server.delete_command(workspace_name, command)
+
+def delete_object(workspace_name, object_signature, obj_id):
+    object_to_func = {_Host.class_signature: delete_host,
+                      _Vuln.class_signature: delete_vuln,
+                      _VulnWeb.class_signature: delete_vuln_web,
+                      _Interface.class_signature: delete_interface,
+                      _Service.class_signature: delete_service,
+                      _Credential.class_signature: delete_credential, 
+                      _Note.class_signature: delete_note,
+                      _Command.class_signature: delete_command}
+    try:
+        appropiate_function = object_to_func[object_signature]
+    except KeyError:
+        raise WrongObjectSignature(object_signature)
+
+    return appropiate_function(workspace_name, obj_id)
+
 def get_workspaces_names():
     return server.get_workspaces_names()['workspaces']
 
@@ -262,9 +347,9 @@ class _Host:
     Any method here more than a couple of lines long probably represent
     a search the server is missing.
     """
+    class_signature = 'Host'
     def __init__(self, host, workspace_name):
         self._workspace_name = workspace_name
-        self.class_signature = 'Host'
         self.id = host['id']
         self.server_id = host['_id']
         self.name = host['value']['name']
@@ -297,7 +382,7 @@ class _Host:
         services = []
         interfaces = self.getAllInterfaces()
         for interface in interfaces:
-            services.append(services.getAllServices())
+            services.append(interface.getAllServices())
         return interfaces
 
 
@@ -307,9 +392,9 @@ class _Interface:
     Any method here more than a couple of lines long probably represent
     a search the server is missing.
     """
+    class_signature = 'Interface'
     def __init__(self, interface, workspace_name):
         self._workspace_name = workspace_name
-        self.class_signature = 'Interface'
         self.id = interface['id']
         self._server_id = interface['_id']
         self.name = interface['value']['name']
@@ -355,9 +440,9 @@ class _Service:
     Any method here more than a couple of lines long probably represent
     a search the server is missing.
     """
+    class_signature = 'Service'
     def __init__(self, service, workspace_name):
         self._workspace_name = workspace_name
-        self.class_signature = 'Service'
         self.id = service['id']
         self._server_id = service['_id']
         self.name = service['value']['name']
@@ -389,9 +474,9 @@ class _Vuln:
     Any method here more than a couple of lines long probably represent
     a search the server is missing.
     """
+    class_signature = 'Vulnerability'
     def __init__(self, vuln, workspace_name):
         self._workspace_name = workspace_name
-        self.class_signature = 'Vulnerability'
         self.id = vuln['id']
         self.name = vuln['value']['name']
         self.description = vuln['value']['desc']
@@ -419,9 +504,9 @@ class _VulnWeb:
     Any method here more than a couple of lines long probably represent
     a search the server is missing.
     """
+    class_signature = 'VulnerabilityWeb'
     def __init__(self, vuln_web, workspace_name):
         self._workspace_name = workspace_name
-        self.class_signature = 'VulnerabilityWeb'
         self.id = vuln_web['id']
         self.name = vuln_web['value']['name']
         self.description = vuln_web['value']['desc']
@@ -483,6 +568,7 @@ class _VulnWeb:
     def getParent(self): return self.parent
 
 class _Note:
+    class_signature = 'Note'
     def __init__(self, note, workspace_name):
         self._workspace_name = workspace_name
         self.id = note['id']
@@ -496,6 +582,7 @@ class _Note:
     def getText(self): return self.text
 
 class _Credential:
+    class_signature = "Cred"
     def __init__(self, credential, workspace_name):
         self._workspace_name = workspace_name
         self.id = note['id']
@@ -507,6 +594,7 @@ class _Credential:
     def getPassword(self): return self.password
 
 class _Command:
+    class_signature = 'CommandRunInformation'
     def __init__(self, command, workspace_name):
         self._workspace_name = workspace_name
         self.id = command['id']
@@ -528,6 +616,15 @@ class _Command:
     def getParams(self): return self.params
     def getUser(self): return self.user
     def getWorkspace(self): return self.workspace
+
+class WrongObjectSignature(Exception):
+    def __init__(self, param):
+        self.param = param
+
+    def __str__(self):
+        return ("object_signature must be either 'host', 'vuln', 'vuln_web',"
+                "'interface' 'service', 'credential' or 'note' and it was {0}"
+                .format(self.param))
 
 # NOTE: uncomment for test
 # class SillyHost():

@@ -201,7 +201,7 @@ class ModelController(threading.Thread):
 
     def _setupActionDispatcher(self):
         self._actionDispatcher = {
-            modelactions.ADDHOST: self.__add,
+            modelactions.ADDHOST: self.__add_host,
             modelactions.DELHOST: self.__del,
             modelactions.EDITHOST: self.__edit,
             modelactions.ADDINTERFACE: self.__add,
@@ -417,7 +417,7 @@ class ModelController(threading.Thread):
         new host must be added to the model
         """
         self.__addPendingAction(modelactions.ADDHOST,
-                                host, category, update, old_hostname)
+                                host, category, update, old_hostname)\
 
     def addHostSYNC(self, host, category=None, update=False, old_hostname=None):
         """
@@ -456,7 +456,7 @@ class ModelController(threading.Thread):
             #     getLogger(self).error(msg)
             #     return False
             dataMapper.save(obj)
-            self.treeWordsTries.addWord(obj.getName())
+            # self.treeWordsTries.addWord(obj.getName())
             if obj.class_signature == model.hosts.Host.class_signature:
                 notifier.addHost(obj)
             else:

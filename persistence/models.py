@@ -22,7 +22,8 @@ def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries
                        'interfaces': _Interface,
                        'services': _Service,
                        'notes': _Note,
-                       'credentials': _Credential}
+                       'credentials': _Credential,
+                       'commands': _Command}
 
     appropiate_class = object_to_class[faraday_object_name]
     faraday_objects = []
@@ -501,6 +502,29 @@ class _Credential:
     def getID(self): return self.id
     def getUsername(self): return self.username
     def getPassword(self): return self.password
+
+class _Command:
+    def __init__(self, command, workspace_name):
+        self._workspace_name = workspace_name
+        self.id = command['id']
+        self.command = command['value']['command']
+        self.duration = command['value']['duration']
+        self.hostname = command['value']['hostname']
+        self.ip = command['value']['ip']
+        self.itime = command['value']['itime']
+        self.params = command['value']['params']
+        self.user = command['value']['user']
+        self.workspace = command['value']['workspace']
+
+    def getID(self): return self.id
+    def getCommand(self): return self.command
+    def getDuration(self): return self.duration
+    def getHostname(self): return self.hostname
+    def getIP(self): return self.ip
+    def getItime(self): return self.itime
+    def getParams(self): return self.params
+    def getUser(self): return self.user
+    def getWorkspace(self): return self.workspace
 
 # NOTE: uncomment for test
 # class SillyHost():

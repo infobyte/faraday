@@ -409,12 +409,15 @@ def get_vulns_number(workspace_name, **params):
     return int(_get_raw_vulns(workspace_name, **params)['count'])
 
 def get_notes_number(workspace_name, **params):
+    """Return the number of notes on workspace workspace_name."""
     return int(_get_raw_notes(workspace_name, **params))
 
 def get_credentials_number(workspace_name, **params):
+    """Return the number of credential on workspace workspace_name."""
     return int(_get_raw_credentials(workspace_name, **params))
 
 def get_commands_number(workspace_name, **params):
+    """Return the number of commands on workspace workspace_name."""
     return int(_get_raw_commands(workspace_name, **params))
 
 def create_host(workspace_name, id, name, os, default_gateway,
@@ -569,14 +572,14 @@ def update_vuln(workspace_name, id, name, description, confirmed=False,
                             type="Vulnerability",
                             metadata=metadata)
 
-def save_vuln_web(workspace_name, id, name, description,
-                  refs=None, resolution="", confirmed=False,
-                  attachments=None, data="", easeofresolution=None,
-                  hostnames=None, impact=None, method=None,
-                  owned=False, owner="", params="", parent=None,
-                  path=None, pname=None, query=None, request=None,
-                  response=None, service="", severity="info", status="",
-                  tags=None, target="", website=None, metadata=None):
+def create_vuln_web(workspace_name, id, name, description,
+                    refs=None, resolution="", confirmed=False,
+                    attachments=None, data="", easeofresolution=None,
+                    hostnames=None, impact=None, method=None,
+                    owned=False, owner="", params="", parent=None,
+                    path=None, pname=None, query=None, request=None,
+                    response=None, service="", severity="info", status="",
+                    tags=None, target="", website=None, metadata=None):
     """Save a web vulnerability to the server. Return the json with the
     server's response.
     """
@@ -647,7 +650,7 @@ def update_vuln_web(workspace_name, id, name, description,
                           type='VulnerabilityWeb',
                           metadata=metadata)
 
-def save_note(workspace_name, id, name, description, text):
+def create_note(workspace_name, id, name, description, text):
     """Save a note to the server. Return the json with the
     server's response.
     """
@@ -667,7 +670,7 @@ def update_note(workspace_name, id, name, description, text):
                             text=text,
                             type="Note")
 
-def save_credential(workspace_name, id, username, password):
+def create_credential(workspace_name, id, username, password):
     """Save a credential to the server. Return the json with the
     server's response.
     """
@@ -675,29 +678,73 @@ def save_credential(workspace_name, id, username, password):
                           password=password, type="Credential")
 
 def update_credential(workspace_name, id, username, password):
-    """Save a credential in the server. Return the json with the
+    """Update a credential in the server. Return the json with the
     server's response.
     """
     return _update_in_couch(workspace_name, id, username=username,
                             password=password, type="Credential")
 
+def create_command(workspace_name, id, command, duration=None, hostname=None,
+                   ip=None, itime=None, params=None, user=None):
+    """Create a command in the server. Return the json with the
+    server's response.
+    """
+    return _save_to_couch(workspace_name,
+                          id,
+                          command=command,
+                          duration=duration,
+                          hostname=hostname,
+                          ip=ip,
+                          itime=itime,
+                          params=params,
+                          user=user,
+                          workspace=workspace_name,
+                          type="CommandRunInformation")
+
+def update_command(workspace_name, id, command, duration=None, hostname=None,
+                   ip=None, itime=None, params=None, user=None):
+    """Update a command in the server. Return the json with the
+    server's response.
+    """
+    return _update_in_couch(workspace_name,
+                            id,
+                            command=command,
+                            duration=duration,
+                            hostname=hostname,
+                            ip=ip,
+                            itime=itime,
+                            params=params,
+                            user=user,
+                            workspace=workspace_name,
+                            type="CommandRunInformation")
+
 def delete_host(workspace_name, host_id):
+    """Delete host of id host_id from the database."""
     return _delete_from_couch(workspace_name, host_id)
 
 def delete_interface(workspace_name, interface_id):
+    """Delete interface of id interface_id from the database."""
     return _delete_from_couch(workspace_name, interface_id)
 
 def delete_service(workspace_name, service_id):
+    """Delete service of id service_id from the database."""
     return _delete_from_couch(workspace_name, service_id)
 
 def delete_vuln(workspace_name, vuln_id):
+    """Delete vuln of id vuln_id from the database."""
     return _delete_from_couch(workspace_name, vuln_id)
 
 def delete_note(workspace_name, note_id):
+    """Delete note of id note_id from the database."""
     return _delete_from_couch(workspace_name, note_id)
 
 def delete_credential(workspace_name, credential_id):
+    """Delete credential of id credential_id from the database."""
     return _delete_from_couch(workspace_name, credential_id)
+
+def delete_command(workspace_name, command_id):
+    """Delete command of id command_id from the database."""
+    return _delete_from_couch(workspace_name, command_id)
 
 class CantCommunicateWithServerError(Exception):
     def __init__(self, server_url, payload):

@@ -49,7 +49,7 @@ from gui.gui_app import FaradayUi
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
 from persistence.persistence_managers import CouchDbManager
-from persistence import models
+from persistence.server import models
 from appwindow import AppWindow
 
 from dialogs import PreferenceWindowDialog

@@ -18,7 +18,7 @@ except ValueError:
     gi.require_version('Vte', '2.90')
 
 from gi.repository import Gtk, Gdk, GLib, Pango, GdkPixbuf, Vte
-from persistence import models
+from persistence.server import models
 
 from decorators import scrollable
 from compatibility import CompatibleVteTerminal as VteTerminal

@@ -13,7 +13,7 @@ from urlparse import urlparse
 import traceback
 from couchdbkit import Server, ChangesStream
 from couchdbkit.resource import ResourceNotFound
-from persistence import server
+from persistence.server import server
 
 from utils.logs import getLogger
 from managers.all import ViewsManager

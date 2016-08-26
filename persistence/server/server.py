@@ -1,5 +1,5 @@
 import requests, json
-from persistence.utils import force_unique
+from persistence.server.utils import force_unique
 
 SERVER_URL = "http://127.0.0.1:5984"
 

@@ -1,8 +1,11 @@
-from persistence import server
-from persistence.utils import (force_unique, get_host_properties,
-                               get_interface_properties, get_service_properties,
-                               get_vuln_properties, get_vuln_web_properties,
-                               get_note_properties, get_credential_properties)
+from persistence.server import server
+from persistence.server.utils import (force_unique, get_host_properties,
+                                      get_interface_properties,
+                                      get_service_properties,
+                                      get_vuln_properties,
+                                      get_vuln_web_properties,
+                                      get_note_properties,
+                                      get_credential_properties)
 
 
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,

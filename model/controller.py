@@ -12,7 +12,6 @@ import model.common  # this is to make sure the factory is created
 import model.hosts
 
 from config.configuration import getInstanceConfiguration
-from model.common import TreeWordsTries
 from utils.logs import getLogger
 import model.api as api
 #import model.guiapi as guiapi
@@ -171,9 +170,6 @@ class ModelController(threading.Thread):
 
         self.objects_with_updates = []
 
-        # used to highligthing
-        self.treeWordsTries = TreeWordsTries()
-
     def __getattr__(self, name):
         getLogger(self).debug("ModelObject attribute to refactor: %s" % name)
 
@@ -308,19 +304,6 @@ class ModelController(threading.Thread):
                 ipv4 = kwargs['ipv4']
                 ipv6 = kwargs['ipv6']
                 hostnames = kwargs['hostnames']
-
-                if not ipv4['address'] in ["0.0.0.0", None]:
-                    self.treeWordsTries.removeWord(ipv4['address'])
-                    self.treeWordsTries.addWord(ipv4['address'])
-
-                if not ipv6['address'] in ["0000:0000:0000:0000:0000:0000:0000:0000", None]:
-                    self.treeWordsTries.removeWord(ipv6['address'])
-                    self.treeWordsTries.addWord(ipv6['address'])
-
-                for h in hostnames:
-                    if h is not None:
-                        self.treeWordsTries.removeWord(h)
-                        self.treeWordsTries.addWord(h)
 
             notifier.conflictUpdate(-1)
             # notifier.editHost(conflict.getFirstObject().getHost())
@@ -478,7 +461,6 @@ class ModelController(threading.Thread):
             #     getLogger(self).error(msg)
             #     return False
             dataMapper.save(obj)
-            self.treeWordsTries.addWord(obj.getName())
             # if obj.class_signature == model.hosts.Host.class_signature:
             #     notifier.addHost(obj)
             # else:
@@ -490,7 +472,6 @@ class ModelController(threading.Thread):
         dataMapper = self.mappers_manager.getMapper(obj.class_signature)
         obj.updateAttributes(*args, **kwargs)
         dataMapper.save(obj)
-        self.treeWordsTries.addWord(obj.getName())
 
         # if obj.class_signature == model.hosts.Host.class_signature:
         #     notifier.editHost(obj)
@@ -504,9 +485,6 @@ class ModelController(threading.Thread):
             obj_parent = obj.getParent()
             if obj_parent:
                 obj_parent.deleteChild(objId)
-
-            if obj.getName():
-                self.treeWordsTries.removeWord(obj.getName())
 
             self.removeConflictsByObject(obj)
 

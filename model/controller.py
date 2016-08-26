@@ -300,11 +300,6 @@ class ModelController(threading.Thread):
     def resolveConflict(self, conflict, kwargs):
         if self.__edit(conflict.getFirstObject(), **kwargs):
             conflict.getFirstObject().updateResolved(conflict)
-            if conflict.getModelObjectType() == "Interface":
-                ipv4 = kwargs['ipv4']
-                ipv6 = kwargs['ipv6']
-                hostnames = kwargs['hostnames']
-
             notifier.conflictUpdate(-1)
             # notifier.editHost(conflict.getFirstObject().getHost())
             # self._notifyModelUpdated()

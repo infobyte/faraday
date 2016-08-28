@@ -143,6 +143,11 @@ def get_notes(workspace_name, **params):
 def get_note(workspace_name, note_id):
     return force_unique(get_notes(workspace_name, couchid=note_id))
 
+def get_workspace(workspace_name):
+    """Return the Workspace of id workspace_name. None if not found."""
+    workspace = server.get_workspace(workspace_name)
+    return _Workspace(workspace, workspace_name) if workspace else None
+
 def get_object(workspace_name, object_signature, object_id):
     """Given a workspace name, an object_signature as string  and an arbitrary
     number of query params, return a list a dictionaries containg information
@@ -286,6 +291,14 @@ def update_object(workspace_name, object_signature, obj):
 
     return appropiate_function(workspace_name, obj)
 
+def create_workspace(workspace_name, **params):
+    """Take the workspace_name and create the database first,
+    then the workspace's document.
+    Return the server's json response as a dictionary"""
+    # XXX: For now we won't upload views
+    response = server.create_database(workspace_name)
+    return server.create_workspace(workspace_name, **params)
+
 def get_hosts_number(workspace_name, **params):
     return server.get_hosts_number(workspace_name, **params)
 
@@ -337,6 +350,9 @@ def delete_object(workspace_name, object_signature, obj_id):
         raise WrongObjectSignature(object_signature)
 
     return appropiate_function(workspace_name, obj_id)
+
+def delete_workspace(workspace_name):
+    return server.delete_workspace(workspace_name)
 
 def get_workspaces_names():
     return server.get_workspaces_names()['workspaces']
@@ -616,6 +632,23 @@ class _Command:
     def getParams(self): return self.params
     def getUser(self): return self.user
     def getWorkspace(self): return self.workspace
+
+class _Workspace:
+    class_signature = 'Workspace'
+    def __init__(self, workspace, workspace_name):
+        self._id = workspace_name
+        self.name = workspace['name']
+        self.description = workspace['description']
+        self.customer = workspace['customer']
+        self.start_date = workspace['sdate']
+        self.finish_date = workspace['fdate']
+
+    def getID(self): return self._id
+    def getName(self): return self.name
+    def getDescription(self): return self.description
+    def getCustomer(self): return self.customer
+    def getStartDate(self): return self.start_date
+    def getFinishDate(self): return self.finish_date
 
 class WrongObjectSignature(Exception):
     def __init__(self, param):

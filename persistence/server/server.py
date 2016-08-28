@@ -1,15 +1,15 @@
 import requests, json
 from persistence.server.utils import force_unique
 
-SERVER_URL = "http://127.0.0.1:5984"
+SERVER_URL = None
 
 def _get_base_server_url():
     if not SERVER_URL:
         from config.configuration import getInstanceConfiguration
         CONF = getInstanceConfiguration()
-        server_url = CONF.getCouchurl()
+        server_url = CONF.getCouchURI()
     else:
-        server_url = SERVER_URL
+        server_url = "http://127.0.0.1:5984"
     return server_url
 
 def _create_server_api_url():
@@ -38,6 +38,11 @@ def _create_server_post_url(workspace_name, object_id):
 def _create_server_delete_url(workspace_name, object_id):
     return _create_server_post_url(workspace_name, object_id)
 
+# XXX: COUCH IT!
+def _create_server_db_url(workspace_name):
+    server_base_url = _get_base_server_url()
+    db_url = '{0}/{1}'.format(server_base_url, workspace_name)
+    return db_url
 
 def _unsafe_io_with_server(server_io_function, server_expected_response,
                            server_url, **payload):
@@ -55,6 +60,8 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
             raise ConflictInDatabase(answer)
         if answer.status_code == 404:
             raise ResourceDoesNotExist(server_url)
+        if answer.status_code == 403:
+            raise Unauthorized(answer)
         if answer.status_code != server_expected_response:
             raise requests.exceptions.ConnectionError()
     except requests.exceptions.ConnectionError:
@@ -392,6 +399,14 @@ def get_credential(workspace_name, credential_id):
 def get_command(workspace_name, command_id):
     return force_unique(get_commands(workspace_name, couchid=command_id))
 
+def get_workspace(workspace_name, **params):
+    """Take a workspace name as string. Return a dictionary
+    containing the workspace document on couch database with the same
+    workspace_name if found, or None if no db or document were found.
+    """
+    request_url = _create_server_post_url(workspace_name, workspace_name)
+    return _get(request_url, **params)
+
 def get_hosts_number(workspace_name, **params):
     """Return the number of host found in workspace workspace_name"""
     return int(_get_raw_hosts(workspace_name, **params)['total_rows'])
@@ -718,6 +733,29 @@ def update_command(workspace_name, id, command, duration=None, hostname=None,
                             workspace=workspace_name,
                             type="CommandRunInformation")
 
+def create_database(workspace_name):
+    """Create a database in the server. Return the json with the
+    server's response. Can throw an Unauthorized exception
+    """
+    db_url = _create_server_db_url(workspace_name)
+    return _parse_json(_unsafe_io_with_server(requests.put,
+                                              201,
+                                              db_url))
+
+def create_workspace(workspace_name, description, start_date, finish_date
+                     customer=None):
+    """Create a workspace in the server. Return the json with the
+    server's response.
+    """
+    return _save_to_couch(workspace_name,
+                          workspace_name,
+                          name=workspace_name,
+                          description=description,
+                          customer=customer,
+                          sdate=start_date,
+                          fdate=finish_date,
+                          type="Workspace")
+
 def delete_host(workspace_name, host_id):
     """Delete host of id host_id from the database."""
     return _delete_from_couch(workspace_name, host_id)
@@ -745,6 +783,13 @@ def delete_credential(workspace_name, credential_id):
 def delete_command(workspace_name, command_id):
     """Delete command of id command_id from the database."""
     return _delete_from_couch(workspace_name, command_id)
+
+def delete_workspace(workspace_name):
+    """Delete the couch database of id workspace_name"""
+    db_url = _create_server_db_url(workspace_name)
+    return _parse_json(_unsafe_io_with_server(requests.delete,
+                                              200,
+                                              db_url))
 
 class CantCommunicateWithServerError(Exception):
     def __init__(self, server_url, payload):
@@ -781,3 +826,11 @@ class ResourceDoesNotExist(Exception):
 
     def __str__(self):
         return ("Can't find anything on URL {0}".format(self.url))
+
+class Unauthorized(Exception):
+    def __init__(self, answer):
+        self.answer = answer
+
+    def __str__(self):
+        return ("You're not authorized to make this request. "
+                "The answer from the server was {0}".format(self.answer))

@@ -285,6 +285,12 @@ def list_workspaces_as_user(cookies):
 
     return { 'workspaces': workspaces }
 
+def get_workspace(ws_name):
+    # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
+    ws_url = get_couchdb_url() + ('/%s/%s' % (workspace_name, workspace_name))
+    response = requests.get(ws_url, verify=False, cookies=cookies, auth=credentials)
+    return response.json()
+
 def has_permissions_for(workspace_name, cookies=None, credentials=None):
     # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
     ws_url = get_couchdb_url() + ('/%s/%s' % (workspace_name, workspace_name))

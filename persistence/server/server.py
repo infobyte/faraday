@@ -742,7 +742,7 @@ def create_database(workspace_name):
                                               201,
                                               db_url))
 
-def create_workspace(workspace_name, description, start_date, finish_date
+def create_workspace(workspace_name, description, start_date, finish_date,
                      customer=None):
     """Create a workspace in the server. Return the json with the
     server's response.

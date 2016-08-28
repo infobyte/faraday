@@ -29,7 +29,6 @@ ADDHOST = 4100
 DELHOST = 4101
 EDITHOST = 4102
 CHANGEFROMINSTANCE = 5100
-UPDATEMODEL_ID = 54321
 CONNECTION_REFUSED = 42424
 WORKSPACE_PROBLEM = 24242
 ADDHOST_CHANGES = 7777
@@ -97,10 +96,9 @@ class RenameHostsRootCustomEvent(CustomEvent):
 
 
 class WorkspaceChangedCustomEvent(CustomEvent):
-    def __init__(self, workspace,workspace_type):
+    def __init__(self, workspace):
         CustomEvent.__init__(self, WORKSPACE_CHANGED)
         self.workspace = workspace
-        self.workspace_type = workspace_type
 
 
 class ConflictUpdatedCustomEvent(CustomEvent):
@@ -125,12 +123,6 @@ class ResolveConflictsCustomEvent(CustomEvent):
 class ClearHostsCustomEvent(CustomEvent):
     def __init__(self):
         CustomEvent.__init__(self, CLEARHOSTS_ID)
-
-
-class ModelObjectUpdateEvent(CustomEvent):
-    def __init__(self, hosts):
-        CustomEvent.__init__(self, UPDATEMODEL_ID)
-        self.hosts = hosts
 
 
 class AddHostCustomEvent(CustomEvent):

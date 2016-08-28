@@ -170,9 +170,8 @@ class GuiApp(Gtk.Application, FaradayUi):
             model.api.devlog("Looking for the delegation class")
             manager = self.getWorkspaceManager()
             try:
-                w = manager.createWorkspace(name, description,
-                                            manager.namedTypeToDbType('CouchDB'))
-                self.change_workspace(w.name)
+                name = manager.createWorkspace(name, description)
+                self.change_workspace(name)
                 creation_ok = True
             except Exception as e:
                 model.guiapi.notification_center.showDialog(str(e))
@@ -407,7 +406,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         clears the sidebar of the old workspaces and injects all the new ones
         in there too"""
         self.workspace_manager.closeWorkspace()
-        self.workspace_manager.resource()
         self.ws_sidebar.clear_sidebar()
         self.ws_sidebar.refresh_sidebar()
 

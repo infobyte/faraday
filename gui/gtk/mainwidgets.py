@@ -444,7 +444,6 @@ class WorkspaceSidebar(Gtk.Widget):
         Gets an updated copy of the workspaces and checks against
         the model to see which are already there and which arent"""
 
-        self.ws_manager.resource()
         self.workspaces = get_workspaces_names()
 
         model = self.workspace_model

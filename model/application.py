@@ -12,7 +12,6 @@ import threading
 import requests
 
 from model.controller import ModelController
-from persistence.persistence_managers import DbManager
 from controllers.change import ChangeController
 from managers.workspace_manager import WorkspaceManager
 from plugins.controller import PluginController
@@ -65,7 +64,6 @@ class MainApplication(object):
 
         self._mappers_manager = MapperManager()
         self._changes_controller = ChangeController()
-        self._db_manager = DbManager(self.on_connection_lost)
 
         self._model_controller = ModelController(self._mappers_manager)
 
@@ -73,7 +71,6 @@ class MainApplication(object):
             os.path.join(CONF.getConfigPath(), "plugins"))
 
         self._workspace_manager = WorkspaceManager(
-            self._db_manager,
             self._mappers_manager,
             self._changes_controller)
 

@@ -44,7 +44,10 @@ class WorkspaceManager(object):
         # XXX: DEPRECATE NEXT LINE
         workspace = Workspace(name, desc)
         try:
-            create_workspace(name, desc, start_date, finish_date, customer)
+            create_workspace(name, description=desc, start_date=start_date,
+                             finish_date=finish_date, customer=customer)
+            # XXX: Remove this hack! Only for testing
+            time.sleep(2)
         except Unauthorized:
             raise WorkspaceException(
                 ("You're not authorized to create workspaces\n"

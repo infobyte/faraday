@@ -469,7 +469,7 @@ def update_host(workspace_name, id, name, os, default_gateway,
                             type="Host")
 
 def create_interface(workspace_name, id, name, description, mac,
-                     owned=False, hostnames=None, network_segment=None,
+                     owned=False, owner="", hostnames=None, network_segment=None,
                      ipv4=None, ipv6=None, metadata=None):
     """Save an interface to the server. Return a dictionary with the
     server's response."""
@@ -479,6 +479,7 @@ def create_interface(workspace_name, id, name, description, mac,
                           description=description,
                           mac=mac,
                           owned=owned,
+                          owner=owner,
                           hostnames=hostnames,
                           network_segment=network_segment,
                           ipv4=ipv4,
@@ -487,10 +488,8 @@ def create_interface(workspace_name, id, name, description, mac,
                           metadata=metadata)
 
 def update_interface(workspace_name, id, name, description, mac,
-                     owned=False, hostnames=None, network_segment=None,
-                     ipv4_address=None, ipv4_gateway=None, ipv4_dns=None,
-                     ipv4_mask=None, ipv6_address=None, ipv6_gateway=None,
-                     ipv6_dns=None, ipv6_prefix=None, metadata=None):
+                     owned=False, owner="", hostnames=None, network_segment=None,
+                     ipv4=None, ipv6=None, metadata=None):
     """Update an interface in the server. Return a dictionary with the
     server's response."""
     return _update_in_couch(workspace_name,
@@ -499,21 +498,16 @@ def update_interface(workspace_name, id, name, description, mac,
                             description=description,
                             mac=mac,
                             owned=owned,
+                            owner=owner,
                             hostnames=hostnames,
                             network_segment=network_segment,
-                            ipv4_address=ipv4_address,
-                            ipv4_gateway=ipv4_gateway,
-                            ipv4_dns=ipv4_dns,
-                            ipv4_mask=ipv4_mask,
-                            ipv6_address=ipv6_address,
-                            ipv6_gateway=ipv6_gateway,
-                            ipv6_dns=ipv6_dns,
-                            ipv6_prefix=ipv6_prefix,
+                            ipv4=ipv4,
+                            ipv6=ipv6,
                             type="Interface",
                             metadata=metadata)
 
 def create_service(workspace_name, id, name, description, ports,
-                   owned=False, protocol="", status="", version="",
+                   owned=False, owner="", protocol="", status="", version="",
                    metadata=None):
     """Save a service to the server. Return a dictionary with the
     server's response."""
@@ -523,6 +517,7 @@ def create_service(workspace_name, id, name, description, ports,
                           description=description,
                           ports=ports,
                           owned=owned,
+                          owner=owner,
                           protocol=protocol,
                           status=status,
                           version=version,
@@ -530,7 +525,7 @@ def create_service(workspace_name, id, name, description, ports,
                           metadata=metadata)
 
 def update_service(workspace_name, id, name, description, ports,
-                   owned=False, protocol="", status="", version="",
+                   owned=False, owner="", protocol="", status="", version="",
                    metadata=None):
     """Update a service in the server. Return a dictionary with the
     server's response."""
@@ -540,6 +535,7 @@ def update_service(workspace_name, id, name, description, ports,
                             description=description,
                             ports=ports,
                             owned=owned,
+                            owner=owner,
                             protocol=protocol,
                             status=status,
                             version=version,
@@ -547,8 +543,9 @@ def update_service(workspace_name, id, name, description, ports,
                             metadata=metadata)
 
 
-def create_vuln(workspace_name, id, name, description, confirmed=False,
-                data="", refs=None, severity="info", metadata=None):
+def create_vuln(workspace_name, id, name, description, owned=None, owner="",
+                confirmed=False, data="", refs=None, severity="info", resolution="",
+                desc="", metadata=None):
     """Save a vulnerability to the server. Return the json with the
     server's response.
     """
@@ -556,15 +553,20 @@ def create_vuln(workspace_name, id, name, description, confirmed=False,
                           id,
                           name=name,
                           description=description,
+                          owned=owned,
+                          owner=owner,
                           confirmed=confirmed,
                           data=data,
                           refs=refs,
                           severity=severity,
+                          resolution=resolution,
+                          desc=desc,
                           type="Vulnerability",
                           metadata=metadata)
 
-def update_vuln(workspace_name, id, name, description, confirmed=False,
-                data="", refs=None, severity="info", metadata=None):
+def update_vuln(workspace_name, id, name, description, owned=None, owner="",
+                confirmed=False, data="", refs=None, severity="info", resolution="",
+                desc="", metadata=None):
     """Update a vulnerability in the server. Return the json with the
     server's response.
     """
@@ -572,124 +574,140 @@ def update_vuln(workspace_name, id, name, description, confirmed=False,
                             id,
                             name=name,
                             description=description,
+                            owned=owned,
+                            owner=owner,
                             confirmed=confirmed,
                             data=data,
                             refs=refs,
                             severity=severity,
+                            resolution=resolution,
+                            desc=desc,
                             type="Vulnerability",
                             metadata=metadata)
 
-def create_vuln_web(workspace_name, id, name, description,
-                    refs=None, resolution="", confirmed=False,
-                    attachments=None, data="", easeofresolution=None,
-                    hostnames=None, impact=None, method=None,
-                    owned=False, owner="", params="", parent=None,
-                    path=None, pname=None, query=None, request=None,
-                    response=None, service="", severity="info", status="",
-                    tags=None, target="", website=None, metadata=None):
+def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
+                    confirmed=False, data="", refs=None, severity="info", resolution="",
+                    desc="", metadata=None, method=None, params="", path=None, pname=None,
+                    query=None, request=None, response=None, category="", website=None):
     """Save a web vulnerability to the server. Return the json with the
     server's response.
     """
     return _save_to_couch(workspace_name,
-                          id,
-                          name=name,
-                          description=description,
-                          refs=refs,
-                          severity=severity,
-                          confirmed=confirmed,
-                          hostnames=hostnames,
-                          impact=impact,
-                          method=method,
-                          owned=owned,
-                          owner=owner,
-                          params=params,
-                          parent=parent,
-                          path=path,
-                          pname=pname,
-                          query=query,
-                          request=request,
-                          resolution=resolution,
-                          response=response,
-                          service=service,
-                          status=status,
-                          tags=tags,
-                          target=target,
-                          website=website,
-                          type='VulnerabilityWeb',
-                          metadata=metadata)
+                            id,
+                            name=name,
+                            description=description,
+                            owned=owned,
+                            owner=owner,
+                            confirmed=confirmed,
+                            data=data,
+                            refs=refs,
+                            severity=severity,
+                            resolution=resolution,
+                            desc=desc,
+                            metadata=metadata,
+                            method=method,
+                            params=params,
+                            path=path,
+                            pname=pname,
+                            query=query,
+                            request=request,
+                            response=response,
+                            website=website,
+                            category=category,
+                            type='VulnerabilityWeb')
 
-def update_vuln_web(workspace_name, id, name, description,
-                    refs=None, resolution="", confirmed=False,
-                    attachments=None, data="", easeofresolution=None,
-                    hostnames=None, impact=None, method=None,
-                    owned=False, owner="", params="", parent=None,
-                    path=None, pname=None, query=None, request=None,
-                    response=None, service="", severity="info", status="",
-                    tags=None, target="", website=None, metadata=None):
+def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
+                    confirmed=False, data="", refs=None, severity="info", resolution="",
+                    desc="", metadata=None, method=None, params="", path=None, pname=None,
+                    query=None, request=None, response=None, category="", website=None):
     """Update a web vulnerability in the server. Return the json with the
     server's response.
     """
     return _update_in_couch(workspace_name,
-                          id,
-                          name=name,
-                          description=description,
-                          refs=refs,
-                          severity=severity,
-                          confirmed=confirmed,
-                          hostnames=hostnames,
-                          impact=impact,
-                          method=method,
-                          owned=owned,
-                          owner=owner,
-                          params=params,
-                          parent=parent,
-                          path=path,
-                          pname=pname,
-                          query=query,
-                          request=request,
-                          resolution=resolution,
-                          response=response,
-                          service=service,
-                          status=status,
-                          tags=tags,
-                          target=target,
-                          website=website,
-                          type='VulnerabilityWeb',
-                          metadata=metadata)
+                            id,
+                            name=name,
+                            description=description,
+                            owned=owned,
+                            owner=owner,
+                            confirmed=confirmed,
+                            data=data,
+                            refs=refs,
+                            severity=severity,
+                            resolution=resolution,
+                            desc=desc,
+                            metadata=metadata,
+                            method=method,
+                            params=params,
+                            path=path,
+                            pname=pname,
+                            query=query,
+                            request=request,
+                            response=response,
+                            website=website,
+                            category=category,
+                            type='VulnerabilityWeb')
 
-def create_note(workspace_name, id, name, description, text):
+def create_note(workspace_name, id, name, text, owned=None, owner="",
+                description="", metadata=None):
     """Save a note to the server. Return the json with the
     server's response.
     """
-    return _save_to_couch(workspace_name, id,
-                          name=name,
-                          description=description,
-                          text=text,
-                          type="Note")
+    return _save_to_couch(workspace_name,
+                            id,
+                            name=name,
+                            description=description,
+                            owned=owned,
+                            owner=owner,
+                            text=text,
+                            type="Note",
+                            metadata=metadata)
 
-def update_note(workspace_name, id, name, description, text):
+def update_note(workspace_name, id, name, text, owned=None, owner="",
+                description="", metadata=None):
     """Update a note in the server. Return the json with the
     server's response.
     """
-    return _update_in_couch(workspace_name, id,
+    return _update_in_couch(workspace_name,
+                            id,
                             name=name,
                             description=description,
+                            owned=owned,
+                            owner=owner,
                             text=text,
-                            type="Note")
+                            type="Note",
+                            metadata=metadata)
 
-def create_credential(workspace_name, id, username, password):
+def create_credential(workspace_name, id, name, username, password,
+                      owned=None, owner="",description="", metadata=None):
     """Save a credential to the server. Return the json with the
     server's response.
     """
-    return _save_to_couch(workspace_name, id, username=username,
-                          password=password, type="Credential")
+    return _save_to_couch(workspace_name,
+                            id,
+                            name=name,
+                            description=description,
+                            owned=owned,
+                            owner=owner,
+                            metadata=metadata,
+                            username=username,
+                            password=password,
+                            type="Credential")
 
-def update_credential(workspace_name, id, username, password):
+def update_credential(workspace_name, id, name, username, password,
+                      owned=None, owner="",description="", metadata=None):
     """Update a credential in the server. Return the json with the
     server's response.
     """
-    return _update_in_couch(workspace_name, id, username=username,
-                            password=password, type="Credential")
+    return _update_in_couch(workspace_name,
+                            id,
+                            name=name,
+                            description=description,
+                            owned=owned,
+                            owner=owner,
+                            metadata=metadata,
+                            username=username,
+                            password=password,
+                            type="Credential")
 
 def create_command(workspace_name, id, command, duration=None, hostname=None,
                    ip=None, itime=None, params=None, user=None):

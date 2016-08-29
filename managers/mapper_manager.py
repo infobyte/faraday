@@ -16,7 +16,6 @@ from persistence.server.models import create_object, get_object, update_object, 
 class MapperManager(object):
     def __init__(self):
         # create and store the datamappers
-        self.mappers = {}
         self.workspace_name = None
 
     def createMappers(self, workpace_name):
@@ -35,5 +34,5 @@ class MapperManager(object):
     def find(self, class_signature, obj_id):
         return get_object(self.workspace_name, class_signature, obj_id)
 
-    def remove(self, obj_id):
-        return delete_object(self.workspace_name, class_signature, obj)
+    def remove(self, obj_id, class_signature):
+        return delete_object(self.workspace_name, class_signature, obj_id)

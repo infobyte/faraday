@@ -59,7 +59,7 @@ class ModelObjectMapper(AbstractMapper):
     def delete(self, mobj_id):
         mobj = self.mapper_manager.find(mobj_id)
         for child in mobj.getChilds().values():
-            self.mapper_manager.remove(child.getID())
+            self.mapper_manager.remove(child.getID(), mobj.class_signature)
         super(ModelObjectMapper, self).delete(mobj_id)
 
     def _loadChilds(self, type):

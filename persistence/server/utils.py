@@ -22,88 +22,77 @@ def force_unique(lst):
 def get_metadata_properties(metadata):
     return metadata.__dict__
 
+def get_object_properties(obj):
+    return {'id': obj.getID(),
+            'name': obj.getName(),
+            'description': obj.getDescription(),
+            'metadata': get_metadata_properties(obj.getMetadata()),
+            'owned': obj.isOwned(),
+            'owner': obj.getOwner()}
+
 def get_host_properties(host):
-    return {'id': host.getID(),
-            'name': host.getName(),
-            'description': host.getDescription(),
-            'os': host.getOS(),
-            'default_gateway': host.getDefaultGateway(),
-            'metadata': get_metadata_properties(host.getMetadata()),
-            'owned': host.isOwned(),
-            'owner': host.getOwner()}
+    host_dict = {'os': host.getOS(),
+            'default_gateway': host.getDefaultGateway()
+            }
+    host_dict.update(get_object_properties(host))
+    return host_dict
 
 def get_interface_properties(interface):
-    return {'id': interface.getID(),
-            'name': interface.getName(),
-            'description': interface.getDescription(),
-            'mac': interface.getMAC(),
-            'owned': interface.isOwned(),
-            'hostnames': interface.getHostnames(),
-            'network_segment': interface.getNetworkSegment(),
-            'ipv4':  interface.getIPv4(),
-            'ipv6': interface.getIPv6(),
-            'metadata': get_metadata_properties(interface.getMetadata())}
+    interface_dict = {'mac': interface.getMAC(),
+                 'hostnames': interface.getHostnames(),
+                 'network_segment': interface.getNetworkSegment(),
+                 'ipv4':  interface.getIPv4(),
+                 'ipv6': interface.getIPv6(),
+                 }
+    interface_dict.update(get_object_properties(interface))
+    return interface_dict
 
 def get_service_properties(service):
-    return {'id': service.getID(),
-            'name': service.getName(),
-            'description': service.getDescription(),
-            'ports': service.getPorts(),
-            'owned': service.isOwned(),
-            'protocol': service.getProtocol(),
-            'status': service.getStatus(),
-            'version': service.getVersion(),
-            'metadata': get_metadata_properties(service.getMetatada())}
+    service_dict = {'ports': service.getPorts(),
+               'protocol': service.getProtocol(),
+               'status': service.getStatus(),
+               'version': service.getVersion(),
+               }
+    service_dict.update(get_object_properties(service))
+    return service_dict
 
 def get_vuln_properties(vuln):
-    return {'id': vuln.getID(),
-            'name': vuln.getName(),
-            'description': vuln.getDescription(),
-            'confirmed': vuln.getConfirmed(),
+    vuln_dict = {'confirmed': vuln.getConfirmed(),
             'data': vuln.getData(),
             'refs': vuln.getRefs(),
             'severity': vuln.getSeverity(),
-            'metadata': get_metadata_properties(vuln.getMetadata())}
+            'resolution': vuln.getResolution(),
+            'desc': vuln.getDesc(),
+            }
+    vuln_dict.update(get_object_properties(vuln))
+    return vuln_dict
 
 def get_vuln_web_properties(vuln_web):
-    return {'id': vuln_web.getID(),
-            'name': vuln_web.getName(),
-            'description': vuln_web.getDescription(),
-            'confirmed': vuln_web.getConfirmed(),
-            'data': vuln_web.getData(),
-            'refs': vuln_web.getRefs(),
-            'severity': vuln_web.getSeverity(),
-            'resolution': vuln_web.getResolution(),
-            'attachments': vuln_web.getAttachments(),
-            'easeofresolution': vuln_web.getEaseOfResolution(),
-            'hostnames': vuln_web.getHostnames(),
-            'impact': vuln_web.getImpact(),
-            'method': vuln_web.getMethod(),
-            'owned': vuln_web.isOwned(),
-            'owner': vuln_web.getOwner(),
-            'params': vuln_web.getParams(),
-            'parent': vuln_web.getParent(),
-            'request': vuln_web.getRequest(),
-            'response': vuln_web.getResponse(),
-            'service': vuln_web.getService(),
-            'status': vuln_web.getStatus(),
-            'tags': vuln_web.getTags(),
-            'target': vuln_web.getTarget(),
-            'website': vuln_web.getWebsite(),
-            'metadata': get_metadata_properties(vuln_web.getMetadata())}
-
+    vuln_web_dict = {'method': vuln_web.getMethod(),
+                'params': vuln_web.getParams(),
+                'request': vuln_web.getRequest(),
+                'response': vuln_web.getResponse(),
+                'website': vuln_web.getWebsite(),
+                'path': vuln_web.getPath(),
+                'pname': vuln_web.getPname(),
+                'query': vuln_web.getQuery(),
+                'category': vuln_web.getCategory()
+                }
+    vuln_web_dict.update(get_object_properties(vuln_web))
+    vuln_web_dict.update(get_vuln_properties(vuln_web))
+    return vuln_web_dict
+            
 def get_note_properties(note):
-    return {'id': note.getID(),
-            'name': note.getName(),
-            'description': note.getDescription(),
-            'text': note.getText(),
-            'metadata': get_metadata_properties(note.getMetadata())}
+    note_dict = {'text': note.getText()}
+    note_dict.update(get_object_properties(note))
+    return note_dict
 
 def get_credential_properties(credential):
-    return {'id': credential.getID(),
-            'username': credential.getUsername(),
+    cred_dict = {'username': credential.getUsername(),
             'password': credential.getPassword(),
-            'metadata': get_metadata_properties(credential.getMetadata())}
+            }
+    cred_dict.update(get_object_properties(credential))
+    return cred_dict
 
 def get_command_properties(command):
     return {'id': command.getID(),

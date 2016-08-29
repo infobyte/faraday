@@ -462,7 +462,7 @@ class ModelController(threading.Thread):
 
             self.removeConflictsByObject(obj)
 
-            self.mappers_manager.remove(objId)
+            self.mappers_manager.remove(objId, obj.class_signature)
 
             if obj.class_signature == model.hosts.Host.class_signature:
                 notifier.delHost(objId)

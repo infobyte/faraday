@@ -413,8 +413,8 @@ class Command(FaradayEntity, Base):
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
     command = Column(String(250), nullable=True)
-    duration = Column(Float(), nullable=True)
-    itime = Column(Float(), nullable=True)
+    duration = Column(Float, nullable=True)
+    itime = Column(Float, nullable=True)
     ip = Column(String(250), nullable=True)
     hostname = Column(String(250), nullable=True)
     params = Column(String(250), nullable=True)

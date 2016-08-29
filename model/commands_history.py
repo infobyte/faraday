@@ -52,8 +52,8 @@ class CommandRunInformation(object):
         self.ip = get_private_ip()
         self.hostname = get_hostname()
         self.itime = None
-        self.duration = None,
-        self.params = None,
+        self.duration = None
+        self.params = None
         self.workspace = None
 
         for k, v in kwargs.items():

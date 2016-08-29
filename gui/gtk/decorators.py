@@ -2,6 +2,20 @@ from gi.repository import Gtk
 from functools import wraps
 from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
 
+def safe_io_with_server(response_in_emergency):
+    """A function that takes a response_in_emergency. It will return
+    a safe_decorator, which will try to execture a funcion and in case
+    anything happens, it will return the response in emergency.
+    """
+    def safe_decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                res = func(*args, **kwargs)
+            except:
+                res = response_in_emergency
+            return res
+        return wrapper
+    return safe_decorator
 
 def scrollable(width=-1, height=-1, overlay_scrolling=False):
     """A function that takes optinal width and height and returns

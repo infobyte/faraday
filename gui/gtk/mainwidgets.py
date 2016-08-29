@@ -18,7 +18,6 @@ except ValueError:
     gi.require_version('Vte', '2.90')
 
 from gi.repository import Gtk, Gdk, GLib, Pango, GdkPixbuf, Vte
-from persistence.server import models
 
 from decorators import scrollable
 from compatibility import CompatibleVteTerminal as VteTerminal
@@ -386,7 +385,7 @@ class WorkspaceSidebar(Gtk.Widget):
     instance to the application. It only handles the view and the model,
     all the backend word is handled by the application via the callback"""
 
-    def __init__(self, workspace_manager, callback_to_change_workspace,
+    def __init__(self, workspaces_names, callback_to_change_workspace,
                  callback_to_remove_workspace, callback_to_create_workspace,
                  last_workspace):
 
@@ -395,9 +394,8 @@ class WorkspaceSidebar(Gtk.Widget):
         self.remove_ws = callback_to_remove_workspace
         self.create_ws = callback_to_create_workspace
         self.last_workspace = last_workspace
-        self.ws_manager = workspace_manager
 
-        self.workspaces = models.get_workspaces_names()
+        self.workspaces = workspaces_names
         self.search_entry = self.create_search_entry()
 
         self.workspace_model = self.create_ws_model()

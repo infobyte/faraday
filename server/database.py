@@ -173,7 +173,7 @@ class WorkspaceDatabase(object):
             self.database.session.delete(entity)
             self.database.session.commit()
             logger.info(u'A {} ({}) was deleted'.format(
-                entity.entity_metadata.document_type, entity.name))
+                entity.entity_metadata.document_type, getattr(entity, 'name', None)))
 
     def __process_update(self, change):
         """
@@ -186,7 +186,7 @@ class WorkspaceDatabase(object):
             entity.entity_metadata.update_from_document(change.doc)
             self.database.session.commit()
             logger.info(u'A {} ({}) was updated'.format(
-                entity.entity_metadata.document_type, getattr(entity, 'name', 'None')))
+                entity.entity_metadata.document_type, getattr(entity, 'name', None)))
 
     def __get_modified_entity(self, change):
         try:

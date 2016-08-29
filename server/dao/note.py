@@ -31,7 +31,10 @@ class NoteDAO(FaradayDAO):
         return result
 
     def __query_database(self, search=None, note_filter={}):
-        note_bundle = Bundle('note', Note.name, Note.text, Note.description, EntityMetadata.couchdb_id)
+        note_bundle = Bundle('note', Note.name, Note.text, Note.description, Note.owned, EntityMetadata.couchdb_id,\
+                EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
+                EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
+                EntityMetadata.update_controller_action, EntityMetadata.owner)
 
         query = self._session.query(note_bundle)\
                              .outerjoin(EntityMetadata, EntityMetadata.id == Note.entity_metadata_id)
@@ -52,6 +55,17 @@ class NoteDAO(FaradayDAO):
                 'name': note.name,
                 'text': note.text,
                 'description': note.description,
+                'owned': note.owned,
+                'owner': note.owner,
+                'metadata': {
+                    'update_time': note.update_time,
+                    'update_user': note.update_user,
+                    'update_action': note.update_action,
+                    'creator': note.creator,
+                    'create_time': note.create_time,
+                    'update_controller_action': note.update_controller_action,
+                    'owner': note.owner
+                },
                 'couchid': note.couchdb_id }}
 
     def count(self):

@@ -139,6 +139,7 @@ class VulnerabilityDAO(FaradayDAO):
                 'confirmed': vuln.confirmed,
                 'data': vuln.data,
                 'desc': vuln.description,
+                'description': vuln.description,
                 'easeofresolution': vuln.easeofresolution,
                 'impact': {
                     'accountability': vuln.impact_accountability,

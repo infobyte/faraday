@@ -37,10 +37,11 @@ class HostDAO(FaradayDAO):
         return result
 
     def __query_database(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, host_filter={}):
-        host_bundle = Bundle('host', Host.id, Host.name, Host.os, Host.description, Host.owned, EntityMetadata.couchdb_id,\
+        host_bundle = Bundle('host', Host.id, Host.name, Host.os, Host.description, Host.owned,\
+            Host.default_gateway_ip, Host.default_gateway_mac, EntityMetadata.couchdb_id,\
             EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
             EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
-            EntityMetadata.update_controller_action,\
+            EntityMetadata.update_controller_action, EntityMetadata.owner,
             func.group_concat(distinct(Interface.id)).label('interfaces'),\
             func.count(distinct(Vulnerability.id)).label('vuln_count'),\
             func.count(distinct(Service.id)).label('open_services_count'))
@@ -75,9 +76,9 @@ class HostDAO(FaradayDAO):
                 'name': host.name,
                 'os': host.os,
                 'owned': host.owned,
-                'owner': False,
+                'owner': host.owner,
                 'description': host.description,
-                'default_gateway': None,
+                'default_gateway': [host.default_gateway_ip, host.default_gateway_mac],
                 'metadata': {
                     'update_time': host.update_time,
                     'update_user': host.update_user,
@@ -85,7 +86,7 @@ class HostDAO(FaradayDAO):
                     'creator': host.creator,
                     'create_time': host.create_time,
                     'update_controller_action': host.update_controller_action,
-                    'owner': ''
+                    'owner': host.owner
                 },
                 'vulns': host.vuln_count,
                 'services': host.open_services_count,

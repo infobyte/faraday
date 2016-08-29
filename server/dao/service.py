@@ -29,8 +29,10 @@ class ServiceDAO(FaradayDAO):
                 Service.id, Service.name, Service.description, Service.protocol,
                 Service.status, Service.ports, Service.version, Service.owned,
                 Service.interface_id,
-                func.count(distinct(Vulnerability.id)).label('vuln_count'),
-                EntityMetadata.couchdb_id, EntityMetadata.revision)
+                func.count(distinct(Vulnerability.id)).label('vuln_count'), EntityMetadata.couchdb_id,\
+                EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
+                EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
+                EntityMetadata.update_controller_action, EntityMetadata.owner)
 
         query = self._session.query(service_bundle).\
                 outerjoin(EntityMetadata, EntityMetadata.id == Service.entity_metadata_id).\
@@ -53,11 +55,21 @@ class ServiceDAO(FaradayDAO):
                 '_rev': service.revision,
                 'name': service.name,
                 'description': service.description,
+                'metadata': {
+                    'update_time': service.update_time,
+                    'update_user': service.update_user,
+                    'update_action': service.update_action,
+                    'creator': service.creator,
+                    'create_time': service.create_time,
+                    'update_controller_action': service.update_controller_action,
+                    'owner': service.owner
+                },
                 'protocol': service.protocol,
                 'status': service.status,
                 'ports': service.ports.split(',') if service.ports else [],
                 'version': service.version,
-                'owned': service.owned
+                'owned': service.owned,
+                'owner': service.owner
                 },
             'vulns': service.vuln_count,
             }

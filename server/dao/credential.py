@@ -32,7 +32,11 @@ class CredentialDAO(FaradayDAO):
         return result
 
     def __query_database(self, search=None, cred_filter={}):
-        creds_bundle = Bundle('cred', Credential.username, Credential.password, EntityMetadata.couchdb_id)
+        creds_bundle = Bundle('cred', Credential.username, Credential.password, Credential.name,
+                Credential.description, Credential.owned, EntityMetadata.couchdb_id,\
+                EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
+                EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
+                EntityMetadata.update_controller_action, EntityMetadata.owner)
 
         query = self._session.query(creds_bundle)\
                              .outerjoin(EntityMetadata, EntityMetadata.id == Credential.entity_metadata_id)
@@ -51,5 +55,18 @@ class CredentialDAO(FaradayDAO):
                 '_id': cred.couchdb_id,
                 'username': cred.username,
                 'password': cred.password,
+                'owner': cred.owner,
+                'owned': cred.owned,
+                'description': cred.description,
+                'name': cred.name,
+                'metadata': {
+                    'update_time': cred.update_time,
+                    'update_user': cred.update_user,
+                    'update_action': cred.update_action,
+                    'creator': cred.creator,
+                    'create_time': cred.create_time,
+                    'update_controller_action': cred.update_controller_action,
+                    'owner': cred.owner
+                },
                 'couchid': cred.couchdb_id }}
 

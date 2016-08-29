@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = 'W.0.3'
+SCHEMA_VERSION = 'W.0.4'
 
 Base = declarative_base()
 
@@ -375,6 +375,7 @@ class Note(FaradayEntity, Base):
     name = Column(String(250), nullable=False)
     text = Column(Text(), nullable=True)
     description = Column(Text(), nullable=True)
+    owned = Column(Boolean)
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
@@ -383,6 +384,7 @@ class Note(FaradayEntity, Base):
         self.name=document.get('name')
         self.text=document.get('text', None)
         self.description=document.get('description', None)
+        self.owned=document.get('owned', False)
 
 class Credential(FaradayEntity, Base):
     DOC_TYPE = 'Cred'
@@ -392,6 +394,9 @@ class Credential(FaradayEntity, Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(250), nullable=False)
     password = Column(Text(), nullable=False)
+    owned = Column(Boolean)
+    description = Column(Text(), nullable=True)
+    name = Column(String(250), nullable=True)
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
@@ -405,6 +410,9 @@ class Credential(FaradayEntity, Base):
     def update_from_document(self, document):
         self.username=document.get('username')
         self.password=document.get('password', '')
+        self.owned=document.get('owned', False)
+        self.description=document.get('description', '')
+        self.name=document.get('name','')
 
 class Command(FaradayEntity, Base):
     DOC_TYPE = 'CommandRunInformation'

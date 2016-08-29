@@ -19,13 +19,16 @@ def force_unique(lst):
     else:
         raise MoreThanOneObjectFoundByID(lst)
 
+def get_metadata_properties(metadata):
+    return metadata.__dict__
+
 def get_host_properties(host):
     return {'id': host.getID(),
             'name': host.getName(),
             'description': host.getDescription(),
             'os': host.getOS(),
             'default_gateway': host.getDefaultGateway(),
-            'metadata': host.getMetadata(),
+            'metadata': get_metadata_properties(host.getMetadata()),
             'owned': host.isOwned(),
             'owner': host.getOwner()}
 
@@ -37,15 +40,9 @@ def get_interface_properties(interface):
             'owned': interface.isOwned(),
             'hostnames': interface.getHostnames(),
             'network_segment': interface.getNetworkSegment(),
-            'ipv4_address':  interface.getIPv4Address(),
-            'ipv4_gateway': interface.getIPv4Gateway(),
-            'ipv4_dns': interface.getIPv4DNS(),
-            'ipv4_mask': interface.getIpv4Mask(),
-            'ipv6_address':  interface.getIPv6Address(),
-            'ipv6_gateway': interface.getIPv6Gateway(),
-            'ipv6_dns': interface.getIPv6DNS(),
-            'ipv6_mask': interface.getIPv6Prefix(),
-            'metadata': interface.getMetadata()}
+            'ipv4':  interface.getIPv4(),
+            'ipv6': interface.getIPv6(),
+            'metadata': get_metadata_properties(interface.getMetadata())}
 
 def get_service_properties(service):
     return {'id': service.getID(),
@@ -56,7 +53,7 @@ def get_service_properties(service):
             'protocol': service.getProtocol(),
             'status': service.getStatus(),
             'version': service.getVersion(),
-            'metadata': service.getMetatada()}
+            'metadata': get_metadata_properties(service.getMetatada())}
 
 def get_vuln_properties(vuln):
     return {'id': vuln.getID(),
@@ -66,7 +63,7 @@ def get_vuln_properties(vuln):
             'data': vuln.getData(),
             'refs': vuln.getRefs(),
             'severity': vuln.getSeverity(),
-            'metadata': vuln.getMetadata()}
+            'metadata': get_metadata_properties(vuln.getMetadata())}
 
 def get_vuln_web_properties(vuln_web):
     return {'id': vuln_web.getID(),
@@ -93,18 +90,20 @@ def get_vuln_web_properties(vuln_web):
             'tags': vuln_web.getTags(),
             'target': vuln_web.getTarget(),
             'website': vuln_web.getWebsite(),
-            'metadata': vuln_web.getMetadata()}
+            'metadata': get_metadata_properties(vuln_web.getMetadata())}
 
 def get_note_properties(note):
     return {'id': note.getID(),
             'name': note.getName(),
             'description': note.getDescription(),
-            'text': note.getText()}
+            'text': note.getText(),
+            'metadata': get_metadata_properties(note.getMetadata())}
 
 def get_credential_properties(credential):
     return {'id': credential.getID(),
             'username': credential.getUsername(),
-            'password': credential.getPassword()}
+            'password': credential.getPassword(),
+            'metadata': get_metadata_properties(credential.getMetadata())}
 
 def get_command_properties(command):
     return {'id': command.getID(),

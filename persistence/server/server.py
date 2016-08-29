@@ -470,9 +470,7 @@ def update_host(workspace_name, id, name, os, default_gateway,
 
 def create_interface(workspace_name, id, name, description, mac,
                      owned=False, hostnames=None, network_segment=None,
-                     ipv4_address=None, ipv4_gateway=None, ipv4_dns=None,
-                     ipv4_mask=None, ipv6_address=None, ipv6_gateway=None,
-                     ipv6_dns=None, ipv6_prefix=None, metadata=None):
+                     ipv4=None, ipv6=None, metadata=None):
     """Save an interface to the server. Return a dictionary with the
     server's response."""
     return _save_to_couch(workspace_name,
@@ -483,14 +481,8 @@ def create_interface(workspace_name, id, name, description, mac,
                           owned=owned,
                           hostnames=hostnames,
                           network_segment=network_segment,
-                          ipv4_address=ipv4_address,
-                          ipv4_gateway=ipv4_gateway,
-                          ipv4_dns=ipv4_dns,
-                          ipv4_mask=ipv4_mask,
-                          ipv6_address=ipv6_address,
-                          ipv6_gateway=ipv6_gateway,
-                          ipv6_dns=ipv6_dns,
-                          ipv6_prefix=ipv6_prefix,
+                          ipv4=ipv4,
+                          ipv6=ipv6,
                           type="Interface",
                           metadata=metadata)
 

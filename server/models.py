@@ -190,9 +190,9 @@ class Interface(FaradayEntity, Base):
         self.ipv6_gateway=document.get('ipv6').get('gateway')
         self.ipv6_dns=u','.join(document.get('ipv6').get('DNS'))
         self.ipv6_prefix=str(document.get('ipv6').get('prefix'))
-        self.ports_filtered=document.get('ports').get('filtered')
-        self.ports_opened=document.get('ports').get('opened')
-        self.ports_closed=document.get('ports').get('closed')
+        self.ports_filtered=document.get('ports',{}).get('filtered')
+        self.ports_opened=document.get('ports',{}).get('opened')
+        self.ports_closed=document.get('ports',{}).get('closed')
 
     def add_relationships_from_dict(self, entities):
         host_id = '.'.join(self.entity_metadata.couchdb_id.split('.')[:-1])

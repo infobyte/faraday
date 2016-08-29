@@ -7,6 +7,15 @@ class MoreThanOneObjectFoundByID(Exception):
                 "These are all the objects found with the same ID: {0}"
                 .format(self.faulty_list))
 
+class WrongObjectSignature(Exception):
+    def __init__(self, param):
+        self.param = param
+
+    def __str__(self):
+        return ("object_signature must be either 'host', 'vuln', 'vuln_web',"
+                "'interface' 'service', 'credential' or 'note' and it was {0}"
+                .format(self.param))
+
 def force_unique(lst):
     """Takes a list and return its only member if the list len is 1,
     None if list is empty or raises an MoreThanOneObjectFoundByID error

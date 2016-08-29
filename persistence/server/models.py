@@ -1,12 +1,14 @@
 from persistence.server import server
-from persistence.server.utils import (force_unique, get_host_properties,
+from persistence.server.utils import (force_unique,
+                                      get_host_properties,
                                       get_interface_properties,
                                       get_service_properties,
                                       get_vuln_properties,
                                       get_vuln_web_properties,
                                       get_note_properties,
                                       get_credential_properties,
-                                      get_command_properties)
+                                      get_command_properties,
+                                      WrongObjectSignature)
 
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
                                faraday_object_name):
@@ -162,7 +164,7 @@ def get_object(workspace_name, object_signature, object_id):
                       _VulnWeb.class_signature: get_web_vuln,
                       _Interface.class_signature: get_interface,
                       _Service.class_signature: get_service,
-                      _Credential.class_signature: get_credential, 
+                      _Credential.class_signature: get_credential,
                       _Note.class_signature: get_note}
     try:
         appropiate_function = object_to_func[object_signature]
@@ -265,7 +267,7 @@ def create_object(workspace_name, object_signature, obj):
                       _VulnWeb.class_signature: create_vuln_web,
                       _Interface.class_signature: create_interface,
                       _Service.class_signature: create_service,
-                      _Credential.class_signature: create_credential, 
+                      _Credential.class_signature: create_credential,
                       _Note.class_signature: create_note,
                       _Command.class_signature: create_command}
     try:
@@ -281,7 +283,7 @@ def update_object(workspace_name, object_signature, obj):
                       _VulnWeb.class_signature: update_vuln_web,
                       _Interface.class_signature: update_interface,
                       _Service.class_signature: update_service,
-                      _Credential.class_signature: update_credential, 
+                      _Credential.class_signature: update_credential,
                       _Note.class_signature: update_note,
                       _Command.class_signature: update_command}
     try:
@@ -296,7 +298,7 @@ def create_workspace(workspace_name, **params):
     then the workspace's document.
     Return the server's json response as a dictionary"""
     # XXX: For now we won't upload views
-    response = server.create_database(workspace_name)
+    server.create_database(workspace_name)
     return server.create_workspace(workspace_name, **params)
 
 def get_hosts_number(workspace_name, **params):
@@ -341,7 +343,7 @@ def delete_object(workspace_name, object_signature, obj_id):
                       _VulnWeb.class_signature: delete_vuln_web,
                       _Interface.class_signature: delete_interface,
                       _Service.class_signature: delete_service,
-                      _Credential.class_signature: delete_credential, 
+                      _Credential.class_signature: delete_credential,
                       _Note.class_signature: delete_note,
                       _Command.class_signature: delete_command}
     try:
@@ -356,6 +358,9 @@ def delete_workspace(workspace_name):
 
 def get_workspaces_names():
     return server.get_workspaces_names()['workspaces']
+
+def is_server_up():
+    return server.is_server_up()
 
 class _Host:
     """A simple Host class. Should implement all the methods of the
@@ -649,15 +654,6 @@ class _Workspace:
     def getCustomer(self): return self.customer
     def getStartDate(self): return self.start_date
     def getFinishDate(self): return self.finish_date
-
-class WrongObjectSignature(Exception):
-    def __init__(self, param):
-        self.param = param
-
-    def __str__(self):
-        return ("object_signature must be either 'host', 'vuln', 'vuln_web',"
-                "'interface' 'service', 'credential' or 'note' and it was {0}"
-                .format(self.param))
 
 # NOTE: uncomment for test
 # class SillyHost():

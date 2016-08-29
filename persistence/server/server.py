@@ -1,5 +1,6 @@
 import requests, json
 from persistence.server.utils import force_unique
+from persistence.server.utils import WrongObjectSignature
 
 SERVER_URL = None
 
@@ -748,9 +749,7 @@ def create_database(workspace_name):
     server's response. Can throw an Unauthorized exception
     """
     db_url = _create_server_db_url(workspace_name)
-    return _parse_json(_unsafe_io_with_server(requests.put,
-                                              201,
-                                              db_url))
+    return _put(db_url)
 
 def create_workspace(workspace_name, description, start_date, finish_date,
                      customer=None):
@@ -801,6 +800,14 @@ def delete_workspace(workspace_name):
                                               200,
                                               db_url))
 
+def is_server_up():
+    try:
+        _get("{0}/info".format(_create_server_api_url()))
+        is_server_up = True
+    except:
+        is_server_up = False
+    return is_server_up
+
 class CantCommunicateWithServerError(Exception):
     def __init__(self, server_url, payload):
         self.server_url = server_url
@@ -811,14 +818,6 @@ class CantCommunicateWithServerError(Exception):
                 "to URL {0} with parameters {1}.".format(self.server_url,
                                                          self.payload))
 
-class WrongObjectSignature(Exception):
-    def __init__(self, param):
-        self.param = param
-
-    def __str__(self):
-        return ("object_signature must be either 'host', 'vuln', 'vuln_web',"
-                "'interface' 'service', 'credential' or 'note' and it was {0}"
-                .format(self.param))
 
 class ConflictInDatabase(Exception):
     def __init__(self, answer):

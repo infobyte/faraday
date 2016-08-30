@@ -430,7 +430,7 @@ class ModelController(threading.Thread):
 
     def _save_new_object(self, new_object):
         res = self.mappers_manager.save(new_object)
-        if res: notifier.addHost(new_object)
+        if res: notifier.addObject(new_object)
         return res
 
     def _handle_conflict(self, old_obj, new_obj):

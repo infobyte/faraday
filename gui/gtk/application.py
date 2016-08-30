@@ -118,7 +118,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         faraday_icon = self.icons + "faraday_icon.png"
         self.icon = GdkPixbuf.Pixbuf.new_from_file_at_scale(faraday_icon, 16,
                                                             16, False)
-        self.serverIO = ServerIO(CONF.getLastWorkspace())
         self.window = None
         self.model_controller = model_controller
 
@@ -508,10 +507,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                              service_count, vuln_count)
 
         def host_added_event():
-            GObject.idle_add(self.hosts_sidebar.update, 'add', event.host)
-            host_count, service_count, vuln_count = self.update_counts()
-            GObject.idle_add(self.statusbar.update_ws_info, host_count,
-                             service_count, vuln_count)
+            pass
 
         def host_deleted_event():
             GObject.idle_add(self.hosts_sidebar.update, 'delete', event.host_id)
@@ -526,7 +522,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                              service_count, vuln_count)
 
         def workspace_changed_event():
-            self.serverIO.active_workspace = CONF.getLastWorkspace()
+            self.serverIO.active_workspace = event.workspace.name
             host_count, service_count, vuln_count = self.update_counts()
             total_host_amount = self.serverIO.get_hosts_number()
             first_host_page = self.serverIO.get_hosts(page='0', page_size='20', sort='vulns', sort_dir='desc')
@@ -550,14 +546,17 @@ class GuiApp(Gtk.Application, FaradayUi):
         def workspace_not_accessible_event():
             GObject.idle_add(self.handle_no_active_workspace)
 
-        def addHostChanges():
-            print 'ADD EVENT'
+        def add_object():
+            GObject.idle_add(self.hosts_sidebar.add_object, event.new_obj)
+            host_count, service_count, vuln_count = self.update_counts()
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
 
-        def deleteHostChanges():
-            print 'DELET EVENT'
+        def delete_object():
+            pass
 
-        def editHostChanges():
-            print 'EDIT EVENT'
+        def edit_object():
+            pass
 
         dispatch = {3131:  new_log_event,
                     3141:  new_conflict_event,
@@ -570,9 +569,9 @@ class GuiApp(Gtk.Application, FaradayUi):
                     3134:  important_error_event,
                     42424: lost_connection_to_server_event,
                     24242: workspace_not_accessible_event,
-                    7777:  addHostChanges,
-                    8888:  deleteHostChanges,
-                    9999:  editHostChanges}
+                    7777:  add_object,
+                    8888:  delete_object,
+                    9999:  edit_object}
 
         function = dispatch.get(event.type())
         if function is not None:
@@ -609,7 +608,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         """
         Gtk.Application.do_startup(self)  # deep GTK magic
 
-        self.ws_sidebar = WorkspaceSidebar(self.serverIO.get_workspaces_names(),
+        self.serverIO = ServerIO(CONF.getLastWorkspace())
+        self.ws_sidebar = WorkspaceSidebar(self.serverIO,
                                            self.change_workspace,
                                            self.remove_workspace,
                                            self.on_new_button,

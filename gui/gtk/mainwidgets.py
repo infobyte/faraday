@@ -137,30 +137,61 @@ class HostsSidebar(Gtk.Widget):
         """Return the total vulnerability count for a given host"""
         return host.getVulnAmount()
 
-    def __add_host_to_model(self, model, host, changes=False):
+    def __get_vuln_amount_from_model(self, host_id):
+        host_iter = self.host_id_to_iter[host_id]
+        return self.current_model[host_iter][4]
+
+    def __add_host_to_model(self, host, changes=False):
         """Adds host to the model given as parameter."""
         vuln_count = self.__compute_vuln_count(host)
         os_icon, os_str = self.__decide_icon(host.getOS())
         display_str = str(host)
-        host_iter = model.append([host.id, os_icon, os_str, display_str, vuln_count])
+        host_iter = self.current_model.append([host.id, os_icon, os_str,
+                                               display_str, vuln_count])
         self.host_id_to_iter[host.id] = host_iter
         if changes:
             self.host_amount += 1
-        return host_iter
 
-    def __delete_host_from_model(self, model, host_id):
+    def __add_vuln_to_model(self, vuln):
+        """When a new vulnerability arrives, look up its hosts
+        and update its vuln amount and its representation as a string."""
+        host_id = self.__find_host_id(vuln)
+        vuln_amount = self.__get_vuln_amount_from_model(host_id) + 1
+        self.__update_host_str(host_id, new_vuln_amount=vuln_amount)
+
+    def __remove_vuln_from_model(self, host_id):
+        """When a new vulnerability id deleted, look up its hosts
+        and update its vuln amount and its representation as a string."""
+        vuln_amount = self.__get_vuln_amount_from_model(host_id) - 1
+        self.__update_host_str(host_id, new_vuln_amount=vuln_amount)
+
+    def __update_host_str(self, host_id, new_vuln_amount=None, new_host_name=None):
+        """When a new vulnerability id deleted, look up its hosts
+        and update its vuln amount and its representation as a string."""
+        host_iter = self.host_id_to_iter[host_id]
+        if not new_host_name:
+            new_host_name = str(self.current_model[host_iter][3].split(" ")[0])
+        if not new_vuln_amount:
+            new_vuln_amount = str(self.current_model[host_iter][4])
+
+        new_string = "{0} ({1})".format(new_host_name, new_vuln_amount)
+
+    def __update_host_in_model(self, host):
+        self.__update_host_str(host.getID(), new_host_name=host.getName())
+
+    def __remove_host_from_model(self, host_id):
         """Deletes a host from the model given as parameter."""
         host_iter = self.host_id_to_iter[host_id]
-        could_be_removed = model.remove(host_iter)
+        could_be_removed = self.current_model.remove(host_iter)
         del self.host_id_to_iter[host_id]
         return could_be_removed
 
-    def __update_host_info_in_model(self, model, host_id):
-        """Updates the model with new information about the host. In practice,
-        this means remove the host and add it again with new information."""
-        host = self.get_host_function(couchid=host_id)[0]
-        self.__delete_host_from_model(model, host.id)
-        self.__add_host_to_model(model, host)
+    # def __update_host_info_in_model(self, host_id):
+    #     """Updates the model with new information about the host. In practice,
+    #     this means remove the host and add it again with new information."""
+    #     host = self.get_host_function(couchid=host_id)[0]
+    #     self.__delete_host_from_model(self.current_model, host.id)
+    #     self.__add_host_to_model(host)
 
     def __find_host_id(self, object_info):
         object_id = object_info.getID()
@@ -222,8 +253,9 @@ class HostsSidebar(Gtk.Widget):
             return order
 
         hosts_model = Gtk.ListStore(str, GdkPixbuf.Pixbuf(), str, str, int)
+        self.current_model = hosts_model
         for host in hosts:
-            self.__add_host_to_model(hosts_model, host)
+            self.__add_host_to_model(host)
 
         # sort the model by default according to column 4 (num of vulns)
         sorted_model = Gtk.TreeModelSort(model=hosts_model)
@@ -232,7 +264,6 @@ class HostsSidebar(Gtk.Widget):
         # set the sorting function of column 2
         sorted_model.set_sort_func(2, compare_os_strings, None)
 
-        self.current_model = hosts_model
         self.current_sorted_model = sorted_model
 
         return self.current_sorted_model
@@ -272,23 +303,23 @@ class HostsSidebar(Gtk.Widget):
 
         return self.view
 
-    def update(self, event, host_info):
-        """Updated the model in case a host was added, deleted or modified.
-        event must be a string, either 'add', 'update' or 'delete'
-        host must be a valid host object.
-        """
-        if event == 'add':
-            self.__add_host_to_model(self.current_model, host_info, changes=True)
-        elif event == 'update':
-            host_id = self.__find_host_id(host_info)
-            self.__update_host_info_in_model(self.current_model, host_id)
-        elif event == 'delete':
-            self.__delete_host_from_model(self.current_model, host_info)
-        else:
-            raise ValueError("event parameter must be a string such that "
-                             "event == 'add' or event == 'update' or "
-                             "event == 'delete'")
-        self.set_move_buttons_sensitivity()
+    def add_object(self, obj):
+        object_type = obj.class_signature
+        if object_type == 'Host':
+            self.__add_host_to_model(obj)
+        if object_type == "Vulnerability" or object_type == "VulnerabilityWeb":
+            self.__add_vuln_to_model(obj)
+
+    def remove_object(self, obj_id):
+        if obj_id.count('.') == 1:
+            self.__remove_host_from_model(obj)
+        if obj_id.count('.') == 3:
+            self.__remove_vuln_from_model(obj_id)
+
+    def update_object(self, obj):
+        object_type = obj.class_signature
+        if object_type == 'Host':
+            self.__update_host_in_model(obj)
 
     def redo(self, hosts, total_host_amount, page=0):
         """Creates a new model from an updated list of hosts and adapts
@@ -385,7 +416,7 @@ class WorkspaceSidebar(Gtk.Widget):
     instance to the application. It only handles the view and the model,
     all the backend word is handled by the application via the callback"""
 
-    def __init__(self, workspaces_names, callback_to_change_workspace,
+    def __init__(self, server_io, callback_to_change_workspace,
                  callback_to_remove_workspace, callback_to_create_workspace,
                  last_workspace):
 
@@ -394,8 +425,9 @@ class WorkspaceSidebar(Gtk.Widget):
         self.remove_ws = callback_to_remove_workspace
         self.create_ws = callback_to_create_workspace
         self.last_workspace = last_workspace
+        self.serverIO = server_io
 
-        self.workspaces = workspaces_names
+        self.workspaces = self.serverIO.get_workspaces_names()
         self.search_entry = self.create_search_entry()
 
         self.workspace_model = self.create_ws_model()
@@ -442,7 +474,7 @@ class WorkspaceSidebar(Gtk.Widget):
         Gets an updated copy of the workspaces and checks against
         the model to see which are already there and which arent"""
 
-        self.workspaces = get_workspaces_names()
+        self.workspaces = self.serverIO.get_workspaces_names()
 
         model = self.workspace_model
         added_workspaces = [added_ws[0] for added_ws in model]

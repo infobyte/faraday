@@ -23,7 +23,6 @@ class ChangeController(object):
     def loadChange(self, objid, revision, deleted):
         try:
             if not deleted:
-                import ipdb; ipdb.set_trace()
                 obj = self.mapper_manager.find(objid)
                 change = change_factory.create(obj, revision, deleted)
                 if isinstance(change, ChangeModelObject):
@@ -46,7 +45,7 @@ class ChangeController(object):
                 #         if obj.getParent():
                 #             obj.getParent().addChild(obj)
             else:
-                model.guiapi.notification_center.deleteHostFromChanges(objid)
+                model.guiapi.notification_center.deleteHost(objid)
             model.guiapi.notification_center.changeFromInstance(change)
 
         except:
@@ -56,17 +55,17 @@ class ChangeController(object):
     def _notify_model_object_change(self, change, obj):
         # host = obj.getHost()
         if (change.getChangeType() == CHANGETYPE.ADD):
-            model.guiapi.notification_center.addHostFromChanges(obj)
+            model.guiapi.notification_center.addObject(obj)
             # model.guiapi.notification_center.addHost(host)
-        
+
         # elif (change.getChangeType() == CHANGETYPE.DELETE ):
         #     model.guiapi.notification_center.delHost(host.getID())
-        
+
         elif (change.getChangeType() != CHANGETYPE.UNKNOWN):
             # model.guiapi.notification_center.editHost(host)
-            model.guiapi.notification_center.editHostFromChanges(obj)
+            model.guiapi.notification_center.editObject(obj)
 
-            
+
     def revertToNoWorkspace(self):
         model.guiapi.notification_center.WorkspaceProblem()
 

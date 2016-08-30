@@ -45,11 +45,12 @@ class VulnerabilityDAO(FaradayDAO):
         "query":            [Vulnerability.query],
         "response":         [Vulnerability.response],
         "hostid":           [Host.id],
+        "serviceid":        [Service.id],
         "web":              [],
         "issuetracker":     []
     }
     
-    STRICT_FILTERING = ["type", "service", "couchid"]
+    STRICT_FILTERING = ["type", "service", "couchid", "hostid", "serviceid"]
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, vuln_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, vuln_filter)
@@ -75,7 +76,7 @@ class VulnerabilityDAO(FaradayDAO):
             EntityMetadata.couchdb_id, EntityMetadata.revision, EntityMetadata.create_time, EntityMetadata.creator,\
             EntityMetadata.owner, EntityMetadata.update_action, EntityMetadata.update_controller_action,\
             EntityMetadata.update_time, EntityMetadata.update_user, EntityMetadata.document_type, Vulnerability.attachments)
-        service_bundle = Bundle('service', Service.name.label('s_name'), Service.ports, Service.protocol)
+        service_bundle = Bundle('service', Service.name.label('s_name'), Service.ports, Service.protocol, Service.id)
         host_bundle = Bundle('host', Host.name)
 
         # IMPORTANT: OUTER JOINS on those tables is IMPERATIVE. Changing them could result in loss of

@@ -7,10 +7,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import os
-import sys
-import threading
-import webbrowser
+import os, sys, threading, webbrowser, time
 
 try:
     import gi
@@ -39,7 +36,6 @@ except ImportError as e:
     print ("You are missing some of the required dependencies. "
            "Check that you have GTK+3 and Vte installed.")
     sys.exit(1)
-
 
 import model.guiapi
 import model.api
@@ -120,6 +116,28 @@ class GuiApp(Gtk.Application, FaradayUi):
                                                             16, False)
         self.window = None
         self.model_controller = model_controller
+        self.continously_check_server_connection()
+
+    def continously_check_server_connection(self):
+        def test_server_connection():
+            tolerance = 0
+            while True:
+                time.sleep(1)
+                test_was_successful = self.serverIO.is_server_up()
+                if test_was_successful:
+                    tolerance = 0
+                else:
+                    tolerance += 1
+                    if tolerance == 3:
+                        GObject.idle_add(self.lost_db_connection,
+                                         "",
+                                         self.handle_connection_lost,
+                                         self.force_change_couch_url)
+                        GObject.idle_add(self.reload_workspaces_no_connection)
+
+        test_server_thread = threading.Thread(target=test_server_connection)
+        test_server_thread.daemon = True
+        test_server_thread.start()
 
     @property
     def active_ws_name(self):

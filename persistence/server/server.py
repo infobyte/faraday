@@ -57,7 +57,6 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
     may be empty.
     """
     try:
-        print server_io_function, server_url, payload
         answer = server_io_function(server_url, **payload)
         if answer.status_code == 409 and answer.json()['error'] == 'conflict':
             raise ConflictInDatabase(answer)

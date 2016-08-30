@@ -808,7 +808,11 @@ def is_server_up():
         is_server_up = False
     return is_server_up
 
-class CantCommunicateWithServerError(Exception):
+class ServerRequestException(Exception):
+    def __init__(self):
+        pass
+
+class CantCommunicateWithServerError(ServerRequestException):
     def __init__(self, server_url, payload):
         self.server_url = server_url
         self.payload = payload
@@ -819,7 +823,7 @@ class CantCommunicateWithServerError(Exception):
                                                          self.payload))
 
 
-class ConflictInDatabase(Exception):
+class ConflictInDatabase(ServerRequestException):
     def __init__(self, answer):
         self.answer = answer
 
@@ -829,14 +833,14 @@ class ConflictInDatabase(Exception):
                 "did not provided a _rev argument to your payload. "
                 "The answer from the server was {0}".format(self.answer))
 
-class ResourceDoesNotExist(Exception):
+class ResourceDoesNotExist(ServerRequestException):
     def __init__(self, url):
         self.url = url
 
     def __str__(self):
         return ("Can't find anything on URL {0}".format(self.url))
 
-class Unauthorized(Exception):
+class Unauthorized(ServerRequestException):
     def __init__(self, answer):
         self.answer = answer
 

@@ -28,14 +28,11 @@ def force_unique(lst):
     else:
         raise MoreThanOneObjectFoundByID(lst)
 
-def get_metadata_properties(metadata):
-    return metadata.__dict__
-
 def get_object_properties(obj):
     return {'id': obj.getID(),
             'name': obj.getName(),
             'description': obj.getDescription(),
-            'metadata': get_metadata_properties(obj.getMetadata()),
+            'metadata': obj.getMetadata(),
             'owned': obj.isOwned(),
             'owner': obj.getOwner()
             }
@@ -50,8 +47,8 @@ def get_interface_properties(interface):
     interface_dict = {'mac': interface.getMAC(),
                       'hostnames': interface.getHostnames(),
                       'network_segment': interface.getNetworkSegment(),
-                      'ipv4':  interface.getIPv4(),
-                      'ipv6': interface.getIPv6()
+                      'ipv4':  interface.getIPv4Address(),
+                      'ipv6': interface.getIPv6Address()
                       }
     interface_dict.update(get_object_properties(interface))
     return interface_dict
@@ -84,7 +81,6 @@ def get_vuln_web_properties(vuln_web):
                      'path': vuln_web.getPath(),
                      'pname': vuln_web.getPname(),
                      'query': vuln_web.getQuery(),
-                     'category': vuln_web.getCategory()
                      }
     vuln_web_dict.update(get_object_properties(vuln_web))
     vuln_web_dict.update(get_vuln_properties(vuln_web))

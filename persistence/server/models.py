@@ -9,7 +9,11 @@ from persistence.server.utils import (force_unique,
                                       get_credential_properties,
                                       get_command_properties,
                                       WrongObjectSignature)
-from model.diff import ModelObjectDiff
+
+from model.diff import ModelObjectDiff, MergeSolver
+from model.conflict import ConflictUpdate
+from config.configuration import getInstanceConfiguration
+CONF = getInstanceConfiguration()
 
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
                                faraday_object_name):
@@ -372,15 +376,69 @@ class ModelBase(object):
         self.owned = obj['value']['owned']
         self.owner = obj['value']['owner']
         self.metadata = obj['value']['metadata']
+        self.updates = []
 
     @staticmethod
     def publicattrsrefs():
         return {'Description': 'description',
                 'Name': 'name',
                 'Owned': 'owned'}
+    
+    def defaultValues(self):
+        return [-1, 0, '', 'unknown', None, [], {}]
+
+    def propertyTieBreaker(self, key, prop1, prop2):
+        """ Breakes the conflict between two properties. If either of them
+        is a default value returns the true and only.
+        If neither returns the default value.
+        If conflicting returns a tuple with the values """
+        if prop1 in self.defaultValues(): return prop2
+        elif prop2 in self.defaultValues(): return prop1
+        elif self.tieBreakable(key): return self.tieBreak(key, prop1, prop2)
+        else: return (prop1, prop2)
+
+    def tieBreakable(self, key):
+        return False
+
+    def tieBreak(self, key, prop1, prop2):
+        return None
+
+    def addUpdate(self, newModelObject):
+        conflict = False
+        diff = ModelObjectDiff(self, newModelObject)
+        for k, v in diff.getPropertiesDiff().items():
+            attribute = self.publicattrsrefs().get(k)
+            prop_update = self.propertyTieBreaker(attribute, *v)
+
+            if (not isinstance(prop_update, tuple) or
+                    CONF.getMergeStrategy()):
+                # if there's a strategy set by the user, apply it
+                if isinstance(prop_update, tuple):
+                    prop_update = MergeSolver(
+                        CONF.getMergeStrategy()
+                        ).solve(prop_update[0], prop_update[1])
+
+                setattr(self, attribute, prop_update)
+            else:
+                conflict = True
+        if conflict:
+            self.updates.append(ConflictUpdate(self, newModelObject))
+        return conflict
+
+    def getUpdates(self):
+        return self.updates
+
+    def updateResolved(self, update):
+        self.updates.remove(update)
 
     def needs_merge(self, new_obj):
         return ModelObjectDiff(self, new_obj).existDiff()
+
+    def getOwner(self): return self.owner
+    def isOwned(self): return self.owned
+    def getName(self): return self.name
+    def getMetadata(self): return self.metadata
+    def getDescription(self): return self.description
 
 class _Host(ModelBase):
     """A simple Host class. Should implement all the methods of the
@@ -406,14 +464,9 @@ class _Host(ModelBase):
 
     def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
     def getOS(self): return self.os
-    def getName(self): return self.name
     def getVulnAmount(self): return self.vuln_amount
-    def isOwned(self): return self.owned
     def getID(self): return self.id
-    def getDescription(self): return self.description
     def getDefaultGateway(self): return self.default_gateway
-    def getOwner(self): return self.owner
-    def getMetadata(self): return self.metadata
     def getVulns(self):
         return get_all_vulns(self._workspace_name, hostid=self._server_id)
     def getInterface(self, interface_couch_id):
@@ -434,6 +487,7 @@ class _Interface(ModelBase):
     class_signature = 'Interface'
 
     def __init__(self, interface, workspace_name):
+        ModelBase.__init__(self, interface, workspace_name)
         self._server_id = interface['_id']
         self.hostnames = interface['value']['hostnames']
         self.ipv4 = interface['value']['ipv4']
@@ -441,7 +495,6 @@ class _Interface(ModelBase):
         self.mac = interface['value']['mac']
         self.network_segment = interface['value']['network_segment']
         self.ports = interface['value']['ports']
-        # XXX FALTA: self.metadata = interface['value']['metadata']
 
     @staticmethod
     def publicattrsrefs():
@@ -456,15 +509,14 @@ class _Interface(ModelBase):
 
     def __str__(self): return "{0}".format(self.name)
     def getID(self): return self.id
-    def getName(self): return self.name
-    def getDescription(self): return self.description
     def getHostnames(self): return self.hostnames
     def getIPv4(self): return self.ipv4
-    def getIPv6(self): return self.ipv6
+    def getIPv6(self): return self.ipv4
+    def getIPv4Address(self): return self.ipv4['address']
+    def getIPv6Address(self): return self.ipv6['address']
     def getMAC(self): return self.mac
     def getNetworkSegment(self): return self.network_segment
-    def isOwned(self): return self.owned
-    #def getMetadata(self): return self.metadata
+    def getMetadata(self): return self.metadata
 
     def getService(self, service_couch_id):
         return get_service(self._workspace_name, service_couch_id)
@@ -490,13 +542,13 @@ class _Service(ModelBase):
     class_signature = 'Service'
 
     def __init__(self, service, workspace_name):
+        ModelBase.__init__(self, service, workspace_name)
         self._server_id = service['_id']
         self.protocol = service['value']['protocol']
         self.ports =  service['value']['ports']
         self.version = service['value']['version']
         self.status = service['value']['status']
         self.vuln_amount = int(service['vulns'])
-        #XXX: FALTA self.metadata = service['value']['metadata']
 
     @staticmethod
     def publicattrsrefs():
@@ -508,18 +560,14 @@ class _Service(ModelBase):
         })
         return publicattrs
 
-
     def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
     def getID(self): return self.id
-    def getName(self): return self.name
-    def getDescription(self): return self.description
     def getStatus(self): return self.status
     def getPorts(self): return [self.ports]  # this is a list of one element in faraday
     def getVersion(self): return self.version
     def getProtocol(self): return self.protocol
     def isOwned(self): return self.owned
     def getVulns(self): return get_all_vulns(self._workspace_name, service=self._server_id)
-    #def getMetadata(self): return self.metadata
 
 
 class _Vuln(ModelBase):
@@ -531,11 +579,13 @@ class _Vuln(ModelBase):
     class_signature = 'Vulnerability'
 
     def __init__(self, vuln, workspace_name):
+        ModelBase.__init__(self, vuln, workspace_name)
         self.desc = vuln['value']['desc']
         self.data = vuln['value']['data']
         self.severity = vuln['value']['severity']
         self.refs = vuln['value']['refs']
         self.confirmed = vuln['value']['confirmed']
+        self.easeofresolution = vuln['value']['easeofresolution']
 
     @staticmethod
     def publicattrsrefs():
@@ -546,19 +596,15 @@ class _Vuln(ModelBase):
         })
         return publicattrs
 
-
     def getID(self): return self.id
-    def getName(self): return self.name
-    def getDescription(self): return self.description
     def getDesc(self): return self.desc
     def getData(self): return self.data
     def getSeverity(self): return self.severity
     def getRefs(self): return self.refs
     def getConfirmed(self): return self.confirmed
-    def getMetadata(self): return self.metadata
 
 
-class _VulnWeb(ModelBase):
+class _VulnWeb(_Vuln):
     """A simple VulnWeb class. Should implement all the methods of the
     VulnWeb object in Model.Common
     Any method here more than a couple of lines long probably represent
@@ -567,10 +613,7 @@ class _VulnWeb(ModelBase):
     class_signature = 'VulnerabilityWeb'
 
     def __init__(self, vuln_web, workspace_name):
-        self.desc = vuln_web['value']['desc']
-        self.data = vuln_web['value']['data']
-        self.severity = vuln_web['value']['severity']
-        self.refs = vuln_web['value']['refs']
+        _Vuln.__init__(self, vuln_web, workspace_name)
         self.path = vuln_web['value']['path']
         self.website = vuln_web['value']['website']
         self.request = vuln_web['value']['request']
@@ -579,10 +622,8 @@ class _VulnWeb(ModelBase):
         self.pname = vuln_web['value']['pname']
         self.params = vuln_web['value']['params']
         self.query = vuln_web['value']['query']
-        self.confirmed = vuln_web['value']['confirmed']
         self.resolution = vuln_web['value']['resolution']
         self.attachments = vuln_web['value']['_attachments']
-        self.easeofresolution = vuln_web['value']['easeofresolution']
         self.hostnames = vuln_web['value']['hostnames']
         self.impact = vuln_web['value']['impact']
         self.service = vuln_web['value']['service']
@@ -608,7 +649,6 @@ class _VulnWeb(ModelBase):
         return publicattrs
 
     def getID(self): return self.id
-    def getName(self): return self.name
     def getDescription(self): return self.description
     def getDesc(self): return self.desc
     def getData(self): return self.data
@@ -628,23 +668,20 @@ class _VulnWeb(ModelBase):
     def getEaseOfResolution(self): return self.easeofresolution
     def getHostnames(self): return self.hostnames
     def getImpact(self): return self.impact
-    def isOwned(self): return self.owned
-    def getOwner(self): return self.owner
     def getService(self): return self.service
     def getStatus(self): return self.status
     def getTags(self): return self.tags
     def getTarget(self): return self.target
-    def getMetadata(self): return self.metadata
     def getParent(self): return self.parent
 
 class _Note(ModelBase):
     class_signature = 'Note'
 
     def __init__(self, note, workspace_name):
+        ModelBase.__init__(self, note, workspace_name)
         self.text = note['value']['text']
 
     def getID(self): return self.id
-    def getName(self): return self.name
     def getDescription(self): return self.description
     def getText(self): return self.text
 
@@ -652,6 +689,7 @@ class _Credential(ModelBase):
     class_signature = "Cred"
 
     def __init__(self, credential, workspace_name):
+        ModelBase.__init__(self, credential, workspace_name)
         self.username = credential['value']['username']
         self.password = credential['value']['password']
 

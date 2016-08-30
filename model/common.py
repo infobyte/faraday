@@ -264,7 +264,7 @@ class ModelObject(object):
 
     def getMetadata(self):
         """Returns the current metadata of the object"""
-        return self._metadata
+        return self._metadata.__dict__
 
     def setMetadata(self, metadata):
         self._metadata = metadata

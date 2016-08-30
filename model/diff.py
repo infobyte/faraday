@@ -20,6 +20,7 @@ class ModelObjectDiff(object):
 
         self.conflicting = []
         self.conflicting.extend(self.getPropertiesDiff())
+        print self.conflicting
 
         self.only_in_obj1 = {}
         self.only_in_obj2 = {}
@@ -29,40 +30,37 @@ class ModelObjectDiff(object):
 
     def getPropertiesDiff(self):
         prop_diff = {}
-        import ipdb; ipdb.set_trace()
-        for attrdesc, attrname in self.obj1.publicattrsrefs().items():
-            for attrdesc2, attrname2 in self.obj2.publicattrsrefs.items():
-
-                info = lambda attr_ref: attr_ref() if callable(attr_ref) else attr_ref
-                prop1 = info(self.obj1.__getattribute__(attrname))
-                prop2 = info(self.obj2.__getattribute__(attrname2))
-                if prop1 != prop2:
-                    prop_diff[attrdesc] = (prop1, prop2)
+        for attrname in self.obj1.publicattrsrefs().keys():
+            info = lambda attr_ref: attr_ref() if callable(attr_ref) else attr_ref
+            prop1 = info(self.obj1.__getattribute__(self.obj1.publicattrsrefs().get(attrname)))
+            prop2 = info(self.obj2.__getattribute__(self.obj2.publicattrsrefs.get(attrname)))
+            if prop1 != prop2:
+                prop_diff[attrname] = (prop1, prop2)
 
         return prop_diff
 
-    def getDifferences(self, ObjDiff, getAllFunc, getById):
-        """ Polymorphic method to get the differences between the list of objects on a ModelObject.
-        Pass the ObjectDiff class, the unbound method to get all the objects and the one to get one by ID"""
+    # def getDifferences(self, ObjDiff, getAllFunc, getById):
+    #     """ Polymorphic method to get the differences between the list of objects on a ModelObject.
+    #     Pass the ObjectDiff class, the unbound method to get all the objects and the one to get one by ID"""
 
-        only_in_obj1 = [i for i in getAllFunc(self.obj1) if not i in getAllFunc(self.obj2)]
-        only_in_obj2 = [i for i in getAllFunc(self.obj2) if not i in getAllFunc(self.obj1)]
+    #     only_in_obj1 = [i for i in getAllFunc(self.obj1) if not i in getAllFunc(self.obj2)]
+    #     only_in_obj2 = [i for i in getAllFunc(self.obj2) if not i in getAllFunc(self.obj1)]
 
-        return (only_in_obj1, only_in_obj2)
+    #     return (only_in_obj1, only_in_obj2)
 
-    def getDifferencesIn(self, getAllFunc):
-        """ Polymorphic method to get the differences between the list of objects on a ModelObject.
-        Pass the ObjectDiff class, the unbound method to get all the objects and the one to get one by ID"""
-        only_in_obj1 = [i for i in getAllFunc(self.obj1) if not i in getAllFunc(self.obj2)]
-        only_in_obj2 = [i for i in getAllFunc(self.obj2) if not i in getAllFunc(self.obj1)]
+    # def getDifferencesIn(self, getAllFunc):
+    #     """ Polymorphic method to get the differences between the list of objects on a ModelObject.
+    #     Pass the ObjectDiff class, the unbound method to get all the objects and the one to get one by ID"""
+    #     only_in_obj1 = [i for i in getAllFunc(self.obj1) if not i in getAllFunc(self.obj2)]
+    #     only_in_obj2 = [i for i in getAllFunc(self.obj2) if not i in getAllFunc(self.obj1)]
 
-        return only_in_obj1, only_in_obj2
+    #     return only_in_obj1, only_in_obj2
 
 
 class MergeStrategy(object):
     @staticmethod
     def solve(old, new):
-        raise NotImplemented("This is an abstract class")
+        raise NotImplementedError("This is an abstract class")
 
 
 class MergeKeepNew(MergeStrategy):

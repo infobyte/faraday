@@ -44,6 +44,7 @@ class VulnerabilityDAO(FaradayDAO):
         "pname":            [Vulnerability.pname],
         "query":            [Vulnerability.query],
         "response":         [Vulnerability.response],
+        "hostid":           [Host.id],
         "web":              [],
         "issuetracker":     []
     }

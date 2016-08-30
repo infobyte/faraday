@@ -9,6 +9,7 @@ from persistence.server.utils import (force_unique,
                                       get_credential_properties,
                                       get_command_properties,
                                       WrongObjectSignature)
+from model.diff import ModelObjectDiff
 
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
                                faraday_object_name):
@@ -362,25 +363,46 @@ def get_workspaces_names():
 def is_server_up():
     return server.is_server_up()
 
-class _Host:
+class ModelBase(object):
+    def __init__(self, obj, workspace_name):
+        self._workspace_name = workspace_name
+        self.id = obj['id']
+        self.name = obj['value']['name']
+        self.description = obj['value']['description']
+        self.owned = obj['value']['owned']
+        self.owner = obj['value']['owner']
+        self.metadata = obj['value']['metadata']
+
+    @staticmethod
+    def publicattrsrefs():
+        return {'Description': 'description',
+                'Name': 'name',
+                'Owned': 'owned'}
+
+    def needs_merge(self, new_obj):
+        return ModelObjectDiff(self, new_obj).existDiff()
+
+class _Host(ModelBase):
     """A simple Host class. Should implement all the methods of the
     Host object in Model.Host
     Any method here more than a couple of lines long probably represent
     a search the server is missing.
     """
     class_signature = 'Host'
+    
     def __init__(self, host, workspace_name):
-        self._workspace_name = workspace_name
-        self.id = host['id']
+        ModelBase.__init__(self, host, workspace_name)
         self.server_id = host['_id']
-        self.name = host['value']['name']
-        self.description = host['value']['description']
         self.default_gateway = host['value']['default_gateway']
         self.os = host['value']['os']
         self.vuln_amount = int(host['value']['vulns'])
-        self.owned = host['value']['owned']
-        self.metadata = host['value']['metadata']
-        self.owner = host['value']['owner']
+
+    @staticmethod
+    def publicattrsrefs():
+        publicattrs = dict(ModelBase.publicattrsrefs(), **{
+            'Operating System' : 'os'
+        })
+        return publicattrs
 
     def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
     def getOS(self): return self.os
@@ -407,27 +429,34 @@ class _Host:
         return interfaces
 
 
-class _Interface:
+class _Interface(ModelBase):
     """A simple Interface class. Should implement all the methods of the
     Interface object in Model.Host
     Any method here more than a couple of lines long probably represent
     a search the server is missing.
     """
     class_signature = 'Interface'
+
     def __init__(self, interface, workspace_name):
-        self._workspace_name = workspace_name
-        self.id = interface['id']
         self._server_id = interface['_id']
-        self.name = interface['value']['name']
-        self.description = interface['value']['description']
         self.hostnames = interface['value']['hostnames']
         self.ipv4 = interface['value']['ipv4']
         self.ipv6 = interface['value']['ipv6']
         self.mac = interface['value']['mac']
         self.network_segment = interface['value']['network_segment']
-        self.owned = interface['value']['owned']
         self.ports = interface['value']['ports']
         # XXX FALTA: self.metadata = interface['value']['metadata']
+
+    @staticmethod
+    def publicattrsrefs():
+        publicattrs = dict(ModelBase.publicattrsrefs(), **{
+            'MAC Address' : 'mac',
+            'IPV4 Settings' : 'ipv4',
+            'IPV6 Settings' : 'ipv6',
+            'Network Segment' : 'network_segment',
+            'Hostnames' : 'hostnames'
+        })
+        return publicattrs
 
     def __str__(self): return "{0}".format(self.name)
     def getID(self): return self.id
@@ -455,26 +484,33 @@ class _Interface:
                 vulns.append(vuln)
         return vulns
 
-class _Service:
+class _Service(ModelBase):
     """A simple Service class. Should implement all the methods of the
     Service object in Model.Host
     Any method here more than a couple of lines long probably represent
     a search the server is missing.
     """
     class_signature = 'Service'
+
     def __init__(self, service, workspace_name):
-        self._workspace_name = workspace_name
-        self.id = service['id']
         self._server_id = service['_id']
-        self.name = service['value']['name']
-        self.owned = service['value']['owned']
         self.protocol = service['value']['protocol']
         self.ports =  service['value']['ports']
-        self.description = service['value']['description']
         self.version = service['value']['version']
         self.status = service['value']['status']
         self.vuln_amount = int(service['vulns'])
         #XXX: FALTA self.metadata = service['value']['metadata']
+
+    @staticmethod
+    def publicattrsrefs():
+        publicattrs = dict(ModelBase.publicattrsrefs(), **{
+            'Ports' : 'ports',
+            'Protocol' : 'protocol',
+            'Status' : 'status',
+            'Version' : 'version',
+        })
+        return publicattrs
+
 
     def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
     def getID(self): return self.id
@@ -489,24 +525,30 @@ class _Service:
     #def getMetadata(self): return self.metadata
 
 
-class _Vuln:
+class _Vuln(ModelBase):
     """A simple Vuln class. Should implement all the methods of the
     Vuln object in Model.Common
     Any method here more than a couple of lines long probably represent
     a search the server is missing.
     """
     class_signature = 'Vulnerability'
+
     def __init__(self, vuln, workspace_name):
-        self._workspace_name = workspace_name
-        self.id = vuln['id']
-        self.name = vuln['value']['name']
-        self.description = vuln['value']['desc']
         self.desc = vuln['value']['desc']
         self.data = vuln['value']['data']
         self.severity = vuln['value']['severity']
         self.refs = vuln['value']['refs']
         self.confirmed = vuln['value']['confirmed']
-        self.metadata = vuln['value']['metadata']
+
+    @staticmethod
+    def publicattrsrefs():
+        publicattrs = dict(ModelBase.publicattrsrefs(), **{
+            'Data' : 'data',
+            'Severity' : 'severity',
+            'Refs' : 'refs'
+        })
+        return publicattrs
+
 
     def getID(self): return self.id
     def getName(self): return self.name
@@ -519,18 +561,15 @@ class _Vuln:
     def getMetadata(self): return self.metadata
 
 
-class _VulnWeb:
+class _VulnWeb(ModelBase):
     """A simple VulnWeb class. Should implement all the methods of the
     VulnWeb object in Model.Common
     Any method here more than a couple of lines long probably represent
     a search the server is missing.
     """
     class_signature = 'VulnerabilityWeb'
+
     def __init__(self, vuln_web, workspace_name):
-        self._workspace_name = workspace_name
-        self.id = vuln_web['id']
-        self.name = vuln_web['value']['name']
-        self.description = vuln_web['value']['desc']
         self.desc = vuln_web['value']['desc']
         self.data = vuln_web['value']['data']
         self.severity = vuln_web['value']['severity']
@@ -549,14 +588,27 @@ class _VulnWeb:
         self.easeofresolution = vuln_web['value']['easeofresolution']
         self.hostnames = vuln_web['value']['hostnames']
         self.impact = vuln_web['value']['impact']
-        self.owned = vuln_web['value']['owned']
-        self.owner = vuln_web['value']['owner']
         self.service = vuln_web['value']['service']
         self.status = vuln_web['value']['status']
         self.tags = vuln_web['value']['tags']
         self.target = vuln_web['value']['target']
-        self.metadata = vuln_web['value']['metadata']
         self.parent = vuln_web['value']['parent']
+
+    @staticmethod
+    def publicattrsrefs():
+        publicattrs = dict(ModelBase.publicattrsrefs(), **{
+            'Data' : 'data',
+            'Severity' : 'severity',
+            'Refs' : 'refs',
+            'Path' : 'path',
+            'Website' : 'website',
+            'Request' : 'request',
+            'Response' : 'response',
+            'Method' : 'method',
+            'Pname' : 'pname',
+            'Params' : 'params',
+            'Query' : 'query'})
+        return publicattrs
 
     def getID(self): return self.id
     def getName(self): return self.name
@@ -588,13 +640,10 @@ class _VulnWeb:
     def getMetadata(self): return self.metadata
     def getParent(self): return self.parent
 
-class _Note:
+class _Note(ModelBase):
     class_signature = 'Note'
+
     def __init__(self, note, workspace_name):
-        self._workspace_name = workspace_name
-        self.id = note['id']
-        self.name = note['value']['name']
-        self.description = note['value']['description']
         self.text = note['value']['text']
 
     def getID(self): return self.id
@@ -602,13 +651,12 @@ class _Note:
     def getDescription(self): return self.description
     def getText(self): return self.text
 
-class _Credential:
+class _Credential(ModelBase):
     class_signature = "Cred"
+
     def __init__(self, credential, workspace_name):
-        self._workspace_name = workspace_name
-        self.id = note['id']
-        self.username = note['value']['username']
-        self.password = note['value']['password']
+        self.username = credential['value']['username']
+        self.password = credential['value']['password']
 
     def getID(self): return self.id
     def getUsername(self): return self.username

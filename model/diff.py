@@ -8,9 +8,14 @@ See the file 'doc/LICENSE' for the license information
 
 class ModelObjectDiff(object):
     def __init__(self, objLeft, objRight):
-        if not isinstance(objLeft, objRight.__class__):
+        try:
+            if not getattr(objLeft, 'class_signature') == getattr(objRight, 'class_signature'):
+                raise Exception("Cannot compare objects of different signature. objLeft (%s) vs objRight (%s)"
+                                % (objLeft.class_signature, objRight.class_signature))
+        except:
             raise Exception("Cannot compare objects of different classes. objLeft (%s) vs objRight (%s)"
-                            % (objLeft.__class__.__name__, objRight.__class__.__name__))
+                                % (objLeft.__class__.__name__, objRight.__class__.__name__))
+
         self.obj1, self.obj2 = objLeft, objRight
 
         self.conflicting = []
@@ -24,12 +29,15 @@ class ModelObjectDiff(object):
 
     def getPropertiesDiff(self):
         prop_diff = {}
-        for attrdesc, attrname in self.obj1.publicattrsrefs.items():
-            info = lambda attr_ref: attr_ref() if callable(attr_ref) else attr_ref
-            prop1 = info(self.obj1.__getattribute__(attrname))
-            prop2 = info(self.obj2.__getattribute__(attrname))
-            if prop1 != prop2:
-                prop_diff[attrdesc] = (prop1, prop2)
+        import ipdb; ipdb.set_trace()
+        for attrdesc, attrname in self.obj1.publicattrsrefs().items():
+            for attrdesc2, attrname2 in self.obj2.publicattrsrefs.items():
+
+                info = lambda attr_ref: attr_ref() if callable(attr_ref) else attr_ref
+                prop1 = info(self.obj1.__getattribute__(attrname))
+                prop2 = info(self.obj2.__getattribute__(attrname2))
+                if prop1 != prop2:
+                    prop_diff[attrdesc] = (prop1, prop2)
 
         return prop_diff
 

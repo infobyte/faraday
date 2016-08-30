@@ -37,56 +37,55 @@ def get_object_properties(obj):
             'description': obj.getDescription(),
             'metadata': get_metadata_properties(obj.getMetadata()),
             'owned': obj.isOwned(),
-            'owner': obj.getOwner()}
+            'owner': obj.getOwner()
+            }
 
 def get_host_properties(host):
     host_dict = {'os': host.getOS(),
-            'default_gateway': host.getDefaultGateway()
-            }
+                 'default_gateway': host.getDefaultGateway()}
     host_dict.update(get_object_properties(host))
     return host_dict
 
 def get_interface_properties(interface):
     interface_dict = {'mac': interface.getMAC(),
-                 'hostnames': interface.getHostnames(),
-                 'network_segment': interface.getNetworkSegment(),
-                 'ipv4':  interface.getIPv4(),
-                 'ipv6': interface.getIPv6(),
-                 }
+                      'hostnames': interface.getHostnames(),
+                      'network_segment': interface.getNetworkSegment(),
+                      'ipv4':  interface.getIPv4(),
+                      'ipv6': interface.getIPv6()
+                      }
     interface_dict.update(get_object_properties(interface))
     return interface_dict
 
 def get_service_properties(service):
     service_dict = {'ports': service.getPorts(),
-               'protocol': service.getProtocol(),
-               'status': service.getStatus(),
-               'version': service.getVersion(),
-               }
+                    'protocol': service.getProtocol(),
+                    'status': service.getStatus(),
+                    'version': service.getVersion()
+                    }
     service_dict.update(get_object_properties(service))
     return service_dict
 
 def get_vuln_properties(vuln):
     vuln_dict = {'confirmed': vuln.getConfirmed(),
-            'data': vuln.getData(),
-            'refs': vuln.getRefs(),
-            'severity': vuln.getSeverity(),
-            'resolution': vuln.getResolution(),
-            'desc': vuln.getDesc(),
-            }
+                 'data': vuln.getData(),
+                 'refs': vuln.getRefs(),
+                 'severity': vuln.getSeverity(),
+                 'resolution': vuln.getResolution(),
+                 'desc': vuln.getDesc()}
     vuln_dict.update(get_object_properties(vuln))
     return vuln_dict
 
 def get_vuln_web_properties(vuln_web):
     vuln_web_dict = {'method': vuln_web.getMethod(),
-                'params': vuln_web.getParams(),
-                'request': vuln_web.getRequest(),
-                'response': vuln_web.getResponse(),
-                'website': vuln_web.getWebsite(),
-                'path': vuln_web.getPath(),
-                'pname': vuln_web.getPname(),
-                'query': vuln_web.getQuery(),
-                'category': vuln_web.getCategory()
-                }
+                     'params': vuln_web.getParams(),
+                     'request': vuln_web.getRequest(),
+                     'response': vuln_web.getResponse(),
+                     'website': vuln_web.getWebsite(),
+                     'path': vuln_web.getPath(),
+                     'pname': vuln_web.getPname(),
+                     'query': vuln_web.getQuery(),
+                     'category': vuln_web.getCategory()
+                     }
     vuln_web_dict.update(get_object_properties(vuln_web))
     vuln_web_dict.update(get_vuln_properties(vuln_web))
     return vuln_web_dict
@@ -98,8 +97,8 @@ def get_note_properties(note):
 
 def get_credential_properties(credential):
     cred_dict = {'username': credential.getUsername(),
-            'password': credential.getPassword(),
-            }
+                 'password': credential.getPassword()}
+
     cred_dict.update(get_object_properties(credential))
     return cred_dict
 

@@ -405,7 +405,7 @@ class ModelController(threading.Thread):
             res = False
             api.devlog("(%s).addUpdate(%s, %s) - failed" %
                        (self, old_object, new_object))
-        self.mappers_manager.update(old_object.class_signature, old_object)
+        self.mappers_manager.update(old_object)
         notifier.editHost(old_object)
         return res
 

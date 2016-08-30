@@ -2,15 +2,16 @@ import requests, json
 from persistence.server.utils import force_unique
 from persistence.server.utils import WrongObjectSignature
 
-SERVER_URL = None
+FARADAY_UP = True
+SERVER_URL = ""
 
 def _get_base_server_url():
-    if not SERVER_URL:
+    if FARADAY_UP:
         from config.configuration import getInstanceConfiguration
         CONF = getInstanceConfiguration()
         server_url = CONF.getCouchURI()
     else:
-        server_url = "http://127.0.0.1:5984"
+        server_url = SERVER_URL
     return server_url
 
 def _create_server_api_url():
@@ -56,6 +57,7 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
     may be empty.
     """
     try:
+        print server_io_function, server_url, payload
         answer = server_io_function(server_url, **payload)
         if answer.status_code == 409 and answer.json()['error'] == 'conflict':
             raise ConflictInDatabase(answer)
@@ -796,9 +798,7 @@ def delete_command(workspace_name, command_id):
 def delete_workspace(workspace_name):
     """Delete the couch database of id workspace_name"""
     db_url = _create_server_db_url(workspace_name)
-    return _parse_json(_unsafe_io_with_server(requests.delete,
-                                              200,
-                                              db_url))
+    return _delete(db_url)
 
 def is_server_up():
     try:

@@ -20,9 +20,10 @@ class ServiceDAO(FaradayDAO):
         "protocol":     [Service.protocol],
         "version":      [Service.version],
         "status":       [Service.status],
-        "owned":        [Service.owned]
+        "owned":        [Service.owned],
+        "hostid":       [Host.id]
     }
-    STRICT_FILTERING = ["couchid", "interface", 'id']
+    STRICT_FILTERING = ["couchid", "interface", 'id', 'hostid']
 
     def list(self, service_filter={}):
         service_bundle = Bundle('service',
@@ -35,8 +36,11 @@ class ServiceDAO(FaradayDAO):
                 EntityMetadata.update_controller_action, EntityMetadata.owner)
 
         query = self._session.query(service_bundle).\
+                group_by(Service.id).\
                 outerjoin(EntityMetadata, EntityMetadata.id == Service.entity_metadata_id).\
-                outerjoin(Vulnerability, Service.id == Vulnerability.service_id).group_by(Service.id)
+                outerjoin(Vulnerability, Service.id == Vulnerability.service_id).group_by(Service.id).\
+                outerjoin(Interface, Interface.id == Service.interface_id).\
+                outerjoin(Host, Host.id == Interface.host_id)
 
         query = apply_search_filter(query, self.COLUMNS_MAP, None, service_filter, self.STRICT_FILTERING)
 

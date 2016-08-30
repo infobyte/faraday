@@ -415,18 +415,14 @@ class _Host(ModelBase):
     def getOwner(self): return self.owner
     def getMetadata(self): return self.metadata
     def getVulns(self):
-        return get_all_vulns(self._workspace_name, target=self.name)
+        return get_all_vulns(self._workspace_name, hostid=self._server_id)
     def getInterface(self, interface_couch_id):
         service = get_interfaces(self._workspace_name, couchid=interface_couch_id)
         return service[0]
     def getAllInterfaces(self):
-        return get_interfaces(self._workspace_name, host=self.server_id)
+        return get_interfaces(self._workspace_name, host=self._server_id)
     def getServices(self):
-        services = []
-        interfaces = self.getAllInterfaces()
-        for interface in interfaces:
-            services.append(interface.getAllServices())
-        return interfaces
+        return get_services(self._workspace_name, hostid=self._server_id)
 
 
 class _Interface(ModelBase):
@@ -471,18 +467,19 @@ class _Interface(ModelBase):
     #def getMetadata(self): return self.metadata
 
     def getService(self, service_couch_id):
-        service = get_services(self._workspace_name, couchid=service_couch_id)
-        return service[0]
+        return get_service(self._workspace_name, service_couch_id)
     def getAllServices(self):
         return get_services(self._workspace_name, interface=self._server_id)
     def getVulns(self):
-        vulns = []
-        services = self.getAllServices()
-        for service in services:
-            vulns_in_service = service.getVulns()
-            for vuln in vulns_in_service:
-                vulns.append(vuln)
-        return vulns
+        return get_all_vulns(self._workspace_name, interfaceid=self._server_id)
+
+        # vulns = []
+        # services = self.getAllServices()
+        # for service in services:
+        #     vulns_in_service = service.getVulns()
+        #     for vuln in vulns_in_service:
+        #         vulns.append(vuln)
+        # return vulns
 
 class _Service(ModelBase):
     """A simple Service class. Should implement all the methods of the
@@ -521,7 +518,7 @@ class _Service(ModelBase):
     def getVersion(self): return self.version
     def getProtocol(self): return self.protocol
     def isOwned(self): return self.owned
-    def getVulns(self): return get_all_vulns(self._workspace_name, service=self.name)
+    def getVulns(self): return get_all_vulns(self._workspace_name, service=self._server_id)
     #def getMetadata(self): return self.metadata
 
 

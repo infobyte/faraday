@@ -89,7 +89,7 @@ def get_vuln_web_properties(vuln_web):
     vuln_web_dict.update(get_object_properties(vuln_web))
     vuln_web_dict.update(get_vuln_properties(vuln_web))
     return vuln_web_dict
-            
+
 def get_note_properties(note):
     note_dict = {'text': note.getText()}
     note_dict.update(get_object_properties(note))
@@ -98,7 +98,6 @@ def get_note_properties(note):
 def get_credential_properties(credential):
     cred_dict = {'username': credential.getUsername(),
                  'password': credential.getPassword()}
-
     cred_dict.update(get_object_properties(credential))
     return cred_dict
 

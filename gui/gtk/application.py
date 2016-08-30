@@ -185,7 +185,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         self.lost_connection_dialog_raised = True
 
-        if explanatory_message:
+        if explanatory_message and isinstance(explanatory_message, basestring):
             explanation = "\n The specific error was: " + explanatory_message
         else:
             explanation = ""

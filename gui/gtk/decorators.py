@@ -1,6 +1,8 @@
 from gi.repository import Gtk
+from utils.logs import getLogger
 from functools import wraps
 from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
+from persistence.server.server import ServerRequestException
 
 def safe_io_with_server(response_in_emergency):
     """A function that takes a response_in_emergency. It will return
@@ -11,8 +13,9 @@ def safe_io_with_server(response_in_emergency):
         def wrapper(*args, **kwargs):
             try:
                 res = func(*args, **kwargs)
-            except:
+            except ServerRequestException as e:
                 res = response_in_emergency
+                getLogger("Server-GTK IO").warning(e)
             return res
         return wrapper
     return safe_decorator

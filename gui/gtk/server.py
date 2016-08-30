@@ -9,7 +9,7 @@ class ServerIO(object):
     def get_hosts(self, **params):
         return models.get_hosts(self.active_workspace, **params)
 
-    @safe_io_with_server([])
+    @safe_io_with_server(0)
     def get_hosts_number(self):
         return models.get_hosts_number(self.active_workspace)
 
@@ -17,7 +17,7 @@ class ServerIO(object):
     def get_interfaces(self, **params):
         return models.get_interfaces(self.active_workspace, **params)
 
-    @safe_io_with_server([])
+    @safe_io_with_server(0)
     def get_interfaces_number(self):
         return models.get_interfaces_number(self.active_workspace)
 
@@ -29,7 +29,7 @@ class ServerIO(object):
     def get_services_number(self):
         return models.get_services_number(self.active_workspace)
 
-    @safe_io_with_server(0)
+    @safe_io_with_server([])
     def get_all_vulns(self, **params):
         return models.get_all_vulns(self.active_workspace, **params)
 

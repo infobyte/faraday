@@ -69,7 +69,6 @@ class ServerIO(object):
                         deleted = bool(change.get('deleted'))
                         obj_id = change.get('id')
                         revision = change.get("changes")[-1].get('rev')
-                        print "CHANGE"
                         notification_center.changeFromInstance(obj_type,
                                                                obj_name,
                                                                deleted)

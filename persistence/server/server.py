@@ -3,7 +3,9 @@ from persistence.server.utils import force_unique
 from persistence.server.utils import WrongObjectSignature
 from persistence.server.changes_stream import CouchChangesStream
 
-FARADAY_UP = False
+# NOTE: Change is you want to use this module by itself.
+# If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
+FARADAY_UP = True
 SERVER_URL = "http://127.0.0.1:5984"
 
 def _get_base_server_url():
@@ -60,12 +62,13 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
     Return the response from the server.
     """
     try:
+        import ipdb; ipdb.set_trace()
         answer = server_io_function(server_url, **payload)
         if answer.status_code == 409 and answer.json()['error'] == 'conflict':
             raise ConflictInDatabase(answer)
         if answer.status_code == 404:
             raise ResourceDoesNotExist(server_url)
-        if answer.status_code == 403:
+        if answer.status_code == 403 or answer.status_code == 401:
             raise Unauthorized(answer)
         if answer.status_code != server_expected_response:
             raise requests.exceptions.ConnectionError()

@@ -669,7 +669,6 @@ class _Vuln(ModelBase):
         self.severity = vuln['value']['severity']
         self.refs = vuln['value']['refs']
         self.confirmed = vuln['value']['confirmed']
-        self.easeofresolution = vuln['value']['easeofresolution']
         self.resolution = vuln['value']['resolution']
 
     @staticmethod
@@ -734,7 +733,7 @@ class _Vuln(ModelBase):
         if data is not None:
             self.data = data
         if resolution is not None:
-            self.easeofresolution = resolution
+            self.resolution = resolution
         if severity is not None:
             self.severity = self.standarize(severity)
         if refs is not None:

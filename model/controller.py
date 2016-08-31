@@ -393,21 +393,20 @@ class ModelController(threading.Thread):
 
     def addUpdate(self, old_object, new_object):
         # Returns True if the update was resolved without user interaction
-        res = True
         try:
             mergeAction = old_object.addUpdate(new_object)
             if mergeAction:
                 if old_object not in self.objects_with_updates:
                     self.objects_with_updates.append(old_object)
                 notifier.conflictUpdate(1)
-                res = False
+                return False
         except:
-            res = False
             api.devlog("(%s).addUpdate(%s, %s) - failed" %
                        (self, old_object, new_object))
+            return False
         self.mappers_manager.update(old_object)
         notifier.editHost(old_object)
-        return res
+        return True
 
     def find(self, obj_id):
         return self.mappers_manager.find(obj_id)

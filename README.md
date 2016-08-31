@@ -31,7 +31,7 @@ Read more about [supported platforms and installation specifics] (https://github
 
 #### Quick install
 
-This applies only to Debian, Ubuntu, Kali and Backtrack. For the full installation guide [visit our wiki](https://github.com/infobyte/faraday/wiki/Installation).
+This applies only to Debian, Ubuntu, Kali and Backtrack. For the full installation guide [visit our wiki](https://github.com/infobyte/faraday/wiki/First-steps).
 
 Download the [latest tarball](https://github.com/infobyte/faraday/tarball/master) or clone our repo:
 

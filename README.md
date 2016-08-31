@@ -27,7 +27,7 @@ The following platforms are supported:
 
 ![platform](https://raw.github.com/wiki/infobyte/faraday/images/platform/supported.png) 
 
-Read more about [supported platforms and installation specifics] (https://github.com/infobyte/faraday/wiki/Installation).
+Read more about [supported platforms and installation specifics] (https://github.com/infobyte/faraday/wiki/First-steps).
 
 #### Quick install
 

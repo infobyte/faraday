@@ -438,11 +438,15 @@ class ModelBase(object):
     def needs_merge(self, new_obj):
         return ModelObjectDiff(self, new_obj).existDiff()
 
+    def updateMetadata(self):
+        self.getMetadata().update(self.owner)
+    
     def getOwner(self): return self.owner
     def isOwned(self): return self.owned
     def getName(self): return self.name
     def getMetadata(self): return self.metadata
     def getDescription(self): return self.description
+
 
 class _Host(ModelBase):
     """A simple Host class. Should implement all the methods of the
@@ -464,6 +468,18 @@ class _Host(ModelBase):
             'Operating System' : 'os'
         })
         return publicattrs
+
+    def updateAttributes(self, name=None, description=None, os=None, owned=None):
+
+        self.updateMetadata()
+        if name is not None:
+            self.name = name
+        if description is not None:
+            self.description = description
+        if os is not None:
+            self.os = os
+        if owned is not None:
+            self.owned = owned
 
     def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
     def getOS(self): return self.os
@@ -498,6 +514,10 @@ class _Interface(ModelBase):
         self.network_segment = interface['value']['network_segment']
         self.ports = interface['value']['ports']
 
+        self.amount_ports_opened   = 0
+        self.amount_ports_closed   = 0
+        self.amount_ports_filtered = 0
+
     @staticmethod
     def publicattrsrefs():
         publicattrs = dict(ModelBase.publicattrsrefs(), **{
@@ -509,16 +529,68 @@ class _Interface(ModelBase):
         })
         return publicattrs
 
+    def tieBreakable(self, property_key):
+        if property_key in ["hostnames"]:
+            return True
+        return False
+
+    def tieBreak(self, key, prop1, prop2):
+        if key == "hostnames":
+            prop1.extend(prop2)
+            return list(set(prop1))
+        return None
+    
+    def updateAttributes(self, name=None, description=None, hostnames=None, mac=None, ipv4=None, ipv6=None,
+                         network_segment=None, amount_ports_opened=None, amount_ports_closed=None,
+                         amount_ports_filtered=None, owned=None):
+
+        self.updateMetadata()
+        if name is not None:
+            self.name = name
+        if description is not None:
+            self.description = description
+        if hostnames is not None:
+            self.hostnames = hostnames
+        if mac is not None:
+            self.mac = mac
+        if ipv4 is not None:
+            self.ipv4 = ipv4
+        if ipv6 is not None:
+            self.ipv6 = ipv6
+        if network_segment is not None:
+            self.network_segment = network_segment
+        if amount_ports_opened is not None:
+            self.setPortsOpened(amount_ports_opened)
+        if amount_ports_closed is not None:
+            self.setPortsClosed(amount_ports_closed)
+        if amount_ports_filtered is not None:
+            self.setPortsFiltered(amount_ports_filtered)
+        if owned is not None:
+            self.owned = owned
+
+    def setPortsOpened(self, ports_opened):
+        self.amount_ports_opened   = ports_opened
+
+    def setPortsClosed(self, ports_closed):
+        self.amount_ports_closed   = ports_closed
+
+    def setPortsFiltered(self, ports_filtered):
+        self.amount_ports_filtered = ports_filtered
+
     def __str__(self): return "{0}".format(self.name)
     def getID(self): return self.id
     def getHostnames(self): return self.hostnames
     def getIPv4(self): return self.ipv4
-    def getIPv6(self): return self.ipv4
+    def getIPv6(self): return self.ipv6
     def getIPv4Address(self): return self.ipv4['address']
+    def getIPv4Mask(self): return self.ipv4['mask']
+    def getIPv4Gateway(self): return self.ipv4['gateway']
+    def getIPv4DNS(self): return self.ipv4['DNS']
     def getIPv6Address(self): return self.ipv6['address']
+    def getIPv6Gateway(self): return self.ipv6['gateway']
+    def getIPv6DNS(self): return self.ipv6['DNS']
     def getMAC(self): return self.mac
     def getNetworkSegment(self): return self.network_segment
-    def getMetadata(self): return self.metadata
 
     def getService(self, service_couch_id):
         return get_service(self._workspace_name, service_couch_id)
@@ -527,13 +599,6 @@ class _Interface(ModelBase):
     def getVulns(self):
         return get_all_vulns(self._workspace_name, interfaceid=self._server_id)
 
-        # vulns = []
-        # services = self.getAllServices()
-        # for service in services:
-        #     vulns_in_service = service.getVulns()
-        #     for vuln in vulns_in_service:
-        #         vulns.append(vuln)
-        # return vulns
 
 class _Service(ModelBase):
     """A simple Service class. Should implement all the methods of the
@@ -557,10 +622,28 @@ class _Service(ModelBase):
             'Ports' : 'ports',
             'Protocol' : 'protocol',
             'Status' : 'status',
-            'Version' : 'version',
+            'Version' : 'version'
         })
         return publicattrs
 
+    def updateAttributes(self, name=None, description=None, protocol=None, ports=None,
+                          status=None, version=None, owned=None):
+        self.updateMetadata()
+        if name is not None:
+            self.name = name
+        if description is not None:
+            self.description = description
+        if protocol is not None:
+            self.protocol = protocol
+        if ports is not None:
+            self.ports = ports
+        if status is not None:
+            self.status = status
+        if version is not None:
+            self.version = version
+        if owned is not None:
+            self.owned = owned
+        
     def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
     def getID(self): return self.id
     def getStatus(self): return self.status
@@ -587,6 +670,7 @@ class _Vuln(ModelBase):
         self.refs = vuln['value']['refs']
         self.confirmed = vuln['value']['confirmed']
         self.easeofresolution = vuln['value']['easeofresolution']
+        self.resolution = vuln['value']['resolution']
 
     @staticmethod
     def publicattrsrefs():
@@ -597,12 +681,72 @@ class _Vuln(ModelBase):
         })
         return publicattrs
 
+    def tieBreakable(self, key):
+        '''
+        If the confirmed property has a conflict, there's two possible reasons:
+            confirmed is false, and the new value is true => returns true
+            confirmed is true, and the new value is false => returns true
+        '''
+        if key == "confirmed":
+            return True
+        return False
+
+    def tieBreak(self, key, prop1, prop2):
+        if key == "confirmed":
+            return True
+        return (prop1, prop2)
+
+    def standarize(self, severity):
+        # Transform all severities into lower strings
+        severity = str(severity).lower()
+        # If it has info, med, high, critical in it, standarized to it:
+
+
+        def align_string_based_vulns(severity):
+            severities = ['info','low', 'med', 'high', 'critical']
+            for sev in severities:
+                if severity[0:3] in sev:
+                    return sev
+            return severity
+
+        severity = align_string_based_vulns(severity)
+
+        # Transform numeric severity into desc severity
+        numeric_severities = { '0' : 'info',
+                                 '1' : 'low',
+                                 '2' : 'med',
+                                 '3' : 'high',
+                                 "4" : 'critical' }
+
+
+        if not severity in numeric_severities.values():
+            severity = numeric_severities.get(severity, 'unclassified')
+
+        return severity
+    
+    def updateAttributes(self, name=None, desc=None, data=None,
+                         severity=None, resolution=None, refs=None):
+        self.updateMetadata()
+        if name is not None:
+            self.name = name
+        if desc is not None:
+            self.desc = desc
+        if data is not None:
+            self.data = data
+        if resolution is not None:
+            self.easeofresolution = resolution
+        if severity is not None:
+            self.severity = self.standarize(severity)
+        if refs is not None:
+            self.refs = refs
+
     def getID(self): return self.id
     def getDesc(self): return self.desc
     def getData(self): return self.data
     def getSeverity(self): return self.severity
     def getRefs(self): return self.refs
     def getConfirmed(self): return self.confirmed
+    def getResolution(self): return self.resolution
 
 
 class _VulnWeb(_Vuln):
@@ -649,12 +793,33 @@ class _VulnWeb(_Vuln):
             'Query' : 'query'})
         return publicattrs
 
-    def getID(self): return self.id
+    def updateAttributes(self, name=None, desc=None, data=None, website=None, path=None, refs=None,
+                        severity=None, resolution=None, request=None,response=None, method=None,
+                        pname=None, params=None, query=None, category=None):
+
+        super(_VulnWeb, self).updateAttributes(name, desc, data, severity, resolution, refs)
+        self.updateMetadata()
+
+        if website is not None:
+            self.website = website
+        if path is not None:
+            self.path = path
+        if request is not None:
+            self.request = request
+        if response is not None:
+            self.response = response
+        if method is not None:
+            self.method = method
+        if pname is not None:
+            self.pname = pname
+        if params is not None:
+            self.params = params
+        if query is not None:
+            self.query = query
+        if category is not None:
+            self.category = category
+
     def getDescription(self): return self.description
-    def getDesc(self): return self.desc
-    def getData(self): return self.data
-    def getSeverity(self): return self.severity
-    def getRefs(self): return self.refs
     def getPath(self): return self.path
     def getWebsite(self): return self.website
     def getRequest(self): return self.request
@@ -663,7 +828,6 @@ class _VulnWeb(_Vuln):
     def getPname(self): return self.pname
     def getParams(self): return self.params
     def getQuery(self): return self.query
-    def getConfirmed(self): return self.confirmed
     def getResolution(self): return self.resolution
     def getAttachments(self): return self.attachments
     def getEaseOfResolution(self): return self.easeofresolution
@@ -682,6 +846,13 @@ class _Note(ModelBase):
         ModelBase.__init__(self, note, workspace_name)
         self.text = note['value']['text']
 
+    def updateAttributes(self, name=None, text=None):
+        self.updateMetadata()
+        if name is not None:
+            self.name = name
+        if text is not None:
+            self.text = text
+
     def getID(self): return self.id
     def getDescription(self): return self.description
     def getText(self): return self.text
@@ -693,6 +864,13 @@ class _Credential(ModelBase):
         ModelBase.__init__(self, credential, workspace_name)
         self.username = credential['value']['username']
         self.password = credential['value']['password']
+
+    def updateAttributes(self, username=None, password=None):
+        self.updateMetadata()
+        if username is not None:
+            self.username =username
+        if password is not None:
+            self.password = password
 
     def getID(self): return self.id
     def getUsername(self): return self.username

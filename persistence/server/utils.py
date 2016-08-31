@@ -47,8 +47,8 @@ def get_interface_properties(interface):
     interface_dict = {'mac': interface.getMAC(),
                       'hostnames': interface.getHostnames(),
                       'network_segment': interface.getNetworkSegment(),
-                      'ipv4':  interface.getIPv4Address(),
-                      'ipv6': interface.getIPv6Address()
+                      'ipv4':  interface.getIPv4(),
+                      'ipv6': interface.getIPv6()
                       }
     interface_dict.update(get_object_properties(interface))
     return interface_dict

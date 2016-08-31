@@ -20,7 +20,6 @@ class ModelObjectDiff(object):
 
         self.conflicting = []
         self.conflicting.extend(self.getPropertiesDiff())
-        print self.conflicting
 
         self.only_in_obj1 = {}
         self.only_in_obj2 = {}

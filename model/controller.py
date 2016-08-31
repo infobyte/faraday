@@ -445,12 +445,12 @@ class ModelController(threading.Thread):
 
     def __edit(self, obj, *args, **kwargs):
         obj.updateAttributes(*args, **kwargs)
-        dataMapper.update(obj.class_signature, obj)
+        self.mappers_manager.update(obj)
 
-        if obj.class_signature == model.hosts.Host.class_signature:
-            notifier.editHost(obj)
-        else:
-            notifier.editHost(obj.getHost())
+        # if obj.class_signature == model.hosts.Host.class_signature:
+        notifier.editHost(obj)
+        # else:
+            # notifier.editHost(obj.getHost())
         return True
 
     def __del(self, objId, *args):

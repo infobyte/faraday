@@ -55,7 +55,7 @@ class InterfaceDAO(FaradayDAO):
                 'mac': interface.mac,
                 'owned': interface.owned,
                 'owner': interface.owner,
-                'hostnames': interface.hostnames,
+                'hostnames': interface.hostnames.split(',') if interface.hostnames else [],
                 'network_segment': interface.network_segment,
                 'ipv4': {'address': interface.ipv4_address,
                          'gateway': interface.ipv4_gateway,

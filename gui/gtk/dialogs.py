@@ -1260,12 +1260,11 @@ class ConflictsDialog(Gtk.Window):
                          obj.getMethod(),
                          obj.getPname(),
                          obj.getParams(),
-                         obj.getQuery(),
-                         obj.getCategory()))
+                         obj.getQuery()))
 
         props = ["Name", "Desc", "Data", "Severity", "Refs", "Path",
                  "Website", "Request", "Response", "Method", "Pname",
-                 "Params", "Query", "Category"]
+                 "Params", "Query"]
 
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model

@@ -375,7 +375,7 @@ def is_server_up():
 class ModelBase(object):
     def __init__(self, obj, workspace_name):
         self._workspace_name = workspace_name
-        self._server_id = obj['_id']
+        self._server_id = obj['value']['_id']
         self.id = obj['id']
         self.name = obj['value']['name']
         self.description = obj['value']['description']

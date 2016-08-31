@@ -67,6 +67,11 @@ def _get_faraday_ready_credentials(workspace_name, credentials_dictionaries):
 def _get_faraday_ready_notes(workspace_name, notes_dictionaries):
     return _get_faraday_ready_objects(workspace_name, notes_dictionaries, 'notes')
 
+def get_changes_stream(workspace_name, **params):
+    since = server.get_workspace(workspace_name)['last_seq']
+    return server.get_changes_stream(workspace_name, since=since,
+                                     heartbeat='5000')
+
 def get_hosts(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
     request.
@@ -336,11 +341,11 @@ def delete_note(workspace_name, note_id):
 def delete_credential(workspace_name, credential_id):
     return server.delete_credential(workspace_name, credential_id)
 
-def delete_vuln_web(workspace_name, vuln_web):
-    return server.delete_vuln(workspace_name, vuln_web)
+def delete_vuln_web(workspace_name, vuln_id):
+    return server.delete_vuln(workspace_name, vuln_id)
 
-def delete_command(workspace_name, command):
-    return server.delete_command(workspace_name, command)
+def delete_command(workspace_name, command_id):
+    return server.delete_command(workspace_name, command_id)
 
 def delete_object(workspace_name, object_signature, obj_id):
     object_to_func = {_Host.class_signature: delete_host,
@@ -370,6 +375,7 @@ def is_server_up():
 class ModelBase(object):
     def __init__(self, obj, workspace_name):
         self._workspace_name = workspace_name
+        self._server_id = obj['_id']
         self.id = obj['id']
         self.name = obj['value']['name']
         self.description = obj['value']['description']
@@ -383,7 +389,7 @@ class ModelBase(object):
         return {'Description': 'description',
                 'Name': 'name',
                 'Owned': 'owned'}
-    
+
     def defaultValues(self):
         return [-1, 0, '', 'unknown', None, [], {}]
 
@@ -410,13 +416,11 @@ class ModelBase(object):
             attribute = self.publicattrsrefs().get(k)
             prop_update = self.propertyTieBreaker(attribute, *v)
 
-            if (not isinstance(prop_update, tuple) or
-                    CONF.getMergeStrategy()):
+            if not isinstance(prop_update, tuple) or CONF.getMergeStrategy():
                 # if there's a strategy set by the user, apply it
                 if isinstance(prop_update, tuple):
-                    prop_update = MergeSolver(
-                        CONF.getMergeStrategy()
-                        ).solve(prop_update[0], prop_update[1])
+                    prop_update = MergeSolver(CONF.getMergeStrategy())
+                    prop_update = prop_update.solve(prop_update[0], prop_update[1])
 
                 setattr(self, attribute, prop_update)
             else:
@@ -447,10 +451,9 @@ class _Host(ModelBase):
     a search the server is missing.
     """
     class_signature = 'Host'
-    
+
     def __init__(self, host, workspace_name):
         ModelBase.__init__(self, host, workspace_name)
-        self.server_id = host['_id']
         self.default_gateway = host['value']['default_gateway']
         self.os = host['value']['os']
         self.vuln_amount = int(host['value']['vulns'])
@@ -488,7 +491,6 @@ class _Interface(ModelBase):
 
     def __init__(self, interface, workspace_name):
         ModelBase.__init__(self, interface, workspace_name)
-        self._server_id = interface['_id']
         self.hostnames = interface['value']['hostnames']
         self.ipv4 = interface['value']['ipv4']
         self.ipv6 = interface['value']['ipv6']
@@ -543,7 +545,6 @@ class _Service(ModelBase):
 
     def __init__(self, service, workspace_name):
         ModelBase.__init__(self, service, workspace_name)
-        self._server_id = service['_id']
         self.protocol = service['value']['protocol']
         self.ports =  service['value']['ports']
         self.version = service['value']['version']

@@ -147,7 +147,7 @@ class ChangesStream(object):
                     stream=True, auth=get_auth_info())
 
                 for raw_line in self.__response.iter_lines():
-                    line = self.__sanitize(raw_line) 
+                    line = self.__sanitize(raw_line)
                     if not line:
                         continue
 
@@ -182,7 +182,7 @@ class ChangesStream(object):
             return None
 
         # Modify line cases
-        if line.startswith('"last_seq"'): 
+        if line.startswith('"last_seq"'):
             line = '{' + line
         if line.endswith(","):
             line = line[:-1]
@@ -249,7 +249,7 @@ class MonitorThread(threading.Thread):
                     elif change_doc.get('reason') == 'no_db_file':
                         self.__stream.stop()
                         break
-    
+
     def stop(self):
         self.__stream.stop()
 
@@ -285,11 +285,16 @@ def list_workspaces_as_user(cookies):
 
     return { 'workspaces': workspaces }
 
-def get_workspace(ws_name):
+def get_workspace(ws_name, cookies, credentials):
     # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
-    ws_url = get_couchdb_url() + ('/%s/%s' % (workspace_name, workspace_name))
+    ws_url = get_couchdb_url() + ('/%s/%s' % (ws_name, ws_name))
     response = requests.get(ws_url, verify=False, cookies=cookies, auth=credentials)
-    return response.json()
+    response_dictionary = response.json()
+    ws_document_url = get_couchdb_url() + ('/%s' % (ws_name))
+    ws_document_response = requests.get(ws_document_url, verify=False,
+                                        cookies=cookies, auth=credentials)
+    response_dictionary['last_seq'] = ws_document_response.json()['update_seq']
+    return response_dictionary
 
 def has_permissions_for(workspace_name, cookies=None, credentials=None):
     # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG

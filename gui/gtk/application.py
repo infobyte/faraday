@@ -116,28 +116,6 @@ class GuiApp(Gtk.Application, FaradayUi):
                                                             16, False)
         self.window = None
         self.model_controller = model_controller
-        self.continously_check_server_connection()
-
-    def continously_check_server_connection(self):
-        def test_server_connection():
-            tolerance = 0
-            while True:
-                time.sleep(1)
-                test_was_successful = self.serverIO.is_server_up()
-                if test_was_successful:
-                    tolerance = 0
-                else:
-                    tolerance += 1
-                    if tolerance == 3:
-                        GObject.idle_add(self.lost_db_connection,
-                                         "",
-                                         self.handle_connection_lost,
-                                         self.force_change_couch_url)
-                        GObject.idle_add(self.reload_workspaces_no_connection)
-
-        test_server_thread = threading.Thread(target=test_server_connection)
-        test_server_thread.daemon = True
-        test_server_thread.start()
 
     @property
     def active_ws_name(self):
@@ -185,8 +163,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.select_active_workspace()
 
     def lost_db_connection(self, explanatory_message=None,
-                           handle_connection_lost=None,
-                           connect_to_a_different_couch=None):
+                                   handle_connection_lost=None,
+                                   connect_to_a_different_couch=None):
         """Creates a simple dialog with an error message to inform the user
         some kind of problem has happened and the connection was lost.
         """
@@ -357,9 +335,6 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def update_counts(self):
         """Update the counts for host, services and vulns"""
-        # host_count = self.model_controller.getHostsCount()
-        # service_count = self.model_controller.getServicesCount()
-        # vuln_count = self.model_controller.getVulnsCount()
         host_count = self.serverIO.get_hosts_number()
         service_count = self.serverIO.get_services_number()
         vuln_count = self.serverIO.get_vulns_number()
@@ -518,28 +493,11 @@ class GuiApp(Gtk.Application, FaradayUi):
                              event.nconflicts)
 
         def new_notification_event():
-            self.notificationsModel.prepend([event.change.getMessage()])
+            self.notificationsModel.prepend([str(event)])
             GObject.idle_add(self.statusbar.inc_notif_button_label)
             host_count, service_count, vuln_count = self.update_counts()
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)
-
-        def host_added_event():
-            pass
-
-        def host_deleted_event():
-            pass
-            # GObject.idle_add(self.hosts_sidebar.update, 'delete', event.host_id)
-            # host_count, service_count, vuln_count = self.update_counts()
-            # GObject.idle_add(self.statusbar.update_ws_info, host_count,
-            #                  service_count, vuln_count)
-
-        def host_updated_event():
-            pass
-            # GObject.idle_add(self.hosts_sidebar.update, 'update', event.host)
-            # host_count, service_count, vuln_count = self.update_counts()
-            # GObject.idle_add(self.statusbar.update_ws_info, host_count,
-            #                  service_count, vuln_count)
 
         def workspace_changed_event():
             self.serverIO.active_workspace = event.workspace.name
@@ -581,9 +539,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         dispatch = {3131:  new_log_event,
                     3141:  new_conflict_event,
                     5100:  new_notification_event,
-                    4100:  host_added_event,
-                    4101:  host_deleted_event,
-                    4102:  host_updated_event,
                     3140:  workspace_changed_event,
                     3132:  normal_error_event,
                     3134:  important_error_event,
@@ -629,6 +584,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         Gtk.Application.do_startup(self)  # deep GTK magic
 
         self.serverIO = ServerIO(CONF.getLastWorkspace())
+
+        self.serverIO.continously_check_server_connection()
+        self.serverIO.continously_get_changes()
+
         self.ws_sidebar = WorkspaceSidebar(self.serverIO,
                                            self.change_workspace,
                                            self.remove_workspace,

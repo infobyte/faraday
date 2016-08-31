@@ -11,7 +11,7 @@ from server.dao.service import ServiceDAO
 from server.dao.interface import InterfaceDAO
 from server.dao.note import NoteDAO
 from server.utils.web import gzipped, validate_workspace
-from server.couchdb import list_workspaces_as_user, get_workspace
+from server.couchdb import list_workspaces_as_user, get_workspace, get_auth_info
 
 
 @app.route('/ws', methods=['GET'])
@@ -46,8 +46,8 @@ def workspace_summary(workspace=None):
 
 @app.route('/ws/<workspace>', methods=['GET'])
 @gzipped
-def workspace():
-    workspaces = list_workspaces_as_user(flask.request.cookies)
-    ws = get_workspace(workspace) if workspace in workspaces else None
+def workspace(workspace):
+    workspaces = list_workspaces_as_user(flask.request.cookies)['workspaces']
+    ws = get_workspace(workspace, flask.request.cookies, get_auth_info()) if workspace in workspaces else None
     return flask.jsonify(ws)
 

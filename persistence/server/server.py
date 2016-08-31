@@ -1,9 +1,10 @@
 import requests, json
 from persistence.server.utils import force_unique
 from persistence.server.utils import WrongObjectSignature
+from persistence.server.changes_stream import CouchChangesStream
 
-FARADAY_UP = True
-SERVER_URL = ""
+FARADAY_UP = False
+SERVER_URL = "http://127.0.0.1:5984"
 
 def _get_base_server_url():
     if FARADAY_UP:
@@ -18,16 +19,19 @@ def _create_server_api_url():
     """Return the server's api url."""
     return "{0}/_api".format(_get_base_server_url())
 
-def _create_server_get_url(workspace_name, object_name):
+def _create_server_get_url(workspace_name, object_name=None):
     """Creates a url to get from the server. Takes the workspace name
     as a string, an object_name paramter which is the object you want to
     query as a string ('hosts', 'interfaces', etc) .
 
-    Return the request_url as a string.
+    object_name may be None if you want to get the workspace itself.
+
+    Return the get_url as a string.
     """
-    get_url = '{0}/ws/{1}/{2}'.format(_create_server_api_url(),
-                                          workspace_name,
-                                          object_name)
+    object_name = "/{0}".format(object_name) if object_name else ""
+    get_url = '{0}/ws/{1}{2}'.format(_create_server_api_url(),
+                                      workspace_name,
+                                      object_name)
     return get_url
 
 # XXX: COUCH IT!
@@ -53,8 +57,7 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
     raising an CantCommunicateWithServerError if the response wasn't
     server_expected_response or if there was a Connection Error.
 
-    Return a dictionary with the response from the server. The dictionary
-    may be empty.
+    Return the response from the server.
     """
     try:
         answer = server_io_function(server_url, **payload)
@@ -172,6 +175,12 @@ def _update_in_couch(workspace_name, faraday_object_id, **params):
 def _delete_from_couch(workspace_name, faraday_object_id):
     delete_url = _create_server_delete_url(workspace_name, faraday_object_id)
     return _delete(delete_url)
+
+# XXX: COUCH IT!
+def _couch_changes(workspace_name, **params):
+    return CouchChangesStream(workspace_name,
+                              _create_server_db_url(workspace_name),
+                              **params)
 
 def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
                                     faraday_object_row_name, full_table=True,
@@ -300,6 +309,11 @@ def get_objects(workspace_name, object_signature, **params):
 
     return appropiate_function(workspace_name, **params)
 
+# cha cha cha chaaaanges!
+def get_changes_stream(workspace_name, since=0, heartbeat='5000', **params):
+    return _couch_changes(workspace_name, since=since, feed='continuous',
+                          heartbeat=heartbeat, **params)
+
 def get_workspaces_names():
     """Return a json containing the list with the workspaces names."""
     return _get("{0}/ws".format(_create_server_api_url()))
@@ -406,7 +420,7 @@ def get_workspace(workspace_name, **params):
     containing the workspace document on couch database with the same
     workspace_name if found, or None if no db or document were found.
     """
-    request_url = _create_server_post_url(workspace_name, workspace_name)
+    request_url = _create_server_get_url(workspace_name)
     return _get(request_url, **params)
 
 def get_hosts_number(workspace_name, **params):

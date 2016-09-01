@@ -10,14 +10,16 @@ from server.dao.vuln import VulnerabilityDAO
 from server.dao.service import ServiceDAO
 from server.dao.interface import InterfaceDAO
 from server.dao.note import NoteDAO
-from server.utils.web import gzipped, validate_workspace
+from server.utils.web import gzipped, validate_workspace, get_basic_auth
 from server.couchdb import list_workspaces_as_user, get_workspace, get_auth_info
 
 
 @app.route('/ws', methods=['GET'])
 @gzipped
 def workspace_list():
-    return flask.jsonify(list_workspaces_as_user(flask.request.cookies))
+    return flask.jsonify(
+        list_workspaces_as_user(
+            flask.request.cookies, get_basic_auth()))
 
 @app.route('/ws/<workspace>/summary', methods=['GET'])
 @gzipped
@@ -47,7 +49,12 @@ def workspace_summary(workspace=None):
 @app.route('/ws/<workspace>', methods=['GET'])
 @gzipped
 def workspace(workspace):
-    workspaces = list_workspaces_as_user(flask.request.cookies)['workspaces']
-    ws = get_workspace(workspace, flask.request.cookies, get_auth_info()) if workspace in workspaces else None
+    validate_workspace(workspace)
+    workspaces = list_workspaces_as_user(
+        flask.request.cookies, get_basic_auth())['workspaces']
+    ws = get_workspace(workspace, flask.request.cookies, get_basic_auth()) if workspace in workspaces else None
+    # TODO: When the workspace DAO is ready, we have to remove this next line
+    if not ws.get('fdate'): ws['fdate'] = ws.get('duration').get('end')
+    if not ws.get('description'): ws['description'] = ''
     return flask.jsonify(ws)
 

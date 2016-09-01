@@ -69,11 +69,18 @@ def gzipped(f):
 
     return view_func
 
+def get_basic_auth():
+    if request.authorization:
+        user, passwd = request.authorization.get('username'), request.authorization.get('password')
+        if (all((user, passwd))):
+            return (user, passwd)
+    return None
+
 def validate_workspace(workspace_name, timeout_sync=0.1):
     if not server.database.is_valid_workspace(workspace_name):
         abort(404)
 
-    if not server.couchdb.has_permissions_for(workspace_name, request.cookies):
+    if not server.couchdb.has_permissions_for(workspace_name, request.cookies, get_basic_auth()):
         abort(401)
 
     wait_for_ws_sync_with_couchdb(workspace_name, timeout_sync)

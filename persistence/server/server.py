@@ -115,13 +115,17 @@ def _put(post_url, update=False, **params):
                                               post_url,
                                               json=params))
 
-def _delete(delete_url):
-    """Deletes the object on delete_url."""
-    last_rev = _get(delete_url)['_rev']
+def _delete(delete_url, database=False):
+    """Deletes the object on delete_url. If you're deleting a database,
+    specify the database parameter to True"""
+    params = {}
+    if not database:
+        last_rev = _get(delete_url)['_rev']
+        params={'_rev':last_rev}
     return _parse_json(_unsafe_io_with_server(requests.delete,
                                               200,
                                               delete_url,
-                                              params={'rev':last_rev}))
+                                              params=params))
 
 def _get_raw_hosts(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
@@ -813,7 +817,7 @@ def delete_command(workspace_name, command_id):
 def delete_workspace(workspace_name):
     """Delete the couch database of id workspace_name"""
     db_url = _create_server_db_url(workspace_name)
-    return _delete(db_url)
+    return _delete(db_url, database=True)
 
 def is_server_up():
     try:

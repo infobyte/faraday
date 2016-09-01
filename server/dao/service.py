@@ -70,7 +70,7 @@ class ServiceDAO(FaradayDAO):
                 },
                 'protocol': service.protocol,
                 'status': service.status,
-                'ports': service.ports.split(',') if service.ports else [],
+                'ports':  [ int(i) for i in service.ports.split(',') if service.ports],
                 'version': service.version,
                 'owned': service.owned,
                 'owner': service.owner

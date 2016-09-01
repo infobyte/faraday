@@ -653,7 +653,7 @@ class _Service(ModelBase):
     def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
     def getID(self): return self.id
     def getStatus(self): return self.status
-    def getPorts(self): return [self.ports]  # this is a list of one element in faraday
+    def getPorts(self): return self.ports  # this is a list of one element in faraday
     def getVersion(self): return self.version
     def getProtocol(self): return self.protocol
     def isOwned(self): return self.owned

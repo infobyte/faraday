@@ -93,7 +93,8 @@ class ServerIO(object):
                             deleted = bool(change.get('deleted'))
                             obj_id = change.get('id')
                             revision = change.get("changes")[-1].get('rev')
-                            notification_center.changeFromInstance(obj_type,
+                            notification_center.changeFromInstance(obj_id,
+                                                                   obj_type,
                                                                    obj_name,
                                                                    deleted)
                 except requests.exceptions.RequestException:

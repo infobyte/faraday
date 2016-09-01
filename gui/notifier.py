@@ -75,8 +75,11 @@ class NotificationCenter():
     def conflictResolution(self, conflicts):
         self._notifyWidgets(events.ResolveConflictsCustomEvent(conflicts))
 
-    def changeFromInstance(self, obj_type, obj_name, deleted):
-        self._notifyWidgets(events.ChangeFromInstanceCustomEvent(obj_type, obj_name, deleted))
+    def changeFromInstance(self, obj_id, obj_type, obj_name, deleted):
+        self._notifyWidgets(events.ChangeFromInstanceCustomEvent(obj_id,
+                                                                 obj_type,
+                                                                 obj_name,
+                                                                 deleted))
 
     def addHostFromChanges(self, obj):
         self._notifyWidgets(events.AddHostChangesEvent(obj))

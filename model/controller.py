@@ -199,44 +199,70 @@ class ModelController(threading.Thread):
         self._object_factory.register(model.common.ModelObjectNote)
         self._object_factory.register(model.common.ModelObjectCred)
 
+    def _checkParent(self, parent_type):
+        """Takes a parent_type and returns the appropiate checkParentDecorator,
+        a function that takes another function (most probably you are using
+        it for the __add method) and checks if the object as a parent of
+        parent_type before adding it.
+        """
+        def checkParentDecorator(add_func):
+            def addWrapper(new_obj, parent_id=None, *args):
+                parent = self.mappers_manager.find(parent_type, parent_id)
+                if parent:
+                    add_func(new_obj, parent_id, *args)
+                else:
+                    msg = "A parent is needed for %s objects" % new_obj.class_signature
+                    getLogger(self).error(msg)
+                    return False
+            return addWrapper
+        return checkParentDecorator
+
     def _setupActionDispatcher(self):
+
+        # these are decorators for the __add method.
+        checkParentHost = self._checkParent('Host')
+        checkParentInterface = self._checkParent('Interface')
+        checkParentService = self._checkParent('Service')
+        checkParentVuln = self._checkParent('Vuln')
+        checkParentNote = self._checkParent('Note')
+
         self._actionDispatcher = {
             modelactions.ADDHOST: self.__add,
             modelactions.DELHOST: self.__del,
             modelactions.EDITHOST: self.__edit,
-            modelactions.ADDINTERFACE: self.__add,
+            modelactions.ADDINTERFACE: checkParentHost(self.__add),
             modelactions.DELINTERFACE: self.__del,
             modelactions.EDITINTERFACE: self.__edit,
-            modelactions.ADDSERVICEINT: self.__add,
+            modelactions.ADDSERVICEINT: checkParentInterface(self.__add),
             modelactions.DELSERVICEINT: self.__del,
             modelactions.EDITSERVICE: self.__edit,
             # Vulnerability
-            modelactions.ADDVULNINT: self.__add,
+            modelactions.ADDVULNINT: checkParentInterface(self.__add),
             modelactions.DELVULNINT: self.__del,
-            modelactions.ADDVULNHOST: self.__add,
+            modelactions.ADDVULNHOST: checkParentHost(self.__add),
             modelactions.DELVULNHOST: self.__del,
-            modelactions.ADDVULNSRV: self.__add,
+            modelactions.ADDVULNSRV: checkParentService(self.__add),
             modelactions.DELVULNSRV: self.__del,
             modelactions.ADDVULN: self.__add,
             modelactions.DELVULN: self.__del,
-            modelactions.ADDVULNWEBSRV: self.__add,
+            modelactions.ADDVULNWEBSRV: checkParentService(self.__add),
             modelactions.EDITVULN: self.__edit,
             # Note
-            modelactions.ADDNOTEINT: self.__add,
+            modelactions.ADDNOTEINT: checkParentInterface(self.__add),
             modelactions.DELNOTEINT: self.__del,
-            modelactions.ADDNOTEHOST: self.__add,
+            modelactions.ADDNOTEHOST: checkParentHost(self.__add),
             modelactions.DELNOTEHOST: self.__del,
-            modelactions.ADDNOTESRV: self.__add,
+            modelactions.ADDNOTESRV: checkParentService(self.__add),
             modelactions.DELNOTESRV: self.__del,
-            modelactions.ADDNOTEVULN: self.__add,
+            modelactions.ADDNOTEVULN: checkParentVuln(self.__add),
             modelactions.ADDNOTE: self.__add,
             modelactions.DELNOTE: self.__del,
-            modelactions.ADDCREDSRV: self.__add,
+            modelactions.ADDCREDSRV: checkParentService(self.__add),
             modelactions.DELCREDSRV: self.__del,
-            modelactions.ADDNOTENOTE: self.__add,
+            modelactions.ADDNOTENOTE: checkParentNote(self.__add),
             modelactions.EDITNOTE: self.__edit,
             modelactions.EDITCRED: self.__edit,
-            modelactions.ADDCRED: self.__add,
+            modelactions.ADDCRED: checkParentHost(self.__add),
             modelactions.DELCRED: self.__del,
             # Plugin states
             modelactions.PLUGINSTART: self._pluginStart,
@@ -408,6 +434,7 @@ class ModelController(threading.Thread):
         notifier.editHost(old_object)
         return True
 
+    # XXX: THIS DOESNT WORK
     def find(self, obj_id):
         return self.mappers_manager.find(obj_id)
 

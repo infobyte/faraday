@@ -18,21 +18,24 @@ class CouchChangesStream(object):
         return self
 
     def __iter__(self):
-        while not self._stop:
-            try:
-                self._response = requests.get(self._change_url, self._params, stream=True)
-            except Exception as e:
-                self.stop()
-                break
-            for raw_line in self._response.iter_lines():
-                line = self._sanitize(raw_line)
-                if not line:
-                    continue
-                change = self._parse_change(line)
-                if not change:
-                    continue
-                object_type, object_name = self._get_object_type_and_name_from_change(change)
-                yield change, object_type, object_name
+        try:
+            self._response = requests.get(self._change_url, self._params, stream=True)
+            if self._response:
+                for raw_line in self._response.iter_lines():
+                    line = self._sanitize(raw_line)
+                    if not line:
+                        if self._stop: break
+                        else: continue
+                    change = self._parse_change(line)
+                    if not change:
+                        continue
+                    object_type, object_name = self._get_object_type_and_name_from_change(change)
+                    yield change, object_type, object_name
+        except requests.exceptions.RequestException:
+            self.stop()
+            raise
+        except Exception as e:
+            self.stop()
 
     def _get_object_type_and_name_from_change(self, change):
         try:
@@ -40,7 +43,7 @@ class CouchChangesStream(object):
             response = requests.get("{0}/{1}".format(self._base_url, id))
             object_json = response.json()
         except Exception:
-            return None
+            return None, None
         return object_json.get('type'), object_json.get('name')
 
     def _sanitize(self, raw_line):

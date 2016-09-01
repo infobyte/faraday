@@ -70,7 +70,7 @@ def _get_faraday_ready_notes(workspace_name, notes_dictionaries):
 def get_changes_stream(workspace_name, **params):
     since = server.get_workspace(workspace_name)['last_seq']
     return server.get_changes_stream(workspace_name, since=since,
-                                     heartbeat='5000')
+                                     heartbeat='1000')
 
 def get_hosts(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
@@ -303,13 +303,19 @@ def update_object(workspace_name, object_signature, obj):
 
     return appropiate_function(workspace_name, obj)
 
-def create_workspace(workspace_name, **params):
+def create_workspace(workspace_name, description, start_date, finish_date,
+                     customer=None):
     """Take the workspace_name and create the database first,
     then the workspace's document.
     Return the server's json response as a dictionary"""
     # XXX: For now we won't upload views
-    server.create_database(workspace_name)
-    return server.create_workspace(workspace_name, **params)
+    db_creation = server.create_database(workspace_name)
+    if db_creation['ok']:
+        return server.create_workspace(workspace_name, description, start_date,
+                                       finish_date, customer)
+    else:
+        # TODO: raise DBCreationProblem
+        return None
 
 def get_hosts_number(workspace_name, **params):
     return server.get_hosts_number(workspace_name, **params)
@@ -440,7 +446,7 @@ class ModelBase(object):
 
     def updateMetadata(self):
         self.getMetadata().update(self.owner)
-    
+
     def getOwner(self): return self.owner
     def isOwned(self): return self.owned
     def getName(self): return self.name
@@ -539,7 +545,7 @@ class _Interface(ModelBase):
             prop1.extend(prop2)
             return list(set(prop1))
         return None
-    
+
     def updateAttributes(self, name=None, description=None, hostnames=None, mac=None, ipv4=None, ipv6=None,
                          network_segment=None, amount_ports_opened=None, amount_ports_closed=None,
                          amount_ports_filtered=None, owned=None):
@@ -643,7 +649,7 @@ class _Service(ModelBase):
             self.version = version
         if owned is not None:
             self.owned = owned
-        
+
     def __str__(self): return "{0} ({1})".format(self.name, self.vuln_amount)
     def getID(self): return self.id
     def getStatus(self): return self.status
@@ -681,11 +687,6 @@ class _Vuln(ModelBase):
         return publicattrs
 
     def tieBreakable(self, key):
-        '''
-        If the confirmed property has a conflict, there's two possible reasons:
-            confirmed is false, and the new value is true => returns true
-            confirmed is true, and the new value is false => returns true
-        '''
         if key == "confirmed":
             return True
         return False
@@ -722,7 +723,7 @@ class _Vuln(ModelBase):
             severity = numeric_severities.get(severity, 'unclassified')
 
         return severity
-    
+
     def updateAttributes(self, name=None, desc=None, data=None,
                          severity=None, resolution=None, refs=None):
         self.updateMetadata()

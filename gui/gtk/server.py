@@ -1,11 +1,24 @@
-import threading, time
+import threading, time, requests
 from model.guiapi import notification_center
 from decorators import safe_io_with_server
 from persistence.server import models
 
 class ServerIO(object):
     def __init__(self, active_workspace):
-        self.active_workspace = active_workspace
+        self.__active_workspace = active_workspace
+        self.stream = None  # will be set when active workpsace is set
+
+    @property
+    def active_workspace(self):
+        return self.__active_workspace
+
+    @active_workspace.setter
+    def active_workspace(self, new_workspace):
+        self.__active_workspace = new_workspace
+        if self.stream:
+            self.stream.stop()
+        self.stream = self.get_changes_stream()
+        self.continously_get_changes()
 
     @safe_io_with_server([])
     def get_hosts(self, **params):
@@ -52,6 +65,16 @@ class ServerIO(object):
         return models.get_changes_stream(self.active_workspace)
 
     def continously_get_changes(self):
+        """Creates a thread which will continuously check the changes
+        coming from other instances of Faraday. Return the thread on any
+        exception, of if self.stream is None.
+        """
+
+        # There is very arcane, dark magic involved in this method.
+        # What you need to know: do not touch it.
+        # If you touch it, do check out persitence/server/changes_stream.py
+        # there lies _most_ of the darkest magic
+
         def filter_changes(change):
             if not change or change.get('last_seq'):
                 return None
@@ -60,18 +83,26 @@ class ServerIO(object):
             return change
 
         def get_changes():
-            stream = self.get_changes_stream()
-            if stream:
-                for change in stream:
-                    change, obj_type, obj_name = change
-                    change = filter_changes(change)
-                    if change:
-                        deleted = bool(change.get('deleted'))
-                        obj_id = change.get('id')
-                        revision = change.get("changes")[-1].get('rev')
-                        notification_center.changeFromInstance(obj_type,
-                                                               obj_name,
-                                                               deleted)
+            # dark maaaaaagic *sing with me!* dark maaaaaagic
+            if self.stream:
+                try:
+                    for change in self.stream:
+                        change, obj_type, obj_name = change
+                        change = filter_changes(change)
+                        if change:
+                            deleted = bool(change.get('deleted'))
+                            obj_id = change.get('id')
+                            revision = change.get("changes")[-1].get('rev')
+                            notification_center.changeFromInstance(obj_type,
+                                                                   obj_name,
+                                                                   deleted)
+                except requests.exceptions.RequestException:
+                    notification_center.WorkspaceProblem()
+                    return False
+                except Exception:
+                    return False
+            else:
+                return False
 
         get_changes_thread = threading.Thread(target=get_changes)
         get_changes_thread.daemon = True
@@ -88,10 +119,7 @@ class ServerIO(object):
                 else:
                     tolerance += 1
                     if tolerance == 3:
-                        "TEST SERVER CONNECTION"
                         notification_center.CouchDBConnectionProblem()
-
-
 
         test_server_thread = threading.Thread(target=test_server_connection)
         test_server_thread.daemon = True

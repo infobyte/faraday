@@ -482,7 +482,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         events module is updated.
 
         DO NOT, AND I REPEAT, DO NOT REDRAW *ANYTHING* FROM THE GUI
-        FROM HERE. If you must do it, you should to it sing Glib.idle_add,
+        FROM HERE. If you must do it, you should to it sing GObject.idle_add,
         a misterious function with outdated documentation. Good luck."""
 
         def new_log_event():
@@ -584,9 +584,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         Gtk.Application.do_startup(self)  # deep GTK magic
 
         self.serverIO = ServerIO(CONF.getLastWorkspace())
-
         self.serverIO.continously_check_server_connection()
-        self.serverIO.continously_get_changes()
 
         self.ws_sidebar = WorkspaceSidebar(self.serverIO,
                                            self.change_workspace,

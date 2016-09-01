@@ -30,7 +30,7 @@
     <repo_url type="svn"></repo_url>
     <repo_user>u</repo_user>
     <repo_password></repo_password>
-    <couch_uri/>
+    <couch_uri>http://127.0.0.1:5985<couch_uri/>
     <couch_is_replicated/>
     <couch_replics/>
 

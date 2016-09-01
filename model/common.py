@@ -894,12 +894,14 @@ class ModelObjectVuln(ModelComposite):
         self.publicattrs['Data'] = "getData"
         self.publicattrs['Severity'] = 'getSeverity'
         self.publicattrs['Refs'] = 'getRefs'
+        self.publicattrs['Resolution'] = 'getResolution'
 
         self.publicattrsrefs['Name'] = 'name'
         self.publicattrsrefs['Description'] = '_desc'
         self.publicattrsrefs['Data'] = "data"
         self.publicattrsrefs['Severity'] = 'severity'
         self.publicattrsrefs['Refs'] = 'refs'
+        self.publicattrsrefs['Resolution'] = 'resolution'
 
     def standarize(self, severity):
         # Transform all severities into lower strings

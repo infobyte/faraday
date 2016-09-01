@@ -690,7 +690,8 @@ class _Vuln(ModelBase):
         publicattrs = dict(ModelBase.publicattrsrefs(), **{
             'Data' : 'data',
             'Severity' : 'severity',
-            'Refs' : 'refs'
+            'Refs' : 'refs',
+            'Resolution': 'resolution'
         })
         return publicattrs
 

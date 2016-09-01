@@ -1235,9 +1235,10 @@ class ConflictsDialog(Gtk.Window):
                          obj.getDescription(),
                          obj.getData(),
                          obj.getSeverity(),
-                         obj.getRefs()))
+                         obj.getRefs(),
+                         obj.getResolution()))
 
-        props = ["Name", "Desc", "Data", "Severity", "Refs"]
+        props = ["Name", "Desc", "Data", "Severity", "Refs", "Resolution"]
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model
 

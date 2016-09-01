@@ -313,7 +313,6 @@ class Interface(ModelComposite):
             servs.accept(visitor)
         visitor.visit(self)
 
-
     def tieBreakable(self, property_key):
         if property_key in ["_hostnames"]:
             return True

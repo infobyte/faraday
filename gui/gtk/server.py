@@ -1,3 +1,12 @@
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
+'''
+Faraday Penetration Test IDE
+Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
+See the file 'doc/LICENSE' for the license information
+
+'''
+
 import threading, time, requests
 from model.guiapi import notification_center
 from decorators import safe_io_with_server

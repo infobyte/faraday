@@ -69,7 +69,8 @@ class VulnerabilityDAO(FaradayDAO):
         # Instead of using SQLAlchemy ORM facilities to fetch rows, we bundle involved columns for
         # organizational and MAINLY performance reasons. Doing it this way, we improve retrieving
         # times from large workspaces almost 2x.
-        vuln_bundle = Bundle('vuln', Vulnerability.id, Vulnerability.name.label('v_name'), Vulnerability.confirmed, Vulnerability.data,\
+        vuln_bundle = Bundle('vuln', Vulnerability.id.label('server_id'),Vulnerability.name.label('v_name'),\
+            Vulnerability.confirmed, Vulnerability.data,\
             Vulnerability.description, Vulnerability.easeofresolution, Vulnerability.impact_accountability,\
             Vulnerability.impact_availability, Vulnerability.impact_confidentiality, Vulnerability.impact_integrity,\
             Vulnerability.refs, Vulnerability.resolution, Vulnerability.severity, Vulnerability.owned,\
@@ -137,7 +138,7 @@ class VulnerabilityDAO(FaradayDAO):
         return {
             'id': vuln.couchdb_id,
             'key': vuln.couchdb_id,
-            '_id': vuln.id,
+            '_id': vuln.server_id,
             'value': {
                 '_id': vuln.couchdb_id,
                 '_rev': vuln.revision,

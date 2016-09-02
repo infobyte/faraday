@@ -441,7 +441,7 @@ def is_server_up():
 class ModelBase(object):
     def __init__(self, obj, workspace_name):
         self._workspace_name = workspace_name
-        self._server_id = obj['value']['_id']
+        self._server_id = obj['_id']
         self.id = obj['id']
         self.name = obj['value']['name']
         self.description = obj['value']['description']
@@ -717,7 +717,7 @@ class _Service(ModelBase):
     def getVersion(self): return self.version
     def getProtocol(self): return self.protocol
     def isOwned(self): return self.owned
-    def getVulns(self): return get_all_vulns(self._workspace_name, service=self._server_id)
+    def getVulns(self): return get_all_vulns(self._workspace_name, serviceid=self._server_id)
 
 
 class _Vuln(ModelBase):

@@ -65,6 +65,10 @@ class ServerIO(object):
     def get_workspaces_names(self):
         return models.get_workspaces_names()
 
+    @safe_io_with_server(None)
+    def get_object(self, object_signature, object_id):
+        return models.get_object(self.active_workspace, object_signature, object_id)
+
     @safe_io_with_server(False)
     def is_server_up(self):
         return models.is_server_up()
@@ -72,6 +76,7 @@ class ServerIO(object):
     @safe_io_with_server(None)
     def get_changes_stream(self):
         return models.get_changes_stream(self.active_workspace)
+
 
     def continously_get_changes(self):
         """Creates a thread which will continuously check the changes
@@ -91,6 +96,19 @@ class ServerIO(object):
                 return None
             return change
 
+        def notification_dispatcher(obj_id, obj_type, obj_name, deleted, revision):
+            notification_center.changeFromInstance(obj_id, obj_type,
+                                                   obj_name, deleted)
+            if deleted:
+                notification_center.deleteObject(obj_id)
+            else:
+                is_new_object = revision.split("-") == "1"
+                obj = self.get_object(obj_type, obj_id)
+                if is_new_object:
+                    notification_center.addObject(obj)
+                else:
+                    notification_center.editObject(obj)
+
         def get_changes():
             # dark maaaaaagic *sing with me!* dark maaaaaagic
             if self.stream:
@@ -102,14 +120,11 @@ class ServerIO(object):
                             deleted = bool(change.get('deleted'))
                             obj_id = change.get('id')
                             revision = change.get("changes")[-1].get('rev')
-                            notification_center.changeFromInstance(obj_id,
-                                                                   obj_type,
-                                                                   obj_name,
-                                                                   deleted)
+                            notification_dispatcher(obj_id, obj_type, obj_name,
+                                                    deleted, revision)
+
                 except requests.exceptions.RequestException:
                     notification_center.WorkspaceProblem()
-                    return False
-                except Exception:
                     return False
             else:
                 return False

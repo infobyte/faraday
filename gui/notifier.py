@@ -87,8 +87,8 @@ class NotificationCenter():
     def editObject(self, obj):
         self._notifyWidgets(events.UpdateObjectCustomEvent(obj))
 
-    def deleteObject(self, obj):
-        self._notifyWidgets(events.DeleteObjectCustomEvent(obj))
+    def deleteObject(self, obj_id):
+        self._notifyWidgets(events.DeleteObjectCustomEvent(obj_id))
 
     def addObject(self, new_object):
         self._notifyWidgets(events.AddObjectCustomEvent(new_object))

@@ -531,10 +531,16 @@ class GuiApp(Gtk.Application, FaradayUi):
                              service_count, vuln_count)
 
         def delete_object():
-            pass
+            GObject.idle_add(self.hosts_sidebar.remove_object, event.obj_id)
+            host_count, service_count, vuln_count = self.update_counts()
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
 
-        def edit_object():
-            pass
+        def update_object():
+            GObject.idle_add(self.hosts_sidebar.update_object, event.obj)
+            host_count, service_count, vuln_count = self.update_counts()
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
 
         dispatch = {3131:  new_log_event,
                     3141:  new_conflict_event,
@@ -546,7 +552,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                     24242: workspace_not_accessible_event,
                     7777:  add_object,
                     8888:  delete_object,
-                    9999:  edit_object}
+                    9999:  update_object}
 
         function = dispatch.get(event.type())
         if function is not None:

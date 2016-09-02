@@ -33,7 +33,7 @@ CONNECTION_REFUSED = 42424
 WORKSPACE_PROBLEM = 24242
 ADDOBJECT = 7777
 DELETEOBJECT = 8888
-EDITOBJECT = 9999
+UPDATEOBJECT = 9999
 
 class CustomEvent(object):
     def __init__(self, type):
@@ -162,9 +162,9 @@ class AddObjectCustomEvent(CustomEvent):
         self.new_obj = new_obj
 
 class DeleteObjectCustomEvent(CustomEvent):
-    def __init__(self, object_id):
+    def __init__(self, obj_id):
         CustomEvent.__init__(self, DELETEOBJECT)
-        self.new_obj = new_obj
+        self.obj_id = obj_id
 
 class UpdateObjectCustomEvent(CustomEvent):
     def __init__(self, obj):

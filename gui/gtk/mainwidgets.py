@@ -173,8 +173,9 @@ class HostsSidebar(Gtk.Widget):
             new_host_name = str(self.current_model[host_iter][3].split(" ")[0])
         if not new_vuln_amount:
             new_vuln_amount = str(self.current_model[host_iter][4])
-
         new_string = "{0} ({1})".format(new_host_name, new_vuln_amount)
+        self.current_model.set_value(host_iter, 3, new_string)
+        self.current_model.set_value(host_iter, 4, int(new_vuln_amount))
 
     def __update_host_in_model(self, host):
         self.__update_host_str(host.getID(), new_host_name=host.getName())
@@ -185,13 +186,6 @@ class HostsSidebar(Gtk.Widget):
         could_be_removed = self.current_model.remove(host_iter)
         del self.host_id_to_iter[host_id]
         return could_be_removed
-
-    # def __update_host_info_in_model(self, host_id):
-    #     """Updates the model with new information about the host. In practice,
-    #     this means remove the host and add it again with new information."""
-    #     host = self.get_host_function(couchid=host_id)[0]
-    #     self.__delete_host_from_model(self.current_model, host.id)
-    #     self.__add_host_to_model(host)
 
     def __find_host_id(self, object_info):
         object_id = object_info.getID()
@@ -311,10 +305,11 @@ class HostsSidebar(Gtk.Widget):
             self.__add_vuln_to_model(obj)
 
     def remove_object(self, obj_id):
-        if obj_id.count('.') == 1:
-            self.__remove_host_from_model(obj)
-        if obj_id.count('.') == 3:
-            self.__remove_vuln_from_model(obj_id)
+        if obj_id.count('.') == 0:
+            self.__remove_host_from_model(obj_id)
+        else:
+            host_id = obj_id.split(".")[0]
+            self.__remove_vuln_from_model(host_id)
 
     def update_object(self, obj):
         object_type = obj.class_signature

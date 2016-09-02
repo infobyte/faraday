@@ -90,9 +90,13 @@ class ServerIO(object):
         # there lies _most_ of the darkest magic
 
         def filter_changes(change):
+            local_changes = models.local_changes()
             if not change or change.get('last_seq'):
                 return None
             if change['id'].startswith('_design'): # XXX: is this still neccesary?
+                return None
+            if change['changes'][0]['rev'] == local_changes.get(change['id']):
+                del local_changes[change['id']]
                 return None
             return change
 
@@ -102,7 +106,7 @@ class ServerIO(object):
             if deleted:
                 notification_center.deleteObject(obj_id)
             else:
-                is_new_object = revision.split("-") == "1"
+                is_new_object = revision.split("-")[0] == "1"
                 obj = self.get_object(obj_type, obj_id)
                 if is_new_object:
                     notification_center.addObject(obj)

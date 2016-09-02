@@ -23,6 +23,18 @@ from model.conflict import ConflictUpdate
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
+_LOCAL_CHANGES_ID_TO_REV = {}
+def local_changes():
+    return _LOCAL_CHANGES_ID_TO_REV
+
+def _ignore_in_changes(func):
+    def func_wrapper(*args, **kwargs):
+        json = func(*args, **kwargs)
+        if json['ok']:
+            _LOCAL_CHANGES_ID_TO_REV[json['id']] = json['rev']
+        return json
+    return func_wrapper
+
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
                                faraday_object_name):
     """Takes a workspace name, a faraday object ('hosts', 'vulns',
@@ -191,6 +203,7 @@ def get_object(workspace_name, object_signature, object_id):
 
     return appropiate_function(workspace_name, object_id)
 
+@_ignore_in_changes
 def create_host(workspace_name, host):
     """Take a workspace_name and a host object and save it to the sever.
 
@@ -199,10 +212,12 @@ def create_host(workspace_name, host):
     host_properties = get_host_properties(host)
     return server.create_host(workspace_name, **host_properties)
 
+@_ignore_in_changes
 def update_host(workspace_name, host):
     host_properties = get_host_properties(host)
     return server.update_host(workspace_name, **host_properties)
 
+@_ignore_in_changes
 def create_interface(workspace_name, interface):
     """Take a workspace_name and an interface object and save it to the sever.
     Return the server's json response as a dictionary.
@@ -210,10 +225,12 @@ def create_interface(workspace_name, interface):
     interface_properties = get_interface_properties(interface)
     return server.create_interface(workspace_name, **interface_properties)
 
+@_ignore_in_changes
 def update_interface(workspace_name, interface):
     interface_properties = get_interface_properties(interface)
     return server.update_interface(workspace_name, **interface_properties)
 
+@_ignore_in_changes
 def create_service(workspace_name, service):
     """Take a workspace_name and a service object and save it to the sever.
     Return the server's json response as a dictionary.
@@ -221,10 +238,12 @@ def create_service(workspace_name, service):
     service_properties = get_service_properties(service)
     return server.create_service(workspace_name, **service_properties)
 
+@_ignore_in_changes
 def update_service(workspace_name, service):
     service_properties = get_service_properties(service)
     return server.update_service(workspace_name, **service_properties)
 
+@_ignore_in_changes
 def create_vuln(workspace_name, vuln):
     """Take a workspace_name and an vulnerability object and save it to the
     sever. The rev parameter must be provided if you are updating the object.
@@ -233,10 +252,12 @@ def create_vuln(workspace_name, vuln):
     vuln_properties = get_vuln_properties(vuln)
     return server.create_vuln(workspace_name, **vuln_properties)
 
+@_ignore_in_changes
 def update_vuln(workspace_name, vuln):
     vuln_properties = get_vuln_properties(vuln)
     return server.update_vuln(workspace_name, **vuln_properties)
 
+@_ignore_in_changes
 def create_vuln_web(workspace_name, vuln_web):
     """Take a workspace_name and an vulnerabilityWeb object and save it to the
     sever.
@@ -245,10 +266,12 @@ def create_vuln_web(workspace_name, vuln_web):
     vuln_web_properties = get_vuln_web_properties(vuln_web)
     return server.create_vuln_web(workspace_name, **vuln_web_properties)
 
+@_ignore_in_changes
 def update_vuln_web(workspace_name, vuln_web):
     vuln_web_properties = get_vuln_web_properties(vuln_web)
     return server.update_vuln_web(workspace_name, **vuln_web_properties)
 
+@_ignore_in_changes
 def create_note(workspace_name, note):
     """Take a workspace_name and an note object and save it to the sever.
     Return the server's json response as a dictionary.
@@ -256,10 +279,12 @@ def create_note(workspace_name, note):
     note_properties = get_note_properties(note)
     return server.create_note(workspace_name, **note_properties)
 
+@_ignore_in_changes
 def update_note(workspace_name, note):
     note_properties = get_note_properties(note)
     return server.update_note(workspace_name, **note_properties)
 
+@_ignore_in_changes
 def create_credential(workspace_name, credential):
     """Take a workspace_name and an credential object and save it to the sever.
     Return the server's json response as a dictionary.
@@ -267,18 +292,22 @@ def create_credential(workspace_name, credential):
     credential_properties = get_credential_properties(credential)
     return server.create_credential(workspace_name, **credential_properties)
 
+@_ignore_in_changes
 def update_credential(workspace_name, credential):
     credential_properties = get_credential_properties(credential)
     return server.update_credential(workspace_name, **credential_properties)
 
+@_ignore_in_changes
 def create_command(workspace_name, command):
     command_properties = get_command_properties(command)
     return server.create_command(workspace_name, **command_properties)
 
+@_ignore_in_changes
 def update_command(workspace_name, command):
     command_properties = get_command_properties(command)
     return server.update_command(workspace_name, **command_properties)
 
+@_ignore_in_changes
 def create_object(workspace_name, object_signature, obj):
     object_to_func = {_Host.class_signature: create_host,
                       _Vuln.class_signature: create_vuln,
@@ -295,6 +324,7 @@ def create_object(workspace_name, object_signature, obj):
 
     return appropiate_function(workspace_name, obj)
 
+@_ignore_in_changes
 def update_object(workspace_name, object_signature, obj):
     object_to_func = {_Host.class_signature: update_host,
                       _Vuln.class_signature: update_vuln,
@@ -311,6 +341,7 @@ def update_object(workspace_name, object_signature, obj):
 
     return appropiate_function(workspace_name, obj)
 
+@_ignore_in_changes
 def create_workspace(workspace_name, description, start_date, finish_date,
                      customer=None):
     """Take the workspace_name and create the database first,
@@ -337,30 +368,39 @@ def get_interfaces_number(workspace_name, **params):
 def get_vulns_number(workspace_name, **params):
     return server.get_vulns_number(workspace_name, **params)
 
+@_ignore_in_changes
 def delete_host(workspace_name, host_id):
     return server.delete_host(workspace_name, host_id)
 
+@_ignore_in_changes
 def delete_interface(workspace_name, interface_id):
     return server.delete_interface(workspace_name, interface_id)
 
+@_ignore_in_changes
 def delete_service(workspace_name, service_id):
     return server.delete_service(workspace_name, service_id)
 
+@_ignore_in_changes
 def delete_vuln(workspace_name, vuln_id):
     return server.delete_vuln(workspace_name, vuln_id)
 
+@_ignore_in_changes
 def delete_note(workspace_name, note_id):
     return server.delete_note(workspace_name, note_id)
 
+@_ignore_in_changes
 def delete_credential(workspace_name, credential_id):
     return server.delete_credential(workspace_name, credential_id)
 
+@_ignore_in_changes
 def delete_vuln_web(workspace_name, vuln_id):
     return server.delete_vuln(workspace_name, vuln_id)
 
+@_ignore_in_changes
 def delete_command(workspace_name, command_id):
     return server.delete_command(workspace_name, command_id)
 
+@_ignore_in_changes
 def delete_object(workspace_name, object_signature, obj_id):
     object_to_func = {_Host.class_signature: delete_host,
                       _Vuln.class_signature: delete_vuln,
@@ -377,6 +417,7 @@ def delete_object(workspace_name, object_signature, obj_id):
 
     return appropiate_function(workspace_name, obj_id)
 
+@_ignore_in_changes
 def delete_workspace(workspace_name):
     return server.delete_workspace(workspace_name)
 

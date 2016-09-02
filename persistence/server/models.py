@@ -6,6 +6,7 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import glob, os
 from persistence.server import server
 from persistence.server.utils import (force_unique,
                                       get_host_properties,
@@ -341,20 +342,30 @@ def update_object(workspace_name, object_signature, obj):
 
     return appropiate_function(workspace_name, obj)
 
+
 @_ignore_in_changes
 def create_workspace(workspace_name, description, start_date, finish_date,
                      customer=None):
     """Take the workspace_name and create the database first,
     then the workspace's document.
     Return the server's json response as a dictionary"""
-    # XXX: For now we won't upload views
+
+    def upload_views():
+        """All wrongdoing is sin, but there is sin that does not lead to death.
+        John 5:17
+        """
+        from managers.all import ViewsManager # Blessed are the merciful, for they shall receive mercy.
+        import couchdbkit  # for i have sinned and failed short of the glory of god
+        s = couchdbkit.Server(uri=CONF.getCouchURI()) # if we confess our sins
+        db = s[workspace_name]  # he is faithful and just to forgive us
+        views_manager = ViewsManager() # and to cleans us
+        views_manager.addViews(db) # from all unrightousness
+
     db_creation = server.create_database(workspace_name)
     if db_creation['ok']:
+        upload_views()
         return server.create_workspace(workspace_name, description, start_date,
                                        finish_date, customer)
-    else:
-        # TODO: raise DBCreationProblem
-        return None
 
 def get_hosts_number(workspace_name, **params):
     return server.get_hosts_number(workspace_name, **params)

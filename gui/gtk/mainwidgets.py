@@ -124,7 +124,6 @@ class HostsSidebar(Gtk.Widget):
         self.open_dialog_callback = open_dialog_callback
         self.get_host_function = get_host_function
         self.current_model = None
-        self.current_sorted_model = None
         self.host_amount = 0
         self.page = 0
         self.host_id_to_iter = {}
@@ -141,16 +140,24 @@ class HostsSidebar(Gtk.Widget):
         host_iter = self.host_id_to_iter[host_id]
         return self.current_model[host_iter][4]
 
-    def __add_host_to_model(self, host, changes=False):
-        """Adds host to the model given as parameter."""
+    def __add_host_to_model(self, host):
+        """Adds host to the model given as parameter in the initial load
+        of the sidebar."""
         vuln_count = self.__compute_vuln_count(host)
         os_icon, os_str = self.__decide_icon(host.getOS())
         display_str = str(host)
         host_iter = self.current_model.append([host.id, os_icon, os_str,
                                                display_str, vuln_count])
         self.host_id_to_iter[host.id] = host_iter
-        if changes:
-            self.host_amount += 1
+
+    def __add_host_to_model_after_initial_load(self, host):
+        """Adds a host to the model after the intial load is done
+        (host came through the changes or through a plugin)"""
+        self.host_amount += 1
+        if self.host_amount % 20 == 0:
+            self.redo([host], self.host_amount, page=self.page+1)
+        else:
+            self.__add_host_to_model(host)
 
     def __add_vuln_to_model(self, vuln):
         """When a new vulnerability arrives, look up its hosts
@@ -222,45 +229,12 @@ class HostsSidebar(Gtk.Widget):
         | a923fd  | PixBufIcon(linux)| linux  | 192.168.1.2 (5)  |      5    |
         """
 
-        def compare_os_strings(model, an_os, other_os, user_data):
-            """Compare an_os with other_os so the model knows how to sort them.
-            user_data is not used.
-            Forces 'unknown' OS to be always at the bottom of the model.
-            Return values:
-            1 means an_os should come after other_os
-            0 means they are the same
-            -1 means an_os should come before other_os
-            It helps to think about it like the relative position of an_os
-            in respect to other_os (-1 'left' in a list, 1 'right' in a list)
-            """
-            sort_column = 2
-            an_os = model.get_value(an_os, sort_column)
-            other_os = model.get_value(other_os, sort_column)
-            if an_os == "unknown":
-                order = 1
-            elif an_os < other_os or other_os == "unknown":
-                order = -1
-            elif an_os == other_os:
-                order = 0
-            else:
-                order = 1
-            return order
-
         hosts_model = Gtk.ListStore(str, GdkPixbuf.Pixbuf(), str, str, int)
         self.current_model = hosts_model
         for host in hosts:
             self.__add_host_to_model(host)
 
-        # sort the model by default according to column 4 (num of vulns)
-        sorted_model = Gtk.TreeModelSort(model=hosts_model)
-        sorted_model.set_sort_column_id(4, Gtk.SortType.DESCENDING)
-
-        # set the sorting function of column 2
-        sorted_model.set_sort_func(2, compare_os_strings, None)
-
-        self.current_sorted_model = sorted_model
-
-        return self.current_sorted_model
+        return self.current_model
 
     def create_view(self, model):
         """Creates a view for the hosts model.
@@ -300,7 +274,7 @@ class HostsSidebar(Gtk.Widget):
     def add_object(self, obj):
         object_type = obj.class_signature
         if object_type == 'Host':
-            self.__add_host_to_model(obj)
+            self.__add_host_to_model_after_initial_load(obj)
         if object_type == "Vulnerability" or object_type == "VulnerabilityWeb":
             self.__add_vuln_to_model(obj)
 
@@ -332,8 +306,8 @@ class HostsSidebar(Gtk.Widget):
 
     def on_click(self, tree_view, path, column):
         """Sends the host_id of the clicked host back to the application"""
-        tree_iter = self.current_sorted_model.get_iter(path)
-        host_id = self.current_sorted_model[tree_iter][0]
+        tree_iter = self.current_model.get_iter(path)
+        host_id = self.current_model[tree_iter][0]
         self.open_dialog_callback(host_id)
 
     def set_move_buttons_sensitivity(self):

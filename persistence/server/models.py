@@ -6,7 +6,7 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import glob, os
+import glob, os, sys
 from persistence.server import server
 from persistence.server.utils import (force_unique,
                                       get_host_properties,
@@ -22,6 +22,7 @@ from persistence.server.utils import (force_unique,
 from model.diff import ModelObjectDiff, MergeSolver
 from model.conflict import ConflictUpdate
 from config.configuration import getInstanceConfiguration
+
 CONF = getInstanceConfiguration()
 
 _LOCAL_CHANGES_ID_TO_REV = {}
@@ -343,7 +344,6 @@ def update_object(workspace_name, object_signature, obj):
     return appropiate_function(workspace_name, obj)
 
 
-@_ignore_in_changes
 def create_workspace(workspace_name, description, start_date, finish_date,
                      customer=None):
     """Take the workspace_name and create the database first,
@@ -428,7 +428,6 @@ def delete_object(workspace_name, object_signature, obj_id):
 
     return appropiate_function(workspace_name, obj_id)
 
-@_ignore_in_changes
 def delete_workspace(workspace_name):
     return server.delete_workspace(workspace_name)
 

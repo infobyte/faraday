@@ -89,6 +89,9 @@ def _get_faraday_ready_credentials(workspace_name, credentials_dictionaries):
 def _get_faraday_ready_notes(workspace_name, notes_dictionaries):
     return _get_faraday_ready_objects(workspace_name, notes_dictionaries, 'notes')
 
+def _get_faraday_ready_commands(workspace_name, commands_dictionaries):
+    return _get_faraday_ready_objects(workspace_name, commands_dictionaries, 'commands')
+
 def get_changes_stream(workspace_name, **params):
     since = server.get_workspace(workspace_name)['last_seq']
     return server.get_changes_stream(workspace_name, since=since,
@@ -182,6 +185,13 @@ def get_workspace(workspace_name):
     workspace = server.get_workspace(workspace_name)
     return _Workspace(workspace, workspace_name) if workspace else None
 
+def get_commands(workspace_name, **params):
+    commands_dictionary = server.get_commands(workspace_name, **params)
+    return _get_faraday_ready_commands(workspace_name, commands_dictionary)
+
+def get_command(workspace_name, command_id):
+    return force_unique(get_commands(workspace_name, couchid=command_id))
+
 def get_object(workspace_name, object_signature, object_id):
     """Given a workspace name, an object_signature as string  and an arbitrary
     number of query params, return a list a dictionaries containg information
@@ -197,7 +207,8 @@ def get_object(workspace_name, object_signature, object_id):
                       _Interface.class_signature: get_interface,
                       _Service.class_signature: get_service,
                       _Credential.class_signature: get_credential,
-                      _Note.class_signature: get_note}
+                      _Note.class_signature: get_note,
+                      _Command.class_signature: get_command}
     try:
         appropiate_function = object_to_func[object_signature]
     except KeyError:

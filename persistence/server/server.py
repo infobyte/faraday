@@ -298,7 +298,7 @@ def get_notes(workspace_name, **params):
 
 def get_commands(workspace_name, **params):
     return _get_faraday_ready_dictionaries(workspace_name, 'commands',
-                                           'commands', **params)
+                                           'rows', **params)
 
 def get_objects(workspace_name, object_signature, **params):
     """Given a workspace name, an object_signature as string  and an arbitrary

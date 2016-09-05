@@ -348,7 +348,11 @@ def create_workspace(workspace_name, description, start_date, finish_date,
                      customer=None):
     """Take the workspace_name and create the database first,
     then the workspace's document.
-    Return the server's json response as a dictionary"""
+    Return the server's json response as a dictionary, if it can. If the
+    DB couldn't be created, it will return None. If the DB could be created
+    but there was a problem creating its basic documents, it will delete
+    the document an raise the corresponding error.
+    """
 
     def upload_views():
         """All wrongdoing is sin, but there is sin that does not lead to death.
@@ -363,9 +367,15 @@ def create_workspace(workspace_name, description, start_date, finish_date,
 
     db_creation = server.create_database(workspace_name)
     if db_creation['ok']:
-        upload_views()
-        return server.create_workspace(workspace_name, description, start_date,
-                                       finish_date, customer)
+        try:
+            upload_views()
+            return server.create_workspace(workspace_name, description,
+                                           start_date, finish_date, customer)
+        except:
+            server.delete_workspace(workspace_name)
+            raise
+    else:
+        return None
 
 def get_hosts_number(workspace_name, **params):
     return server.get_hosts_number(workspace_name, **params)

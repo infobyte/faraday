@@ -145,13 +145,13 @@ class DeleteHostCustomEvent(CustomEvent):
 
 class ChangeFromInstanceCustomEvent(CustomEvent):
     def __init__(self, object_id, object_type, object_name,
-                 deleted=False, updated=False):
+                 deleted=False, update=False):
         CustomEvent.__init__(self, CHANGEFROMINSTANCE)
         self.object_id = object_id
         self.object_type = object_type
         self.object_name = object_name
         self.deleted = deleted
-        self.updated_or_created = "updated" if updated else "created"
+        self.updated_or_created = "updated" if update else "created"
 
     def __str__(self):
         if self.deleted:

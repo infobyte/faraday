@@ -100,24 +100,21 @@ class ServerIO(object):
             return change
 
         def notification_dispatcher(obj_id, obj_type, obj_name, deleted, revision):
-            is_new_object = False
             if deleted:
                 notification_center.deleteObject(obj_id)
             else:
                 is_new_object = revision.split("-")[0] == "1"
-                notification_center.changeFromInstance(obj_id, obj_type,
-                                                       obj_name, deleted)
                 obj = self.get_object(obj_type, obj_id)
-                obj_id = obj.getID()
-                obj_name = obj.getName()
                 if obj:
                     if is_new_object:
                         notification_center.addObject(obj)
+                        update = False
                     else:
                         notification_center.editObject(obj)
+                        update = True
             notification_center.changeFromInstance(obj_id, obj_type,
                                                    obj_name, deleted=deleted,
-                                                   updated=is_new_object)
+                                                   update=update)
 
         def get_changes():
             # dark maaaaaagic *sing with me!* dark maaaaaagic

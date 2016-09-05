@@ -606,10 +606,6 @@ class GuiApp(Gtk.Application, FaradayUi):
                                            self.on_new_button,
                                            CONF.getLastWorkspace())
 
-        workspace_argument_set = self.open_workspace_from_args()
-        if not workspace_argument_set:
-            self.open_last_workspace()
-
         # the dummy values here will be updated as soon as the ws is loaded.
         self.hosts_sidebar = HostsSidebar(self.show_host_info, self.serverIO.get_hosts,
                                           self.icons)
@@ -688,6 +684,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         # XXX: HACK TO AVOID RACE CONDITION. CORRECT FIX: STOP LOADING WORKPACE AS SOON AS FARADAY START
         self.change_workspace(self.active_ws_name)
 
+
+        workspace_argument_set = self.open_workspace_from_args()
+        if not workspace_argument_set:
+            self.open_last_workspace()
 
     def on_quit(self, action=None, param=None):
         self.quit()

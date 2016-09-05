@@ -14,7 +14,7 @@ from persistence.server.changes_stream import CouchChangesStream
 # NOTE: Change is you want to use this module by itself.
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
 FARADAY_UP = True
-SERVER_URL = "http://127.0.0.1:5984"
+SERVER_URL = "http://192.168.10.210:5984"
 
 def _get_base_server_url():
     if FARADAY_UP:
@@ -324,7 +324,7 @@ def get_objects(workspace_name, object_signature, **params):
     return appropiate_function(workspace_name, **params)
 
 # cha cha cha chaaaanges!
-def get_changes_stream(workspace_name, since=0, heartbeat='5000', **params):
+def get_changes_stream(workspace_name, since=0, heartbeat='1000', **params):
     return _couch_changes(workspace_name, since=since, feed='continuous',
                           heartbeat=heartbeat, **params)
 

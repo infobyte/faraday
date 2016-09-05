@@ -121,6 +121,10 @@ class GuiApp(Gtk.Application, FaradayUi):
     def active_ws_name(self):
         return self.get_active_workspace().name
 
+    def get_active_workspace(self):
+        """Return the currently active workspace"""
+        return self.workspace_manager.getActiveWorkspace()
+
     def getMainWindow(self):
         """Useless mostly, but guiapi uses this method to access the main
         window."""
@@ -160,7 +164,12 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.getWorkspaceManager().removeWorkspace(ws_name)
         self.ws_sidebar.clear_sidebar()
         self.ws_sidebar.refresh_sidebar()
-        self.select_active_workspace()
+        available_workspaces = self.serverIO.get_workspaces_names()
+        if available_workspaces:
+            self.select_last_workspace_in_list(available_workspaces)
+        else:
+            self.handle_no_active_workspace()
+
 
     def lost_db_connection(self, explanatory_message=None,
                                    handle_connection_lost=None,
@@ -255,9 +264,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Selects on the sidebar the currently active workspace."""
         self.ws_sidebar.select_ws_by_name(self.active_ws_name)
 
-    def get_active_workspace(self):
-        """Return the currently active workspace"""
-        return self.workspace_manager.getActiveWorkspace()
+    def select_last_workspace_in_list(self, ws_names_list):
+        self.ws_sidebar.select_ws_by_name(ws_names_list[-1])
 
     def exit_faraday(self, button=None, parent=None):
         """A simple exit which will ask for confirmation."""

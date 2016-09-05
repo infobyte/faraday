@@ -77,7 +77,6 @@ class ServerIO(object):
     def get_changes_stream(self):
         return models.get_changes_stream(self.active_workspace)
 
-
     def continously_get_changes(self):
         """Creates a thread which will continuously check the changes
         coming from other instances of Faraday. Return the thread on any
@@ -108,10 +107,11 @@ class ServerIO(object):
             else:
                 is_new_object = revision.split("-")[0] == "1"
                 obj = self.get_object(obj_type, obj_id)
-                if is_new_object:
-                    notification_center.addObject(obj)
-                else:
-                    notification_center.editObject(obj)
+                if obj:
+                    if is_new_object:
+                        notification_center.addObject(obj)
+                    else:
+                        notification_center.editObject(obj)
 
         def get_changes():
             # dark maaaaaagic *sing with me!* dark maaaaaagic
@@ -126,7 +126,6 @@ class ServerIO(object):
                             revision = change.get("changes")[-1].get('rev')
                             notification_dispatcher(obj_id, obj_type, obj_name,
                                                     deleted, revision)
-
                 except requests.exceptions.RequestException:
                     notification_center.WorkspaceProblem()
                     return False
@@ -138,6 +137,9 @@ class ServerIO(object):
         get_changes_thread.start()
 
     def continously_check_server_connection(self):
+        """Starts a thread which requests from the server every second, so
+        we know if the connection is still alive.
+        """
         def test_server_connection():
             tolerance = 0
             while True:

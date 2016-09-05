@@ -221,7 +221,7 @@ def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
                       'services': _get_raw_services,
                       'notes': _get_raw_notes,
                       'credentials': _get_raw_credentials,
-                      'commands': _get_raw_notes}
+                      'commands': _get_raw_commands}
 
     appropiate_function = object_to_func[faraday_object_name]
     appropiate_dictionary = appropiate_function(workspace_name, **params)
@@ -298,7 +298,7 @@ def get_notes(workspace_name, **params):
 
 def get_commands(workspace_name, **params):
     return _get_faraday_ready_dictionaries(workspace_name, 'commands',
-                                           'rows', **params)
+                                           'commands', **params)
 
 def get_objects(workspace_name, object_signature, **params):
     """Given a workspace name, an object_signature as string  and an arbitrary

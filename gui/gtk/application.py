@@ -685,6 +685,9 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.lost_db_connection(
                 handle_connection_lost=self.handle_connection_lost,
                 connect_to_a_different_couch=self.force_change_couch_url)
+        # XXX: HACK TO AVOID RACE CONDITION. CORRECT FIX: STOP LOADING WORKPACE AS SOON AS FARADAY START
+        self.change_workspace(self.active_ws_name)
+
 
     def on_quit(self, action=None, param=None):
         self.quit()

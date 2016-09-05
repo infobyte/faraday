@@ -31,7 +31,7 @@ class NoteDAO(FaradayDAO):
         return result
 
     def __query_database(self, search=None, note_filter={}):
-        note_bundle = Bundle('note', Note.name, Note.text, Note.description, Note.owned, EntityMetadata.couchdb_id,\
+        note_bundle = Bundle('note', Note.id, Note.name, Note.text, Note.description, Note.owned, EntityMetadata.couchdb_id,\
                 EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
                 EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
                 EntityMetadata.update_controller_action, EntityMetadata.owner)
@@ -50,6 +50,7 @@ class NoteDAO(FaradayDAO):
         return {
             'id': note.couchdb_id,
             'key': note.couchdb_id,
+             '_id': note.id,
             'value': {
                 '_id': note.couchdb_id,
                 'name': note.name,

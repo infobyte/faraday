@@ -29,10 +29,8 @@ class WorkspaceManager(object):
     This class is in charge of creating, deleting and opening workspaces
     """
 
-    def __init__(self, mappersManager,
-                 changesManager, *args, **kwargs):
+    def __init__(self, mappersManager, *args, **kwargs):
         self.mappersManager = mappersManager
-        self.changesManager = changesManager
         self.active_workspace = None
 
     def getWorkspacesNames(self):
@@ -89,12 +87,11 @@ class WorkspaceManager(object):
         self.mappersManager.createMappers(name)
         self.setActiveWorkspace(workspace)
         notification_center.workspaceChanged(workspace)
-        #self.changesManager.watch(self.mappersManager, dbConnector)
         return workspace
 
     def closeWorkspace(self):
+        # TODO: DELETE
         pass
-        #self.changesManager.unwatch()
 
     def removeWorkspace(self, name):
         if name in self.getWorkspacesNames():

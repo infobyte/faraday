@@ -137,7 +137,11 @@ class HostsSidebar(Gtk.Widget):
         return host.getVulnAmount()
 
     def __get_vuln_amount_from_model(self, host_id):
-        host_iter = self.host_id_to_iter[host_id]
+        """Given a host_id, it will look in the current model for the host_id
+        and return the amount of vulnerabilities IF the host_id corresponds
+        to the model ID. Else it will return None.
+        """
+        host_iter = self.host_id_to_iter.get(host_id)
         return self.current_model[host_iter][4]
 
     def __add_host_to_model(self, host):
@@ -163,8 +167,20 @@ class HostsSidebar(Gtk.Widget):
         """When a new vulnerability arrives, look up its hosts
         and update its vuln amount and its representation as a string."""
         host_id = self.__find_host_id(vuln)
-        vuln_amount = self.__get_vuln_amount_from_model(host_id) + 1
-        self.__update_host_str(host_id, new_vuln_amount=vuln_amount)
+
+        # as the user can change pages, selfl.current_model can change at
+        # any point. if we try to add something to a host that doesnt
+        # exist on this model (but existed on another model, on another page)
+        # this will raise a TypeError exception.
+        try:
+            vuln_amount = self.__get_vuln_amount_from_model(host_id) + 1
+            self.__update_host_str(host_id, new_vuln_amount=vuln_amount)
+        except TypeError:
+            pass  # be forgiving, as you'd want the lord to be forgiving to you
+                  # seriously now: this makes sense. we don't have to recover
+                  # anything here, a new request will be made
+                  # when the user changes pages
+        #warnings.filterwarnings("default")
 
     def __remove_vuln_from_model(self, host_id):
         """When a new vulnerability id deleted, look up its hosts

@@ -168,7 +168,7 @@ angular.module('faradayApp')
                 "request":          false,
                 "refs":             true,
                 "evidence":         false,
-                "hostnames":        false,
+                "hostnames":        true,
                 "impact":           false,
                 "method":           false,
                 "params":           false,
@@ -235,7 +235,7 @@ angular.module('faradayApp')
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/severitycolumn.html',
                 headerCellTemplate: header,
                 type: 'string',
-                width: '110',
+                width: '70',
                 visible: $scope.columns["severity"],
                 sortingAlgorithm: compareSeverities
             });
@@ -244,6 +244,13 @@ angular.module('faradayApp')
                 headerCellTemplate: header,
                 width: '110',
                 visible: $scope.columns["service"]
+            });
+             $scope.gridOptions.columnDefs.push({ name : 'hostnames',
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/hostnamescolumn.html',
+                headerCellTemplate: header,
+                minWidth: '100',
+                maxWidth: '200',
+                visible: $scope.columns["hostnames"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'target',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/targetcolumn.html',
@@ -303,11 +310,6 @@ angular.module('faradayApp')
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/evidencecolumn.html',
                 headerCellTemplate: header,
                 visible: $scope.columns["evidence"]
-            });
-            $scope.gridOptions.columnDefs.push({ name : 'hostnames',
-                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/hostnamescolumn.html',
-                headerCellTemplate: header,
-                visible: $scope.columns["hostnames"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'impact',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/impactcolumn.html',

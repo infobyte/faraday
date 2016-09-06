@@ -10,6 +10,16 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+TBA: 
+---
+* Fixed more than 10 bugs on the Web UI
+* Updated URL shown when starting Faraday
+* Dashboard is now refreshed automatically
+* Fixed Propecia plugin
+* New plugin: WPscan
+* Host Sidebar on GTK now adds information more intelligently and will never block the application 
+
+
 August 12, 2016:
 ---
 * Added Faraday Server

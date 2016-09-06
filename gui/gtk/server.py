@@ -69,6 +69,10 @@ class ServerIO(object):
     def get_object(self, object_signature, object_id):
         return models.get_object(self.active_workspace, object_signature, object_id)
 
+    @safe_io_with_server((0,0,0,0))
+    def get_workspace_numbers(self):
+        return models.get_workspace_numbers(self.active_workspace)
+
     @safe_io_with_server(False)
     def is_server_up(self):
         return models.is_server_up()

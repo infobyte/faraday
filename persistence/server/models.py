@@ -388,6 +388,12 @@ def create_workspace(workspace_name, description, start_date, finish_date,
     else:
         return None
 
+def get_workspace_summary(workspace_number):
+    return server.get_workspace_summary(workspace_number)
+
+def get_workspace_numbers(workspace_name):
+    return server.get_workspace_numbers(workspace_name)
+
 def get_hosts_number(workspace_name, **params):
     return server.get_hosts_number(workspace_name, **params)
 

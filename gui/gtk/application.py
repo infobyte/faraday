@@ -342,11 +342,10 @@ class GuiApp(Gtk.Application, FaradayUi):
         return reconnected
 
     def update_counts(self):
-        """Update the counts for host, services and vulns"""
-        host_count = self.serverIO.get_hosts_number()
-        service_count = self.serverIO.get_services_number()
-        vuln_count = self.serverIO.get_vulns_number()
-        return host_count, service_count, vuln_count
+        """Returns the counts of hosts, services and vulns on the current
+        workspace."""
+        hosts, interfaces, services, vulns = self.serverIO.get_workspace_numbers()
+        return hosts, services, vulns
 
     def show_host_info(self, host_id):
         """Looks up the host selected in the HostSidebar by id and shows

@@ -14,7 +14,7 @@ from persistence.server.changes_stream import CouchChangesStream
 # NOTE: Change is you want to use this module by itself.
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
 FARADAY_UP = True
-SERVER_URL = "http://192.168.10.210:5984"
+SERVER_URL = "http://127.0.1:5984"
 
 def _get_base_server_url():
     if FARADAY_UP:
@@ -443,6 +443,13 @@ def get_workspace(workspace_name, **params):
 
 def get_workspace_summary(workspace_name):
     return _get_raw_workspace_summary(workspace_name)['stats']
+
+def get_workspace_numbers(workspace_name):
+    """Returns a 4-uple of (host_amount, interface_amount, service_amount, vuln_amount)
+    inside of workspace workspace_name.
+    """
+    stats = _get_raw_workspace_summary(workspace_name)['stats']
+    return stats['hosts'], stats['interfaces'], stats['services'], stats['total_vulns']
 
 def get_hosts_number(workspace_name, **params):
     """Return the number of host found in workspace workspace_name"""

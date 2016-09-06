@@ -175,6 +175,10 @@ def _get_raw_commands(workspace_name, **params):
     request_url = _create_server_get_url(workspace_name, 'commands')
     return _get(request_url, **params)
 
+def _get_raw_workspace_summary(workspace_name):
+    request_url = _create_server_get_url(workspace_name, 'summary')
+    return _get(request_url)
+
 # XXX: COUCH IT!
 def _save_to_couch(workspace_name, faraday_object_id, **params):
     post_url = _create_server_post_url(workspace_name, faraday_object_id)
@@ -437,25 +441,28 @@ def get_workspace(workspace_name, **params):
     request_url = _create_server_get_url(workspace_name)
     return _get(request_url, **params)
 
+def get_workspace_summary(workspace_name):
+    return _get_raw_workspace_summary(workspace_name)['stats']
+
 def get_hosts_number(workspace_name, **params):
     """Return the number of host found in workspace workspace_name"""
-    return int(_get_raw_hosts(workspace_name, **params)['total_rows'])
+    return int(get_workspace_summary(workspace_name)['hosts'])
 
 def get_services_number(workspace_name, **params):
     """Return the number of services found in workspace workspace_name"""
-    return len(get_services(workspace_name, **params))
+    return int(get_workspace_summary(workspace_name)['interfaces'])
 
 def get_interfaces_number(workspace_name, **params):
     """Return the number of interfaces found in workspace workspace_name"""
-    return len(get_interfaces(workspace_name, **params))
+    return int(get_workspace_summary(workspace_name)['interfaces'])
 
 def get_vulns_number(workspace_name, **params):
     """Return the number of vulns found in workspace workspace_name"""
-    return int(_get_raw_vulns(workspace_name, **params)['count'])
+    return int(get_workspace_summary(workspace_name)['total_vulns'])
 
 def get_notes_number(workspace_name, **params):
     """Return the number of notes on workspace workspace_name."""
-    return int(_get_raw_notes(workspace_name, **params))
+    return int(get_workspace_summary(workspace_name)['notes'])
 
 def get_credentials_number(workspace_name, **params):
     """Return the number of credential on workspace workspace_name."""

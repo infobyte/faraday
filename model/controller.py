@@ -14,9 +14,9 @@ import model.hosts
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
 import model.api as api
-#import model.guiapi as guiapi
 from model.guiapi import notification_center as notifier
 from gui.customevents import *
+from functools import wraps
 
 
 # XXX: consider re-writing this module! There's alot of repeated code
@@ -206,6 +206,7 @@ class ModelController(threading.Thread):
         parent_type before adding it.
         """
         def checkParentDecorator(add_func):
+            @wraps(add_func)
             def addWrapper(new_obj, parent_id=None, *args):
                 parent = self.mappers_manager.find(parent_type, parent_id)
                 if parent:

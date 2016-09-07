@@ -22,6 +22,7 @@ from persistence.server.utils import (force_unique,
 from model.diff import ModelObjectDiff, MergeSolver
 from model.conflict import ConflictUpdate
 from config.configuration import getInstanceConfiguration
+from functools import wraps
 
 CONF = getInstanceConfiguration()
 
@@ -30,6 +31,7 @@ def local_changes():
     return _LOCAL_CHANGES_ID_TO_REV
 
 def _ignore_in_changes(func):
+    @wraps(func)
     def func_wrapper(*args, **kwargs):
         json = func(*args, **kwargs)
         if json['ok']:

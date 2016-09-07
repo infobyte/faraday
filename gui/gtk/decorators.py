@@ -10,6 +10,7 @@ def safe_io_with_server(response_in_emergency):
     anything happens, it will return the response in emergency.
     """
     def safe_decorator(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
             try:
                 res = func(*args, **kwargs)
@@ -24,10 +25,8 @@ def scrollable(width=-1, height=-1, overlay_scrolling=False):
     """A function that takes optinal width and height and returns
     the scrollable decorator. -1 is the default GTK option for both
     width and height."""
-
     def scrollable_decorator(func):
         """Takes a function and returns the scroll_object_wrapper."""
-
         @wraps(func)
         def scroll_object_wrapper(*args, **kwargs):
             """Takes arguments and obtains the original object from

@@ -95,7 +95,11 @@ class WorkspaceManager(object):
 
     def removeWorkspace(self, name):
         if name in self.getWorkspacesNames():
-            return delete_workspace(name)
+            try:
+                return delete_workspace(name)
+            except Unauthorized:
+                notification_center.showDialog("You are not authorized to "
+                                               "delete this workspace. \n")
 
     def setActiveWorkspace(self, workspace):
         self.active_workspace = workspace

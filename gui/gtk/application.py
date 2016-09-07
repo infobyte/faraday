@@ -157,19 +157,20 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def remove_workspace(self, button, ws_name):
         """Removes a workspace. If the workspace to be deleted is the one
-        selected, it moves you first to the default. The clears and refreshes
+        selected, it moves you to the one above it on the list. If there
+        aren't more workspaces left, you will be forced to create one.
+        The clears and refreshes
         sidebar"""
-
         model.api.log("Removing Workspace: %s" % ws_name)
-        self.getWorkspaceManager().removeWorkspace(ws_name)
-        self.ws_sidebar.clear_sidebar()
-        self.ws_sidebar.refresh_sidebar()
-        available_workspaces = self.serverIO.get_workspaces_names()
-        if available_workspaces:
-            self.select_last_workspace_in_list(available_workspaces)
-        else:
-            self.handle_no_active_workspace()
-
+        server_response = self.getWorkspaceManager().removeWorkspace(ws_name)
+        if server_response:
+            self.ws_sidebar.clear_sidebar()
+            self.ws_sidebar.refresh_sidebar()
+            available_workspaces = self.serverIO.get_workspaces_names()
+            if available_workspaces:
+                self.select_last_workspace_in_list(available_workspaces)
+            else:
+                self.handle_no_active_workspace()
 
     def lost_db_connection(self, explanatory_message=None,
                                    handle_connection_lost=None,

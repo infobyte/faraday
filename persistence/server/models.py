@@ -458,6 +458,10 @@ def delete_object(workspace_name, object_signature, obj_id):
     return appropiate_function(workspace_name, obj_id)
 
 def delete_workspace(workspace_name):
+    """Tries to delete the worskpace workspace_name and returns the json
+    response.  You should always try/except this function, at least catching
+    server.Unathorized exception.
+    """
     return server.delete_workspace(workspace_name)
 
 def get_workspaces_names():

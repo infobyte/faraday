@@ -40,15 +40,14 @@ class ReportProcessor():
 
         if parser.report_type is None:
             getLogger(self).error(
-                'Plugin not found: automatic and manual try!'
-            )
+                'Plugin not found: automatic and manual try!')
             return False
 
         return self.sendReport(parser.report_type, filename)
 
     def sendReport(self, plugin_id, filename):
         """Sends a report to the appropiate plugin specified by plugin_id"""
-        getLogger(self).debug(
+        getLogger(self).info(
             'The file is %s, %s' % (filename, plugin_id))
         if not self.plugin_controller.processReport(plugin_id, filename):
             getLogger(self).error(
@@ -95,8 +94,7 @@ class ReportManager(threading.Thread):
                 except Exception:
                     getLogger(self).error(
                         "An exception was captured while saving reports\n%s"
-                        % traceback.format_exc()
-                    )
+                        % traceback.format_exc())
                 finally:
                     tmp_timer = 0
 
@@ -124,13 +122,11 @@ class ReportManager(threading.Thread):
 
                 os.rename(
                     filename,
-                    os.path.join(self._report_upath, name)
-                )
+                    os.path.join(self._report_upath, name))
             else:
                 os.rename(
                     filename,
-                    os.path.join(self._report_ppath, name)
-                )
+                    os.path.join(self._report_ppath, name))
 
         self.onlinePlugins()
 
@@ -285,14 +281,12 @@ class ReportParser(object):
 
             if re.search(
                 "https://raw.githubusercontent.com/Arachni/arachni/",
-                output
-             ) is not None:
+                output) is not None:
                 return "Arachni"
 
             elif re.search("OpenVAS", output) is not None or re.search(
                 '<omp><version>',
-                output
-            ) is not None:
+                output) is not None:
                 return "Openvas"
 
             else:

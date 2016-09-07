@@ -612,7 +612,8 @@ class HostInfoDialog(Gtk.Window):
         # only the ID and the name are needed, but i still need to 'fill'
         # the other columns with dummy info
 
-        display_str = host.getName() + " (" + str(len(host.getVulns())) + ")"
+        # display_str = host.getName() + " (" + str(len(host.getVulns())) + ")"
+        display_str = str(host)
         owned_status = ("Yes" if host.isOwned() else "No")
         host_position = model.append(None, [host.getID(), host.getName(),
                                             host.getOS(), owned_status,
@@ -635,8 +636,7 @@ class HostInfoDialog(Gtk.Window):
             """
             ipv4_dic = interface.getIPv4()
             ipv6_dic = interface.getIPv6()
-            vulns = interface.getVulns()
-            display_str = interface.getName() + " (" + str(len(vulns)) + ")"
+            display_str = str(interface)
 
             position = model.append(host_pos, [interface.getID(),
                                                interface.getName(),
@@ -656,8 +656,7 @@ class HostInfoDialog(Gtk.Window):
         def add_service_to_interface_in_model(service, interface_pos, model):
             """Append a service to an interface at interface_pos in the given
             model. Return None. Modifies the model"""
-            vulns = service.getVulns()
-            display_str = service.getName() + " (" + str(len(vulns)) + ")"
+            display_str = str(service)
             model.append(interface_pos, [service.getID(),
                                          service.getName(),
                                          service.getDescription(),
@@ -761,7 +760,6 @@ class HostInfoDialog(Gtk.Window):
         """Return the model for the vulnerabilities of the obj object.
         It will be sorted alphabetically.
         """
-
         def params_to_string(params):  # XXX
             """Converts params to a string, in case it gets here as a list.
             It's pretty anoyting, but needed for backwards compatibility.
@@ -799,7 +797,7 @@ class HostInfoDialog(Gtk.Window):
                               vuln.getResponse(), vuln.getMethod(),
                               vuln.getPname(),
                               params_to_string(vuln.getParams()),
-                              vuln.getQuery(), vuln.getCategory()])
+                              vuln.getQuery(), ""])
         # sort it!
         sorted_model = Gtk.TreeModelSort(model=model)
         sorted_model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
@@ -1237,9 +1235,10 @@ class ConflictsDialog(Gtk.Window):
                          obj.getDescription(),
                          obj.getData(),
                          obj.getSeverity(),
-                         obj.getRefs()))
+                         obj.getRefs(),
+                         obj.getResolution()))
 
-        props = ["Name", "Desc", "Data", "Severity", "Refs"]
+        props = ["Name", "Desc", "Data", "Severity", "Refs", "Resolution"]
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model
 
@@ -1262,12 +1261,11 @@ class ConflictsDialog(Gtk.Window):
                          obj.getMethod(),
                          obj.getPname(),
                          obj.getParams(),
-                         obj.getQuery(),
-                         obj.getCategory()))
+                         obj.getQuery()))
 
         props = ["Name", "Desc", "Data", "Severity", "Refs", "Path",
                  "Website", "Request", "Response", "Method", "Pname",
-                 "Params", "Query", "Category"]
+                 "Params", "Query"]
 
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model

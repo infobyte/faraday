@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = 'W.0.3'
+SCHEMA_VERSION = 'W.0.4'
 
 Base = declarative_base()
 
@@ -119,6 +119,7 @@ class Host(FaradayEntity, Base):
     interfaces = relationship('Interface')
     services = relationship('Service')
     vulnerabilities = relationship('Vulnerability')
+    credentials = relationship('Credential')
 
     def update_from_document(self, document):
         default_gateway = self.__get_default_gateway(document)
@@ -189,9 +190,9 @@ class Interface(FaradayEntity, Base):
         self.ipv6_gateway=document.get('ipv6').get('gateway')
         self.ipv6_dns=u','.join(document.get('ipv6').get('DNS'))
         self.ipv6_prefix=str(document.get('ipv6').get('prefix'))
-        self.ports_filtered=document.get('ports').get('filtered')
-        self.ports_opened=document.get('ports').get('opened')
-        self.ports_closed=document.get('ports').get('closed')
+        self.ports_filtered=document.get('ports',{}).get('filtered')
+        self.ports_opened=document.get('ports',{}).get('opened')
+        self.ports_closed=document.get('ports',{}).get('closed')
 
     def add_relationships_from_dict(self, entities):
         host_id = '.'.join(self.entity_metadata.couchdb_id.split('.')[:-1])
@@ -229,6 +230,7 @@ class Service(FaradayEntity, Base):
     interface = relationship('Interface', back_populates='services')
 
     vulnerabilities = relationship('Vulnerability')
+    credentials = relationship('Credential')
 
     def update_from_document(self, document):
         self.name=document.get('name')
@@ -373,6 +375,7 @@ class Note(FaradayEntity, Base):
     name = Column(String(250), nullable=False)
     text = Column(Text(), nullable=True)
     description = Column(Text(), nullable=True)
+    owned = Column(Boolean)
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
@@ -381,4 +384,61 @@ class Note(FaradayEntity, Base):
         self.name=document.get('name')
         self.text=document.get('text', None)
         self.description=document.get('description', None)
+        self.owned=document.get('owned', False)
 
+class Credential(FaradayEntity, Base):
+    DOC_TYPE = 'Cred'
+
+    # Table schema
+    __tablename__ = 'credential'
+    id = Column(Integer, primary_key=True)
+    username = Column(String(250), nullable=False)
+    password = Column(Text(), nullable=False)
+    owned = Column(Boolean)
+    description = Column(Text(), nullable=True)
+    name = Column(String(250), nullable=True)
+
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    host_id = Column(Integer, ForeignKey(Host.id), index=True)
+    host = relationship('Host', back_populates='credentials')
+
+    service_id = Column(Integer, ForeignKey(Service.id), index=True)
+    service = relationship('Service', back_populates='credentials')
+
+    def update_from_document(self, document):
+        self.username=document.get('username')
+        self.password=document.get('password', '')
+        self.owned=document.get('owned', False)
+        self.description=document.get('description', '')
+        self.name=document.get('name','')
+
+class Command(FaradayEntity, Base):
+    DOC_TYPE = 'CommandRunInformation'
+
+    # Table schema
+    __tablename__ = 'command'
+    id = Column(Integer, primary_key=True)
+    command = Column(String(250), nullable=True)
+    duration = Column(Float, nullable=True)
+    itime = Column(Float, nullable=True)
+    ip = Column(String(250), nullable=True)
+    hostname = Column(String(250), nullable=True)
+    params = Column(String(250), nullable=True)
+    user = Column(String(250), nullable=True)
+    workspace = Column(String(250), nullable=True)
+
+
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    def update_from_document(self, document):
+        self.command = document.get('command', None)
+        self.duration = document.get('duration', None)
+        self.itime = document.get('itime', None)
+        self.ip = document.get('ip', None)
+        self.hostname = document.get('hostname', None)
+        self.params = document.get('params', None)
+        self.user = document.get('user', None)
+        self.workspace = document.get('workspace', None)

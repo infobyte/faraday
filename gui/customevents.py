@@ -29,10 +29,11 @@ ADDHOST = 4100
 DELHOST = 4101
 EDITHOST = 4102
 CHANGEFROMINSTANCE = 5100
-UPDATEMODEL_ID = 54321
 CONNECTION_REFUSED = 42424
 WORKSPACE_PROBLEM = 24242
-
+ADDOBJECT = 7777
+DELETEOBJECT = 8888
+UPDATEOBJECT = 9999
 
 class CustomEvent(object):
     def __init__(self, type):
@@ -95,10 +96,9 @@ class RenameHostsRootCustomEvent(CustomEvent):
 
 
 class WorkspaceChangedCustomEvent(CustomEvent):
-    def __init__(self, workspace,workspace_type):
+    def __init__(self, workspace):
         CustomEvent.__init__(self, WORKSPACE_CHANGED)
         self.workspace = workspace
-        self.workspace_type = workspace_type
 
 
 class ConflictUpdatedCustomEvent(CustomEvent):
@@ -125,12 +125,6 @@ class ClearHostsCustomEvent(CustomEvent):
         CustomEvent.__init__(self, CLEARHOSTS_ID)
 
 
-class ModelObjectUpdateEvent(CustomEvent):
-    def __init__(self, hosts):
-        CustomEvent.__init__(self, UPDATEMODEL_ID)
-        self.hosts = hosts
-
-
 class AddHostCustomEvent(CustomEvent):
     def __init__(self, host):
         CustomEvent.__init__(self, ADDHOST)
@@ -150,6 +144,33 @@ class DeleteHostCustomEvent(CustomEvent):
 
 
 class ChangeFromInstanceCustomEvent(CustomEvent):
-    def __init__(self, change):
+    def __init__(self, object_id, object_type, object_name,
+                 deleted=False, update=False):
         CustomEvent.__init__(self, CHANGEFROMINSTANCE)
-        self.change = change
+        self.object_id = object_id
+        self.object_type = object_type
+        self.object_name = object_name
+        self.deleted = deleted
+        self.updated_or_created = "updated" if update else "created"
+
+    def __str__(self):
+        if self.deleted:
+            return "The object of ID {0} was deleted".format(self.object_id)
+        return "The {0} {1} was {2}".format(self.object_type,
+                                            self.object_name,
+                                            self.updated_or_created)
+
+class AddObjectCustomEvent(CustomEvent):
+    def __init__(self, new_obj):
+        CustomEvent.__init__(self, ADDOBJECT)
+        self.new_obj = new_obj
+
+class DeleteObjectCustomEvent(CustomEvent):
+    def __init__(self, obj_id):
+        CustomEvent.__init__(self, DELETEOBJECT)
+        self.obj_id = obj_id
+
+class UpdateObjectCustomEvent(CustomEvent):
+    def __init__(self, obj):
+        CustomEvent.__init__(self, UPDATEOBJECT)
+        self.obj = obj

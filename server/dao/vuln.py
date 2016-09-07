@@ -16,6 +16,8 @@ from server.models import Host, Interface, Service, Vulnerability, EntityMetadat
 class VulnerabilityDAO(FaradayDAO):
     MAPPED_ENTITY = Vulnerability
     COLUMNS_MAP = {
+        "couchid":          [EntityMetadata.couchdb_id],
+        "id":               [Vulnerability.id],
         "date":             [EntityMetadata.create_time], # TODO: fix search for this field
         "confirmed":        [Vulnerability.confirmed],
         "name":             [Vulnerability.name],
@@ -43,11 +45,14 @@ class VulnerabilityDAO(FaradayDAO):
         "pname":            [Vulnerability.pname],
         "query":            [Vulnerability.query],
         "response":         [Vulnerability.response],
+        "hostid":           [Host.id],
+        "serviceid":        [Service.id],
+        "interfaceid":      [Interface.id],
         "web":              [],
         "issuetracker":     []
     }
-    
-    STRICT_FILTERING = ["type", "service"]
+
+    STRICT_FILTERING = ["type", "service", "couchid", "hostid", "serviceid", 'interfaceid', 'id']
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, vuln_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, vuln_filter)
@@ -64,7 +69,8 @@ class VulnerabilityDAO(FaradayDAO):
         # Instead of using SQLAlchemy ORM facilities to fetch rows, we bundle involved columns for
         # organizational and MAINLY performance reasons. Doing it this way, we improve retrieving
         # times from large workspaces almost 2x.
-        vuln_bundle = Bundle('vuln', Vulnerability.name.label('v_name'), Vulnerability.confirmed, Vulnerability.data,\
+        vuln_bundle = Bundle('vuln', Vulnerability.id.label('server_id'),Vulnerability.name.label('v_name'),\
+            Vulnerability.confirmed, Vulnerability.data,\
             Vulnerability.description, Vulnerability.easeofresolution, Vulnerability.impact_accountability,\
             Vulnerability.impact_availability, Vulnerability.impact_confidentiality, Vulnerability.impact_integrity,\
             Vulnerability.refs, Vulnerability.resolution, Vulnerability.severity, Vulnerability.owned,\
@@ -73,7 +79,7 @@ class VulnerabilityDAO(FaradayDAO):
             EntityMetadata.couchdb_id, EntityMetadata.revision, EntityMetadata.create_time, EntityMetadata.creator,\
             EntityMetadata.owner, EntityMetadata.update_action, EntityMetadata.update_controller_action,\
             EntityMetadata.update_time, EntityMetadata.update_user, EntityMetadata.document_type, Vulnerability.attachments)
-        service_bundle = Bundle('service', Service.name.label('s_name'), Service.ports, Service.protocol)
+        service_bundle = Bundle('service', Service.name.label('s_name'), Service.ports, Service.protocol, Service.id)
         host_bundle = Bundle('host', Host.name)
 
         # IMPORTANT: OUTER JOINS on those tables is IMPERATIVE. Changing them could result in loss of
@@ -132,12 +138,14 @@ class VulnerabilityDAO(FaradayDAO):
         return {
             'id': vuln.couchdb_id,
             'key': vuln.couchdb_id,
+            '_id': vuln.server_id,
             'value': {
                 '_id': vuln.couchdb_id,
                 '_rev': vuln.revision,
                 'confirmed': vuln.confirmed,
                 'data': vuln.data,
                 'desc': vuln.description,
+                'description': vuln.description,
                 'easeofresolution': vuln.easeofresolution,
                 'impact': {
                     'accountability': vuln.impact_accountability,

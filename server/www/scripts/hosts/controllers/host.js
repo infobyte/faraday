@@ -17,7 +17,7 @@ angular.module('faradayApp')
             var hostId = $routeParams.hidId;
 
             $scope.services = [];
-            $scope.sortField = "name";
+            $scope.sortField = "ports";
             $scope.reverse = false;
 
             $scope.loadedServices = false;

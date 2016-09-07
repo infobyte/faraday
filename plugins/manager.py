@@ -22,12 +22,10 @@ CONF = getInstanceConfiguration()
 
 
 class PluginManager(object):
-    def __init__(self, plugin_repo_path, mapper_manager):
+    def __init__(self, plugin_repo_path):
         self._controllers = {}
         self._plugin_modules = {}
         self._loadPlugins(plugin_repo_path)
-        self._mapper_manager = mapper_manager
-
         self._plugin_settings = {}
         self._loadSettings()
 

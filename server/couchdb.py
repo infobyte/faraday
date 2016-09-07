@@ -147,7 +147,7 @@ class ChangesStream(object):
                     stream=True, auth=get_auth_info())
 
                 for raw_line in self.__response.iter_lines():
-                    line = self.__sanitize(raw_line) 
+                    line = self.__sanitize(raw_line)
                     if not line:
                         continue
 
@@ -182,7 +182,7 @@ class ChangesStream(object):
             return None
 
         # Modify line cases
-        if line.startswith('"last_seq"'): 
+        if line.startswith('"last_seq"'):
             line = '{' + line
         if line.endswith(","):
             line = line[:-1]
@@ -249,7 +249,7 @@ class MonitorThread(threading.Thread):
                     elif change_doc.get('reason') == 'no_db_file':
                         self.__stream.stop()
                         break
-    
+
     def stop(self):
         self.__stream.stop()
 
@@ -274,22 +274,31 @@ def get_auth_info():
 def is_usable_workspace(ws_name):
     return not ws_name.startswith('_') and ws_name not in config.WS_BLACKLIST
 
-def list_workspaces_as_user(cookies):
+def list_workspaces_as_user(cookies, credentials=None):
     all_dbs_url = get_couchdb_url() + '/_all_dbs'
-    response = requests.get(all_dbs_url, verify=False, cookies=cookies)
+    response = requests.get(all_dbs_url, verify=False, cookies=cookies, auth=credentials)
     if response.status_code != requests.codes.ok:
         raise Exception("Couldn't obtain workspaces list")
 
-    workspaces = filter(lambda ws_name: is_usable_workspace(ws_name) and has_permissions_for(ws_name, cookies),\
+    workspaces = filter(lambda ws_name: is_usable_workspace(ws_name) and has_permissions_for(ws_name, cookies, credentials),\
                         response.json())
 
     return { 'workspaces': workspaces }
 
-def has_permissions_for(workspace_name, cookies=None, credentials=None):
+def _get_workspace_doc(workspace_name, cookies, credentials):
     # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
     ws_url = get_couchdb_url() + ('/%s/%s' % (workspace_name, workspace_name))
-    response = requests.get(ws_url, verify=False, cookies=cookies, auth=credentials)
+    return requests.get(ws_url, verify=False, cookies=cookies, auth=credentials)
 
+def get_workspace(workspace_name, cookies, credentials):
+    workspace = _get_workspace_doc(workspace_name, cookies, credentials).json()
+    ws_info_url = get_couchdb_url() + ('/%s' % (workspace_name))
+    response = requests.get(ws_info_url, verify=False, cookies=cookies, auth=credentials)
+    workspace['last_seq'] = response.json()['update_seq']
+    return workspace
+
+def has_permissions_for(workspace_name, cookies=None, credentials=None):
+    response = _get_workspace_doc(workspace_name, cookies, credentials)
     # Even if the document doesn't exist, CouchDB will
     # respond 401 if it doesn't have access to it
     return (response.status_code != requests.codes.unauthorized)

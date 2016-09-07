@@ -21,7 +21,7 @@ __email__      = "famato@infobytesec.com"
 __status__     = "Development"
 
 # Configuration
-SHODAN_API_KEY = "INSERT YOUR SHODAN KEY HERE"
+SHODAN_API_KEY = "lT3whkyVHH7iAtP28iNIq7hVNlK638vR"
 
 def strip_non_ascii(string):
     ''' Returns the string without non ASCII characters'''
@@ -29,7 +29,7 @@ def strip_non_ascii(string):
     return ''.join(stripped)
 
 def send_faraday(result):
-    print 'IP: %s' % result['ip_str']    
+    print 'IP: %s' % result['ip_str']
 
     if result['data'] is not None:
         result['data'] = base64.b64encode(strip_non_ascii(str(result['data']))) #fix: to avoid non ascii caracters
@@ -47,7 +47,7 @@ def send_faraday(result):
         "tcp",str(result['port']),"open",str(result['version']) if result.has_key('version') else "")
     if result['data'] is not None:
     	n_id = api.createAndAddNoteToService(h_id,s_id,"shadon_response",str(result['data']))
-    
+
     #Notes - Information geo/shadon
     n_id = api.createAndAddNoteToHost(h_id,"geo_country",result['location']['country_name'] if result['location']['country_name']  is not None else "" )
     n_id = api.createAndAddNoteToHost(h_id,"geo_latitude",result['location']['latitude'] if result['location']['latitude']  is not None else "")
@@ -76,7 +76,7 @@ try:
 
     results = shodan_api.search(args.shodan_query)
     print 'Results found: %s, query "%s"' % (results['total'], args.shodan_query)
-    
+
     for r in shodan_api.search_cursor(args.shodan_query, minify=True, retries=5):
         if args.count != "all" and c_page >= int(args.count):
      		break

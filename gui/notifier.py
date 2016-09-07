@@ -51,11 +51,8 @@ class NotificationCenter():
     def showDialog(self, msg, level="INFORMATION"):
         self._notifyWidgets(events.ShowDialogCustomEvent(msg, level))
 
-    def workspaceLoad(self, hosts):
-        self._notifyWidgets(events.ModelObjectUpdateEvent(hosts))
-
-    def workspaceChanged(self, workspace, workspace_type):
-        self._notifyWidgets(events.WorkspaceChangedCustomEvent(workspace,workspace_type))
+    def workspaceChanged(self, workspace):
+        self._notifyWidgets(events.WorkspaceChangedCustomEvent(workspace))
 
     def CouchDBConnectionProblem(self, problem=None):
         self._notifyWidgets(events.ShowExceptionConnectionRefusedCustomEvent(problem))
@@ -78,6 +75,22 @@ class NotificationCenter():
     def conflictResolution(self, conflicts):
         self._notifyWidgets(events.ResolveConflictsCustomEvent(conflicts))
 
-    def changeFromInstance(self, change):
-        self._notifyWidgets(events.ChangeFromInstanceCustomEvent(change))
+    def changeFromInstance(self, obj_id, obj_type, obj_name,
+                           deleted=False, update=False):
+        self._notifyWidgets(events.ChangeFromInstanceCustomEvent(obj_id,
+                                                                 obj_type,
+                                                                 obj_name,
+                                                                 deleted=deleted,
+                                                                 update=update))
 
+    def addHostFromChanges(self, obj):
+        self._notifyWidgets(events.AddHostChangesEvent(obj))
+
+    def editObject(self, obj):
+        self._notifyWidgets(events.UpdateObjectCustomEvent(obj))
+
+    def deleteObject(self, obj_id):
+        self._notifyWidgets(events.DeleteObjectCustomEvent(obj_id))
+
+    def addObject(self, new_object):
+        self._notifyWidgets(events.AddObjectCustomEvent(new_object))

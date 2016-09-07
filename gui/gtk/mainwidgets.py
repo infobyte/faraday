@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import gi
 import os
+import math
 
 gi.require_version('Gtk', '3.0')
 
@@ -114,15 +115,17 @@ class HostsSidebar(Gtk.Widget):
     the Sidebar notebook. Will list all the host, and when clicking on one,
     will open a window with more information about it"""
 
-    def __init__(self, open_dialog_callback, icons):
+    def __init__(self, open_dialog_callback, get_host_function, icons):
         """Initializes the HostsSidebar. Initialization by itself does
         almost nothing, the application will inmediatly call create_model
         with the last workspace and create_view with that model upon startup.
         """
-        super(Gtk.Widget, self).__init__()
+        Gtk.Widget.__init__(self)
         self.open_dialog_callback = open_dialog_callback
+        self.get_host_function = get_host_function
         self.current_model = None
-        self.current_sorted_model = None
+        self.host_amount = 0
+        self.page = 0
         self.host_id_to_iter = {}
         self.linux_icon = icons + "tux.png"
         self.windows_icon = icons + "windows.png"
@@ -131,35 +134,86 @@ class HostsSidebar(Gtk.Widget):
 
     def __compute_vuln_count(self, host):
         """Return the total vulnerability count for a given host"""
-        vuln_count = 0
-        vuln_count += len(host.getVulns())
-        for interface in host.getAllInterfaces():
-            vuln_count += len(interface.getVulns())
-            for service in interface.getAllServices():
-                vuln_count += len(service.getVulns())
-        return vuln_count
+        return host.getVulnAmount()
 
-    def __add_host_to_model(self, model, host):
-        """Adds host to the model given as parameter."""
+    def __get_vuln_amount_from_model(self, host_id):
+        """Given a host_id, it will look in the current model for the host_id
+        and return the amount of vulnerabilities IF the host_id corresponds
+        to the model ID. Else it will return None.
+        """
+        host_iter = self.host_id_to_iter.get(host_id)
+        return self.current_model[host_iter][4]
+
+    def __add_host_to_model(self, host):
+        """Adds host to the model given as parameter in the initial load
+        of the sidebar."""
         vuln_count = self.__compute_vuln_count(host)
         os_icon, os_str = self.__decide_icon(host.getOS())
-        display_str = '{0} ({1})'.format(host.name, str(vuln_count))
-        host_iter = model.append([host.id, os_icon, os_str, display_str, vuln_count])
+        display_str = str(host)
+        host_iter = self.current_model.append([host.id, os_icon, os_str,
+                                               display_str, vuln_count])
         self.host_id_to_iter[host.id] = host_iter
-        return host_iter
 
-    def __delete_host_from_model(self, model, host_id):
+    def __add_host_to_model_after_initial_load(self, host):
+        """Adds a host to the model after the intial load is done
+        (host came through the changes or through a plugin)"""
+        self.host_amount += 1
+        if self.host_amount % 20 == 0:
+            self.redo([host], self.host_amount, page=self.page+1)
+        else:
+            self.__add_host_to_model(host)
+
+    def __add_vuln_to_model(self, vuln):
+        """When a new vulnerability arrives, look up its hosts
+        and update its vuln amount and its representation as a string."""
+        host_id = self.__find_host_id(vuln)
+
+        # as the user can change pages, selfl.current_model can change at
+        # any point. if we try to add something to a host that doesnt
+        # exist on this model (but existed on another model, on another page)
+        # this will raise a TypeError exception.
+        try:
+            vuln_amount = self.__get_vuln_amount_from_model(host_id) + 1
+            self.__update_host_str(host_id, new_vuln_amount=vuln_amount)
+        except TypeError:
+            pass  # be forgiving, as you'd want the lord to be forgiving to you
+                  # seriously now: this makes sense. we don't have to recover
+                  # anything here, a new request will be made
+                  # when the user changes pages
+        #warnings.filterwarnings("default")
+
+    def __remove_vuln_from_model(self, host_id):
+        """When a new vulnerability id deleted, look up its hosts
+        and update its vuln amount and its representation as a string."""
+        vuln_amount = self.__get_vuln_amount_from_model(host_id) - 1
+        self.__update_host_str(host_id, new_vuln_amount=vuln_amount)
+
+    def __update_host_str(self, host_id, new_vuln_amount=None, new_host_name=None):
+        """When a new vulnerability id deleted, look up its hosts
+        and update its vuln amount and its representation as a string."""
+        host_iter = self.host_id_to_iter[host_id]
+        if not new_host_name:
+            new_host_name = str(self.current_model[host_iter][3].split(" ")[0])
+        if not new_vuln_amount:
+            new_vuln_amount = str(self.current_model[host_iter][4])
+        new_string = "{0} ({1})".format(new_host_name, new_vuln_amount)
+        self.current_model.set_value(host_iter, 3, new_string)
+        self.current_model.set_value(host_iter, 4, int(new_vuln_amount))
+
+    def __update_host_in_model(self, host):
+        self.__update_host_str(host.getID(), new_host_name=host.getName())
+
+    def __remove_host_from_model(self, host_id):
         """Deletes a host from the model given as parameter."""
         host_iter = self.host_id_to_iter[host_id]
-        could_be_removed = model.remove(host_iter)
+        could_be_removed = self.current_model.remove(host_iter)
         del self.host_id_to_iter[host_id]
         return could_be_removed
 
-    def __update_host_info_in_model(self, model, host):
-        """Updates the model with new information about the host. In practice,
-        this means remove the host and add it again with new information."""
-        self.__delete_host_from_model(model, host.id)
-        self.__add_host_to_model(model, host)
+    def __find_host_id(self, object_info):
+        object_id = object_info.getID()
+        host_id = object_id.split(".")[0]
+        return host_id
 
     def __decide_icon(self, os):
         """Return the GdkPixbuf icon according to 'os' paramather string
@@ -191,45 +245,12 @@ class HostsSidebar(Gtk.Widget):
         | a923fd  | PixBufIcon(linux)| linux  | 192.168.1.2 (5)  |      5    |
         """
 
-        def compare_os_strings(model, an_os, other_os, user_data):
-            """Compare an_os with other_os so the model knows how to sort them.
-            user_data is not used.
-            Forces 'unknown' OS to be always at the bottom of the model.
-            Return values:
-            1 means an_os should come after other_os
-            0 means they are the same
-            -1 means an_os should come before other_os
-            It helps to think about it like the relative position of an_os
-            in respect to other_os (-1 'left' in a list, 1 'right' in a list)
-            """
-            sort_column = 2
-            an_os = model.get_value(an_os, sort_column)
-            other_os = model.get_value(other_os, sort_column)
-            if an_os == "unknown":
-                order = 1
-            elif an_os < other_os or other_os == "unknown":
-                order = -1
-            elif an_os == other_os:
-                order = 0
-            else:
-                order = 1
-            return order
-
         hosts_model = Gtk.ListStore(str, GdkPixbuf.Pixbuf(), str, str, int)
-        for host in hosts:
-            self.__add_host_to_model(hosts_model, host)
-
-        # sort the model by default according to column 4 (num of vulns)
-        sorted_model = Gtk.TreeModelSort(model=hosts_model)
-        sorted_model.set_sort_column_id(4, Gtk.SortType.DESCENDING)
-
-        # set the sorting function of column 2
-        sorted_model.set_sort_func(2, compare_os_strings, None)
-
         self.current_model = hosts_model
-        self.current_sorted_model = sorted_model
+        for host in hosts:
+            self.__add_host_to_model(host)
 
-        return self.current_sorted_model
+        return self.current_model
 
     def create_view(self, model):
         """Creates a view for the hosts model.
@@ -266,27 +287,34 @@ class HostsSidebar(Gtk.Widget):
 
         return self.view
 
-    def update(self, event, host_info):
-        """Updated the model in case a host was added, deleted or modified.
-        event must be a string, either 'add', 'update' or 'delete'
-        host must be a valid host object.
-        """
-        if event == 'add':
-            self.__add_host_to_model(self.current_model, host_info)
-        elif event == 'update':
-            self.__update_host_info_in_model(self.current_model, host_info)
-        elif event == 'delete':
-            self.__delete_host_from_model(self.current_model, host_info)
-        else:
-            raise ValueError("event parameter must be a string such that "
-                             "event == 'add' or 'update' or 'delete'")
+    def add_object(self, obj):
+        object_type = obj.class_signature
+        if object_type == 'Host':
+            self.__add_host_to_model_after_initial_load(obj)
+        if object_type == "Vulnerability" or object_type == "VulnerabilityWeb":
+            self.__add_vuln_to_model(obj)
 
-    def redo(self, hosts):
+    def remove_object(self, obj_id):
+        if obj_id.count('.') == 0:
+            self.__remove_host_from_model(obj_id)
+        else:
+            host_id = obj_id.split(".")[0]
+            self.__remove_vuln_from_model(host_id)
+
+    def update_object(self, obj):
+        object_type = obj.class_signature
+        if object_type == 'Host':
+            self.__update_host_in_model(obj)
+
+    def redo(self, hosts, total_host_amount, page=0):
         """Creates a new model from an updated list of hosts and adapts
         the view to reflect the changes"""
+        self.page = page
         self.host_id_to_iter = {}
         model = self.create_model(hosts)
         self.redo_view(model)
+        self.host_amount = total_host_amount
+        self.set_move_buttons_sensitivity()
 
     def redo_view(self, model):
         """Updates the view of the object with a new model"""
@@ -294,14 +322,78 @@ class HostsSidebar(Gtk.Widget):
 
     def on_click(self, tree_view, path, column):
         """Sends the host_id of the clicked host back to the application"""
-        tree_iter = self.current_sorted_model.get_iter(path)
-        host_id = self.current_sorted_model[tree_iter][0]
+        tree_iter = self.current_model.get_iter(path)
+        host_id = self.current_model[tree_iter][0]
         self.open_dialog_callback(host_id)
 
+    def set_move_buttons_sensitivity(self):
+        if self.page > 0:
+            self.prev_button.set_sensitive(True)
+        else:
+            self.prev_button.set_sensitive(False)
+        if math.ceil(self.host_amount / 20) >= self.page+1:
+            self.next_button.set_sensitive(True)
+        else:
+            self.next_button.set_sensitive(False)
+
     @scrollable(width=160)
-    def get_box(self):
-        """Returns the box to be displayed in the appwindow"""
+    def scrollable_view(self):
         return self.view
+
+    def get_box(self):
+        search_entry= self.create_search_entry()
+        scrollable_view = self.scrollable_view()
+        button_box = self.button_box()
+        sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        sidebar_box.pack_start(search_entry, False, False, 0)
+        sidebar_box.pack_start(scrollable_view, True, True, 0)
+        sidebar_box.pack_start(button_box, False, True, 0)
+        return sidebar_box
+
+    def button_box(self):
+        button_box = Gtk.Box()
+        self.prev_button = Gtk.Button.new_with_label("<<")
+        self.next_button = Gtk.Button.new_with_label(">>")
+        self.prev_button.connect("clicked", self.on_click_move_page, lambda x: x-1)
+        self.next_button.connect("clicked", self.on_click_move_page, lambda x: x+1)
+        button_box.pack_start(self.prev_button, True, True, 0)
+        button_box.pack_start(self.next_button, True, True, 0)
+        return button_box
+
+    def on_click_move_page(self, button, add_one_or_take_one_from, *args, **kwargs):
+        self.page = add_one_or_take_one_from(self.page)
+        hosts = self.get_host_function(page=str(self.page), page_size=20,
+                                       sort='vulns', sort_dir='desc')
+        model = self.create_model(hosts)
+        self.redo_view(model)
+        self.set_move_buttons_sensitivity()
+
+    def create_search_entry(self):
+        """Returns a simple search entry"""
+        search_entry = Gtk.Entry()
+        search_entry.set_placeholder_text("Search a host by name...")
+        search_entry.connect("activate", self.on_search_enter_key)
+        search_entry.show()
+        return search_entry
+
+    def on_search_enter_key(self, entry):
+        """When the users preses enter, if the workspace exists,
+        select it. If not, present the window to create a workspace with
+        that name"""
+        search = entry.get_text()
+        if search == "":
+            hosts = self.get_host_function(page=0, page_size=20, sort='vulns',
+                                           sort_dir='desc')
+            model = self.create_model(hosts)
+            self.redo_view(model)
+            self.set_move_buttons_sensitivity()
+        else:
+            hosts = self.get_host_function(name=search, sort='name',
+                                           sort_dir='desc')
+            model = self.create_model(hosts)
+            self.redo_view(model)
+            self.prev_button.set_sensitive(False)
+            self.next_button.set_sensitive(False)
 
 
 class WorkspaceSidebar(Gtk.Widget):
@@ -309,7 +401,7 @@ class WorkspaceSidebar(Gtk.Widget):
     instance to the application. It only handles the view and the model,
     all the backend word is handled by the application via the callback"""
 
-    def __init__(self, workspace_manager, callback_to_change_workspace,
+    def __init__(self, server_io, callback_to_change_workspace,
                  callback_to_remove_workspace, callback_to_create_workspace,
                  last_workspace):
 
@@ -318,9 +410,9 @@ class WorkspaceSidebar(Gtk.Widget):
         self.remove_ws = callback_to_remove_workspace
         self.create_ws = callback_to_create_workspace
         self.last_workspace = last_workspace
-        self.ws_manager = workspace_manager
+        self.serverIO = server_io
 
-        self.workspaces = self.ws_manager.getWorkspacesNames()
+        self.workspaces = self.serverIO.get_workspaces_names()
         self.search_entry = self.create_search_entry()
 
         self.workspace_model = self.create_ws_model()
@@ -367,8 +459,7 @@ class WorkspaceSidebar(Gtk.Widget):
         Gets an updated copy of the workspaces and checks against
         the model to see which are already there and which arent"""
 
-        self.ws_manager.resource()
-        self.workspaces = self.ws_manager.getWorkspacesNames()
+        self.workspaces = self.serverIO.get_workspaces_names()
 
         model = self.workspace_model
         added_workspaces = [added_ws[0] for added_ws in model]

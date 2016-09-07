@@ -264,7 +264,7 @@ class ModelObject(object):
 
     def getMetadata(self):
         """Returns the current metadata of the object"""
-        return self._metadata
+        return self._metadata.__dict__
 
     def setMetadata(self, metadata):
         self._metadata = metadata
@@ -894,12 +894,14 @@ class ModelObjectVuln(ModelComposite):
         self.publicattrs['Data'] = "getData"
         self.publicattrs['Severity'] = 'getSeverity'
         self.publicattrs['Refs'] = 'getRefs'
+        self.publicattrs['Resolution'] = 'getResolution'
 
         self.publicattrsrefs['Name'] = 'name'
         self.publicattrsrefs['Description'] = '_desc'
         self.publicattrsrefs['Data'] = "data"
         self.publicattrsrefs['Severity'] = 'severity'
         self.publicattrsrefs['Refs'] = 'refs'
+        self.publicattrsrefs['Resolution'] = 'resolution'
 
     def standarize(self, severity):
         # Transform all severities into lower strings
@@ -1214,122 +1216,3 @@ class ModelObjectCred(ModelLeaf):
             self.setUsername(username)
         if password is not None:
             self.setPassword(password)
-
-class TreeWordsTries(object):
-    instance = None
-    END = '_end_'
-    root = dict()
-    FOUND = True
-
-    def __init__(self):
-        self.partial_match = False
-        self.partial_match_dict = {}
-        self.cur_idx = 0
-
-    def addWord(self, word):
-        current_dict = self.root
-        for letter in word:
-            current_dict = current_dict.setdefault(letter, {})
-
-        current_dict = current_dict.setdefault(self.END, self.END)
-
-    def getWordsInText(self, text):
-        current_dict = self.root
-        list_of_word = list()
-        w = ''
-        for letter in text:
-            if letter in current_dict:
-                current_dict = current_dict[letter]
-                w += letter
-            elif self.END in current_dict:
-                list_of_word.append(w)
-                current_dict = self.root
-                w = ''
-            else:
-                current_dict = self.root
-                w = ''
-
-        if self.END in current_dict:
-            list_of_word.append(w)
-
-        return list_of_word
-
-
-    def isInTries(self, word):
-        current_dict = self.root
-
-        if word is None:
-            return False
-
-        for letter in word:
-            if letter in current_dict:
-                current_dict = current_dict[letter]
-            else:
-                return not self.FOUND
-        else:
-            if self.END in current_dict:
-                return self.FOUND
-            else:
-                return False
-
-    def __new__(cls, *args, **kargs):
-        if cls.instance is None:
-            cls.instance = object.__new__(cls, *args, **kargs)
-        return cls.instance
-
-    def removeWord(self, word):
-        previous_dict = None
-        current_dict = self.root
-        last_letter = ''
-
-        if not self.isInTries(word):
-            return
-
-        for letter in word:
-            if letter in current_dict:
-                if not previous_dict:
-                    previous_dict = current_dict
-                    last_letter = letter
-                if len(current_dict.keys()) != 1:
-                    previous_dict = current_dict
-                    last_letter = letter
-                current_dict = current_dict[letter]
-        else:
-            if self.END in current_dict:
-                previous_dict.pop(last_letter)
-
-    def clear(self):
-        self.root = dict()
-        self.FOUND = True
-
-
-
-#-------------------------------------------------------------------------------
-# taken from http://code.activestate.com/recipes/576477-yet-another-signalslot-implementation-in-python/
-# under MIT License
-#TODO: decide if we are going to use this...
-class Signal(object):
-    """
-    used to handle signals between several objects
-    """
-    def __init__(self):
-        self.__slots = WeakValueDictionary()
-
-    def __call__(self, *args, **kargs):
-        for key in self.__slots:
-            func, _ = key
-            func(self.__slots[key], *args, **kargs)
-
-    def connect(self, slot):
-        key = (slot.im_func, id(slot.im_self))
-        self.__slots[key] = slot.im_self
-
-    def disconnect(self, slot):
-        key = (slot.im_func, id(slot.im_self))
-        if key in self.__slots:
-            self.__slots.pop(key)
-
-    def clear(self):
-        self.__slots.clear()
-
-#-------------------------------------------------------------------------------

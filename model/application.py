@@ -12,8 +12,6 @@ import threading
 import requests
 
 from model.controller import ModelController
-from persistence.persistence_managers import DbManager
-from controllers.change import ChangeController
 from managers.workspace_manager import WorkspaceManager
 from plugins.controller import PluginController
 
@@ -48,7 +46,6 @@ class TimerClass(threading.Thread):
                     params={'version': CONF.getVersion()},
                     timeout=1,
                     verify=True)
-                res.status_code
             except Exception:
                 model.api.devlog("CWE database couldn't be updated")
             self.__event.wait(43200)
@@ -58,8 +55,6 @@ class TimerClass(threading.Thread):
 
 
 class MainApplication(object):
-    """
-    """
 
     def __init__(self, args):
         self._original_excepthook = sys.excepthook
@@ -67,19 +62,14 @@ class MainApplication(object):
         self.args = args
 
         self._mappers_manager = MapperManager()
-        self._changes_controller = ChangeController()
-        self._db_manager = DbManager(self.on_connection_lost)
 
         self._model_controller = ModelController(self._mappers_manager)
 
         self._plugin_manager = PluginManager(
-            os.path.join(CONF.getConfigPath(), "plugins"),
-            self._mappers_manager)
+            os.path.join(CONF.getConfigPath(), "plugins"))
 
         self._workspace_manager = WorkspaceManager(
-            self._db_manager,
-            self._mappers_manager,
-            self._changes_controller)
+            self._mappers_manager)
 
         # Create a PluginController and send this to UI selected.
         self._plugin_controller = PluginController(
@@ -161,7 +151,6 @@ class MainApplication(object):
         model.api.devlog("stopping model controller thread...")
         model.api.stopAPIServer()
         restapi.stopServer()
-        self._changes_controller.stop()
         self._model_controller.stop()
         self._model_controller.join()
         self.timer.stop()

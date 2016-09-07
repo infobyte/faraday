@@ -12,6 +12,7 @@ New features in the latest update
 
 TBA: 
 ---
+* Major refactor de Faraday Client: now we support massive workspaces (100.000+ hosts). 
 * Fixed more than 10 bugs on the Web UI
 * Updated URL shown when starting Faraday
 * Dashboard is now refreshed automatically

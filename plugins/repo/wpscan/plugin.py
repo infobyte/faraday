@@ -82,19 +82,19 @@ class WPScanPlugin(core.PluginBase):
         and (None, None) if the regex found nothing.
         """
         critical_search = re.search(r"Website is not fully configured|"
-                                    "Debug log file found|",
+                                    "Debug log file found|"
                                     "wp-config\.php backup file has been found|"
                                     "searchreplacedb2.php has been found",
                                     potential_vuln)
         if critical_search:
             return critical_search.group(0), "critical"
 
-        info_search = re.search(r"Directory listing is enabled|",
-                                "An error_log file has been found|",
-                                "file exists exposing a version number|",
-                                "Full Path Disclosure|",
-                                "Registration is enabled|",
-                                "(Upload|Includes) directory has directory listing enabled|",
+        info_search = re.search(r"Directory listing is enabled|"
+                                "An error_log file has been found|"
+                                "file exists exposing a version number|"
+                                "Full Path Disclosure|"
+                                "Registration is enabled|"
+                                "(Upload|Includes) directory has directory listing enabled|"
                                 "Default first Wordpress username 'admin' is still used",
                                 potential_vuln)
         if info_search:

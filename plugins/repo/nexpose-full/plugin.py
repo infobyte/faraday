@@ -274,7 +274,7 @@ class NexposeFullPlugin(core.PluginBase):
         for item in parser.items:
             h_id = self.createAndAddHost(item['name'], item['os'])
             i_id = self.createAndAddInterface(h_id, item['name'], ipv4_address=item[
-                                              'name'], hostname_resolution=item['hostnames'])
+                                              'name'], hostname_resolution= ' '.join( list( item['hostnames'] )))
 
             for v in item['vulns']:
                 v_id = self.createAndAddVulnToHost(h_id, v['name'], v['desc'], v[

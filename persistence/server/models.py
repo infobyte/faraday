@@ -470,6 +470,9 @@ def get_workspaces_names():
 def is_server_up():
     return server.is_server_up()
 
+def test_server_url(url_to_test):
+    return server.test_server_url(url_to_test)
+
 class ModelBase(object):
     def __init__(self, obj, workspace_name):
         self._workspace_name = workspace_name

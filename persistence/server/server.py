@@ -849,6 +849,14 @@ def is_server_up():
         is_server_up = False
     return is_server_up
 
+def test_server_url(url_to_test):
+    try:
+        _get("{0}/_api/info".format(url_to_test))
+        test_okey = True
+    except:
+        test_okey = False
+    return test_okey
+
 class ServerRequestException(Exception):
     def __init__(self):
         pass

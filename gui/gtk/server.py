@@ -77,6 +77,10 @@ class ServerIO(object):
     def is_server_up(self):
         return models.is_server_up()
 
+    @safe_io_with_server(False)
+    def test_server_url(self, url):
+        return models.test_server_url(url)
+
     @safe_io_with_server(None)
     def get_changes_stream(self):
         return models.get_changes_stream(self.active_workspace)

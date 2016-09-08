@@ -393,7 +393,8 @@ class GuiApp(Gtk.Application, FaradayUi):
     def change_workspace(self, workspace_name):
         """Changes workspace in a separate thread. Emits a signal
         to present a 'Loading workspace' dialog while Faraday processes
-        the change"""
+        the change. If there are conflict present in the workspace, it will
+        show a warning before changing the workspaces."""
 
         def loading_workspace(action):
             """Function to be called via GObject.idle_add by the background
@@ -446,6 +447,12 @@ class GuiApp(Gtk.Application, FaradayUi):
             return True
 
         self.ws_sidebar.select_ws_by_name(workspace_name)
+        if self.statusbar.conflict_button_label_int > 0:
+            response = self.window.show_conflicts_warning()
+            if response == Gtk.ResponseType.NO:
+                self.select_active_workspace()
+                return False
+
         thread = threading.Thread(target=background_process)
         thread.daemon = True
         thread.start()
@@ -512,6 +519,8 @@ class GuiApp(Gtk.Application, FaradayUi):
             GObject.idle_add(self.hosts_sidebar.redo, first_host_page, total_host_amount)
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)
+            GObject.idle_add(self.statusbar.set_default_conflict_label)
+            GObject.idle_add(self.statusbar.set_default_conflict_label)
             GObject.idle_add(self.select_active_workspace)
 
         def normal_error_event():

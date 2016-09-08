@@ -276,6 +276,19 @@ class AppWindow(Gtk.ApplicationWindow):
         current_state = self.log_box.is_visible()
         self.log_box.set_visible(not current_state)
 
+    def show_conflicts_warning(self):
+        warning_string = ("There are conflicts that need manual "
+                         "handling. Closing Faraday or changing workspaces "
+                         "may result in the loss of relevant information. "
+                         "Are you sure you want to continue?")
+        dialog = Gtk.MessageDialog(self, 0,
+                                   Gtk.MessageType.QUESTION,
+                                   Gtk.ButtonsType.YES_NO,
+                                   warning_string)
+        response = dialog.run()
+        dialog.destroy()
+        return response
+
     def do_delete_event(self, event=None, status=None, parent=None):
         """Override delete_event signal to show a confirmation dialog first.
         """
@@ -284,6 +297,12 @@ class AppWindow(Gtk.ApplicationWindow):
 
         # NOTE: Return False for 'yes' is weird but that's how gtk likes it
         #       Don't judge, man. Don't judge.
+        if self.statusbar.conflict_button_label_int > 0:
+            response = self.show_conflicts_warning()
+            if response == Gtk.ResponseType.NO:
+                return True
+            else:
+                return False
 
         dialog = Gtk.MessageDialog(transient_for=parent,
                                    modal=True,

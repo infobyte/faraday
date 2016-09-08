@@ -542,8 +542,9 @@ class WorkspaceSidebar(Gtk.Widget):
             select.select_path(path)
 
             # change the workspace to the newly selected
-
             self.change_ws(self.get_selected_ws_name())
+            return True # prevents the click from selecting a workspace
+                        # this is handled manually by us on self.change_ws
 
         if event.button == 3:  # 3 represents right click
             menu = Gtk.Menu()

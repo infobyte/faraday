@@ -110,6 +110,7 @@ class ServerIO(object):
         def notification_dispatcher(obj_id, obj_type, obj_name, deleted, revision):
             if deleted:
                 notification_center.deleteObject(obj_id)
+                update = False
             else:
                 is_new_object = revision.split("-")[0] == "1"
                 obj = self.get_object(obj_type, obj_id)

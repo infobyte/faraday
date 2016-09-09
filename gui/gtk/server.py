@@ -121,6 +121,8 @@ class ServerIO(object):
                     else:
                         notification_center.editObject(obj)
                         update = True
+                else:
+                    update = False
             notification_center.changeFromInstance(obj_id, obj_type,
                                                    obj_name, deleted=deleted,
                                                    update=update)

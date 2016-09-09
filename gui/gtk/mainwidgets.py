@@ -142,7 +142,8 @@ class HostsSidebar(Gtk.Widget):
         to the model ID. Else it will return None.
         """
         host_iter = self.host_id_to_iter.get(host_id)
-        return self.current_model[host_iter][4]
+        if host_iter:
+            return self.current_model[host_iter][4]
 
     def __add_host_to_model(self, host):
         """Adds host to the model given as parameter in the initial load
@@ -163,30 +164,33 @@ class HostsSidebar(Gtk.Widget):
         else:
             self.__add_host_to_model(host)
 
+    def __host_exists_in_current_model(self, host_id):
+        return self.host_id_to_iter.get(host_id) is not None
+
+    def __get_host_from_host_id(self, host_id):
+        try:
+            return self.get_host_function(couchid=host_id)[0]
+        except IndexError:
+            return None
+
     def __add_vuln_to_model(self, vuln):
         """When a new vulnerability arrives, look up its hosts
         and update its vuln amount and its representation as a string."""
-        host_id = self.__find_host_id(vuln)
-
-        # as the user can change pages, selfl.current_model can change at
-        # any point. if we try to add something to a host that doesnt
-        # exist on this model (but existed on another model, on another page)
-        # this will raise a TypeError exception.
-        try:
-            vuln_amount = self.__get_vuln_amount_from_model(host_id) + 1
+        host_id = self.__find_host_in_id(vuln)
+        if self.__host_exists_in_current_model(host_id):
+            real_host = self.__get_host_from_host_id(host_id)
+            if real_host is None: return
+            vuln_amount = self.__compute_vuln_count(real_host)
             self.__update_host_str(host_id, new_vuln_amount=vuln_amount)
-        except TypeError:
-            pass  # be forgiving, as you'd want the lord to be forgiving to you
-                  # seriously now: this makes sense. we don't have to recover
-                  # anything here, a new request will be made
-                  # when the user changes pages
-        #warnings.filterwarnings("default")
 
     def __remove_vuln_from_model(self, host_id):
         """When a new vulnerability id deleted, look up its hosts
-        and update its vuln amount and its representation as a string."""
-        vuln_amount = self.__get_vuln_amount_from_model(host_id) - 1
-        self.__update_host_str(host_id, new_vuln_amount=vuln_amount)
+        fand update its vuln amount and its representation as a string."""
+        if self.__host_exists_in_current_model(host_id):
+            real_host = self.__get_host_from_host_id(host_id)
+            if real_host is None: return
+            vuln_amount = self.__compute_vuln_count(real_host)
+            self.__update_host_str(host_id, new_vuln_amount=vuln_amount)
 
     def __update_host_str(self, host_id, new_vuln_amount=None, new_host_name=None):
         """When a new vulnerability id deleted, look up its hosts

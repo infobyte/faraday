@@ -176,7 +176,7 @@ class HostsSidebar(Gtk.Widget):
     def __add_vuln_to_model(self, vuln):
         """When a new vulnerability arrives, look up its hosts
         and update its vuln amount and its representation as a string."""
-        host_id = self.__find_host_in_id(vuln)
+        host_id = self.__find_host_id(vuln)
         if self.__host_exists_in_current_model(host_id):
             real_host = self.__get_host_from_host_id(host_id)
             if real_host is None: return

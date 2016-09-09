@@ -725,6 +725,8 @@ class HostInfoDialog(Gtk.Window):
             prop_names = self.get_properties_names(object_type)
             self.show_info_in_box(object_info, prop_names, self.specific_info)
             actual_object = self.get_object(object_info, object_type)
+            if not actual_object:
+                return None
             vuln_model = self.create_vuln_model(actual_object)
             self.set_vuln_model(vuln_model)
 
@@ -846,17 +848,31 @@ class HostInfoDialog(Gtk.Window):
         """Take a selection as selected_object and an object_type
         and return the actual object, not the model's selection.
         """
+        def safely(func):
+            def safe_wrapper(*args, **kwargs):
+                try:
+                    return func(*args, **kwargs)
+                except IndexError, ValueError:
+                    dialog = errorDialog(self, ("There has been a problem. "
+                                                "The object you clicked on "
+                                                "does not exist anymore."))
+                    self.destroy() # exit
+            return safe_wrapper
+
         object_id = selected_object[0]
         if object_type == 'Interface':
             # an interface is a direct child of a host
-            object_ = self.host.getInterface(object_id)
+            object_ = safely(self.host.getInterface)(object_id)
         elif object_type == 'Service':
             # a service is a grand-child of a host, so we should look
             # for its parent interface and ask her about the child
             parent_interface_iter = selected_object.get_parent()
             parent_interface_id = parent_interface_iter[0]
-            parent_interface = self.host.getInterface(parent_interface_id)
-            object_ = parent_interface.getService(object_id)
+            parent_interface = safely(self.host.getInterface)(parent_interface_id)
+            if parent_interface:
+                object_ = safely(parent_interface.getService)(object_id)
+            else:
+                object_ = None
 
         return object_
 

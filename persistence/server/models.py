@@ -492,7 +492,7 @@ class ModelBase(object):
                 'Owned': 'owned'}
 
     def defaultValues(self):
-        return [-1, 0, '', 'unknown', None, [], {}]
+        return [-1, 0, '', 'None', 'none', 'unknown', None, [], {}]
 
     def propertyTieBreaker(self, key, prop1, prop2):
         """ Breakes the conflict between two properties. If either of them

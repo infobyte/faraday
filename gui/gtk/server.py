@@ -96,8 +96,10 @@ class ServerIO(object):
         # If you touch it, do check out persitence/server/changes_stream.py
         # there lies _most_ of the darkest magic
 
-        def filter_changes(change):
+        def filter_changes(change, obj_type):
             local_changes = models.local_changes()
+            if obj_type == "Reports" or obj_type == "Workspace":
+                return None
             if not change or change.get('last_seq'):
                 return None
             if change['id'].startswith('_design'): # XXX: is this still neccesary?
@@ -133,7 +135,7 @@ class ServerIO(object):
                 try:
                     for change in self.stream:
                         change, obj_type, obj_name = change
-                        change = filter_changes(change)
+                        change = filter_changes(change, obj_type)
                         if change:
                             deleted = bool(change.get('deleted'))
                             obj_id = change.get('id')

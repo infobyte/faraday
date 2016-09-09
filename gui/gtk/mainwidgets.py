@@ -198,7 +198,7 @@ class HostsSidebar(Gtk.Widget):
         host_iter = self.host_id_to_iter[host_id]
         if not new_host_name:
             new_host_name = str(self.current_model[host_iter][3].split(" ")[0])
-        if not new_vuln_amount:
+        if new_vuln_amount is None:
             new_vuln_amount = str(self.current_model[host_iter][4])
         new_string = "{0} ({1})".format(new_host_name, new_vuln_amount)
         self.current_model.set_value(host_iter, 3, new_string)

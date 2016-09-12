@@ -2,13 +2,14 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-import os, sys
+import os, sys, re
 import atexit
 import logging
 import threading
 import server.models
 import server.config
 import server.couchdb
+import server.importer
 import server.utils.logger
 
 from sqlalchemy import create_engine
@@ -17,115 +18,226 @@ from sqlalchemy.orm.exc import MultipleResultsFound
 from restkit.errors import RequestError, Unauthorized
 
 logger = server.utils.logger.get_logger(__name__)
-workspace = {}
 
 
-class WorkspaceDatabase(object):
-    LAST_SEQ_CONFIG = 'last_seq'
-    MIGRATION_SUCCESS = 'migration'
-    SCHEMA_VERSION = 'version'
+_db_manager = None
 
-    def __init__(self, name):
-        self.__workspace = name
+def initialize():
+    global _db_manager
+    _db_manager = Manager()
 
-        self.database = Database(self.__workspace)
-        self.couchdb = server.couchdb.Workspace(self.__workspace)
+def is_valid_workspace(workspace_name):
+    return _db_manager.is_valid_workspace(workspace_name)
 
-        self.__setup_database_synchronization()
-        self.__open_or_create_database()
-        self.__start_database_synchronization()
+def get(workspace_name):
+    return _db_manager.get_workspace(workspace_name)
 
-    def __open_or_create_database(self):
-        if not self.database.exists():
-            self.create_database()
-        else:
-            self.database.open_session()
-            self.check_database_integrity()
+def teardown_context():
+    """ This is called by Flask to cleanup sessions created in the context of a request """
+    _db_manager.close_sessions()
 
-    def check_database_integrity(self):
-        if not self.was_migration_successful():
-            logger.info(u"Workspace {} wasn't migrated successfully. Remigrating workspace...".format(
-                self.__workspace))
-            self.remigrate_database()
 
-        elif self.get_schema_version() != server.models.SCHEMA_VERSION:
-            logger.info(u"Workspace {} has an old schema version ({} != {}). Remigrating workspace...".format(
-                self.__workspace, self.get_schema_version(), server.models.SCHEMA_VERSION))
-            self.remigrate_database()
+class Manager(object):
+    def __init__(self):
+        self.__workspaces = {}
 
-    def remigrate_database(self):
-        self.database.close()
-        self.database.delete()
-        self.database = Database(self.__workspace)
+        # Open all existent databases on workspaces path
+        self.__init_sessions()
 
-        self.create_database()
-    
-    def create_database(self):
-        logger.info(u'Creating database for workspace {}'.format(self.__workspace))
-        self.database.create()
-        self.database.open_session()
+        # Start CouchDB database monitor
+        server.couchdb.start_dbs_monitor(self.__process_workspace_change)
 
+        # Register database closing to be executed when process goes down
+        atexit.register(self.close_databases)
+
+    def __init_sessions(self):
+        # Only loads does databases that are already created and
+        # are present on the current CouchDB instance
+        databases = self.__list_databases().intersection(self.__list_workspaces())
+
+        for database_name in databases:
+            self.__init_workspace(database_name)
+
+    def __list_databases(self):
+        def is_a_valid_database(filename):
+            return is_a_file(filename) and is_a_valid_name(filename)
+        def is_a_file(filename):
+            return os.path.isfile(os.path.join(server.config.FARADAY_SERVER_DBS_DIR, filename))
+        def is_a_valid_name(filename):
+            return bool(re.match('^[a-z][a-z0-9_$()+/-]*\\.db$', filename))
+
+        # List all valid databases stored on configured directory
+        db_filenames = filter(is_a_valid_database, os.listdir(server.config.FARADAY_SERVER_DBS_DIR))
+
+        # Remove extensions and move on
+        return set([os.path.splitext(filename)[0] for filename in db_filenames])
+
+    def __list_workspaces(self):
+        couchdb_server_conn = server.couchdb.CouchDBServer()
+        return set(couchdb_server_conn.list_workspaces())
+
+    def __init_workspace(self, ws_name, db_conn=None):
+        if ws_name not in self.__workspaces:
+            new_workspace = Workspace(ws_name, db_conn=db_conn)
+            new_workspace.start_sync_job()
+            self.__workspaces[ws_name] = new_workspace
+
+    def get_workspace(self, ws_name):
         try:
-            # Add metadata information to database
-            self.set_last_seq(self.couchdb.get_last_seq())
-            self.set_migration_status(False)
-            self.set_schema_version()
+            return self.__workspaces[ws_name]
+        except KeyError:
+            raise WorkspaceNotFound(ws_name)
+        
+    def __process_workspace_change(self, change):
+        if change.created:
+            logger.info(u'Workspace {} was created'.format(change.db_name))
+            self.__process_new_workspace(change.db_name)
 
-            self.import_from_couchdb()
+        elif change.deleted:
+            logger.info(u'Workspace {} was deleted'.format(change.db_name))
+            self.__process_delete_workspace(change.db_name)
 
-            # Reaching this far without errors means a successful migration
-            self.set_migration_status(True)
+    def __process_new_workspace(self, ws_name):
+        if ws_name in self.__workspaces:
+            logger.info(u"Workspace {} already exists. Ignoring change.".format(ws_name))
+        elif not server.couchdb.server_has_access_to(ws_name):
+            logger.error(u"Unauthorized access to CouchDB for Workspace {}. Make sure faraday-server's"\
+                         " configuration file has CouchDB admin's credentials set".format(ws_name))
+        else:
+            self.__create_and_import_workspace(ws_name)
 
-        except Exception, e:
-            import traceback
-            logger.debug(traceback.format_exc())
-            logger.error(u'Error while importing workspace {}: {!s}'.format(self.__workspace, e))
-            self.delete()
-            raise e
+    def __create_and_import_workspace(self, ws_name):
+        new_db_conn = Connector(ws_name)
+
+        if new_db_conn.exists():
+            # TODO(mrocha): if somehow this happens, then we should check for integrity and reimport
+            # if necessary. After that we should add it into the databases dict
+            logger.warning(u"Workspace {} already exists but wasn't registered at startup".format(ws_name))
+        else:
+            server.importer.import_workspace_into_database(ws_name, new_db_conn)
+
+        self.__init_workspace(ws_name, db_conn=new_db_conn)
+
+    def __process_delete_workspace(self, ws_name):
+        if ws_name not in workspace:
+            logger.info(u"Workspace {} doesn't exist. Ignoring change.".format(ws_name))
+        else:
+            logger.info(u"Deleting workspace {} from Faraday Server".format(ws_name))
+            self.__delete_workspace(ws_name)
+
+    def __delete_workspace(self, ws_name):
+        self.get_workspace(ws_name).delete()
+        del self.__workspaces[ws_name]
+
+    def is_valid_workspace(self, ws_name):
+        return ws_name in self.__workspaces
+
+    def close_sessions(self):
+        for workspace in self.__workspaces.values():
+            workspace.close_session()
+
+    def close_databases(self):
+        for workspace in self.__workspaces.values():
+            workspace.close()
+
+
+class Workspace(object):
+    def __init__(self, db_name, db_conn=None, couchdb_conn=None, couchdb_server_conn=None):
+        self.__db_conn = db_conn or Connector(db_name)
+        self.__couchdb_conn = couchdb_conn or server.couchdb.Workspace(db_name, couchdb_server_conn)
+        self.__sync = Synchronizer(self.__db_conn, self.__couchdb_conn)
+
+    @property
+    def session(self):
+        # TODO(mrocha): should we check if session is None here???
+        return self.__db_conn.session
+
+    @property
+    def couchdb(self):
+        return self.__couchdb_conn
+
+    def start_sync_job(self):
+        self.__sync.start()
+
+    def wait_until_sync(self, timeout):
+        self.__sync.wait_until_sync(timeout)
     
-    def import_from_couchdb(self):
-        total_amount = self.couchdb.get_total_amount_of_documents()
-        processed_docs, progress = 0, 0
-        should_flush_changes = False
-        host_entities = {}
+    def close_session(self):
+        self.__db_conn.close()
 
-        def flush_changes():
-            host_entities.clear()
-            self.database.session.commit()
-            self.database.session.expunge_all()
+    def close(self):
+        self.close_session()
+        self.__couchdb_conn.close()
+        self.__sync.close()
 
-        for doc in self.couchdb.get_documents(per_request=1000):
-            processed_docs = processed_docs + 1
-            current_progress = (processed_docs * 100) / total_amount 
-            if current_progress > progress:
-                self.__show_progress(u'  * Importing {} from CouchDB'.format(
-                    self.__workspace), progress)
-                progress = current_progress
-                should_flush_changes = True
 
-            entity = server.models.FaradayEntity.parse(doc.get('doc'))
-            if entity is not None:
-                if isinstance(entity, server.models.Host) and should_flush_changes:
-                    flush_changes()
-                    should_flush_changes = False
+class Connector(object):
+    def __init__(self, db_name):
+        self.db_name = db_name
 
-                try:
-                    entity.add_relationships_from_dict(host_entities)
-                except server.models.EntityNotFound as e:
-                    logger.warning(u"Ignoring {} entity ({}) because its parent wasn't found".format(
-                        entity.entity_metadata.document_type, entity.entity_metadata.couchdb_id))
-                else:
-                    host_entities[doc.get('key')] = entity
-                    self.database.session.add(entity)
+        self.__db_path = self.__get_db_path()
+        self.__db_conf = Configuration(self)
+        self.__setup_engine()
 
-        logger.info(u'{} importation done!'.format(self.__workspace))
-        flush_changes()
+        # From here it is now ready to open, or create/open
+        if self.exists():
+            self.session = self.__open_session()
+        else:
+            self.session = None
 
-    def __show_progress(self, msg, percentage):
-        sys.stdout.write('{}: {}%\r'.format(msg, percentage))
-        sys.stdout.flush()
+    def __get_db_path(self):
+        return os.path.join(server.config.FARADAY_SERVER_DBS_DIR, '%s.db' % self.db_name)
 
-    def __setup_database_synchronization(self):
+    def __setup_engine(self):
+        self.__engine = create_engine('sqlite:///%s' % self.__db_path) # XXX: is this safe?
+        # TODO(mrocha): review this piece of code. i'm not sure what this implicates
+        # when having multiple databases open using the same model
+        server.models.Base.metadata.bind = self.__engine
+
+    def __open_session(self):
+        return scoped_session(sessionmaker(autocommit=False,
+                                           autoflush=False,
+                                           bind=self.__engine))
+
+    def create(self):
+        if self.exists():
+            raise RuntimeError("Cannot create new database. Database {} already exists".format(self.db_name))
+
+        server.models.Base.metadata.create_all(self.__engine)
+        self.session = self.__open_session()
+        self.__db_conf.setup_new_database()
+
+    def exists(self):
+        return os.path.exists(self.__db_path)
+
+    def close(self):
+        # TODO(mrocha): Detail how this works
+        if self.session is not None:
+            self.session.remove()
+
+    def delete(self):
+        self.close()
+        os.remove(self.__db_path)
+
+    def is_integrous(self):
+        if not self.__db_conf.was_migration_successful():
+            logger.info(u"Workspace {} wasn't migrated successfully".format(self.db_name))
+            return False
+
+        elif self.__db_conf.get_schema_version() != server.models.SCHEMA_VERSION:
+            logger.info(u"Workspace {} has an old schema version ({} != {})".format(
+                self.db_name, self.__db_conf.get_schema_version(), server.models.SCHEMA_VERSION))
+            return False
+        
+        return True
+
+
+class Synchronizer(object):
+    def __init__(self, db_conn, couchdb_conn):
+        self.__db_conn = db_conn
+        self.__db_conf = Configuration(db_conn)
+        self.__doc_importer = self.__build_doc_importer()
+        self.__couchdb_conn = couchdb_conn
         self.__sync_seq_milestone = 0
 
         # As far as we know, before the changes monitor is
@@ -134,163 +246,25 @@ class WorkspaceDatabase(object):
         self.__data_sync_event = threading.Event()
         self.__data_sync_event.set()
 
-    def __start_database_synchronization(self):
-        self.__last_seq = self.get_last_seq()
-        logger.debug(u'Workspace {} last update: {}'.format(self.__workspace, self.__last_seq))
-        self.couchdb.start_changes_monitor(self.__process_change, last_seq=self.__last_seq)
+    def __build_doc_importer(self):
+        def post_change_cbk(change):
+            self.__last_seq = change.seq
+            # Set sync event when the database is updated relative
+            # to the milestone set
+            if self.__last_seq >= self.__sync_seq_milestone:
+                self.__data_sync_event.set()
+        
+        return DocumentImporter(self.__db_conn, post_processing_change_cbk=post_change_cbk)
 
-    # CHA, CHA, CHA, CHANGESSSS
-    def __process_change(self, change):
-        logger.debug(u'New change for {}: {}'.format(self.__workspace, change.change_doc))
-
-        if change.deleted:
-            logger.debug(u'Doc {} was deleted'.format(change.doc_id))
-            self.__process_del(change)
-
-        elif change.updated:
-            logger.debug(u'Doc {} was updated'.format(change.doc_id))
-            self.__process_update(change)
-
-        elif change.added:
-            logger.debug(u'Doc {} was added'.format(change.doc_id))
-            self.__process_add(change)
-
-        self.__update_last_seq(change)
-
-    def __process_del(self, change):
-        """
-        ISSUES:
-            * Delete child entities. Have not found cases where this is a problem. So far,
-            clients are deleting all CouchDBs documents properly, and if they don't, the
-            DBs still are consistent. Maybe use SQLAlchemy's cascades if this become a
-            problem. Status: Somewhat OK
-
-            * Doc ID maps to multiple elements. This could happen since the ID is a hash
-            based in a few entity's properties which can be replicated. Status: TODO
-        """
-        entity = self.__get_modified_entity(change)
-        if entity is not None:
-            self.database.session.delete(entity)
-            self.database.session.commit()
-            logger.info(u'A {} ({}) was deleted'.format(
-                entity.entity_metadata.document_type, getattr(entity, 'name', None)))
-
-    def __process_update(self, change):
-        """
-        ISSUES:
-            * Updated relationships are not taken into account. Status: TODO
-        """
-        entity = self.__get_modified_entity(change)
-        if entity is not None:
-            entity.update_from_document(change.doc)
-            entity.entity_metadata.update_from_document(change.doc)
-            self.database.session.commit()
-            logger.info(u'A {} ({}) was updated'.format(
-                entity.entity_metadata.document_type, getattr(entity, 'name', None)))
-
-    def __get_modified_entity(self, change):
-        try:
-            metadata = self.database.session.query(server.models.EntityMetadata)\
-                .filter(server.models.EntityMetadata.couchdb_id == change.doc_id)\
-                .one_or_none()
-        except MultipleResultsFound:
-            logger.warning(u'Multiple entities were found for doc {}.'\
-                'Ignoring change'.format(change.doc_id))
-            return None
-
-        if metadata is not None:
-            # Obtain the proper table on which to perform the entity operation
-            entity_cls = server.models.FaradayEntity.get_entity_class_from_type(
-                metadata.document_type)
-            
-            entity = self.database.session.query(entity_cls)\
-                .join(server.models.EntityMetadata)\
-                .filter(server.models.EntityMetadata.couchdb_id == change.doc_id)\
-                .one()
-
-            return entity
-
-        else:
-            logger.info(u'Doc {} was not found in the database'.format(change.doc_id))
-            return None
-
-    def __process_add(self, change):
-        """
-        ISSUES:
-            * Other entities related to this new document may be not already
-            include into the database (ie: these documents are added on future
-            changes)
-        """
-        entity = server.models.FaradayEntity.parse(change.doc)
-        if entity is not None:
-            entity.add_relationships_from_db(self.database.session)
-            self.database.session.add(entity)
-            self.database.session.commit()
-            logger.info(u'New {} was added'.format(
-               entity.entity_metadata.document_type))
-
-    def get_last_seq(self):
-        config = self.get_config(WorkspaceDatabase.LAST_SEQ_CONFIG)
-        if config is None:
-            return 0
-
-        last_seq = int(config.value)
-        return last_seq
-
-    def was_migration_successful(self):
-        config = self.get_config(WorkspaceDatabase.MIGRATION_SUCCESS)
-        return (config is not None and config.value == 'true')
-
-    def get_schema_version(self):
-        config = self.get_config(WorkspaceDatabase.SCHEMA_VERSION)
-        return config.value if config is not None else None
-
-    def get_config(self, option):
-        query = self.database.session.query(server.models.DatabaseMetadata)
-        query = query.filter(server.models.DatabaseMetadata.option == option)
-
-        try:
-            result = query.one_or_none()
-        except MultipleResultsFound:
-            msg = u'Database {} should not have the option {} defined multiple times'.format(self.__workspace, option)
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        return result
-
-    def set_last_seq(self, last_seq):
-        self.set_config(WorkspaceDatabase.LAST_SEQ_CONFIG, last_seq)
-        self.__last_seq = last_seq
-        # Set sync event when the database is updated relative
-        # to the milestone set
-        if self.__last_seq >= self.__sync_seq_milestone:
-            self.__data_sync_event.set()
-
-    def set_migration_status(self, was_successful):
-        self.set_config(WorkspaceDatabase.MIGRATION_SUCCESS, 'true' if was_successful else 'false')
-
-    def set_schema_version(self):
-        self.set_config(WorkspaceDatabase.SCHEMA_VERSION, server.models.SCHEMA_VERSION)
-
-    def set_config(self, option, value):
-        config = self.get_config(option)
-        if config is None:
-            config = server.models.DatabaseMetadata(option=option)
-        config.value = value
-
-        self.database.session.merge(config)
-        self.database.session.commit()
-
-    def __update_last_seq(self, change):
-        if change.seq is not None:
-            self.set_last_seq(change.seq)
+    def start(self):
+        self.__last_seq = self.__db_conf.get_last_seq()
+        logger.debug(u'Workspace {} last update: {}'.format(self.__db_conn.db_name, self.__last_seq))
+        self.__couchdb_conn.start_changes_monitor(self.__doc_importer.process_change, last_seq=self.__last_seq)
 
     def close(self):
-        self.database.close()
-
-    def delete(self):
-        self.database.close()
-        self.database.delete()
+        # TODO(mrocha): Take responsability for closing monitor thread instead of
+        # letting CouchDB conn object to do it
+        pass
 
     def wait_until_sync(self, timeout):
         """
@@ -348,119 +322,183 @@ class WorkspaceDatabase(object):
         Set a milestone from where we can check if data is synchronized
         between the server and CouchDB
         """
-        self.__sync_seq_milestone = self.couchdb.get_last_seq()
+        self.__sync_seq_milestone = self.__couchdb_conn.get_last_seq()
         # Clear event if last database seq version is outdated
         # relative to CouchDB
         if self.__last_seq < self.__sync_seq_milestone:
             self.__data_sync_event.clear()
 
-class Database(object):
-    def __init__(self, db_name):
-        self.__db_path = os.path.join(server.config.FARADAY_BASE, 'server/workspaces/%s.db' % db_name)
-        self.__engine = create_engine('sqlite:///%s' % self.__db_path) # XXX: Is this safe?
-        server.models.Base.metadata.bind = self.__engine
 
-    def create(self):
-        server.models.Base.metadata.create_all(self.__engine)
+class DocumentImporter(object):
+    def __init__(self, db_conn, post_processing_change_cbk=None):
+        self.__db_conn = db_conn
+        self.__db_conf = Configuration(db_conn)
+        self.__post_processing_change_cbk = post_processing_change_cbk
 
-    def open_session(self):
-        self.session = scoped_session(sessionmaker(autocommit=False,
-                                                   autoflush=False,
-                                                   bind=self.__engine))
+    # CHA, CHA, CHA, CHANGESSSS
+    def process_change(self, change):
+        logger.debug(u'New change for {}: {}'.format(self.__db_conn.db_name, change.change_doc))
 
-    def exists(self):
-        return os.path.exists(self.__db_path)
+        if change.deleted:
+            logger.debug(u'Doc {} was deleted'.format(change.doc_id))
+            self.delete_entity_from_doc_id(change.doc['_id'])
 
-    def close(self):
-        pass
+        elif change.updated:
+            logger.debug(u'Doc {} was updated'.format(change.doc_id))
+            self.update_entity_from_doc(change.doc)
 
-    def delete(self):
-        os.remove(self.__db_path)
+        elif change.added:
+            logger.debug(u'Doc {} was added'.format(change.doc_id))
+            self.add_entity_from_doc(change.doc)
 
-    def teardown_context(self):
-        self.session.remove()
+        if change.seq is not None:
+            self.__db_conf.set_last_seq(change.seq)
+            if self.__post_processing_change_cbk:
+                self.__post_processing_change_cbk(change)
 
-def setup():
-    setup_workspaces()
-    server.couchdb.start_dbs_monitor(process_db_change)
+    def add_entity_from_doc(self, document):
+        """
+        ISSUES:
+            * Other entities related to this new document may be not already
+            include into the database (ie: these documents are added on future
+            changes)
+        """
+        entity = server.models.FaradayEntity.parse(document)
+        if entity is not None:
+            entity.add_relationships_from_db(self.__db_conn.session)
+            self.__db_conn.session.add(entity)
+            self.__db_conn.session.commit()
+            logger.info(u'New {} ({}) was added in Workspace {}'.format(
+                entity.entity_metadata.document_type,
+                getattr(entity, 'name', '<no-name>'),
+                self.__db_conn.db_name))
 
-def setup_workspaces():
-    try:
-        couchdb = server.couchdb.CouchDBServer()
-        workspaces_list = couchdb.list_workspaces()
-    except RequestError:
-        logger.error(u"CouchDB is not running at {}. Check faraday-server's"\
-            " configuration and make sure CouchDB is running".format(
-            server.couchdb.get_couchdb_url()))
-        sys.exit(1)
-    except Unauthorized:
-        logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
-            " configuration file has CouchDB admin's credentials set")
-        sys.exit(1)
+    def delete_entity_from_doc_id(self, document_id):
+        """
+        ISSUES:
+            * Delete child entities. Have not found cases where this is a problem. So far,
+            clients are deleting all CouchDBs documents properly, and if they don't, the
+            DBs still are consistent. Maybe use SQLAlchemy's cascades if this become a
+            problem. Status: Somewhat OK
 
-    for ws in workspaces_list:
-        setup_workspace(ws)
+            * Doc ID maps to multiple elements. This could happen since the ID is a hash
+            based in a few entity's properties which can be replicated. Status: TODO
+        """
+        entity = self.__get_modified_entity(document_id)
+        if entity is not None:
+            self.__db_conn.session.delete(entity)
+            self.__db_conn.session.commit()
+            logger.info(u'A {} ({}) was deleted in Workspace {}'.format(
+                entity.entity_metadata.document_type,
+                getattr(entity, 'name', '<no-name>'),
+                self.__db_conn.db_name))
 
-    atexit.register(server.database.close_databases)
+    def update_entity_from_doc(self, document):
+        """
+        ISSUES:
+            * Updated relationships are not taken into account. Status: TODO
+        """
+        entity = self.__get_modified_entity(document.get('_id'))
+        if entity is not None:
+            entity.update_from_document(document)
+            entity.entity_metadata.update_from_document(document)
+            self.__db_conn.session.commit()
+            logger.info(u'A {} ({}) was updated in Workspace {}'.format(
+                entity.entity_metadata.document_type,
+                getattr(entity, 'name', '<no-name>'),
+                self.__db_conn.db_name))
 
-def setup_workspace(ws_name):
-    logger.info(u'Setting up workspace {}'.format(ws_name))
-    check_admin_access_to(ws_name)
-    workspace[ws_name] = WorkspaceDatabase(ws_name)
+    def __get_modified_entity(self, document_id):
+        try:
+            metadata = self.__db_conn.session.query(server.models.EntityMetadata)\
+                                             .filter(server.models.EntityMetadata.couchdb_id == document_id)\
+                                             .one_or_none()
 
-def check_admin_access_to(ws_name):
-    if not server.couchdb.has_permissions_for(ws_name,
-        credentials=server.couchdb.get_auth_info()):
-        logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
-            " configuration file has CouchDB admin's credentials set")
-        sys.exit(1)
+        except MultipleResultsFound:
+            logger.warning(u'Multiple entities were found for doc {}.'\
+                'Ignoring change'.format(document_id))
+            return None
 
-def close_databases():
-    for ws in workspace.values():
-        ws.close()
+        if metadata is not None:
+            # Obtain the proper table on which to perform the entity operation
+            entity_cls = server.models.FaradayEntity.get_entity_class_from_type(
+                metadata.document_type)
+            
+            # TODO(mrocha): Add error handling here when no or more than one entities where found.
+            entity = self.__db_conn.session.query(entity_cls)\
+                                   .join(server.models.EntityMetadata)\
+                                   .filter(server.models.EntityMetadata.couchdb_id == document_id)\
+                                   .one()
+            return entity
 
-def process_db_change(change):
-    if change.created:
-        logger.info(u'Workspace {} was created'.format(change.db_name))
-        process_new_workspace(change.db_name)
-    elif change.deleted:
-        logger.info(u'Workspace {} was deleted'.format(change.db_name))
-        process_delete_workspace(change.db_name)
+        else:
+            logger.info(u'Doc {} was not found in the database'.format(document_id))
+            return None
 
-def process_new_workspace(ws_name):
-    if ws_name in workspace:
-        logger.info(u"Workspace {} was already migrated. Ignoring change.".format(ws_name))
-    else:
-        setup_workspace(ws_name)
 
-def process_delete_workspace(ws_name):
-    if ws_name not in workspace:
-        logger.info(u"Workspace {} wasn't migrated at startup. Ignoring change.".format(ws_name))
-    else:
-        logger.info(u"Deleting workspace {} from Faraday Server".format(ws_name))
-        delete_workspace(ws_name)
+class Configuration(object):
+    # TODO(mrocha): use enums in database metadata table 
+    # instead of constants defined here
+    LAST_SEQ_CONFIG = 'last_seq'
+    MIGRATION_SUCCESS = 'migration'
+    SCHEMA_VERSION = 'version'
 
-def delete_workspace(ws_name):
-    get(ws_name).delete()
-    del workspace[ws_name]
- 
-def teardown_context():
-    """ This is called by Flask to cleanup sessions created in the context of a request """
-    for ws in workspace.values():
-        ws.database.teardown_context()
+    def __init__(self, db_conn):
+        self.__db_conn = db_conn
 
-class WorkspaceNotFound(Exception):
-    def __init__(self, workspace_name):
-        super(WorkspaceNotFound, self).__init__('Workspace "%s" not found' % workspace_name)
+    def setup_new_database(self, from_seq=0):
+        self.set_last_seq(from_seq)
+        self.set_migration_status(False)
+        self.set_schema_version()
 
-def is_valid_workspace(workspace_name):
-    return workspace_name in workspace
+    def get_last_seq(self):
+        config = self.__get_config(Configuration.LAST_SEQ_CONFIG)
+        if config is not None:
+            return int(config.value)
+        else:
+            return 0
 
-def get(ws_name):
-    try:
-        return workspace[ws_name]
-    except KeyError:
-        raise WorkspaceNotFound(ws_name)
+    def set_last_seq(self, last_seq):
+        self.__set_config(Configuration.LAST_SEQ_CONFIG, last_seq)
+
+
+    def was_migration_successful(self):
+        config = self.__get_config(Configuration.MIGRATION_SUCCESS)
+        return (config is not None and config.value == 'true')
+
+    def get_schema_version(self):
+        config = self.__get_config(Configuration.SCHEMA_VERSION)
+        return (config.value if config is not None else None)
+
+    def set_migration_status(self, was_successful):
+        self.__set_config(Configuration.MIGRATION_SUCCESS, 'true' if was_successful else 'false')
+
+    def set_schema_version(self):
+        self.__set_config(Configuration.SCHEMA_VERSION, server.models.SCHEMA_VERSION)
+
+    def __get_config(self, option):
+        try:
+            result = self.__db_conn.session\
+                        .query(server.models.DatabaseMetadata)\
+                        .filter(server.models.DatabaseMetadata.option == option)\
+                        .one_or_none()
+
+        except MultipleResultsFound:
+            msg = u'Database {} should not have the option {} defined multiple times'.format(self.__db_conn.db_name, option)
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        return result
+
+    def __set_config(self, option, value):
+        config = self.__get_config(option)
+        if config is None:
+            config = server.models.DatabaseMetadata(option=option)
+        config.value = value
+
+        self.__db_conn.session.merge(config)
+        self.__db_conn.session.commit()
+
 
 #
 # Profile queries performance on debug mode
@@ -482,4 +520,12 @@ if server.config.is_debug_mode():
         parameters, context, executemany):
         total = time.time() - context._query_start_time
         logger.debug(u"Query Complete. Total Time: {:.02f}ms".format(total*1000))
+
+
+#
+# Exception definitions
+#
+class WorkspaceNotFound(Exception):
+    def __init__(self, workspace_name):
+        super(WorkspaceNotFound, self).__init__('Workspace "%s" not found' % workspace_name)
 

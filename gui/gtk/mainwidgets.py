@@ -320,12 +320,12 @@ class HostsSidebar(Gtk.Widget):
         self.redo_view(model)
         self.host_amount = total_host_amount
         self.set_move_buttons_sensitivity()
-        self.progress_label.set_label("{0} / {1}".format(self.page, self.compute_total_number_of_pages()))
+        self.progress_label.set_label("{0} / {1}".format(self.page+1, self.compute_total_number_of_pages()+1))
 
     def redo_view(self, model):
         """Updates the view of the object with a new model"""
         self.view.set_model(model)
-        self.progress_label.set_label("{0} / {1}".format(self.page, self.compute_total_number_of_pages()))
+        self.progress_label.set_label("{0} / {1}".format(self.page+1, self.compute_total_number_of_pages()+1))
 
     def on_click(self, tree_view, path, column):
         """Sends the host_id of the clicked host back to the application"""

@@ -85,6 +85,10 @@ class ServerIO(object):
     def get_changes_stream(self):
         return models.get_changes_stream(self.active_workspace)
 
+    @safe_io_with_server(None)
+    def get_deleted_object_name_and_type(self, obj_id):
+        return models.get_deleted_object_name_and_type(self.active_workspace, obj_id)
+
     def continously_get_changes(self):
         """Creates a thread which will continuously check the changes
         coming from other instances of Faraday. Return the thread on any
@@ -111,6 +115,7 @@ class ServerIO(object):
 
         def notification_dispatcher(obj_id, obj_type, obj_name, deleted, revision):
             if deleted:
+                obj_name, obj_type = self.get_deleted_object_name_and_type(obj_id)
                 notification_center.deleteObject(obj_id)
                 update = False
             else:

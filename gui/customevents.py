@@ -155,7 +155,7 @@ class ChangeFromInstanceCustomEvent(CustomEvent):
 
     def __str__(self):
         if self.deleted:
-            return "The object of ID {0} was deleted".format(self.object_id)
+            return "The {0} {1} was deleted".format(self.object_type, self.object_name)
         return "The {0} {1} was {2}".format(self.object_type,
                                             self.object_name,
                                             self.updated_or_created)

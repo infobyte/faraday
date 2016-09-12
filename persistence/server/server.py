@@ -13,7 +13,7 @@ from persistence.server.changes_stream import CouchChangesStream
 
 # NOTE: Change is you want to use this module by itself.
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
-FARADAY_UP = True
+FARADAY_UP = False
 SERVER_URL = "http://127.0.1:5984"
 
 def _get_base_server_url():
@@ -44,6 +44,9 @@ def _create_server_get_url(workspace_name, object_name=None):
                                       object_name)
     return get_url
 
+# XXX: COUCH IT!
+def _create_couch_get_url(workspace_name, object_id):
+    return _create_server_post_url(workspace_name, object_id)
 # XXX: COUCH IT!
 def _create_server_post_url(workspace_name, object_id):
     server_base_url = _get_base_server_url()
@@ -335,6 +338,33 @@ def get_changes_stream(workspace_name, since=0, heartbeat='1000', **params):
 def get_workspaces_names():
     """Return a json containing the list with the workspaces names."""
     return _get("{0}/ws".format(_create_server_api_url()))
+
+
+#COUCH IT!
+def _clean_up_stupid_couch_response(response_string):
+    """Couch likes to give invalid jsons as a response :). So nice."""
+    interesting_part = "{".join(response_string.split("{")[1:])
+    almost_there = interesting_part.split("}")[0:-1]
+    ok_yeah = "}".join(almost_there)
+    hopefully_valid_json = "{{{0}}}".format(ok_yeah)
+    return json.loads(hopefully_valid_json)
+
+# COUCH IT!
+# COUCH IT LEVEL: 900
+def get_object_before_last_revision(workspace_name, object_id):
+    get_url = _create_couch_get_url(workspace_name, object_id)
+    response = _unsafe_io_with_server(requests.get, 200, get_url, params={'revs': 'true', 'open_revs': 'all'})
+    try:
+        valid_json_response = _clean_up_stupid_couch_response(response.text)
+    except ValueError:
+        return Non()
+    id_before_del = valid_json_response['_revisions']['ids'][1]
+    new_number_for_rev = valid_json_response['_revisions']['start'] - 1
+    rev_id_before_del = "{0}-{1}".format(new_number_for_rev, id_before_del)
+    object_dict = _get(get_url, rev=rev_id_before_del)
+    return object_dict
+    # object_info = _get(get_url, revs=True, open_revs='all')
+
 
 def get_object(workspace_name, object_signature, object_id):
     """Take a workspace_name, an object_signature and an object_id as strings,

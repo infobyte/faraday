@@ -218,6 +218,10 @@ def get_object(workspace_name, object_signature, object_id):
 
     return appropiate_function(workspace_name, object_id)
 
+def get_deleted_object_name_and_type(workspace_name, object_id):
+    obj_dict = server.get_object_before_last_revision(workspace_name, object_id)
+    return obj_dict['name'], obj_dict['type']
+
 @_ignore_in_changes
 def create_host(workspace_name, host):
     """Take a workspace_name and a host object and save it to the sever.

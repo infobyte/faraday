@@ -268,7 +268,7 @@ class HostsSidebar(Gtk.Widget):
         """
 
         self.view = Gtk.TreeView(model)
-        self.view.set_activate_on_single_click(True)
+        self.view.set_activate_on_single_click(False)
 
         text_renderer = Gtk.CellRendererText()
         icon_renderer = Gtk.CellRendererPixbuf()
@@ -501,6 +501,7 @@ class WorkspaceSidebar(Gtk.Widget):
         a selection with the change workspace callback"""
 
         self.ws_view = Gtk.TreeView(model)
+        self.ws_view.set_activate_on_single_click(False)
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("Workspaces", renderer, text=0)
         self.ws_view.append_column(column)
@@ -514,18 +515,31 @@ class WorkspaceSidebar(Gtk.Widget):
         selection = self.ws_view.get_selection()
         selection.set_mode(Gtk.SelectionMode.BROWSE)
 
-        self.ws_view.connect("button-press-event", self.on_click)
+        self.ws_view.connect("button-press-event", self.on_right_click)
+        self.ws_view.connect("row-activated", self.on_left_click)
 
         return self.ws_view
 
-    def on_click(self, view, event):
+    def on_left_click(self, view, path, column):
+
+        # force selection of newly selected
+        # before actually changing workspace
+        select = view.get_selection()
+        select.select_path(path)
+
+        # change the workspace to the newly selected
+        self.change_ws(self.get_selected_ws_name())
+        return True # prevents the click from selecting a workspace
+                    # this is handled manually by us on self.change_ws
+
+    def on_right_click(self, view, event):
         """On click, check if it was a right click. If it was,
         create a menu with the delete option. On click on that option,
         delete the workspace that occupied the position where the user
         clicked. Returns True if it was a right click"""
 
-        # it it isnt right click or left click just do nothing
-        if event.button != 3 and event.button != 1:
+        # if it isnt right click just do nothing
+        if event.button != 3:
             return False
 
         # we really do care about where the user clicked, that is our
@@ -538,34 +552,21 @@ class WorkspaceSidebar(Gtk.Widget):
             # if the user didn't click on a workspace there no path to work on
             return False
 
-        # left click:
-        if event.button == 1:
-            # force selection of newly selected
-            # before actually changing workspace
-            select = view.get_selection()
-            select.select_path(path)
+        menu = Gtk.Menu()
+        delete_item = Gtk.MenuItem("Delete")
+        menu.append(delete_item)
 
-            # change the workspace to the newly selected
-            self.change_ws(self.get_selected_ws_name())
-            return True # prevents the click from selecting a workspace
-                        # this is handled manually by us on self.change_ws
+        # get tree_iter from path. then get its name. then delete
+        # that workspace
 
-        if event.button == 3:  # 3 represents right click
-            menu = Gtk.Menu()
-            delete_item = Gtk.MenuItem("Delete")
-            menu.append(delete_item)
+        tree_iter = self.workspace_model.get_iter(path)
+        ws_name = self.workspace_model[tree_iter][0]
 
-            # get tree_iter from path. then get its name. then delete
-            # that workspace
+        delete_item.connect("activate", self.remove_ws, ws_name)
 
-            tree_iter = self.workspace_model.get_iter(path)
-            ws_name = self.workspace_model[tree_iter][0]
-
-            delete_item.connect("activate", self.remove_ws, ws_name)
-
-            delete_item.show()
-            menu.popup(None, None, None, None, event.button, event.time)
-            return True  # prevents the click from selecting a workspace
+        delete_item.show()
+        menu.popup(None, None, None, None, event.button, event.time)
+        return True  # prevents the click from selecting a workspace
 
     def get_selected_ws_iter(self):
         """Returns the tree_iter of the current selected workspace"""
@@ -701,6 +702,9 @@ class Statusbar(Gtk.Widget):
         Gtk.Widget.__init__(self)
         initial_strings = self.create_strings(host_count, service_count,
                                               vuln_count)
+
+        self.active_workspace_label = Gtk.Label()
+        self.active_workspace_label.set_use_markup(True)
         self.notif_text = "Notifications: "
         self.conflict_text = "Conflicts: "
 
@@ -723,7 +727,11 @@ class Statusbar(Gtk.Widget):
         self.mainBox.pack_start(self.notif_button, False, False, 5)
         self.mainBox.pack_start(self.ws_info, False, True, 5)
         self.mainBox.pack_start(Gtk.Box(), True, True, 5)  # blank space
+        self.mainBox.pack_start(self.active_workspace_label, False, True, 5)
         self.mainBox.pack_end(self.conflict_button, False, True, 5)
+
+    def set_workspace_label(self, new_label):
+        self.active_workspace_label.set_label("Active workspace: <b>{0}</b>".format(new_label))
 
     def inc_notif_button_label(self):
         """Increments the button label, sets bold so user knows there are

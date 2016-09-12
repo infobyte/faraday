@@ -55,12 +55,12 @@ def parse_arguments():
 def setup_environment():
     # Configuration files generation
     server.config.copy_default_config_to_local()
-    server.config.gen_web_config()
 
     # Dependencies installation
     missing_packages = check_dependencies()
     if len(missing_packages) > 0:
         install_packages(missing_packages)
+    server.config.gen_web_config()
 
 def check_dependencies():
     checker = DependencyChecker(server.config.REQUIREMENTS_FILE)

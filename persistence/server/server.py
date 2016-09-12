@@ -13,7 +13,7 @@ from persistence.server.changes_stream import CouchChangesStream
 
 # NOTE: Change is you want to use this module by itself.
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
-FARADAY_UP = False
+FARADAY_UP = True
 SERVER_URL = "http://127.0.1:5984"
 
 def _get_base_server_url():
@@ -73,6 +73,7 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
     Return the response from the server.
     """
     try:
+        if server_io_function != requests.get: print server_url, payload
         answer = server_io_function(server_url, **payload)
         if answer.status_code == 409 and answer.json()['error'] == 'conflict':
             raise ConflictInDatabase(answer)

@@ -124,6 +124,7 @@ class HostsSidebar(Gtk.Widget):
         self.open_dialog_callback = open_dialog_callback
         self.get_host_function = get_host_function
         self.current_model = None
+        self.progress_label = Gtk.Label("")
         self.host_amount = 0
         self.page = 0
         self.host_id_to_iter = {}
@@ -319,10 +320,12 @@ class HostsSidebar(Gtk.Widget):
         self.redo_view(model)
         self.host_amount = total_host_amount
         self.set_move_buttons_sensitivity()
+        self.progress_label.set_label("{0} / {1}".format(self.page, self.compute_total_number_of_pages()))
 
     def redo_view(self, model):
         """Updates the view of the object with a new model"""
         self.view.set_model(model)
+        self.progress_label.set_label("{0} / {1}".format(self.page, self.compute_total_number_of_pages()))
 
     def on_click(self, tree_view, path, column):
         """Sends the host_id of the clicked host back to the application"""
@@ -335,10 +338,13 @@ class HostsSidebar(Gtk.Widget):
             self.prev_button.set_sensitive(True)
         else:
             self.prev_button.set_sensitive(False)
-        if math.ceil(self.host_amount / 20) >= self.page+1:
+        if self.compute_total_number_of_pages() > self.page:
             self.next_button.set_sensitive(True)
         else:
             self.next_button.set_sensitive(False)
+
+    def compute_total_number_of_pages(self):
+        return int(math.ceil(self.host_amount / 20))
 
     @scrollable(width=160)
     def scrollable_view(self):
@@ -356,11 +362,13 @@ class HostsSidebar(Gtk.Widget):
 
     def button_box(self):
         button_box = Gtk.Box()
+        button_box.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(.1,.1,.1,.1))
         self.prev_button = Gtk.Button.new_with_label("<<")
         self.next_button = Gtk.Button.new_with_label(">>")
         self.prev_button.connect("clicked", self.on_click_move_page, lambda x: x-1)
         self.next_button.connect("clicked", self.on_click_move_page, lambda x: x+1)
         button_box.pack_start(self.prev_button, True, True, 0)
+        button_box.pack_start(self.progress_label, True, True, 0)
         button_box.pack_start(self.next_button, True, True, 0)
         return button_box
 

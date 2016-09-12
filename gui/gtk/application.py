@@ -516,6 +516,7 @@ class GuiApp(Gtk.Application, FaradayUi):
             host_count, service_count, vuln_count = self.update_counts()
             total_host_amount = self.serverIO.get_hosts_number()
             first_host_page = self.serverIO.get_hosts(page='0', page_size='20', sort='vulns', sort_dir='desc')
+            GObject.idle_add(self.statusbar.set_workspace_label, event.workspace.name)
             GObject.idle_add(self.hosts_sidebar.redo, first_host_page, total_host_amount)
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)

@@ -29,7 +29,7 @@ class CouchDBServer(object):
 
     def __authenticate(self):
         user, passwd = config.couchdb.user, config.couchdb.password
-        if (all((user, passwd))):
+        if all((user, passwd)):
             auth = restkit.BasicAuth(user, passwd)
             self.__auth_resource = CouchdbResource(filters=[auth])
         else:
@@ -46,11 +46,11 @@ class CouchDBServer(object):
 
 
 class Workspace(object):
-    def __init__(self, ws_name):
-        self.__server = CouchDBServer()
+    def __init__(self, ws_name, couchdb_server_conn=None):
         self.__ws_name = ws_name
-        self.__get_workspace()
+        self.__server = couchdb_server_conn or CouchDBServer()
         self.__changes_monitor_thread = None
+        self.__get_workspace()
 
     def __get_workspace(self):
         self.__workspace = self.__server.get_workspace_handler(self.__ws_name)
@@ -280,15 +280,15 @@ def list_workspaces_as_user(cookies, credentials=None):
     if response.status_code != requests.codes.ok:
         raise Exception("Couldn't obtain workspaces list")
 
-    workspaces = filter(lambda ws_name: is_usable_workspace(ws_name) and has_permissions_for(ws_name, cookies, credentials),\
-                        response.json())
+    def is_workspace_accessible_for_user(ws_name):
+        return is_usable_workspace(ws_name) and\
+               has_permissions_for(ws_name, cookies, credentials)
 
+    workspaces = filter(is_workspace_accessible_for_user, response.json())
     return { 'workspaces': workspaces }
 
-def _get_workspace_doc(workspace_name, cookies, credentials):
-    # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
-    ws_url = get_couchdb_url() + ('/%s/%s' % (workspace_name, workspace_name))
-    return requests.get(ws_url, verify=False, cookies=cookies, auth=credentials)
+def server_has_access_to(ws_name):
+    return has_permissions_for(ws_name, credentials=get_auth_info())
 
 def get_workspace(workspace_name, cookies, credentials):
     workspace = _get_workspace_doc(workspace_name, cookies, credentials).json()
@@ -296,6 +296,11 @@ def get_workspace(workspace_name, cookies, credentials):
     response = requests.get(ws_info_url, verify=False, cookies=cookies, auth=credentials)
     workspace['last_seq'] = response.json()['update_seq']
     return workspace
+
+def _get_workspace_doc(workspace_name, cookies, credentials):
+    # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
+    ws_url = get_couchdb_url() + ('/%s/%s' % (workspace_name, workspace_name))
+    return requests.get(ws_url, verify=False, cookies=cookies, auth=credentials)
 
 def has_permissions_for(workspace_name, cookies=None, credentials=None):
     response = _get_workspace_doc(workspace_name, cookies, credentials)

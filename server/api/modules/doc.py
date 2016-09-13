@@ -17,6 +17,14 @@ def build_bad_request_response(msg):
     response.status_code = 400
     return response
 
+@app.route('/ws/<workspace>/doc/<doc_id>', methods=['GET'])
+def get_document(workspace, doc_id):
+    validate_workspace(workspace)
+    ws =  server.database.get(workspace)
+    couchdb_conn = ws.couchdb
+    response = couchdb_conn.get_document(doc_id)
+    return flask.jsonify(response)
+
 @app.route('/ws/<workspace>/doc/<doc_id>', methods=['PUT'])
 def add_or_update_document(workspace, doc_id):
     validate_workspace(workspace)
@@ -26,6 +34,7 @@ def add_or_update_document(workspace, doc_id):
     except ValueError:
         return build_bad_request_response('invalid json')
 
+    document['_id'] = doc_id  # document dictionary does not have id, add it
     ws = server.database.get(workspace)
     couchdb_conn = ws.couchdb
     is_update_request = bool(document.get('_rev', False))
@@ -40,7 +49,7 @@ def add_or_update_document(workspace, doc_id):
         response = flask.jsonify({'error': e.message})
         response.status_code = e.status_int
         return response
-        
+
     if response.get('ok', False):
         doc_importer = server.database.DocumentImporter(ws.connector)
         if is_update_request:
@@ -70,10 +79,9 @@ def delete_document(workspace, doc_id):
         response = flask.jsonify({'error': e.message})
         response.status_code = e.status_int
         return response
-        
+
     if response.get('ok', False):
         doc_importer = server.database.DocumentImporter(ws.connector)
         doc_importer.delete_entity_from_doc_id(doc_id)
-    
-    return flask.jsonify(response)
 
+    return flask.jsonify(response)

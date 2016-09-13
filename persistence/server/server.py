@@ -47,13 +47,14 @@ def _create_server_get_url(workspace_name, object_name=None):
 # XXX: COUCH IT!
 def _create_couch_get_url(workspace_name, object_id):
     return _create_server_post_url(workspace_name, object_id)
-# XXX: COUCH IT!
+
+# XXX: SEMI COUCH IT!
 def _create_server_post_url(workspace_name, object_id):
-    server_base_url = _get_base_server_url()
-    post_url = '{0}/{1}/{2}'.format(server_base_url, workspace_name, object_id)
+    server_api_url = _create_server_api_url()
+    post_url = '{0}/ws/{1}/doc/{2}'.format(server_api_url, workspace_name, object_id)
     return post_url
 
-# XXX: COUCH IT!
+# XXX: SEMI COUCH IT!
 def _create_server_delete_url(workspace_name, object_id):
     return _create_server_post_url(workspace_name, object_id)
 
@@ -83,7 +84,7 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
         if answer.status_code != server_expected_response:
             raise requests.exceptions.ConnectionError()
     except requests.exceptions.ConnectionError:
-        raise CantCommunicateWithServerError(server_url, payload)
+        raise CantCommunicateWithServerError(server_io_function, server_url, payload)
     return answer
 
 def _parse_json(response_object):
@@ -122,7 +123,7 @@ def _put(post_url, update=False, **params):
         last_rev = _get(post_url)['_rev']
         params['_rev'] = last_rev
     return _parse_json(_unsafe_io_with_server(requests.put,
-                                              201,
+                                              200,
                                               post_url,
                                               json=params))
 
@@ -185,7 +186,7 @@ def _get_raw_workspace_summary(workspace_name):
 # XXX: COUCH IT!
 def _save_to_couch(workspace_name, faraday_object_id, **params):
     post_url = _create_server_post_url(workspace_name, faraday_object_id)
-    return _put(post_url, **params)
+    return _put(post_url, update=False, **params)
 
 # XXX: COUCH IT!
 def _update_in_couch(workspace_name, faraday_object_id, **params):
@@ -892,14 +893,16 @@ class ServerRequestException(Exception):
         pass
 
 class CantCommunicateWithServerError(ServerRequestException):
-    def __init__(self, server_url, payload):
+    def __init__(self, function, server_url, payload):
+        self.function = function
         self.server_url = server_url
         self.payload = payload
 
     def __str__(self):
         return ("Couldn't get a valid response from the server when requesting "
-                "to URL {0} with parameters {1}.".format(self.server_url,
-                                                         self.payload))
+                "to URL {0} with parameters {1} and function {2}.".format(self.server_url,
+                                                                          self.payload,
+                                                                          self.function))
 
 
 class ConflictInDatabase(ServerRequestException):

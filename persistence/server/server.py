@@ -185,17 +185,17 @@ def _get_raw_workspace_summary(workspace_name):
     request_url = _create_server_get_url(workspace_name, 'summary')
     return _get(request_url)
 
-# XXX: COUCH IT!
+# XXX: SEMI COUCH IT!
 def _save_to_couch(workspace_name, faraday_object_id, **params):
     post_url = _create_server_post_url(workspace_name, faraday_object_id)
     return _put(post_url, update=False, **params)
 
-# XXX: COUCH IT!
+# XXX: SEMI COUCH IT!
 def _update_in_couch(workspace_name, faraday_object_id, **params):
     post_url = _create_server_post_url(workspace_name, faraday_object_id)
     return _put(post_url, update=True, **params)
 
-# XXX: COUCH IT!
+# XXX: SEMI COUCH IT!
 def _delete_from_couch(workspace_name, faraday_object_id):
     delete_url = _create_server_delete_url(workspace_name, faraday_object_id)
     return _delete(delete_url)
@@ -341,7 +341,6 @@ def get_changes_stream(workspace_name, since=0, heartbeat='1000', **params):
 def get_workspaces_names():
     """Return a json containing the list with the workspaces names."""
     return _get("{0}/ws".format(_create_server_api_url()))
-
 
 #COUCH IT!
 def _clean_up_stupid_couch_response(response_string):
@@ -827,12 +826,19 @@ def update_command(workspace_name, id, command, duration=None, hostname=None,
                             workspace=workspace_name,
                             type="CommandRunInformation")
 
+#  COUCH IT!
 def create_database(workspace_name):
     """Create a database in the server. Return the json with the
     server's response. Can throw an Unauthorized exception
     """
+
+    ### NOTE: this function is still talking to couch directly,
+    ### that's why it is unable to use the _put function:
+    ### it returns s 201 response code if everything went ok
     db_url = _create_server_db_url(workspace_name)
-    return _put(db_url)
+    return _parse_json(_unsafe_io_with_server(requests.put,
+                                              201,
+                                              db_url))
 
 def create_workspace(workspace_name, description, start_date, finish_date,
                      customer=None):

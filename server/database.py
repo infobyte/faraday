@@ -148,6 +148,10 @@ class Workspace(object):
         self.__sync = Synchronizer(self.__db_conn, self.__couchdb_conn)
 
     @property
+    def connector(self):
+        return self.__db_conn
+
+    @property
     def session(self):
         # TODO(mrocha): should we check if session is None here???
         return self.__db_conn.session
@@ -364,14 +368,20 @@ class DocumentImporter(object):
             changes)
         """
         entity = server.models.FaradayEntity.parse(document)
-        if entity is not None:
-            entity.add_relationships_from_db(self.__db_conn.session)
-            self.__db_conn.session.add(entity)
-            self.__db_conn.session.commit()
-            logger.info(u'New {} ({}) was added in Workspace {}'.format(
-                entity.entity_metadata.document_type,
-                getattr(entity, 'name', '<no-name>'),
-                self.__db_conn.db_name))
+        if entity is None:
+            return False
+
+        if self.get_document_metadata(document.get('_id')):
+            logger.debug(u'Document ({}) already exists'.format(document.get('_id')))
+            return False
+
+        entity.add_relationships_from_db(self.__db_conn.session)
+        self.__db_conn.session.add(entity)
+        self.__db_conn.session.commit()
+        logger.info(u'New {} ({}) was added in Workspace {}'.format(
+            entity.entity_metadata.document_type,
+            getattr(entity, 'name', '<no-name>'),
+            self.__db_conn.db_name))
 
     def delete_entity_from_doc_id(self, document_id):
         """
@@ -392,6 +402,10 @@ class DocumentImporter(object):
                 entity.entity_metadata.document_type,
                 getattr(entity, 'name', '<no-name>'),
                 self.__db_conn.db_name))
+            return True
+
+        logger.debug(u'Document ({}) was not present in database to delete'.format(document_id))
+        return False
 
     def update_entity_from_doc(self, document):
         """
@@ -407,33 +421,38 @@ class DocumentImporter(object):
                 entity.entity_metadata.document_type,
                 getattr(entity, 'name', '<no-name>'),
                 self.__db_conn.db_name))
+            return True
+
+        logger.debug(u'Document ({}) was not present in database to update'.format(document.get('_id')))
+        return False
 
     def __get_modified_entity(self, document_id):
+        metadata = self.get_document_metadata(document_id)
+        if metadata is None:
+            logger.info(u'Doc {} was not found in the database'.format(document_id))
+            return None
+
+        # Obtain the proper table on which to perform the entity operation
+        entity_cls = server.models.FaradayEntity.get_entity_class_from_type(
+            metadata.document_type)
+        
+        # TODO(mrocha): Add error handling here when no or more than one entities where found.
+        entity = self.__db_conn.session.query(entity_cls)\
+                               .join(server.models.EntityMetadata)\
+                               .filter(server.models.EntityMetadata.couchdb_id == document_id)\
+                               .one()
+        return entity
+
+    def get_document_metadata(self, document_id):
+        metadata = None
         try:
             metadata = self.__db_conn.session.query(server.models.EntityMetadata)\
                                              .filter(server.models.EntityMetadata.couchdb_id == document_id)\
                                              .one_or_none()
-
         except MultipleResultsFound:
             logger.warning(u'Multiple entities were found for doc {}.'\
                 'Ignoring change'.format(document_id))
-            return None
-
-        if metadata is not None:
-            # Obtain the proper table on which to perform the entity operation
-            entity_cls = server.models.FaradayEntity.get_entity_class_from_type(
-                metadata.document_type)
-            
-            # TODO(mrocha): Add error handling here when no or more than one entities where found.
-            entity = self.__db_conn.session.query(entity_cls)\
-                                   .join(server.models.EntityMetadata)\
-                                   .filter(server.models.EntityMetadata.couchdb_id == document_id)\
-                                   .one()
-            return entity
-
-        else:
-            logger.info(u'Doc {} was not found in the database'.format(document_id))
-            return None
+        return metadata
 
 
 class Configuration(object):

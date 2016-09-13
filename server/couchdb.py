@@ -102,6 +102,9 @@ class Workspace(object):
     def save_doc(self, document):
         return self.__workspace.save_doc(document)
 
+    def delete_doc(self, document):
+        return self.__workspace.delete_doc(document)
+
     def create_doc(self, doc_content):
         # Remember to add "_id" in the doc if you want
         # to specify an arbitrary id

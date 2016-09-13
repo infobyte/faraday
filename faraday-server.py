@@ -18,12 +18,12 @@ logger = server.utils.logger.get_logger(__name__)
 def main():
     args = parse_arguments()
 
+    if args.stop:
+        sys.exit(0 if stop_server() else 1)
+
     if not args.no_setup:
         setup_environment()
         import_workspaces()
-
-    if args.stop:
-        sys.exit(0 if stop_server() else 1)
 
     if is_server_running():
         sys.exit(1)

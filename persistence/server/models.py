@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import glob, os, sys
+from threading import Lock
 from persistence.server import server
 from persistence.server.utils import (force_unique,
                                       get_host_properties,
@@ -26,6 +27,10 @@ from functools import wraps
 
 CONF = getInstanceConfiguration()
 
+_CHANGES_LOCK = Lock()
+def get_changes_lock():
+    return _CHANGES_LOCK
+
 _LOCAL_CHANGES_ID_TO_REV = {}
 def local_changes():
     return _LOCAL_CHANGES_ID_TO_REV
@@ -33,9 +38,10 @@ def local_changes():
 def _ignore_in_changes(func):
     @wraps(func)
     def func_wrapper(*args, **kwargs):
-        json = func(*args, **kwargs)
-        if json['ok']:
-            _LOCAL_CHANGES_ID_TO_REV[json['id']] = json['rev']
+        with get_changes_lock():
+            json = func(*args, **kwargs)
+            if json.get('ok'):
+                _LOCAL_CHANGES_ID_TO_REV[json['id']] = json['rev']
         return json
     return func_wrapper
 
@@ -326,7 +332,6 @@ def update_command(workspace_name, command):
     command_properties = get_command_properties(command)
     return server.update_command(workspace_name, **command_properties)
 
-@_ignore_in_changes
 def create_object(workspace_name, object_signature, obj):
     object_to_func = {_Host.class_signature: create_host,
                       _Vuln.class_signature: create_vuln,
@@ -343,7 +348,6 @@ def create_object(workspace_name, object_signature, obj):
 
     return appropiate_function(workspace_name, obj)
 
-@_ignore_in_changes
 def update_object(workspace_name, object_signature, obj):
     object_to_func = {_Host.class_signature: update_host,
                       _Vuln.class_signature: update_vuln,
@@ -444,7 +448,6 @@ def delete_vuln_web(workspace_name, vuln_id):
 def delete_command(workspace_name, command_id):
     return server.delete_command(workspace_name, command_id)
 
-@_ignore_in_changes
 def delete_object(workspace_name, object_signature, obj_id):
     object_to_func = {_Host.class_signature: delete_host,
                       _Vuln.class_signature: delete_vuln,

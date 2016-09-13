@@ -16,6 +16,7 @@ class ServerIO(object):
     def __init__(self, active_workspace):
         self.__active_workspace = active_workspace
         self.stream = None  # will be set when active workpsace is set
+        self.changes_lock = models.get_changes_lock()
 
     @property
     def active_workspace(self):
@@ -140,7 +141,8 @@ class ServerIO(object):
                 try:
                     for change in self.stream:
                         change, obj_type, obj_name = change
-                        change = filter_changes(change, obj_type)
+                        with self.changes_lock:
+                            change = filter_changes(change, obj_type)
                         if change:
                             deleted = bool(change.get('deleted'))
                             obj_id = change.get('id')

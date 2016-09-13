@@ -46,7 +46,8 @@ def _create_server_get_url(workspace_name, object_name=None):
 
 # XXX: COUCH IT!
 def _create_couch_get_url(workspace_name, object_id):
-    return _create_server_post_url(workspace_name, object_id)
+    server_url = _get_base_server_url()
+    return "{0}/{1}/{2}".format(server_url, workspace_name, object_id)
 
 # XXX: SEMI COUCH IT!
 def _create_server_post_url(workspace_name, object_id):
@@ -126,6 +127,7 @@ def _put(post_url, update=False, **params):
                                               200,
                                               post_url,
                                               json=params))
+
 
 def _delete(delete_url, database=False):
     """Deletes the object on delete_url. If you're deleting a database,
@@ -351,20 +353,27 @@ def _clean_up_stupid_couch_response(response_string):
     return json.loads(hopefully_valid_json)
 
 # COUCH IT!
-# COUCH IT LEVEL: 900
+# COUCH IT LEVEL: REVOLUTIONS
 def get_object_before_last_revision(workspace_name, object_id):
+    """Return a dictionary containing the object information before
+    its last revision (modification). Useful to get the attributes of
+    objects already deleted."""
     get_url = _create_couch_get_url(workspace_name, object_id)
-    response = _unsafe_io_with_server(requests.get, 200, get_url, params={'revs': 'true', 'open_revs': 'all'})
+    response = _unsafe_io_with_server(requests.get, 200, get_url,
+                                      params={'revs': 'true', 'open_revs': 'all'})
     try:
         valid_json_response = _clean_up_stupid_couch_response(response.text)
     except ValueError:
-        return Non()
-    id_before_del = valid_json_response['_revisions']['ids'][1]
-    new_number_for_rev = valid_json_response['_revisions']['start'] - 1
+        return None
+    try:
+        id_before_del = valid_json_response['_revisions']['ids'][1]
+        new_number_for_rev = valid_json_response['_revisions']['start'] - 1
+    except KeyError:  # one if never too safe when you call a function called "_clean_up_stupid_couch_response"
+        return None
+
     rev_id_before_del = "{0}-{1}".format(new_number_for_rev, id_before_del)
     object_dict = _get(get_url, rev=rev_id_before_del)
     return object_dict
-    # object_info = _get(get_url, revs=True, open_revs='all')
 
 
 def get_object(workspace_name, object_signature, object_id):

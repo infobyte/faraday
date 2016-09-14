@@ -7,6 +7,7 @@ import server.utils.logger
 import server.couchdb
 import server.database
 import server.models
+from restkit.errors import RequestError, Unauthorized
 
 logger = server.utils.logger.get_logger(__name__)
 
@@ -108,7 +109,7 @@ def _import_from_couchdb(db_conn, couchdb_conn):
 
     for doc in couchdb_conn.get_documents(per_request=1000):
         processed_docs = processed_docs + 1
-        current_progress = (processed_docs * 100) / total_amount 
+        current_progress = (processed_docs * 100) / total_amount
         if current_progress > progress:
             _show_progress(u'  * Importing {} from CouchDB'.format(db_conn.db_name), progress)
             progress = current_progress

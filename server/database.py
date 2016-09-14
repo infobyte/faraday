@@ -13,6 +13,7 @@ import server.importer
 import server.utils.logger
 
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound
 from restkit.errors import RequestError, Unauthorized
@@ -352,8 +353,10 @@ class DocumentImporter(object):
             self.update_entity_from_doc(change.doc)
 
         elif change.added:
-            logger.debug(u'Doc {} was added'.format(change.doc_id))
-            self.add_entity_from_doc(change.doc)
+            if self.add_entity_from_doc(change.doc):
+                logger.debug(u'Doc {} was added'.format(change.doc_id))
+            else:
+                logger.debug(u"Doc {} was not added".format(change.doc_id))
 
         if change.seq is not None:
             self.__db_conf.set_last_seq(change.seq)
@@ -371,17 +374,24 @@ class DocumentImporter(object):
         if entity is None:
             return False
 
-        if self.get_document_metadata(document.get('_id')):
-            logger.debug(u'Document ({}) already exists'.format(document.get('_id')))
-            return False
-
         entity.add_relationships_from_db(self.__db_conn.session)
         self.__db_conn.session.add(entity)
-        self.__db_conn.session.commit()
-        logger.info(u'New {} ({}) was added in Workspace {}'.format(
-            entity.entity_metadata.document_type,
-            getattr(entity, 'name', '<no-name>'),
-            self.__db_conn.db_name))
+
+        try:
+            self.__db_conn.session.commit()
+            logger.info(u'New {} ({}) was added in Workspace {}'.format(
+                entity.entity_metadata.document_type,
+                getattr(entity, 'name', '<no-name>'),
+                self.__db_conn.db_name))
+
+        except IntegrityError, e:
+            # For now, we silently rollback because it is an excepted
+            # scenario when we create documents from the server and its
+            # change notification arrives
+            self.__db_conn.session.rollback()
+            return False
+
+        return True
 
     def delete_entity_from_doc_id(self, document_id):
         """

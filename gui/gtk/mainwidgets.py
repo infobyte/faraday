@@ -210,9 +210,12 @@ class HostsSidebar(Gtk.Widget):
 
     def __remove_host_from_model(self, host_id):
         """Deletes a host from the model given as parameter."""
-        host_iter = self.host_id_to_iter[host_id]
-        could_be_removed = self.current_model.remove(host_iter)
-        del self.host_id_to_iter[host_id]
+        if self.__host_exists_in_current_model(host_id):
+            host_iter = self.host_id_to_iter[host_id]
+            could_be_removed = self.current_model.remove(host_iter)
+            del self.host_id_to_iter[host_id]
+        else:
+            could_be_removed = False
         return could_be_removed
 
     def __find_host_id(self, object_info):

@@ -4,12 +4,12 @@
 
 import json
 
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, Text
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = 'W.0.4'
+SCHEMA_VERSION = 'W.0.5'
 
 Base = declarative_base()
 
@@ -68,6 +68,10 @@ class DatabaseMetadata(Base):
 class EntityMetadata(Base):
     # Table schema
     __tablename__ = 'metadata'
+    __table_args__ = (
+        UniqueConstraint('couchdb_id'),
+    )
+
     id = Column(Integer, primary_key=True)
     update_time = Column(Float, nullable=True)
     update_user = Column(String(250), nullable=True)
@@ -442,3 +446,4 @@ class Command(FaradayEntity, Base):
         self.params = document.get('params', None)
         self.user = document.get('user', None)
         self.workspace = document.get('workspace', None)
+

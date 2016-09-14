@@ -6,7 +6,8 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import requests, json
+import requests
+import json
 from persistence.server.utils import force_unique
 from persistence.server.utils import WrongObjectSignature
 from persistence.server.changes_stream import CouchChangesStream
@@ -15,6 +16,7 @@ from persistence.server.changes_stream import CouchChangesStream
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
 FARADAY_UP = True
 SERVER_URL = "http://127.0.1:5984"
+
 
 def _get_base_server_url():
     if FARADAY_UP:
@@ -25,9 +27,11 @@ def _get_base_server_url():
         server_url = SERVER_URL
     return server_url
 
+
 def _create_server_api_url():
     """Return the server's api url."""
     return "{0}/_api".format(_get_base_server_url())
+
 
 def _create_server_get_url(workspace_name, object_name=None):
     """Creates a url to get from the server. Takes the workspace name
@@ -40,30 +44,38 @@ def _create_server_get_url(workspace_name, object_name=None):
     """
     object_name = "/{0}".format(object_name) if object_name else ""
     get_url = '{0}/ws/{1}{2}'.format(_create_server_api_url(),
-                                      workspace_name,
-                                      object_name)
+                                     workspace_name,
+                                     object_name)
     return get_url
+
+
+def _create_server_post_url(workspace_name, object_id):
+    server_api_url = _create_server_api_url()
+    post_url = '{0}/ws/{1}/doc/{2}'.format(server_api_url, workspace_name, object_id)
+    return post_url
+
+
+def _create_server_delete_url(workspace_name, object_id):
+    return _create_server_post_url(workspace_name, object_id)
+
 
 # XXX: COUCH IT!
 def _create_couch_get_url(workspace_name, object_id):
     server_url = _get_base_server_url()
     return "{0}/{1}/{2}".format(server_url, workspace_name, object_id)
 
-# XXX: SEMI COUCH IT!
-def _create_server_post_url(workspace_name, object_id):
-    server_api_url = _create_server_api_url()
-    post_url = '{0}/ws/{1}/doc/{2}'.format(server_api_url, workspace_name, object_id)
-    return post_url
 
-# XXX: SEMI COUCH IT!
-def _create_server_delete_url(workspace_name, object_id):
-    return _create_server_post_url(workspace_name, object_id)
+# XXX: COUCH IT!
+def _create_couch_post_url(workspace_name, object_id):
+    return _create_couch_get_url(workspace_name, object_id)
+
 
 # XXX: COUCH IT!
 def _create_server_db_url(workspace_name):
     server_base_url = _get_base_server_url()
     db_url = '{0}/{1}'.format(server_base_url, workspace_name)
     return db_url
+
 
 def _unsafe_io_with_server(server_io_function, server_expected_response,
                            server_url, **payload):
@@ -88,12 +100,14 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
         raise CantCommunicateWithServerError(server_io_function, server_url, payload)
     return answer
 
+
 def _parse_json(response_object):
     """Takes a response object and return its response as a dictionary."""
     try:
         return response_object.json()
     except ValueError:
         return {}
+
 
 def _get(request_url, **params):
     """Get from the request_url. Takes an arbitrary number of parameters
@@ -109,10 +123,12 @@ def _get(request_url, **params):
                                               request_url,
                                               params=params))
 
-def _put(post_url, update=False, **params):
+def _put(post_url, update=False, expected_response=201, **params):
     """Put to the post_url. If update is True, try to get the object
-    revision first so as to update the object in Couch.
-    Takes an arbitrary number of parameters to put into the post_url.
+    revision first so as to update the object in Couch. You can
+    customize the expected response (it should be 201, but Couchdbkit returns
+    200, so...). Also take an arbitrary number of parameters to put into the
+    post_url.
 
     Will raise a CantCommunicateWithServerError if requests cant stablish
     connection to server or if response is not equal to 201.
@@ -124,7 +140,7 @@ def _put(post_url, update=False, **params):
         last_rev = _get(post_url)['_rev']
         params['_rev'] = last_rev
     return _parse_json(_unsafe_io_with_server(requests.put,
-                                              200,
+                                              expected_response,
                                               post_url,
                                               json=params))
 
@@ -135,11 +151,12 @@ def _delete(delete_url, database=False):
     params = {}
     if not database:
         last_rev = _get(delete_url)['_rev']
-        params={'_rev':last_rev}
+        params = {'_rev': last_rev}
     return _parse_json(_unsafe_io_with_server(requests.delete,
                                               200,
                                               delete_url,
                                               params=params))
+
 
 def _get_raw_hosts(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
@@ -147,11 +164,13 @@ def _get_raw_hosts(workspace_name, **params):
     request_url = _create_server_get_url(workspace_name, 'hosts')
     return _get(request_url, **params)
 
+
 def _get_raw_vulns(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the vulns table."""
     request_url = _create_server_get_url(workspace_name, 'vulns')
     return _get(request_url, **params)
+
 
 def _get_raw_interfaces(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
@@ -159,11 +178,13 @@ def _get_raw_interfaces(workspace_name, **params):
     request_url = _create_server_get_url(workspace_name, 'interfaces')
     return _get(request_url, **params)
 
+
 def _get_raw_services(workspace_name, **params):
     """Take a workspace_name and an arbitrary number of params and return
     a dictionary with the services table."""
     request_url = _create_server_get_url(workspace_name, 'services')
     return _get(request_url, **params)
+
 
 def _get_raw_notes(workspace_name, **params):
     """Take a workspace name and an arbitrary number of params and
@@ -171,29 +192,40 @@ def _get_raw_notes(workspace_name, **params):
     request_url = _create_server_get_url(workspace_name, 'notes')
     return _get(request_url, **params)
 
+
 def _get_raw_credentials(workspace_name, **params):
     """Take a workspace name and an arbitrary number of params and
     return a dictionary with the credentials table."""
     request_url = _create_server_get_url(workspace_name, 'credentials')
     return _get(request_url, **params)
 
+
 def _get_raw_commands(workspace_name, **params):
     request_url = _create_server_get_url(workspace_name, 'commands')
     return _get(request_url, **params)
+
 
 def _get_raw_workspace_summary(workspace_name):
     request_url = _create_server_get_url(workspace_name, 'summary')
     return _get(request_url)
 
-# XXX: SEMI COUCH IT!
+# XXX: COUCH IT!
 def _save_to_couch(workspace_name, faraday_object_id, **params):
-    post_url = _create_server_post_url(workspace_name, faraday_object_id)
+    post_url = _create_couch_post_url(workspace_name, faraday_object_id)
     return _put(post_url, update=False, **params)
 
-# XXX: SEMI COUCH IT!
+# XXX: COUCH IT!
 def _update_in_couch(workspace_name, faraday_object_id, **params):
     post_url = _create_server_post_url(workspace_name, faraday_object_id)
     return _put(post_url, update=True, **params)
+
+def _save_to_server(workspace_name, faraday_object_id, **params):
+    post_url = _create_server_post_url(workspace_name, faraday_object_id)
+    return _put(post_url, update=False, expected_response=200, **params)
+
+def _update_in_server(workspace_name, faraday_object_id, **params):
+    post_url = _create_server_post_url(workspace_name, faraday_object_id)
+    return _put(post_url, update=True, expected_response=200, **params)
 
 # XXX: SEMI COUCH IT!
 def _delete_from_couch(workspace_name, faraday_object_id):
@@ -205,6 +237,7 @@ def _couch_changes(workspace_name, **params):
     return CouchChangesStream(workspace_name,
                               _create_server_db_url(workspace_name),
                               **params)
+
 
 def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
                                     faraday_object_row_name, full_table=True,
@@ -244,6 +277,7 @@ def _get_faraday_ready_dictionaries(workspace_name, faraday_object_name,
                 faraday_ready_dictionaries.append(raw_dictionary)
     return faraday_ready_dictionaries
 
+
 def get_hosts(workspace_name, **params):
     """Given a workspace name and an arbitrary number of query params,
     return a list a dictionaries containg information about hosts
@@ -251,6 +285,7 @@ def get_hosts(workspace_name, **params):
     """
     return _get_faraday_ready_dictionaries(workspace_name, 'hosts',
                                            'rows', **params)
+
 
 def get_all_vulns(workspace_name, **params):
     """Given a workspace name and an arbitrary number of query params,
@@ -260,12 +295,14 @@ def get_all_vulns(workspace_name, **params):
     return _get_faraday_ready_dictionaries(workspace_name, 'vulns',
                                            'vulnerabilities', **params)
 
+
 def get_vulns(workspace_name, **params):
     """Given a workspace name and an arbitrary number of query params,
     return a list a dictionaries containg information about not web vulns
     matching the query
     """
     return get_all_vulns(workspace_name, type='Vulnerability', **params)
+
 
 def get_web_vulns(workspace_name, **params):
     """Given a workspace name and an arbitrary number of query params,
@@ -342,7 +379,7 @@ def get_workspaces_names():
     """Return a json containing the list with the workspaces names."""
     return _get("{0}/ws".format(_create_server_api_url()))
 
-#COUCH IT!
+# XXX: COUCH IT!
 def _clean_up_stupid_couch_response(response_string):
     """Couch likes to give invalid jsons as a response :). So nice."""
     interesting_part = "{".join(response_string.split("{")[1:])
@@ -351,7 +388,7 @@ def _clean_up_stupid_couch_response(response_string):
     hopefully_valid_json = "{{{0}}}".format(ok_yeah)
     return json.loads(hopefully_valid_json)
 
-# COUCH IT!
+# XXX: COUCH IT!
 # COUCH IT LEVEL: REVOLUTIONS
 def get_object_before_last_revision(workspace_name, object_id):
     """Return a dictionary containing the object information before
@@ -524,106 +561,106 @@ def create_host(workspace_name, id, name, os, default_gateway,
     """Save a host to the server. Return a dictionary with the server's
     reponse.
     """
-    return _save_to_couch(workspace_name,
-                          id,
-                          name=name, os=os,
-                          default_gateway=default_gateway,
-                          owned=owned,
-                          metadata=metadata,
-                          owner=owner,
-                          parent=parent,
-                          description=description,
-                          type="Host")
+    return _save_to_server(workspace_name,
+                           id,
+                           name=name, os=os,
+                           default_gateway=default_gateway,
+                           owned=owned,
+                           metadata=metadata,
+                           owner=owner,
+                           parent=parent,
+                           description=description,
+                           type="Host")
 
 def update_host(workspace_name, id, name, os, default_gateway,
                 description="", metadata=None, owned=False, owner="",
                 parent=None):
     """Update an host in the server. Return a dictionary with the
     server's response."""
-    return _update_in_couch(workspace_name,
-                            id,
-                            name=name, os=os,
-                            default_gateway=default_gateway,
-                            owned=owned,
-                            metadata=metadata,
-                            owner=owner,
-                            parent=parent,
-                            description=description,
-                            type="Host")
+    return _update_in_server(workspace_name,
+                             id,
+                             name=name, os=os,
+                             default_gateway=default_gateway,
+                             owned=owned,
+                             metadata=metadata,
+                             owner=owner,
+                             parent=parent,
+                             description=description,
+                             type="Host")
 
 def create_interface(workspace_name, id, name, description, mac,
                      owned=False, owner="", hostnames=None, network_segment=None,
                      ipv4=None, ipv6=None, metadata=None):
     """Save an interface to the server. Return a dictionary with the
     server's response."""
-    return _save_to_couch(workspace_name,
-                          id,
-                          name=name,
-                          description=description,
-                          mac=mac,
-                          owned=owned,
-                          owner=owner,
-                          hostnames=hostnames,
-                          network_segment=network_segment,
-                          ipv4=ipv4,
-                          ipv6=ipv6,
-                          type="Interface",
-                          metadata=metadata)
+    return _save_to_server(workspace_name,
+                           id,
+                           name=name,
+                           description=description,
+                           mac=mac,
+                           owned=owned,
+                           owner=owner,
+                           hostnames=hostnames,
+                           network_segment=network_segment,
+                           ipv4=ipv4,
+                           ipv6=ipv6,
+                           type="Interface",
+                           metadata=metadata)
 
 def update_interface(workspace_name, id, name, description, mac,
                      owned=False, owner="", hostnames=None, network_segment=None,
                      ipv4=None, ipv6=None, metadata=None):
     """Update an interface in the server. Return a dictionary with the
     server's response."""
-    return _update_in_couch(workspace_name,
-                            id,
-                            name=name,
-                            description=description,
-                            mac=mac,
-                            owned=owned,
-                            owner=owner,
-                            hostnames=hostnames,
-                            network_segment=network_segment,
-                            ipv4=ipv4,
-                            ipv6=ipv6,
-                            type="Interface",
-                            metadata=metadata)
+    return _update_in_server(workspace_name,
+                             id,
+                             name=name,
+                             description=description,
+                             mac=mac,
+                             owned=owned,
+                             owner=owner,
+                             hostnames=hostnames,
+                             network_segment=network_segment,
+                             ipv4=ipv4,
+                             ipv6=ipv6,
+                             type="Interface",
+                             metadata=metadata)
 
 def create_service(workspace_name, id, name, description, ports,
                    owned=False, owner="", protocol="", status="", version="",
                    metadata=None):
     """Save a service to the server. Return a dictionary with the
     server's response."""
-    return _save_to_couch(workspace_name,
-                          id,
-                          name=name,
-                          description=description,
-                          ports=ports,
-                          owned=owned,
-                          owner=owner,
-                          protocol=protocol,
-                          status=status,
-                          version=version,
-                          type="Service",
-                          metadata=metadata)
+    return _save_to_server(workspace_name,
+                           id,
+                           name=name,
+                           description=description,
+                           ports=ports,
+                           owned=owned,
+                           owner=owner,
+                           protocol=protocol,
+                           status=status,
+                           version=version,
+                           type="Service",
+                           metadata=metadata)
 
 def update_service(workspace_name, id, name, description, ports,
                    owned=False, owner="", protocol="", status="", version="",
                    metadata=None):
     """Update a service in the server. Return a dictionary with the
     server's response."""
-    return _update_in_couch(workspace_name,
-                            id,
-                            name=name,
-                            description=description,
-                            ports=ports,
-                            owned=owned,
-                            owner=owner,
-                            protocol=protocol,
-                            status=status,
-                            version=version,
-                            type="Service",
-                            metadata=metadata)
+    return _update_in_server(workspace_name,
+                             id,
+                             name=name,
+                             description=description,
+                             ports=ports,
+                             owned=owned,
+                             owner=owner,
+                             protocol=protocol,
+                             status=status,
+                             version=version,
+                             type="Service",
+                             metadata=metadata)
 
 
 def create_vuln(workspace_name, id, name, description, owned=None, owner="",
@@ -632,20 +669,20 @@ def create_vuln(workspace_name, id, name, description, owned=None, owner="",
     """Save a vulnerability to the server. Return the json with the
     server's response.
     """
-    return _save_to_couch(workspace_name,
-                          id,
-                          name=name,
-                          description=description,
-                          owned=owned,
-                          owner=owner,
-                          confirmed=confirmed,
-                          data=data,
-                          refs=refs,
-                          severity=severity,
-                          resolution=resolution,
-                          desc=desc,
-                          type="Vulnerability",
-                          metadata=metadata)
+    return _save_to_server(workspace_name,
+                           id,
+                           name=name,
+                           description=description,
+                           owned=owned,
+                           owner=owner,
+                           confirmed=confirmed,
+                           data=data,
+                           refs=refs,
+                           severity=severity,
+                           resolution=resolution,
+                           desc=desc,
+                           type="Vulnerability",
+                           metadata=metadata)
 
 def update_vuln(workspace_name, id, name, description, owned=None, owner="",
                 confirmed=False, data="", refs=None, severity="info", resolution="",
@@ -653,20 +690,20 @@ def update_vuln(workspace_name, id, name, description, owned=None, owner="",
     """Update a vulnerability in the server. Return the json with the
     server's response.
     """
-    return _update_in_couch(workspace_name,
-                            id,
-                            name=name,
-                            description=description,
-                            owned=owned,
-                            owner=owner,
-                            confirmed=confirmed,
-                            data=data,
-                            refs=refs,
-                            severity=severity,
-                            resolution=resolution,
-                            desc=desc,
-                            type="Vulnerability",
-                            metadata=metadata)
+    return _update_in_server(workspace_name,
+                             id,
+                             name=name,
+                             description=description,
+                             owned=owned,
+                             owner=owner,
+                             confirmed=confirmed,
+                             data=data,
+                             refs=refs,
+                             severity=severity,
+                             resolution=resolution,
+                             desc=desc,
+                             type="Vulnerability",
+                             metadata=metadata)
 
 def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
@@ -675,29 +712,29 @@ def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
     """Save a web vulnerability to the server. Return the json with the
     server's response.
     """
-    return _save_to_couch(workspace_name,
-                            id,
-                            name=name,
-                            description=description,
-                            owned=owned,
-                            owner=owner,
-                            confirmed=confirmed,
-                            data=data,
-                            refs=refs,
-                            severity=severity,
-                            resolution=resolution,
-                            desc=desc,
-                            metadata=metadata,
-                            method=method,
-                            params=params,
-                            path=path,
-                            pname=pname,
-                            query=query,
-                            request=request,
-                            response=response,
-                            website=website,
-                            category=category,
-                            type='VulnerabilityWeb')
+    return _save_to_server(workspace_name,
+                           id,
+                           name=name,
+                           description=description,
+                           owned=owned,
+                           owner=owner,
+                           confirmed=confirmed,
+                           data=data,
+                           refs=refs,
+                           severity=severity,
+                           resolution=resolution,
+                           desc=desc,
+                           metadata=metadata,
+                           method=method,
+                           params=params,
+                           path=path,
+                           pname=pname,
+                           query=query,
+                           request=request,
+                           response=response,
+                           website=website,
+                           category=category,
+                           type='VulnerabilityWeb')
 
 def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
@@ -706,125 +743,127 @@ def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
     """Update a web vulnerability in the server. Return the json with the
     server's response.
     """
-    return _update_in_couch(workspace_name,
-                            id,
-                            name=name,
-                            description=description,
-                            owned=owned,
-                            owner=owner,
-                            confirmed=confirmed,
-                            data=data,
-                            refs=refs,
-                            severity=severity,
-                            resolution=resolution,
-                            desc=desc,
-                            metadata=metadata,
-                            method=method,
-                            params=params,
-                            path=path,
-                            pname=pname,
-                            query=query,
-                            request=request,
-                            response=response,
-                            website=website,
-                            category=category,
-                            type='VulnerabilityWeb')
+    return _update_in_server(workspace_name,
+                             id,
+                             name=name,
+                             description=description,
+                             owned=owned,
+                             owner=owner,
+                             confirmed=confirmed,
+                             data=data,
+                             refs=refs,
+                             severity=severity,
+                             resolution=resolution,
+                             desc=desc,
+                             metadata=metadata,
+                             method=method,
+                             params=params,
+                             path=path,
+                             pname=pname,
+                             query=query,
+                             request=request,
+                             response=response,
+                             website=website,
+                             category=category,
+                             type='VulnerabilityWeb')
 
 def create_note(workspace_name, id, name, text, owned=None, owner="",
                 description="", metadata=None):
     """Save a note to the server. Return the json with the
     server's response.
     """
-    return _save_to_couch(workspace_name,
-                            id,
-                            name=name,
-                            description=description,
-                            owned=owned,
-                            owner=owner,
-                            text=text,
-                            type="Note",
-                            metadata=metadata)
+    return _save_to_server(workspace_name,
+                           id,
+                           name=name,
+                           description=description,
+                           owned=owned,
+                           owner=owner,
+                           text=text,
+                           type="Note",
+                           metadata=metadata)
 
 def update_note(workspace_name, id, name, text, owned=None, owner="",
                 description="", metadata=None):
     """Update a note in the server. Return the json with the
     server's response.
     """
-    return _update_in_couch(workspace_name,
-                            id,
-                            name=name,
-                            description=description,
-                            owned=owned,
-                            owner=owner,
-                            text=text,
-                            type="Note",
-                            metadata=metadata)
+    return _update_in_server(workspace_name,
+                             id,
+                             name=name,
+                             description=description,
+                             owned=owned,
+                             owner=owner,
+                             text=text,
+                             type="Note",
+                             metadata=metadata)
+
 
 def create_credential(workspace_name, id, name, username, password,
-                      owned=None, owner="",description="", metadata=None):
+                      owned=None, owner="", description="", metadata=None):
     """Save a credential to the server. Return the json with the
     server's response.
     """
-    return _save_to_couch(workspace_name,
-                            id,
-                            name=name,
-                            description=description,
-                            owned=owned,
-                            owner=owner,
-                            metadata=metadata,
-                            username=username,
-                            password=password,
-                            type="Credential")
+    return _save_to_server(workspace_name,
+                           id,
+                           name=name,
+                           description=description,
+                           owned=owned,
+                           owner=owner,
+                           metadata=metadata,
+                           username=username,
+                           password=password,
+                           type="Credential")
 
 def update_credential(workspace_name, id, name, username, password,
-                      owned=None, owner="",description="", metadata=None):
+                      owned=None, owner="", description="", metadata=None):
     """Update a credential in the server. Return the json with the
     server's response.
     """
-    return _update_in_couch(workspace_name,
-                            id,
-                            name=name,
-                            description=description,
-                            owned=owned,
-                            owner=owner,
-                            metadata=metadata,
-                            username=username,
-                            password=password,
-                            type="Credential")
+    return _update_in_server(workspace_name,
+                             id,
+                             name=name,
+                             description=description,
+                             owned=owned,
+                             owner=owner,
+                             metadata=metadata,
+                             username=username,
+                             password=password,
+                             type="Credential")
 
 def create_command(workspace_name, id, command, duration=None, hostname=None,
                    ip=None, itime=None, params=None, user=None):
     """Create a command in the server. Return the json with the
     server's response.
     """
-    return _save_to_couch(workspace_name,
-                          id,
-                          command=command,
-                          duration=duration,
-                          hostname=hostname,
-                          ip=ip,
-                          itime=itime,
-                          params=params,
-                          user=user,
-                          workspace=workspace_name,
-                          type="CommandRunInformation")
+    return _save_to_server(workspace_name,
+                           id,
+                           command=command,
+                           duration=duration,
+                           hostname=hostname,
+                           ip=ip,
+                           itime=itime,
+                           params=params,
+                           user=user,
+                           workspace=workspace_name,
+                           type="CommandRunInformation")
 
 def update_command(workspace_name, id, command, duration=None, hostname=None,
                    ip=None, itime=None, params=None, user=None):
     """Update a command in the server. Return the json with the
     server's response.
     """
-    return _update_in_couch(workspace_name,
-                            id,
-                            command=command,
-                            duration=duration,
-                            hostname=hostname,
-                            ip=ip,
-                            itime=itime,
-                            params=params,
-                            user=user,
-                            workspace=workspace_name,
-                            type="CommandRunInformation")
+    return _update_in_server(workspace_name,
+                             id,
+                             command=command,
+                             duration=duration,
+                             hostname=hostname,
+                             ip=ip,
+                             itime=itime,
+                             params=params,
+                             user=user,
+                             workspace=workspace_name,
+                             type="CommandRunInformation")
+
 
 #  COUCH IT!
 def create_database(workspace_name):
@@ -832,9 +871,9 @@ def create_database(workspace_name):
     server's response. Can throw an Unauthorized exception
     """
 
-    ### NOTE: this function is still talking to couch directly,
-    ### that's why it is unable to use the _put function:
-    ### it returns s 201 response code if everything went ok
+    # NOTE: this function is still talking to couch directly,
+    # that's why it is unable to use the _put function:
+    # it returns s 201 response code if everything went ok
     db_url = _create_server_db_url(workspace_name)
     return _parse_json(_unsafe_io_with_server(requests.put,
                                               201,

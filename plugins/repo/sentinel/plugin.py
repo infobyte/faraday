@@ -38,6 +38,7 @@ class SentinelPlugin(core.PluginBase):
         self.plugin_version = "0.0.1"
         self.version = "1.0.0"
         self.baseURL = "https://sentinel.whitehatsec.com/api/"
+        self.vulnURL = "https://source.whitehatsec.com/site_vuln_detail.html?site_id="
 
         self.addSetting("Api_key", str, "")
         self.addSetting("Enable", str, "0")
@@ -81,20 +82,28 @@ class SentinelPlugin(core.PluginBase):
                 vuln_information  = self.getVulnInformation(element.get('href', 'unknown')) 
                 
                 desc = vuln_information.get("description", "").get("description_prepend", "")
-                solution= vuln_information.get("solution", "").get("solution_prepend", "")
-                cvss = "CVSS: " + vuln_information.get("cvss_score", "")
+                solution = vuln_information.get("solution", "").get("solution_prepend", "")
+                siteId = vuln_information.get("site", "Unknown")
+                id = vuln_information.get("id", uuid.uuid4())
 
-                id = vuln_information.get('id', uuid.uuid4())
+                vulnUrlComplete = self.vulnURL + siteId + "&vuln_id=" + id
+                
+                cvss = "CVSS: " + vuln_information.get("cvss_score", "")
+                siteName = "Site-Name: " + vuln_information.get("site_name", "Unknown")
+
                 found = vuln.get('found', '0000-00-00T00:00:00Z')
                 tested = vuln.get('tested', '0000-00-00T00:00:00Z')
-                state = vuln.get('state', 'false')
                 request = vuln.get('request', {})#{}
-            
+                
+                state = "State: " + vuln.get('state', 'Unknown')
+                
+
                 if(len(request)>0):
+
                     url = request.get('url', "Unknown")
                     method = request.get('method', "Unknown")
-                    reqHeader = ""
                     headers = request.get("headers", [])
+                    reqHeader = ""
             
                     if(headers == None):
                         headers = []
@@ -110,32 +119,46 @@ class SentinelPlugin(core.PluginBase):
                 response = vuln.get('response', {})#{}
             
                 if(len(response)>0):
+
                     status = str(response.get("status", ""))
-                    resHeader = ""
                     headers = response.get("headers", [])
+                    resHeader = ""
+
                     if (headers == None):
                         headers = []
+
                     for parts in headers:
                         resHeader += parts.get("name", "") + ":" + parts.get("value", "") + "\n"
+
                     resBody = response.get("body", {})#{}
                     if(len(resBody)>0):
                         resBodyMatch = resBody.get("body_match", {})#
                         resBodyContent = resBodyMatch.get("content", "")
 
-                data = "\n\nFound: " + found + "\n" + "Tested: " + tested + "\n" + "State: " + state
+                data = "\n\nFound: " + found + "\n" + "Tested: " + tested + "\n" + state
                 req = ""
                 res = ""
 
                 if(len(request)>0):
+
                     req = method+" "+url+"\n"
                     req += reqHeader+"\n"
                     req += bodyContent
+
                 if (len(response)>0):
+
                     res = "Status: "+status+"\n"
                     res += resHeader+"\n"
                     res += resBodyContent
+
                 name = vulnClass+" ID: "+id
-                self.faraday_api.createAndAddVulnWebToService(hostId, serviceId, name, desc + data, [cvss], severity, solution, url, "", req, res, method, "", "", "","")
+                
+                self.faraday_api.createAndAddVulnWebToService(hostId,
+                                                            serviceId, name,
+                                                            desc + data,
+                                                            [cvss, state, siteName, vulnUrlComplete],
+                                                            severity, solution, url, "", req, res,
+                                                            method, "", "", "", "")
         return True
 
     def getAllVulns(self):

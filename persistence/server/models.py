@@ -208,7 +208,7 @@ def get_object(workspace_name, object_signature, object_id):
     about 'object_signature' objects matching the query.
 
     object_signature must be either 'Host', 'Vulnerability', 'VulnerabilityWeb',
-    'Interface', 'Service', 'Credential', 'Note' or 'CommandRunInformation'.
+    'Interface', 'Service', 'Cred', 'Note' or 'CommandRunInformation'.
     Will raise an WrongObjectSignature error if this condition is not met.
     """
     object_to_func = {_Host.class_signature: get_host,
@@ -227,8 +227,10 @@ def get_object(workspace_name, object_signature, object_id):
     return appropiate_function(workspace_name, object_id)
 
 def get_deleted_object_name_and_type(workspace_name, object_id):
+    """Return a tupe of (name, type) for the deleted object of object_id,
+    if it can get around CouchDB to do it. Else None"""
     obj_dict = server.get_object_before_last_revision(workspace_name, object_id)
-    return obj_dict['name'], obj_dict['type']
+    return obj_dict['name'], obj_dict['type'] if obj_dict else None
 
 @_ignore_in_changes
 def create_host(workspace_name, host):

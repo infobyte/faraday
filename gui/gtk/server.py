@@ -103,15 +103,24 @@ class ServerIO(object):
 
         def filter_changes(change, obj_type):
             local_changes = models.local_changes()
-            if obj_type == "Reports" or obj_type == "Workspace":
-                return None
-            if not change or change.get('last_seq'):
-                return None
-            if change['id'].startswith('_design'): # XXX: is this still neccesary?
-                return None
+            cool_types = ("Host", "Interface", "Service", "Vulnerability",
+                          "VulnerabilityWeb", "CommandRunInfomation", "Cred",
+                          "Note")
+
             if change['changes'][0]['rev'] == local_changes.get(change['id']):
                 del local_changes[change['id']]
                 return None
+
+            if obj_type is not None and obj_type not in cool_types:
+                # if obj_type is None it's a deleted change. retrieve its type later
+                return None
+
+            if not change or change.get('last_seq'):
+                return None
+
+            if change['id'].startswith('_design'): # XXX: is this still neccesary?
+                return None
+
             return change
 
         def notification_dispatcher(obj_id, obj_type, obj_name, deleted, revision):
@@ -131,6 +140,8 @@ class ServerIO(object):
                         update = True
                 else:
                     update = False
+            for var in [var for var in [obj_id, obj_type, obj_name] if var is None]:
+                var = ""
             notification_center.changeFromInstance(obj_id, obj_type,
                                                    obj_name, deleted=deleted,
                                                    update=update)

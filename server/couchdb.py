@@ -150,6 +150,9 @@ class ChangesStream(object):
                     stream=True, auth=get_auth_info())
 
                 for raw_line in self.__response.iter_lines():
+                    if self.__stop:
+                        break
+
                     line = self.__sanitize(raw_line)
                     if not line:
                         continue
@@ -161,15 +164,22 @@ class ChangesStream(object):
                     yield change
 
             except Exception, e:
+                # On workspace deletion, requests will probably
+                # fail to perform the request or the connection
+                # will be closed. Check if this was intentional
+                # by checking on the __stop flag.
+                if self.__stop:
+                    break
+
                 import traceback
                 logger.debug(traceback.format_exc())
 
                 # Close everything but keep retrying
                 self.stop()
-                self.__stop = True
+                self.__stop = False
 
-                logger.warning(u"Lost connection to CouchDB. Retrying in 5 seconds...")
-                time.sleep(5)
+                logger.warning(u"Lost connection to CouchDB. Retrying in 3 seconds...")
+                time.sleep(3)
                 logger.info(u"Retrying...")
 
     def __sanitize(self, raw_line):
@@ -200,10 +210,10 @@ class ChangesStream(object):
             return None
 
     def stop(self):
+        self.__stop = True
         if self.__response is not None:
             self.__response.close()
             self.__response = None
-        self.__stop = True
 
 class Change(object):
     def __init__(self, change_doc):

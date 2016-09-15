@@ -171,9 +171,9 @@ class Workspace(object):
         self.__db_conn.close()
 
     def close(self):
-        self.close_session()
-        self.__couchdb_conn.close()
         self.__sync.close()
+        self.__couchdb_conn.close()
+        self.close_session()
 
     def delete(self):
         self.close()
@@ -271,9 +271,7 @@ class Synchronizer(object):
         self.__couchdb_conn.start_changes_monitor(self.__doc_importer.process_change, last_seq=self.__last_seq)
 
     def close(self):
-        # TODO(mrocha): Take responsability for closing monitor thread instead of
-        # letting CouchDB conn object to do it
-        pass
+        self.__couchdb_conn.close()
 
     def wait_until_sync(self, timeout):
         """

@@ -175,6 +175,10 @@ class Workspace(object):
         self.__couchdb_conn.close()
         self.__sync.close()
 
+    def delete(self):
+        self.close()
+        self.__db_conn.delete()
+
 
 class Connector(object):
     def __init__(self, db_name):

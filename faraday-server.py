@@ -8,6 +8,7 @@ import sys, os
 import argparse
 import subprocess
 import server.config
+import server.couchdb
 
 from server.utils import daemonize
 from utils.dependencies import DependencyChecker
@@ -60,7 +61,12 @@ def setup_environment():
     missing_packages = check_dependencies()
     if len(missing_packages) > 0:
         install_packages(missing_packages)
+
+    # Web configuration file generation
     server.config.gen_web_config()
+
+    # Reports DB creation
+    server.couchdb.push_reports()
 
 def check_dependencies():
     checker = DependencyChecker(server.config.REQUIREMENTS_FILE)

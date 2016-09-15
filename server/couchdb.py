@@ -12,6 +12,7 @@ import requests
 from couchdbkit import Server
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.resource import CouchdbResource
+from managers.all import ViewsManager
 from server import config
 
 
@@ -43,6 +44,9 @@ class CouchDBServer(object):
 
     def get_workspace_handler(self, ws_name):
         return self.__server.get_db(ws_name)
+
+    def get_or_create_db(self, ws_name):
+        return self.__server.get_or_create_db(ws_name)
 
 
 class Workspace(object):
@@ -343,4 +347,15 @@ def start_dbs_monitor(changes_callback):
     monitor_thread.daemon = True
     monitor_thread.start()
     return monitor_thread
+
+def push_reports():
+    vmanager = ViewsManager()
+    try:
+        couchdb_server = CouchDBServer()
+        workspace = couchdb_server.get_or_create_db('reports')
+        vmanager.addView(config.REPORTS_VIEWS_DIR, workspace)
+    except:
+        import traceback
+        logger.debug(traceback.format_exc())
+        logger.warning("Reports database couldn't be uploaded. You need to be an admin to do it")
 

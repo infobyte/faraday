@@ -32,9 +32,7 @@ def main():
         couchdb = args.couchdb
     __serv = Server(uri = couchdb)
 
-    # reports = os.path.join(os.getcwd(), "views", "reports")
     workspace = __serv.get_or_create_db("cwe")
-    # designer.push(reports, workspace, atomic = False)
 
     with open('data/cwe.csv', 'r') as csvfile:
         cwereader = csv.reader(csvfile, delimiter=',')

@@ -351,6 +351,7 @@ def start_dbs_monitor(changes_callback):
 def push_reports():
     vmanager = ViewsManager()
     try:
+        logger.debug(u'Pushing Reports DB into CouchDB')
         couchdb_server = CouchDBServer()
         workspace = couchdb_server.get_or_create_db('reports')
         vmanager.addView(config.REPORTS_VIEWS_DIR, workspace)

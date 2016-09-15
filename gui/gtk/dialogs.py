@@ -988,6 +988,15 @@ class ConflictsDialog(Gtk.Window):
         button_box.pack_start(keep_right, False, False, 5)
         return button_box
 
+    def _next_conflict_or_close(self):
+            if len(self.conflicts)-1 > self.conflict_n:
+                self.conflict_n += 1
+                self.update_current_conflict()
+                self.update_current_conflict_model()
+                self.set_conflict_view(self.conflict_n)
+            else:
+                self.destroy()
+
     def save(self, button, keeper):
         """Saves information to Faraday. Keeper is needed to know if user
         wanted to keep left or right view"""
@@ -1011,14 +1020,8 @@ class ConflictsDialog(Gtk.Window):
 
         try:
             guiapi.resolveConflict(self.current_conflict, solution)
+            self._next_conflict_or_close()
             # if this isn't the last conflict...
-            if len(self.conflicts)-1 > self.conflict_n:
-                self.conflict_n += 1
-                self.update_current_conflict()
-                self.update_current_conflict_model()
-                self.set_conflict_view(self.conflict_n)
-            else:
-                self.destroy()
 
         except ValueError:
             dialog = Gtk.MessageDialog(self, 0,
@@ -1031,6 +1034,20 @@ class ConflictsDialog(Gtk.Window):
                                         " numbers, and so on."))
             dialog.run()
             dialog.destroy()
+
+        except KeyError: # TODO: revert this hack to prevent exception when
+                         # fixing conflict of non existent object
+            dialog = Gtk.MessageDialog(self, 0,
+                                       Gtk.MessageType.INFO,
+                                       Gtk.ButtonsType.OK,
+                                       ("It seems like this conflict does not "
+                                        "exist anymore. Most probably someone "
+                                        "deleted the conflicting object from "
+                                        "the DB \n"
+                                        "Moving on to the next conflict."))
+            dialog.run()
+            dialog.destroy()
+            self._next_conflict_or_close()
 
     def case_for_interfaces(self, model, n):
         """The custom case for the interfaces. Plays a little

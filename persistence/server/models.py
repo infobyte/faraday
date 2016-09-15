@@ -207,8 +207,8 @@ def get_object(workspace_name, object_signature, object_id):
     number of query params, return a list a dictionaries containg information
     about 'object_signature' objects matching the query.
 
-    object_signature must be either 'hosts', 'vulns', 'interfaces'
-    'services', 'credentials', 'notes' or 'commands'.
+    object_signature must be either 'Host', 'Vulnerability', 'VulnerabilityWeb',
+    'Interface', 'Service', 'Credential', 'Note' or 'CommandRunInformation'.
     Will raise an WrongObjectSignature error if this condition is not met.
     """
     object_to_func = {_Host.class_signature: get_host,

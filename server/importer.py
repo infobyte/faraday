@@ -83,7 +83,7 @@ def _create_and_import_db(db_conn, couchdb_conn):
     except Exception, e:
         import traceback
         logger.debug(traceback.format_exc())
-        logger.error(u'Error while importing workspace {}: {!s}'.format(self.__workspace, e))
+        logger.error(u'Error while importing workspace {}: {!s}'.format(db_conn.db_name, e))
         db_conn.delete()
         raise e
 

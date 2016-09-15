@@ -88,7 +88,7 @@ class Manager(object):
             return self.__workspaces[ws_name]
         except KeyError:
             raise WorkspaceNotFound(ws_name)
-        
+
     def __process_workspace_change(self, change):
         if change.created:
             logger.info(u'Workspace {} was created'.format(change.db_name))
@@ -120,7 +120,7 @@ class Manager(object):
         self.__init_workspace(ws_name, db_conn=new_db_conn)
 
     def __process_delete_workspace(self, ws_name):
-        if ws_name not in workspace:
+        if ws_name not in self.__workspace:
             logger.info(u"Workspace {} doesn't exist. Ignoring change.".format(ws_name))
         else:
             logger.info(u"Deleting workspace {} from Faraday Server".format(ws_name))
@@ -166,7 +166,7 @@ class Workspace(object):
 
     def wait_until_sync(self, timeout):
         self.__sync.wait_until_sync(timeout)
-    
+
     def close_session(self):
         self.__db_conn.close()
 
@@ -233,7 +233,7 @@ class Connector(object):
             logger.info(u"Workspace {} has an old schema version ({} != {})".format(
                 self.db_name, self.__db_conf.get_schema_version(), server.models.SCHEMA_VERSION))
             return False
-        
+
         return True
 
 
@@ -258,7 +258,7 @@ class Synchronizer(object):
             # to the milestone set
             if self.__last_seq >= self.__sync_seq_milestone:
                 self.__data_sync_event.set()
-        
+
         return DocumentImporter(self.__db_conn, post_processing_change_cbk=post_change_cbk)
 
     def start(self):
@@ -445,7 +445,7 @@ class DocumentImporter(object):
         # Obtain the proper table on which to perform the entity operation
         entity_cls = server.models.FaradayEntity.get_entity_class_from_type(
             metadata.document_type)
-        
+
         # TODO(mrocha): Add error handling here when no or more than one entities where found.
         entity = self.__db_conn.session.query(entity_cls)\
                                .join(server.models.EntityMetadata)\
@@ -466,7 +466,7 @@ class DocumentImporter(object):
 
 
 class Configuration(object):
-    # TODO(mrocha): use enums in database metadata table 
+    # TODO(mrocha): use enums in database metadata table
     # instead of constants defined here
     LAST_SEQ_CONFIG = 'last_seq'
     MIGRATION_SUCCESS = 'migration'
@@ -545,7 +545,7 @@ if server.config.is_debug_mode():
         logger.debug(u"Parameters:\n{!r}".format(parameters))
 
     @event.listens_for(Engine, "after_cursor_execute")
-    def after_cursor_execute(conn, cursor, statement, 
+    def after_cursor_execute(conn, cursor, statement,
         parameters, context, executemany):
         total = time.time() - context._query_start_time
         logger.debug(u"Query Complete. Total Time: {:.02f}ms".format(total*1000))

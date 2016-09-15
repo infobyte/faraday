@@ -230,7 +230,7 @@ def get_deleted_object_name_and_type(workspace_name, object_id):
     """Return a tupe of (name, type) for the deleted object of object_id,
     if it can get around CouchDB to do it. Else None"""
     obj_dict = server.get_object_before_last_revision(workspace_name, object_id)
-    return obj_dict['name'], obj_dict['type'] if obj_dict else None
+    return (obj_dict['name'], obj_dict['type']) if obj_dict else (None, None)
 
 @_ignore_in_changes
 def create_host(workspace_name, host):

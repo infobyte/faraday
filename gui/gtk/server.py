@@ -86,7 +86,7 @@ class ServerIO(object):
     def get_changes_stream(self):
         return models.get_changes_stream(self.active_workspace)
 
-    @safe_io_with_server(None)
+    @safe_io_with_server((None, None))
     def get_deleted_object_name_and_type(self, obj_id):
         return models.get_deleted_object_name_and_type(self.active_workspace, obj_id)
 
@@ -107,12 +107,13 @@ class ServerIO(object):
                           "VulnerabilityWeb", "CommandRunInfomation", "Cred",
                           "Note")
 
-            if change['changes'][0]['rev'] == local_changes.get(change['id']):
-                del local_changes[change['id']]
-                return None
 
             if obj_type is not None and obj_type not in cool_types:
                 # if obj_type is None it's a deleted change. retrieve its type later
+                return None
+
+            if change['changes'][0]['rev'] == local_changes.get(change['id']):
+                del local_changes[change['id']]
                 return None
 
             if not change or change.get('last_seq'):

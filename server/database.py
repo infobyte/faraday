@@ -120,7 +120,7 @@ class Manager(object):
         self.__init_workspace(ws_name, db_conn=new_db_conn)
 
     def __process_delete_workspace(self, ws_name):
-        if ws_name not in self.__workspace:
+        if ws_name not in self.__workspaces:
             logger.info(u"Workspace {} doesn't exist. Ignoring change.".format(ws_name))
         else:
             logger.info(u"Deleting workspace {} from Faraday Server".format(ws_name))

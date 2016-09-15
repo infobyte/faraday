@@ -216,6 +216,12 @@ class ChangesStream(object):
             self.__response = None
 
 class Change(object):
+    REQUIRED_FIELDS = ('doc', 'changes', 'id', 'seq')
+
+    @staticmethod
+    def validate(change_doc):
+        return all(map(lambda prop: prop in change_doc, Change.REQUIRED_FIELDS))
+
     def __init__(self, change_doc):
         self.change_doc = change_doc
         self.doc = change_doc.get('doc')
@@ -227,7 +233,12 @@ class Change(object):
         self.updated = (int(self.revision.split('-')[0]) > 1)
         self.added = (not self.deleted and not self.updated)
 
+
 class DBChange(object):
+    @staticmethod
+    def validate(change_doc):
+        return True
+
     def __init__(self, change_doc):
         self.change_doc = change_doc
         self.type = change_doc.get('type', None)
@@ -246,7 +257,11 @@ class MonitorThread(threading.Thread):
     def run(self):
         for change_doc in self.__stream:
             try:
-                self.__changes_callback(self.CHANGE_CLS(change_doc))
+                if self.CHANGE_CLS.validate(change_doc):
+                    self.__changes_callback(self.CHANGE_CLS(change_doc))
+                else:
+                    logger.debug(u'Ignoring change: {}'.format(change_doc))
+
             except Exception, e:
                 import traceback
                 logger.debug(traceback.format_exc())

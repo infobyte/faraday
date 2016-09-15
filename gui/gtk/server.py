@@ -107,6 +107,9 @@ class ServerIO(object):
                           "VulnerabilityWeb", "CommandRunInfomation", "Cred",
                           "Note")
 
+            if not change.get('changes') or not change['changes'][0].get('rev'):
+                # not a change really right?
+                return None
 
             if obj_type is not None and obj_type not in cool_types:
                 # if obj_type is None it's a deleted change. retrieve its type later

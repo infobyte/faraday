@@ -58,4 +58,10 @@ class ClientServerAPITests(unittest.TestCase):
     @responses.activate
     def test_json_parsing(self):
         url = "http://give_me_json.com"
-        responses.add(responses.GET, url, json='{"some": "valid", "json": "string"}
+        responses.add(responses.GET, url, body='{"some": "valid", "json": "string"}')
+        url2 = "http://give_me_invalid_json.com"
+        responses.add(responses.GET, url2, body='{"this is not", "valid": "json"}')
+        json_as_dict = server._parse_json(requests.get(url))
+        json_as_empty_dict = server._parse_json(requests.get(url2))
+        self.assertEqual({'some': 'valid', 'json': 'string'}, json_as_dict)
+        self.assertEqual({}, json_as_empty_dict)

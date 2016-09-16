@@ -154,6 +154,8 @@ class ChangeFromInstanceCustomEvent(CustomEvent):
         self.updated_or_created = "updated" if update else "created"
 
     def __str__(self):
+        if not self.object_type or not self.object_name and self.deleted:
+            return "An object was deleted"
         if self.deleted:
             return "The {0} {1} was deleted".format(self.object_type, self.object_name)
         return "The {0} {1} was {2}".format(self.object_type,

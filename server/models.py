@@ -101,6 +101,18 @@ class EntityMetadata(Base):
         self.revision=document.get('_rev')
         self.document_type=document.get('type')
 
+        if self.create_time is not None:
+            self.create_time = self.__truncate_to_epoch_in_seconds(self.create_time)
+
+    def __truncate_to_epoch_in_seconds(self, timestamp):
+        """ In a not so elegant fashion, identifies and truncate
+        epoch timestamps expressed in milliseconds to seconds"""
+        limit = 32503680000 # 01 Jan 3000 00:00:00 GMT
+        if timestamp > limit:
+            return timestamp / 1000
+        else:
+            return timestamp
+
 
 class Host(FaradayEntity, Base):
     DOC_TYPE = 'Host'

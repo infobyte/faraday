@@ -58,7 +58,6 @@ angular.module('faradayApp')
                 })
                 .then(function(vulns) {
                     $scope.services.forEach(function(service) {
-                        console.log(service);
                         service.vulns = vulns[service._id] || 0;
                     });
                 })

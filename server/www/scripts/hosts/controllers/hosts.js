@@ -385,9 +385,7 @@ angular.module('faradayApp')
 
         $scope.selectedHosts = function() {
             selected = [];
-
-            tmp_hosts = filter($scope.hosts);
-            tmp_hosts.forEach(function(host) {
+            $scope.hosts.forEach(function(host) {
                 if(host.selected === true) {
                     selected.push(host);
                 }
@@ -397,9 +395,7 @@ angular.module('faradayApp')
 
         $scope.checkAll = function() {
             $scope.selectall_hosts = !$scope.selectall_hosts;
-
-            tmp_hosts = filter($scope.hosts);
-            tmp_hosts.forEach(function(host) {
+            $scope.hosts.forEach(function(host) {
                 host.selected = $scope.selectall_hosts;
             });
         };
@@ -423,14 +419,6 @@ angular.module('faradayApp')
                 $scope.sortDirection = "asc";
             }
         }
-
-        filter = function(data) {
-            var tmp_data = $filter('orderBy')(data, $scope.sortField, $scope.reverse);
-            tmp_data = $filter('filter')(tmp_data, $scope.expression);
-            tmp_data = tmp_data.splice($scope.pageSize * ($scope.currentPage - 1), $scope.pageSize);
-
-            return tmp_data;
-        };
 
         // paging
         $scope.prevPage = function() {

@@ -152,21 +152,22 @@ class ServerIO(object):
 
         def get_changes():
             # dark maaaaaagic *sing with me!* dark maaaaaagic
-            if self.stream:
-                try:
-                    for change in self.stream:
-                        change, obj_type, obj_name = change
-                        with self.changes_lock:
-                            change = filter_changes(change, obj_type)
-                        if change:
-                            deleted = bool(change.get('deleted'))
-                            obj_id = change.get('id')
-                            revision = change.get("changes")[-1].get('rev')
-                            notification_dispatcher(obj_id, obj_type, obj_name,
-                                                    deleted, revision)
-                except requests.exceptions.RequestException:
-                    notification_center.WorkspaceProblem()
-                    return False
+            while True:
+                if self.stream:
+                    try:
+                        for change in self.stream:
+                            change, obj_type, obj_name = change
+                            with self.changes_lock:
+                                change = filter_changes(change, obj_type)
+                            if change:
+                                deleted = bool(change.get('deleted'))
+                                obj_id = change.get('id')
+                                revision = change.get("changes")[-1].get('rev')
+                                notification_dispatcher(obj_id, obj_type, obj_name,
+                                                        deleted, revision)
+                    except requests.exceptions.RequestException:
+                        notification_center.WorkspaceProblem()
+                        return False
             else:
                 return False
 

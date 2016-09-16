@@ -28,6 +28,8 @@ class CouchChangesStream(object):
     def __iter__(self):
         try:
             self._response = requests.get(self._change_url, self._params, stream=True)
+            if self._response.status_code != 200:
+                raise requests.exceptions.RequestException
             if self._response:
                 for raw_line in self._response.iter_lines():
                     line = self._sanitize(raw_line)

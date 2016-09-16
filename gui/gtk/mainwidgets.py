@@ -483,6 +483,11 @@ class WorkspaceSidebar(Gtk.Widget):
                 ws_iter = self.workspace_model.append([ws])
                 self.valid_ws_iters.append(ws_iter)
 
+        for ws in added_workspaces:
+            if ws not in self.workspaces:
+                iter = self.get_iter_by_name(ws)
+                self.workspace_model.remove(iter)
+
     def clear_sidebar(self):
         """Brutaly clear all the information from the model.
         No one survives"""
@@ -601,6 +606,7 @@ class WorkspaceSidebar(Gtk.Widget):
         """Returns the iter associated to the workspace ws_name or None
         if not found.
         """
+        # NOTE. this function should really be replaced by a dictionary
         for ws_iter in self.valid_ws_iters:
             if self.workspace_model[ws_iter][0] == ws_name:
                 return ws_iter

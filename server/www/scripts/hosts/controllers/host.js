@@ -5,7 +5,7 @@
 angular.module('faradayApp')
     .controller('hostCtrl',
         ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', '$q',
-            'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager',
+            'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager', 
             function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, $q,
             hostsManager, workspacesFact, dashboardSrv, servicesManager) {
 
@@ -54,15 +54,12 @@ angular.module('faradayApp')
 
                     $scope.loadedServices = true;
 
-                    return hostsManager.getAllVulnsCount($scope.workspace);
+                    return servicesManager.getServiceVulnCount($scope.workspace, $scope.services)
                 })
                 .then(function(vulns) {
-                    var vulnsCount = {};
-                    vulns.forEach(function(vuln) {
-                        vulnsCount[vuln.key] = vuln.value;
-                    });
                     $scope.services.forEach(function(service) {
-                        service.vulns = vulnsCount[service._id] || 0;
+                        console.log(service);
+                        service.vulns = vulns[service._id] || 0;
                     });
                 })
                 .catch(function(e) {

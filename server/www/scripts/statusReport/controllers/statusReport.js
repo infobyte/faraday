@@ -6,11 +6,11 @@ angular.module('faradayApp')
     .controller('statusReportCtrl',
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
-                    'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager',
+                    'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager', 'commonsFact',
                     'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
-                        SEVERITIES, EASEOFRESOLUTION, hostsManager,
+                        SEVERITIES, EASEOFRESOLUTION, hostsManager, commonsFact,
                         vulnsManager, workspacesFact, csvService, uiGridConstants) {
         $scope.baseurl;
         $scope.columns;
@@ -146,10 +146,8 @@ angular.module('faradayApp')
             }
 
             if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
-                search_obj = $scope.decodeSearch($scope.search);
-                search_exp = $scope.stringSearch(search_obj);
-                $scope.searchParams = search_exp;
-                searchFilter = prepareFilter(search_exp);
+                searchFilter = commonsFact.parseSearchURL($scope.search);
+                $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
             }
 
             $scope.columns = {
@@ -841,101 +839,6 @@ angular.module('faradayApp')
             });
         };
 
-        // encodes search string in order to send it through URL
-        $scope.encodeSearch = function(search) {
-            var i = -1,
-            encode = "",
-            params = search.split(" "),
-            chunks = {};
-
-            params.forEach(function(chunk) {
-                i = chunk.indexOf(":");
-                if(i > 0) {
-                    chunks[chunk.slice(0, i)] = chunk.slice(i+1);
-                } else {
-                    if(!chunks.hasOwnProperty("free")) {
-                        chunks.free = "";
-                    }
-                    chunks.free += " ".concat(chunk);
-                }
-            });
-
-            if(chunks.hasOwnProperty("free")) {
-                chunks.free = chunks.free.slice(1);
-            }
-
-            for(var prop in chunks) {
-                if(chunks.hasOwnProperty(prop)) {
-                    if(chunks.prop != "") {
-                        encode += "&" + encodeURIComponent(prop) + "=" + encodeURIComponent(chunks[prop]);
-                    }
-                }
-            }
-            return encode.slice(1);
-        };
-
-        // decodes search parameters to object in order to use in filter
-        $scope.decodeSearch = function(search) {
-            var i = -1,
-            decode = {},
-            params = search.split("&");
-
-            params.forEach(function(param) {
-                i = param.indexOf("=");
-                decode[decodeURIComponent(param.slice(0,i))] = decodeURIComponent(param.slice(i+1));
-            });
-
-            if(decode.hasOwnProperty("free")) {
-                decode['$'] = decode.free;
-                delete decode.free;
-            }
-
-            return decode;
-        };
-
-        // converts current search object to string to be displayed in search field
-        $scope.stringSearch = function(obj) {
-            var search = "";
-
-            for(var prop in obj) {
-                if(obj.hasOwnProperty(prop)) {
-                    if(search != "") {
-                        search += " ";
-                    }
-                    if(prop == "$") {
-                        search += obj[prop];
-                    } else {
-                        if(prop !== "confirmed"){
-                            search += prop + ":" + obj[prop];
-                        }
-                    }
-                }
-            }
-
-            return search.trim();
-        };
-
-        var prepareFilter = function(searchText) {
-            var params = searchText.split(" ");
-            var chunks = {};
-            var i = -1;
-
-            params.forEach(function(chunk) {
-                i = chunk.indexOf(":");
-                if (i > 0) {
-                    chunks[chunk.slice(0, i)] = chunk.slice(i+1);
-                } else {
-                    if (!chunks.hasOwnProperty("search")) {
-                        chunks.search  = chunk;
-                    } else {
-                        chunks.search += ' ' + chunk;
-                    }
-                }
-            });
-
-            return chunks;
-        };
-
         // changes the URL according to search params
         $scope.searchFor = function(search, params) {
             // TODO: It would be nice to find a way for changing
@@ -947,7 +850,9 @@ angular.module('faradayApp')
             }
 
             if(search && params != "" && params != undefined) {
-                url += "/search/" + $scope.encodeSearch(params);
+                var filter = commonsFact.parseSearchExpression(params);
+                var URLParams = commonsFact.searchFilterToURLParams(filter);
+                url += "/search/" + URLParams;
             }
 
             $location.path(url);

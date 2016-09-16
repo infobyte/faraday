@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('hostsCtrl',
-        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact',
-        function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact) {
+        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'commonsFact',
+        function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, commonsFact) {
 
         init = function() {
             $scope.selectall_hosts = false;
@@ -32,23 +32,19 @@ angular.module('faradayApp')
             if(!isNaN(parseInt($cookies.pageSize))) $scope.pageSize = parseInt($cookies.pageSize);
             $scope.newPageSize = $scope.pageSize;
 
-            decodeSearchFromURL();
+            parseSearchQuery();
 
             loadHosts();
         };
 
-        var decodeSearchFromURL = function() {
+        var parseSearchQuery = function() {
             $scope.search = $routeParams.search;
             $scope.searchParams = "";
             $scope.expression = {};
 
             if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
-                // search expression for filter
-                $scope.expression = $scope.decodeSearch($scope.search);
-                // search params for search field, which shouldn't be used for filtering
-                $scope.searchParams = $scope.stringSearch($scope.expression);
-                // TODO: This sucks man
-                $scope.expression = prepareFilter($scope.searchParams);
+                $scope.expression = commonsFact.parseSearchURL($scope.search);
+                $scope.searchParams = commonsFact.searchFilterToExpression($scope.expression);
             }
         };
 
@@ -87,31 +83,10 @@ angular.module('faradayApp')
             });
         };
 
-        var prepareFilter = function(searchText) {
-            var params = searchText.split(" ");
-            var chunks = {};
-            var i = -1;
-
-            params.forEach(function(chunk) {
-                i = chunk.indexOf(":");
-                if (i > 0) {
-                    chunks[chunk.slice(0, i)] = chunk.slice(i+1);
-                } else {
-                    if (!chunks.hasOwnProperty("search")) {
-                        chunks.search  = chunk;
-                    } else {
-                        chunks.search += ' ' + chunk;
-                    }
-                }
-            });
-
-            return chunks;
-        };
-
         // changes the URL according to search params
         $scope.searchFor = function(search, params) {
             if (search && params != "" && params != undefined) {
-                $scope.expression = prepareFilter(params);
+                $scope.expression = commonsFact.parseSearchExpression(params);
             } else {
                 $scope.expression = {};
             }
@@ -130,78 +105,6 @@ angular.module('faradayApp')
                 $scope.currentPage = $scope.newCurrentPage;
             }
             loadHosts();
-        };
-
-        // encodes search string in order to send it through URL
-        $scope.encodeSearch = function(search) {
-            var i = -1,
-            encode = "",
-            params = search.split(" "),
-            chunks = {};
-
-            params.forEach(function(chunk) {
-                i = chunk.indexOf(":");
-                if(i > 0) {
-                    chunks[chunk.slice(0, i)] = chunk.slice(i+1);
-                } else {
-                    if(!chunks.hasOwnProperty("free")) {
-                        chunks.free = "";
-                    }
-                    chunks.free += " ".concat(chunk);
-                }
-            });
-
-            if(chunks.hasOwnProperty("free")) {
-                chunks.free = chunks.free.slice(1);
-            }
-
-            for(var prop in chunks) {
-                if(chunks.hasOwnProperty(prop)) {
-                    if(chunks.prop != "") {
-                        encode += "&" + encodeURIComponent(prop) + "=" + encodeURIComponent(chunks[prop]);
-                    }
-                }
-            }
-            return encode.slice(1);
-        };
-
-        // decodes search parameters to object in order to use in filter
-        $scope.decodeSearch = function(search) {
-            var i = -1,
-            decode = {},
-            params = search.split("&");
-
-            params.forEach(function(param) {
-                i = param.indexOf("=");
-                decode[decodeURIComponent(param.slice(0,i))] = decodeURIComponent(param.slice(i+1));
-            });
-
-            if(decode.hasOwnProperty("free")) {
-                decode['$'] = decode.free;
-                delete decode.free;
-            }
-
-            return decode;
-        };
-
-        // converts current search object to string to be displayed in search field
-        $scope.stringSearch = function(obj) {
-            var search = "";
-
-            for(var prop in obj) {
-                if(obj.hasOwnProperty(prop)) {
-                    if(search != "") {
-                        search += " ";
-                    }
-                    if(prop == "$") {
-                        search += obj[prop];
-                    } else {
-                        search += prop + ":" + obj[prop];
-                    }
-                }
-            }
-
-            return search;
         };
 
         $scope.remove = function(ids) {

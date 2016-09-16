@@ -270,5 +270,89 @@ angular.module('faradayApp')
             });
         };
 
+        commonsFact.parseSearchURL = function(searchParams) {
+            var i = -1, searchFilter = {}, searchTerms = searchParams.split("&");
+
+            searchTerms.forEach(function(term) {
+                i = term.indexOf("=");
+                if(i > 0) {
+                    var filterField = decodeURIComponent(term.slice(0, i));
+                    var filterValue = decodeURIComponent(term.slice(i+1));
+                    searchFilter[filterField] = filterValue;
+                }
+            });
+
+            return trimSearchFilter(searchFilter);
+        };
+
+        commonsFact.parseSearchExpression = function(searchExpression) {
+            var i = -1;
+            var searchFilter = {};
+            var lastFilterField = "search";
+            var expressionTerms = searchExpression.split(" ");
+
+            expressionTerms.forEach(function(term) {
+                i = term.indexOf(":");
+                if (i > 0) {
+                    var filterField = term.slice(0, i);
+                    var filterValueChunk = term.slice(i+1);
+                    searchFilter[filterField] = filterValueChunk;
+                    lastFilterField = filterField;
+                } else {
+                    if (!searchFilter.hasOwnProperty(lastFilterField)) {
+                        searchFilter[lastFilterField] = term;
+                    } else {
+                        searchFilter[lastFilterField] += ' ' + term;
+                    }
+                }
+            });
+
+            return trimSearchFilter(searchFilter);
+        };
+
+        var trimSearchFilter = function(searchFilter) {
+            for (var filter in searchFilter) {
+                if (searchFilter.hasOwnProperty(filter)) {
+                    searchFilter[filter] = searchFilter[filter].trim();
+                }
+            }
+            return searchFilter;
+        };
+
+        commonsFact.searchFilterToExpression = function(searchFilter) {
+            var searchExpression = "";
+
+            if (searchFilter.hasOwnProperty("search")) {
+                searchExpression += searchFilter.search;
+            }
+
+            for (var filter in searchFilter) {
+                if (searchFilter.hasOwnProperty(filter)) {
+                    if (filter !== "search" && filter !== "confirmed") {
+                        if (searchExpression != "") {
+                            searchExpression += " ";
+                        }
+                        searchExpression += filter + ":" + searchFilter[filter];
+                    }
+                }
+            }
+
+            return searchExpression.trim();
+        };
+
+        commonsFact.searchFilterToURLParams = function(searchFilter) {
+            var searchURLParams = "";
+            for (var filter in searchFilter) {
+                if (searchFilter.hasOwnProperty(filter)) {
+                    if (searchFilter[filter] != "") {
+                        var paramName = encodeURIComponent(filter);
+                        var paramValue = encodeURIComponent(searchFilter[filter]);
+                        searchURLParams += "&" + paramName + "=" + paramValue;
+                    }
+                }
+            }
+            return searchURLParams.slice(1);
+        };
+
         return commonsFact;
     }]);

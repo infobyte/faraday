@@ -1537,25 +1537,6 @@ class aboutDialog(Gtk.AboutDialog):
         self.set_website(faraday_website)
         self.set_website_label("Learn more about Faraday")
 
-
-class helpDialog(Gtk.AboutDialog):
-    """Using about dialog 'cause they are very similar, but this will
-    display github page, Wiki, and such"""
-    def __init__(self, main_window):
-        Gtk.AboutDialog.__init__(self, transient_for=main_window, modal=True)
-        icons = CONF.getImagePath() + "icons/"
-        faraday_icon = GdkPixbuf.Pixbuf.new_from_file(icons+"faraday_icon.png")
-        self.set_logo(faraday_icon)
-        self.set_program_name("Faraday")
-        self.set_comments("Farday is a Penetration Test IDE. "
-                          "Just use one of the supported tools on Faraday's "
-                          " terminal and a plugin will capture the output and "
-                          "extract useful information for you.")
-        faraday_website = "https://github.com/infobyte/faraday/wiki"
-        self.set_website(faraday_website)
-        self.set_website_label("Learn more about how to use Faraday")
-
-
 class errorDialog(Gtk.MessageDialog):
     """A simple error dialog to show the user where things went wrong.
     Takes the parent window, (Gtk.Window or Gtk.Dialog, most probably)

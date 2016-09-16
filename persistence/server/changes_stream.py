@@ -41,6 +41,8 @@ class CouchChangesStream(object):
                         continue
                     object_type, object_name = self._get_object_type_and_name_from_change(change)
                     yield change, object_type, object_name
+                if not self._stop:  # why did we stop if no one asked me to stop?
+                    raise requests.exceptions.RequestException
         except requests.exceptions.RequestException:
             self.stop()
             raise

@@ -6,6 +6,7 @@ from mock import MagicMock, patch
 
 server.FARADAY_UP = False
 server.SERVER_URL = "http://s:p"
+example_url = "http://just_some_url"
 class ClientServerAPITests(unittest.TestCase):
 
     def setUp(self):
@@ -56,6 +57,16 @@ class ClientServerAPITests(unittest.TestCase):
             server._unsafe_io_with_server(requests.get, 200, url, json={"name": "betcha"})
 
     @responses.activate
+    def test_server_with_okey_request(self):
+        url = "http://this-is-ok.com"
+        responses.add(responses.GET, url, body='{"name": "betcha"}', status=200)
+        responses.add(responses.PUT, url, body='{"ok": "true"}', status=200)
+        response_get = server._unsafe_io_with_server(requests.get, 200, url)
+        response_put = server._unsafe_io_with_server(requests.put, 200, url)
+        self.assertEqual(response_get.text, requests.get(url).text)
+        self.assertEqual(response_put.text, requests.put(url).text)
+
+    @responses.activate
     def test_json_parsing(self):
         url = "http://give_me_json.com"
         responses.add(responses.GET, url, body='{"some": "valid", "json": "string"}')
@@ -65,3 +76,30 @@ class ClientServerAPITests(unittest.TestCase):
         json_as_empty_dict = server._parse_json(requests.get(url2))
         self.assertEqual({'some': 'valid', 'json': 'string'}, json_as_dict)
         self.assertEqual({}, json_as_empty_dict)
+
+    @responses.activate
+    def test_get(self):
+        url = "http://get_url"
+        responses.add(responses.GET, url, body='{"some": "object"}')
+        expected_json = server._get(url)
+        self.assertEqual(expected_json, {"some": "object"})
+
+    @responses.activate
+    def test_put_with_no_update(self):
+        responses.add(responses.PUT, example_url, body='{"ok": "true"}', status=200)
+        self.assertEqual(server._put(example_url, expected_response=200), {"ok": "true"})
+
+    @responses.activate
+    def test_put_with_update(self):
+        responses.add(responses.GET, example_url, body='{"_rev": "1-asf"}')
+        responses.add(responses.PUT, example_url, body='{"ok": "true"}', status=200)
+        server._put(example_url, update=True, expected_response=200)
+        self.assertIn("_rev", responses.calls[0].response.text)
+
+    @responses.activate
+    def test_delete_object(self):
+        responses.add(responses.GET, example_url, body='{"_rev": "1-asf"}')
+        responses.add(responses.DELETE, example_url, body='{"ok": "true"}', status=200)
+        server._delete(example_url)
+        self.assertIn("_rev", responses.calls[0].response.text)
+        self.assertEqual(responses.calls[1].request.method, 'DELETE')

@@ -638,9 +638,15 @@ class GuiApp(Gtk.Application, FaradayUi):
                             "new_terminal": self.on_new_terminal_button,
                             "open_report": self.on_open_report_button,
                             "go_to_web_ui": self.on_click_go_to_web_ui_button,
-                            "go_to_forum" : self.go_to_forum,
-                            "go_to_documentation": self.go_to_documentation,
-                            "go_to_irc": self.go_to_irc
+                            "go_to_documentation": self.go_to_help,
+                            "go_to_faq": self.go_to_help,
+                            "go_to_troubleshooting": self.go_to_help,
+                            "go_to_demos": self.go_to_help,
+                            "go_to_issues": self.go_to_help,
+                            "go_to_forum": self.go_to_help,
+                            "go_to_irc": self.go_to_help,
+                            "go_to_twitter": self.go_to_help,
+                            "go_to_googlegroup": self.go_to_help
                             }
 
         for action, method in action_to_method.items():
@@ -836,14 +842,18 @@ class GuiApp(Gtk.Application, FaradayUi):
         ws_url = couch_url + "/_ui/#/dashboard/ws/" + ws_name
         webbrowser.open(ws_url, new=2)
     
-    def go_to_forum(self,action=None, param=None):
-        url = "https://forum.faradaysec.com"
-        webbrowser.open(url, new=2)
-    
-    def go_to_documentation(self, action=None, param=None):
-        url = "https://github.com/infobyte/faraday/wiki"
-        webbrowser.open(url, new=2)
+    def go_to_help(self,action=None, param=None):
+        
+        urls = {"go_to_documentation":  "https://faradaysec.com/help/docs",
+                "go_to_faq": "https://faradaysec.com/help/faq",
+                "go_to_troubleshooting": "https://faradaysec.com/help/troubleshooting",
+                "go_to_demos": "https://faradaysec.com/help/demos",
+                "go_to_issues": "https://faradaysec.com/help/issues",
+                "go_to_forum": "https://forum.faradaysec.com",
+                "go_to_irc": "https://faradaysec.com/help/irc",
+                "go_to_twitter": "https://faradaysec.com/help/twitter",
+                "go_to_googlegroup": "https://faradaysec.com/help/googlegroup"
+        }
 
-    def go_to_irc(self, action=None, param=None):
-        url = "https://webchat.freenode.net/?channels=faraday-dev"
+        url = urls.get(action.get_name(), "https://faradaysec.com")
         webbrowser.open(url, new=2)

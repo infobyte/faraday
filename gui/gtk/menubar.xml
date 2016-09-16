@@ -29,12 +29,36 @@ See the file 'doc/LICENSE' for the license information
             <attribute name="action">app.go_to_documentation</attribute>
           </item>
           <item>
+            <attribute name="label" translatable="yes">FAQ</attribute>
+            <attribute name="action">app.go_to_faq</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">Troubleshooting</attribute>
+            <attribute name="action">app.go_to_troubleshooting</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">Demos</attribute>
+            <attribute name="action">app.go_to_demos</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">Issues</attribute>
+            <attribute name="action">app.go_to_issues</attribute>
+          </item>
+          <item>
             <attribute name="label" translatable="yes">Forum</attribute>
             <attribute name="action">app.go_to_forum</attribute>
           </item>
           <item>
             <attribute name="label" translatable="yes">IRC</attribute>
             <attribute name="action">app.go_to_irc</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">Twitter</attribute>
+            <attribute name="action">app.go_to_twitter</attribute>
+          </item>
+           <item>
+            <attribute name="label" translatable="yes">Google Group</attribute>
+            <attribute name="action">app.go_to_googlegroup</attribute>
           </item>
       </submenu>
       <item>

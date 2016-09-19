@@ -53,7 +53,6 @@ from dialogs import NewWorkspaceDialog
 from dialogs import PluginOptionsDialog
 from dialogs import NotificationsDialog
 from dialogs import aboutDialog
-from dialogs import helpDialog
 from dialogs import ConflictsDialog
 from dialogs import HostInfoDialog
 from dialogs import ForceChooseWorkspaceDialog
@@ -632,14 +631,22 @@ class GuiApp(Gtk.Application, FaradayUi):
         self.notificationsModel = Gtk.ListStore(str)
 
         action_to_method = {"about": self.on_about,
-                            "help": self.on_help,
                             "quit": self.on_quit,
                             "preferences": self.on_preferences,
                             "pluginOptions": self.on_plugin_options,
                             "new": self.on_new_button,
                             "new_terminal": self.on_new_terminal_button,
                             "open_report": self.on_open_report_button,
-                            "go_to_web_ui": self.on_click_go_to_web_ui_button
+                            "go_to_web_ui": self.on_click_go_to_web_ui_button,
+                            "go_to_documentation": self.on_help_dispatch,
+                            "go_to_faq": self.on_help_dispatch,
+                            "go_to_troubleshooting": self.on_help_dispatch,
+                            "go_to_demos": self.on_help_dispatch,
+                            "go_to_issues": self.on_help_dispatch,
+                            "go_to_forum": self.on_help_dispatch,
+                            "go_to_irc": self.on_help_dispatch,
+                            "go_to_twitter": self.on_help_dispatch,
+                            "go_to_googlegroup": self.on_help_dispatch
                             }
 
         for action, method in action_to_method.items():
@@ -652,6 +659,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         builder.connect_signals(self)
         appmenu = builder.get_object('appmenu')
         self.set_app_menu(appmenu)
+
         helpMenu = builder.get_object('Help')
         self.set_menubar(helpMenu)
 
@@ -814,12 +822,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         about_dialog.run()
         about_dialog.destroy()
 
-    def on_help(self, action, param):
-        """Defines what happens when user press 'help' on the menu"""
-        help_dialog = helpDialog(self.window)
-        help_dialog.run()
-        help_dialog.destroy()
-
     def on_preferences(self, action=None, param=None):
         """Defines what happens when you press 'preferences' on the menu.
         Sends as a callback reloadWsManager, so if the user actually
@@ -839,3 +841,18 @@ class GuiApp(Gtk.Application, FaradayUi):
         ws_name = self.workspace_manager.getActiveWorkspace().name
         ws_url = couch_url + "/_ui/#/dashboard/ws/" + ws_name
         webbrowser.open(ws_url, new=2)
+
+    def on_help_dispatch(self, action, param=None):
+        """Open the url contained in "action" in the user's browser."""
+        urls = {"go_to_documentation":  "https://faradaysec.com/help/docs",
+                "go_to_faq": "https://faradaysec.com/help/faq",
+                "go_to_troubleshooting": "https://faradaysec.com/help/troubleshooting",
+                "go_to_demos": "https://faradaysec.com/help/demos",
+                "go_to_issues": "https://faradaysec.com/help/issues",
+                "go_to_forum": "https://forum.faradaysec.com",
+                "go_to_irc": "https://faradaysec.com/help/irc",
+                "go_to_twitter": "https://faradaysec.com/help/twitter",
+                "go_to_googlegroup": "https://faradaysec.com/help/googlegroup"
+        }
+        url = urls.get(action.get_name(), "https://faradaysec.com")
+        webbrowser.open(url, new=2)

@@ -638,15 +638,15 @@ class GuiApp(Gtk.Application, FaradayUi):
                             "new_terminal": self.on_new_terminal_button,
                             "open_report": self.on_open_report_button,
                             "go_to_web_ui": self.on_click_go_to_web_ui_button,
-                            "go_to_documentation": self.go_to_help,
-                            "go_to_faq": self.go_to_help,
-                            "go_to_troubleshooting": self.go_to_help,
-                            "go_to_demos": self.go_to_help,
-                            "go_to_issues": self.go_to_help,
-                            "go_to_forum": self.go_to_help,
-                            "go_to_irc": self.go_to_help,
-                            "go_to_twitter": self.go_to_help,
-                            "go_to_googlegroup": self.go_to_help
+                            "go_to_documentation": self.on_help_dispatch,
+                            "go_to_faq": self.on_help_dispatch,
+                            "go_to_troubleshooting": self.on_help_dispatch,
+                            "go_to_demos": self.on_help_dispatch,
+                            "go_to_issues": self.on_help_dispatch,
+                            "go_to_forum": self.on_help_dispatch,
+                            "go_to_irc": self.on_help_dispatch,
+                            "go_to_twitter": self.on_help_dispatch,
+                            "go_to_googlegroup": self.on_help_dispatch
                             }
 
         for action, method in action_to_method.items():
@@ -841,9 +841,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         ws_name = self.workspace_manager.getActiveWorkspace().name
         ws_url = couch_url + "/_ui/#/dashboard/ws/" + ws_name
         webbrowser.open(ws_url, new=2)
-    
-    def go_to_help(self,action=None, param=None):
-        
+
+    def on_help_dispatch(self, action, param=None):
+        """Open the url contained in "action" in the user's browser."""
         urls = {"go_to_documentation":  "https://faradaysec.com/help/docs",
                 "go_to_faq": "https://faradaysec.com/help/faq",
                 "go_to_troubleshooting": "https://faradaysec.com/help/troubleshooting",
@@ -854,6 +854,5 @@ class GuiApp(Gtk.Application, FaradayUi):
                 "go_to_twitter": "https://faradaysec.com/help/twitter",
                 "go_to_googlegroup": "https://faradaysec.com/help/googlegroup"
         }
-
         url = urls.get(action.get_name(), "https://faradaysec.com")
         webbrowser.open(url, new=2)

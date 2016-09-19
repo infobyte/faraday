@@ -9,7 +9,6 @@ See the file 'doc/LICENSE' for the license information
 import subprocess
 import couchdbkit
 import model.workspace
-import persistence.mappers.data_mappers as dm
 from utils.logs import getLogger
 from config.globals import *
 logger = getLogger('Updater')
@@ -21,6 +20,7 @@ import sys
 import os
 import shutil
 from managers.all import ViewsManager
+from persistence.server.models import create_workspace
 
 class Updater(object):
     def doUpdates(self):
@@ -66,7 +66,6 @@ class CouchViews(Update):
 	dbs = filter(lambda x: not x.startswith("_") and 'backup' not in x and x not in CONST_BLACKDBS, serv.all_dbs())
         logger.info('Dbs to upgrade: %s' % (', '.join(dbs)))
 
-
         logger.info('Preparing updates on Couchdbs')
         processed = 0
         views_uploader = ViewsManager()
@@ -103,11 +102,12 @@ class DB(Update):
 
         # Crear documento 'workspace'
         logger.info('Creating workspace document')
-        workspace = model.workspace.Workspace(db_name,
-                                            'Migrated Workspace ')
-
-        dict_workspace = dm.WorkspaceMapper(None).serialize(workspace)
-        db_source.save_doc(dict_workspace, force_update = True)
+        
+        create_workspace(db_name,
+                        'Migrated Workspace',
+                        int(time.time() * 1000),
+                        int(time.time() * 1000),
+                        "")
         types = {}
 
         logger.info('Updating modelobject documents')

@@ -4,6 +4,7 @@
 
 import os
 import logging
+import logging.handlers
 import server.config
 import errno
 
@@ -74,3 +75,7 @@ def create_logging_path():
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
+
+setup_logging()
+
+

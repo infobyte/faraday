@@ -2,11 +2,9 @@
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-
 '''
 
-
-from persistence.mappers.data_mappers import Mappers
+from persistence.server.models import create_object, get_object, update_object, delete_object
 
 # NOTE: This class is intended to be instantiated by the
 # service or controller that needs it.
@@ -18,43 +16,23 @@ from persistence.mappers.data_mappers import Mappers
 class MapperManager(object):
     def __init__(self):
         # create and store the datamappers
-        self.mappers = {}
+        self.workspace_name = None
 
-    def createMappers(self, dbconnector):
-        self.mappers.clear()
-        for tmapper, mapper in Mappers.items():
-            self.mappers[tmapper] = mapper(self, dbconnector)
+    def createMappers(self, workpace_name):
+        self.workspace_name = workpace_name
 
     def save(self, obj):
-        if self.mappers.get(obj.class_signature, None):
-            self.mappers.get(obj.class_signature).save(obj)
+        if create_object(self.workspace_name, obj.class_signature, obj):
+            return True
+        return False
+    
+    def update(self, obj):
+        if update_object(self.workspace_name, obj.class_signature, obj):
             return True
         return False
 
-    def find(self, obj_id):
-        obj = self._find(obj_id, with_load=False)
-        if not obj:
-            obj = self._find(obj_id, with_load=True)
-        return obj
+    def find(self, class_signature, obj_id):
+        return get_object(self.workspace_name, class_signature, obj_id)
 
-    def _find(self, obj_id, with_load=True):
-        for mapper in self.mappers.values():
-            obj = mapper.find(obj_id, with_load=with_load)
-            if obj:
-                return obj
-        return None
-
-    def remove(self, obj_id):
-        obj = self.find(obj_id)
-        if obj:
-            self.mappers.get(obj.class_signature).delete(obj_id)
-            return True
-        return False
-
-    def reload(self, obj_id):
-        obj = self.find(obj_id)
-        if obj:
-            self.mappers.get(obj.class_signature).reload(obj)
-
-    def getMapper(self, type):
-        return self.mappers.get(type, None)
+    def remove(self, obj_id, class_signature):
+        return delete_object(self.workspace_name, class_signature, obj_id)

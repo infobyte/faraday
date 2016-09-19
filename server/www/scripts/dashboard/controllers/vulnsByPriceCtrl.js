@@ -62,5 +62,7 @@ angular.module('faradayApp')
                 return total;
             };
 
+            dashboardSrv.registerCallback($scope.loadData);
+
             init();
     }]);

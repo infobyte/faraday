@@ -14,6 +14,7 @@ from server.models import Host, Interface, Service, Vulnerability, EntityMetadat
 class HostDAO(FaradayDAO):
     MAPPED_ENTITY = Host
     COLUMNS_MAP = {
+        "couchid":  [EntityMetadata.couchdb_id],
         "name":     [Host.name],
         "service":  [Service.name],
         "services": ["open_services_count"],
@@ -21,7 +22,7 @@ class HostDAO(FaradayDAO):
         "os":       [Host.os],
         "owned":    [Host.owned],
     }
-    STRICT_FILTERING = ["service"]
+    STRICT_FILTERING = ["service", "couchid"]
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, host_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, host_filter)
@@ -36,17 +37,20 @@ class HostDAO(FaradayDAO):
         return result
 
     def __query_database(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, host_filter={}):
-        host_bundle = Bundle('host', Host.name, Host.os, Host.description, Host.owned, EntityMetadata.couchdb_id,\
+        host_bundle = Bundle('host', Host.id, Host.name, Host.os, Host.description, Host.owned,\
+            Host.default_gateway_ip, Host.default_gateway_mac, EntityMetadata.couchdb_id,\
             EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
             EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
-            EntityMetadata.update_controller_action,\
+            EntityMetadata.update_controller_action, EntityMetadata.owner,
+            func.group_concat(distinct(Interface.id)).label('interfaces'),\
             func.count(distinct(Vulnerability.id)).label('vuln_count'),\
             func.count(distinct(Service.id)).label('open_services_count'))
 
         query = self._session.query(host_bundle)\
                              .outerjoin(EntityMetadata, EntityMetadata.id == Host.entity_metadata_id)\
+                             .outerjoin(Interface, Host.id == Interface.host_id)\
                              .outerjoin(Vulnerability, Host.id == Vulnerability.host_id)\
-                             .outerjoin(Service, (Host.id == Service.host_id) & (Service.status.in_(('open', 'running'))))\
+                             .outerjoin(Service, (Host.id == Service.host_id) & (Service.status.in_(('open', 'running', 'opened'))))\
                              .group_by(Host.id)
 
         # Apply pagination, sorting and filtering options to the query
@@ -65,15 +69,16 @@ class HostDAO(FaradayDAO):
         return {
             'id': host.couchdb_id,
             'key': host.couchdb_id,
+            '_id': host.id,
             'value': {
                 '_id': host.couchdb_id,
                 '_rev': host.revision,
                 'name': host.name,
                 'os': host.os,
                 'owned': host.owned,
-                'owner': False,
+                'owner': host.owner,
                 'description': host.description,
-                'default_gateway': None,
+                'default_gateway': [host.default_gateway_ip, host.default_gateway_mac],
                 'metadata': {
                     'update_time': host.update_time,
                     'update_user': host.update_user,
@@ -81,10 +86,11 @@ class HostDAO(FaradayDAO):
                     'creator': host.creator,
                     'create_time': host.create_time,
                     'update_controller_action': host.update_controller_action,
-                    'owner': ''
+                    'owner': host.owner
                 },
                 'vulns': host.vuln_count,
-                'services': host.open_services_count }}
+                'services': host.open_services_count,
+                'interfaces': map(int, host.interfaces.split(',')) if host.interfaces else []  }}
 
     def count(self, group_by=None):
         total_count = self._session.query(func.count(Host.id)).scalar()

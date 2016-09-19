@@ -50,10 +50,23 @@ class Host(ModelComposite):
         self._default_gateway = api.getLocalDefaultGateway() \
                                 if default_gateway is None else default_gateway
 
+    def __str__(self):
+        return "{0} ({1})".format(self.name, self.getVulnAmount())
+
     def _updatePublicAttributes(self):
 
         self.publicattrs['Operating System'] = 'getOS'
         self.publicattrsrefs['Operating System'] = '_operating_system'
+
+    def getVulnAmount(self):
+        vuln_count = 0
+        vuln_count += len(self.getVulns())
+        for interface in self.getAllInterfaces():
+            vuln_count += len(interface.getVulns())
+            for service in interface.getAllServices():
+                vuln_count += len(service.getVulns())
+        return vuln_count
+
 
     def accept(self, visitor):
         """ Accept method for visitor in the host leaf"""
@@ -265,6 +278,9 @@ class Interface(ModelComposite):
         self.amount_ports_closed   = 0
         self.amount_ports_filtered = 0
 
+    def __str__(self):
+        return "{0}".format(self.name)
+
     def _updatePublicAttributes(self):
 
         self.publicattrs['MAC Address'] = 'mac'
@@ -297,7 +313,6 @@ class Interface(ModelComposite):
             servs.accept(visitor)
         visitor.visit(self)
 
-
     def tieBreakable(self, property_key):
         if property_key in ["_hostnames"]:
             return True
@@ -318,8 +333,6 @@ class Interface(ModelComposite):
 
     def getName(self):
         return self._name
-
-
 
     def setMAC(self, mac):
         self.mac = mac
@@ -498,6 +511,11 @@ class Service(ModelComposite):
         self.publicattrs['Status'] = 'getStatus'
         self.publicattrs['Version'] = 'getVersion'
 
+    def __str__(self):
+        return "{0} ({1})".format(self.name, self.getVulnAmount())
+
+    def getVulnAmount(self):
+        return len(self.getVulns())
 
     def setName(self, name):
         self._name = name

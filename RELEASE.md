@@ -14,12 +14,13 @@ TBA:
 ---
 * Major refactor of Faraday Client: now we support massive workspaces (100.000+ hosts). 
 * Fixed more than 10 minor bugs on the Web UI.
+* Fixed searching with spaces character on Web UI
 * Updated URL shown when starting Faraday.
 * Dashboard is now refreshed automatically every 60 seconds.
 * Fixed Propecia plugin.
 * New plugin: WPscan
 * Host Sidebar on GTK now adds information more intelligently and will never block the application.
-* Evidence screenshots in report generation, is now more bigger. 
+* Evidence screenshots in report generation is now bigger. 
 
 
 August 12, 2016:

@@ -56,6 +56,10 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, 
             controller: 'workspacesCtrl',
             title: 'Dashboard | '
         }).
+        when('/help', {
+            templateUrl: 'scripts/help/partials/help.html',
+            title: 'Help | '
+        }).
         when('/hosts/ws/:wsId/search/:search', {
             templateUrl: 'scripts/hosts/partials/list.html',
             controller: 'hostsCtrl',

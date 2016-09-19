@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-TBA: 
+September 19, 2016: 
 ---
 * Major refactor of Faraday Client: now we support massive workspaces (100.000+ hosts). 
 * Fixed more than 10 minor bugs on the Web UI.

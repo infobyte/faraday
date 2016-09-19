@@ -38,5 +38,7 @@ angular.module('faradayApp')
                 $scope.cmdSortReverse = !$scope.cmdSortReverse;
             }
 
+            dashboardSrv.registerCallback(init);
+
             init();
     }]);

@@ -20,7 +20,17 @@ class HTTPProxyClient(proxy.ProxyClient):
     def connectionLost(self, reason):
         if not reason.check(error.ConnectionClosed):
             logger.get_logger(__name__).error("Connection error: {}".format(reason.value))
-        return proxy.ProxyClient.connectionLost(self, reason)
+
+        try:
+            proxy.ProxyClient.connectionLost(self, reason)
+
+        except RuntimeError, e:
+            # Dirty way to ignore this expected exception from twisted. It happens
+            # when one endpoint of the connection is still transmitting data while
+            # the other one is disconnected.
+            ignore_error_msg = 'Request.finish called on a request after its connection was lost'
+            if ignore_error_msg not in e.message:
+                raise e
 
 
 class HTTPProxyClientFactory(proxy.ProxyClientFactory):

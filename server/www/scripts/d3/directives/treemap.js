@@ -32,10 +32,12 @@ angular.module('faradayApp')
           }, true);
  
           scope.render = function(data) {
+            //remove existing treemap container, if any
+            d3.select(ele[0]).select("#treemap_container").remove();
 
             if (!data || data.length == 0) return;
 
-          var width = data.width || 160,
+            var width = data.width || 160,
             height = data.height || 133;
 
             var div = d3.select(ele[0])

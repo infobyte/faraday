@@ -104,6 +104,26 @@ angular.module('faradayApp')
             return deferred.promise;
         }
 
+        servicesManager.getServiceVulnCount = function(ws, services) {
+            var deferred = $q.defer();
+            var promises =  [];
+            services.forEach(function(service) {
+                var url = BASEURL + "_api/ws/" + ws + "/services?couchid=" + service._id;
+                promises.push($http.get(url));
+            });
+            $q.all(promises).then(function(services){
+                var result = {};
+                services.forEach(function(service) {
+                    var service_data = service.data.services[0];
+                    result[service_data.id] = service_data.vulns;
+                });
+                deferred.resolve(result);
+            }, function(){
+                deferred.reject([]);
+            });
+            return deferred.promise;
+        }
+
         servicesManager.createService = function(serviceData, ws) {
             var deferred = $q.defer();
             var self = this;

@@ -12,6 +12,7 @@ import requests
 from couchdbkit import Server
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.resource import CouchdbResource
+from managers.all import ViewsManager
 from server import config
 
 
@@ -29,7 +30,7 @@ class CouchDBServer(object):
 
     def __authenticate(self):
         user, passwd = config.couchdb.user, config.couchdb.password
-        if (all((user, passwd))):
+        if all((user, passwd)):
             auth = restkit.BasicAuth(user, passwd)
             self.__auth_resource = CouchdbResource(filters=[auth])
         else:
@@ -44,13 +45,16 @@ class CouchDBServer(object):
     def get_workspace_handler(self, ws_name):
         return self.__server.get_db(ws_name)
 
+    def get_or_create_db(self, ws_name):
+        return self.__server.get_or_create_db(ws_name)
+
 
 class Workspace(object):
-    def __init__(self, ws_name):
-        self.__server = CouchDBServer()
+    def __init__(self, ws_name, couchdb_server_conn=None):
         self.__ws_name = ws_name
-        self.__get_workspace()
+        self.__server = couchdb_server_conn or CouchDBServer()
         self.__changes_monitor_thread = None
+        self.__get_workspace()
 
     def __get_workspace(self):
         self.__workspace = self.__server.get_workspace_handler(self.__ws_name)
@@ -102,6 +106,9 @@ class Workspace(object):
     def save_doc(self, document):
         return self.__workspace.save_doc(document)
 
+    def delete_doc(self, document):
+        return self.__workspace.delete_doc(document)
+
     def create_doc(self, doc_content):
         # Remember to add "_id" in the doc if you want
         # to specify an arbitrary id
@@ -147,7 +154,10 @@ class ChangesStream(object):
                     stream=True, auth=get_auth_info())
 
                 for raw_line in self.__response.iter_lines():
-                    line = self.__sanitize(raw_line) 
+                    if self.__stop:
+                        break
+
+                    line = self.__sanitize(raw_line)
                     if not line:
                         continue
 
@@ -158,15 +168,22 @@ class ChangesStream(object):
                     yield change
 
             except Exception, e:
+                # On workspace deletion, requests will probably
+                # fail to perform the request or the connection
+                # will be closed. Check if this was intentional
+                # by checking on the __stop flag.
+                if self.__stop:
+                    break
+
                 import traceback
                 logger.debug(traceback.format_exc())
 
                 # Close everything but keep retrying
                 self.stop()
-                self.__stop = True
+                self.__stop = False
 
-                logger.warning(u"Lost connection to CouchDB. Retrying in 5 seconds...")
-                time.sleep(5)
+                logger.warning(u"Lost connection to CouchDB. Retrying in 3 seconds...")
+                time.sleep(3)
                 logger.info(u"Retrying...")
 
     def __sanitize(self, raw_line):
@@ -182,7 +199,7 @@ class ChangesStream(object):
             return None
 
         # Modify line cases
-        if line.startswith('"last_seq"'): 
+        if line.startswith('"last_seq"'):
             line = '{' + line
         if line.endswith(","):
             line = line[:-1]
@@ -197,12 +214,18 @@ class ChangesStream(object):
             return None
 
     def stop(self):
+        self.__stop = True
         if self.__response is not None:
             self.__response.close()
             self.__response = None
-        self.__stop = True
 
 class Change(object):
+    REQUIRED_FIELDS = ('doc', 'changes', 'id', 'seq')
+
+    @staticmethod
+    def validate(change_doc):
+        return all(map(lambda prop: prop in change_doc, Change.REQUIRED_FIELDS))
+
     def __init__(self, change_doc):
         self.change_doc = change_doc
         self.doc = change_doc.get('doc')
@@ -214,7 +237,12 @@ class Change(object):
         self.updated = (int(self.revision.split('-')[0]) > 1)
         self.added = (not self.deleted and not self.updated)
 
+
 class DBChange(object):
+    @staticmethod
+    def validate(change_doc):
+        return True
+
     def __init__(self, change_doc):
         self.change_doc = change_doc
         self.type = change_doc.get('type', None)
@@ -233,7 +261,11 @@ class MonitorThread(threading.Thread):
     def run(self):
         for change_doc in self.__stream:
             try:
-                self.__changes_callback(self.CHANGE_CLS(change_doc))
+                if self.CHANGE_CLS.validate(change_doc):
+                    self.__changes_callback(self.CHANGE_CLS(change_doc))
+                else:
+                    logger.debug(u'Ignoring change: {}'.format(change_doc))
+
             except Exception, e:
                 import traceback
                 logger.debug(traceback.format_exc())
@@ -249,7 +281,7 @@ class MonitorThread(threading.Thread):
                     elif change_doc.get('reason') == 'no_db_file':
                         self.__stream.stop()
                         break
-    
+
     def stop(self):
         self.__stream.stop()
 
@@ -274,22 +306,36 @@ def get_auth_info():
 def is_usable_workspace(ws_name):
     return not ws_name.startswith('_') and ws_name not in config.WS_BLACKLIST
 
-def list_workspaces_as_user(cookies):
+def list_workspaces_as_user(cookies, credentials=None):
     all_dbs_url = get_couchdb_url() + '/_all_dbs'
-    response = requests.get(all_dbs_url, verify=False, cookies=cookies)
+    response = requests.get(all_dbs_url, verify=False, cookies=cookies, auth=credentials)
     if response.status_code != requests.codes.ok:
         raise Exception("Couldn't obtain workspaces list")
 
-    workspaces = filter(lambda ws_name: is_usable_workspace(ws_name) and has_permissions_for(ws_name, cookies),\
-                        response.json())
+    def is_workspace_accessible_for_user(ws_name):
+        return is_usable_workspace(ws_name) and\
+               has_permissions_for(ws_name, cookies, credentials)
 
+    workspaces = filter(is_workspace_accessible_for_user, response.json())
     return { 'workspaces': workspaces }
 
-def has_permissions_for(workspace_name, cookies=None, credentials=None):
+def server_has_access_to(ws_name):
+    return has_permissions_for(ws_name, credentials=get_auth_info())
+
+def get_workspace(workspace_name, cookies, credentials):
+    workspace = _get_workspace_doc(workspace_name, cookies, credentials).json()
+    ws_info_url = get_couchdb_url() + ('/%s' % (workspace_name))
+    response = requests.get(ws_info_url, verify=False, cookies=cookies, auth=credentials)
+    workspace['last_seq'] = response.json()['update_seq']
+    return workspace
+
+def _get_workspace_doc(workspace_name, cookies, credentials):
     # TODO: SANITIZE WORKSPACE NAME IF NECESSARY. POSSIBLE SECURITY BUG
     ws_url = get_couchdb_url() + ('/%s/%s' % (workspace_name, workspace_name))
-    response = requests.get(ws_url, verify=False, cookies=cookies, auth=credentials)
+    return requests.get(ws_url, verify=False, cookies=cookies, auth=credentials)
 
+def has_permissions_for(workspace_name, cookies=None, credentials=None):
+    response = _get_workspace_doc(workspace_name, cookies, credentials)
     # Even if the document doesn't exist, CouchDB will
     # respond 401 if it doesn't have access to it
     return (response.status_code != requests.codes.unauthorized)
@@ -301,4 +347,16 @@ def start_dbs_monitor(changes_callback):
     monitor_thread.daemon = True
     monitor_thread.start()
     return monitor_thread
+
+def push_reports():
+    vmanager = ViewsManager()
+    try:
+        logger.debug(u'Pushing Reports DB into CouchDB')
+        couchdb_server = CouchDBServer()
+        workspace = couchdb_server.get_or_create_db('reports')
+        vmanager.addView(config.REPORTS_VIEWS_DIR, workspace)
+    except:
+        import traceback
+        logger.debug(traceback.format_exc())
+        logger.warning("Reports database couldn't be uploaded. You need to be an admin to do it")
 

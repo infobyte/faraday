@@ -15,7 +15,7 @@
                 <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
                     <span class="glyphicon glyphicon-refresh"></span>
                 </button>
-                <button type="button" class="btn btn-danger" title="{{ confirmed === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleFilter(expression)">
+                <button type="button" class="btn btn-danger" title="{{ confirmed === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleFilter()">
                     <span class="glyphicon glyphicon-filter" ng-style="{ 'opacity': (confirmed === true) ? '1' : '0.7' }"></span>
                 </button>
                 <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">

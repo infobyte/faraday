@@ -15,21 +15,21 @@ angular.module('faradayApp')
                 if($routeParams.wsId != undefined) {
                     $scope.workspace = $routeParams.wsId;
 
-                    $scope.loadData();
+                    $scope.loadData(true);
 
                     $scope.$watch(function() {
                         return dashboardSrv.props.confirmed;
                     }, function(newValue, oldValue) {
                         if (oldValue != newValue)
-                            $scope.loadData();
+                            $scope.loadData(true);
                     }, true);
                 }
             };
 
-            $scope.loadData = function() {
+            $scope.loadData = function(animated) {
                 dashboardSrv.getVulnerabilitiesCount($scope.workspace)
                     .then(function(vulns) {
-                        $scope.data = {key: [], value: [], colors: [], options: {maintainAspectRatio: false}};
+                        $scope.data = {key: [], value: [], colors: [], options: {maintainAspectRatio: false, animateRotate: animated}};
                         $scope.loaded = true;
                         SEVERITIES.forEach(function(severity, index) {
                             if(severity != "unclassified" && vulns[severity] != undefined) {
@@ -38,8 +38,14 @@ angular.module('faradayApp')
                                 $scope.data.colors.push(dashboardSrv.vulnColors[index]);
                             }
                         });
+                        // angular.copy(tmp, $scope.data);
+                        //                    
                     });
             };
+
+            dashboardSrv.registerCallback(function (){
+                $scope.loadData(false);
+            });
 
             init();
     }]);

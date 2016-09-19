@@ -17,14 +17,11 @@ def list_services(workspace=None):
     get_logger(__name__).debug("Request parameters: {!r}"\
         .format(flask.request.args))
 
-    port = get_integer_parameter('port', default=None)
-
     services_dao = ServiceDAO(workspace)
-    services_by_host = services_dao.list(port)
 
-    result = { 'hosts': services_by_host }
+    services = services_dao.list(service_filter=flask.request.args)
 
-    return flask.jsonify(result)
+    return flask.jsonify(services)
 
 @app.route('/ws/<workspace>/services/count', methods=['GET'])
 @gzipped

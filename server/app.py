@@ -9,12 +9,9 @@ import server.database
 from server.utils.logger import LOGGING_HANDLERS
 
 
-def create_app():
-    app = flask.Flask(__name__)
-    configure(app)
-    return app
+app = flask.Flask(__name__)
 
-def configure(app):
+def setup():
     app.debug = server.config.is_debug_mode()
     minify_json_output(app)
 
@@ -33,8 +30,6 @@ def minify_json_output(app):
 
     app.json_encoder = MiniJSONEncoder
     app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
-
-app = create_app()
 
 # Load APIs
 import server.api

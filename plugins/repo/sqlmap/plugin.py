@@ -128,9 +128,10 @@ class SqlmapPlugin(PluginTerminalOutput):
             self.error_message = message
 
     def hashKey(self, key):
-        key = repr(key).strip("'")
+        # from sqlmap/lib/utils/hashdb.py
+        # we don't sanitize key, because we only work
+        # with plain string
         retVal = int(hashlib.md5(key).hexdigest(), 16) & 0x7fffffffffffffff
-
         return retVal
 
     def hashDBRetrieve(self, key, unserialize=False, db=False):
@@ -294,9 +295,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         dbms_version = self.hashDBRetrieve(self.HASHDB_KEYS.DBMS, False, db)
 
         self.ip = self.getAddress(self.hostname)
-
-        dbms = str(dbms_version.split(" ")[0])
-
+        
         h_id = self.createAndAddHost(self.ip)
 
         i_id = self.createAndAddInterface(
@@ -327,12 +326,14 @@ class SqlmapPlugin(PluginTerminalOutput):
             self.hostname,
             '')
 
-        db_port = self.db_port[dbms]
+        for item in self.db_port.keys():
+            if dbms_version.find(item) >= 0:
+                db_port = self.db_port[item]
 
         s_id2 = self.createAndAddServiceToInterface(
             h_id,
             i_id,
-            name=dbms,
+            name=dbms_version,
             protocol="tcp",
             status="down",
             version=str(dbms_version),
@@ -440,9 +441,12 @@ class SqlmapPlugin(PluginTerminalOutput):
 
         if args.u:
 
-            urlComponents = urlparse(args.u)
+            if args.u.find('http://') < 0 or args.u.find('https://') < 0:
+                urlComponents = urlparse('http://' + args.u)
+            else:
+                urlComponents = urlparse(args.u)
 
-            self.protocol = urlComponents.scheme
+            self.protocol = urlComponents.scheme 
             self.hostname = urlComponents.netloc
 
             if urlComponents.port:

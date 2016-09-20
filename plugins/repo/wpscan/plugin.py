@@ -93,7 +93,7 @@ class WPScanPlugin(core.PluginBase):
                     self.plugins[name[0]] = title #insert plugin in dicc {'plugin' : ['titles', 'titles']}
 
     def addThemesOrPluginsVulns(self, db, dic, host_id, serv_id, domain, wp_url, name):
-        with open(self.wpPath + db, "r") as data:
+        with open(self.wpPath+'/data/'+db, "r") as data:
             j = json.load(data)
             for p in dic:
                 for title in dic[p]:
@@ -110,7 +110,7 @@ class WPScanPlugin(core.PluginBase):
 
 
     def addWPVulns(self, db, version, host_id, serv_id, domain):
-        with open(self.wpPath + db, "r") as data:
+        with open(self.wpPath+'/data/'+db, "r") as data:
             j = json.load(data)
             for vuln in j[version]['vulnerabilities']: #iter vulnerabilities
                 title     = vuln['title'] #title

@@ -3,14 +3,17 @@
 
 '''
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
-import os
+#TODO : Fix help
+
+import imp
 import argparse
 
 if __name__ == '__main__':
+    
     description = (
         'Using our plugin you can do different actions in the command line'
         ' and interact with Faraday. Faraday comes with some presets for bulk'
@@ -22,23 +25,27 @@ if __name__ == '__main__':
         '-e',
         '--execute',
         help='Execute code received in this parameter.'
-        ' Example:\n./fplugin -e "for h in api.__model_controller.getAllHosts(): print h.name"')
+        ' Example:\n./fplugin -e "for h in getHosts(): print h.name"')
 
-    parser.add_argument(
-        '-o',
-        '--output',
-        help='Store output of fplugin in a file.')
-
-    # file with code to execute
     parser.add_argument(
         '-f',
         '--file',
-        help='File with code to execute.'
+        help='Script file.'
         ' Example:\n./fplugin -f getAllIps.py ')
 
     args, unknown = parser.parse_known_args()
-    if args.output:
-        if os.path.isfile(args.output):
-            with open(args.output) as f:
-                data = f.read()
-                print data
+
+    if args.execute:
+        # Shrug Here.
+        exec(args.execute, globals(), locals())
+
+    if args.file:
+
+        # Get filename and import this
+        module_fplugin = imp.load_source('module_fplugin', args.file)
+
+        try:
+            call_main = getattr(module_fplugin, 'main')
+            call_main()
+        except AttributeError:
+            print 'Error: main() function missing in script?'

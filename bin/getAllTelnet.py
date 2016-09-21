@@ -11,4 +11,5 @@ from persistence.server.models import get_services
 
 def main(workspace = ''):
     for service in get_services(workspace):
-        print(service.name)
+        if 23 in service.ports:
+            print(service.name)

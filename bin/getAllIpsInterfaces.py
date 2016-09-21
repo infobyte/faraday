@@ -11,4 +11,4 @@ from persistence.server.models import get_interfaces
 
 def main(workspace = ''):
     for interface in get_interfaces(workspace):
-        print(interface.ipv4)
+        print(interface.ipv4['address'])

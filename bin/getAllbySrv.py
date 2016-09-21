@@ -11,7 +11,7 @@ from persistence.server.models import get_services
 
 def main(workspace = ''):
 
-    ports = ['80', '443', '8080']
+    ports = [80, 443, 8080]
     for service in get_services(workspace):
         for port in ports:
             if port in service.ports:

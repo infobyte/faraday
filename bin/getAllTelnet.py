@@ -1,20 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
 '''
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-
 '''
-webs={}
-for host in api.__model_controller.getAllHosts():
 
-    for i in host.getAllInterfaces():
-        for s in i.getAllServices():
-            for p in s.getPorts():
-                if str(p) == '23':
-                    webs[host.name]=1
+from persistence.server.models import get_services
 
-for k,v in webs.iteritems():
-    print k
+def main(workspace = ''):
+    for service in get_services(workspace):
+        print(service.name)

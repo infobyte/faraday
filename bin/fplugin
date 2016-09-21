@@ -9,8 +9,17 @@ See the file 'doc/LICENSE' for the license information
 
 #TODO : Fix help
 
+import os
 import imp
+import sys
 import argparse
+
+parent_path = os.path.abspath(os.path.join(__file__, '../..'))
+sys.path.insert(0, parent_path)
+
+from config.configuration import getInstanceConfiguration
+CONF = getInstanceConfiguration()
+WORKSPACE = CONF.getLastWorkspace()
 
 if __name__ == '__main__':
     
@@ -36,7 +45,7 @@ if __name__ == '__main__':
     args, unknown = parser.parse_known_args()
 
     if args.execute:
-        # Shrug Here.
+        # [Shrug Here]
         exec(args.execute, globals(), locals())
 
     if args.file:
@@ -46,6 +55,6 @@ if __name__ == '__main__':
 
         try:
             call_main = getattr(module_fplugin, 'main')
-            call_main()
+            call_main(workspace = WORKSPACE )
         except AttributeError:
             print 'Error: main() function missing in script?'

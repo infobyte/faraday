@@ -26,6 +26,7 @@ from model.diff import ModelObjectDiff, MergeSolver
 from model.conflict import ConflictUpdate
 from config.configuration import getInstanceConfiguration
 from functools import wraps
+from difflib import Differ
 
 CONF = getInstanceConfiguration()
 
@@ -946,6 +947,35 @@ class _VulnWeb(_Vuln):
     def getTarget(self): return self.target
     def getParent(self): return self.parent
 
+    def tieBreakable(self, property_key):
+        if property_key in ["response"]:
+            return True
+        return False
+
+    def tieBreak(self, key, prop1, prop2):
+        if key == "response":
+            return self._resolve_response(prop1, prop2)
+        return None
+
+    def _resolve_response(self ,res1, res2):
+
+        differ = Differ()
+        result = list(differ.compare(res1.splitlines(), res2.splitlines()))
+
+        counterNegative = 0
+        counterPositive = 0
+        
+        for i in result:
+            if i.startswith('-') and i.find('date:') != -1:
+                counterNegative += 1
+            if i.startswith('+') and i.find('date:') != -1:
+                counterPositive += 1
+
+        if counterNegative == 1 and counterPositive == 1 and counterNegative == counterPositive:
+            return res2
+        else:
+            return None
+            
 class _Note(ModelBase):
     class_signature = 'Note'
 

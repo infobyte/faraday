@@ -25,10 +25,10 @@
                 <tr ng-repeat="vuln in vulns">
                     <td><span am-time-ago="vuln.metadata.create_time * 1000"></span></td>
                     <td>
-                        {{vuln.target}}
+                        <a href="" ng-click="navigate('/status/ws/'+workspace+'/search/target='+vuln.target)">{{vuln.target}}</a>
                     </td>
-                    <td><span class="label vuln fondo-{{vuln.severity}}">{{vuln.severity | uppercase}}</span></td>
-                    <td class="wrapword">{{vuln.name}}</td>
+                    <td><a href="" ng-click="navigate('/status/ws/'+workspace+'/search/severity='+vuln.severity)"><span class="label vuln fondo-{{vuln.severity}}">{{vuln.severity | uppercase}}</span></a></td>
+                    <td class="wrapword"><a href="" ng-click="navigate('/status/ws/'+workspace+'/search/name='+vuln.name)">{{vuln.name}}</a></td>
                     <td>
                         <span class="glyphicon glyphicon-ok" ng-show="vuln.web"></span>
                         <span class="glyphicon glyphicon-remove" ng-show="!vuln.web"></span>

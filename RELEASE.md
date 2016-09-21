@@ -22,6 +22,7 @@ September 19, 2016:
 * Host Sidebar on GTK now adds information more intelligently and will never block the application.
 * Evidence screenshots in report generation is now bigger. 
 * Help menu in GTK with links to interesting links.
+* Added Help section to WEB UI.
 
 August 12, 2016:
 ---

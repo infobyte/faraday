@@ -28,7 +28,7 @@ def main():
 
     if is_server_running():
         sys.exit(1)
-        
+
     if args.debug:
         server.utils.logger.set_logging_level(server.config.DEBUG)
 
@@ -89,8 +89,9 @@ def ask_to_install(missing_packages):
     if query_yes_no("Do you want to install them?", default="no"):
         checker = DependencyChecker(server.config.REQUIREMENTS_FILE)
         checker.install_packages(missing_packages)
+        return True
 
-    return res
+    return False
 
 def import_workspaces():
     import server.importer

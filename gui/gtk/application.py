@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os, sys, threading, webbrowser, time
+from utils.logs import getLogger
 
 try:
     import gi
@@ -441,7 +442,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                 GObject.idle_add(CONF.saveConfig)
             except Exception as e:
                 GObject.idle_add(self.handle_no_active_workspace)
-                model.guiapi.notification_center.showDialog(str(e))
+                getLogger("GTK").error(e)
 
             GObject.idle_add(loading_workspace, 'destroy')
             return True

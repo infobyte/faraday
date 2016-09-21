@@ -11,4 +11,4 @@ from persistence.server.models import get_hosts
 
 def main(workspace = ''):
     for host in get_hosts(workspace):
-        print host.name
+        print(host.name)

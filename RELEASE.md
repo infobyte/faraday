@@ -21,7 +21,7 @@ September 19, 2016:
 * New plugin: WPscan
 * Host Sidebar on GTK now adds information more intelligently and will never block the application.
 * Evidence screenshots in report generation is now bigger. 
-
+* Help menu in GTK with links to interesting links.
 
 August 12, 2016:
 ---

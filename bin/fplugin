@@ -7,8 +7,6 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
-#TODO : Fix help
-
 import os
 import imp
 import sys
@@ -34,7 +32,7 @@ if __name__ == '__main__':
         '-e',
         '--execute',
         help='Execute code received in this parameter.'
-        ' Example:\n./fplugin -e "for h in getHosts(): print h.name"')
+        ' Example:\n./fplugin -e "for h in get_hosts("WORKSPACE_NAME"): print h.name"')
 
     parser.add_argument(
         '-f',

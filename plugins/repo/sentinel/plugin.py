@@ -34,7 +34,7 @@ class SentinelPlugin(core.PluginBase):
     def __init__(self):
         core.PluginBase.__init__(self)
         self.id = "Sentinel"
-        self.name = "sentinel"
+        self.name = "Sentinel Online Plugin"
         self.plugin_version = "0.0.1"
         self.version = "1.0.0"
         self.baseURL = "https://sentinel.whitehatsec.com/api/"

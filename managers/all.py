@@ -11,10 +11,6 @@ See the file 'doc/LICENSE' for the license information
 import os
 from couchdbkit import designer
 
-from config.configuration import getInstanceConfiguration
-
-CONF = getInstanceConfiguration()
-
 
 class ViewsManager(object):
     """docstring for ViewsWrapper"""

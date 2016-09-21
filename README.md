@@ -53,4 +53,3 @@ Join our community! Subscribe to our [mailing list](https://groups.google.com/fo
 
 Do you have a question? Troubleshooting? Joing our IRC channel #faraday-dev in [freenode](ircs://irc.freenode.net/faraday-dev) or access directly from this link: [![Visit our IRC channel](https://kiwiirc.com/buttons/irc.freenode.org/faraday-dev.png)](https://kiwiirc.com/client/irc.freenode.org/?nick=faraday_gi|?#faraday-dev)
 
-

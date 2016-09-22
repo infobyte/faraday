@@ -87,6 +87,11 @@ class Workspace(object):
                 yield doc
             offset += per_request
 
+    def get_documents_starting_with_id(self, starting_id):
+        startkey = '"{0}"'.format(starting_id)
+        endkey = '"{0}.z"'.format(starting_id)
+        return self.__workspace.all_docs(include_docs=True, start_key=startkey, end_key=endkey)
+
     def __get_all_docs(self, limit, offset=0):
         return self.__workspace.all_docs(include_docs=True, limit=limit, skip=offset)
 

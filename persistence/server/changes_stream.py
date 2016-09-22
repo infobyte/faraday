@@ -28,7 +28,7 @@ class CouchChangesStream(object):
 
     def __iter__(self):
         try:
-            self._response = requests.get(self._change_url, self._params, stream=True)
+            self._response = requests.get(self._change_url, stream=True, **self._params)
             if self._response:
                 for raw_line in self._response.iter_lines():
                     line = self._sanitize(raw_line)

@@ -157,7 +157,7 @@ def _delete(delete_url, database=False):
     params = {}
     if not database:
         last_rev = _get(delete_url)['_rev']
-        params = {'_rev': last_rev}
+        params = {'rev': last_rev}
     return _parse_json(_unsafe_io_with_server(requests.delete,
                                               200,
                                               delete_url,

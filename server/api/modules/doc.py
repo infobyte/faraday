@@ -60,28 +60,32 @@ def add_or_update_document(workspace, doc_id):
     return flask.jsonify(response)
 
 @app.route('/ws/<workspace>/doc/<doc_id>', methods=['DELETE'])
-def delete_document(workspace, doc_id):
-    validate_workspace(workspace)
+def delete_document_and_children(workspace, doc_id):
 
+    def delete_document(doc_id, doc_rev):
+        try:
+            response = couchdb_conn.delete_doc({'_id': doc_id, '_rev': doc_rev})
+
+        except RequestFailed as e:
+            response = flask.jsonify(json.loads(e.msg))
+            response.status_code = e.status_int
+            return response
+        except ResourceError as e:
+            response = flask.jsonify({'error': e.message})
+            response.status_code = e.status_int
+            return response
+        if response.get('ok', False):
+            doc_importer = server.database.DocumentImporter(ws.connector)
+            doc_importer.delete_entity_from_doc_id(doc_id)
+
+        return flask.jsonify(response)
+
+    validate_workspace(workspace)
     ws = server.database.get(workspace)
     couchdb_conn = ws.couchdb
-    doc_rev = flask.request.args.get('rev', '')
+    docs_to_delete = couchdb_conn.get_documents_starting_with_id(doc_id)
+    docs_ids_to_delete = filter(lambda x: x is not None, (map(lambda d: d.get('id'), docs_to_delete)))
+    docs_revs_to_delete = map(lambda d: d['doc']['_rev'], docs_to_delete)
+    responses = map(delete_document, docs_ids_to_delete, docs_revs_to_delete)
 
-    try:
-        response = couchdb_conn.delete_doc({'_id': doc_id, '_rev': doc_rev})
-
-    except RequestFailed as e:
-        response = flask.jsonify(json.loads(e.msg))
-        response.status_code = e.status_int
-        return response
-
-    except ResourceError as e:
-        response = flask.jsonify({'error': e.message})
-        response.status_code = e.status_int
-        return response
-
-    if response.get('ok', False):
-        doc_importer = server.database.DocumentImporter(ws.connector)
-        doc_importer.delete_entity_from_doc_id(doc_id)
-
-    return flask.jsonify(response)
+    return responses[0]

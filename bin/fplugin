@@ -15,10 +15,6 @@ import argparse
 parent_path = os.path.abspath(os.path.join(__file__, '../..'))
 sys.path.insert(0, parent_path)
 
-from config.configuration import getInstanceConfiguration
-CONF = getInstanceConfiguration()
-WORKSPACE = CONF.getLastWorkspace()
-
 if __name__ == '__main__':
     
     description = (
@@ -29,30 +25,32 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=description)
 
     parser.add_argument(
-        '-e',
-        '--execute',
-        help='Execute code received in this parameter.'
-        ' Example:\n./fplugin -e "for h in get_hosts("WORKSPACE_NAME"): print h.name"')
-
-    parser.add_argument(
         '-f',
         '--file',
         help='Script file.'
-        ' Example:\n./fplugin -f getAllIps.py ')
+        ' Example:\n./fplugin -f getAllIps.py')
+
+    parser.add_argument(
+        '-w',
+        '--workspace',
+        help='Use workspace')
+
+    parser.add_argument(
+        '-u',
+        '--url',
+        help='Faraday Server URL')
 
     args, unknown = parser.parse_known_args()
-
-    if args.execute:
-        # [Shrug Here]
-        exec(args.execute, globals(), locals())
 
     if args.file:
 
         # Get filename and import this
         module_fplugin = imp.load_source('module_fplugin', args.file)
+        module_fplugin.models.server.FARADAY_UP = False
+        module_fplugin.models.server.SERVER_URL = args.url
 
         try:
             call_main = getattr(module_fplugin, 'main')
-            call_main(workspace = WORKSPACE )
+            call_main(workspace = args.workspace)
         except AttributeError:
             print 'Error: main() function missing in script?'

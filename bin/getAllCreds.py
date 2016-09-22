@@ -7,9 +7,8 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
-from persistence.server.models import get_credentials
+from persistence.server import server, models
 
-def main(workspace = ''):
-
-    for credential in get_credentials(workspace):
+def main(workspace=''):
+    for credential in models.get_credentials(workspace):
         print(credential.username + ' : ' + credential.password)

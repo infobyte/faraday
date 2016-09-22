@@ -7,8 +7,8 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
-from persistence.server.models import get_interfaces
+from persistence.server import server, models
 
-def main(workspace = ''):
-    for interface in get_interfaces(workspace):
+def main(workspace=''):
+    for interface in models.get_interfaces(workspace):
         print(interface.ipv4['address'])

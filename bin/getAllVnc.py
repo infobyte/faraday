@@ -7,9 +7,10 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
-from persistence.server.models import get_services
+from persistence.server import server, models
 
-def main(workspace = ''):
-    for service in get_services(workspace):
+def main(workspace=''):
+    
+    for service in models.get_services(workspace):
         if 5900 in service.ports:
             print(service.name)

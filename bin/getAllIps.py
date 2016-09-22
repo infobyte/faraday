@@ -7,8 +7,8 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
-from persistence.server.models import get_hosts
+from persistence.server import server, models
 
-def main(workspace = ''):
-    for host in get_hosts(workspace):
+def main(workspace=''):
+    for host in models.get_hosts(workspace):
         print(host.name)

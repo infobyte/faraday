@@ -2,7 +2,7 @@ from gi.repository import Gtk
 from utils.logs import getLogger
 from functools import wraps
 from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
-from persistence.server.server import ServerRequestException
+from persistence.server.server_io_exceptions import ServerRequestException
 
 def safe_io_with_server(response_in_emergency):
     """A function that takes a response_in_emergency. It will return

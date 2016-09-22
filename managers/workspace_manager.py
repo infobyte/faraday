@@ -12,7 +12,7 @@ import time
 
 from model.workspace import Workspace
 from persistence.server.models import create_workspace, get_workspaces_names, get_workspace, delete_workspace
-from persistence.server.server import Unauthorized
+from persistence.server.server_io_exceptions import Unauthorized
 from model.guiapi import notification_center
 
 from config.configuration import getInstanceConfiguration

@@ -19,8 +19,7 @@ from persistence.server.utils import (force_unique,
                                       get_vuln_web_properties,
                                       get_note_properties,
                                       get_credential_properties,
-                                      get_command_properties,
-                                      WrongObjectSignature)
+                                      get_command_properties)
 
 from model.diff import ModelObjectDiff, MergeSolver
 from model.conflict import ConflictUpdate
@@ -964,7 +963,7 @@ class _VulnWeb(_Vuln):
 
         counterNegative = 0
         counterPositive = 0
-        
+
         for i in result:
             if i.startswith('-') and i.find('date:') != -1:
                 counterNegative += 1
@@ -975,7 +974,7 @@ class _VulnWeb(_Vuln):
             return res2
         else:
             return None
-            
+
 class _Note(ModelBase):
     class_signature = 'Note'
 

@@ -2,7 +2,7 @@ import responses
 import requests
 import unittest
 from persistence.server import server
-from persistence.server import utils
+from persistence.server import server_io_exceptions
 from mock import MagicMock, patch
 
 server.FARADAY_UP = False
@@ -41,32 +41,32 @@ class ClientServerAPITests(unittest.TestCase):
         url = "http://just_raise_conflict.com"
         responses.add(responses.PUT, url, body='{"name": "betcha"}', status=409,
                       content_type="application/json", json={'error': 'conflict'})
-        with self.assertRaises(server.ConflictInDatabase):
+        with self.assertRaises(server_io_exceptions.ConflictInDatabase):
             server._unsafe_io_with_server(requests.put, 200, url, json={"name": "betcha"})
 
     @responses.activate
     def test_raise_resource_does_not_exist(self):
         url = "http://dont_exist.com"
         responses.add(responses.GET, url, body='{"name": "betcha"}', status=404)
-        with self.assertRaises(server.ResourceDoesNotExist):
+        with self.assertRaises(server_io_exceptions.ResourceDoesNotExist):
             server._unsafe_io_with_server(requests.get, 200, url, json={"name": "betcha"})
 
     @responses.activate
     def test_raise_unauthorized(self):
         url = "http://nope.com"
         responses.add(responses.GET, url, body='{"name": "betcha"}', status=403)
-        with self.assertRaises(server.Unauthorized):
+        with self.assertRaises(server_io_exceptions.Unauthorized):
             server._unsafe_io_with_server(requests.get, 200, url, json={"name": "betcha"})
         url2 = "http://nope2.com"
         responses.add(responses.GET, url2, body='{"name": "betcha"}', status=401)
-        with self.assertRaises(server.Unauthorized):
+        with self.assertRaises(server_io_exceptions.Unauthorized):
             server._unsafe_io_with_server(requests.get, 200, url, json={"name": "betcha"})
 
     @responses.activate
     def test_raise_cant_comm_with_server_on_wrong_response_code(self):
         url = "http://yes.com"
         responses.add(responses.GET, url, status=204)
-        with self.assertRaises(server.CantCommunicateWithServerError):
+        with self.assertRaises(server_io_exceptions.CantCommunicateWithServerError):
             server._unsafe_io_with_server(requests.get, 200, url)
 
     @responses.activate
@@ -170,5 +170,5 @@ class ClientServerAPITests(unittest.TestCase):
         for obj_sign in obj_sign_to_mock.keys():
             server.get_objects('a', obj_sign)
             obj_sign_to_mock[obj_sign].assert_called_once_with('a')
-        with self.assertRaises(utils.WrongObjectSignature):
+        with self.assertRaises(server_io_exceptions.WrongObjectSignature):
             server.get_objects('a', 'not a signature')

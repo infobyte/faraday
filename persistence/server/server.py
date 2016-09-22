@@ -9,7 +9,13 @@ See the file 'doc/LICENSE' for the license information
 import requests
 import json
 from persistence.server.utils import force_unique
-from persistence.server.utils import WrongObjectSignature
+from persistence.server.server_io_exceptions import (WrongObjectSignature,
+                                                     CantCommunicateWithServerError,
+                                                     ConflictInDatabase,
+                                                     ResourceDoesNotExist,
+                                                     Unauthorized,
+                                                     MoreThanOneObjectFoundByID)
+
 from persistence.server.changes_stream import CouchChangesStream
 
 # NOTE: Change is you want to use this module by itself.
@@ -942,44 +948,3 @@ def test_server_url(url_to_test):
         test_okey = False
     return test_okey
 
-class ServerRequestException(Exception):
-    def __init__(self):
-        pass
-
-class CantCommunicateWithServerError(ServerRequestException):
-    def __init__(self, function, server_url, payload):
-        self.function = function
-        self.server_url = server_url
-        self.payload = payload
-
-    def __str__(self):
-        return ("Couldn't get a valid response from the server when requesting "
-                "to URL {0} with parameters {1} and function {2}.".format(self.server_url,
-                                                                          self.payload,
-                                                                          self.function))
-
-
-class ConflictInDatabase(ServerRequestException):
-    def __init__(self, answer):
-        self.answer = answer
-
-    def __str__(self):
-        return ("There was a conflict trying to save your document. "
-                "Most probably the document already existed and you "
-                "did not provided a _rev argument to your payload. "
-                "The answer from the server was {0}".format(self.answer))
-
-class ResourceDoesNotExist(ServerRequestException):
-    def __init__(self, url):
-        self.url = url
-
-    def __str__(self):
-        return ("Can't find anything on URL {0}".format(self.url))
-
-class Unauthorized(ServerRequestException):
-    def __init__(self, answer):
-        self.answer = answer
-
-    def __str__(self):
-        return ("You're not authorized to make this request. "
-                "The answer from the server was {0}".format(self.answer))

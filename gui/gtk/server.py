@@ -10,7 +10,7 @@ See the file 'doc/LICENSE' for the license information
 import threading, time, requests
 from model.guiapi import notification_center
 from decorators import safe_io_with_server
-from persistence.server import models
+from persistence.server import models, server_io_exceptions
 
 class ServerIO(object):
     def __init__(self, active_workspace):
@@ -167,7 +167,7 @@ class ServerIO(object):
                             revision = change.get("changes")[-1].get('rev')
                             notification_dispatcher(obj_id, obj_type, obj_name,
                                                     deleted, revision)
-                except requests.exceptions.RequestException:
+                except server_io_exceptions.ChangesStreamStoppedAbruptly:
                     notification_center.WorkspaceProblem()
                     return False
             else:

@@ -214,7 +214,6 @@ class PluginBase(object):
     def createAndAddVulnToService(self, host_id, service_id, name, desc="",
                                   ref=[], severity="", resolution=""):
         
-        
         vuln_obj = model.common.factory.createModelObject(
             ModelObjectVuln.class_signature,
             name, desc=desc, ref=ref, severity=severity, resolution=resolution,
@@ -293,57 +292,6 @@ class PluginBase(object):
         self.__addPendingAction(modelactions.ADDCREDSRV, cred_obj.getID())
 
         return cred_obj.getID()
-
-    def addHost(self, host, category=None, update=False, old_hostname=None):
-
-        self.__addPendingAction(modelactions.ADDHOST, host, category, update,
-                                old_hostname)
-
-    def addInterface(self, host_id, interface):
-        self.__addPendingAction(modelactions.ADDINTERFACE, host_id, interface)
-
-    def addServiceToInterface(self, host_id, interface_id, service):
-        self.__addPendingAction(modelactions.ADDSERVICEINT, host_id,
-                                interface_id, service)
-
-    def addVulnToHost(self, host_id, vuln):
-        self.__addPendingAction(modelactions.ADDVULNHOST, host_id, vuln)
-
-    def addVulnToInterface(self, host_id, interface_id, vuln):
-        self.__addPendingAction(modelactions.ADDVULNINT, host_id, interface_id,
-                                vuln)
-
-    def addVulnToService(self, host_id, service_id, vuln):
-        self.__addPendingAction(modelactions.ADDVULNSRV, host_id, service_id,
-                                vuln)
-
-    def addVulnWebToService(self, host_id, service_id, vuln):
-        self.__addPendingAction(modelactions.ADDVULNWEBSRV, host_id, service_id,
-                                vuln)
-
-    def addNoteToHost(self, host_id, note):
-        self.__addPendingAction(modelactions.ADDNOTEHOST, host_id, note)
-
-    def addNoteToInterface(self, host_id, interface_id, note):
-        self.__addPendingAction(modelactions.ADDNOTEINT, host_id, interface_id,
-                                note)
-
-    def addNoteToService(self, host_id, service_id, note):
-        self.__addPendingAction(modelactions.ADDNOTESRV, host_id, service_id,
-                                note)
-
-    def addNoteToNote(self, host_id, service_id, note_id, note):
-        self.__addPendingAction(modelactions.ADDNOTENOTE, host_id, service_id,
-                                note_id, note)
-
-    def addCredToService(self, host_id, service_id, cred):
-        self.__addPendingAction(modelactions.ADDCREDSRV, host_id, service_id,
-                                cred)
-
-    def delServiceFromInterface(self, service, hostname,
-                                intname, remote=True):
-        self.__addPendingAction(modelactions.DELSERVICEINT, hostname, intname,
-                                service, remote)
 
     def log(self, msg, level='INFO'):
         self.__addPendingAction(modelactions.LOG, msg, level)

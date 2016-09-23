@@ -121,6 +121,11 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, 
             controller: 'licensesCtrl',
             title: 'Licenses | '
         }).
+        when('/status/ws/:wsId/history', {
+            templateUrl: 'scripts/statusReport/partials/statusReportHistory.html',
+            controller: 'statusReportHistoryCtrl',
+            title: 'Status Report History |',
+        }).
         when('/status/ws/:wsId/groupby/:groupbyId', {
             templateUrl: 'scripts/statusReport/partials/statusReport.html',
             controller: 'statusReportCtrl',

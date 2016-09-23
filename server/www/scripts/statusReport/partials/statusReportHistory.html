@@ -8,6 +8,11 @@
             <div class="ws-label">
                 <h2><span id="ws-name" title="Current workspace">Status report history for {{ workspace }} ({{vulns.count}} vulns)</span></h2><!-- WS name -->
             </div><!-- .ws-label -->
+            <div class="btn-group btn-small-margin">
+                <a href="#/status/ws/{{workspace}}" class="btn btn-success" title="Back to report">
+                    <span class="glyphicon glyphicon-arrow-left"></span>
+                </a>
+            </div>
             <div id="ws-control" class="btn-group btn-small-margin">
                 <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
                     <span class="glyphicon glyphicon-refresh"></span>
@@ -16,30 +21,35 @@
                     Change workspace <span class="caret"></span>
                 </button>
                 <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
-                    <li ng-repeat="ws in workspaces"><a href="#/status/ws/{{ws}}" class="ws" >{{ws}}</a></li>
+                    <li ng-repeat="ws in workspaces"><a href="#/status/ws/{{ws}}/history" class="ws" >{{ws}}</a></li>
                 </ul>
                 <!-- WS navigation -->
             </div><!-- #ws-control -->
-            <!-- Month Control -->
-            <div class="btn-group btn-small-margin">
-                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" title="Select month">
-                    {{ months[month] }} <span class="caret"></span>
-                </button>
-                <ul id="monthList" class="dropdown-menu dropdown-menu-right">
-                    <li ng-repeat="mm in availableMonths"><a class="ws" ng-click="setMonth(mm)">{{ months[mm] }}</a></li>
-                </ul>
-            </div>
-            <!-- Year Control -->
-            <div class="btn-group btn-small-margin">
-                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" title="Select year">
-                    {{ year }} <span class="caret"></span>
-                </button>
-                <ul id="monthList" class="dropdown-menu dropdown-menu-right">
-                    <li ng-repeat="yy in availableYears"><a class="ws" ng-click="setYear(yy)">{{ yy }}</a></li>
-                </ul>
+            <div ng-if="vulns.count > 0">
+                <!-- Month Control -->
+                <div class="btn-group btn-small-margin">
+                    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" title="Select month">
+                        {{ months[month] }} <span class="caret"></span>
+                    </button>
+                    <ul id="monthList" class="dropdown-menu dropdown-menu-right">
+                        <li ng-repeat="mm in availableMonths"><a class="ws" ng-click="setMonth(mm)">{{ months[mm] }}</a></li>
+                    </ul>
+                </div>
+                <!-- Year Control -->
+                <div class="btn-group btn-small-margin">
+                    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" title="Select year">
+                        {{ year }} <span class="caret"></span>
+                    </button>
+                    <ul id="monthList" class="dropdown-menu dropdown-menu-right">
+                        <li ng-repeat="yy in availableYears"><a class="ws" ng-click="setYear(yy)">{{ yy }}</a></li>
+                    </ul>
+                </div>
             </div>
 
             <div class="reports">
+                <div ng-if="vulns.count === 0">
+                    <h2>Vulns not found</h2>
+                </div>
                 <canvas class="chart chart-bar" chart-data="data" chart-labels="labels" chart-series="series" chart-colors="colors" width="1200" height="400"></canvas>
             </div><!-- .reports -->
     </div><!-- #reports-main --></div><!-- .right-main -->

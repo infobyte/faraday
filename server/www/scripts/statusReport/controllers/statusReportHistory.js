@@ -56,8 +56,10 @@ angular.module('faradayApp')
             .then(function(response) {
                 $scope.vulns.data = response.vulnerabilities;
                 $scope.vulns.count = response.count;
-                updateDateSelection();
-                updateStackedChartData();
+                if ($scope.vulns.count > 0) {
+                    updateDateSelection();
+                    updateStackedChartData();
+                }
             });
         };
 
@@ -65,7 +67,6 @@ angular.module('faradayApp')
             for (vuln in $scope.vulns.data) {
                 var d = new Date(0);
                 d.setUTCMilliseconds($scope.vulns.data[vuln].metadata.create_time * 1000);
-                console.log(d.getFullYear() + ' - ' + $scope.vulns.data[vuln].metadata.create_time * 1000)
                 if ($scope.availableMonths.indexOf(d.getMonth()) == -1) {
                     $scope.availableMonths.push(d.getMonth());
                     $scope.availableMonths.sort();

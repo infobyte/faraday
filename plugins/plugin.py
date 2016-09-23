@@ -140,11 +140,15 @@ class PluginBase(object):
         """
         self._pending_actions.put(args)
 
-    def createAndAddHost(self, name, os="unknown", category=None,
-                         update=False, old_hostname=None):
-        self.__addPendingAction(modelactions.CADDHOST, name, os, category,
-                                update, old_hostname)
-        return factory.generateID(Host.class_signature, name=name, os=os)
+    def createAndAddHost(self, name, os="unknown"):
+
+        host_obj = factory.createModelObject(
+            Host.class_signature,
+            name, os=os, parent_id=None)
+        
+        self.__addPendingAction(modelactions.ADDHOST, host_obj)
+        
+        return host_obj.getID()
 
     def createAndAddInterface(
         self, host_id, name="", mac="00:00:00:00:00:00",
@@ -154,128 +158,149 @@ class PluginBase(object):
         ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns=[],
         network_segment="", hostname_resolution=[]
     ):
-        self.__addPendingAction(modelactions.CADDINTERFACE, host_id, name,
-                                mac, ipv4_address, ipv4_mask, ipv4_gateway,
-                                ipv4_dns, ipv6_address, ipv6_prefix,
-                                ipv6_gateway, ipv6_dns,
-                                network_segment, hostname_resolution)
-        return factory.generateID(
-            Interface.class_signature, parent_id=host_id, name=name, mac=mac,
-            ipv4_address=ipv4_address, ipv4_mask=ipv4_mask,
-            ipv4_gateway=ipv4_gateway, ipv4_dns=ipv4_dns,
+        
+        obj_int = model.common.factory.createModelObject(
+            Interface.class_signature,
+            name, mac=mac, ipv4_address=ipv4_address,
+            ipv4_mask=ipv4_mask, ipv4_gateway=ipv4_gateway, ipv4_dns=ipv4_dns,
             ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
             ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
             network_segment=network_segment,
-            hostname_resolution=hostname_resolution)
+            hostname_resolution=hostname_resolution, parent_id=host_id)
+
+ 
+        self.__addPendingAction(modelactions.ADDINTERFACE, obj_int)
+        return obj_int.getID()
 
     def createAndAddServiceToInterface(self, host_id, interface_id, name,
                                        protocol="tcp?", ports=[],
                                        status="running", version="unknown",
                                        description=""):
-        self.__addPendingAction(modelactions.CADDSERVICEINT, host_id,
-                                interface_id, name, protocol, ports, status,
-                                version, description)
-        return factory.generateID(
+    
+        obj_serv = model.common.factory.createModelObject(
             Service.class_signature,
-            name=name, protocol=protocol, ports=ports,
-            status=status, version=version, description=description,
-            parent_id=interface_id)
+            name, protocol=protocol, ports=ports, status=status,
+            version=version, description=description, parent_id=interface_id)
+
+        self.__addPendingAction(modelactions.ADDSERVICEINT, obj_serv.__dict__)
+        
+        return obj_serv.getID()
 
     def createAndAddVulnToHost(self, host_id, name, desc="", ref=[],
                                severity="", resolution=""):
-        self.__addPendingAction(modelactions.CADDVULNHOST, host_id, name,
-                                desc, ref, severity, resolution)
-        return factory.generateID(
-            ModelObjectVuln.class_signature,
-            name=name, desc=desc, ref=ref, severity=severity,
-            resolution=resolution, parent_id=host_id)
 
+        vuln_obj = model.common.factory.createModelObject(
+            ModelObjectVuln.class_signature,
+            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            confirmed=False, parent_id=host_id)
+
+        self.__addPendingAction(modelactions.ADDVULNHOST, vuln_obj.__dict__)
+
+        return vuln_obj.getID()
+    
     def createAndAddVulnToInterface(self, host_id, interface_id, name,
                                     desc="", ref=[], severity="",
                                     resolution=""):
-        self.__addPendingAction(modelactions.CADDVULNINT, host_id,
-                                interface_id, name, desc, ref, severity,
-                                resolution)
-        return factory.generateID(
+
+        vuln_obj = model.common.factory.createModelObject(
             ModelObjectVuln.class_signature,
-            name=name, desc=desc, ref=ref, severity=severity,
-            resolution=resolution, parent_id=interface_id)
+            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            confirmed=False, parent_id=interface_id)
+
+        self.__addPendingAction(modelactions.ADDVULNINT, vuln_obj.__dict__)
+
+        return vuln_obj.getID()
 
     def createAndAddVulnToService(self, host_id, service_id, name, desc="",
                                   ref=[], severity="", resolution=""):
-        self.__addPendingAction(modelactions.CADDVULNSRV, host_id,
-                                service_id, name, desc, ref, severity,
-                                resolution)
-        return factory.generateID(
+        
+        
+        vuln_obj = model.common.factory.createModelObject(
             ModelObjectVuln.class_signature,
-            name=name, desc=desc, ref=ref, severity=severity,
-            resolution=resolution, parent_id=service_id)
+            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            confirmed=False, parent_id=service_id)
+
+
+        self.__addPendingAction(modelactions.ADDVULNSRV, vuln_obj)
+        
+        return vuln_obj.getID()
 
     def createAndAddVulnWebToService(self, host_id, service_id, name, desc="",
                                      ref=[], severity="", resolution="",
                                      website="", path="", request="",
                                      response="", method="", pname="",
                                      params="", query="", category=""):
-        self.__addPendingAction(modelactions.CADDVULNWEBSRV, host_id,
-                                service_id, name, desc, ref, severity,
-                                resolution, website, path, request, response,
-                                method, pname, params, query, category)
-        return factory.generateID(
+        
+        vulnweb_obj = model.common.factory.createModelObject(
             ModelObjectVulnWeb.class_signature,
-            name=name, desc=desc, ref=ref, severity=severity,
-            resolution=resolution, website=website, path=path, request=request,
-            response=response, method=method, pname=pname, params=params,
-            query=query, category=category, parent_id=service_id)
+            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            website=website, path=path, request=request, response=response,
+            method=method, pname=pname, params=params, query=query,
+            category=category, confirmed=False, parent_id=service_id)
+
+        self.__addPendingAction(modelactions.ADDVULNWEBSRV, vulnweb_obj)
+
+        return vulnweb_obj.getID()
 
     def createAndAddNoteToHost(self, host_id, name, text):
-        self.__addPendingAction(modelactions.CADDNOTEHOST, host_id, name, text)
-        return factory.generateID(
+
+        note_obj = model.common.factory.createModelObject(
             ModelObjectNote.class_signature,
-            name=name, text=text, parent_id=host_id)
+            name, text=text, parent_id=host_id)
+
+        self.__addPendingAction(modelactions.ADDNOTEHOST, note_obj.__dict__)
+
+        return note_obj.getID()
 
     def createAndAddNoteToInterface(self, host_id, interface_id, name, text):
-        self.__addPendingAction(modelactions.CADDNOTEINT, host_id, interface_id,
-                                name, text)
-        return factory.generateID(
+
+        note_obj = model.common.factory.createModelObject(
             ModelObjectNote.class_signature,
-            name=name, text=text, parent_id=interface_id)
+            name, text=text, parent_id=interface_id)
+
+        self.__addPendingAction(modelactions.ADDNOTEINT, note_obj.__dict__)
+
+        return note_obj.getID()
 
     def createAndAddNoteToService(self, host_id, service_id, name, text):
-        self.__addPendingAction(modelactions.CADDNOTESRV, host_id, service_id,
-                                name, text)
-        return factory.generateID(
+
+        note_obj = model.common.factory.createModelObject(
             ModelObjectNote.class_signature,
-            name=name, text=text, parent_id=service_id)
+            name, text=text, parent_id=interface_id)
+
+        self.__addPendingAction(modelactions.ADDNOTESRV, note_obj.__dict__)
+
+        return note_obj.getID()
 
     def createAndAddNoteToNote(self, host_id, service_id, note_id, name, text):
-        self.__addPendingAction(modelactions.CADDNOTENOTE, host_id, service_id,
-                                note_id, name, text)
-        return factory.generateID(
+
+
+        note_obj = model.common.factory.createModelObject(
             ModelObjectNote.class_signature,
-            name=name, text=text, parent_id=note_id)
+            name, text=text, parent_id=interface_id)
+
+        self.__addPendingAction(modelactions.ADDNOTENOTE, note_obj.__dict__ )
+
+        return note_obj.getID()
 
     def createAndAddCredToService(self, host_id, service_id, username,
                                   password):
-        self.__addPendingAction(modelactions.CADDCREDSRV, host_id, service_id,
-                                username, password)
-        return factory.generateID(
+        
+        cred_obj = model.common.factory.createModelObject(
             ModelObjectCred.class_signature,
-            username=username, password=password, parent_id=service_id)
+            username, password=password, parent_id=service_id)
+
+        self.__addPendingAction(modelactions.ADDCREDSRV, cred_obj.getID())
+
+        return cred_obj.getID()
 
     def addHost(self, host, category=None, update=False, old_hostname=None):
+
         self.__addPendingAction(modelactions.ADDHOST, host, category, update,
                                 old_hostname)
 
     def addInterface(self, host_id, interface):
         self.__addPendingAction(modelactions.ADDINTERFACE, host_id, interface)
-
-    def addApplication(self, host_id, application):
-        self.__addPendingAction(modelactions.ADDAPPLICATION, host_id,
-                                application)
-
-    def addServiceToApplication(self, host_id, application_id, service):
-        self.__addPendingAction(modelactions.ADDSERVICEAPP, host_id,
-                                application_id, service)
 
     def addServiceToInterface(self, host_id, interface_id, service):
         self.__addPendingAction(modelactions.ADDSERVICEINT, host_id,
@@ -287,10 +312,6 @@ class PluginBase(object):
     def addVulnToInterface(self, host_id, interface_id, vuln):
         self.__addPendingAction(modelactions.ADDVULNINT, host_id, interface_id,
                                 vuln)
-
-    def addVulnToApplication(self, host_id, application_id, vuln):
-        self.__addPendingAction(modelactions.ADDVULNAPP, host_id,
-                                application_id, vuln)
 
     def addVulnToService(self, host_id, service_id, vuln):
         self.__addPendingAction(modelactions.ADDVULNSRV, host_id, service_id,
@@ -306,10 +327,6 @@ class PluginBase(object):
     def addNoteToInterface(self, host_id, interface_id, note):
         self.__addPendingAction(modelactions.ADDNOTEINT, host_id, interface_id,
                                 note)
-
-    def addNoteToApplication(self, host_id, application_id, note):
-        self.__addPendingAction(modelactions.ADDNOTEAPP, host_id,
-                                application_id, note)
 
     def addNoteToService(self, host_id, service_id, note):
         self.__addPendingAction(modelactions.ADDNOTESRV, host_id, service_id,

@@ -92,7 +92,7 @@ angular.module('faradayApp')
                 var d = new Date(0);
                 d.setUTCMilliseconds($scope.vulns.data[vuln].metadata.create_time * 1000);
                 if (d.getMonth() == selectedMonth && d.getFullYear() == selectedYear) {
-                    vulnsDateDict[$scope.vulns.data[vuln].severity][d.getDay()]++;
+                    vulnsDateDict[$scope.vulns.data[vuln].severity][d.getDate()]++;
                 }
             }
 

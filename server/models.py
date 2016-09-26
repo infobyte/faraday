@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = 'W.2.1.0'
+SCHEMA_VERSION = 'W.2.2.1'
 
 Base = declarative_base()
 
@@ -80,6 +80,7 @@ class EntityMetadata(Base):
     update_controller_action = Column(String(250), nullable=True)
     creator = Column(String(250), nullable=True)
     owner = Column(String(250), nullable=True)
+    command_id = Column(String(250), nullable=True)
 
     couchdb_id = Column(String(250))
     revision = Column(String(250))

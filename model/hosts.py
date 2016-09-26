@@ -113,8 +113,6 @@ class Host(ModelComposite):
     def setDefaultGateway(self, default_gateway):
         self._default_gateway = default_gateway
 
-
-    #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, description=None, os=None, owned=None):
         if name is not None:
@@ -151,39 +149,6 @@ class Host(ModelComposite):
                 break
         return service
 
-    @updateLocalMetadata
-    def addApplication(self, newApp, update=False, setparent=True): # Deprecated
-        return self._addValue("_applications", newApp,
-                              setparent=setparent, update=update)
-
-    @updateLocalMetadata
-    def delApplication(self, appID): # Deprecated
-
-        app = self.getApplication(appID)
-        if app is not None:
-            for srv in app.getAllServices():
-                srv.delApplication(appID)
-
-        return self._delValue("_applications", appID)
-
-    def addApplicationFull(self, app): # Deprecated # Deprecated
-        self.addApplication(app)
-
-    def getAllApplications(self, mode = 0): # Deprecated
-        """
-        return all applications in this interface
-        mode = 0 returns a list of service objects
-        mode = 1 returns a dictionary of service objects with their id as key
-        """
-        return self._getAllValues("_applications", mode)
-
-    def getApplication(self, name): # Deprecated
-        """
-        if name is found it returns the application object
-        it returns None otherwise
-        """
-        return self._getValueByID("_applications", name)
-
     def __eq__(self, other_host):
         if isinstance(other_host, Host):
             if self._name == other_host.getName():
@@ -192,15 +157,6 @@ class Host(ModelComposite):
 
                 ip_addr_this = self.getIPv4Addresses()
                 ip_addr_other = other_host.getIPv4Addresses()
-
-
-
-
-
-
-
-
-
 
                 for addr in ip_addr_this:
                     if addr in ip_addr_other and IPy.IP(addr).iptype() == "PUBLIC":
@@ -237,35 +193,30 @@ class Interface(ModelComposite):
     def __init__(self, name = "", mac = "00:00:00:00:00:00",
                  ipv4_address = "0.0.0.0", ipv4_mask = "0.0.0.0",
                  ipv4_gateway = "0.0.0.0", ipv4_dns = [],
-                 ipv6_address = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_prefix = "00",
+                 ipv6_address = "0000:0000:0000:000 0:0000:0000:0000:0000", ipv6_prefix = "00",
                  ipv6_gateway = "0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns = [],
                  network_segment = "", hostname_resolution = None, parent_id=None):
 
         ModelComposite.__init__(self, parent_id)
 
+        self._name = name
+        self.mac = mac
+        
+        self.ipv4 = {
+            "address" : ipv4_address,
+            "mask" : ipv4_mask,
+            "gateway" : ipv4_gateway,
+            "DNS" : ipv4_dns}
 
-        self._name         = name
-        self.mac           = mac
-        self.ipv4          = {
-                                "address" : ipv4_address,
-                                "mask"    : ipv4_mask,
-                                "gateway" : ipv4_gateway,
-                                "DNS"     : ipv4_dns
-                            }
-
-        self.ipv6         = {
-                                "address" : ipv6_address,
-                                "prefix"    : ipv6_prefix,
-                                "gateway" : ipv6_gateway,
-                                "DNS"     : ipv6_dns
-                            }
-
+        self.ipv6 = {
+            "address" : ipv6_address,
+            "prefix" : ipv6_prefix,
+            "gateway" : ipv6_gateway,
+            "DNS" : ipv6_dns}
 
         self._services      = {}
 
-
         self.network_segment       = network_segment
-
 
         self._hostnames=[]
         if hostname_resolution is not None:
@@ -301,11 +252,11 @@ class Interface(ModelComposite):
     def defaultValues(self):
         defVals = ModelObject.defaultValues(self)
         defVals.extend([{
-                                "address" :  "0.0.0.0",
-                                "mask"    :  "0.0.0.0",
-                                "gateway" :  "0.0.0.0",
-                                "DNS"     :  []
-                                }, {'prefix': '00', 'gateway': '0000:0000:0000:0000:0000:0000:0000:0000', 'DNS': [], 'address': '0000:0000:0000:0000:0000:0000:0000:0000'}])
+            "address" :  "0.0.0.0",
+            "mask"    :  "0.0.0.0",
+            "gateway" :  "0.0.0.0",
+            "DNS"     :  []
+            }, {'prefix': '00', 'gateway': '0000:0000:0000:0000:0000:0000:0000:0000', 'DNS': [], 'address': '0000:0000:0000:0000:0000:0000:0000:0000'}])
         return defVals
 
     def accept(self, visitor):
@@ -405,18 +356,6 @@ class Interface(ModelComposite):
 
     def getPortsFiltered(self):
         return self.amount_ports_filtered
-
-    @updateLocalMetadata
-    def addService(self, newService, update=False, setparent=True): # Deprecated
-        res = self._addValue("_services", newService, setparent=setparent, update=update)
-        if res: newService.addInterface(self)
-        return res
-
-    @updateLocalMetadata
-    def delService(self, srvID, checkFullDelete=True): # Deprecated
-        res = True
-        res = self._delValue("_services", srvID)
-        return res
 
     def getAllServices(self, mode = 0):
         return self.getChildsByType(Service.__name__)
@@ -523,7 +462,6 @@ class Service(ModelComposite):
     def getName(self):
         return self._name
 
-
     def setProtocol(self, protocol):
         self._protocol = protocol.lower()
 
@@ -607,122 +545,3 @@ class Service(ModelComposite):
         """
         interface = self.findChild(ID)
         return interface if interface.class_signature == "Interface" else None
-
-    def addApplication(self, newApp, update=False): # Deprecated
-        res = self._addValue("_applications", newApp, update=update)
-        if res: newApp.addService(self)
-        return res
-
-    def delApplication(self, appID, checkFullDelete=True): # Deprecated
-        app = self.getApplication(appID)
-        res = self._delValue("_applications", appID)
-        if res:
-            if app is not None:
-                app.delService(self.getID(), checkFullDelete)
-
-        if checkFullDelete: self._checkFullDelete()
-        return res
-
-    def getAllApplications(self, mode = 0): # Deprecated
-        """
-        return all applications in this service
-        mode = 0 returns a list of applications objects
-        mode = 1 returns a dictionary of application objects with their id as key
-        """
-        return self._getAllValues("_applications", mode)
-
-    def getApplication(self, name): # Deprecated
-        """
-        if name is found it returns the application object
-        it returns None otherwise
-        """
-        return self._getValueByID("_applications", name)
-
-class HostApplication(ModelComposite): # Deprecated
-    """
-    An application running in a host
-    The application can be related to more than one service
-    Commonly this will have a name, description, version and status
-    """
-
-    class_signature = "HostApplication"
-
-    def __init__(self, name, status = "running", version = "unknonw"):
-        ModelComposite.__init__(self)
-
-        self._name          = name
-        self._status        = status
-        self._version       = version
-
-        self._services      = {}
-
-    def _updatePublicAttributes(self):
-        self.publicattrs['Status'] = 'getStatus'
-        self.publicattrs['Version'] = 'getVersion'
-
-    def setName(self, name):
-        self._name = name
-
-    def getName(self):
-        return self._name
-
-    def setStatus(self, status):
-        self._status = status
-
-    def getStatus(self):
-        return self._status
-
-    def setVersion(self, version):
-        self._version = version
-
-    def getVersion(self):
-        return self._version
-
-    def updateID(self):
-        self._id = get_hash([self._name, self._version])
-        self._prependParentId()
-
-    @updateLocalMetadata
-    def updateAttributes(self, name=None, description=None, status=None, version=None, owned=None):
-        if name is not None:
-            self.setName(name)
-        if description is not None:
-            self.setDescription(description)
-        if status is not None:
-            self.setStatus(status)
-        if version is not None:
-            self.setVersion(version)
-        if owned is not None:
-            self.setOwned(owned)
-
-    @updateLocalMetadata
-    def addService(self, newService, update=False):
-        res = self._addValue("_services", newService, update=update)
-        if res: newService.addApplication(self)
-        if self.getParent() is not None:
-            self.getParent().addService(newService)
-        return res
-
-    @updateLocalMetadata
-    def delService(self, srvID, checkFullDelete=True):
-        srv = self.getService(srvID)
-        res = self._delValue("_services", srvID)
-        if res:
-            if srv is not None:
-                srv.delApplication(self.getID(), checkFullDelete)
-        return res
-
-    def getAllServices(self, mode = 0):
-        """
-        return all services in this interface
-        mode = 0 returns a list of service objects
-        mode = 1 returns a dictionary of service objects with their id as key
-        """
-        return self._getAllValues("_services", mode)
-
-    def getService(self, ID):
-        """
-        if name is found it returns the service object
-        it returns None otherwise
-        """
-        return self._getValueByID("_services", name)

@@ -140,14 +140,15 @@ class PluginBase(object):
         """
         self._pending_actions.put(args)
 
+    # TODO: Set Metadata Creator
     def createAndAddHost(self, name, os="unknown"):
 
         host_obj = factory.createModelObject(
             Host.class_signature,
             name, os=os, parent_id=None)
         
+        host_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDHOST, host_obj)
-        
         return host_obj.getID()
 
     def createAndAddInterface(
@@ -156,10 +157,9 @@ class PluginBase(object):
         ipv4_dns=[], ipv6_address="0000:0000:0000:0000:0000:0000:0000:0000",
         ipv6_prefix="00",
         ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns=[],
-        network_segment="", hostname_resolution=[]
-    ):
+        network_segment="", hostname_resolution=[]):
         
-        obj_int = model.common.factory.createModelObject(
+        int_obj = model.common.factory.createModelObject(
             Interface.class_signature,
             name, mac=mac, ipv4_address=ipv4_address,
             ipv4_mask=ipv4_mask, ipv4_gateway=ipv4_gateway, ipv4_dns=ipv4_dns,
@@ -168,23 +168,23 @@ class PluginBase(object):
             network_segment=network_segment,
             hostname_resolution=hostname_resolution, parent_id=host_id)
 
- 
-        self.__addPendingAction(modelactions.ADDINTERFACE, obj_int)
-        return obj_int.getID()
+        int_obj._metadata.creator = self.id
+        self.__addPendingAction(modelactions.ADDINTERFACE, host_id, int_obj)
+        return int_obj.getID()
 
     def createAndAddServiceToInterface(self, host_id, interface_id, name,
                                        protocol="tcp?", ports=[],
                                        status="running", version="unknown",
                                        description=""):
     
-        obj_serv = model.common.factory.createModelObject(
+        serv_obj = model.common.factory.createModelObject(
             Service.class_signature,
             name, protocol=protocol, ports=ports, status=status,
             version=version, description=description, parent_id=interface_id)
 
-        self.__addPendingAction(modelactions.ADDSERVICEINT, obj_serv.__dict__)
-        
-        return obj_serv.getID()
+        serv_obj._metadata.creator = self.id
+        self.__addPendingAction(modelactions.ADDSERVICEINT, host_id, interface_id, serv_obj)
+        return serv_obj.getID()
 
     def createAndAddVulnToHost(self, host_id, name, desc="", ref=[],
                                severity="", resolution=""):
@@ -194,8 +194,8 @@ class PluginBase(object):
             name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             confirmed=False, parent_id=host_id)
 
-        self.__addPendingAction(modelactions.ADDVULNHOST, vuln_obj.__dict__)
-
+        vuln_obj._metadata.creator = self.id
+        self.__addPendingAction(modelactions.ADDVULNHOST, host_id, vuln_obj)
         return vuln_obj.getID()
     
     def createAndAddVulnToInterface(self, host_id, interface_id, name,
@@ -207,8 +207,8 @@ class PluginBase(object):
             name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             confirmed=False, parent_id=interface_id)
 
-        self.__addPendingAction(modelactions.ADDVULNINT, vuln_obj.__dict__)
-
+        vuln_obj._metadata.creator = self.id
+        self.__addPendingAction(modelactions.ADDVULNINT, host_id, interface_id, vuln_obj)
         return vuln_obj.getID()
 
     def createAndAddVulnToService(self, host_id, service_id, name, desc="",
@@ -219,9 +219,8 @@ class PluginBase(object):
             name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             confirmed=False, parent_id=service_id)
 
-
-        self.__addPendingAction(modelactions.ADDVULNSRV, vuln_obj)
-        
+        vuln_obj._metadata.creator = self.id
+        self.__addPendingAction(modelactions.ADDVULNSRV, host_id, service_id, vuln_obj)
         return vuln_obj.getID()
 
     def createAndAddVulnWebToService(self, host_id, service_id, name, desc="",
@@ -237,8 +236,8 @@ class PluginBase(object):
             method=method, pname=pname, params=params, query=query,
             category=category, confirmed=False, parent_id=service_id)
 
-        self.__addPendingAction(modelactions.ADDVULNWEBSRV, vulnweb_obj)
-
+        vulnweb_obj._metadata.creator = self.id
+        self.__addPendingAction(modelactions.ADDVULNWEBSRV, host_id, service_id, vulnweb_obj)
         return vulnweb_obj.getID()
 
     def createAndAddNoteToHost(self, host_id, name, text):
@@ -247,8 +246,8 @@ class PluginBase(object):
             ModelObjectNote.class_signature,
             name, text=text, parent_id=host_id)
 
-        self.__addPendingAction(modelactions.ADDNOTEHOST, note_obj.__dict__)
-
+        note_obj._metadata.creator = self.id
+        self.__addPendingAction(modelactions.ADDNOTEHOST, host_id, note_obj)
         return note_obj.getID()
 
     def createAndAddNoteToInterface(self, host_id, interface_id, name, text):
@@ -257,29 +256,28 @@ class PluginBase(object):
             ModelObjectNote.class_signature,
             name, text=text, parent_id=interface_id)
 
-        self.__addPendingAction(modelactions.ADDNOTEINT, note_obj.__dict__)
-
+        note_obj._metadata.creator = self.id
+        self.__addPendingAction(modelactions.ADDNOTEINT, host_id, interface_id, note_obj)
         return note_obj.getID()
 
     def createAndAddNoteToService(self, host_id, service_id, name, text):
 
         note_obj = model.common.factory.createModelObject(
             ModelObjectNote.class_signature,
-            name, text=text, parent_id=interface_id)
+            name, text=text, parent_id=service_id)
 
-        self.__addPendingAction(modelactions.ADDNOTESRV, note_obj.__dict__)
-
+        note_obj._metadata.creator = self.id
+        self.__addPendingAction(modelactions.ADDNOTESRV, host_id, service_id, note_obj)
         return note_obj.getID()
 
     def createAndAddNoteToNote(self, host_id, service_id, note_id, name, text):
 
-
         note_obj = model.common.factory.createModelObject(
             ModelObjectNote.class_signature,
-            name, text=text, parent_id=interface_id)
+            name, text=text, parent_id=note_id)
 
-        self.__addPendingAction(modelactions.ADDNOTENOTE, note_obj.__dict__ )
-
+        note_obj._metadata.creator = self.id
+        self.__addPendingAction(modelactions.ADDNOTENOTE, host_id, service_id, note_id, note_obj)
         return note_obj.getID()
 
     def createAndAddCredToService(self, host_id, service_id, username,
@@ -289,8 +287,8 @@ class PluginBase(object):
             ModelObjectCred.class_signature,
             username, password=password, parent_id=service_id)
 
-        self.__addPendingAction(modelactions.ADDCREDSRV, cred_obj.getID())
-
+        cred_obj._metadata.creator = self.id
+        self.__addPendingAction(modelactions.ADDCREDSRV, host_id, service_id, cred_obj)
         return cred_obj.getID()
 
     def log(self, msg, level='INFO'):

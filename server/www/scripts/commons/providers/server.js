@@ -236,6 +236,17 @@ angular.module("faradayApp")
                     data.type = "CommandRunInformation"
                     return createOrUpdate(wsName, id, data);
             }
+
+            var createObject = function(wsName, id, data) {
+                var _postUrl = postUrl(wsName, id);
+                return put(_postUrl, data, false);
+            }
+
+            var updateObject = function(wsName, id, data) {
+                var postUrl = postUrl(wsName, id);
+                return put(postUrl, data, true);
+            }
+
             var saveInServer = function(wsName, objectId, data) {
                 var postUrl = postUrl(wsName, objectId);
                 return put(postUrl, data, false);
@@ -285,20 +296,16 @@ angular.module("faradayApp")
                 return get(APIURL + "ws");
             }
 
-            ServerAPI.getWorkspaceSummary = function() {
+            ServerAPI.getWorkspace = function(wsName) {
+                getUrl = BASEURL + wsName + "/" + wsName;
+                return get(getUrl);
+            }
+
+            ServerAPI.getWorkspaceSummary = function(wsName) {
                 var getUrl = getUrl(wsName, "summary");
                 return get(getUrl);
             }
 
-            var createObject = function(wsName, id, data) {
-                var _postUrl = postUrl(wsName, id);
-                return put(_postUrl, data, false);
-            }
-
-            var updateObject = function(wsName, id, data) {
-                var postUrl = postUrl(wsName, id);
-                return put(postUrl, data, true);
-            }
 
             ServerAPI.createHost = function(wsName, id, name, os, defaultGateway,
                 description, metadata, owned, owner, objParent) {
@@ -411,21 +418,21 @@ angular.module("faradayApp")
                         hostname, ip, itime, params, user);
             }
 
-            ServerAPI.createWorkspace = function(wsName, description, startDate, finishDate,
-                customer) {
-                    var createDB = function(wsName) {
-                        var dbUrl = BASEURL + wsName
-                        return put(dbUrl)
-                    }
-                    createDB(wsName);
-                    var wsDoc = {};
-                    wsDoc.description = description;
-                    wsDoc.startDate = startDate;
-                    wsDoc.finishDate = finishDate;
-                    wsDoc.customer = customer;
-                    var putUrl = BASEURL + wsName + "/" + wsName;
-                    return put(putUrl, wsDoc)
+            ServerAPI.createDB = function(wsName) {
+                var dbUrl = BASEURL + wsName;
+                return put(dbUrl);
             }
+
+            ServerAPI.uploadWsDoc = function(workspace) {
+                var putUrl = BASEURL + workspace.name + "/" + workspace.name;
+                return put(putUrl, workspace);
+            }
+
+            ServerAPI.updateWsDoc = function(workspace) {
+                var putUrl = BASEURL + workspace.name + "/" + workspace.name;
+                return put(putUrl, workspace, true)
+            }
+
 
             ServerAPI.deleteHost = function(wsName, hostId) {
                 deleteUrl = deleteUrl(wsName, hostId);

@@ -56,7 +56,8 @@ class Metadata(object):
         self.update_user    = user
         self.update_action  = MetadataUpdateActions.CREATE
         self.update_controller_action = self.__getUpdateAction()
-
+        self.command_id = ''
+        
     def toDict(self):
         return self.__dict__
 

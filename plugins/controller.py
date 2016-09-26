@@ -92,7 +92,7 @@ class PluginController(object):
         """
         return self._plugins
 
-    def processOutput(self, plugin, output, isReport=False):
+    def processOutput(self, plugin, output, command_id, isReport=False):
         output_queue = multiprocessing.JoinableQueue()
         new_elem_queue = multiprocessing.Queue()
 
@@ -118,6 +118,9 @@ class PluginController(object):
                     break
                 action = current_action[0]
                 parameters = current_action[1:]
+
+                parameters[-1]._metadata.command_id = command_id
+
                 getLogger(self).debug(
                     "Core: Processing a new '%s', parameters (%s)\n" %
                     (action, str(parameters)))
@@ -228,7 +231,8 @@ class PluginController(object):
         cmd_info.duration = time.time() - cmd_info.itime
         self._mapper_manager.update(cmd_info)
 
-        self.processOutput(plugin, term_output)
+        self.processOutput(plugin, term_output, cmd_info.getID()
+)
         del self._active_plugins[pid]
         return True
 
@@ -242,7 +246,7 @@ class PluginController(object):
         self._mapper_manager.save(cmd_info)
 
         if plugin in self._plugins:
-            self.processOutput(self._plugins[plugin], filepath, True)
+            self.processOutput(self._plugins[plugin], filepath, cmd_info.getID(), True )
             cmd_info.duration = time.time() - cmd_info.itime
             self._mapper_manager.update(cmd_info)
             return True

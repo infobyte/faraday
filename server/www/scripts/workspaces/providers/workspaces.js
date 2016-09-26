@@ -3,13 +3,12 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('workspacesFact', ['BASEURL', '$http', '$q', function(BASEURL, $http, $q) {
+    .factory('workspacesFact', ['BASEURL', 'ServerAPI', '$http', '$q', function(BASEURL, ServerAPI, $http, $q) {
         var workspacesFact = {};
 
         workspacesFact.list = function() {
-            var url = BASEURL + "_api/ws",
             deferred = $q.defer();
-            $http.get(url).
+            ServerAPI.getWorkspacesNames().
                 then(function(response) { deferred.resolve(response.data.workspaces) }, errorHandler);
             return deferred.promise;
         };
@@ -20,11 +19,10 @@ angular.module('faradayApp')
 
         workspacesFact.get = function(workspace_name) {
             var deferred = $q.defer();
-            $http.get(BASEURL + workspace_name + '/' + workspace_name)
-                .success(function(data, status, headers, config) {
-                    deferred.resolve(data);
-                })
-                .error(function() {
+            ServerAPI.getWorkspace(workspace_name).
+                then(function(ws) {
+                    deferred.resolve(ws.data);
+                }, function() {
                     deferred.reject();
                 });
             return deferred.promise;
@@ -32,7 +30,7 @@ angular.module('faradayApp')
 
         workspacesFact.getDuration = function(workspace_name) {
             var deferred = $q.defer();
-            workspacesFact.get(workspace_name).then(function(workspace) {
+            ServerAPI.getWorkspace(workspace_name).then(function(workspace) {
                 var ws = workspace;
                 var dur = {};
 
@@ -75,21 +73,17 @@ angular.module('faradayApp')
         };
 
         workspacesFact.put = function(workspace) {
-            return createDatabase(workspace).
+            return ServerAPI.createDB(workspace.name).
                 then(function(resp) { createWorkspaceDoc(resp, workspace); }, errorHandler).
                 then(function(resp) { uploadDocs(workspace.name); }, errorHandler);
         };
 
-        createDatabase = function(workspace){
-            return $http.put(BASEURL + workspace.name, workspace);
-        };
-
         createWorkspaceDoc = function(response, workspace){
-            $http.put(BASEURL + workspace.name + '/' + workspace.name, workspace).
-                success(function(data){ 
+            ServerAPI.uploadWsDoc(workspace).then(
+                function(data) {
                     workspace._rev = data.rev;
-                }).
-                error(function(data) {
+                },
+                function(data) {
                     errorHandler;
                 });
         };
@@ -157,8 +151,7 @@ angular.module('faradayApp')
 
         workspacesFact.update = function(workspace) {
             var deferred = $q.defer();
-            document_url = BASEURL + workspace.name + '/' + workspace.name + '?rev=' + workspace._rev;
-            $http.put(document_url, workspace).success(function(data){
+            ServerAPI.updateWsDoc(workspace).then(function(data){
                 workspace._rev = data.rev;
                 deferred.resolve(workspace);
             });
@@ -167,14 +160,9 @@ angular.module('faradayApp')
 
         workspacesFact.delete = function(workspace_name) {
             var deferred = $q.defer();
-            var request = {
-                method: 'DELETE',
-                url: BASEURL + workspace_name
-            };
-            $http(request).success(function(data) {
+            ServerAPI.deleteWorkspace(workspace_name).then(function(data) {
                 deferred.resolve(workspace_name);
-            })
-            .error(function() {
+            }, function() {
                 deferred.reject();
             });
             return deferred.promise;

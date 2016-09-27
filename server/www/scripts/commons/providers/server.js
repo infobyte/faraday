@@ -48,9 +48,10 @@ angular.module("faradayApp")
                 if (typeof is_update === "undefined") {var is_update = false;}
                 if (is_update) {
                     // ok, undefined, you win
+                    var deferred = $q.defer()
                     var last_rev = get(url).then(function s(r) {return r.data._rev;},
                                                  function e(r) {return undefined})
-                    data._rev = last_rev;
+                    data.rev = last_rev;
                 }
                 return serverComm("PUT", url, data);
             };

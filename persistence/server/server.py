@@ -594,6 +594,10 @@ def update_host(workspace_name, id, name, os, default_gateway,
                              description=description,
                              type="Host")
 
+
+# TODO: FIX. If you actually pass ipv4 or ipv6 as None, which are the defaults
+# values here, the server will complain. Review if this should be fixed on
+# the client or on the server.
 def create_interface(workspace_name, id, name, description, mac,
                      owned=False, owner="", hostnames=None, network_segment=None,
                      ipv4=None, ipv6=None, metadata=None):

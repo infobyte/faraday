@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('Vuln', ['BASEURL', '$http', '$q', 'attachmentsFact', 
-    function(BASEURL, $http, $q, attachmentsFact) {
+    .factory('Vuln', ['BASEURL', '$q', 'ServerAPI', 'attachmentsFact', 
+    function(BASEURL, $q, ServerAPI, attachmentsFact) {
         Vuln = function(ws, data) {
             var now = new Date(),
             date = now.getTime() / 1000.0;
@@ -91,9 +91,9 @@ angular.module('faradayApp')
                 });
             },
             remove: function() {
-                var self = this,
-                url = BASEURL + self.ws + "/" + self._id + "?rev=" + self._rev;
-                return $http.delete(url);
+                var self = this;
+                return ServerAPI.deleteVuln(self.ws, self._id, self._rev);
+
             },
             _update: function(vuln, data) {
                 var deferred = $q.defer(),
@@ -131,18 +131,17 @@ angular.module('faradayApp')
                     angular.extend(vuln._attachments, stubs);
                     attachmentsFact.loadAttachments(files).then(function(atts) {
                         angular.extend(vuln._attachments, atts);
-                        self._save(vuln)
-                            .success(function(response) {
+                        self._save(vuln, true)
+                            .then(function(response) {
                                 self.set(self.ws, vuln);
                                 self._rev = response.rev;
                                 deferred.resolve();
-                            })
-                            .error(function() {
+                            }, function() {
                                 deferred.reject();
                             });
                     });
                 } else {
-                    self._save(vuln)
+                    self._save(vuln, true)
                         .success(function(response) {
                             self.set(self.ws, vuln);
                             self._rev = response.rev;
@@ -155,11 +154,13 @@ angular.module('faradayApp')
 
                 return deferred.promise;
             },
+
             update: function(data) {
                 var self = this,
                 vuln = new Vuln(self.ws, self);
                 return self._update(vuln, data);
             },
+
             populate: function() {
                 var deferred = $q.defer(),
                 self = this,
@@ -197,12 +198,12 @@ angular.module('faradayApp')
                 url = BASEURL + self.ws + "/" + self._id;
 
                 self.populate().then(function(resp) {
-                    self._save(resp)
-                        .success(function(data) {
+                    console.log(self._save);
+                    self._save(resp, false)
+                        .then(function(data) {
                             self._rev = data.rev;
                             deferred.resolve(self);
-                        })
-                        .error(function(data, status, headers, config) {
+                        }, function(data, status, headers, config) {
                             deferred.reject(status);
                         });
                 }, function() {
@@ -211,17 +212,22 @@ angular.module('faradayApp')
 
                 return deferred.promise;
             },
-            _save: function(data) {
+            _save: function(data, update) {
                 var doc = {};
-                var url = BASEURL + this.ws + "/" + this._id;
-                for (property in data) {
+                if (typeof update === "undefined") {var update = false};
+                for (var property in data) {
                     if (this.saved_properties.indexOf(property) != -1) {
                         doc[property] = data[property];
+                        }
                     }
-                };
-                return $http.put(url, doc);
-            }
-        };
-
+                if (update) {
+                    return ServerAPI.updateVuln(this.ws, data);
+                    }
+                else {
+                    console.log("IM CREATING");
+                    return ServerAPI.createVuln(this.ws, data);
+                }
+        }
+        }
         return Vuln;
     }]);

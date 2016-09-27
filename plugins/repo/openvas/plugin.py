@@ -79,11 +79,17 @@ class OpenvasXmlParser(object):
         """
         @return items A list of Host instances
         """
-        node = tree.findall('report')[0]
-        node2 = node.findall('results')[0]
+        try:
+            node = tree.findall('report')[0]
+            node2 = node.findall('results')[0]
+            for node in node2.findall('result'):
+                yield Item(node)
 
-        for node in node2.findall('result'):
-            yield Item(node)
+        except Exception:
+
+            node2 = tree.findall('result')
+            for node in node2:
+                yield Item(node)
 
 
 def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
@@ -98,7 +104,9 @@ def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
     if ETREE_VERSION[0] <= 1 and ETREE_VERSION[1] < 3:
 
         match_obj = re.search(
-            "([^\@]+?)\[\@([^=]*?)=\'([^\']*?)\'", subnode_xpath_expr)
+            "([^\@]+?)\[\@([^=]*?)=\'([^\']*?)\'",
+            subnode_xpath_expr)
+
         if match_obj is not None:
             node_to_find = match_obj.group(1)
             xpath_attrib = match_obj.group(2)
@@ -122,8 +130,6 @@ def get_attrib_from_subnode(xml_node, subnode_xpath_expr, attrib_name):
 class Item(object):
     """
     An abstract representation of a Item
-
-
     @param item_node A item_node taken from an openvas xml tree
     """
 
@@ -139,12 +145,14 @@ class Item(object):
         self.description = self.get_text_from_subnode('description')
         self.port = "None"
         self.severity = self.get_text_from_subnode('threat')
-        self.service = ""
+        self.service = "Unknown"
         self.protocol = ""
         port = self.get_text_from_subnode('port')
 
-        if (re.search("^general", port) is None):
+        if re.search("^general", port) is None:
+
             mregex = re.search("([\w]+) \(([\d]+)\/([\w]+)\)", port)
+            
             if mregex is not None:
                 self.service = mregex.group(1)
                 self.port = mregex.group(2)
@@ -224,7 +232,9 @@ class OpenvasPlugin(core.PluginBase):
         web = False
         ids = {}
         for item in parser.items:
+            
             if item.name is not None:
+            
                 ref = []
                 if item.cve:
                     ref.append(item.cve.encode("utf-8"))
@@ -240,18 +250,21 @@ class OpenvasPlugin(core.PluginBase):
                     ids[item.subnet] = h_id
 
                 if item.port == "None":
-                    v_id = self.createAndAddVulnToHost(h_id, item.name.encode("utf-8"), desc=item.description.encode("utf-8"),
-                                                       severity=item.severity.encode(
-                                                           "utf-8"),
-                                                       ref=ref)
+                    v_id = self.createAndAddVulnToHost(
+                        h_id,
+                        item.name.encode("utf-8"),
+                        desc=item.description.encode("utf-8"),
+                        severity=item.severity.encode("utf-8"),
+                        ref=ref)
                 else:
 
                     if item.service:
                         web = True if re.search(
-                            r'^(www|http)', item.service) else False
+                            r'^(www|http)',
+                            item.service) else False
                     else:
-                        web = True if item.port in (
-                            '80', '443', '8080') else False
+                    
+                        web = True if item.port in ('80', '443', '8080') else False
 
                     if ids.has_key(item.subnet + "_" + item.subnet):
                         i_id = ids[item.subnet + "_" + item.subnet]
@@ -259,36 +272,66 @@ class OpenvasPlugin(core.PluginBase):
 
                         if self._isIPV4(item.subnet):
                             i_id = self.createAndAddInterface(
-                                h_id, item.subnet, ipv4_address=item.subnet, hostname_resolution=item.host)
+                                h_id,
+                                item.subnet,
+                                ipv4_address=item.subnet,
+                                hostname_resolution=item.host)
                         else:
                             i_id = self.createAndAddInterface(
-                                h_id, item.subnet, ipv6_address=item.subnet, hostname_resolution=item.host)
+                                h_id,
+                                item.subnet,
+                                ipv6_address=item.subnet,
+                                hostname_resolution=item.host)
 
                         ids[item.subnet + "_" + item.subnet] = i_id
 
                     if ids.has_key(item.subnet + "_" + item.port):
                         s_id = ids[item.subnet + "_" + item.port]
                     else:
-                        s_id = self.createAndAddServiceToInterface(h_id, i_id, item.service,
-                                                                   item.protocol,
-                                                                   ports=[
-                                                                       str(item.port)],
-                                                                   status="open")
+
+                        s_id = self.createAndAddServiceToInterface(
+                            h_id,
+                            i_id,
+                            item.service,
+                            item.protocol,
+                            ports=[str(item.port)],
+                            status="open")
+                        
                         ids[item.subnet + "_" + item.port] = s_id
+                        
                         if web:
+                        
                             n_id = self.createAndAddNoteToService(
-                                h_id, s_id, "website", "")
+                                h_id,
+                                s_id,
+                                "website",
+                                "")
+                            
                             self.createAndAddNoteToNote(
-                                h_id, s_id, n_id, item.host, "")
+                                h_id,
+                                s_id,
+                                n_id,
+                                item.host,
+                                "")
 
                     if item.name:
                         if web:
-                            v_id = self.createAndAddVulnWebToService(h_id, s_id, item.name.encode("utf-8"),
-                                                                     desc=item.description.encode("utf-8"), website=item.host,
-                                                                     severity=item.severity.encode("utf-8"), ref=ref)
+                            v_id = self.createAndAddVulnWebToService(
+                                h_id,
+                                s_id,
+                                item.name.encode("utf-8"),
+                                desc=item.description.encode("utf-8"),
+                                website=item.host,
+                                severity=item.severity.encode("utf-8"),
+                                ref=ref)
                         else:
-                            self.createAndAddVulnToService(h_id, s_id, item.name.encode("utf-8"),
-                                                           desc=item.description.encode("utf-8"), severity=item.severity.encode("utf-8"), ref=ref)
+                            self.createAndAddVulnToService(
+                                h_id,
+                                s_id,
+                                item.name.encode("utf-8"),
+                                desc=item.description.encode("utf-8"),
+                                severity=item.severity.encode("utf-8"),
+                                ref=ref)
 
         del parser
 

@@ -5,7 +5,7 @@
 angular.module('faradayApp')
     .controller('hostCtrl',
         ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', '$q',
-            'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager',
+            'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager', 
             function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, $q,
             hostsManager, workspacesFact, dashboardSrv, servicesManager) {
 
@@ -17,7 +17,7 @@ angular.module('faradayApp')
             var hostId = $routeParams.hidId;
 
             $scope.services = [];
-            $scope.sortField = "name";
+            $scope.sortField = "ports";
             $scope.reverse = false;
 
             $scope.loadedServices = false;
@@ -54,15 +54,11 @@ angular.module('faradayApp')
 
                     $scope.loadedServices = true;
 
-                    return hostsManager.getAllVulnsCount($scope.workspace);
+                    return servicesManager.getServiceVulnCount($scope.workspace, $scope.services)
                 })
                 .then(function(vulns) {
-                    var vulnsCount = {};
-                    vulns.forEach(function(vuln) {
-                        vulnsCount[vuln.key] = vuln.value;
-                    });
                     $scope.services.forEach(function(service) {
-                        service.vulns = vulnsCount[service._id] || 0;
+                        service.vulns = vulns[service._id] || 0;
                     });
                 })
                 .catch(function(e) {
@@ -70,8 +66,8 @@ angular.module('faradayApp')
                 });
 
             $scope.pageSize = 10;
-            $scope.currentPage = 0;
-            $scope.newCurrentPage = 0;
+            $scope.currentPage = 1;
+            $scope.newCurrentPage = 1;
 
             if(!isNaN(parseInt($cookies.pageSize))) $scope.pageSize = parseInt($cookies.pageSize);
             $scope.newPageSize = $scope.pageSize;
@@ -112,11 +108,13 @@ angular.module('faradayApp')
         };
 
         $scope.go = function() {
+            if ($scope.newPageSize === undefined)
+                $scope.newPageSize = 1;
             $scope.pageSize = $scope.newPageSize;
             $cookies.pageSize = $scope.pageSize;
-            $scope.currentPage = 0;
-            if($scope.newCurrentPage <= parseInt($scope.services.length/$scope.pageSize)
-                    && $scope.newCurrentPage > -1 && !isNaN(parseInt($scope.newCurrentPage))) {
+            $scope.currentPage = 1;
+            if ($scope.newCurrentPage <= $scope.pageCount() && $scope.newCurrentPage > 0 &&
+                !isNaN(parseInt($scope.newCurrentPage))) {
                 $scope.currentPage = $scope.newCurrentPage;
             }
         };
@@ -354,11 +352,35 @@ angular.module('faradayApp')
 	    }
 
         filter = function(data) {
+            // this is going to be replaced by a server query
             var tmp_data = $filter('orderBy')(data, $scope.sortField, $scope.reverse);
             tmp_data = $filter('filter')(tmp_data, $scope.expression);
-            tmp_data = tmp_data.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
-
+            tmp_data = tmp_data.splice($scope.pageSize * ($scope.currentPage - 1), $scope.pageSize);
             return tmp_data;
+        };
+
+        // paging
+
+        $scope.prevPage = function() {
+            $scope.currentPage -= 1;
+        };
+
+        $scope.prevPageDisabled = function() {
+            return $scope.currentPage <= 1;
+        };
+
+        $scope.nextPage = function() {
+            $scope.currentPage += 1;
+        };
+
+        $scope.nextPageDisabled = function() {
+            return $scope.currentPage >= $scope.pageCount();
+        };
+
+        $scope.pageCount = function() {
+            var tmp_services = $filter('orderBy')($scope.services, $scope.sortField, $scope.reverse);
+            tmp_services = $filter('filter')(tmp_services, $scope.expression);
+            return Math.ceil(tmp_services.length / $scope.pageSize);
         };
 
 	    init();

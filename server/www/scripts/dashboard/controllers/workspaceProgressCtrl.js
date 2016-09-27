@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('workspaceProgressCtrl',
-        ['$scope', '$routeParams', 'workspacesFact',
-        function($scope, $routeParams, workspacesFact) {
+        ['$scope', '$routeParams', 'workspacesFact', 'dashboardSrv',
+        function($scope, $routeParams, workspacesFact, dashboardSrv) {
 
             $scope.workspace;
             $scope.wsDuration;
@@ -49,6 +49,8 @@ angular.module('faradayApp')
 
                 return progress;
             };
+
+            dashboardSrv.registerCallback(init);
 
             init();
     }]);

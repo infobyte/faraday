@@ -6,16 +6,15 @@ angular.module('faradayApp')
     .controller('statusReportCtrl',
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
-                    'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager',
+                    'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager', 'commonsFact',
                     'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
-                        SEVERITIES, EASEOFRESOLUTION, hostsManager,
+                        SEVERITIES, EASEOFRESOLUTION, hostsManager, commonsFact,
                         vulnsManager, workspacesFact, csvService, uiGridConstants) {
         $scope.baseurl;
         $scope.columns;
         $scope.easeofresolution;
-        $scope.expression;
         $scope.interfaces;
         $scope.reverse;
         $scope.severities;
@@ -133,7 +132,6 @@ angular.module('faradayApp')
             // current search
             $scope.search = $routeParams.search;
             $scope.searchParams = "";
-            $scope.expression = {};
             if($scope.confirmed === true) {
                 if($scope.search !== undefined) {
                     $scope.search = $scope.search.concat("&confirmed=true");
@@ -148,10 +146,8 @@ angular.module('faradayApp')
             }
 
             if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
-                search_obj = $scope.decodeSearch($scope.search);
-                search_exp = $scope.stringSearch(search_obj);
-                $scope.searchParams = search_exp;
-                searchFilter = prepareFilter(search_exp);
+                searchFilter = commonsFact.parseSearchURL($scope.search);
+                $scope.searchParams = commonsFact.searchFilterToExpression(searchFilter);
             }
 
             $scope.columns = {
@@ -170,7 +166,7 @@ angular.module('faradayApp')
                 "request":          false,
                 "refs":             true,
                 "evidence":         false,
-                "hostnames":        false,
+                "hostnames":        true,
                 "impact":           false,
                 "method":           false,
                 "params":           false,
@@ -237,7 +233,7 @@ angular.module('faradayApp')
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/severitycolumn.html',
                 headerCellTemplate: header,
                 type: 'string',
-                width: '110',
+                width: '70',
                 visible: $scope.columns["severity"],
                 sortingAlgorithm: compareSeverities
             });
@@ -246,6 +242,13 @@ angular.module('faradayApp')
                 headerCellTemplate: header,
                 width: '110',
                 visible: $scope.columns["service"]
+            });
+             $scope.gridOptions.columnDefs.push({ name : 'hostnames',
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/hostnamescolumn.html',
+                headerCellTemplate: header,
+                minWidth: '100',
+                maxWidth: '200',
+                visible: $scope.columns["hostnames"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'target',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/targetcolumn.html',
@@ -305,11 +308,6 @@ angular.module('faradayApp')
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/evidencecolumn.html',
                 headerCellTemplate: header,
                 visible: $scope.columns["evidence"]
-            });
-            $scope.gridOptions.columnDefs.push({ name : 'hostnames',
-                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/hostnamescolumn.html',
-                headerCellTemplate: header,
-                visible: $scope.columns["hostnames"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'impact',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/impactcolumn.html',
@@ -452,30 +450,27 @@ angular.module('faradayApp')
         };
 
         $scope.csv = function() {
-            tmp_vulns = $filter('filter')($scope.gridOptions.data, $scope.expression);
-            return csvService.generator($scope.columns, tmp_vulns, $scope.workspace);
+            deferred = $q.defer();
+            delete searchFilter.confirmed;
+            if ($scope.confirmed)
+                searchFilter.confirmed = true;
+            vulnsManager.getVulns($scope.workspace,
+                                  null,
+                                  null,
+                                  searchFilter,
+                                  null,
+                                  null)
+            .then(function(response) {
+                deferred.resolve(csvService.generator($scope.columns, response.vulnerabilities, $scope.workspace));
+            });
+            return deferred.promise;
         };
 
-        $scope.toggleFilter = function(expression) {
-            if(expression["confirmed"] === undefined) {
-                expression["confirmed"] = true;
-                $scope.expression = expression;
-                $cookies.put('confirmed', $scope.expression.confirmed);
-                $scope.confirmed = true;
-                loadVulns();
-            } else {
-                $scope.expression = {};
-                for(key in expression) {
-                    if(expression.hasOwnProperty(key)) {
-                        if(key !== "confirmed") {
-                            $scope.expression[key] = expression[key];
-                        }
-                    }
-                }
-                $cookies.put('confirmed', $scope.expression.confirmed);
-                $scope.confirmed = false;
-                loadVulns();
-            }
+        $scope.toggleFilter = function() {
+            $scope.confirmed = !$scope.confirmed;
+            $cookies.put('confirmed', $scope.confirmed);
+            console.log($scope.confirmed);
+            loadVulns();
         };
 
         showMessage = function(msg) {
@@ -844,101 +839,6 @@ angular.module('faradayApp')
             });
         };
 
-        // encodes search string in order to send it through URL
-        $scope.encodeSearch = function(search) {
-            var i = -1,
-            encode = "",
-            params = search.split(" "),
-            chunks = {};
-
-            params.forEach(function(chunk) {
-                i = chunk.indexOf(":");
-                if(i > 0) {
-                    chunks[chunk.slice(0, i)] = chunk.slice(i+1);
-                } else {
-                    if(!chunks.hasOwnProperty("free")) {
-                        chunks.free = "";
-                    }
-                    chunks.free += " ".concat(chunk);
-                }
-            });
-
-            if(chunks.hasOwnProperty("free")) {
-                chunks.free = chunks.free.slice(1);
-            }
-
-            for(var prop in chunks) {
-                if(chunks.hasOwnProperty(prop)) {
-                    if(chunks.prop != "") {
-                        encode += "&" + encodeURIComponent(prop) + "=" + encodeURIComponent(chunks[prop]);
-                    }
-                }
-            }
-            return encode.slice(1);
-        };
-
-        // decodes search parameters to object in order to use in filter
-        $scope.decodeSearch = function(search) {
-            var i = -1,
-            decode = {},
-            params = search.split("&");
-
-            params.forEach(function(param) {
-                i = param.indexOf("=");
-                decode[decodeURIComponent(param.slice(0,i))] = decodeURIComponent(param.slice(i+1));
-            });
-
-            if(decode.hasOwnProperty("free")) {
-                decode['$'] = decode.free;
-                delete decode.free;
-            }
-
-            return decode;
-        };
-
-        // converts current search object to string to be displayed in search field
-        $scope.stringSearch = function(obj) {
-            var search = "";
-
-            for(var prop in obj) {
-                if(obj.hasOwnProperty(prop)) {
-                    if(search != "") {
-                        search += " ";
-                    }
-                    if(prop == "$") {
-                        search += obj[prop];
-                    } else {
-                        if(prop !== "confirmed"){
-                            search += prop + ":" + obj[prop];
-                        }
-                    }
-                }
-            }
-
-            return search.trim();
-        };
-
-        var prepareFilter = function(searchText) {
-            var params = searchText.split(" ");
-            var chunks = {};
-            var i = -1;
-
-            params.forEach(function(chunk) {
-                i = chunk.indexOf(":");
-                if (i > 0) {
-                    chunks[chunk.slice(0, i)] = chunk.slice(i+1);
-                } else {
-                    if (!chunks.hasOwnProperty("search")) {
-                        chunks.search  = chunk;
-                    } else {
-                        chunks.search += ' ' + chunk;
-                    }
-                }
-            });
-
-            return chunks;
-        };
-
         // changes the URL according to search params
         $scope.searchFor = function(search, params) {
             // TODO: It would be nice to find a way for changing
@@ -950,7 +850,9 @@ angular.module('faradayApp')
             }
 
             if(search && params != "" && params != undefined) {
-                url += "/search/" + $scope.encodeSearch(params);
+                var filter = commonsFact.parseSearchExpression(params);
+                var URLParams = commonsFact.searchFilterToURLParams(filter);
+                url += "/search/" + URLParams;
             }
 
             $location.path(url);

@@ -3,7 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('dashboardSrv', ['BASEURL', 'SEVERITIES', '$cookies', '$q', '$http', 'hostsManager', function(BASEURL, SEVERITIES, $cookies, $q, $http, hostsManager) {
+    .factory('dashboardSrv', ['BASEURL', 'SEVERITIES', '$cookies', '$q', '$http', '$interval', 'hostsManager',
+        function(BASEURL, SEVERITIES, $cookies, $q, $http, $interval, hostsManager) {
         var dashboardSrv = {};
 
         dashboardSrv._getView = function(url) {
@@ -20,7 +21,9 @@ angular.module('faradayApp')
         };
 
         dashboardSrv.props = {};
-        dashboardSrv.props["confirmed"] = ($cookies.get('confirmed') == undefined) ? false : JSON.parse($cookies.get('confirmed'));
+        dashboardSrv.setConfirmedFromCookie = function() {
+            dashboardSrv.props["confirmed"] = ($cookies.get('confirmed') == undefined) ? false : JSON.parse($cookies.get('confirmed'));
+        }
 
         dashboardSrv.setConfirmed = function(val) {
             if(val == undefined) {
@@ -310,6 +313,34 @@ angular.module('faradayApp')
                 }
             });
         };
+
+        var timer = undefined;
+
+        dashboardSrv.startTimer = function() {
+            timer = $interval(function(){
+                dashboardSrv.updateData();
+            }, 60000)
+        }
+        dashboardSrv._callbacks = [];
+
+        dashboardSrv.registerCallback = function(callback) {
+            dashboardSrv._callbacks.push(callback);
+        }
+
+        dashboardSrv.stopTimer = function() {
+            dashboardSrv._callbacks = [];
+            if (angular.isDefined(timer)) {
+                $interval.cancel(timer);
+                timer = undefined;
+            }
+        }
+
+        dashboardSrv.updateData = function() {
+            for (var i = 0; i < dashboardSrv._callbacks.length; i++) {
+                var callback = dashboardSrv._callbacks[i];
+                callback();
+            }
+        }
 
         return dashboardSrv;
     }]);

@@ -44,7 +44,7 @@ def openMtgx(mtgx_file):
 
     except:
         print "Bad report format"
-        sys.exit()
+        return None
 
     file.close()
     return xml

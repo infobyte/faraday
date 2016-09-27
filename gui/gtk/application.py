@@ -7,10 +7,8 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import os
-import sys
-import threading
-import webbrowser
+import os, sys, threading, webbrowser, time
+from utils.logs import getLogger
 
 try:
     import gi
@@ -40,7 +38,6 @@ except ImportError as e:
            "Check that you have GTK+3 and Vte installed.")
     sys.exit(1)
 
-
 import model.guiapi
 import model.api
 import model.log
@@ -48,15 +45,15 @@ import model.log
 from gui.gui_app import FaradayUi
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
-from persistence.persistence_managers import CouchDbManager
+from persistence.server import models
 from appwindow import AppWindow
 
+from server import ServerIO
 from dialogs import PreferenceWindowDialog
 from dialogs import NewWorkspaceDialog
 from dialogs import PluginOptionsDialog
 from dialogs import NotificationsDialog
 from dialogs import aboutDialog
-from dialogs import helpDialog
 from dialogs import ConflictsDialog
 from dialogs import HostInfoDialog
 from dialogs import ForceChooseWorkspaceDialog
@@ -119,23 +116,19 @@ class GuiApp(Gtk.Application, FaradayUi):
                                                             16, False)
         self.window = None
         self.model_controller = model_controller
-        self.conflicts = self.model_controller.getConflicts()
+
+    @property
+    def active_ws_name(self):
+        return self.get_active_workspace().name
+
+    def get_active_workspace(self):
+        """Return the currently active workspace"""
+        return self.workspace_manager.getActiveWorkspace()
 
     def getMainWindow(self):
         """Useless mostly, but guiapi uses this method to access the main
         window."""
         return self.window
-
-    def updateConflicts(self):
-        """Reassings self.conflicts with an updated list of conflicts"""
-        self.conflicts = self.model_controller.getConflicts()
-
-    def updateHosts(self):
-        """Reassings the value of self.all_hosts to a current one to
-        catch workspace changes, new hosts added via plugins or any other
-        external interference with our host list"""
-        self.all_hosts = self.model_controller.getAllHosts()
-        return self.all_hosts
 
     def createWorkspace(self, name, description=""):
         """Uses the instance of workspace manager passed into __init__ to
@@ -153,9 +146,8 @@ class GuiApp(Gtk.Application, FaradayUi):
             model.api.devlog("Looking for the delegation class")
             manager = self.getWorkspaceManager()
             try:
-                w = manager.createWorkspace(name, description,
-                                            manager.namedTypeToDbType('CouchDB'))
-                self.change_workspace(w.name)
+                name = manager.createWorkspace(name, description)
+                self.change_workspace(name)
                 creation_ok = True
             except Exception as e:
                 model.guiapi.notification_center.showDialog(str(e))
@@ -165,18 +157,24 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def remove_workspace(self, button, ws_name):
         """Removes a workspace. If the workspace to be deleted is the one
-        selected, it moves you first to the default. The clears and refreshes
+        selected, it moves you to the one above it on the list. If there
+        aren't more workspaces left, you will be forced to create one.
+        The clears and refreshes
         sidebar"""
-
         model.api.log("Removing Workspace: %s" % ws_name)
-        self.getWorkspaceManager().removeWorkspace(ws_name)
-        self.ws_sidebar.clear_sidebar()
-        self.ws_sidebar.refresh_sidebar()
-        self.select_active_workspace()
+        server_response = self.getWorkspaceManager().removeWorkspace(ws_name)
+        if server_response:
+            self.ws_sidebar.clear_sidebar()
+            self.ws_sidebar.refresh_sidebar()
+            available_workspaces = self.serverIO.get_workspaces_names()
+            if available_workspaces:
+                self.select_last_workspace_in_list(available_workspaces)
+            else:
+                self.handle_no_active_workspace()
 
     def lost_db_connection(self, explanatory_message=None,
-                           handle_connection_lost=None,
-                           connect_to_a_different_couch=None):
+                                   handle_connection_lost=None,
+                                   connect_to_a_different_couch=None):
         """Creates a simple dialog with an error message to inform the user
         some kind of problem has happened and the connection was lost.
         """
@@ -193,7 +191,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         self.lost_connection_dialog_raised = True
 
-        if explanatory_message:
+        if explanatory_message and isinstance(explanatory_message, basestring):
             explanation = "\n The specific error was: " + explanatory_message
         else:
             explanation = ""
@@ -238,14 +236,15 @@ class GuiApp(Gtk.Application, FaradayUi):
         if self.workspace_dialogs_raised:
             return False
 
-        if not CouchDbManager.testCouch(CONF.getCouchURI()):
+        if not self.serverIO.is_server_up():
             # make sure it is not because we're not connected to Couch
             # there's another whole strategy for that.
             return False
 
         self.workspace_dialogs_raised = True
+        self.ws_sidebar.refresh_sidebar()
 
-        available_workspaces = self.workspace_manager.getWorkspacesNames()
+        available_workspaces = self.serverIO.get_workspaces_names()
         workspace_model = self.ws_sidebar.workspace_model
 
         if available_workspaces:
@@ -265,12 +264,10 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def select_active_workspace(self):
         """Selects on the sidebar the currently active workspace."""
-        active_ws_name = self.get_active_workspace().name
-        self.ws_sidebar.select_ws_by_name(active_ws_name)
+        self.ws_sidebar.select_ws_by_name(self.active_ws_name)
 
-    def get_active_workspace(self):
-        """Return the currently active workspace"""
-        return self.workspace_manager.getActiveWorkspace()
+    def select_last_workspace_in_list(self, ws_names_list):
+        self.ws_sidebar.select_ws_by_name(ws_names_list[-1])
 
     def exit_faraday(self, button=None, parent=None):
         """A simple exit which will ask for confirmation."""
@@ -305,7 +302,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         preference_window.run()
 
-    def connect_to_couch(self, couch_uri, parent=None):
+    def connect_to_couch(self, server_uri, parent=None):
         """Tries to connect to a CouchDB on a specified Couch URI.
         Returns the success status of the operation, False for not successful,
         True for successful
@@ -313,19 +310,19 @@ class GuiApp(Gtk.Application, FaradayUi):
         if parent is None:
             parent = self.window
 
-        if not CouchDbManager.testCouch(couch_uri):
+        if not self.serverIO.test_server_url(server_uri):
             errorDialog(parent, "Could not connect to Faraday Server.",
                         ("Are you sure it is running and that you can "
                          "connect to it? \n Make sure your username and "
                          "password are still valid."))
             success = False
-        elif couch_uri.startswith("https://"):
-            if not checkSSL(couch_uri):
+        elif server_uri.startswith("https://"):
+            if not checkSSL(server_uri):
                 errorDialog(self.window,
                             "The SSL certificate validation has failed")
             success = False
         else:
-            CONF.setCouchUri(couch_uri)
+            CONF.setCouchUri(server_uri)
             CONF.saveConfig()
             self.reload_workspaces()
             self.open_last_workspace()
@@ -347,26 +344,32 @@ class GuiApp(Gtk.Application, FaradayUi):
         return reconnected
 
     def update_counts(self):
-        """Update the counts for host, services and vulns"""
-        host_count = self.model_controller.getHostsCount()
-        service_count = self.model_controller.getServicesCount()
-        vuln_count = self.model_controller.getVulnsCount()
-        return host_count, service_count, vuln_count
+        """Returns the counts of hosts, services and vulns on the current
+        workspace."""
+        hosts, interfaces, services, vulns = self.serverIO.get_workspace_numbers()
+        return hosts, services, vulns
 
     def show_host_info(self, host_id):
         """Looks up the host selected in the HostSidebar by id and shows
-        its information on the HostInfoDialog"""
+        its information on the HostInfoDialog.
+
+        Return True if everything went OK, False if there was a problem
+        looking for the host."""
         current_ws_name = self.get_active_workspace().name
 
-        for host in self.all_hosts:
-            if host_id == host.id:
-                selected_host = host
-                break
+        #for host in self.model_controller.getAllHosts():
+        host = self.serverIO.get_hosts(couchid=host_id)
+        if not host:
+            self.show_normal_error("The host you clicked isn't accessible. "
+                                   "This is most probably due to an internal "
+                                   "error.")
+            return False
 
-        info_window = HostInfoDialog(self.window, current_ws_name, selected_host)
+        info_window = HostInfoDialog(self.window, current_ws_name, host[0])
         info_window.show_all()
+        return True
 
-    def reload_worskpaces_no_connection(self):
+    def reload_workspaces_no_connection(self):
         """Very similar to reload_workspaces, but doesn't resource the
         workspace_manager to avoid asking for information to a database
         we can't access."""
@@ -378,7 +381,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         clears the sidebar of the old workspaces and injects all the new ones
         in there too"""
         self.workspace_manager.closeWorkspace()
-        self.workspace_manager.resource()
         self.ws_sidebar.clear_sidebar()
         self.ws_sidebar.refresh_sidebar()
 
@@ -392,7 +394,8 @@ class GuiApp(Gtk.Application, FaradayUi):
     def change_workspace(self, workspace_name):
         """Changes workspace in a separate thread. Emits a signal
         to present a 'Loading workspace' dialog while Faraday processes
-        the change"""
+        the change. If there are conflict present in the workspace, it will
+        show a warning before changing the workspaces."""
 
         def loading_workspace(action):
             """Function to be called via GObject.idle_add by the background
@@ -402,8 +405,8 @@ class GuiApp(Gtk.Application, FaradayUi):
 
             if action == "show" and not self.loading_dialog_raised:
                 message_string = ("Loading workspace {0}. Please wait. \n"
-                                 "To cancel, press Alt+F4 or a similar shorcut."
-                                 .format(workspace_name))
+                                  "To cancel, press Alt+F4 or a similar shorcut."
+                                  .format(workspace_name))
 
                 self.loading_dialog_raised = True
                 self.loading_dialog = Gtk.MessageDialog(self.window, 0,
@@ -439,12 +442,18 @@ class GuiApp(Gtk.Application, FaradayUi):
                 GObject.idle_add(CONF.saveConfig)
             except Exception as e:
                 GObject.idle_add(self.handle_no_active_workspace)
-                model.guiapi.notification_center.showDialog(str(e))
+                getLogger("GTK").error(e)
 
             GObject.idle_add(loading_workspace, 'destroy')
             return True
 
         self.ws_sidebar.select_ws_by_name(workspace_name)
+        if self.statusbar.conflict_button_label_int > 0:
+            response = self.window.show_conflicts_warning()
+            if response == Gtk.ResponseType.NO:
+                self.select_active_workspace()
+                return False
+
         thread = threading.Thread(target=background_process)
         thread.daemon = True
         thread.start()
@@ -486,47 +495,84 @@ class GuiApp(Gtk.Application, FaradayUi):
         events module is updated.
 
         DO NOT, AND I REPEAT, DO NOT REDRAW *ANYTHING* FROM THE GUI
-        FROM HERE. If you must do it, you should to it sing Glib.idle_add,
+        FROM HERE. If you must do it, you should to it sing GObject.idle_add,
         a misterious function with outdated documentation. Good luck."""
 
-        type_ = event.type()
-
-        if type_ == 3131:  # new log event
+        def new_log_event():
             GObject.idle_add(self.console_log.customEvent, event.text)
 
-        elif type_ == 3141:  # new conflict event
+        def new_conflict_event():
             GObject.idle_add(self.statusbar.update_conflict_button_label,
                              event.nconflicts)
 
-        elif type_ == 5100:  # new notification event
-            self.notificationsModel.prepend([event.change.getMessage()])
+        def new_notification_event():
+            self.notificationsModel.prepend([str(event)])
             GObject.idle_add(self.statusbar.inc_notif_button_label)
             host_count, service_count, vuln_count = self.update_counts()
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)
 
-        # in order: add host, delete host, edit host, workspace_change
-        elif type_ in {4100, 4101, 4102, 3140}:
+        def workspace_changed_event():
+            self.serverIO.active_workspace = event.workspace.name
             host_count, service_count, vuln_count = self.update_counts()
-            GObject.idle_add(self.hosts_sidebar.update, self.updateHosts())
+            total_host_amount = self.serverIO.get_hosts_number()
+            first_host_page = self.serverIO.get_hosts(page='0', page_size='20', sort='vulns', sort_dir='desc')
+            GObject.idle_add(self.statusbar.set_workspace_label, event.workspace.name)
+            GObject.idle_add(self.hosts_sidebar.redo, first_host_page, total_host_amount)
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)
+            GObject.idle_add(self.statusbar.set_default_conflict_label)
+            GObject.idle_add(self.statusbar.set_default_conflict_label)
             GObject.idle_add(self.select_active_workspace)
 
-        elif type_ == 3132:  # error
+        def normal_error_event():
             GObject.idle_add(self.show_normal_error, event.text)
 
-        elif type_ == 3134:  # important error, uncaught exception
+        def important_error_event():
             GObject.idle_add(self.show_important_error, event)
 
-        elif type_ == 42424:  # lost connection to couch db
+        def lost_connection_to_server_event():
             GObject.idle_add(self.lost_db_connection, event.problem,
                              self.handle_connection_lost,
                              self.force_change_couch_url)
-            GObject.idle_add(self.reload_worskpaces_no_connection)
+            GObject.idle_add(self.reload_workspaces_no_connection)
 
-        elif type_ == 24242:  # workspace not accesible
+        def workspace_not_accessible_event():
             GObject.idle_add(self.handle_no_active_workspace)
+
+        def add_object():
+            GObject.idle_add(self.hosts_sidebar.add_object, event.new_obj)
+            host_count, service_count, vuln_count = self.update_counts()
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
+
+        def delete_object():
+            GObject.idle_add(self.hosts_sidebar.remove_object, event.obj_id)
+            host_count, service_count, vuln_count = self.update_counts()
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
+
+        def update_object():
+            GObject.idle_add(self.hosts_sidebar.update_object, event.obj)
+            host_count, service_count, vuln_count = self.update_counts()
+            GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                             service_count, vuln_count)
+
+        dispatch = {3131:  new_log_event,
+                    3141:  new_conflict_event,
+                    5100:  new_notification_event,
+                    3140:  workspace_changed_event,
+                    3132:  normal_error_event,
+                    3134:  important_error_event,
+                    42424: lost_connection_to_server_event,
+                    24242: workspace_not_accessible_event,
+                    7777:  add_object,
+                    8888:  delete_object,
+                    9999:  update_object}
+
+        function = dispatch.get(event.type())
+        if function is not None:
+            function()
 
     def show_normal_error(self, dialog_text):
         """Just a simple, normal, ignorable error"""
@@ -559,30 +605,24 @@ class GuiApp(Gtk.Application, FaradayUi):
         """
         Gtk.Application.do_startup(self)  # deep GTK magic
 
-        self.ws_sidebar = WorkspaceSidebar(self.workspace_manager,
+        self.serverIO = ServerIO(CONF.getLastWorkspace())
+        self.serverIO.continously_check_server_connection()
+
+        self.ws_sidebar = WorkspaceSidebar(self.serverIO,
                                            self.change_workspace,
                                            self.remove_workspace,
                                            self.on_new_button,
                                            CONF.getLastWorkspace())
 
-        # XXX: do not move next line, it is very important it stays there,
-        # just after the creation of the sidebar and before updateHosts.
-        # correct fix: move the creation of the ws_model to the application
-
-        workspace_argument_set = self.open_workspace_from_args()
-        if not workspace_argument_set:
-            self.open_last_workspace()
-
-        self.updateHosts()
-        self.hosts_sidebar = HostsSidebar(self.show_host_info, self.icons)
-        default_model = self.hosts_sidebar.create_model(self.all_hosts)
+        # the dummy values here will be updated as soon as the ws is loaded.
+        self.hosts_sidebar = HostsSidebar(self.show_host_info, self.serverIO.get_hosts,
+                                          self.icons)
+        default_model = self.hosts_sidebar.create_model([]) # dummy empty list
         self.hosts_sidebar.create_view(default_model)
-
         self.sidebar = Sidebar(self.ws_sidebar.get_box(),
                                self.hosts_sidebar.get_box())
 
-        host_count, service_count, vuln_count = self.update_counts()
-
+        host_count, service_count, vuln_count = 0, 0, 0  # dummy values
         self.terminal = Terminal(CONF)
         self.console_log = ConsoleLog()
         self.statusbar = Statusbar(self.on_click_notifications,
@@ -591,15 +631,23 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         self.notificationsModel = Gtk.ListStore(str)
 
-        action_to_method = {"about" : self.on_about,
-                            "help" : self.on_help,
-                            "quit" : self.on_quit,
-                            "preferences" : self.on_preferences,
-                            "pluginOptions" : self.on_plugin_options,
-                            "new" : self.on_new_button,
-                            "new_terminal" : self.on_new_terminal_button,
-                            "open_report" : self.on_open_report_button,
-                            "go_to_web_ui" : self.on_click_go_to_web_ui_button
+        action_to_method = {"about": self.on_about,
+                            "quit": self.on_quit,
+                            "preferences": self.on_preferences,
+                            "pluginOptions": self.on_plugin_options,
+                            "new": self.on_new_button,
+                            "new_terminal": self.on_new_terminal_button,
+                            "open_report": self.on_open_report_button,
+                            "go_to_web_ui": self.on_click_go_to_web_ui_button,
+                            "go_to_documentation": self.on_help_dispatch,
+                            "go_to_faq": self.on_help_dispatch,
+                            "go_to_troubleshooting": self.on_help_dispatch,
+                            "go_to_demos": self.on_help_dispatch,
+                            "go_to_issues": self.on_help_dispatch,
+                            "go_to_forum": self.on_help_dispatch,
+                            "go_to_irc": self.on_help_dispatch,
+                            "go_to_twitter": self.on_help_dispatch,
+                            "go_to_googlegroup": self.on_help_dispatch
                             }
 
         for action, method in action_to_method.items():
@@ -612,6 +660,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         builder.connect_signals(self)
         appmenu = builder.get_object('appmenu')
         self.set_app_menu(appmenu)
+
         helpMenu = builder.get_object('Help')
         self.set_menubar(helpMenu)
 
@@ -645,10 +694,14 @@ class GuiApp(Gtk.Application, FaradayUi):
         notifier.widget = self.window
         model.guiapi.notification_center.registerWidget(self.window)
 
-        if not CouchDbManager.testCouch(CONF.getCouchURI()):
+        if not self.serverIO.is_server_up():
             self.lost_db_connection(
                 handle_connection_lost=self.handle_connection_lost,
                 connect_to_a_different_couch=self.force_change_couch_url)
+
+        workspace_argument_set = self.open_workspace_from_args()
+        if not workspace_argument_set:
+            self.open_last_workspace()
 
     def on_quit(self, action=None, param=None):
         self.quit()
@@ -694,12 +747,11 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Doesn't use the button at all, there cause GTK likes it.
         Shows the conflict dialog.
         """
-        self.updateConflicts()
-        if self.conflicts:
-            dialog = ConflictsDialog(self.conflicts,
+        conflicts = self.model_controller.getConflicts()
+        if conflicts:
+            dialog = ConflictsDialog(conflicts,
                                      self.window)
             dialog.show_all()
-            self.updateConflicts()
 
         else:
             dialog = Gtk.MessageDialog(self.window, 0,
@@ -771,12 +823,6 @@ class GuiApp(Gtk.Application, FaradayUi):
         about_dialog.run()
         about_dialog.destroy()
 
-    def on_help(self, action, param):
-        """Defines what happens when user press 'help' on the menu"""
-        help_dialog = helpDialog(self.window)
-        help_dialog.run()
-        help_dialog.destroy()
-
     def on_preferences(self, action=None, param=None):
         """Defines what happens when you press 'preferences' on the menu.
         Sends as a callback reloadWsManager, so if the user actually
@@ -796,3 +842,18 @@ class GuiApp(Gtk.Application, FaradayUi):
         ws_name = self.workspace_manager.getActiveWorkspace().name
         ws_url = couch_url + "/_ui/#/dashboard/ws/" + ws_name
         webbrowser.open(ws_url, new=2)
+
+    def on_help_dispatch(self, action, param=None):
+        """Open the url contained in "action" in the user's browser."""
+        urls = {"go_to_documentation":  "https://faradaysec.com/help/docs",
+                "go_to_faq": "https://faradaysec.com/help/faq",
+                "go_to_troubleshooting": "https://faradaysec.com/help/troubleshooting",
+                "go_to_demos": "https://faradaysec.com/help/demos",
+                "go_to_issues": "https://faradaysec.com/help/issues",
+                "go_to_forum": "https://forum.faradaysec.com",
+                "go_to_irc": "https://faradaysec.com/help/irc",
+                "go_to_twitter": "https://faradaysec.com/help/twitter",
+                "go_to_googlegroup": "https://faradaysec.com/help/googlegroup"
+        }
+        url = urls.get(action.get_name(), "https://faradaysec.com")
+        webbrowser.open(url, new=2)

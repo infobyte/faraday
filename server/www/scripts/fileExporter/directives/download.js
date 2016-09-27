@@ -14,25 +14,28 @@ angular.module('faradayApp')
           return function(scope, element, attr) {
              
             element.on('click', function(event) {
-              var a_href, content, extension, title, type, url, _ref;
-              _ref = fn(scope), content = _ref.content, extension = _ref.extension, title = _ref.title, type = _ref.type;
+              fn(scope).then(function (res){
+                var a_href, content, extension, title, type, url, _ref;
+                _ref = res;
+                content = _ref.content, extension = _ref.extension, title = _ref.title, type = _ref.type;
                
-              if (!(content != null) && !(extension != null) && !(title != null) && !(type != null)) {
-                $log.warn("Invalid content, extension, title or type in file exporter : ", content, extension, title, type);
-                return;
-              }
-               
-              title = $blob.sanitizeFileName(title, extension);
-              type  = $blob.sanitizeFileType(type);
-              url   = $blob.fileToURL(content, type);
-               
-              element.append("<a download=\"" + title + "\" href=\"" + url + "\"></a>");
-              a_href = element.find('a')[0];
-               
-              $click.on(a_href);
-              $timeout(function() {$blob.revoke(url);});
-               
-              element[0].removeChild(a_href);
+                if (!(content != null) && !(extension != null) && !(title != null) && !(type != null)) {
+                  $log.warn("Invalid content, extension, title or type in file exporter : ", content, extension, title, type);
+                  return;
+                }
+                
+                title = $blob.sanitizeFileName(title, extension);
+                type  = $blob.sanitizeFileType(type);
+                url   = $blob.fileToURL(content, type);
+                
+                element.append("<a download=\"" + title + "\" href=\"" + url + "\"></a>");
+                a_href = element.find('a')[0];
+                
+                $click.on(a_href);
+                $timeout(function() {$blob.revoke(url);});
+                
+                element[0].removeChild(a_href);
+              });
             });
           };
         }

@@ -612,7 +612,8 @@ class HostInfoDialog(Gtk.Window):
         # only the ID and the name are needed, but i still need to 'fill'
         # the other columns with dummy info
 
-        display_str = host.getName() + " (" + str(len(host.getVulns())) + ")"
+        # display_str = host.getName() + " (" + str(len(host.getVulns())) + ")"
+        display_str = str(host)
         owned_status = ("Yes" if host.isOwned() else "No")
         host_position = model.append(None, [host.getID(), host.getName(),
                                             host.getOS(), owned_status,
@@ -635,8 +636,7 @@ class HostInfoDialog(Gtk.Window):
             """
             ipv4_dic = interface.getIPv4()
             ipv6_dic = interface.getIPv6()
-            vulns = interface.getVulns()
-            display_str = interface.getName() + " (" + str(len(vulns)) + ")"
+            display_str = str(interface)
 
             position = model.append(host_pos, [interface.getID(),
                                                interface.getName(),
@@ -656,8 +656,7 @@ class HostInfoDialog(Gtk.Window):
         def add_service_to_interface_in_model(service, interface_pos, model):
             """Append a service to an interface at interface_pos in the given
             model. Return None. Modifies the model"""
-            vulns = service.getVulns()
-            display_str = service.getName() + " (" + str(len(vulns)) + ")"
+            display_str = str(service)
             model.append(interface_pos, [service.getID(),
                                          service.getName(),
                                          service.getDescription(),
@@ -726,6 +725,8 @@ class HostInfoDialog(Gtk.Window):
             prop_names = self.get_properties_names(object_type)
             self.show_info_in_box(object_info, prop_names, self.specific_info)
             actual_object = self.get_object(object_info, object_type)
+            if not actual_object:
+                return None
             vuln_model = self.create_vuln_model(actual_object)
             self.set_vuln_model(vuln_model)
 
@@ -761,7 +762,6 @@ class HostInfoDialog(Gtk.Window):
         """Return the model for the vulnerabilities of the obj object.
         It will be sorted alphabetically.
         """
-
         def params_to_string(params):  # XXX
             """Converts params to a string, in case it gets here as a list.
             It's pretty anoyting, but needed for backwards compatibility.
@@ -799,7 +799,7 @@ class HostInfoDialog(Gtk.Window):
                               vuln.getResponse(), vuln.getMethod(),
                               vuln.getPname(),
                               params_to_string(vuln.getParams()),
-                              vuln.getQuery(), vuln.getCategory()])
+                              vuln.getQuery(), ""])
         # sort it!
         sorted_model = Gtk.TreeModelSort(model=model)
         sorted_model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
@@ -848,17 +848,31 @@ class HostInfoDialog(Gtk.Window):
         """Take a selection as selected_object and an object_type
         and return the actual object, not the model's selection.
         """
+        def safely(func):
+            def safe_wrapper(*args, **kwargs):
+                try:
+                    return func(*args, **kwargs)
+                except IndexError, ValueError:
+                    dialog = errorDialog(self, ("There has been a problem. "
+                                                "The object you clicked on "
+                                                "does not exist anymore."))
+                    self.destroy() # exit
+            return safe_wrapper
+
         object_id = selected_object[0]
         if object_type == 'Interface':
             # an interface is a direct child of a host
-            object_ = self.host.getInterface(object_id)
+            object_ = safely(self.host.getInterface)(object_id)
         elif object_type == 'Service':
             # a service is a grand-child of a host, so we should look
             # for its parent interface and ask her about the child
             parent_interface_iter = selected_object.get_parent()
             parent_interface_id = parent_interface_iter[0]
-            parent_interface = self.host.getInterface(parent_interface_id)
-            object_ = parent_interface.getService(object_id)
+            parent_interface = safely(self.host.getInterface)(parent_interface_id)
+            if parent_interface:
+                object_ = safely(parent_interface.getService)(object_id)
+            else:
+                object_ = None
 
         return object_
 
@@ -974,6 +988,15 @@ class ConflictsDialog(Gtk.Window):
         button_box.pack_start(keep_right, False, False, 5)
         return button_box
 
+    def _next_conflict_or_close(self):
+            if len(self.conflicts)-1 > self.conflict_n:
+                self.conflict_n += 1
+                self.update_current_conflict()
+                self.update_current_conflict_model()
+                self.set_conflict_view(self.conflict_n)
+            else:
+                self.destroy()
+
     def save(self, button, keeper):
         """Saves information to Faraday. Keeper is needed to know if user
         wanted to keep left or right view"""
@@ -997,14 +1020,8 @@ class ConflictsDialog(Gtk.Window):
 
         try:
             guiapi.resolveConflict(self.current_conflict, solution)
+            self._next_conflict_or_close()
             # if this isn't the last conflict...
-            if len(self.conflicts)-1 > self.conflict_n:
-                self.conflict_n += 1
-                self.update_current_conflict()
-                self.update_current_conflict_model()
-                self.set_conflict_view(self.conflict_n)
-            else:
-                self.destroy()
 
         except ValueError:
             dialog = Gtk.MessageDialog(self, 0,
@@ -1017,6 +1034,20 @@ class ConflictsDialog(Gtk.Window):
                                         " numbers, and so on."))
             dialog.run()
             dialog.destroy()
+
+        except KeyError: # TODO: revert this hack to prevent exception when
+                         # fixing conflict of non existent object
+            dialog = Gtk.MessageDialog(self, 0,
+                                       Gtk.MessageType.INFO,
+                                       Gtk.ButtonsType.OK,
+                                       ("It seems like this conflict does not "
+                                        "exist anymore. Most probably someone "
+                                        "deleted the conflicting object from "
+                                        "the DB \n"
+                                        "Moving on to the next conflict."))
+            dialog.run()
+            dialog.destroy()
+            self._next_conflict_or_close()
 
     def case_for_interfaces(self, model, n):
         """The custom case for the interfaces. Plays a little
@@ -1237,9 +1268,10 @@ class ConflictsDialog(Gtk.Window):
                          obj.getDescription(),
                          obj.getData(),
                          obj.getSeverity(),
-                         obj.getRefs()))
+                         obj.getRefs(),
+                         obj.getResolution()))
 
-        props = ["Name", "Desc", "Data", "Severity", "Refs"]
+        props = ["Name", "Desc", "Data", "Severity", "Refs", "Resolution"]
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model
 
@@ -1262,12 +1294,11 @@ class ConflictsDialog(Gtk.Window):
                          obj.getMethod(),
                          obj.getPname(),
                          obj.getParams(),
-                         obj.getQuery(),
-                         obj.getCategory()))
+                         obj.getQuery()))
 
         props = ["Name", "Desc", "Data", "Severity", "Refs", "Path",
                  "Website", "Request", "Response", "Method", "Pname",
-                 "Params", "Query", "Category"]
+                 "Params", "Query"]
 
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model
@@ -1505,25 +1536,6 @@ class aboutDialog(Gtk.AboutDialog):
         faraday_website = "http://www.infobytesec.com/faraday.html"
         self.set_website(faraday_website)
         self.set_website_label("Learn more about Faraday")
-
-
-class helpDialog(Gtk.AboutDialog):
-    """Using about dialog 'cause they are very similar, but this will
-    display github page, Wiki, and such"""
-    def __init__(self, main_window):
-        Gtk.AboutDialog.__init__(self, transient_for=main_window, modal=True)
-        icons = CONF.getImagePath() + "icons/"
-        faraday_icon = GdkPixbuf.Pixbuf.new_from_file(icons+"faraday_icon.png")
-        self.set_logo(faraday_icon)
-        self.set_program_name("Faraday")
-        self.set_comments("Farday is a Penetration Test IDE. "
-                          "Just use one of the supported tools on Faraday's "
-                          " terminal and a plugin will capture the output and "
-                          "extract useful information for you.")
-        faraday_website = "https://github.com/infobyte/faraday/wiki"
-        self.set_website(faraday_website)
-        self.set_website_label("Learn more about how to use Faraday")
-
 
 class errorDialog(Gtk.MessageDialog):
     """A simple error dialog to show the user where things went wrong.

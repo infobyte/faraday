@@ -15,11 +15,13 @@ from config import globals as CONSTANTS
 LOGGING_LEVEL = INFO
 
 FARADAY_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+FARADAY_SERVER_DBS_DIR = os.path.join(FARADAY_BASE, 'server/workspaces')
 FARADAY_SERVER_PID_FILE = os.path.join(FARADAY_BASE, 'server/.faraday-server.pid')
 REQUIREMENTS_FILE = os.path.join(FARADAY_BASE, 'requirements_server.txt')
 DEFAULT_CONFIG_FILE = os.path.join(FARADAY_BASE, 'server/default.ini')
 VERSION_FILE = os.path.join(FARADAY_BASE, CONSTANTS.CONST_VERSION_FILE)
 WEB_CONFIG_FILE = os.path.join(FARADAY_BASE, 'server/www/config/config.json')
+REPORTS_VIEWS_DIR = os.path.join(FARADAY_BASE, 'views/reports')
 LOCAL_CONFIG_FILE = os.path.expanduser(
     os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'config/server.ini'))
 

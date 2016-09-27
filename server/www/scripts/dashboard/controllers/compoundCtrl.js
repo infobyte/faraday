@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('compoundCtrl',
-        ['$scope', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact',
-        function($scope, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact) {
+        ['$scope', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'dashboardSrv',
+        function($scope, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, dashboardSrv) {
 
         init = function() {
             // hosts list
@@ -137,6 +137,8 @@ angular.module('faradayApp')
                  });
             }
         };
+
+        dashboardSrv.registerCallback(loadHosts);
 
         init();
     }]);

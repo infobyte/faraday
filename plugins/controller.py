@@ -246,7 +246,7 @@ class PluginController(object):
         plugin, cmd_info = self._active_plugins.get(pid)
 
         cmd_info.duration = time.time() - cmd_info.itime
-        self._mapper_manager.save(cmd_info)
+        self._mapper_manager.update(cmd_info)
 
         self.processOutput(plugin, term_output)
         del self._active_plugins[pid]
@@ -264,7 +264,7 @@ class PluginController(object):
         if plugin in self._plugins:
             self.processOutput(self._plugins[plugin], filepath, True)
             cmd_info.duration = time.time() - cmd_info.itime
-            self._mapper_manager.save(cmd_info)
+            self._mapper_manager.update(cmd_info)
             return True
         return False
 

@@ -79,7 +79,7 @@ class VulnerabilityDAO(FaradayDAO):
             Vulnerability.method, Vulnerability.params, Vulnerability.pname, Vulnerability.query,\
             EntityMetadata.couchdb_id, EntityMetadata.revision, EntityMetadata.create_time, EntityMetadata.creator,\
             EntityMetadata.owner, EntityMetadata.update_action, EntityMetadata.update_controller_action,\
-            EntityMetadata.update_time, EntityMetadata.update_user, EntityMetadata.document_type, Vulnerability.attachments)
+            EntityMetadata.update_time, EntityMetadata.update_user, EntityMetadata.document_type, EntityMetadata.command_id, Vulnerability.attachments)
         service_bundle = Bundle('service', Service.name.label('s_name'), Service.ports, Service.protocol, Service.id)
         host_bundle = Bundle('host', Host.name)
 
@@ -162,7 +162,8 @@ class VulnerabilityDAO(FaradayDAO):
                     'update_action': vuln.update_action,
                     'update_controller_action': vuln.update_controller_action,
                     'update_time': vuln.update_time,
-                    'update_user': vuln.update_user
+                    'update_user': vuln.update_user,
+                    'command_id': vuln.command_id
                 },
                 '_attachments': json.loads(vuln.attachments),
                 'name': vuln.v_name,

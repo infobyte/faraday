@@ -101,6 +101,7 @@ class EntityMetadata(Base):
         self.couchdb_id=document.get('_id')
         self.revision=document.get('_rev')
         self.document_type=document.get('type')
+        self.command_id = metadata.get('command_id', None)
 
         if self.create_time is not None:
             self.create_time = self.__truncate_to_epoch_in_seconds(self.create_time)

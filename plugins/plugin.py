@@ -140,7 +140,6 @@ class PluginBase(object):
         """
         self._pending_actions.put(args)
 
-    # TODO: Set Metadata Creator
     def createAndAddHost(self, name, os="unknown"):
 
         host_obj = factory.createModelObject(

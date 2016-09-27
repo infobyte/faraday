@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .factory('vulnsManager',
-        ['Vuln', 'WebVuln', 'BASEURL', '$http', '$q', 'commonsFact',
-        function(Vuln, WebVuln, BASEURL, $http, $q, commonsFact) {
+        ['Vuln', 'WebVuln', 'BASEURL', '$q', 'ServerAPI', 'commonsFact',
+        function(Vuln, WebVuln, BASEURL, $q, ServerAPI, commonsFact) {
         var vulnsManager = {};
 
         vulnsManager.createVuln = function(ws, data) {
@@ -25,10 +25,8 @@ angular.module('faradayApp')
         vulnsManager.getVulns = function(ws, page, page_size, filter, sort, sort_direction) {
             var deferred = $q.defer();
 
-            var url = BASEURL + '_api/ws/' + ws + '/vulns';
-            url = commonsFact.addPresentationParams(url, page, page_size, filter, sort, sort_direction);
-
-            $http.get(url)
+            options = {page: page, page_size: page_size, filter: filter, sort:sort, sort_direction: sort_direction}
+            ServerAPI.getVulns(ws, options)
                 .then(function(response) {
                     var result = {
                         vulnerabilities: [],
@@ -54,7 +52,6 @@ angular.module('faradayApp')
                 }, function(response) {
                     deferred.reject("Unable to retrieve vulnerabilities from server");
                 });
-
             return deferred.promise;
         };
 

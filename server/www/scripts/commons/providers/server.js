@@ -17,6 +17,10 @@ angular.module("faradayApp")
                 return get_url;
             };
 
+            var createNewGetUrl = function(wsName, objId) {
+                return APIURL + "ws/" + wsName + "/doc/" + objId;
+            }
+
             var createPostUrl = function(wsName, objectId, rev) {
                 if (rev === undefined) {
                     return APIURL + "ws/" + wsName + "/doc/" + objectId;
@@ -30,11 +34,11 @@ angular.module("faradayApp")
 
             var serverComm = function(method, url, data) {
                 var success = function (response) {
-                    console.log(response);
+                    // console.log(response);
                     return response;
                 };
                 var error = function(response) {
-                    console.log(response);
+                    // console.log(response);
                     return {};
                 };
                 // return a promise :)
@@ -221,6 +225,44 @@ angular.module("faradayApp")
                 return get(getUrl);
             }
 
+            ServerAPI.getObj = function(wsName, objID) {
+                var getUrl = createNewGetUrl(wsName, objID)
+                return get(getUrl);
+            }
+
+            var getCount = function(wsName, object) {
+                var deferred = $q.defer();
+                ServerAPI.getWorkspaceSummary(wsName).then(
+                    function(response) {
+                        deferred.resolve(response.data.stats[object]);
+                        }, function(error) {
+                        deferred.reject(error);
+                    })
+                return deferred.promise;
+            }
+
+            ServerAPI.getHostCount = function(wsName) {
+                return getCount(wsName, 'hosts');
+            }
+
+            ServerAPI.getServiceCount = function(wsName) {
+                return getCount(wsName, 'services');
+            }
+
+            ServerAPI.getServicesBy = function(wsName, what) {
+                var url = createGetUrl(wsName, 'services') + '/count';
+                return get(url, {"group_by": what})
+            }
+
+            // an special snowflake
+            ServerAPI.getServicesByName = function(wsName) {
+                return ServerAPI.getServicesBy(wsName, 'name');
+            }
+
+            ServerAPI.getVulnsBySeverity = function(wsName) {
+                var url = createGetUrl(wsName, 'vulns') + '/count';
+                return get(url, {'group_by': 'severity'})
+            }
 
             ServerAPI.createHost = function(wsName, host) {
                     return modHost(createObject, wsName, host);

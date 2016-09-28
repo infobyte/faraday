@@ -38,7 +38,7 @@ angular.module("faradayApp")
                     return {};
                 };
                 // return a promise :)
-                if (method === 'GET') {
+                if (method === 'GET' || method === 'DELETE') {
                     return $http({method: method, url: url, params: data}).then(success, error);
                 } else { 
                     return $http({method: method, url: url, data: data}).then(success, error);
@@ -62,18 +62,25 @@ angular.module("faradayApp")
                 return serverComm("PUT", url, data);
             };
 
+
             // delete is a reserved keyword
             var _delete = function(url, is_database, rev_provided) {
                 // never let undefined win
-                var is_database = typeof is_database === "undefined" ? false: is_database;
-                var rev_provided = typeof is_database === "undefined" ? false: rev_provided;
+                if (typeof is_database === "undefined") {var is_update = false;}
+                if (typeof rev_provided === "undefined") {var is_update = false;}
+                deferred = $q.defer();
                 var data = {};
                 if (is_database === false || rev_provided === false ) {
-                    var last_rev = get(url).then(function s(r) {return r.data._rev;},
-                                                 function e(r) {return undefined});
-                    data.rev = last_rev;
+                    get(url).then(
+                        function s(r) {
+                            data.rev = r.data._rev;
+                            deferred.resolve(serverComm("DELETE", url, data));
+                        },
+                        function e(r) {
+                            deferred.reject(r);
+                        });
                 }
-                return serverComm("DELETE", url, data);
+                return deferred.promise;
             };
 
             var modHost = function(createOrUpdate, wsName, host) {

@@ -23,7 +23,7 @@ angular.module('faradayApp')
             },
 
             delete: function(ws) {
-                return ServerAPI.deleteHost(ws, self._id);
+                return ServerAPI.deleteHost(ws, this._id, this.rev);
             },
 
             update: function(data, interfaceData, ws) {

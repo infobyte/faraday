@@ -30,13 +30,19 @@ angular.module("faradayApp")
 
             var serverComm = function(method, url, data) {
                 var success = function (response) {
+                    console.log(response);
                     return response;
                 };
                 var error = function(response) {
+                    console.log(response);
                     return {};
                 };
                 // return a promise :)
-                return $http({method: method, url: url, data: data}).then(success, error);
+                if (method === 'GET') {
+                    return $http({method: method, url: url, params: data}).then(success, error);
+                } else { 
+                    return $http({method: method, url: url, data: data}).then(success, error);
+                }
             };
 
             var get = function(url, data) {
@@ -74,12 +80,14 @@ angular.module("faradayApp")
                 if (typeof host.description === "undefined") {host.description = ""};
                 if (typeof host.owner === "undefined") {host.owner = ""};
                 if (typeof host.owned === "undefined") {host.owned = false};
+                if (typeof host.os === "undefined") {host.os = ""};
                 return createOrUpdate(wsName, host._id, host);
             }
 
             var modInterface = function(createOrUpdate, wsName, _interface) {
                 if (typeof _interface.owned === "undefined") {_interface.owned = false};
                 if (typeof _interface.owner === "undefined") {_interface.owner = ""};
+                if (typeof _interface.os === "undefined") {_interface.os = ""};
                 return createOrUpdate(wsName, _interface._id, _interface);
             }
 
@@ -215,12 +223,12 @@ angular.module("faradayApp")
                     return modHost(updateObject, wsName, host);
             }
 
-            ServerAPI.createInterface = function(wsName, interface) {
-                    return modInterface(createObject, wsName, interface);
+            ServerAPI.createInterface = function(wsName, _interface) {
+                    return modInterface(createObject, wsName, _interface);
             }
 
-            ServerAPI.updateInterface = function(wsName, interface) {
-                    return modInterface(updateObject, wsName, interface);
+            ServerAPI.updateInterface = function(wsName, _interface) {
+                    return modInterface(updateObject, wsName, _interface);
             }
 
             ServerAPI.createService = function(wsName, service) {

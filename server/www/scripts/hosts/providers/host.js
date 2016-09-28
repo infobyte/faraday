@@ -23,13 +23,14 @@ angular.module('faradayApp')
             },
 
             delete: function(ws) {
-                return ServerAPI.delete(ws, self._id);
+                return ServerAPI.deleteHost(ws, self._id);
             },
 
             update: function(data, interfaceData, ws) {
                 var self = this;
                 return ServerAPI.updateHost(ws, data)
-                .then(function(data) { if(data.id == self._id) {
+                .then(function(data) {
+                    if(data.id == self._id) {
                         self._rev = data.rev;
                     } else {
                         interfaceData._rev = data.rev;
@@ -39,12 +40,16 @@ angular.module('faradayApp')
 
             save: function(ws, interfaceData) {
                 var self = this;
-                return ServerAPI.createHost(ws, self)
-                .success(function(host_data){
-                        self._rev = host_data.rev;
+                return ServerAPI.createHost(ws, self).
+                    then(function(host_data) {
+                        ServerAPI.createInterface(ws, interfaceData).
+                        then(function(interface_data) {
+                            self._rev = host_data.rev;
+                            interfaceData._rev = interface_data.rev;
+                        });
                     });
-                }
-            }
+            },
 
+        }
         return Host;
     }]);

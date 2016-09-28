@@ -27,10 +27,14 @@ angular.module('faradayApp')
 
         hostsManager._load = function(id, ws, deferred) {
             var self = this;
-            ServerAPI.getHosts(ws).then(
-                function(data){
-                    var host = self._get(data._id, data);
-                    deferred.resolve(host);
+            ServerAPI.getHosts(ws, {couchid: id}).then(
+                function(response){
+                    if (response.data.rows.length === 1) {
+                        var host = self._get(response.data.rows[0].id, response.data.rows[0].value);
+                        deferred.resolve(host);
+                    } else {
+                        deferred.reject();
+                    }
                 }, function(){
                     deferred.reject();
                 });
@@ -53,7 +57,7 @@ angular.module('faradayApp')
         hostsManager.getHosts = function(ws, page, page_size, filter, sort, sort_direction) {
             var deferred = $q.defer();
 
-            options = {page: page, page_size: page_size, filter:filter, sort:sort, sort_direction: sort_direction}
+            options = {page: page, page_size: page_size, sort:sort, sort_dir: sort_direction}
             ServerAPI.getHosts(ws, options)
                 .then(function(response) {
                     var result = { hosts: [], total: 0 };
@@ -61,9 +65,7 @@ angular.module('faradayApp')
                         host = new Host(host_data.value);
                         result.hosts.push(host);
                     });
-
                     result.total = response.data.total_rows;
-
                     deferred.resolve(result);
                 }, function(response) {
                     deferred.reject();
@@ -154,7 +156,8 @@ angular.module('faradayApp')
             ServerAPI.getInterfaces(ws) 
                 .then(function(ints) {
                     var interfaces = [];
-                    ints.rows.forEach(function(interf) {interfaces.push(interf.value);
+                    ints.rows.forEach(function(interf) {
+                        interfaces.push(interf.value);
                     });
 
                     deferred.resolve(interfaces);

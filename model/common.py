@@ -868,7 +868,7 @@ class ModelObjectVuln(ModelComposite):
     class_signature = "Vulnerability"
 
     def __init__(self, name="", desc="", ref=None, severity="", resolution="",
-                 confirmed=False, parent_id=None):
+                 confirmed=False, status='vulnerable', parent_id=None):
         """
         The parameters refs can be a single value or a list with values
         """
@@ -877,6 +877,7 @@ class ModelObjectVuln(ModelComposite):
         self._desc = desc
         self.data = ""
         self.confirmed = confirmed
+        self.status = status
         self.refs = []
 
         if isinstance(ref, list):
@@ -896,6 +897,7 @@ class ModelObjectVuln(ModelComposite):
         self.publicattrs['Severity'] = 'getSeverity'
         self.publicattrs['Refs'] = 'getRefs'
         self.publicattrs['Resolution'] = 'getResolution'
+        self.publicattrs['Status'] = 'getStatus'
 
         self.publicattrsrefs['Name'] = 'name'
         self.publicattrsrefs['Description'] = '_desc'
@@ -903,6 +905,7 @@ class ModelObjectVuln(ModelComposite):
         self.publicattrsrefs['Severity'] = 'severity'
         self.publicattrsrefs['Refs'] = 'refs'
         self.publicattrsrefs['Resolution'] = 'resolution'
+        self.publicattrsrefs['Status'] = 'status'
 
     def standarize(self, severity):
         # Transform all severities into lower strings
@@ -944,12 +947,18 @@ class ModelObjectVuln(ModelComposite):
         '''
         if key == "confirmed":
             return True
+        if key == "status":
+            return True
         return False
 
     def tieBreak(self, key, prop1, prop2):
         if key == "confirmed":
             return True
+        if key == "status":
+            if prop1 == "fixed" or prop1 == "re-opened":
+                return "re-opened"
         return (prop1, prop2)
+
 
     def _setDesc(self, desc):
         self._desc = desc
@@ -957,7 +966,7 @@ class ModelObjectVuln(ModelComposite):
     #@save
     @updateLocalMetadata
     def updateAttributes(self, name=None, desc=None, data=None,
-                         severity=None, resolution=None, refs=None):
+                         severity=None, resolution=None, refs=None, status=None):
         if name is not None:
             self.setName(name)
         if desc is not None:
@@ -970,6 +979,8 @@ class ModelObjectVuln(ModelComposite):
             self.severity = self.standarize(severity)
         if refs is not None:
             self.refs = refs
+        if status is not None:
+            self.status = self.setStatus(status)
 
     def _getDesc(self):
         return self._desc
@@ -1020,7 +1031,13 @@ class ModelObjectVuln(ModelComposite):
 
     def getConfirmed(self):
         return self.confirmed
-
+    
+    def getStatus(self):
+        return self.status
+    
+    def setStatus(self, status):
+        self.status = status
+     
     def __str__(self):
         return "vuln id:%s - %s" % (self.id, self.name)
 
@@ -1039,13 +1056,13 @@ class ModelObjectVulnWeb(ModelObjectVuln):
     def __init__(self, name="", desc="", website="", path="", ref=None,
                  severity="", resolution="", request="", response="",
                  method="", pname="", params="", query="", category="",
-                 confirmed=False, parent_id=None):
+                 confirmed=False, status='vulnerable', parent_id=None):
         """
         The parameters ref can be a single value or a list with values
         """
         ModelObjectVuln.__init__(
             self, name, desc, ref, severity, resolution, confirmed,
-            parent_id)
+            status, parent_id)
         self.path = path
         self.website = website
         self.request = request
@@ -1072,6 +1089,7 @@ class ModelObjectVulnWeb(ModelObjectVuln):
         self.publicattrs['Params'] = 'getParams'
         self.publicattrs['Query'] = 'getQuery'
         self.publicattrs['Category'] = 'getCategory'
+        self.publicattrs['Status'] = 'getStatus'
 
         self.publicattrsrefs['Name'] = 'name'
         self.publicattrsrefs['Desc'] = '_desc'
@@ -1087,6 +1105,8 @@ class ModelObjectVulnWeb(ModelObjectVuln):
         self.publicattrsrefs['Params'] = 'params'
         self.publicattrsrefs['Query'] = 'query'
         self.publicattrsrefs['Category'] = 'category'
+        self.publicattrsrefs['Status'] = 'status'
+
 
     def updateID(self):
         self._id = get_hash([self.name, self.website, self.path, self.desc ])
@@ -1150,7 +1170,7 @@ class ModelObjectVulnWeb(ModelObjectVuln):
     @updateLocalMetadata
     def updateAttributes(self, name=None, desc=None, data=None, website=None, path=None, refs=None,
                         severity=None, resolution=None, request=None,response=None, method=None,
-                        pname=None, params=None, query=None, category=None):
+                        pname=None, params=None, query=None, category=None, status=None):
         super(ModelObjectVulnWeb, self).updateAttributes(name, desc, data, severity, resolution, refs)
         if website is not None:
             self.website = website
@@ -1170,6 +1190,8 @@ class ModelObjectVulnWeb(ModelObjectVuln):
             self.query = query
         if category is not None:
             self.category = category
+        if status is not None:
+            self.status = self.setStatus(status)
 
 
 #-------------------------------------------------------------------------------

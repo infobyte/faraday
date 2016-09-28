@@ -776,9 +776,9 @@ class HostInfoDialog(Gtk.Window):
                 raise TypeError
             return params_string
 
-        # those are 15 strings
+        # those are 16 strings
         model = Gtk.ListStore(str, str, str, str, str, str, str, str,
-                              str, str, str, str, str, str, str)
+                              str, str, str, str, str, str, str, str)
 
         vulns = obj.getVulns()
         for vuln in vulns:
@@ -789,7 +789,8 @@ class HostInfoDialog(Gtk.Window):
                 model.append([_type, vuln.getName(), vuln.getDescription(),
                               vuln.getData(), vuln.getSeverity(),
                               ', '.join(vuln.getRefs()),
-                              "", "", "", "", "", "", "", "", ""])
+                              "", "", "", "", "", "", "", "", "",
+                              vuln.getStatus() ])
 
             elif _type == "VulnerabilityWeb":
                 model.append([_type, vuln.getName(), vuln.getDescription(),
@@ -799,7 +800,8 @@ class HostInfoDialog(Gtk.Window):
                               vuln.getResponse(), vuln.getMethod(),
                               vuln.getPname(),
                               params_to_string(vuln.getParams()),
-                              vuln.getQuery(), ""])
+                              vuln.getQuery(), "",
+                              vuln.getStatus()])
         # sort it!
         sorted_model = Gtk.TreeModelSort(model=model)
         sorted_model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
@@ -898,14 +900,14 @@ class HostInfoDialog(Gtk.Window):
 
         elif object_type == "Vulnerability":
             property_names = ["Name: ", "Description: ", "Data: ",
-                              "Severity: ", "Refs: "]
+                              "Severity: ", "Refs: ", "Status: "]
 
         elif object_type == "VulnerabilityWeb":
             property_names = ["Name: ", "Description: ", "Data: ",
                               "Severity: ", "Refs: ", "Path: ",
                               "Website: ", "Request: ", "Response: ",
                               "Method: ", "Pname: ", "Params: ",
-                              "Query: ", "Category: "]
+                              "Query: ", "Category: ", "Status: "]
         return property_names
 
     def clear(self, box):
@@ -1269,9 +1271,10 @@ class ConflictsDialog(Gtk.Window):
                          obj.getData(),
                          obj.getSeverity(),
                          obj.getRefs(),
-                         obj.getResolution()))
+                         obj.getResolution(),
+                         obj.getStatus()))
 
-        props = ["Name", "Desc", "Data", "Severity", "Refs", "Resolution"]
+        props = ["Name", "Desc", "Data", "Severity", "Refs", "Resolution", "Status"]
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model
 
@@ -1294,11 +1297,12 @@ class ConflictsDialog(Gtk.Window):
                          obj.getMethod(),
                          obj.getPname(),
                          obj.getParams(),
-                         obj.getQuery()))
+                         obj.getQuery(),
+                         obj.getStatus()))
 
         props = ["Name", "Desc", "Data", "Severity", "Refs", "Path",
                  "Website", "Request", "Response", "Method", "Pname",
-                 "Params", "Query"]
+                 "Params", "Query", "Status"]
 
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model

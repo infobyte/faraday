@@ -776,6 +776,7 @@ class _Vuln(ModelBase):
         self.refs = vuln['value']['refs']
         self.confirmed = vuln['value']['confirmed']
         self.resolution = vuln['value']['resolution']
+        self.status = vuln['value']['status']
 
     @staticmethod
     def publicattrsrefs():
@@ -783,18 +784,24 @@ class _Vuln(ModelBase):
             'Data' : 'data',
             'Severity' : 'severity',
             'Refs' : 'refs',
-            'Resolution': 'resolution'
+            'Resolution': 'resolution',
+            'Status': 'status'
         })
         return publicattrs
 
     def tieBreakable(self, key):
         if key == "confirmed":
             return True
+        if key == "status":
+            return True
         return False
 
     def tieBreak(self, key, prop1, prop2):
         if key == "confirmed":
             return True
+        if key == "status":
+            if prop1 == "fixed" or prop1 == "re-opened":
+                return "re-opened"
         return (prop1, prop2)
 
     def standarize(self, severity):
@@ -826,7 +833,7 @@ class _Vuln(ModelBase):
         return severity
 
     def updateAttributes(self, name=None, desc=None, data=None,
-                         severity=None, resolution=None, refs=None):
+                         severity=None, resolution=None, refs=None, status=None):
         if name is not None:
             self.name = name
         if desc is not None:
@@ -839,6 +846,8 @@ class _Vuln(ModelBase):
             self.severity = self.standarize(severity)
         if refs is not None:
             self.refs = refs
+        if status is not None:
+            self.status = self.setStatus(status)
 
     def getID(self): return self.id
     def getDesc(self): return self.desc
@@ -847,7 +856,11 @@ class _Vuln(ModelBase):
     def getRefs(self): return self.refs
     def getConfirmed(self): return self.confirmed
     def getResolution(self): return self.resolution
+    def getStatus(self): return self.status
 
+    def setStatus(self, status):
+        self.status = status
+            
 
 class _VulnWeb(_Vuln):
     """A simple VulnWeb class. Should implement all the methods of the
@@ -890,12 +903,13 @@ class _VulnWeb(_Vuln):
             'Method' : 'method',
             'Pname' : 'pname',
             'Params' : 'params',
-            'Query' : 'query'})
+            'Query' : 'query',
+            'Status': 'status'})
         return publicattrs
 
     def updateAttributes(self, name=None, desc=None, data=None, website=None, path=None, refs=None,
                         severity=None, resolution=None, request=None,response=None, method=None,
-                        pname=None, params=None, query=None, category=None):
+                        pname=None, params=None, query=None, category=None, status=None):
 
         super(_VulnWeb, self).updateAttributes(name, desc, data, severity, resolution, refs)
 
@@ -917,6 +931,8 @@ class _VulnWeb(_Vuln):
             self.query = query
         if category is not None:
             self.category = category
+        if status is not None:
+            self.status = self.setStatus(status)
 
     def getDescription(self): return self.description
     def getPath(self): return self.path
@@ -938,15 +954,24 @@ class _VulnWeb(_Vuln):
     def getTarget(self): return self.target
     def getParent(self): return self.parent
 
-    def tieBreakable(self, property_key):
-        if property_key in ["response"]:
+    def tieBreakable(self, key):
+        if key == "response":
+            return True
+        if key == "confirmed":
+            return True
+        if key == "status":
             return True
         return False
 
     def tieBreak(self, key, prop1, prop2):
         if key == "response":
             return self._resolve_response(prop1, prop2)
-        return None
+        if key == "status":
+            if prop1 == "fixed" or prop1 == "re-opened":
+                return "re-opened"
+        if key == "confirmed":
+            return True
+        return (prop1, prop2)
 
     def _resolve_response(self ,res1, res2):
 

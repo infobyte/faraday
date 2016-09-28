@@ -24,7 +24,7 @@ angular.module('faradayApp')
 
         vulnsManager.getVulns = function(ws, page, page_size, filter, sort, sort_direction) {
             var deferred = $q.defer();
-            options = {page: page, page_size: page_size, name: filter.search, sort:sort, sort_direction: sort_direction}
+            options = {page: page, page_size: page_size, name: filter.search, sort:sort, sort_dir: sort_direction}
             ServerAPI.getVulns(ws, options)
                 .then(function(response) {
                     var result = {

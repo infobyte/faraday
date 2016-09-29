@@ -74,7 +74,7 @@ angular.module("faradayApp")
                 if (typeof rev_provided === "undefined") {var is_update = false;}
                 deferred = $q.defer();
                 var data = {};
-                if (is_database === false || rev_provided === false ) {
+                if (is_database === false || rev_provided === false) {
                     get(url).then(
                         function s(r) {
                             data.rev = r.data._rev;
@@ -82,7 +82,7 @@ angular.module("faradayApp")
                         },
                         function e(r) {
                             deferred.reject(r);
-                        });
+                        })
                 }
                 return deferred.promise;
             };
@@ -254,9 +254,12 @@ angular.module("faradayApp")
                 return get(url, {"group_by": what})
             }
 
-            // an special snowflake
             ServerAPI.getServicesByName = function(wsName) {
                 return ServerAPI.getServicesBy(wsName, 'name');
+            }
+
+            ServerAPI.getServicesByHost = function(wsName) {
+                return ServerAPI.getServicesBy(wsName, 'hostid');
             }
 
             ServerAPI.getVulnsBySeverity = function(wsName) {

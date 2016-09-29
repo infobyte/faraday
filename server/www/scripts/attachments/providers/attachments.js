@@ -46,6 +46,7 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        // XXX: what is this even?
         attachmentsFact.getStubs = function(ws, vid, names) {
             var url = BASEURL + ws + "/" + vid, 
             stubs = {},

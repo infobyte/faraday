@@ -7,7 +7,7 @@ angular.module('faradayApp')
         var workspacesFact = {};
 
         workspacesFact.list = function() {
-            deferred = $q.defer();
+            var deferred = $q.defer();
             ServerAPI.getWorkspacesNames().
                 then(function(response) { deferred.resolve(response.data.workspaces) }, errorHandler);
             return deferred.promise;

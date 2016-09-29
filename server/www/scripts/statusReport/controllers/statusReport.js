@@ -477,7 +477,6 @@ angular.module('faradayApp')
         $scope.toggleFilter = function() {
             $scope.confirmed = !$scope.confirmed;
             $cookies.put('confirmed', $scope.confirmed);
-            console.log($scope.confirmed);
             loadVulns();
         };
 

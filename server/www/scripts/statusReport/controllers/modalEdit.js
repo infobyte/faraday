@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'commonsFact', 'severities', 'vuln', 'cweFact', 
-        function($modalInstance, EASEOFRESOLUTION, commons, severities, vuln, cweFact) {
+    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact', 'severities', 'vuln', 'cweFact', 
+        function($modalInstance, EASEOFRESOLUTION, STATUSES, commons, severities, vuln, cweFact) {
         
         var vm = this;
 
@@ -23,6 +23,7 @@ angular.module('faradayApp')
         init = function() {
             vm.easeofresolution = EASEOFRESOLUTION;
             vm.severities = severities;
+            vm.statuses = STATUSES;
             vm.new_ref = "";
             vm.icons = {};
 
@@ -58,7 +59,8 @@ angular.module('faradayApp')
                 query: "", 
                 request: "",
                 response: "",
-                website: ""
+                website: "",
+                status: "vulnerable",
             };
 
             vm.vuln = angular.copy(vuln);

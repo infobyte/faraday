@@ -6,11 +6,11 @@ angular.module('faradayApp')
     .controller('statusReportCtrl',
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
-                    'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager', 'commonsFact',
+                    'SEVERITIES', 'EASEOFRESOLUTION', 'STATUSES', 'hostsManager', 'commonsFact',
                     'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
-                        SEVERITIES, EASEOFRESOLUTION, hostsManager, commonsFact,
+                        SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,
                         vulnsManager, workspacesFact, csvService, uiGridConstants) {
         $scope.baseurl;
         $scope.columns;
@@ -645,6 +645,15 @@ angular.module('faradayApp')
                 'Enter the new severity:',
                 'severity',
                 {options: SEVERITIES});
+        };
+
+        $scope.editStatus = function() {
+            editProperty(
+                'scripts/commons/partials/editOptions.html',
+                'commonsModalEditOptions',
+                'Enter the new status:',
+                'status',
+                {options: STATUSES});
         };
 
         $scope.editEaseofresolution = function() {

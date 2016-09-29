@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('Service', ['BASEURL', '$http', function(BASEURL, $http) {
+    .factory('Service', ['BASEURL', 'ServerAPI', function(BASEURL, ServerAPI) {
         Service = function(data) {
             if(data) {
                 this.set(data);
@@ -39,24 +39,14 @@ angular.module('faradayApp')
                 if( typeof(data.ports) === 'number' ) {
                     this.ports = data.ports;
                 } else {
-                    this.ports = data.ports[0];
+                    this.ports = data.ports;
                 }
             },
-            delete: function(ws) {
-                var self = this,
-                bulk = {docs:[]};
-                return $http.get(BASEURL + ws + '/_all_docs?startkey="' + self._id + '"&endkey="' + self._id + '.z"').then(function(all) {
-                    all.data.rows.forEach(function(row) {
-                        bulk.docs.push({
-                            "_id": row.id,
-                            "_rev": row.value.rev,
-                            "_deleted": true
-                        });
-                    });
 
-                    return $http.post(BASEURL + ws + "/_bulk_docs", JSON.stringify(bulk));
-                });
+            delete: function(ws) {
+                return ServerAPI.deleteService(ws, this._id, this._rev);
             },
+
             update: function(data, ws) {
                 angular.extend(this, data);
                 var self = this;
@@ -65,8 +55,9 @@ angular.module('faradayApp')
                     self.ports = [self.ports];
                 }
 
-                return (self._save(ws, self).success(function(data) {
-                    self._rev = data.rev;
+                return (self._save(ws, self, true).then(
+                    function(data) {
+                        self._rev = data.rev;
                 }));
             },
             save: function(ws) {
@@ -76,19 +67,25 @@ angular.module('faradayApp')
                     self.ports = [self.ports];
                 }
 
-                return (self._save(ws, self).success(function(data){
-                    self._rev = data.rev;
+                return (self._save(ws, self, false).then(
+                    function(data){
+                        self._rev = data.rev;
                 }));
             },
-            _save: function(ws, data) {
-                var doc = {};
-                var url = BASEURL + ws + '/' + this._id
+            _save: function(ws, data, isUpdate) {
+                if (typeof isUpdate === 'undefined') {isUpdate = false};
+                doc = {};
                 for (property in data) {
                     if (this.saved_properties.indexOf(property) != -1) {
                         doc[property] = data[property];
                     }
-                };
-                return $http.put(url, doc);
+                }
+
+                if (isUpdate) {
+                    return ServerAPI.updateService(ws, doc);
+                } else {
+                    return ServerAPI.createService(ws, doc);
+                }
             }
         }
 

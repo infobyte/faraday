@@ -88,6 +88,7 @@ angular.module('faradayApp')
                 });
         };
 
+        // XXX need to implement upload docs on server
         uploadDocs = function(workspace) {
             var files = {},
             reports = BASEURL + 'reports/_design/reports';

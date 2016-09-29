@@ -50,14 +50,10 @@ angular.module('faradayApp')
 
         workspacesFact.exists = function(workspace_name) {
             var deferred = $q.defer();
-            var request = {
-                method: 'HEAD',
-                url: BASEURL + workspace_name
-            };
-            $http(request).success(function(data) {
+            ServerAPI.getWorkspace(workspace_name).then(
+                function(response) {
                 deferred.resolve(true);
-            })
-            .error(function() {
+            }, function(error) {
                 deferred.resolve(false);
             });
             return deferred.promise;

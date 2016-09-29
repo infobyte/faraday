@@ -189,8 +189,6 @@ angular.module('faradayApp')
             return this.get_count(ws, 'services');
         };
 
-        // WHY IS THIS CALLED GET INTERFACES WHEN IT BRINGS ONLY ONE INTERDFACE??!??!?!?!
-        // THIS SIN DOES LEAD TO DEATH
         // XXX: THIS STILL USES VIEWS
         hostsManager.getInterfaces = function(ws, id) {
             var deferred = $q.defer(),

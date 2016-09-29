@@ -28,7 +28,8 @@ angular.module('faradayApp')
             10: 'November',
             11: 'December'
         }
-
+        $scope.severities = ['unclassified','info','low','med','high','critical'];
+        $scope.severitiesDisplay = {unclassified: true, info: true, low: true, med: true, high: true, critical: true};
         $scope.availableMonths = [];
         $scope.availableYears = [];
 
@@ -83,17 +84,17 @@ angular.module('faradayApp')
             var selectedYear = $scope.year;
             var selectedMonth = $scope.month;
             var daysOfMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-            var severities = ['unclassified','info','low','med','high','critical'];
             var vulnsDateDict = {}
-            for (i in severities) {
-                vulnsDateDict[severities[i]] = new Array(daysOfMonth).fill(0);
+            for (i in $scope.severities) {
+                vulnsDateDict[$scope.severities[i]] = new Array(daysOfMonth).fill(0);
             }
             var currentMonth = new Date().getMonth();
-            for (vuln in $scope.vulns.data) {
+            for (vulnKey in $scope.vulns.data) {
+                var vuln = $scope.vulns.data[vulnKey];
                 var d = new Date(0);
-                d.setUTCMilliseconds($scope.vulns.data[vuln].metadata.create_time * 1000);
-                if (d.getMonth() == selectedMonth && d.getFullYear() == selectedYear) {
-                    vulnsDateDict[$scope.vulns.data[vuln].severity][d.getDate() - 1]++;
+                d.setUTCMilliseconds(vuln.metadata.create_time * 1000);
+                if (d.getMonth() == selectedMonth && d.getFullYear() == selectedYear && $scope.severitiesDisplay[vuln.severity]) {
+                    vulnsDateDict[vuln.severity][d.getDate() - 1]++;
                 }
             }
 
@@ -101,16 +102,18 @@ angular.module('faradayApp')
             for (i = 1; i <= daysOfMonth; i++) {
                 $scope.labels.push(i.toString());
             }
-            $scope.series = ['Unclassified','Info','Low','Med','High','Critical'];
-            $scope.colors = ['#00ADF9','#803690','#2ecc71','#f1c40f','#e74c3c','#000000']
-            $scope.data = [
-                    vulnsDateDict.unclassified,
-                    vulnsDateDict.info,
-                    vulnsDateDict.low,
-                    vulnsDateDict.med,
-                    vulnsDateDict.high,
-                    vulnsDateDict.critical
-                ];
+            $scope.series = [];
+            for (sev in $scope.severitiesDisplay) {
+                if ($scope.severitiesDisplay[sev]) {
+                    $scope.series.push(sev);
+                }
+            }
+            $scope.data = [];
+            for (key in vulnsDateDict) {
+                if ($scope.series.indexOf(key) != -1) {
+                    $scope.data.push(vulnsDateDict[key])
+                }
+            }
         }
 
         $scope.setMonth = function(month) {
@@ -120,6 +123,11 @@ angular.module('faradayApp')
 
         $scope.setYear = function(year) {
             $scope.year = year;
+            updateStackedChartData();
+        }
+
+        $scope.updateSeverityStatus = function(severity) {
+            $scope.severitiesDisplay[severity] = !$scope.severitiesDisplay[severity];
             updateStackedChartData();
         }
 

@@ -44,6 +44,14 @@
                         <li ng-repeat="yy in availableYears"><a class="ws" ng-click="setYear(yy)">{{ yy }}</a></li>
                     </ul>
                 </div>
+                <div class="btn-group btn-small-margin">
+                    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" title="Filter alerts">
+                         Filter Severities <span class="caret"></span>
+                    </button>
+                    <ul id="serveritiesList" class="dropdown-menu dropdown-menu-right" ng-click="$event.stopPropagation()">
+                        <li ng-repeat="sev in severities"><a ng-click="updateSeverityStatus(sev)"><input type="checkbox" ng-model="severitiesDisplay[sev]"> {{ sev }}</a></li>
+                    </ul>
+                </div>
             </div>
 
             <div class="reports">

@@ -27,7 +27,8 @@ angular.module('faradayApp')
             9: 'October',
             10: 'November',
             11: 'December'
-        }
+        };
+        $scope.monthView = true;
         $scope.severities = ['unclassified','info','low','med','high','critical'];
         $scope.severitiesDisplay = {unclassified: true, info: true, low: true, med: true, high: true, critical: true};
         $scope.severitiesColors = {unclassified: '#CCCCCC', info: '#B3E6FF', low: '#2ecc71', med: '#f1c40f', high: '#e74c3c', critical: '#000000'};
@@ -84,36 +85,53 @@ angular.module('faradayApp')
         updateStackedChartData = function() {
             var selectedYear = $scope.year;
             var selectedMonth = $scope.month;
+            var monthView = $scope.monthView;
             var daysOfMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-            var vulnsDateDict = {}
+            //Initializing vuln series
+            var vulnsSeries = {}
             for (i in $scope.severities) {
-                vulnsDateDict[$scope.severities[i]] = new Array(daysOfMonth).fill(0);
+                vulnsSeries[$scope.severities[i]] = new Array(monthView?daysOfMonth:12).fill(0);
             }
+
             var currentMonth = new Date().getMonth();
             for (vulnKey in $scope.vulns.data) {
                 var vuln = $scope.vulns.data[vulnKey];
                 var d = new Date(0);
                 d.setUTCMilliseconds(vuln.metadata.create_time * 1000);
-                if (d.getMonth() == selectedMonth && d.getFullYear() == selectedYear && $scope.severitiesDisplay[vuln.severity]) {
-                    vulnsDateDict[vuln.severity][d.getDate() - 1]++;
+                if ((d.getMonth() == selectedMonth || !monthView) && d.getFullYear() == selectedYear && $scope.severitiesDisplay[vuln.severity]) {
+                    if (monthView) {
+                        vulnsSeries[vuln.severity][d.getDate() - 1]++;
+                    } else {
+                        vulnsSeries[vuln.severity][d.getMonth()]++;
+                    }
                 }
             }
             $scope.labels = [];
-            for (i = 1; i <= daysOfMonth; i++) {
-                $scope.labels.push(i.toString());
+            if (monthView) {
+                for (i = 1; i <= daysOfMonth; i++) {
+                    $scope.labels.push(i.toString());
+                }
+            } else {
+                for (monthKey in $scope.months) {
+                    $scope.labels.push($scope.months[monthKey]);
+                }
             }
+            updateSeries();
+            $scope.data = [];
+            for (key in vulnsSeries) {
+                if ($scope.series.indexOf(key) != -1) {
+                    $scope.data.push(vulnsSeries[key])
+                }
+            }
+        }
+
+        updateSeries = function () {
             $scope.colors = []
             $scope.series = [];
             for (sev in $scope.severitiesDisplay) {
                 if ($scope.severitiesDisplay[sev]) {
                     $scope.series.push(sev);
                     $scope.colors.push($scope.severitiesColors[sev])
-                }
-            }
-            $scope.data = [];
-            for (key in vulnsDateDict) {
-                if ($scope.series.indexOf(key) != -1) {
-                    $scope.data.push(vulnsDateDict[key])
                 }
             }
         }
@@ -130,6 +148,16 @@ angular.module('faradayApp')
 
         $scope.updateSeverityStatus = function(severity) {
             $scope.severitiesDisplay[severity] = !$scope.severitiesDisplay[severity];
+            updateStackedChartData();
+        }
+
+        $scope.setMonthView = function() {
+            $scope.monthView = true;
+            updateStackedChartData();
+        }
+
+        $scope.setYearView = function() {
+            $scope.monthView = false;
             updateStackedChartData();
         }
 

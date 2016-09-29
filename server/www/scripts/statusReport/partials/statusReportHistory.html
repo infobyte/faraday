@@ -26,13 +26,13 @@
                 <!-- WS navigation -->
             </div><!-- #ws-control -->
             <div ng-if="vulns.count > 0">
-                <!-- Month Control -->
                 <div class="btn-group btn-small-margin">
-                    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" title="Select month">
-                        {{ months[month] }} <span class="caret"></span>
+                    <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" title="Select view mode">
+                        {{ monthView ? 'Month' : 'Year' }} <span class="caret"></span>
                     </button>
                     <ul id="monthList" class="dropdown-menu dropdown-menu-right">
-                        <li ng-repeat="mm in availableMonths"><a class="ws" ng-click="setMonth(mm)">{{ months[mm] }}</a></li>
+                        <li><a ng-click="setMonthView()">Month</a></li>
+                        <li><a ng-click="setYearView()">Year</a></li>
                     </ul>
                 </div>
                 <!-- Year Control -->
@@ -44,9 +44,18 @@
                         <li ng-repeat="yy in availableYears"><a class="ws" ng-click="setYear(yy)">{{ yy }}</a></li>
                     </ul>
                 </div>
-                <div class="btn-group btn-small-margin">
-                    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" title="Filter alerts">
-                         Filter Severities <span class="caret"></span>
+                <!-- Month Control -->
+                <div ng-if="monthView" class="btn-group btn-small-margin">
+                    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" title="Select month">
+                        {{ months[month] }} <span class="caret"></span>
+                    </button>
+                    <ul id="monthList" class="dropdown-menu dropdown-menu-right">
+                        <li ng-repeat="mm in availableMonths"><a class="ws" ng-click="setMonth(mm)">{{ months[mm] }}</a></li>
+                    </ul>
+                </div>
+                <div class="btn-group btn-small-margin" style="float: right">
+                    <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Filter alerts">
+                         <span class="glyphicon glyphicon-filter"></span>Severities <span class="caret"></span>
                     </button>
                     <ul id="serveritiesList" class="dropdown-menu dropdown-menu-right" ng-click="$event.stopPropagation()">
                         <li ng-repeat="sev in severities"><a ng-click="updateSeverityStatus(sev)"><input type="checkbox" ng-model="severitiesDisplay[sev]"> {{ sev }}</a></li>
@@ -60,7 +69,7 @@
                 </div>
                 <div ng-if="vulns.count > 0">
                     <canvas class="chart chart-bar" chart-data="data" chart-labels="labels" chart-series="series" chart-colours="colors" width="1200" height="400"></canvas>
-                    Day of month
+                    {{ monthView ? 'Day of month' : 'Month' }}
                 </div>
             </div><!-- .reports -->
     </div><!-- #reports-main --></div><!-- .right-main -->

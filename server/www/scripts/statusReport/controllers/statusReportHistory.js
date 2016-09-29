@@ -30,6 +30,7 @@ angular.module('faradayApp')
         }
         $scope.severities = ['unclassified','info','low','med','high','critical'];
         $scope.severitiesDisplay = {unclassified: true, info: true, low: true, med: true, high: true, critical: true};
+        $scope.severitiesColors = {unclassified: '#CCCCCC', info: '#B3E6FF', low: '#2ecc71', med: '#f1c40f', high: '#e74c3c', critical: '#000000'};
         $scope.availableMonths = [];
         $scope.availableYears = [];
 
@@ -97,15 +98,16 @@ angular.module('faradayApp')
                     vulnsDateDict[vuln.severity][d.getDate() - 1]++;
                 }
             }
-
             $scope.labels = [];
             for (i = 1; i <= daysOfMonth; i++) {
                 $scope.labels.push(i.toString());
             }
+            $scope.colors = []
             $scope.series = [];
             for (sev in $scope.severitiesDisplay) {
                 if ($scope.severitiesDisplay[sev]) {
                     $scope.series.push(sev);
+                    $scope.colors.push($scope.severitiesColors[sev])
                 }
             }
             $scope.data = [];

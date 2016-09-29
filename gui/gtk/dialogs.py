@@ -786,22 +786,30 @@ class HostInfoDialog(Gtk.Window):
             if _type == "Vulnerability":
                 # again filling up the model with dumb strings
                 # because gtk
-                model.append([_type, vuln.getName(), vuln.getDescription(),
-                              vuln.getData(), vuln.getSeverity(),
+                model.append([_type, vuln.getName(),
+                              vuln.getDescription(),
+                              vuln.getData(),
+                              vuln.getSeverity(),
                               ', '.join(vuln.getRefs()),
-                              "", "", "", "", "", "", "", "", "",
-                              vuln.getStatus() ])
+                              vuln.getStatus(),
+                              "", "", "", "", "", "", "", "", ""])
 
             elif _type == "VulnerabilityWeb":
-                model.append([_type, vuln.getName(), vuln.getDescription(),
-                              vuln.getData(), vuln.getSeverity(),
-                              ", ".join(vuln.getRefs()), vuln.getPath(),
-                              vuln.getWebsite(), vuln.getRequest(),
-                              vuln.getResponse(), vuln.getMethod(),
+                model.append([_type, vuln.getName(),
+                              vuln.getDescription(),
+                              vuln.getData(),
+                              vuln.getSeverity(),
+                              ", ".join(vuln.getRefs()),
+                              vuln.getPath(),
+                              vuln.getWebsite(),
+                              vuln.getRequest(),
+                              vuln.getResponse(),
+                              vuln.getMethod(),
                               vuln.getPname(),
                               params_to_string(vuln.getParams()),
-                              vuln.getQuery(), "",
-                              vuln.getStatus()])
+                              vuln.getQuery(),
+                              vuln.getStatus(),
+                              ""])
         # sort it!
         sorted_model = Gtk.TreeModelSort(model=model)
         sorted_model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
@@ -822,7 +830,7 @@ class HostInfoDialog(Gtk.Window):
         It is important to notice that the first element of object_info
         is ignored. This is because of how the models in this class contain
         information. Thus, there'll be as many of this small boxes as
-        len(property_names) minus one, read next paragraph.
+        len(property_names) minus one.
         """
 
         for index, prop_name in enumerate(property_names, start=1):
@@ -907,7 +915,7 @@ class HostInfoDialog(Gtk.Window):
                               "Severity: ", "Refs: ", "Path: ",
                               "Website: ", "Request: ", "Response: ",
                               "Method: ", "Pname: ", "Params: ",
-                              "Query: ", "Category: ", "Status: "]
+                              "Query: ", "Status: "]
         return property_names
 
     def clear(self, box):

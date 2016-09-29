@@ -6,4 +6,4 @@
 ###
 
 NAME="nmap_$(date +%s).xml"
-${CS_NMAP:=nmap} -iL $1 -oX $2$NAME
+${CS_NMAP:=nmap} $CS_NMAP_ARGS -iL $1 -oX $2$NAME

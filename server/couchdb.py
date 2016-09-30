@@ -48,6 +48,12 @@ class CouchDBServer(object):
     def get_or_create_db(self, ws_name):
         return self.__server.get_or_create_db(ws_name)
 
+    def create_db(self, ws_name):
+        return self.__server.create_db(ws_name)
+
+    def delete_db(self, ws_name):
+        return self.__server.delete_db(ws_name)
+
 
 class Workspace(object):
     def __init__(self, ws_name, couchdb_server_conn=None):
@@ -364,4 +370,23 @@ def push_reports():
         import traceback
         logger.debug(traceback.format_exc())
         logger.warning("Reports database couldn't be uploaded. You need to be an admin to do it")
+
+def create_workspace(workspace):
+    # NOTE: For now, couchdb views won't be uploaded
+    # since should be deprecated during this release
+    couch_server = CouchDBServer()
+    couch_server.create_db(workspace.get('name'))
+    ws = couch_server.get_workspace_handler(workspace.get('name'))
+    try:
+        response = ws.save_doc(workspace)
+    except RequestFailed, ResourceError:
+        # create an error
+        response = {'ok': False}
+
+    success = response.get('ok', False)
+    if not success:
+        # if the document was not create, delete db
+        couch_server.delete_db(workspace.get('name'))
+
+    return success
 

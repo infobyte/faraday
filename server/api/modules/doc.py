@@ -7,15 +7,10 @@ import server.database
 import server.utils.logger
 
 from server.app import app
-from server.utils.web import validate_workspace
+from server.utils.web import validate_workspace, build_bad_request_response
 from restkit.errors import RequestFailed, ResourceError
 
 logger = server.utils.logger.get_logger(__name__)
-
-def build_bad_request_response(msg):
-    response = flask.jsonify({'error': msg})
-    response.status_code = 400
-    return response
 
 @app.route('/ws/<workspace>/doc/<doc_id>', methods=['GET'])
 def get_document(workspace, doc_id):

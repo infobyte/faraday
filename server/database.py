@@ -37,6 +37,9 @@ def teardown_context():
     """ This is called by Flask to cleanup sessions created in the context of a request """
     _db_manager.close_sessions()
 
+def get_manager():
+    return _db_manager
+
 
 class Manager(object):
     def __init__(self):
@@ -88,6 +91,13 @@ class Manager(object):
             return self.__workspaces[ws_name]
         except KeyError:
             raise WorkspaceNotFound(ws_name)
+
+    def create_workspace(self, workspace):
+        # create the couch database first
+        ok = server.couchdb.create_workspace(workspace)
+        if ok:
+            self.__process_new_workspace(workspace.get('name'))
+        return ok
 
     def __process_workspace_change(self, change):
         if change.created:

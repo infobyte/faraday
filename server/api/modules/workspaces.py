@@ -3,6 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 
 import flask
+import json
 
 from server.app import app
 from server.dao.host import HostDAO
@@ -10,8 +11,9 @@ from server.dao.vuln import VulnerabilityDAO
 from server.dao.service import ServiceDAO
 from server.dao.interface import InterfaceDAO
 from server.dao.note import NoteDAO
-from server.utils.web import gzipped, validate_workspace, get_basic_auth
+from server.utils.web import gzipped, validate_workspace, get_basic_auth, validate_admin_perm, validate_database, build_bad_request_response
 from server.couchdb import list_workspaces_as_user, get_workspace, get_auth_info
+from server.database import get_manager
 
 
 @app.route('/ws', methods=['GET'])
@@ -58,3 +60,29 @@ def workspace(workspace):
     if not ws.get('description'): ws['description'] = ''
     return flask.jsonify(ws)
 
+@app.route('/ws/<workspace>', methods=['PUT'])
+@gzipped
+def workspace_create(workspace):
+    # only admins can create workspaces
+    validate_admin_perm()
+    validate_database(workspace)
+
+    try:
+        document = json.loads(flask.request.data)
+    except ValueError:
+        return build_bad_request_response('invalid json')
+    if not document.get('name', None):
+        return build_bad_request_response('workspace name needed')
+    if document.get('name') != workspace:
+        return build_bad_request_response('workspace name and route parameter don\'t match')
+
+    db_manager = get_manager()
+
+    document['_id'] = workspace  # document dictionary does not have id, add it
+
+    if not db_manager.create_workspace(document):
+        response = flask.jsonify({'error': "There was an error creating the database"})
+        response.status_code = 500
+        return response
+
+    return flask.jsonify({'ok': True})

@@ -50,7 +50,7 @@ class VulnerabilityDAO(FaradayDAO):
         "interfaceid":      [Interface.id],
         "web":              [],
         "issuetracker":     [],
-        "plugin":           [EntityMetadata.creator]
+        "metadata.creator": [EntityMetadata.creator]
     }
 
     STRICT_FILTERING = ["type", "service", "couchid", "hostid", "serviceid", 'interfaceid', 'id']

@@ -347,8 +347,8 @@ angular.module('faradayApp')
                 visible: $scope.columns["web"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'metadata.creator',
-                displayName : "plugin",
-                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/plugincolumn.html',
+                displayName : "creator",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/creatorcolumn.html',
                 headerCellTemplate: header,
                 width: '80',
                 visible: $scope.columns["creator"]

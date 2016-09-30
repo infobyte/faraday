@@ -39,9 +39,10 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
     })())
     .constant("STATUSES", (function() {
         var statuses = [
-            "vulnerable",
-            "fixed",
-            "re-opened"
+            "opened",
+            "closed",
+            "re-opened",
+            "risk-accepted"
         ];
         return statuses;
     })());

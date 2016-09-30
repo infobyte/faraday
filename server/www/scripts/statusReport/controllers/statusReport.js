@@ -280,7 +280,7 @@ angular.module('faradayApp')
                 visible: $scope.columns["easeofresolution"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'status',
-                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
                 headerCellTemplate: header,
                 visible: $scope.columns["status"]
             });

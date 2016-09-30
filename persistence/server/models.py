@@ -800,8 +800,11 @@ class _Vuln(ModelBase):
         if key == "confirmed":
             return True
         if key == "status":
-            if prop1 == "fixed" or prop1 == "re-opened":
+            # prop1 is original object property
+            if prop1 == "closed" or prop1 == "re-opened":
                 return "re-opened"
+            if prop1 == "risk-accepted":
+                return False
         return (prop1, prop2)
 
     def standarize(self, severity):
@@ -847,7 +850,7 @@ class _Vuln(ModelBase):
         if refs is not None:
             self.refs = refs
         if status is not None:
-            self.status = self.setStatus(status)
+            self.setStatus(status)
 
     def getID(self): return self.id
     def getDesc(self): return self.desc
@@ -860,7 +863,7 @@ class _Vuln(ModelBase):
 
     def setStatus(self, status):
         self.status = status
-            
+
 
 class _VulnWeb(_Vuln):
     """A simple VulnWeb class. Should implement all the methods of the
@@ -871,7 +874,9 @@ class _VulnWeb(_Vuln):
     class_signature = 'VulnerabilityWeb'
 
     def __init__(self, vuln_web, workspace_name):
-        _Vuln.__init__(self, vuln_web, workspace_name)
+
+        super(self.__class__, self).__init__(vuln_web, workspace_name)
+
         self.path = vuln_web['value']['path']
         self.website = vuln_web['value']['website']
         self.request = vuln_web['value']['request']
@@ -911,7 +916,7 @@ class _VulnWeb(_Vuln):
                         severity=None, resolution=None, request=None,response=None, method=None,
                         pname=None, params=None, query=None, category=None, status=None):
 
-        super(_VulnWeb, self).updateAttributes(name, desc, data, severity, resolution, refs)
+        super(self.__class__, self).updateAttributes(name, desc, data, severity, resolution, refs, status)
 
         if website is not None:
             self.website = website
@@ -931,8 +936,6 @@ class _VulnWeb(_Vuln):
             self.query = query
         if category is not None:
             self.category = category
-        if status is not None:
-            self.status = self.setStatus(status)
 
     def getDescription(self): return self.description
     def getPath(self): return self.path
@@ -967,8 +970,11 @@ class _VulnWeb(_Vuln):
         if key == "response":
             return self._resolve_response(prop1, prop2)
         if key == "status":
-            if prop1 == "fixed" or prop1 == "re-opened":
+            # prop1 is original object property
+            if prop1 == "closed" or prop1 == "re-opened":
                 return "re-opened"
+            if prop1 == "risk-accepted":
+                return False
         if key == "confirmed":
             return True
         return (prop1, prop2)

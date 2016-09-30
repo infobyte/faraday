@@ -868,7 +868,7 @@ class ModelObjectVuln(ModelComposite):
     class_signature = "Vulnerability"
 
     def __init__(self, name="", desc="", ref=None, severity="", resolution="",
-                 confirmed=False, status='vulnerable', parent_id=None):
+                 confirmed=False, status='opened', parent_id=None):
         """
         The parameters refs can be a single value or a list with values
         """
@@ -955,8 +955,11 @@ class ModelObjectVuln(ModelComposite):
         if key == "confirmed":
             return True
         if key == "status":
-            if prop1 == "fixed" or prop1 == "re-opened":
+            # prop1 is original object property
+            if prop1 == "closed" or prop1 == "re-opened":
                 return "re-opened"
+            if prop1 == "risk-accepted":
+                return False
         return (prop1, prop2)
 
 
@@ -1056,7 +1059,7 @@ class ModelObjectVulnWeb(ModelObjectVuln):
     def __init__(self, name="", desc="", website="", path="", ref=None,
                  severity="", resolution="", request="", response="",
                  method="", pname="", params="", query="", category="",
-                 confirmed=False, status='vulnerable', parent_id=None):
+                 confirmed=False, status='opened', parent_id=None):
         """
         The parameters ref can be a single value or a list with values
         """

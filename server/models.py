@@ -355,7 +355,7 @@ class Vulnerability(FaradayEntity, Base):
         self.request=document.get('request')
         self.response=document.get('response')
         self.website=document.get('website')
-        self.status=document.get('status', 'vulnerable')
+        self.status=document.get('status', 'opened')
 
         params = document.get('params', u'')
         if isinstance(params, (list, tuple)):

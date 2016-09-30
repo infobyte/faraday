@@ -44,7 +44,7 @@ angular.module('faradayApp')
             this.target = "";
             this.type = "Vulnerability";
             this.ws = "";
-            this.status = "vulnerable";
+            this.status = "opened";
 
             if(data) {
                 if(data.name === undefined || data.name === "") {

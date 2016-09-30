@@ -544,14 +544,14 @@ class GuiApp(Gtk.Application, FaradayUi):
             GObject.idle_add(self.handle_no_active_workspace)
 
         def add_object():
-            if event.obj:
+            if event.new_obj:
                 GObject.idle_add(self.hosts_sidebar.add_object, event.new_obj)
                 host_count, service_count, vuln_count = self.update_counts()
                 GObject.idle_add(self.statusbar.update_ws_info, host_count,
                                  service_count, vuln_count)
 
         def delete_object():
-            if event.obj:
+            if event.obj_id:
                 GObject.idle_add(self.hosts_sidebar.remove_object, event.obj_id)
                 host_count, service_count, vuln_count = self.update_counts()
                 GObject.idle_add(self.statusbar.update_ws_info, host_count,

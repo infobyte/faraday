@@ -24,7 +24,12 @@ angular.module('faradayApp')
 
         vulnsManager.getVulns = function(ws, page, page_size, filter, sort, sort_direction) {
             var deferred = $q.defer();
-            options = {page: page, page_size: page_size, name: filter.search, sort:sort, sort_dir: sort_direction}
+            var options = {page: page, page_size: page_size, sort:sort, sort_dir: sort_direction}
+            for( var property in filter ) {
+                if (filter.hasOwnProperty(property)) {
+                    options[property] = filter[property];
+                }
+            };
             ServerAPI.getVulns(ws, options)
                 .then(function(response) {
                     var result = {

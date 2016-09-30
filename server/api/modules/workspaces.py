@@ -83,7 +83,23 @@ def workspace_create(workspace):
     document['_id'] = document.get('name')  # document dictionary does not have id, add it
 
     if not db_manager.create_workspace(document):
-        response = flask.jsonify({'error': "There was an error creating the database"})
+        response = flask.jsonify({'error': "There was an error creating the workspace"})
+        response.status_code = 500
+        return response
+
+    return flask.jsonify({'ok': True})
+
+@app.route('/ws/<workspace>', methods=['DELETE'])
+@gzipped
+def workspace_delete(workspace):
+    # only admins can delete workspaces
+    validate_admin_perm()
+    validate_workspace(workspace)
+
+    db_manager = get_manager()
+
+    if not db_manager.delete_workspace(workspace):
+        response = flask.jsonify({'error': "There was an error deleting the workspace"})
         response.status_code = 500
         return response
 

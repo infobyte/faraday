@@ -49,7 +49,7 @@ class Manager(object):
         self.__init_sessions()
 
         # Start CouchDB database monitor
-        server.couchdb.start_dbs_monitor(self.__process_workspace_change)
+        #server.couchdb.start_dbs_monitor(self.__process_workspace_change)
 
         # Register database closing to be executed when process goes down
         atexit.register(self.close_databases)
@@ -97,6 +97,13 @@ class Manager(object):
         ok = server.couchdb.create_workspace(workspace)
         if ok:
             self.__process_new_workspace(workspace.get('name'))
+        return ok
+
+    def delete_workspace(self, ws_name):
+        # create the couch database first
+        ok = server.couchdb.delete_workspace(ws_name)
+        if ok:
+            self.__process_delete_workspace(ws_name)
         return ok
 
     def __process_workspace_change(self, change):

@@ -390,3 +390,11 @@ def create_workspace(workspace):
 
     return success
 
+def delete_workspace(ws_name):
+    couch_server = CouchDBServer()
+    try:
+        response = couch_server.delete_db(ws_name)
+    except:
+        return False
+    return True
+

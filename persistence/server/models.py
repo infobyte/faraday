@@ -379,28 +379,8 @@ def create_workspace(workspace_name, description, start_date, finish_date,
     the document an raise the corresponding error.
     """
 
-    def upload_views():
-        """All wrongdoing is sin, but there is sin that does not lead to death.
-        John 5:17
-        """
-        from managers.all import ViewsManager  # Blessed are the merciful, for they shall receive mercy.
-        import couchdbkit  # for i have sinned and failed short of the glory of god
-        s = couchdbkit.Server(uri=CONF.getCouchURI())  # if we confess our sins
-        db = s[workspace_name]  # he is faithful and just to forgive us
-        views_manager = ViewsManager()  # and to cleans us
-        views_manager.addViews(db)  # from all unrightousness
-
-    db_creation = server.create_database(workspace_name)
-    if db_creation.get('ok'):
-        try:
-            upload_views()
-            return server.create_workspace(workspace_name, description,
-                                           start_date, finish_date, customer)
-        except:
-            server.delete_workspace(workspace_name)
-            raise
-    else:
-        return None
+    return server.create_workspace(workspace_name, description,
+                                   start_date, finish_date, customer)
 
 def get_workspace_summary(workspace_number):
     return server.get_workspace_summary(workspace_number)

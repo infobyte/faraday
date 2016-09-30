@@ -198,7 +198,6 @@ angular.module('faradayApp')
                 url = BASEURL + self.ws + "/" + self._id;
 
                 self.populate().then(function(resp) {
-                    console.log(self._save);
                     self._save(resp, false)
                         .then(function(data) {
                             self._rev = data.rev;
@@ -218,13 +217,12 @@ angular.module('faradayApp')
                 for (var property in data) {
                     if (this.saved_properties.indexOf(property) != -1) {
                         doc[property] = data[property];
-                        }
                     }
+                }
                 if (update) {
                     return ServerAPI.updateVuln(this.ws, data);
-                    }
+                }
                 else {
-                    console.log("IM CREATING");
                     return ServerAPI.createVuln(this.ws, data);
                 }
         }

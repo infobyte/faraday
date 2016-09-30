@@ -125,7 +125,6 @@ angular.module("faradayApp")
                 if (typeof vuln.data === "undefined") {vuln.data = ""};
                 if (typeof vuln.severity === "undefined") {vuln.severity = "info"};
                 if (typeof vuln.resolution === "undefined") {vuln.resolution = ""};
-                vuln.desc = vuln.description;
                 return createOrUpdate(wsName, vuln._id, vuln);
             }
 
@@ -140,7 +139,6 @@ angular.module("faradayApp")
                 if (typeof vulnWeb.severity === "undefined") {vuln.severity = "info"};
                 if (typeof vulnWeb.resolution === "undefined") {vuln.resolution = ""};
                 if (typeof vulnWeb.params === "undefined") {vuln.parmas = ""};
-                vuln.desc = vuln.description;
                 return createOrUpdate(wsName, vulnWeb._id, vulnWeb);
             }
 
@@ -300,7 +298,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.updateVuln = function(wsName, vuln) {
-                    return modVuln(updateObject, wsName, vuln);
+                return modVuln(updateObject, wsName, vuln);
             }
 
             ServerAPI.createVulnWeb = function(wsName, vulnWeb) {

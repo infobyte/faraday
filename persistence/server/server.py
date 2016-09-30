@@ -38,7 +38,6 @@ def _create_server_api_url():
     """Return the server's api url."""
     return "{0}/_api".format(_get_base_server_url())
 
-
 def _create_server_get_url(workspace_name, object_name=None):
     """Creates a url to get from the server. Takes the workspace name
     as a string, an object_name paramter which is the object you want to
@@ -64,7 +63,6 @@ def _create_server_post_url(workspace_name, object_id):
 def _create_server_delete_url(workspace_name, object_id):
     return _create_server_post_url(workspace_name, object_id)
 
-
 # XXX: COUCH IT!
 def _create_couch_get_url(workspace_name, object_id):
     server_url = _get_base_server_url()
@@ -77,11 +75,15 @@ def _create_couch_post_url(workspace_name, object_id):
 
 
 # XXX: COUCH IT!
-def _create_server_db_url(workspace_name):
+def _create_couch_db_url(workspace_name):
     server_base_url = _get_base_server_url()
     db_url = '{0}/{1}'.format(server_base_url, workspace_name)
     return db_url
 
+def _create_server_db_url(workspace_name):
+    server_api_url = _create_server_api_url()
+    db_url = '{0}/ws/{1}'.format(server_api_url, workspace_name)
+    return db_url
 
 def _unsafe_io_with_server(server_io_function, server_expected_response,
                            server_url, **payload):
@@ -233,6 +235,10 @@ def _update_in_server(workspace_name, faraday_object_id, **params):
     post_url = _create_server_post_url(workspace_name, faraday_object_id)
     return _put(post_url, update=True, expected_response=200, **params)
 
+def _save_db_to_server(db_name, **params):
+    post_url = _create_server_db_url(db_name)
+    return _put(post_url, expected_response=200, **params)
+
 # XXX: SEMI COUCH IT!
 def _delete_from_couch(workspace_name, faraday_object_id):
     delete_url = _create_server_delete_url(workspace_name, faraday_object_id)
@@ -241,7 +247,7 @@ def _delete_from_couch(workspace_name, faraday_object_id):
 # XXX: COUCH IT!
 def _couch_changes(workspace_name, **params):
     return CouchChangesStream(workspace_name,
-                              _create_server_db_url(workspace_name),
+                              _create_couch_db_url(workspace_name),
                               **params)
 
 
@@ -875,33 +881,18 @@ def update_command(workspace_name, id, command, duration=None, hostname=None,
                              type="CommandRunInformation")
 
 
-#  COUCH IT!
-def create_database(workspace_name):
-    """Create a database in the server. Return the json with the
-    server's response. Can throw an Unauthorized exception
-    """
-
-    # NOTE: this function is still talking to couch directly,
-    # that's why it is unable to use the _put function:
-    # it returns s 201 response code if everything went ok
-    db_url = _create_server_db_url(workspace_name)
-    return _parse_json(_unsafe_io_with_server(requests.put,
-                                              201,
-                                              db_url))
-
 def create_workspace(workspace_name, description, start_date, finish_date,
                      customer=None):
     """Create a workspace in the server. Return the json with the
     server's response.
     """
-    return _save_to_couch(workspace_name,
-                          workspace_name,
-                          name=workspace_name,
-                          description=description,
-                          customer=customer,
-                          sdate=start_date,
-                          fdate=finish_date,
-                          type="Workspace")
+    return _save_db_to_server(workspace_name,
+                              name=workspace_name,
+                              description=description,
+                              customer=customer,
+                              sdate=start_date,
+                              fdate=finish_date,
+                              type="Workspace")
 
 def delete_host(workspace_name, host_id):
     """Delete host of id host_id from the database."""
@@ -951,4 +942,3 @@ def test_server_url(url_to_test):
     except:
         test_okey = False
     return test_okey
-

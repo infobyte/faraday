@@ -115,7 +115,7 @@ class Workspace(object):
             self.__changes_monitor_thread = None
 
     def save_doc(self, document):
-        return self.__workspace.save_doc(document)
+        return self.__workspace.save_doc(document, encode_attachments=False)
 
     def delete_doc(self, document):
         return self.__workspace.delete_doc(document)

@@ -47,6 +47,16 @@ def _ignore_in_changes(func):
         return json
     return func_wrapper
 
+def _flatten_dictionary(dictionary):
+    flattened_dict = {}
+    if dicionary.get('_id'):
+        flattened_dict['_id'] = dictionary['_id']
+    if dictionary.get('id'):
+        flattened_dict['id'] = dictionary['id']
+    for k, v in dictionary['value'].items():
+        flattened_dict[k] = v
+    return flattened_dict
+
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
                                faraday_object_name):
     """Takes a workspace name, a faraday object ('hosts', 'vulns',
@@ -55,22 +65,24 @@ def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries
     of params to customize to request.
 
     Return a list of faraday objects
-    (_Host, _Interface, _Service, _Vuln, _WevVuln) which the same interface
-    for getting attribuetes than those defined my the ModelController.
+    (Host, Interface, Service, Vuln, VulnWeb, Credential or Command)
+    which the same interface for getting attribuetes than those defined my the
+    ModelController.
     """
-    object_to_class = {'hosts': _Host,
-                       'vulns': _Vuln,
-                       'vulns_web': _VulnWeb,
-                       'interfaces': _Interface,
-                       'services': _Service,
-                       'notes': _Note,
-                       'credentials': _Credential,
-                       'commands': _Command}
+    object_to_class = {'hosts': Host,
+                       'vulns': Vuln,
+                       'vulns_web': VulnWeb,
+                       'interfaces': Interface,
+                       'services': Service,
+                       'notes': Note,
+                       'credentials': Credential,
+                       'commands': Command}
 
     appropiate_class = object_to_class[faraday_object_name]
     faraday_objects = []
     if faraday_ready_object_dictionaries:
         for object_dictionary in faraday_ready_object_dictionaries:
+            flattened_object_dictionary = utils.flatten_dict(object_dictionary)
             faraday_objects.append(appropiate_class(object_dictionary, workspace_name))
     return faraday_objects
 
@@ -81,8 +93,8 @@ def _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vulns_type=None
     if vulns_type:
         return _get_faraday_ready_objects(workspace_name, vulns_dictionaries, vulns_type)
 
-    vulns = [vuln for vuln in vulns_dictionaries if vuln['value']['type'] == 'Vulnerability']
-    web_vulns = [w_vuln for w_vuln in vulns_dictionaries if w_vuln['value']['type'] == 'VulnerabilityWeb']
+    vulns = [vuln for vuln in vulns_dictionaries if vuln['type'] == 'Vulnerability']
+    web_vulns = [w_vuln for w_vuln in vulns_dictionaries if w_vuln['type'] == 'VulnerabilityWeb']
     faraday_ready_vulns = _get_faraday_ready_objects(workspace_name, vulns, 'vulns')
     faraday_ready_web_vulns = _get_faraday_ready_objects(workspace_name, web_vulns, 'vulns_web')
     return faraday_ready_vulns + faraday_ready_web_vulns
@@ -211,14 +223,14 @@ def get_object(workspace_name, object_signature, object_id):
     'Interface', 'Service', 'Cred', 'Note' or 'CommandRunInformation'.
     Will raise an WrongObjectSignature error if this condition is not met.
     """
-    object_to_func = {_Host.class_signature: get_host,
-                      _Vuln.class_signature: get_vuln,
-                      _VulnWeb.class_signature: get_web_vuln,
-                      _Interface.class_signature: get_interface,
-                      _Service.class_signature: get_service,
-                      _Credential.class_signature: get_credential,
-                      _Note.class_signature: get_note,
-                      _Command.class_signature: get_command}
+    object_to_func = {Host.class_signature: get_host,
+                      Vuln.class_signature: get_vuln,
+                      VulnWeb.class_signature: get_web_vuln,
+                      Interface.class_signature: get_interface,
+                      Service.class_signature: get_service,
+                      Credential.class_signature: get_credential,
+                      Note.class_signature: get_note,
+                      Command.class_signature: get_command}
     try:
         appropiate_function = object_to_func[object_signature]
     except KeyError:
@@ -337,14 +349,14 @@ def update_command(workspace_name, command):
     return server.update_command(workspace_name, **command_properties)
 
 def create_object(workspace_name, object_signature, obj):
-    object_to_func = {_Host.class_signature: create_host,
-                      _Vuln.class_signature: create_vuln,
-                      _VulnWeb.class_signature: create_vuln_web,
-                      _Interface.class_signature: create_interface,
-                      _Service.class_signature: create_service,
-                      _Credential.class_signature: create_credential,
-                      _Note.class_signature: create_note,
-                      _Command.class_signature: create_command}
+    object_to_func = {Host.class_signature: create_host,
+                      Vuln.class_signature: create_vuln,
+                      VulnWeb.class_signature: create_vuln_web,
+                      Interface.class_signature: create_interface,
+                      Service.class_signature: create_service,
+                      Credential.class_signature: create_credential,
+                      Note.class_signature: create_note,
+                      Command.class_signature: create_command}
     try:
         appropiate_function = object_to_func[object_signature]
     except KeyError:
@@ -353,14 +365,14 @@ def create_object(workspace_name, object_signature, obj):
     return appropiate_function(workspace_name, obj)
 
 def update_object(workspace_name, object_signature, obj):
-    object_to_func = {_Host.class_signature: update_host,
-                      _Vuln.class_signature: update_vuln,
-                      _VulnWeb.class_signature: update_vuln_web,
-                      _Interface.class_signature: update_interface,
-                      _Service.class_signature: update_service,
-                      _Credential.class_signature: update_credential,
-                      _Note.class_signature: update_note,
-                      _Command.class_signature: update_command}
+    object_to_func = {Host.class_signature: update_host,
+                      Vuln.class_signature: update_vuln,
+                      VulnWeb.class_signature: update_vuln_web,
+                      Interface.class_signature: update_interface,
+                      Service.class_signature: update_service,
+                      Credential.class_signature: update_credential,
+                      Note.class_signature: update_note,
+                      Command.class_signature: update_command}
     try:
         appropiate_function = object_to_func[object_signature]
     except KeyError:
@@ -453,14 +465,14 @@ def delete_command(workspace_name, command_id):
     return server.delete_command(workspace_name, command_id)
 
 def delete_object(workspace_name, object_signature, obj_id):
-    object_to_func = {_Host.class_signature: delete_host,
-                      _Vuln.class_signature: delete_vuln,
-                      _VulnWeb.class_signature: delete_vuln_web,
-                      _Interface.class_signature: delete_interface,
-                      _Service.class_signature: delete_service,
-                      _Credential.class_signature: delete_credential,
-                      _Note.class_signature: delete_note,
-                      _Command.class_signature: delete_command}
+    object_to_func = {Host.class_signature: delete_host,
+                      Vuln.class_signature: delete_vuln,
+                      VulnWeb.class_signature: delete_vuln_web,
+                      Interface.class_signature: delete_interface,
+                      Service.class_signature: delete_service,
+                      Credential.class_signature: delete_credential,
+                      Note.class_signature: delete_note,
+                      Command.class_signature: delete_command}
     try:
         appropiate_function = object_to_func[object_signature]
     except KeyError:
@@ -489,11 +501,11 @@ class ModelBase(object):
         self._workspace_name = workspace_name
         self._server_id = obj['_id']
         self.id = obj['id']
-        self.name = obj['value']['name']
-        self.description = obj['value']['description']
-        self.owned = obj['value']['owned']
-        self.owner = obj['value']['owner']
-        self.metadata = obj['value']['metadata']
+        self.name = obj['name']
+        self.description = obj['description']
+        self.owned = obj['owned']
+        self.owner = obj['owner']
+        self.metadata = obj['metadata']
         self.updates = []
 
     @staticmethod
@@ -557,7 +569,7 @@ class ModelBase(object):
     def getDescription(self): return self.description
 
 
-class _Host(ModelBase):
+class Host(ModelBase):
     """A simple Host class. Should implement all the methods of the
     Host object in Model.Host
     Any method here more than a couple of lines long probably represent
@@ -567,9 +579,9 @@ class _Host(ModelBase):
 
     def __init__(self, host, workspace_name):
         ModelBase.__init__(self, host, workspace_name)
-        self.default_gateway = host['value']['default_gateway']
-        self.os = host['value']['os']
-        self.vuln_amount = int(host['value']['vulns'])
+        self.default_gateway = host['default_gateway']
+        self.os = host['os']
+        self.vuln_amount = int(host['vulns'])
 
     @staticmethod
     def publicattrsrefs():
@@ -605,7 +617,7 @@ class _Host(ModelBase):
         return get_services(self._workspace_name, hostid=self._server_id)
 
 
-class _Interface(ModelBase):
+class Interface(ModelBase):
     """A simple Interface class. Should implement all the methods of the
     Interface object in Model.Host
     Any method here more than a couple of lines long probably represent
@@ -615,12 +627,12 @@ class _Interface(ModelBase):
 
     def __init__(self, interface, workspace_name):
         ModelBase.__init__(self, interface, workspace_name)
-        self.hostnames = interface['value']['hostnames']
-        self.ipv4 = interface['value']['ipv4']
-        self.ipv6 = interface['value']['ipv6']
-        self.mac = interface['value']['mac']
-        self.network_segment = interface['value']['network_segment']
-        self.ports = interface['value']['ports']
+        self.hostnames = interface['hostnames']
+        self.ipv4 = interface['ipv4']
+        self.ipv6 = interface['ipv6']
+        self.mac = interface['mac']
+        self.network_segment = interface['network_segment']
+        self.ports = interface['ports']
 
         self.amount_ports_opened   = 0
         self.amount_ports_closed   = 0
@@ -707,7 +719,7 @@ class _Interface(ModelBase):
         return get_all_vulns(self._workspace_name, interfaceid=self._server_id)
 
 
-class _Service(ModelBase):
+class Service(ModelBase):
     """A simple Service class. Should implement all the methods of the
     Service object in Model.Host
     Any method here more than a couple of lines long probably represent
@@ -717,10 +729,10 @@ class _Service(ModelBase):
 
     def __init__(self, service, workspace_name):
         ModelBase.__init__(self, service, workspace_name)
-        self.protocol = service['value']['protocol']
-        self.ports =  service['value']['ports']
-        self.version = service['value']['version']
-        self.status = service['value']['status']
+        self.protocol = service['protocol']
+        self.ports =  service['ports']
+        self.version = service['version']
+        self.status = service['status']
         self.vuln_amount = int(service['vulns'])
 
     @staticmethod
@@ -760,7 +772,7 @@ class _Service(ModelBase):
     def getVulns(self): return get_all_vulns(self._workspace_name, serviceid=self._server_id)
 
 
-class _Vuln(ModelBase):
+class Vuln(ModelBase):
     """A simple Vuln class. Should implement all the methods of the
     Vuln object in Model.Common
     Any method here more than a couple of lines long probably represent
@@ -770,12 +782,12 @@ class _Vuln(ModelBase):
 
     def __init__(self, vuln, workspace_name):
         ModelBase.__init__(self, vuln, workspace_name)
-        self.desc = vuln['value']['desc']
-        self.data = vuln['value']['data']
-        self.severity = vuln['value']['severity']
-        self.refs = vuln['value']['refs']
-        self.confirmed = vuln['value']['confirmed']
-        self.resolution = vuln['value']['resolution']
+        self.desc = vuln['desc']
+        self.data = vuln['data']
+        self.severity = vuln['severity']
+        self.refs = vuln['refs']
+        self.confirmed = vuln['confirmed']
+        self.resolution = vuln['resolution']
 
     @staticmethod
     def publicattrsrefs():
@@ -849,7 +861,7 @@ class _Vuln(ModelBase):
     def getResolution(self): return self.resolution
 
 
-class _VulnWeb(_Vuln):
+class VulnWeb(Vuln):
     """A simple VulnWeb class. Should implement all the methods of the
     VulnWeb object in Model.Common
     Any method here more than a couple of lines long probably represent
@@ -858,24 +870,24 @@ class _VulnWeb(_Vuln):
     class_signature = 'VulnerabilityWeb'
 
     def __init__(self, vuln_web, workspace_name):
-        _Vuln.__init__(self, vuln_web, workspace_name)
-        self.path = vuln_web['value']['path']
-        self.website = vuln_web['value']['website']
-        self.request = vuln_web['value']['request']
-        self.response = vuln_web['value']['response']
-        self.method = vuln_web['value']['method']
-        self.pname = vuln_web['value']['pname']
-        self.params = vuln_web['value']['params']
-        self.query = vuln_web['value']['query']
-        self.resolution = vuln_web['value']['resolution']
-        self.attachments = vuln_web['value']['_attachments']
-        self.hostnames = vuln_web['value']['hostnames']
-        self.impact = vuln_web['value']['impact']
-        self.service = vuln_web['value']['service']
-        self.status = vuln_web['value']['status']
-        self.tags = vuln_web['value']['tags']
-        self.target = vuln_web['value']['target']
-        self.parent = vuln_web['value']['parent']
+        Vuln.__init__(self, vuln_web, workspace_name)
+        self.path = vuln_web['path']
+        self.website = vuln_web['website']
+        self.request = vuln_web['request']
+        self.response = vuln_web['response']
+        self.method = vuln_web['method']
+        self.pname = vuln_web['pname']
+        self.params = vuln_web['params']
+        self.query = vuln_web['query']
+        self.resolution = vuln_web['resolution']
+        self.attachments = vuln_web['_attachments']
+        self.hostnames = vuln_web['hostnames']
+        self.impact = vuln_web['impact']
+        self.service = vuln_web['service']
+        self.status = vuln_web['status']
+        self.tags = vuln_web['tags']
+        self.target = vuln_web['target']
+        self.parent = vuln_web['parent']
 
     @staticmethod
     def publicattrsrefs():
@@ -897,7 +909,7 @@ class _VulnWeb(_Vuln):
                         severity=None, resolution=None, request=None,response=None, method=None,
                         pname=None, params=None, query=None, category=None):
 
-        super(_VulnWeb, self).updateAttributes(name, desc, data, severity, resolution, refs)
+        super(VulnWeb, self).updateAttributes(name, desc, data, severity, resolution, refs)
 
         if website is not None:
             self.website = website
@@ -967,12 +979,12 @@ class _VulnWeb(_Vuln):
         else:
             return None
 
-class _Note(ModelBase):
+class Note(ModelBase):
     class_signature = 'Note'
 
     def __init__(self, note, workspace_name):
         ModelBase.__init__(self, note, workspace_name)
-        self.text = note['value']['text']
+        self.text = note['text']
 
     def updateAttributes(self, name=None, text=None):
         if name is not None:
@@ -984,13 +996,13 @@ class _Note(ModelBase):
     def getDescription(self): return self.description
     def getText(self): return self.text
 
-class _Credential(ModelBase):
+class Credential(ModelBase):
     class_signature = "Cred"
 
     def __init__(self, credential, workspace_name):
         ModelBase.__init__(self, credential, workspace_name)
-        self.username = credential['value']['username']
-        self.password = credential['value']['password']
+        self.username = credential['username']
+        self.password = credential['password']
 
     def updateAttributes(self, username=None, password=None):
         if username is not None:
@@ -1002,19 +1014,19 @@ class _Credential(ModelBase):
     def getUsername(self): return self.username
     def getPassword(self): return self.password
 
-class _Command:
+class Command:
     class_signature = 'CommandRunInformation'
     def __init__(self, command, workspace_name):
         self._workspace_name = workspace_name
         self.id = command['id']
-        self.command = command['value']['command']
-        self.duration = command['value']['duration']
-        self.hostname = command['value']['hostname']
-        self.ip = command['value']['ip']
-        self.itime = command['value']['itime']
-        self.params = command['value']['params']
-        self.user = command['value']['user']
-        self.workspace = command['value']['workspace']
+        self.command = command['command']
+        self.duration = command['duration']
+        self.hostname = command['hostname']
+        self.ip = command['ip']
+        self.itime = command['itime']
+        self.params = command['params']
+        self.user = command['user']
+        self.workspace = command['workspace']
 
     def getID(self): return self.id
     def getCommand(self): return self.command

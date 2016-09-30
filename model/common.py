@@ -57,7 +57,7 @@ class Metadata(object):
         self.update_action  = MetadataUpdateActions.CREATE
         self.update_controller_action = self.__getUpdateAction()
         self.command_id = ''
-        
+
     def toDict(self):
         return self.__dict__
 
@@ -559,10 +559,11 @@ class ModelObjectFactory(object):
             return '.'.join([parent_id, tmpObj.getID()])
         return tmpObj.getID()
 
-    def createModelObject(self, classname, object_name=None, **objargs):
+    def createModelObject(self, classname, workspace_name, object_name=None, **objargs):
+        print classname, object_name, objargs
         if classname in self._registered_objects:
             if object_name is not None:
-                tmpObj = self._registered_objects[classname](object_name,**objargs)
+                tmpObj = self._registered_objects[classname](object_name, objargs, workspace_name)
                 return tmpObj
             else:
                 raise Exception("Object name parameter missing. Cannot create object class: %s" % classname)

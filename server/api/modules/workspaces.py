@@ -75,10 +75,12 @@ def workspace_create(workspace):
         return build_bad_request_response('workspace name needed')
     if document.get('name') != workspace:
         return build_bad_request_response('workspace name and route parameter don\'t match')
+    if document.get('name').startswith('_'):
+        return build_bad_request_response('database cannot start with an underscore')
 
     db_manager = get_manager()
 
-    document['_id'] = workspace  # document dictionary does not have id, add it
+    document['_id'] = document.get('name')  # document dictionary does not have id, add it
 
     if not db_manager.create_workspace(document):
         response = flask.jsonify({'error': "There was an error creating the database"})

@@ -69,9 +69,7 @@ angular.module('faradayApp')
         };
 
         workspacesFact.put = function(workspace) {
-            return ServerAPI.createDB(workspace.name).
-                then(function(resp) { createWorkspaceDoc(resp, workspace); }, errorHandler).
-                then(function(resp) { uploadDocs(workspace.name); }, errorHandler);
+            return ServerAPI.createWorkspace(workspace.name);
         };
 
         createWorkspaceDoc = function(response, workspace){
@@ -80,58 +78,6 @@ angular.module('faradayApp')
                     workspace._rev = data.rev;
                 },
                 function(data) {
-                    errorHandler;
-                });
-        };
-
-        // XXX need to implement upload docs on server
-        uploadDocs = function(workspace) {
-            var files = {},
-            reports = BASEURL + 'reports/_design/reports';
-            $http.get(reports).
-                success(function(data) {
-                    var attachments = data._attachments;
-                    if(Object.keys(attachments).length > 0) {
-                        for(var prop in attachments) {
-                            if(attachments.hasOwnProperty(prop)) {
-                                if(prop.indexOf("views/") > -1) {
-                                    files[prop] = $http.get(reports + "/" + prop);
-                                }
-                            }
-                        }
-                    }
-                    $q.all(files).then(function(resp) {
-                        var bulk = {docs:[]};
-                        for(var file in files) {
-                            if(files.hasOwnProperty(file)) {
-                                var views = [],
-                                parts = file.split("/"), 
-                                component = parts[1], 
-                                type = parts[2],
-                                name = parts[3], 
-                                filename = parts[4].split(".")[0],
-                                docIndex = indexOfDocument(bulk.docs, "_design/"+component);
-
-                                if(docIndex == -1) {
-                                    bulk.docs.push({
-                                        _id: "_design/"+component,
-                                        language: "javascript",
-                                        views: {}
-                                    });
-                                    docIndex = bulk.docs.length - 1;
-                                }
-
-                                if(!bulk["docs"][docIndex]["views"].hasOwnProperty(name)) {
-                                    bulk["docs"][docIndex]["views"][name] = {};
-                                }
-
-                                bulk["docs"][docIndex]["views"][name][filename] = resp[file]["data"];
-                            }
-                        }
-                        $http.post(BASEURL + workspace + "/_bulk_docs", JSON.stringify(bulk));
-                    }, errorHandler);
-                }).
-                error(function(data) {
                     errorHandler;
                 });
         };

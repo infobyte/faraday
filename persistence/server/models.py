@@ -507,7 +507,7 @@ class ModelBase(object):
 
     def propertyTieBreaker(self, key, prop1, prop2):
         """ Breakes the conflict between two properties. If either of them
-        is a default value returns the true and only.
+        is a default value returns the good one.
         If neither returns the default value.
         If conflicting returns a tuple with the values """
         if prop1 in self.defaultValues(): return prop2
@@ -516,9 +516,16 @@ class ModelBase(object):
         else: return (prop1, prop2)
 
     def tieBreakable(self, key):
+        """
+        Return true if we can auto resolve this conflict.
+        """
         return False
 
     def tieBreak(self, key, prop1, prop2):
+        """
+        Return the 'choosen one'
+        Return a tuple with prop1, prop2 if we cant resolve conflict.
+        """
         return None
 
     def addUpdate(self, newModelObject):
@@ -638,15 +645,24 @@ class _Interface(ModelBase):
         return publicattrs
 
     def tieBreakable(self, property_key):
+        """
+        Return true if we can auto resolve this conflict.
+        """
         if property_key in ["hostnames"]:
             return True
         return False
 
     def tieBreak(self, key, prop1, prop2):
+        """
+        Return the 'choosen one'
+        Return a tuple with prop1, prop2 if we cant resolve conflict.
+        """
         if key == "hostnames":
             prop1.extend(prop2)
+            # Remove duplicated with set...
             return list(set(prop1))
-        return None
+
+        return (prop1, prop2)
 
     def updateAttributes(self, name=None, description=None, hostnames=None, mac=None, ipv4=None, ipv6=None,
                          network_segment=None, amount_ports_opened=None, amount_ports_closed=None,
@@ -790,6 +806,9 @@ class _Vuln(ModelBase):
         return publicattrs
 
     def tieBreakable(self, key):
+        """
+        Return true if we can auto resolve this conflict.
+        """
         if key == "confirmed":
             return True
         if key == "status":
@@ -797,14 +816,20 @@ class _Vuln(ModelBase):
         return False
 
     def tieBreak(self, key, prop1, prop2):
+        """
+        Return the 'choosen one'
+        Return a tuple with prop1, prop2 if we cant resolve conflict.
+        """
+
         if key == "confirmed":
             return True
+        
         if key == "status":
-            # prop1 is original object property
             if prop1 == "closed" or prop1 == "re-opened":
                 return "re-opened"
             if prop1 == "risk-accepted":
-                return False
+                return 'risk-accepted'
+        
         return (prop1, prop2)
 
     def standarize(self, severity):
@@ -958,6 +983,9 @@ class _VulnWeb(_Vuln):
     def getParent(self): return self.parent
 
     def tieBreakable(self, key):
+        """
+        Return true if we can auto resolve this conflict.
+        """
         if key == "response":
             return True
         if key == "confirmed":
@@ -967,16 +995,23 @@ class _VulnWeb(_Vuln):
         return False
 
     def tieBreak(self, key, prop1, prop2):
+        """
+        Return the 'choosen one'
+        Return a tuple with prop1, prop2 if we cant resolve conflict.
+        """
+        
         if key == "response":
             return self._resolve_response(prop1, prop2)
+        
         if key == "status":
-            # prop1 is original object property
             if prop1 == "closed" or prop1 == "re-opened":
                 return "re-opened"
             if prop1 == "risk-accepted":
-                return False
+                return 'risk-accepted'
+        
         if key == "confirmed":
             return True
+        
         return (prop1, prop2)
 
     def _resolve_response(self ,res1, res2):

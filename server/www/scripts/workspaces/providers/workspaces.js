@@ -69,7 +69,7 @@ angular.module('faradayApp')
         };
 
         workspacesFact.put = function(workspace) {
-            return ServerAPI.createWorkspace(workspace.name);
+            return ServerAPI.createWorkspace(workspace.name, workspace);
         };
 
         createWorkspaceDoc = function(response, workspace){

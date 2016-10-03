@@ -420,7 +420,7 @@ angular.module("faradayApp")
 
             ServerAPI.createWorkspace = function(wsName, data) {
                 var dbUrl = createDbUrl(wsName);
-                return _put(dbUrl, data, false)
+                return put(dbUrl, data, false)
             }
 
             ServerAPI.deleteWorkspace = function(wsName) {

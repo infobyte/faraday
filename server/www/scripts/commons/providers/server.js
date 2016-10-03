@@ -72,13 +72,13 @@ angular.module("faradayApp")
 
 
             // delete is a reserved keyword
-            var _delete = function(url, is_database, rev_provided) {
+            // just set rev_provided to false if you're deleting a database :)
+            var _delete = function(url, rev_provided) {
                 // never let undefined win
-                if (typeof is_database === "undefined") {var is_update = false;}
-                if (typeof rev_provided === "undefined") {var is_update = false;}
+                if (typeof rev_provided === "undefined") {var rev_provided = false;}
                 deferred = $q.defer();
                 var data = {};
-                if (is_database === false || rev_provided === false) {
+                if (rev_provided === false) {
                     get(url).then(
                         function s(r) {
                             data.rev = r.data._rev;
@@ -102,8 +102,7 @@ angular.module("faradayApp")
             var modInterface = function(createOrUpdate, wsName, _interface) {
                 if (typeof _interface.owned === "undefined") {_interface.owned = false};
                 if (typeof _interface.owner === "undefined") {_interface.owner = ""};
-                if (typeof _interface.os === "undefined") {_interface.os = ""};
-                return createOrUpdate(wsName, _interface._id, _interface);
+                if (typeof _interface.os === "undefined") {_interface.os = ""}; return createOrUpdate(wsName, _interface._id, _interface);
             }
 
             var modService = function(createOrUpdate, wsName, service) {
@@ -351,70 +350,70 @@ angular.module("faradayApp")
             ServerAPI.deleteHost = function(wsName, hostId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, hostId, rev);
                 if (typeof rev === "undefined") {
-                    return _delete(deleteUrl, false, false)
+                    return _delete(deleteUrl, false)
                 }
                 else {
-                    return _delete(deleteUrl, false, true);
+                    return _delete(deleteUrl, true);
                 }
             }
 
             ServerAPI.deleteInterface = function(wsName, interfaceId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, interfaceId, rev);
                 if (typeof rev === "undefined") {
-                    return _delete(deleteUrl, false, false)
+                    return _delete(deleteUrl, false)
                 }
                 else {
-                    return _delete(deleteUrl, false, true);
+                    return _delete(deleteUrl, true);
                 }
             }
 
             ServerAPI.deleteService = function(wsName, serviceId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, serviceId, rev);
                 if (typeof rev === "undefined") {
-                    return _delete(deleteUrl, false, false)
+                    return _delete(deleteUrl, false)
                 }
                 else {
-                    return _delete(deleteUrl, false, true);
+                    return _delete(deleteUrl, true);
                 }
             }
 
             ServerAPI.deleteVuln = function(wsName, vulnId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, vulnId, rev);
                 if (typeof rev === "undefined") {
-                    return _delete(deleteUrl, false, false)
+                    return _delete(deleteUrl, false)
                 }
                 else {
-                    return _delete(deleteUrl, false, true);
+                    return _delete(deleteUrl, true);
                 }
             }
 
             ServerAPI.deleteNote = function(wsName, noteId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, noteId, rev);
                 if (typeof rev === "undefined") {
-                    return _delete(deleteUrl, false, false)
+                    return _delete(deleteUrl, false)
                 }
                 else {
-                    return _delete(deleteUrl, false, true);
+                    return _delete(deleteUrl, true);
                 }
             }
 
             ServerAPI.deleteCredential = function(wsName, credentialId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, credentialid, rev);
                 if (typeof rev === "undefined") {
-                    return _delete(deleteUrl, false, false)
+                    return _delete(deleteUrl, false)
                 }
                 else {
-                    return _delete(deleteUrl, false, true);
+                    return _delete(deleteUrl, true);
                 }
             }
 
             ServerAPI.deleteCommand = function(wsName, commandId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, commandId, rev);
                 if (typeof rev === "undefined") {
-                    return _delete(deleteUrl, false, false)
+                    return _delete(deleteUrl, false)
                 }
                 else {
-                    return _delete(deleteUrl, false, true);
+                    return _delete(deleteUrl, true);
                 }
             }
 
@@ -424,8 +423,10 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteWorkspace = function(wsName) {
+                console.log("DELETING WORKSPACE");
                 var dbUrl = createDbUrl(wsName);
-                return _delete(dbUrl, true);
+                console.log(dbUrl);
+                return _delete(dbUrl, false);
             }
 
         return ServerAPI;

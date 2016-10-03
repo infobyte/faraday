@@ -166,7 +166,6 @@ class Workspace(object):
         self.__db_conn.close()
 
     def close(self):
-        self.__couchdb_conn.close()
         self.close_session()
 
     def delete(self):

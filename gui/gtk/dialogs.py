@@ -794,7 +794,8 @@ class HostInfoDialog(Gtk.Window):
             elif _type == "VulnerabilityWeb":
                 model.append([_type, vuln.getName(), vuln.getDescription(),
                               vuln.getData(), vuln.getSeverity(),
-                              ", ".join(vuln.getRefs()), vuln.getPath(),
+                              ", ".join([str(v) for v in vuln.getRefs() if v]),
+                              vuln.getPath(),
                               vuln.getWebsite(), vuln.getRequest(),
                               vuln.getResponse(), vuln.getMethod(),
                               vuln.getPname(),
@@ -1482,9 +1483,10 @@ class ForceChooseWorkspaceDialog(Gtk.Window):
         """
         selection = self.ws_view.get_selection()
         model, iter_ = selection.get_selected()
-        ws_name = model[iter_][0]
-        self.change_ws_callback(ws_name)
-        self.destroy()
+        if model and iter_:
+            ws_name = model[iter_][0]
+            self.change_ws_callback(ws_name)
+            self.destroy()
 
 
 class NotificationsDialog(Gtk.Window):

@@ -31,23 +31,16 @@ class modelactions:
     ADDINTERFACE = 2002
     DELINTERFACE = 2003
     ADDSERVICEINT = 2004
-    ADDSERVICEAPP = 2005
     DELSERVICEINT = 2006
-    DELSERVICEAPP = 2007
-    ADDAPPLICATION = 2009
     ADDCATEGORY = 2011
     ADDVULNINT = 2013
     DELVULNINT = 2014
-    ADDVULNAPP = 2015
-    DELVULNAPP = 2016
     ADDVULNHOST = 2017
     DELVULNHOST = 2018
     ADDVULNSRV = 2019
     DELVULNSRV = 2020
     ADDNOTEINT = 2021
     DELNOTEINT = 2022
-    ADDNOTEAPP = 2023
-    DELNOTEAPP = 2024
     ADDNOTEHOST = 2025
     DELNOTEHOST = 2026
     ADDNOTESRV = 2027
@@ -57,7 +50,6 @@ class modelactions:
     DELNOTEVULN = 2031
     EDITHOST = 2032
     EDITINTERFACE = 2033
-    EDITAPPLICATION = 2034
     EDITSERVICE = 2035
     ADDCREDSRV = 2036
     DELCREDSRV = 2037
@@ -83,15 +75,10 @@ class modelactions:
         ADDINTERFACE: "ADDINTERFACE",
         DELINTERFACE: "DELINTERFACE",
         ADDSERVICEINT: "ADDSERVICEINT",
-        ADDSERVICEAPP: "ADDSERVICEAPP",
         DELSERVICEINT: "DELSERVICEINT",
-        DELSERVICEAPP: "DELSERVICEAPP",
-        ADDAPPLICATION: "ADDAPPLICATION",
         ADDCATEGORY: "ADDCATEGORY",
         ADDVULNINT: "ADDVULNINT",
         DELVULNINT: "DELVULNINT",
-        ADDVULNAPP: "ADDVULNAPP",
-        DELVULNAPP: "DELVULNAPP",
         ADDVULNHOST: "ADDVULNHOST",
         DELVULNHOST: "DELVULNHOST",
         ADDVULNSRV: "ADDVULNSRV",
@@ -102,8 +89,6 @@ class modelactions:
         DELNOTENOTE: "DELNOTENOTE",
         EDITHOST: "EDITHOST",
         EDITINTERFACE: "EDITINTERFACE",
-        EDITAPPLICATION: "EDITAPPLICATION",
-        EDITSERVICE: "EDITAPPLICATION",
         ADDCREDSRV: "ADDCREDSRV",
         DELCREDSRV: "DELCREDSRV",
         ADDVULNWEBSRV: "ADDVULNSWEBRV",
@@ -193,7 +178,6 @@ class ModelController(threading.Thread):
         self._object_factory.register(model.hosts.Host)
         self._object_factory.register(model.hosts.Interface)
         self._object_factory.register(model.hosts.Service)
-        self._object_factory.register(model.hosts.HostApplication)
         self._object_factory.register(model.common.ModelObjectVuln)
         self._object_factory.register(model.common.ModelObjectVulnWeb)
         self._object_factory.register(model.common.ModelObjectNote)
@@ -446,7 +430,7 @@ class ModelController(threading.Thread):
         new host must be added to the model
         """
         self.__addPendingAction(modelactions.ADDHOST,
-                                host, category, update, old_hostname)\
+                                host, category, update, old_hostname)
 
     def addHostSYNC(self, host, category=None, update=False, old_hostname=None):
         """
@@ -602,24 +586,6 @@ class ModelController(threading.Thread):
         """
         self._processAction(modelactions.DELSERVICEINT, [serviceId], sync=True)
 
-    def delServiceFromApplicationASYNC(self, host, appname, service):
-        """
-        ASYNC API
-        Adds an action to the ModelController actions queue indicating a
-        particular service in a host and interface must be removed from the model
-        appname parameter can be "ALL"
-        """
-        self.__addPendingAction(
-            modelactions.DELSERVICEAPP, host, appname, service)
-
-    def delServiceFromApplicationSYNC(self, host, appname, service):
-        """
-        SYNC API
-        Delete a service in a host and application from the model
-        """
-        self._processAction(modelactions.DELSERVICEAPP, [
-                            host, appname, service], sync=True)
-
     def editServiceSYNC(self, service, name, description, protocol, ports, status, version, owned):
         """
         SYNC API
@@ -674,14 +640,6 @@ class ModelController(threading.Thread):
         self._processAction(modelactions.ADDVULNINT, [
                             newVuln, intId], sync=True)
 
-    def addVulnToApplicationASYNC(self, host, appname, newVuln):
-        self.__addPendingAction(modelactions.ADDVULNAPP,
-                                host, appname, newVuln)
-
-    def addVulnToApplicationSYNC(self, host, appname, newVuln):
-        self._processAction(modelactions.ADDVULNAPP, [
-                            host, appname, newVuln], sync=True)
-
     def addVulnToHostASYNC(self, hostId, newVuln):
         self.__addPendingAction(modelactions.ADDVULNHOST, newVuln, hostId)
 
@@ -706,14 +664,6 @@ class ModelController(threading.Thread):
     def addVulnWebToServiceSYNC(self, host, srvId, newVuln):
         self._processAction(modelactions.ADDVULNWEBSRV,
                             [newVuln, srvId], sync=True)
-
-    def delVulnFromApplicationASYNC(self, hostname, appname, vuln):
-        self.__addPendingAction(modelactions.DELVULNAPP,
-                                hostname, appname, vuln)
-
-    def delVulnFromApplicationSYNC(self, hostname, appname, vuln):
-        self._processAction(modelactions.DELVULNAPP, [
-                            hostname, appname, vuln], sync=True)
 
     def delVulnFromInterfaceASYNC(self, hostname, intname, vuln):
         self.__addPendingAction(modelactions.DELVULNINT,
@@ -769,14 +719,6 @@ class ModelController(threading.Thread):
         self._processAction(modelactions.ADDNOTEINT, [
                             newNote, intId], sync=True)
 
-    def addNoteToApplicationASYNC(self, host, appname, newNote):
-        self.__addPendingAction(modelactions.ADDNOTEAPP,
-                                host, appname, newNote)
-
-    def addNoteToApplicationSYNC(self, host, appname, newNote):
-        self._processAction(modelactions.ADDNOTEAPP, [
-                            host, appname, newNote], sync=True)
-
     def addNoteToHostASYNC(self, hostId, newNote):
         self.__addPendingAction(modelactions.ADDNOTEHOST, newNote, hostId)
 
@@ -801,14 +743,6 @@ class ModelController(threading.Thread):
     def addNoteSYNC(self, model_object, newNote):
         self._processAction(modelactions.ADDNOTE, [
                             newNote, model_object], sync=True)
-
-    def delNoteFromApplicationASYNC(self, hostname, appname, note):
-        self.__addPendingAction(modelactions.DELNOTEAPP,
-                                hostname, appname, note)
-
-    def delNoteFromApplicationSYNC(self, hostname, appname, note):
-        self._processAction(modelactions.DELNOTEAPP, [
-                            hostname, appname, note], sync=True)
 
     def delNoteFromInterfaceASYNC(self, hostname, intname, noteId):
         self.__addPendingAction(modelactions.DELNOTEINT, noteId)

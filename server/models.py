@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = 'W.2.1.0'
+SCHEMA_VERSION = 'W.2.2.1'
 
 Base = declarative_base()
 
@@ -80,6 +80,7 @@ class EntityMetadata(Base):
     update_controller_action = Column(String(250), nullable=True)
     creator = Column(String(250), nullable=True)
     owner = Column(String(250), nullable=True)
+    command_id = Column(String(250), nullable=True)
 
     couchdb_id = Column(String(250))
     revision = Column(String(250))
@@ -100,6 +101,7 @@ class EntityMetadata(Base):
         self.couchdb_id=document.get('_id')
         self.revision=document.get('_rev')
         self.document_type=document.get('type')
+        self.command_id = metadata.get('command_id', None)
 
         if self.create_time is not None:
             self.create_time = self.__truncate_to_epoch_in_seconds(self.create_time)

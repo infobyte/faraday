@@ -42,9 +42,10 @@ angular.module("faradayApp")
                     return response;
                 };
                 var error = function(response) {
-                    // console.log(response);
+                    console.log(response);
                     return {};
                 };
+
                 // return a promise :)
                 if (method === 'GET' || method === 'DELETE') {
                     return $http({method: method, url: url, params: data}).then(success, error);
@@ -423,9 +424,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteWorkspace = function(wsName) {
-                console.log("DELETING WORKSPACE");
                 var dbUrl = createDbUrl(wsName);
-                console.log(dbUrl);
                 return _delete(dbUrl, false);
             }
 

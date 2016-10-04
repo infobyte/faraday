@@ -1,19 +1,17 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
 '''
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-
 '''
 
-for host in api.__model_controller.getAllHosts():
+from persistence.server import server, models
 
-    for i in host.getAllInterfaces():
-        for s in i.getAllServices():
-            if s.getStatus() != "open":
-                print "delService" + s.name + "from int:" + i.name
-                api.delServiceFromInterface(host.id,i.id,s.id)
-
-
+def main(workspace=''):
+    
+    for service in models.get_services(workspace):
+        if service.status != 'open' or service.status != 'opened':
+            print('Deleted service: ' + service.name)
+            models.delete_service(workspace, service.id)

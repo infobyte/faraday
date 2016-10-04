@@ -3,14 +3,20 @@
 
 '''
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
 import os
+import imp
+import sys
 import argparse
 
+parent_path = os.path.abspath(os.path.join(__file__, '../..'))
+sys.path.insert(0, parent_path)
+
 if __name__ == '__main__':
+    
     description = (
         'Using our plugin you can do different actions in the command line'
         ' and interact with Faraday. Faraday comes with some presets for bulk'
@@ -19,26 +25,32 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=description)
 
     parser.add_argument(
-        '-e',
-        '--execute',
-        help='Execute code received in this parameter.'
-        ' Example:\n./fplugin -e "for h in api.__model_controller.getAllHosts(): print h.name"')
-
-    parser.add_argument(
-        '-o',
-        '--output',
-        help='Store output of fplugin in a file.')
-
-    # file with code to execute
-    parser.add_argument(
         '-f',
         '--file',
-        help='File with code to execute.'
-        ' Example:\n./fplugin -f getAllIps.py ')
+        help='Script file.'
+        ' Example:\n./fplugin -f getAllIps.py')
+
+    parser.add_argument(
+        '-w',
+        '--workspace',
+        help='Use workspace')
+
+    parser.add_argument(
+        '-u',
+        '--url',
+        help='Faraday Server URL')
 
     args, unknown = parser.parse_known_args()
-    if args.output:
-        if os.path.isfile(args.output):
-            with open(args.output) as f:
-                data = f.read()
-                print data
+
+    if args.file:
+
+        # Get filename and import this
+        module_fplugin = imp.load_source('module_fplugin', args.file)
+        module_fplugin.models.server.FARADAY_UP = False
+        module_fplugin.models.server.SERVER_URL = args.url
+
+        try:
+            call_main = getattr(module_fplugin, 'main')
+            call_main(workspace = args.workspace)
+        except AttributeError:
+            print 'Error: main() function missing in script?'

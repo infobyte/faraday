@@ -530,9 +530,6 @@ class ModelBase(object):
     def needs_merge(self, new_obj):
         return ModelObjectDiff(self, new_obj).existDiff()
 
-    def updateMetadata(self):
-        self.getMetadata().update(self.owner)
-
     def getOwner(self): return self.owner
     def isOwned(self): return self.owned
     def getName(self): return self.name
@@ -563,7 +560,6 @@ class _Host(ModelBase):
 
     def updateAttributes(self, name=None, description=None, os=None, owned=None):
 
-        self.updateMetadata()
         if name is not None:
             self.name = name
         if description is not None:
@@ -636,7 +632,6 @@ class _Interface(ModelBase):
                          network_segment=None, amount_ports_opened=None, amount_ports_closed=None,
                          amount_ports_filtered=None, owned=None):
 
-        self.updateMetadata()
         if name is not None:
             self.name = name
         if description is not None:
@@ -720,7 +715,6 @@ class _Service(ModelBase):
 
     def updateAttributes(self, name=None, description=None, protocol=None, ports=None,
                           status=None, version=None, owned=None):
-        self.updateMetadata()
         if name is not None:
             self.name = name
         if description is not None:
@@ -813,7 +807,6 @@ class _Vuln(ModelBase):
 
     def updateAttributes(self, name=None, desc=None, data=None,
                          severity=None, resolution=None, refs=None):
-        self.updateMetadata()
         if name is not None:
             self.name = name
         if desc is not None:
@@ -885,7 +878,6 @@ class _VulnWeb(_Vuln):
                         pname=None, params=None, query=None, category=None):
 
         super(_VulnWeb, self).updateAttributes(name, desc, data, severity, resolution, refs)
-        self.updateMetadata()
 
         if website is not None:
             self.website = website
@@ -963,7 +955,6 @@ class _Note(ModelBase):
         self.text = note['value']['text']
 
     def updateAttributes(self, name=None, text=None):
-        self.updateMetadata()
         if name is not None:
             self.name = name
         if text is not None:
@@ -982,7 +973,6 @@ class _Credential(ModelBase):
         self.password = credential['value']['password']
 
     def updateAttributes(self, username=None, password=None):
-        self.updateMetadata()
         if username is not None:
             self.username =username
         if password is not None:

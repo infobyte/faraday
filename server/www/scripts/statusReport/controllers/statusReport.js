@@ -173,7 +173,8 @@ angular.module('faradayApp')
                 "pname":            false,
                 "query":            false,
                 "response":         false,
-                "web":              false
+                "web":              false,
+                "creator":          false
             };
 
             // created object for columns cookie columns
@@ -344,6 +345,13 @@ angular.module('faradayApp')
                 headerCellTemplate: header,
                 width: '80',
                 visible: $scope.columns["web"]
+            });
+            $scope.gridOptions.columnDefs.push({ name : 'metadata.creator',
+                displayName : "creator",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/creatorcolumn.html',
+                headerCellTemplate: header,
+                width: '80',
+                visible: $scope.columns["creator"]
             });
         };
 

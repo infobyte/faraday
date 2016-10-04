@@ -53,7 +53,6 @@ class AcunetixParserTest(unittest.TestCase):
         action = self.plugin._pending_actions.get(block=True)
         self.assertEqual(action[0], modelactions.CADDNOTESRV)
         action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.CADDNOTENOTE)
         action = self.plugin._pending_actions.get(block=True)
         self.assertEqual(action[0], modelactions.CADDVULNWEBSRV)
         self.assertEqual(action[3], "ASP.NET error message")

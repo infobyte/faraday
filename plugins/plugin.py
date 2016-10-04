@@ -145,7 +145,7 @@ class PluginBase(object):
         host_obj = factory.createModelObject(
             Host.class_signature,
             name, os=os, parent_id=None)
-        
+
         host_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDHOST, host_obj)
         return host_obj.getID()
@@ -157,7 +157,7 @@ class PluginBase(object):
         ipv6_prefix="00",
         ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns=[],
         network_segment="", hostname_resolution=[]):
-        
+
         int_obj = model.common.factory.createModelObject(
             Interface.class_signature,
             name, mac=mac, ipv4_address=ipv4_address,
@@ -175,7 +175,7 @@ class PluginBase(object):
                                        protocol="tcp?", ports=[],
                                        status="running", version="unknown",
                                        description=""):
-    
+
         serv_obj = model.common.factory.createModelObject(
             Service.class_signature,
             name, protocol=protocol, ports=ports, status=status,
@@ -196,7 +196,7 @@ class PluginBase(object):
         vuln_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDVULNHOST, host_id, vuln_obj)
         return vuln_obj.getID()
-    
+
     def createAndAddVulnToInterface(self, host_id, interface_id, name,
                                     desc="", ref=[], severity="",
                                     resolution=""):
@@ -212,7 +212,7 @@ class PluginBase(object):
 
     def createAndAddVulnToService(self, host_id, service_id, name, desc="",
                                   ref=[], severity="", resolution=""):
-        
+
         vuln_obj = model.common.factory.createModelObject(
             ModelObjectVuln.class_signature,
             name, desc=desc, ref=ref, severity=severity, resolution=resolution,
@@ -227,7 +227,7 @@ class PluginBase(object):
                                      website="", path="", request="",
                                      response="", method="", pname="",
                                      params="", query="", category=""):
-        
+
         vulnweb_obj = model.common.factory.createModelObject(
             ModelObjectVulnWeb.class_signature,
             name, desc=desc, ref=ref, severity=severity, resolution=resolution,
@@ -281,7 +281,7 @@ class PluginBase(object):
 
     def createAndAddCredToService(self, host_id, service_id, username,
                                   password):
-        
+
         cred_obj = model.common.factory.createModelObject(
             ModelObjectCred.class_signature,
             username, password=password, parent_id=service_id)

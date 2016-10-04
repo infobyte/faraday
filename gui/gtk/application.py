@@ -442,6 +442,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                 GObject.idle_add(CONF.saveConfig)
             except Exception as e:
                 GObject.idle_add(self.handle_no_active_workspace)
+                print e
                 getLogger("GTK").error(e)
 
             GObject.idle_add(loading_workspace, 'destroy')

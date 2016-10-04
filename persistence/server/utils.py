@@ -24,7 +24,7 @@ def get_object_properties(obj):
     return {'id': obj.getID(),
             'name': obj.getName(),
             'description': obj.getDescription(),
-            'metadata': obj.getMetadata(),
+            'metadata': obj.getMetadata().toDict(),
             'owned': obj.isOwned(),
             'owner': obj.getOwner()
             }

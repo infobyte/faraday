@@ -76,9 +76,6 @@ class Metadata(object):
 
         self.update_controller_action = self.__getUpdateAction()
 
-        # api.devlog("Updating object (%s) metadata for user: (%s), utime = (%.4f), action=(%d), controller action = (%s)"
-        #                     % (self, self.update_user, self.update_time, self.update_action, self.update_controller_action))
-
     def __getUpdateAction(self):
         """This private method grabs the stackframes in look for the controller
         call that generated the update"""
@@ -554,16 +551,40 @@ class ModelObjectFactory(object):
         return names
 
     def generateID(self, classname, parent_id=None, **objargs):
-        tmpObj = self._registered_objects[classname](**objargs)
-        if parent_id:
-            return '.'.join([parent_id, tmpObj.getID()])
-        return tmpObj.getID()
+        if classname == 'Host':
+            args = (objargs['name'],)
+        elif classname == 'Interface':
+            args =(objargs['network_segment'], objargs['ipv4_address'], objargs['ipv6_address'])
+        elif classname == "Service":
+            args = (objargs['protocol'], ':'.join(str(objargs['ports'])))
+        elif classname == "Note":
+            args = (objargs['name'], objargs['text'])
+        elif classname == "Vulnerability":
+            args = (objargs['name'], objargs['desc'])
+        elif classname == "VulnerabilityWeb":
+            args = (objargs['name'], objargs['website'])
+        elif classname == "Credential" or classname == 'Cred':
+            print objargs
+            args = (objargs['name'], objargs['password'])
+        else:
+            raise Exception("You've provided the invalid classname {0}".format(classname))
 
-    def createModelObject(self, classname, workspace_name, object_name=None, **objargs):
-        print classname, object_name, objargs
+        objid = get_hash(args)
+        if parent_id:
+            objid = '.'.join([parent_id, objid])
+        return objid
+
+    def createModelObject(self, classname, object_name=None, workspace_name=None, **objargs):
+        if not workspace_name:
+            workspace_name = CONF.getLastWorkspace()
         if classname in self._registered_objects:
             if object_name is not None:
-                tmpObj = self._registered_objects[classname](object_name, objargs, workspace_name)
+                print "OBJECT NAME IS NOT NONE"
+                objargs['name'] = object_name
+                objargs['id'] = self.generateID(classname, **objargs)
+                objargs['_id'] = -1 # they still don't have a server id
+                print objargs
+                tmpObj = self._registered_objects[classname](objargs, workspace_name)
                 return tmpObj
             else:
                 raise Exception("Object name parameter missing. Cannot create object class: %s" % classname)

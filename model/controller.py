@@ -266,6 +266,7 @@ class ModelController(threading.Thread):
     def _dispatchActionWithLock(self, action_callback, *args):
         res = False
         self.__acquire_host_lock()
+        print "ACTION CALLBACK: ", action_callback
         try:
             res = action_callback(*args)
         except Exception:
@@ -802,8 +803,8 @@ class ModelController(threading.Thread):
 
     def newHost(self, name, os="Unknown"):
         return model.common.factory.createModelObject(
-            models.Host.class_signature, self.mappers_manager.workspace_name,
-            name, os=os, parent_id=None)
+            models.Host.class_signature, name,
+            self.mappers_manager.workspace_name, os=os, parent_id=None)
 
     def newInterface(self, name, mac="00:00:00:00:00:00",
                      ipv4_address="0.0.0.0",
@@ -814,8 +815,8 @@ class ModelController(threading.Thread):
                      ipv6_dns=[], network_segment="", hostname_resolution=[],
                      parent_id=None):
         return model.common.factory.createModelObject(
-            models.Interface.class_signature, self.mappers_manager.workspace_name,
-            name, mac=mac, ipv4_address=ipv4_address,
+            models.Interface.class_signature, name,
+            self.mappers_manager.workspace_name, mac=mac, ipv4_address=ipv4_address,
             ipv4_mask=ipv4_mask, ipv4_gateway=ipv4_gateway, ipv4_dns=ipv4_dns,
             ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
             ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
@@ -825,15 +826,15 @@ class ModelController(threading.Thread):
     def newService(self, name, protocol="tcp?", ports=[], status="running",
                    version="unknown", description="", parent_id=None):
         return model.common.factory.createModelObject(
-            models.Service.class_signature, self.mappers_manager.workspace_name,
-            name, protocol=protocol, ports=ports, status=status,
+            models.Service.class_signature, name,
+            self.mappers_manager.workspace_name, protocol=protocol, ports=ports, status=status,
             version=version, description=description, parent_id=parent_id)
 
     def newVuln(self, name, desc="", ref=None, severity="", resolution="",
                 confirmed=False, parent_id=None):
         return model.common.factory.createModelObject(
-            models.Vuln.class_signature, self.mappers_manager.workspace_name,
-            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            models.Vuln.class_signature, name,
+            self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             confirmed=confirmed, parent_id=parent_id)
 
     def newVulnWeb(self, name, desc="", ref=None, severity="", resolution="",
@@ -841,20 +842,20 @@ class ModelController(threading.Thread):
                    pname="", params="", query="", category="", confirmed=False,
                    parent_id=None):
         return model.common.factory.createModelObject(
-            models.VulnWeb.class_signature, self.mappers_manager.workspace_name,
-            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            models.VulnWeb.class_signature, name,
+            self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
             category=category, confirmed=confirmed, parent_id=parent_id)
 
     def newNote(self, name, text, parent_id=None):
         return model.common.factory.createModelObject(
-            models.Note.class_signature, self.mappers_manager.workspace_name,
-            name, text=text, parent_id=parent_id)
+            models.Note.class_signature, name,
+            self.mappers_manager.workspace_name, text=text, parent_id=parent_id)
 
     def newCred(self, username, password, parent_id=None):
         return model.common.factory.createModelObject(
-            models.Credential.class_signature, self.mappers_manager.workspace_name,
+            models.Credential.class_signature, name,
             username, password=password, parent_id=parent_id)
 
     def getHost(self, name):

@@ -9,6 +9,8 @@ See the file 'doc/LICENSE' for the license information
 import glob
 import os
 import sys
+from time import time
+import traceback
 from threading import Lock
 from persistence.server import server
 from persistence.server.utils import (force_unique,
@@ -48,13 +50,15 @@ def _ignore_in_changes(func):
     return func_wrapper
 
 def _flatten_dictionary(dictionary):
+    print "ORIGINAL DICTIONARY: ", dictionary
     flattened_dict = {}
-    if dicionary.get('_id'):
+    if dictionary.get('_id'):
         flattened_dict['_id'] = dictionary['_id']
     if dictionary.get('id'):
         flattened_dict['id'] = dictionary['id']
-    for k, v in dictionary['value'].items():
+    for k, v in dictionary.get('value', {}).items():
         flattened_dict[k] = v
+    print "FLATTENED DICTIONARY: ", flattened_dict
     return flattened_dict
 
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
@@ -82,8 +86,8 @@ def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries
     faraday_objects = []
     if faraday_ready_object_dictionaries:
         for object_dictionary in faraday_ready_object_dictionaries:
-            flattened_object_dictionary = utils.flatten_dict(object_dictionary)
-            faraday_objects.append(appropiate_class(object_dictionary, workspace_name))
+            flattened_object_dictionary = _flatten_dictionary(object_dictionary)
+            faraday_objects.append(appropiate_class(flattened_object_dictionary, workspace_name))
     return faraday_objects
 
 def _get_faraday_ready_hosts(workspace_name, hosts_dictionaries):
@@ -498,14 +502,16 @@ def test_server_url(url_to_test):
 
 class ModelBase(object):
     def __init__(self, obj, workspace_name):
+        print "WHAT IS OBJECT: "
+        print obj
         self._workspace_name = workspace_name
-        self._server_id = obj['_id']
-        self.id = obj['id']
-        self.name = obj['name']
-        self.description = obj['description']
-        self.owned = obj['owned']
-        self.owner = obj['owner']
-        self.metadata = obj['metadata']
+        self._server_id = obj.get('_id')
+        self.id = obj.get('id')
+        self.name = obj.get('name')
+        self.description = obj.get('description', "")
+        self.owned = obj.get('owned')
+        self.owner = obj.get('owner')
+        self._metadata = obj.get('metadata', Metadata(self.owner))
         self.updates = []
 
     @staticmethod
@@ -565,7 +571,7 @@ class ModelBase(object):
     def getOwner(self): return self.owner
     def isOwned(self): return self.owned
     def getName(self): return self.name
-    def getMetadata(self): return self.metadata
+    def getMetadata(self): return self._metadata
     def getDescription(self): return self.description
 
 
@@ -579,9 +585,10 @@ class Host(ModelBase):
 
     def __init__(self, host, workspace_name):
         ModelBase.__init__(self, host, workspace_name)
-        self.default_gateway = host['default_gateway']
-        self.os = host['os']
-        self.vuln_amount = int(host['vulns'])
+        print host
+        self.default_gateway = host.get('default_gateway')
+        self.os = host.get('os', 'unkown')
+        self.vuln_amount = int(host.get('vulns', 0))
 
     @staticmethod
     def publicattrsrefs():
@@ -627,12 +634,22 @@ class Interface(ModelBase):
 
     def __init__(self, interface, workspace_name):
         ModelBase.__init__(self, interface, workspace_name)
-        self.hostnames = interface['hostnames']
-        self.ipv4 = interface['ipv4']
-        self.ipv6 = interface['ipv6']
-        self.mac = interface['mac']
-        self.network_segment = interface['network_segment']
-        self.ports = interface['ports']
+        self.hostnames = interface.get('hostnames', [])
+        try:
+            self.ipv4 = interface['ipv4']
+            self.ipv6 = interface['ipv6']
+        except KeyError:
+            self.ipv4 = {'address': interface['ipv4_address'],
+                         'gateway': interface['ipv4_gateway'],
+                         'mask': interface['ipv4_mask'],
+                         'DNS': interface['ipv4_dns']}
+            self.ipv6 = {'address': interface['ipv6_address'],
+                         'gateway': interface['ipv6_gateway'],
+                         'prefix': interface['ipv6_prefix'],
+                         'DNS': interface['ipv6_dns']}
+        self.mac = interface.get('mac')
+        self.network_segment = interface.get('network_segment')
+        self.ports = interface.get('ports')
 
         self.amount_ports_opened   = 0
         self.amount_ports_closed   = 0
@@ -733,7 +750,7 @@ class Service(ModelBase):
         self.ports =  service['ports']
         self.version = service['version']
         self.status = service['status']
-        self.vuln_amount = int(service['vulns'])
+        self.vuln_amount = int(service.get('vulns', 0))
 
     @staticmethod
     def publicattrsrefs():
@@ -783,11 +800,11 @@ class Vuln(ModelBase):
     def __init__(self, vuln, workspace_name):
         ModelBase.__init__(self, vuln, workspace_name)
         self.desc = vuln['desc']
-        self.data = vuln['data']
+        self.data = vuln.get('data')
         self.severity = vuln['severity']
-        self.refs = vuln['refs']
-        self.confirmed = vuln['confirmed']
-        self.resolution = vuln['resolution']
+        self.refs = vuln.get('refs')
+        self.confirmed = vuln.get('confirmed', False)
+        self.resolution = vuln.get('resolution')
 
     @staticmethod
     def publicattrsrefs():
@@ -871,23 +888,23 @@ class VulnWeb(Vuln):
 
     def __init__(self, vuln_web, workspace_name):
         Vuln.__init__(self, vuln_web, workspace_name)
-        self.path = vuln_web['path']
-        self.website = vuln_web['website']
-        self.request = vuln_web['request']
-        self.response = vuln_web['response']
-        self.method = vuln_web['method']
-        self.pname = vuln_web['pname']
-        self.params = vuln_web['params']
-        self.query = vuln_web['query']
-        self.resolution = vuln_web['resolution']
-        self.attachments = vuln_web['_attachments']
-        self.hostnames = vuln_web['hostnames']
-        self.impact = vuln_web['impact']
-        self.service = vuln_web['service']
-        self.status = vuln_web['status']
-        self.tags = vuln_web['tags']
-        self.target = vuln_web['target']
-        self.parent = vuln_web['parent']
+        self.path = vuln_web.get('path')
+        self.website = vuln_web.get('website')
+        self.request = vuln_web.get('request')
+        self.response = vuln_web.get('response')
+        self.method = vuln_web.get('method')
+        self.pname = vuln_web.get('pname')
+        self.params = vuln_web.get('params')
+        self.query = vuln_web.get('query')
+        self.resolution = vuln_web.get('resolution')
+        self.attachments = vuln_web.get('_attachments')
+        self.hostnames = vuln_web.get('hostnames')
+        self.impact = vuln_web.get('impact')
+        self.service = vuln_web.get('service')
+        self.status = vuln_web.get('status')
+        self.tags = vuln_web.get('tags')
+        self.target = vuln_web.get('target')
+        self.parent = vuln_web.get('parent')
 
     @staticmethod
     def publicattrsrefs():
@@ -1001,7 +1018,11 @@ class Credential(ModelBase):
 
     def __init__(self, credential, workspace_name):
         ModelBase.__init__(self, credential, workspace_name)
-        self.username = credential['username']
+        try:
+            self.username = credential['username']
+        except KeyError:
+            self.username = credential['name']
+
         self.password = credential['password']
 
     def updateAttributes(self, username=None, password=None):
@@ -1055,6 +1076,58 @@ class _Workspace:
     def getCustomer(self): return self.customer
     def getStartDate(self): return self.start_date
     def getFinishDate(self): return self.finish_date
+
+
+class MetadataUpdateActions(object):
+    """Constants for the actions made on the update"""
+    UNDEFINED   = -1
+    CREATE      = 0
+    UPDATE      = 1
+
+
+class Metadata(object):
+    """To save information about the modification of ModelObjects.
+       All members declared public as this is only a wrapper"""
+
+    class_signature = "Metadata"
+
+    def __init__(self, user):
+        self.creator        = user
+        self.owner          = user
+        self.create_time    = time()
+        self.update_time    = time()
+        self.update_user    = user
+        self.update_action  = MetadataUpdateActions.CREATE
+        self.update_controller_action = self.__getUpdateAction()
+        self.command_id = ''
+
+    def toDict(self):
+        return self.__dict__
+
+    def fromDict(self, dictt):
+        for k, v in dictt.items():
+            setattr(self, k, v)
+        return self
+
+    def update(self, user, action = MetadataUpdateActions.UPDATE):
+        """Update the local metadata giving a user and an action.
+        Update time gets modified to the current system time"""
+        self.update_user = user
+        self.update_time = time()
+        self.update_action = action
+
+        self.update_controller_action = self.__getUpdateAction()
+
+    def __getUpdateAction(self):
+        """This private method grabs the stackframes in look for the controller
+        call that generated the update"""
+
+        l_strace = traceback.extract_stack(limit = 10)
+        controller_funcallnames = [ x[2] for x in l_strace if "controller" in x[0] ]
+
+        if controller_funcallnames:
+            return "ModelControler." +  " ModelControler.".join(controller_funcallnames)
+        return "No model controller call"
 
 # NOTE: uncomment for test
 # class SillyHost():

@@ -38,11 +38,9 @@ angular.module("faradayApp")
 
             var serverComm = function(method, url, data) {
                 var success = function (response) {
-                    // console.log(response);
                     return response;
                 };
                 var error = function(response) {
-                    // console.log(response);
                     return {};
                 };
                 // return a promise :)
@@ -423,9 +421,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteWorkspace = function(wsName) {
-                console.log("DELETING WORKSPACE");
                 var dbUrl = createDbUrl(wsName);
-                console.log(dbUrl);
                 return _delete(dbUrl, false);
             }
 

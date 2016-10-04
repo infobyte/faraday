@@ -748,6 +748,17 @@ class ConsoleLog(Gtk.Widget):
             self.update("[ " + text[0] + "]", self.bold, self.orange)
         if text[0] == "NOTIFICATION ":
             self.update("[ " + text[0] + "]", self.bold, self.blue)
+        if text[0] == "NEWS ":
+
+            self.anchor = self.textBuffer.create_child_anchor(
+                self.textBuffer.get_end_iter())
+
+            self.button = Gtk.LinkButton.new_with_label(
+                "Url", "Description Example")
+
+            self.button.set_visible(True)
+            self.textView.add_child_at_anchor(self.button, self.anchor)
+            return
 
         self.update("-" + '-'.join(text[1:]) + "\n")
 

@@ -94,3 +94,6 @@ class NotificationCenter():
 
     def addObject(self, new_object):
         self._notifyWidgets(events.AddObjectCustomEvent(new_object))
+
+    def sendCustomLog(self, log_obj):
+        self._notifyWidgets(events.LogCustomEvent(log_obj))

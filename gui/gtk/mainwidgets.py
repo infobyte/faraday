@@ -737,27 +737,35 @@ class ConsoleLog(Gtk.Widget):
         Also split them, so we can add the correct formatting to the first
         part of the message"""
 
-        text = text.split('-')
+        text = text.split('-', 1)
         if text[0] == "INFO ":
             self.update("[ " + text[0] + "]", self.bold)
-        if text[0] == "DEBUG ":
+        elif text[0] == "DEBUG ":
             self.update("[ " + text[0] + "]", self.bold, self.green)
-        if text[0] == "ERROR " or text[0] == "CRITICAL: ":
+        elif text[0] == "ERROR " or text[0] == "CRITICAL: ":
             self.update("[ " + text[0] + "]", self.bold, self.red)
-        if text[0] == "WARNING ":
+        elif text[0] == "WARNING ":
             self.update("[ " + text[0] + "]", self.bold, self.orange)
-        if text[0] == "NOTIFICATION ":
+        elif text[0] == "NOTIFICATION ":
             self.update("[ " + text[0] + "]", self.bold, self.blue)
-        if text[0] == "NEWS ":
 
-            self.anchor = self.textBuffer.create_child_anchor(
+        elif text[0] == "NEWS ":
+
+            # Button with link to the news, dont print CSV data...
+            self.update('Faraday News: ')
+
+            anchor = self.textBuffer.create_child_anchor(
                 self.textBuffer.get_end_iter())
 
-            self.button = Gtk.LinkButton.new_with_label(
-                "Url", "Description Example")
+            # Format of data : 'NEWS - URL|DESC'
+            data_url_desc = text[1].split('|')
 
-            self.button.set_visible(True)
-            self.textView.add_child_at_anchor(self.button, self.anchor)
+            button = Gtk.LinkButton.new_with_label(
+                data_url_desc[0], data_url_desc[1])
+            self.update('\n')
+
+            button.show()
+            self.textView.add_child_at_anchor(button, anchor)
             return
 
         self.update("-" + '-'.join(text[1:]) + "\n")

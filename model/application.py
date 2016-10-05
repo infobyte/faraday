@@ -11,7 +11,7 @@ import signal
 import threading
 import requests
 
-from json import dumps
+from json import loads
 
 from model.controller import ModelController
 from managers.workspace_manager import WorkspaceManager
@@ -42,26 +42,26 @@ class TimerClass(threading.Thread):
 
     def sendNewstoLogGTK(self, json_response):
 
-        information = dumps(json_response)
+        information = loads(json_response)
 
         if information["license_status"] != "OK":
 
-            getLogger('License').error
+            getLogger("License").error
             ("License invalid, please check with customer support.")
             sys.exit(2)
 
-        logger_info = ""
-        for news in info["notice"]:
-            logger_info.join(news["url"] + news["description"])
-
-        model.guiapi.notification_center.sendCustomLog('NEWS - EXAMPLE')
+        for news in information["news"]:
+            model.guiapi.notification_center.sendCustomLog(
+                "NEWS -" + news["url"] + "|" + news["description"])
 
     def run(self):
         while not self.__event.is_set():
             try:
-
+                from time import sleep
+                sleep(5)
                 res = requests.get(
-                    "https://www.faradaysec.com/scripts/updatedb.php",
+                    #"https://www.faradaysec.com/scripts/updatedb.php",
+                    "http://localhost:5985/testing/b5cf3ff7fa0c08890a7b41179900091c/update.json",
                     params={'version': CONF.getVersion()},
                     timeout=1,
                     verify=True)
@@ -69,7 +69,10 @@ class TimerClass(threading.Thread):
                 self.sendNewstoLogGTK(res.text)
 
             except Exception:
-                model.api.devlog("[ERROR-NEWS] Can't connect to faradaysec.com...")
+                model.api.devlog(
+                    "[ERROR-NEWS] Can't connect to faradaysec.com...")
+                raise
+
             self.__event.wait(43200)
 
     def stop(self):

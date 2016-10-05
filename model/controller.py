@@ -9,7 +9,6 @@ import threading
 import Queue
 import traceback
 import model.common  # this is to make sure the factory is created
-import model.hosts
 
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
@@ -17,7 +16,7 @@ import model.api as api
 from model.guiapi import notification_center as notifier
 from gui.customevents import *
 from functools import wraps
-
+from persistence.server import models
 
 # XXX: consider re-writing this module! There's alot of repeated code
 # and things are really messy
@@ -175,13 +174,13 @@ class ModelController(threading.Thread):
         """
         # This could be done in hosts module, but it seems easier to maintain
         # if we have all in one place inside the controller
-        self._object_factory.register(model.hosts.Host)
-        self._object_factory.register(model.hosts.Interface)
-        self._object_factory.register(model.hosts.Service)
-        self._object_factory.register(model.common.ModelObjectVuln)
-        self._object_factory.register(model.common.ModelObjectVulnWeb)
-        self._object_factory.register(model.common.ModelObjectNote)
-        self._object_factory.register(model.common.ModelObjectCred)
+        self._object_factory.register(models.Host)
+        self._object_factory.register(models.Interface)
+        self._object_factory.register(models.Service)
+        self._object_factory.register(models.Vuln)
+        self._object_factory.register(models.VulnWeb)
+        self._object_factory.register(models.Note)
+        self._object_factory.register(models.Credential)
 
     def _checkParent(self, parent_type):
         """Takes a parent_type and returns the appropiate checkParentDecorator,
@@ -266,6 +265,7 @@ class ModelController(threading.Thread):
     def _dispatchActionWithLock(self, action_callback, *args):
         res = False
         self.__acquire_host_lock()
+        print "ACTION CALLBACK: ", action_callback
         try:
             res = action_callback(*args)
         except Exception:
@@ -457,11 +457,7 @@ class ModelController(threading.Thread):
     def __edit(self, obj, *args, **kwargs):
         obj.updateAttributes(*args, **kwargs)
         self.mappers_manager.update(obj)
-
-        # if obj.class_signature == model.hosts.Host.class_signature:
         notifier.editHost(obj)
-        # else:
-            # notifier.editHost(obj.getHost())
         return True
 
     def __del(self, objId, *args):
@@ -475,7 +471,7 @@ class ModelController(threading.Thread):
 
             self.mappers_manager.remove(objId, obj.class_signature)
 
-            if obj.class_signature == model.hosts.Host.class_signature:
+            if obj.class_signature == models.Host.class_signature:
                 notifier.delHost(objId)
             else:
                 notifier.editHost(obj.getHost())
@@ -802,8 +798,8 @@ class ModelController(threading.Thread):
 
     def newHost(self, name, os="Unknown"):
         return model.common.factory.createModelObject(
-            model.hosts.Host.class_signature,
-            name, os=os, parent_id=None)
+            models.Host.class_signature, name,
+            self.mappers_manager.workspace_name, os=os, parent_id=None)
 
     def newInterface(self, name, mac="00:00:00:00:00:00",
                      ipv4_address="0.0.0.0",
@@ -814,8 +810,8 @@ class ModelController(threading.Thread):
                      ipv6_dns=[], network_segment="", hostname_resolution=[],
                      parent_id=None):
         return model.common.factory.createModelObject(
-            model.hosts.Interface.class_signature,
-            name, mac=mac, ipv4_address=ipv4_address,
+            models.Interface.class_signature, name,
+            self.mappers_manager.workspace_name, mac=mac, ipv4_address=ipv4_address,
             ipv4_mask=ipv4_mask, ipv4_gateway=ipv4_gateway, ipv4_dns=ipv4_dns,
             ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
             ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
@@ -825,15 +821,15 @@ class ModelController(threading.Thread):
     def newService(self, name, protocol="tcp?", ports=[], status="running",
                    version="unknown", description="", parent_id=None):
         return model.common.factory.createModelObject(
-            model.hosts.Service.class_signature,
-            name, protocol=protocol, ports=ports, status=status,
+            models.Service.class_signature, name,
+            self.mappers_manager.workspace_name, protocol=protocol, ports=ports, status=status,
             version=version, description=description, parent_id=parent_id)
 
     def newVuln(self, name, desc="", ref=None, severity="", resolution="",
                 confirmed=False, parent_id=None):
         return model.common.factory.createModelObject(
-            model.common.ModelObjectVuln.class_signature,
-            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            models.Vuln.class_signature, name,
+            self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             confirmed=confirmed, parent_id=parent_id)
 
     def newVulnWeb(self, name, desc="", ref=None, severity="", resolution="",
@@ -841,25 +837,24 @@ class ModelController(threading.Thread):
                    pname="", params="", query="", category="", confirmed=False,
                    parent_id=None):
         return model.common.factory.createModelObject(
-            model.common.ModelObjectVulnWeb.class_signature,
-            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            models.VulnWeb.class_signature, name,
+            self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
             category=category, confirmed=confirmed, parent_id=parent_id)
 
     def newNote(self, name, text, parent_id=None):
         return model.common.factory.createModelObject(
-            model.common.ModelObjectNote.class_signature,
-            name, text=text, parent_id=parent_id)
+            models.Note.class_signature, name,
+            self.mappers_manager.workspace_name, text=text, parent_id=parent_id)
 
     def newCred(self, username, password, parent_id=None):
         return model.common.factory.createModelObject(
-            model.common.ModelObjectCred.class_signature,
+            models.Credential.class_signature, name,
             username, password=password, parent_id=parent_id)
 
     def getHost(self, name):
-        hosts_mapper = self.mappers_manager.getMapper(
-            model.hosts.Host.class_signature)
+        hosts_mapper = self.mappers_manager.getMapper(models.Host.class_signature)
         return hosts_mapper.find(name)
 
     def getAllHosts(self):
@@ -868,20 +863,20 @@ class ModelController(threading.Thread):
         """
         try:
             hosts = self.mappers_manager.getMapper(
-                model.hosts.Host.class_signature).getAll()
+                models.Host.class_signature.getAll())
         except:
             hosts = []
         return hosts
 
     def getWebVulns(self):
         return self.mappers_manager.getMapper(
-            model.common.ModelObjectVulnWeb.class_signature).getAll()
+            models.Vuln.class_signature).getAll()
 
     def getHostsCount(self):
         """Get how many hosts are in the workspace. If it can't, it will
         return zero."""
         try:
-            hosts = model.hosts.Host.class_signature
+            hosts = models.Hosts.class_signature
             count = self.mappers_manager.getMapper(hosts).getCount()
         except:
             getLogger(self).debug(
@@ -893,7 +888,7 @@ class ModelController(threading.Thread):
         """Get how many services are in the workspace. If it can't, it will
         return zero."""
         try:
-            services = model.hosts.Service.class_signature
+            services = models.Service.class_signature
             count = self.mappers_manager.getMapper(services).getCount()
         except:
             getLogger(self).debug(
@@ -905,8 +900,8 @@ class ModelController(threading.Thread):
         """Get how many vulns (web + normal) are in the workspace.
         If it can't, it will return zero."""
         try:
-            vulns = model.common.ModelObjectVuln.class_signature
-            web_vulns = model.common.ModelObjectVulnWeb.class_signature
+            vulns = models.Vuln.class_signature
+            web_vulns = models.WebVuln.class_signature
             count = (self.mappers_manager.getMapper(vulns).getCount() +
                      self.mappers_manager.getMapper(web_vulns).getCount())
         except:

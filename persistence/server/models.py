@@ -9,9 +9,12 @@ See the file 'doc/LICENSE' for the license information
 import glob
 import os
 import sys
+from time import time
+import traceback
 from threading import Lock
 from persistence.server import server
 from persistence.server.utils import (force_unique,
+                                      get_hash,
                                       get_host_properties,
                                       get_interface_properties,
                                       get_service_properties,
@@ -47,6 +50,17 @@ def _ignore_in_changes(func):
         return json
     return func_wrapper
 
+def _flatten_dictionary(dictionary):
+    flattened_dict = {}
+    if dictionary.get('_id'):
+        flattened_dict['_id'] = dictionary['_id']
+    if dictionary.get('id'):
+        flattened_dict['id'] = dictionary['id']
+    for k, v in dictionary.get('value', {}).items():
+        if k != '_id':  # this is the couch id, which we have saved on 'id'
+            flattened_dict[k] = v
+    return flattened_dict
+
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
                                faraday_object_name):
     """Takes a workspace name, a faraday object ('hosts', 'vulns',
@@ -55,23 +69,25 @@ def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries
     of params to customize to request.
 
     Return a list of faraday objects
-    (_Host, _Interface, _Service, _Vuln, _WevVuln) which the same interface
-    for getting attribuetes than those defined my the ModelController.
+    (Host, Interface, Service, Vuln, VulnWeb, Credential or Command)
+    which the same interface for getting attribuetes than those defined my the
+    ModelController.
     """
-    object_to_class = {'hosts': _Host,
-                       'vulns': _Vuln,
-                       'vulns_web': _VulnWeb,
-                       'interfaces': _Interface,
-                       'services': _Service,
-                       'notes': _Note,
-                       'credentials': _Credential,
-                       'commands': _Command}
+    object_to_class = {'hosts': Host,
+                       'vulns': Vuln,
+                       'vulns_web': VulnWeb,
+                       'interfaces': Interface,
+                       'services': Service,
+                       'notes': Note,
+                       'credentials': Credential,
+                       'commands': Command}
 
     appropiate_class = object_to_class[faraday_object_name]
     faraday_objects = []
     if faraday_ready_object_dictionaries:
         for object_dictionary in faraday_ready_object_dictionaries:
-            faraday_objects.append(appropiate_class(object_dictionary, workspace_name))
+            flattened_object_dictionary = _flatten_dictionary(object_dictionary)
+            faraday_objects.append(appropiate_class(flattened_object_dictionary, workspace_name))
     return faraday_objects
 
 def _get_faraday_ready_hosts(workspace_name, hosts_dictionaries):
@@ -211,14 +227,14 @@ def get_object(workspace_name, object_signature, object_id):
     'Interface', 'Service', 'Cred', 'Note' or 'CommandRunInformation'.
     Will raise an WrongObjectSignature error if this condition is not met.
     """
-    object_to_func = {_Host.class_signature: get_host,
-                      _Vuln.class_signature: get_vuln,
-                      _VulnWeb.class_signature: get_web_vuln,
-                      _Interface.class_signature: get_interface,
-                      _Service.class_signature: get_service,
-                      _Credential.class_signature: get_credential,
-                      _Note.class_signature: get_note,
-                      _Command.class_signature: get_command}
+    object_to_func = {Host.class_signature: get_host,
+                      Vuln.class_signature: get_vuln,
+                      VulnWeb.class_signature: get_web_vuln,
+                      Interface.class_signature: get_interface,
+                      Service.class_signature: get_service,
+                      Credential.class_signature: get_credential,
+                      Note.class_signature: get_note,
+                      Command.class_signature: get_command}
     try:
         appropiate_function = object_to_func[object_signature]
     except KeyError:
@@ -337,14 +353,14 @@ def update_command(workspace_name, command):
     return server.update_command(workspace_name, **command_properties)
 
 def create_object(workspace_name, object_signature, obj):
-    object_to_func = {_Host.class_signature: create_host,
-                      _Vuln.class_signature: create_vuln,
-                      _VulnWeb.class_signature: create_vuln_web,
-                      _Interface.class_signature: create_interface,
-                      _Service.class_signature: create_service,
-                      _Credential.class_signature: create_credential,
-                      _Note.class_signature: create_note,
-                      _Command.class_signature: create_command}
+    object_to_func = {Host.class_signature: create_host,
+                      Vuln.class_signature: create_vuln,
+                      VulnWeb.class_signature: create_vuln_web,
+                      Interface.class_signature: create_interface,
+                      Service.class_signature: create_service,
+                      Credential.class_signature: create_credential,
+                      Note.class_signature: create_note,
+                      Command.class_signature: create_command}
     try:
         appropiate_function = object_to_func[object_signature]
     except KeyError:
@@ -353,14 +369,14 @@ def create_object(workspace_name, object_signature, obj):
     return appropiate_function(workspace_name, obj)
 
 def update_object(workspace_name, object_signature, obj):
-    object_to_func = {_Host.class_signature: update_host,
-                      _Vuln.class_signature: update_vuln,
-                      _VulnWeb.class_signature: update_vuln_web,
-                      _Interface.class_signature: update_interface,
-                      _Service.class_signature: update_service,
-                      _Credential.class_signature: update_credential,
-                      _Note.class_signature: update_note,
-                      _Command.class_signature: update_command}
+    object_to_func = {Host.class_signature: update_host,
+                      Vuln.class_signature: update_vuln,
+                      VulnWeb.class_signature: update_vuln_web,
+                      Interface.class_signature: update_interface,
+                      Service.class_signature: update_service,
+                      Credential.class_signature: update_credential,
+                      Note.class_signature: update_note,
+                      Command.class_signature: update_command}
     try:
         appropiate_function = object_to_func[object_signature]
     except KeyError:
@@ -433,14 +449,14 @@ def delete_command(workspace_name, command_id):
     return server.delete_command(workspace_name, command_id)
 
 def delete_object(workspace_name, object_signature, obj_id):
-    object_to_func = {_Host.class_signature: delete_host,
-                      _Vuln.class_signature: delete_vuln,
-                      _VulnWeb.class_signature: delete_vuln_web,
-                      _Interface.class_signature: delete_interface,
-                      _Service.class_signature: delete_service,
-                      _Credential.class_signature: delete_credential,
-                      _Note.class_signature: delete_note,
-                      _Command.class_signature: delete_command}
+    object_to_func = {Host.class_signature: delete_host,
+                      Vuln.class_signature: delete_vuln,
+                      VulnWeb.class_signature: delete_vuln_web,
+                      Interface.class_signature: delete_interface,
+                      Service.class_signature: delete_service,
+                      Credential.class_signature: delete_credential,
+                      Note.class_signature: delete_note,
+                      Command.class_signature: delete_command}
     try:
         appropiate_function = object_to_func[object_signature]
     except KeyError:
@@ -467,14 +483,21 @@ def test_server_url(url_to_test):
 class ModelBase(object):
     def __init__(self, obj, workspace_name):
         self._workspace_name = workspace_name
-        self._server_id = obj['_id']
+        self._server_id = obj.get('_id')
         self.id = obj['id']
-        self.name = obj['value']['name']
-        self.description = obj['value']['description']
-        self.owned = obj['value']['owned']
-        self.owner = obj['value']['owner']
-        self.metadata = obj['value']['metadata']
+        self.name = obj.get('name')
+        self.description = obj.get('description', "")
+        self.owned = obj.get('owned')
+        self.owner = obj.get('owner')
+        self._metadata = obj.get('metadata', Metadata(self.owner))
         self.updates = []
+
+    @staticmethod
+    def generateID(parent_id, *args):
+        objid = get_hash(args)
+        if parent_id:
+            objid = '.'.join([parent_id, objid])
+        return objid
 
     @staticmethod
     def publicattrsrefs():
@@ -533,11 +556,11 @@ class ModelBase(object):
     def getOwner(self): return self.owner
     def isOwned(self): return self.owned
     def getName(self): return self.name
-    def getMetadata(self): return self.metadata
+    def getMetadata(self): return self._metadata
     def getDescription(self): return self.description
 
 
-class _Host(ModelBase):
+class Host(ModelBase):
     """A simple Host class. Should implement all the methods of the
     Host object in Model.Host
     Any method here more than a couple of lines long probably represent
@@ -547,9 +570,14 @@ class _Host(ModelBase):
 
     def __init__(self, host, workspace_name):
         ModelBase.__init__(self, host, workspace_name)
-        self.default_gateway = host['value']['default_gateway']
-        self.os = host['value']['os']
-        self.vuln_amount = int(host['value']['vulns'])
+        self.default_gateway = host.get('default_gateway')
+        self.os = host.get('os', 'unkown')
+        self.vuln_amount = int(host.get('vulns', 0))
+
+    @staticmethod
+    def generateID(_, name):
+        # empty arg so as to share same interface as other classes' generateID
+        return ModelBase.generateID('', name)
 
     @staticmethod
     def publicattrsrefs():
@@ -585,7 +613,7 @@ class _Host(ModelBase):
         return get_services(self._workspace_name, hostid=self._server_id)
 
 
-class _Interface(ModelBase):
+class Interface(ModelBase):
     """A simple Interface class. Should implement all the methods of the
     Interface object in Model.Host
     Any method here more than a couple of lines long probably represent
@@ -595,16 +623,30 @@ class _Interface(ModelBase):
 
     def __init__(self, interface, workspace_name):
         ModelBase.__init__(self, interface, workspace_name)
-        self.hostnames = interface['value']['hostnames']
-        self.ipv4 = interface['value']['ipv4']
-        self.ipv6 = interface['value']['ipv6']
-        self.mac = interface['value']['mac']
-        self.network_segment = interface['value']['network_segment']
-        self.ports = interface['value']['ports']
+        self.hostnames = interface.get('hostnames', [])
+        try:
+            self.ipv4 = interface['ipv4']
+            self.ipv6 = interface['ipv6']
+        except KeyError:
+            self.ipv4 = {'address': interface['ipv4_address'],
+                         'gateway': interface['ipv4_gateway'],
+                         'mask': interface['ipv4_mask'],
+                         'DNS': interface['ipv4_dns']}
+            self.ipv6 = {'address': interface['ipv6_address'],
+                         'gateway': interface['ipv6_gateway'],
+                         'prefix': interface['ipv6_prefix'],
+                         'DNS': interface['ipv6_dns']}
+        self.mac = interface.get('mac')
+        self.network_segment = interface.get('network_segment')
+        self.ports = interface.get('ports')
 
         self.amount_ports_opened   = 0
         self.amount_ports_closed   = 0
         self.amount_ports_filtered = 0
+
+    @staticmethod
+    def generateID(parent_id, network_segment, ipv4_address, ipv6_address):
+        return ModelBase.generateID(parent_id, network_segment, ipv4_address, ipv6_address)
 
     @staticmethod
     def publicattrsrefs():
@@ -687,7 +729,7 @@ class _Interface(ModelBase):
         return get_all_vulns(self._workspace_name, interfaceid=self._server_id)
 
 
-class _Service(ModelBase):
+class Service(ModelBase):
     """A simple Service class. Should implement all the methods of the
     Service object in Model.Host
     Any method here more than a couple of lines long probably represent
@@ -697,11 +739,16 @@ class _Service(ModelBase):
 
     def __init__(self, service, workspace_name):
         ModelBase.__init__(self, service, workspace_name)
-        self.protocol = service['value']['protocol']
-        self.ports =  service['value']['ports']
-        self.version = service['value']['version']
-        self.status = service['value']['status']
-        self.vuln_amount = int(service['vulns'])
+        self.protocol = service['protocol']
+        self.ports =  service['ports']
+        self.version = service['version']
+        self.status = service['status']
+        self.vuln_amount = int(service.get('vulns', 0))
+
+    @staticmethod
+    def generateID(parent_id, protocol, ports):
+        ports = ':'.join(str(ports))
+        return ModelBase.generateID(parent_id, protocol, ports)
 
     @staticmethod
     def publicattrsrefs():
@@ -740,7 +787,7 @@ class _Service(ModelBase):
     def getVulns(self): return get_all_vulns(self._workspace_name, serviceid=self._server_id)
 
 
-class _Vuln(ModelBase):
+class Vuln(ModelBase):
     """A simple Vuln class. Should implement all the methods of the
     Vuln object in Model.Common
     Any method here more than a couple of lines long probably represent
@@ -750,12 +797,19 @@ class _Vuln(ModelBase):
 
     def __init__(self, vuln, workspace_name):
         ModelBase.__init__(self, vuln, workspace_name)
-        self.desc = vuln['value']['desc']
-        self.data = vuln['value']['data']
-        self.severity = vuln['value']['severity']
-        self.refs = vuln['value']['refs']
-        self.confirmed = vuln['value']['confirmed']
-        self.resolution = vuln['value']['resolution']
+
+        # this next two lines are stupid but so is life so you should get used to it :)
+        self.description = vuln['desc']
+        self.desc = vuln['desc']
+        self.data = vuln.get('data')
+        self.severity = vuln['severity']
+        self.refs = vuln.get('refs') or []
+        self.confirmed = vuln.get('confirmed', False)
+        self.resolution = vuln.get('resolution')
+
+    @staticmethod
+    def generateID(parent_id, name, description):
+        return ModelBase.generateID(parent_id, name, description)
 
     @staticmethod
     def publicattrsrefs():
@@ -829,7 +883,7 @@ class _Vuln(ModelBase):
     def getResolution(self): return self.resolution
 
 
-class _VulnWeb(_Vuln):
+class VulnWeb(Vuln):
     """A simple VulnWeb class. Should implement all the methods of the
     VulnWeb object in Model.Common
     Any method here more than a couple of lines long probably represent
@@ -838,24 +892,28 @@ class _VulnWeb(_Vuln):
     class_signature = 'VulnerabilityWeb'
 
     def __init__(self, vuln_web, workspace_name):
-        _Vuln.__init__(self, vuln_web, workspace_name)
-        self.path = vuln_web['value']['path']
-        self.website = vuln_web['value']['website']
-        self.request = vuln_web['value']['request']
-        self.response = vuln_web['value']['response']
-        self.method = vuln_web['value']['method']
-        self.pname = vuln_web['value']['pname']
-        self.params = vuln_web['value']['params']
-        self.query = vuln_web['value']['query']
-        self.resolution = vuln_web['value']['resolution']
-        self.attachments = vuln_web['value']['_attachments']
-        self.hostnames = vuln_web['value']['hostnames']
-        self.impact = vuln_web['value']['impact']
-        self.service = vuln_web['value']['service']
-        self.status = vuln_web['value']['status']
-        self.tags = vuln_web['value']['tags']
-        self.target = vuln_web['value']['target']
-        self.parent = vuln_web['value']['parent']
+        Vuln.__init__(self, vuln_web, workspace_name)
+        self.path = vuln_web.get('path')
+        self.website = vuln_web.get('website')
+        self.request = vuln_web.get('request')
+        self.response = vuln_web.get('response')
+        self.method = vuln_web.get('method')
+        self.pname = vuln_web.get('pname')
+        self.params = vuln_web.get('params')
+        self.query = vuln_web.get('query')
+        self.resolution = vuln_web.get('resolution')
+        self.attachments = vuln_web.get('_attachments')
+        self.hostnames = vuln_web.get('hostnames')
+        self.impact = vuln_web.get('impact')
+        self.service = vuln_web.get('service')
+        self.status = vuln_web.get('status')
+        self.tags = vuln_web.get('tags')
+        self.target = vuln_web.get('target')
+        self.parent = vuln_web.get('parent')
+
+    @staticmethod
+    def generateID(parent_id, name, website):
+        return ModelBase.generateID(parent_id, name, website)
 
     @staticmethod
     def publicattrsrefs():
@@ -877,7 +935,7 @@ class _VulnWeb(_Vuln):
                         severity=None, resolution=None, request=None,response=None, method=None,
                         pname=None, params=None, query=None, category=None):
 
-        super(_VulnWeb, self).updateAttributes(name, desc, data, severity, resolution, refs)
+        super(VulnWeb, self).updateAttributes(name, desc, data, severity, resolution, refs)
 
         if website is not None:
             self.website = website
@@ -947,12 +1005,16 @@ class _VulnWeb(_Vuln):
         else:
             return None
 
-class _Note(ModelBase):
+class Note(ModelBase):
     class_signature = 'Note'
 
     def __init__(self, note, workspace_name):
         ModelBase.__init__(self, note, workspace_name)
-        self.text = note['value']['text']
+        self.text = note['text']
+
+    @staticmethod
+    def generateID(parent_id, name, text):
+        return ModelBase.generateID(parent_id, name, text)
 
     def updateAttributes(self, name=None, text=None):
         if name is not None:
@@ -964,13 +1026,21 @@ class _Note(ModelBase):
     def getDescription(self): return self.description
     def getText(self): return self.text
 
-class _Credential(ModelBase):
+class Credential(ModelBase):
     class_signature = "Cred"
 
     def __init__(self, credential, workspace_name):
         ModelBase.__init__(self, credential, workspace_name)
-        self.username = credential['value']['username']
-        self.password = credential['value']['password']
+        try:
+            self.username = credential['username']
+        except KeyError:
+            self.username = credential['name']
+
+        self.password = credential['password']
+
+    @staticmethod
+    def generateID(parent_id, name, password):
+        return ModelBase.generateID(parent_id, name, password)
 
     def updateAttributes(self, username=None, password=None):
         if username is not None:
@@ -982,19 +1052,19 @@ class _Credential(ModelBase):
     def getUsername(self): return self.username
     def getPassword(self): return self.password
 
-class _Command:
+class Command:
     class_signature = 'CommandRunInformation'
     def __init__(self, command, workspace_name):
         self._workspace_name = workspace_name
         self.id = command['id']
-        self.command = command['value']['command']
-        self.duration = command['value']['duration']
-        self.hostname = command['value']['hostname']
-        self.ip = command['value']['ip']
-        self.itime = command['value']['itime']
-        self.params = command['value']['params']
-        self.user = command['value']['user']
-        self.workspace = command['value']['workspace']
+        self.command = command['command']
+        self.duration = command['duration']
+        self.hostname = command['hostname']
+        self.ip = command['ip']
+        self.itime = command['itime']
+        self.params = command['params']
+        self.user = command['user']
+        self.workspace = command['workspace']
 
     def getID(self): return self.id
     def getCommand(self): return self.command
@@ -1023,6 +1093,58 @@ class _Workspace:
     def getCustomer(self): return self.customer
     def getStartDate(self): return self.start_date
     def getFinishDate(self): return self.finish_date
+
+
+class MetadataUpdateActions(object):
+    """Constants for the actions made on the update"""
+    UNDEFINED   = -1
+    CREATE      = 0
+    UPDATE      = 1
+
+
+class Metadata(object):
+    """To save information about the modification of ModelObjects.
+       All members declared public as this is only a wrapper"""
+
+    class_signature = "Metadata"
+
+    def __init__(self, user):
+        self.creator        = user
+        self.owner          = user
+        self.create_time    = time()
+        self.update_time    = time()
+        self.update_user    = user
+        self.update_action  = MetadataUpdateActions.CREATE
+        self.update_controller_action = self.__getUpdateAction()
+        self.command_id = ''
+
+    def toDict(self):
+        return self.__dict__
+
+    def fromDict(self, dictt):
+        for k, v in dictt.items():
+            setattr(self, k, v)
+        return self
+
+    def update(self, user, action = MetadataUpdateActions.UPDATE):
+        """Update the local metadata giving a user and an action.
+        Update time gets modified to the current system time"""
+        self.update_user = user
+        self.update_time = time()
+        self.update_action = action
+
+        self.update_controller_action = self.__getUpdateAction()
+
+    def __getUpdateAction(self):
+        """This private method grabs the stackframes in look for the controller
+        call that generated the update"""
+
+        l_strace = traceback.extract_stack(limit = 10)
+        controller_funcallnames = [ x[2] for x in l_strace if "controller" in x[0] ]
+
+        if controller_funcallnames:
+            return "ModelControler." +  " ModelControler.".join(controller_funcallnames)
+        return "No model controller call"
 
 # NOTE: uncomment for test
 # class SillyHost():

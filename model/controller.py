@@ -9,7 +9,6 @@ import threading
 import Queue
 import traceback
 import model.common  # this is to make sure the factory is created
-import model.hosts
 
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
@@ -458,11 +457,7 @@ class ModelController(threading.Thread):
     def __edit(self, obj, *args, **kwargs):
         obj.updateAttributes(*args, **kwargs)
         self.mappers_manager.update(obj)
-
-        # if obj.class_signature == model.hosts.Host.class_signature:
         notifier.editHost(obj)
-        # else:
-            # notifier.editHost(obj.getHost())
         return True
 
     def __del(self, objId, *args):

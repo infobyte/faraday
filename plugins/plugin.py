@@ -16,14 +16,16 @@ import traceback
 
 import model.api
 import model.common
-from model.common import (
-    factory,
-    ModelObjectVuln,
-    ModelObjectVulnWeb,
-    ModelObjectNote,
-    ModelObjectCred
-)
-from model.hosts import Host, Interface, Service
+from model.common import factory
+from persistence.server.models import (Host,
+        Interface,
+        Service,
+        Vuln,
+        VulnWeb,
+        Credential,
+        Note,
+        Command
+        )
 from plugins.modelactions import modelactions
 
 from config.configuration import getInstanceConfiguration
@@ -189,7 +191,7 @@ class PluginBase(object):
                                severity="", resolution=""):
 
         vuln_obj = model.common.factory.createModelObject(
-            ModelObjectVuln.class_signature,
+            Vuln.class_signature,
             name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             confirmed=False, parent_id=host_id)
 
@@ -202,7 +204,7 @@ class PluginBase(object):
                                     resolution=""):
 
         vuln_obj = model.common.factory.createModelObject(
-            ModelObjectVuln.class_signature,
+            Vuln.class_signature,
             name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             confirmed=False, parent_id=interface_id)
 
@@ -214,7 +216,7 @@ class PluginBase(object):
                                   ref=[], severity="", resolution=""):
 
         vuln_obj = model.common.factory.createModelObject(
-            ModelObjectVuln.class_signature,
+            Vuln.class_signature,
             name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             confirmed=False, parent_id=service_id)
 
@@ -229,7 +231,7 @@ class PluginBase(object):
                                      params="", query="", category=""):
 
         vulnweb_obj = model.common.factory.createModelObject(
-            ModelObjectVulnWeb.class_signature,
+            VulnWeb.class_signature,
             name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
@@ -242,7 +244,7 @@ class PluginBase(object):
     def createAndAddNoteToHost(self, host_id, name, text):
 
         note_obj = model.common.factory.createModelObject(
-            ModelObjectNote.class_signature,
+            Note.class_signature,
             name, text=text, parent_id=host_id)
 
         note_obj._metadata.creator = self.id
@@ -252,7 +254,7 @@ class PluginBase(object):
     def createAndAddNoteToInterface(self, host_id, interface_id, name, text):
 
         note_obj = model.common.factory.createModelObject(
-            ModelObjectNote.class_signature,
+            Note.class_signature,
             name, text=text, parent_id=interface_id)
 
         note_obj._metadata.creator = self.id
@@ -262,7 +264,7 @@ class PluginBase(object):
     def createAndAddNoteToService(self, host_id, service_id, name, text):
 
         note_obj = model.common.factory.createModelObject(
-            ModelObjectNote.class_signature,
+            Note.class_signature,
             name, text=text, parent_id=service_id)
 
         note_obj._metadata.creator = self.id
@@ -272,7 +274,7 @@ class PluginBase(object):
     def createAndAddNoteToNote(self, host_id, service_id, note_id, name, text):
 
         note_obj = model.common.factory.createModelObject(
-            ModelObjectNote.class_signature,
+            Note.class_signature,
             name, text=text, parent_id=note_id)
 
         note_obj._metadata.creator = self.id
@@ -283,7 +285,7 @@ class PluginBase(object):
                                   password):
 
         cred_obj = model.common.factory.createModelObject(
-            ModelObjectCred.class_signature,
+            Credential.class_signature,
             username, password=password, parent_id=service_id)
 
         cred_obj._metadata.creator = self.id

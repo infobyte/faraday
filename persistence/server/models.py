@@ -57,7 +57,8 @@ def _flatten_dictionary(dictionary):
     if dictionary.get('id'):
         flattened_dict['id'] = dictionary['id']
     for k, v in dictionary.get('value', {}).items():
-        flattened_dict[k] = v
+        if k != '_id':  # this is the couch id, which we have saved on 'id'
+            flattened_dict[k] = v
     return flattened_dict
 
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
@@ -96,8 +97,8 @@ def _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vulns_type=None
     if vulns_type:
         return _get_faraday_ready_objects(workspace_name, vulns_dictionaries, vulns_type)
 
-    vulns = [vuln for vuln in vulns_dictionaries if vuln['type'] == 'Vulnerability']
-    web_vulns = [w_vuln for w_vuln in vulns_dictionaries if w_vuln['type'] == 'VulnerabilityWeb']
+    vulns = [vuln for vuln in vulns_dictionaries if vuln['value']['type'] == 'Vulnerability']
+    web_vulns = [w_vuln for w_vuln in vulns_dictionaries if w_vuln['value']['type'] == 'VulnerabilityWeb']
     faraday_ready_vulns = _get_faraday_ready_objects(workspace_name, vulns, 'vulns')
     faraday_ready_web_vulns = _get_faraday_ready_objects(workspace_name, web_vulns, 'vulns_web')
     return faraday_ready_vulns + faraday_ready_web_vulns
@@ -820,10 +821,9 @@ class Vuln(ModelBase):
         # this next two lines are stupid but so is life so you should get used to it :)
         self.description = vuln['desc']
         self.desc = vuln['desc']
-
         self.data = vuln.get('data')
         self.severity = vuln['severity']
-        self.refs = vuln.get('refs')
+        self.refs = vuln.get('refs') or []
         self.confirmed = vuln.get('confirmed', False)
         self.resolution = vuln.get('resolution')
 

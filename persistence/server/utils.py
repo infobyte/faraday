@@ -64,7 +64,8 @@ def get_vuln_properties(vuln):
                  'refs': vuln.getRefs(),
                  'severity': vuln.getSeverity(),
                  'resolution': vuln.getResolution(),
-                 'desc': vuln.getDesc()}
+                 'desc': vuln.getDesc(),
+                 'status': vuln.getStatus()}
     vuln_dict.update(get_object_properties(vuln))
     return vuln_dict
 
@@ -77,6 +78,7 @@ def get_vuln_web_properties(vuln_web):
                      'path': vuln_web.getPath(),
                      'pname': vuln_web.getPname(),
                      'query': vuln_web.getQuery(),
+                     'status': vuln_web.getStatus()
                      }
     vuln_web_dict.update(get_object_properties(vuln_web))
     vuln_web_dict.update(get_vuln_properties(vuln_web))

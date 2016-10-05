@@ -31,7 +31,7 @@ class VulnerabilityDAO(FaradayDAO):
         "owned":            [Vulnerability.owned],
         "easeofresolution": [Vulnerability.easeofresolution],
         "type":             [EntityMetadata.document_type],
-        "status":           [],
+        "status":           [Vulnerability.status],
         "website":          [Vulnerability.website],
         "path":             [Vulnerability.path],
         "request":          [Vulnerability.request],
@@ -74,7 +74,7 @@ class VulnerabilityDAO(FaradayDAO):
             Vulnerability.confirmed, Vulnerability.data,\
             Vulnerability.description, Vulnerability.easeofresolution, Vulnerability.impact_accountability,\
             Vulnerability.impact_availability, Vulnerability.impact_confidentiality, Vulnerability.impact_integrity,\
-            Vulnerability.refs, Vulnerability.resolution, Vulnerability.severity, Vulnerability.owned,\
+            Vulnerability.refs, Vulnerability.resolution, Vulnerability.severity, Vulnerability.owned, Vulnerability.status,\
             Vulnerability.website, Vulnerability.path, Vulnerability.request, Vulnerability.response,\
             Vulnerability.method, Vulnerability.params, Vulnerability.pname, Vulnerability.query,\
             EntityMetadata.couchdb_id, EntityMetadata.revision, EntityMetadata.create_time, EntityMetadata.creator,\
@@ -172,7 +172,7 @@ class VulnerabilityDAO(FaradayDAO):
                 'owner': vuln.owner,
                 'parent': get_parent_id(vuln.couchdb_id),
                 'refs': json.loads(vuln.refs),
-                'status': '',
+                'status': vuln.status,
                 'website': vuln.website,
                 'path': vuln.path,
                 'request': vuln.request,

@@ -776,9 +776,9 @@ class HostInfoDialog(Gtk.Window):
                 raise TypeError
             return params_string
 
-        # those are 15 strings
+        # those are 16 strings
         model = Gtk.ListStore(str, str, str, str, str, str, str, str,
-                              str, str, str, str, str, str, str)
+                              str, str, str, str, str, str, str, str)
 
         vulns = obj.getVulns()
         for vuln in vulns:
@@ -786,21 +786,30 @@ class HostInfoDialog(Gtk.Window):
             if _type == "Vulnerability":
                 # again filling up the model with dumb strings
                 # because gtk
-                model.append([_type, vuln.getName(), vuln.getDescription(),
-                              vuln.getData(), vuln.getSeverity(),
-                              ', '.join(vuln.getRefs()),
+                model.append([_type, vuln.getName(),
+                              vuln.getDescription(),
+                              vuln.getData(),
+                              vuln.getSeverity(),
+                              ', '.join([str(v) for v in vuln.getRefs() if v]),
+                              vuln.getStatus(),
                               "", "", "", "", "", "", "", "", ""])
 
             elif _type == "VulnerabilityWeb":
-                model.append([_type, vuln.getName(), vuln.getDescription(),
-                              vuln.getData(), vuln.getSeverity(),
+                model.append([_type, vuln.getName(),
+                              vuln.getDescription(),
+                              vuln.getData(),
+                              vuln.getSeverity(),
                               ", ".join([str(v) for v in vuln.getRefs() if v]),
                               vuln.getPath(),
-                              vuln.getWebsite(), vuln.getRequest(),
-                              vuln.getResponse(), vuln.getMethod(),
+                              vuln.getWebsite(),
+                              vuln.getRequest(),
+                              vuln.getResponse(),
+                              vuln.getMethod(),
                               vuln.getPname(),
                               params_to_string(vuln.getParams()),
-                              vuln.getQuery(), ""])
+                              vuln.getQuery(),
+                              vuln.getStatus(),
+                              ""])
         # sort it!
         sorted_model = Gtk.TreeModelSort(model=model)
         sorted_model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
@@ -821,7 +830,7 @@ class HostInfoDialog(Gtk.Window):
         It is important to notice that the first element of object_info
         is ignored. This is because of how the models in this class contain
         information. Thus, there'll be as many of this small boxes as
-        len(property_names) minus one, read next paragraph.
+        len(property_names) minus one.
         """
 
         for index, prop_name in enumerate(property_names, start=1):
@@ -899,14 +908,14 @@ class HostInfoDialog(Gtk.Window):
 
         elif object_type == "Vulnerability":
             property_names = ["Name: ", "Description: ", "Data: ",
-                              "Severity: ", "Refs: "]
+                              "Severity: ", "Refs: ", "Status: "]
 
         elif object_type == "VulnerabilityWeb":
             property_names = ["Name: ", "Description: ", "Data: ",
                               "Severity: ", "Refs: ", "Path: ",
                               "Website: ", "Request: ", "Response: ",
                               "Method: ", "Pname: ", "Params: ",
-                              "Query: ", "Category: "]
+                              "Query: ", "Status: "]
         return property_names
 
     def clear(self, box):
@@ -1270,9 +1279,10 @@ class ConflictsDialog(Gtk.Window):
                          obj.getData(),
                          obj.getSeverity(),
                          obj.getRefs(),
-                         obj.getResolution()))
+                         obj.getResolution(),
+                         obj.getStatus()))
 
-        props = ["Name", "Desc", "Data", "Severity", "Refs", "Resolution"]
+        props = ["Name", "Desc", "Data", "Severity", "Refs", "Resolution", "Status"]
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model
 
@@ -1295,11 +1305,12 @@ class ConflictsDialog(Gtk.Window):
                          obj.getMethod(),
                          obj.getPname(),
                          obj.getParams(),
-                         obj.getQuery()))
+                         obj.getQuery(),
+                         obj.getStatus()))
 
         props = ["Name", "Desc", "Data", "Severity", "Refs", "Path",
                  "Website", "Request", "Response", "Method", "Pname",
-                 "Params", "Query"]
+                 "Params", "Query", "Status"]
 
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model

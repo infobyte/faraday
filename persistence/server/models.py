@@ -510,7 +510,7 @@ class ModelBase(object):
 
     def propertyTieBreaker(self, key, prop1, prop2):
         """ Breakes the conflict between two properties. If either of them
-        is a default value returns the true and only.
+        is a default value returns the good one.
         If neither returns the default value.
         If conflicting returns a tuple with the values """
         if prop1 in self.defaultValues(): return prop2
@@ -519,9 +519,16 @@ class ModelBase(object):
         else: return (prop1, prop2)
 
     def tieBreakable(self, key):
+        """
+        Return true if we can auto resolve this conflict.
+        """
         return False
 
     def tieBreak(self, key, prop1, prop2):
+        """
+        Return the 'choosen one'
+        Return a tuple with prop1, prop2 if we cant resolve conflict.
+        """
         return None
 
     def addUpdate(self, newModelObject):
@@ -660,15 +667,24 @@ class Interface(ModelBase):
         return publicattrs
 
     def tieBreakable(self, property_key):
+        """
+        Return true if we can auto resolve this conflict.
+        """
         if property_key in ["hostnames"]:
             return True
         return False
 
     def tieBreak(self, key, prop1, prop2):
+        """
+        Return the 'choosen one'
+        Return a tuple with prop1, prop2 if we cant resolve conflict.
+        """
         if key == "hostnames":
             prop1.extend(prop2)
+            # Remove duplicated with set...
             return list(set(prop1))
-        return None
+
+        return (prop1, prop2)
 
     def updateAttributes(self, name=None, description=None, hostnames=None, mac=None, ipv4=None, ipv6=None,
                          network_segment=None, amount_ports_opened=None, amount_ports_closed=None,
@@ -797,7 +813,6 @@ class Vuln(ModelBase):
 
     def __init__(self, vuln, workspace_name):
         ModelBase.__init__(self, vuln, workspace_name)
-
         # this next two lines are stupid but so is life so you should get used to it :)
         self.description = vuln['desc']
         self.desc = vuln['desc']
@@ -806,6 +821,7 @@ class Vuln(ModelBase):
         self.refs = vuln.get('refs') or []
         self.confirmed = vuln.get('confirmed', False)
         self.resolution = vuln.get('resolution')
+        self.status = vuln['value']['status']
 
     @staticmethod
     def generateID(parent_id, name, description):
@@ -817,18 +833,36 @@ class Vuln(ModelBase):
             'Data' : 'data',
             'Severity' : 'severity',
             'Refs' : 'refs',
-            'Resolution': 'resolution'
+            'Resolution': 'resolution',
+            'Status': 'status'
         })
         return publicattrs
 
     def tieBreakable(self, key):
+        """
+        Return true if we can auto resolve this conflict.
+        """
         if key == "confirmed":
+            return True
+        if key == "status":
             return True
         return False
 
     def tieBreak(self, key, prop1, prop2):
+        """
+        Return the 'choosen one'
+        Return a tuple with prop1, prop2 if we cant resolve conflict.
+        """
+
         if key == "confirmed":
             return True
+
+        if key == "status":
+            if prop1 == "closed" or prop1 == "re-opened":
+                return "re-opened"
+            if prop1 == "risk-accepted":
+                return 'risk-accepted'
+
         return (prop1, prop2)
 
     def standarize(self, severity):
@@ -860,7 +894,7 @@ class Vuln(ModelBase):
         return severity
 
     def updateAttributes(self, name=None, desc=None, data=None,
-                         severity=None, resolution=None, refs=None):
+                         severity=None, resolution=None, refs=None, status=None):
         if name is not None:
             self.name = name
         if desc is not None:
@@ -873,6 +907,8 @@ class Vuln(ModelBase):
             self.severity = self.standarize(severity)
         if refs is not None:
             self.refs = refs
+        if status is not None:
+            self.setStatus(status)
 
     def getID(self): return self.id
     def getDesc(self): return self.desc
@@ -881,6 +917,10 @@ class Vuln(ModelBase):
     def getRefs(self): return self.refs
     def getConfirmed(self): return self.confirmed
     def getResolution(self): return self.resolution
+    def getStatus(self): return self.status
+
+    def setStatus(self, status):
+        self.status = status
 
 
 class VulnWeb(Vuln):
@@ -928,14 +968,15 @@ class VulnWeb(Vuln):
             'Method' : 'method',
             'Pname' : 'pname',
             'Params' : 'params',
-            'Query' : 'query'})
+            'Query' : 'query',
+            'Status': 'status'})
         return publicattrs
 
     def updateAttributes(self, name=None, desc=None, data=None, website=None, path=None, refs=None,
                         severity=None, resolution=None, request=None,response=None, method=None,
-                        pname=None, params=None, query=None, category=None):
+                        pname=None, params=None, query=None, category=None, status=None):
 
-        super(VulnWeb, self).updateAttributes(name, desc, data, severity, resolution, refs)
+        super(self.__class__, self).updateAttributes(name, desc, data, severity, resolution, refs, status)
 
         if website is not None:
             self.website = website
@@ -976,15 +1017,37 @@ class VulnWeb(Vuln):
     def getTarget(self): return self.target
     def getParent(self): return self.parent
 
-    def tieBreakable(self, property_key):
-        if property_key in ["response"]:
+    def tieBreakable(self, key):
+        """
+        Return true if we can auto resolve this conflict.
+        """
+        if key == "response":
+            return True
+        if key == "confirmed":
+            return True
+        if key == "status":
             return True
         return False
 
     def tieBreak(self, key, prop1, prop2):
+        """
+        Return the 'choosen one'
+        Return a tuple with prop1, prop2 if we cant resolve conflict.
+        """
+
         if key == "response":
             return self._resolve_response(prop1, prop2)
-        return None
+
+        if key == "status":
+            if prop1 == "closed" or prop1 == "re-opened":
+                return "re-opened"
+            if prop1 == "risk-accepted":
+                return 'risk-accepted'
+
+        if key == "confirmed":
+            return True
+
+        return (prop1, prop2)
 
     def _resolve_response(self ,res1, res2):
 

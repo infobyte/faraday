@@ -681,7 +681,7 @@ def update_service(workspace_name, id, name, description, ports,
 
 def create_vuln(workspace_name, id, name, description, owned=None, owner="",
                 confirmed=False, data="", refs=None, severity="info", resolution="",
-                desc="", metadata=None):
+                desc="", metadata=None, status=None):
     """Save a vulnerability to the server. Return the json with the
     server's response.
     """
@@ -698,11 +698,12 @@ def create_vuln(workspace_name, id, name, description, owned=None, owner="",
                            resolution=resolution,
                            desc=desc,
                            type="Vulnerability",
+                           status=status,
                            metadata=metadata)
 
 def update_vuln(workspace_name, id, name, description, owned=None, owner="",
                 confirmed=False, data="", refs=None, severity="info", resolution="",
-                desc="", metadata=None):
+                desc="", metadata=None, status=None):
     """Update a vulnerability in the server. Return the json with the
     server's response.
     """
@@ -719,12 +720,14 @@ def update_vuln(workspace_name, id, name, description, owned=None, owner="",
                              resolution=resolution,
                              desc=desc,
                              type="Vulnerability",
+                             status=status,
                              metadata=metadata)
 
 def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
                     desc="", metadata=None, method=None, params="", path=None, pname=None,
-                    query=None, request=None, response=None, category="", website=None):
+                    query=None, request=None, response=None, category="", website=None,
+                    status=None):
     """Save a web vulnerability to the server. Return the json with the
     server's response.
     """
@@ -750,12 +753,14 @@ def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                            response=response,
                            website=website,
                            category=category,
+                           status=status,
                            type='VulnerabilityWeb')
 
 def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
                     desc="", metadata=None, method=None, params="", path=None, pname=None,
-                    query=None, request=None, response=None, category="", website=None):
+                    query=None, request=None, response=None, category="", website=None,
+                    status=None):
     """Update a web vulnerability in the server. Return the json with the
     server's response.
     """
@@ -781,6 +786,7 @@ def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                              response=response,
                              website=website,
                              category=category,
+                             status=status,
                              type='VulnerabilityWeb')
 
 def create_note(workspace_name, id, name, text, owned=None, owner="",

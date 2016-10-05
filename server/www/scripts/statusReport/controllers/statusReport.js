@@ -6,11 +6,11 @@ angular.module('faradayApp')
     .controller('statusReportCtrl',
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
-                    'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager', 'commonsFact',
+                    'SEVERITIES', 'EASEOFRESOLUTION', 'STATUSES', 'hostsManager', 'commonsFact',
                     'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
-                        SEVERITIES, EASEOFRESOLUTION, hostsManager, commonsFact,
+                        SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,
                         vulnsManager, workspacesFact, csvService, uiGridConstants) {
         $scope.baseurl;
         $scope.columns;
@@ -280,7 +280,7 @@ angular.module('faradayApp')
                 visible: $scope.columns["easeofresolution"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'status',
-                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
                 headerCellTemplate: header,
                 visible: $scope.columns["status"]
             });
@@ -644,6 +644,15 @@ angular.module('faradayApp')
                 'Enter the new severity:',
                 'severity',
                 {options: SEVERITIES});
+        };
+
+        $scope.editStatus = function() {
+            editProperty(
+                'scripts/commons/partials/editOptions.html',
+                'commonsModalEditOptions',
+                'Enter the new status:',
+                'status',
+                {options: STATUSES});
         };
 
         $scope.editEaseofresolution = function() {

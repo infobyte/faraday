@@ -36,6 +36,15 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
             "unclassified"
         ];
         return severities;
+    })())
+    .constant("STATUSES", (function() {
+        var statuses = [
+            "opened",
+            "closed",
+            "re-opened",
+            "risk-accepted"
+        ];
+        return statuses;
     })());
 
 faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, ngClipProvider) {

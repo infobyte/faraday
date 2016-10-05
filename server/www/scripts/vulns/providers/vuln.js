@@ -44,6 +44,7 @@ angular.module('faradayApp')
             this.target = "";
             this.type = "Vulnerability";
             this.ws = "";
+            this.status = "opened";
 
             if(data) {
                 if(data.name === undefined || data.name === "") {
@@ -56,6 +57,7 @@ angular.module('faradayApp')
         var public_properties = [
             '_attachments', 'confirmed', 'data', 'desc', 'easeofresolution', 
             'impact', 'name', 'owned', 'refs', 'resolution', 'severity',
+            'status',
         ];
 
         var saved_properties = public_properties.concat(

@@ -196,14 +196,14 @@ article.untercio{
 
 /* ==== General COLORS ==== */
 /* Backgrounds Legacy */
-.fondo-rojo, .fondo-high, .fondo-error {background-color: #DF3936 !important;}
+.fondo-rojo, .fondo-high, .fondo-error, .fondo-opened {background-color: #DF3936 !important;}
 .fondo-negro {background-color: #000 !important;}
 .fondo-gris1, .fondo-critical {background-color: #932ebe !important;}
 .fondo-gris1, .fondo-unclassified {background-color: #999 !important;}
 .fondo-blanco {background-color: #fff !important;}
-.fondo-info {background-color: #2e97bd !important;}
-.fondo-naranja, .fondo-med {background-color: #DFBF35 !important;}
-.fondo-amarillo, .fondo-low, .fondo-created{background-color: #A1CE31 !important;}
+.fondo-info, .fondo-risk-accepted {background-color: #2e97bd !important;}
+.fondo-naranja, .fondo-med, .fondo-re-opened {background-color: #DFBF35 !important;}
+.fondo-amarillo, .fondo-low, .fondo-closed , .fondo-created{background-color: #A1CE31 !important;}
 .fondo-violeta {background-color: #932ebe !important;}
 /* Backgrounds New */
 .background-unclassified {

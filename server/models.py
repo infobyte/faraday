@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = 'W.2.2.1'
+SCHEMA_VERSION = 'W.2.2.2'
 
 Base = declarative_base()
 
@@ -321,6 +321,8 @@ class Vulnerability(FaradayEntity, Base):
     response = Column(Text())
     website = Column(String(250))
 
+    status = Column(String(250))
+
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
@@ -353,6 +355,7 @@ class Vulnerability(FaradayEntity, Base):
         self.request=document.get('request')
         self.response=document.get('response')
         self.website=document.get('website')
+        self.status=document.get('status', 'opened')
 
         params = document.get('params', u'')
         if isinstance(params, (list, tuple)):

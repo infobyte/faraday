@@ -1,3 +1,4 @@
+import requests
 from gi.repository import Gtk
 from utils.logs import getLogger
 from functools import wraps
@@ -17,6 +18,12 @@ def safe_io_with_server(response_in_emergency):
             except ServerRequestException as e:
                 res = response_in_emergency
                 getLogger("Server-GTK IO").warning(e)
+            except (requests.exceptions.MissingSchema, requests.exceptions.InvalidSchema):
+                res = response_in_emergency
+                getLogger("Server-GTK IO").error("It looks like the Faraday Server "
+                        "URL is not correctly formated. Please change it and "
+                        "remember to set it with a valid protocol, like http.\n"
+                        "For example: http://faradayserver:port/")
             return res
         return wrapper
     return safe_decorator

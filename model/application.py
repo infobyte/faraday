@@ -63,8 +63,7 @@ class TimerClass(threading.Thread):
 
             except Exception:
                 model.api.devlog(
-                    "[ERROR-NEWS] Can't connect to faradaysec.com...")
-                raise
+                    "NEWS: Can't connect to faradaysec.com...")
 
             self.__event.wait(43200)
 

@@ -13,6 +13,9 @@ from time import time
 import traceback
 from threading import Lock
 from persistence.server import server
+from persistence.server.server_io_exceptions import (WrongObjectSignature,
+                                                     CantAccessConfigurationWithoutTheClient)
+
 from persistence.server.utils import (force_unique,
                                       get_hash,
                                       get_host_properties,
@@ -30,7 +33,14 @@ from config.configuration import getInstanceConfiguration
 from functools import wraps
 from difflib import Differ
 
-CONF = getInstanceConfiguration()
+FARADAY_UP = True
+
+def _conf():
+    if FARADAY_UP:
+        from config.configuration import getInstanceConfiguration
+        return getInstanceConfiguration()
+    else:
+        raise CantAccessConfigurationWithoutTheClient
 
 _CHANGES_LOCK = Lock()
 def get_changes_lock():
@@ -51,6 +61,12 @@ def _ignore_in_changes(func):
     return func_wrapper
 
 def _flatten_dictionary(dictionary):
+    """Given a dictionary with dictionaries inside, create a new flattened
+    dictionary from that one and return it.
+
+    It's not as general as it sounds. Do not use without looking at the
+    implementation.
+    """
     flattened_dict = {}
     if dictionary.get('_id'):
         flattened_dict['_id'] = dictionary['_id']
@@ -61,6 +77,17 @@ def _flatten_dictionary(dictionary):
             flattened_dict[k] = v
     return flattened_dict
 
+# NOTE: what is a faraday_ready object?
+# it's an instance of the classes defined on this module
+# created from a dictionary of faraday_ready_dictionaries
+# faraday_ready_dictionaries are the dictionaries gotten from
+# the server's json response with adecuate transformations applied to them
+# so as to be able to create the needed objects
+
+# i called them 'faraday ready' because they are _ready_ for the faraday
+# client, even if they come from the server: they should have the same
+# interface as the old style objects, from when we kept them on memory
+
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
                                faraday_object_name):
     """Takes a workspace name, a faraday object ('hosts', 'vulns',
@@ -68,10 +95,8 @@ def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries
     the information about the objects live) and an arbitray number
     of params to customize to request.
 
-    Return a list of faraday objects
-    (Host, Interface, Service, Vuln, VulnWeb, Credential or Command)
-    which the same interface for getting attribuetes than those defined my the
-    ModelController.
+    Return a list of faraday objects: either
+    Host, Interface, Service, Vuln, VulnWeb, Credential or Command.
     """
     object_to_class = {'hosts': Host,
                        'vulns': Vuln,
@@ -91,9 +116,16 @@ def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries
     return faraday_objects
 
 def _get_faraday_ready_hosts(workspace_name, hosts_dictionaries):
+    """Return a list of Hosts created with the information found on hosts_dictionaries"""
     return _get_faraday_ready_objects(workspace_name, hosts_dictionaries, 'hosts')
 
 def _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vulns_type=None):
+    """Return a list of Vuln or VulnWeb objects created with the information found on
+    vulns_dictionaries.
+
+    If vulns_type is specified, the returned list will only contain vuln_type objects.
+    Otherwise, vuln_type will be inferred for every vuln_dictionary.
+    """
     if vulns_type:
         return _get_faraday_ready_objects(workspace_name, vulns_dictionaries, vulns_type)
 
@@ -104,21 +136,31 @@ def _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vulns_type=None
     return faraday_ready_vulns + faraday_ready_web_vulns
 
 def _get_faraday_ready_services(workspace_name, services_dictionaries):
+    """Return a list of Services created with the information found on services_dictionaries"""
     return _get_faraday_ready_objects(workspace_name, services_dictionaries, 'services')
 
 def _get_faraday_ready_interfaces(workspace_name, interfaces_dictionaries):
+    """Return a list of Interfaces created with the information found on interfaces_dictionaries"""
     return _get_faraday_ready_objects(workspace_name, interfaces_dictionaries, 'interfaces')
 
 def _get_faraday_ready_credentials(workspace_name, credentials_dictionaries):
+    """Return a list of Credentials created with the information found on credentials_dictionaries"""
     return _get_faraday_ready_objects(workspace_name, credentials_dictionaries, 'credentials')
 
 def _get_faraday_ready_notes(workspace_name, notes_dictionaries):
+    """Return a list of Notes created with the information found on notes_dictionaries"""
     return _get_faraday_ready_objects(workspace_name, notes_dictionaries, 'notes')
 
 def _get_faraday_ready_commands(workspace_name, commands_dictionaries):
+    """Return a list of Commands created with the information found on commands_dictionaries"""
     return _get_faraday_ready_objects(workspace_name, commands_dictionaries, 'commands')
 
-def get_changes_stream(workspace_name, **params):
+def get_changes_stream(workspace_name):
+    """Take a workspace_name as a string.
+    Return a couchDB change_stream with the changes relevant to the workspace
+    of name workspace_name.
+    The change stream will have heartbeet set to 1000.
+    """
     since = server.get_workspace(workspace_name)['last_seq']
     return server.get_changes_stream(workspace_name, since=since,
                                      heartbeat='1000')
@@ -137,6 +179,11 @@ def get_host(workspace_name, host_id):
     return force_unique(get_hosts(workspace_name, couchid=host_id))
 
 def get_all_vulns(workspace_name, **params):
+    """Take a workspace name and a arbitrary number of params to customize the
+    request.
+
+    Return a list with Vuln and VulnWeb objects.
+    """
     vulns_dictionaries = server.get_all_vulns(workspace_name, **params)
     return _get_faraday_ready_vulns(workspace_name, vulns_dictionaries)
 
@@ -193,17 +240,29 @@ def get_service(workspace_name, service_id):
     return force_unique(get_services(workspace_name, couchid=service_id))
 
 def get_credentials(workspace_name, **params):
+    """Take a workspace name and a arbitrary number of params to customize the
+    request.
+
+    Return a list of Credential objects
+    """
     credentials_dictionary = server.get_credentials(workspace_name, **params)
     return _get_faraday_ready_credentials(workspace_name, credentials_dictionary)
 
 def get_credential(workspace_name, credential_id):
+    """Return the Credential of id credential_id. None if not found."""
     return force_unique(get_credentials(workspace_name, couchid=credential_id))
 
 def get_notes(workspace_name, **params):
+    """Take a workspace name and a arbitrary number of params to customize the
+    request.
+
+    Return a list of Note objects
+    """
     notes_dictionary = server.get_notes(workspace_name, **params)
     return _get_faraday_ready_notes(workspace_name, notes_dictionary)
 
 def get_note(workspace_name, note_id):
+    """Return the Note of id note_id. None if not found."""
     return force_unique(get_notes(workspace_name, couchid=note_id))
 
 def get_workspace(workspace_name):
@@ -212,10 +271,16 @@ def get_workspace(workspace_name):
     return _Workspace(workspace, workspace_name) if workspace else None
 
 def get_commands(workspace_name, **params):
+    """Take a workspace name and a arbitrary number of params to customize the
+    request.
+
+    Return a list of Command objects
+    """
     commands_dictionary = server.get_commands(workspace_name, **params)
     return _get_faraday_ready_commands(workspace_name, commands_dictionary)
 
 def get_command(workspace_name, command_id):
+    """Return the Command of id command_id. None if not found."""
     return force_unique(get_commands(workspace_name, couchid=command_id))
 
 def get_object(workspace_name, object_signature, object_id):
@@ -259,6 +324,10 @@ def create_host(workspace_name, host):
 
 @_ignore_in_changes
 def update_host(workspace_name, host):
+    """Take a workspace_name and a host object and update it in the sever.
+
+    Return the server's json response as a dictionary.
+    """
     host_properties = get_host_properties(host)
     return server.update_host(workspace_name, **host_properties)
 
@@ -272,6 +341,10 @@ def create_interface(workspace_name, interface):
 
 @_ignore_in_changes
 def update_interface(workspace_name, interface):
+    """Take a workspace_name and an interface object and update it in the sever.
+
+    Return the server's json response as a dictionary.
+    """
     interface_properties = get_interface_properties(interface)
     return server.update_interface(workspace_name, **interface_properties)
 
@@ -285,6 +358,10 @@ def create_service(workspace_name, service):
 
 @_ignore_in_changes
 def update_service(workspace_name, service):
+    """Take a workspace_name and an service object and update it in the sever.
+
+    Return the server's json response as a dictionary.
+    """
     service_properties = get_service_properties(service)
     return server.update_service(workspace_name, **service_properties)
 
@@ -299,6 +376,10 @@ def create_vuln(workspace_name, vuln):
 
 @_ignore_in_changes
 def update_vuln(workspace_name, vuln):
+    """Take a workspace_name and a Vuln object and update it in the sever.
+
+    Return the server's json response as a dictionary.
+    """
     vuln_properties = get_vuln_properties(vuln)
     return server.update_vuln(workspace_name, **vuln_properties)
 
@@ -313,6 +394,10 @@ def create_vuln_web(workspace_name, vuln_web):
 
 @_ignore_in_changes
 def update_vuln_web(workspace_name, vuln_web):
+    """Take a workspace_name and a VulnWeb object and update it in the sever.
+
+    Return the server's json response as a dictionary.
+    """
     vuln_web_properties = get_vuln_web_properties(vuln_web)
     return server.update_vuln_web(workspace_name, **vuln_web_properties)
 
@@ -326,6 +411,9 @@ def create_note(workspace_name, note):
 
 @_ignore_in_changes
 def update_note(workspace_name, note):
+    """Take a workspace_name and a Note object and update it in the sever.
+    Return the server's json response as a dictionary.
+    """
     note_properties = get_note_properties(note)
     return server.update_note(workspace_name, **note_properties)
 
@@ -339,6 +427,9 @@ def create_credential(workspace_name, credential):
 
 @_ignore_in_changes
 def update_credential(workspace_name, credential):
+    """Take a workspace_name and a Credential object and update it in the sever.
+    Return the server's json response as a dictionary.
+    """
     credential_properties = get_credential_properties(credential)
     return server.update_credential(workspace_name, **credential_properties)
 
@@ -349,10 +440,22 @@ def create_command(workspace_name, command):
 
 @_ignore_in_changes
 def update_command(workspace_name, command):
+    """Take a workspace_name and a Command object and update it in the sever.
+    Return the server's json response as a dictionary.
+    """
     command_properties = get_command_properties(command)
     return server.update_command(workspace_name, **command_properties)
 
 def create_object(workspace_name, object_signature, obj):
+    """Given a workspace name, an object_signature as string and obj, a Faraday
+    object, save that object on the server.
+
+    object_signature must match the type of the object.
+
+    object_signature must be either 'Host', 'Vulnerability', 'VulnerabilityWeb',
+    'Interface', 'Service', 'Cred', 'Note' or 'CommandRunInformation'.
+    Will raise an WrongObjectSignature error if this condition is not met.
+    """
     object_to_func = {Host.class_signature: create_host,
                       Vuln.class_signature: create_vuln,
                       VulnWeb.class_signature: create_vuln_web,
@@ -369,6 +472,16 @@ def create_object(workspace_name, object_signature, obj):
     return appropiate_function(workspace_name, obj)
 
 def update_object(workspace_name, object_signature, obj):
+    """Given a workspace name, an object_signature as string and obj, a Faraday
+    object, update that object on the server.
+
+    object_signature must match the type of the object.
+
+    object_signature must be either 'Host', 'Vulnerability', 'VulnerabilityWeb',
+    'Interface', 'Service', 'Cred', 'Note' or 'CommandRunInformation'.
+    Will raise an WrongObjectSignature error if this condition is not met.
+
+    """
     object_to_func = {Host.class_signature: update_host,
                       Vuln.class_signature: update_vuln,
                       VulnWeb.class_signature: update_vuln_web,
@@ -394,61 +507,108 @@ def create_workspace(workspace_name, description, start_date, finish_date,
     but there was a problem creating its basic documents, it will delete
     the document an raise the corresponding error.
     """
-
     return server.create_workspace(workspace_name, description,
                                    start_date, finish_date, customer)
 
-def get_workspace_summary(workspace_number):
-    return server.get_workspace_summary(workspace_number)
+def get_workspace_summary(workspace_name):
+    """Return the workspace summary as a dictionary
+    """
+    return server.get_workspace_summary(workspace_name)
 
 def get_workspace_numbers(workspace_name):
+    """Return a tuple with the number of hosts, interfaces, services and vulns
+    on the workspace of name workspace_name.
+    """
     return server.get_workspace_numbers(workspace_name)
 
 def get_hosts_number(workspace_name, **params):
+    """Return the number of hosts found on the workspace of name workspace_name
+    """
     return server.get_hosts_number(workspace_name, **params)
 
 def get_services_number(workspace_name, **params):
+    """Return the number of services found on the workspace of name workspace_name
+    """
     return server.get_services_number(workspace_name, **params)
 
 def get_interfaces_number(workspace_name, **params):
+    """Return the number of interfaces found on the workspace of name workspace_name
+    """
     return server.get_interfaces_number(workspace_name, **params)
 
 def get_vulns_number(workspace_name, **params):
+    """Return the number of vulns found on the workspace of name workspace_name
+    """
     return server.get_vulns_number(workspace_name, **params)
+
+# NOTE: the delete functions are actually the same.
+# there's no difference between delete_host and delete_interface
+# except for their names.
+# maybe implement some kind of validation in the future?
 
 @_ignore_in_changes
 def delete_host(workspace_name, host_id):
+    """Delete the host of id host_id on workspace workspace_name.
+    Return the json response from the server.
+    """
     return server.delete_host(workspace_name, host_id)
 
 @_ignore_in_changes
 def delete_interface(workspace_name, interface_id):
+    """Delete the interface of id interface_id on workspace workspace_name.
+    Return the json response from the server.
+    """
     return server.delete_interface(workspace_name, interface_id)
 
 @_ignore_in_changes
 def delete_service(workspace_name, service_id):
+    """Delete the service of id service_id on workspace workspace_name.
+    Return the json response from the server.
+    """
     return server.delete_service(workspace_name, service_id)
 
 @_ignore_in_changes
 def delete_vuln(workspace_name, vuln_id):
+    """Delete the vuln of id vuln_id on workspace workspace_name.
+    Return the json response from the server.
+    """
     return server.delete_vuln(workspace_name, vuln_id)
 
 @_ignore_in_changes
 def delete_note(workspace_name, note_id):
+    """Delete the note of id note_id on workspace workspace_name.
+    Return the json response from the server.
+    """
     return server.delete_note(workspace_name, note_id)
 
 @_ignore_in_changes
 def delete_credential(workspace_name, credential_id):
+    """Delete the credential of id credential_id on workspace workspace_name.
+    Return the json response from the server.
+    """
     return server.delete_credential(workspace_name, credential_id)
 
 @_ignore_in_changes
 def delete_vuln_web(workspace_name, vuln_id):
+    """Delete the vulnweb of id vulnweb_id on workspace workspace_name.
+    Return the json response from the server.
+    """
     return server.delete_vuln(workspace_name, vuln_id)
 
 @_ignore_in_changes
 def delete_command(workspace_name, command_id):
+    """Delete the command of id command_id on workspace workspace_name.
+    Return the json response from the server.
+    """
     return server.delete_command(workspace_name, command_id)
 
 def delete_object(workspace_name, object_signature, obj_id):
+    """Given a workspace name, an object_signature as string and an object id.
+
+    object_signature must be either 'Host', 'Vulnerability', 'VulnerabilityWeb',
+    'Interface', 'Service', 'Cred', 'Note' or 'CommandRunInformation'.
+    Will raise an WrongObjectSignature error if this condition is not met.
+    """
     object_to_func = {Host.class_signature: delete_host,
                       Vuln.class_signature: delete_vuln,
                       VulnWeb.class_signature: delete_vuln_web,
@@ -472,12 +632,15 @@ def delete_workspace(workspace_name):
     return server.delete_workspace(workspace_name)
 
 def get_workspaces_names():
+    """Return a list with all the workspace names available."""
     return server.get_workspaces_names()['workspaces']
 
 def is_server_up():
+    """True if server is up, False otherwise."""
     return server.is_server_up()
 
 def test_server_url(url_to_test):
+    """Return True if url_to_test/_api/info is accessible, False otherwise"""
     return server.test_server_url(url_to_test)
 
 class ModelBase(object):
@@ -538,10 +701,10 @@ class ModelBase(object):
             attribute = self.publicattrsrefs().get(k)
             prop_update = self.propertyTieBreaker(attribute, *v)
 
-            if not isinstance(prop_update, tuple) or CONF.getMergeStrategy():
+            if not isinstance(prop_update, tuple) or _conf().getMergeStrategy():
                 # if there's a strategy set by the user, apply it
                 if isinstance(prop_update, tuple):
-                    prop_update = MergeSolver(CONF.getMergeStrategy())
+                    prop_update = MergeSolver(_conf().getMergeStrategy())
                     prop_update = prop_update.solve(prop_update[0], prop_update[1])
 
                 setattr(self, attribute, prop_update)

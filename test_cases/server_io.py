@@ -139,7 +139,7 @@ class ClientServerAPITests(unittest.TestCase):
     def test_faraday_dictionary_dispatcher_calls(self, mock_hosts, mock_vulns, mock_interfaces,
                                                  mock_services, mock_notes, mock_credentials, mock_commands):
         # NOTE: if you finds any bugs here, i have the suspipcion that mock_host is actually mock_commands
-        # i mean, the parameters names are wrong. I'd check for that. Good luck.
+        # i mean that the parameters names are wrong. I'd check for that. Good luck.
         server._get_faraday_ready_dictionaries('a', 'hosts', 'whatever')
         server._get_faraday_ready_dictionaries('a', 'interfaces', 'whatever')
         server._get_faraday_ready_dictionaries('a', 'vulns', 'whatever')

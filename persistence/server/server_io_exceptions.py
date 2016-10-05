@@ -75,3 +75,11 @@ class WrongObjectSignature(Exception):
         return ("object_signature must be either 'host', 'vuln', 'vuln_web',"
                 "'interface' 'service', 'credential' or 'note' and it was {0}"
                 .format(self.param))
+
+class CantAccessConfigurationWithoutTheClient(Exception):
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        return ("You're tring to access to the Faraday Configuration without "
+                "having the client up. This is not possible at the moment.")

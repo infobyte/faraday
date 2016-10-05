@@ -6,6 +6,7 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
+import hashlib
 from persistence.server.server_io_exceptions import MoreThanOneObjectFoundByID
 
 def force_unique(lst):
@@ -19,6 +20,9 @@ def force_unique(lst):
         return None
     else:
         raise MoreThanOneObjectFoundByID(lst)
+
+def get_hash(parts):
+    return hashlib.sha1("._.".join(parts)).hexdigest()
 
 def get_object_properties(obj):
     return {'id': obj.getID(),

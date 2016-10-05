@@ -550,40 +550,39 @@ class ModelObjectFactory(object):
         names.sort()
         return names
 
-    def generateID(self, classname, parent_id=None, **objargs):
-        if classname == 'Host':
-            args = (objargs['name'],)
-        elif classname == 'Interface':
-            args =(objargs['network_segment'], objargs['ipv4_address'], objargs['ipv6_address'])
-        elif classname == "Service":
-            args = (objargs['protocol'], ':'.join(str(objargs['ports'])))
-        elif classname == "Note":
-            args = (objargs['name'], objargs['text'])
-        elif classname == "Vulnerability":
-            args = (objargs['name'], objargs['desc'])
-        elif classname == "VulnerabilityWeb":
-            args = (objargs['name'], objargs['website'])
-        elif classname == "Credential" or classname == 'Cred':
-            print objargs
-            args = (objargs['name'], objargs['password'])
-        else:
-            raise Exception("You've provided the invalid classname {0}".format(classname))
+    def generateID(self, classname, parent_id='', **objargs):
+        # see how nicely formated that dictionary is
+        # it's a building about to go down on an eathquake!
+        # let's try not to make that an analogy about my code, ok? thank you :)
+        appropiate_class = self._registered_objects[classname]
+        class_to_args = {'Host': (objargs.get('name'),),
+                         'Cred': (objargs.get('name'), objargs.get('password')),
+                         'Note': (objargs.get('name'),
+                                  objargs.get('text')),
+                         'Service': (objargs.get('protocol'),
+                                     objargs.get('ports')),
+                         'Interface': (objargs.get('network_segment'),
+                                       objargs.get('ipv4_address'),
+                                       objargs.get('ipv6_address')),
+                         'Vulnerability': (objargs.get('name'),
+                                           objargs.get('desc')),
+                         'VulnerabilityWeb': (objargs.get('name'),
+                                              objargs.get('website'))
+                         }
+        try:
+            id = appropiate_class.generateID(parent_id, *class_to_args[classname])
+        except KeyError:
+            raise Exception("You've provided an invalid classname")
+        return id
 
-        objid = get_hash(args)
-        if parent_id:
-            objid = '.'.join([parent_id, objid])
-        return objid
-
-    def createModelObject(self, classname, object_name=None, workspace_name=None, **objargs):
+    def createModelObject(self, classname, object_name, workspace_name=None, parent_id=None, **objargs):
         if not workspace_name:
             workspace_name = CONF.getLastWorkspace()
         if classname in self._registered_objects:
             if object_name is not None:
-                print "OBJECT NAME IS NOT NONE"
                 objargs['name'] = object_name
-                objargs['id'] = self.generateID(classname, **objargs)
                 objargs['_id'] = -1 # they still don't have a server id
-                print objargs
+                objargs['id'] = self.generateID(classname, parent_id, **objargs)
                 tmpObj = self._registered_objects[classname](objargs, workspace_name)
                 return tmpObj
             else:

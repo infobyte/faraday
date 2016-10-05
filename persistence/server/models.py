@@ -14,6 +14,7 @@ import traceback
 from threading import Lock
 from persistence.server import server
 from persistence.server.utils import (force_unique,
+                                      get_hash,
                                       get_host_properties,
                                       get_interface_properties,
                                       get_service_properties,
@@ -50,7 +51,6 @@ def _ignore_in_changes(func):
     return func_wrapper
 
 def _flatten_dictionary(dictionary):
-    print "ORIGINAL DICTIONARY: ", dictionary
     flattened_dict = {}
     if dictionary.get('_id'):
         flattened_dict['_id'] = dictionary['_id']
@@ -58,7 +58,6 @@ def _flatten_dictionary(dictionary):
         flattened_dict['id'] = dictionary['id']
     for k, v in dictionary.get('value', {}).items():
         flattened_dict[k] = v
-    print "FLATTENED DICTIONARY: ", flattened_dict
     return flattened_dict
 
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
@@ -502,17 +501,22 @@ def test_server_url(url_to_test):
 
 class ModelBase(object):
     def __init__(self, obj, workspace_name):
-        print "WHAT IS OBJECT: "
-        print obj
         self._workspace_name = workspace_name
         self._server_id = obj.get('_id')
-        self.id = obj.get('id')
+        self.id = obj['id']
         self.name = obj.get('name')
         self.description = obj.get('description', "")
         self.owned = obj.get('owned')
         self.owner = obj.get('owner')
         self._metadata = obj.get('metadata', Metadata(self.owner))
         self.updates = []
+
+    @staticmethod
+    def generateID(parent_id, *args):
+        objid = get_hash(args)
+        if parent_id:
+            objid = '.'.join([parent_id, objid])
+        return objid
 
     @staticmethod
     def publicattrsrefs():
@@ -585,10 +589,14 @@ class Host(ModelBase):
 
     def __init__(self, host, workspace_name):
         ModelBase.__init__(self, host, workspace_name)
-        print host
         self.default_gateway = host.get('default_gateway')
         self.os = host.get('os', 'unkown')
         self.vuln_amount = int(host.get('vulns', 0))
+
+    @staticmethod
+    def generateID(_, name):
+        # empty arg so as to share same interface as other classes' generateID
+        return ModelBase.generateID('', name)
 
     @staticmethod
     def publicattrsrefs():
@@ -654,6 +662,10 @@ class Interface(ModelBase):
         self.amount_ports_opened   = 0
         self.amount_ports_closed   = 0
         self.amount_ports_filtered = 0
+
+    @staticmethod
+    def generateID(parent_id, network_segment, ipv4_address, ipv6_address):
+        return ModelBase.generateID(parent_id, network_segment, ipv4_address, ipv6_address)
 
     @staticmethod
     def publicattrsrefs():
@@ -753,6 +765,11 @@ class Service(ModelBase):
         self.vuln_amount = int(service.get('vulns', 0))
 
     @staticmethod
+    def generateID(parent_id, protocol, ports):
+        ports = ':'.join(str(ports))
+        return ModelBase.generateID(parent_id, protocol, ports)
+
+    @staticmethod
     def publicattrsrefs():
         publicattrs = dict(ModelBase.publicattrsrefs(), **{
             'Ports' : 'ports',
@@ -799,12 +816,20 @@ class Vuln(ModelBase):
 
     def __init__(self, vuln, workspace_name):
         ModelBase.__init__(self, vuln, workspace_name)
+
+        # this next two lines are stupid but so is life so you should get used to it :)
+        self.description = vuln['desc']
         self.desc = vuln['desc']
+
         self.data = vuln.get('data')
         self.severity = vuln['severity']
         self.refs = vuln.get('refs')
         self.confirmed = vuln.get('confirmed', False)
         self.resolution = vuln.get('resolution')
+
+    @staticmethod
+    def generateID(parent_id, name, description):
+        return ModelBase.generateID(parent_id, name, description)
 
     @staticmethod
     def publicattrsrefs():
@@ -907,6 +932,10 @@ class VulnWeb(Vuln):
         self.parent = vuln_web.get('parent')
 
     @staticmethod
+    def generateID(parent_id, name, website):
+        return ModelBase.generateID(parent_id, name, website)
+
+    @staticmethod
     def publicattrsrefs():
         publicattrs = dict(ModelBase.publicattrsrefs(), **{
             'Data' : 'data',
@@ -1003,6 +1032,10 @@ class Note(ModelBase):
         ModelBase.__init__(self, note, workspace_name)
         self.text = note['text']
 
+    @staticmethod
+    def generateID(parent_id, name, text):
+        return ModelBase.generateID(parent_id, name, text)
+
     def updateAttributes(self, name=None, text=None):
         if name is not None:
             self.name = name
@@ -1024,6 +1057,10 @@ class Credential(ModelBase):
             self.username = credential['name']
 
         self.password = credential['password']
+
+    @staticmethod
+    def generateID(parent_id, name, password):
+        return ModelBase.generateID(parent_id, name, password)
 
     def updateAttributes(self, username=None, password=None):
         if username is not None:

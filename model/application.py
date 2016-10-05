@@ -12,6 +12,7 @@ import threading
 import requests
 
 from json import loads
+from time import sleep
 
 from model.controller import ModelController
 from managers.workspace_manager import WorkspaceManager
@@ -44,12 +45,6 @@ class TimerClass(threading.Thread):
 
         information = loads(json_response)
 
-        if information["license_status"] != "OK":
-
-            getLogger("License").error
-            ("License invalid, please check with customer support.")
-            sys.exit(2)
-
         for news in information["news"]:
             model.guiapi.notification_center.sendCustomLog(
                 "NEWS -" + news["url"] + "|" + news["description"])
@@ -57,11 +52,9 @@ class TimerClass(threading.Thread):
     def run(self):
         while not self.__event.is_set():
             try:
-                from time import sleep
                 sleep(5)
                 res = requests.get(
-                    #"https://www.faradaysec.com/scripts/updatedb.php",
-                    "http://localhost:5985/testing/b5cf3ff7fa0c08890a7b41179900091c/update.json",
+                    "https://www.faradaysec.com/scripts/updatedb.php",
                     params={'version': CONF.getVersion()},
                     timeout=1,
                     verify=True)

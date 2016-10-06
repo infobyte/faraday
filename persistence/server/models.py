@@ -33,7 +33,11 @@ from config.configuration import getInstanceConfiguration
 from functools import wraps
 from difflib import Differ
 
+
 FARADAY_UP = True
+MERGE_STRATEGY = None  # you may change it the string 'NEW' to prefer new objects
+                       # you may ask why this can be None type or 'New' as a string
+                       # the answer is: Faraday.
 
 def _conf():
     if FARADAY_UP:
@@ -41,6 +45,13 @@ def _conf():
         return getInstanceConfiguration()
     else:
         raise CantAccessConfigurationWithoutTheClient
+
+def _get_merge_strategy():
+    try:
+        merge_strategy = _conf().getMergeStrategy()
+    except CantAccessConfigurationWithoutTheClient:
+        merge_strategy = MERGE_STRATEGY
+    return merge_strategy
 
 _CHANGES_LOCK = Lock()
 def get_changes_lock():
@@ -69,9 +80,9 @@ def _flatten_dictionary(dictionary):
     """
     flattened_dict = {}
     if dictionary.get('_id'):
-        flattened_dict['_id'] = dictionary['_id']
+        flattened_dict[u'_id'] = dictionary['_id']
     if dictionary.get('id'):
-        flattened_dict['id'] = dictionary['id']
+        flattened_dict[u'id'] = dictionary['id']
     for k, v in dictionary.get('value', {}).items():
         if k != '_id':  # this is the couch id, which we have saved on 'id'
             flattened_dict[k] = v
@@ -701,10 +712,10 @@ class ModelBase(object):
             attribute = self.publicattrsrefs().get(k)
             prop_update = self.propertyTieBreaker(attribute, *v)
 
-            if not isinstance(prop_update, tuple) or _conf().getMergeStrategy():
+            if not isinstance(prop_update, tuple) or _get_merge_strategy():
                 # if there's a strategy set by the user, apply it
                 if isinstance(prop_update, tuple):
-                    prop_update = MergeSolver(_conf().getMergeStrategy())
+                    prop_update = MergeSolver(_get_merge_strategy())
                     prop_update = prop_update.solve(prop_update[0], prop_update[1])
 
                 setattr(self, attribute, prop_update)

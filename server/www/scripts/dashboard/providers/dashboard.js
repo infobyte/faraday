@@ -201,14 +201,13 @@ angular.module('faradayApp')
 
         dashboardSrv.getCommands = function(ws) {
             var deferred = $q.defer();
-            var url = BASEURL + "/" + ws + "/_design/commands/_view/list";
 
             ServerAPI.getCommands(ws)
                 .then(function(res) {
+                    console.log(res);
                     var tmp = [];
                     res.data.commands.forEach(function(cmd) {
                         var _cmd = cmd.value;
-                        _cmd["command"] = cmd.key;
                         _cmd.user = _cmd.user || "unknown";
                         _cmd.hostname = _cmd.hostname || "unknown";
                         _cmd.ip = _cmd.ip || "0.0.0.0";
@@ -217,7 +216,7 @@ angular.module('faradayApp')
                         } else if(_cmd.duration != undefined) {
                             _cmd.duration = _cmd.duration.toFixed(2) + "s";
                         }
-                        _cmd.date = _cmd.startdate * 1000;
+                        _cmd.date = _cmd.itime * 1000;
                         tmp.push(_cmd);
                     });
 

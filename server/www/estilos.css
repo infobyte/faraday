@@ -1107,3 +1107,11 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
     border-radius: .25em;
 }
 
+.ui-notification.info{
+    color: #31708f;
+    background-color: #d9edf7;
+}
+
+.ui-notification a {
+    color: #31708f;
+}

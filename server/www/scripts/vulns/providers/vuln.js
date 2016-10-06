@@ -144,12 +144,11 @@ angular.module('faradayApp')
                     });
                 } else {
                     self._save(vuln, true)
-                        .success(function(response) {
+                        .then(function(response) {
                             self.set(self.ws, vuln);
                             self._rev = response.rev;
                             deferred.resolve();
-                        })
-                        .error(function() {
+                        }, function() {
                             deferred.reject();
                         });
                 }

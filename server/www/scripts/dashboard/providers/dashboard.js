@@ -257,7 +257,7 @@ angular.module('faradayApp')
                     }
                 }, function() {
                     deferred.reject();
-                })
+                });
             return deferred.promise;
         };
 

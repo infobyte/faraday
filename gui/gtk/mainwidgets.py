@@ -10,6 +10,7 @@ import gi
 import os
 import math
 import operator
+import webbrowser
 
 gi.require_version('Gtk', '3.0')
 
@@ -732,22 +733,50 @@ class ConsoleLog(Gtk.Widget):
         """Returns the ScrolledWindow used to contain the view"""
         return self.textView
 
+    def news_button(self, url, description):
+
+            anchor = self.textBuffer.create_child_anchor(
+                self.textBuffer.get_end_iter())
+
+            button = Gtk.Button()
+            label = Gtk.Label()
+
+            label.set_markup(
+                'Faraday News: <a href="' + url + '"> ' +
+                description + "</a>")
+
+            button.add(label)
+            button.set_relief(Gtk.ReliefStyle.NONE)
+
+            button.connect("clicked", lambda o: webbrowser.open())
+
+            label.show()
+            button.show()
+            self.update("\n")
+
+            self.textView.add_child_at_anchor(button, anchor)
+
     def customEvent(self, text):
         """Filters event so that only those with type 3131 get to the log.
         Also split them, so we can add the correct formatting to the first
         part of the message"""
 
-        text = text.split('-')
+        text = text.split('-', 1)
         if text[0] == "INFO ":
             self.update("[ " + text[0] + "]", self.bold)
-        if text[0] == "DEBUG ":
+        elif text[0] == "DEBUG ":
             self.update("[ " + text[0] + "]", self.bold, self.green)
-        if text[0] == "ERROR " or text[0] == "CRITICAL: ":
+        elif text[0] == "ERROR " or text[0] == "CRITICAL: ":
             self.update("[ " + text[0] + "]", self.bold, self.red)
-        if text[0] == "WARNING ":
+        elif text[0] == "WARNING ":
             self.update("[ " + text[0] + "]", self.bold, self.orange)
-        if text[0] == "NOTIFICATION ":
+        elif text[0] == "NOTIFICATION ":
             self.update("[ " + text[0] + "]", self.bold, self.blue)
+        elif text[0] == "NEWS ":
+            # Format of data : 'NEWS - URL|DESC'
+            data_url_desc = text[1].split('|')
+            self.news_button(data_url_desc[0], data_url_desc[1])
+            return
 
         self.update("-" + '-'.join(text[1:]) + "\n")
 

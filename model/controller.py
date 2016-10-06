@@ -265,7 +265,6 @@ class ModelController(threading.Thread):
     def _dispatchActionWithLock(self, action_callback, *args):
         res = False
         self.__acquire_host_lock()
-        print "ACTION CALLBACK: ", action_callback
         try:
             res = action_callback(*args)
         except Exception:

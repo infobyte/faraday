@@ -794,6 +794,9 @@ class Interface(ModelBase):
     def __init__(self, interface, workspace_name):
         ModelBase.__init__(self, interface, workspace_name)
         self.hostnames = interface.get('hostnames', [])
+
+        # NOTE. i don't know why this is like this
+        # probably a remnant of the old faraday style classes
         try:
             self.ipv4 = interface['ipv4']
             self.ipv6 = interface['ipv6']
@@ -984,7 +987,7 @@ class Vuln(ModelBase):
         self.refs = vuln.get('refs') or []
         self.confirmed = vuln.get('confirmed', False)
         self.resolution = vuln.get('resolution')
-        self.status = vuln['value']['status']
+        self.status = vuln.get('status', "vulnerable")
 
     @staticmethod
     def generateID(parent_id, name, description):
@@ -1109,7 +1112,6 @@ class VulnWeb(Vuln):
         self.hostnames = vuln_web.get('hostnames')
         self.impact = vuln_web.get('impact')
         self.service = vuln_web.get('service')
-        self.status = vuln_web.get('status')
         self.tags = vuln_web.get('tags')
         self.target = vuln_web.get('target')
         self.parent = vuln_web.get('parent')

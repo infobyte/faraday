@@ -14,6 +14,8 @@ VULN_JSON_STRING = '{"_id":8,"id":"08d3b6545ec70897daf05cd471f4166a8e605c00.2a21
 
 VULN_WEB_JSON_STRING = '{"_id":20,"id":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.790670b8824bf95588c1a00e4e65cb3c681e94d6.f0390f7e450cb71a4ff31e3bd38c2049c5f189f8","key":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.790670b8824bf95588c1a00e4e65cb3c681e94d6.f0390f7e450cb71a4ff31e3bd38c2049c5f189f8","value":{"_attachments":{},"_id":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.790670b8824bf95588c1a00e4e65cb3c681e94d6.f0390f7e450cb71a4ff31e3bd38c2049c5f189f8","_rev":"1-aeee90afddaa938dff756baf8d2cebda","confirmed":false,"data":"","desc":"It was possible to identify the remote service by its banner or by looking at the error message it sends when it receives an HTTP request.\\nOutput: A web server is running on this port.","description":"It was possible to identify the remote service by its banner or by looking at the error message it sends when it receives an HTTP request.\\nOutput: A web server is running on this port.","easeofresolution":null,"hostnames":["qa3app09"],"impact":{"accountability":null,"availability":null,"confidentiality":null,"integrity":null},"issuetracker":{},"metadata":{"create_time":1475852074.464117,"creator":"","owner":"","update_action":0,"update_controller_action":"ModelControler.newVulnWeb","update_time":1475852074.464117,"update_user":""},"method":"","name":"Service Detection","obj_id":"f0390f7e450cb71a4ff31e3bd38c2049c5f189f8","owned":"false","owner":"","params":"","parent":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.790670b8824bf95588c1a00e4e65cb3c681e94d6","path":"","pname":"","query":"","refs":[],"request":"","resolution":"n/a","response":"","service":"(80/tcp) www","severity":"info","status":"","tags":[],"target":"10.31.112.29","type":"VulnerabilityWeb","website":"qa3app09"}}'
 
+NOTE_JSON_STRING = '{"_id":1,"id":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.790670b8824bf95588c1a00e4e65cb3c681e94d6.83b3a120d6928b3c1f04a41cfccc59a55c627cf2","key":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.790670b8824bf95588c1a00e4e65cb3c681e94d6.83b3a120d6928b3c1f04a41cfccc59a55c627cf2","value":{"_id":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.790670b8824bf95588c1a00e4e65cb3c681e94d6.83b3a120d6928b3c1f04a41cfccc59a55c627cf2","couchid":"08d3b6545ec70897daf05cd471f4166a8e605c00.02946afc59c50a4d76c1adbb082c2d5439baf50a.790670b8824bf95588c1a00e4e65cb3c681e94d6.83b3a120d6928b3c1f04a41cfccc59a55c627cf2","description":"","metadata":{"create_time":1475852074.461232,"creator":"","owner":"","update_action":0,"update_controller_action":"ModelControler._processAction ModelControler.newNote","update_time":1475852074.461232,"update_user":""},"name":"website","owned":false,"owner":"","text":""}}'
+
 models.FARADAY_UP = False
 models.MERGE_STRATEGY = None  # this is the default :)
 
@@ -26,8 +28,9 @@ class ModelsTest(unittest.TestCase):
         self.a_service_dictionary = json.loads(SERVICE_JSON_STRING)
         self.a_vuln_dictionary = json.loads(VULN_JSON_STRING)
         self.a_vuln_web_dictionary = json.loads(VULN_WEB_JSON_STRING)
+        self.a_note_dictionary = json.loads(NOTE_JSON_STRING)
 
-        self.maxDiff = None
+        self.maxDiff = None  # show the diff when test run no matter how big
 
     def test_ignore_in_changes(self):
         def server_io(): return {'ok': True, 'rev': 1, 'id': 2}
@@ -75,9 +78,12 @@ class ModelsTest(unittest.TestCase):
         self.assertTrue(all([isinstance(v, models.VulnWeb) for v in vulns_web]))
 
     def test_id_creation(self):
-        classes = [models.Host, models.Interface, models.Service, models.Vuln, models.VulnWeb]
+        # ideally, the flatten dictionary should be provided and shouldnt depend upon
+        # our implementation.
+        # ideally.
+        classes = [models.Host, models.Interface, models.Service, models.Vuln, models.VulnWeb, models.Note]
         dicts = [self.a_host_dictionary, self.an_interface_dictionary, self.a_service_dictionary,
-                 self.a_vuln_dictionary, self.a_vuln_web_dictionary]
+                 self.a_vuln_dictionary, self.a_vuln_web_dictionary, self.a_note_dictionary]
         dicts = map(models._flatten_dictionary, dicts)
         for class_, dictionary in zip(classes, dicts):
             expected_id = dictionary['id']

@@ -654,15 +654,40 @@ def test_server_url(url_to_test):
     """Return True if url_to_test/_api/info is accessible, False otherwise"""
     return server.test_server_url(url_to_test)
 
+
+# NOTE: the whole 'which arguments are mandatory and which type should they be"
+# should probably be reviewed in a nice developmet meeting where
+# I think there are several # discrepancies between the models here,
+# those on the server and the parameters the apis specify,
+# and this leads to potential dissaster. Remember params?
 class ModelBase(object):
+    """A model for all the Faraday Objects.
+    There should be a one to one correspondance with the jsons the faraday
+    server gives through apis and the classes inheriting from this one.
+    That is: you can view this classes as an python-object representation
+    of the server's json or viceversa.
+
+    As all the classes take the obj dictionary as an mandatory parameter.
+    The obj dictionary contains the information of the object we need to create
+    an instance of. To specify a default argument for the objects attributes,
+    use the .get method for dictionaries. Try to specifiy a default value that
+    matches the type of the value you expect.
+
+    All of the values used from the obj dictionary that are set to be
+    non-nullable on the server's models (server/models.py) should be given a
+    sane default argument, EXCEPT for those where we can't provide a one.
+    For example, we can't provide a sane default argument for ID, that should be
+    given to us and indeed raise an exception if it wasn't. We can provide
+    a default argument for 'description': if nothing came, assume empty string,
+    """
     def __init__(self, obj, workspace_name):
         self._workspace_name = workspace_name
         self._server_id = obj.get('_id')
         self.id = obj.get('id', '')
         self.name = obj.get('name')
         self.description = obj.get('description', "")
-        self.owned = obj.get('owned')
-        self.owner = obj.get('owner')
+        self.owned = obj.get('owned', False)
+        self.owner = obj.get('owner', '')
         self._metadata = obj.get('metadata', Metadata(self.owner))
         self.updates = []
 
@@ -757,9 +782,9 @@ class Host(ModelBase):
         self.os = host.get('os', 'unkown')
         self.vuln_amount = int(host.get('vulns', 0))
 
-    def setID(self, _, name):
+    def setID(self, _):
         # empty arg so as to share same interface as other classes' generateID
-        ModelBase.generateID('', self.name)
+        ModelBase.setID(self, '', self.name)
 
     @staticmethod
     def publicattrsrefs():
@@ -829,7 +854,14 @@ class Interface(ModelBase):
         self.amount_ports_filtered = 0
 
     def setID(self, parent_id):
-         ModelBase.setID(parent_id, self.network_segment, self.ipv4_address, self.ipv6_address)
+        try:
+            ipv4_address = self.ipv4_address
+            ipv6_address = self.ipv6_address
+        except AttributeError:
+            ipv4_address = self.ipv4['address']
+            ipv6_address = self.ipv6['address']
+
+        ModelBase.setID(self, parent_id, self.network_segment, ipv4_address, ipv6_address)
 
     @staticmethod
     def publicattrsrefs():
@@ -932,14 +964,14 @@ class Service(ModelBase):
     def __init__(self, service, workspace_name):
         ModelBase.__init__(self, service, workspace_name)
         self.protocol = service['protocol']
-        self.ports =  service['ports']
+        self.ports =  [int(port) for port in service['ports']]
         self.version = service['version']
         self.status = service['status']
         self.vuln_amount = int(service.get('vulns', 0))
 
     def setID(self, parent_id):
-        ports = ':'.join(str(ports))
-        ModelBase.generateID(parent_id, self.protocol, ports)
+        ports = ':'.join(str(self.ports))
+        ModelBase.setID(self, parent_id, self.protocol, ports)
 
     @staticmethod
     def publicattrsrefs():
@@ -999,7 +1031,7 @@ class Vuln(ModelBase):
         self.status = vuln.get('status', "vulnerable")
 
     def setID(self, parent_id):
-        ModelBase.setID(parent_id, self.name, self.description)
+        ModelBase.setID(self, parent_id, self.name, self.description)
 
     @staticmethod
     def publicattrsrefs():
@@ -1125,7 +1157,7 @@ class VulnWeb(Vuln):
         self.parent = vuln_web.get('parent')
 
     def setID(self, parent_id):
-        ModelBase.setID(parent_id, self.name, self.website)
+        ModelBase.setID(self, parent_id, self.name, self.website)
 
     @staticmethod
     def publicattrsrefs():
@@ -1248,7 +1280,7 @@ class Note(ModelBase):
         self.text = note['text']
 
     def setID(self, parent_id):
-        ModelBase.setID(parent_id, self.name, self.text)
+        ModelBase.setID(self, parent_id, self.name, self.text)
 
     def updateAttributes(self, name=None, text=None):
         if name is not None:
@@ -1273,7 +1305,7 @@ class Credential(ModelBase):
         self.password = credential['password']
 
     def setID(self, parent_id):
-        ModelBase.setID(parent_id, self.name, self.password)
+        ModelBase.setID(self, parent_id, self.name, self.password)
 
     def updateAttributes(self, username=None, password=None):
         if username is not None:

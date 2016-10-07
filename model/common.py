@@ -64,26 +64,26 @@ class ModelObjectFactory(object):
         # see how nicely formated that dictionary is
         # it's a building about to go down on an eathquake!
         # let's try not to make that an analogy about my code, ok? thank you :)
-        appropiate_class = self._registered_objects[classname]
-        class_to_args = {'Host': (objargs.get('name'),),
-                         'Cred': (objargs.get('name'), objargs.get('password')),
-                         'Note': (objargs.get('name'),
-                                  objargs.get('text')),
-                         'Service': (objargs.get('protocol'),
-                                     objargs.get('ports')),
-                         'Interface': (objargs.get('network_segment'),
-                                       objargs.get('ipv4_address'),
-                                       objargs.get('ipv6_address')),
-                         'Vulnerability': (objargs.get('name'),
-                                           objargs.get('desc')),
-                         'VulnerabilityWeb': (objargs.get('name'),
-                                              objargs.get('website'))
-                         }
-        try:
-            id = appropiate_class.generateID(parent_id, *class_to_args[classname])
-        except KeyError:
-            raise Exception("You've provided an invalid classname")
-        return id
+        # appropiate_class = self._registered_objects[classname]
+        # class_to_args = {'Host': (objargs.get('name'),),
+        #                  'Cred': (objargs.get('name'), objargs.get('password')),
+        #                  'Note': (objargs.get('name'),
+        #                           objargs.get('text')),
+        #                  'Service': (objargs.get('protocol'),
+        #                              objargs.get('ports')),
+        #                  'Interface': (objargs.get('network_segment'),
+        #                                objargs.get('ipv4_address'),
+        #                                objargs.get('ipv6_address')),
+        #                  'Vulnerability': (objargs.get('name'),
+        #                                    objargs.get('desc')),
+        #                  'VulnerabilityWeb': (objargs.get('name'),
+        #                                       objargs.get('website'))
+        #                  }
+        # try:
+        #     id = appropiate_class.generateID(parent_id, *class_to_args[classname])
+        # except KeyError:
+        #     raise Exception("You've provided an invalid classname")
+        # return id
 
     def createModelObject(self, classname, object_name, workspace_name=None, parent_id=None, **objargs):
         """Given a registered classname, create an object of name object_name and
@@ -98,8 +98,9 @@ class ModelObjectFactory(object):
             if object_name is not None:
                 objargs['name'] = object_name
                 objargs['_id'] = -1  # they still don't have a server id
-                objargs['id'] = self.generateID(classname, parent_id, **objargs)
+                objargs['id'] = -1 # we'll generate it after making sure the objects are okey
                 tmpObj = self._registered_objects[classname](objargs, workspace_name)
+                tmpObj.setID(parent_id)
                 return tmpObj
             else:
                 raise Exception("Object name parameter missing. Cannot create object class: %s" % classname)

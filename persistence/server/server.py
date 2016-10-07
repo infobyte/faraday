@@ -934,6 +934,9 @@ def delete_workspace(workspace_name):
     return _delete(db_url, database=True)
 
 def is_server_up():
+    """Return True if we can stablish a connection with the server,
+    False otherwise.
+    """
     try:
         _get("{0}/info".format(_create_server_api_url()))
         is_server_up = True
@@ -942,6 +945,9 @@ def is_server_up():
     return is_server_up
 
 def test_server_url(url_to_test):
+    """Return True if the url_to_test is indeed a valid Faraday Server URL.
+    False otherwise.
+    """
     try:
         _get("{0}/_api/info".format(url_to_test))
         test_okey = True

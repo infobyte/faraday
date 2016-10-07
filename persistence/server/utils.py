@@ -25,10 +25,16 @@ def get_hash(parts):
     return hashlib.sha1("._.".join(parts)).hexdigest()
 
 def get_object_properties(obj):
+    # this sometimes is the metadata object and sometimes its a dictionary
+    # a better fix awaits in a brighter future
+    metadata = obj.getMetadata()
+    if not isinstance(obj.getMetadata(), dict):
+        metadata = metadata.toDict()
+
     return {'id': obj.getID(),
             'name': obj.getName(),
             'description': obj.getDescription(),
-            'metadata': obj.getMetadata().toDict(),
+            'metadata': metadata,
             'owned': obj.isOwned(),
             'owner': obj.getOwner()
             }

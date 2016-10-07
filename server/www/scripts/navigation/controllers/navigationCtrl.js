@@ -6,14 +6,20 @@ angular.module('faradayApp')
     .controller('navigationCtrl', ['$scope', '$http', '$route', '$routeParams', '$cookies', '$location', '$interval', '$uibModal', 'configSrv', 'workspacesFact', 'Notification',
         function($scope, $http, $route, $routeParams, $cookies, $location, $interval, $uibModal, configSrv, workspacesFact, Notification) {
 
-        $scope.workspace = "";
+        $scope.workspace = "asd";
         $scope.component = "";
         var componentsNeedsWS = ["dashboard","status","hosts"];
 
         $scope.checkNews = function() {
              $http.get("https://www.faradaysec.com/scripts/updatedb.php?version=" + configSrv.faraday_version).then(function(response) {
                 response.data['news'].forEach(function(element) {
-                    Notification.info({message: '<a href="' + element['url']  + '">' + element['description']  + '</a>', title: 'Faraday News', delay: 'NO'});
+                    $scope.url = element['url'];
+                    Notification.info({
+                        message: element['description'],
+                        title: 'x',
+                        scope: $scope,
+                        delay: 'ALWAYS',
+                        templateUrl: 'scripts/navigation/partials/notification.html'});
                 }, this);
                 
             }, function() {

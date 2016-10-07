@@ -1115,3 +1115,13 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .ui-notification a {
     color: #31708f;
 }
+
+.ui-notification>h3{
+    font-size:14px;
+    font-weight:700;
+    display:block;
+    margin:0px 10px 0;
+    padding:0 0 5px;
+    text-align:right;
+    border-bottom:1px solid rgba(255,255,255,.3)
+}

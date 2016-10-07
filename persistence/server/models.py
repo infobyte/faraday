@@ -658,7 +658,7 @@ class ModelBase(object):
     def __init__(self, obj, workspace_name):
         self._workspace_name = workspace_name
         self._server_id = obj.get('_id')
-        self.id = obj['id']
+        self.id = obj.get('id', '')
         self.name = obj.get('name')
         self.description = obj.get('description', "")
         self.owned = obj.get('owned')
@@ -666,12 +666,14 @@ class ModelBase(object):
         self._metadata = obj.get('metadata', Metadata(self.owner))
         self.updates = []
 
-    @staticmethod
-    def generateID(parent_id, *args):
+    def setID(self, parent_id, *args):
+        if self.id:
+            return None
+
         objid = get_hash(args)
         if parent_id:
             objid = '.'.join([parent_id, objid])
-        return objid
+        self.id = objid
 
     @staticmethod
     def publicattrsrefs():
@@ -755,10 +757,9 @@ class Host(ModelBase):
         self.os = host.get('os', 'unkown')
         self.vuln_amount = int(host.get('vulns', 0))
 
-    @staticmethod
-    def generateID(_, name):
+    def setID(self, _, name):
         # empty arg so as to share same interface as other classes' generateID
-        return ModelBase.generateID('', name)
+        ModelBase.generateID('', self.name)
 
     @staticmethod
     def publicattrsrefs():
@@ -768,7 +769,6 @@ class Host(ModelBase):
         return publicattrs
 
     def updateAttributes(self, name=None, description=None, os=None, owned=None):
-
         if name is not None:
             self.name = name
         if description is not None:
@@ -828,9 +828,8 @@ class Interface(ModelBase):
         self.amount_ports_closed   = 0
         self.amount_ports_filtered = 0
 
-    @staticmethod
-    def generateID(parent_id, network_segment, ipv4_address, ipv6_address):
-        return ModelBase.generateID(parent_id, network_segment, ipv4_address, ipv6_address)
+    def setID(self, parent_id):
+         ModelBase.setID(parent_id, self.network_segment, self.ipv4_address, self.ipv6_address)
 
     @staticmethod
     def publicattrsrefs():
@@ -938,10 +937,9 @@ class Service(ModelBase):
         self.status = service['status']
         self.vuln_amount = int(service.get('vulns', 0))
 
-    @staticmethod
-    def generateID(parent_id, protocol, ports):
+    def setID(self, parent_id):
         ports = ':'.join(str(ports))
-        return ModelBase.generateID(parent_id, protocol, ports)
+        ModelBase.generateID(parent_id, self.protocol, ports)
 
     @staticmethod
     def publicattrsrefs():
@@ -1000,9 +998,8 @@ class Vuln(ModelBase):
         self.resolution = vuln.get('resolution')
         self.status = vuln.get('status', "vulnerable")
 
-    @staticmethod
-    def generateID(parent_id, name, description):
-        return ModelBase.generateID(parent_id, name, description)
+    def setID(self, parent_id):
+        ModelBase.setID(parent_id, self.name, self.description)
 
     @staticmethod
     def publicattrsrefs():
@@ -1127,9 +1124,8 @@ class VulnWeb(Vuln):
         self.target = vuln_web.get('target')
         self.parent = vuln_web.get('parent')
 
-    @staticmethod
-    def generateID(parent_id, name, website):
-        return ModelBase.generateID(parent_id, name, website)
+    def setID(self, parent_id):
+        ModelBase.setID(parent_id, self.name, self.website)
 
     @staticmethod
     def publicattrsrefs():
@@ -1251,9 +1247,8 @@ class Note(ModelBase):
         ModelBase.__init__(self, note, workspace_name)
         self.text = note['text']
 
-    @staticmethod
-    def generateID(parent_id, name, text):
-        return ModelBase.generateID(parent_id, name, text)
+    def setID(self, parent_id):
+        ModelBase.setID(parent_id, self.name, self.text)
 
     def updateAttributes(self, name=None, text=None):
         if name is not None:
@@ -1277,9 +1272,8 @@ class Credential(ModelBase):
 
         self.password = credential['password']
 
-    @staticmethod
-    def generateID(parent_id, name, password):
-        return ModelBase.generateID(parent_id, name, password)
+    def setID(self, parent_id):
+        ModelBase.setID(parent_id, self.name, self.password)
 
     def updateAttributes(self, username=None, password=None):
         if username is not None:

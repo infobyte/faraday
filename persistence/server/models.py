@@ -682,7 +682,7 @@ class ModelBase(object):
     """
     def __init__(self, obj, workspace_name):
         self._workspace_name = workspace_name
-        self._server_id = obj.get('_id')
+        self._server_id = obj.get('_id', '')
         self.id = obj.get('id', '')
         self.name = obj.get('name')
         self.description = obj.get('description', "")
@@ -694,7 +694,6 @@ class ModelBase(object):
     def setID(self, parent_id, *args):
         if self.id:
             return None
-
         objid = get_hash(args)
         if parent_id:
             objid = '.'.join([parent_id, objid])

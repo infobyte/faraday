@@ -58,6 +58,11 @@ angular.module('faradayApp')
             var deferred = $q.defer();
 
             options = {page: page, page_size: page_size, sort:sort, sort_dir: sort_direction}
+            for( var property in filter ) {
+                if (filter.hasOwnProperty(property)) {
+                    options[property] = filter[property];
+                }
+            };
             ServerAPI.getHosts(ws, options)
                 .then(function(response) {
                     var result = { hosts: [], total: 0 };

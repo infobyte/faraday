@@ -969,6 +969,7 @@ class Service(ModelBase):
         self.vuln_amount = int(service.get('vulns', 0))
 
     def setID(self, parent_id):
+        # TODO: str from list? ERROR MIGRATION NEEDED
         ports = ':'.join(str(self.ports))
         ModelBase.setID(self, parent_id, self.protocol, ports)
 
@@ -1156,7 +1157,7 @@ class VulnWeb(Vuln):
         self.parent = vuln_web.get('parent')
 
     def setID(self, parent_id):
-        ModelBase.setID(self, parent_id, self.name, self.website)
+        ModelBase.setID(self, parent_id, self.name, self.website, self.path, self.description)
 
     @staticmethod
     def publicattrsrefs():
@@ -1304,7 +1305,7 @@ class Credential(ModelBase):
         self.password = credential['password']
 
     def setID(self, parent_id):
-        ModelBase.setID(self, parent_id, self.name, self.password)
+        ModelBase.setID(self, parent_id, self.username, self.password)
 
     def updateAttributes(self, username=None, password=None):
         if username is not None:

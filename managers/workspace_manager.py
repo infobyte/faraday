@@ -44,8 +44,6 @@ class WorkspaceManager(object):
         try:
             create_workspace(name, description=desc, start_date=start_date,
                              finish_date=finish_date, customer=customer)
-            # XXX: Remove this hack! Only for testing
-            time.sleep(2)
         except Unauthorized:
             raise WorkspaceException(
                 ("You're not authorized to create workspaces\n"
@@ -60,8 +58,6 @@ class WorkspaceManager(object):
         self.mappersManager.createMappers(name)
         self.setActiveWorkspace(workspace)
         notification_center.workspaceChanged(workspace)
-        # XXX: REIMPLEMENT THIS
-        #self.changesManager.watch(self.mappersManager, dbConnector)
         return name
 
     def openWorkspace(self, name):

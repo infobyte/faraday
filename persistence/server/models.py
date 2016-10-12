@@ -692,7 +692,7 @@ class ModelBase(object):
         self.updates = []
 
     def setID(self, parent_id, *args):
-        if self.id:
+        if  self.id and self.id != -1:
             return None
         objid = get_hash(args)
         if parent_id:

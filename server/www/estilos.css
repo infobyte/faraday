@@ -202,7 +202,7 @@ article.untercio{
 .fondo-gris1, .fondo-unclassified {background-color: #999 !important;}
 .fondo-blanco {background-color: #fff !important;}
 .fondo-info, .fondo-risk-accepted {background-color: #2e97bd !important;}
-.fondo-naranja, .fondo-medium, .fondo-re-opened {background-color: #DFBF35 !important;}
+.fondo-naranja, .fondo-medium, .fondo-med, .fondo-re-opened {background-color: #DFBF35 !important;}
 .fondo-amarillo, .fondo-low, .fondo-closed , .fondo-created{background-color: #A1CE31 !important;}
 .fondo-violeta {background-color: #932ebe !important;}
 /* Backgrounds New */

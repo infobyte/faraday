@@ -1024,11 +1024,11 @@ class Vuln(ModelBase):
         self.description = vuln['desc']
         self.desc = vuln['desc']
         self.data = vuln.get('data')
-        self.severity = vuln['severity']
+        self.severity = self.standarize(vuln['severity'])
         self.refs = vuln.get('refs') or []
         self.confirmed = vuln.get('confirmed', False)
         self.resolution = vuln.get('resolution')
-        self.status = vuln.get('status', "vulnerable")
+        self.status = vuln.get('status', "opened")
 
     def setID(self, parent_id):
         ModelBase.setID(self, parent_id, self.name, self.description)

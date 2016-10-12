@@ -60,7 +60,7 @@ angular.module('faradayApp')
                 request: "",
                 response: "",
                 website: "",
-                status: "vulnerable",
+                status: "opened",
             };
 
             vm.vuln = angular.copy(vuln);

@@ -28,9 +28,8 @@ class CantCommunicateWithServerError(ServerRequestException):
 
     def __str__(self):
         return ("Couldn't get a valid response from the server when requesting "
-                "to URL {0} with parameters {1} and function {2}.".format(self.server_url,
-                                                                          self.payload,
-                                                                          self.function))
+                "to URL {0} and function {1}.".format(self.server_url,
+                                                      self.function))
 
 class ConflictInDatabase(ServerRequestException):
     def __init__(self, answer):

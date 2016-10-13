@@ -162,7 +162,7 @@ angular.module('faradayApp')
         dashboardSrv.getVulnerabilitiesCount = function(ws) {
             var deferred = $q.defer();
 
-            var confirmed = false;
+            var confirmed = undefined;
 
             if (dashboardSrv.props['confirmed']) {
                 confirmed = true;
@@ -185,8 +185,8 @@ angular.module('faradayApp')
 
         dashboardSrv.getObjectsCount = function(ws) {
             var deferred = $q.defer();
-
-            var confirmed = false;
+            // Confirmed empty = All vulns 
+            var confirmed = undefined;
 
             if (dashboardSrv.props['confirmed']) {
                 confirmed = true;

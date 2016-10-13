@@ -26,7 +26,7 @@ angular.module('faradayApp')
                 }, function(err) {deferred.reject(err)});
                 servicesManager.getServices(workspace).then(function(services) {
                     services.forEach(function(service) {
-                        host_id = service.parent.split(".")[0];
+                        host_id = service._id.split(".")[0];
                         if (hosts_dict.hasOwnProperty(host_id)) {
                             hosts_dict[host_id].services.push(service);
                         }

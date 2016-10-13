@@ -222,9 +222,12 @@ angular.module("faradayApp")
                 return get(getUrl);
             }
 
-            ServerAPI.getWorkspaceSummary = function(wsName) {
+            ServerAPI.getWorkspaceSummary = function(wsName, confirmed) {
+                if (confirmed === undefined) {
+                    confirmed = false;
+                }
                 var getUrl = createGetUrl(wsName, "summary");
-                return get(getUrl);
+                return get(getUrl, {'confirmed': confirmed});
             }
 
             ServerAPI.getObj = function(wsName, objID) {
@@ -264,9 +267,12 @@ angular.module("faradayApp")
                 return ServerAPI.getServicesBy(wsName, 'hostid');
             }
 
-            ServerAPI.getVulnsBySeverity = function(wsName) {
+            ServerAPI.getVulnsBySeverity = function(wsName, confirmed) {
+                if (confirmed === undefined) {
+                    confirmed = false;
+                } 
                 var url = createGetUrl(wsName, 'vulns') + '/count';
-                return get(url, {'group_by': 'severity'})
+                return get(url, {'group_by': 'severity', 'confirmed' : confirmed})
             }
 
             ServerAPI.createHost = function(wsName, host) {

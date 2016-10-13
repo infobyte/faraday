@@ -161,7 +161,7 @@ angular.module('faradayApp')
             ServerAPI.getInterfaces(ws) 
                 .then(function(ints) {
                     var interfaces = [];
-                    ints.rows.forEach(function(interf) {
+                    ints.data.interfaces.forEach(function(interf) {
                         interfaces.push(interf.value);
                     });
 

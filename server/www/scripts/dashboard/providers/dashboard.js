@@ -162,11 +162,13 @@ angular.module('faradayApp')
         dashboardSrv.getVulnerabilitiesCount = function(ws) {
             var deferred = $q.defer();
 
+            var confirmed = false;
+
             if (dashboardSrv.props['confirmed']) {
-                url += "&confirmed=true";
+                confirmed = true;
             }
 
-            ServerAPI.getVulnsBySeverity(ws)
+            ServerAPI.getVulnsBySeverity(ws, confirmed)
                 .then(function(res) {
                     var vs = {};
                     res.data.groups.forEach(function(vuln) {
@@ -184,11 +186,13 @@ angular.module('faradayApp')
         dashboardSrv.getObjectsCount = function(ws) {
             var deferred = $q.defer();
 
-            if(dashboardSrv.props['confirmed']) {
-                url += "?confirmed=true";
+            var confirmed = false;
+
+            if (dashboardSrv.props['confirmed']) {
+                confirmed = true;
             }
 
-            ServerAPI.getWorkspaceSummary(ws)
+            ServerAPI.getWorkspaceSummary(ws, confirmed)
                 .then(function(res) {
                     delete res.data.stats["interfaces"];
                     deferred.resolve(res.data.stats);

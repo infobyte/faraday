@@ -846,7 +846,8 @@ class GuiApp(Gtk.Application, FaradayUi):
         ws_name = self.workspace_manager.getActiveWorkspace()
         if not ws_name:
             ws_url = couch_url + "/_ui/"
-        ws_url = couch_url + "/_ui/#/dashboard/ws/" + ws_name
+        else:
+            ws_url = couch_url + "/_ui/#/dashboard/ws/" + ws_name.name
         webbrowser.open(ws_url, new=2)
 
     def on_help_dispatch(self, action, param=None):

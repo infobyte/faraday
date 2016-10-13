@@ -11,16 +11,21 @@ angular.module('faradayApp')
         var componentsNeedsWS = ["dashboard","status","hosts"];
 
         $scope.checkNews = function() {
-             $http.get("https://www.faradaysec.com/scripts/updatedb.php?version=" + configSrv.faraday_version).then(function(response) {
-                response.data['news'].forEach(function(element) {
-                    $scope.url = element['url'];
-                    Notification.info({
-                        message: element['description'],
-                        title: 'x',
-                        scope: $scope,
-                        delay: 'ALWAYS',
-                        templateUrl: 'scripts/navigation/partials/notification.html'});
-                }, this);
+             $http.get('https://www.faradaysec.com/scripts/updatedb.php?version=' + configSrv.faraday_version).then(function(response) {
+                 try{
+                     response.data['news'].forEach(function(element) {
+                         $scope.url = element['url'];
+                         Notification.info({
+                             message: element['description'],
+                             title: 'x',
+                             scope: $scope,
+                             delay: 'ALWAYS',
+                             templateUrl: 'scripts/navigation/partials/notification.html'});
+                      }, this);
+                 }
+                 catch(error){
+                     console.log("Can't connect to faradaysec.com");
+                 }
                 
             }, function() {
                 console.log("Can't connect to faradaysec.com");

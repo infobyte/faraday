@@ -204,7 +204,6 @@ angular.module('faradayApp')
 
             ServerAPI.getCommands(ws)
                 .then(function(res) {
-                    console.log(res);
                     var tmp = [];
                     res.data.commands.forEach(function(cmd) {
                         var _cmd = cmd.value;

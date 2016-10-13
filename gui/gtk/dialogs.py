@@ -182,7 +182,7 @@ class NewWorkspaceDialog(Gtk.Window):
             creation_ok = self.create_ws_callback(ws_name, ws_desc)
             if creation_ok:
                 self.sidebar.add_workspace(ws_name)
-            self.destroy()
+                self.destroy()
         else:
             errorDialog(self, "Invalid workspace name",
                         "A workspace must be named with "

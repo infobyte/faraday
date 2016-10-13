@@ -442,7 +442,6 @@ class GuiApp(Gtk.Application, FaradayUi):
                 GObject.idle_add(CONF.saveConfig)
             except Exception as e:
                 GObject.idle_add(self.handle_no_active_workspace)
-                print e
                 getLogger("GTK").error(e)
 
             GObject.idle_add(loading_workspace, 'destroy')
@@ -844,7 +843,9 @@ class GuiApp(Gtk.Application, FaradayUi):
         the user's default browser
         """
         couch_url = CONF.getCouchURI()
-        ws_name = self.workspace_manager.getActiveWorkspace().name
+        ws_name = self.workspace_manager.getActiveWorkspace()
+        if not ws_name:
+            ws_url = couch_url + "/_ui/"
         ws_url = couch_url + "/_ui/#/dashboard/ws/" + ws_name
         webbrowser.open(ws_url, new=2)
 

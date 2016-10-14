@@ -29,12 +29,12 @@ angular.module('faradayApp')
             update: function(data, interfaceData, ws) {
                 var self = this;
                 return ServerAPI.updateHost(ws, data)
-                .then(function(data) {
-                    if(data.id == self._id) {
-                        self._rev = data.rev;
-                    } else {
-                        interfaceData._rev = data.rev;
-                    }
+                .then(function(hostData) {
+                    ServerAPI.updateInterface(ws, interfaceData)
+                    .then(function(intData) {
+                            self._rev = hostData.rev;
+                            interfaceData._rev = intData.rev;
+                    });
                 });
             },
 

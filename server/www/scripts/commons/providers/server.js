@@ -76,9 +76,11 @@ angular.module("faradayApp")
             // just set rev_provided to false if you're deleting a database :)
             var _delete = function(url, rev_provided) {
                 // never let undefined win
+
                 if (typeof rev_provided === "undefined") {var rev_provided = false;}
                 deferred = $q.defer();
                 var data = {};
+                
                 if (rev_provided === false) {
                     get(url).then(
                         function s(r) {
@@ -89,6 +91,10 @@ angular.module("faradayApp")
                             deferred.reject(r);
                         })
                 }
+                else{
+                    deferred.resolve(serverComm("DELETE", url, data));
+                }
+
                 return deferred.promise;
             };
 

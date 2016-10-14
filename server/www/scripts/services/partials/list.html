@@ -131,7 +131,7 @@
                                     </td>
                                     <td ng-bind="service.status || '-'"></td>
                                     <td>
-                                        <a ng-href="#/status/ws/{{workspace}}/search/service={{service.ports}}&target={{host.name}}">
+                                        <a ng-href="#/status/ws/{{workspace}}/search/service={{service.ports[0]}}&target={{host.name}}">
                                             <span ng-bind="service.vulns"></span>
                                         </a>
                                     </td>

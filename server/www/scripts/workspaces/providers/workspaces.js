@@ -31,7 +31,7 @@ angular.module('faradayApp')
         workspacesFact.getDuration = function(workspace_name) {
             var deferred = $q.defer();
             ServerAPI.getWorkspace(workspace_name).then(function(workspace) {
-                var ws = workspace;
+                var ws = workspace.data;
                 var dur = {};
 
                 if(ws.hasOwnProperty('duration')) {

@@ -224,7 +224,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.getWorkspace = function(wsName) {
-                getUrl = BASEURL + wsName + "/" + wsName;
+                getUrl = createDbUrl(wsName);
                 return get(getUrl);
             }
 

@@ -203,8 +203,7 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, 
             title: 'Users | '
         }).
         otherwise({
-            templateUrl: 'scripts/commons/partials/home.html',
-            controller: 'statusReportCtrl'
+            templateUrl: 'scripts/commons/partials/home.html'
         });
 }]);
 

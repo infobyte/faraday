@@ -177,12 +177,24 @@ def push_reports():
         logger.debug(traceback.format_exc())
         logger.warning("Reports database couldn't be uploaded. You need to be an admin to do it")
 
+def upload_views(workspace):
+    """ Upload views with couchdb behind of ViewsManager """
+    vmanager = ViewsManager()
+    try:
+        vmanager.addViews(workspace)
+    except:
+        import traceback
+        logger.debug(traceback.format_exc())
+        logger.warning("Views documents couldn't be uploaded. You need to be an admin to do it")
+
 def create_workspace(workspace):
-    # NOTE: For now, couchdb views won't be uploaded
-    # since should be deprecated during this release
+
     couch_server = CouchDBServer()
     couch_server.create_db(workspace.get('name'))
+
     ws = couch_server.get_workspace_handler(workspace.get('name'))
+    upload_views(ws)
+
     try:
         response = ws.save_doc(workspace)
     except (RequestFailed, ResourceError):

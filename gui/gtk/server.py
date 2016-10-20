@@ -115,8 +115,12 @@ class ServerIO(object):
                 # not a change really right?
                 return None
 
-            if obj_type is not None and obj_type not in cool_types:
+            is_deleted = bool(change.get('deleted'))
+            if obj_type is None and not is_deleted:
                 # if obj_type is None it's a deleted change. retrieve its type later
+                return None
+
+            if obj_type is not None and obj_type not in cool_types:
                 return None
 
             if change['changes'][0]['rev'] == local_changes.get(change['id']):

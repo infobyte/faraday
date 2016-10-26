@@ -52,7 +52,7 @@ class CouchChangesStream(object):
     def _get_object_type_and_name_from_change(self, change):
         try:
             id = change['id']
-            response = requests.get("{0}/{1}".format(self._base_url, id))
+            response = requests.get("{0}/{1}".format(self._base_url, id), **self._params)
             object_json = response.json()
         except Exception:
             return None, None

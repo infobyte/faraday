@@ -23,12 +23,14 @@ from persistence.server.changes_stream import CouchChangesStream
 FARADAY_UP = True
 SERVER_URL = "http://127.0.0.1:5984"
 
+def _conf():
+    from config.configuration import getInstanceConfiguration
+    CONF = getInstanceConfiguration()
+    return CONF
 
 def _get_base_server_url():
     if FARADAY_UP:
-        from config.configuration import getInstanceConfiguration
-        CONF = getInstanceConfiguration()
-        server_url = CONF.getCouchURI()
+        server_url = _conf().getCouchURI()
     else:
         server_url = SERVER_URL
     return server_url
@@ -383,7 +385,7 @@ def get_objects(workspace_name, object_signature, **params):
     return appropiate_function(workspace_name, **params)
 
 # cha cha cha chaaaanges!
-def get_changes_stream(workspace_name, since=0, heartbeat='1000', **params):
+def get_changes_stream(workspace_name, since=0, heartbeat='1000', **extra_params):
     return _couch_changes(workspace_name, since=since, feed='continuous',
                           heartbeat=heartbeat, **params)
 

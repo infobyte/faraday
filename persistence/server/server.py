@@ -387,7 +387,7 @@ def get_objects(workspace_name, object_signature, **params):
 # cha cha cha chaaaanges!
 def get_changes_stream(workspace_name, since=0, heartbeat='1000', **extra_params):
     return _couch_changes(workspace_name, since=since, feed='continuous',
-                          heartbeat=heartbeat, **params)
+                          heartbeat=heartbeat, **extra_params)
 
 def get_workspaces_names():
     """Return a json containing the list with the workspaces names."""

@@ -220,6 +220,7 @@ angular.module('faradayApp')
                             _cmd.duration = _cmd.duration.toFixed(2) + "s";
                         }
                         _cmd.date = _cmd.itime * 1000;
+                        _cmd.command = _cmd.command + ' ' + _cmd.params;
                         tmp.push(_cmd);
                     });
 

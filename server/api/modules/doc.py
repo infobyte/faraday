@@ -7,7 +7,8 @@ import server.database
 import server.utils.logger
 
 from server.app import app
-from server.utils.web import validate_workspace, build_bad_request_response
+from server.utils.web import validate_workspace, build_bad_request_response, get_basic_auth
+from server.couchdb import get_user_from_session
 from restkit.errors import RequestFailed, ResourceError
 
 logger = server.utils.logger.get_logger(__name__)
@@ -33,6 +34,13 @@ def add_or_update_document(workspace, doc_id):
     ws = server.database.get(workspace)
     couchdb_conn = ws.couchdb
     is_update_request = bool(document.get('_rev', False))
+
+    # change user in metadata based on session information
+    user = get_user_from_session(flask.request.cookies, get_basic_auth())
+    if document.get('metadata', {}).has_key('owner'):
+        document['metadata']['owner'] = user
+    if document.get('metadata', {}).has_key('update_user'):
+        document['metadata']['update_user'] = user
 
     try:
         response = couchdb_conn.save_doc(document)

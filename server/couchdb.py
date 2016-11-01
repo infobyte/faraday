@@ -165,6 +165,13 @@ def has_permissions_for(workspace_name, cookies=None, credentials=None):
     # respond 401 if it doesn't have access to it
     return (response.status_code != requests.codes.unauthorized)
 
+def get_user_from_session(cookies=None, credentials=None):
+    session_url = "%s/_session" % get_couchdb_url()
+    res = requests.get(session_url, cookies=cookies, auth=credentials)
+    if res.ok:
+        user = res.json()['userCtx']['name']
+    return user if user else ''
+
 def push_reports():
     vmanager = ViewsManager()
     try:

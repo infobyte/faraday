@@ -57,6 +57,7 @@ angular.module('faradayApp')
         };
 
         parseObject = function(object) {
+            if (object === null || object === undefined) return "";
             var parsedData = "";
             if(object.length === undefined) {
                 for(key in object){

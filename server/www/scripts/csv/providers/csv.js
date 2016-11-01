@@ -28,6 +28,7 @@ angular.module('faradayApp')
                         object[prop] = "";
                     }
                     if(prop === "date") object[prop] = parseDate(v["metadata"]["create_time"] * 1000);
+                    if(prop === "creator") object[prop] = v["metadata"]["creator"];
                     if(prop === "web") {
                         if(v.type === "Vulnerability") {
                             object[prop] = false;

@@ -38,19 +38,17 @@ angular.module("faradayApp")
 
             var serverComm = function(method, url, data) {
                 var success = function (response) {
-                    // console.log(response);
                     return response;
                 };
-                var error = function(response) {
-                    console.log(response);
-                    return {};
+                var error = function(err) {
+                    return $q.reject(err);
                 };
 
                 // return a promise :)
                 if (method === 'GET' || method === 'DELETE') {
-                    return $http({method: method, url: url, params: data}).then(success, error);
+                    return $http({method: method, url: url, params: data}).then(success).catch(error);
                 } else { 
-                    return $http({method: method, url: url, data: data}).then(success, error);
+                    return $http({method: method, url: url, data: data}).then(success).catch(error);
                 }
             };
 
@@ -85,14 +83,20 @@ angular.module("faradayApp")
                     get(url).then(
                         function s(r) {
                             data.rev = r.data._rev;
-                            deferred.resolve(serverComm("DELETE", url, data));
+                            return serverComm("DELETE", url, data).then(
+                                function(res) {
+                                    deferred.resolve(res);
+                                }, function(err) {
+                                    deferred.reject(err);
+                                }
+                            );
                         },
                         function e(r) {
                             deferred.reject(r);
                         })
                 }
                 else{
-                    deferred.resolve(serverComm("DELETE", url, data));
+                    return serverComm("DELETE", url, data);
                 }
 
                 return deferred.promise;

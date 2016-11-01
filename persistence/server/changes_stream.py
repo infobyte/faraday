@@ -10,9 +10,12 @@ import requests, json
 from persistence.server.server_io_exceptions import ChangesStreamStoppedAbruptly
 
 class CouchChangesStream(object):
-    def __init__(self, workspace_name, server_url, **params):
+    def __init__(self, workspace_name, server_url, since=0, heartbeat='1000', feed='continuous', **params):
         self._base_url = server_url
         self._change_url = "{0}/_changes".format(server_url)
+        self.since = since
+        self.heartbeat = heartbeat
+        self.feed = feed
         self._params = params
         self._response = None
         self._stop = False
@@ -28,7 +31,8 @@ class CouchChangesStream(object):
 
     def __iter__(self):
         try:
-            self._response = requests.get(self._change_url, stream=True, **self._params)
+            params = {'since' : self.since, 'heartbeat': self.heartbeat, 'feed': self.feed}
+            self._response = requests.get(self._change_url, stream=True, params=params, **self._params)
             if self._response:
                 for raw_line in self._response.iter_lines():
                     line = self._sanitize(raw_line)

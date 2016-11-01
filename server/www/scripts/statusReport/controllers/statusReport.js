@@ -359,7 +359,8 @@ angular.module('faradayApp')
         var groupByColumn = function() {
             for (var i = 0; i < $scope.gridOptions.columnDefs.length; i++) {
                 var column = $scope.gridOptions.columnDefs[i];
-                if ( column.name == $scope.propertyGroupBy && $scope.columns[column.displayName] == true) {
+                colname = column.displayName !== undefined ? column.displayName : column.name; 
+                if ( colname == $scope.propertyGroupBy && $scope.columns[colname] == true) {
                     column.grouping = { groupPriority: 0 };
                     paginationOptions.sortColumn = column.name;
                     paginationOptions.sortDirection = 'asc';

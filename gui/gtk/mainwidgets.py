@@ -358,7 +358,7 @@ class HostsSidebar(Gtk.Widget):
 
     def remove_host(self, host_id):
         """Remove host of host_id from the model, if found in it."""
-        self.remove_relevant_hosts_from_model([hosts_id])
+        self.remove_relevant_hosts_from_model([host_id])
 
     def update_host_name(self, host):
         """Update the host name of host in the model, if found in it."""
@@ -392,7 +392,7 @@ class HostsSidebar(Gtk.Widget):
     def remove_object(self, obj_id):
         """Remove an obj of id obj_id from the model, if found there"""
         potential_host_id = obj_id.split('.')[0]
-        is_host = len(obj_id.split('.')) == 0
+        is_host = len(obj_id.split('.')) == 1
         if is_host:
             self.remove_host(host_id=obj_id)
         elif not is_host and self._is_vuln_of_host(vuln_id=obj_id, host_id=potential_host_id):

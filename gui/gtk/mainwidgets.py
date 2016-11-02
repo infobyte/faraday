@@ -395,8 +395,15 @@ class HostsSidebar(Gtk.Widget):
         is_host = len(obj_id.split('.')) == 1
         if is_host:
             self.remove_host(host_id=obj_id)
-        elif not is_host and self._is_vuln_of_host(vuln_id=obj_id, host_id=potential_host_id):
-            self.remove_vuln(vuln_id=obj_id)
+        # elif not is_host and self._is_vuln_of_host(vuln_id=obj_id, host_id=potential_host_id):
+        #     self.remove_vuln(vuln_id=obj_id)
+        else:
+            # Since we don't know the type of the delete object,
+            # we have to assume it's a vulnerability so the host's
+            # name is updated with the ammount of vulns
+            host = self.get_single_host_function(potential_host_id)
+            if host:
+                self._modify_vuln_amount_of_single_host_in_model(host.getID(), host.getVulnAmount())
 
     def update_object(self, obj):
         """Update the obj in the model, if found there"""

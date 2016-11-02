@@ -362,7 +362,7 @@ angular.module('faradayApp')
                 colname = column.displayName !== undefined ? column.displayName : column.name; 
                 if ( colname == $scope.propertyGroupBy && $scope.columns[colname] == true) {
                     column.grouping = { groupPriority: 0 };
-                    paginationOptions.sortColumn = column.name;
+                    paginationOptions.sortColumn = colname;
                     paginationOptions.sortDirection = 'asc';
                 }
             }

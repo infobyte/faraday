@@ -76,7 +76,7 @@ angular.module("faradayApp")
                 // never let undefined win
 
                 if (typeof rev_provided === "undefined") {var rev_provided = false;}
-                deferred = $q.defer();
+                var deferred = $q.defer();
                 var data = {};
                 
                 if (rev_provided === false) {
@@ -228,7 +228,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.getWorkspace = function(wsName) {
-                getUrl = createDbUrl(wsName);
+                var getUrl = createDbUrl(wsName);
                 return get(getUrl);
             }
 

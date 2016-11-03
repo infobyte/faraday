@@ -39,7 +39,7 @@ angular.module('faradayApp')
                 if( typeof(data.ports) === 'number' ) {
                     this.ports = data.ports;
                 } else {
-                    this.ports = data.ports;
+                    this.ports = data.ports[0];
                 }
             },
 

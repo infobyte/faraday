@@ -685,10 +685,10 @@ class WorkspaceSidebar(Gtk.Widget):
         """
         # NOTE. this function should really be replaced by a dictionary
         for ws_iter in self.valid_ws_iters:
-            if self.workspace_model[ws_iter][0] == ws_name:
-                return ws_iter
-        else:
-            return None
+            if self.workspace_model.iter_is_valid(ws_iter):
+                if self.workspace_model[ws_iter][0] == ws_name:
+                    return ws_iter
+        return None
 
     def select_ws_by_name(self, ws_name):
         """Selects the workspace by name ws_name"""

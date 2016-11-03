@@ -141,7 +141,7 @@ class Host(FaradayEntity, Base):
 
     def update_from_document(self, document):
         # Ticket #3387: if the 'os' field is None, we default to 'unknown'
-        if document.get('os'): document['os']='unknown'
+        if not document.get('os'): document['os']='unknown'
 
         default_gateway = self.__get_default_gateway(document)
 

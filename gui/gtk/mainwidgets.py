@@ -204,7 +204,7 @@ class HostsSidebar(Gtk.Widget):
         and a str_id to that GdkPixbuf for easy comparison and ordering
         of the view ('os' paramether string is complicated and has caps).
         """
-        os = os.lower()
+        os = os.lower() if os else ""
         if "linux" in os or "unix" in os:
             icon = GdkPixbuf.Pixbuf.new_from_file(self.linux_icon)
             str_id = "linux"

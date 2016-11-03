@@ -105,8 +105,8 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
         if answer.status_code == 403 or answer.status_code == 401:
             raise Unauthorized(answer)
         if answer.status_code != server_expected_response:
-            raise requests.exceptions.ConnectionError()
-    except requests.exceptions.ConnectionError:
+            raise requests.exceptions.RequestException(response=answer)
+    except requests.exceptions.RequestException:
         raise CantCommunicateWithServerError(server_io_function, server_url, payload)
     return answer
 

@@ -19,4 +19,4 @@ def main(workspace=''):
     for vuln in models.get_all_vulns(workspace):
         if re.findall(regex, vuln.name, ) != []:
             print("Delete Vuln: " + vuln.name)
-            models.delete_vuln(vuln.id)
+            models.delete_vuln(workspace, vuln.id)

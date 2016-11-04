@@ -38,7 +38,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-u',
         '--url',
-        help='Faraday Server URL')
+        help='Faraday Server URL. Example: http://localhost:5984')
 
     args, unknown = parser.parse_known_args()
 

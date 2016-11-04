@@ -10,6 +10,16 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+New release:
+---
+* New plugins: Dirb - Netdiscover - FruttyWifi - Sentinel.
+* Improve of WPscan plugin.
+* Fixed Fplugin, now use new Faraday API library.
+* Bug fixing in Faraday Client and Server.
+* Faraday news in GTK and Web UI.
+* New field for Vulnerabilities: Plugin creator and Status.
+
+
 September 19, 2016: 
 ---
 * Major refactor of Faraday Client: now we support massive workspaces (100.000+ hosts). 

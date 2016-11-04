@@ -18,7 +18,7 @@ New release:
 * Bug fixing in Faraday Client and Server.
 * Faraday news in GTK and Web UI.
 * New field for Vulnerabilities: Plugin creator and Status.
-
+* Refactor in Faraday Core and Faraday GTK. 
 
 September 19, 2016: 
 ---

@@ -10,8 +10,8 @@ See the file 'doc/LICENSE' for the license information
 from persistence.server import server, models
 
 def main(workspace=''):
-    
+
     for service in models.get_services(workspace):
-        if service.status != 'open' or service.status != 'opened':
+        if service.status != 'open' and service.status != 'opened':
             print('Deleted service: ' + service.name)
             models.delete_service(workspace, service.id)

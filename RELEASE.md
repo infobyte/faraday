@@ -13,7 +13,7 @@ New features in the latest update
 New release:
 ---
 * New library to connect with Faraday Server.
-* Fixed Fplugin, now it uses the new library to communivate with the Server.
+* Fixed Fplugin, now it uses the new library to communicate with the Server.
 * New field for Vulnerabilities: plugin creator and status.
 * Refactor in Faraday Core and GTK Client.
 * Bug fixing in Faraday Client and Server.

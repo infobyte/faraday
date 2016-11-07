@@ -72,16 +72,6 @@ angular.module('faradayApp')
             return ServerAPI.createWorkspace(workspace.name, workspace);
         };
 
-        createWorkspaceDoc = function(response, workspace){
-            ServerAPI.uploadWsDoc(workspace).then(
-                function(data) {
-                    workspace._rev = data.rev;
-                },
-                function(data) {
-                    errorHandler;
-                });
-        };
-
         indexOfDocument = function(list, name) {
             var ret = -1;
             list.forEach(function(item, index) {
@@ -94,7 +84,7 @@ angular.module('faradayApp')
 
         workspacesFact.update = function(workspace) {
             var deferred = $q.defer();
-            ServerAPI.updateWsDoc(workspace).then(function(data){
+            ServerAPI.updateWorkspace(workspace).then(function(data){
                 workspace._rev = data.rev;
                 deferred.resolve(workspace);
             });

@@ -62,10 +62,9 @@ def workspace(workspace):
 
 @app.route('/ws/<workspace>', methods=['PUT'])
 @gzipped
-def workspace_create(workspace):
+def workspace_create_or_update(workspace):
     # only admins can create workspaces
     validate_admin_perm()
-    validate_database(workspace)
 
     try:
         document = json.loads(flask.request.data)
@@ -77,13 +76,21 @@ def workspace_create(workspace):
         return build_bad_request_response('workspace name and route parameter don\'t match')
     if document.get('name').startswith('_'):
         return build_bad_request_response('database cannot start with an underscore')
+    document['_id'] = document.get('name')  # document dictionary does not have id, add it
+
+    is_update_request = bool(document.get('_rev', False))
 
     db_manager = get_manager()
 
-    document['_id'] = document.get('name')  # document dictionary does not have id, add it
+    if workspace in db_manager and is_update_request:
+        res = db_manager.update_workspace(document)
+    elif workspace not in db_manager and not is_update_request:
+        res = db_manager.create_workspace(document)
+    else:
+        abort(400)
 
-    if not db_manager.create_workspace(document):
-        response = flask.jsonify({'error': "There was an error creating the workspace"})
+    if not res:
+        response = flask.jsonify({'error': "There was an error {0} the workspace".format("updating" if is_update_request else "creating")})
         response.status_code = 500
         return response
 

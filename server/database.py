@@ -93,6 +93,10 @@ class Manager(object):
             self.__process_new_workspace(workspace.get('name'))
         return ok
 
+    def update_workspace(self, workspace):
+        # update the couch database
+        return server.couchdb.update_workspace(workspace)
+
     def delete_workspace(self, ws_name):
         # create the couch database first
         ok = server.couchdb.delete_workspace(ws_name)
@@ -134,6 +138,9 @@ class Manager(object):
 
     def is_valid_workspace(self, ws_name):
         return ws_name in self.__workspaces
+
+    def __contains__(self, ws_name):
+        return self.is_valid_workspace(ws_name)
 
     def close_sessions(self):
         for workspace in self.__workspaces.values():

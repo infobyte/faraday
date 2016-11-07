@@ -215,6 +215,17 @@ def create_workspace(workspace):
 
     return success
 
+def update_workspace(workspace):
+    couch_server = CouchDBServer()
+    ws = couch_server.get_workspace_handler(workspace.get('name'))
+
+    try:
+        response = ws.save_doc(workspace)
+    except (RequestFailed, ResourceError):
+        # create an error
+        response = {'ok': False}
+    return response.get('ok', False)
+
 def delete_workspace(ws_name):
     couch_server = CouchDBServer()
     try:

@@ -59,12 +59,12 @@ angular.module("faradayApp")
             var put = function(url, data, is_update) {
                 // undefined is just evil...
                 if (typeof is_update === "undefined") {var is_update = false;}
-                if (is_update) {
+                if (is_update && !data._rev) {
                     // ok, undefined, you win
-                    var deferred = $q.defer()
-                    var last_rev = get(url).then(function s(r) {return r.data._rev;},
-                                                 function e(r) {return undefined})
-                    data.rev = last_rev;
+                    return get(url).then(function s(r) {
+                        data._rev = r.data._rev;
+                        return serverComm("PUT", url, data);
+                    }).catch(function e(r) {$q.reject(r)});
                 }
                 return serverComm("PUT", url, data);
             };
@@ -362,16 +362,6 @@ angular.module("faradayApp")
                 return put(dbUrl);
             }
 
-            ServerAPI.uploadWsDoc = function(workspace) {
-                var putUrl = BASEURL + workspace.name + "/" + workspace.name;
-                return put(putUrl, workspace);
-            }
-
-            ServerAPI.updateWsDoc = function(workspace) {
-                var putUrl = BASEURL + workspace.name + "/" + workspace.name;
-                return put(putUrl, workspace, true)
-            }
-
             ServerAPI.deleteHost = function(wsName, hostId, rev) {
                 var deleteUrl = createDeleteUrl(wsName, hostId, rev);
                 if (typeof rev === "undefined") {
@@ -445,6 +435,11 @@ angular.module("faradayApp")
             ServerAPI.createWorkspace = function(wsName, data) {
                 var dbUrl = createDbUrl(wsName);
                 return put(dbUrl, data, false)
+            }
+
+            ServerAPI.updateWorkspace = function(workspace) {
+                var putUrl = createDbUrl(workspace.name);
+                return put(putUrl, workspace, true)
             }
 
             ServerAPI.deleteWorkspace = function(wsName) {

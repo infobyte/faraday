@@ -12,14 +12,14 @@ New features in the latest update
 
 New release:
 ---
-* New plugins: Dirb - Netdiscover - FruttyWifi - Sentinel.
-* Improve of WPscan plugin.
-* Fixed Fplugin, now use new Faraday API library.
+* New library to connect with Faraday Server.
+* Fixed Fplugin, now it uses the new library to communivate with the Server.
+* New field for Vulnerabilities: plugin creator and status.
+* Refactor in Faraday Core and GTK Client.
 * Bug fixing in Faraday Client and Server.
-* Faraday news in GTK and Web UI.
-* New field for Vulnerabilities: Plugin creator and Status.
-* Refactor in Faraday Core and Faraday GTK. 
-* New library for use Faraday server.
+* Added Faraday news notifications in GTK and Web UI.
+* New plugins: Dirb, Netdiscover, FruttyWifi, Sentinel.
+* Improvements on the WPscan plugin.
 
 September 19, 2016: 
 ---

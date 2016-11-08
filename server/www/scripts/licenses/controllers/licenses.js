@@ -7,47 +7,23 @@ angular.module('faradayApp')
         ['$scope', '$cookies', '$filter', '$location', '$q', '$route', '$routeParams', '$uibModal', 'commonsFact', 'licensesManager',
         function($scope, $cookies, $filter, $location, $q, $route, $routeParams, $uibModal, commonsFact, licensesManager) {
 
-            $scope.currentPage;
-            $scope.DBExists = false;
-            $scope.expression;
+            $scope.db_exists = false;
+            $scope.expiration_month = false;
             $scope.licenses = [];
             $scope.loaded_licenses = false;
-            $scope.expiration_month = false;
-            $scope.newCurrentPage;
-            $scope.newPageSize;
-            $scope.pageSize;
             $scope.reverse;
             $scope.search;
-            $scope.searchParams;
             $scope.selectall_licenses;
-            $scope.sortField;
+            $scope.sort_field;
             $scope.store;
 
         init = function() {
-            $scope.store = "https://appstore.faradaysec.com/";
+            $scope.store = "https://appstore.faradaysec.com/search/?q=";
 
             // table stuff
             $scope.selectall_licenses = false;
-            $scope.sortField = "end";
+            $scope.sort_field = "end";
             $scope.reverse = true;
-
-            // pagination stuff
-            $scope.pageSize = 100;
-            $scope.currentPage = 0;
-            $scope.newCurrentPage = 0;
-            if(!isNaN(parseInt($cookies.pageSize))) $scope.pageSize = parseInt($cookies.pageSize);
-            $scope.newPageSize = $scope.pageSize;
-
-            // current search
-            $scope.search = $routeParams.search;
-            $scope.searchParams = "";
-            $scope.expression = {};
-            if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
-                // search expression for filter
-                $scope.expression = commonsFact.decodeSearch($scope.search);
-                // search params for search field, which shouldn't be used for filtering
-                $scope.searchParams = commonsFact.stringSearch($scope.expression);
-            }
 
             licensesManager.DBExists()
                 .then(function(exists) {
@@ -57,12 +33,12 @@ angular.module('faradayApp')
                             controller: 'licensesModalCreateDB',
                             size: 'lg'
                         }).result.then(function() {
-                            $scope.DBExists = true;
+                            $scope.db_exists = true;
                         }, function(message) {
                             // The user didn't create the DB, do nothing!
                         });
                     } else {
-                        $scope.DBExists = true;
+                        $scope.db_exists = true;
                         licensesManager.get()
                             .then(function() {
                                 $scope.licenses = licensesManager.licenses;
@@ -94,27 +70,6 @@ angular.module('faradayApp')
             return licenses.some(function(elem, index, array) {
                 return $scope.almostExpired(elem.end);
             });
-        };
-
-        // changes the URL according to search params
-        $scope.searchFor = function(search, params) {
-            var url = "/licenses";
-
-            if(search && params != "" && params != undefined) {
-                url += "/search/" + commonsFact.encodeSearch(params);
-            }
-
-            $location.path(url);
-        };
-
-        $scope.go = function() {
-            $scope.pageSize = $scope.newPageSize;
-            $cookies.pageSize = $scope.pageSize;
-            $scope.currentPage = 0;
-            if($scope.newCurrentPage <= parseInt($scope.licenses.length/$scope.pageSize)
-                    && $scope.newCurrentPage > -1 && !isNaN(parseInt($scope.newCurrentPage))) {
-                $scope.currentPage = $scope.newCurrentPage;
-            }
         };
 
         $scope.remove = function(ids) {
@@ -226,7 +181,7 @@ angular.module('faradayApp')
         $scope.selectedLicenses = function() {
             var selected = [];
 
-            $scope.filter($scope.licenses).forEach(function(license) {
+            $filter('filter')($scope.licenses, $scope.search).forEach(function(license) {
                 if(license.selected === true) {
                     selected.push(license);
                 }
@@ -238,7 +193,7 @@ angular.module('faradayApp')
         $scope.checkAll = function() {
             $scope.selectall_licenses = !$scope.selectall_licenses;
 
-            tmp_licenses = $scope.filter($scope.licenses);
+            tmp_licenses = $filter('filter')($scope.licenses, $scope.search);
             tmp_licenses.forEach(function(license) {
                 license.selected = $scope.selectall_licenses;
             });
@@ -252,21 +207,13 @@ angular.module('faradayApp')
 
         // toggles column sort field
         $scope.toggleSortField = function(field) {
-            $scope.sortField = field;
+            $scope.sort_field = field;
         };
 
         // toggle column sort order
         $scope.toggleReverse = function() {
             $scope.reverse = !$scope.reverse;
         }
-
-        $scope.filter = function(data) {
-            var tmp_data = $filter('orderBy')(data, $scope.sortField, $scope.reverse);
-            tmp_data = $filter('filter')(tmp_data, $scope.expression);
-            tmp_data = tmp_data.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
-
-            return tmp_data;
-        };
 
         init();
     }]);

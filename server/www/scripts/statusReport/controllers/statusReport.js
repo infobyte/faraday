@@ -6,11 +6,11 @@ angular.module('faradayApp')
     .controller('statusReportCtrl',
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
-                    'SEVERITIES', 'EASEOFRESOLUTION', 'hostsManager', 'commonsFact',
+                    'SEVERITIES', 'EASEOFRESOLUTION', 'STATUSES', 'hostsManager', 'commonsFact',
                     'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
-                        SEVERITIES, EASEOFRESOLUTION, hostsManager, commonsFact,
+                        SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,
                         vulnsManager, workspacesFact, csvService, uiGridConstants) {
         $scope.baseurl;
         $scope.columns;
@@ -41,7 +41,7 @@ angular.module('faradayApp')
             sortDirection: null
         };
 
-        init = function() {
+        var init = function() {
             $scope.baseurl = BASEURL;
             $scope.severities = SEVERITIES;
             $scope.easeofresolution = EASEOFRESOLUTION;
@@ -68,9 +68,10 @@ angular.module('faradayApp')
             };
             $scope.gridOptions.columnDefs = [];
 
-            if ($cookies.get('pageSize') !== undefined) {
-                paginationOptions.pageSize = parseInt($cookies.get('pageSize'));
-                $scope.gridOptions.paginationPageSize = paginationOptions.pageSize;
+            var storedPageSize = parseInt($cookies.get('pageSize'));
+            if ( storedPageSize && storedPageSize > 0 ) {
+                paginationOptions.pageSize = storedPageSize;
+                $scope.gridOptions.paginationPageSize = storedPageSize;
             }
 
             if($cookies.get('confirmed') === 'true') {
@@ -173,7 +174,8 @@ angular.module('faradayApp')
                 "pname":            false,
                 "query":            false,
                 "response":         false,
-                "web":              false
+                "web":              false,
+                "creator":          false
             };
 
             // created object for columns cookie columns
@@ -279,8 +281,9 @@ angular.module('faradayApp')
                 visible: $scope.columns["easeofresolution"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'status',
-                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
                 headerCellTemplate: header,
+                width: '100',
                 visible: $scope.columns["status"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'website',
@@ -345,15 +348,23 @@ angular.module('faradayApp')
                 width: '80',
                 visible: $scope.columns["web"]
             });
+            $scope.gridOptions.columnDefs.push({ name : 'metadata.creator',
+                displayName : "creator",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/creatorcolumn.html',
+                headerCellTemplate: header,
+                width: '100',
+                visible: $scope.columns["creator"]
+            });
         };
 
 
         var groupByColumn = function() {
             for (var i = 0; i < $scope.gridOptions.columnDefs.length; i++) {
                 var column = $scope.gridOptions.columnDefs[i];
-                if ( column.name == $scope.propertyGroupBy && $scope.columns[column.name] == true) {
+                var colname = column.displayName !== undefined ? column.displayName : column.name; 
+                if ( colname == $scope.propertyGroupBy && $scope.columns[colname] == true) {
                     column.grouping = { groupPriority: 0 };
-                    paginationOptions.sortColumn = column.name;
+                    paginationOptions.sortColumn = colname;
                     paginationOptions.sortDirection = 'asc';
                 }
             }
@@ -469,11 +480,10 @@ angular.module('faradayApp')
         $scope.toggleFilter = function() {
             $scope.confirmed = !$scope.confirmed;
             $cookies.put('confirmed', $scope.confirmed);
-            console.log($scope.confirmed);
             loadVulns();
         };
 
-        showMessage = function(msg) {
+        var showMessage = function(msg) {
             var modal = $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',
                     controller: 'commonsModalKoCtrl',
@@ -509,7 +519,7 @@ angular.module('faradayApp')
             _delete([vuln]);
         };
 
-        _delete = function(vulns) {
+        var _delete = function(vulns) {
             if(vulns.length > 0) {
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalDelete.html',
@@ -541,7 +551,7 @@ angular.module('faradayApp')
             _toggleConfirm([vuln], confirm);
         };
 
-        _toggleConfirm = function(vulns, confirm) {
+        var _toggleConfirm = function(vulns, confirm) {
             var toggleConfirm = {'confirmed': !confirm},
             deferred = $q.defer(),
             promises = [];
@@ -566,7 +576,7 @@ angular.module('faradayApp')
             _edit([vuln]);
         };
 
-        _edit = function(vulns) {
+        var _edit = function(vulns) {
            if (vulns.length == 1) {
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/statusReport/partials/modalEdit.html',
@@ -637,6 +647,15 @@ angular.module('faradayApp')
                 'Enter the new severity:',
                 'severity',
                 {options: SEVERITIES});
+        };
+
+        $scope.editStatus = function() {
+            editProperty(
+                'scripts/commons/partials/editOptions.html',
+                'commonsModalEditOptions',
+                'Enter the new status:',
+                'status',
+                {options: STATUSES});
         };
 
         $scope.editEaseofresolution = function() {
@@ -796,7 +815,7 @@ angular.module('faradayApp')
             */
         };
 
-        loadVulns = function() {
+        var loadVulns = function() {
             delete searchFilter.confirmed;
             if ($scope.confirmed)
                 searchFilter.confirmed = true;
@@ -815,6 +834,8 @@ angular.module('faradayApp')
                 // if it is larger than our biggest page size
                 if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
                     $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
+                    // sadly, this will load the vuln list again because it fires a paginationChanged event
+                    if ($scope.gridOptions.paginationPageSize != $scope.gridOptions.totalItems) $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
                 }
             });
         };
@@ -890,7 +911,7 @@ angular.module('faradayApp')
 
         $scope.serviceSearch = function(srvStr) {
             //TODO: this is horrible
-            srvName = srvStr.split(') ')[1];
+            var srvName = srvStr.split(') ')[1];
             return $scope.encodeUrl(srvName);
         }
 

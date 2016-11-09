@@ -10,7 +10,7 @@ See the file 'doc/LICENSE' for the license information
 import threading, time, requests
 from model.guiapi import notification_center
 from decorators import safe_io_with_server
-from persistence.server import models
+from persistence.server import models, server_io_exceptions
 
 class ServerIO(object):
     def __init__(self, active_workspace):
@@ -70,6 +70,10 @@ class ServerIO(object):
     def get_object(self, object_signature, object_id):
         return models.get_object(self.active_workspace, object_signature, object_id)
 
+    @safe_io_with_server(None)
+    def get_host(self, host_id):
+        return models.get_host(self.active_workspace, host_id)
+
     @safe_io_with_server((0,0,0,0))
     def get_workspace_numbers(self):
         return models.get_workspace_numbers(self.active_workspace)
@@ -111,8 +115,12 @@ class ServerIO(object):
                 # not a change really right?
                 return None
 
-            if obj_type is not None and obj_type not in cool_types:
+            is_deleted = bool(change.get('deleted'))
+            if obj_type is None and not is_deleted:
                 # if obj_type is None it's a deleted change. retrieve its type later
+                return None
+
+            if obj_type is not None and obj_type not in cool_types:
                 return None
 
             if change['changes'][0]['rev'] == local_changes.get(change['id']):
@@ -163,7 +171,7 @@ class ServerIO(object):
                             revision = change.get("changes")[-1].get('rev')
                             notification_dispatcher(obj_id, obj_type, obj_name,
                                                     deleted, revision)
-                except requests.exceptions.RequestException:
+                except server_io_exceptions.ChangesStreamStoppedAbruptly:
                     notification_center.WorkspaceProblem()
                     return False
             else:

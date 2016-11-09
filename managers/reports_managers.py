@@ -84,10 +84,17 @@ class ReportManager(threading.Thread):
 
     def run(self):
         tmp_timer = 0
+        tmp_timer_sentinel = 0
         while not self._stop:
 
             time.sleep(1)
             tmp_timer += 1
+            tmp_timer_sentinel += 1
+
+            if tmp_timer_sentinel == 1800:
+                tmp_timer_sentinel = 0
+                self.launchSentinel()
+
             if tmp_timer == self.timer:
                 try:
                     self.syncReports()
@@ -100,6 +107,16 @@ class ReportManager(threading.Thread):
 
     def stop(self):
         self._stop = True
+
+    def launchSentinel(self):
+        psettings = CONF.getPluginSettings()
+
+        name, cmd = "Sentinel", "sentinel"
+        if name in psettings:
+            if psettings[name]['settings']['Enable'] == "1":
+                getLogger(self).info("Plugin Started: Sentinel")
+                self.processor.onlinePlugin(cmd)
+                getLogger(self).info("Plugin Ended: Sentinel")
 
     def syncReports(self):
         """

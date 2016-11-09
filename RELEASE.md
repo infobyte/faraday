@@ -10,6 +10,19 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
+November 10, 2016:
+---
+* New library to connect with Faraday Server.
+* Fixed Fplugin, now it uses the new library to communicate with the Server.
+* New field for Vulnerabilities: plugin creator and status.
+* Refactor in Faraday Core and GTK Client.
+* Bug fixing in Faraday Client and Server.
+* Added Faraday news notifications in GTK and Web UI.
+* New plugins: Dirb, Netdiscover, FruttyWifi, Sentinel.
+* Improvements on the WPscan plugin.
+* Fixed Licenses search.
+* Refactor Licenses module to be compatible with JS Strict Mode.
+
 September 19, 2016: 
 ---
 * Major refactor of Faraday Client: now we support massive workspaces (100.000+ hosts). 
@@ -21,8 +34,8 @@ September 19, 2016:
 * New plugin: WPscan
 * Host Sidebar on GTK now adds information more intelligently and will never block the application.
 * Evidence screenshots in report generation is now bigger. 
+* Help menu in GTK with links to interesting links.
 * Added Help section to WEB UI.
-
 
 August 12, 2016:
 ---

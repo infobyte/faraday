@@ -92,7 +92,7 @@ class PluginController(object):
         """
         return self._plugins
 
-    def processOutput(self, plugin, output, isReport=False):
+    def processOutput(self, plugin, output, command_id, isReport=False):
         output_queue = multiprocessing.JoinableQueue()
         new_elem_queue = multiprocessing.Queue()
 
@@ -118,6 +118,9 @@ class PluginController(object):
                     break
                 action = current_action[0]
                 parameters = current_action[1:]
+
+                parameters[-1]._metadata.command_id = command_id
+
                 getLogger(self).debug(
                     "Core: Processing a new '%s', parameters (%s)\n" %
                     (action, str(parameters)))
@@ -155,41 +158,21 @@ class PluginController(object):
     def _setupActionDispatcher(self):
         self._actionDispatcher = {
             modelactions.ADDHOST: model.api.addHost,
-            modelactions.CADDHOST: model.api.createAndAddHost,
             modelactions.ADDINTERFACE: model.api.addInterface,
-            modelactions.CADDINTERFACE: model.api.createAndAddInterface,
             modelactions.ADDSERVICEINT: model.api.addServiceToInterface,
-            modelactions.ADDSERVICEAPP: model.api.addServiceToApplication,
-            modelactions.CADDSERVICEINT: model.api.createAndAddServiceToInterface,
-            modelactions.CADDSERVICEAPP: model.api.createAndAddServiceToApplication,
-            modelactions.ADDAPPLICATION: model.api.addApplication,
-            modelactions.CADDAPPLICATION:  model.api.createAndAddApplication,
             modelactions.DELSERVICEINT: model.api.delServiceFromInterface,
             #Vulnerability
             modelactions.ADDVULNINT: model.api.addVulnToInterface,
-            modelactions.CADDVULNINT: model.api.createAndAddVulnToInterface,
-            modelactions.ADDVULNAPP: model.api.addVulnToApplication,
-            modelactions.CADDVULNAPP: model.api.createAndAddVulnToApplication,
             modelactions.ADDVULNHOST: model.api.addVulnToHost,
-            modelactions.CADDVULNHOST: model.api.createAndAddVulnToHost,
             modelactions.ADDVULNSRV: model.api.addVulnToService,
-            modelactions.CADDVULNSRV: model.api.createAndAddVulnToService,
             #VulnWeb
             modelactions.ADDVULNWEBSRV: model.api.addVulnWebToService,
-            modelactions.CADDVULNWEBSRV: model.api.createAndAddVulnWebToService,
             #Note
             modelactions.ADDNOTEINT: model.api.addNoteToInterface,
-            modelactions.CADDNOTEINT: model.api.createAndAddNoteToInterface,
-            modelactions.ADDNOTEAPP: model.api.addNoteToApplication,
-            modelactions.CADDNOTEAPP: model.api.createAndAddNoteToApplication,
             modelactions.ADDNOTEHOST: model.api.addNoteToHost,
-            modelactions.CADDNOTEHOST: model.api.createAndAddNoteToHost,
             modelactions.ADDNOTESRV: model.api.addNoteToService,
-            modelactions.CADDNOTESRV: model.api.createAndAddNoteToService,
             modelactions.ADDNOTENOTE: model.api.addNoteToNote,
-            modelactions.CADDNOTENOTE: model.api.createAndAddNoteToNote,
             #Creds
-            modelactions.CADDCREDSRV: model.api.createAndAddCredToService,
             modelactions.ADDCREDSRV:  model.api.addCredToService,
             #LOG
             modelactions.LOG: model.api.log,
@@ -248,7 +231,8 @@ class PluginController(object):
         cmd_info.duration = time.time() - cmd_info.itime
         self._mapper_manager.update(cmd_info)
 
-        self.processOutput(plugin, term_output)
+        self.processOutput(plugin, term_output, cmd_info.getID()
+)
         del self._active_plugins[pid]
         return True
 
@@ -262,7 +246,7 @@ class PluginController(object):
         self._mapper_manager.save(cmd_info)
 
         if plugin in self._plugins:
-            self.processOutput(self._plugins[plugin], filepath, True)
+            self.processOutput(self._plugins[plugin], filepath, cmd_info.getID(), True )
             cmd_info.duration = time.time() - cmd_info.itime
             self._mapper_manager.update(cmd_info)
             return True

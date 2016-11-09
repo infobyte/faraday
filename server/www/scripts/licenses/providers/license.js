@@ -5,7 +5,7 @@
 angular.module('faradayApp')
     .factory('License', ['BASEURL', 'configSrv', '$http', '$q',
     function(BASEURL, configSrv, $http, $q) {
-        License = function(data) {
+        function License(data) {
             var now = new Date(),
             date = now.getTime() / 1000.0;
 

@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('dashboardSrv', ['BASEURL', 'SEVERITIES', '$cookies', '$q', '$http', '$interval', 'hostsManager',
-        function(BASEURL, SEVERITIES, $cookies, $q, $http, $interval, hostsManager) {
+    .factory('dashboardSrv', ['BASEURL', 'SEVERITIES', '$cookies', '$q', '$http', '$interval', 'hostsManager', 'ServerAPI',
+        function(BASEURL, SEVERITIES, $cookies, $q, $http, $interval, hostsManager, ServerAPI) {
         var dashboardSrv = {};
 
         dashboardSrv._getView = function(url) {
@@ -87,11 +87,11 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        // this is really not the count
+        // does some weird grouping too
         dashboardSrv.getServicesCount = function(ws) {
-            var deferred = $q.defer(),
-            url = BASEURL + "_api/ws/" + ws + "/services/count?group_by=name";
-
-            $http.get(url)
+            var deferred = $q.defer();
+            ServerAPI.getServicesByName(ws)
                 .then(function(res) {
                     var tmp =[];
                     res.data.groups.sort(function(a, b) {
@@ -160,14 +160,15 @@ angular.module('faradayApp')
         };
 
         dashboardSrv.getVulnerabilitiesCount = function(ws) {
-            var deferred = $q.defer(),
-            url = BASEURL + "_api/ws/" + ws + "/vulns/count?group_by=severity";
+            var deferred = $q.defer();
 
-            if(dashboardSrv.props['confirmed']) {
-                url += "&confirmed=true";
+            var confirmed = undefined;
+
+            if (dashboardSrv.props['confirmed']) {
+                confirmed = true;
             }
 
-            $http.get(url)
+            ServerAPI.getVulnsBySeverity(ws, confirmed)
                 .then(function(res) {
                     var vs = {};
                     res.data.groups.forEach(function(vuln) {
@@ -183,14 +184,15 @@ angular.module('faradayApp')
         };
 
         dashboardSrv.getObjectsCount = function(ws) {
-            var deferred = $q.defer(),
-            url = BASEURL + "_api/ws/" + ws + "/summary";
+            var deferred = $q.defer();
+            // Confirmed empty = All vulns 
+            var confirmed = undefined;
 
-            if(dashboardSrv.props['confirmed']) {
-                url += "?confirmed=true";
+            if (dashboardSrv.props['confirmed']) {
+                confirmed = true;
             }
 
-            $http.get(url)
+            ServerAPI.getWorkspaceSummary(ws, confirmed)
                 .then(function(res) {
                     delete res.data.stats["interfaces"];
                     deferred.resolve(res.data.stats);
@@ -203,14 +205,12 @@ angular.module('faradayApp')
 
         dashboardSrv.getCommands = function(ws) {
             var deferred = $q.defer();
-            var url = BASEURL + "/" + ws + "/_design/commands/_view/list";
 
-            dashboardSrv._getView(url)
+            ServerAPI.getCommands(ws)
                 .then(function(res) {
                     var tmp = [];
-                    res.forEach(function(cmd) {
+                    res.data.commands.forEach(function(cmd) {
                         var _cmd = cmd.value;
-                        _cmd["command"] = cmd.key;
                         _cmd.user = _cmd.user || "unknown";
                         _cmd.hostname = _cmd.hostname || "unknown";
                         _cmd.ip = _cmd.ip || "0.0.0.0";
@@ -219,7 +219,8 @@ angular.module('faradayApp')
                         } else if(_cmd.duration != undefined) {
                             _cmd.duration = _cmd.duration.toFixed(2) + "s";
                         }
-                        _cmd.date = _cmd.startdate * 1000;
+                        _cmd.date = _cmd.itime * 1000;
+                        _cmd.command = _cmd.command + ' ' + _cmd.params;
                         tmp.push(_cmd);
                     });
 
@@ -233,8 +234,7 @@ angular.module('faradayApp')
 
         dashboardSrv.getHosts = function(ws) {
             var deferred = $q.defer();
-            var url = BASEURL + "_api/ws/" + ws + "/hosts";
-            $http.get(url)
+            ServerAPI.getHosts(ws)
                 .then(function(res) {
                     var tmp = [];
                     res.data.rows.forEach(function(host) {
@@ -251,16 +251,21 @@ angular.module('faradayApp')
 
         dashboardSrv.getHost = function(ws, host_id) {
             var deferred = $q.defer();
-            var url = BASEURL + "/" + ws + "/" + host_id;
-            $http.get(url)
+            ServerAPI.getHosts(ws, {'couchid': host_id})
                 .then(function(res) {
-                    deferred.resolve(res.data);
+                    if (res.rows == 1) {
+                        deferred.resolve(res.data.rows[0]);
+                    } else {
+                        deferred.reject("More than one object found by ID");
+                    }
                 }, function() {
                     deferred.reject();
                 });
             return deferred.promise;
         };
 
+        // XXX: still uses a CouchDB view 
+        // server hasn't implemented services/count?group_by=host
         dashboardSrv.getServicesByHost = function(ws, host_id) {
             var deferred = $q.defer();
             var url = BASEURL + "/" + ws + "/_design/services/_view/byhost?key=\"" + host_id + "\"";
@@ -292,14 +297,14 @@ angular.module('faradayApp')
 
         dashboardSrv.getName = function(ws, id) {
             var deferred = $q.defer();
-            url = BASEURL + "/" + ws + "/" + id;
 
-            $http.get(url).then(function(response){
-                res = response.data.name;
-                deferred.resolve(res);
-            }, function(){
-                deferred.reject();
-            });
+            ServerAPI.getObj(ws, id)
+                .then(function(response){
+                    res = response.data.name;
+                    deferred.resolve(res);
+                }, function(){
+                    deferred.reject();
+                });
 
             return deferred.promise;
         };

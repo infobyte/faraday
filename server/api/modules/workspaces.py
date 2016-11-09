@@ -3,6 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 
 import flask
+import json
 
 from server.app import app
 from server.dao.host import HostDAO
@@ -10,8 +11,9 @@ from server.dao.vuln import VulnerabilityDAO
 from server.dao.service import ServiceDAO
 from server.dao.interface import InterfaceDAO
 from server.dao.note import NoteDAO
-from server.utils.web import gzipped, validate_workspace, get_basic_auth
+from server.utils.web import gzipped, validate_workspace, get_basic_auth, validate_admin_perm, validate_database, build_bad_request_response
 from server.couchdb import list_workspaces_as_user, get_workspace, get_auth_info
+from server.database import get_manager
 
 
 @app.route('/ws', methods=['GET'])
@@ -58,3 +60,54 @@ def workspace(workspace):
     if not ws.get('description'): ws['description'] = ''
     return flask.jsonify(ws)
 
+@app.route('/ws/<workspace>', methods=['PUT'])
+@gzipped
+def workspace_create_or_update(workspace):
+    # only admins can create workspaces
+    validate_admin_perm()
+
+    try:
+        document = json.loads(flask.request.data)
+    except ValueError:
+        return build_bad_request_response('invalid json')
+    if not document.get('name', None):
+        return build_bad_request_response('workspace name needed')
+    if document.get('name') != workspace:
+        return build_bad_request_response('workspace name and route parameter don\'t match')
+    if document.get('name').startswith('_'):
+        return build_bad_request_response('database cannot start with an underscore')
+    document['_id'] = document.get('name')  # document dictionary does not have id, add it
+
+    is_update_request = bool(document.get('_rev', False))
+
+    db_manager = get_manager()
+
+    if workspace in db_manager and is_update_request:
+        res = db_manager.update_workspace(document)
+    elif workspace not in db_manager and not is_update_request:
+        res = db_manager.create_workspace(document)
+    else:
+        abort(400)
+
+    if not res:
+        response = flask.jsonify({'error': "There was an error {0} the workspace".format("updating" if is_update_request else "creating")})
+        response.status_code = 500
+        return response
+
+    return flask.jsonify({'ok': True})
+
+@app.route('/ws/<workspace>', methods=['DELETE'])
+@gzipped
+def workspace_delete(workspace):
+    # only admins can delete workspaces
+    validate_admin_perm()
+    validate_workspace(workspace)
+
+    db_manager = get_manager()
+
+    if not db_manager.delete_workspace(workspace):
+        response = flask.jsonify({'error': "There was an error deleting the workspace"})
+        response.status_code = 500
+        return response
+
+    return flask.jsonify({'ok': True})

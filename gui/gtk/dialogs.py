@@ -182,7 +182,7 @@ class NewWorkspaceDialog(Gtk.Window):
             creation_ok = self.create_ws_callback(ws_name, ws_desc)
             if creation_ok:
                 self.sidebar.add_workspace(ws_name)
-            self.destroy()
+                self.destroy()
         else:
             errorDialog(self, "Invalid workspace name",
                         "A workspace must be named with "
@@ -612,8 +612,8 @@ class HostInfoDialog(Gtk.Window):
         # only the ID and the name are needed, but i still need to 'fill'
         # the other columns with dummy info
 
-        # display_str = host.getName() + " (" + str(len(host.getVulns())) + ")"
-        display_str = str(host)
+        display_str = host.getName() + " (" + str(len(host.getVulns())) + ")"
+        # display_str = str(host)
         owned_status = ("Yes" if host.isOwned() else "No")
         host_position = model.append(None, [host.getID(), host.getName(),
                                             host.getOS(), owned_status,
@@ -656,7 +656,7 @@ class HostInfoDialog(Gtk.Window):
         def add_service_to_interface_in_model(service, interface_pos, model):
             """Append a service to an interface at interface_pos in the given
             model. Return None. Modifies the model"""
-            display_str = str(service)
+            display_str = service.getName() + " (" + str(len(service.getVulns())) + ")"
             model.append(interface_pos, [service.getID(),
                                          service.getName(),
                                          service.getDescription(),
@@ -776,9 +776,9 @@ class HostInfoDialog(Gtk.Window):
                 raise TypeError
             return params_string
 
-        # those are 15 strings
+        # those are 16 strings
         model = Gtk.ListStore(str, str, str, str, str, str, str, str,
-                              str, str, str, str, str, str, str)
+                              str, str, str, str, str, str, str, str)
 
         vulns = obj.getVulns()
         for vuln in vulns:
@@ -786,20 +786,30 @@ class HostInfoDialog(Gtk.Window):
             if _type == "Vulnerability":
                 # again filling up the model with dumb strings
                 # because gtk
-                model.append([_type, vuln.getName(), vuln.getDescription(),
-                              vuln.getData(), vuln.getSeverity(),
-                              ', '.join(vuln.getRefs()),
+                model.append([_type, vuln.getName(),
+                              vuln.getDescription(),
+                              vuln.getData(),
+                              vuln.getSeverity(),
+                              ', '.join([str(v) for v in vuln.getRefs() if v]),
+                              vuln.getStatus(),
                               "", "", "", "", "", "", "", "", ""])
 
             elif _type == "VulnerabilityWeb":
-                model.append([_type, vuln.getName(), vuln.getDescription(),
-                              vuln.getData(), vuln.getSeverity(),
-                              ", ".join(vuln.getRefs()), vuln.getPath(),
-                              vuln.getWebsite(), vuln.getRequest(),
-                              vuln.getResponse(), vuln.getMethod(),
+                model.append([_type, vuln.getName(),
+                              vuln.getDescription(),
+                              vuln.getData(),
+                              vuln.getSeverity(),
+                              ", ".join([str(v) for v in vuln.getRefs() if v]),
+                              vuln.getPath(),
+                              vuln.getWebsite(),
+                              vuln.getRequest(),
+                              vuln.getResponse(),
+                              vuln.getMethod(),
                               vuln.getPname(),
                               params_to_string(vuln.getParams()),
-                              vuln.getQuery(), ""])
+                              vuln.getQuery(),
+                              vuln.getStatus(),
+                              ""])
         # sort it!
         sorted_model = Gtk.TreeModelSort(model=model)
         sorted_model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
@@ -820,7 +830,7 @@ class HostInfoDialog(Gtk.Window):
         It is important to notice that the first element of object_info
         is ignored. This is because of how the models in this class contain
         information. Thus, there'll be as many of this small boxes as
-        len(property_names) minus one, read next paragraph.
+        len(property_names) minus one.
         """
 
         for index, prop_name in enumerate(property_names, start=1):
@@ -898,14 +908,14 @@ class HostInfoDialog(Gtk.Window):
 
         elif object_type == "Vulnerability":
             property_names = ["Name: ", "Description: ", "Data: ",
-                              "Severity: ", "Refs: "]
+                              "Severity: ", "Refs: ", "Status: "]
 
         elif object_type == "VulnerabilityWeb":
             property_names = ["Name: ", "Description: ", "Data: ",
                               "Severity: ", "Refs: ", "Path: ",
                               "Website: ", "Request: ", "Response: ",
                               "Method: ", "Pname: ", "Params: ",
-                              "Query: ", "Category: "]
+                              "Query: ", "Status: "]
         return property_names
 
     def clear(self, box):
@@ -1269,9 +1279,10 @@ class ConflictsDialog(Gtk.Window):
                          obj.getData(),
                          obj.getSeverity(),
                          obj.getRefs(),
-                         obj.getResolution()))
+                         obj.getResolution(),
+                         obj.getStatus()))
 
-        props = ["Name", "Desc", "Data", "Severity", "Refs", "Resolution"]
+        props = ["Name", "Desc", "Data", "Severity", "Refs", "Resolution", "Status"]
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model
 
@@ -1294,11 +1305,12 @@ class ConflictsDialog(Gtk.Window):
                          obj.getMethod(),
                          obj.getPname(),
                          obj.getParams(),
-                         obj.getQuery()))
+                         obj.getQuery(),
+                         obj.getStatus()))
 
         props = ["Name", "Desc", "Data", "Severity", "Refs", "Path",
                  "Website", "Request", "Response", "Method", "Pname",
-                 "Params", "Query"]
+                 "Params", "Query", "Status"]
 
         model = self.fill_model_from_props_and_attr(model, attr, props)
         return model
@@ -1482,9 +1494,10 @@ class ForceChooseWorkspaceDialog(Gtk.Window):
         """
         selection = self.ws_view.get_selection()
         model, iter_ = selection.get_selected()
-        ws_name = model[iter_][0]
-        self.change_ws_callback(ws_name)
-        self.destroy()
+        if model and iter_:
+            ws_name = model[iter_][0]
+            self.change_ws_callback(ws_name)
+            self.destroy()
 
 
 class NotificationsDialog(Gtk.Window):

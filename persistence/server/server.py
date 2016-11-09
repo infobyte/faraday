@@ -9,20 +9,28 @@ See the file 'doc/LICENSE' for the license information
 import requests
 import json
 from persistence.server.utils import force_unique
-from persistence.server.utils import WrongObjectSignature
+from persistence.server.server_io_exceptions import (WrongObjectSignature,
+                                                     CantCommunicateWithServerError,
+                                                     ConflictInDatabase,
+                                                     ResourceDoesNotExist,
+                                                     Unauthorized,
+                                                     MoreThanOneObjectFoundByID)
+
 from persistence.server.changes_stream import CouchChangesStream
 
 # NOTE: Change is you want to use this module by itself.
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
 FARADAY_UP = True
-SERVER_URL = "http://127.0.1:5984"
+SERVER_URL = "http://127.0.0.1:5984"
 
+def _conf():
+    from config.configuration import getInstanceConfiguration
+    CONF = getInstanceConfiguration()
+    return CONF
 
 def _get_base_server_url():
     if FARADAY_UP:
-        from config.configuration import getInstanceConfiguration
-        CONF = getInstanceConfiguration()
-        server_url = CONF.getCouchURI()
+        server_url = _conf().getCouchURI()
     else:
         server_url = SERVER_URL
     return server_url
@@ -31,7 +39,6 @@ def _get_base_server_url():
 def _create_server_api_url():
     """Return the server's api url."""
     return "{0}/_api".format(_get_base_server_url())
-
 
 def _create_server_get_url(workspace_name, object_name=None):
     """Creates a url to get from the server. Takes the workspace name
@@ -58,7 +65,6 @@ def _create_server_post_url(workspace_name, object_id):
 def _create_server_delete_url(workspace_name, object_id):
     return _create_server_post_url(workspace_name, object_id)
 
-
 # XXX: COUCH IT!
 def _create_couch_get_url(workspace_name, object_id):
     server_url = _get_base_server_url()
@@ -71,11 +77,15 @@ def _create_couch_post_url(workspace_name, object_id):
 
 
 # XXX: COUCH IT!
-def _create_server_db_url(workspace_name):
+def _create_couch_db_url(workspace_name):
     server_base_url = _get_base_server_url()
     db_url = '{0}/{1}'.format(server_base_url, workspace_name)
     return db_url
 
+def _create_server_db_url(workspace_name):
+    server_api_url = _create_server_api_url()
+    db_url = '{0}/ws/{1}'.format(server_api_url, workspace_name)
+    return db_url
 
 def _unsafe_io_with_server(server_io_function, server_expected_response,
                            server_url, **payload):
@@ -95,8 +105,8 @@ def _unsafe_io_with_server(server_io_function, server_expected_response,
         if answer.status_code == 403 or answer.status_code == 401:
             raise Unauthorized(answer)
         if answer.status_code != server_expected_response:
-            raise requests.exceptions.ConnectionError()
-    except requests.exceptions.ConnectionError:
+            raise requests.exceptions.RequestException(response=answer)
+    except requests.exceptions.RequestException:
         raise CantCommunicateWithServerError(server_io_function, server_url, payload)
     return answer
 
@@ -151,7 +161,7 @@ def _delete(delete_url, database=False):
     params = {}
     if not database:
         last_rev = _get(delete_url)['_rev']
-        params = {'_rev': last_rev}
+        params = {'rev': last_rev}
     return _parse_json(_unsafe_io_with_server(requests.delete,
                                               200,
                                               delete_url,
@@ -227,6 +237,10 @@ def _update_in_server(workspace_name, faraday_object_id, **params):
     post_url = _create_server_post_url(workspace_name, faraday_object_id)
     return _put(post_url, update=True, expected_response=200, **params)
 
+def _save_db_to_server(db_name, **params):
+    post_url = _create_server_db_url(db_name)
+    return _put(post_url, expected_response=200, **params)
+
 # XXX: SEMI COUCH IT!
 def _delete_from_couch(workspace_name, faraday_object_id):
     delete_url = _create_server_delete_url(workspace_name, faraday_object_id)
@@ -235,7 +249,7 @@ def _delete_from_couch(workspace_name, faraday_object_id):
 # XXX: COUCH IT!
 def _couch_changes(workspace_name, **params):
     return CouchChangesStream(workspace_name,
-                              _create_server_db_url(workspace_name),
+                              _create_couch_db_url(workspace_name),
                               **params)
 
 
@@ -371,9 +385,9 @@ def get_objects(workspace_name, object_signature, **params):
     return appropiate_function(workspace_name, **params)
 
 # cha cha cha chaaaanges!
-def get_changes_stream(workspace_name, since=0, heartbeat='1000', **params):
+def get_changes_stream(workspace_name, since=0, heartbeat='1000', **extra_params):
     return _couch_changes(workspace_name, since=since, feed='continuous',
-                          heartbeat=heartbeat, **params)
+                          heartbeat=heartbeat, **extra_params)
 
 def get_workspaces_names():
     """Return a json containing the list with the workspaces names."""
@@ -588,6 +602,10 @@ def update_host(workspace_name, id, name, os, default_gateway,
                              description=description,
                              type="Host")
 
+
+# TODO: FIX. If you actually pass ipv4 or ipv6 as None, which are the defaults
+# values here, the server will complain. Review if this should be fixed on
+# the client or on the server.
 def create_interface(workspace_name, id, name, description, mac,
                      owned=False, owner="", hostnames=None, network_segment=None,
                      ipv4=None, ipv6=None, metadata=None):
@@ -665,7 +683,7 @@ def update_service(workspace_name, id, name, description, ports,
 
 def create_vuln(workspace_name, id, name, description, owned=None, owner="",
                 confirmed=False, data="", refs=None, severity="info", resolution="",
-                desc="", metadata=None):
+                desc="", metadata=None, status=None):
     """Save a vulnerability to the server. Return the json with the
     server's response.
     """
@@ -682,11 +700,12 @@ def create_vuln(workspace_name, id, name, description, owned=None, owner="",
                            resolution=resolution,
                            desc=desc,
                            type="Vulnerability",
+                           status=status,
                            metadata=metadata)
 
 def update_vuln(workspace_name, id, name, description, owned=None, owner="",
                 confirmed=False, data="", refs=None, severity="info", resolution="",
-                desc="", metadata=None):
+                desc="", metadata=None, status=None):
     """Update a vulnerability in the server. Return the json with the
     server's response.
     """
@@ -703,12 +722,14 @@ def update_vuln(workspace_name, id, name, description, owned=None, owner="",
                              resolution=resolution,
                              desc=desc,
                              type="Vulnerability",
+                             status=status,
                              metadata=metadata)
 
 def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
                     desc="", metadata=None, method=None, params="", path=None, pname=None,
-                    query=None, request=None, response=None, category="", website=None):
+                    query=None, request=None, response=None, category="", website=None,
+                    status=None):
     """Save a web vulnerability to the server. Return the json with the
     server's response.
     """
@@ -734,12 +755,14 @@ def create_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                            response=response,
                            website=website,
                            category=category,
+                           status=status,
                            type='VulnerabilityWeb')
 
 def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                     confirmed=False, data="", refs=None, severity="info", resolution="",
                     desc="", metadata=None, method=None, params="", path=None, pname=None,
-                    query=None, request=None, response=None, category="", website=None):
+                    query=None, request=None, response=None, category="", website=None,
+                    status=None):
     """Update a web vulnerability in the server. Return the json with the
     server's response.
     """
@@ -765,6 +788,7 @@ def update_vuln_web(workspace_name, id, name, description, owned=None, owner="",
                              response=response,
                              website=website,
                              category=category,
+                             status=status,
                              type='VulnerabilityWeb')
 
 def create_note(workspace_name, id, name, text, owned=None, owner="",
@@ -865,33 +889,18 @@ def update_command(workspace_name, id, command, duration=None, hostname=None,
                              type="CommandRunInformation")
 
 
-#  COUCH IT!
-def create_database(workspace_name):
-    """Create a database in the server. Return the json with the
-    server's response. Can throw an Unauthorized exception
-    """
-
-    # NOTE: this function is still talking to couch directly,
-    # that's why it is unable to use the _put function:
-    # it returns s 201 response code if everything went ok
-    db_url = _create_server_db_url(workspace_name)
-    return _parse_json(_unsafe_io_with_server(requests.put,
-                                              201,
-                                              db_url))
-
 def create_workspace(workspace_name, description, start_date, finish_date,
                      customer=None):
     """Create a workspace in the server. Return the json with the
     server's response.
     """
-    return _save_to_couch(workspace_name,
-                          workspace_name,
-                          name=workspace_name,
-                          description=description,
-                          customer=customer,
-                          sdate=start_date,
-                          fdate=finish_date,
-                          type="Workspace")
+    return _save_db_to_server(workspace_name,
+                              name=workspace_name,
+                              description=description,
+                              customer=customer,
+                              sdate=start_date,
+                              fdate=finish_date,
+                              type="Workspace")
 
 def delete_host(workspace_name, host_id):
     """Delete host of id host_id from the database."""
@@ -927,6 +936,9 @@ def delete_workspace(workspace_name):
     return _delete(db_url, database=True)
 
 def is_server_up():
+    """Return True if we can stablish a connection with the server,
+    False otherwise.
+    """
     try:
         _get("{0}/info".format(_create_server_api_url()))
         is_server_up = True
@@ -935,51 +947,12 @@ def is_server_up():
     return is_server_up
 
 def test_server_url(url_to_test):
+    """Return True if the url_to_test is indeed a valid Faraday Server URL.
+    False otherwise.
+    """
     try:
         _get("{0}/_api/info".format(url_to_test))
         test_okey = True
     except:
         test_okey = False
     return test_okey
-
-class ServerRequestException(Exception):
-    def __init__(self):
-        pass
-
-class CantCommunicateWithServerError(ServerRequestException):
-    def __init__(self, function, server_url, payload):
-        self.function = function
-        self.server_url = server_url
-        self.payload = payload
-
-    def __str__(self):
-        return ("Couldn't get a valid response from the server when requesting "
-                "to URL {0} with parameters {1} and function {2}.".format(self.server_url,
-                                                                          self.payload,
-                                                                          self.function))
-
-
-class ConflictInDatabase(ServerRequestException):
-    def __init__(self, answer):
-        self.answer = answer
-
-    def __str__(self):
-        return ("There was a conflict trying to save your document. "
-                "Most probably the document already existed and you "
-                "did not provided a _rev argument to your payload. "
-                "The answer from the server was {0}".format(self.answer))
-
-class ResourceDoesNotExist(ServerRequestException):
-    def __init__(self, url):
-        self.url = url
-
-    def __str__(self):
-        return ("Can't find anything on URL {0}".format(self.url))
-
-class Unauthorized(ServerRequestException):
-    def __init__(self, answer):
-        self.answer = answer
-
-    def __str__(self):
-        return ("You're not authorized to make this request. "
-                "The answer from the server was {0}".format(self.answer))

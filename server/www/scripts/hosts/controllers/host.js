@@ -243,10 +243,7 @@ angular.module('faradayApp')
                     resolve: {
                         service: function() {
                             return $scope.selectedServices();
-                        },
-	                    services: function() {
-	                        return $scope.services;
-	                    }
+                        }
                     }
                  });
 

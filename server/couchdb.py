@@ -2,16 +2,14 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-import sys, time, json
-import couchdbkit
 import restkit
-import threading, thread
 import server.utils.logger
 import requests
 
 from couchdbkit import Server
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.resource import CouchdbResource
+from restkit.errors import RequestFailed, ResourceError
 from managers.all import ViewsManager
 from server import config
 
@@ -48,12 +46,17 @@ class CouchDBServer(object):
     def get_or_create_db(self, ws_name):
         return self.__server.get_or_create_db(ws_name)
 
+    def create_db(self, ws_name):
+        return self.__server.create_db(ws_name)
+
+    def delete_db(self, ws_name):
+        return self.__server.delete_db(ws_name)
+
 
 class Workspace(object):
     def __init__(self, ws_name, couchdb_server_conn=None):
         self.__ws_name = ws_name
         self.__server = couchdb_server_conn or CouchDBServer()
-        self.__changes_monitor_thread = None
         self.__get_workspace()
 
     def __get_workspace(self):
@@ -87,24 +90,16 @@ class Workspace(object):
                 yield doc
             offset += per_request
 
+    def get_documents_starting_with_id(self, starting_id):
+        startkey = '"{0}"'.format(starting_id)
+        endkey = '"{0}.z"'.format(starting_id)
+        return self.__workspace.all_docs(include_docs=True, start_key=startkey, end_key=endkey)
+
     def __get_all_docs(self, limit, offset=0):
         return self.__workspace.all_docs(include_docs=True, limit=limit, skip=offset)
 
-    def start_changes_monitor(self, changes_callback, last_seq=0):
-        logger.debug(u'Starting changes monitor for workspace {} since {}'.format(self.__ws_name, last_seq))
-        ws_stream = ChangesStream(self.__ws_name, feed='continuous',
-            since=last_seq, include_docs='true', heartbeat='true')
-        self.__changes_monitor_thread = ChangesMonitorThread(ws_stream, changes_callback)
-        self.__changes_monitor_thread.daemon = True
-        self.__changes_monitor_thread.start()
-
-    def close(self):
-        if self.__changes_monitor_thread:
-            self.__changes_monitor_thread.stop()
-            self.__changes_monitor_thread = None
-
     def save_doc(self, document):
-        return self.__workspace.save_doc(document)
+        return self.__workspace.save_doc(document, encode_attachments=False)
 
     def delete_doc(self, document):
         return self.__workspace.delete_doc(document)
@@ -120,176 +115,6 @@ class Workspace(object):
     def fetch_attachment(self, doc, name):
         return self.__workspace.fetch_attachment(doc, name)
 
-class ChangesStream(object):
-    ALL_DBS = "__ALL_WORKSPACES__"
-
-    def __init__(self, db, **params):
-        self.__db = db
-        self.__url = self.__build_url()
-        self.__params = params
-        self.__response = None
-        self.__stop = False
-
-    def __build_url(self):
-        if self.__db == ChangesStream.ALL_DBS:
-            return get_couchdb_url() + '/_db_updates'
-        else:
-            return get_couchdb_url() + ('/%s/_changes' % self.__db)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        return False
-
-    def __next__(self):
-        return self
-
-    def __iter__(self):
-        while not self.__stop:
-            try:
-                # TODO: Connection timeout is too long.
-                self.__response = requests.get(
-                    self.__url, params=self.__params,
-                    stream=True, auth=get_auth_info())
-
-                for raw_line in self.__response.iter_lines():
-                    if self.__stop:
-                        break
-
-                    line = self.__sanitize(raw_line)
-                    if not line:
-                        continue
-
-                    change = self.__parse_change(line)
-                    if not change:
-                        continue
-
-                    yield change
-
-            except Exception, e:
-                # On workspace deletion, requests will probably
-                # fail to perform the request or the connection
-                # will be closed. Check if this was intentional
-                # by checking on the __stop flag.
-                if self.__stop:
-                    break
-
-                import traceback
-                logger.debug(traceback.format_exc())
-
-                # Close everything but keep retrying
-                self.stop()
-                self.__stop = False
-
-                logger.warning(u"Lost connection to CouchDB. Retrying in 3 seconds...")
-                time.sleep(3)
-                logger.info(u"Retrying...")
-
-    def __sanitize(self, raw_line):
-        if not isinstance(raw_line, basestring):
-            return None
-
-        line = raw_line.strip()
-
-        # Ignore line cases
-        if not line:
-            return None
-        if line in ('{"results":', '],'):
-            return None
-
-        # Modify line cases
-        if line.startswith('"last_seq"'):
-            line = '{' + line
-        if line.endswith(","):
-            line = line[:-1]
-
-        return line
-
-    def __parse_change(self, line):
-        try:
-            obj = json.loads(line)
-            return obj
-        except ValueError:
-            return None
-
-    def stop(self):
-        self.__stop = True
-        if self.__response is not None:
-            self.__response.close()
-            self.__response = None
-
-class Change(object):
-    REQUIRED_FIELDS = ('doc', 'changes', 'id', 'seq')
-
-    @staticmethod
-    def validate(change_doc):
-        return all(map(lambda prop: prop in change_doc, Change.REQUIRED_FIELDS))
-
-    def __init__(self, change_doc):
-        self.change_doc = change_doc
-        self.doc = change_doc.get('doc')
-        self.revision = change_doc.get('changes')[-1].get('rev')
-        self.doc_id = change_doc.get('id')
-        self.seq = change_doc.get('seq')
-
-        self.deleted = bool(change_doc.get('deleted', False))
-        self.updated = (int(self.revision.split('-')[0]) > 1)
-        self.added = (not self.deleted and not self.updated)
-
-
-class DBChange(object):
-    @staticmethod
-    def validate(change_doc):
-        return True
-
-    def __init__(self, change_doc):
-        self.change_doc = change_doc
-        self.type = change_doc.get('type', None)
-        self.deleted = (self.type == 'deleted')
-        self.created = (self.type == 'created')
-        self.db_name = change_doc.get('db_name', None)
-
-class MonitorThread(threading.Thread):
-    CHANGE_CLS = None
-
-    def __init__(self, stream, changes_callback):
-        super(MonitorThread, self).__init__()
-        self.__stream = stream
-        self.__changes_callback = changes_callback
-
-    def run(self):
-        for change_doc in self.__stream:
-            try:
-                if self.CHANGE_CLS.validate(change_doc):
-                    self.__changes_callback(self.CHANGE_CLS(change_doc))
-                else:
-                    logger.debug(u'Ignoring change: {}'.format(change_doc))
-
-            except Exception, e:
-                import traceback
-                logger.debug(traceback.format_exc())
-                logger.warning(u"Error while processing change. Ignoring. Offending change: {}".format(change_doc))
-
-                if change_doc.get('error', None):
-                    if change_doc.get('error') == 'unauthorized':
-                        logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
-                            " configuration file has CouchDB admin's credentials set")
-                        thread.interrupt_main()
-
-                    # TODO: A proper fix is needed here
-                    elif change_doc.get('reason') == 'no_db_file':
-                        self.__stream.stop()
-                        break
-
-    def stop(self):
-        self.__stream.stop()
-
-class ChangesMonitorThread(MonitorThread):
-    CHANGE_CLS = Change
-
-class DBsMonitorThread(MonitorThread):
-    CHANGE_CLS = DBChange
 
 def get_couchdb_url():
     couchdb_port = config.couchdb.port if config.couchdb.protocol == 'http' else config.couchdb.ssl_port
@@ -340,13 +165,12 @@ def has_permissions_for(workspace_name, cookies=None, credentials=None):
     # respond 401 if it doesn't have access to it
     return (response.status_code != requests.codes.unauthorized)
 
-def start_dbs_monitor(changes_callback):
-    logger.debug(u'Starting global workspaces monitor')
-    dbs_stream = ChangesStream(ChangesStream.ALL_DBS, feed='continuous', heartbeat='true')
-    monitor_thread = DBsMonitorThread(dbs_stream, changes_callback)
-    monitor_thread.daemon = True
-    monitor_thread.start()
-    return monitor_thread
+def get_user_from_session(cookies=None, credentials=None):
+    session_url = "%s/_session" % get_couchdb_url()
+    res = requests.get(session_url, cookies=cookies, auth=credentials)
+    if res.ok:
+        user = res.json()['userCtx']['name']
+    return user if user else ''
 
 def push_reports():
     vmanager = ViewsManager()
@@ -360,3 +184,52 @@ def push_reports():
         logger.debug(traceback.format_exc())
         logger.warning("Reports database couldn't be uploaded. You need to be an admin to do it")
 
+def upload_views(workspace):
+    """ Upload views with couchdb behind of ViewsManager """
+    vmanager = ViewsManager()
+    try:
+        vmanager.addViews(workspace)
+    except:
+        import traceback
+        logger.debug(traceback.format_exc())
+        logger.warning("Views documents couldn't be uploaded. You need to be an admin to do it")
+
+def create_workspace(workspace):
+
+    couch_server = CouchDBServer()
+    couch_server.create_db(workspace.get('name'))
+
+    ws = couch_server.get_workspace_handler(workspace.get('name'))
+    upload_views(ws)
+
+    try:
+        response = ws.save_doc(workspace)
+    except (RequestFailed, ResourceError):
+        # create an error
+        response = {'ok': False}
+
+    success = response.get('ok', False)
+    if not success:
+        # if the document was not create, delete db
+        couch_server.delete_db(workspace.get('name'))
+
+    return success
+
+def update_workspace(workspace):
+    couch_server = CouchDBServer()
+    ws = couch_server.get_workspace_handler(workspace.get('name'))
+
+    try:
+        response = ws.save_doc(workspace)
+    except (RequestFailed, ResourceError):
+        # create an error
+        response = {'ok': False}
+    return response.get('ok', False)
+
+def delete_workspace(ws_name):
+    couch_server = CouchDBServer()
+    try:
+        couch_server.delete_db(ws_name)
+    except:
+        return False
+    return True

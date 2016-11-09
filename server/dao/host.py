@@ -41,7 +41,7 @@ class HostDAO(FaradayDAO):
             Host.default_gateway_ip, Host.default_gateway_mac, EntityMetadata.couchdb_id,\
             EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
             EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
-            EntityMetadata.update_controller_action, EntityMetadata.owner,
+            EntityMetadata.update_controller_action, EntityMetadata.owner, EntityMetadata.command_id,\
             func.group_concat(distinct(Interface.id)).label('interfaces'),\
             func.count(distinct(Vulnerability.id)).label('vuln_count'),\
             func.count(distinct(Service.id)).label('open_services_count'))
@@ -86,7 +86,8 @@ class HostDAO(FaradayDAO):
                     'creator': host.creator,
                     'create_time': host.create_time,
                     'update_controller_action': host.update_controller_action,
-                    'owner': host.owner
+                    'owner': host.owner,
+                    'command_id': host.command_id
                 },
                 'vulns': host.vuln_count,
                 'services': host.open_services_count,

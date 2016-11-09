@@ -2,6 +2,8 @@
 // Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 // See the file 'doc/LICENSE' for the license information
 
+'use strict';
+
 angular.module('faradayApp')
     .controller('statusReportCtrl',
                     ['$scope', '$filter', '$routeParams',
@@ -833,6 +835,8 @@ angular.module('faradayApp')
                 // if it is larger than our biggest page size
                 if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
                     $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
+                    // sadly, this will load the vuln list again because it fires a paginationChanged event
+                    if ($scope.gridOptions.paginationPageSize > $scope.gridOptions.totalItems) $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
                 }
             });
         };

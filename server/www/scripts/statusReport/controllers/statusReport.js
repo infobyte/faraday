@@ -283,6 +283,7 @@ angular.module('faradayApp')
             $scope.gridOptions.columnDefs.push({ name : 'status',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
                 headerCellTemplate: header,
+                width: '100',
                 visible: $scope.columns["status"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'website',
@@ -351,7 +352,7 @@ angular.module('faradayApp')
                 displayName : "creator",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/creatorcolumn.html',
                 headerCellTemplate: header,
-                width: '80',
+                width: '100',
                 visible: $scope.columns["creator"]
             });
         };

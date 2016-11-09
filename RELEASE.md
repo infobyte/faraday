@@ -20,6 +20,8 @@ New release:
 * Added Faraday news notifications in GTK and Web UI.
 * New plugins: Dirb, Netdiscover, FruttyWifi, Sentinel.
 * Improvements on the WPscan plugin.
+* Fixed Licenses search.
+* Refactor Licenses module to be compatible with JS Strict Mode.
 
 September 19, 2016: 
 ---

@@ -10,7 +10,7 @@ Please run ./faraday.py --update
 New features in the latest update
 =====================================
 
-New release:
+November 10, 2016:
 ---
 * New library to connect with Faraday Server.
 * Fixed Fplugin, now it uses the new library to communicate with the Server.

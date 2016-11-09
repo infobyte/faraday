@@ -835,7 +835,7 @@ angular.module('faradayApp')
                 if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
                     $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
                     // sadly, this will load the vuln list again because it fires a paginationChanged event
-                    if ($scope.gridOptions.paginationPageSize > $scope.gridOptions.totalItems) $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
+                    if ($scope.gridOptions.paginationPageSize != $scope.gridOptions.totalItems) $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
                 }
             });
         };

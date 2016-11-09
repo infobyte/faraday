@@ -41,7 +41,7 @@ angular.module('faradayApp')
             sortDirection: null
         };
 
-        init = function() {
+        var init = function() {
             $scope.baseurl = BASEURL;
             $scope.severities = SEVERITIES;
             $scope.easeofresolution = EASEOFRESOLUTION;
@@ -68,9 +68,10 @@ angular.module('faradayApp')
             };
             $scope.gridOptions.columnDefs = [];
 
-            if ($cookies.get('pageSize') !== undefined) {
-                paginationOptions.pageSize = parseInt($cookies.get('pageSize'));
-                $scope.gridOptions.paginationPageSize = paginationOptions.pageSize;
+            var storedPageSize = parseInt($cookies.get('pageSize'));
+            if ( storedPageSize && storedPageSize > 0 ) {
+                paginationOptions.pageSize = storedPageSize;
+                $scope.gridOptions.paginationPageSize = storedPageSize;
             }
 
             if($cookies.get('confirmed') === 'true') {
@@ -359,7 +360,7 @@ angular.module('faradayApp')
         var groupByColumn = function() {
             for (var i = 0; i < $scope.gridOptions.columnDefs.length; i++) {
                 var column = $scope.gridOptions.columnDefs[i];
-                colname = column.displayName !== undefined ? column.displayName : column.name; 
+                var colname = column.displayName !== undefined ? column.displayName : column.name; 
                 if ( colname == $scope.propertyGroupBy && $scope.columns[colname] == true) {
                     column.grouping = { groupPriority: 0 };
                     paginationOptions.sortColumn = colname;
@@ -481,7 +482,7 @@ angular.module('faradayApp')
             loadVulns();
         };
 
-        showMessage = function(msg) {
+        var showMessage = function(msg) {
             var modal = $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',
                     controller: 'commonsModalKoCtrl',
@@ -517,7 +518,7 @@ angular.module('faradayApp')
             _delete([vuln]);
         };
 
-        _delete = function(vulns) {
+        var _delete = function(vulns) {
             if(vulns.length > 0) {
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalDelete.html',
@@ -549,7 +550,7 @@ angular.module('faradayApp')
             _toggleConfirm([vuln], confirm);
         };
 
-        _toggleConfirm = function(vulns, confirm) {
+        var _toggleConfirm = function(vulns, confirm) {
             var toggleConfirm = {'confirmed': !confirm},
             deferred = $q.defer(),
             promises = [];
@@ -574,7 +575,7 @@ angular.module('faradayApp')
             _edit([vuln]);
         };
 
-        _edit = function(vulns) {
+        var _edit = function(vulns) {
            if (vulns.length == 1) {
                 var modal = $uibModal.open({
                     templateUrl: 'scripts/statusReport/partials/modalEdit.html',
@@ -813,7 +814,7 @@ angular.module('faradayApp')
             */
         };
 
-        loadVulns = function() {
+        var loadVulns = function() {
             delete searchFilter.confirmed;
             if ($scope.confirmed)
                 searchFilter.confirmed = true;
@@ -907,7 +908,7 @@ angular.module('faradayApp')
 
         $scope.serviceSearch = function(srvStr) {
             //TODO: this is horrible
-            srvName = srvStr.split(') ')[1];
+            var srvName = srvStr.split(') ')[1];
             return $scope.encodeUrl(srvName);
         }
 

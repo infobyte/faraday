@@ -18,7 +18,7 @@ November 10, 2016:
 * Refactor in Faraday Core and GTK Client.
 * Bug fixing in Faraday Client and Server.
 * Added Faraday news notifications in GTK and Web UI.
-* New plugins: Dirb, Netdiscover, FruttyWifi, Sentinel.
+* New plugins: Dirb, Netdiscover, FruityWifi, Sentinel.
 * Improvements on the WPscan plugin.
 * Fixed Licenses search.
 * Refactor Licenses module to be compatible with JS Strict Mode.

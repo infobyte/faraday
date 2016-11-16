@@ -14,11 +14,14 @@ angular.module('faradayApp')
              $http.get('https://www.faradaysec.com/scripts/updatedb.php?version=' + configSrv.faraday_version).then(function(response) {
                  try{
                      response.data['news'].forEach(function(element) {
-                         $scope.url = element['url'];
+
+                         var childScope = $scope.$new();
+                         childScope.url = element['url'];
+
                          Notification.info({
                              message: element['description'],
                              title: 'x',
-                             scope: $scope,
+                             scope: childScope,
                              delay: 'ALWAYS',
                              templateUrl: 'scripts/navigation/partials/notification.html'});
                       }, this);

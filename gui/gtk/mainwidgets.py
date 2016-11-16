@@ -755,7 +755,7 @@ class ConsoleLog(Gtk.Widget):
             button.add(label)
             button.set_relief(Gtk.ReliefStyle.NONE)
 
-            button.connect("clicked", lambda o: webbrowser.open())
+            button.connect("clicked", lambda o: webbrowser.open(url))
 
             label.show()
             button.show()

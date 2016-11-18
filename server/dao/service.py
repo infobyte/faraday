@@ -33,7 +33,7 @@ class ServiceDAO(FaradayDAO):
                 func.count(distinct(Vulnerability.id)).label('vuln_count'), EntityMetadata.couchdb_id,\
                 EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
                 EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
-                EntityMetadata.update_controller_action, EntityMetadata.owner)
+                EntityMetadata.update_controller_action, EntityMetadata.owner, EntityMetadata.command_id)
 
         query = self._session.query(service_bundle).\
                 group_by(Service.id).\
@@ -66,7 +66,8 @@ class ServiceDAO(FaradayDAO):
                     'creator': service.creator,
                     'create_time': service.create_time,
                     'update_controller_action': service.update_controller_action,
-                    'owner': service.owner
+                    'owner': service.owner,
+                    'command_id': service.command_id
                 },
                 'protocol': service.protocol,
                 'status': service.status,

@@ -6,24 +6,8 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-
-class MoreThanOneObjectFoundByID(Exception):
-    def __init__(self, faulty_list):
-        self.faulty_list = faulty_list
-
-    def __str__(self):
-        return ("More than one object has been found."
-                "These are all the objects found with the same ID: {0}"
-                .format(self.faulty_list))
-
-class WrongObjectSignature(Exception):
-    def __init__(self, param):
-        self.param = param
-
-    def __str__(self):
-        return ("object_signature must be either 'host', 'vuln', 'vuln_web',"
-                "'interface' 'service', 'credential' or 'note' and it was {0}"
-                .format(self.param))
+import hashlib
+from persistence.server.server_io_exceptions import MoreThanOneObjectFoundByID
 
 def force_unique(lst):
     """Takes a list and return its only member if the list len is 1,
@@ -37,11 +21,20 @@ def force_unique(lst):
     else:
         raise MoreThanOneObjectFoundByID(lst)
 
+def get_hash(parts):
+    return hashlib.sha1("._.".join(parts)).hexdigest()
+
 def get_object_properties(obj):
+    # this sometimes is the metadata object and sometimes its a dictionary
+    # a better fix awaits in a brighter future
+    metadata = obj.getMetadata()
+    if not isinstance(obj.getMetadata(), dict):
+        metadata = metadata.toDict()
+
     return {'id': obj.getID(),
             'name': obj.getName(),
             'description': obj.getDescription(),
-            'metadata': obj.getMetadata(),
+            'metadata': metadata,
             'owned': obj.isOwned(),
             'owner': obj.getOwner()
             }
@@ -77,7 +70,8 @@ def get_vuln_properties(vuln):
                  'refs': vuln.getRefs(),
                  'severity': vuln.getSeverity(),
                  'resolution': vuln.getResolution(),
-                 'desc': vuln.getDesc()}
+                 'desc': vuln.getDesc(),
+                 'status': vuln.getStatus()}
     vuln_dict.update(get_object_properties(vuln))
     return vuln_dict
 
@@ -90,6 +84,7 @@ def get_vuln_web_properties(vuln_web):
                      'path': vuln_web.getPath(),
                      'pname': vuln_web.getPname(),
                      'query': vuln_web.getQuery(),
+                     'status': vuln_web.getStatus()
                      }
     vuln_web_dict.update(get_object_properties(vuln_web))
     vuln_web_dict.update(get_vuln_properties(vuln_web))

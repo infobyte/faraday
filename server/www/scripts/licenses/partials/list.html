@@ -3,7 +3,7 @@
 <!-- See the file 'doc/LICENSE' for the license information -->
 
 <section id="main" class="seccion clearfix">
-    <div class="right-main" ng-show="DBExists"><div id="reports-main" class="fila clearfix">
+    <div class="right-main" ng-show="db_exists"><div id="reports-main" class="fila clearfix">
         <h2 class="ws-label">
             <span id="ws-name" title="Licenses">Licenses ({{licenses.length}})</span><!-- WS name -->
             <button id="delete" type="button" class="btn btn-default" title="Delete selected licenses" ng-click="delete()">
@@ -21,19 +21,16 @@
         </h2><!-- .ws-label -->
         <div class="reports col-md-12 col-sm-12 col-xs-12">
             <div class="col-md-6 col-sm-3 col-xs-11">
-                <form role="form" ng-submit="searchFor(true, searchParams)">
-                    <div class="form-group">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
-                            <input type="text" class="form-control" id="filter-by"
-                            placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
-                            <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                <i class="fa fa-search" ng-if="loaded_licenses"></i>
-                                <i class="fa fa-refresh fa-spin" ng-if="!loaded_licenses"></i>
-                            </span>
-                        </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" class="form-control input-sm" ng-model="search" placeholder="enter keywords" />
+                        <span class="input-group-btn">
+                            <button class="btn btn-sm" type="button">
+                                <i class="fa fa-search"></i>
+                            </button>
+                        </span>
                     </div>
-                </form>
+                </div>
             </div>
             <div class="reports col-md-12 col-sm-12 cols-xs-12" ng-if="expiration_month == true">
                 <h4><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> The licenses marked in dark red are about to expire</h4>
@@ -61,7 +58,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="license in filtered = (licenses | filter:expression) | orderBy:sortField:reverse | startFrom:currentPage*pageSize | limitTo:pageSize"
+                    <tr ng-repeat="license in licenses | filter:search | orderBy:sort_field:reverse"
                         selection-model selection-model-type="checkbox"
                         selection-model-mode="multiple-additive"
                         selection-model-selected-class="multi-selected"
@@ -74,27 +71,11 @@
                         <td>{{license.start | date:'MM/dd/yyyy'}}</td>
                         <td>{{license.end|date:'MM/dd/yyyy'}}</td>
                         <td><i class="fa fa-history" aria-hidden="true">
-                            <a ng-href="{{store}}search/?q={{license.product}}" target="_blank">renew</a>
+                            <a ng-href="{{store}}{{license.product}}" target="_blank">renew</a>
                         </i></td>
                     </tr>
                 </tbody>
             </table><!-- #licenses -->
-            <div class="showPagination">
-                <div class="form-group">
-                    <ul class="pagination">
-                        <li><a ng-hide="currentPage <= 0" ng-click="currentPage = currentPage - 1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
-                        <li><a>{{currentPage}}/{{ ((filtered.length / pageSize) | integer)}}</a></li>
-                        <li><a ng-hide="currentPage >= ((filtered.length / pageSize) | integer)" ng-click="currentPage = currentPage + 1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
-                    </ul>
-                    <form name="goToPage" id="goToPageStatus">
-                        <div class="col-md-2">
-                            <input type="number" min="0" max="{{ (filtered.length / pageSize) | integer }}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
-                        </div>
-                        <button class="btn btn-default" ng-click="go()">GO</button>
-                        <input type="number" min="0" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />
-                    </form>
-                </div>
-            </div><!-- .showPagination -->
         </div><!-- .reports -->
     </div><!-- #reports-main --></div><!-- .right-main -->
 </section><!-- #main -->

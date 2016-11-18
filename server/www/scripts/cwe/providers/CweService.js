@@ -7,6 +7,7 @@ angular.module('faradayApp')
         var cweFact = {};
         cweFact.cweList = [];
 
+        // XXX: this is still not using the server
         cweFact.get = function() {
             var deferred = $q.defer();
             var cwe_url = BASEURL + 'cwe/_all_docs?include_docs=true';

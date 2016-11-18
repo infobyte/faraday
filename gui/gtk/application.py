@@ -516,9 +516,12 @@ class GuiApp(Gtk.Application, FaradayUi):
             self.serverIO.active_workspace = event.workspace.name
             host_count, service_count, vuln_count = self.update_counts()
             total_host_amount = self.serverIO.get_hosts_number()
-            first_host_page = self.serverIO.get_hosts(page='0', page_size='20', sort='vulns', sort_dir='desc')
+            first_host_page = self.serverIO.get_hosts(page='0', page_size='20',
+                                                      sort='vulns', sort_dir='desc')
+            total_host_amount = self.serverIO.get_workspace_numbers()[0]
             GObject.idle_add(self.statusbar.set_workspace_label, event.workspace.name)
-            GObject.idle_add(self.hosts_sidebar.redo, first_host_page, total_host_amount)
+            GObject.idle_add(self.hosts_sidebar.reset_model_after_workspace_changed,
+                             first_host_page, total_host_amount)
             GObject.idle_add(self.statusbar.update_ws_info, host_count,
                              service_count, vuln_count)
             GObject.idle_add(self.statusbar.set_default_conflict_label)
@@ -541,22 +544,25 @@ class GuiApp(Gtk.Application, FaradayUi):
             GObject.idle_add(self.handle_no_active_workspace)
 
         def add_object():
-            GObject.idle_add(self.hosts_sidebar.add_object, event.new_obj)
-            host_count, service_count, vuln_count = self.update_counts()
-            GObject.idle_add(self.statusbar.update_ws_info, host_count,
-                             service_count, vuln_count)
+            if event.new_obj:
+                GObject.idle_add(self.hosts_sidebar.add_object, event.new_obj)
+                host_count, service_count, vuln_count = self.update_counts()
+                GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                                 service_count, vuln_count)
 
         def delete_object():
-            GObject.idle_add(self.hosts_sidebar.remove_object, event.obj_id)
-            host_count, service_count, vuln_count = self.update_counts()
-            GObject.idle_add(self.statusbar.update_ws_info, host_count,
-                             service_count, vuln_count)
+            if event.obj_id:
+                GObject.idle_add(self.hosts_sidebar.remove_object, event.obj_id)
+                host_count, service_count, vuln_count = self.update_counts()
+                GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                                 service_count, vuln_count)
 
         def update_object():
-            GObject.idle_add(self.hosts_sidebar.update_object, event.obj)
-            host_count, service_count, vuln_count = self.update_counts()
-            GObject.idle_add(self.statusbar.update_ws_info, host_count,
-                             service_count, vuln_count)
+            if event.obj:
+                GObject.idle_add(self.hosts_sidebar.update_object, event.obj)
+                host_count, service_count, vuln_count = self.update_counts()
+                GObject.idle_add(self.statusbar.update_ws_info, host_count,
+                                 service_count, vuln_count)
 
         dispatch = {3131:  new_log_event,
                     3141:  new_conflict_event,
@@ -616,9 +622,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         # the dummy values here will be updated as soon as the ws is loaded.
         self.hosts_sidebar = HostsSidebar(self.show_host_info, self.serverIO.get_hosts,
-                                          self.icons)
-        default_model = self.hosts_sidebar.create_model([]) # dummy empty list
-        self.hosts_sidebar.create_view(default_model)
+                                          self.serverIO.get_host, self.icons)
         self.sidebar = Sidebar(self.ws_sidebar.get_box(),
                                self.hosts_sidebar.get_box())
 
@@ -839,8 +843,11 @@ class GuiApp(Gtk.Application, FaradayUi):
         the user's default browser
         """
         couch_url = CONF.getCouchURI()
-        ws_name = self.workspace_manager.getActiveWorkspace().name
-        ws_url = couch_url + "/_ui/#/dashboard/ws/" + ws_name
+        ws_name = self.workspace_manager.getActiveWorkspace()
+        if not ws_name:
+            ws_url = couch_url + "/_ui/"
+        else:
+            ws_url = couch_url + "/_ui/#/dashboard/ws/" + ws_name.name
         webbrowser.open(ws_url, new=2)
 
     def on_help_dispatch(self, action, param=None):

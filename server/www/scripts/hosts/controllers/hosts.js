@@ -7,7 +7,7 @@ angular.module('faradayApp')
         ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'commonsFact',
         function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, commonsFact) {
 
-        init = function() {
+        var init = function() {
             $scope.selectall_hosts = false;
             // hosts list
             $scope.hosts = [];
@@ -69,7 +69,7 @@ angular.module('faradayApp')
                 // load icons into object for HTML
                 // maybe this part should be directly in the view somehow
                 // or, even better, in a CSS file
-                oss = ["windows", "cisco", "router", "osx", "apple","linux", "unix"];
+                var oss = ["windows", "cisco", "router", "osx", "apple","linux", "unix"];
                 oss.forEach(function(os){
                     if(host.os.toLowerCase().indexOf(os) != -1) {
                         host.icon = os;
@@ -132,7 +132,7 @@ angular.module('faradayApp')
             });
 
             if(selected.length == 0) {
-                $uibModal.open(config = {
+                $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',
                     controller: 'commonsModalKoCtrl',
                     size: 'sm',
@@ -148,7 +148,7 @@ angular.module('faradayApp')
                     message = selected.length  + " hosts will be deleted";
                 }
                 message = message.concat(" along with all of its children. This operation cannot be undone. Are you sure you want to proceed?");
-                $uibModal.open(config = {
+                $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalDelete.html',
                     controller: 'commonsModalDelete',
                     size: 'lg',
@@ -171,7 +171,7 @@ angular.module('faradayApp')
                 $scope.hosts.push(host);
                 $scope.loadIcons();
             }, function(message) {
-                $uibModal.open(config = {
+                $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',
                     controller: 'commonsModalKoCtrl',
                     size: 'sm',
@@ -193,8 +193,8 @@ angular.module('faradayApp')
              });
 
             modal.result.then(function(data) {
-                hostdata = data[0];
-                interfaceData = data[1];
+                var hostdata = data[0];
+                var interfaceData = data[1];
                 $scope.insert(hostdata, interfaceData);
             });
         };
@@ -228,7 +228,7 @@ angular.module('faradayApp')
                     $scope.update($scope.selectedHosts()[0], hostdata, interfaceData);
                 });
             } else {
-                $uibModal.open(config = {
+                $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',
                     controller: 'commonsModalKoCtrl',
                     size: 'sm',
@@ -287,7 +287,7 @@ angular.module('faradayApp')
         };
 
         $scope.selectedHosts = function() {
-            selected = [];
+            var selected = [];
             $scope.hosts.forEach(function(host) {
                 if(host.selected === true) {
                     selected.push(host);

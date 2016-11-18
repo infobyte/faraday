@@ -9,7 +9,7 @@ angular.module('faradayApp')
 
         $scope.message;
 
-        init = function() {
+        var init = function() {
             $scope.message = "It looks like your Faraday installation is missing "+
                              "the Licenses database. Would you like to create it now?";
         };

@@ -1,89 +1,626 @@
-END-USER LICENSE AGREEMENT
+GNU GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
 
-IMPORTANT-READ CAREFULLY: This End-User License Agreement ("EULA") is a legal agreement between you (either an individual or a single entity) and Infobyte LLC ("Infobyte"). for the Software and Services identified above, which includes computer software and may include associated media, printed materials, and "online" or electronic documentation ("Product"). An amendment or addendum to this EULA may accompany the Product. YOU AGREE TO BE BOUND BY THE TERMS OF THIS EULA BY INSTALLING, COPYING, OR OTHERWISE USING THE PRODUCT. IF YOU DO NOT AGREE, DO NOT INSTALL OR USE THE PRODUCT.
+ Copyright (C) 2007 Free Software Foundation, Inc. [http://fsf.org/]
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
 
-1. DEFINITIONS 
+                            Preamble
 
-1.1 “Content Updates” means content used by certain Infobyte Software which is updated from time to time, including but not limited to updated plugins for vulnerability assessment, management and penetration testing. 
+  The GNU General Public License is a free, copyleft license for
+software and other kinds of works.
 
-1.2 “Documentation” means the published and generally available user manuals and written materials Infobyte delivers or makes available with the Software. 
-1.3 “License Term” shall mean the period in which Customer is authorized to utilize the Software. Each License Term shall be listed on the applicable Product Order Form and shall commence on the date Customer is delivered the Software. If the Product Order Form fails to specify a specific License Term for the use of the Software then it shall be deemed a perpetual License Term. 
+  The licenses for most software and other practical works are designed
+to take away your freedom to share and change the works.  By contrast,
+the GNU General Public License is intended to guarantee your freedom to
+share and change all versions of a program--to make sure it remains free
+software for all its users.  We, the Free Software Foundation, use the
+GNU General Public License for most of our software; it applies also to
+any other work released this way by its authors.  You can apply it to
+your programs, too.
 
-1.4 “Faraday® Products” shall mean Infobyte’s proprietary penetration testing products currently marketed under the names Faraday® Professional, Faraday® Corporate, Faraday® Cloud Professional, Faraday® Cloud Standard and Faraday® Cloud Corporate. 
+  When we speak of free software, we are referring to freedom, not
+price.  Our General Public Licenses are designed to make sure that you
+have the freedom to distribute copies of free software (and charge for
+them if you wish), that you receive source code or can get it if you
+want it, that you can change the software or use pieces of it in new
+free programs, and that you know you can do these things.
 
-1.5 “Product Order Form” means either Infobyte’s online registration form or other ordering document entered into by Customer and Infobyte which identifies the Software, services, or any hardware ordered by Customer from Infobyte, sets forth the price to be paid for such Software, services, or hardware and sets forth the number of Users who may access and use the Software; the number of IP addresses that may be scanned by the Software; or the number of installs or scans of the Software. 
+  To protect your rights, we need to prevent others from denying you
+these rights or asking you to surrender the rights.  Therefore, you have
+certain responsibilities if you distribute copies of the software, or if
+you modify it: responsibilities to respect the freedom of others.
 
-1.6 “Services” means Infobyte’s maintenance and support services (as described in Section 11.1) 
+  For example, if you distribute copies of such a program, whether
+gratis or for a fee, you must pass on to the recipients the same
+freedoms that you received.  You must make sure that they, too, receive
+or can get the source code.  And you must show them these terms so they
+know their rights.
 
-1.7 “Software" means those Infobyte Faraday Products listed on the applicable Product Order Form and all updates, enhancements, bug fixes and new releases thereto that Infobyte elects in its discretion to make available to Customer. 
+  Developers that use the GNU GPL protect your rights with two steps:
+(1) assert copyright on the software, and (2) offer you this License
+giving you legal permission to copy, distribute and/or modify it.
 
-1.8 “User” means those specific individual named users who are granted access to the Software by Customer. For the sake of clarity, Users shall include full and part-time employees, contractors, agents, or other workers of Customer; provided, however each individual person shall count as only one User. Once a User has been deactivated by the Software’s administrator (even if as a result of employee turnover) such User license may be transferred to another person.
+  For the developers' and authors' protection, the GPL clearly explains
+that there is no warranty for this free software.  For both users' and
+authors' sake, the GPL requires that modified versions be marked as
+changed, so that their problems will not be attributed erroneously to
+authors of previous versions.
 
-2. SOFTWARE LICENSES
+  Some devices are designed to deny users access to install or run
+modified versions of the software inside them, although the manufacturer
+can do so.  This is fundamentally incompatible with the aim of
+protecting users' freedom to change the software.  The systematic
+pattern of such abuse occurs in the area of products for individuals to
+use, which is precisely where it is most unacceptable.  Therefore, we
+have designed this version of the GPL to prohibit the practice for those
+products.  If such problems arise substantially in other domains, we
+stand ready to extend this provision to those domains in future versions
+of the GPL, as needed to protect the freedom of users.
 
-2.1. License to Faraday Products. To the extent that Customer has licensed any of Infobyte LLC’s proprietary Faraday Products then the following license terms, as applicable, shall apply
+  Finally, every program is threatened constantly by software patents.
+States should not allow patents to restrict development and use of
+software on general-purpose computers, but in those that do, we wish to
+avoid the special danger that patents applied to a free program could
+make it effectively proprietary.  To prevent this, the GPL assures that
+patents cannot be used to render the program non-free.
 
-Subject to the terms and conditions of this Agreement, Infobyte LLC hereby grants to Customer, during the applicable License Term only, a non-exclusive, non-transferable license to use such Software (in object code form only) solely for network penetration testing purposes, solely in accordance with any restrictions on use set forth on the Product Order Form and only in accordance with the applicable Documentation. Customer shall ensure that its use of the Software does not exceed the number of Users, machines, seats and/or other restrictions set forth on the Product Order Form (all as more fully described on such Product Order Form).
+  The precise terms and conditions for copying, distribution and
+modification follow.
 
-2.2 Delivery and Copies. Delivery shall be deemed to have been made upon Infobyte LLC providing Customer with instructions to download the Software
-from a Infobyte LLC designated download site. Notwithstanding anything to the contrary herein, Customer may make a reasonable number of copies of the Software for the sole purpose of backing-up and archiving the Software. Each copy of the Software is subject to all of the terms and conditions of this
-Agreement and must contain the same titles, trademarks, and copyright notices as the original. To the extent that Infobyte LLC provides any hardware to Customer (either sold or provided as part of an evaluation), then all shipments are FOB Infobyte LLC’s designated shipping facility.
+                       TERMS AND CONDITIONS
 
-2.3 Restrictions. All Software provided is licensed, not sold. The restrictions contained in this Agreement represent conditions of Customer’s
-license. Customer may not use the Software for the purposes of conducting any comparative analysis, evaluations or product benchmarks with respect to the
-Software without Infobyte LLC’s prior written approval. Customer recognizes and agrees that there is no adequate remedy at law for a breach of this Section 2.3 and that such breach would irreparably harm Infobyte LLC for which monetary damages would not be an adequate remedy and that Infobyte LLC is entitled to equitable relief in addition to any other remedies.
+  0. Definitions.
 
-* Reservation of Rights. Infobyte LLC. reserves all rights not expressly granted to you in this EULA. 
+  "This License" refers to version 3 of the GNU General Public License.
 
-3. FEES AND PAYMENT TERMS. Customer shall pay Infobyte LLC the fees, charges and other amounts specified on the Product Order Form in accordance with the payment terms set forth on the Product Order Form. Overdue balances are subject to a service charge equal to the lesser of 1.5% per month or the maximum legal interest rate allowed by law. Customer shall be responsible for all shipping costs, including any applicable duties, and taxes levied on any transaction under this Agreement, including, without limitation, all federal, state, and local sales taxes, levies and assessments and local withholding taxes in Customer’s jurisdiction, if any, excluding, however, any taxes based on Infobyte LLC's income.
+  "Copyright" also means copyright-like laws that apply to other kinds of
+works, such as semiconductor masks.
 
-In the event Customer is required to withhold taxes from its payment to Infobyte LLC or withholding taxes are subsequently required to be paid to a local taxing jurisdiction, Customer is obligated to pay such tax, and Infobyte LLC will receive the full payment, net of any such taxes, as agreed on the applicable
-Product Order Form. Customer shall also pay all reasonable travel and out-of-pocket expenses incurred by Infobyte LLC in connection with any Services
-rendered provided such expenses have been pre-approved in advance by Customer.
+  "The Program" refers to any copyrightable work licensed under this
+License.  Each licensee is addressed as "you".  "Licensees" and
+"recipients" may be individuals or organizations.
 
-4.   CONTENTS UPDATES. For so long as Customer subscribes to Infobyte LLC’s maintenance and support services for the Software, Customer is granted the right to use, as part of the Software, such Content Updates as and when they are made generally available to Infobyte LLC’s end user customers who are covered by Infobyte LLC’s maintenance and support services for such Software. This Agreement does not otherwise permit Customer to obtain and use Content Updates.
+  To "modify" a work means to copy from or adapt all or part of the work
+in a fashion requiring copyright permission, other than the making of an
+exact copy.  The resulting work is called a "modified version" of the
+earlier work or a work "based on" the earlier work.
 
-5.   LIMITATION ON REVERSE ENGINEERING, DECOMPILATION, AND DISASSEMBLY. You may not modify, alter, decompile, disassemble, reverse engineer or emulate the functionality, reverse compile or otherwise reduce to human readable form, or create derivative works of the Software without the prior written consent of Infobyte LLC.
+  A "covered work" means either the unmodified Program or a work based
+on the Program.
 
-6.   TERMINATION. Without prejudice to any other rights, Infobyte LLC. may cancel this EULA if you do not abide by the terms and conditions of this EULA, in which case you must destroy all copies of the Product and all of its component parts. 
+  To "propagate" a work means to do anything with it that, without
+permission, would make you directly or secondarily liable for
+infringement under applicable copyright law, except executing it on a
+computer or modifying a private copy.  Propagation includes copying,
+distribution (with or without modification), making available to the
+public, and in some countries other activities as well.
 
-7.   CONSENT TO USE OF DATA. You agree that Infobyte LLC. and its affiliates may collect and use technical information you provide as a part of support services related to the Product. Infobyte LLC. agrees not to use this information in a form that personally identifies you. 
+  To "convey" a work means any kind of propagation that enables other
+parties to make or receive copies.  Mere interaction with a user through
+a computer network, with no transfer of a copy, is not conveying.
 
-8.   NOT FOR RESALE SOFTWARE. Product identified as "Not for Resale" or "NFR," may not be resold, transferred or used for any purpose other than demonstration, test or evaluation. 
+  An interactive user interface displays "Appropriate Legal Notices"
+to the extent that it includes a convenient and prominently visible
+feature that (1) displays an appropriate copyright notice, and (2)
+tells the user that there is no warranty for the work (except to the
+extent that warranties are provided), that licensees may convey the
+work under this License, and how to view a copy of this License.  If
+the interface presents a list of user commands or options, such as a
+menu, a prominent item in the list meets this criterion.
 
-9.  LIMITED WARRANTY FOR SOFTWARE PRODUCTS. Infobyte LLC. warrants that the Product will perform substantially in accordance with the accompanying materials for a period of ninety days from the date of receipt. If an implied warranty or condition is created by your state/jurisdiction and federal or state/provincial law prohibits disclaimer of it, you also have an implied warranty or condition, BUT ONLY AS TO DEFECTS DISCOVERED DURING THE PERIOD OF THIS LIMITED WARRANTY (THIRTY DAYS). AS TO ANY DEFECTS DISCOVERED AFTER THE THIRTY (30) DAY PERIOD, THERE IS NO WARRANTY OR CONDITION OF ANY KIND. Some states/jurisdictions do not allow limitations on how long an implied warranty or condition lasts, so the above limitation may not apply to you. Any supplements or updates to the Product, including without limitation, any (if any) service packs or hot fixes provided to you after the expiration of the ninety day Limited Warranty period are not covered by any warranty or condition, express, implied or statutory. LIMITATION ON REMEDIES; NO CONSEQUENTIAL OR OTHER DAMAGES. Your exclusive remedy for any breach of this Limited Warranty is as set forth below. Except for any refund elected by Infobyte LLC., YOU ARE NOT ENTITLED TO ANY DAMAGES, INCLUDING BUT NOT LIMITED TO CONSEQUENTIAL DAMAGES, if the Product does not meet Infobyte LLC.'s Limited Warranty, and, to the maximum extent allowed by applicable law, even if any remedy fails of its essential purpose. The terms of Section 13 below ("Exclusion of Incidental, Consequential and Certain Other Damages") are also incorporated into this Limited Warranty. Some states/jurisdictions do not allow the exclusion or limitation of incidental or consequential damages, so the above limitation or exclusion may not apply to you. This Limited Warranty gives you specific legal rights. You may have others which vary from state/jurisdiction to state/jurisdiction. YOUR EXCLUSIVE REMEDY. Infobyte LLC.'s and its suppliers' entire liability and your exclusive remedy shall be, at Infobyte LLC.'s option from time to time exercised subject to applicable law, (a) return of the price paid (if any) for the Product, or (b) repair or replacement of the Product, that does not meet this Limited Warranty and that is returned to Infobyte LLC. with a copy of your receipt. You will receive the remedy elected by Infobyte LLC. without charge, except that you are responsible for any expenses you may incur (e.g. cost of shipping the Product to Infobyte LLC.). This Limited Warranty is void if failure of the Product has resulted from accident, abuse, misapplication, abnormal use or a virus. Any replacement Product will be warranted for the remainder of the original warranty period or thirty (30) days, whichever is longer. Outside the United States or Canada, neither these remedies nor any product support services offered by Infobyte LLC. are available without proof of purchase from an authorized international source. To exercise your remedy, contact Infobyte LLC.
+  1. Source Code.
 
-10. THE FARADAY SOFTWARE IS PROVIDED TO THE USER ''AS IS.'' FARADAY SOFTWARE DOES NOT WARRANT THAT THE FUNCTIONS CONTAINED IN THE SOFTWARE WILL MEET YOUR REQUIREMENTS, OR THAT THE OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED OR ERROR-FREE, OR THAT DEFECTS IN THE SOFTWARE WILL BE CORRECTED.  FURTHERMORE, FARADAY SOFTWARE DOES NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OR THE RESULTS OF THE USE OF THE SOFTWARE OR ANY DOCUMENTATION PROVIDED THEREWITH IN TERMS OF THEIR CORRECTNESS, ACCURACY, RELIABILITY, OR OTHERWISE. NO ORAL OR WRITTEN INFORMATION OR ADVICE GIVEN BY FARADAY SOFTWARE OR A FARADAY SOFTWARE AUTHORIZED REPRESENTATIVE SHALL CREATE A WARRANTY OR IN ANY WAY INCREASE THE SCOPE OF THIS WARRANTY.
+  The "source code" for a work means the preferred form of the work
+for making modifications to it.  "Object code" means any non-source
+form of a work.
 
-11.  DISCLAIMER OF WARRANTIES. The Limited Warranty that appears above is the only express warranty made to you and is provided in lieu of any other express warranties (if any) created by any documentation or packaging. Except for the Limited Warranty and to the maximum extent permitted by applicable law, Infobyte LLC. and its suppliers provide the Product and support services (if any) AS IS AND WITH ALL FAULTS, and hereby disclaim all other warranties and conditions, either express, implied or statutory, including, but not limited to, any (if any) implied warranties, duties or conditions of merchantability, of fitness for a particular purpose, of accuracy or completeness of responses, of results, of workmanlike effort, of lack of viruses, and of lack of negligence, all with regard to the Product, and the provision of or failure to provide support services. ALSO, THERE IS NO WARRANTY OR CONDITION OF TITLE, QUIET ENJOYMENT, QUIET POSSESSION, CORRESPONDENCE TO DESCRIPTION OR NON-INFRINGEMENT WITH REGARD TO THE PRODUCT.
+  A "Standard Interface" means an interface that either is an official
+standard defined by a recognized standards body, or, in the case of
+interfaces specified for a particular programming language, one that
+is widely used among developers working in that language.
 
-12.  EXCLUSION OF INCIDENTAL, CONSEQUENTIAL AND CERTAIN OTHER DAMAGES. TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL INFOBYTE LLC. OR ITS SUPPLIERS BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT, OR CONSEQUENTIAL DAMAGES WHATSOEVER (INCLUDING, BUT NOT LIMITED TO, DAMAGES FOR LOSS OF PROFITS OR CONFIDENTIAL OR OTHER INFORMATION, FOR BUSINESS INTERRUPTION, FOR PERSONAL INJURY, FOR LOSS OF PRIVACY, FOR FAILURE TO MEET ANY DUTY INCLUDING OF GOOD FAITH OR OF REASONABLE CARE, FOR NEGLIGENCE, AND FOR ANY OTHER PECUNIARY OR OTHER LOSS WHATSOEVER) ARISING OUT OF OR IN ANY WAY RELATED TO THE USE OF OR INABILITY TO USE THE PRODUCT, THE PROVISION OF OR FAILURE TO PROVIDE SUPPORT SERVICES, OR OTHERWISE UNDER OR IN CONNECTION WITH ANY PROVISION OF THIS EULA, EVEN IN THE EVENT OF THE FAULT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY, BREACH OF CONTRACT OR BREACH OF WARRANTY OF INFOBYTE LLC. OR ANY SUPPLIER, AND EVEN IF INFOBYTE LLC. OR ANY SUPPLIER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. 
+  The "System Libraries" of an executable work include anything, other
+than the work as a whole, that (a) is included in the normal form of
+packaging a Major Component, but which is not part of that Major
+Component, and (b) serves only to enable use of the work with that
+Major Component, or to implement a Standard Interface for which an
+implementation is available to the public in source code form.  A
+"Major Component", in this context, means a major essential component
+(kernel, window system, and so on) of the specific operating system
+(if any) on which the executable work runs, or a compiler used to
+produce the work, or an object code interpreter used to run it.
 
-13.  LIMITATION OF LIABILITY AND REMEDIES.
-Notwithstanding any damages that you might incur for any reason whatsoever (including, without limitation, all damages referenced above and all direct or general damages), the entire liability of Infobyte LLC. and any of its suppliers under any provision of this EULA and your exclusive remedy for all of the foregoing (except for any remedy of repair or replacement elected by Infobyte LLC. with respect to any breach of the Limited Warranty) shall be limited to the greater of the amount actually paid by you for the Product or U.S.$5.00. The foregoing limitations, exclusions and disclaimers (including Sections 11, 12 and 13 above) shall apply to the maximum extent permitted by applicable law, even if any remedy fails its essential purpose. 
+  The "Corresponding Source" for a work in object code form means all
+the source code needed to generate, install, and (for an executable
+work) run the object code and to modify the work, including scripts to
+control those activities.  However, it does not include the work's
+System Libraries, or general-purpose tools or generally available free
+programs which are used unmodified in performing those activities but
+which are not part of the work.  For example, Corresponding Source
+includes interface definition files associated with source files for
+the work, and the source code for shared libraries and dynamically
+linked subprograms that the work is specifically designed to require,
+such as by intimate data communication or control flow between those
+subprograms and other parts of the work.
 
-14. ENTIRE AGREEMENT. This EULA (including any addendum or amendment to this EULA which is included with the Product) are the entire agreement between you and Infobyte LLC. relating to the Product and the support services (if any) and they supersede all prior or contemporaneous oral or written communications, proposals and representations with respect to the Product or any other subject matter covered by this EULA. To the extent the terms of any Infobyte LLC. policies or programs for support services conflict with the terms of this EULA, the terms of this EULA shall control. 
+  The Corresponding Source need not include anything that users
+can regenerate automatically from other parts of the Corresponding
+Source.
 
-15. Maintenance and Support Services. Infobyte LLC offers multiple maintenance and support programs for the Software. The maintenance and support program selected by Customer shall be as set forth on the applicable Product Order Form and shall be further subject to Infobyte LLC’s maintenance and support policies.
+  The Corresponding Source for a work in source code form is that
+same work.
 
-16. Export. Customer acknowledges that the export, re-export, deemed export, and import of the Software and Documentation is subject to certain laws, rules, Executive Orders, directives, arrangements, and regulations (“laws”) of the United States and of other countries. These laws apply to Customer. Customer will not violate these laws. Without limitation, Customer agrees that the Software, Documentation, or any direct or indirect product thereof, must not be exported, re-exported, transferred by download or otherwise, directly or indirectly into (i) Cuba, Iran, Northern Sudan, North Korea, Syria, or into any other country embargoed by the United States, or to (ii) anyone on the United States Treasury Department’s list of Specially Designated Nationals or the United States Commerce Department’s Table of Denial Orders, or to (iii) any end user or for any end use in violation of any United States Executive Order, policy, embargo, or laws, without first obtaining the required licenses or authorizations from the United States
-Government. Customer will not allow the Software, related Documentation, or the underlying technology to be used for any purpose prohibited by United States laws, including, without limitation, for the development, design, manufacture, proliferation, or production of nuclear, chemical, biological or any weapons of mass destruction. Further, Customer represents that it is not a national, resident, or under the control of the government of Cuba, Iran, Northern Sudan, North Korea, Syria, or any country to which the United States has prohibited export of the Software or Documentation and that it is not listed on the United States Department of Treasury lists of Specially Designated Nationals, Specially Designated Terrorists, Specially Designated Narcotic Traffickers, or on the United States Department of Commerce Table of Denial Orders. 
+  2. Basic Permissions.
 
-Customer acknowledges that an export license from the Bureau of Industry and Security is required to provide the Software or Documentation to any "government end-user" in any country that is not listed as a Supplement No. 3, Favorable Treatment Country, in accordance with 740.17(b)(2) of the Export Administration Regulations which identifies certain categories of encryption products that are "restricted" for purposes of License Exception ENC. Customer shall indemnify, hold harmless, and defend Infobyte, including the payment of all reasonable attorney’s fees and court costs, against any claims or losses related to Customer’s failure to conform to any and all of these requirements and obligations contained in Section 16.
+  All rights granted under this License are granted for the term of
+copyright on the Program, and are irrevocable provided the stated
+conditions are met.  This License explicitly affirms your unlimited
+permission to run the unmodified Program.  The output from running a
+covered work is covered by this License only if the output, given its
+content, constitutes a covered work.  This License acknowledges your
+rights of fair use or other equivalent, as provided by copyright law.
 
-17. Government Restricted Rights. This Section 17 applies to all acquisitions of the Software by or for the federal government, or by any prime contractor or subcontractor (at any tier) under any contract, grant, cooperative agreement or other activity with the federal government. The
-Software was developed at private expense and is Commercial Computer Software, as defined in Section 12.212 of the Federal Acquisition Regulation (48 CFR 12.212 (October 1995)) and Sections 227.7202-1 and 227.7202-3 of the Defense Federal Acquisition Regulation Supplement (48 CFR 227.7202-1, 227.7202-3 (June 1995)). Accordingly, any use, duplication or disclosure by the Government or any of its authorized users is subject to restrictions as set forth in this standard license agreement for the Software. If for any reason, Sections 12.212, 227.7202-1 or 227.7202-3 are deemed not applicable, then the Government's rights to use, duplicate or disclose the Software are limited to "Restricted Rights" as defined in 48 CFR Section 52.227-19(c)(1) and (2) (June 1987), or DFARS 252.227-7014(a)(14) (June 1995), as applicable. If this Agreement fails to meet the government's needs or is inconsistent in any respect with Federal law, the government agrees to return the Software, unused, to Infobyte. Manufacturer is Infobyte LLC, 2699 S. Bayshore Dr #300, Miami, FL 33133.
+  You may make, run and propagate covered works that you do not
+convey, without conditions so long as your license otherwise remains
+in force.  You may convey covered works to others for the sole purpose
+of having them make modifications exclusively for you, or provide you
+with facilities for running those works, provided that you comply with
+the terms of this License in conveying all material for which you do
+not control copyright.  Those thus making or running the covered works
+for you must do so exclusively on your behalf, under your direction
+and control, on terms that prohibit them from making any copies of
+your copyrighted material outside their relationship with you.
 
-18. Data Privacy. To the extent that Infobyte processes personal data about any living individual (“Data”) in the course of providing the Services, it
-will do so only as a data processor acting on behalf of Customer (as data controller) and in accordance with the requirements of this Agreement. Infobyte will process the Data in accordance with Customer’s lawful instructions and will not (i) assume any responsibility for determining the purposes for which and the manner in which the Data is processed or (ii) process the Data for its own purposes (other than for aggregated, analytical purposes which the Customer hereby authorizes). Infobyte will have in place and maintain throughout the term of this Agreement appropriate technical and organizational measures to protect the Data against accidental or unlawful destruction or accidental loss, alteration, unauthorized disclosure or access, and against all other unlawful forms of processing. In this Section, the terms “controller”, “processor” and “personal data” will bear the meanings given to them in European Union Data Protection Directive 95/46/EC. 
+  Conveying under any other circumstances is permitted solely under
+the conditions stated below.  Sublicensing is not allowed; section 10
+makes it unnecessary.
 
-19. Publicity. Customer acknowledges that Infobyte may use Customer’s name and logo for the purposes of identifying Customer as a customer of Infobyte products and/or services, including in Infobyte’s quarterly press releases highlighting new customer engagements.
+  3. Protecting Users' Legal Rights From Anti-Circumvention Law.
 
-20. The Product is protected by copyright and other intellectual property laws and treaties. Infobyte LLC. or its suppliers own the title, copyright, and other intellectual property rights in the Product. The Product is licensed, not sold.
+  No covered work shall be deemed part of an effective technological
+measure under any applicable law fulfilling obligations under article
+11 of the WIPO copyright treaty adopted on 20 December 1996, or
+similar laws prohibiting or restricting circumvention of such
+measures.
 
-21. Infobyte LLC. reserves the right, at any time and from time to time, to update, revise, supplement, and otherwise modify this Agreement and to impose new or additional rules, policies, terms, or conditions on your use of the Service. Such updates, revisions, supplements, modifications, and additional rules, policies, terms, and conditions (collectively referred to in this Agreement as "Additional Terms") will be effective immediately and incorporated into this Agreement. Your continued use of the Faraday® Products following will be deemed to constitute your acceptance of any and all such Additional Terms. All Additional Terms are hereby incorporated into this Agreement by this reference.
+  When you convey a covered work, you waive any legal power to forbid
+circumvention of technological measures to the extent such circumvention
+is effected by exercising rights under this License with respect to
+the covered work, and you disclaim any intention to limit operation or
+modification of the work as a means of enforcing, against the work's
+users, your or third parties' legal rights to forbid circumvention of
+technological measures.
 
-22. Faraday is copyright © 2013-2016 of Infobyte LLC.  All rights reserved. Faraday® is a registered trademark of Infobyte LLC in the US, Europe and other countries. Faraday® and the Faraday® logo are registered trademarks of Infobyte LLC in the US, Europe and other countries. All other trademarks and service marks are the property of their respective owners.
+  4. Conveying Verbatim Copies.
+
+  You may convey verbatim copies of the Program's source code as you
+receive it, in any medium, provided that you conspicuously and
+appropriately publish on each copy an appropriate copyright notice;
+keep intact all notices stating that this License and any
+non-permissive terms added in accord with section 7 apply to the code;
+keep intact all notices of the absence of any warranty; and give all
+recipients a copy of this License along with the Program.
+
+  You may charge any price or no price for each copy that you convey,
+and you may offer support or warranty protection for a fee.
+
+  5. Conveying Modified Source Versions.
+
+  You may convey a work based on the Program, or the modifications to
+produce it from the Program, in the form of source code under the
+terms of section 4, provided that you also meet all of these conditions:
+
+    a) The work must carry prominent notices stating that you modified
+    it, and giving a relevant date.
+
+    b) The work must carry prominent notices stating that it is
+    released under this License and any conditions added under section
+    7.  This requirement modifies the requirement in section 4 to
+    "keep intact all notices".
+
+    c) You must license the entire work, as a whole, under this
+    License to anyone who comes into possession of a copy.  This
+    License will therefore apply, along with any applicable section 7
+    additional terms, to the whole of the work, and all its parts,
+    regardless of how they are packaged.  This License gives no
+    permission to license the work in any other way, but it does not
+    invalidate such permission if you have separately received it.
+
+    d) If the work has interactive user interfaces, each must display
+    Appropriate Legal Notices; however, if the Program has interactive
+    interfaces that do not display Appropriate Legal Notices, your
+    work need not make them do so.
+
+  A compilation of a covered work with other separate and independent
+works, which are not by their nature extensions of the covered work,
+and which are not combined with it such as to form a larger program,
+in or on a volume of a storage or distribution medium, is called an
+"aggregate" if the compilation and its resulting copyright are not
+used to limit the access or legal rights of the compilation's users
+beyond what the individual works permit.  Inclusion of a covered work
+in an aggregate does not cause this License to apply to the other
+parts of the aggregate.
+
+  6. Conveying Non-Source Forms.
+
+  You may convey a covered work in object code form under the terms
+of sections 4 and 5, provided that you also convey the
+machine-readable Corresponding Source under the terms of this License,
+in one of these ways:
+
+    a) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by the
+    Corresponding Source fixed on a durable physical medium
+    customarily used for software interchange.
+
+    b) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by a
+    written offer, valid for at least three years and valid for as
+    long as you offer spare parts or customer support for that product
+    model, to give anyone who possesses the object code either (1) a
+    copy of the Corresponding Source for all the software in the
+    product that is covered by this License, on a durable physical
+    medium customarily used for software interchange, for a price no
+    more than your reasonable cost of physically performing this
+    conveying of source, or (2) access to copy the
+    Corresponding Source from a network server at no charge.
+
+    c) Convey individual copies of the object code with a copy of the
+    written offer to provide the Corresponding Source.  This
+    alternative is allowed only occasionally and noncommercially, and
+    only if you received the object code with such an offer, in accord
+    with subsection 6b.
+
+    d) Convey the object code by offering access from a designated
+    place (gratis or for a charge), and offer equivalent access to the
+    Corresponding Source in the same way through the same place at no
+    further charge.  You need not require recipients to copy the
+    Corresponding Source along with the object code.  If the place to
+    copy the object code is a network server, the Corresponding Source
+    may be on a different server (operated by you or a third party)
+    that supports equivalent copying facilities, provided you maintain
+    clear directions next to the object code saying where to find the
+    Corresponding Source.  Regardless of what server hosts the
+    Corresponding Source, you remain obligated to ensure that it is
+    available for as long as needed to satisfy these requirements.
+
+    e) Convey the object code using peer-to-peer transmission, provided
+    you inform other peers where the object code and Corresponding
+    Source of the work are being offered to the general public at no
+    charge under subsection 6d.
+
+  A separable portion of the object code, whose source code is excluded
+from the Corresponding Source as a System Library, need not be
+included in conveying the object code work.
+
+  A "User Product" is either (1) a "consumer product", which means any
+tangible personal property which is normally used for personal, family,
+or household purposes, or (2) anything designed or sold for incorporation
+into a dwelling.  In determining whether a product is a consumer product,
+doubtful cases shall be resolved in favor of coverage.  For a particular
+product received by a particular user, "normally used" refers to a
+typical or common use of that class of product, regardless of the status
+of the particular user or of the way in which the particular user
+actually uses, or expects or is expected to use, the product.  A product
+is a consumer product regardless of whether the product has substantial
+commercial, industrial or non-consumer uses, unless such uses represent
+the only significant mode of use of the product.
+
+  "Installation Information" for a User Product means any methods,
+procedures, authorization keys, or other information required to install
+and execute modified versions of a covered work in that User Product from
+a modified version of its Corresponding Source.  The information must
+suffice to ensure that the continued functioning of the modified object
+code is in no case prevented or interfered with solely because
+modification has been made.
+
+  If you convey an object code work under this section in, or with, or
+specifically for use in, a User Product, and the conveying occurs as
+part of a transaction in which the right of possession and use of the
+User Product is transferred to the recipient in perpetuity or for a
+fixed term (regardless of how the transaction is characterized), the
+Corresponding Source conveyed under this section must be accompanied
+by the Installation Information.  But this requirement does not apply
+if neither you nor any third party retains the ability to install
+modified object code on the User Product (for example, the work has
+been installed in ROM).
+
+  The requirement to provide Installation Information does not include a
+requirement to continue to provide support service, warranty, or updates
+for a work that has been modified or installed by the recipient, or for
+the User Product in which it has been modified or installed.  Access to a
+network may be denied when the modification itself materially and
+adversely affects the operation of the network or violates the rules and
+protocols for communication across the network.
+
+  Corresponding Source conveyed, and Installation Information provided,
+in accord with this section must be in a format that is publicly
+documented (and with an implementation available to the public in
+source code form), and must require no special password or key for
+unpacking, reading or copying.
+
+  7. Additional Terms.
+
+  "Additional permissions" are terms that supplement the terms of this
+License by making exceptions from one or more of its conditions.
+Additional permissions that are applicable to the entire Program shall
+be treated as though they were included in this License, to the extent
+that they are valid under applicable law.  If additional permissions
+apply only to part of the Program, that part may be used separately
+under those permissions, but the entire Program remains governed by
+this License without regard to the additional permissions.
+
+  When you convey a copy of a covered work, you may at your option
+remove any additional permissions from that copy, or from any part of
+it.  (Additional permissions may be written to require their own
+removal in certain cases when you modify the work.)  You may place
+additional permissions on material, added by you to a covered work,
+for which you have or can give appropriate copyright permission.
+
+  Notwithstanding any other provision of this License, for material you
+add to a covered work, you may (if authorized by the copyright holders of
+that material) supplement the terms of this License with terms:
+
+    a) Disclaiming warranty or limiting liability differently from the
+    terms of sections 15 and 16 of this License; or
+
+    b) Requiring preservation of specified reasonable legal notices or
+    author attributions in that material or in the Appropriate Legal
+    Notices displayed by works containing it; or
+
+    c) Prohibiting misrepresentation of the origin of that material, or
+    requiring that modified versions of such material be marked in
+    reasonable ways as different from the original version; or
+
+    d) Limiting the use for publicity purposes of names of licensors or
+    authors of the material; or
+
+    e) Declining to grant rights under trademark law for use of some
+    trade names, trademarks, or service marks; or
+
+    f) Requiring indemnification of licensors and authors of that
+    material by anyone who conveys the material (or modified versions of
+    it) with contractual assumptions of liability to the recipient, for
+    any liability that these contractual assumptions directly impose on
+    those licensors and authors.
+
+  All other non-permissive additional terms are considered "further
+restrictions" within the meaning of section 10.  If the Program as you
+received it, or any part of it, contains a notice stating that it is
+governed by this License along with a term that is a further
+restriction, you may remove that term.  If a license document contains
+a further restriction but permits relicensing or conveying under this
+License, you may add to a covered work material governed by the terms
+of that license document, provided that the further restriction does
+not survive such relicensing or conveying.
+
+  If you add terms to a covered work in accord with this section, you
+must place, in the relevant source files, a statement of the
+additional terms that apply to those files, or a notice indicating
+where to find the applicable terms.
+
+  Additional terms, permissive or non-permissive, may be stated in the
+form of a separately written license, or stated as exceptions;
+the above requirements apply either way.
+
+  8. Termination.
+
+  You may not propagate or modify a covered work except as expressly
+provided under this License.  Any attempt otherwise to propagate or
+modify it is void, and will automatically terminate your rights under
+this License (including any patent licenses granted under the third
+paragraph of section 11).
+
+  However, if you cease all violation of this License, then your
+license from a particular copyright holder is reinstated (a)
+provisionally, unless and until the copyright holder explicitly and
+finally terminates your license, and (b) permanently, if the copyright
+holder fails to notify you of the violation by some reasonable means
+prior to 60 days after the cessation.
+
+  Moreover, your license from a particular copyright holder is
+reinstated permanently if the copyright holder notifies you of the
+violation by some reasonable means, this is the first time you have
+received notice of violation of this License (for any work) from that
+copyright holder, and you cure the violation prior to 30 days after
+your receipt of the notice.
+
+  Termination of your rights under this section does not terminate the
+licenses of parties who have received copies or rights from you under
+this License.  If your rights have been terminated and not permanently
+reinstated, you do not qualify to receive new licenses for the same
+material under section 10.
+
+  9. Acceptance Not Required for Having Copies.
+
+  You are not required to accept this License in order to receive or
+run a copy of the Program.  Ancillary propagation of a covered work
+occurring solely as a consequence of using peer-to-peer transmission
+to receive a copy likewise does not require acceptance.  However,
+nothing other than this License grants you permission to propagate or
+modify any covered work.  These actions infringe copyright if you do
+not accept this License.  Therefore, by modifying or propagating a
+covered work, you indicate your acceptance of this License to do so.
+
+  10. Automatic Licensing of Downstream Recipients.
+
+  Each time you convey a covered work, the recipient automatically
+receives a license from the original licensors, to run, modify and
+propagate that work, subject to this License.  You are not responsible
+for enforcing compliance by third parties with this License.
+
+  An "entity transaction" is a transaction transferring control of an
+organization, or substantially all assets of one, or subdividing an
+organization, or merging organizations.  If propagation of a covered
+work results from an entity transaction, each party to that
+transaction who receives a copy of the work also receives whatever
+licenses to the work the party's predecessor in interest had or could
+give under the previous paragraph, plus a right to possession of the
+Corresponding Source of the work from the predecessor in interest, if
+the predecessor has it or can get it with reasonable efforts.
+
+  You may not impose any further restrictions on the exercise of the
+rights granted or affirmed under this License.  For example, you may
+not impose a license fee, royalty, or other charge for exercise of
+rights granted under this License, and you may not initiate litigation
+(including a cross-claim or counterclaim in a lawsuit) alleging that
+any patent claim is infringed by making, using, selling, offering for
+sale, or importing the Program or any portion of it.
+
+  11. Patents.
+
+  A "contributor" is a copyright holder who authorizes use under this
+License of the Program or a work on which the Program is based.  The
+work thus licensed is called the contributor's "contributor version".
+
+  A contributor's "essential patent claims" are all patent claims
+owned or controlled by the contributor, whether already acquired or
+hereafter acquired, that would be infringed by some manner, permitted
+by this License, of making, using, or selling its contributor version,
+but do not include claims that would be infringed only as a
+consequence of further modification of the contributor version.  For
+purposes of this definition, "control" includes the right to grant
+patent sublicenses in a manner consistent with the requirements of
+this License.
+
+  Each contributor grants you a non-exclusive, worldwide, royalty-free
+patent license under the contributor's essential patent claims, to
+make, use, sell, offer for sale, import and otherwise run, modify and
+propagate the contents of its contributor version.
+
+  In the following three paragraphs, a "patent license" is any express
+agreement or commitment, however denominated, not to enforce a patent
+(such as an express permission to practice a patent or covenant not to
+sue for patent infringement).  To "grant" such a patent license to a
+party means to make such an agreement or commitment not to enforce a
+patent against the party.
+
+  If you convey a covered work, knowingly relying on a patent license,
+and the Corresponding Source of the work is not available for anyone
+to copy, free of charge and under the terms of this License, through a
+publicly available network server or other readily accessible means,
+then you must either (1) cause the Corresponding Source to be so
+available, or (2) arrange to deprive yourself of the benefit of the
+patent license for this particular work, or (3) arrange, in a manner
+consistent with the requirements of this License, to extend the patent
+license to downstream recipients.  "Knowingly relying" means you have
+actual knowledge that, but for the patent license, your conveying the
+covered work in a country, or your recipient's use of the covered work
+in a country, would infringe one or more identifiable patents in that
+country that you have reason to believe are valid.
+
+  If, pursuant to or in connection with a single transaction or
+arrangement, you convey, or propagate by procuring conveyance of, a
+covered work, and grant a patent license to some of the parties
+receiving the covered work authorizing them to use, propagate, modify
+or convey a specific copy of the covered work, then the patent license
+you grant is automatically extended to all recipients of the covered
+work and works based on it.
+
+  A patent license is "discriminatory" if it does not include within
+the scope of its coverage, prohibits the exercise of, or is
+conditioned on the non-exercise of one or more of the rights that are
+specifically granted under this License.  You may not convey a covered
+work if you are a party to an arrangement with a third party that is
+in the business of distributing software, under which you make payment
+to the third party based on the extent of your activity of conveying
+the work, and under which the third party grants, to any of the
+parties who would receive the covered work from you, a discriminatory
+patent license (a) in connection with copies of the covered work
+conveyed by you (or copies made from those copies), or (b) primarily
+for and in connection with specific products or compilations that
+contain the covered work, unless you entered into that arrangement,
+or that patent license was granted, prior to 28 March 2007.
+
+  Nothing in this License shall be construed as excluding or limiting
+any implied license or other defenses to infringement that may
+otherwise be available to you under applicable patent law.
+
+  12. No Surrender of Others' Freedom.
+
+  If conditions are imposed on you (whether by court order, agreement or
+otherwise) that contradict the conditions of this License, they do not
+excuse you from the conditions of this License.  If you cannot convey a
+covered work so as to satisfy simultaneously your obligations under this
+License and any other pertinent obligations, then as a consequence you may
+not convey it at all.  For example, if you agree to terms that obligate you
+to collect a royalty for further conveying from those to whom you convey
+the Program, the only way you could satisfy both those terms and this
+License would be to refrain entirely from conveying the Program.
+
+  13. Use with the GNU Affero General Public License.
+
+  Notwithstanding any other provision of this License, you have
+permission to link or combine any covered work with a work licensed
+under version 3 of the GNU Affero General Public License into a single
+combined work, and to convey the resulting work.  The terms of this
+License will continue to apply to the part which is the covered work,
+but the special requirements of the GNU Affero General Public License,
+section 13, concerning interaction through a network will apply to the
+combination as such.
+
+  14. Revised Versions of this License.
+
+  The Free Software Foundation may publish revised and/or new versions of
+the GNU General Public License from time to time.  Such new versions will
+be similar in spirit to the present version, but may differ in detail to
+address new problems or concerns.
+
+  Each version is given a distinguishing version number.  If the
+Program specifies that a certain numbered version of the GNU General
+Public License "or any later version" applies to it, you have the
+option of following the terms and conditions either of that numbered
+version or of any later version published by the Free Software
+Foundation.  If the Program does not specify a version number of the
+GNU General Public License, you may choose any version ever published
+by the Free Software Foundation.
+
+  If the Program specifies that a proxy can decide which future
+versions of the GNU General Public License can be used, that proxy's
+public statement of acceptance of a version permanently authorizes you
+to choose that version for the Program.
+
+  Later license versions may give you additional or different
+permissions.  However, no additional obligations are imposed on any
+author or copyright holder as a result of your choosing to follow a
+later version.
+
+  15. Disclaimer of Warranty.
+
+  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
+HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
+OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
+IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
+ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+
+  16. Limitation of Liability.
+
+  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
+THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
+GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
+USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
+DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
+PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
+EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+  17. Interpretation of Sections 15 and 16.
+
+  If the disclaimer of warranty and limitation of liability provided
+above cannot be given local legal effect according to their terms,
+reviewing courts shall apply local law that most closely approximates
+an absolute waiver of all civil liability in connection with the
+Program, unless a warranty or assumption of liability accompanies a
+copy of the Program in return for a fee.
+
+                     END OF TERMS AND CONDITIONS
+
 _________________________________________________________________________________
 
 This license does not apply to the following components and any component which may not be included in the following file: 'doc/LIBRARY_LICENSE'
+

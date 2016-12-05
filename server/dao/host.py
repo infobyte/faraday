@@ -21,8 +21,9 @@ class HostDAO(FaradayDAO):
         "vulns":    ["vuln_count"],
         "os":       [Host.os],
         "owned":    [Host.owned],
+        "command_id":[EntityMetadata.command_id]
     }
-    STRICT_FILTERING = ["service", "couchid"]
+    STRICT_FILTERING = ["service", "couchid", "command_id"]
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, host_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, host_filter)

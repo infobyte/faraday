@@ -1,0 +1,28 @@
+<article class='panel panel-default left-big-box' ng-controller="activityFeedCtrl as activityFeed">
+
+        <header>
+            <h2>Activity Feed
+                <span class="glyphicon glyphicon-info-sign" uib-tooltip="Faraday feed"></span>
+            </h2>
+        </header>
+
+        <div ng-if="activityFeed.commands.length == 0" class="alert alert-info alert-dismissible no-margin-bottom">
+            <button type="button" class="close" data-dismiss="alert">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+            </button>
+            <p>No activities found yet.</p>
+        </div>
+
+       <table id="commands" ng-if="activityFeed.commands.length > 0" class="tablesorter table table-striped">
+        <tbody>
+            <tr ng-repeat="cmd in activityFeed.commands">
+                <td><span am-time-ago="cmd.date"></span> - <b>{{cmd.user}}</b> runned {{cmd.command}} and found:</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <!--{{timeago}} - {{Username}} runned {{creator}} tooltip {{command_id}} 
+    and found: 25 new hosts , 30 services & 90 new vulnerabilities-->
+
+</article>

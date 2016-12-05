@@ -50,10 +50,11 @@ class VulnerabilityDAO(FaradayDAO):
         "interfaceid":      [Interface.id],
         "web":              [],
         "issuetracker":     [],
-        "creator":          [EntityMetadata.creator]
+        "creator":          [EntityMetadata.creator],
+        "command_id":       [EntityMetadata.command_id]
     }
 
-    STRICT_FILTERING = ["type", "service", "couchid", "hostid", "serviceid", 'interfaceid', 'id', 'status']
+    STRICT_FILTERING = ["type", "service", "couchid", "hostid", "serviceid", 'interfaceid', 'id', 'status', 'command_id']
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, vuln_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, vuln_filter)

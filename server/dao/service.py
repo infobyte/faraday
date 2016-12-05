@@ -15,6 +15,7 @@ class ServiceDAO(FaradayDAO):
     COLUMNS_MAP = {
         "interface":    [Service.interface_id],
         "couchid":      [EntityMetadata.couchdb_id],
+        "command_id":   [EntityMetadata.command_id],
         'id':           [Service.id],
         "name":         [Service.name],
         "protocol":     [Service.protocol],

@@ -23,7 +23,7 @@
         <tbody>
             <tr ng-repeat="cmd in commands | orderObjectBy:cmdSortField:cmdSortReverse">
                 <td><b><p uib-tooltip="{{cmd.ip}}">{{cmd.user}}@{{cmd.hostname}}</p></b></td>
-                <td class="wrapword">{{cmd.command}}</td>
+                <td class="wrapword">{{cmd.command}} {{cmd.params}}</td>
                 <td><span am-time-ago="cmd.date"></span></td>
                 <td ng-bind="cmd.duration || 'undefined'"></td>
             </tr>

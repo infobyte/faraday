@@ -18,7 +18,7 @@
         <tbody>
             <tr ng-repeat="cmd in activityFeed.commands">
                 <td>
-                    <span am-time-ago="cmd.date"/> - <b>{{cmd.user || Anonymous}}</b> runned <span uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">{{cmd.command.replace(':', '')  || Unknown}}</a> and found: 
+                    <span am-time-ago="cmd.date"/> <b>{{cmd.user || Anonymous}}</b> runned <span uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">{{cmd.command.replace(':', '')  || Unknown}}</span> and found: 
                     {{cmd.hosts_count || 0}} hosts, {{cmd.services_count || 0}} services & {{cmd.vulnerabilities_count || 0}} vulnerabilities.
                 </td>
             </tr>

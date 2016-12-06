@@ -17,12 +17,11 @@
        <table id="commands" ng-if="activityFeed.commands.length > 0" class="tablesorter table table-striped">
         <tbody>
             <tr ng-repeat="cmd in activityFeed.commands">
-                <td><span am-time-ago="cmd.date"></span> - <b>{{cmd.user}}</b> runned {{cmd.command}} and found:</td>
+                <td>
+                    <span am-time-ago="cmd.date"/> - <b>{{cmd.user || Anonymous}}</b> runned <span uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">{{cmd.command.replace(':', '')  || Unknown}}</a> and found: 
+                    {{cmd.hosts_count || 0}} hosts, {{cmd.services_count || 0}} services & {{cmd.vulnerabilities_count || 0}} vulnerabilities.
+                </td>
             </tr>
         </tbody>
     </table>
-    
-    <!--{{timeago}} - {{Username}} runned {{creator}} tooltip {{command_id}} 
-    and found: 25 new hosts , 30 services & 90 new vulnerabilities-->
-
 </article>

@@ -1,0 +1,1662 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>persistence.server.server &mdash; Faraday 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="Faraday 0.1 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Faraday
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <!-- Local TOC -->
+                <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Faraday</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>persistence.server.server</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for persistence.server.server</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/python2.7</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1"># Faraday Penetration Test IDE</span>
+<span class="c1"># Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)</span>
+<span class="c1"># See the file &#39;doc/LICENSE&#39; for the license information</span>
+
+
+<span class="sd">&quot;&quot;&quot;A module to handle request to the Faraday Server.</span>
+
+<span class="sd">Note:</span>
+<span class="sd">    Before using this as an API, you should copy this file and edit</span>
+<span class="sd">    the FARADAY_UP and the SERVER_URL variables found inmediatly</span>
+<span class="sd">    below the imports.</span>
+
+<span class="sd">    FARADAY_UP should be set to False in the copy of the file, and SERVER_URL</span>
+<span class="sd">    must be a valid server url.</span>
+
+<span class="sd">Warning:</span>
+<span class="sd">    This module was though of primarly as a way of querying and removing</span>
+<span class="sd">    information from the Faraday Server. Adding objects is supported, but should</span>
+<span class="sd">    be used with care, specially regarding the ID of objects, which must</span>
+<span class="sd">    be always unique.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">persistence.server.utils</span> <span class="k">import</span> <span class="n">force_unique</span>
+<span class="kn">from</span> <span class="nn">persistence.server.server_io_exceptions</span> <span class="k">import</span> <span class="p">(</span><span class="n">WrongObjectSignature</span><span class="p">,</span>
+                                                     <span class="n">CantCommunicateWithServerError</span><span class="p">,</span>
+                                                     <span class="n">ConflictInDatabase</span><span class="p">,</span>
+                                                     <span class="n">ResourceDoesNotExist</span><span class="p">,</span>
+                                                     <span class="n">Unauthorized</span><span class="p">,</span>
+                                                     <span class="n">MoreThanOneObjectFoundByID</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">persistence.server.changes_stream</span> <span class="k">import</span> <span class="n">CouchChangesStream</span>
+
+<span class="c1"># NOTE: Change is you want to use this module by itself.</span>
+<span class="c1"># If FARADAY_UP is False, SERVER_URL must be a valid faraday server url</span>
+<span class="n">FARADAY_UP</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">SERVER_URL</span> <span class="o">=</span> <span class="s2">&quot;http://127.0.0.1:5984&quot;</span>
+
+<span class="k">def</span> <span class="nf">_conf</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">config.configuration</span> <span class="k">import</span> <span class="n">getInstanceConfiguration</span>
+    <span class="n">CONF</span> <span class="o">=</span> <span class="n">getInstanceConfiguration</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">CONF</span>
+
+<span class="k">def</span> <span class="nf">_get_base_server_url</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">FARADAY_UP</span><span class="p">:</span>
+        <span class="n">server_url</span> <span class="o">=</span> <span class="n">_conf</span><span class="p">()</span><span class="o">.</span><span class="n">getCouchURI</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">server_url</span> <span class="o">=</span> <span class="n">SERVER_URL</span>
+    <span class="k">return</span> <span class="n">server_url</span>
+
+
+<span class="k">def</span> <span class="nf">_create_server_api_url</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Return the server&#39;s api url.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/_api&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_get_base_server_url</span><span class="p">())</span>
+
+<span class="k">def</span> <span class="nf">_create_server_get_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates a url to get from the server. Takes the workspace name</span>
+<span class="sd">    as a string, an object_name paramter which is the object you want to</span>
+<span class="sd">    query as a string (&#39;hosts&#39;, &#39;interfaces&#39;, etc) .</span>
+
+<span class="sd">    object_name may be None if you want to get the workspace itself.</span>
+
+<span class="sd">    Return the get_url as a string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">object_name</span> <span class="o">=</span> <span class="s2">&quot;/</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">object_name</span><span class="p">)</span> <span class="k">if</span> <span class="n">object_name</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">get_url</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">/ws/</span><span class="si">{1}{2}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_create_server_api_url</span><span class="p">(),</span>
+                                     <span class="n">workspace_name</span><span class="p">,</span>
+                                     <span class="n">object_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">get_url</span>
+
+
+<span class="k">def</span> <span class="nf">_create_server_post_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_id</span><span class="p">):</span>
+    <span class="n">server_api_url</span> <span class="o">=</span> <span class="n">_create_server_api_url</span><span class="p">()</span>
+    <span class="n">post_url</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">/ws/</span><span class="si">{1}</span><span class="s1">/doc/</span><span class="si">{2}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">server_api_url</span><span class="p">,</span> <span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">post_url</span>
+
+
+<span class="k">def</span> <span class="nf">_create_server_delete_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_id</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">_create_server_post_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_id</span><span class="p">)</span>
+
+<span class="c1"># XXX: COUCH IT!</span>
+<span class="k">def</span> <span class="nf">_create_couch_get_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_id</span><span class="p">):</span>
+    <span class="n">server_url</span> <span class="o">=</span> <span class="n">_get_base_server_url</span><span class="p">()</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/</span><span class="si">{1}</span><span class="s2">/</span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">server_url</span><span class="p">,</span> <span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_id</span><span class="p">)</span>
+
+
+<span class="c1"># XXX: COUCH IT!</span>
+<span class="k">def</span> <span class="nf">_create_couch_post_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_id</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">_create_couch_get_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_id</span><span class="p">)</span>
+
+
+<span class="c1"># XXX: COUCH IT!</span>
+<span class="k">def</span> <span class="nf">_create_couch_db_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">):</span>
+    <span class="n">server_base_url</span> <span class="o">=</span> <span class="n">_get_base_server_url</span><span class="p">()</span>
+    <span class="n">db_url</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">/</span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">server_base_url</span><span class="p">,</span> <span class="n">workspace_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">db_url</span>
+
+<span class="k">def</span> <span class="nf">_create_server_db_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">):</span>
+    <span class="n">server_api_url</span> <span class="o">=</span> <span class="n">_create_server_api_url</span><span class="p">()</span>
+    <span class="n">db_url</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">/ws/</span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">server_api_url</span><span class="p">,</span> <span class="n">workspace_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">db_url</span>
+
+<span class="k">def</span> <span class="nf">_unsafe_io_with_server</span><span class="p">(</span><span class="n">server_io_function</span><span class="p">,</span> <span class="n">server_expected_response</span><span class="p">,</span>
+                           <span class="n">server_url</span><span class="p">,</span> <span class="o">**</span><span class="n">payload</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A wrapper for functions which deals with I/O to or from the server.</span>
+<span class="sd">    It calls the server_io_function with url server_url and the payload,</span>
+<span class="sd">    raising an CantCommunicateWithServerError if the response wasn&#39;t</span>
+<span class="sd">    server_expected_response or if there was a Connection Error.</span>
+
+<span class="sd">    Return the response from the server.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">answer</span> <span class="o">=</span> <span class="n">server_io_function</span><span class="p">(</span><span class="n">server_url</span><span class="p">,</span> <span class="o">**</span><span class="n">payload</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">answer</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">409</span> <span class="ow">and</span> <span class="n">answer</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;error&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;conflict&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ConflictInDatabase</span><span class="p">(</span><span class="n">answer</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">answer</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ResourceDoesNotExist</span><span class="p">(</span><span class="n">server_url</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">answer</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">403</span> <span class="ow">or</span> <span class="n">answer</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">401</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">Unauthorized</span><span class="p">(</span><span class="n">answer</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">answer</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="n">server_expected_response</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">(</span><span class="n">response</span><span class="o">=</span><span class="n">answer</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">CantCommunicateWithServerError</span><span class="p">(</span><span class="n">server_io_function</span><span class="p">,</span> <span class="n">server_url</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">answer</span>
+
+
+<span class="k">def</span> <span class="nf">_parse_json</span><span class="p">(</span><span class="n">response_object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Takes a response object and return its response as a dictionary.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">response_object</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+
+<span class="k">def</span> <span class="nf">_get</span><span class="p">(</span><span class="n">request_url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get from the request_url. Takes an arbitrary number of parameters</span>
+<span class="sd">    to customize the request_url if necessary.</span>
+
+<span class="sd">    Will raise a CantCommunicateWithServerError if requests cant stablish</span>
+<span class="sd">    connection to server or if response is not equal to 200.</span>
+
+<span class="sd">    Return a dictionary with the information in the json.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_parse_json</span><span class="p">(</span><span class="n">_unsafe_io_with_server</span><span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">,</span>
+                                              <span class="mi">200</span><span class="p">,</span>
+                                              <span class="n">request_url</span><span class="p">,</span>
+                                              <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">_put</span><span class="p">(</span><span class="n">post_url</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">expected_response</span><span class="o">=</span><span class="mi">201</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Put to the post_url. If update is True, try to get the object</span>
+<span class="sd">    revision first so as to update the object in Couch. You can</span>
+<span class="sd">    customize the expected response (it should be 201, but Couchdbkit returns</span>
+<span class="sd">    200, so...). Also take an arbitrary number of parameters to put into the</span>
+<span class="sd">    post_url.</span>
+
+<span class="sd">    Will raise a CantCommunicateWithServerError if requests cant stablish</span>
+<span class="sd">    connection to server or if response is not equal to 201.</span>
+
+<span class="sd">    Return a dictionary with the response from couchdb, which looks like this:</span>
+<span class="sd">    {u&#39;id&#39;: u&#39;61&#39;, u&#39;ok&#39;: True, u&#39;rev&#39;: u&#39;1-967a00dff5e02add41819138abb3284d&#39;}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">update</span><span class="p">:</span>
+        <span class="n">last_rev</span> <span class="o">=</span> <span class="n">_get</span><span class="p">(</span><span class="n">post_url</span><span class="p">)[</span><span class="s1">&#39;_rev&#39;</span><span class="p">]</span>
+        <span class="n">params</span><span class="p">[</span><span class="s1">&#39;_rev&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">last_rev</span>
+    <span class="k">return</span> <span class="n">_parse_json</span><span class="p">(</span><span class="n">_unsafe_io_with_server</span><span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">put</span><span class="p">,</span>
+                                              <span class="n">expected_response</span><span class="p">,</span>
+                                              <span class="n">post_url</span><span class="p">,</span>
+                                              <span class="n">json</span><span class="o">=</span><span class="n">params</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_delete</span><span class="p">(</span><span class="n">delete_url</span><span class="p">,</span> <span class="n">database</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deletes the object on delete_url. If you&#39;re deleting a database,</span>
+<span class="sd">    specify the database parameter to True&quot;&quot;&quot;</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">database</span><span class="p">:</span>
+        <span class="n">last_rev</span> <span class="o">=</span> <span class="n">_get</span><span class="p">(</span><span class="n">delete_url</span><span class="p">)[</span><span class="s1">&#39;_rev&#39;</span><span class="p">]</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;rev&#39;</span><span class="p">:</span> <span class="n">last_rev</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">_parse_json</span><span class="p">(</span><span class="n">_unsafe_io_with_server</span><span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">delete</span><span class="p">,</span>
+                                              <span class="mi">200</span><span class="p">,</span>
+                                              <span class="n">delete_url</span><span class="p">,</span>
+                                              <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_get_raw_hosts</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Take a workspace_name and an arbitrary number of params and return</span>
+<span class="sd">    a dictionary with the hosts table.&quot;&quot;&quot;</span>
+    <span class="n">request_url</span> <span class="o">=</span> <span class="n">_create_server_get_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;hosts&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_get</span><span class="p">(</span><span class="n">request_url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_raw_vulns</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Take a workspace_name and an arbitrary number of params and return</span>
+<span class="sd">    a dictionary with the vulns table.&quot;&quot;&quot;</span>
+    <span class="n">request_url</span> <span class="o">=</span> <span class="n">_create_server_get_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;vulns&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_get</span><span class="p">(</span><span class="n">request_url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_raw_interfaces</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Take a workspace_name and an arbitrary number of params and return</span>
+<span class="sd">    a dictionary with the interfaces table.&quot;&quot;&quot;</span>
+    <span class="n">request_url</span> <span class="o">=</span> <span class="n">_create_server_get_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;interfaces&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_get</span><span class="p">(</span><span class="n">request_url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_raw_services</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Take a workspace_name and an arbitrary number of params and return</span>
+<span class="sd">    a dictionary with the services table.&quot;&quot;&quot;</span>
+    <span class="n">request_url</span> <span class="o">=</span> <span class="n">_create_server_get_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;services&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_get</span><span class="p">(</span><span class="n">request_url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_raw_notes</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Take a workspace name and an arbitrary number of params and</span>
+<span class="sd">    return a dictionary with the notes table.&quot;&quot;&quot;</span>
+    <span class="n">request_url</span> <span class="o">=</span> <span class="n">_create_server_get_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;notes&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_get</span><span class="p">(</span><span class="n">request_url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_raw_credentials</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Take a workspace name and an arbitrary number of params and</span>
+<span class="sd">    return a dictionary with the credentials table.&quot;&quot;&quot;</span>
+    <span class="n">request_url</span> <span class="o">=</span> <span class="n">_create_server_get_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;credentials&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_get</span><span class="p">(</span><span class="n">request_url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_raw_commands</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="n">request_url</span> <span class="o">=</span> <span class="n">_create_server_get_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;commands&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_get</span><span class="p">(</span><span class="n">request_url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_raw_workspace_summary</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">):</span>
+    <span class="n">request_url</span> <span class="o">=</span> <span class="n">_create_server_get_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;summary&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_get</span><span class="p">(</span><span class="n">request_url</span><span class="p">)</span>
+
+<span class="c1"># XXX: COUCH IT!</span>
+<span class="k">def</span> <span class="nf">_save_to_couch</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">faraday_object_id</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="n">post_url</span> <span class="o">=</span> <span class="n">_create_couch_post_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">faraday_object_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_put</span><span class="p">(</span><span class="n">post_url</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<span class="c1"># XXX: COUCH IT!</span>
+<span class="k">def</span> <span class="nf">_update_in_couch</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">faraday_object_id</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="n">post_url</span> <span class="o">=</span> <span class="n">_create_server_post_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">faraday_object_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_put</span><span class="p">(</span><span class="n">post_url</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_save_to_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">faraday_object_id</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="n">post_url</span> <span class="o">=</span> <span class="n">_create_server_post_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">faraday_object_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_put</span><span class="p">(</span><span class="n">post_url</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">expected_response</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_update_in_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">faraday_object_id</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="n">post_url</span> <span class="o">=</span> <span class="n">_create_server_post_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">faraday_object_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_put</span><span class="p">(</span><span class="n">post_url</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">expected_response</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_save_db_to_server</span><span class="p">(</span><span class="n">db_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="n">post_url</span> <span class="o">=</span> <span class="n">_create_server_db_url</span><span class="p">(</span><span class="n">db_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_put</span><span class="p">(</span><span class="n">post_url</span><span class="p">,</span> <span class="n">expected_response</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<span class="c1"># XXX: SEMI COUCH IT!</span>
+<span class="k">def</span> <span class="nf">_delete_from_couch</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">faraday_object_id</span><span class="p">):</span>
+    <span class="n">delete_url</span> <span class="o">=</span> <span class="n">_create_server_delete_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">faraday_object_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_delete</span><span class="p">(</span><span class="n">delete_url</span><span class="p">)</span>
+
+<span class="c1"># XXX: COUCH IT!</span>
+<span class="k">def</span> <span class="nf">_couch_changes</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">CouchChangesStream</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                              <span class="n">_create_couch_db_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">),</span>
+                              <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_faraday_ready_dictionaries</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">faraday_object_name</span><span class="p">,</span>
+                                    <span class="n">faraday_object_row_name</span><span class="p">,</span> <span class="n">full_table</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                    <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Takes a workspace_name (str), a faraday_object_name (str),</span>
+<span class="sd">    a faraday_object_row_name (str) and an arbitrary number of params.</span>
+<span class="sd">    Return a list of dictionaries that hold the information for the objects</span>
+<span class="sd">    in table faraday_object_name.</span>
+
+<span class="sd">    The full_table paramether may be used to get the full dictionary instead</span>
+<span class="sd">    of just the one inside the &#39;value&#39; key which holds information about the</span>
+<span class="sd">    object.</span>
+
+<span class="sd">    Preconditions:</span>
+<span class="sd">    faraday_object_name == &#39;host&#39;, &#39;vuln&#39;, &#39;interface&#39;, &#39;service&#39;, &#39;note&#39;</span>
+<span class="sd">    or &#39;credential&#39;</span>
+
+<span class="sd">    faraday_object_row_name must be the key to the dictionary which holds</span>
+<span class="sd">    the information of the object per se in the table. most times this is &#39;rows&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">object_to_func</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;hosts&#39;</span><span class="p">:</span> <span class="n">_get_raw_hosts</span><span class="p">,</span>
+                      <span class="s1">&#39;vulns&#39;</span><span class="p">:</span> <span class="n">_get_raw_vulns</span><span class="p">,</span>
+                      <span class="s1">&#39;interfaces&#39;</span><span class="p">:</span> <span class="n">_get_raw_interfaces</span><span class="p">,</span>
+                      <span class="s1">&#39;services&#39;</span><span class="p">:</span> <span class="n">_get_raw_services</span><span class="p">,</span>
+                      <span class="s1">&#39;notes&#39;</span><span class="p">:</span> <span class="n">_get_raw_notes</span><span class="p">,</span>
+                      <span class="s1">&#39;credentials&#39;</span><span class="p">:</span> <span class="n">_get_raw_credentials</span><span class="p">,</span>
+                      <span class="s1">&#39;commands&#39;</span><span class="p">:</span> <span class="n">_get_raw_commands</span><span class="p">}</span>
+
+    <span class="n">appropiate_function</span> <span class="o">=</span> <span class="n">object_to_func</span><span class="p">[</span><span class="n">faraday_object_name</span><span class="p">]</span>
+    <span class="n">appropiate_dictionary</span> <span class="o">=</span> <span class="n">appropiate_function</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">faraday_ready_dictionaries</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">appropiate_dictionary</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">raw_dictionary</span> <span class="ow">in</span> <span class="n">appropiate_dictionary</span><span class="p">[</span><span class="n">faraday_object_row_name</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">full_table</span><span class="p">:</span>
+                <span class="n">faraday_ready_dictionaries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raw_dictionary</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">faraday_ready_dictionaries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raw_dictionary</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">faraday_ready_dictionaries</span>
+
+
+<div class="viewcode-block" id="get_hosts"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_hosts">[docs]</a><span class="k">def</span> <span class="nf">get_hosts</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get hosts from the server.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace from which to get the hosts.</span>
+<span class="sd">        **params: any of valid request parameters for CouchDB.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing the hosts matching the query.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_get_faraday_ready_dictionaries</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;hosts&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;rows&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_all_vulns"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_all_vulns">[docs]</a><span class="k">def</span> <span class="nf">get_all_vulns</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get vulns, both normal and web, from the server.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace from which to get the vulns.</span>
+<span class="sd">        **params: any of valid request parameters for CouchDB.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing the vulns matching the query.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_get_faraday_ready_dictionaries</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;vulns&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;vulnerabilities&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_vulns"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_vulns">[docs]</a><span class="k">def</span> <span class="nf">get_vulns</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get only normal vulns from the server.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace from which to get the vulns.</span>
+<span class="sd">        **params: any of valid request parameters for CouchDB.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing the vulns matching the query.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">get_all_vulns</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;Vulnerability&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_web_vulns"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_web_vulns">[docs]</a><span class="k">def</span> <span class="nf">get_web_vulns</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get only web vulns from the server.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace from which to get the vulns.</span>
+<span class="sd">        **params: any of valid request parameters for CouchDB.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing the vulns matching the query.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">get_all_vulns</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;VulnerabilityWeb&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_interfaces"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_interfaces">[docs]</a><span class="k">def</span> <span class="nf">get_interfaces</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get interfaces from the server.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace from which to get the interfaces.</span>
+<span class="sd">        **params: any of valid request parameters for CouchDB.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing the interfaces matching the query.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_get_faraday_ready_dictionaries</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;interfaces&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;interfaces&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_services"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_services">[docs]</a><span class="k">def</span> <span class="nf">get_services</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get services from the server.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace from which to get the services.</span>
+<span class="sd">        **params: any of valid request parameters for CouchDB.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing the services matching the query.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_get_faraday_ready_dictionaries</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;services&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;services&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_credentials"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_credentials">[docs]</a><span class="k">def</span> <span class="nf">get_credentials</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get credentials from the server.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace from which to get the credentials.</span>
+<span class="sd">        **params: any of valid request parameters for CouchDB.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing the credentials matching the query.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_get_faraday_ready_dictionaries</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;credentials&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;rows&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_notes"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_notes">[docs]</a><span class="k">def</span> <span class="nf">get_notes</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get notes from the server.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace from which to get the notes.</span>
+<span class="sd">        **params: any of valid request parameters for CouchDB.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing the notes matching the query.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_get_faraday_ready_dictionaries</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;notes&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;rows&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_commands"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_commands">[docs]</a><span class="k">def</span> <span class="nf">get_commands</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get commands from the server.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace from which to get the commands.</span>
+<span class="sd">        **params: any of valid request parameters for CouchDB.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing the commands matching the query.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_get_faraday_ready_dictionaries</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="s1">&#39;commands&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;commands&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_objects"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_objects">[docs]</a><span class="k">def</span> <span class="nf">get_objects</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_signature</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get any type of object from the server, be it hosts, vulns, interfaces,</span>
+<span class="sd">    services, credentials, commands or notes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace from which to get the commands.</span>
+<span class="sd">        object_signature (str): the type of object to get. Must equal &#39;hosts&#39;,</span>
+<span class="sd">            &#39;vulns&#39;, &#39;interfaces&#39;, &#39;services&#39;, &#39;credentials&#39;, &#39;notes&#39; or &#39;commands&#39;</span>
+<span class="sd">        **params: any of valid request parameters for CouchDB.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing the commands matching the query.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        WrongObjectSignature: if the object_signature string didn&#39;t match</span>
+<span class="sd">        a faraday object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">object_to_func</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;hosts&#39;</span><span class="p">:</span> <span class="n">get_hosts</span><span class="p">,</span>
+                      <span class="s1">&#39;vulns&#39;</span><span class="p">:</span> <span class="n">get_vulns</span><span class="p">,</span>
+                      <span class="s1">&#39;interfaces&#39;</span><span class="p">:</span> <span class="n">get_interfaces</span><span class="p">,</span>
+                      <span class="s1">&#39;services&#39;</span><span class="p">:</span> <span class="n">get_services</span><span class="p">,</span>
+                      <span class="s1">&#39;credentials&#39;</span><span class="p">:</span> <span class="n">get_credentials</span><span class="p">,</span>
+                      <span class="s1">&#39;notes&#39;</span><span class="p">:</span> <span class="n">get_notes</span><span class="p">,</span>
+                      <span class="s1">&#39;commands&#39;</span><span class="p">:</span> <span class="n">get_commands</span><span class="p">}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">appropiate_function</span> <span class="o">=</span> <span class="n">object_to_func</span><span class="p">[</span><span class="n">object_signature</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">WrongObjectSignature</span><span class="p">(</span><span class="n">object_signature</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">appropiate_function</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
+
+<span class="c1"># cha cha cha chaaaanges!</span>
+<div class="viewcode-block" id="get_changes_stream"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_changes_stream">[docs]</a><span class="k">def</span> <span class="nf">get_changes_stream</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">since</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">heartbeat</span><span class="o">=</span><span class="s1">&#39;1000&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">_couch_changes</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">since</span><span class="o">=</span><span class="n">since</span><span class="p">,</span> <span class="n">feed</span><span class="o">=</span><span class="s1">&#39;continuous&#39;</span><span class="p">,</span>
+                          <span class="n">heartbeat</span><span class="o">=</span><span class="n">heartbeat</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_workspaces_names"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_workspaces_names">[docs]</a><span class="k">def</span> <span class="nf">get_workspaces_names</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns:</span>
+<span class="sd">        A dictionary with a list with the workspaces names.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/ws&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_create_server_api_url</span><span class="p">()))</span></div>
+
+<span class="c1"># XXX: COUCH IT!</span>
+<span class="k">def</span> <span class="nf">_clean_up_stupid_couch_response</span><span class="p">(</span><span class="n">response_string</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Couch likes to give invalid jsons as a response :). So nice.&quot;&quot;&quot;</span>
+    <span class="n">interesting_part</span> <span class="o">=</span> <span class="s2">&quot;{&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">response_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;{&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="n">almost_there</span> <span class="o">=</span> <span class="n">interesting_part</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;}&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">ok_yeah</span> <span class="o">=</span> <span class="s2">&quot;}&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">almost_there</span><span class="p">)</span>
+    <span class="n">hopefully_valid_json</span> <span class="o">=</span> <span class="s2">&quot;{{</span><span class="si">{0}</span><span class="s2">}}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ok_yeah</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">hopefully_valid_json</span><span class="p">)</span>
+
+<span class="c1"># XXX: COUCH IT!</span>
+<span class="c1"># COUCH IT LEVEL: REVOLUTIONS</span>
+<div class="viewcode-block" id="get_object_before_last_revision"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_object_before_last_revision">[docs]</a><span class="k">def</span> <span class="nf">get_object_before_last_revision</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an object before its last revision. Useful to get information about</span>
+<span class="sd">    recently deleted objects.</span>
+
+<span class="sd">    Warning:</span>
+<span class="sd">        Error-pronce process. You should check for &#39;None&#39; after usage,</span>
+<span class="sd">        as that&#39;s the return value if any problem arose during execution.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace where the object was</span>
+<span class="sd">        object_id (str): the id of the object</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the object&#39;s information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">get_url</span> <span class="o">=</span> <span class="n">_create_couch_get_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_id</span><span class="p">)</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">_unsafe_io_with_server</span><span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">get_url</span><span class="p">,</span>
+                                      <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;revs&#39;</span><span class="p">:</span> <span class="s1">&#39;true&#39;</span><span class="p">,</span> <span class="s1">&#39;open_revs&#39;</span><span class="p">:</span> <span class="s1">&#39;all&#39;</span><span class="p">})</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">valid_json_response</span> <span class="o">=</span> <span class="n">_clean_up_stupid_couch_response</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">id_before_del</span> <span class="o">=</span> <span class="n">valid_json_response</span><span class="p">[</span><span class="s1">&#39;_revisions&#39;</span><span class="p">][</span><span class="s1">&#39;ids&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">new_number_for_rev</span> <span class="o">=</span> <span class="n">valid_json_response</span><span class="p">[</span><span class="s1">&#39;_revisions&#39;</span><span class="p">][</span><span class="s1">&#39;start&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>  <span class="c1"># one if never too safe when you call a function called &quot;_clean_up_stupid_couch_response&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">rev_id_before_del</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">-</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">new_number_for_rev</span><span class="p">,</span> <span class="n">id_before_del</span><span class="p">)</span>
+    <span class="n">object_dict</span> <span class="o">=</span> <span class="n">_get</span><span class="p">(</span><span class="n">get_url</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="n">rev_id_before_del</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">object_dict</span></div>
+
+
+<div class="viewcode-block" id="get_object"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_object">[docs]</a><span class="k">def</span> <span class="nf">get_object</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_signature</span><span class="p">,</span> <span class="n">object_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an unique object of arbitrary type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace where the object should be found.</span>
+<span class="sd">        object_signature (str): must be either &#39;hosts&#39;, &#39;vulns&#39;, &#39;interfaces&#39;</span>
+<span class="sd">            &#39;services&#39;, &#39;credentials&#39;, &#39;notes&#39; or &#39;commands&#39;.</span>
+<span class="sd">        object_id (str): the id of the object</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing information about the object.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        MoreThanOneObjectFoundByID: if for some reason the object_id is shared</span>
+<span class="sd">        by two or more objects. This should never happen. If it does,</span>
+<span class="sd">        contact Infobyte LCC.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">get_objects</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">object_signature</span><span class="p">,</span> <span class="n">couchid</span><span class="o">=</span><span class="n">object_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">force_unique</span><span class="p">(</span><span class="n">objects</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_host"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_host">[docs]</a><span class="k">def</span> <span class="nf">get_host</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">host_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an unique host.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace where the object should be found.</span>
+<span class="sd">        host_id (str): the id of the host</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing information about the host.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        MoreThanOneObjectFoundByID: if for some reason the host id is shared</span>
+<span class="sd">        by two or more objects. This should never happen. If it does,</span>
+<span class="sd">        contact Infobyte LCC.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">force_unique</span><span class="p">(</span><span class="n">get_hosts</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">couchid</span><span class="o">=</span><span class="n">host_id</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="get_vuln"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_vuln">[docs]</a><span class="k">def</span> <span class="nf">get_vuln</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">vuln_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an unique vuln.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace where the object should be found.</span>
+<span class="sd">        vuln_id (str): the id of the vuln</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing information about the vuln.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        MoreThanOneObjectFoundByID: if for some reason the vuln id is shared</span>
+<span class="sd">        by two or more objects. This should never happen. If it does,</span>
+<span class="sd">        contact Infobyte LCC.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">force_unique</span><span class="p">(</span><span class="n">get_vulns</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">couchid</span><span class="o">=</span><span class="n">vuln_id</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="get_web_vuln"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_web_vuln">[docs]</a><span class="k">def</span> <span class="nf">get_web_vuln</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">vuln_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an unique web vuln.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace where the object should be found.</span>
+<span class="sd">        web vuln_id (str): the id of the web vuln</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing information about the web vuln.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        MoreThanOneObjectFoundByID: if for some reason the web vuln id is shared</span>
+<span class="sd">        by two or more objects. This should never happen. If it does,</span>
+<span class="sd">        contact Infobyte LCC.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">force_unique</span><span class="p">(</span><span class="n">get_web_vulns</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">couchid</span><span class="o">=</span><span class="n">vuln_id</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="get_interface"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_interface">[docs]</a><span class="k">def</span> <span class="nf">get_interface</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">interface_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an unique interface.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace where the object should be found.</span>
+<span class="sd">        interface_id (str): the id of the interface</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing information about the interface.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        MoreThanOneObjectFoundByID: if for some reason the interface id is shared</span>
+<span class="sd">        by two or more objects. This should never happen. If it does,</span>
+<span class="sd">        contact Infobyte LCC.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">force_unique</span><span class="p">(</span><span class="n">get_interfaces</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">couchid</span><span class="o">=</span><span class="n">interface_id</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="get_service"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_service">[docs]</a><span class="k">def</span> <span class="nf">get_service</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">service_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an unique service.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace where the object should be found.</span>
+<span class="sd">        service_id (str): the id of the service</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing information about the service.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        MoreThanOneObjectFoundByID: if for some reason the service id is shared</span>
+<span class="sd">        by two or more objects. This should never happen. If it does,</span>
+<span class="sd">        contact Infobyte LCC.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">force_unique</span><span class="p">(</span><span class="n">get_services</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">couchid</span><span class="o">=</span><span class="n">service_id</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="get_note"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_note">[docs]</a><span class="k">def</span> <span class="nf">get_note</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">note_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an unique note.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace where the object should be found.</span>
+<span class="sd">        note_id (str): the id of the note</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing information about the note.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        MoreThanOneObjectFoundByID: if for some reason the note id is shared</span>
+<span class="sd">        by two or more objects. This should never happen. If it does,</span>
+<span class="sd">        contact Infobyte LCC.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">force_unique</span><span class="p">(</span><span class="n">get_notes</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">couchid</span><span class="o">=</span><span class="n">note_id</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="get_credential"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_credential">[docs]</a><span class="k">def</span> <span class="nf">get_credential</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">credential_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an unique credential.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace where the object should be found.</span>
+<span class="sd">        credential_id (str): the id of the credential</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing information about the credential.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        MoreThanOneObjectFoundByID: if for some reason the credential id is shared</span>
+<span class="sd">        by two or more objects. This should never happen. If it does,</span>
+<span class="sd">        contact Infobyte LCC.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">force_unique</span><span class="p">(</span><span class="n">get_services</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">couchid</span><span class="o">=</span><span class="n">credential_id</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="get_command"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_command">[docs]</a><span class="k">def</span> <span class="nf">get_command</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">command_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an unique command.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace where the object should be found.</span>
+<span class="sd">        command_id (str): the id of the command</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing information about the command.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        MoreThanOneObjectFoundByID: if for some reason the command id is shared</span>
+<span class="sd">        by two or more objects. This should never happen. If it does,</span>
+<span class="sd">        contact Infobyte LCC.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">force_unique</span><span class="p">(</span><span class="n">get_commands</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">couchid</span><span class="o">=</span><span class="n">command_id</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="get_workspace"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_workspace">[docs]</a><span class="k">def</span> <span class="nf">get_workspace</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an unique command.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        command_name (str): the command where the object should be found.</span>
+<span class="sd">        command_id (str): the id of the command</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary containing information about the command.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        MoreThanOneObjectFoundByID: if for some reason the command id is shared</span>
+<span class="sd">        by two or more objects. This should never happen. If it does,</span>
+<span class="sd">        contact Infobyte LCC.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">request_url</span> <span class="o">=</span> <span class="n">_create_server_get_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_get</span><span class="p">(</span><span class="n">request_url</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_workspace_summary"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_workspace_summary">[docs]</a><span class="k">def</span> <span class="nf">get_workspace_summary</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get a collection of data about the workspace.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace to get the stats from.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the workspace&#39;s information</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_get_raw_workspace_summary</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">)[</span><span class="s1">&#39;stats&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="get_workspace_numbers"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_workspace_numbers">[docs]</a><span class="k">def</span> <span class="nf">get_workspace_numbers</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the number of hosts, interfaces, services and vulns in the workspace.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace to query</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        A tuple of 4 elements with the amounts of hosts, interfaces, services and vulns.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">_get_raw_workspace_summary</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">)[</span><span class="s1">&#39;stats&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;hosts&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;interfaces&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;services&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_vulns&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="get_hosts_number"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_hosts_number">[docs]</a><span class="k">def</span> <span class="nf">get_hosts_number</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace to query</span>
+<span class="sd">        **params: any of the Couchdb request parameters</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The amount of hosts in the workspace as an integer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">get_workspace_summary</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">)[</span><span class="s1">&#39;hosts&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="get_services_number"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_services_number">[docs]</a><span class="k">def</span> <span class="nf">get_services_number</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace to query</span>
+<span class="sd">        **params: any of the Couchdb request parameters</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The amount of services in the workspace as an integer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">get_workspace_summary</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">)[</span><span class="s1">&#39;interfaces&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="get_interfaces_number"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_interfaces_number">[docs]</a><span class="k">def</span> <span class="nf">get_interfaces_number</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace to query</span>
+<span class="sd">        **params: any of the Couchdb request parameters</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The amount of interfaces in the workspace as an integer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">get_workspace_summary</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">)[</span><span class="s1">&#39;interfaces&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="get_vulns_number"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_vulns_number">[docs]</a><span class="k">def</span> <span class="nf">get_vulns_number</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace to query</span>
+<span class="sd">        **params: any of the Couchdb request parameters</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The amount of vulns in the workspace as an integer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">get_workspace_summary</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">)[</span><span class="s1">&#39;total_vulns&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="get_notes_number"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_notes_number">[docs]</a><span class="k">def</span> <span class="nf">get_notes_number</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace to query</span>
+<span class="sd">        **params: any of the Couchdb request parameters</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The amount of notes in the workspace as an integer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">get_workspace_summary</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">)[</span><span class="s1">&#39;notes&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="get_credentials_number"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_credentials_number">[docs]</a><span class="k">def</span> <span class="nf">get_credentials_number</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace to query</span>
+<span class="sd">        **params: any of the Couchdb request parameters</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The amount of credentials in the workspace as an integer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">_get_raw_credentials</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="get_commands_number"><a class="viewcode-back" href="../../../server.html#persistence.server.server.get_commands_number">[docs]</a><span class="k">def</span> <span class="nf">get_commands_number</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace to query</span>
+<span class="sd">        **params: any of the Couchdb request parameters</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The amount of commands in the workspace as an integer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">_get_raw_commands</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="create_host"><a class="viewcode-back" href="../../../server.html#persistence.server.server.create_host">[docs]</a><span class="k">def</span> <span class="nf">create_host</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">os</span><span class="p">,</span> <span class="n">default_gateway</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">owned</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a host.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the host will be saved.</span>
+<span class="sd">        id (str): the id of the host. Must be unique.</span>
+<span class="sd">        name (str): the host&#39;s name</span>
+<span class="sd">        os (str): the operative system of the host</span>
+<span class="sd">        default_gateway (str): the host&#39;s default_gateway</span>
+<span class="sd">        description (str): a description.</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None.</span>
+<span class="sd">        owned (bool): is the host owned or not?</span>
+<span class="sd">        owner (str): an owner for the host</span>
+<span class="sd">        parent (Faraday Object): the host&#39;s parent. If you don&#39;t know this, leave</span>
+<span class="sd">            on None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_save_to_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                           <span class="nb">id</span><span class="p">,</span>
+                           <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">os</span><span class="o">=</span><span class="n">os</span><span class="p">,</span>
+                           <span class="n">default_gateway</span><span class="o">=</span><span class="n">default_gateway</span><span class="p">,</span>
+                           <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                           <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                           <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                           <span class="n">parent</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span>
+                           <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                           <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Host&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="update_host"><a class="viewcode-back" href="../../../server.html#persistence.server.server.update_host">[docs]</a><span class="k">def</span> <span class="nf">update_host</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">os</span><span class="p">,</span> <span class="n">default_gateway</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">owned</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Updates a host.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the host will be saved.</span>
+<span class="sd">        id (str): the id of the host. Must be unique.</span>
+<span class="sd">        name (str): the host&#39;s name</span>
+<span class="sd">        os (str): the operative system of the host</span>
+<span class="sd">        default_gateway (str): the host&#39;s default_gateway</span>
+<span class="sd">        description (str): a description.</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None, it will be created automatically.</span>
+<span class="sd">        owned (bool): is the host owned or not?</span>
+<span class="sd">        owner (str): an owner for the host</span>
+<span class="sd">        parent (Faraday Object): the host&#39;s parent. If you don&#39;t know this, leave</span>
+<span class="sd">            on None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_update_in_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                             <span class="nb">id</span><span class="p">,</span>
+                             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">os</span><span class="o">=</span><span class="n">os</span><span class="p">,</span>
+                             <span class="n">default_gateway</span><span class="o">=</span><span class="n">default_gateway</span><span class="p">,</span>
+                             <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                             <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                             <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                             <span class="n">parent</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span>
+                             <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                             <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Host&quot;</span><span class="p">)</span></div>
+
+
+<span class="c1"># TODO: FIX. If you actually pass ipv4 or ipv6 as None, which are the defaults</span>
+<span class="c1"># values here, the server will complain. Review if this should be fixed on</span>
+<span class="c1"># the client or on the server.</span>
+<div class="viewcode-block" id="create_interface"><a class="viewcode-back" href="../../../server.html#persistence.server.server.create_interface">[docs]</a><span class="k">def</span> <span class="nf">create_interface</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">mac</span><span class="p">,</span>
+                     <span class="n">owned</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">hostnames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">network_segment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">ipv4</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ipv6</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates an interface.</span>
+
+<span class="sd">    Warning:</span>
+<span class="sd">        DO NOT leave ipv4 and ipv6 values on None, as the default indicated.</span>
+<span class="sd">        This is a known bug and we&#39;re working to fix it. ipv4 and ipv6 need to</span>
+<span class="sd">        be valid IP addresses, or, in case one of them is irrelevant, empty strings.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the interface will be saved.</span>
+<span class="sd">        id (str): the id of the interface. Must be unique.</span>
+<span class="sd">        name (str): the interface&#39;s name</span>
+<span class="sd">        description (str): a description.</span>
+<span class="sd">        mac (str) the mac address of the interface</span>
+<span class="sd">        owned (bool): is the host owned or not?</span>
+<span class="sd">        owner (str): an owner for the host</span>
+<span class="sd">        hostnames ([str]): a list of hostnames</span>
+<span class="sd">        network_segment (str): the network segment</span>
+<span class="sd">        ipv4 (str): the ipv4 direction of the interface.</span>
+<span class="sd">        ipv6 (str): the ipv6 direction of the interface.</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None, it will be created automatically.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_save_to_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                           <span class="nb">id</span><span class="p">,</span>
+                           <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                           <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                           <span class="n">mac</span><span class="o">=</span><span class="n">mac</span><span class="p">,</span>
+                           <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                           <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                           <span class="n">hostnames</span><span class="o">=</span><span class="n">hostnames</span><span class="p">,</span>
+                           <span class="n">network_segment</span><span class="o">=</span><span class="n">network_segment</span><span class="p">,</span>
+                           <span class="n">ipv4</span><span class="o">=</span><span class="n">ipv4</span><span class="p">,</span>
+                           <span class="n">ipv6</span><span class="o">=</span><span class="n">ipv6</span><span class="p">,</span>
+                           <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Interface&quot;</span><span class="p">,</span>
+                           <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="update_interface"><a class="viewcode-back" href="../../../server.html#persistence.server.server.update_interface">[docs]</a><span class="k">def</span> <span class="nf">update_interface</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">mac</span><span class="p">,</span>
+                     <span class="n">owned</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">hostnames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">network_segment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">ipv4</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ipv6</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates an interface.</span>
+
+<span class="sd">    Warning:</span>
+<span class="sd">        DO NOT leave ipv4 and ipv6 values on None, as the default indicated.</span>
+<span class="sd">        This is a known bug and we&#39;re working to fix it. ipv4 and ipv6 need to</span>
+<span class="sd">        be valid IP addresses, or, in case one of them is irrelevant, empty strings.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the interface will be saved.</span>
+<span class="sd">        id (str): the id of the interface. Must be unique.</span>
+<span class="sd">        name (str): the interface&#39;s name</span>
+<span class="sd">        description (str): a description.</span>
+<span class="sd">        mac (str) the mac address of the interface</span>
+<span class="sd">        owned (bool): is the host owned or not?</span>
+<span class="sd">        owner (str): an owner for the host</span>
+<span class="sd">        hostnames ([str]): a list of hostnames</span>
+<span class="sd">        network_segment (str): the network segment</span>
+<span class="sd">        ipv4 (str): the ipv4 direction of the interface.</span>
+<span class="sd">        ipv6 (str): the ipv6 direction of the interface.</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None, it will be created automatically.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_update_in_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                             <span class="nb">id</span><span class="p">,</span>
+                             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                             <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                             <span class="n">mac</span><span class="o">=</span><span class="n">mac</span><span class="p">,</span>
+                             <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                             <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                             <span class="n">hostnames</span><span class="o">=</span><span class="n">hostnames</span><span class="p">,</span>
+                             <span class="n">network_segment</span><span class="o">=</span><span class="n">network_segment</span><span class="p">,</span>
+                             <span class="n">ipv4</span><span class="o">=</span><span class="n">ipv4</span><span class="p">,</span>
+                             <span class="n">ipv6</span><span class="o">=</span><span class="n">ipv6</span><span class="p">,</span>
+                             <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Interface&quot;</span><span class="p">,</span>
+                             <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="create_service"><a class="viewcode-back" href="../../../server.html#persistence.server.server.create_service">[docs]</a><span class="k">def</span> <span class="nf">create_service</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">ports</span><span class="p">,</span>
+                   <span class="n">owned</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                   <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates a service.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the service will be saved.</span>
+<span class="sd">        id (str): the id of the service. Must be unique.</span>
+<span class="sd">        name (str): the host&#39;s name</span>
+<span class="sd">        description (str): a description.</span>
+<span class="sd">        ports ([str]): a list of ports for the service.</span>
+<span class="sd">        owned (bool): is the service owned or not?</span>
+<span class="sd">        owner (str): an owner for the service</span>
+<span class="sd">        protocol (str): the service&#39;s protocol</span>
+<span class="sd">        status (str): the service&#39;s status</span>
+<span class="sd">        version (str): the service&#39;s version</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None, it will be created automatically.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_save_to_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                           <span class="nb">id</span><span class="p">,</span>
+                           <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                           <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                           <span class="n">ports</span><span class="o">=</span><span class="n">ports</span><span class="p">,</span>
+                           <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                           <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                           <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span>
+                           <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+                           <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+                           <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Service&quot;</span><span class="p">,</span>
+                           <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="update_service"><a class="viewcode-back" href="../../../server.html#persistence.server.server.update_service">[docs]</a><span class="k">def</span> <span class="nf">update_service</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">ports</span><span class="p">,</span>
+                   <span class="n">owned</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                   <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates a service.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the service will be saved.</span>
+<span class="sd">        id (str): the id of the service. Must be unique.</span>
+<span class="sd">        name (str): the service&#39;s name</span>
+<span class="sd">        description (str): a description.</span>
+<span class="sd">        ports ([str]): a list of ports for the service.</span>
+<span class="sd">        owned (bool): is the host owned or not?</span>
+<span class="sd">        owner (str): an owner for the service</span>
+<span class="sd">        protocol (str): the service&#39;s protocol</span>
+<span class="sd">        status (str): the service&#39;s status</span>
+<span class="sd">        version (str): the service&#39;s version</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None, it will be created automatically.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_update_in_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                             <span class="nb">id</span><span class="p">,</span>
+                             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                             <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                             <span class="n">ports</span><span class="o">=</span><span class="n">ports</span><span class="p">,</span>
+                             <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                             <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                             <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span>
+                             <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+                             <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+                             <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Service&quot;</span><span class="p">,</span>
+                             <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="create_vuln"><a class="viewcode-back" href="../../../server.html#persistence.server.server.create_vuln">[docs]</a><span class="k">def</span> <span class="nf">create_vuln</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">owned</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">confirmed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">refs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates a vuln.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the vuln will be saved.</span>
+<span class="sd">        id (str): the id of the vuln. Must be unique.</span>
+<span class="sd">        name (str): the vuln&#39;s name</span>
+<span class="sd">        description (str): a description.</span>
+<span class="sd">        owned (bool): is the vuln owned or not?</span>
+<span class="sd">        owner (str): an owner for the vuln</span>
+<span class="sd">        confirmed (bool): is the vulnerability confirmed?</span>
+<span class="sd">        data (str): any aditional data about the vuln</span>
+<span class="sd">        refs ([str]): references for the vulnerability</span>
+<span class="sd">        severity (str): a string indicating the vuln&#39;s severity. can be &#39;info&#39;,</span>
+<span class="sd">            &#39;low&#39;, &#39;med&#39;, &#39;high&#39;, &#39;critical&#39;</span>
+<span class="sd">        resolution (str): the vuln&#39;s possible resolution</span>
+<span class="sd">        desc (str): a vuln&#39;s description.</span>
+<span class="sd">        status (str): the service&#39;s status</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None, it will be created automatically.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_save_to_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                           <span class="nb">id</span><span class="p">,</span>
+                           <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                           <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                           <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                           <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                           <span class="n">confirmed</span><span class="o">=</span><span class="n">confirmed</span><span class="p">,</span>
+                           <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                           <span class="n">refs</span><span class="o">=</span><span class="n">refs</span><span class="p">,</span>
+                           <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                           <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span>
+                           <span class="n">desc</span><span class="o">=</span><span class="n">desc</span><span class="p">,</span>
+                           <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Vulnerability&quot;</span><span class="p">,</span>
+                           <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+                           <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="update_vuln"><a class="viewcode-back" href="../../../server.html#persistence.server.server.update_vuln">[docs]</a><span class="k">def</span> <span class="nf">update_vuln</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">owned</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">confirmed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">refs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Updates a vuln.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the host will be saved.</span>
+<span class="sd">        id (str): the id of the host. Must be unique.</span>
+<span class="sd">        name (str): the host&#39;s name</span>
+<span class="sd">        description (str): a description.</span>
+<span class="sd">        owned (bool): is the vuln owned or not?</span>
+<span class="sd">        owner (str): an owner for the vuln</span>
+<span class="sd">        confirmed (bool): is the vulnerability confirmed?</span>
+<span class="sd">        data (str): any aditional data about the vuln</span>
+<span class="sd">        refs ([str]): references for the vulnerability</span>
+<span class="sd">        severity (str): a string indicating the vuln&#39;s severity. can be &#39;info&#39;,</span>
+<span class="sd">            &#39;low&#39;, &#39;med&#39;, &#39;high&#39;, &#39;critical&#39;</span>
+<span class="sd">        resolution (str): the vuln&#39;s possible resolution</span>
+<span class="sd">        desc (str): a vuln&#39;s description.</span>
+<span class="sd">        status (str): the service&#39;s status</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None, it will be created automatically.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_update_in_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                             <span class="nb">id</span><span class="p">,</span>
+                             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                             <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                             <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                             <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                             <span class="n">confirmed</span><span class="o">=</span><span class="n">confirmed</span><span class="p">,</span>
+                             <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                             <span class="n">refs</span><span class="o">=</span><span class="n">refs</span><span class="p">,</span>
+                             <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                             <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="n">desc</span><span class="p">,</span>
+                             <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Vulnerability&quot;</span><span class="p">,</span>
+                             <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+                             <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="create_vuln_web"><a class="viewcode-back" href="../../../server.html#persistence.server.server.create_vuln_web">[docs]</a><span class="k">def</span> <span class="nf">create_vuln_web</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">owned</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="n">confirmed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">refs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pname</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">request</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">response</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">website</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">status</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates a vuln web.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the vuln web will be saved.</span>
+<span class="sd">        id (str): the id of the vuln web. Must be unique.</span>
+<span class="sd">        name (str): the vuln web&#39;s name</span>
+<span class="sd">        description (str): a description.</span>
+<span class="sd">        owner (str): an owner for the host</span>
+<span class="sd">        confirmed (bool): is the vulnerability confirmed?</span>
+<span class="sd">        data (str): any aditional data about the vuln</span>
+<span class="sd">        refs ([str]): references for the vulnerability</span>
+<span class="sd">        severity (str): a string indicating the vuln&#39;s severity. can be &#39;info&#39;,</span>
+<span class="sd">            &#39;low&#39;, &#39;med&#39;, &#39;high&#39;, &#39;critical&#39;</span>
+<span class="sd">        resolution (str): the vuln&#39;s possible resolution</span>
+<span class="sd">        desc (str): a vuln&#39;s description.</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None, it will be created automatically.</span>
+<span class="sd">        method (str): the web vuln method</span>
+<span class="sd">        params (str): the parameters for the web vuln</span>
+<span class="sd">        path (str): the web vuln&#39;s path</span>
+<span class="sd">        query (str): the web vuln&#39;s query</span>
+<span class="sd">        request (str): the web vuln&#39;s request</span>
+<span class="sd">        response (str): the web vuln&#39;s response</span>
+<span class="sd">        category (str): a category for the web vuln&#39;s</span>
+<span class="sd">        website (str): the website where the vuln was found</span>
+<span class="sd">        status (str): the web vulns&#39;s status</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_save_to_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                           <span class="nb">id</span><span class="p">,</span>
+                           <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                           <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                           <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                           <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                           <span class="n">confirmed</span><span class="o">=</span><span class="n">confirmed</span><span class="p">,</span>
+                           <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                           <span class="n">refs</span><span class="o">=</span><span class="n">refs</span><span class="p">,</span>
+                           <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                           <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span>
+                           <span class="n">desc</span><span class="o">=</span><span class="n">desc</span><span class="p">,</span>
+                           <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                           <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                           <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+                           <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                           <span class="n">pname</span><span class="o">=</span><span class="n">pname</span><span class="p">,</span>
+                           <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+                           <span class="n">request</span><span class="o">=</span><span class="n">request</span><span class="p">,</span>
+                           <span class="n">response</span><span class="o">=</span><span class="n">response</span><span class="p">,</span>
+                           <span class="n">website</span><span class="o">=</span><span class="n">website</span><span class="p">,</span>
+                           <span class="n">category</span><span class="o">=</span><span class="n">category</span><span class="p">,</span>
+                           <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+                           <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;VulnerabilityWeb&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="update_vuln_web"><a class="viewcode-back" href="../../../server.html#persistence.server.server.update_vuln_web">[docs]</a><span class="k">def</span> <span class="nf">update_vuln_web</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">owned</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="n">confirmed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">refs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pname</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">request</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">response</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">website</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">status</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates a vuln web.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the vuln web will be saved.</span>
+<span class="sd">        id (str): the id of the vuln web. Must be unique.</span>
+<span class="sd">        name (str): the vuln web&#39;s name</span>
+<span class="sd">        description (str): a description.</span>
+<span class="sd">        owner (str): an owner for the host</span>
+<span class="sd">        confirmed (bool): is the vulnerability confirmed?</span>
+<span class="sd">        data (str): any aditional data about the vuln</span>
+<span class="sd">        refs ([str]): references for the vulnerability</span>
+<span class="sd">        severity (str): a string indicating the vuln&#39;s severity. can be &#39;info&#39;,</span>
+<span class="sd">            &#39;low&#39;, &#39;med&#39;, &#39;high&#39;, &#39;critical&#39;</span>
+<span class="sd">        resolution (str): the vuln&#39;s possible resolution</span>
+<span class="sd">        desc (str): a vuln&#39;s description.</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None, it will be created automatically.</span>
+<span class="sd">        method (str): the web vuln method</span>
+<span class="sd">        params (str): the parameters for the web vuln</span>
+<span class="sd">        path (str): the web vuln&#39;s path</span>
+<span class="sd">        query (str): the web vuln&#39;s query</span>
+<span class="sd">        request (str): the web vuln&#39;s request</span>
+<span class="sd">        response (str): the web vuln&#39;s response</span>
+<span class="sd">        category (str): a category for the web vuln&#39;s</span>
+<span class="sd">        website (str): the website where the vuln was found</span>
+<span class="sd">        status (str): the web vulns&#39;s status</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_update_in_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                             <span class="nb">id</span><span class="p">,</span>
+                             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                             <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                             <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                             <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                             <span class="n">confirmed</span><span class="o">=</span><span class="n">confirmed</span><span class="p">,</span>
+                             <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                             <span class="n">refs</span><span class="o">=</span><span class="n">refs</span><span class="p">,</span>
+                             <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                             <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span>
+                             <span class="n">desc</span><span class="o">=</span><span class="n">desc</span><span class="p">,</span>
+                             <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                             <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                             <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+                             <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                             <span class="n">pname</span><span class="o">=</span><span class="n">pname</span><span class="p">,</span>
+                             <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+                             <span class="n">request</span><span class="o">=</span><span class="n">request</span><span class="p">,</span>
+                             <span class="n">response</span><span class="o">=</span><span class="n">response</span><span class="p">,</span>
+                             <span class="n">website</span><span class="o">=</span><span class="n">website</span><span class="p">,</span>
+                             <span class="n">category</span><span class="o">=</span><span class="n">category</span><span class="p">,</span>
+                             <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+                             <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;VulnerabilityWeb&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="create_note"><a class="viewcode-back" href="../../../server.html#persistence.server.server.create_note">[docs]</a><span class="k">def</span> <span class="nf">create_note</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">owned</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates a note.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the vuln web will be saved.</span>
+<span class="sd">        id (str): the id of the vuln web. Must be unique.</span>
+<span class="sd">        name (str): the vuln web&#39;s name</span>
+<span class="sd">        text (str): the note&#39;s text</span>
+<span class="sd">        owned (bool): is the note owned?</span>
+<span class="sd">        owner (str): the note&#39;s owner</span>
+<span class="sd">        description (str): a description</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None, it will be created automatically.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_save_to_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                           <span class="nb">id</span><span class="p">,</span>
+                           <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                           <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                           <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                           <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                           <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+                           <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Note&quot;</span><span class="p">,</span>
+                           <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="update_note"><a class="viewcode-back" href="../../../server.html#persistence.server.server.update_note">[docs]</a><span class="k">def</span> <span class="nf">update_note</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">owned</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Updates a note.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the vuln web will be saved.</span>
+<span class="sd">        id (str): the id of the vuln web. Must be unique.</span>
+<span class="sd">        name (str): the vuln web&#39;s name</span>
+<span class="sd">        text (str): the note&#39;s text</span>
+<span class="sd">        owned (bool): is the note owned?</span>
+<span class="sd">        owner (str): the note&#39;s owner</span>
+<span class="sd">        description (str): a description</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None, it will be created automatically.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_update_in_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                             <span class="nb">id</span><span class="p">,</span>
+                             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                             <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                             <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                             <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                             <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+                             <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Note&quot;</span><span class="p">,</span>
+                             <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="create_credential"><a class="viewcode-back" href="../../../server.html#persistence.server.server.create_credential">[docs]</a><span class="k">def</span> <span class="nf">create_credential</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span>
+                      <span class="n">owned</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates a credential.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the vuln web will be saved.</span>
+<span class="sd">        id (str): the id of the vuln web. Must be unique.</span>
+<span class="sd">        name (str): the vuln web&#39;s name</span>
+<span class="sd">        username (str)</span>
+<span class="sd">        password (str)</span>
+<span class="sd">        owned (bool): is the note owned?</span>
+<span class="sd">        owner (str): the note&#39;s owner</span>
+<span class="sd">        description (str): a description</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None, it will be created automatically.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_save_to_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                           <span class="nb">id</span><span class="p">,</span>
+                           <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                           <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                           <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                           <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                           <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                           <span class="n">username</span><span class="o">=</span><span class="n">username</span><span class="p">,</span>
+                           <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">,</span>
+                           <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Credential&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="update_credential"><a class="viewcode-back" href="../../../server.html#persistence.server.server.update_credential">[docs]</a><span class="k">def</span> <span class="nf">update_credential</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span>
+                      <span class="n">owned</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Updates a credential.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the vuln web will be saved.</span>
+<span class="sd">        id (str): the id of the vuln web. Must be unique.</span>
+<span class="sd">        name (str): the vuln web&#39;s name</span>
+<span class="sd">        username (str)</span>
+<span class="sd">        password (str)</span>
+<span class="sd">        owned (bool): is the note owned?</span>
+<span class="sd">        owner (str): the note&#39;s owner</span>
+<span class="sd">        description (str): a description</span>
+<span class="sd">        metadata: a collection of metadata. If you don&#39;t know the metada. leave</span>
+<span class="sd">            on None, it will be created automatically.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_update_in_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                             <span class="nb">id</span><span class="p">,</span>
+                             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                             <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                             <span class="n">owned</span><span class="o">=</span><span class="n">owned</span><span class="p">,</span>
+                             <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                             <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                             <span class="n">username</span><span class="o">=</span><span class="n">username</span><span class="p">,</span>
+                             <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">,</span>
+                             <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Credential&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="create_command"><a class="viewcode-back" href="../../../server.html#persistence.server.server.create_command">[docs]</a><span class="k">def</span> <span class="nf">create_command</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hostname</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">ip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">itime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates a command.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the vuln web will be saved.</span>
+<span class="sd">        id (str): the id of the vuln web. Must be unique.</span>
+<span class="sd">        command (str): the command to be created</span>
+<span class="sd">        duration (str). the command&#39;s duration</span>
+<span class="sd">        hostname (str): the hostname where the command was executed</span>
+<span class="sd">        ip (str): the ip of the host where the command was executed</span>
+<span class="sd">        itime (str): the time it took to run</span>
+<span class="sd">        params (str): the parameters given</span>
+<span class="sd">        user (str): the user that ran the command</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_save_to_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                           <span class="nb">id</span><span class="p">,</span>
+                           <span class="n">command</span><span class="o">=</span><span class="n">command</span><span class="p">,</span>
+                           <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
+                           <span class="n">hostname</span><span class="o">=</span><span class="n">hostname</span><span class="p">,</span>
+                           <span class="n">ip</span><span class="o">=</span><span class="n">ip</span><span class="p">,</span>
+                           <span class="n">itime</span><span class="o">=</span><span class="n">itime</span><span class="p">,</span>
+                           <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+                           <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+                           <span class="n">workspace</span><span class="o">=</span><span class="n">workspace_name</span><span class="p">,</span>
+                           <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;CommandRunInformation&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="update_command"><a class="viewcode-back" href="../../../server.html#persistence.server.server.update_command">[docs]</a><span class="k">def</span> <span class="nf">update_command</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hostname</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">ip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">itime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Updates a command.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the name of the workspace where the vuln web will be saved.</span>
+<span class="sd">        id (str): the id of the vuln web. Must be unique.</span>
+<span class="sd">        command (str): the command to be created</span>
+<span class="sd">        duration (str). the command&#39;s duration</span>
+<span class="sd">        hostname (str): the hostname where the command was executed</span>
+<span class="sd">        ip (str): the ip of the host where the command was executed</span>
+<span class="sd">        itime (str): the time it took to run</span>
+<span class="sd">        params (str): the parameters given</span>
+<span class="sd">        user (str): the user that ran the command</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_update_in_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                             <span class="nb">id</span><span class="p">,</span>
+                             <span class="n">command</span><span class="o">=</span><span class="n">command</span><span class="p">,</span>
+                             <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
+                             <span class="n">hostname</span><span class="o">=</span><span class="n">hostname</span><span class="p">,</span>
+                             <span class="n">ip</span><span class="o">=</span><span class="n">ip</span><span class="p">,</span>
+                             <span class="n">itime</span><span class="o">=</span><span class="n">itime</span><span class="p">,</span>
+                             <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+                             <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+                             <span class="n">workspace</span><span class="o">=</span><span class="n">workspace_name</span><span class="p">,</span>
+                             <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;CommandRunInformation&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="create_workspace"><a class="viewcode-back" href="../../../server.html#persistence.server.server.create_workspace">[docs]</a><span class="k">def</span> <span class="nf">create_workspace</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">finish_date</span><span class="p">,</span>
+                     <span class="n">customer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a workspace.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        workspace_name (str): the workspace&#39;s name</span>
+<span class="sd">        description (str): a description for the worksapce</span>
+<span class="sd">        start_date (str): a date to represent when work began in the workspace</span>
+<span class="sd">        finish_date (str): a date to represent when work will be finished on the workspace</span>
+<span class="sd">        customer (str): the customer for which we are creating the workspace</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary with the server&#39;s response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_save_db_to_server</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span>
+                              <span class="n">name</span><span class="o">=</span><span class="n">workspace_name</span><span class="p">,</span>
+                              <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                              <span class="n">customer</span><span class="o">=</span><span class="n">customer</span><span class="p">,</span>
+                              <span class="n">sdate</span><span class="o">=</span><span class="n">start_date</span><span class="p">,</span>
+                              <span class="n">fdate</span><span class="o">=</span><span class="n">finish_date</span><span class="p">,</span>
+                              <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Workspace&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="delete_host"><a class="viewcode-back" href="../../../server.html#persistence.server.server.delete_host">[docs]</a><span class="k">def</span> <span class="nf">delete_host</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">host_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Delete host of id host_id from the database.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_delete_from_couch</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">host_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="delete_interface"><a class="viewcode-back" href="../../../server.html#persistence.server.server.delete_interface">[docs]</a><span class="k">def</span> <span class="nf">delete_interface</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">interface_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Delete interface of id interface_id from the database.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_delete_from_couch</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">interface_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="delete_service"><a class="viewcode-back" href="../../../server.html#persistence.server.server.delete_service">[docs]</a><span class="k">def</span> <span class="nf">delete_service</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">service_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Delete service of id service_id from the database.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_delete_from_couch</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">service_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="delete_vuln"><a class="viewcode-back" href="../../../server.html#persistence.server.server.delete_vuln">[docs]</a><span class="k">def</span> <span class="nf">delete_vuln</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">vuln_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Delete vuln of id vuln_id from the database.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_delete_from_couch</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">vuln_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="delete_note"><a class="viewcode-back" href="../../../server.html#persistence.server.server.delete_note">[docs]</a><span class="k">def</span> <span class="nf">delete_note</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">note_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Delete note of id note_id from the database.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_delete_from_couch</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">note_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="delete_credential"><a class="viewcode-back" href="../../../server.html#persistence.server.server.delete_credential">[docs]</a><span class="k">def</span> <span class="nf">delete_credential</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">credential_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Delete credential of id credential_id from the database.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_delete_from_couch</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">credential_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="delete_command"><a class="viewcode-back" href="../../../server.html#persistence.server.server.delete_command">[docs]</a><span class="k">def</span> <span class="nf">delete_command</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">command_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Delete command of id command_id from the database.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_delete_from_couch</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">,</span> <span class="n">command_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="delete_workspace"><a class="viewcode-back" href="../../../server.html#persistence.server.server.delete_workspace">[docs]</a><span class="k">def</span> <span class="nf">delete_workspace</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Delete the couch database of id workspace_name&quot;&quot;&quot;</span>
+    <span class="n">db_url</span> <span class="o">=</span> <span class="n">_create_server_db_url</span><span class="p">(</span><span class="n">workspace_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_delete</span><span class="p">(</span><span class="n">db_url</span><span class="p">,</span> <span class="n">database</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="is_server_up"><a class="viewcode-back" href="../../../server.html#persistence.server.server.is_server_up">[docs]</a><span class="k">def</span> <span class="nf">is_server_up</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Return True if we can stablish a connection with the server,</span>
+<span class="sd">    False otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/info&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_create_server_api_url</span><span class="p">()))</span>
+        <span class="n">is_server_up</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">is_server_up</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">is_server_up</span></div>
+
+<div class="viewcode-block" id="test_server_url"><a class="viewcode-back" href="../../../server.html#persistence.server.server.test_server_url">[docs]</a><span class="k">def</span> <span class="nf">test_server_url</span><span class="p">(</span><span class="n">url_to_test</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return True if the url_to_test is indeed a valid Faraday Server URL.</span>
+<span class="sd">    False otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">_get</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/_api/info&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">url_to_test</span><span class="p">))</span>
+        <span class="n">test_okey</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">test_okey</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">test_okey</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Infobyte.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

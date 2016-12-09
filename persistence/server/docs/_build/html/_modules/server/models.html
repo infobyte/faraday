@@ -1,0 +1,662 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>server.models &mdash; Faraday 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="Faraday 0.1 documentation" href="../../index.html"/>
+        <link rel="up" title="server" href="../server.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Faraday
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <!-- Local TOC -->
+                <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">Faraday</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+          <li><a href="../server.html">server</a> &raquo;</li>
+      
+    <li>server.models</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for server.models</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Faraday Penetration Test IDE</span>
+<span class="c1"># Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)</span>
+<span class="c1"># See the file &#39;doc/LICENSE&#39; for the license information</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="k">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span> <span class="n">Boolean</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Text</span><span class="p">,</span> <span class="n">UniqueConstraint</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="k">import</span> <span class="n">relationship</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.ext.declarative</span> <span class="k">import</span> <span class="n">declarative_base</span>
+
+
+<span class="n">SCHEMA_VERSION</span> <span class="o">=</span> <span class="s1">&#39;W.2.2.0&#39;</span>
+
+<span class="n">Base</span> <span class="o">=</span> <span class="n">declarative_base</span><span class="p">()</span>
+
+<div class="viewcode-block" id="EntityNotFound"><a class="viewcode-back" href="../../server.html#server.models.EntityNotFound">[docs]</a><span class="k">class</span> <span class="nc">EntityNotFound</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EntityNotFound</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="s2">&quot;Entity (</span><span class="si">%s</span><span class="s2">) wasn&#39;t found&quot;</span> <span class="o">%</span> <span class="n">entity_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FaradayEntity"><a class="viewcode-back" href="../../server.html#server.models.FaradayEntity">[docs]</a><span class="k">class</span> <span class="nc">FaradayEntity</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="c1"># Document Types: [u&#39;Service&#39;, u&#39;Communication&#39;, u&#39;Vulnerability&#39;, u&#39;CommandRunInformation&#39;, u&#39;Reports&#39;, u&#39;Host&#39;, u&#39;Workspace&#39;, u&#39;Interface&#39;]</span>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="FaradayEntity.parse"><a class="viewcode-back" href="../../server.html#server.models.FaradayEntity.parse">[docs]</a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get an instance of a DAO object given a document&quot;&quot;&quot;</span>
+        <span class="n">entity_cls</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">get_entity_class_from_doc</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">entity_cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">entity</span> <span class="o">=</span> <span class="n">entity_cls</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">EntityMetadata</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
+            <span class="n">entity</span><span class="o">.</span><span class="n">entity_metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+            <span class="k">return</span> <span class="n">entity</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="FaradayEntity.get_entity_class_from_doc"><a class="viewcode-back" href="../../server.html#server.models.FaradayEntity.get_entity_class_from_doc">[docs]</a>    <span class="k">def</span> <span class="nf">get_entity_class_from_doc</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">get_entity_class_from_type</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span></div>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="FaradayEntity.get_entity_class_from_type"><a class="viewcode-back" href="../../server.html#server.models.FaradayEntity.get_entity_class_from_type">[docs]</a>    <span class="k">def</span> <span class="nf">get_entity_class_from_type</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">doc_type</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">entity_cls</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity_cls</span><span class="o">.</span><span class="n">DOC_TYPE</span><span class="p">,</span> <span class="n">basestring</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">entity_cls</span><span class="o">.</span><span class="n">DOC_TYPE</span> <span class="o">==</span> <span class="n">doc_type</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">entity_cls</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">doc_type</span> <span class="ow">in</span> <span class="n">entity_cls</span><span class="o">.</span><span class="n">DOC_TYPE</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">entity_cls</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_from_document</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FaradayEntity.update_from_document"><a class="viewcode-back" href="../../server.html#server.models.FaradayEntity.update_from_document">[docs]</a>    <span class="k">def</span> <span class="nf">update_from_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;MUST IMPLEMENT&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FaradayEntity.add_relationships_from_dict"><a class="viewcode-back" href="../../server.html#server.models.FaradayEntity.add_relationships_from_dict">[docs]</a>    <span class="k">def</span> <span class="nf">add_relationships_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entities</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="FaradayEntity.add_relationships_from_db"><a class="viewcode-back" href="../../server.html#server.models.FaradayEntity.add_relationships_from_db">[docs]</a>    <span class="k">def</span> <span class="nf">add_relationships_from_db</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="DatabaseMetadata"><a class="viewcode-back" href="../../server.html#server.models.DatabaseMetadata">[docs]</a><span class="k">class</span> <span class="nc">DatabaseMetadata</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;db_metadata&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">option</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EntityMetadata"><a class="viewcode-back" href="../../server.html#server.models.EntityMetadata">[docs]</a><span class="k">class</span> <span class="nc">EntityMetadata</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="c1"># Table schema</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;metadata&#39;</span>
+    <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">UniqueConstraint</span><span class="p">(</span><span class="s1">&#39;couchdb_id&#39;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">update_time</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">update_user</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">update_action</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">create_time</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">update_controller_action</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">creator</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">owner</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">command_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">couchdb_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">revision</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">document_type</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_from_document</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EntityMetadata.update_from_document"><a class="viewcode-back" href="../../server.html#server.models.EntityMetadata.update_from_document">[docs]</a>    <span class="k">def</span> <span class="nf">update_from_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;metadata&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_time</span><span class="o">=</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;update_time&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_user</span><span class="o">=</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;update_user&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_action</span><span class="o">=</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;update_action&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="o">=</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;creator&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">=</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;owner&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_time</span><span class="o">=</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;create_time&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_controller_action</span><span class="o">=</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;update_controller_action&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">couchdb_id</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_id&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">revision</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_rev&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command_id</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;command_id&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__truncate_to_epoch_in_seconds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_time</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__truncate_to_epoch_in_seconds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; In a not so elegant fashion, identifies and truncate</span>
+<span class="sd">        epoch timestamps expressed in milliseconds to seconds&quot;&quot;&quot;</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="mi">32503680000</span> <span class="c1"># 01 Jan 3000 00:00:00 GMT</span>
+        <span class="k">if</span> <span class="n">timestamp</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">timestamp</span> <span class="o">/</span> <span class="mi">1000</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">timestamp</span></div>
+
+
+<div class="viewcode-block" id="Host"><a class="viewcode-back" href="../../server.html#server.models.Host">[docs]</a><span class="k">class</span> <span class="nc">Host</span><span class="p">(</span><span class="n">FaradayEntity</span><span class="p">,</span> <span class="n">Base</span><span class="p">):</span>
+    <span class="n">DOC_TYPE</span> <span class="o">=</span> <span class="s1">&#39;Host&#39;</span>
+
+    <span class="c1"># Table schema</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;host&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">os</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">owned</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">)</span>
+
+    <span class="n">default_gateway_ip</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">default_gateway_mac</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+
+    <span class="n">entity_metadata</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="p">,</span> <span class="n">uselist</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cascade</span><span class="o">=</span><span class="s2">&quot;all, delete-orphan&quot;</span><span class="p">,</span> <span class="n">single_parent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">entity_metadata_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">interfaces</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Interface&#39;</span><span class="p">)</span>
+    <span class="n">services</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Service&#39;</span><span class="p">)</span>
+    <span class="n">vulnerabilities</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Vulnerability&#39;</span><span class="p">)</span>
+    <span class="n">credentials</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Credential&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Host.update_from_document"><a class="viewcode-back" href="../../server.html#server.models.Host.update_from_document">[docs]</a>    <span class="k">def</span> <span class="nf">update_from_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="c1"># Ticket #3387: if the &#39;os&#39; field is None, we default to &#39;unknown&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;os&#39;</span><span class="p">):</span> <span class="n">document</span><span class="p">[</span><span class="s1">&#39;os&#39;</span><span class="p">]</span><span class="o">=</span><span class="s1">&#39;unknown&#39;</span>
+
+        <span class="n">default_gateway</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_default_gateway</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">os</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;os&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_gateway_ip</span><span class="o">=</span><span class="n">default_gateway</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_gateway_mac</span><span class="o">=</span><span class="n">default_gateway</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owned</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;owned&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__get_default_gateway</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="n">default_gateway</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;default_gateway&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">default_gateway</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">default_gateway</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">u&#39;&#39;</span><span class="p">,</span> <span class="s1">u&#39;&#39;</span></div>
+
+
+<div class="viewcode-block" id="Interface"><a class="viewcode-back" href="../../server.html#server.models.Interface">[docs]</a><span class="k">class</span> <span class="nc">Interface</span><span class="p">(</span><span class="n">FaradayEntity</span><span class="p">,</span> <span class="n">Base</span><span class="p">):</span>
+    <span class="n">DOC_TYPE</span> <span class="o">=</span> <span class="s1">&#39;Interface&#39;</span>
+
+    <span class="c1"># Table schema</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;interface&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">mac</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">owned</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">)</span>
+
+    <span class="n">hostnames</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">network_segment</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+
+    <span class="n">ipv4_address</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">ipv4_gateway</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">ipv4_dns</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">ipv4_mask</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+
+    <span class="n">ipv6_address</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">ipv6_gateway</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">ipv6_dns</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">ipv6_prefix</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+
+    <span class="n">ports_filtered</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">ports_opened</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">ports_closed</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">)</span>
+
+    <span class="n">entity_metadata</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="p">,</span> <span class="n">uselist</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cascade</span><span class="o">=</span><span class="s2">&quot;all, delete-orphan&quot;</span><span class="p">,</span> <span class="n">single_parent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">entity_metadata_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">host_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Host</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Host&#39;</span><span class="p">,</span> <span class="n">back_populates</span><span class="o">=</span><span class="s1">&#39;interfaces&#39;</span><span class="p">)</span>
+
+    <span class="n">services</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Service&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Interface.update_from_document"><a class="viewcode-back" href="../../server.html#server.models.Interface.update_from_document">[docs]</a>    <span class="k">def</span> <span class="nf">update_from_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mac</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mac&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owned</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;owned&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hostnames</span><span class="o">=</span><span class="s1">u&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hostnames&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">network_segment</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;network_segment&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ipv4_address</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ipv4&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;address&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ipv4_gateway</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ipv4&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gateway&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ipv4_dns</span><span class="o">=</span><span class="s1">u&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ipv4&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;DNS&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ipv4_mask</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ipv4&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mask&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ipv6_address</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ipv6&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;address&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ipv6_gateway</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ipv6&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gateway&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ipv6_dns</span><span class="o">=</span><span class="s1">u&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ipv6&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;DNS&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ipv6_prefix</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ipv6&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;prefix&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ports_filtered</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ports&#39;</span><span class="p">,{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;filtered&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ports_opened</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ports&#39;</span><span class="p">,{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;opened&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ports_closed</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ports&#39;</span><span class="p">,{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;closed&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Interface.add_relationships_from_dict"><a class="viewcode-back" href="../../server.html#server.models.Interface.add_relationships_from_dict">[docs]</a>    <span class="k">def</span> <span class="nf">add_relationships_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entities</span><span class="p">):</span>
+        <span class="n">host_id</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entity_metadata</span><span class="o">.</span><span class="n">couchdb_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">host_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">EntityNotFound</span><span class="p">(</span><span class="n">host_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">entities</span><span class="p">[</span><span class="n">host_id</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Interface.add_relationships_from_db"><a class="viewcode-back" href="../../server.html#server.models.Interface.add_relationships_from_db">[docs]</a>    <span class="k">def</span> <span class="nf">add_relationships_from_db</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">):</span>
+        <span class="n">host_id</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entity_metadata</span><span class="o">.</span><span class="n">couchdb_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Host</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="o">.</span><span class="n">couchdb_id</span> <span class="o">==</span> <span class="n">host_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">one</span><span class="p">()</span></div></div>
+
+<div class="viewcode-block" id="Service"><a class="viewcode-back" href="../../server.html#server.models.Service">[docs]</a><span class="k">class</span> <span class="nc">Service</span><span class="p">(</span><span class="n">FaradayEntity</span><span class="p">,</span> <span class="n">Base</span><span class="p">):</span>
+    <span class="n">DOC_TYPE</span> <span class="o">=</span> <span class="s1">&#39;Service&#39;</span>
+
+    <span class="c1"># Table schema</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;service&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ports</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">owned</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">)</span>
+
+    <span class="n">protocol</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+
+    <span class="n">entity_metadata</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="p">,</span> <span class="n">uselist</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cascade</span><span class="o">=</span><span class="s2">&quot;all, delete-orphan&quot;</span><span class="p">,</span> <span class="n">single_parent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">entity_metadata_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">host_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Host</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Host&#39;</span><span class="p">,</span> <span class="n">back_populates</span><span class="o">=</span><span class="s1">&#39;services&#39;</span><span class="p">)</span>
+
+    <span class="n">interface_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Interface</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">interface</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Interface&#39;</span><span class="p">,</span> <span class="n">back_populates</span><span class="o">=</span><span class="s1">&#39;services&#39;</span><span class="p">)</span>
+
+    <span class="n">vulnerabilities</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Vulnerability&#39;</span><span class="p">)</span>
+    <span class="n">credentials</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Credential&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Service.update_from_document"><a class="viewcode-back" href="../../server.html#server.models.Service.update_from_document">[docs]</a>    <span class="k">def</span> <span class="nf">update_from_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owned</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;owned&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;protocol&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;version&#39;</span><span class="p">)</span>
+
+        <span class="c1"># We found workspaces where ports are defined as an integer</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ports&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">long</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ports</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ports&#39;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ports</span> <span class="o">=</span> <span class="s1">u&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ports&#39;</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="Service.add_relationships_from_dict"><a class="viewcode-back" href="../../server.html#server.models.Service.add_relationships_from_dict">[docs]</a>    <span class="k">def</span> <span class="nf">add_relationships_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entities</span><span class="p">):</span>
+        <span class="n">couchdb_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_metadata</span><span class="o">.</span><span class="n">couchdb_id</span>
+
+        <span class="n">host_id</span> <span class="o">=</span> <span class="n">couchdb_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">host_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">EntityNotFound</span><span class="p">(</span><span class="n">host_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">entities</span><span class="p">[</span><span class="n">host_id</span><span class="p">]</span>
+
+        <span class="n">interface_id</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">couchdb_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">interface_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">EntityNotFound</span><span class="p">(</span><span class="n">interface_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">entities</span><span class="p">[</span><span class="n">interface_id</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Service.add_relationships_from_db"><a class="viewcode-back" href="../../server.html#server.models.Service.add_relationships_from_db">[docs]</a>    <span class="k">def</span> <span class="nf">add_relationships_from_db</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">):</span>
+        <span class="n">couchdb_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_metadata</span><span class="o">.</span><span class="n">couchdb_id</span>
+        <span class="n">host_id</span> <span class="o">=</span> <span class="n">couchdb_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Host</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="o">.</span><span class="n">couchdb_id</span> <span class="o">==</span> <span class="n">host_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
+
+        <span class="n">interface_id</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">couchdb_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Interface</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="o">.</span><span class="n">couchdb_id</span> <span class="o">==</span> <span class="n">interface_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">one</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="Vulnerability"><a class="viewcode-back" href="../../server.html#server.models.Vulnerability">[docs]</a><span class="k">class</span> <span class="nc">Vulnerability</span><span class="p">(</span><span class="n">FaradayEntity</span><span class="p">,</span> <span class="n">Base</span><span class="p">):</span>
+    <span class="n">DOC_TYPE</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Vulnerability&#39;</span><span class="p">,</span> <span class="s1">&#39;VulnerabilityWeb&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Table schema</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;vulnerability&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">confirmed</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">)</span>
+    <span class="n">vuln_type</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">())</span>
+    <span class="n">easeofresolution</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">50</span><span class="p">))</span>
+    <span class="n">refs</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">())</span>
+    <span class="n">resolution</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">())</span>
+    <span class="n">severity</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">50</span><span class="p">))</span>
+    <span class="n">owned</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">)</span>
+    <span class="n">attachments</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">impact_accountability</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">)</span>
+    <span class="n">impact_availability</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">)</span>
+    <span class="n">impact_confidentiality</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">)</span>
+    <span class="n">impact_integrity</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">)</span>
+
+    <span class="n">method</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">50</span><span class="p">))</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">500</span><span class="p">))</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">500</span><span class="p">))</span>
+    <span class="n">pname</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">())</span>
+    <span class="n">request</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">())</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">())</span>
+    <span class="n">website</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+
+    <span class="n">status</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">))</span>
+
+    <span class="n">entity_metadata</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="p">,</span> <span class="n">uselist</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cascade</span><span class="o">=</span><span class="s2">&quot;all, delete-orphan&quot;</span><span class="p">,</span> <span class="n">single_parent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">entity_metadata_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">host_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Host</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Host&#39;</span><span class="p">,</span> <span class="n">back_populates</span><span class="o">=</span><span class="s1">&#39;vulnerabilities&#39;</span><span class="p">)</span>
+
+    <span class="n">service_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Service</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">service</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Service&#39;</span><span class="p">,</span> <span class="n">back_populates</span><span class="o">=</span><span class="s1">&#39;vulnerabilities&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Vulnerability.update_from_document"><a class="viewcode-back" href="../../server.html#server.models.Vulnerability.update_from_document">[docs]</a>    <span class="k">def</span> <span class="nf">update_from_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;desc&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">confirmed</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;confirmed&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vuln_type</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">easeofresolution</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;easeofresolution&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refs</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;refs&#39;</span><span class="p">,</span> <span class="p">[]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;resolution&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">severity</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;severity&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owned</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;owned&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attachments</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_attachments&#39;</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">impact_accountability</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;impact&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;accountability&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">impact_availability</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;impact&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;availability&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">impact_confidentiality</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;impact&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;confidentiality&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">impact_integrity</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;impact&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;integrity&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;method&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pname</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pname&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;query&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;request&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;response&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">website</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;website&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;opened&#39;</span><span class="p">)</span>
+
+        <span class="n">params</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;params&#39;</span><span class="p">,</span> <span class="s1">u&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">(</span><span class="s1">u&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">params</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span> <span class="k">if</span> <span class="n">params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">u&#39;&#39;</span></div>
+
+<div class="viewcode-block" id="Vulnerability.add_relationships_from_dict"><a class="viewcode-back" href="../../server.html#server.models.Vulnerability.add_relationships_from_dict">[docs]</a>    <span class="k">def</span> <span class="nf">add_relationships_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entities</span><span class="p">):</span>
+        <span class="n">couchdb_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_metadata</span><span class="o">.</span><span class="n">couchdb_id</span>
+        <span class="n">host_id</span> <span class="o">=</span> <span class="n">couchdb_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">host_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">EntityNotFound</span><span class="p">(</span><span class="n">host_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">entities</span><span class="p">[</span><span class="n">host_id</span><span class="p">]</span>
+
+        <span class="n">parent_id</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">couchdb_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">parent_id</span> <span class="o">!=</span> <span class="n">host_id</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">parent_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">EntityNotFound</span><span class="p">(</span><span class="n">parent_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">service</span> <span class="o">=</span> <span class="n">entities</span><span class="p">[</span><span class="n">parent_id</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Vulnerability.add_relationships_from_db"><a class="viewcode-back" href="../../server.html#server.models.Vulnerability.add_relationships_from_db">[docs]</a>    <span class="k">def</span> <span class="nf">add_relationships_from_db</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">):</span>
+        <span class="n">couchdb_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_metadata</span><span class="o">.</span><span class="n">couchdb_id</span>
+        <span class="n">host_id</span> <span class="o">=</span> <span class="n">couchdb_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Host</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="o">.</span><span class="n">couchdb_id</span> <span class="o">==</span> <span class="n">host_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
+
+        <span class="n">parent_id</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">couchdb_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">parent_id</span> <span class="o">!=</span> <span class="n">host_id</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Service</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="o">.</span><span class="n">couchdb_id</span> <span class="o">==</span> <span class="n">parent_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">service</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">one</span><span class="p">()</span></div></div>
+
+<div class="viewcode-block" id="Note"><a class="viewcode-back" href="../../server.html#server.models.Note">[docs]</a><span class="k">class</span> <span class="nc">Note</span><span class="p">(</span><span class="n">FaradayEntity</span><span class="p">,</span> <span class="n">Base</span><span class="p">):</span>
+    <span class="n">DOC_TYPE</span> <span class="o">=</span> <span class="s1">&#39;Note&#39;</span>
+
+    <span class="c1"># Table schema</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;note&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">owned</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">)</span>
+
+    <span class="n">entity_metadata</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="p">,</span> <span class="n">uselist</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cascade</span><span class="o">=</span><span class="s2">&quot;all, delete-orphan&quot;</span><span class="p">,</span> <span class="n">single_parent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">entity_metadata_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Note.update_from_document"><a class="viewcode-back" href="../../server.html#server.models.Note.update_from_document">[docs]</a>    <span class="k">def</span> <span class="nf">update_from_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owned</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;owned&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="Credential"><a class="viewcode-back" href="../../server.html#server.models.Credential">[docs]</a><span class="k">class</span> <span class="nc">Credential</span><span class="p">(</span><span class="n">FaradayEntity</span><span class="p">,</span> <span class="n">Base</span><span class="p">):</span>
+    <span class="n">DOC_TYPE</span> <span class="o">=</span> <span class="s1">&#39;Cred&#39;</span>
+
+    <span class="c1"># Table schema</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;credential&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">username</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">owned</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Boolean</span><span class="p">)</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">entity_metadata</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="p">,</span> <span class="n">uselist</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cascade</span><span class="o">=</span><span class="s2">&quot;all, delete-orphan&quot;</span><span class="p">,</span> <span class="n">single_parent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">entity_metadata_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">host_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Host</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Host&#39;</span><span class="p">,</span> <span class="n">back_populates</span><span class="o">=</span><span class="s1">&#39;credentials&#39;</span><span class="p">)</span>
+
+    <span class="n">service_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Service</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">service</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Service&#39;</span><span class="p">,</span> <span class="n">back_populates</span><span class="o">=</span><span class="s1">&#39;credentials&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Credential.update_from_document"><a class="viewcode-back" href="../../server.html#server.models.Credential.update_from_document">[docs]</a>    <span class="k">def</span> <span class="nf">update_from_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;username&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;password&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owned</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;owned&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="Command"><a class="viewcode-back" href="../../server.html#server.models.Command">[docs]</a><span class="k">class</span> <span class="nc">Command</span><span class="p">(</span><span class="n">FaradayEntity</span><span class="p">,</span> <span class="n">Base</span><span class="p">):</span>
+    <span class="n">DOC_TYPE</span> <span class="o">=</span> <span class="s1">&#39;CommandRunInformation&#39;</span>
+
+    <span class="c1"># Table schema</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;command&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">command</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">itime</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">ip</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">hostname</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">workspace</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">250</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+    <span class="n">entity_metadata</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="p">,</span> <span class="n">uselist</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cascade</span><span class="o">=</span><span class="s2">&quot;all, delete-orphan&quot;</span><span class="p">,</span> <span class="n">single_parent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">entity_metadata_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">EntityMetadata</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Command.update_from_document"><a class="viewcode-back" href="../../server.html#server.models.Command.update_from_document">[docs]</a>    <span class="k">def</span> <span class="nf">update_from_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;command&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">itime</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;itime&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ip</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ip&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hostname</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hostname&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;params&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">workspace</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;workspace&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Infobyte.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

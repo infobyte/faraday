@@ -17,9 +17,23 @@
        <table id="commands" ng-if="activityFeed.commands.length > 0" class="tablesorter table table-striped">
         <tbody>
             <tr ng-repeat="cmd in activityFeed.commands">
-                <td>
-                    <span am-time-ago="cmd.date"/> <b>{{cmd.user || Anonymous}}</b> runned <span uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">{{cmd.command.replace(':', '')  || Unknown}}</span> and found: 
-                    {{cmd.hosts_count || 0}} hosts, {{cmd.services_count || 0}} services & {{cmd.vulnerabilities_count || 0}} vulnerabilities.
+                <td align="left">
+                    <span ng-if="cmd.command_type == 'import'" class="fa fa-upload"/>
+                    <span ng-if="cmd.command_type == 'command'" class="fa fa-terminal"/>
+                    
+                    <b class="capitalize">{{cmd.user || Anonymous}}</b> <span ng-if="cmd.command_type == 'command'" uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">ran {{cmd.command}}</span>
+                    <span ng-if="cmd.command_type == 'import'" uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">{{cmd.command.replace('Import', 'imported').replace(':', '')  || Unknown}}</span>
+                    <span> and found</span>
+                    <span ng-if="cmd.hosts_count == 0 && cmd.services_count == 0 && cmd.vulnerabilities_count == 0 "> nothing</span>
+                    <span ng-if="cmd.hosts_count != 0 || cmd.services_count != 0 || cmd.vulnerabilities_count != 0 ">: </span>
+                    <span ng-if="cmd.hosts_count > 0">{{cmd.hosts_count}} {{cmd.hosts_count == 1 ? 'host' : 'hosts'}}</span>
+                    <span ng-if="cmd.hosts_count != 0 && cmd.services_count != 0 && cmd.vulnerabilities_count != 0">, </span>
+                    <span ng-if="(cmd.hosts_count != 0 && cmd.services_count != 0 && cmd.vulnerabilities_count == 0) || (cmd.hosts_count != 0 && cmd.services_count == 0 && cmd.vulnerabilities_count != 0)"> & </span>
+                    <span ng-if="cmd.services_count > 0">{{cmd.services_count}} {{cmd.services_count == 1 ? 'service' : 'services'}}</span>
+                    <span ng-if="(cmd.hosts_count != 0 && cmd.services_count != 0 && cmd.vulnerabilities_count != 0) || (cmd.hosts_count == 0 && cmd.services_count != 0 && cmd.vulnerabilities_count != 0)"> & </span>
+                    <span ng-if="cmd.vulnerabilities_count > 0">{{cmd.vulnerabilities_count}} {{cmd.vulnerabilities_count == 1 ? 'vulnerability' : 'vulnerabilities'}}</span>
+                    <span ng-if="cmd.criticalIssue > 0">- {{cmd.criticalIssue}} {{cmd.criticalIssue == 1 ? 'is' : 'are'}} rated as <b>Critical</b>.</span>
+                    <span class ="small-size" am-time-ago="cmd.date"/>
                 </td>
             </tr>
         </tbody>

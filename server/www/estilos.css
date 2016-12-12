@@ -1125,3 +1125,11 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
     text-align:right;
     border-bottom:1px solid rgba(255,255,255,.3)
 }
+
+.capitalize {
+   text-transform: capitalize;
+}
+
+.small-size {
+    font-size:10px;
+}

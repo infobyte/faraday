@@ -17,9 +17,10 @@ angular.module('faradayApp')
                 dashboardSrv.getHostsCountByCommandId($scope.workspace, command._id)
                         .then(function(hosts) {
 
-                           if( !isNaN(hosts['total_rows']) ){
-                               command['hosts_count'] = hosts['total_rows'];
-                           }
+                           if( !isNaN(hosts['total_rows']) )
+                               command.hosts_count = hosts['total_rows'];
+                            else
+                                command.hosts_count = 0;
                         });
             };
 
@@ -27,10 +28,10 @@ angular.module('faradayApp')
             vm.getServiceCount = function(command){
                 dashboardSrv.getServicesByCommandId($scope.workspace, command._id)
                         .then(function(services) {
-                            
-                            if( services['services'].length != 0 ){
-                                command['services_count'] = services['services'].length;
-                            }
+                            if( services.services.length != 0 )
+                                command.services_count = services.services.length;
+                            else
+                                 command.services_count = 0;
                         });
             };
 
@@ -38,11 +39,33 @@ angular.module('faradayApp')
             vm.getVulnsCount = function(command){
                 dashboardSrv.getVulnsByCommandId($scope.workspace, command._id)
                         .then(function(vulnerabilities) {
+
+                            vm.checkCriticalIssue(vulnerabilities, command);
                             
-                            if( !isNaN(vulnerabilities['count']) ){
-                                command['vulnerabilities_count'] = vulnerabilities['count'];
-                            }
+                            if(!isNaN(vulnerabilities.count))
+                                command.vulnerabilities_count = vulnerabilities.count;
+                            else
+                                command.vulnerabilities_count = 0;
                         });
+            };
+
+            //Check if is a command or Import report.
+            vm.setCommandType = function(command){
+
+                if(command.command.indexOf('Import') >= 0)
+                    command.command_type = 'import';
+                else
+                    command.command_type = 'command';
+            };
+
+            vm.checkCriticalIssue = function(vulnerabilities, command){
+                command.criticalIssue = 0;
+
+                vulnerabilities.vulnerabilities.forEach(function(vuln){
+                    if(vuln.value.severity == 'critical'){
+                        command.criticalIssue += 1;
+                    }
+                });
             };
             
             // Get last 5 commands
@@ -55,9 +78,11 @@ angular.module('faradayApp')
 
                             vm.commands = commands;
                             vm.commands.forEach(function(command){
+
                               vm.getHostCount(command);
                               vm.getServiceCount(command);
                               vm.getVulnsCount(command);
+                              vm.setCommandType(command);
                             });
                         });
                 }

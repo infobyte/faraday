@@ -31,7 +31,7 @@
                     <span ng-if="(cmd.hosts_count != 0 && cmd.services_count != 0 && cmd.vulnerabilities_count == 0) || (cmd.hosts_count != 0 && cmd.services_count == 0 && cmd.vulnerabilities_count != 0)"> & </span>
                     <span ng-if="cmd.services_count > 0">{{cmd.services_count}} {{cmd.services_count == 1 ? 'service' : 'services'}}</span>
                     <span ng-if="(cmd.hosts_count != 0 && cmd.services_count != 0 && cmd.vulnerabilities_count != 0) || (cmd.hosts_count == 0 && cmd.services_count != 0 && cmd.vulnerabilities_count != 0)"> & </span>
-                    <span ng-if="cmd.vulnerabilities_count > 0">{{cmd.vulnerabilities_count}} {{cmd.vulnerabilities_count == 1 ? 'vulnerability' : 'vulnerabilities'}}</span>
+                    <span ng-if="cmd.vulnerabilities_count > 0"><a ng-click="navigate('/status/ws/' + cmd.workspace + '/search/command_id=' + cmd._id)"> {{cmd.vulnerabilities_count}} {{cmd.vulnerabilities_count == 1 ? 'vulnerability' : 'vulnerabilities'}}</a></span>
                     <span ng-if="cmd.criticalIssue > 0">- {{cmd.criticalIssue}} {{cmd.criticalIssue == 1 ? 'is' : 'are'}} rated as <b>Critical</b>.</span>
                     <span class ="small-size" am-time-ago="cmd.date"/>
                 </td>

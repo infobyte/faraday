@@ -32,18 +32,29 @@ class hping3 (core.PluginBase):
         reg = re.search(r"(\b\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}\b)", output)
         ip_address=reg.group(1)
         hostname=output.split(" ")[1]
-        host_id=self.createAndAddHost(ip_address)
-
+        host_id=self.createAndAddHost(hostname)
+        verita=False
         if self._isIPV4(ip_address):
             
                 i_id=self.createAndAddInterface(host_id, ip_address, ipv4_address=ip_address, hostname_resolution=hostname)
         
         else:
-                self.createAndAddInterface(
-                    host_id, ip_address, ipv6_address=ip_address, hostname_resolution=hostname)
+                i_id=self.createAndAddInterface(
+                    host_id, ip_address, ipv6_addres=ip_address, hostname_resolution=hostname)
 
-
-        
+                
+        '''
+        Las siguientes lineas fueron testeadas con el parametro --scan -S
+        '''
+        lineas=output.split("\n")
+        for linea in lineas:
+            
+            if (re.match(" ",linea)):
+                lista_recibida=re.findall("\w+",linea)
+                servicio=lista_recibida[1]
+                puerto=lista_recibida[0]
+                s_id=self.createAndAddServiceToInterface(host_id, i_id,servicio,protocol="tcp",ports=puerto,status="open") 
+                
     def _isIPV4(self, ip):
         if len(ip.split(".")) == 4:
             return True

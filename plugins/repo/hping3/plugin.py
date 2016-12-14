@@ -57,17 +57,15 @@ class hping3 (core.PluginBase):
                  if reci.group(1) == "SA":
                      s_id = self.createAndAddServiceToInterface(host_id, i_id, servicio, protocol="tcp", ports=ssport, status="open") 
                      
-        else:
-                lineas = output.split("\n")
+        lineas = output.split("\n")
         
-                for linea in lineas:
-        
-                    if (re.match(" ", linea)):
-                        lista_recibida = re.findall("\w+", linea)
-                        servicio = lista_recibida[1]
-                        puerto = [lista_recibida[0]]
-                    if lista_recibida[2] == "S" and lista_recibida[3] == "A":
-                        s_id = self.createAndAddServiceToInterface(host_id, i_id, servicio, protocol="tcp", ports=puerto, status="open") 
+        for linea in lineas:
+            if (re.match(" ", linea)):
+                lista_recibida = re.findall("\w+", linea)
+                servicio = lista_recibida[1]
+                puerto = [lista_recibida[0]]
+                if lista_recibida[2] == "S" and lista_recibida[3] == "A":
+                    s_id = self.createAndAddServiceToInterface(host_id, i_id, servicio, protocol="tcp", ports=puerto, status="open") 
          
     def _isIPV4(self, ip):
         if len(ip.split(".")) == 4:

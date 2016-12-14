@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -46,20 +47,22 @@ class hping3 (core.PluginBase):
                     host_id, ip_address, ipv6_addres=ip_address, hostname_resolution=hostname)
     
 	'''
-    procesar scaneos del tipo -S -p
-    
-    '''
+	procesar scaneo del tipo -S -p
+	'''
 	    if (re.match("HPING", output)):
+	
 		    sport=re.search(r"sport=(\d{1,6})",output)
-        	ssport=[sport.group(1)]
-       		reci=re.search(r"flags=(\w{2,3})",output)
-        	servicio=self.srv[sport.group(1)]
+            ssport=[sport.group(1)]
+       	    reci=re.search(r"flags=(\w{2,3})",output)
+            servicio=self.srv[sport.group(1)]
                 
 		    if reci.group(1)=="SA":
-                s_id=self.createAndAddServiceToInterface(host_id, i_id,servicio,protocol="tcp",ports=ssport,status="open") 
+        	    s_id=self.createAndAddServiceToInterface(host_id, i_id,servicio,protocol="tcp",ports=ssport,status="open") 
+       
+         
     '''
-    procesar scaneo de tipo --scan -S -p 
-    '''
+    procesar scaneo del tipo --scan -p
+    '''    
         lineas=output.split("\n")
         for linea in lineas:
         
@@ -67,7 +70,6 @@ class hping3 (core.PluginBase):
                 lista_recibida=re.findall("\w+",linea)
                 servicio=lista_recibida[1]
                 puerto=[lista_recibida[0]]
-            
                 if lista_recibida[2]=="S" and lista_recibida[3]=="A":
                     s_id=self.createAndAddServiceToInterface(host_id, i_id,servicio,protocol="tcp",ports=puerto,status="open") 
          

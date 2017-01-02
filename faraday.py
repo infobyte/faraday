@@ -414,7 +414,6 @@ def checkConfiguration(gui_type):
     setupImages()
 
 
-
 def setupFolders(folderlist):
     """Checks if a list of folders exists and creates them otherwise.
 

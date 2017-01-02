@@ -185,7 +185,7 @@ Oct 2, 2015:
 * Added Services columns to Status Report
 * Added sections of Commercial versions
 * Converted references to links in Status Report. Support for CVE, CWE, Exploit Database and Open Source Vulnerability Database
-* Added Pippingtom, SSHdefaultscan and pasteAnalyzer plugins
+* Added Peepingtom, SSHdefaultscan and pasteAnalyzer plugins
 * Fixed Debian install
 
 Sep 10, 2015:
@@ -272,7 +272,7 @@ You can get the new version here:
 
 Changes:
 
-* Performance improvment in the dahsboard
+* Performance improvement in the dashboard
 * Fix bug OSX install
 * Bug fixes
 

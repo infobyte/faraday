@@ -73,7 +73,7 @@ angular.module('faradayApp')
                 if($routeParams.wsId != undefined) {
                     $scope.workspace = $routeParams.wsId;
 
-                    dashboardSrv.getCommands($scope.workspace, 0, 5)
+                    dashboardSrv.getCommands($scope.workspace)
                         .then(function(commands) {
 
                             vm.commands = commands;

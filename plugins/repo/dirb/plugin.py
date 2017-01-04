@@ -98,7 +98,7 @@ class dirbPlugin(core.PluginBase):
 
             host_id = self.createAndAddHost(ip)
             iface_id = self.createAndAddInterface(host_id, ip, ipv4_address = ip)
-            serv_id  = self.createAndAddServiceToInterface(host_id, iface_id, proto, protocol = proto, ports = puerto, status = status)
+            serv_id  = self.createAndAddServiceToInterface(host_id, iface_id, proto, protocol = proto, ports =[puerto], status = status)
 
             if len(self.text) > 0:
                 self.createAndAddNoteToService(host_id, serv_id, 'Url Fuzzing', self.text)

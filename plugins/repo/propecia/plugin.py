@@ -57,8 +57,7 @@ class CmdPropeciaPlugin(core.PluginBase):
                         h_id, host, ipv4_address=host)
                     s_id = self.createAndAddServiceToInterface(h_id, i_id, str(self._port),
                                                                "tcp",
-                                                               ports=[
-                                                                   self._port],
+                                                               ports=[self._port],
                                                                status="open",
                                                                version="",
                                                                description="")

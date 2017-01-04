@@ -218,8 +218,7 @@ class RetinaPlugin(core.PluginBase):
                         web = False
                         s_id = self.createAndAddServiceToInterface(h_id, i_id, 'unknown',
                                                                    v.protocol.lower(),
-                                                                   ports=[
-                                                                       str(v.port)],
+                                                                   ports=[str(v.port)],
                                                                    status="open")
 
                         if v.port in ['80', '443'] or re.search("ssl|http", v.name.lower()):

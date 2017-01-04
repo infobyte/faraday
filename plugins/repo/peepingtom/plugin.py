@@ -54,9 +54,7 @@ class PeepingTomPlugin(core.PluginBase):
                 host = self.createAndAddHost(address)
                 iface = self.createAndAddInterface(
                     host, address, ipv4_address=address)
-                service = self.createAndAddServiceToInterface(
-                    host, iface, "http", protocol="tcp", ports=80
-                )
+                service = self.createAndAddServiceToInterface(host, iface, "http", protocol="tcp", ports=[80])
                 self.createAndAddNoteToService(
                     host,
                     service,

@@ -165,7 +165,7 @@ class ParsingCanvas():
                     interface_id,
                     str(int(float(port))),
                     'tcp?',
-                    int(float(port))
+                    [int(float(port)])
                     )
 
                     host.addService(ip, port, service_id)

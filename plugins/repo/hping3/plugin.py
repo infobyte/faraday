@@ -36,47 +36,43 @@ class hping3 (core.PluginBase):
 
     def parseOutputString(self, output, debug=False):
 
-        reg = re.search(r"(\b\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}\b)", output)
-        ip_address = reg.group(1)
+        regex_ipv4 = re.search(r"(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\)\:", output)
+        if regex_ipv4:
+            ip_address = regex_ipv4.group(0).rstrip("):") # Regex pls
+        else:
+            # Exit plugin, ip address not found. bad output
+            self.log("Abort plugin: Ip address not found", "INFO")
+            return
+
         hostname = output.split(" ")[1]
         host_id = self.createAndAddHost(hostname)
 
-        if self._isIPV4(ip_address):
-            i_id = self.createAndAddInterface(
-                host_id, ip_address, ipv4_address=ip_address, hostname_resolution=hostname)
-        else:
-            i_id = self.createAndAddInterface(
-                host_id, ip_address, ipv6_addres=ip_address, hostname_resolution=hostname)
+        i_id = self.createAndAddInterface(
+            host_id, ip_address, ipv4_address=ip_address, hostname_resolution=hostname)
 
         if re.match("HPING", output):
 
             sport = re.search(r"sport=(\d{1,6})", output)
             ssport = [sport.group(1)]
             reci = re.search(r"flags=(\w{2,3})", output)
-            servicio = self.srv[sport.group(1)]
+            service = self.srv[sport.group(1)]
 
             if reci.group(1) == "SA":
                 s_id = self.createAndAddServiceToInterface(
-                    host_id, i_id, servicio, protocol="tcp", ports=ssport, status="open")
+                    host_id, i_id, service, protocol="tcp", ports=ssport, status="open")
 
         lineas = output.split("\n")
 
         for linea in lineas:
             if (re.match(" ", linea)):
 
-                lista_recibida = re.findall("\w+", linea)
-                servicio = lista_recibida[1]
-                puerto = [lista_recibida[0]]
+                list = re.findall("\w+", linea)
+                service = list[1]
+                port = [list[0]]
 
-                if lista_recibida[2] == "S" and lista_recibida[3] == "A":
+                if list[2] == "S" and list[3] == "A":
                     s_id = self.createAndAddServiceToInterface(
-                        host_id, i_id, servicio, protocol="tcp", ports=puerto, status="open") 
-
-    def _isIPV4(self, ip):
-        if len(ip.split(".")) == 4:
-            return True
-        else:
-            return False
+                        host_id, i_id, service, protocol="tcp", ports=port, status="open")
 
     def processCommandString(self, username, current_path, command_string):
         return None

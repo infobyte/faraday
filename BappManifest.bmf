@@ -1,0 +1,11 @@
+Uuid: 82f3cbaea46c4f158fd85bbccc90c31c
+ExtensionType: 3
+Name: Faraday
+ScreenVersion: 1.2
+SerialVersion: 2
+MinPlatformVersion: 0
+ProOnly: True
+Author: Francisco Amato
+ShortDescription: Integrates Burp with the Faraday Integrated Penetration-Test Environment.
+EntryPoint: faraday-burp.rb
+BuildCommand: cp plugins/repo/burp/faraday-burp.rb . && find . \( -not -name '.' -and -not -name '..' -and -not -path './.git*' -and -not -path './Bapp*' -and -not -path './faraday-burp.rb' \) -exec rm -rf {} +

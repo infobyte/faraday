@@ -138,7 +138,7 @@ class WPScanPlugin(core.PluginBase):
                                                   hostname_resolution=base_url)
 
         service_id = self.createAndAddServiceToInterface(host_id, interface_id,
-                                                         service, "tcp", ports = port)
+                                                         service, "tcp", ports = [port])
 
         potential_vulns = re.findall(r"(\[\!\].*)", output)
         for potential_vuln in potential_vulns:

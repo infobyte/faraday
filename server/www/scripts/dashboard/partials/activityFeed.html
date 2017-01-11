@@ -16,7 +16,7 @@
 
        <table id="commands" ng-if="activityFeed.commands.length > 0" class="tablesorter table table-striped">
         <tbody>
-            <tr ng-repeat="cmd in activityFeed.commands | limitTo:5">
+            <tr ng-repeat="cmd in activityFeed.commands | orderBy : '-date' | limitTo:5">
                 <td align="left">
                     <span ng-if="cmd.command_type == 'import'" class="fa fa-upload"/>
                     <span ng-if="cmd.command_type == 'command'" class="fa fa-terminal"/>

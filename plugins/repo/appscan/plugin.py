@@ -57,19 +57,8 @@ class AppscanParser():
 
             for threat in self.obj_xml["url-group"]["item"]:
                 if threat["issue-type"] == issue["fix-recommendation"]["ref"]:
-                    if 'entity-type' in threat:
 
-                        if threat["entity-type"] == "Parameter":
-                            url_list.append(
-                                {"url": threat['url-name'].text, "vuln_parameter": threat["name"].text})
-
-                        if threat["entity-type"] == "Page":
-                            url_list.append(
-                                {"url": threat['url-name'].text, "vuln_parameter": ""})
-
-                    else:
-                        url_list.append(
-                            {"url": threat['name'].text, "vuln_parameter": ""})
+                    url_list.append(threat['name'].text)
 
                     obj_issue['urls'] = url_list
 
@@ -135,7 +124,7 @@ class AppscanPlugin(core.PluginBase):
 
             for url in issue["urls"]:
 
-                url_parsed = urlparse(url["url"])
+                url_parsed = urlparse(url)
 
                 # Get domain of URL.
                 if url_parsed.netloc:
@@ -180,9 +169,7 @@ class AppscanPlugin(core.PluginBase):
                     path=url_parsed.path,
                     request=cleaner_unicode(issue["request"]) if "request" in issue else "",
                     response=cleaner_unicode(issue["response"]) if "response" in issue else "",
-                    method=issue["request"][0:3] if "request" in issue else "",
-                    pname=url["vuln_parameter"] if url["vuln_parameter"] != "" else "",
-                    params=url["vuln_parameter"] if url["vuln_parameter"] != "" else "")
+                    method=issue["request"][0:3] if "request" in issue else "")
 
         return
 

@@ -139,8 +139,14 @@ class Item(object):
         severity = item_node.findall('severity')[0]
         request = item_node.findall('./requestresponse/request')[0].text if len(
             item_node.findall('./requestresponse/request')) > 0 else ""
-        response = item_node.findall('./requestresponse/response')[0].text if len(
-            item_node.findall('./requestresponse/response')) > 0 else ""
+        response = ""
+        if len(item_node.findall('./requestresponse/response')) > 0:
+            response_node = item_node.findall('./requestresponse/response')[0]
+            if response_node["base64"]:
+                print "*"*40 + "\n\n base64"
+            else:
+                print "*"*40 + "\n\n not base64 content"
+            response = response_node.text
 
         detail = self.do_clean(item_node.findall('issueDetail'))
         remediation = self.do_clean(item_node.findall('remediationBackground'))

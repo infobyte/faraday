@@ -11,6 +11,7 @@ New features in the latest update
 TBA:
 ---
 * Added an activity feed panel in the Dashboard.
+* Added AppScan plugin.
 * Refactor remaining modules to be compatible with JS Strict Mode.
 
 November 10, 2016:

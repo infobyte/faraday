@@ -9,6 +9,7 @@ angular.module('faradayApp')
             .then(function(conf) {
                 configSrv.faraday_version = conf.data.ver;
                 configSrv.license_db = conf.data.lic_db;
+                configSrv.vulnModelsDB = conf.data.vuln_model_db
             });
 
         configSrv = {

@@ -204,7 +204,7 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, 
         }).
         when('/vulndb', {
             templateUrl: 'scripts/vulndb/partials/vulndb.html',
-            controller: 'vulnCtrl',
+            controller: 'vulnModelsCtrl',
             title: 'Vulnerabilities |'
         }).
         otherwise({

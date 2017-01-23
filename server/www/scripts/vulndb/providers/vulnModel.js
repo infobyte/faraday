@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp').
-    factory('VulnModel', ['BASEURL', 'configSrv', '$http', '$q',
+    factory('vulnModel', ['BASEURL', 'configSrv', '$http', '$q',
         function(BASEURL, configSrv, $http, $q) {
             function VulnModel(data) {
                 var now = new Date();
@@ -28,9 +28,7 @@ angular.module('faradayApp').
             };
 
             VulnModel.prototype = {
-                public_properties: [
-                    'exploitation', 'references', 'name', 'resolution0', 'cwe', 'desc_summary', 'description'
-                ];
+                public_properties: ['exploitation', 'references', 'name', 'resolution0', 'cwe', 'desc_summary', 'description'],
 
                 set: function(data) {
                     var self = this;
@@ -44,8 +42,8 @@ angular.module('faradayApp').
                     self.public_properties.forEach(function(property) {
                         if(data[property] !== undefined) {
                             self[property] = data[property];
-                        });
-                    }
+                        };
+                    });
                 },
 
                 remove: function() {

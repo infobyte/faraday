@@ -3,10 +3,10 @@
 <!-- See the file 'doc/LICENSE' for the license information -->
 
 <section id="main" class="seccion clearfix">
-    <div class="right-main">
+    <div class="right-main" ng-controller="vulnModelsCtrl">
         <div id="reports-main" class="fila clearfix">
             <div class="ws-label">
-                <h2><span id="ws-name" title="Current workspace">Status report for {{ workspace }} ({{ confirmed === false ? 'all vulns' : 'confirmed' }}) ({{gridOptions.totalItems}} vulns)</span></h2><!-- WS name -->
+                <h2><span id="ws-name" title="Current workspace">Status report for {{ workspace }} vulns)</span></h2><!-- WS name -->
             </div><!-- .ws-label -->
             <div id="ws-control" class="btn-group btn-small-margin">
                 <button file-exporter="csv()" type="button" class="btn btn-success" title="Download CSV for current workspace">

@@ -1,12 +1,12 @@
 // Faraday Penetration Test IDE
 // Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 // See the file 'doc/LICENSE' for the license information
-
-angular.module('faradayApp')
-    .factory('vulnModelsManager', 
+//
+angular.module('faradayApp').
+    factory('vulnModelsManager', 
         ['vulnModel', 'BASEURL', 'configSrv', '$http', '$q',
             function(vulnModel, BASEURL, configSrv, $http, $q) {
-                var vulnsModelManager = {};
+                var vulnModelsManager = {};
 
                 vulnModelsManager.models = [];
 
@@ -32,7 +32,7 @@ angular.module('faradayApp')
                 };
 
                 vulnModelsManager.createDB = function() {
-                    var deferred = $q.defer(),
+                    var deferred = $q.defer();
                     self = this;
 
                     configSrv.promise
@@ -134,7 +134,7 @@ angular.module('faradayApp')
 
                     vulnModel.update(data).
                         then(function() {
-                            licensesManager.get().
+                            vulnModelsManager.get().
                                 then(function(resp) {
                                     deferred.resolve(resp);
                                 }, function(reason) {

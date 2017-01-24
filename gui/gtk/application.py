@@ -61,6 +61,7 @@ from dialogs import ForceNewWorkspaceDialog
 from dialogs import ForcePreferenceWindowDialog
 from dialogs import errorDialog
 from dialogs import ImportantErrorDialog
+from dialogs import FaradayPluginsDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import WorkspaceSidebar
@@ -72,6 +73,8 @@ from mainwidgets import Statusbar
 from gui.loghandler import GUIHandler
 from utils.logs import addHandler
 from utils.common import checkSSL
+
+from plugins import fplugin_utils
 
 CONF = getInstanceConfiguration()
 
@@ -639,6 +642,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                             "quit": self.on_quit,
                             "preferences": self.on_preferences,
                             "pluginOptions": self.on_plugin_options,
+                            "faradayPlugin": self.on_faraday_plugin,
                             "new": self.on_new_button,
                             "new_terminal": self.on_new_terminal_button,
                             "open_report": self.on_open_report_button,
@@ -664,6 +668,27 @@ class GuiApp(Gtk.Application, FaradayUi):
         builder.connect_signals(self)
         appmenu = builder.get_object('appmenu')
         self.set_app_menu(appmenu)
+
+        topmenu = Gio.Menu()
+        pluginmenu = Gio.Menu()
+
+        topmenu.append('Faraday Plugin...', 'app.faradayPlugin')
+
+        for plugin in fplugin_utils.get_available_plugins().iterkeys():
+            gio_action = Gio.SimpleAction.new('fplugin_%s' % plugin, None)
+            gio_action.connect("activate", self.type_faraday_plugin_command)
+            self.add_action(gio_action)
+
+            item = Gio.MenuItem.new(plugin, 'app.fplugin_%s' % plugin)
+
+            pluginmenu.append_item(item)
+
+        fmenu = Gio.Menu()
+
+        fmenu.append_section(None, topmenu)
+        fmenu.append_section(None, pluginmenu)
+
+        appmenu.insert_submenu(1, "Faraday Plugin", fmenu)
 
         helpMenu = builder.get_object('Help')
         self.set_menubar(helpMenu)
@@ -714,6 +739,13 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Defines what happens when you press "Plugins" on the menu"""
         pluginsOption_window = PluginOptionsDialog(self.plugin_manager,
                                                    self.window)
+        pluginsOption_window.show_all()
+
+    def on_faraday_plugin(self, action, param):
+        """Defines what happens when you press "Faraday Plugin..." on the menu"""
+        pluginsOption_window = FaradayPluginsDialog(self.window.get_current_focused_terminal(),
+                                                    self.get_active_workspace().getName(),
+                                                    self.window)
         pluginsOption_window.show_all()
 
     def on_new_button(self, action=None, params=None, title=None):
@@ -864,3 +896,16 @@ class GuiApp(Gtk.Application, FaradayUi):
         }
         url = urls.get(action.get_name(), "https://faradaysec.com")
         webbrowser.open(url, new=2)
+
+    def type_faraday_plugin_command(self, action, param=None):
+        """
+        Types the faraday plugin command on the command line.
+        """
+
+        plugin = action.get_name().split('_')[1]
+        terminal = self.window.get_current_focused_terminal()
+
+        command = fplugin_utils.build_faraday_plugin_command(plugin, self.get_active_workspace().getName())
+        fd = terminal.get_pty().get_fd()
+
+        os.write(fd, command)

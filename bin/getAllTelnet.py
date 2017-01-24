@@ -9,6 +9,8 @@ See the file 'doc/LICENSE' for the license information
 
 from persistence.server import server, models
 
+__description__ = 'Get all hosts using telnet'
+
 def main(workspace=''):
     
     for service in models.get_services(workspace):

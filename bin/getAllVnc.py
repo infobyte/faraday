@@ -9,8 +9,11 @@ See the file 'doc/LICENSE' for the license information
 
 from persistence.server import server, models
 
+__description__ = 'Get all hosts with an open VNC port'
+__prettyname__ = 'Get All VNC'
+
+
 def main(workspace=''):
-    
     for service in models.get_services(workspace):
         if 5900 in service.ports:
             print(service.name)

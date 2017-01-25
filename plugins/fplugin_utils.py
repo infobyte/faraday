@@ -29,13 +29,15 @@ def get_available_plugins():
             module_fplugin = imp.load_source('module_fplugin', plugin_path)
 
             description = getattr(module_fplugin, '__description__', 'Empty')
+            prettyname = getattr(module_fplugin, '__prettyname__', plugin)
 
             plugins_dic[plugin[:-3]] = {
-                'description': description
+                'description': description,
+                'prettyname': prettyname
             }
 
         except Exception:
-            pass
+            print "Unable to import module %s" % plugin_path
 
     return plugins_dic
 

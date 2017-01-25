@@ -507,11 +507,13 @@ class FaradayPluginsDialog(Gtk.Window):
         """Creates and return a TreeStore where the basic information about
         the plugins: the plugin ID, name, intended version of the tool
         and plugin version"""
-        plugin_info = Gtk.TreeStore(str, str)
+        plugin_info = Gtk.TreeStore(str, str, str)
 
         for key, plugin_dic in fplugin_utils.get_available_plugins().items():
             plugin_info.append(None, [key,
-                                      plugin_dic["description"]]
+                                      plugin_dic["description"],
+                                      plugin_dic["prettyname"]
+                                      ]
                                )
 
         # Sort it!
@@ -527,8 +529,8 @@ class FaradayPluginsDialog(Gtk.Window):
 
         plugin_list_view = Gtk.TreeView(plugin_info)
         renderer = Gtk.CellRendererText()
-        column = Gtk.TreeViewColumn("Title", renderer, text=0)
-        column.set_sort_column_id(0)
+        column = Gtk.TreeViewColumn("Title", renderer, text=2)
+        column.set_sort_column_id(1)
         plugin_list_view.append_column(column)
 
         selection = plugin_list_view.get_selection()

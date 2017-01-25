@@ -674,12 +674,12 @@ class GuiApp(Gtk.Application, FaradayUi):
 
         topmenu.append('Faraday Plugin...', 'app.faradayPlugin')
 
-        for plugin in fplugin_utils.get_available_plugins().iterkeys():
-            gio_action = Gio.SimpleAction.new('fplugin_%s' % plugin, None)
+        for plugin_file, plugin_dic in fplugin_utils.get_available_plugins().items():
+            gio_action = Gio.SimpleAction.new('fplugin_%s' % plugin_file, None)
             gio_action.connect("activate", self.type_faraday_plugin_command)
             self.add_action(gio_action)
 
-            item = Gio.MenuItem.new(plugin, 'app.fplugin_%s' % plugin)
+            item = Gio.MenuItem.new(plugin_dic['prettyname'], 'app.fplugin_%s' % plugin_file)
 
             pluginmenu.append_item(item)
 

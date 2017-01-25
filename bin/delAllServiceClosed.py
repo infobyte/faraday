@@ -9,8 +9,11 @@ See the file 'doc/LICENSE' for the license information
 
 from persistence.server import server, models
 
-def main(workspace=''):
+__description__ = 'Deletes all services with a non open port'
+__prettyname__ = 'Delete All Service Closed'
 
+
+def main(workspace=''):
     for service in models.get_services(workspace):
         if service.status != 'open' and service.status != 'opened':
             print('Deleted service: ' + service.name)

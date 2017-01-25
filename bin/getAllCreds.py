@@ -9,6 +9,10 @@ See the file 'doc/LICENSE' for the license information
 
 from persistence.server import server, models
 
+__description__ = 'Get all stored credentials'
+__prettyname__ = 'Get All Credentials'
+
+
 def main(workspace=''):
     for credential in models.get_credentials(workspace):
         print(credential.username + ' : ' + credential.password)

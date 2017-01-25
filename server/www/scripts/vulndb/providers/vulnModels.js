@@ -28,6 +28,7 @@ angular.module('faradayApp').
                             deferred.reject("Unable to fetch the Vulnerability Models DB name.");
                         });
 
+                    console.log("HERE2")
                     return deferred.promise;
                 };
 
@@ -57,7 +58,7 @@ angular.module('faradayApp').
                     self = this;
 
                     try {
-                        var vulnModel = new VulnModel(data);
+                        var vulnModel = new vulnModel(data);
 
                         vulnModel.save().
                             then(function(resp) {
@@ -92,7 +93,7 @@ angular.module('faradayApp').
                         }, function(err) {
                             deferred.reject(err);
                         });
-                    return deferred.promise
+                    return deferred.promise;
                 };
 
                 vulnModelsManager.get = function() {
@@ -111,7 +112,7 @@ angular.module('faradayApp').
                                     if (data.hasOwnProperty("rows")) {
                                         data.rows.forEach(function(row) {
                                             try {
-                                                vulnModels.push(new VulnModel(row.doc));
+                                                vulnModels.push(new vulnModel(row.doc));
                                             } catch(e) {
                                                 console.log(e.stack);
                                             }

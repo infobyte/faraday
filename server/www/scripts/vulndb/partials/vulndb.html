@@ -6,26 +6,16 @@
     <div class="right-main" ng-controller="vulnModelsCtrl">
         <div id="reports-main" class="fila clearfix">
             <div class="ws-label">
-                <h2><span id="ws-name" title="Current workspace">Status report for {{ workspace }} vulns)</span></h2><!-- WS name -->
+                <h2><span id="ws-name" title="">Vulnerability Model Database</span></h2><!-- WS name -->
             </div><!-- .ws-label -->
             <div id="ws-control" class="btn-group btn-small-margin">
-                <button file-exporter="csv()" type="button" class="btn btn-success" title="Download CSV for current workspace">
+                <button file-exporter="csv()" type="button" class="btn btn-success" title="Download CSV of the Vulnerability DB">
                     <span class="glyphicon glyphicon-download"></span>
                 </button>
-                <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
+                <button id="refresh" type="button" class="btn btn-danger" title="Refresh Vulnerability DB" ng-click="location.reload()">
                     <span class="glyphicon glyphicon-refresh"></span>
                 </button>
-                <button type="button" class="btn btn-danger" title="{{ confirmed === true ? 'All vulns' : 'Confirmed vulns' }}" ng-click="toggleFilter()">
-                    <span class="glyphicon glyphicon-filter" ng-style="{ 'opacity': (confirmed === true) ? '1' : '0.7' }"></span>
-                </button>
-                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
-                    Change workspace <span class="caret"></span>
-                </button>
-                <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
-                    <li ng-repeat="ws in workspaces"><a href="#/status/ws/{{ws}}" class="ws" >{{ws}}</a></li>
-                </ul><!-- WS navigation -->
             </div><!-- #ws-control -->
-
             <div class="button-control col-md-6 col-sm-6 col-xs-12">
                 <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="delete()">
                     <span class="glyphicon glyphicon-trash"></span>
@@ -41,26 +31,12 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
                         <li><a class="ws" ng-click="editString('name')">Edit name</a></li>
-                        <li><a class="ws" ng-click="editText('desc', 'description')">Edit description</a></li>
-                        <li><a class="ws" ng-click="editText('data')">Edit data</a></li>
+                        <li><a class="ws" ng-click="editText('description')">Edit description</a></li>
                         <li><a class="ws" ng-click="editText('resolution')">Edit resolution</a></li>
-                        <li><a class="ws" ng-click="editSeverity()">Edit severity</a></li>
                         <li><a class="ws" ng-click="editEaseofresolution()">Edit ease of resolution</a></li>
+                        <li><a class="ws" ng-click="editExploitation()">Edit exploitation</a></li>
                         <li><a class="ws" ng-click="editReferences()">Add references</a></li>
-                        <li><a class="ws" ng-click="editImpact()">Edit impact</a></li>
-                        <li><a class="ws" ng-click="editStatus()">Edit status</a></li>
-                        <li><a class="ws" ng-click="editConfirm()">Confirm/Change to false positive</a></li>
-                        <li ng-show="vulnWebSelected" role="separator" class="divider"></li>
-                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('method')">Edit method</a></li>
-                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('pname', 'param name')">Edit param name</a></li>
-                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('params', 'parameters')">Edit parameters</a></li>
-                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('path')">Edit path</a></li>
-                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('query')">Edit query</a></li>
-                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('website')">Edit website</a></li>
-                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editText('request')">Edit request</a></li>
-                        <li ng-show="vulnWebSelected"><a class="ws" ng-click="editText('response')">Edit response</a></li>
-                        <li role="separator" class="divider"></li>
-                        <li><a class="ws" ng-click="editCWE()">From CWE</a></li>
+                        <li><a class="ws" ng-click="editCWE()">Edit CWE</a></li>
                     </ul>
                 </div>
                 <div id="group-by" class="btn-group btn-small-margin">
@@ -75,11 +51,11 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
                         <li ng-repeat="(column, show) in columns">
-                            <a class="ws" ng-show="show && (column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date')" ng-click="groupBy(column)">{{column}}</a>
+                            <a class="ws" ng-show="show" ng-click="groupBy(column)">{{column}}</a>
                         </li>
                     </ul>
                 </div>
-                <button id="new" type="button" class="btn btn-success" title="New Vulns" ng-click="new()">
+                <button id="new" type="button" class="btn btn-success" title="New Vulnerablity Model" ng-click="new()">
                     <span class="glyphicon glyphicon-plus-sign"></span>
                     New
                 </button>
@@ -101,19 +77,19 @@
                             </div>
                         </form>
                     </div>
-                    <div class="col-md-12 col-sm-9 col-xs-12">
-                        <h4><span class="label label-default" title="Add columns">Add columns</span></h4>
-                        <ul class="label-list">
-                            <li ng-repeat="(column, show) in columns">
-                                <a href="" ng-click="toggleShow(column, show)" ng-show="!show">
-                                    <span class="label label-primary ws-name">{{column}}</span>
-                                </a>
-                            </li><!-- label-list -->
-                        </ul>
-                    </div>
+                    <!-- <div class="col-md-12 col-sm-9 col-xs-12"> -->
+                    <!--     <h4><span class="label label-default" title="Add columns">Add columns</span></h4> -->
+                    <!--     <ul class="label-list"> -->
+                    <!--         <li ng-repeat="(column, show) in columns"> -->
+                    <!--             <a href="" ng-click="toggleShow(column, show)" ng-show="!show"> -->
+                    <!--                 <span class="label label-primary ws-name">{{column}}</span> -->
+                    <!--             </a> -->
+                    <!--         </li><1!-- label-list --1> -->
+                    <!--     </ul> -->
+                    <!-- </div> -->
                 </div>
 
-                <div ui-grid="gridOptions" ui-grid-grouping ui-grid-selection ui-grid-pagination ui-grid-pinning class="grid"></div>
+                <!-- <div ui-grid="gridOptions" ui-grid-grouping ui-grid-selection ui-grid-pagination ui-grid-pinning class="grid"></div> -->
 
                 <div id="counter">
                     <span>Total</span>

@@ -4,13 +4,13 @@ angular.module('faradayApp')
         function($scope, $filter, $http, $q, $uibModal, vulnModelsManager) {
             $scope.db_exists = false;
             $scope.models = [];
-            $scope.loaded_licenses = false;
+            $scope.loaded_models = false;
             $scope.reverse;
             $scope.search;
 
             var init = function() {
                 // table stuff
-                $scope.selectall_licenses = false;
+                $scope.selectall_models = false;
                 $scope.sort_field = "end";
                 $scope.reverse = true;
 
@@ -28,8 +28,8 @@ angular.module('faradayApp')
                             $scope.db_exists = true;
                             vulnModelsManager.get()
                                 .then(function() {
-                                    $scope.models = vulnModelsManager.licenses;
-                                    $scope.loaded_licenses = true;
+                                    $scope.models = vulnModelsManager.models;
+                                    $scope.loaded_models = true;
                                 });
                         }
                     }, function(message) {
@@ -40,8 +40,10 @@ angular.module('faradayApp')
                     return vulnModelsManager.models;
                 }, function(newVal, oldVal) {
                     $scope.models = vulnModelsManager.models;
-                    $scope.loaded_licenses = true;
+                    $scope.loaded_models = true;
                 }, true);
+
+                console.log("WOLOLO")
             };
 
             $scope.remove = function(ids) {
@@ -146,7 +148,7 @@ angular.module('faradayApp')
                         $scope.update(model, data);
                     });
                 } else {
-                    commonsFact.errorDialog("No licenses were selected to edit.");
+                    commonsFact.errorDialog("No Vulnerability Models were selected to edit.");
                 }
             };
 
@@ -165,9 +167,9 @@ angular.module('faradayApp')
             $scope.checkAll = function() {
                 $scope.selectall_models = !$scope.selectall_models;
 
-                tmp_licenses = $filter('filter')($scope.models, $scope.search);
-                tmp_licenses.forEach(function(model) {
-                    license.selected = $scope.selectall_models;
+                tmp_models = $filter('filter')($scope.models, $scope.search);
+                tmp_models.forEach(function(model) {
+                    model.selected = $scope.selectall_models;
                 });
             };
 

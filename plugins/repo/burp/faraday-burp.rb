@@ -7,7 +7,7 @@
 #__author__	= "Francisco Amato"
 #__copyright__	= "Copyright (c) 2014, Infobyte LLC"
 #__credits__	= ["Francisco Amato"]
-#__version__	= "1.2.0"
+#__version__	= "1.2.1"
 #__maintainer__ = "Francisco Amato"
 #__email__	= "famato@infobytesec.com"
 #__status__	= "Development"
@@ -17,7 +17,7 @@ require "xmlrpc/client"
 require "pp"
 
 
-PLUGINVERSION="Faraday v1.2 Ruby"
+PLUGINVERSION="Faraday v1.2.1 Ruby"
 #Tested: Burp Professional v1.6.09
 
 XMLRPC::Config.module_eval do

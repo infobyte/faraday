@@ -14,6 +14,7 @@ TBA:
 * Added AppScan plugin.
 * Refactor remaining modules to be compatible with JS Strict Mode.
 * Fixed bug that prevented GTK from closing when user clicked CANCEL on WS creation.
+* Fixed size of Workspace creation dialog.
 
 November 10, 2016:
 ---

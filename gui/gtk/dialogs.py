@@ -217,7 +217,7 @@ class ForceNewWorkspaceDialog(NewWorkspaceDialog):
 
     def on_click_cancel(self, button):
         """Override parent's class cancel callback so it exits faraday."""
-        self.exit_faraday(parent=self)
+        self.exit_faraday()
 
     def create_explanation_message(self):
         """Returns a simple explanatory message inside a Label"""

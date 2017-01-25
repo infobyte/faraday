@@ -13,6 +13,7 @@ TBA:
 * Added an activity feed panel in the Dashboard.
 * Added AppScan plugin.
 * Refactor remaining modules to be compatible with JS Strict Mode.
+* Fixed bug that prevented GTK from closing when user clicked CANCEL on WS creation.
 
 November 10, 2016:
 ---

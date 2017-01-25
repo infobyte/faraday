@@ -257,7 +257,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                                              self.createWorkspace,
                                              self.workspace_manager,
                                              self.ws_sidebar,
-                                             self.exit_faraday)
+                                             self.exit_faraday_without_confirm)
 
         dialog.connect("destroy", change_flag)
         dialog.show_all()

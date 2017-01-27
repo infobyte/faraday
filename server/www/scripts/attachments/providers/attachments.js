@@ -46,22 +46,5 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        attachmentsFact.getStubs = function(ws, vid, names) {
-            var url = BASEURL + ws + "/" + vid, 
-            stubs = {},
-            deferred = $q.defer();
-
-            $http.get(url).success(function(result) {
-                for(var attachment in result._attachments) {
-                    if(names.indexOf(attachment) >= 0) {
-                        stubs[attachment] = result._attachments[attachment];
-                    }
-                }
-                deferred.resolve(stubs);
-            });
-
-            return deferred.promise;
-        };
-
         return attachmentsFact;
     }]);

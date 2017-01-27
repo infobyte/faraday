@@ -1,0 +1,62 @@
+server package
+==============
+
+Submodules
+----------
+
+server.changes_stream module
+----------------------------
+
+.. automodule:: server.changes_stream
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+server.conf module
+------------------
+
+.. automodule:: server.conf
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+server.models module
+--------------------
+
+.. automodule:: server.models
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+server.server module
+--------------------
+
+.. automodule:: server.server
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+server.server_io_exceptions module
+----------------------------------
+
+.. automodule:: server.server_io_exceptions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+server.utils module
+-------------------
+
+.. automodule:: server.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: server
+    :members:
+    :undoc-members:
+    :show-inheritance:

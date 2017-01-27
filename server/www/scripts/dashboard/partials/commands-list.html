@@ -1,7 +1,7 @@
 <article id='list' class='panel panel-default' ng-controller="commandsCtrl">
     <header>
         <h2>Commands History
-            <span class="glyphicon glyphicon-info-sign" uib-tooltip="Shows current WS' executed commands"></span>
+            <span class="glyphicon glyphicon-info-sign" uib-tooltip="Shows current WS executed commands"></span>
         </h2>
     </header>
     <div ng-if="commands.length == 0" class="alert alert-info alert-dismissible no-margin-bottom">
@@ -23,8 +23,8 @@
         <tbody>
             <tr ng-repeat="cmd in commands | orderObjectBy:cmdSortField:cmdSortReverse">
                 <td><b><p uib-tooltip="{{cmd.ip}}">{{cmd.user}}@{{cmd.hostname}}</p></b></td>
-                <td class="wrapword">{{cmd.command}}</td>
-                <td><span am-time-ago="cmd.date"></span></td>
+                <td class="wrapword">{{cmd.command + ' ' + cmd.params}}</td>
+                <td am-time-ago="cmd.date"/>
                 <td ng-bind="cmd.duration || 'undefined'"></td>
             </tr>
         </tbody>

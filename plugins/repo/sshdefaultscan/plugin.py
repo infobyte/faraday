@@ -44,7 +44,7 @@ class SSHDefaultScanPlugin(core.PluginBase):
                 iface = self.createAndAddInterface(
                     host, address, ipv4_address=address)
                 service = self.createAndAddServiceToInterface(
-                    host, iface, "ssh", protocol="tcp", ports=22
+                    host, iface, "ssh", protocol="tcp", ports=[22]
                 )
                 username, password = credentials.split(":")
                 cred = self.createAndAddCredToService(

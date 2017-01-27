@@ -21,8 +21,9 @@ class HostDAO(FaradayDAO):
         "vulns":    ["vuln_count"],
         "os":       [Host.os],
         "owned":    [Host.owned],
+        "command_id":[EntityMetadata.command_id]
     }
-    STRICT_FILTERING = ["service", "couchid"]
+    STRICT_FILTERING = ["service", "couchid", "command_id"]
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, host_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, host_filter)
@@ -41,7 +42,7 @@ class HostDAO(FaradayDAO):
             Host.default_gateway_ip, Host.default_gateway_mac, EntityMetadata.couchdb_id,\
             EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
             EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
-            EntityMetadata.update_controller_action, EntityMetadata.owner,
+            EntityMetadata.update_controller_action, EntityMetadata.owner, EntityMetadata.command_id,\
             func.group_concat(distinct(Interface.id)).label('interfaces'),\
             func.count(distinct(Vulnerability.id)).label('vuln_count'),\
             func.count(distinct(Service.id)).label('open_services_count'))
@@ -86,7 +87,8 @@ class HostDAO(FaradayDAO):
                     'creator': host.creator,
                     'create_time': host.create_time,
                     'update_controller_action': host.update_controller_action,
-                    'owner': host.owner
+                    'owner': host.owner,
+                    'command_id': host.command_id
                 },
                 'vulns': host.vuln_count,
                 'services': host.open_services_count,

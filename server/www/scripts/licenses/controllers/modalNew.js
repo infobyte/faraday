@@ -4,15 +4,15 @@
 
 angular.module('faradayApp')
     .controller('licensesModalNew',
-        ['$scope', '$modalInstance', 'licensesManager',
-        function($scope, $modalInstance, licensesManager) {
+        ['$scope', '$modalInstance', 'License', 'licensesManager',
+        function($scope, $modalInstance, License, licensesManager) {
 
         $scope.data;
         $scope.other = false;
         $scope.other_product;
         $scope.products;
 
-        init = function() {
+        var init = function() {
             $scope.data = new License;
 
             $scope.products = licensesManager.products;

@@ -25,15 +25,15 @@
                     <li ng-repeat="ws in workspaces"><a href="#/status/ws/{{ws}}" class="ws" >{{ws}}</a></li>
                 </ul><!-- WS navigation -->
             </div><!-- #ws-control -->
-    
+
             <div class="button-control col-md-6 col-sm-6 col-xs-12">
                 <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="delete()">
-                    <span class="glyphicon glyphicon-trash"></span> 
+                    <span class="glyphicon glyphicon-trash"></span>
                     Delete
                 </button>
                 <div id="merge" class="btn-group btn-small-margin">
                     <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()" ng-disabled="getCurrentSelection().length != 1">
-                        <span class="glyphicon glyphicon-pencil"></span> 
+                        <span class="glyphicon glyphicon-pencil"></span>
                         Edit
                     </button>
                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="getCurrentSelection().length < 2">
@@ -48,6 +48,7 @@
                         <li><a class="ws" ng-click="editEaseofresolution()">Edit ease of resolution</a></li>
                         <li><a class="ws" ng-click="editReferences()">Add references</a></li>
                         <li><a class="ws" ng-click="editImpact()">Edit impact</a></li>
+                        <li><a class="ws" ng-click="editStatus()">Edit status</a></li>
                         <li><a class="ws" ng-click="editConfirm()">Confirm/Change to false positive</a></li>
                         <li ng-show="vulnWebSelected" role="separator" class="divider"></li>
                         <li ng-show="vulnWebSelected"><a class="ws" ng-click="editString('method')">Edit method</a></li>
@@ -98,7 +99,7 @@
                                     </span>
                                 </div>
                             </div>
-                        </form>  
+                        </form>
                     </div>
                     <div class="col-md-12 col-sm-9 col-xs-12">
                         <h4><span class="label label-default" title="Add columns">Add columns</span></h4>

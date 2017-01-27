@@ -8,7 +8,6 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import with_statement
-from bs4 import BeautifulSoup, Comment
 from plugins import core
 from model import api
 import re
@@ -29,9 +28,9 @@ current_path = os.path.abspath(os.getcwd())
 
 __author__ = "Francisco Amato"
 __copyright__ = "Copyright (c) 2013, Infobyte LLC"
-__credits__ = ["Francisco Amato", "Micaela Ranea Sanchez"]
+__credits__ = ["Francisco Amato"]
 __license__ = ""
-__version__ = "1.1.0"
+__version__ = "1.0.0"
 __maintainer__ = "Francisco Amato"
 __email__ = "famato@infobytesec.com"
 __status__ = "Development"
@@ -137,15 +136,8 @@ class Item(object):
         severity = item_node.findall('severity')[0]
         request = item_node.findall('./requestresponse/request')[0].text if len(
             item_node.findall('./requestresponse/request')) > 0 else ""
-        response = ""
-
-        if len(item_node.findall('./requestresponse/response')) > 0:
-            response_node = item_node.findall('./requestresponse/response')[0]
-            if response_node["base64"]:
-                response = "base64"
-            else:
-                response = "not base64 content"
-            #response = response_node.text
+        response = item_node.findall('./requestresponse/response')[0].text if len(
+            item_node.findall('./requestresponse/response')) > 0 else ""
 
         detail = self.do_clean(item_node.findall('issueDetail'))
         remediation = self.do_clean(item_node.findall('remediationBackground'))
@@ -256,8 +248,9 @@ class BurpPlugin(core.PluginBase):
                 item.host,
                 "")
 
-            desc = self.removeHtml(item.detail)
-            resolution = self.removeHtml(item.remediation) if item.remediation else ""
+            item.response = ""
+            desc = item.detail
+            resolution = item.remediation if item.remediation else ""
 
             v_id = self.createAndAddVulnWebToService(
                 h_id,
@@ -275,33 +268,6 @@ class BurpPlugin(core.PluginBase):
 
     def processCommandString(self, username, current_path, command_string):
         return None
-
-    def removeHtml(self, markup):
-        soup = BeautifulSoup(markup, "html.parser")
-
-        # Replace line breaks and paragraphs for new lines
-        for tag in soup.find_all(["br", "p"]):
-            tag.append("\n")
-            tag.unwrap()
-
-        # Replace lists for * and new lines
-        for tag in soup.find_all(["ul", "ol"]):
-            for item in tag.find_all("li"):
-                item.insert_before("* ")
-                item.append("\n")
-                item.unwrap()
-            tag.unwrap()
-
-        # Remove all other HTML tags
-        for tag in soup.find_all():
-            tag.unwrap()
-
-        # Remove all comments
-        for child in soup.children:
-            if isinstance(child, Comment):
-                child.extract()
-
-        return str(soup)
 
     def setHost(self):
         pass

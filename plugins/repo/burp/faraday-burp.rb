@@ -7,7 +7,7 @@
 #__author__	= "Francisco Amato"
 #__copyright__	= "Copyright (c) 2014, Infobyte LLC"
 #__credits__	= ["Francisco Amato", "Micaela Ranea Sanchez"]
-#__version__	= "1.2.0"
+#__version__	= "1.3.0"
 #__maintainer__ = "Francisco Amato"
 #__email__	= "famato@infobytesec.com"
 #__status__	= "Development"

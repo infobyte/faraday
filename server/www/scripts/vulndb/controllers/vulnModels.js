@@ -42,8 +42,6 @@ angular.module('faradayApp')
                     $scope.models = vulnModelsManager.models;
                     $scope.loaded_models = true;
                 }, true);
-
-                console.log("WOLOLO")
             };
 
             $scope.remove = function(ids) {

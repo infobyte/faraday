@@ -107,9 +107,10 @@ angular.module('faradayApp').
                             $http.get(url).
                                 then(function(res) {
                                     var data = res.data;
-                                    var vulnModels = [];
+                                    var vulnModels = []
 
                                     if (data.hasOwnProperty("rows")) {
+                                        console.log(data);
                                         data.rows.forEach(function(row) {
                                             try {
                                                 vulnModels.push(new vulnModel(row.doc));
@@ -119,7 +120,7 @@ angular.module('faradayApp').
                                         });
                                     }
 
-                                    angular.copy(vulnModels, self.vulnModels);
+                                    angular.copy(vulnModels, self.models);
                                     deferred.resolve(vulnModels);
                                 }, function(data, status, headers, config) {
                                     deferred.reject("Unable to retrieve vuln models. " + status);

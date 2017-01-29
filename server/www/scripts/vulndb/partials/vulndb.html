@@ -60,49 +60,76 @@
                     New
                 </button>
             </div><!-- .col-md-6 .col-sm-6 .col-xs-12 -->
-            <div class="reports">
-                <div class="row">
-                    <div class="col-md-6 col-sm-3 col-xs-11">
-                        <form role="form" ng-submit="searchFor(true, searchParams)">
-                            <div class="form-group">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search && search != 'confirmed=true'"></span>
-                                    <input type="text" class="form-control" id="filter-by" 
-                                    placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
-                                    <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                        <i class="fa fa-search" ng-if="gridOptions.data.length > 0 || gridOptions.totalItems >= 0"></i>
-                                        <i class="fa fa-refresh fa-spin" ng-if="gridOptions.totalItems === null"></i>
-                                    </span>
+            <div class="reports col-md-12 col-sm-12 col-xs-12">
+                <div class="col-md-6 col-sm-3 col-xs-11">
+                    <div class="row">
+                        <div class="col-md-6 col-sm-3 col-xs-11">
+                            <form role="form" ng-submit="searchFor(true, searchParams)">
+                                <div class="form-group">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search && search != 'confirmed=true'"></span>
+                                        <input type="text" class="form-control" id="filter-by" 
+                                        placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
+                                        <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
+                                            <i class="fa fa-search" ng-if="gridOptions.data.length > 0 || gridOptions.totalItems >= 0"></i>
+                                            <i class="fa fa-refresh fa-spin" ng-if="gridOptions.totalItems === null"></i>
+                                        </span>
+                                    </div>
                                 </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            <table class="status-report licenses-list table table-responsive">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
+                        <th>
+                            <a href="" ng-click="toggleSort('name')">Name</a>
+                        </th>
+                        <th>
+                            <a href="" ng-click="toggleSort('description')">Description</a>
+                        </th>
+                        <th>
+                            <a href="" ng-click="toggleSort('cwe')">CWE</a>
+                        </th>
+                        <th>
+                            <a href="" ng-click="toggleSort('resolution')">Resolution</a>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="model in models | filter:search | orderBy:sort_field:reverse"
+                        selection-model selection-model-type="checkbox"
+                        selection-model-mode="multiple-additive"
+                        selection-model-selected-class="multi-selected"
+                        selection-model-on-change="selectedModels()">
+                        <td><input type="checkbox" name="{{model._id}}"/></td>
+                        <td>{{model.name}}</td>
+                        <td>{{model.description}}</td>
+                        <td>{{model.cwe}}</td>
+                        <td>{{model.resolution}}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="showPagination">
+                    <div class="form-group">
+                        <ul class="pagination">
+                            <li><a ng-hide="prevPageDisabled()" ng-click="prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                            <li><a>{{currentPage}}/{{pageCount()}}</a></li>
+                            <li><a ng-hide="nextPageDisabled()" ng-click="nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                        </ul>
+                        <form name="goToPage" id="goToPageStatus">
+                            <div class="col-md-2">
+                                <input type="number" min="1" max="{{pageCount()}}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
                             </div>
+                            <button class="btn btn-default" ng-click="go()">GO</button>
+                            <input type="number" min="1" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />
                         </form>
                     </div>
-                    <!-- <div class="col-md-12 col-sm-9 col-xs-12"> -->
-                    <!--     <h4><span class="label label-default" title="Add columns">Add columns</span></h4> -->
-                    <!--     <ul class="label-list"> -->
-                    <!--         <li ng-repeat="(column, show) in columns"> -->
-                    <!--             <a href="" ng-click="toggleShow(column, show)" ng-show="!show"> -->
-                    <!--                 <span class="label label-primary ws-name">{{column}}</span> -->
-                    <!--             </a> -->
-                    <!--         </li><1!-- label-list --1> -->
-                    <!--     </ul> -->
-                    <!-- </div> -->
-                </div>
-
-                <!-- <div ui-grid="gridOptions" ui-grid-grouping ui-grid-selection ui-grid-pagination ui-grid-pinning class="grid"></div> -->
-
-                <div id="counter">
-                    <span>Total</span>
-                    <span class="counterNum">{{gridOptions.totalItems}}</span>
-                    <div ng-if="search">
-                        <span>Viewing</span>
-                        <span class="counterNum">{{gridOptions.data.length}}</span>
-                    </div>
-                    <p style="margin:0px" ng-if="!search"></p>
-                    <span>Selected</span>
-                    <span class="counterNum">{{getCurrentSelection().length}}</span>
-                </div>
-            </div><!-- .reports -->
+            </div><!-- .showPagination -->
+        </div><!-- .reports -->
     </div><!-- #reports-main --></div><!-- .right-main -->
 </section><!-- #main -->
 

@@ -81,6 +81,7 @@ angular.module('faradayApp').
                                     self._rev = res.rev;
                                     deferred.resolve(self);
                                 }, function(res) {
+                                    console.log("WOLOLO")
                                     deferred.reject("Unable to update the Vuln Model. " + res.data.reason);
                                 });
                         }, function(reason) {
@@ -105,6 +106,7 @@ angular.module('faradayApp').
                                     self._id = data._id;
                                     self._rev = data.rev;
                                 }, function(res) {
+                                    console.log("WOLOLO")
                                     deferred.reject("Unable to save the Vuln Model. " + res.data.reason)
                                 });
                         }, function(reason) {

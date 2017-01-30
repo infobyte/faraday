@@ -9,9 +9,12 @@ See the file 'doc/LICENSE' for the license information
 
 from persistence.server import server, models
 
-def main(workspace=''):
+__description__ = 'Get all hosts with an open HTTP/HTTPS port'
+__prettyname__ = 'Get All HTTP Servers'
 
-    ports = [80, 443, 8080]
+
+def main(workspace=''):
+    ports = [80, 443, 8080, 8443]
     for service in models.get_services(workspace):
         for port in ports:
             if port in service.ports:

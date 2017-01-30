@@ -8,7 +8,7 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
-TBA:
+January 30, 2017:
 ---
 * Added an activity feed panel in the Dashboard.
 * Added AppScan plugin.

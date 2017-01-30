@@ -58,7 +58,7 @@ def deregisterWidget(widget):
         notification_center.deregisterWidget(widget)
 
 
-def createAndAddHost(name, os="Unknown", category=None, update=False, old_hostname=None):
+def createAndAddHost(name, os="Unknown"):
     host = model.api.newHost(name, os)
     if addHost(host, category, update, old_hostname):
         return host.getID()

@@ -137,7 +137,7 @@ def _setUpAPIServer(hostname=None, port=None):
 # plugin created the object
 
 
-def createAndAddHost(name, os = "Unknown", category=None, update = False, old_hostname = None ):
+def createAndAddHost(name, os = "Unknown"):
     host = newHost(name, os)
     if addHost(host, category, update, old_hostname):
         return host.getID()

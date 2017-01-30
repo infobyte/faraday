@@ -16,6 +16,9 @@ January 30, 2017:
 * Refactor remaining modules to be compatible with JS Strict Mode.
 * Fixed bug that prevented GTK from closing when user clicked CANCEL on WS creation.
 * Fixed size of Workspace creation dialog.
+* New cwe databases: English and Spanish.
+* Added Hping plugin.
+* Enhancements to Wpscan plugin.
 
 November 10, 2016:
 ---

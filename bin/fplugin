@@ -14,6 +14,8 @@ import os
 import shlex
 import sys
 import signal
+import readline
+import atexit
 
 parent_path = os.path.abspath(os.path.join(__file__, '../..'))
 sys.path.insert(0, parent_path)
@@ -59,9 +61,9 @@ def dispatch(args, unknown, help):
             sys.exit(1)
 
     if args.command not in plugins.keys():
-        print (Fore.RED +
-               ("ERROR: Plugin %s not found." % args.command) +
-               Fore.RESET)
+        sys.stderr.write(Fore.RED +
+                         ("ERROR: Plugin %s not found.\n" % args.command) +
+                         Fore.RESET)
         if args.interactive:
             return None
         else:
@@ -79,7 +81,7 @@ def dispatch(args, unknown, help):
     call_main = getattr(module_fplugin, 'main', None)
 
     if call_main is None:
-        print (Fore.RED + "ERROR: Main function not found." + Fore.RESET)
+        sys.stderr.write(Fore.RED + "ERROR: Main function not found.\n" + Fore.RESET)
         if args.interactive:
             return None
         else:
@@ -91,9 +93,9 @@ def dispatch(args, unknown, help):
     if main_argspec != CURRENT_MAIN_ARGSPEC:
         # Function argspec does not match current API.
         # Warn the user and call with original parameteres.
-        print (Fore.YELLOW +
-               "WARNING: Plugin does not follow current call signature. Please update it! [%s.py]" % args.command +
-               Fore.RESET)
+        sys.stderr.write(Fore.YELLOW +
+                         "WARNING: Plugin does not follow current call signature. Please update it! [%s.py]\n" % args.command +
+                         Fore.RESET)
 
     obj_id = None
 
@@ -110,16 +112,16 @@ def dispatch(args, unknown, help):
             print obj_id
     else:
         # Use old API to call plugin
-        print (Fore.YELLOW +
-               "WARNING: Call with arguments and parser not supported." +
-               Fore.RESET)
+        sys.stderr.write(Fore.YELLOW +
+                         "WARNING: Call with arguments and parser not supported.\n" +
+                         Fore.RESET)
         ret = call_main(workspace=args.workspace)
 
     if ret is None:
         ret = 0
 
     if args.interactive:
-        print 'code = %d' % ret
+        # print 'code = %d' % ret
         return obj_id
     else:
         sys.exit(ret)
@@ -170,7 +172,20 @@ if __name__ == '__main__':
         dispatch(args, unknown, parser.format_help())
     else:
 
+        # print "Loading command history..."
+        histfile = os.path.join(CONF.getDataPath(), ".faraday_hist")
+        readline.parse_and_bind('tab: complete')
+        atexit.register(readline.write_history_file, histfile)
+
+        try:
+            readline.read_history_file(histfile)
+            # default history len is -1 (infinite), which may grow unruly
+            readline.set_history_length(1000)
+        except IOError:
+            pass
+
         print "Welcome to interactive Faraday!"
+        print "Press CTRL-D to quit."
         last_id = None
 
         while True:
@@ -194,8 +209,8 @@ if __name__ == '__main__':
                 parsed_args, new_unknown = parser.parse_known_args(new_args)
                 parsed_args.interactive = True
 
-                last_id = dispatch(parsed_args, new_unknown, help) or last_id
-                print '$last = %s' % last_id
+                last_id = dispatch(parsed_args, new_unknown, parser.format_help()) or last_id
+                # print '$last = %s' % last_id
             except EOFError, KeyboardInterrupt:
                 print 'Bye Bye!'
                 sys.exit(0)

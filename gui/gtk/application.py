@@ -7,8 +7,10 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import os, sys, threading, webbrowser, time
-from utils.logs import getLogger
+import os
+import sys
+import threading
+import webbrowser
 
 try:
     import gi
@@ -45,7 +47,6 @@ import model.log
 from gui.gui_app import FaradayUi
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
-from persistence.server import models
 from appwindow import AppWindow
 
 from server import ServerIO
@@ -61,6 +62,7 @@ from dialogs import ForceNewWorkspaceDialog
 from dialogs import ForcePreferenceWindowDialog
 from dialogs import errorDialog
 from dialogs import ImportantErrorDialog
+from dialogs import FaradayPluginsDialog
 
 from mainwidgets import Sidebar
 from mainwidgets import WorkspaceSidebar
@@ -72,6 +74,8 @@ from mainwidgets import Statusbar
 from gui.loghandler import GUIHandler
 from utils.logs import addHandler
 from utils.common import checkSSL
+
+from plugins import fplugin_utils
 
 CONF = getInstanceConfiguration()
 
@@ -173,8 +177,8 @@ class GuiApp(Gtk.Application, FaradayUi):
                 self.handle_no_active_workspace()
 
     def lost_db_connection(self, explanatory_message=None,
-                                   handle_connection_lost=None,
-                                   connect_to_a_different_couch=None):
+                           handle_connection_lost=None,
+                           connect_to_a_different_couch=None):
         """Creates a simple dialog with an error message to inform the user
         some kind of problem has happened and the connection was lost.
         """
@@ -230,6 +234,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         we suddenly find our selves without one, force the user
         to select one if possible, or if not, to create one.
         """
+
         def change_flag(widget):
             self.workspace_dialogs_raised = not self.workspace_dialogs_raised
 
@@ -257,7 +262,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                                              self.createWorkspace,
                                              self.workspace_manager,
                                              self.ws_sidebar,
-                                             self.exit_faraday_without_confirm)
+                                             self.exit_faraday)
 
         dialog.connect("destroy", change_flag)
         dialog.show_all()
@@ -357,7 +362,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         looking for the host."""
         current_ws_name = self.get_active_workspace().name
 
-        #for host in self.model_controller.getAllHosts():
+        # for host in self.model_controller.getAllHosts():
         host = self.serverIO.get_hosts(couchid=host_id)
         if not host:
             self.show_normal_error("The host you clicked isn't accessible. "
@@ -564,17 +569,17 @@ class GuiApp(Gtk.Application, FaradayUi):
                 GObject.idle_add(self.statusbar.update_ws_info, host_count,
                                  service_count, vuln_count)
 
-        dispatch = {3131:  new_log_event,
-                    3141:  new_conflict_event,
-                    5100:  new_notification_event,
-                    3140:  workspace_changed_event,
-                    3132:  normal_error_event,
-                    3134:  important_error_event,
+        dispatch = {3131: new_log_event,
+                    3141: new_conflict_event,
+                    5100: new_notification_event,
+                    3140: workspace_changed_event,
+                    3132: normal_error_event,
+                    3134: important_error_event,
                     42424: lost_connection_to_server_event,
                     24242: workspace_not_accessible_event,
-                    7777:  add_object,
-                    8888:  delete_object,
-                    9999:  update_object}
+                    7777: add_object,
+                    8888: delete_object,
+                    9999: update_object}
 
         function = dispatch.get(event.type())
         if function is not None:
@@ -639,6 +644,7 @@ class GuiApp(Gtk.Application, FaradayUi):
                             "quit": self.on_quit,
                             "preferences": self.on_preferences,
                             "pluginOptions": self.on_plugin_options,
+                            "faradayPlugin": self.on_faraday_plugin,
                             "new": self.on_new_button,
                             "new_terminal": self.on_new_terminal_button,
                             "open_report": self.on_open_report_button,
@@ -664,6 +670,29 @@ class GuiApp(Gtk.Application, FaradayUi):
         builder.connect_signals(self)
         appmenu = builder.get_object('appmenu')
         self.set_app_menu(appmenu)
+
+        topmenu = Gio.Menu()
+        pluginmenu = Gio.Menu()
+
+        topmenu.append('Faraday Plugin...', 'app.faradayPlugin')
+
+        plugins = fplugin_utils.get_available_plugins()
+
+        for plugin in sorted(plugins.iterkeys()):
+            gio_action = Gio.SimpleAction.new('fplugin_%s' % plugin, None)
+            gio_action.connect("activate", self.type_faraday_plugin_command)
+            self.add_action(gio_action)
+
+            item = Gio.MenuItem.new(plugins[plugin]['prettyname'], 'app.fplugin_%s' % plugin)
+
+            pluginmenu.append_item(item)
+
+        fmenu = Gio.Menu()
+
+        fmenu.append_section(None, topmenu)
+        fmenu.append_section(None, pluginmenu)
+
+        appmenu.insert_submenu(1, "Faraday Plugin", fmenu)
 
         helpMenu = builder.get_object('Help')
         self.set_menubar(helpMenu)
@@ -714,6 +743,13 @@ class GuiApp(Gtk.Application, FaradayUi):
         """Defines what happens when you press "Plugins" on the menu"""
         pluginsOption_window = PluginOptionsDialog(self.plugin_manager,
                                                    self.window)
+        pluginsOption_window.show_all()
+
+    def on_faraday_plugin(self, action, param):
+        """Defines what happens when you press "Faraday Plugin..." on the menu"""
+        pluginsOption_window = FaradayPluginsDialog(self.window.get_current_focused_terminal(),
+                                                    self.get_active_workspace().getName(),
+                                                    self.window)
         pluginsOption_window.show_all()
 
     def on_new_button(self, action=None, params=None, title=None):
@@ -852,7 +888,7 @@ class GuiApp(Gtk.Application, FaradayUi):
 
     def on_help_dispatch(self, action, param=None):
         """Open the url contained in "action" in the user's browser."""
-        urls = {"go_to_documentation":  "https://faradaysec.com/help/docs",
+        urls = {"go_to_documentation": "https://faradaysec.com/help/docs",
                 "go_to_faq": "https://faradaysec.com/help/faq",
                 "go_to_troubleshooting": "https://faradaysec.com/help/troubleshooting",
                 "go_to_demos": "https://faradaysec.com/help/demos",
@@ -861,6 +897,19 @@ class GuiApp(Gtk.Application, FaradayUi):
                 "go_to_irc": "https://faradaysec.com/help/irc",
                 "go_to_twitter": "https://faradaysec.com/help/twitter",
                 "go_to_googlegroup": "https://faradaysec.com/help/googlegroup"
-        }
+                }
         url = urls.get(action.get_name(), "https://faradaysec.com")
         webbrowser.open(url, new=2)
+
+    def type_faraday_plugin_command(self, action, param=None):
+        """
+        Types the faraday plugin command on the command line.
+        """
+
+        plugin = "_".join(action.get_name().split('_')[1:])
+        terminal = self.window.get_current_focused_terminal()
+
+        command = fplugin_utils.build_faraday_plugin_command(plugin, self.get_active_workspace().getName())
+        fd = terminal.get_pty().get_fd()
+
+        os.write(fd, command)

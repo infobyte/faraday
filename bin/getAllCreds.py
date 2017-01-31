@@ -7,12 +7,13 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
-from persistence.server import server, models
+from persistence.server import models
 
 __description__ = 'Get all stored credentials'
 __prettyname__ = 'Get All Credentials'
 
 
-def main(workspace=''):
+def main(workspace='', args=None, parser=None):
     for credential in models.get_credentials(workspace):
         print(credential.username + ' : ' + credential.password)
+    return 0, None

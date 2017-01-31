@@ -10,8 +10,22 @@ See the file 'doc/LICENSE' for the license information
 __description__ = 'Lists all scanned OSs'
 __prettyname__ = 'Get All OSs'
 
-from persistence.server import server, models
+from persistence.server import models
 
-def main(workspace=''):
+
+def main(workspace='', args=None, parser=None):
+    parser.add_argument('-q', '--unique', help='Only print and OS once', action='store_true')
+
+    parsed_args = parser.parse_args(args)
+
+    printed = set()
+
     for host in models.get_hosts(workspace):
-        print(host.os)
+
+        if not parsed_args.unique or (parsed_args.unique and host.os not in printed):
+            print(host.os)
+
+        if parsed_args.unique:
+            printed.add(host.os)
+
+    return 0, None

@@ -39,7 +39,7 @@ def main(workspace='', args=None, parser=None):
     parser.add_argument('--columns', help='Comma separated list of columns to show.',
                         default="host,service,ports,protocol,status,host_os", choices=COLUMNS.keys())
 
-    parser.add_argument('-a', help='Showadditional information, like ports filtered and column headers.',
+    parser.add_argument('-a', help='Show additional information, like ports filtered and column headers.',
                         action='store_true', dest='additional_info')
 
     parsed_args = parser.parse_args(args)

@@ -35,7 +35,7 @@ class RawDescriptionAndDefaultsHelpFormatter(argparse.RawDescriptionHelpFormatte
 
 
 # Call signature corresponding to a function defined as:
-# def main(workspace='', args=[]):
+# def main(workspace='', args=[], parser = None):
 CURRENT_MAIN_ARGSPEC = inspect.ArgSpec(args=['workspace', 'args', 'parser'], varargs=None, keywords=None,
                                        defaults=('', None, None))
 

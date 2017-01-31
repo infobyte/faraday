@@ -67,8 +67,12 @@ def dispatch(args, unknown, help):
         else:
             sys.exit(1)
 
+    faraday_directory = os.path.dirname(os.path.realpath(os.path.join(__file__, "../")))
+
+    plugin_path = os.path.join(faraday_directory, "bin/", args.command + '.py')
+
     # Get filename and import this
-    module_fplugin = imp.load_source('module_fplugin', args.command + '.py')
+    module_fplugin = imp.load_source('module_fplugin', plugin_path)
     module_fplugin.models.server.FARADAY_UP = False
     module_fplugin.models.server.SERVER_URL = args.url
 

@@ -1,5 +1,6 @@
 import imp
 import os
+from colorama import Fore
 
 from config.configuration import getInstanceConfiguration
 
@@ -26,10 +27,26 @@ def get_available_plugins():
         plugin_path = os.path.join(scan_path, plugin)
 
         try:
-            module_fplugin = imp.load_source('module_fplugin', plugin_path)
 
-            description = getattr(module_fplugin, '__description__', 'Empty')
-            prettyname = getattr(module_fplugin, '__prettyname__', plugin)
+            plugin_name = os.path.splitext(plugin)[0]
+
+            module = imp.load_source('module_fplugin_%s' % plugin_name, plugin_path)
+
+            try:
+                description = getattr(module, '__description__')
+            except AttributeError:
+                description = 'Empty'
+                print (Fore.YELLOW +
+                       "WARNING: Plugin missing a description. Please update it! [%s.py]" % plugin +
+                       Fore.RESET)
+
+            try:
+                prettyname = getattr(module, '__prettyname__')
+            except AttributeError:
+                prettyname = plugin_name
+                print (Fore.YELLOW +
+                       "WARNING: Plugin missing a pretty name. Please update it! [%s.py]" % plugin +
+                       Fore.RESET)
 
             plugins_dic[plugin[:-3]] = {
                 'description': description,
@@ -43,10 +60,10 @@ def get_available_plugins():
 
 
 def build_faraday_plugin_command(plugin, workspace_name):
-    faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
+    faraday_directory = os.path.dirname(os.path.realpath(os.path.join(__file__, "../")))
     path = os.path.join(faraday_directory, "bin")
 
-    return 'cd "{path}" && ./fplugin -f {command}.py -u {url} -w {workspace}'.format(
+    return '"{path}/fplugin" -f {command} -u {url} -w {workspace}'.format(
         path=path,
         command=plugin,
         url=CONF.getCouchURI(),

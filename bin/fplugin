@@ -134,7 +134,7 @@ if __name__ == '__main__':
     description = ('Using our plugin you can do different actions in the command line\n'
                    'and interact with Faraday. Faraday comes with some presets for bulk\n'
                    'actions such as object removal, get object information, etc.\n'
-                   'Any parameter not recognized by fplugin will be passed on \n'
+                   'Any parameter not recognized by fplugin, or everything after -- will be passed on \n'
                    'to the called script.\n')
 
     epilog = 'Available scripts:\n'

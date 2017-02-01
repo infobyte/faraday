@@ -72,7 +72,7 @@ def build_faraday_plugin_command(plugin, workspace_name):
     faraday_directory = os.path.dirname(os.path.realpath(os.path.join(__file__, "../")))
     path = os.path.join(faraday_directory, "bin")
 
-    return '"{path}/fplugin" {command} -u {url} -w {workspace}'.format(
+    return '"{path}/fplugin" {command} -u {url} -w {workspace} '.format(
         path=path,
         command=plugin,
         url=CONF.getCouchURI(),

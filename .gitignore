@@ -54,3 +54,9 @@ reports/executive/images/vulns-piechart.png
 typings/
 jsconfig.json
 .vscode/
+
+# PyCharm project files
+.idea
+
+# vFeed DB
+data/vfeed.db

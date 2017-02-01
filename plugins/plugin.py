@@ -167,7 +167,7 @@ class PluginBase(object):
             ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
             ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
             network_segment=network_segment,
-            hostname_resolution=hostname_resolution, parent_id=host_id)
+            hostnames=hostname_resolution, parent_id=host_id)
 
         int_obj._metadata.creator = self.id
         self.__addPendingAction(modelactions.ADDINTERFACE, host_id, int_obj)

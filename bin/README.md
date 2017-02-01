@@ -71,7 +71,8 @@ Everything after the `--` will be sent to the command, and will not be interpret
 
 ### Filter hosts by ports or services
 
-The following command will list all running services exposed on common HTTP ports (services with ports 80, 8080, 443, 8443 open)
+The following command will list all running services exposed on common HTTP ports (services with ports 80, 8080, 443, 8443 open).
+
 ```
  $ ./bin/fplugin filter_services http ssh -p 21 -a
 Filtering services for ports: 21, 22, 80, 443, 8080, 8443
@@ -91,6 +92,7 @@ Filtering services for ports: 21, 22, 80, 443, 8080, 8443
 ```
 
 ### Create a new host
+
 ```
 $ ./fplugin create_host 192.154.33.222 Android
 1a7b2981c7becbcb3d5318056eb29a58817f5e67

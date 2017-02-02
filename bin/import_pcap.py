@@ -1,16 +1,13 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-'''
+"""
 
 import os
-
-from pcapfile import savefile
-import pcapfile
 
 from model.common import factory
 from persistence.server import models
@@ -27,7 +24,17 @@ def main(workspace='', args=None, parser=None):
 
     parser.add_argument('--dry-run', action='store_true', help='Do not touch the database. Only print the object ID')
 
+    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output from the pcapfile library.')
+
     parsed_args = parser.parse_args(args)
+
+    try:
+        from pcapfile import savefile
+        import pcapfile
+    except ImportError:
+        print 'capfile not found, please install it to use this plugin.' \
+              ' You can do it executing pip2 install pcapfile in a shell.'
+        return 1, None
 
     if not os.path.isfile(parsed_args.pcap):
         print "pcap file not found: " % parsed_args.pcap
@@ -36,11 +43,13 @@ def main(workspace='', args=None, parser=None):
     testcap = open(parsed_args.pcap, 'rb')
 
     try:
-        capfile = savefile.load_savefile(testcap, layers=2, verbose=True)
+        capfile = savefile.load_savefile(testcap, layers=2, verbose=parsed_args.verbose)
     except pcapfile.Error:
         print "Invalid pcap file"
-        return 2, None
+        return 3, None
 
+    # Set() to store already added hosts. This will save an enormous amount of time by not querying the database
+    # for hosts we already know are in Faraday
     added = set()
 
     for packet in capfile.packets:
@@ -51,10 +60,10 @@ def main(workspace='', args=None, parser=None):
         src = packet.packet.payload.src
         dst = packet.packet.payload.dst
 
-        if parsed_args.source and parsed_args.source <> src:
+        if parsed_args.source and parsed_args.source != src:
             continue
 
-        if parsed_args.dest and parsed_args.dest <> dst:
+        if parsed_args.dest and parsed_args.dest != dst:
             continue
 
         if src not in added:
@@ -78,6 +87,7 @@ def main(workspace='', args=None, parser=None):
             # Lets save additional queries for this IP, it will already be on the database anyway!
             added.add(packet.packet.payload.dst)
 
+            # Parsing of destination field
             obj = factory.createModelObject(models.Host.class_signature, dst,
                                             workspace, os=None, parent_id=None)
 

@@ -82,7 +82,7 @@ def main(workspace='', args=None, parser=None):
             if old is None:
                 if not parsed_args.dry_run:
                     models.create_host(workspace, obj)
-                    print obj.getID()
+                    print '%s\t%s' % (src, obj.getID())
 
         if dst not in added:
 
@@ -98,6 +98,6 @@ def main(workspace='', args=None, parser=None):
             if old is None:
                 if not parsed_args.dry_run:
                     models.create_host(workspace, obj)
-                    print obj.getID()
+                    print '%s\t%s' % (dst, obj.getID())
 
     return 0, None

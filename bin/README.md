@@ -49,7 +49,7 @@ Available scripts:
 To view the help ofthe `fplugin`, you can use the `-h` or `--help` arguments. It is also possible to view the help of the individual commands, but as the arguments mentioned will be catched before they reach the command being called, you need to 'escape' them, like this:
 
 ```
-$ ./bin//fplugin create_host -- -h
+$ ./fplugin create_host -- -h
 
 usage: fplugin create_host [-h] [--dry-run] name os
 
@@ -74,7 +74,7 @@ Everything after the `--` will be sent to the command, and will not be interpret
 The following command will list all running services exposed on common HTTP ports (services with ports 80, 8080, 443, 8443 open).
 
 ```
- $ ./bin/fplugin filter_services http ssh -p 21 -a
+ $ ./fplugin filter_services http ssh -p 21 -a
 Filtering services for ports: 21, 22, 80, 443, 8080, 8443
 
 192.168.20.1	ssh	[22]	tcp	open	None

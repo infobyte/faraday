@@ -59,8 +59,8 @@ class Terminal(VteTerminal):
         home_dir = os.path.expanduser('~')
         self.spawn_sync(Vte.PtyFlags.DEFAULT,
                         home_dir,
-                        [self.faraday_exec, str(self.host), str(self.port)],
-                        ['FARADAY_PATH=%s' % self.faraday_directory],
+                        [self.faraday_exec, str(self.host), str(self.port), None],
+                        ['FARADAY_PATH=%s' % self.faraday_directory, None],
                         GLib.SpawnFlags.DO_NOT_REAP_CHILD,
                         None,
                         None)

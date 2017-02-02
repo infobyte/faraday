@@ -518,7 +518,7 @@ class FaradayPluginsDialog(Gtk.Window):
 
         # Sort it!
         sorted_plugin_info = Gtk.TreeModelSort(model=plugin_info)
-        sorted_plugin_info.set_sort_column_id(1, Gtk.SortType.ASCENDING)
+        sorted_plugin_info.set_sort_column_id(2, Gtk.SortType.ASCENDING)
         return sorted_plugin_info
 
     @scrollable(width=300)

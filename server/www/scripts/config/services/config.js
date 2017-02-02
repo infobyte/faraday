@@ -15,6 +15,7 @@ angular.module('faradayApp')
         configSrv = {
             faraday_version: null,
             license_db: null,
+            vulnModelsDB: null,
             promise: p
         }
 

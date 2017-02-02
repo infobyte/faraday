@@ -1,7 +1,7 @@
 angular.module('faradayApp')
     .controller('vulnModelsCtrl',
-        ['$scope', '$filter', '$http', '$q', '$uibModal', 'vulnModelsManager',
-        function($scope, $filter, $http, $q, $uibModal, vulnModelsManager) {
+        ['$scope', '$filter', '$http', '$q', '$uibModal', 'commonsFact', 'vulnModelsManager',
+        function($scope, $filter, $http, $q, $uibModal, commonsFact, vulnModelsManager) {
             $scope.db_exists = false;
             $scope.models = [];
             $scope.loaded_models = false;
@@ -26,7 +26,7 @@ angular.module('faradayApp')
                             }, function(message) { });
                         } else {
                             $scope.db_exists = true;
-                            vulnModelsManager.get()
+                            vulnModelsManager.get(0)
                                 .then(function() {
                                     $scope.models = vulnModelsManager.models;
                                     $scope.loaded_models = true;

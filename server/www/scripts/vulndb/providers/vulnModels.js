@@ -4,10 +4,9 @@
 //
 angular.module('faradayApp').
     factory('vulnModelsManager', 
-        ['vulnModel', 'BASEURL', 'configSrv', '$http', '$q',
-            function(vulnModel, BASEURL, configSrv, $http, $q) {
+        ['VulnModel', 'BASEURL', 'configSrv', '$http', '$q',
+            function(VulnModel, BASEURL, configSrv, $http, $q) {
                 var vulnModelsManager = {};
-
                 vulnModelsManager.models = [];
 
                 vulnModelsManager.DBExists = function() {
@@ -28,7 +27,6 @@ angular.module('faradayApp').
                             deferred.reject("Unable to fetch the Vulnerability Models DB name.");
                         });
 
-                    console.log("HERE2")
                     return deferred.promise;
                 };
 
@@ -58,7 +56,7 @@ angular.module('faradayApp').
                     self = this;
 
                     try {
-                        var vulnModel = new vulnModel(data);
+                        var vulnModel = new VulnModel(data);
 
                         vulnModel.save().
                             then(function(resp) {
@@ -84,7 +82,7 @@ angular.module('faradayApp').
 
                     vulnModel.remove().
                         then(function() {
-                            vulnModel.get().
+                            vulnModelsManager.get().
                                 then(function(resp) {
                                     deferred.resolve(resp);
                                 }, function(reason) {
@@ -102,18 +100,20 @@ angular.module('faradayApp').
 
                     configSrv.promise.
                         then(function() {
-                            var url = BASEURL + configSrv.vulnModelsDB + "/_all_docs?include_docs=true";
+                            var url = BASEURL + configSrv.vulnModelsDB + "/_all_docs?include_docs=true&limit=20&skip=" + "0";
 
                             $http.get(url).
                                 then(function(res) {
                                     var data = res.data;
+                                    self.totalNumberOfModels = data.total_rows
+
                                     var vulnModels = []
 
                                     if (data.hasOwnProperty("rows")) {
                                         console.log(data);
                                         data.rows.forEach(function(row) {
                                             try {
-                                                vulnModels.push(new vulnModel(row.doc));
+                                                vulnModels.push(new VulnModel(row.doc));
                                             } catch(e) {
                                                 console.log(e.stack);
                                             }

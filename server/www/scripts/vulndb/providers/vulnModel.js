@@ -3,9 +3,10 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp').
-    factory('vulnModel', ['BASEURL', 'configSrv', '$http', '$q',
+    factory('VulnModel', ['BASEURL', 'configSrv', '$http', '$q',
         function(BASEURL, configSrv, $http, $q) {
             function VulnModel(data) {
+                
                 var now = new Date();
                 var date = now.getTime() / 1000.0;
 
@@ -81,7 +82,6 @@ angular.module('faradayApp').
                                     self._rev = res.rev;
                                     deferred.resolve(self);
                                 }, function(res) {
-                                    console.log("WOLOLO")
                                     deferred.reject("Unable to update the Vuln Model. " + res.data.reason);
                                 });
                         }, function(reason) {
@@ -99,14 +99,13 @@ angular.module('faradayApp').
 
                     configSrv.promise.
                         then(function() {
-                            var url = BAsEURL + configSrv.vulnModelsDB;
+                            var url = BASEURL + configSrv.vulnModelsDB;
 
                             $http.post(url, self).
                                 then(function(data) {
-                                    self._id = data._id;
+                                    self._id = data.id;
                                     self._rev = data.rev;
                                 }, function(res) {
-                                    console.log("WOLOLO")
                                     deferred.reject("Unable to save the Vuln Model. " + res.data.reason)
                                 });
                         }, function(reason) {

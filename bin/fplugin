@@ -185,21 +185,25 @@ if __name__ == '__main__':
             pass
 
         print "Welcome to interactive Faraday!"
-        print "Press CTRL-D to quit."
+        print "Press CTRL-D or run 'exit' to quit interactive mode."
         last_id = None
 
         while True:
             try:
                 line = raw_input("> ")
 
-                if not line:
-                    sys.exit(0)
+                if line.strip() == 'exit':
+                    os._exit(0)
 
                 # Split line read from stdin into argv
                 new_args = shlex.split(line)
 
                 if '-i' in new_args or '--interactive' in new_args:
                     print 'Already in interactive mode!'
+                    continue
+
+                if 'h' in new_args or 'help' in new_args:
+                    parser.print_help()
                     continue
 
                 if FPLUGIN_INTERACTIVE_LAST_TOKEN in new_args:

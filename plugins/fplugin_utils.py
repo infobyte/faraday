@@ -68,12 +68,12 @@ def get_available_plugins():
     return plugins_dic
 
 
-def build_faraday_plugin_command(plugin, workspace_name):
+def build_faraday_plugin_command(plugin, workspace_name, absolute_path=False):
     faraday_directory = os.path.dirname(os.path.realpath(os.path.join(__file__, "../")))
-    path = os.path.join(faraday_directory, "bin")
+    path = os.path.join(faraday_directory, "bin/")
 
-    return '"{path}/fplugin" {command} -u {url} -w {workspace} '.format(
-        path=path,
+    return '{path}fplugin {command} -u {url} -w {workspace} '.format(
+        path='"%s"' % path if absolute_path else '',
         command=plugin,
         url=CONF.getCouchURI(),
         workspace=workspace_name

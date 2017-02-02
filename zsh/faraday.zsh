@@ -89,4 +89,14 @@ zshexit() {
     send-output
 }
 
+if [ -n "${FARADAY_PATH+x}" ]; then
+    echo "[+] Faraday path set. Aliasing fplugin"
+
+    function fplugin() {
+     "$FARADAY_PATH/bin/fplugin" $*;
+     }
+else
+    echo "[-] Faraday path not set"
+fi
+
 zle -N accept-line add-output

@@ -48,6 +48,8 @@ def main(workspace='', args=None, parser=None):
         print "Invalid pcap file"
         return 3, None
 
+    print 'pcap file loaded. Parsing packets...'
+
     # Set() to store already added hosts. This will save an enormous amount of time by not querying the database
     # for hosts we already know are in Faraday
     added = set()

@@ -24,8 +24,6 @@ angular.module('faradayApp')
         $scope.vulns;
         $scope.workspaces;
         $scope.currentPage;
-        $scope.newCurrentPage;
-        $scope.newPageSize;
         $scope.gridOptions;
 
         $scope.vulnWebSelected;
@@ -833,9 +831,17 @@ angular.module('faradayApp')
                 // Add the total amount of vulnerabilities as an option for pagination
                 // if it is larger than our biggest page size
                 if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
+                    
                     $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
+                    
                     // sadly, this will load the vuln list again because it fires a paginationChanged event
-                    if ($scope.gridOptions.paginationPageSize != $scope.gridOptions.totalItems) $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
+                    if ($scope.gridOptions.paginationPageSize > $scope.gridOptions.totalItems)
+                        $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
+                    
+                    // New vuln and MAX items per page setted => reload page size.
+                    if ($scope.gridOptions.paginationPageSize === $scope.gridOptions.totalItems - 1)
+                        $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
+
                 }
             });
         };

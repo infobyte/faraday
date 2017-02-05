@@ -8,77 +8,54 @@
             <div class="ws-label">
                 <h2><span id="ws-name" title="">Vulnerability Model Database</span></h2><!-- WS name -->
             </div><!-- .ws-label -->
-            <div id="ws-control" class="btn-group btn-small-margin">
-                <button file-exporter="csv()" type="button" class="btn btn-success" title="Download CSV of the Vulnerability DB">
-                    <span class="glyphicon glyphicon-download"></span>
-                </button>
-                <button id="refresh" type="button" class="btn btn-danger" title="Refresh Vulnerability DB" ng-click="location.reload()">
-                    <span class="glyphicon glyphicon-refresh"></span>
-                </button>
-            </div><!-- #ws-control -->
-            <div class="button-control col-md-6 col-sm-6 col-xs-12">
-                <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="delete()">
-                    <span class="glyphicon glyphicon-trash"></span>
-                    Delete
-                </button>
-                <div id="merge" class="btn-group btn-small-margin">
-                    <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()" ng-disabled="getCurrentSelection().length != 1">
-                        <span class="glyphicon glyphicon-pencil"></span>
-                        Edit
-                    </button>
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="getCurrentSelection().length < 2">
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                        <li><a class="ws" ng-click="editString('name')">Edit name</a></li>
-                        <li><a class="ws" ng-click="editText('description')">Edit description</a></li>
-                        <li><a class="ws" ng-click="editText('resolution')">Edit resolution</a></li>
-                        <li><a class="ws" ng-click="editEaseofresolution()">Edit ease of resolution</a></li>
-                        <li><a class="ws" ng-click="editExploitation()">Edit exploitation</a></li>
-                        <li><a class="ws" ng-click="editReferences()">Add references</a></li>
-                        <li><a class="ws" ng-click="editCWE()">Edit CWE</a></li>
-                    </ul>
-                </div>
-                <div id="group-by" class="btn-group btn-small-margin">
-                    <button type="button" ng-if="propertyGroupBy" class="btn btn-danger" title="Clear" ng-click="clearGroupBy()">
-                        <i class="fa fa-times"></i>
-                    </button>
-                    <button type="button" class="btn btn-default" title="{{propertyGroupBy || 'Group By'}}" >
-                        {{ (propertyGroupBy | uppercase) || "Group By"}}
-                    </button>
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Group By">
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                        <li ng-repeat="(column, show) in columns">
-                            <a class="ws" ng-show="show" ng-click="groupBy(column)">{{column}}</a>
-                        </li>
-                    </ul>
-                </div>
-                <button id="new" type="button" class="btn btn-success" title="New Vulnerablity Model" ng-click="new()">
-                    <span class="glyphicon glyphicon-plus-sign"></span>
-                    New
-                </button>
-            </div><!-- .col-md-6 .col-sm-6 .col-xs-12 -->
             <div class="reports col-md-12 col-sm-12 col-xs-12">
-                <div class="col-md-6 col-sm-3 col-xs-11">
-                    <div class="row">
-                        <div class="col-md-6 col-sm-3 col-xs-11">
-                            <form role="form" ng-submit="searchFor(true, searchParams)">
-                                <div class="form-group">
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search && search != 'confirmed=true'"></span>
-                                        <input type="text" class="form-control" id="filter-by" 
-                                        placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
-                                        <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                            <i class="fa fa-search" ng-if="gridOptions.data.length > 0 || gridOptions.totalItems >= 0"></i>
-                                            <i class="fa fa-refresh fa-spin" ng-if="gridOptions.totalItems === null"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
+                <div class="button-control col-md-6 col-sm-6 col-xs-12">
+                    <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="delete()">
+                        <span class="glyphicon glyphicon-trash"></span>
+                        Delete
+                    </button>
+                    <div id="merge" class="btn-group btn-small-margin">
+                        <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()" ng-disabled="getCurrentSelection().length != 1">
+                            <span class="glyphicon glyphicon-pencil"></span>
+                            Edit
+                        </button>
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="getCurrentSelection().length < 2">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                            <li><a class="ws" ng-click="editString('name')">Edit name</a></li>
+                            <li><a class="ws" ng-click="editText('description')">Edit description</a></li>
+                            <li><a class="ws" ng-click="editText('resolution')">Edit resolution</a></li>
+                            <li><a class="ws" ng-click="editEaseofresolution()">Edit ease of resolution</a></li>
+                            <li><a class="ws" ng-click="editExploitation()">Edit exploitation</a></li>
+                            <li><a class="ws" ng-click="editReferences()">Add references</a></li>
+                            <li><a class="ws" ng-click="editCWE()">Edit CWE</a></li>
+                        </ul>
                     </div>
+                    <button id="new" type="button" class="btn btn-success" title="New Vulnerablity Model" ng-click="new()">
+                        <span class="glyphicon glyphicon-plus-sign"></span>
+                        New
+                    </button>
+                </div><!-- .col-md-6 .col-sm-6 .col-xs-12 -->
+                <div id="ws-control" class="btn-group btn-small-margin">
+                    <button file-exporter="csv()" type="button" class="btn btn-success" title="Download CSV of the Vulnerability DB">
+                        <span class="glyphicon glyphicon-download"></span>
+                    </button>
+                    <button id="refresh" type="button" class="btn btn-danger" title="Refresh Vulnerability DB" ng-click="location.reload()">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </div><!-- #ws-control -->
+                <!-- <div class="col-md-6 col-sm-3 col-xs-11"> UNCOMMENT TO GET MINIMAL SEARCH BAR--> 
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input type="text" class="form-control input-sm" ng-model="search" placeholder="enter keywords" />
+                            <span class="input-group-btn">
+                                <button class="btn btn-sm" type="button">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </span>
+                        </div>
+                    <!-- </div> -->
                 </div>
             <table class="status-report licenses-list table table-responsive">
                 <thead>
@@ -107,7 +84,7 @@
                         selection-model-on-change="selectedModels()">
                         <td><input type="checkbox" name="{{model._id}}"/></td>
                         <td>{{model.name}}</td>
-                        <td>{{model.description}}</td>
+                        <td>{{model.desc_summary}}</td>
                         <td>{{model.cwe}}</td>
                         <td>{{model.resolution}}</td>
                     </tr>

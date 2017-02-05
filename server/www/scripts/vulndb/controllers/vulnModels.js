@@ -1,7 +1,7 @@
 angular.module('faradayApp')
     .controller('vulnModelsCtrl',
-        ['$scope', '$filter', '$http', '$q', '$uibModal', 'commonsFact', 'vulnModelsManager',
-        function($scope, $filter, $http, $q, $uibModal, commonsFact, vulnModelsManager) {
+        ['$scope', '$filter', '$http', '$q', '$uibModal', 'csvService', 'commonsFact', 'vulnModelsManager',
+        function($scope, $filter, $http, $q, $uibModal, csvService, commonsFact, vulnModelsManager) {
             $scope.db_exists = false;
             $scope.models = [];
             $scope.loaded_models = false;
@@ -62,6 +62,23 @@ angular.module('faradayApp')
 
                 return $q.all(confirmations);
             };
+
+            $scope.csv = function() {
+                deferred = $q.defer();
+                var model_properties = {
+                    'name': true,
+                    'cwe': true,
+                    'references': true,
+                    'resolution': true,
+                    'desc_summary': true,
+                    'exploitation': true,
+                };
+                vulnModelsManager.get().then(function(response) {
+                    deferred.resolve(csvService.generator(model_properties, response.models, null)
+                )});
+                return deferred.promise;
+        };
+
 
             $scope.delete = function() {
                 var selected = $scope.selectedModels();
@@ -170,6 +187,20 @@ angular.module('faradayApp')
                     model.selected = $scope.selectall_models;
                 });
             };
+
+            // changes the URL according to search params
+            $scope.searchFor = function(search, params) {
+                // TODO: It would be nice to find a way for changing
+                // the url without reloading the controller
+                if(search && params != "" && params != undefined) {
+                    var filter = commonsFact.parseSearchExpression(params);
+                    var URLParams = commonsFact.searchFilterToURLParams(filter);
+                    url += "/search/" + URLParams;
+                }
+
+                $location.path(url);
+            };
+
 
             // toggles sort field and order
             $scope.toggleSort = function(field) {

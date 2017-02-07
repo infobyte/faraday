@@ -422,16 +422,16 @@ class ModelController(threading.Thread):
     def find(self, obj_id):
         return self.mappers_manager.find(obj_id)
 
-    def addHostASYNC(self, host, category=None, update=False, old_hostname=None):
+    def addHostASYNC(self, host):
         """
         ASYNC API
         Adds an action to the ModelController actions queue indicating a
         new host must be added to the model
         """
         self.__addPendingAction(modelactions.ADDHOST,
-                                host, category, update, old_hostname)
+                                host)
 
-    def addHostSYNC(self, host, category=None, update=False, old_hostname=None):
+    def addHostSYNC(self, host):
         """
         SYNC API
         Adds a host directly to the model

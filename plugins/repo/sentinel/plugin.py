@@ -54,7 +54,7 @@ class SentinelPlugin(core.PluginBase):
         if self.getSetting("Api_key") == "":
             self.log("Please set Sentinel API in plugin configuration", "ERROR")
             return True
-            
+
         allVulns = self.getAllVulns()
         for element in allVulns['collection']:
 
@@ -62,7 +62,7 @@ class SentinelPlugin(core.PluginBase):
             severity = element.get('severity', "INFO")
             host = element.get('url', 'Unknown Hostname')
 
-            hostId = self.faraday_api.createAndAddHost(host, "", "", False, "")
+            hostId = self.faraday_api.createAndAddHost(host, "")
 
             interfaceId = self.faraday_api.createAndAddInterface(
                 hostId,
@@ -78,9 +78,9 @@ class SentinelPlugin(core.PluginBase):
             vulnData = self.getAttackVector(element.get('href', 'unknown'))
 
             for vuln in vulnData['collection']:
-                
+
                 vuln_information  = self.getVulnInformation(element.get('href', 'unknown')) 
-                
+
                 desc = vuln_information.get("description", "").get("description_prepend", "")
                 solution = vuln_information.get("solution", "").get("solution_prepend", "")
                 siteId = vuln_information.get("site", "Unknown")

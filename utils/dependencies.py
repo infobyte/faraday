@@ -5,46 +5,28 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import pip
 import pkg_resources
+import pip
 
 
-class DependencyChecker(object):
-    def __init__(self, requirements_file):
-        self.mandatory = []
-        self.optional = []
+def check_dependencies(requirements_file='requirements.txt'):
+    dependencies_file = open(requirements_file, 'r')
 
-        dependencies_file = open(requirements_file, 'r')
+    requirements = list(pkg_resources.parse_requirements(dependencies_file))
 
-        for line in dependencies_file:
-            if line.find('#') > -1:
-                # Optional dependencies after the '#' character
-                break
-            self.mandatory.append(line.strip())
+    installed = []
+    missing = []
 
-        for line in dependencies_file:
-            self.optional.append(line.strip())
-
-        dependencies_file.close()
-
-    def __check_dependency(self, package):
+    for package in requirements:
         try:
-            pkg_resources.require(package)
-            return True
+            pkg_resources.working_set.resolve([package])
+            installed += [package]
         except (pkg_resources.DistributionNotFound, pkg_resources.VersionConflict):
-            return False
+            missing += [package.key]
 
-    def check_dependencies(self, with_optional=True):
-        print "Checking dependencies"
-        missing = []
-        dependencies = self.mandatory
-        if with_optional:
-            dependencies += self.optional
-        for package in dependencies:
-            if not self.__check_dependency(package):
-                missing.append(package)
-        return missing
+    return installed, missing
 
-    def install_packages(self, packages):
-        for package in packages:
-            pip.main(['install', package, '--user'])
+
+def install_packages(packages):
+    for package in packages:
+        pip.main(['install', package, '--user'])

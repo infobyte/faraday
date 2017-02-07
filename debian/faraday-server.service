@@ -1,0 +1,11 @@
+[Unit]
+Description=Faraday Server
+Requires=couchdb.service
+After=couchdb.service
+
+[Service]
+Type=simple
+ExecStart=/opt/faraday/server/faraday-server.py
+
+[Install]
+WantedBy=multi-user.target

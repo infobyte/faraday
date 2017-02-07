@@ -1,0 +1,29 @@
+From Faraday version 2.0.0, Faraday is composed of Faraday Server and Faraday Client.
+Couchdb is mandatory.
+
+
+IF YOU WANT TO USE USER AND PASSWORD IN COUCHDB
+
+1. Configure couchdb
+    Start couchdb: systemctl start couchdb
+    Go to http://127.0.0.1:5984/_utils
+    Create an admin (click on "Everyone is admin. Fix This" or "Sign up"
+on the bottom right)
+
+2. Configure Faraday server with user and password you set up in couchdb
+The admin name and password must be copied in the config file
+    ~/.faraday/config/server.ini in section [couchdb]
+Information: This file exists only if you have already launched faraday once.
+
+3. Launch faraday with menu or command python-faraday
+This will start the server (systemd managed service) and start python-faraday
+A pop up window will inform you that the client can't connect to Faraday Server,
+you will have to choose "Change server IP?" and then set up server IP with
+user and password are the one you chose in step 1:
+    http://user:password@127.0.0.1:5985
+
+The port 5985 is the default port for Faraday in kali
+
+You can also configure the server IP in the config file
+~/.faraday/config/user.xml before launching faraday.
+    <couch_uri>http://user:password@127.0.0.1:5985</couch_uri>

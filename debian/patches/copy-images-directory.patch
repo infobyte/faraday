@@ -1,0 +1,19 @@
+Description: Copy the images repository in .faraday/
+Author: Sophie Brun <sophie@freexian.com>
+Bug-kali: https://bugs.kali.org/view.php?id=3429
+Last-Update: 2016-08-18
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/faraday.py
++++ b/faraday.py
+@@ -347,6 +347,10 @@ def setupXMLConfig():
+     if not os.path.isfile(FARADAY_USER_CONFIG_XML):
+         logger.info("Copying default configuration from project.")
+         shutil.copy(FARADAY_BASE_CONFIG_XML, FARADAY_USER_CONFIG_XML)
++        imgdir = os.path.join(FARADAY_USER_HOME, 'images')
++        if os.path.isdir(imgdir):
++            shutil.rmtree(imgdir)
++        shutil.copytree(FARADAY_BASE_IMAGES, imgdir)
+     else:
+         logger.info("Using custom user configuration.")
+ 

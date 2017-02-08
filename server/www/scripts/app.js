@@ -130,6 +130,11 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, 
             controller: 'statusReportHistoryCtrl',
             title: 'Status Report History |',
         }).
+        when('/status/ws/:wsId/visualization', {
+            templateUrl: 'scripts/statusReport/partials/statusReportVis.html',
+            controller: 'statusReportVisCtrl',
+            title: 'Status Report Visualization |',
+        }).
         when('/status/ws/:wsId/groupby/:groupbyId', {
             templateUrl: 'scripts/statusReport/partials/statusReport.html',
             controller: 'statusReportCtrl',

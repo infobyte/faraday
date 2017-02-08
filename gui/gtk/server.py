@@ -79,8 +79,8 @@ class ServerIO(object):
         return models.get_workspace_numbers(self.active_workspace)
 
     @safe_io_with_server(False)
-    def is_server_up(self):
-        return models.is_server_up()
+    def server_info(self):
+        return models.server_info()
 
     @safe_io_with_server(False)
     def test_server_url(self, url):
@@ -189,7 +189,7 @@ class ServerIO(object):
             tolerance = 0
             while True:
                 time.sleep(1)
-                test_was_successful = self.is_server_up()
+                test_was_successful = self.server_info() is not None
                 if test_was_successful:
                     tolerance = 0
                 else:

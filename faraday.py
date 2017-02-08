@@ -23,6 +23,8 @@ from utils.logs import getLogger, setUpLogger
 from utils.profilehooks import profile
 from utils.user_input import query_yes_no
 
+from persistence.server import server
+
 USER_HOME = os.path.expanduser(CONST_USER_HOME)
 FARADAY_BASE = os.path.dirname(os.path.realpath(__file__))
 
@@ -495,6 +497,23 @@ def checkVersion():
         sys.exit(-1)
 
 
+def check_faraday_version():
+    server_info = server.server_info()
+
+    faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
+
+    file_path = os.path.join(faraday_directory, 'VERSION')
+
+    with open(file_path, 'r') as version_file:
+        version = version_file.read().strip()
+
+    if version != server_info['Version']:
+        getLogger("launcher").error("The server is running a different Faraday version than the client "
+                                    "you are running. Version numbers must much!")
+
+        sys.exit(2)
+
+
 def main():
     """Main.
 
@@ -521,6 +540,9 @@ def main():
     setConf()
     checkCouchUrl()
     checkVersion()
+
+    check_faraday_version()
+
     update()
     checkUpdates()
     startFaraday()

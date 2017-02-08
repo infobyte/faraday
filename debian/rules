@@ -4,7 +4,7 @@ PACKAGE_DIR = debian/opt/faraday/server/shell/core
 UNAME_M = $(shell uname -m)
 
 %:
-	dh $@ --with python2
+	dh $@
 
 override_dh_installchangelogs:
 	dh_installchangelogs RELEASE.md

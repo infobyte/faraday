@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "configure" ]; then
+     chmod 777 /opt/faraday/server/server/www/config/
+     chmod 777 /opt/faraday/server/server/
+fi

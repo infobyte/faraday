@@ -28,7 +28,7 @@
             <div ng-if="vulns.count > 0">
                 <div class="btn-group btn-small-margin">
                     <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" title="Select view mode">
-                        {{ radarChartDisplay }} <span class="caret"></span>
+                        {{ chartDisplay }} <span class="caret"></span>
                     </button>
                     <ul id="monthList" class="dropdown-menu dropdown-menu-right">
                         <li><a ng-click="switchToTargetDisplay()">Targets</a></li>
@@ -45,6 +45,16 @@
                     <div class="row">
                         <div class="col-md-6 col-xs-12">
                             <canvas class="chart chart-radar" chart-data="radarChartData" chart-labels="radarChartLabels" chart-series="radarChartSeries"  width="1200" height="400"></canvas>
+                        </div>
+                        <div class="col-md-6 col-xs-12">
+                            <div class="status-report-vis-container">
+                                <div ng-repeat="(key, value) in pieChartData">
+                                    <div>
+                                        <div>{{key}}</div>
+                                        <canvas class="chart chart-pie" chart-colours="pieChartColors" chart-data="value" chart-labels="pieChartLabels" />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

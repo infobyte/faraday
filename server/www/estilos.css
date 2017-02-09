@@ -1107,3 +1107,23 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
     border-radius: .25em;
 }
 
+.status-report-vis-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    display: flex;
+}
+
+.status-report-vis-container > div {
+    padding: 15px;
+    width: 33%;
+}
+
+.status-report-vis-container > div > div {
+    text-align: center;
+    word-wrap: break-word;
+    font-size: 15px;
+}
+
+.status-report-vis-container > div > div > div {
+    margin-bottom: 10px;
+}

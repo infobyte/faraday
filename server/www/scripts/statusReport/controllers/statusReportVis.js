@@ -13,8 +13,8 @@ angular.module('faradayApp')
                         SEVERITIES, EASEOFRESOLUTION, hostsManager,
                         vulnsManager, workspacesFact, csvService, uiGridConstants) {
 
-        const RADAR_DISPLAY_TARGET = 'Target'
-        const RADAR_DISPLAY_HOST = 'Host'
+        const DISPLAY_TARGET = 'Target'
+        const DISPLAY_HOST = 'Host'
 
         $scope.vulns = {}
         $scope.severities = ['unclassified','info','low','med','high','critical'];
@@ -22,7 +22,9 @@ angular.module('faradayApp')
         $scope.severitiesColors = {unclassified: '#CCCCCC', info: '#B3E6FF', low: '#2ecc71', med: '#f1c40f', high: '#e74c3c', critical: '#000000'};
 
         $scope.radarChartLabels = $scope.severities;
-        $scope.radarChartDisplay = RADAR_DISPLAY_HOST;
+        $scope.pieChartLabels = $scope.severities;
+        $scope.pieChartColors = ['#CCCCCC','#B3E6FF','#2ecc71','#f1c40f','#e74c3c','#000000'];
+        $scope.chartDisplay = DISPLAY_HOST;
 
         init = function() {
             // load all workspaces
@@ -48,17 +50,18 @@ angular.module('faradayApp')
                 $scope.vulns.data = response.vulnerabilities;
                 $scope.vulns.count = response.count;
                 if ($scope.vulns.count > 0) {
-                    updateRadarData();
+                    updateChartsData();
                 }
             });
         };
 
         
-        updateRadarData = function() {
+        updateChartsData = function() {
             $scope.radarChartSeries = []
             $scope.radarChartData = []
-            switch($scope.radarChartDisplay) {
-                case RADAR_DISPLAY_TARGET:
+            $scope.pieChartData = {}
+            switch($scope.chartDisplay) {
+                case DISPLAY_TARGET:
                     let targets = {}
                     $scope.vulns.data.forEach(vuln => {
                         if (!targets[vuln.target]) {
@@ -69,9 +72,10 @@ angular.module('faradayApp')
                     Object.keys(targets).forEach(key => {
                         $scope.radarChartSeries.push(key);
                         $scope.radarChartData.push(targets[key]);
+                        $scope.pieChartData[key] = targets[key];
                     })
                     break;
-                case RADAR_DISPLAY_HOST:
+                case DISPLAY_HOST:
                     let hosts = {};
                     $scope.vulns.data.forEach(vuln => {
                         if (Array.isArray(vuln.hostnames)) {
@@ -86,6 +90,7 @@ angular.module('faradayApp')
                     Object.keys(hosts).forEach(key => {
                         $scope.radarChartSeries.push(key);
                         $scope.radarChartData.push(hosts[key]);
+                        $scope.pieChartData[key] = hosts[key];
                     })
                     break;
                 default:
@@ -94,13 +99,13 @@ angular.module('faradayApp')
         }
 
         $scope.switchToTargetDisplay = function() {
-            $scope.radarChartDisplay = RADAR_DISPLAY_TARGET;
-            updateRadarData();
+            $scope.chartDisplay = DISPLAY_TARGET;
+            updateChartsData();
         }
 
         $scope.switchToHostDisplay = function() {
-            $scope.radarChartDisplay = RADAR_DISPLAY_HOST;
-            updateRadarData();
+            $scope.chartDisplay = DISPLAY_HOST;
+            updateChartsData();
         }
 
         init();

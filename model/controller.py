@@ -815,7 +815,7 @@ class ModelController(threading.Thread):
             ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
             ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
             network_segment=network_segment,
-            hostname_resolution=hostname_resolution, parent_id=parent_id)
+            hostnames=hostname_resolution, parent_id=parent_id)
 
     def newService(self, name, protocol="tcp?", ports=[], status="running",
                    version="unknown", description="", parent_id=None):

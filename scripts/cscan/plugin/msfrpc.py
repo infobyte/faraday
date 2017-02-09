@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import os
 import time
@@ -9,56 +9,61 @@ import msgpack
 import httplib
 import ssl
 
+
 class Msfrpc:
     """ Msfrpc class from https://github.com/SpiderLabs/msfrpc """
+
     class MsfError(Exception):
-        def __init__(self,msg):
+        def __init__(self, msg):
             self.msg = msg
+
         def __str__(self):
             return repr(self.msg)
 
     class MsfAuthError(MsfError):
-        def __init__(self,msg):
+        def __init__(self, msg):
             self.msg = msg
 
-    def __init__(self,opts=[]):
+    def __init__(self, opts=[]):
         self.host = opts.get("host") or "127.0.0.1"
         self.port = opts.get("port") or 55552
         self.uri = opts.get("uri") or "/api/"
         self.ssl = opts.get("ssl") or False
         self.authenticated = False
         self.token = False
-        self.headers = {"Content-type" : "binary/message-pack" }
+        self.headers = {"Content-type": "binary/message-pack"}
         if self.ssl:
-            self.client = httplib.HTTPSConnection(self.host,self.port, context=ssl._create_unverified_context())
+            self.client = httplib.HTTPSConnection(self.host, self.port, context=ssl._create_unverified_context())
         else:
-            self.client = httplib.HTTPConnection(self.host,self.port)
+            self.client = httplib.HTTPConnection(self.host, self.port)
 
-    def encode(self,data):
+    def encode(self, data):
         return msgpack.packb(data)
-    def decode(self,data):
+
+    def decode(self, data):
         return msgpack.unpackb(data)
 
-    def call(self,meth,opts = []):
+    def call(self, meth, opts=[]):
         if meth != "auth.login":
             if not self.authenticated:
                 raise self.MsfAuthError("MsfRPC: Not Authenticated")
-            opts.insert(0,self.token)
+            opts.insert(0, self.token)
 
-        opts.insert(0,meth)
+        opts.insert(0, meth)
         params = self.encode(opts)
-        self.client.request("POST",self.uri,params,self.headers)
+        self.client.request("POST", self.uri,params, self.headers)
         resp = self.client.getresponse()
         return self.decode(resp.read())
 
-    def login(self,user,password):
-        ret = self.call("auth.login",[user,password])
+    def login(self, user, password):
+        ret = self.call("auth.login", [user, password])
         if ret.get("result") == "success":
-	    self.authenticated = True
+            self.authenticated = True
             self.token = ret.get("token")
             return True
         else:
             raise self.MsfAuthError("MsfRPC: Authentication failed")
+
 
 class CscanMsf:
     """ msfrpc plugin for cscan """
@@ -191,6 +196,7 @@ def banner(args, cws="unknown"):
     args.log,
     args.output
 )
+
 
 def main():
     parser = argparse.ArgumentParser(description="msfrpc cscan plugin, for automated security testing")

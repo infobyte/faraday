@@ -81,7 +81,7 @@ def main():
             targets = target_list(script, categories)
 
         cmd = "%s %s %s %s" % (script, targets, output, logdir)
-        print "Running: %s" % cmd
+        print "\n\nRunning: %s" % cmd
         proc = subprocess.call(cmd, shell=True, stdin=None, env=dict(env))
 
     #Remove lockfile

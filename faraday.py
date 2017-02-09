@@ -507,7 +507,7 @@ def check_faraday_version():
     with open(file_path, 'r') as version_file:
         version = version_file.read().strip()
 
-    if version != server_info['Version']:
+    if server_info is not None and version != server_info['Version']:
         getLogger("launcher").error("The server is running a different Faraday version than the client "
                                     "you are running. Version numbers must much!")
 

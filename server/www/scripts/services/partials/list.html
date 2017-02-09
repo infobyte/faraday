@@ -114,14 +114,14 @@
                                             <span ng-bind="service.name"></span>
                                         </a>
                                         <a ng-href="//{{osint.host}}/search?query={{service.name}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
-                                            <img ng-src="/images/{{osint.icon}}.png" height="15px" width="15px" />
+                                            <img ng-src="images/{{osint.icon}}.png" height="15px" width="15px" />
                                         </a>
                                     </td>
                                     <td ng-bind="service.version || '-'"></td>
                                     <td>
                                         <span ng-bind="service.ports"></span>
                                         <a ng-href="//{{osint.host}}/search?query=port:{{service.ports}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
-                                            <img ng-src="/images/{{osint.icon}}.png" height="15px" width="15px" />
+                                            <img ng-src="images/{{osint.icon}}.png" height="15px" width="15px" />
                                         </a>
                                     </td>
                                     <td>

@@ -5,12 +5,13 @@ from __future__ import absolute_import
 
 import ConfigParser
 import json
-import os, shutil
+import os
+import shutil
 import errno
 
 from logging import NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL
 from config import globals as CONSTANTS
-
+from config.configuration import getInstanceConfiguration
 
 LOGGING_LEVEL = INFO
 
@@ -25,7 +26,7 @@ REPORTS_VIEWS_DIR = os.path.join(FARADAY_BASE, 'views/reports')
 LOCAL_CONFIG_FILE = os.path.expanduser(
     os.path.join(CONSTANTS.CONST_FARADAY_HOME_PATH, 'config/server.ini'))
 
-CONFIG_FILES = [ DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE ]
+CONFIG_FILES = [DEFAULT_CONFIG_FILE, LOCAL_CONFIG_FILE]
 WS_BLACKLIST = CONSTANTS.CONST_BLACKDBS
 
 
@@ -46,6 +47,7 @@ def copy_default_config_to_local():
     from server.utils.logger import get_logger
     get_logger(__name__).info(u"Local faraday-server configuration created at {}".format(LOCAL_CONFIG_FILE))
 
+
 def parse_and_bind_configuration():
     """Load configuration from files declared in this module and put them
     on this module's namespace for convenient access"""
@@ -64,6 +66,7 @@ def parse_and_bind_configuration():
     for section in __parser.sections():
         globals()[section] = ConfigSection(section, __parser)
 
+
 def __get_version():
     try:
         version = open(VERSION_FILE, 'r').read().strip()
@@ -71,18 +74,27 @@ def __get_version():
         version = ''
     return version
 
+
+def __get_osint():
+    try:
+        return getInstanceConfiguration().getOsint()
+    except:
+        return ''
+
+
 def gen_web_config():
     doc = {
         'ver': __get_version(),
-        'lic_db': CONSTANTS.CONST_LICENSES_DB
+        'lic_db': CONSTANTS.CONST_LICENSES_DB,
+        "osint" __get_osint()
     }
     if os.path.isfile(WEB_CONFIG_FILE):
         os.remove(WEB_CONFIG_FILE)
     with open(WEB_CONFIG_FILE, "w") as doc_file:
         json.dump(doc, doc_file)
 
+
 def is_debug_mode():
     return LOGGING_LEVEL is DEBUG
 
 parse_and_bind_configuration()
-

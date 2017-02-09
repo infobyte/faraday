@@ -23,4 +23,3 @@ zsh/ opt/faraday/server/
 VERSION opt/faraday/server/
 requirements_server.txt opt/faraday/server
 debian/helper-script/faraday-server usr/bin/
-debian/lintian-overrides/faraday-server usr/share/lintian/overrides/

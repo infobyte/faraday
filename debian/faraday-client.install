@@ -24,6 +24,5 @@ VERSION opt/faraday/client/
 requirements.txt opt/faraday/client
 faraday-terminal.zsh opt/faraday/client
 debian/helper-script/faraday usr/bin/
-debian/lintian-overrides/faraday-client usr/share/lintian/overrides/
 debian/faraday.desktop usr/share/applications
 data/images/icons/faraday_icon.png usr/share/icons/hicolor/48x48/apps

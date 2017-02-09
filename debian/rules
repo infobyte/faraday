@@ -1,6 +1,5 @@
 #!/usr/bin/make -f
 
-PACKAGE_DIR = debian/opt/faraday/server/shell/core
 UNAME_M = $(shell uname -m)
 
 %:

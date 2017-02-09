@@ -1,12 +1,12 @@
 Source: faraday
 Section: python
 Priority: optional
-Maintainer: Sophie Brun <sophie@freexian.com>
-Build-Depends: debhelper (>= 9), dh-python, python, dh-systemd
+Maintainer: Sebastian Kulesz <sebikul@gmail.com>
+Build-Depends: debhelper (>= 9), dh-systemd
 Standards-Version: 3.9.8
 Homepage: http://faradaysec.com
-Vcs-Git: git://git.kali.org/packages/python-faraday.git
-Vcs-Browser: http://git.kali.org/gitweb/?p=packages/python-faraday.git;a=summary
+Vcs-Git: https://github.com/infobyte/faraday.git
+Vcs-Browser: https://github.com/infobyte/faraday
 
 Package: faraday
 Architecture: all

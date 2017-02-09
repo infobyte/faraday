@@ -13,7 +13,6 @@ from pprint import pprint
 from config import config
 
 def lockFile(lockfile):
-
     if os.path.isfile(lockfile):
         return False
     else:
@@ -21,8 +20,19 @@ def lockFile(lockfile):
         f.close()
         return True
 
-def main():
+def target_list(script, categories):
+    dictionary = {
+        "network": "ips.txt",
+        "web": "websites.txt",
+        "extra": "ips.txt"
+    }
 
+    category = 'network'
+    for c in categories:
+        if os.path.exists(os.path.join('scripts', c, script)):
+            return dictionary[c]
+
+def main():
     lockf = ".lock.pod"
     if not lockFile(lockf):
         print "You can run only one instance of cscan (%s)" % lockf
@@ -31,30 +41,50 @@ def main():
     my_env = os.environ
     env = config.copy()
     env.update(my_env)
-    #Parser argument in command line
+
     parser = argparse.ArgumentParser(description='continues scanning on Faraday')
-    parser.add_argument('-p','--plugin', help='Scan only the following plugin ej: ./cscan.py -p nmap.sh', required=False)
+    parser.add_argument('-s','--script', help='Scan only the following script ej: ./cscan.py -p nmap.sh', required=False)
+    parser.add_argument('-S','--scripts', help='Scan the following scripts list ej: ./cscan.py -p nmap.sh,nikto.sh', required=False)
+    parser.add_argument('-c','--category', help='Scan only for given category ej: ./cscan.py -c network', required=False)
+    parser.add_argument('-t','--targets', help='Choose a custom target list ej: ./cscan.py -t custom-list.txt', required=False)
+    parser.add_argument('-o','--output', help='Choose a custom output directory', required=False)
+    parser.add_argument('-l','--log', help='Choose a custom log directory', required=False)
     args = parser.parse_args()
 
-    for dirpath, dnames, fnames in os.walk("./scripts/web/"):
-        for f in  fnames:
-            if args.plugin and args.plugin != f:
-                continue
-            script = os.path.join(dirpath, f)
-            cmd = "%s websites.txt output/" % (script)
-            print "Running: %s" % cmd
-            proc = subprocess.call(cmd, shell=True, stdin=None, stderr=subprocess.PIPE,  env=dict(env))
+    output = 'output/'
+    if args.output:
+        output = args.output
 
-    for dirpath, dnames, fnames in os.walk("./scripts/network/"):
-        for f in  fnames:
-            if args.plugin and args.plugin != f:
-                continue
-            script = os.path.join(dirpath, f)
-            cmd = "%s ips.txt output/" % (script)
-            print "Running: %s" % cmd
-            proc = subprocess.call(cmd, shell=True, stdin=None, stderr=subprocess.PIPE, env=dict(env))
+    logdir = 'log/'
+    if args.log:
+        logdir = args.log
 
-    #Remove lockfile           
+    for d in [logdir, output]:
+        if not os.path.isdir(d):
+            os.makedirs(d)
+
+    if args.script:
+        scripts = [args.script]
+    elif args.scripts:
+        scripts = args.scripts.split(",")
+    else:
+        scripts = env["CS_SCRIPTS"].split(",")
+
+    categories = env["CS_CATEGORIES"].split(",")
+    for category in categories:
+        env["PATH"] += ":%s" % os.path.abspath("./scripts/" + category)
+
+    for script in scripts:
+        if args.targets:
+            targets = args.targets
+        else:
+            targets = target_list(script, categories)
+
+        cmd = "%s %s %s %s" % (script, targets, output, logdir)
+        print "Running: %s" % cmd
+        proc = subprocess.call(cmd, shell=True, stdin=None, env=dict(env))
+
+    #Remove lockfile
     os.remove(lockf)
 
 if __name__ == "__main__":

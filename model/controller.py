@@ -298,6 +298,14 @@ class ModelController(threading.Thread):
         if sync:
             self._sync_api_request = False
 
+    def conflictMissing(self, conflict):
+        """
+        Conflict missing (Resolved by another one)
+        Remove conflict in original object and notify to clients
+        """
+        conflict.getFirstObject().updateResolved(conflict)
+        notifier.conflictUpdate(-1)
+
     def getConflicts(self):
         conflicts = []
         for obj in self.objects_with_updates:

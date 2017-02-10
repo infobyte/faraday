@@ -1002,13 +1002,14 @@ class ConflictsDialog(Gtk.Window):
         return button_box
 
     def _next_conflict_or_close(self):
-            if len(self.conflicts)-1 > self.conflict_n:
-                self.conflict_n += 1
-                self.update_current_conflict()
-                self.update_current_conflict_model()
-                self.set_conflict_view(self.conflict_n)
-            else:
-                self.destroy()
+        """Move to next conflict and update current conflict View and model."""
+        if len(self.conflicts) - 1 > self.conflict_n:
+            self.conflict_n += 1
+            self.update_current_conflict()
+            self.update_current_conflict_model()
+            self.set_conflict_view(self.conflict_n)
+        else:
+            self.destroy()
 
     def save(self, button, keeper):
         """Saves information to Faraday. Keeper is needed to know if user
@@ -1058,6 +1059,8 @@ class ConflictsDialog(Gtk.Window):
                                         "deleted the conflicting object from "
                                         "the DB \n"
                                         "Moving on to the next conflict."))
+
+            guiapi.conflictMissing(self.current_conflict)
             dialog.run()
             dialog.destroy()
             self._next_conflict_or_close()

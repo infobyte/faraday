@@ -447,6 +447,8 @@ def editCred(cred, username=None, password=None):
 def getParent(parent_id):
     return __model_controller.find(parent_id)
 
+def conflictMissing(conflict):
+    __model_controller.conflictMissing(conflict)
 
 def resolveConflicts():
     __model_controller.resolveConflicts()

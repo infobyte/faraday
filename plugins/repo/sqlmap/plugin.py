@@ -262,7 +262,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             from lib.core.settings import UNICODE_ENCODING
         except:
             print 'ERROR: Remember set your Sqlmap Path Setting!... Abort plugin.'
-            sys.exit(-1)
+            return
 
         self.HASHDB_MILESTONE_VALUE = HASHDB_MILESTONE_VALUE
         self.HASHDB_KEYS = HASHDB_KEYS

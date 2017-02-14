@@ -441,7 +441,7 @@ class SqlmapPlugin(PluginTerminalOutput):
 
         if args.u:
 
-            if args.u.find('http://') < 0 or args.u.find('https://') < 0:
+            if args.u.find('http://') < 0 and args.u.find('https://') < 0:
                 urlComponents = urlparse('http://' + args.u)
             else:
                 urlComponents = urlparse(args.u)

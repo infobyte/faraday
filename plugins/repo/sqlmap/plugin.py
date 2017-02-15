@@ -295,7 +295,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         dbms_version = self.hashDBRetrieve(self.HASHDB_KEYS.DBMS, False, db)
 
         self.ip = self.getAddress(self.hostname)
-        
+
         h_id = self.createAndAddHost(self.ip)
 
         i_id = self.createAndAddInterface(
@@ -350,7 +350,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         if password:
             for k, v in password.iteritems():
                 self.createAndAddCredToService(h_id, s_id2, k, v)
-        
+
         # sqlmap.py --file-dest
         if absFilePaths:
             self.createAndAddNoteToService(
@@ -446,7 +446,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             else:
                 urlComponents = urlparse(args.u)
 
-            self.protocol = urlComponents.scheme 
+            self.protocol = urlComponents.scheme
             self.hostname = urlComponents.netloc
 
             if urlComponents.port:

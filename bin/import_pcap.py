@@ -17,14 +17,14 @@ __prettyname__ = 'Import PCAP'
 
 
 def main(workspace='', args=None, parser=None):
-    parser.add_argument('pcap', help='Path to the PCAP file'),
 
-    parser.add_argument('-s', '--source', help='Filter packets by source'),
-    parser.add_argument('-d', '--dest', help='Filter packets by destination'),
+    parser.add_argument('-s', '--source', nargs='*', help='Filter packets by source'),
+    parser.add_argument('-d', '--dest', nargs='*', help='Filter packets by destination'),
 
     parser.add_argument('--dry-run', action='store_true', help='Do not touch the database. Only print the object ID')
 
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output from the pcapfile library.')
+    parser.add_argument('pcap', help='Path to the PCAP file'),
 
     parsed_args = parser.parse_args(args)
 
@@ -62,10 +62,10 @@ def main(workspace='', args=None, parser=None):
         src = packet.packet.payload.src
         dst = packet.packet.payload.dst
 
-        if parsed_args.source and parsed_args.source != src:
+        if parsed_args.source and not src in parsed_args.source:
             continue
 
-        if parsed_args.dest and parsed_args.dest != dst:
+        if parsed_args.dest and not dst in parsed_args.dest:
             continue
 
         if src not in added:
@@ -82,7 +82,7 @@ def main(workspace='', args=None, parser=None):
             if old is None:
                 if not parsed_args.dry_run:
                     models.create_host(workspace, obj)
-                    print '%s\t%s' % (src, obj.getID())
+                print '%s\t%s' % (src, obj.getID())
 
         if dst not in added:
 
@@ -98,6 +98,6 @@ def main(workspace='', args=None, parser=None):
             if old is None:
                 if not parsed_args.dry_run:
                     models.create_host(workspace, obj)
-                    print '%s\t%s' % (dst, obj.getID())
+                print '%s\t%s' % (dst, obj.getID())
 
     return 0, None

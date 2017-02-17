@@ -76,19 +76,18 @@ The following command will list all running services exposed on common HTTP port
 ```
  $ ./fplugin filter_services http ssh -p 21 -a
 Filtering services for ports: 21, 22, 80, 443, 8080, 8443
-
-192.168.20.1	ssh	[22]	tcp	open	None
-192.168.20.1	http	[443]	tcp	open	None
-192.168.20.7	ssh	[22]	tcp	open	Linux
-192.168.20.7	http	[443]	tcp	open	Linux
-192.168.20.11	ssh	[22]	tcp	open	Linux
-192.168.20.11	http	[80]	tcp	open	Linux
-192.168.20.11	http	[443]	tcp	open	Linux
-192.168.20.15	upnp	[80]	tcp	open	Linux
-192.168.20.22	ssh	[22]	tcp	open	Linux
-192.168.20.26	http	[80]	tcp	open	Windows
-192.168.20.123	ssh	[22]	tcp	open	Linux
-192.168.20.123	http	[443]	tcp	open	Linux
+host            service         ports           protocol        status          host_os
+------------------------------------------------------------------------------------------------
+192.168.20.7    ssh             22              tcp             open            Linux
+192.168.20.7    http            443             tcp             open            Linux
+192.168.20.15   upnp            80              tcp             open            Linux
+192.168.20.22   ssh             22              tcp             open            Linux
+192.168.20.48   ssh             22              tcp             open            None
+192.168.20.123  ssh             22              tcp             open            Linux
+192.168.20.123  http            443             tcp             open            Linux
+192.168.20.11   ssh             22              tcp             open            Linux
+192.168.20.11   http            80              tcp             open            Linux
+192.168.20.11   http            443             tcp             open            Linux
 ```
 
 ### Create a new host
@@ -157,12 +156,14 @@ Faraday comes with some presets for bulk actions such as object removal, etc. Th
 * `delAllServiceClosed`: Deletes all services with a non open port
 * `delAllVulnsWith`: Empty
 * `filter_services`: Filter services by port
-* `getAllCreds`: Get all stored credentials
-* `getAllIps`: Get all scanned IPs
 * `getAllIpsInterfaces`: Get all scanned interfaces
-* `getAllOs`: Lists all scanned OSs
 * `getExploits`: Get possible exploits from open services
 * `getSeverityByCwe`: Get Vulns filtered by Severity and change Severity based in CWE
+* `import_pcap`: Import every host found in a PCAP file for further scanning
+* `list_creds`: Get all stored credentials
+* `list_hosts`: List hosts
+* `list_ips`: List all scanned IPs
+* `list_os`: Lists all scanned OSs
 
 # Adding new commands
 

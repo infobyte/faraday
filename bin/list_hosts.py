@@ -13,11 +13,13 @@ __prettyname__ = 'List Hosts'
 
 
 def main(workspace='', args=None, parser=None):
-    parser.add_argument('os', nargs='*', help='List of OSs to filter for', default=[]),
+    parser.add_argument('os_filter', nargs='*', help='List of OSs to filter for', default=[]),
 
     parsed_args = parser.parse_args(args)
 
     for host in models.get_hosts(workspace):
-        print '%s\t%s' % (host.name, host.os)
+
+        if not parsed_args.os_filter or (parsed_args.os_filter and host.os in parsed_args.os_filter):
+            print '%s\t%s' % (host.name, host.os)
 
     return 0, None

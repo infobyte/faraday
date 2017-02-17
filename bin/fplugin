@@ -102,11 +102,11 @@ def dispatch(args, unknown, help):
     if {'args', 'parser'} <= set(main_argspec.args):
         # Function accepts args and parser arguments
 
-        parser = argparse.ArgumentParser(description=plugins[args.command]['description'],
-                                         prog="fplugin %s" % args.command,
-                                         formatter_class=RawDescriptionAndDefaultsHelpFormatter)
+        new_parser = argparse.ArgumentParser(description=plugins[args.command]['description'],
+                                             prog="fplugin %s" % args.command,
+                                             formatter_class=RawDescriptionAndDefaultsHelpFormatter)
 
-        ret, obj_id = call_main(workspace=args.workspace, args=unknown, parser=parser)
+        ret, obj_id = call_main(workspace=args.workspace, args=unknown, parser=new_parser)
 
         if obj_id is not None:
             print obj_id
@@ -215,7 +215,7 @@ if __name__ == '__main__':
 
                 last_id = dispatch(parsed_args, new_unknown, parser.format_help()) or last_id
                 # print '$last = %s' % last_id
-            except EOFError, KeyboardInterrupt:
+            except (EOFError, KeyboardInterrupt):
                 print 'Bye Bye!'
                 sys.exit(0)
             except SystemExit:

@@ -187,6 +187,10 @@ angular.module('faradayApp')
                 });
             }
 
+            // load cookie of columns ordering if exists
+            paginationOptions.sortColumn = $cookies.get('SRsortColumn') || null;
+            paginationOptions.sortDirection = $cookies.get('SRsortDirection') || null;
+
             defineColumns();
 
             $scope.vulnWebSelected = false;
@@ -371,6 +375,8 @@ angular.module('faradayApp')
         var sortRowsBy = function(columnName, sortDirection) {
             paginationOptions.sortColumn = columnName;
             paginationOptions.sortDirection = sortDirection;
+            $cookies.put('SRsortColumn', columnName || '');
+            $cookies.put('SRsortDirection', sortDirection || '');
         }
 
         $scope.ifTooltip = function(text) {

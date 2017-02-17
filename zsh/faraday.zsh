@@ -96,7 +96,17 @@ if [ -n "${FARADAY_PATH+x}" ]; then
      "$FARADAY_PATH/bin/fplugin" $*;
      }
 else
-    echo "[-] Faraday path not set"
+
+    if [ -s "./faraday-server.py" ]; then
+        echo "[+] Faraday path not set, but server found. Aliasing fplugin"
+        function fplugin() {
+         "./bin/fplugin" $*;
+         }
+    else
+
+        echo "[-] Faraday path not set"
+    fi
+
 fi
 
 zle -N accept-line add-output

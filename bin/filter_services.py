@@ -35,7 +35,7 @@ COLUMNS = {
 
 def main(workspace='', args=None, parser=None):
     parser.add_argument('-p', type=int, nargs='+', metavar='port', help='List of ports to filter', default=[])
-    parser.add_argument('services', nargs='+', help='List of service names', default=[]),
+    parser.add_argument('services', nargs='*', help='List of service names', default=[]),
     parser.add_argument('--columns', help='Comma separated list of columns to show.',
                         default="host,service,ports,protocol,status,host_os", choices=COLUMNS.keys())
 

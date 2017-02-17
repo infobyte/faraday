@@ -27,7 +27,7 @@ COLUMNS = {
     'host': lambda service, workspace: models.get_host(workspace, service.id.split('.')[0]).name,
     'host_os': lambda service, workspace: models.get_host(workspace, service.id.split('.')[0]).os,
     'service': lambda service, workspace: service.name,
-    'ports': lambda service, workspace: service.ports,
+    'ports': lambda service, workspace: str(service.ports[0]),
     'protocol': lambda service, workspace: service.protocol,
     'status': lambda service, workspace: service.status,
 }
@@ -42,6 +42,11 @@ def main(workspace='', args=None, parser=None):
     parser.add_argument('-a', help='Show additional information, like ports filtered and column headers.',
                         action='store_true', dest='additional_info')
 
+    parser.add_argument('-f', help='Do not apply any filter. Print every host.',
+                        action='store_true', dest='no_filter')
+
+    parser.add_argument('-s', '--sorted', help='Print the list sorted IP..', action='store_true')
+
     parsed_args = parser.parse_args(args)
 
     port_list = parsed_args.p
@@ -54,28 +59,39 @@ def main(workspace='', args=None, parser=None):
                              "WARNING: Service definition not found. [%s]\n" % service +
                              Fore.RESET)
 
-    if not port_list:
+    if not port_list and not parsed_args.no_filter:
         print "Empty filter set."
         return 1, None
 
-    if parsed_args.additional_info:
+    if parsed_args.additional_info and not parsed_args.no_filter:
         print 'Filtering services for ports: ' + ', '.join(map(str, sorted(port_list)))
 
     columns = filter(None, parsed_args.columns.split(','))
 
-    if parsed_args.additional_info:
-        print '\t'.join(columns)
-
-    fmt = ('{}\t' * len(columns))[:-1]
+    lines = []
 
     for service in models.get_services(workspace):
         for port in service.ports:
-            if port in port_list:
+            if port in port_list or parsed_args.no_filter:
                 column_data = []
 
                 for column in columns:
                     column_data += [COLUMNS[column](service, workspace)]
 
-                print  fmt.format(*column_data)
+                lines += [column_data]
+
+    col_width = max(len(word) for row in lines for word in row) + 2
+
+    if parsed_args.additional_info:
+        print ''.join(col.ljust(col_width) for col in columns)
+        print '-' * (col_width * len(columns))
+
+    if parsed_args.sorted:
+        # Compare lines using the first column (IP)
+        for row in sorted(lines, cmp=lambda l1, l2: cmp(l1[0], l2[0])):
+            print  "".join(word.ljust(col_width) for word in row)
+    else:
+        for row in lines:
+            print "".join(word.ljust(col_width) for word in row)
 
     return 0, None

@@ -1,0 +1,25 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<form name="form" novalidate>
+    <div class="modal-header">
+        <div class="modal-button">
+            <button class="btn btn-success" ng-click="ok()" ng-disabled="form.$invalid">OK</button>
+            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+        </div>
+        <h3 class="modal-title">Import CSV</h3>
+    </div>
+    <div class="modal-body">
+        <p> Select workspace from where to import </p>
+        <select ng-model="selectedWs">
+            <option ng-repeat="ws in workspaces" value="{{ws}}">{{ws}}</option>
+        </select>
+    </div><!-- .modal-body -->
+    <div class="modal-footer">
+        <div class="modal-button">
+            <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
+            <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
+        </div>
+    </div>
+</form>

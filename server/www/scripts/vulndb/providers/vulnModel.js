@@ -24,8 +24,6 @@ angular.module('faradayApp').
                     if(data.name === undefined || data.name === "") {
                         throw new Error("Unable to create a Vulnerability Model whithout a name");
                     }
-                    console.log("RESOLUTION IS: ");
-                    console.log(data.resolution);
                     this.set(data)
                 }
             };
@@ -92,8 +90,13 @@ angular.module('faradayApp').
                 },
 
                 save : function() {
-                    var deferred = $q.defer();
+                    console.log("IN SAVE FUNCTION!");
+                    console.log("THIS IS: ");
+                    console.log(this);
                     self = this;
+                    console.log("SELF IS:");
+                    console.log(self);
+                    var deferred = $q.defer();
 
                     delete this._id;
                     delete this._rev;
@@ -101,6 +104,8 @@ angular.module('faradayApp').
                     configSrv.promise.
                         then(function() {
                             var url = BASEURL + configSrv.vulnModelsDB;
+                            console.log("NOW SELF IS: ");
+                            console.log(self);
 
                             $http.post(url, self).
                                 then(function(data) {

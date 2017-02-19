@@ -52,8 +52,15 @@ angular.module('faradayApp').
                 };
 
                 vulnModelsManager.create = function(data) {
+                    console.log("IN CREATE FUNCTION");
+                    console.log("CREATING: ");
+                    console.log(data);
                     var deferred = $q.defer();
+                    console.log("SELF IS: ");
+                    console.log(self);
                     self = this;
+                    console.log("THIS IS: ");
+                    console.log(this);
 
                     try {
                         var vulnModel = new VulnModel(data);
@@ -110,7 +117,6 @@ angular.module('faradayApp').
                                     var vulnModels = []
 
                                     if (data.hasOwnProperty("rows")) {
-                                        console.log(data);
                                         data.rows.forEach(function(row) {
                                             try {
                                                 vulnModels.push(new VulnModel(row.doc));

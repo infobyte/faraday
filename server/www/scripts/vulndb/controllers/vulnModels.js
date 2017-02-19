@@ -72,10 +72,8 @@ angular.module('faradayApp')
                     resolve: { }
                 });
 
-                console.log(modal.result);
                 modal.result.then(
                     function(data) {
-                        console.log(data);
                         Papa.parse(data, {
                             worker: true,
                             header: true,
@@ -89,26 +87,32 @@ angular.module('faradayApp')
                 });
             };
 
+            $scope.importFromWorkspace = function() {
+                var modal = $uibModal.open({
+                    templateUrl: 'scripts/vulndb/partials/importFromWs.html',
+                    controller: 'vulnModelModalImportFromWs',
+                    size: 'sm',
+                    resolve: { }
+                });
 
-                // Papa.parse(csv);
-                // ServerAPI.getVulns("test").then(function(response) {
-                //     var vulns = response.data.vulnerabilities;
-                //     console.log(response);
-                //     var relevant_data_from_vulns = [];
-                //     vulns.forEach(function(vuln) {
-                //         relevant_vuln = {};
-                //         relevant_vuln.name = vuln.value.name;
-                //         relevant_vuln.description = vuln.value.description;
-                //         relevant_vuln.resolution = vuln.value.resolution;
-                //         relevant_data_from_vulns.push(relevant_vuln);
-                //     });
-                //     console.log(relevant_data_from_vulns);
-                //     var csv = Papa.unparse(relevant_data_from_vulns);
-                //     console.log(csv);
-                // }, function(response) {
-                //     deferred.reject("Unable to parse vulns as CSV");
-                // });
-
+                modal.result.then(function(data) {
+                    ServerAPI.getVulns(data).then(function(vulns_data) {
+                        var vulns = vulns_data.data.vulnerabilities
+                        var relevant_data_of_vulns = [];
+                        vulns.forEach(function(vuln) {
+                            relevant_vuln = {};
+                            relevant_vuln.name = vuln.value.name;
+                            relevant_vuln.description = vuln.value.description;
+                            relevant_vuln.resolution = vuln.value.resolution;
+                            relevant_data_of_vulns.push(relevant_vuln);
+                        });
+                        console.log(relevant_data_of_vulns);
+                        relevant_data_of_vulns.forEach(function(relevant_vuln) {
+                            $scope.insert(relevant_vuln);
+                        });
+                    })
+                })
+            }
 
             $scope.delete = function() {
                 var selected = $scope.selectedModels();
@@ -149,8 +153,6 @@ angular.module('faradayApp')
             };
 
             $scope.insert = function(data) {
-                console.log("INSERTING THIS: ");
-                console.log(data);
                 vulnModelsManager.create(data)
                     .catch(function(message) {
                         commonsFact.errorDialog(message);

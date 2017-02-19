@@ -6,7 +6,7 @@ angular.module('faradayApp').
     factory('VulnModel', ['BASEURL', 'configSrv', '$http', '$q',
         function(BASEURL, configSrv, $http, $q) {
             function VulnModel(data) {
-                
+
                 var now = new Date();
                 var date = now.getTime() / 1000.0;
 
@@ -24,17 +24,18 @@ angular.module('faradayApp').
                     if(data.name === undefined || data.name === "") {
                         throw new Error("Unable to create a Vulnerability Model whithout a name");
                     }
+                    console.log("RESOLUTION IS: ");
+                    console.log(data.resolution);
                     this.set(data)
                 }
             };
 
             VulnModel.prototype = {
-                public_properties: ['exploitation', 'references', 'name', 'resolution0', 'cwe', 'desc_summary', 'description'],
+                public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'desc_summary', 'description'],
 
                 set: function(data) {
                     var self = this;
 
-                    // new license
                     if(data._id != undefined) {
                         self._id = data._id;
                         if(data._rev !== undefined) self._rev = data._rev;

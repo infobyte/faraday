@@ -1,12 +1,13 @@
 angular.module('faradayApp')
     .controller('vulnModelsCtrl',
-        ['$scope', '$filter', '$http', '$q', '$uibModal', 'csvService', 'commonsFact', 'vulnModelsManager',
-        function($scope, $filter, $http, $q, $uibModal, csvService, commonsFact, vulnModelsManager) {
+        ['$scope', '$filter', '$http', '$q', '$uibModal', 'ServerAPI', 'csvService', 'commonsFact', 'vulnModelsManager',
+        function($scope, $filter, $http, $q, $uibModal, ServerAPI, csvService, commonsFact, vulnModelsManager) {
             $scope.db_exists = false;
             $scope.models = [];
             $scope.loaded_models = false;
             $scope.reverse;
             $scope.search;
+            console.log(ServerAPI);
 
             var init = function() {
                 // table stuff
@@ -63,21 +64,50 @@ angular.module('faradayApp')
                 return $q.all(confirmations);
             };
 
-            $scope.csv = function() {
-                deferred = $q.defer();
-                var model_properties = {
-                    'name': true,
-                    'cwe': true,
-                    'references': true,
-                    'resolution': true,
-                    'desc_summary': true,
-                    'exploitation': true,
-                };
-                vulnModelsManager.get().then(function(response) {
-                    deferred.resolve(csvService.generator(model_properties, response.models, null)
-                )});
-                return deferred.promise;
-        };
+            $scope.importCSV = function() {
+                var modal = $uibModal.open({
+                    templateUrl: 'scripts/vulndb/partials/upload.html',
+                    controller: 'vulnModelModalUpload',
+                    size: 'sm',
+                    resolve: { }
+                });
+
+                console.log(modal.result);
+                modal.result.then(
+                    function(data) {
+                        console.log(data);
+                        Papa.parse(data, {
+                            worker: true,
+                            header: true,
+                            skipEmptyLines: true,
+                            step: function(results) {
+                                if (results.data) {
+                                    $scope.insert(results.data[0])
+                                }
+                            }
+                        });
+                });
+            };
+
+
+                // Papa.parse(csv);
+                // ServerAPI.getVulns("test").then(function(response) {
+                //     var vulns = response.data.vulnerabilities;
+                //     console.log(response);
+                //     var relevant_data_from_vulns = [];
+                //     vulns.forEach(function(vuln) {
+                //         relevant_vuln = {};
+                //         relevant_vuln.name = vuln.value.name;
+                //         relevant_vuln.description = vuln.value.description;
+                //         relevant_vuln.resolution = vuln.value.resolution;
+                //         relevant_data_from_vulns.push(relevant_vuln);
+                //     });
+                //     console.log(relevant_data_from_vulns);
+                //     var csv = Papa.unparse(relevant_data_from_vulns);
+                //     console.log(csv);
+                // }, function(response) {
+                //     deferred.reject("Unable to parse vulns as CSV");
+                // });
 
 
             $scope.delete = function() {
@@ -98,6 +128,7 @@ angular.module('faradayApp')
                     var message = "A vulnerability model will be deleted";
                     if(selected.length > 1) {
                         message = selected.length  + " vulnerability models will be deleted";
+
                     }
                     message = message.concat(". This operation cannot be undone. Are you sure you want to proceed?");
                     $uibModal.open({
@@ -118,6 +149,8 @@ angular.module('faradayApp')
             };
 
             $scope.insert = function(data) {
+                console.log("INSERTING THIS: ");
+                console.log(data);
                 vulnModelsManager.create(data)
                     .catch(function(message) {
                         commonsFact.errorDialog(message);

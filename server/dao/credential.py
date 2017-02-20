@@ -8,23 +8,22 @@ from server.dao.base import FaradayDAO
 from server.models import Credential, EntityMetadata
 from server.utils.database import apply_search_filter
 
+
 class CredentialDAO(FaradayDAO):
 
     MAPPED_ENTITY = Credential
 
     COLUMNS_MAP = {
-        'couchid':          [EntityMetadata.couchdb_id],
-        'username':         [Credential.username],
-        'password':         [Credential.password],
-    }
+        'couchid': [EntityMetadata.couchdb_id],
+        'username': [Credential.username],
+        'password': [Credential.password]}
 
-    STRICT_FILTERING = ["couchid"] 
+    STRICT_FILTERING = ["couchid"]
 
     def list(self, search=None, cred_filter={}):
         results = self.__query_database(search, cred_filter)
 
-        rows = [ self.__get_cred_data(result.cred) for result in results ]
-
+        rows = [self.__get_cred_data(result.cred) for result in results]
         result = {
             'rows': rows
         }
@@ -69,5 +68,4 @@ class CredentialDAO(FaradayDAO):
                     'owner': cred.owner,
                     'command_id': cred.command_id
                 },
-                'couchid': cred.couchdb_id }}
-
+                'couchid': cred.couchdb_id}}

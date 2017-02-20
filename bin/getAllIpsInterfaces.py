@@ -9,6 +9,10 @@ See the file 'doc/LICENSE' for the license information
 
 from persistence.server import server, models
 
+__description__ = "Get all scanned interfaces"
+__prettyname__ = "Get All IPs Interfaces"
+
+
 def main(workspace=''):
     for interface in models.get_interfaces(workspace):
         print(interface.ipv4['address'])

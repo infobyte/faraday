@@ -9,8 +9,10 @@ See the file 'doc/LICENSE' for the license information
 
 from persistence.server import server, models
 
+__description__ = 'Deletes all stored hosts'
+__prettyname__ = 'Delete All Hosts'
+
 def main(workspace=''):
-    
     for host in models.get_hosts(workspace):
         print('Delete Host:' + host.name)
         models.delete_host(workspace, host.id)

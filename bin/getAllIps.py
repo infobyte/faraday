@@ -9,6 +9,10 @@ See the file 'doc/LICENSE' for the license information
 
 from persistence.server import server, models
 
+__description__ = 'Get all scanned IPs'
+__prettyname__ = 'Get All IPs'
+
+
 def main(workspace=''):
     for host in models.get_hosts(workspace):
         print(host.name)

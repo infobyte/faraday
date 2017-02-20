@@ -7,6 +7,9 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
 
+__description__ = 'Lists all scanned OSs'
+__prettyname__ = 'Get All OSs'
+
 from persistence.server import server, models
 
 def main(workspace=''):

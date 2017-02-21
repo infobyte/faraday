@@ -1300,7 +1300,7 @@ def create_credential(workspace_name, id, name, username, password,
                            metadata=metadata,
                            username=username,
                            password=password,
-                           type="Credential")
+                           type="Cred")
 
 def update_credential(workspace_name, id, name, username, password,
                       owned=None, owner="", description="", metadata=None):
@@ -1330,7 +1330,7 @@ def update_credential(workspace_name, id, name, username, password,
                              metadata=metadata,
                              username=username,
                              password=password,
-                             type="Credential")
+                             type="Cred")
 
 def create_command(workspace_name, id, command, duration=None, hostname=None,
                    ip=None, itime=None, params=None, user=None):

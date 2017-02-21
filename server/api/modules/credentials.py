@@ -15,9 +15,10 @@ from server.dao.credential import CredentialDAO
 def list_credentials(workspace=None):
 
     validate_workspace(workspace)
-    
-    get_logger(__name__).debug("Request parameters: {!r}"\
-        .format(flask.request.args))
+
+    get_logger(__name__).debug(
+        "Request parameters: {!r}".format(
+            flask.request.args))
 
     cred_filter = filter_request_args()
 

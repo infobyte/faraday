@@ -2,7 +2,7 @@ Uuid: 82f3cbaea46c4f158fd85bbccc90c31c
 ExtensionType: 3
 Name: Faraday
 RepoName: faraday
-ScreenVersion: 1.2.1
+ScreenVersion: 1.3.0
 SerialVersion: 4
 MinPlatformVersion: 0
 ProOnly: True

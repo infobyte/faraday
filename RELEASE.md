@@ -11,6 +11,7 @@ New features in the latest update
 TBA:
 ---
 * Improved fplugin
+* Improved the installation process
 
 February 8, 2017:
 ---

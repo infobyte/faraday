@@ -241,7 +241,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         if self.workspace_dialogs_raised:
             return False
 
-        if not self.serverIO.is_server_up():
+        if self.serverIO.server_info() is None:
             # make sure it is not because we're not connected to Couch
             # there's another whole strategy for that.
             return False
@@ -727,7 +727,7 @@ class GuiApp(Gtk.Application, FaradayUi):
         notifier.widget = self.window
         model.guiapi.notification_center.registerWidget(self.window)
 
-        if not self.serverIO.is_server_up():
+        if self.serverIO.server_info() is None:
             self.lost_db_connection(
                 handle_connection_lost=self.handle_connection_lost,
                 connect_to_a_different_couch=self.force_change_couch_url)

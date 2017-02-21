@@ -1,0 +1,5 @@
+faraday (2.3.0-deb) saucy; urgency=medium
+
+  * Initial deb package
+
+ -- Sebastian Kulesz <sebikul@gmail.com>  Fri, 16 Dec 2016 09:29:58 +0100

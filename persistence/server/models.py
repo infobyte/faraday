@@ -646,9 +646,9 @@ def get_workspaces_names():
     """Return a list with all the workspace names available."""
     return server.get_workspaces_names()['workspaces']
 
-def is_server_up():
+def server_info():
     """True if server is up, False otherwise."""
-    return server.is_server_up()
+    return server.server_info()
 
 def test_server_url(url_to_test):
     """Return True if url_to_test/_api/info is accessible, False otherwise"""

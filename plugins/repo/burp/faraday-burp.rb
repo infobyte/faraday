@@ -238,7 +238,7 @@ class BurpExtender
       resolution = resolution.gsub(/<(\/p|br\/|\/li)>/, "\n").gsub(/<li>/, "* ").gsub(/<\/?[^>]*>/, "")
     end
 
-    @stdout.println("New scan issue host: " +host +",name:"+ issuename +",IP:" + ip)
+    @stdout.println("New scan issue host: #{host},name:#{issuename},IP:#{ip}")
 
     begin
       rt = @server.call("devlog", "[BURP] New issue generation")

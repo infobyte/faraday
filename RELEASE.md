@@ -1,14 +1,29 @@
 IMPORTANT
 ===========
 
-Please be kind to remove all your pyc files before running faraday if you are updating this piece of software.  
-We made a big refactor in the latest iteration moving some code into a diferent package.
-
-Please run ./faraday.py --update
+Please be kind to remove all your pyc files before running faraday if you are updating this piece of software.
+Make sure you run ```./faraday.py --update``` the first time after an update!
 
 
 New features in the latest update
 =====================================
+
+February 8, 2017:
+---
+* Fixed max amount of vulns pagination bug in Web UI
+* Fixed Maltego plugin
+
+January 30, 2017:
+---
+* Added an activity feed panel in the Dashboard.
+* Added AppScan plugin.
+* Improved Burp's Online plugin. Added fields and removed HTML tags.
+* Refactor remaining modules to be compatible with JS Strict Mode.
+* Fixed bug that prevented GTK from closing when user clicked CANCEL on WS creation.
+* Fixed size of Workspace creation dialog.
+* New cwe databases: English and Spanish.
+* Added Hping plugin.
+* Enhancements to Wpscan plugin.
 
 November 10, 2016:
 ---
@@ -23,9 +38,9 @@ November 10, 2016:
 * Fixed Licenses search.
 * Refactor Licenses module to be compatible with JS Strict Mode.
 
-September 19, 2016: 
+September 19, 2016:
 ---
-* Major refactor of Faraday Client: now we support massive workspaces (100.000+ hosts). 
+* Major refactor of Faraday Client: now we support massive workspaces (100.000+ hosts).
 * Fixed more than 10 minor bugs on the Web UI.
 * Fixed searching with spaces character on Web UI
 * Updated URL shown when starting Faraday.
@@ -33,7 +48,7 @@ September 19, 2016:
 * Fixed Propecia plugin.
 * New plugin: WPscan
 * Host Sidebar on GTK now adds information more intelligently and will never block the application.
-* Evidence screenshots in report generation is now bigger. 
+* Evidence screenshots in report generation is now bigger.
 * Help menu in GTK with links to interesting links.
 * Added Help section to WEB UI.
 
@@ -106,7 +121,7 @@ May 23, 2016:
 * Added support for resize workspace bar.
 * Added a quote for imported reports in WEB UI.
 * Added support for a new type of report in Qualysguard plugin.
-* Fixed bugs in plugins: Acunetix - Nmap - Nikto. 
+* Fixed bugs in plugins: Acunetix - Nmap - Nikto.
 
 Apr 29, 2016:
 ---
@@ -143,7 +158,7 @@ Feb 26, 2016:
 * Added script to remove all vulns with a specific severity value (parameterized)
 * Fixed Arachni Plugin bugs
 * Added new version for Maltego Plugin
-* Added support for Mint 17 
+* Added support for Mint 17
 
 Dec 18, 2015:
 ---
@@ -244,7 +259,7 @@ Jun 30, 2015:
 
 * Added hosts CRUD
 * Added services CRUD
-* Fix ubuntu 15.04 installation bug 
+* Fix ubuntu 15.04 installation bug
 * Small bug in burp plugin "Import new vulnerabilities" checkbox issue
 * Added an interactive visualization to calculate the value of a Workspace
 * Fixed several bugs in WEB UI
@@ -258,7 +273,7 @@ Apr 17, 2015:
 
 Changes:
 
-* Styles changes in WEB UI: fancy component selection, improved workspaces selection. 
+* Styles changes in WEB UI: fancy component selection, improved workspaces selection.
 
 Bugfixes:
 * Date on Workspace creation
@@ -290,10 +305,10 @@ Changes:
 * Easy access to Vulnerability pages in the Status Report
 * Easy access to the Host pages on the dashboard
 * Creation and Editing capabilities for the Workspace from the UI Web
-* Support installation for the latest version of Debian/Ubuntu/Kali 
+* Support installation for the latest version of Debian/Ubuntu/Kali
 * sqlmap version 1.0-dev support updated
 * API Status Check in both ZSH & QT GUI
-* Field added for resolution of vulnerabilities classification with plug-ins updated to support the new function. 
+* Field added for resolution of vulnerabilities classification with plug-ins updated to support the new function.
 * Field added for rating "ease of resolution" for vulnerabilities
 * Adjustments for Resolution field
 
@@ -402,7 +417,7 @@ May 14, 2014:
 * https://github.com/infobyte/faraday/commit/9dfa9ad23dfe450ceb65d38074d55f07425aa90a
 
 Improving (web interface, vulnerability classification)
- 
+
 Apr 30, 2014:
 ----
 
@@ -419,5 +434,3 @@ Taking feedback from our users we took account that each of them had particular 
 
     * A brand new ZSH based Terminal UI
     * The Command Run execution history
-
-

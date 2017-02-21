@@ -147,8 +147,8 @@ class NewWorkspaceDialog(Gtk.Window):
         self.name_entry = Gtk.Entry()
         if self.title is not None:
             self.name_entry.set_text(self.title)
-        name_box.pack_start(name_label, False, False, 10)
-        name_box.pack_end(self.name_entry, True, True, 10)
+        name_box.pack_start(name_label, True, True, 10)
+        name_box.pack_end(self.name_entry, False, False, 10)
         return name_box
 
     def create_description_box(self):
@@ -157,8 +157,8 @@ class NewWorkspaceDialog(Gtk.Window):
         description_label = Gtk.Label()
         description_label.set_text("Description: ")
         self.description_entry = Gtk.Entry()
-        description_box.pack_start(description_label, False, False, 10)
-        description_box.pack_end(self.description_entry, True, True, 10)
+        description_box.pack_start(description_label, True, True, 10)
+        description_box.pack_end(self.description_entry, False, False, 10)
         return description_box
 
     def create_button_box(self):
@@ -212,18 +212,21 @@ class ForceNewWorkspaceDialog(NewWorkspaceDialog):
         self.connect("delete_event", lambda _, __: True)
         self.exit_faraday = exit_faraday_callback
         explanation_message = self.create_explanation_message()
-        self.main_box.pack_start(explanation_message, True, True, 6)
+        self.main_box.pack_start(explanation_message, True, True, 10)
         self.main_box.reorder_child(explanation_message, 0)
 
     def on_click_cancel(self, button):
         """Override parent's class cancel callback so it exits faraday."""
-        self.exit_faraday(parent=self)
+        self.exit_faraday()
 
     def create_explanation_message(self):
         """Returns a simple explanatory message inside a Label"""
         message = Gtk.Label()
         message.set_text("There are no workspaces available. You must "
                          "create one to continue using Faraday.")
+        message.set_line_wrap(True)
+        message.set_max_width_chars(38)
+
         return message
 
 

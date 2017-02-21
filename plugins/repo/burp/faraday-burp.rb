@@ -6,8 +6,8 @@
 ###
 #__author__	= "Francisco Amato"
 #__copyright__	= "Copyright (c) 2014, Infobyte LLC"
-#__credits__	= ["Francisco Amato"]
-#__version__	= "1.2.1"
+#__credits__	= ["Francisco Amato", "Micaela Ranea Sanchez"]
+#__version__	= "1.3.0"
 #__maintainer__ = "Francisco Amato"
 #__email__	= "famato@infobytesec.com"
 #__status__	= "Development"
@@ -17,7 +17,7 @@ require "xmlrpc/client"
 require "pp"
 
 
-PLUGINVERSION="Faraday v1.2.1 Ruby"
+PLUGINVERSION="Faraday v1.3 Ruby"
 #Tested: Burp Professional v1.6.09
 
 XMLRPC::Config.module_eval do
@@ -225,11 +225,17 @@ class BurpExtender
       severity="Information"
       desc="This request was manually sent using burp"
     else
-      desc=issue.getIssueDetail().to_s
-      desc+="<br/>Resolution:" + issue.getIssueBackground().to_s
-      severity=issue.getSeverity().to_s
-      issuename=issue.getIssueName().to_s
-      resolution=issue.getRemediationBackground().to_s
+      desc = issue.getIssueDetail().to_s.empty? ? "" : "Detail\n" + issue.getIssueDetail().to_s
+      background = issue.getIssueBackground().to_s
+      if !background.empty?
+        desc.concat("Background\n").concat(background)
+      end
+      severity = issue.getSeverity().to_s
+      issuename = issue.getIssueName().to_s
+      resolution = issue.getRemediationBackground().to_s
+
+      desc = desc.gsub(/<(\/p|br\/|\/li|ul|ol)>/, "\n").gsub(/<li>/, "* ").gsub(/<\/?[^>]*>/, "")
+      resolution = resolution.gsub(/<(\/p|br\/|\/li)>/, "\n").gsub(/<li>/, "* ").gsub(/<\/?[^>]*>/, "")
     end
 
     @stdout.println("New scan issue host: " +host +",name:"+ issuename +",IP:" + ip)
@@ -256,37 +262,36 @@ class BurpExtender
 
       #Menu action
       if ctx == 5 or ctx == 6 or ctx == 2
-	req = @helpers.analyzeRequest(issue.getRequest())
+      	req = @helpers.analyzeRequest(issue.getRequest())
 
-	param = getParam(req)
-	issuename += "("+issue.getUrl().getPath()[0,20]+")"
-	path = issue.getUrl().to_s
-	request = issue.getRequest().to_s
-	method = req.getMethod().to_s
-
+      	param = getParam(req)
+      	issuename += "("+issue.getUrl().getPath()[0,20]+")"
+      	path = issue.getUrl().to_s
+      	request = issue.getRequest().to_s
+      	method = req.getMethod().to_s
       else #Scan event or Menu scan tab
-	unless issue.getHttpMessages().nil? #issues with request #IHttpRequestResponse
-	  c = 0
-	  issue.getHttpMessages().each do |m|
-	    if c == 0
-	      req = @helpers.analyzeRequest(m.getRequest())
-	      path = m.getUrl().to_s
-	      request = m.getRequest().to_s
-	      method = req.getMethod().to_s
+        unless issue.getHttpMessages().nil? #issues with request #IHttpRequestResponse
+      	  c = 0
+      	  issue.getHttpMessages().each do |m|
+      	    if c == 0
+      	      req = @helpers.analyzeRequest(m.getRequest())
+      	      path = m.getUrl().to_s
+      	      request = m.getRequest().to_s
+      	      method = req.getMethod().to_s
+              response = m.getResponse().to_s
 
-	      param = getParam(req)
-	    else
-	      desc += "<br/>Request (" + c.to_s + "): " + m.getUrl().to_s
-	    end
+      	      param = getParam(req)
+      	    else
+      	      desc += "Request (" + c.to_s + "): " + m.getUrl().to_s
+      	    end
 
-	    c = c + 1
-	  end
+      	    c = c + 1
+        end
 
-	  if c == 0
-	    path = issue.getUrl().to_s
-	  end
-
-	end
+    	  if c == 0
+    	    path = issue.getUrl().to_s
+    	  end
+      end
       end
 
       #createAndAddVulnWebToService(host_id, service_id, name, desc, ref, severity, resolution, website, path, request, response,method,pname, params,query,category):
@@ -367,6 +372,5 @@ class BurpExtender
 	newScanIssue(issue, 1, true)
       end
   end
-
 
 end

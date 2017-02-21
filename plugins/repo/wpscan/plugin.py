@@ -79,7 +79,7 @@ class WPScanPlugin(core.PluginBase):
 	for e in sp:
     	    if 'Title:' in e:
                 if 'WordPress version' in e:
-                    r = re.search(r'WordPress version ([\d\.]+) identified', e) #get wordpress version
+                    r = re.search(r'WordPress version (\d.\w)', e) #get wordpress version
                     self.wpversion = r.group(1)
 
                 elif 'wp-content/themes/' in e:
@@ -138,7 +138,7 @@ class WPScanPlugin(core.PluginBase):
                                                   hostname_resolution=base_url)
 
         service_id = self.createAndAddServiceToInterface(host_id, interface_id,
-                                                         service, "tcp", ports = port)
+                                                         service, "tcp", ports = [port])
 
         potential_vulns = re.findall(r"(\[\!\].*)", output)
         for potential_vuln in potential_vulns:
@@ -164,7 +164,7 @@ class WPScanPlugin(core.PluginBase):
         protocol) from a given string. In case more than one URL is found,
         return the service and base_url of the first one, ignore others.
         """
-        search_url = re.search(r"\[\+\](.*?)URL: (https?)://(.*?)/", output)
+        search_url = re.search(r"URL: ((http[s]?)\:\/\/([\w\.]+)[.\S]+)", output)
         service, base_url = search_url.group(2), search_url.group(3)
         return service, base_url
 

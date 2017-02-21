@@ -192,7 +192,7 @@ class PluginBase(object):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
-            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            name, desc=desc, refs=ref, severity=severity, resolution=resolution,
             confirmed=False, parent_id=host_id)
 
         vuln_obj._metadata.creator = self.id
@@ -205,7 +205,7 @@ class PluginBase(object):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
-            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            name, desc=desc, refs=ref, severity=severity, resolution=resolution,
             confirmed=False, parent_id=interface_id)
 
         vuln_obj._metadata.creator = self.id
@@ -217,7 +217,7 @@ class PluginBase(object):
 
         vuln_obj = model.common.factory.createModelObject(
             Vuln.class_signature,
-            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            name, desc=desc, refs=ref, severity=severity, resolution=resolution,
             confirmed=False, parent_id=service_id)
 
         vuln_obj._metadata.creator = self.id
@@ -229,10 +229,9 @@ class PluginBase(object):
                                      website="", path="", request="",
                                      response="", method="", pname="",
                                      params="", query="", category=""):
-
         vulnweb_obj = model.common.factory.createModelObject(
             VulnWeb.class_signature,
-            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            name, desc=desc, refs=ref, severity=severity, resolution=resolution,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
             category=category, confirmed=False, parent_id=service_id)

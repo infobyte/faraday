@@ -105,6 +105,19 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
+        dashboardSrv.getServicesByCommandId = function(ws, command_id) {
+            var deferred = $q.defer();
+            ServerAPI.getServices(ws, {"command_id": command_id})
+                .then(function(res) {
+                    deferred.resolve(res.data);
+                }, function() {
+                    deferred.reject("Unable to get Services");
+                });
+
+            return deferred.promise;
+        };
+
+
         dashboardSrv.getTopServices = function(ws, colors) {
             var deferred = $q.defer();
 
@@ -125,6 +138,18 @@ angular.module('faradayApp')
                     }
                 }, function() {
                     deferred.reject("Unable to get Top Services");
+                });
+
+            return deferred.promise;
+        };
+
+        dashboardSrv.getVulnsByCommandId = function(ws, command_id) {
+            var deferred = $q.defer();
+            ServerAPI.getVulns(ws, {"command_id": command_id})
+                .then(function(res) {
+                    deferred.resolve(res.data);
+                }, function() {
+                    deferred.reject("Unable to get Vulnerabilities");
                 });
 
             return deferred.promise;
@@ -219,8 +244,7 @@ angular.module('faradayApp')
                         } else if(_cmd.duration != undefined) {
                             _cmd.duration = _cmd.duration.toFixed(2) + "s";
                         }
-                        _cmd.date = _cmd.itime * 1000;
-                        _cmd.command = _cmd.command + ' ' + _cmd.params;
+                        _cmd.date = _cmd.itime * 1000;                        
                         tmp.push(_cmd);
                     });
 
@@ -232,7 +256,7 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        dashboardSrv.getHosts = function(ws) {
+       dashboardSrv.getHosts = function(ws) {
             var deferred = $q.defer();
             ServerAPI.getHosts(ws)
                 .then(function(res) {
@@ -243,6 +267,19 @@ angular.module('faradayApp')
                         tmp.push(_host);
                     });
                     deferred.resolve(tmp);
+                }, function() {
+                    deferred.reject();
+                });
+            return deferred.promise;
+        };
+
+        dashboardSrv.getHostsCountByCommandId = function(ws, command_id) {
+
+            var deferred = $q.defer();
+          
+            ServerAPI.getHosts(ws, {"command_id": command_id })
+                .then(function(res) {
+                    deferred.resolve(res.data);
                 }, function() {
                     deferred.reject();
                 });

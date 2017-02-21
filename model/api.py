@@ -137,9 +137,9 @@ def _setUpAPIServer(hostname=None, port=None):
 # plugin created the object
 
 
-def createAndAddHost(name, os = "Unknown", category=None, update = False, old_hostname = None ):
+def createAndAddHost(name, os="Unknown"):
     host = newHost(name, os)
-    if addHost(host, category, update, old_hostname):
+    if addHost(host):
         return host.getID()
     return None
 
@@ -239,9 +239,9 @@ def createAndAddCredToService(host_id, service_id, username, password):
 
 #TODO: add class check to object passed to be sure we are adding the right thing to the model
 
-def addHost(host, category=None, update = False, old_hostname = None):
+def addHost(host):
     if host is not None:
-        __model_controller.addHostASYNC(host, category, update, old_hostname)
+        __model_controller.addHostASYNC(host)
         return True
     return False
 

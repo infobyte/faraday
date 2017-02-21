@@ -50,6 +50,7 @@ CONST_UPDATEURI = "updates_uri"
 CONST_TKTURI = "tickets_uri"
 CONST_TKTAPIPARAMS = "tickets_api"
 CONST_TKTTEMPLATE = "tickets_template"
+CONST_OSINT = "osint"
 
 CONST_LAST_WORKSPACE = "last_workspace"
 CONST_PLUGIN_SETTINGS = "plugin_settings"
@@ -151,6 +152,7 @@ class Configuration:
             self._version = self._getValue(tree, CONST_VERSION)
             self._last_workspace = self._getValue(tree, CONST_LAST_WORKSPACE, default = "untitled")
             self._plugin_settings = json.loads(self._getValue(tree, CONST_PLUGIN_SETTINGS, default = "{}"))
+            self._osint = json.loads(self._getValue(tree, CONST_OSINT, default = "{\"host\": \"shodan.io\",\"icon\": \"shodan\",\"label\": \"Shodan\"}"))
 
             self._updates_uri = self._getValue(tree, CONST_UPDATEURI, default = "https://www.faradaysec.com/scripts/updates.php")
             self._tkts_uri = self._getValue(tree, CONST_TKTURI,default = "https://www.faradaysec.com/scripts/listener.php")
@@ -271,6 +273,9 @@ class Configuration:
 
     def getPluginSettings(self):
         return self._plugin_settings
+
+    def getOsint(self):
+        return self._osint
 
     def getUpdatesUri(self):
         return self._updates_uri
@@ -393,6 +398,9 @@ class Configuration:
     def setPluginSettings(self, settings):
         self._plugin_settings = settings
 
+    def setOsint(self, config):
+        self._osint = config
+
     def setMergeStrategy(self, strategy):
         self._merge_strategy = strategy
 
@@ -476,7 +484,6 @@ class Configuration:
         HOME_PATH.text = self.getHomePath()
         ROOT.append(HOME_PATH)
 
-
         HOST_TREE_TOGGLE = Element(CONST_HOST_TREE_TOGGLE)
         HOST_TREE_TOGGLE.text = self.getHostTreeToggle()
         ROOT.append(HOST_TREE_TOGGLE)
@@ -553,6 +560,10 @@ class Configuration:
         PLUGIN_SETTINGS.text = json.dumps(self.getPluginSettings())
         ROOT.append(PLUGIN_SETTINGS)
 
+        OSINT = Element(CONST_OSINT)
+        OSINT.text = json.dumps(self.getOsint())
+        ROOT.append(OSINT)
+
         UPDATE_URI = Element(CONST_UPDATEURI)
         UPDATE_URI.text = self.getUpdatesUri()
         ROOT.append(UPDATE_URI)
@@ -572,6 +583,7 @@ class Configuration:
         self.indent(ROOT, 0)
         xml_file = os.path.expanduser(xml_file)
         ElementTree(ROOT).write(xml_file)
+
 
 def getInstanceConfiguration():
     global the_config

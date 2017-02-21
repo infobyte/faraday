@@ -77,8 +77,8 @@
                                     <td><input type="checkbox" name="{{host._id}}"/></td>
                                     <td>
                                         {{host.name}}
-                                        <a href="//www.shodan.io/search?query={{host.name}}" uib-tooltip="Search in Shodan" target="_blank">
-                                            <img ng-src="images/shodan.png" height="15px" width="15px" />
+                                        <a href="//{{osint.host}}/search?query={{host.name}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
+                                            <img ng-src="images/{{osint.icon}}.png" height="15px" width="15px" />
                                         </a>
                                     </td>
                                     <td><a href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>

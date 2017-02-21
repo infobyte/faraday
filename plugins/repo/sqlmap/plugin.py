@@ -20,6 +20,7 @@ import sys
 from BaseHTTPServer import BaseHTTPRequestHandler
 from StringIO import StringIO
 from urlparse import urlparse
+from collections import defaultdict
 
 from plugins.plugin import PluginTerminalOutput
 
@@ -236,6 +237,130 @@ class SqlmapPlugin(PluginTerminalOutput):
 
         return users
 
+    def _get_log_message(self, line):
+        """Return the message of a log line.
+
+        If the line isn't from the log it will raise a ValueError
+
+        >>> line = '[16:59:03] [INFO] fetching tables'
+        >>> self._get_log_message('line')
+        'fetching tables'
+        """
+        match = re.match(r'\[[0-9:]+\] \[\w+\] (.+)$', line)
+        if match is None:
+            raise ValueError('Incorrect format of line')
+        return match.group(1)
+
+    def _is_log_and_startswith(self, text, line):
+        try:
+            msg = self._get_log_message(line)
+        except ValueError:
+            return False
+        else:
+            return msg.startswith(text)
+
+    def _is_tables_log_line(self, line):
+        # [16:59:03] [INFO] fetching tables for databases: 'bWAPP, ...
+        return self._is_log_and_startswith('fetching tables for databases',
+                                           line)
+
+    def _is_columns_log_line(self, line):
+        # [16:59:03] [INFO] fetching columns for table ...
+        return self._is_log_and_startswith('fetching columns for table ',
+                                           line)
+
+    def _match_start_get_remaining(self, start, text):
+        """
+        If text starts with start, return text with start stripped.
+
+        Return None if it doesn't match.
+        """
+        if not text.startswith(start):
+            return
+        return text[len(start):]
+
+    def gettables(self, data):
+        """
+        Return enumerated tables of the remote database.
+        """
+        tables = defaultdict(list)  # Map database names with its tables
+        current_database = None
+        status = 'find_log_line'
+        for line in data.splitlines():
+            if status == 'find_log_line':
+                # Look for the correct log line to start searching databases
+                if self._is_tables_log_line(line):
+                    # Correct line, change status
+                    status = 'find_dbname'
+            elif self._is_log_and_startswith('', line):
+                # If another log line is reached, stop looking
+                break
+            elif status == 'find_dbname':
+                database = self._match_start_get_remaining('Database: ', line)
+                if database is not None:
+                    current_database = database
+                    status = 'find_list_start'
+            elif status == 'find_list_start':
+                # Find +--------------+ line
+                if re.match(r'^\+\-+\+$', line):
+                    # Line found
+                    status = 'find_tables'
+            elif status == 'find_tables':
+                if line.startswith('|') and line.endswith('|'):
+                    table = line[1:-1].strip()
+                    tables[current_database].append(table)
+                elif re.match(r'^\+\-+\+$', line):
+                    # Table list for this db ended
+                    status = 'find_dbname'
+            else:
+                raise RuntimeError('unknown status')
+        return tables
+
+    def getcolumns(self, data):
+        """
+        Return enumerated columns of the remote database.
+        """
+        columns = defaultdict(lambda: defaultdict(list))
+        current_table = current_database = None
+        status = 'find_log_line'
+        list_start_count = 0
+        for line in data.splitlines():
+            if status == 'find_log_line':
+                if self._is_columns_log_line(line):
+                    status = 'find_dbname'
+            elif self._is_log_and_startswith('', line) and (
+                    not self._is_columns_log_line(line)):
+                # Break if log lines other than "fetching columns..." found
+                break
+            elif status == 'find_dbname':
+                database = self._match_start_get_remaining('Database: ', line)
+                if database is not None:
+                    current_database = database
+                    status = 'find_table_name'
+            elif status == 'find_table_name':
+                table = self._match_start_get_remaining('Table: ', line)
+                if database is not None:
+                    current_table = table
+                    status = 'find_two_list_starts'
+            elif status == 'find_two_list_starts':
+                if re.match(r'^\+[\-\+]+\+$', line):
+                    list_start_count += 1
+                    if list_start_count == 2:
+                        # Start fetching columns
+                        list_start_count = 0
+                        status = 'find_columns'
+            elif status == 'find_columns':
+                if line.startswith('|') and line.endswith('|'):
+                    (name, type_) = [val.strip()
+                                     for val in line[1:-1].split('|')]
+                    columns[current_database][current_table].append(
+                        (name, type_))
+                elif re.match(r'^\+[\-\+]+\+$', line):
+                    status = 'find_dbname'
+            else:
+                raise RuntimeError('unknown status')
+        return columns
+
     def getAddress(self, hostname):
         """
         Returns remote IP address from hostname.
@@ -262,7 +387,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             from lib.core.settings import UNICODE_ENCODING
         except:
             print 'ERROR: Remember set your Sqlmap Path Setting!... Abort plugin.'
-            sys.exit(-1)
+            return
 
         self.HASHDB_MILESTONE_VALUE = HASHDB_MILESTONE_VALUE
         self.HASHDB_KEYS = HASHDB_KEYS
@@ -276,6 +401,8 @@ class SqlmapPlugin(PluginTerminalOutput):
 
         users = self.getuser(output)
         dbs = self.getdbs(output)
+        tables = self.gettables(output)
+        columns = self.getcolumns(output)
 
         db = Database(self._output_path)
         db.connect()
@@ -283,10 +410,10 @@ class SqlmapPlugin(PluginTerminalOutput):
         absFilePaths = self.hashDBRetrieve(
             self.HASHDB_KEYS.KB_ABS_FILE_PATHS, True, db)
 
-        tables = self.hashDBRetrieve(
+        brute_tables = self.hashDBRetrieve(
             self.HASHDB_KEYS.KB_BRUTE_TABLES, True, db)
 
-        columns = self.hashDBRetrieve(
+        brute_columns = self.hashDBRetrieve(
             self.HASHDB_KEYS.KB_BRUTE_COLUMNS, True, db)
 
         xpCmdshellAvailable = self.hashDBRetrieve(
@@ -295,7 +422,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         dbms_version = self.hashDBRetrieve(self.HASHDB_KEYS.DBMS, False, db)
 
         self.ip = self.getAddress(self.hostname)
-        
+
         h_id = self.createAndAddHost(self.ip)
 
         i_id = self.createAndAddInterface(
@@ -350,7 +477,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         if password:
             for k, v in password.iteritems():
                 self.createAndAddCredToService(h_id, s_id2, k, v)
-        
+
         # sqlmap.py --file-dest
         if absFilePaths:
             self.createAndAddNoteToService(
@@ -360,23 +487,51 @@ class SqlmapPlugin(PluginTerminalOutput):
                 str(absFilePaths))
 
         # sqlmap.py --common-tables
-        if tables:
-            for item in tables:
+        if brute_tables:
+            for item in brute_tables:
                 self.createAndAddNoteToService(
                     h_id,
                     s_id2,
                     "sqlmap.brutetables",
                     item[1])
 
-        # sqlmap.py --common-columns
+        # sqlmap.py --tables
+        if tables:
+            table_names = ['{}.{}'.format(db_name, table)
+                           for (db_name, db_tables) in tables.items()
+                           for table in db_tables]
+            self.createAndAddNoteToService(
+                h_id,
+                s_id2,
+                "sqlmap.tables",
+                '\n'.join(table_names)
+                )
+
+        # sqlmap.py --columns
         if columns:
+            # Create one note per database
+            for (database, tables) in columns.items():
+                text = ''
+                for (table_name, columns) in tables.items():
+                    columns_text = ', '.join(
+                        '{} {}'.format(col_name, type_)
+                        for (col_name, type_) in columns)
+                    text += '{}: {}\n'.format(table_name, columns_text)
+                self.createAndAddNoteToService(
+                    h_id,
+                    s_id2,
+                    "sqlmap.columns." + database,
+                    text)
+
+        # sqlmap.py --common-columns
+        if brute_columns:
 
             text = (
-                'Db: ' + columns[0][0] +
-                '\nTable: ' + columns[0][1] +
+                'Db: ' + brute_columns[0][0] +
+                '\nTable: ' + brute_columns[0][1] +
                 '\nColumns:')
 
-            for element in columns:
+            for element in brute_columns:
                 text += str(element[2]) + '\n'
 
             self.createAndAddNoteToService(
@@ -441,12 +596,12 @@ class SqlmapPlugin(PluginTerminalOutput):
 
         if args.u:
 
-            if args.u.find('http://') < 0 or args.u.find('https://') < 0:
+            if args.u.find('http://') < 0 and args.u.find('https://') < 0:
                 urlComponents = urlparse('http://' + args.u)
             else:
                 urlComponents = urlparse(args.u)
 
-            self.protocol = urlComponents.scheme 
+            self.protocol = urlComponents.scheme
             self.hostname = urlComponents.netloc
 
             if urlComponents.port:

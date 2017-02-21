@@ -5,26 +5,32 @@ Faraday Penetration Test IDE
 Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 '''
-import os
+import json
 
-def getCweData():
+import requests
 
-    import requests
-    import json
+from persistence.server import models
 
-    #Get elements from cwe DB in couchdb
+__description__ = 'Get Vulns filtered by Severity and change Severity based in CWE'
+__prettyname__ = 'Get Severity By CWE'
+
+SEVERITY_OPTIONS = ('unclassified', 'info', 'low', 'med', 'high', 'critical', 'all')
+
+
+def getCweData(couch_url):
+    # Get elements from cwe DB in couchdb
     headers = {'Content-Type': 'application/json'}
 
     payload = {
-    'map' :
-    'function(doc) { if(doc.severity && doc.name){'
-    'emit(doc.name, doc.severity); }}'
+        'map':
+            'function(doc) { if(doc.severity && doc.name){'
+            'emit(doc.name, doc.severity); }}'
     }
 
     r = requests.post(
-    couchdb + '/cwe/_temp_view',
-    headers = headers,
-    data = json.dumps(payload)
+        couch_url + '/cwe/_temp_view',
+        headers=headers,
+        data=json.dumps(payload)
     )
 
     response_code = r.status_code
@@ -40,7 +46,7 @@ def getCweData():
             if value == 'informational':
                 value = 'info'
 
-            dict.update( {item['key'] : value} )
+            dict.update({item['key']: value})
 
         if dict == {}:
             return None
@@ -54,40 +60,36 @@ def getCweData():
         print 'Error couchDB: ' + str(response_code) + str(r.text)
 
 
-def checkSeverity(vuln, cwe_dict, severity_choose, workspace):
-
-    import requests
-    import json
-
+def checkSeverity(vuln, cwe_dict, severity_choose, workspace, couch_url):
     severity_dict = {
-    'unclassified' : 0,
-    'info' : 1,
-    'low' : 2,
-    'med' : 3,
-    'high' : 4,
-    'critical' : 5,
-    'all' : 100
+        'unclassified': 0,
+        'info': 1,
+        'low': 2,
+        'med': 3,
+        'high': 4,
+        'critical': 5,
+        'all': 100
     }
 
-    if vuln._name in cwe_dict and severity_dict[vuln.severity] <= severity_dict[severity_choose] :
+    if vuln._name in cwe_dict and severity_dict[vuln.severity] <= severity_dict[severity_choose]:
 
         print 'Change: ' + vuln._name + ' to ' + cwe_dict[vuln._name]
 
-        #Get object Vuln
+        # Get object Vuln
         response = requests.get(
-        couchdb + '/' + workspace + '/' + str (vuln._id)
+            models.server.SERVER_URL + '/' + workspace + '/' + str(vuln._id)
         )
         vulnWeb = response.json()
 
-        #Change severity
+        # Change severity
         vulnWeb['severity'] = cwe_dict[vuln._name]
 
-        #Put changes...
+        # Put changes...
         headers = {'Content-Type': 'application/json'}
         update = requests.put(
-        couchdb + '/' + workspace + '/' + vuln._id,
-        headers = headers,
-        data = json.dumps(vulnWeb)
+            couch_url + '/' + workspace + '/' + vuln._id,
+            headers=headers,
+            data=json.dumps(vulnWeb)
         )
 
         if update.status_code == 200 or update.status_code == 201:
@@ -96,55 +98,26 @@ def checkSeverity(vuln, cwe_dict, severity_choose, workspace):
             print 'Error in update Vulnerability, status code: ' + str(update.status_code)
             print update.text
 
-help = (
-'\nGet Vulns filtered by Severity and change Severity based in CWE\n'
-'Parameters:\n'
-'1º : Filter by Severity (<=) (unclassified, info, low, med, high, critical, all)\n'
-'2º : Url to Couchdb\n'
-'3º : Workspace name\n'
-'Try help for this description.\n'
-'Example:'
-'./fplugin.py -f getSeverityByCwe.py -p high '
-'http://username:password@localhost:5984/ workspace_test_name'
-'Note: In this case, change vulns with severity high, med, low, info and unclassified'
-)
 
-if script_parameters == 'help' or script_parameters == None or script_parameters == '' :
-    print help
-    raise(Exception('Exit for help'))
+def main(workspace='', args=None, parser=None):
+    parser.add_argument('severity', nargs='?', help='Filter by Severity (<=)', default="info", choices=SEVERITY_OPTIONS)
+    parser.add_argument('--couchdb', nargs='?', help='CouchDB URL', default="http://faraday:faraday@localhost:5984")
 
-# Main
-list_parameters = script_parameters.split(' ')
+    parsed_args = parser.parse_args(args)
 
-#default value from ENV COUCHDB
-global couchdb
-couchdb = os.environ.get('COUCHDB')
+    cwe = getCweData(parsed_args.couchdb)
 
-if not couchdb and list_parameters[1]:
-    couchdb = list_parameters[1]
+    if cwe is None:
+        print 'CWE DB not downloaded....EXIT'
+        return 2, None
 
-#Default workspace
-workspace = 'untitled'
-if list_parameters[2]:
-    workspace = list_parameters[2]
+    for host in models.get_hosts(workspace):
+        for v in host.getVulns():
+            checkSeverity(v, cwe, parsed_args.severity, workspace, parsed_args.couchdb)
 
-#Default severity
-severity = 'info'
-if list_parameters[0]:
-    severity = list_parameters[0]
+        for i in host.getAllInterfaces():
+            for s in i.getAllServices():
+                for v in s.getVulns():
+                    checkSeverity(v, cwe, parsed_args.severity, workspace, parsed_args.couchdb)
 
-
-cwe = getCweData()
-
-if cwe is None:
-    print 'CWE DB not downloaded....EXIT'
-    raise(Exception('Exit CWE DB not found'))
-
-for host in api.__model_controller.getAllHosts():
-    for v in host.getVulns():
-        checkSeverity(v, cwe, severity, workspace)
-
-    for i in host.getAllInterfaces():
-        for s in i.getAllServices():
-            for v in s.getVulns():
-                checkSeverity(v, cwe, severity, workspace)
+    return 0, None

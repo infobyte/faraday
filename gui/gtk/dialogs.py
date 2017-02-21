@@ -8,6 +8,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import gi
 import webbrowser
+import os
 
 gi.require_version('Gtk', '3.0')
 
@@ -17,7 +18,7 @@ from model import guiapi
 from decorators import scrollable
 
 from compatibility import CompatibleScrolledWindow as GtkScrolledWindow
-
+from plugins import fplugin_utils
 
 CONF = getInstanceConfiguration()
 
@@ -147,8 +148,8 @@ class NewWorkspaceDialog(Gtk.Window):
         self.name_entry = Gtk.Entry()
         if self.title is not None:
             self.name_entry.set_text(self.title)
-        name_box.pack_start(name_label, True, True, 10)
-        name_box.pack_end(self.name_entry, False, False, 10)
+        name_box.pack_start(name_label, False, False, 10)
+        name_box.pack_end(self.name_entry, True, True, 10)
         return name_box
 
     def create_description_box(self):
@@ -157,8 +158,8 @@ class NewWorkspaceDialog(Gtk.Window):
         description_label = Gtk.Label()
         description_label.set_text("Description: ")
         self.description_entry = Gtk.Entry()
-        description_box.pack_start(description_label, True, True, 10)
-        description_box.pack_end(self.description_entry, False, False, 10)
+        description_box.pack_start(description_label, False, False, 10)
+        description_box.pack_end(self.description_entry, True, True, 10)
         return description_box
 
     def create_button_box(self):
@@ -212,21 +213,18 @@ class ForceNewWorkspaceDialog(NewWorkspaceDialog):
         self.connect("delete_event", lambda _, __: True)
         self.exit_faraday = exit_faraday_callback
         explanation_message = self.create_explanation_message()
-        self.main_box.pack_start(explanation_message, True, True, 10)
+        self.main_box.pack_start(explanation_message, True, True, 6)
         self.main_box.reorder_child(explanation_message, 0)
 
     def on_click_cancel(self, button):
         """Override parent's class cancel callback so it exits faraday."""
-        self.exit_faraday()
+        self.exit_faraday(parent=self)
 
     def create_explanation_message(self):
         """Returns a simple explanatory message inside a Label"""
         message = Gtk.Label()
         message.set_text("There are no workspaces available. You must "
                          "create one to continue using Faraday.")
-        message.set_line_wrap(True)
-        message.set_max_width_chars(38)
-
         return message
 
 
@@ -436,6 +434,134 @@ class PluginOptionsDialog(Gtk.Window):
 
         adecuateModel = self.models[self.id_of_selected]
         self.createAdecuatePluginSettingView(adecuateModel)
+
+
+class FaradayPluginsDialog(Gtk.Window):
+    """The dialog where the user can see details about installed plugins.
+    It is not the prettiest thing in the world but it works.
+    Creating and displaying the models of each plugin settings is specially
+    messy , there's more info in the appropiate methods"""
+
+    def __init__(self, terminal, workspace_name, parent):
+
+        Gtk.Window.__init__(self, title="Faraday Plugin")
+        self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+        self.set_transient_for(parent)
+        self.set_modal(True)
+        self.set_size_request(800, 300)
+        self._terminal = terminal
+        self._workspace_name = workspace_name
+
+        plugin_info = self.createPluginInfo()
+
+        # self.id_of_selected = plugin_info[0][0]  # default selected is first item in list
+        plugin_list = self.createPluginListView(plugin_info)
+        left_side_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        left_side_box.pack_start(plugin_list, True, True, 0)
+
+        buttonBox = Gtk.Box()
+        append_button = Gtk.Button.new_with_label("Append")
+        cancel_button = Gtk.Button.new_with_label("Cancel")
+        append_button.connect("clicked", self.on_click_append)
+        cancel_button.connect("clicked", self.on_click_cancel)
+        buttonBox.pack_start(append_button, True, True, 10)
+        buttonBox.pack_start(cancel_button, True, True, 10)
+
+        left_side_box.pack_start(buttonBox, False, False, 10)
+
+        infoBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        descriptionBox = Gtk.Box()
+
+        descriptionLabel = Gtk.Label()
+
+        self.descriptionEntry = Gtk.Label()
+
+        descriptionLabel.set_text("Description: ")
+
+        descriptionBox.pack_start(descriptionLabel, False, False, 5)
+        descriptionBox.pack_start(self.descriptionEntry, False, True, 5)
+
+        infoBox.pack_start(descriptionBox, False, False, 5)
+
+        self.pluginSpecsBox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.pluginSpecsBox.pack_start(infoBox, False, False, 5)
+
+        self.mainBox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        self.mainBox.pack_start(left_side_box, False, True, 10)
+        self.mainBox.pack_end(self.pluginSpecsBox, True, True, 10)
+
+        self.add(self.mainBox)
+
+    def on_click_append(self, button=None):
+        """On click OK button update the plugins settings and then destroy"""
+
+        self.type_faraday_plugin_command(self.name_of_selected)
+
+        self.destroy()
+
+    def on_click_cancel(self, button):
+        """On click cancel button, destroy brutally. No mercy"""
+        self.destroy()
+
+    def createPluginInfo(self):
+        """Creates and return a TreeStore where the basic information about
+        the plugins: the plugin ID, name, intended version of the tool
+        and plugin version"""
+        plugin_info = Gtk.TreeStore(str, str, str)
+
+        for key, plugin_dic in fplugin_utils.get_available_plugins().items():
+            plugin_info.append(None, [key,
+                                      plugin_dic["description"],
+                                      plugin_dic["prettyname"]
+                                      ]
+                               )
+
+        # Sort it!
+        sorted_plugin_info = Gtk.TreeModelSort(model=plugin_info)
+        sorted_plugin_info.set_sort_column_id(2, Gtk.SortType.ASCENDING)
+        return sorted_plugin_info
+
+    @scrollable(width=300)
+    def createPluginListView(self, plugin_info):
+        """Creates the view for the left-hand side list of the dialog.
+        It uses an instance of the plugin manager to get a list
+        of all available plugins"""
+
+        plugin_list_view = Gtk.TreeView(plugin_info)
+        renderer = Gtk.CellRendererText()
+        column = Gtk.TreeViewColumn("Title", renderer, text=2)
+        column.set_sort_column_id(1)
+        plugin_list_view.append_column(column)
+
+        selection = plugin_list_view.get_selection()
+        selection.connect("changed", self.on_plugin_selection)
+
+        return plugin_list_view
+
+    def on_plugin_selection(self, selection):
+        """When the user selects a plugin, it will change the text
+        displeyed on the entries to their corresponding values"""
+
+        # if the user searches for something that doesn't exists,
+        # for example, the plugin 'jsaljfdlajs', this avoids
+        # the program trying to get settings for that non-existing plugin
+        try:
+            model, treeiter = selection.get_selected()
+            self.name_of_selected = model[treeiter][0]
+            # self.id_of_selected = model[treeiter][1]
+            description = model[treeiter][1]
+
+            self.descriptionEntry.set_label(description)
+
+        except TypeError:
+            pass
+
+    def type_faraday_plugin_command(self, plugin):
+
+        command = fplugin_utils.build_faraday_plugin_command(plugin, self._workspace_name)
+        fd = self._terminal.get_pty().get_fd()
+
+        os.write(fd, command)
 
 
 class HostInfoDialog(Gtk.Window):

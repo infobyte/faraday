@@ -1,5 +1,4 @@
 #!/usr/bin/env python2.7
-# -*- coding: utf-8 -*-
 
 '''
 Faraday Penetration Test IDE
@@ -9,12 +8,13 @@ See the file 'doc/LICENSE' for the license information
 
 from persistence.server import models
 
-__description__ = 'Deletes all stored hosts'
-__prettyname__ = 'Delete All Hosts'
+__description__ = 'Get all stored credentials'
+__prettyname__ = 'List Credentials'
 
 
 def main(workspace='', args=None, parser=None):
-    for host in models.get_hosts(workspace):
-        print('Delete Host:' + host.name)
-        models.delete_host(workspace, host.id)
+    parsed_args = parser.parse_args(args)
+
+    for credential in models.get_credentials(workspace):
+        print(credential.username + ' : ' + credential.password)
     return 0, None

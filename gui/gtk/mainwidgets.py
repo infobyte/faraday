@@ -42,8 +42,8 @@ class Terminal(VteTerminal):
         self.connect("key_press_event", self.copy_or_paste)
         self.host, self.port = CONF.getApiRestfulConInfo()
 
-        faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
-        self.faraday_exec = faraday_directory + "/faraday-terminal.zsh"
+        self.faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
+        self.faraday_exec = self.faraday_directory + "/faraday-terminal.zsh"
 
         self.start_faraday()
 
@@ -59,8 +59,8 @@ class Terminal(VteTerminal):
         home_dir = os.path.expanduser('~')
         self.spawn_sync(Vte.PtyFlags.DEFAULT,
                         home_dir,
-                        [self.faraday_exec, str(self.host), str(self.port)],
-                        [],
+                        [self.faraday_exec, str(self.host), str(self.port), None],
+                        ['FARADAY_PATH=%s' % self.faraday_directory, None],
                         GLib.SpawnFlags.DO_NOT_REAP_CHILD,
                         None,
                         None)
@@ -339,7 +339,7 @@ class HostsSidebar(Gtk.Widget):
         model by modifying their corresponding hosts in the model. Return None.
         """
         host_ids = map(self._find_host_id, vulns)
-        self._modify_vuln_amounts_of_hosts_in_model(host_ids, lambda x: x+1)
+        self._modify_vuln_amounts_of_hosts_in_model(host_ids, lambda x: x + 1)
 
     def remove_relevant_vulns_from_model(self, vuln_ids):
         """Takes vulns_ids, a list of vuln ids, and removes them from
@@ -347,7 +347,7 @@ class HostsSidebar(Gtk.Widget):
         Return None.
         """
         host_ids = map(lambda v: v.getID().split(".")[0], vulns_ids)
-        self._modify_vuln_amounts_of_hosts_in_model(host_ids, lambda x: x-1)
+        self._modify_vuln_amounts_of_hosts_in_model(host_ids, lambda x: x - 1)
 
     def add_host(self, host):
         """Adds host to the model. Do not use for hosts added after
@@ -449,8 +449,8 @@ class HostsSidebar(Gtk.Widget):
         button_box.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(.1, .1, .1, .1))
         self.prev_button = Gtk.Button.new_with_label("<<")
         self.next_button = Gtk.Button.new_with_label(">>")
-        self.prev_button.connect("clicked", self.on_click_move_page, lambda x: x-1)
-        self.next_button.connect("clicked", self.on_click_move_page, lambda x: x+1)
+        self.prev_button.connect("clicked", self.on_click_move_page, lambda x: x - 1)
+        self.next_button.connect("clicked", self.on_click_move_page, lambda x: x + 1)
         button_box.pack_start(self.prev_button, True, True, 0)
         button_box.pack_start(self.progress_label, True, True, 0)
         button_box.pack_start(self.next_button, True, True, 0)
@@ -472,7 +472,7 @@ class HostsSidebar(Gtk.Widget):
 
     def update_progress_label(self):
         """Updates the progress label with values from self.page and self.number_of_pages."""
-        self.progress_label.set_label("{0} / {1}".format(self.page+1, self.number_of_pages))
+        self.progress_label.set_label("{0} / {1}".format(self.page + 1, self.number_of_pages))
 
     def create_search_entry(self):
         """Returns a simple search entry"""
@@ -623,7 +623,7 @@ class WorkspaceSidebar(Gtk.Widget):
         # change the workspace to the newly selected
         self.change_ws(self.get_selected_ws_name())
         return True  # prevents the click from selecting a workspace
-                     # this is handled manually by us on self.change_ws
+        # this is handled manually by us on self.change_ws
 
     def on_right_click(self, view, event):
         """On click, check if it was a right click. If it was,
@@ -742,26 +742,26 @@ class ConsoleLog(Gtk.Widget):
 
     def news_button(self, url, description):
 
-            anchor = self.textBuffer.create_child_anchor(
-                self.textBuffer.get_end_iter())
+        anchor = self.textBuffer.create_child_anchor(
+            self.textBuffer.get_end_iter())
 
-            button = Gtk.Button()
-            label = Gtk.Label()
+        button = Gtk.Button()
+        label = Gtk.Label()
 
-            label.set_markup(
-                'Faraday News: <a href="' + url + '"> ' +
-                description + "</a>")
+        label.set_markup(
+            'Faraday News: <a href="' + url + '"> ' +
+            description + "</a>")
 
-            button.add(label)
-            button.set_relief(Gtk.ReliefStyle.NONE)
+        button.add(label)
+        button.set_relief(Gtk.ReliefStyle.NONE)
 
-            button.connect("clicked", lambda o: webbrowser.open(url))
+        button.connect("clicked", lambda o: webbrowser.open(url))
 
-            label.show()
-            button.show()
-            self.update("\n")
+        label.show()
+        button.show()
+        self.update("\n")
 
-            self.textView.add_child_at_anchor(button, anchor)
+        self.textView.add_child_at_anchor(button, anchor)
 
     def customEvent(self, text):
         """Filters event so that only those with type 3131 get to the log.
@@ -795,7 +795,7 @@ class ConsoleLog(Gtk.Widget):
 
         # we need to take 1 from the lines to compensate for the default line
         lines = self.textBuffer.get_line_count()
-        begin = self.textBuffer.get_iter_at_line(lines-1)
+        begin = self.textBuffer.get_iter_at_line(lines - 1)
 
         # update last position, it isn't the same as when the funcion started
         last_position = self.textBuffer.get_end_iter()
@@ -904,7 +904,6 @@ class Statusbar(Gtk.Widget):
 
     def update_ws_info(self, new_host_count, new_service_count,
                        new_vuln_count):
-
         host, service, vuln = self.create_strings(new_host_count,
                                                   new_service_count,
                                                   new_vuln_count)

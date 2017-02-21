@@ -8,10 +8,11 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import re
-from persistence.server import server, models
 
-def main(workspace=''):
+from persistence.server import models
 
+
+def main(workspace='', args=None, parser=None):
     regex = (
         r"ssl\-cert|ssl\-date|Traceroute Information|TCP\/IP Timestamps Supported"
         r"|OS Identification|Common Platform Enumeration")
@@ -20,3 +21,4 @@ def main(workspace=''):
         if re.findall(regex, vuln.name, ) != []:
             print("Delete Vuln: " + vuln.name)
             models.delete_vuln(workspace, vuln.id)
+    return 0, None

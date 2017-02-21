@@ -10,3 +10,4 @@ flask
 colorama
 #extra
 psycopg2
+w3af_api_client

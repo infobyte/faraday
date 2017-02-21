@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 ###
 ## Faraday Penetration Test IDE
 ## Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
@@ -19,12 +19,14 @@ import signal
 import atexit
 child_pid = None
 
+
 def kill_child():
     global child_pid
     if child_pid is None:
         pass
     else:
         os.kill(child_pid, signal.SIGTERM)
+
 
 def is_http_url(page):
     """
@@ -37,12 +39,15 @@ def is_http_url(page):
     else:
         return False
 
+
 def exportfile(filename,zap):
+
     #Output for XML Report
     print 'Generating XML Report...'
-    filex=open(filename, 'w')
+    filex = open(filename, 'w')
     filex.write(zap.core.xmlreport)
-    filex.close()        
+    filex.close()
+
 
 def main():
 
@@ -51,25 +56,25 @@ def main():
     my_env = os.environ
     cmd = my_env["CS_ZAP"] if 'CS_ZAP' in my_env else "/usr/share/zaproxy/zap.sh"
 
-    #Parser argument in command line
+    # Parser argument in command line
     parser = argparse.ArgumentParser(description='PyZap is develop for automating security testing')
-    parser.add_argument('-t','--target', help='Network or Host for scan', required=False)
-    parser.add_argument('-o','--output', help='Output file', required=False)
+    parser.add_argument('-t', '--target', help='Network or Host for scan', required=False)
+    parser.add_argument('-o', '--output', help='Output file', required=False)
     args = parser.parse_args()
 
     # Review de Command input
-    if args.target == None:
+    if args.target is None:
         # Do nothing
         # Input data for test
         target = raw_input('[+] Enter your target: ')
-        if is_http_url(target) == True:
+        if is_http_url(target) is True:
             print '[-] Target selected: ', target
         else:
             print '[w] Please type a correct URL address'
             quit()
     else:
         # Check for valid URL addres
-        if is_http_url(args.target) == True:
+        if is_http_url(args.target) is True:
             target = args.target
             print '[-] Target selected: ', target
         else:
@@ -78,7 +83,7 @@ def main():
     print 'Starting ZAP ...'
 
     global child_pid
-    proc = subprocess.Popen([cmd,'-daemon'])
+    proc = subprocess.Popen([cmd, '-daemon'])
     child_pid = proc.pid
 
     print 'Waiting for ZAP to load, 10 seconds ...'
@@ -99,7 +104,7 @@ def main():
     zap.spider.scan(target)
     # Give the Spider a chance to start
     time.sleep(2)
-    #print 'Status %s' % zap.spider.status
+    # print 'Status %s' % zap.spider.status
     while(int(zap.spider.status) < 100):
         print 'Spider progress %: ' + zap.spider.status
         time.sleep(2)
@@ -121,7 +126,7 @@ def main():
     print 'Hosts: ' + ', '.join(zap.core.hosts)
     # print 'Alerts: '
     # pprint (zap.core.alerts())
-    #pprint (zap.core.xmlreport())
+    # pprint (zap.core.xmlreport())
     exportfile(args.output,zap)
 
     print 'Shutting down ZAP ...'

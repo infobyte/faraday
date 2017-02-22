@@ -324,17 +324,18 @@ class SqlmapPlugin(PluginTerminalOutput):
         current_table = current_database = None
         status = 'find_log_line'
         list_start_count = 0
+        list_found = False
         for line in data.splitlines():
             if status == 'find_log_line':
                 if self._is_columns_log_line(line):
                     status = 'find_dbname'
-            elif self._is_log_and_startswith('', line) and (
-                    not self._is_columns_log_line(line)):
-                # Break if log lines other than "fetching columns..." found
+            elif self._is_log_and_startswith('', line) and list_found:
+                # Don't accept log lines if the DB dump started
                 break
             elif status == 'find_dbname':
                 database = self._match_start_get_remaining('Database: ', line)
                 if database is not None:
+                    list_found = True
                     current_database = database
                     status = 'find_table_name'
             elif status == 'find_table_name':

@@ -286,19 +286,21 @@ class SqlmapPlugin(PluginTerminalOutput):
         tables = defaultdict(list)  # Map database names with its tables
         current_database = None
         status = 'find_log_line'
+        list_found = False
         for line in data.splitlines():
             if status == 'find_log_line':
                 # Look for the correct log line to start searching databases
                 if self._is_tables_log_line(line):
                     # Correct line, change status
                     status = 'find_dbname'
-            elif self._is_log_and_startswith('', line):
+            elif self._is_log_and_startswith('', line) and list_found:
                 # If another log line is reached, stop looking
                 break
             elif status == 'find_dbname':
                 database = self._match_start_get_remaining('Database: ', line)
                 if database is not None:
                     current_database = database
+                    list_found = True
                     status = 'find_list_start'
             elif status == 'find_list_start':
                 # Find +--------------+ line

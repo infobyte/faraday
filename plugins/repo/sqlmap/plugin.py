@@ -487,7 +487,7 @@ class SqlmapPlugin(PluginTerminalOutput):
                 h_id,
                 s_id2,
                 "sqlmap.absFilePaths",
-                str(absFilePaths))
+                '\n'.join(absFilePaths))
 
         # sqlmap.py --common-tables
         if brute_tables:
@@ -557,7 +557,7 @@ class SqlmapPlugin(PluginTerminalOutput):
                 h_id,
                 s_id2,
                 "db.databases",
-                str(dbs))
+                '\n'.join(dbs))
 
         for inj in self.hashDBRetrieve(self.HASHDB_KEYS.KB_INJECTIONS, True, db) or []:
 

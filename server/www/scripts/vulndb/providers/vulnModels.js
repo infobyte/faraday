@@ -11,7 +11,7 @@ angular.module('faradayApp').
 
                 vulnModelsManager.DBExists = function() {
                     var deferred = $q.defer();
-                    self = this;
+                    var self = this;
 
                     configSrv.promise.
                         then(function() {
@@ -32,7 +32,7 @@ angular.module('faradayApp').
 
                 vulnModelsManager.createDB = function() {
                     var deferred = $q.defer();
-                    self = this;
+                    var self = this;
 
                     configSrv.promise
                         .then(function() {
@@ -52,15 +52,8 @@ angular.module('faradayApp').
                 };
 
                 vulnModelsManager.create = function(data) {
-                    console.log("IN CREATE FUNCTION");
-                    console.log("CREATING: ");
-                    console.log(data);
                     var deferred = $q.defer();
-                    console.log("SELF IS: ");
-                    console.log(self);
-                    self = this;
-                    console.log("THIS IS: ");
-                    console.log(this);
+                    var self = this;
 
                     try {
                         var vulnModel = new VulnModel(data);
@@ -85,7 +78,7 @@ angular.module('faradayApp').
 
                 vulnModelsManager.delete = function(vulnModel) {
                     var deferred = $q.defer();
-                    self = this;
+                    var self = this;
 
                     vulnModel.remove().
                         then(function() {
@@ -103,7 +96,7 @@ angular.module('faradayApp').
 
                 vulnModelsManager.get = function() {
                     var deferred = $q.defer();
-                    self = this;
+                    var self = this;
 
                     configSrv.promise.
                         then(function() {
@@ -138,7 +131,11 @@ angular.module('faradayApp').
 
                 vulnModelsManager.update = function(vulnModel, data) {
                     var deferred = $q.defer();
-                    self = this;
+                    var self = this;
+
+                    if (data._rev === undefined) { 
+                        data._rev = vulnModel._rev;
+                    }
 
                     vulnModel.update(data).
                         then(function() {

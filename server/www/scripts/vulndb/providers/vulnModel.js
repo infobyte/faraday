@@ -6,14 +6,10 @@ angular.module('faradayApp').
     factory('VulnModel', ['BASEURL', 'configSrv', '$http', '$q',
         function(BASEURL, configSrv, $http, $q) {
             function VulnModel(data) {
-
-                var now = new Date();
-                var date = now.getTime() / 1000.0;
-
                 this._id = "";
                 this._rev = "";
                 this.exploitation = "";
-                this.references = "";
+                this.references = [];
                 this.name = "";
                 this.resolution = "";
                 this.cwe = "";
@@ -48,7 +44,7 @@ angular.module('faradayApp').
 
                 remove: function() {
                     var deferred = $q.defer();
-                    self = this;
+                    var self = this;
 
                     configSrv.promise.
                         then(function() {
@@ -69,7 +65,7 @@ angular.module('faradayApp').
 
                 update: function(data) {
                     var deferred = $q.defer();
-                    self = this;
+                    var self = this;
 
                     configSrv.promise.
                         then(function() {
@@ -77,8 +73,8 @@ angular.module('faradayApp').
 
                             $http.put(url, data).
                                 then(function(res) {
-                                    self.set(data);
-                                    self._rev = res.rev;
+                                    self.set(res.data);
+                                    self._rev = res.data.rev;
                                     deferred.resolve(self);
                                 }, function(res) {
                                     deferred.reject("Unable to update the Vuln Model. " + res.data.reason);
@@ -90,12 +86,7 @@ angular.module('faradayApp').
                 },
 
                 save : function() {
-                    console.log("IN SAVE FUNCTION!");
-                    console.log("THIS IS: ");
-                    console.log(this);
-                    self = this;
-                    console.log("SELF IS:");
-                    console.log(self);
+                    var self = this;
                     var deferred = $q.defer();
 
                     delete this._id;
@@ -104,13 +95,12 @@ angular.module('faradayApp').
                     configSrv.promise.
                         then(function() {
                             var url = BASEURL + configSrv.vulnModelsDB;
-                            console.log("NOW SELF IS: ");
-                            console.log(self);
 
                             $http.post(url, self).
                                 then(function(data) {
                                     self._id = data.id;
                                     self._rev = data.rev;
+                                    deferred.resolve(self);
                                 }, function(res) {
                                     deferred.reject("Unable to save the Vuln Model. " + res.data.reason)
                                 });

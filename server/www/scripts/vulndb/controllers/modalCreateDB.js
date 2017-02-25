@@ -17,15 +17,16 @@ angular.module('faradayApp')
         $scope.yes = function() {
             vulnModelsManager.createDB()
                 .then(function() {
-                    $modalInstance.close($scope.data);
+                    console.log("CLOSING!!");
+                    console.log($modalInstance);
+                    $modalInstance.close();
+                    $modalInstance.dismiss();
                 }, function() {
                     $scope.message = "There's been a problem creating the database.";
                 });
         };
 
-        $scope.no = function() {
-            $modalInstance.dismiss('cancel');
-        };
+        $scope.no = function() { };
 
         init();
     }]);

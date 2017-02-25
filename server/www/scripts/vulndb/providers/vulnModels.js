@@ -57,7 +57,6 @@ angular.module('faradayApp').
 
                     try {
                         var vulnModel = new VulnModel(data);
-
                         vulnModel.save().
                             then(function(resp) {
                                 vulnModelsManager.get().

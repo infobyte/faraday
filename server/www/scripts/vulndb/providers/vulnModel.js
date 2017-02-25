@@ -15,6 +15,7 @@ angular.module('faradayApp').
                 this.cwe = "";
                 this.desc_summary = "";
                 this.description = "";
+                this.tag = "";
 
                 if (data) {
                     if(data.name === undefined || data.name === "") {
@@ -25,7 +26,7 @@ angular.module('faradayApp').
             };
 
             VulnModel.prototype = {
-                public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'desc_summary', 'description'],
+                public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'desc_summary', 'description', 'tag'],
 
                 set: function(data) {
                     var self = this;

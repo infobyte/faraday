@@ -4,9 +4,10 @@
 
 angular.module('faradayApp')
     .controller('summarizedCtrlHostsModal',
-        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'srv_name',
-        function($scope, $modalInstance, dashboardSrv, workspace, srv_name) {
-
+        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'srv_name', 'osint', 
+        function($scope, $modalInstance, dashboardSrv, workspace, srv_name, osint) {
+            
+            $scope.osint = osint;
             $scope.sortField = 'name';
             $scope.sortReverse = false;
             $scope.clipText = "Copy to Clipboard";

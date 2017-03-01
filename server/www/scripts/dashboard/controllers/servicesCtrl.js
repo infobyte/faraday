@@ -32,6 +32,9 @@ angular.module('faradayApp')
                             },
                             workspace: function() {
                                 return $scope.workspace;
+                            },
+                            osint: function() {
+                                return $scope.osint;
                             }
                         }
                      });

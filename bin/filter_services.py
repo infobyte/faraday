@@ -80,6 +80,10 @@ def main(workspace='', args=None, parser=None):
 
                 lines += [column_data]
 
+    if not lines:
+        print "No services running on that port found."
+        return 0, None
+
     col_width = max(len(word) for row in lines for word in row) + 2
 
     if parsed_args.additional_info:

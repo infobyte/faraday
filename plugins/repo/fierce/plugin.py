@@ -67,9 +67,9 @@ class FierceParser(object):
                     self.items.append(item)
 
         self.isZoneVuln = False
+        output= output.replace('\\$', '')
         r = re.search(
-            "Whoah, it worked - misconfigured DNS server found:\r\n([^$]+)There isn't much point continuing, you have everything.",
-            output)
+            "Whoah, it worked - misconfigured DNS server found:([^$]+)\There isn't much point continuing, you have  everything.",
 
         if r is not None:
 

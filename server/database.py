@@ -2,10 +2,9 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-import os, sys, re
+import os
+import re
 import atexit
-import logging
-import threading
 import server.models
 import server.config
 import server.couchdb
@@ -16,7 +15,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound
-from restkit.errors import RequestError, Unauthorized
 
 logger = server.utils.logger.get_logger(__name__)
 
@@ -37,6 +35,9 @@ def teardown_context():
     """ This is called by Flask to cleanup sessions created in the context of a request """
     _db_manager.close_sessions()
 
+def get_manager():
+    return _db_manager
+
 
 class Manager(object):
     def __init__(self):
@@ -44,9 +45,6 @@ class Manager(object):
 
         # Open all existent databases on workspaces path
         self.__init_sessions()
-
-        # Start CouchDB database monitor
-        server.couchdb.start_dbs_monitor(self.__process_workspace_change)
 
         # Register database closing to be executed when process goes down
         atexit.register(self.close_databases)
@@ -80,7 +78,6 @@ class Manager(object):
     def __init_workspace(self, ws_name, db_conn=None):
         if ws_name not in self.__workspaces:
             new_workspace = Workspace(ws_name, db_conn=db_conn)
-            new_workspace.start_sync_job()
             self.__workspaces[ws_name] = new_workspace
 
     def get_workspace(self, ws_name):
@@ -89,14 +86,23 @@ class Manager(object):
         except KeyError:
             raise WorkspaceNotFound(ws_name)
 
-    def __process_workspace_change(self, change):
-        if change.created:
-            logger.info(u'Workspace {} was created'.format(change.db_name))
-            self.__process_new_workspace(change.db_name)
+    def create_workspace(self, workspace):
+        # create the couch database first
+        ok = server.couchdb.create_workspace(workspace)
+        if ok:
+            self.__process_new_workspace(workspace.get('name'))
+        return ok
 
-        elif change.deleted:
-            logger.info(u'Workspace {} was deleted'.format(change.db_name))
-            self.__process_delete_workspace(change.db_name)
+    def update_workspace(self, workspace):
+        # update the couch database
+        return server.couchdb.update_workspace(workspace)
+
+    def delete_workspace(self, ws_name):
+        # create the couch database first
+        ok = server.couchdb.delete_workspace(ws_name)
+        if ok:
+            self.__process_delete_workspace(ws_name)
+        return ok
 
     def __process_new_workspace(self, ws_name):
         if ws_name in self.__workspaces:
@@ -133,6 +139,9 @@ class Manager(object):
     def is_valid_workspace(self, ws_name):
         return ws_name in self.__workspaces
 
+    def __contains__(self, ws_name):
+        return self.is_valid_workspace(ws_name)
+
     def close_sessions(self):
         for workspace in self.__workspaces.values():
             workspace.close_session()
@@ -146,7 +155,6 @@ class Workspace(object):
     def __init__(self, db_name, db_conn=None, couchdb_conn=None, couchdb_server_conn=None):
         self.__db_conn = db_conn or Connector(db_name)
         self.__couchdb_conn = couchdb_conn or server.couchdb.Workspace(db_name, couchdb_server_conn)
-        self.__sync = Synchronizer(self.__db_conn, self.__couchdb_conn)
 
     @property
     def connector(self):
@@ -161,18 +169,10 @@ class Workspace(object):
     def couchdb(self):
         return self.__couchdb_conn
 
-    def start_sync_job(self):
-        self.__sync.start()
-
-    def wait_until_sync(self, timeout):
-        self.__sync.wait_until_sync(timeout)
-
     def close_session(self):
         self.__db_conn.close()
 
     def close(self):
-        self.__sync.close()
-        self.__couchdb_conn.close()
         self.close_session()
 
     def delete(self):
@@ -240,130 +240,11 @@ class Connector(object):
 
         return True
 
-
-class Synchronizer(object):
-    def __init__(self, db_conn, couchdb_conn):
-        self.__db_conn = db_conn
-        self.__db_conf = Configuration(db_conn)
-        self.__doc_importer = self.__build_doc_importer()
-        self.__couchdb_conn = couchdb_conn
-        self.__sync_seq_milestone = 0
-
-        # As far as we know, before the changes monitor is
-        # running, the data is synchronized with CouchDB
-        self.__data_sync_lock = threading.Lock()
-        self.__data_sync_event = threading.Event()
-        self.__data_sync_event.set()
-
-    def __build_doc_importer(self):
-        def post_change_cbk(change):
-            self.__last_seq = change.seq
-            # Set sync event when the database is updated relative
-            # to the milestone set
-            if self.__last_seq >= self.__sync_seq_milestone:
-                self.__data_sync_event.set()
-
-        return DocumentImporter(self.__db_conn, post_processing_change_cbk=post_change_cbk)
-
-    def start(self):
-        self.__last_seq = self.__db_conf.get_last_seq()
-        logger.debug(u'Workspace {} last update: {}'.format(self.__db_conn.db_name, self.__last_seq))
-        self.__couchdb_conn.start_changes_monitor(self.__doc_importer.process_change, last_seq=self.__last_seq)
-
-    def close(self):
-        self.__couchdb_conn.close()
-
-    def wait_until_sync(self, timeout):
-        """
-        Wait a maximum of <timeout> seconds for Faraday server to
-        synchronize its database with CouchDB. This is intended to
-        provide a solution to data inconsistencies between CouchDB
-        and the server on short windows of time between an update
-        and its importation into Faraday server's database.
-        Currently, this case is commonly seen when entities are
-        updated or added and, immediately afterwards, a query for
-        them is made.
-        """
-        # Synchronize access to data synchronization to avoid race
-        # conditions on heavy workload (mainly because multiple
-        # threads could set different milestones and clear the sync
-        # event on unexpected moments, rendering the possibility that
-        # this function returns False when data is in fact synchronized
-        # or to wait <timeout> seconds without need). (PS: maybe this
-        # not necessary given its current use and cause overhead for a
-        # situation that may not be troublesome)
-        # This may cause performance issues if processing CouchDB
-        # changes is taking a lot of time. If that is a persistent
-        # issue adjust the timeout to a lower value to minimize its
-        # impact
-        with self.__data_sync_lock:
-            self.__wait_until_database_is_sync(timeout)
-
-    def __wait_until_database_is_sync(self, timeout):
-        """
-        This function will establish a milestone by asking CouchDB's last
-        update sequence number to then wait for an event signal from the
-        changes monitor when its last procesed change is newer or as new
-        as this milestone.
-        If synchronization isn't achieved in <timeout> seconds it will
-        return False, communicating that data consistency can be ensured
-        after this call.
-        """
-        self.__set_sync_milestone()
-
-        logger.debug(u"Waiting until synchronization with CouchDB (ws: {}, couchdb: {})".format(
-            self.__last_seq, self.__sync_seq_milestone))
-
-        self.__data_sync_event.wait(timeout)
-        is_sync = self.__data_sync_event.is_set()
-
-        if is_sync:
-            logger.debug(u"Synchronized with CouchDB to seq {}".format(self.__last_seq))
-        else:
-            logger.debug(u"Synchronization timed out. Working with outdated database")
-
-        return is_sync
-
-    def __set_sync_milestone(self):
-        """
-        Set a milestone from where we can check if data is synchronized
-        between the server and CouchDB
-        """
-        self.__sync_seq_milestone = self.__couchdb_conn.get_last_seq()
-        # Clear event if last database seq version is outdated
-        # relative to CouchDB
-        if self.__last_seq < self.__sync_seq_milestone:
-            self.__data_sync_event.clear()
-
-
 class DocumentImporter(object):
     def __init__(self, db_conn, post_processing_change_cbk=None):
         self.__db_conn = db_conn
         self.__db_conf = Configuration(db_conn)
         self.__post_processing_change_cbk = post_processing_change_cbk
-
-    # CHA, CHA, CHA, CHANGESSSS
-    def process_change(self, change):
-        logger.debug(u'New change for {}: {}'.format(self.__db_conn.db_name, change.change_doc))
-
-        if change.deleted:
-            logger.debug(u'Doc {} was deleted'.format(change.doc_id))
-            self.delete_entity_from_doc_id(change.doc['_id'])
-
-        elif change.updated:
-            logger.debug(u'Doc {} was updated'.format(change.doc_id))
-            self.update_entity_from_doc(change.doc)
-
-        elif change.added:
-            if self.add_entity_from_doc(change.doc):
-                logger.debug(u'Doc {} was added'.format(change.doc_id))
-            else:
-                logger.debug(u"Doc {} was not added".format(change.doc_id))
-
-        if change.seq is not None:
-            self.__db_conf.set_last_seq(change.seq)
-            if self.__post_processing_change_cbk:
-                self.__post_processing_change_cbk(change)
 
     def add_entity_from_doc(self, document):
         """

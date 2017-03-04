@@ -24,7 +24,7 @@
                 </div>
             </div>
             <div class="form-group">
-                 <div class="col-md-4 severities">
+                 <div class="col-md-3 severities">
                     <h5>Severity</h5>
                     <button type="button" class="btn btn-default dropdown-toggle color-{{modal.data.severity}}" name="severity" data-toggle="dropdown" title="Change severity" ng-class="{'button-error': modal.data.severity === undefined}">
                     {{modal.data.severity || 'Edit severity'}} <span class="caret" style="color:#000"></span>
@@ -33,13 +33,19 @@
                         <li ng-repeat="s in modal.severities"><a href="" class="ws color-{{s}}" ng-click="modal.data.severity=s">{{s}}</a></li>
                     </ul><!-- WS navigation -->
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <h5>Ease of Resolution</h5>
                     <select class="form-control" ng-model="modal.data.easeofresolution" ng-options="e as e for e in modal.easeofresolution">
                         <option value=""></option>
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <h5>Status</h5>
+                    <select class="form-control" ng-model="modal.data.status" ng-options="e as e for e in modal.statuses">
+                        <option value=""></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
                     <h5>Confirmed</h5>
                     <input type="checkbox" id="confirmed" ng-model="modal.data.confirmed" />
                     <span class="normal-size">Confirmed</span>

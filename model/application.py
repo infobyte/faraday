@@ -11,6 +11,9 @@ import signal
 import threading
 import requests
 
+from json import loads
+from time import sleep
+
 from model.controller import ModelController
 from managers.workspace_manager import WorkspaceManager
 from plugins.controller import PluginController
@@ -38,16 +41,30 @@ class TimerClass(threading.Thread):
         threading.Thread.__init__(self)
         self.__event = threading.Event()
 
+    def sendNewstoLogGTK(self, json_response):
+
+        information = loads(json_response)
+
+        for news in information["news"]:
+            model.guiapi.notification_center.sendCustomLog(
+                "NEWS -" + news["url"] + "|" + news["description"])
+
     def run(self):
         while not self.__event.is_set():
             try:
+                sleep(5)
                 res = requests.get(
                     "https://www.faradaysec.com/scripts/updatedb.php",
                     params={'version': CONF.getVersion()},
                     timeout=1,
                     verify=True)
+
+                self.sendNewstoLogGTK(res.text)
+
             except Exception:
-                model.api.devlog("CWE database couldn't be updated")
+                model.api.devlog(
+                    "NEWS: Can't connect to faradaysec.com...")
+
             self.__event.wait(43200)
 
     def stop(self):

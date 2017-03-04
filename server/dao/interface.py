@@ -29,7 +29,7 @@ class InterfaceDAO(FaradayDAO):
                 Interface.ports_opened, Interface.ports_closed, Interface.host_id, EntityMetadata.couchdb_id,\
                 EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
                 EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
-                EntityMetadata.update_controller_action, EntityMetadata.owner)
+                EntityMetadata.update_controller_action, EntityMetadata.owner, EntityMetadata.command_id)
 
         query = self._session.query(interface_bundle).\
                 outerjoin(EntityMetadata, EntityMetadata.id == Interface.entity_metadata_id)
@@ -75,7 +75,8 @@ class InterfaceDAO(FaradayDAO):
                     'creator': interface.creator,
                     'create_time': interface.create_time,
                     'update_controller_action': interface.update_controller_action,
-                    'owner': interface.owner
+                    'owner': interface.owner,
+                    'command_id': interface.command_id
                 },
                 'host_id': interface.host_id}
             }

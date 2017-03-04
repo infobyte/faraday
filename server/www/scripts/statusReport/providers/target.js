@@ -19,14 +19,15 @@ angular.module('faradayApp')
                 });
                 hostsManager.getAllInterfaces(workspace).then(function(interfaces) {
                     interfaces.forEach(function(interf) {
-                        if (hosts_dict.hasOwnProperty(interf.parent)) {
-                            hosts_dict[interf.parent].hostnames = hosts_dict[interf.parent].hostnames.concat(interf.hostnames);
+                        host_id = interf._id.split(".")[0];
+                        if (hosts_dict.hasOwnProperty(host_id)) {
+                            hosts_dict[host_id].hostnames = hosts_dict[host_id].hostnames.concat(interf.hostnames);
                         }
                     });
                 }, function(err) {deferred.reject(err)});
                 servicesManager.getServices(workspace).then(function(services) {
                     services.forEach(function(service) {
-                        host_id = service.parent.split(".")[0];
+                        host_id = service._id.split(".")[0];
                         if (hosts_dict.hasOwnProperty(host_id)) {
                             hosts_dict[host_id].services.push(service);
                         }

@@ -45,14 +45,15 @@ class SkipfishParser(object):
         self.filepath = skipfish_filepath
 
         tmp = open(skipfish_filepath + "/samples.js", "r").read()
-        issues = json.loads(
-            self.extract_data(
-                tmp,
-                "var issue_samples =", "];",
-                lambda x: x.replace("'", '"'),
-                False,
-                False)
-            [1] + "]")
+        data = self.extract_data(
+                    tmp,
+                    "var issue_samples =", "];",
+                    lambda x: x.replace("'", '"'),
+                    False,
+                    False)
+        # Escape characters not allowed in JSON, repr fix this with double Escape
+        # Also remove \n character and space for have a valid JSON.
+        issues = json.loads(repr(data[1]).replace("\\n"," ").replace("'","") + "]")
 
         tmp = open(skipfish_filepath + "/index.html", "r").read()
         err_msg = json.loads(

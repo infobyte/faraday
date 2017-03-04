@@ -334,8 +334,7 @@ class MaltegoPlugin(core.PluginBase):
                 old_hostname = "unknown"
 
             host_id = self.createAndAddHost(
-                name=host.ip,
-                old_hostname=old_hostname)
+                name=host.ip)
 
         # Create interface
         try:

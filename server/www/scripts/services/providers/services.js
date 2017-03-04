@@ -3,7 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('servicesManager', ['BASEURL', '$http', '$q', 'Service', function(BASEURL, $http, $q, Service) {
+    .factory('servicesManager', ['BASEURL', '$http', '$q', 'Service', 'ServerAPI', 
+        function(BASEURL, $http, $q, Service, ServerAPI) {
         var servicesManager = {};
 
         servicesManager._objects = {};
@@ -26,15 +27,20 @@ angular.module('faradayApp')
 
         servicesManager._load = function(id, ws, deferred) {
             var self = this;
-            $http.get(BASEURL + '/' + ws + '/' + id)
-                .success(function(data){
-                    var service = self._get(data._id, data);
-                    deferred.resolve(service);
+            ServerAPI.getServices(ws, {'couchid': id}).
+                then(function(response) {
+                    if (response.data.services.length == 1) {
+                        var service_data = response.data.services[0].value;
+                        var service_id = service_data._id;
+                        var service = self._get(service_id, service_data);
+                        deferred.resolve(service);
+                    } else {
+                        deferred.reject("More than one object found by ID");
+                    }
+                }, function(error) {
+                    deferred.reject(error); 
                 })
-                .error(function(){
-                    deferred.reject();
-                });
-        }
+        };
 
         servicesManager.getService = function(id, ws, force_reload) {
             var deferred = $q.defer();
@@ -54,21 +60,23 @@ angular.module('faradayApp')
             var self = this;
             this._objects = {};
 
-            $http.get(BASEURL + '/' + ws + '/_design/services/_view/services')
-                .success(function(servicesArray) {
+            ServerAPI.getServices(ws)
+                .then(function(servicesArray) {
                     var services = [];
-                    servicesArray.rows.forEach(function(serviceData) {
+                    servicesArray.data.services.forEach(function(serviceData) {
                         var service = self._get(serviceData.value._id, serviceData.value);
                         services.push(service);
                     });
                     deferred.resolve(services);
-                })
-                .error(function(){
+                }, function(){
                     deferred.reject();
                 })
             return deferred.promise;
         }
 
+        // XXX: this still uses couch 
+        // host_id is the couch host_id, but the server allows grouping
+        // by server ID D: D: D: D: 
         servicesManager.getServicesByHost = function(ws, host_id) {
             var deferred = $q.defer();
             var url = BASEURL + "/" + ws + "/_design/services/_view/byhost?key=\"" + host_id + "\"";
@@ -108,9 +116,9 @@ angular.module('faradayApp')
             var deferred = $q.defer();
             var promises =  [];
             services.forEach(function(service) {
-                var url = BASEURL + "_api/ws/" + ws + "/services?couchid=" + service._id;
-                promises.push($http.get(url));
+                promises.push(ServerAPI.getServices(ws, {'couchid': service._id}));
             });
+
             $q.all(promises).then(function(services){
                 var result = {};
                 services.forEach(function(service) {

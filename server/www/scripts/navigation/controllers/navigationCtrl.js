@@ -3,23 +3,41 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('navigationCtrl', ['$scope', '$http', '$route', '$routeParams', '$cookies', '$location', '$interval', '$uibModal', 'configSrv', 'workspacesFact',
-        function($scope, $http, $route, $routeParams, $cookies, $location, $interval, $uibModal, configSrv, workspacesFact) {
+    .controller('navigationCtrl', ['$scope', '$http', '$route', '$routeParams', '$cookies', '$location', '$interval', '$uibModal', 'configSrv', 'workspacesFact', 'Notification',
+        function($scope, $http, $route, $routeParams, $cookies, $location, $interval, $uibModal, configSrv, workspacesFact, Notification) {
 
-        $scope.workspace = "";
+        $scope.workspace = "asd";
         $scope.component = "";
         var componentsNeedsWS = ["dashboard","status","hosts"];
 
-        $scope.checkCwe = function() {
-            $http.get("https://www.faradaysec.com/scripts/updatedb.php?version=" + configSrv.faraday_version).then(function() {
+        $scope.checkNews = function() {
+             $http.get('https://www.faradaysec.com/scripts/updatedb.php?version=' + configSrv.faraday_version).then(function(response) {
+                 try{
+                     response.data['news'].forEach(function(element) {
+
+                         var childScope = $scope.$new();
+                         childScope.url = element['url'];
+
+                         Notification.info({
+                             message: element['description'],
+                             title: 'x',
+                             scope: childScope,
+                             delay: 'ALWAYS',
+                             templateUrl: 'scripts/navigation/partials/notification.html'});
+                      }, this);
+                 }
+                 catch(error){
+                     console.log("Can't connect to faradaysec.com");
+                 }
+                
             }, function() {
-                console.log("CWE database couldn't be updated");
+                console.log("Can't connect to faradaysec.com");
             });
         };
 
         configSrv.promise.then(function() {
-            var timer = $interval($scope.checkCwe, 43200000);
-            $scope.checkCwe();
+            var timer = $interval($scope.checkNews, 43200000);
+            $scope.checkNews();
         });
 
         $scope.$on('$destroy', function() {

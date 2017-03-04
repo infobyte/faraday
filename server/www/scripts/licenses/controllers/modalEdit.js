@@ -4,14 +4,14 @@
 
 angular.module('faradayApp')
     .controller('licensesModalEdit',
-        ['$scope', '$modalInstance', 'license',
-        function($scope, $modalInstance, license) {
+        ['$scope', '$modalInstance', 'License', 'license',
+        function($scope, $modalInstance, License, license) {
 
         $scope.data;
         $scope.openedStart;
         $scope.openedEnd;
 
-        init = function() {
+        var init = function() {
             $scope.data = new License;
             $scope.data.set(license);
 

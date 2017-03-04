@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('hostsManager', ['BASEURL', '$http', '$q', 'Host', 'commonsFact', function(BASEURL, $http, $q, Host, commonsFact) {
+    .factory('hostsManager', ['BASEURL', '$http', '$q', 'ServerAPI', 'Host', 'commonsFact', function(BASEURL, $http, $q, ServerAPI, Host, commonsFact) {
         var hostsManager = {};
 
         hostsManager._objects = {};
@@ -27,12 +27,15 @@ angular.module('faradayApp')
 
         hostsManager._load = function(id, ws, deferred) {
             var self = this;
-            $http.get(BASEURL + ws + '/' + id)
-                .success(function(data){
-                    var host = self._get(data._id, data);
-                    deferred.resolve(host);
-                })
-                .error(function(){
+            ServerAPI.getHosts(ws, {couchid: id}).then(
+                function(response){
+                    if (response.data.rows.length === 1) {
+                        var host = self._get(response.data.rows[0].id, response.data.rows[0].value);
+                        deferred.resolve(host);
+                    } else {
+                        deferred.reject();
+                    }
+                }, function(){
                     deferred.reject();
                 });
         };
@@ -53,20 +56,21 @@ angular.module('faradayApp')
 
         hostsManager.getHosts = function(ws, page, page_size, filter, sort, sort_direction) {
             var deferred = $q.defer();
-            var url = BASEURL + '_api/ws/' + ws + '/hosts';
 
-            url = commonsFact.addPresentationParams(url, page, page_size, filter, sort, sort_direction);
-
-            $http.get(url)
+            options = {page: page, page_size: page_size, sort:sort, sort_dir: sort_direction}
+            for( var property in filter ) {
+                if (filter.hasOwnProperty(property)) {
+                    options[property] = filter[property];
+                }
+            };
+            ServerAPI.getHosts(ws, options)
                 .then(function(response) {
                     var result = { hosts: [], total: 0 };
                     response.data.rows.forEach(function(host_data) {
                         host = new Host(host_data.value);
                         result.hosts.push(host);
                     });
-
                     result.total = response.data.total_rows;
-
                     deferred.resolve(result);
                 }, function(response) {
                     deferred.reject();
@@ -154,64 +158,43 @@ angular.module('faradayApp')
         hostsManager.getAllInterfaces = function(ws) {
             var deferred = $q.defer(),
             self = this;
-
-            var url = BASEURL + ws + '/_design/interfaces/_view/interfaces';
-
-            $http.get(url)
-                .success(function(ints) {
+            ServerAPI.getInterfaces(ws) 
+                .then(function(ints) {
                     var interfaces = [];
-
-                    ints.rows.forEach(function(interf) {
+                    ints.data.interfaces.forEach(function(interf) {
                         interfaces.push(interf.value);
                     });
 
                     deferred.resolve(interfaces);
-                })
-                .error(function() {
+                }, function() {
                     deferred.reject("Unable to retrieve Interfaces");
                 });
 
             return deferred.promise;
         };
 
-        hostsManager.getAllVulnsCount = function(ws) {
+        var get_count = function(ws, object) {
             var deferred = $q.defer();
-
-            var url = BASEURL + ws + '/_design/vulns/_view/byhost?group=true';
-
-            $http.get(url)
-                .success(function(vulns) {
-                    deferred.resolve(vulns.rows);
-                })
-                .error(function() {
-                    deferred.reject("Unable to load Vulnerabilities");
-                });
-
+            ServerAPI.getWorkspaceSummary(ws).then(
+                function(summary) {
+                    deferred.resolve(summary[object])
+                }, function() {
+                    deferred.reject("Unable to get vulnerability count")
+                }
+            )
             return deferred.promise;
+        };
+
+
+        hostsManager.getAllVulnsCount = function(ws) {
+            return this.get_count(ws, 'total_vulns');
         };
 
         hostsManager.getAllServicesCount = function(ws) {
-            var deferred = $q.defer();
-
-            var url = BASEURL + ws + '/_design/hosts/_view/byservicecount?group=true';
-
-            $http.get(url)
-                .success(function(allrows) {
-                    var services = {};
-
-                    allrows.rows.forEach(function(service) {
-                        services[service.key] = service.value;
-                    });
-
-                    deferred.resolve(services);
-                })
-                .error(function() {
-                    deferred.reject("Unable to load Services");
-                });
-
-            return deferred.promise;
+            return this.get_count(ws, 'services');
         };
 
+        // XXX: THIS STILL USES VIEWS
         hostsManager.getInterfaces = function(ws, id) {
             var deferred = $q.defer(),
             self = this;

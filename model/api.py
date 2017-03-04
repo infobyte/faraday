@@ -91,9 +91,7 @@ def _setUpAPIServer(hostname=None, port=None):
                 # register all the api functions to be exposed by the server
                 _xmlrpc_api_server.register_function(createAndAddHost)
                 _xmlrpc_api_server.register_function(createAndAddInterface)
-                _xmlrpc_api_server.register_function(createAndAddServiceToApplication)
                 _xmlrpc_api_server.register_function(createAndAddServiceToInterface)
-                _xmlrpc_api_server.register_function(createAndAddApplication)
                 _xmlrpc_api_server.register_function(createAndAddNoteToService)
                 _xmlrpc_api_server.register_function(createAndAddNoteToHost)
                 _xmlrpc_api_server.register_function(createAndAddNoteToNote)
@@ -102,13 +100,10 @@ def _setUpAPIServer(hostname=None, port=None):
                 _xmlrpc_api_server.register_function(createAndAddVulnToHost)
                 _xmlrpc_api_server.register_function(addHost)
                 _xmlrpc_api_server.register_function(addInterface)
-                _xmlrpc_api_server.register_function(addServiceToApplication)
                 _xmlrpc_api_server.register_function(addServiceToInterface)
-                _xmlrpc_api_server.register_function(addApplication)
                 _xmlrpc_api_server.register_function(newHost)
                 _xmlrpc_api_server.register_function(newInterface)
                 _xmlrpc_api_server.register_function(newService)
-                _xmlrpc_api_server.register_function(newApplication)
                 _xmlrpc_api_server.register_function(devlog)
 
                 #TODO: check if all necessary APIs are registered here!!
@@ -142,9 +137,9 @@ def _setUpAPIServer(hostname=None, port=None):
 # plugin created the object
 
 
-def createAndAddHost(name, os = "Unknown", category=None, update = False, old_hostname = None ):
+def createAndAddHost(name, os="Unknown"):
     host = newHost(name, os)
-    if addHost(host, category, update, old_hostname):
+    if addHost(host):
         return host.getID()
     return None
 
@@ -167,19 +162,6 @@ def createAndAddInterface(host_id, name = "", mac = "00:00:00:00:00:00",
         return interface.getID()
     return None
 
-def createAndAddApplication(host_id, name, status = "running", version = "unknown"):
-    application = newApplication(name, status, version)
-    if addApplication(host_id, application):
-        return application.getID()
-    return None
-
-def createAndAddServiceToApplication(host_id, application_id, name, protocol = "tcp?",
-                ports = [], status = "running", version = "unknown", description = ""):
-    service = newService(name, protocol, ports, status, version, description)
-    if addServiceToApplication(host_id, application_id, service):
-        return service.getID()
-    return None
-
 def createAndAddServiceToInterface(host_id, interface_id, name, protocol = "tcp?",
                 ports = [], status = "running", version = "unknown", description = ""):
     service = newService(name, protocol, ports, status, version, description, parent_id=interface_id)
@@ -198,12 +180,6 @@ def createAndAddVulnToHost(host_id, name, desc, ref, severity, resolution):
 def createAndAddVulnToInterface(host_id, interface_id, name, desc, ref, severity, resolution):
     vuln = newVuln(name, desc, ref, severity, resolution, parent_id=interface_id)
     if addVulnToInterface(host_id, interface_id, vuln):
-        return vuln.getID()
-    return None
-
-def createAndAddVulnToApplication(host_id, application_id, name, desc, ref, severity, resolution):
-    vuln = newVuln(name, desc, ref, severity, resolution)
-    if addVulnToApplication(host_id, application_id, vuln):
         return vuln.getID()
     return None
 
@@ -239,12 +215,6 @@ def createAndAddNoteToInterface(host_id, interface_id, name, text):
         return note.getID()
     return None
 
-def createAndAddNoteToApplication(host_id, application_id, name, text):
-    note = newNote(text)
-    if addNoteToApplication(host_id, application_id, note):
-        return note.getID()
-    return None
-
 def createAndAddNoteToService(host_id, service_id, name, text):
     note = newNote(name, text, parent_id=service_id)
     if addNoteToService(host_id, service_id, note):
@@ -269,9 +239,9 @@ def createAndAddCredToService(host_id, service_id, username, password):
 
 #TODO: add class check to object passed to be sure we are adding the right thing to the model
 
-def addHost(host, category=None, update = False, old_hostname = None):
+def addHost(host):
     if host is not None:
-        __model_controller.addHostASYNC(host, category, update, old_hostname)
+        __model_controller.addHostASYNC(host)
         return True
     return False
 
@@ -281,17 +251,6 @@ def addInterface(host_id, interface):
         return True
     return False
 
-def addApplication(host_id, application):
-    if application is not None:
-        __model_controller.addApplicationASYNC(host_id, application)
-        return True
-    return False
-
-def addServiceToApplication(host_id, application_id, service):
-    if service is not None:
-        __model_controller.addServiceToApplicationASYNC(host_id, application_id, service)
-        return True
-    return False
 
 def addServiceToInterface(host_id, interface_id, service):
     if service is not None:
@@ -313,12 +272,6 @@ def addVulnToInterface(host_id, interface_id, vuln):
         return True
     return False
 
-def addVulnToApplication(host_id, application_id, vuln):
-    if vuln is not None:
-        __model_controller.addVulnToApplicationASYNC(host_id, application_id, vuln)
-        return True
-    return False
-
 def addVulnToService(host_id, service_id, vuln):
     if vuln is not None:
         __model_controller.addVulnToServiceASYNC(host_id, service_id, vuln)
@@ -332,12 +285,7 @@ def addVulnWebToService(host_id, service_id, vuln):
         return True
     return False
 
-
-
 # Notes
-
-
-
 
 def addNoteToHost(host_id, note):
     if note is not None:
@@ -348,12 +296,6 @@ def addNoteToHost(host_id, note):
 def addNoteToInterface(host_id, interface_id, note):
     if note is not None:
         __model_controller.addNoteToInterfaceASYNC(host_id, interface_id, note)
-        return True
-    return False
-
-def addNoteToApplication(host_id, application_id, note):
-    if note is not None:
-        __model_controller.addNoteToApplicationASYNC(host_id, application_id, note)
         return True
     return False
 
@@ -383,9 +325,6 @@ def delHost(hostname):
     __model_controller.delHostASYNC(hostname)
     return True
 
-def delApplication(hostname,appname):
-    __model_controller.delApplicationASYNC(hostname,appname)
-    return True
 
 def delInterface(hostname,intname):
     __model_controller.delInterfaceASYNC(hostname,intname)
@@ -399,15 +338,8 @@ def delServiceFromInterface(hostname, intname, service, remote = True):
     __model_controller.delServiceFromInterfaceASYNC(hostname,intname,service)
     return True
 
-def delServiceFromApplication(hostname, appname, service):
-    __model_controller.delServiceFromApplicationASYNC(hostname,appname,service)
-    return True
 
 # Vulnerability
-#-------------------------------------------------------------------------------
-def delVulnFromApplication(vuln, hostname, appname):
-    __model_controller.delVulnFromApplicationASYNC(hostname, appname, vuln)
-    return True
 #-------------------------------------------------------------------------------
 def delVulnFromInterface(vuln, hostname, intname):
     __model_controller.delVulnFromInterfaceASYNC(hostname,intname, vuln)
@@ -423,10 +355,6 @@ def delVulnFromService(vuln, hostname, srvname):
     return True
 
 # Notes
-#-------------------------------------------------------------------------------
-def delNoteFromApplication(note, hostname, appname):
-    __model_controller.delNoteFromApplicationASYNC(hostname, appname, note)
-    return True
 #-------------------------------------------------------------------------------
 def delNoteFromInterface(note, hostname, intname):
     __model_controller.delNoteFromInterfaceASYNC(hostname,intname, note)
@@ -450,14 +378,12 @@ def delCredFromService(cred, hostname, srvname):
 # CREATION APIS
 #-------------------------------------------------------------------------------
 
-
 def newHost(name, os = "Unknown"):
     """
     It creates and returns a Host object.
     The object created is not added to the model.
     """
     return __model_controller.newHost(name, os)
-
 
 def newInterface(name = "", mac = "00:00:00:00:00:00",
                  ipv4_address = "0.0.0.0", ipv4_mask = "0.0.0.0",
@@ -522,17 +448,6 @@ def newCred(username, password, parent_id=None):
     The created object is not added to the model.
     """
     return __model_controller.newCred(username, password, parent_id)
-
-
-#-------------------------------------------------------------------------------
-def newApplication(name, status = "running", version = "unknown"):
-    """
-    It creates and returns an Application object.
-    The created object is not added to the model.
-    """
-    return model.common.factory.createModelObject("HostApplication",name,
-                                                  status = status,
-                                                  version = version)
 
 #-------------------------------------------------------------------------------
 
@@ -654,7 +569,6 @@ def showPopup(msg, level="Information"):
 def pluginStart(name):
     __model_controller.addPluginStart(name)
 
-
 def pluginEnd(name):
     __model_controller.addPluginEnd(name)
 
@@ -670,7 +584,6 @@ def getLoggedUser():
 #TODO: implement!!!!!
 def getLocalDefaultGateway():
     return gateway()
-
 
 def getActiveWorkspace():
     return __workspace_manager.getActiveWorkspace()

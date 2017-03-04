@@ -30,9 +30,9 @@ class ModelObjectDiff(object):
     def getPropertiesDiff(self):
         prop_diff = {}
         for attrname in self.obj1.publicattrsrefs().keys():
-            info = lambda attr_ref: attr_ref() if callable(attr_ref) else attr_ref
+            def info(attr_ref): return attr_ref() if callable(attr_ref) else attr_ref
             prop1 = info(self.obj1.__getattribute__(self.obj1.publicattrsrefs().get(attrname)))
-            prop2 = info(self.obj2.__getattribute__(self.obj2.publicattrsrefs.get(attrname)))
+            prop2 = info(self.obj2.__getattribute__(self.obj2.publicattrsrefs().get(attrname)))
             if prop1 != prop2:
                 prop_diff[attrname] = (prop1, prop2)
 

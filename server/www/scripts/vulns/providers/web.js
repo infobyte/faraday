@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('WebVuln', ['Vuln', 'BASEURL', '$http', function(Vuln, BASEURL, $http) {
+    .factory('WebVuln', ['Vuln', 'BASEURL', function(Vuln, BASEURL) {
         WebVuln = function(ws, data) {
             Vuln.call(this, data);
             if(data) {

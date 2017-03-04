@@ -11,7 +11,7 @@ $.ajaxSetup({
 var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.bootstrap', 'angularFileUpload',
                                                 'filter', 'ngClipboard', 'ngCookies', 'cfp.hotkeys', 'chart.js',
                                                 'ui.grid', 'ui.grid.selection', 'ui.grid.grouping', 'ngSanitize',
-                                                'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment'])
+                                                'ui.grid.pagination', 'ui.grid.pinning', 'angularMoment', 'ui-notification'])
     .constant("BASEURL", (function() {
         var url = window.location.origin + "/";
         return url;
@@ -36,6 +36,15 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
             "unclassified"
         ];
         return severities;
+    })())
+    .constant("STATUSES", (function() {
+        var statuses = [
+            "opened",
+            "closed",
+            "re-opened",
+            "risk-accepted"
+        ];
+        return statuses;
     })());
 
 faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, ngClipProvider) {
@@ -204,8 +213,7 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, 
             title: 'Users | '
         }).
         otherwise({
-            templateUrl: 'scripts/commons/partials/home.html',
-            controller: 'statusReportCtrl'
+            templateUrl: 'scripts/commons/partials/home.html'
         });
 }]);
 

@@ -61,7 +61,7 @@ class NmapXmlParser(object):
         try:
             return ET.fromstring(xml_output)
         except SyntaxError, err:
-            print "SyntaxError: %s. %s" % (err, filepath)
+            print "SyntaxError: %s." % (err)
             return None
 
     def get_hosts(self, tree):

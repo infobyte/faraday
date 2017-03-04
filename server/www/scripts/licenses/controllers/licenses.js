@@ -4,269 +4,216 @@
 
 angular.module('faradayApp')
     .controller('licensesCtrl',
-        ['$scope', '$cookies', '$filter', '$location', '$q', '$route', '$routeParams', '$uibModal', 'commonsFact', 'licensesManager',
-        function($scope, $cookies, $filter, $location, $q, $route, $routeParams, $uibModal, commonsFact, licensesManager) {
+        ['$scope', '$filter', '$q', '$uibModal', 'commonsFact', 'licensesManager',
+        function($scope, $filter, $q, $uibModal, commonsFact, licensesManager) {
 
-            $scope.currentPage;
-            $scope.DBExists = false;
-            $scope.expression;
+            $scope.db_exists = false;
+            $scope.expiration_month = false;
             $scope.licenses = [];
             $scope.loaded_licenses = false;
-            $scope.expiration_month = false;
-            $scope.newCurrentPage;
-            $scope.newPageSize;
-            $scope.pageSize;
             $scope.reverse;
             $scope.search;
-            $scope.searchParams;
             $scope.selectall_licenses;
-            $scope.sortField;
+            $scope.sort_field;
             $scope.store;
 
-        init = function() {
-            $scope.store = "https://appstore.faradaysec.com/";
+            var init = function() {
+                $scope.store = "https://appstore.faradaysec.com/search/?q=";
 
-            // table stuff
-            $scope.selectall_licenses = false;
-            $scope.sortField = "end";
-            $scope.reverse = true;
+                // table stuff
+                $scope.selectall_licenses = false;
+                $scope.sort_field = "end";
+                $scope.reverse = true;
 
-            // pagination stuff
-            $scope.pageSize = 100;
-            $scope.currentPage = 0;
-            $scope.newCurrentPage = 0;
-            if(!isNaN(parseInt($cookies.pageSize))) $scope.pageSize = parseInt($cookies.pageSize);
-            $scope.newPageSize = $scope.pageSize;
-
-            // current search
-            $scope.search = $routeParams.search;
-            $scope.searchParams = "";
-            $scope.expression = {};
-            if($scope.search != "" && $scope.search != undefined && $scope.search.indexOf("=") > -1) {
-                // search expression for filter
-                $scope.expression = commonsFact.decodeSearch($scope.search);
-                // search params for search field, which shouldn't be used for filtering
-                $scope.searchParams = commonsFact.stringSearch($scope.expression);
-            }
-
-            licensesManager.DBExists()
-                .then(function(exists) {
-                    if(!exists) {
-                        $uibModal.open(config = {
-                            templateUrl: 'scripts/licenses/partials/modalCreateDB.html',
-                            controller: 'licensesModalCreateDB',
-                            size: 'lg'
-                        }).result.then(function() {
-                            $scope.DBExists = true;
-                        }, function(message) {
-                            // The user didn't create the DB, do nothing!
-                        });
-                    } else {
-                        $scope.DBExists = true;
-                        licensesManager.get()
-                            .then(function() {
-                                $scope.licenses = licensesManager.licenses;
-                                $scope.loaded_licenses = true;
-
-                                $scope.expiration_month = $scope.isExpirationMonth($scope.licenses);
+                licensesManager.DBExists()
+                    .then(function(exists) {
+                        if(!exists) {
+                            $uibModal.open({
+                                templateUrl: 'scripts/licenses/partials/modalCreateDB.html',
+                                controller: 'licensesModalCreateDB',
+                                size: 'lg'
+                            }).result.then(function() {
+                                $scope.db_exists = true;
+                            }, function(message) {
+                                // The user didn't create the DB, do nothing!
                             });
-                    }
-                }, function(message) {
-                    commonsFact.errorDialog(message);
-                });
+                        } else {
+                            $scope.db_exists = true;
+                            licensesManager.get()
+                                .then(function() {
+                                    $scope.licenses = licensesManager.licenses;
+                                    $scope.loaded_licenses = true;
 
-            $scope.$watch(function() {
-                return licensesManager.licenses;
-            }, function(newVal, oldVal) {
-                $scope.licenses = licensesManager.licenses;
-                $scope.loaded_licenses = true;
-                $scope.expiration_month = $scope.isExpirationMonth(newVal);
-            }, true);
-        };
-
-        $scope.almostExpired = function(end) {
-            var end_date = new Date(end),
-            today = new Date();
-            return (end_date.getMonth() == today.getMonth()) && (end_date.getYear() == today.getYear());
-        };
-
-        $scope.isExpirationMonth = function(licenses) {
-            return licenses.some(function(elem, index, array) {
-                return $scope.almostExpired(elem.end);
-            });
-        };
-
-        // changes the URL according to search params
-        $scope.searchFor = function(search, params) {
-            var url = "/licenses";
-
-            if(search && params != "" && params != undefined) {
-                url += "/search/" + commonsFact.encodeSearch(params);
-            }
-
-            $location.path(url);
-        };
-
-        $scope.go = function() {
-            $scope.pageSize = $scope.newPageSize;
-            $cookies.pageSize = $scope.pageSize;
-            $scope.currentPage = 0;
-            if($scope.newCurrentPage <= parseInt($scope.licenses.length/$scope.pageSize)
-                    && $scope.newCurrentPage > -1 && !isNaN(parseInt($scope.newCurrentPage))) {
-                $scope.currentPage = $scope.newCurrentPage;
-            }
-        };
-
-        $scope.remove = function(ids) {
-            var confirmations = [];
-
-            ids.forEach(function(id) {
-                var deferred = $q.defer();
-
-                licensesManager.delete(id, $scope.workspace)
-                    .then(function(resp) {
-                        deferred.resolve(resp);
+                                    $scope.expiration_month = $scope.isExpirationMonth($scope.licenses);
+                                });
+                        }
                     }, function(message) {
-                        deferred.reject(message);
+                        commonsFact.errorDialog(message);
                     });
 
-                confirmations.push(deferred);
-            });
+                $scope.$watch(function() {
+                    return licensesManager.licenses;
+                }, function(newVal, oldVal) {
+                    $scope.licenses = licensesManager.licenses;
+                    $scope.loaded_licenses = true;
+                    $scope.expiration_month = $scope.isExpirationMonth(newVal);
+                }, true);
+            };
 
-            return $q.all(confirmations);
-        };
+            $scope.almostExpired = function(end) {
+                var end_date = new Date(end),
+                today = new Date();
+                return (end_date.getMonth() == today.getMonth()) && (end_date.getYear() == today.getYear());
+            };
 
-        $scope.delete = function() {
-            var selected = $scope.selectedLicenses();
-
-            if(selected.length == 0) {
-                $uibModal.open(config = {
-                    templateUrl: 'scripts/commons/partials/modalKO.html',
-                    controller: 'commonsModalKoCtrl',
-                    size: 'sm',
-                    resolve: {
-                        msg: function() {
-                            return 'No licenses were selected to delete';
-                        }
-                    }
+            $scope.isExpirationMonth = function(licenses) {
+                return licenses.some(function(elem, index, array) {
+                    return $scope.almostExpired(elem.end);
                 });
-            } else {
-                var message = "A license will be deleted";
-                if(selected.length > 1) {
-                    message = selected.length  + " licenses will be deleted";
+            };
+
+            $scope.remove = function(ids) {
+                var confirmations = [];
+
+                ids.forEach(function(id) {
+                    var deferred = $q.defer();
+
+                    licensesManager.delete(id, $scope.workspace)
+                        .then(function(resp) {
+                            deferred.resolve(resp);
+                        }, function(message) {
+                            deferred.reject(message);
+                        });
+
+                    confirmations.push(deferred);
+                });
+
+                return $q.all(confirmations);
+            };
+
+            $scope.delete = function() {
+                var selected = $scope.selectedLicenses();
+
+                if(selected.length == 0) {
+                    $uibModal.open({
+                        templateUrl: 'scripts/commons/partials/modalKO.html',
+                        controller: 'commonsModalKoCtrl',
+                        size: 'sm',
+                        resolve: {
+                            msg: function() {
+                                return 'No licenses were selected to delete';
+                            }
+                        }
+                    });
+                } else {
+                    var message = "A license will be deleted";
+                    if(selected.length > 1) {
+                        message = selected.length  + " licenses will be deleted";
+                    }
+                    message = message.concat(". This operation cannot be undone. Are you sure you want to proceed?");
+                    $uibModal.open({
+                        templateUrl: 'scripts/commons/partials/modalDelete.html',
+                        controller: 'commonsModalDelete',
+                        size: 'lg',
+                        resolve: {
+                            msg: function() {
+                                return message;
+                            }
+                        }
+                    }).result.then(function() {
+                        $scope.remove(selected);
+                    }, function() {
+                        //dismised, do nothing
+                    });
                 }
-                message = message.concat(". This operation cannot be undone. Are you sure you want to proceed?");
-                $uibModal.open(config = {
-                    templateUrl: 'scripts/commons/partials/modalDelete.html',
-                    controller: 'commonsModalDelete',
-                    size: 'lg',
-                    resolve: {
-                        msg: function() {
-                            return message;
-                        }
-                    }
-                }).result.then(function() {
-                    $scope.remove(selected);
-                }, function() {
-                    //dismised, do nothing
-                });
-            }
-        };
+            };
 
-        $scope.insert = function(data) {
-            licensesManager.create(data)
-                .catch(function(message) {
-                    commonsFact.errorDialog(message);
-                });
-        };
+            $scope.insert = function(data) {
+                licensesManager.create(data)
+                    .catch(function(message) {
+                        commonsFact.errorDialog(message);
+                    });
+            };
 
-        $scope.new = function() {
-            var modal = $uibModal.open({
-                templateUrl: 'scripts/licenses/partials/modalNew.html',
-                controller: 'licensesModalNew',
-                size: 'lg',
-                resolve: {}
-             });
-
-            modal.result
-                .then(function(data) {
-                    $scope.insert(data);
-                });
-        };
-
-        $scope.update = function(license, data) {
-            licensesManager.update(license, data)
-                .catch(function(message) {
-                    commonsFact.errorDialog(message);
-                });
-        };
-
-        $scope.edit = function() {
-            if($scope.selectedLicenses().length == 1) {
-                var license = $scope.selectedLicenses()[0];
+            $scope.new = function() {
                 var modal = $uibModal.open({
-                    templateUrl: 'scripts/licenses/partials/modalEdit.html',
-                    controller: 'licensesModalEdit',
+                    templateUrl: 'scripts/licenses/partials/modalNew.html',
+                    controller: 'licensesModalNew',
                     size: 'lg',
-                    resolve: {
-                        license: function() {
-                            return license;
-                        }
-                    }
+                    resolve: {}
                  });
 
-                modal.result.then(function(data) {
-                    $scope.update(license, data);
-                });
-            } else {
-                commonsFact.errorDialog("No licenses were selected to edit.");
-            }
-        };
+                modal.result
+                    .then(function(data) {
+                        $scope.insert(data);
+                    });
+            };
 
-        $scope.selectedLicenses = function() {
-            var selected = [];
+            $scope.update = function(license, data) {
+                licensesManager.update(license, data)
+                    .catch(function(message) {
+                        commonsFact.errorDialog(message);
+                    });
+            };
 
-            $scope.filter($scope.licenses).forEach(function(license) {
-                if(license.selected === true) {
-                    selected.push(license);
+            $scope.edit = function() {
+                if($scope.selectedLicenses().length == 1) {
+                    var license = $scope.selectedLicenses()[0];
+                    var modal = $uibModal.open({
+                        templateUrl: 'scripts/licenses/partials/modalEdit.html',
+                        controller: 'licensesModalEdit',
+                        size: 'lg',
+                        resolve: {
+                            license: function() {
+                                return license;
+                            }
+                        }
+                     });
+
+                    modal.result.then(function(data) {
+                        $scope.update(license, data);
+                    });
+                } else {
+                    commonsFact.errorDialog("No licenses were selected to edit.");
                 }
-            });
+            };
 
-            return selected;
-        };
+            $scope.selectedLicenses = function() {
+                var selected = [];
 
-        $scope.checkAll = function() {
-            $scope.selectall_licenses = !$scope.selectall_licenses;
+                $filter('filter')($scope.licenses, $scope.search).forEach(function(license) {
+                    if(license.selected === true) {
+                        selected.push(license);
+                    }
+                });
 
-            tmp_licenses = $scope.filter($scope.licenses);
-            tmp_licenses.forEach(function(license) {
-                license.selected = $scope.selectall_licenses;
-            });
-        };
+                return selected;
+            };
 
-        // toggles sort field and order
-        $scope.toggleSort = function(field) {
-            $scope.toggleSortField(field);
-            $scope.toggleReverse();
-        };
+            $scope.checkAll = function() {
+                $scope.selectall_licenses = !$scope.selectall_licenses;
 
-        // toggles column sort field
-        $scope.toggleSortField = function(field) {
-            $scope.sortField = field;
-        };
+                tmp_licenses = $filter('filter')($scope.licenses, $scope.search);
+                tmp_licenses.forEach(function(license) {
+                    license.selected = $scope.selectall_licenses;
+                });
+            };
 
-        // toggle column sort order
-        $scope.toggleReverse = function() {
-            $scope.reverse = !$scope.reverse;
-        }
+            // toggles sort field and order
+            $scope.toggleSort = function(field) {
+                $scope.toggleSortField(field);
+                $scope.toggleReverse();
+            };
 
-        $scope.filter = function(data) {
-            var tmp_data = $filter('orderBy')(data, $scope.sortField, $scope.reverse);
-            tmp_data = $filter('filter')(tmp_data, $scope.expression);
-            tmp_data = tmp_data.splice($scope.pageSize * $scope.currentPage, $scope.pageSize);
+            // toggles column sort field
+            $scope.toggleSortField = function(field) {
+                $scope.sort_field = field;
+            };
 
-            return tmp_data;
-        };
+            // toggle column sort order
+            $scope.toggleReverse = function() {
+                $scope.reverse = !$scope.reverse;
+            }
 
-        init();
+            init();
     }]);

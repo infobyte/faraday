@@ -6,7 +6,7 @@ import flask
 
 from server.app import app
 from server.utils.logger import get_logger
-from server.utils.web import gzipped, validate_workspace, filter_request_args
+from server.utils.web import gzipped, validate_workspace, filter_request_args, get_integer_parameter
 from server.dao.command import CommandDAO
 
 @gzipped
@@ -16,10 +16,17 @@ def list_commands(workspace=None):
     get_logger(__name__).debug(
         "Request parameters: {!r}".format(flask.request.args))
 
-    commands_filter = filter_request_args()
+    page = get_integer_parameter('page', default=0)
+    page_size = get_integer_parameter('page_size', default=0)
+
+    commands_filter = filter_request_args(
+        'page', 'page_size')
 
     dao = CommandDAO(workspace)
 
-    result = dao.list(command_filter=commands_filter)
+    result = dao.list(
+        page=page,
+        page_size=page_size,
+        command_filter=commands_filter)
 
     return flask.jsonify(result)

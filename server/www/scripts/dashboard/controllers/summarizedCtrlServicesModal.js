@@ -4,12 +4,13 @@
 
 angular.module('faradayApp')
     .controller('summarizedCtrlServicesModal',
-        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'host',
-        function($scope, $modalInstance, dashboardSrv, workspace, host) {
+        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'host', 'osint',
+        function($scope, $modalInstance, dashboardSrv, workspace, host, osint) {
 
             $scope.host = host
             $scope.sortField = 'port';
             $scope.sortReverse = false;
+            $scope.osint = osint;
 
             // toggles sort field and order
             $scope.toggleSort = function(field) {

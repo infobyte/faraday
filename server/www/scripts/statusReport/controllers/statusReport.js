@@ -187,6 +187,10 @@ angular.module('faradayApp')
                 });
             }
 
+            // load cookie of columns ordering if exists
+            paginationOptions.sortColumn = $cookies.get('SRsortColumn') || null;
+            paginationOptions.sortDirection = $cookies.get('SRsortDirection') || null;
+
             defineColumns();
 
             $scope.vulnWebSelected = false;
@@ -202,6 +206,17 @@ angular.module('faradayApp')
             $scope.gridOptions.columnDefs.push({ name: 'confirmVuln', width: '40', headerCellTemplate: "<div></div>", cellTemplate: 'scripts/statusReport/partials/ui-grid/confirmbutton.html' });
             $scope.gridOptions.columnDefs.push({ name: 'deleteVuln', width: '40', headerCellTemplate: "<div></div>", cellTemplate: 'scripts/statusReport/partials/ui-grid/deletebutton.html' });
             $scope.gridOptions.columnDefs.push({ name: 'editVuln', width: '30', headerCellTemplate: "<div></div>", cellTemplate: 'scripts/statusReport/partials/ui-grid/editbutton.html' });
+
+            function getColumnSort(columnName){
+                if($cookies.get('SRsortColumn') === columnName){
+                    direction = ($cookies.get('SRsortDirection').toLowerCase() == 'asc')
+                                 ? uiGridConstants.ASC
+                                 : uiGridConstants.DESC;
+                    return {ignoreSort: true, priority: 0, direction: direction};
+                }else{
+                    return {};
+                }
+            }
 
             var header = '<div ng-class="{ \'sortable\': sortable }">'+
                     '       <div class="ui-grid-cell-contents" col-index="renderIndex" title="TOOLTIP">{{ col.displayName CUSTOM_FILTERS }}'+
@@ -221,12 +236,14 @@ angular.module('faradayApp')
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/datecolumn.html',
                 headerCellTemplate: header,
                 width: '90',
+                sort: getColumnSort('date'),
                 visible: $scope.columns["date"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'name',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/namecolumn.html',
                 headerCellTemplate: header,
                 maxWidth: '230',
+                sort: getColumnSort('name'),
                 visible: $scope.columns["name"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'severity',
@@ -235,25 +252,29 @@ angular.module('faradayApp')
                 type: 'string',
                 width: '70',
                 visible: $scope.columns["severity"],
+                sort: getColumnSort('severity'),
                 sortingAlgorithm: compareSeverities
             });
             $scope.gridOptions.columnDefs.push({ name : 'service',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/servicecolumn.html',
                 headerCellTemplate: header,
                 width: '110',
-                visible: $scope.columns["service"]
+                visible: $scope.columns["service"],
+                sort: getColumnSort('service'),
             });
              $scope.gridOptions.columnDefs.push({ name : 'hostnames',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/hostnamescolumn.html',
                 headerCellTemplate: header,
                 minWidth: '100',
                 maxWidth: '200',
+                sort: getColumnSort('hostnames'),
                 visible: $scope.columns["hostnames"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'target',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/targetcolumn.html',
                 headerCellTemplate: header,
                 width: '140',
+                sort: getColumnSort('target'),
                 visible: $scope.columns["target"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'desc',
@@ -261,89 +282,106 @@ angular.module('faradayApp')
                 headerCellTemplate: header,
                 minWidth: '300',
                 maxWidth: '400',
+                sort: getColumnSort('desc'),
                 visible: $scope.columns["desc"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'resolution',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/resolutioncolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('resolution'),
                 visible: $scope.columns["resolution"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'data',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/resolutioncolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('data'),
                 visible: $scope.columns["data"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'easeofresolution',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('easeofresolution'),
                 visible: $scope.columns["easeofresolution"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'status',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/statuscolumn.html',
                 headerCellTemplate: header,
                 width: '100',
+                sort: getColumnSort('status'),
                 visible: $scope.columns["status"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'website',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('website'),
                 visible: $scope.columns["website"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'path',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('path'),
                 visible: $scope.columns["path"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'request',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/resolutioncolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('request'),
                 visible: $scope.columns["request"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'refs',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/refscolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('refs'),
                 visible: $scope.columns["refs"]
             });
             $scope.gridOptions.columnDefs.push({ name : '_attachments',
                 displayName: "evidence",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/evidencecolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('_attachments'),
                 visible: $scope.columns["evidence"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'impact',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/impactcolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('impact'),
                 visible: $scope.columns["impact"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'method',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('method'),
                 visible: $scope.columns["method"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'params',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('params'),
                 visible: $scope.columns["params"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'pname',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('pname'),
                 visible: $scope.columns["pname"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'query',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/defaultcolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('query'),
                 visible: $scope.columns["query"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'response',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/resolutioncolumn.html',
                 headerCellTemplate: header,
+                sort: getColumnSort('response'),
                 visible: $scope.columns["response"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'web',
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/webcolumn.html',
                 headerCellTemplate: header,
                 width: '80',
+                sort: getColumnSort('date'),
                 visible: $scope.columns["web"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'metadata.creator',
@@ -351,6 +389,7 @@ angular.module('faradayApp')
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/creatorcolumn.html',
                 headerCellTemplate: header,
                 width: '100',
+                sort: getColumnSort('metadata.creator'),
                 visible: $scope.columns["creator"]
             });
         };
@@ -371,6 +410,8 @@ angular.module('faradayApp')
         var sortRowsBy = function(columnName, sortDirection) {
             paginationOptions.sortColumn = columnName;
             paginationOptions.sortDirection = sortDirection;
+            $cookies.put('SRsortColumn', columnName || '');
+            $cookies.put('SRsortDirection', sortDirection || '');
         }
 
         $scope.ifTooltip = function(text) {

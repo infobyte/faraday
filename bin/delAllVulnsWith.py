@@ -8,8 +8,10 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import re
-
 from persistence.server import models
+
+__description__ = "Delete all vulnerabilities matched with regex"
+__prettyname__ = "Delete all vulnerabilities with (...)"
 
 
 def main(workspace='', args=None, parser=None):

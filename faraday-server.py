@@ -96,6 +96,10 @@ def main():
     parser.add_argument('--no-setup', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
 
+    # Overwrites config option if SSL is set by argument
+    if args.ssl:
+        server.config.ssl.set('enabled', 'true')
+
     if is_server_running():
         sys.exit(1)
 

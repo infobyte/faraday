@@ -12,14 +12,19 @@ import sys
 
 from persistence.server import models
 
-__description__ = 'Filter services by port'
+__description__ = 'Filter services by port or service name'
 __prettyname__ = 'Filter services'
 
 SERVICES = {
     'http': [80, 443, 8080, 8443],
+    'ftp': [21],
     'ssh': [22],
     'telnet': [23],
-    'vnc': [5900]
+    'smtp': [25],
+    'domain': [53],
+    'pop3': [110, 995],
+    'imap': [143, 993],
+    'vnc': [5900],
 }
 
 # FIXME Update when persistence API changes
@@ -81,7 +86,7 @@ def main(workspace='', args=None, parser=None):
         for port in service.ports:
             if port in port_list or parsed_args.no_filter:
 
-                if status_filter is not None and not service.status in status_filter:
+                if not parsed_args.no_filter and status_filter is not None and not service.status in status_filter:
                     continue
 
                 column_data = []

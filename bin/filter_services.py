@@ -39,6 +39,8 @@ def main(workspace='', args=None, parser=None):
     parser.add_argument('--columns', help='Comma separated list of columns to show.',
                         default="host,service,ports,protocol,status,host_os", choices=COLUMNS.keys())
 
+    parser.add_argument('--status', help='Comma separated list of status to filter for.')
+
     parser.add_argument('-a', help='Show additional information, like ports filtered and column headers.',
                         action='store_true', dest='additional_info')
 
@@ -68,11 +70,20 @@ def main(workspace='', args=None, parser=None):
 
     columns = filter(None, parsed_args.columns.split(','))
 
+    status_filter = None
+
+    if parsed_args.status is not None:
+        status_filter = filter(None, parsed_args.status.split(','))
+
     lines = []
 
     for service in models.get_services(workspace):
         for port in service.ports:
             if port in port_list or parsed_args.no_filter:
+
+                if status_filter is not None and not service.status in status_filter:
+                    continue
+
                 column_data = []
 
                 for column in columns:

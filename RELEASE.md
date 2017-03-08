@@ -18,6 +18,7 @@ TBA:
 * Fixed bug in SQLMap plugin that made the client freeze
 * Improved SQLMap plugin to support --tables and --columns options
 * Fixed bug when creating/updating Credentials
+* Fixed bug in the WEB UI - menu explanation bubbles were hidden behind inputs
 
 February 8, 2017:
 ---

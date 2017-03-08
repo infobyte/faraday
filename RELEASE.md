@@ -19,6 +19,7 @@ TBA:
 * Improved SQLMap plugin to support --tables and --columns options
 * Fixed bug when creating/updating Credentials
 * The Status Report now remembers the sorting column and order
+* Fixed bug in the WEB UI - menu explanation bubbles were hidden behind inputs
 
 February 8, 2017:
 ---

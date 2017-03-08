@@ -47,7 +47,11 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         return statuses;
     })());
 
-faradayApp.config(['$routeProvider', 'ngClipProvider', function($routeProvider, ngClipProvider) {
+faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
+                   function($routeProvider, ngClipProvider, $uibTooltipProvider) {
+    $uibTooltipProvider.options({
+        appendToBody: true
+    });
     ngClipProvider.setPath("script/ZeroClipboard.swf");
     $routeProvider.
         when('/dashboard/ws/:wsId', {

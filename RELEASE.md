@@ -20,6 +20,8 @@ TBA:
 * Fixed bug when creating/updating Credentials
 * The Status Report now remembers the sorting column and order
 * Fixed bug in the WEB UI - menu explanation bubbles were hidden behind inputs
+* Improved navigation in Web UI
+* Added link to name column in Hosts list
 
 February 8, 2017:
 ---

@@ -18,6 +18,7 @@ TBA:
 * Fixed bug in SQLMap plugin that made the client freeze
 * Improved SQLMap plugin to support --tables and --columns options
 * Fixed bug when creating/updating Credentials
+* The Status Report now remembers the sorting column and order
 
 February 8, 2017:
 ---

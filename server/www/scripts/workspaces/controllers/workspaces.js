@@ -288,6 +288,9 @@ angular.module('faradayApp')
         $scope.redirect = function(path){
             $location.path("/"+($location.path().split('/')[1] || 'dashboard')+ "/ws/"+path);
         };
+        $scope.dashboardRedirect = function(path){
+            $location.path("/dashboard/ws/"+path);
+        };
 
         $scope.init();
     }]);

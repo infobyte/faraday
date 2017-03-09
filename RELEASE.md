@@ -13,6 +13,7 @@ TBA:
 * Merged PR #137 - CScan improvements: bug fixing, change plugin format and removed unnecessary file output
 * Merged PR #173 - Hostnames: added hostnames to plugins
 * Merged PR #105 - OSint: added the possibility of using a DB other than Shodan
+* Removed grouping by issue tracker option in status report
 * Improved fplugin
 * Improved the installation process
 * Improved SQLMap plugin to support --tables and --columns options

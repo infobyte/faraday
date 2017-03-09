@@ -93,6 +93,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         self.params = ""
         self.fullpath = ""
         self.path = ""
+        self.ignore_parsing = False
 
         self.addSetting("Sqlmap path", str, "/root/tools/sqlmap")
 
@@ -382,6 +383,8 @@ class SqlmapPlugin(PluginTerminalOutput):
         output being sent is valid.
         """
 
+        if self.ignore_parsing:
+            return
         sys.path.append(self.getSetting("Sqlmap path"))
 
         try:
@@ -592,7 +595,12 @@ class SqlmapPlugin(PluginTerminalOutput):
             pass
 
         if args.r:
-            with open(args.r, 'r') as f:
+            filename = os.path.expanduser(args.r)
+            if not os.path.isabs(filename):
+                print 'ERROR: Please use an absolute path in -r option'
+                self.ignore_parsing = True
+                return
+            with open(filename, 'r') as f:
                 request = self.HTTPRequest(f.read())
                 args.u = "http://" + request.headers['host'] + request.path
                 f.close()

@@ -12,14 +12,19 @@ import sys
 
 from persistence.server import models
 
-__description__ = 'Filter services by port'
+__description__ = 'Filter services by port or service name'
 __prettyname__ = 'Filter services'
 
 SERVICES = {
     'http': [80, 443, 8080, 8443],
+    'ftp': [21],
     'ssh': [22],
     'telnet': [23],
-    'vnc': [5900]
+    'smtp': [25],
+    'domain': [53],
+    'pop3': [110, 995],
+    'imap': [143, 993],
+    'vnc': [5900],
 }
 
 # FIXME Update when persistence API changes
@@ -38,6 +43,8 @@ def main(workspace='', args=None, parser=None):
     parser.add_argument('services', nargs='*', help='List of service names', default=[]),
     parser.add_argument('--columns', help='Comma separated list of columns to show.',
                         default="host,service,ports,protocol,status,host_os", choices=COLUMNS.keys())
+
+    parser.add_argument('--status', help='Comma separated list of status to filter for.')
 
     parser.add_argument('-a', help='Show additional information, like ports filtered and column headers.',
                         action='store_true', dest='additional_info')
@@ -68,17 +75,30 @@ def main(workspace='', args=None, parser=None):
 
     columns = filter(None, parsed_args.columns.split(','))
 
+    status_filter = None
+
+    if parsed_args.status is not None:
+        status_filter = filter(None, parsed_args.status.split(','))
+
     lines = []
 
     for service in models.get_services(workspace):
         for port in service.ports:
             if port in port_list or parsed_args.no_filter:
+
+                if not parsed_args.no_filter and status_filter is not None and not service.status in status_filter:
+                    continue
+
                 column_data = []
 
                 for column in columns:
                     column_data += [COLUMNS[column](service, workspace)]
 
                 lines += [column_data]
+
+    if not lines:
+        print "No services running on that port found."
+        return 0, None
 
     col_width = max(len(word) for row in lines for word in row) + 2
 

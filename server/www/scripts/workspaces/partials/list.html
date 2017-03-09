@@ -56,7 +56,7 @@
                         <tr ng-repeat="ws in workspaces | filter:query | filter:search | orderBy:sortField:reverse"
                             selection-model selection-model-selected-class="multi-selected">
                             <td>
-                                <span class="onhover upsize" ng-click="redirect(ws.name)">
+                                <span class="onhover upsize" ng-click="dashboardRedirect(ws.name)">
                                    <b>{{ws.name}}</b>
                                 </span>
                             </td>

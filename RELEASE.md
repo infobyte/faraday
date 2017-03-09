@@ -10,18 +10,19 @@ New features in the latest update
 
 TBA:
 ---
-* Improved fplugin
-* Improved the installation process
 * Merged PR #137 - CScan improvements: bug fixing, change plugin format and removed unnecessary file output
 * Merged PR #173 - Hostnames: added hostnames to plugins
 * Merged PR #105 - OSint: added the possibility of using a DB other than Shodan
-* Fixed bug in SQLMap plugin that made the client freeze
+* Improved fplugin
+* Improved the installation process
 * Improved SQLMap plugin to support --tables and --columns options
-* Fixed bug when creating/updating Credentials
 * The Status Report now remembers the sorting column and order
-* Fixed bug in the WEB UI - menu explanation bubbles were hidden behind inputs
 * Improved navigation in Web UI
 * Added link to name column in Hosts list
+* Fixed bug in SQLMap plugin that made the client freeze
+* Fixed bug when creating/updating Credentials
+* Fixed bug in the WEB UI - menu explanation bubbles were hidden behind inputs
+* Fixed conflict resolution when the object was deleted from another client before resolving the conflict
 
 February 8, 2017:
 ---

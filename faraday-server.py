@@ -96,22 +96,22 @@ def main():
     parser.add_argument('--no-setup', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
 
-    # Overwrites config option if SSL is set by argument
-    if args.ssl:
-        server.config.ssl.set('enabled', 'true')
-
-    if is_server_running():
-        sys.exit(1)
+    if args.debug:
+        server.utils.logger.set_logging_level(server.config.DEBUG)
 
     if args.stop:
         sys.exit(0 if stop_server() else 1)
 
+    if is_server_running():
+        sys.exit(1)
+
+    # Overwrites config option if SSL is set by argument
+    if args.ssl:
+        server.config.ssl.set('enabled', 'true')
+
     if not args.no_setup:
         setup_environment(not args.nodeps)
         import_workspaces()
-
-    if args.debug:
-        server.utils.logger.set_logging_level(server.config.DEBUG)
 
     if args.start:
         # Starts a new process on background with --ignore-setup

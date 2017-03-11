@@ -11,12 +11,17 @@
         <h3 class="modal-title">Import CSV</h3>
     </div>
     <div class="modal-body">
+        <!-- <input type="file" id="file" name="file"/> -->
+        <!-- <button ng-click="_import()">Upload</button> -->
+        <span class="help-block">
+            <p> Please note the CSV headers must be: name,description,resolution,exploitation,tag.</p>
+            <p> All of these are optional except for the name column.</p>
+        </span>
         <input type="file" id="file" name="file"/>
-        <button ng-click="_import()">Upload</button>
     </div><!-- .modal-body -->
     <div class="modal-footer">
         <div class="modal-button">
-            <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
+            <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="_import()">OK</button>
             <button class="btn btn-danger" ng-click="cancel()">Cancel</button>
         </div>
     </div>

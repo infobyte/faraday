@@ -11,6 +11,7 @@ angular.module('faradayApp')
             $scope._import = function() {
                 var csv = document.getElementById('file').files[0];
                 $scope.data = csv;
+                $scope.ok();
             };
 
             $scope.ok = function() {

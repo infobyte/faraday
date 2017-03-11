@@ -75,12 +75,14 @@ angular.module('faradayApp')
                     var modal = $uibModal.open({
                         templateUrl: 'scripts/vulndb/partials/upload.html',
                         controller: 'vulnModelModalUpload',
-                        size: 'sm',
+                        size: 'lg',
                         resolve: { }
                     });
 
                     modal.result.then(
                         function(data) {
+                            console.log("DATA IS: ");
+                            console.log(data);
                             Papa.parse(data, {
                                 worker: true,
                                 header: true,

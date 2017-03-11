@@ -74,7 +74,8 @@ def __get_version():
 def gen_web_config():
     doc = {
         'ver': __get_version(),
-        'lic_db': CONSTANTS.CONST_LICENSES_DB
+        'lic_db': CONSTANTS.CONST_LICENSES_DB,
+        'vuln_model_db': CONSTANTS.CONST_VULN_MODEL_DB
     }
     if os.path.isfile(WEB_CONFIG_FILE):
         os.remove(WEB_CONFIG_FILE)

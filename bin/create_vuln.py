@@ -34,7 +34,6 @@ def main(workspace='', args=None, parser=None):
     parsed_args = parser.parse_args(args)
 
     obj = factory.createModelObject(models.Vuln.class_signature, parsed_args.name, workspace,
-                                    name=parsed_args.name,
                                     ref=parsed_args.reference,
                                     severity=parsed_args.severity,
                                     resolution=parsed_args.resolution,

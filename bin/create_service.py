@@ -15,7 +15,7 @@ __prettyname__ = 'Create Service'
 
 def main(workspace='', args=None, parser=None):
     parser.add_argument('interface_id', help='Interface ID')
-    parser.add_argument('name', help='Interface Name')
+    parser.add_argument('name', help='Service Name')
     parser.add_argument('ports', help='Service ports, as a comma separated list')
     parser.add_argument('--protocol', help='Service protocol', default='tcp')
     parser.add_argument('--status', help='Service status', default='running')

@@ -315,6 +315,13 @@ class HostsSidebar(Gtk.Widget):
         @preconditions: host_id must be in self.host_id_to_iter,
                         self.host_id_to_iter[host_id] must in the model.
         """
+
+        # Let's first check if the host_id is in the model to avoid an exception bellow.
+        # Added because of a race condition (?) between the client and the server, where a deletion
+        # in bulk by the fplugin would trigger a KeyError
+        if not self._is_host_in_model_by_host_id(host_id):
+            return
+
         host_iter = self.host_id_to_iter[host_id]
         current_host_name = self.model[host_iter][3].split(" ")[0]
         new_host_string = "{0} ({1})".format(current_host_name, new_vuln_amount)

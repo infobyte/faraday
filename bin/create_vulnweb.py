@@ -45,7 +45,6 @@ def main(workspace='', args=None, parser=None):
     parsed_args = parser.parse_args(args)
 
     obj = factory.createModelObject(models.VulnWeb.class_signature, parsed_args.name, workspace,
-                                    name=parsed_args.name,
                                     desc=parsed_args.description,
                                     ref=parsed_args.reference,
                                     severity=parsed_args.severity,

@@ -23,7 +23,6 @@ def main(workspace='', args=None, parser=None):
     parsed_args = parser.parse_args(args)
 
     obj = factory.createModelObject(models.Note.class_signature, parsed_args.name, workspace,
-                                    name=parsed_args.name,
                                     text=parsed_args.text,
                                     parent_id=parsed_args.parent
                                     )

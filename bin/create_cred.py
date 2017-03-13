@@ -15,6 +15,7 @@ __prettyname__ = 'Create Credentials'
 
 def main(workspace='', args=None, parser=None):
     parser.add_argument('parent', help='Parent ID')
+    parser.add_argument('name', help='Credential Name')
     parser.add_argument('username', help='Username')
     parser.add_argument('password', help='Password')
 

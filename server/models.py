@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-SCHEMA_VERSION = 'W.2.3.1'
+SCHEMA_VERSION = 'W.2.4.0'
 
 Base = declarative_base()
 

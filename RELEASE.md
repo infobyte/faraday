@@ -8,7 +8,7 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
-TBA:
+March 15, 2017:
 ---
 * Added link to name column in Hosts list
 * Fixed bug in SQLMap plugin that made the client freeze

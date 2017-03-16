@@ -11,6 +11,7 @@ New features in the latest update
 March 15, 2017:
 ---
 * Added link to name column in Hosts list
+* Created a requirements_extras.txt file to handle optional packages for specific features
 * Fixed bug in SQLMap plugin that made the client freeze
 * Fixed bug when creating/updating Credentials
 * Fixed bug in the WEB UI - menu explanation bubbles were hidden behind inputs
@@ -23,7 +24,6 @@ March 15, 2017:
 * Merged PR #173 - Hostnames: added hostnames to plugins
 * Merged PR #105 - OSint: added the possibility of using a DB other than Shodan
 * The Status Report now remembers the sorting column and order
-* Created a requirements_extras.txt file to handle optional packages for specific features
 
 February 8, 2017:
 ---

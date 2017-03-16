@@ -23,7 +23,7 @@ March 15, 2017:
 * Merged PR #173 - Hostnames: added hostnames to plugins
 * Merged PR #105 - OSint: added the possibility of using a DB other than Shodan
 * The Status Report now remembers the sorting column and order
-
+* Created a requirements_extras.txt file to handle optional packages for specific features
 
 February 8, 2017:
 ---

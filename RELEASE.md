@@ -8,6 +8,10 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+TBA
+---
+* Fixed bug when editing workspaces created in GTK
+
 March 15, 2017:
 ---
 * Added link to name column in Hosts list

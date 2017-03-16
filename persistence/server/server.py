@@ -1394,7 +1394,7 @@ def update_command(workspace_name, id, command, duration=None, hostname=None,
 
 
 def create_workspace(workspace_name, description, start_date, finish_date,
-                     customer=None):
+                     customer=None, duration=None):
     """Create a workspace.
 
     Args:
@@ -1407,12 +1407,15 @@ def create_workspace(workspace_name, description, start_date, finish_date,
     Returns:
         A dictionary with the server's response.
     """
+    if duration is None:
+        duration = {"start": start_date, "end": finish_date}
     return _save_db_to_server(workspace_name,
                               name=workspace_name,
                               description=description,
                               customer=customer,
                               sdate=start_date,
                               fdate=finish_date,
+                              duration=duration,
                               type="Workspace")
 
 def delete_host(workspace_name, host_id):

@@ -119,7 +119,8 @@ class PluginController(object):
                 action = current_action[0]
                 parameters = current_action[1:]
 
-                parameters[-1]._metadata.command_id = command_id
+                if hasattr(parameters[-1], '_metadata'):
+                    parameters[-1]._metadata.command_id = command_id
 
                 getLogger(self).debug(
                     "Core: Processing a new '%s', parameters (%s)\n" %

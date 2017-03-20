@@ -197,7 +197,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             try:
                 tree = ET.fromstring(f.read())
             except SyntaxError, err:
-                print "SyntaxError: %s. %s" % (err, filepath)
+                self.log("SyntaxError: %s. %s" % (err, filepath), "ERROR")
                 return None
 
         for node in tree.findall("dbms[@value='" + db + "']/" + name + ''):
@@ -392,7 +392,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             from lib.core.enums import HASHDB_KEYS
             from lib.core.settings import UNICODE_ENCODING
         except:
-            print 'ERROR: Remember set your Sqlmap Path Setting!... Abort plugin.'
+            self.log('Remember set your Sqlmap Path Setting!... Abort plugin.', 'ERROR')
             return
 
         self.HASHDB_MILESTONE_VALUE = HASHDB_MILESTONE_VALUE
@@ -597,7 +597,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         if args.r:
             filename = os.path.expanduser(args.r)
             if not os.path.isabs(filename):
-                print 'ERROR: Please use an absolute path in -r option'
+                self.log('Please use an absolute path in -r option of sqlmap', 'ERROR')
                 self.ignore_parsing = True
                 return
             with open(filename, 'r') as f:

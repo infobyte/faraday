@@ -23,6 +23,7 @@ from urlparse import urlparse
 from collections import defaultdict
 
 from plugins.plugin import PluginTerminalOutput
+from plugins.plugin_utils import get_vulnweb_url_fields
 
 try:
     import xml.etree.cElementTree as ET
@@ -565,7 +566,6 @@ class SqlmapPlugin(PluginTerminalOutput):
                 self.createAndAddVulnWebToService(
                     h_id,
                     s_id,
-                    website=self.hostname,
                     name=inj.data[k]['title'],
                     desc="Payload:" + str(inj.data[k]['payload']) + "\nVector:" + str(inj.data[k]['vector']) +
                     "\nParam type:" + str(self.ptype[inj.ptype]),
@@ -574,7 +574,7 @@ class SqlmapPlugin(PluginTerminalOutput):
                     severity="high",
                     method=inj.place,
                     params=self.params,
-                    path=self.fullpath)
+                    **get_vulnweb_url_fields(self.fullpath))
 
     def processCommandString(self, username, current_path, command_string):
 

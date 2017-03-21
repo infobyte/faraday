@@ -16,7 +16,7 @@ TBA:
 * Merged PR #173 - Hostnames: added hostnames to plugins
 * Merged PR #105 - OSint: added the possibility of using a DB other than Shodan
 * Fixed bug in SQLMap plugin that made the client freeze
-* Improved SQLMap plugin to support -r, --tables and --columns options
+* Improved SQLMap plugin to support more options and to show errors in GTK log console
 * Fixed bug when creating/updating Credentials
 
 February 8, 2017:

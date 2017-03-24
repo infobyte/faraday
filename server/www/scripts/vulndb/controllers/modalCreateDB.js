@@ -17,8 +17,6 @@ angular.module('faradayApp')
         $scope.yes = function() {
             vulnModelsManager.createDB()
                 .then(function() {
-                    console.log("CLOSING!!");
-                    console.log($modalInstance);
                     $modalInstance.close();
                     $modalInstance.dismiss();
                 }, function() {

@@ -38,8 +38,24 @@ angular.module('faradayApp').
                     }
 
                     self.public_properties.forEach(function(property) {
-                        if(data[property] !== undefined) {
+                        if(data[property] !== undefined && property !== 'tag') {
                             self[property] = data[property];
+                        } else if (data[property] !== undefined && property === 'tag') {
+                            var tagsAsString = data[property];
+                            var tagsAsString = tagsAsString.replace(" ", "");
+                            var tags = tagsAsString.split(",");
+                            var alreadyPresentTags = self.tag.split(",")
+                            var newTags = [];
+                            tags.forEach(function(tag) {
+                                if (alreadyPresentTags.indexOf(tag) >= 0) {
+                                    return;
+                                }
+                                newTags.push(tag);
+                            })
+                            var validTags = alreadyPresentTags.concat(newTags);
+                            validTags = validTags.filter(function(n) { return n })
+                            self.tag = validTags.join();
+
                         };
                     });
                 },

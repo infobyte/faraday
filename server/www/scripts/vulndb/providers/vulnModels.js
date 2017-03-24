@@ -101,7 +101,6 @@ angular.module('faradayApp').
                 vulnModelsManager.get = function(page, all) {
                     var deferred = $q.defer();
                     var self = this;
-                    if (all === undefined) { all = false)
 
                     configSrv.promise.
                         then(function() {
@@ -146,7 +145,6 @@ angular.module('faradayApp').
                             $http.get(url).
                                 then(function(res) {
                                     var data = res.data;
-                                    console.log("TOTAL ROWS: " + data.total_rows)
                                     self.updateState(data.total_rows)
                                     deferred.resolve()
                                 }, function(data, status) {

@@ -40,11 +40,9 @@ angular.module('faradayApp')
                                         $scope.models = vulnModelsManager.models;
                                         $scope.loaded_models = true;
                                     });
-                                console.log(vulnModelsManager.getSize())
                                 vulnModelsManager.getSize().
                                     then(function() {
                                         $scope.totalModels = vulnModelsManager.totalNumberOfModels
-                                        console.log(vulnModelsManager.totalNumberOfPages);
                                     });
                             }
                         }, function(message) {

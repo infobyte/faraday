@@ -5,15 +5,17 @@ angular.module('faradayApp')
                 $scope.db_exists = false;
                 $scope.models = [];
                 $scope.loaded_models = false;
+                $scope.totalModels = 0;
                 $scope.reverse;
                 $scope.search;
-                console.log(ServerAPI);
+                $scope.currentPage;
 
                 var init = function() {
                     // table stuff
                     $scope.selectall_models = false;
                     $scope.sort_field = "end";
                     $scope.reverse = true;
+                    $scope.currentPage = 1;
 
                     vulnModelsManager.DBExists()
                         .then(function(exists) {
@@ -25,7 +27,6 @@ angular.module('faradayApp')
                                 }).result.then(function(data) {
                                     if (data) {
                                         $scope.db_exists = true;
-                                        console.log($uibModal);
 
                                     }
                                 }, function(message) { 
@@ -34,10 +35,16 @@ angular.module('faradayApp')
                                 });
                             } else {
                                 $scope.db_exists = true;
-                                vulnModelsManager.get(0)
+                                vulnModelsManager.get()
                                     .then(function() {
                                         $scope.models = vulnModelsManager.models;
                                         $scope.loaded_models = true;
+                                    });
+                                console.log(vulnModelsManager.getSize())
+                                vulnModelsManager.getSize().
+                                    then(function() {
+                                        $scope.totalModels = vulnModelsManager.totalNumberOfModels
+                                        console.log(vulnModelsManager.totalNumberOfPages);
                                     });
                             }
                         }, function(message) {
@@ -51,6 +58,37 @@ angular.module('faradayApp')
                         $scope.loaded_models = true;
                     }, true);
                 };
+
+                $scope.pageCount = function() {
+                    return vulnModelsManager.totalNumberOfPages
+                }
+
+                $scope.prevPageDisabled = function() {
+                    return $scope.currentPage <= 1;
+                }
+
+                $scope.nextPageDisabled = function() {
+                    return $scope.currentPage >= $scope.pageCount();
+                }
+
+                $scope.nextPage = function() {
+                    if (page <= 0 || page > $scope.pageCount || ! page) { return }
+                    $scope.currentPage += 1;
+                    vulnModelsManager.get($scope.currentPage);
+                }
+
+                $scope.prevPage = function() {
+                    if (page <= 0 || page > $scope.pageCount || ! page) { return }
+                    $scope.currentPage -= 1;
+                    vulnModelsManager.get($scope.currentPage);
+                }
+
+                $scope.go = function(page) {
+                    if (page <= 0 || page > $scope.pageCount || ! page) { return }
+                    $scope.currentPage = page;
+                    vulnModelsManager.get($scope.currentPage);
+                }
+
 
                 $scope.remove = function(ids) {
                     var confirmations = [];
@@ -81,8 +119,6 @@ angular.module('faradayApp')
 
                     modal.result.then(
                         function(data) {
-                            console.log("DATA IS: ");
-                            console.log(data);
                             Papa.parse(data, {
                                 worker: true,
                                 header: true,
@@ -115,7 +151,6 @@ angular.module('faradayApp')
                                 relevant_vuln.resolution = vuln.value.resolution;
                                 relevant_data_of_vulns.push(relevant_vuln);
                             });
-                            console.log(relevant_data_of_vulns);
                             relevant_data_of_vulns.forEach(function(relevant_vuln) {
                                 $scope.insert(relevant_vuln);
                             });
@@ -125,8 +160,6 @@ angular.module('faradayApp')
 
                 $scope.delete = function() {
                     var selected = $scope.selectedModels();
-                    console.log("HERE");
-                    console.log(selected);
 
                     if(selected.length == 0) {
                         $uibModal.open({

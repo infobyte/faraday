@@ -142,16 +142,12 @@ angular.module('faradayApp')
                     modal.result.then(function(data) {
                         ServerAPI.getVulns(data).then(function(vulns_data) {
                             var vulns = vulns_data.data.vulnerabilities
-                            var relevant_data_of_vulns = [];
                             vulns.forEach(function(vuln) {
                                 relevant_vuln = {};
                                 relevant_vuln.name = vuln.value.name;
                                 relevant_vuln.description = vuln.value.description;
                                 relevant_vuln.resolution = vuln.value.resolution;
-                                relevant_data_of_vulns.push(relevant_vuln);
-                            });
-                            relevant_data_of_vulns.forEach(function(relevant_vuln) {
-                                $scope.insert(relevant_vuln);
+                                $scope.insert(relevant_vuln)
                             });
                         })
                     })

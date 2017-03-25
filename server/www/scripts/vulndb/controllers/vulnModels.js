@@ -70,18 +70,19 @@ angular.module('faradayApp')
                 }
 
                 $scope.nextPage = function() {
-                    if (page <= 0 || page > $scope.pageCount || ! page) { return }
+                    if ($scope.currentPagepage <= 0 || $scope.currentPage > $scope.pageCount) { return }
                     $scope.currentPage += 1;
                     vulnModelsManager.get($scope.currentPage);
                 }
 
                 $scope.prevPage = function() {
-                    if (page <= 0 || page > $scope.pageCount || ! page) { return }
+                    if ($scope.currentPagepage <= 0 || $scope.currentPage > $scope.pageCount) { return }
                     $scope.currentPage -= 1;
                     vulnModelsManager.get($scope.currentPage);
                 }
 
-                $scope.go = function(page) {
+                $scope.go = function() {
+                    var page = $scope.newCurrentPage
                     if (page <= 0 || page > $scope.pageCount || ! page) { return }
                     $scope.currentPage = page;
                     vulnModelsManager.get($scope.currentPage);

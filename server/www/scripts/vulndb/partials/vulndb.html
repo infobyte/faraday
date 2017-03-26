@@ -10,26 +10,26 @@
             </div><!-- .ws-label -->
             <div class="reports col-md-12 col-sm-12 col-xs-12">
                 <div class="button-control col-md-6 col-sm-6 col-xs-12">
-                    <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="delete()">
+                    <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="disabledClick || delete()">
                         <span class="glyphicon glyphicon-trash"></span>
                         Delete
                     </button>
                     <div id="merge" class="btn-group btn-small-margin">
-                        <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="edit()" ng-disabled="selectedModels().length != 1">
+                        <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="disabledClick || edit()" ng-disabled="selectedModels().length != 1">
                             <span class="glyphicon glyphicon-pencil"></span>
                             Edit
                         </button>
                     </div>
-                    <button id="new" type="button" class="btn btn-success" title="New Vulnerablity Model" ng-click="new()">
+                    <button id="new" type="button" class="btn btn-success" title="New Vulnerablity Model" ng-click="disabledClick || new()">
                         <span class="glyphicon glyphicon-plus-sign"></span>
                         New
                     </button>
                 </div><!-- .col-md-6 .col-sm-6 .col-xs-12 -->
                 <div id="ws-control" class="btn-group btn-small-margin">
-                    <button id="import" type="button" class="btn btn-success" title="Import from CSV" ng-click="importCSV()">
+                    <button id="import" type="button" class="btn btn-success" title="Import from CSV" ng-click="disabledClick || importCSV()">
                         <span class="glyphicon glyphicon-upload"></span>
                     </button>
-                    <button id="importFromWs" type="button" class="btn btn-success" title="Import from Workspace" ng-click="importFromWorkspace()">
+                    <button id="importFromWs" type="button" class="btn btn-success" title="Import from Workspace" ng-click="disabledClick || importFromWorkspace()">
                         <span class="glyphicon glyphicon-transfer"></span>
                     </button>
                     <button id="refresh" type="button" class="btn btn-danger" title="Refresh Vulnerability DB" ng-click="location.reload()">
@@ -51,7 +51,7 @@
             <table class="status-report licenses-list table table-responsive">
                 <thead>
                     <tr>
-                        <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
+                        <th><input type="checkbox" ng-model="selectall" ng-click="disabledClick || checkAll()"/></th>
                         <th>
                             <a href="" ng-click="toggleSort('name')">Name</a>
                         </th>
@@ -89,15 +89,15 @@
             <div class="showPagination">
                     <div class="form-group">
                         <ul class="pagination">
-                            <li><a ng-hide="prevPageDisabled()" ng-click="prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                            <li><a ng-hide="prevPageDisabled()" ng-click="disabledClick || prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
                             <li><a>{{currentPage}}/{{pageCount()}}</a></li>
-                            <li><a ng-hide="nextPageDisabled()" ng-click="nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                            <li><a ng-hide="nextPageDisabled()" ng-click="disabledClick || nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
                         </ul>
                         <form name="goToPage" id="goToPageStatus">
                             <div class="col-md-2">
                                 <input type="number" min="1" max="{{pageCount()}}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
                             </div>
-                            <button class="btn btn-default" ng-click="go()">GO</button>
+                            <button class="btn btn-default" ng-click="disabledClick || go()">GO</button>
                         </form>
                     </div>
             </div><!-- .showPagination -->

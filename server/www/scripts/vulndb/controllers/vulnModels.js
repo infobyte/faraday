@@ -6,6 +6,7 @@ angular.module('faradayApp')
                 $scope.models = [];
                 $scope.loaded_models = false;
                 $scope.totalModels = 0;
+                $scope.disabledClick = false;
                 $scope.reverse;
                 $scope.search;
                 $scope.currentPage;
@@ -116,8 +117,10 @@ angular.module('faradayApp')
                         resolve: { }
                     });
 
+                    document.body.style.cursor='wait';
                     modal.result.then(
                         function(data) {
+                            $scope.disabledClick = true;
                             Papa.parse(data, {
                                 worker: true,
                                 header: true,
@@ -129,6 +132,8 @@ angular.module('faradayApp')
                                 }
                             });
                         });
+                    document.body.style.cursor='default';
+                    $scope.disabledClick = false;
                 };
 
                 $scope.importFromWorkspace = function() {
@@ -139,8 +144,10 @@ angular.module('faradayApp')
                         resolve: { }
                     });
 
+                    document.body.style.cursor='wait';
                     modal.result.then(function(data) {
                         ServerAPI.getVulns(data).then(function(vulns_data) {
+                            $scope.disabledClick = true;
                             var vulns = vulns_data.data.vulnerabilities
                             vulns.forEach(function(vuln) {
                                 relevant_vuln = {};
@@ -151,6 +158,8 @@ angular.module('faradayApp')
                             });
                         })
                     })
+                    document.body.style.cursor = "default";
+                    $scope.disabledClick = false;
                 }
 
                 $scope.delete = function() {

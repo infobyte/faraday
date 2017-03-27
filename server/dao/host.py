@@ -8,27 +8,30 @@ from server.utils.database import paginate, sort_results, apply_search_filter, g
 from sqlalchemy import distinct
 from sqlalchemy.orm.query import Bundle
 from sqlalchemy.sql import func
-from server.models import Host, Interface, Service, Vulnerability, EntityMetadata
+from server.models import Host, Interface, Service, Vulnerability, EntityMetadata, Credential
 
 
 class HostDAO(FaradayDAO):
+
     MAPPED_ENTITY = Host
+
     COLUMNS_MAP = {
-        "couchid":  [EntityMetadata.couchdb_id],
-        "name":     [Host.name],
-        "service":  [Service.name],
+        "couchid": [EntityMetadata.couchdb_id],
+        "name": [Host.name],
+        "service": [Service.name],
         "services": ["open_services_count"],
-        "vulns":    ["vuln_count"],
-        "os":       [Host.os],
-        "owned":    [Host.owned],
-        "command_id":[EntityMetadata.command_id]
+        "vulns": ["vuln_count"],
+        "os": [Host.os],
+        "owned": [Host.owned],
+        "command_id": [EntityMetadata.command_id]
     }
+
     STRICT_FILTERING = ["service", "couchid", "command_id"]
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, host_filter={}):
-        results, count = self.__query_database(search, page, page_size, order_by, order_dir, host_filter)
 
-        rows = [ self.__get_host_data(result.host) for result in results ]
+        results, count = self.__query_database(search, page, page_size, order_by, order_dir, host_filter)
+        rows = [self.__get_host_data(result.host) for result in results]
 
         result = {
             'total_rows': count,
@@ -38,13 +41,17 @@ class HostDAO(FaradayDAO):
         return result
 
     def __query_database(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, host_filter={}):
-        host_bundle = Bundle('host', Host.id, Host.name, Host.os, Host.description, Host.owned,\
-            Host.default_gateway_ip, Host.default_gateway_mac, EntityMetadata.couchdb_id,\
-            EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
-            EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
-            EntityMetadata.update_controller_action, EntityMetadata.owner, EntityMetadata.command_id,\
-            func.group_concat(distinct(Interface.id)).label('interfaces'),\
-            func.count(distinct(Vulnerability.id)).label('vuln_count'),\
+
+        host_bundle = Bundle(
+            'host', Host.id, Host.name, Host.os, Host.description, Host.owned,
+            Host.default_gateway_ip, Host.default_gateway_mac,
+            EntityMetadata.couchdb_id, EntityMetadata.revision,
+            EntityMetadata.update_time, EntityMetadata.update_user,
+            EntityMetadata.update_action, EntityMetadata.creator,
+            EntityMetadata.create_time, EntityMetadata.update_controller_action,
+            EntityMetadata.owner, EntityMetadata.command_id,
+            func.group_concat(distinct(Interface.id)).label('interfaces'),
+            func.count(distinct(Vulnerability.id)).label('vuln_count'),
             func.count(distinct(Service.id)).label('open_services_count'))
 
         query = self._session.query(host_bundle)\
@@ -66,7 +73,30 @@ class HostDAO(FaradayDAO):
 
         return results, count
 
+    def __query_credentials_database(self, host_id):
+
+        creds_bundle = Bundle(
+            'cred', Credential.username, Credential.password, Credential.host_id,
+            Credential.name.label('cred_name'))
+
+        query = self._session.query(creds_bundle).filter(Credential.host_id == host_id)
+        results = query.all()
+        return results
+
     def __get_host_data(self, host):
+
+        # Retrieve all credentials of that Host.
+        creds_list = self.__query_credentials_database(host.id)
+
+        credentials_object = []
+        if creds_list:
+            for credential in creds_list:
+                credentials_object.append({
+                    'name': credential.cred.cred_name,
+                    'username': credential.cred.username,
+                    'password': credential.cred.password
+                })
+
         return {
             'id': host.couchdb_id,
             'key': host.couchdb_id,
@@ -92,7 +122,9 @@ class HostDAO(FaradayDAO):
                 },
                 'vulns': host.vuln_count,
                 'services': host.open_services_count,
-                'interfaces': map(int, host.interfaces.split(',')) if host.interfaces else []  }}
+                'interfaces': map(int, host.interfaces.split(',')) if host.interfaces else [],
+                'credentials': credentials_object
+            }}
 
     def count(self, group_by=None):
         total_count = self._session.query(func.count(Host.id)).scalar()
@@ -114,4 +146,3 @@ class HostDAO(FaradayDAO):
         result_count['groups'] = [ { group_by: value, 'count': count } for value, count in res ]
 
         return result_count
-

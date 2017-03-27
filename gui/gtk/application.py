@@ -48,6 +48,7 @@ from gui.gui_app import FaradayUi
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
 from appwindow import AppWindow
+from persistence.server.server import check_faraday_version
 
 from server import ServerIO
 from dialogs import PreferenceWindowDialog
@@ -327,6 +328,14 @@ class GuiApp(Gtk.Application, FaradayUi):
                             "The SSL certificate validation has failed")
             success = False
         else:
+            try:
+                check_faraday_version()
+            except RuntimeError:
+                errorDialog(parent,
+                            "The server ir running a different Faraday version then the "
+                            "client you are runnung. Version numbers must match!")
+                success = False
+                return success
             CONF.setCouchUri(server_uri)
             CONF.saveConfig()
             self.reload_workspaces()

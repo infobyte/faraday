@@ -432,11 +432,35 @@ class Credential(FaradayEntity, Base):
     service = relationship('Service', back_populates='credentials')
 
     def update_from_document(self, document):
-        self.username=document.get('username')
-        self.password=document.get('password', '')
-        self.owned=document.get('owned', False)
-        self.description=document.get('description', '')
-        self.name=document.get('name','')
+        self.username = document.get('username')
+        self.password = document.get('password', '')
+        self.owned = document.get('owned', False)
+        self.description = document.get('description', '')
+        self.name = document.get('name', '')
+
+    def add_relationships_from_dict(self, entities):
+        couchdb_id = self.entity_metadata.couchdb_id
+        host_id = couchdb_id.split('.')[0]
+        if host_id not in entities:
+            raise EntityNotFound(host_id)
+        self.host = entities[host_id]
+
+        parent_id = '.'.join(couchdb_id.split('.')[:-1])
+        if parent_id != host_id:
+            if parent_id not in entities:
+                raise EntityNotFound(parent_id)
+            self.service = entities[parent_id]
+
+    def add_relationships_from_db(self, session):
+        couchdb_id = self.entity_metadata.couchdb_id
+        host_id = couchdb_id.split('.')[0]
+        query = session.query(Host).join(EntityMetadata).filter(EntityMetadata.couchdb_id == host_id)
+        self.host = query.one()
+
+        parent_id = '.'.join(couchdb_id.split('.')[:-1])
+        if parent_id != host_id:
+            query = session.query(Service).join(EntityMetadata).filter(EntityMetadata.couchdb_id == parent_id)
+            self.service = query.one()
 
 class Command(FaradayEntity, Base):
     DOC_TYPE = 'CommandRunInformation'

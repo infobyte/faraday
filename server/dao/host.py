@@ -1,6 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
-# See the file 'doc/LICENSE' for the license information
+# See the file "doc/LICENSE" for the license information
 
 from server.dao.base import FaradayDAO
 from server.utils.database import paginate, sort_results, apply_search_filter, get_count
@@ -23,7 +23,8 @@ class HostDAO(FaradayDAO):
         "vulns": ["vuln_count"],
         "os": [Host.os],
         "owned": [Host.owned],
-        "command_id": [EntityMetadata.command_id]
+        "command_id": [EntityMetadata.command_id],
+        "credentials": ["credentials_count"]
     }
 
     STRICT_FILTERING = ["service", "couchid", "command_id"]
@@ -34,8 +35,8 @@ class HostDAO(FaradayDAO):
         rows = [self.__get_host_data(result.host) for result in results]
 
         result = {
-            'total_rows': count,
-            'rows': rows
+            "total_rows": count,
+            "rows": rows
         }
 
         return result
@@ -43,22 +44,24 @@ class HostDAO(FaradayDAO):
     def __query_database(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, host_filter={}):
 
         host_bundle = Bundle(
-            'host', Host.id, Host.name, Host.os, Host.description, Host.owned,
+            "host", Host.id, Host.name, Host.os, Host.description, Host.owned,
             Host.default_gateway_ip, Host.default_gateway_mac,
             EntityMetadata.couchdb_id, EntityMetadata.revision,
             EntityMetadata.update_time, EntityMetadata.update_user,
             EntityMetadata.update_action, EntityMetadata.creator,
             EntityMetadata.create_time, EntityMetadata.update_controller_action,
             EntityMetadata.owner, EntityMetadata.command_id,
-            func.group_concat(distinct(Interface.id)).label('interfaces'),
-            func.count(distinct(Vulnerability.id)).label('vuln_count'),
-            func.count(distinct(Service.id)).label('open_services_count'))
+            func.group_concat(distinct(Interface.id)).label("interfaces"),
+            func.count(distinct(Vulnerability.id)).label("vuln_count"),
+            func.count(distinct(Service.id)).label("open_services_count"),
+            func.count(distinct(Credential.id)).label("credentials_count"))
 
         query = self._session.query(host_bundle)\
                              .outerjoin(EntityMetadata, EntityMetadata.id == Host.entity_metadata_id)\
                              .outerjoin(Interface, Host.id == Interface.host_id)\
                              .outerjoin(Vulnerability, Host.id == Vulnerability.host_id)\
-                             .outerjoin(Service, (Host.id == Service.host_id) & (Service.status.in_(('open', 'running', 'opened'))))\
+                             .outerjoin(Service, (Host.id == Service.host_id) & (Service.status.in_(("open", "running", "opened"))))\
+                             .outerjoin(Credential, Credential.host_id == Host.id)\
                              .group_by(Host.id)
 
         # Apply pagination, sorting and filtering options to the query
@@ -73,76 +76,54 @@ class HostDAO(FaradayDAO):
 
         return results, count
 
-    def __query_credentials_database(self, host_id):
-
-        creds_bundle = Bundle(
-            'cred', Credential.username, Credential.password, Credential.host_id,
-            Credential.name.label('cred_name'))
-
-        query = self._session.query(creds_bundle).filter(Credential.host_id == host_id)
-        results = query.all()
-        return results
-
     def __get_host_data(self, host):
 
-        # Retrieve all credentials of that Host.
-        creds_list = self.__query_credentials_database(host.id)
-
-        credentials_object = []
-        if creds_list:
-            for credential in creds_list:
-                credentials_object.append({
-                    'name': credential.cred.cred_name,
-                    'username': credential.cred.username,
-                    'password': credential.cred.password
-                })
-
         return {
-            'id': host.couchdb_id,
-            'key': host.couchdb_id,
-            '_id': host.id,
-            'value': {
-                '_id': host.couchdb_id,
-                '_rev': host.revision,
-                'name': host.name,
-                'os': host.os,
-                'owned': host.owned,
-                'owner': host.owner,
-                'description': host.description,
-                'default_gateway': [host.default_gateway_ip, host.default_gateway_mac],
-                'metadata': {
-                    'update_time': host.update_time,
-                    'update_user': host.update_user,
-                    'update_action': host.update_action,
-                    'creator': host.creator,
-                    'create_time': host.create_time,
-                    'update_controller_action': host.update_controller_action,
-                    'owner': host.owner,
-                    'command_id': host.command_id
+            "id": host.couchdb_id,
+            "key": host.couchdb_id,
+            "_id": host.id,
+            "value": {
+                "_id": host.couchdb_id,
+                "_rev": host.revision,
+                "name": host.name,
+                "os": host.os,
+                "owned": host.owned,
+                "owner": host.owner,
+                "description": host.description,
+                "default_gateway": [host.default_gateway_ip, host.default_gateway_mac],
+                "metadata": {
+                    "update_time": host.update_time,
+                    "update_user": host.update_user,
+                    "update_action": host.update_action,
+                    "creator": host.creator,
+                    "create_time": host.create_time,
+                    "update_controller_action": host.update_controller_action,
+                    "owner": host.owner,
+                    "command_id": host.command_id
                 },
-                'vulns': host.vuln_count,
-                'services': host.open_services_count,
-                'interfaces': map(int, host.interfaces.split(',')) if host.interfaces else [],
-                'credentials': credentials_object
+                "vulns": host.vuln_count,
+                "services": host.open_services_count,
+                "interfaces": map(int, host.interfaces.split(",")) if host.interfaces else [],
+                "credentials": host.credentials_count
             }}
 
     def count(self, group_by=None):
         total_count = self._session.query(func.count(Host.id)).scalar()
 
         # Return total amount of services if no group-by field was provided
-        result_count = { 'total_count': total_count }
+        result_count = {"total_count": total_count}
         if group_by is None:
             return result_count
 
         # Otherwise return the amount of services grouped by the field specified
         # Strict restriction is applied for this entity
-        if group_by not in ['name', 'os']:
+        if group_by not in ["name", "os"]:
             return None
 
         col = HostDAO.COLUMNS_MAP.get(group_by)[0]
         query = self._session.query(col, func.count()).group_by(col)
         res = query.all()
 
-        result_count['groups'] = [ { group_by: value, 'count': count } for value, count in res ]
+        result_count["groups"] = [{group_by: value, "count": count} for value, count in res]
 
         return result_count

@@ -7,8 +7,12 @@ angular.module('faradayApp')
         ['$scope', 'indexFact',
         function($scope, indexFact) {
         	indexFact.getConf().then(function(conf) {
-        		$scope.version = conf.data.ver;
-			    $scope.osint = conf.data.osint;
+                    var osint = conf.data.osint;
+                    osint.prefix = osint.prefix || "/search?query=";
+                    osint.suffix = osint.suffix || "";
+                    if(!osint.use_external_icon)
+                        osint.icon = "images/" + osint.icon + ".png";
+                    $scope.osint = osint;
         	});
 
         }]);

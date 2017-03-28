@@ -23,9 +23,7 @@
             <tr ng-repeat="host in hosts">
                 <td class="col-xs-6">
                     <a href="" class="host" ng-click="showServices(host)">{{host.name}}</a>
-                    <a href="//{{osint.host}}/search?query={{host.name}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
-                        <img ng-src="images/{{osint.icon}}.png" height="15px" width="15px" />
-                    </a>
+                    <osint-link query="host.name" osint="osint"></osint-link>
                 </td>
                 <td class="col-xs-6">{{host.services}}</td>
                 <td class="col-xs-4">

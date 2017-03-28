@@ -66,6 +66,9 @@
                                     <th>
                                         <a href="" ng-click="toggleSort('owned')">Owned</a>
                                     </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('credentials')">Credentials</a>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -92,6 +95,9 @@
                                     <td>
                                         <i class="fa fa-exclamation-triangle" aria-hidden="true" ng-if="host.owned"> owned</i>
                                         <span ng-if="!host.owned">not yet</span>
+                                    </td>
+                                    <td>
+                                        <span>{{host.credentials}}</span>
                                     </td>
                                 </tr>
                             </tbody>

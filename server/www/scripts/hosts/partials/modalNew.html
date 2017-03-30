@@ -38,17 +38,13 @@
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
-                    <div class="checkbox">
-                        <label>
-                            <input type="checkbox" id="owned" ng-model="hostdata.owned"/>
-                            <span class="normal-size">Owned</span>
-                        </label>
-                    </div><!-- .checkbox -->
+                    <input type="checkbox" id="owned" ng-model="hostdata.owned"/>
+                    <span class="normal-size">Owned</span>
                 </div>
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
-                    <h5>Hostnames</h5>
+                    <h5><b>Hostnames</b></h5>
                     <span class="input-group-addon button-radius" ng-click="newHostnames($event)">Add Hostname</span>
                 </div>
                 <div class="col-md-12 input-margin" ng-repeat="hostname in interfaceData.hostnames">
@@ -73,6 +69,20 @@
                 <div class="col-md-12">
                     <label class="sr-only" for="mac">MAC</label>
                     <input type="text" class="form-control" id="mac" placeholder="MAC" ng-model="interfaceData.mac"/>
+                </div>
+            </div><!-- .form-group -->
+           <h5>
+               <b>Credential</b>
+           </h5>
+            <div class="form-group">
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="nameCredential" placeholder="Name" ng-model="credentialData.name"/>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="usernameCredential" placeholder="Username" ng-model="credentialData.username"/>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="passwordCredential" placeholder="Password" ng-model="credentialData.password"/>
                 </div>
             </div><!-- .form-group -->
         </div>

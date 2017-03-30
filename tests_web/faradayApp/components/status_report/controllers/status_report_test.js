@@ -176,7 +176,8 @@ describe('statusReportCtrl', function() {
             vulnsManagerMock = {
                 vulns: [],
                 getVulns: function(workspace) {
-                    vulnsManagerMock.vulns = [vuln1, vuln2, vuln3];
+                    if (vulnsManagerMock.vulns.length == 0)
+                        vulnsManagerMock.vulns = [vuln1, vuln2, vuln3];
                     return returnPromise({
                         vulnerabilities: vulnsManagerMock.vulns,
                         count: vulnsManagerMock.vulns.length});

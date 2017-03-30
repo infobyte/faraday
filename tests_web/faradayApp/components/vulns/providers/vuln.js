@@ -26,7 +26,7 @@ describe('Vulnerability Object', function() {
         $q = _$q_;
         Vuln = _Vuln_;
         attachmentsFact = _attachmentsFact_;
-        BASEURL = 'http://localhost:9876/'; 
+        BASEURL = 'http://localhost:9876/_api/'; 
 
         new_name = "new name";
         new_desc = "new desc";
@@ -126,7 +126,7 @@ describe('Vulnerability Object', function() {
         });
 
         it('Saving new object', function() {
-            var url = BASEURL + "ws/" + new_full_id;
+            var url = BASEURL + "ws/ws/doc/" + new_full_id;
             var vuln = new Vuln('ws', new_data);
 
             $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
@@ -139,7 +139,7 @@ describe('Vulnerability Object', function() {
         });
 
         it('Saving existing object', function() {
-            var url = BASEURL + "ws/" + old_full_id;
+            var url = BASEURL + "ws/ws/doc/" + old_full_id;
             var vuln = new Vuln('ws', old_data);
 
             $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
@@ -152,7 +152,7 @@ describe('Vulnerability Object', function() {
         });
 
         it('Updating object', function() {
-            var url = BASEURL + "ws/" + new_full_id;
+            var url = BASEURL + "ws/ws/doc/" + new_full_id;
             var vuln = new Vuln('ws', new_data);
 
             $httpBackend.expect('PUT', url).respond(201, {"rev": "1234"});
@@ -173,7 +173,7 @@ describe('Vulnerability Object', function() {
         });
 
         it('Deleting object', function() {
-            var url = BASEURL + "ws/" + old_full_id + "?rev=" + old_data._rev;
+            var url = BASEURL + "ws/ws/doc/" + old_full_id + "?rev=" + old_data._rev;
             var vuln = new Vuln('ws', old_data);
 
             $httpBackend.expect('DELETE', url).respond(200);

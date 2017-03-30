@@ -206,7 +206,7 @@ describe('vulnsManager', function() {
             WebVuln = _WebVuln_;
             hostsManager = _hostsManager_;
             servicesManager = _servicesManager_;
-            BASEURL = 'http://localhost:9876/';
+            BASEURL = 'http://localhost:9876/_api/ws/';
         });
 
     });
@@ -220,7 +220,7 @@ describe('vulnsManager', function() {
         it('getVulns', function() {
             var vulns;
 
-            $httpBackend.expect('GET', BASEURL + 'ws/_design/vulns/_view/all').respond(200, couchVuln1);
+            $httpBackend.expect('GET', BASEURL + 'ws/vulns').respond(200, couchVuln1);
 
             vulnsManager.getVulns("ws")
                 .then(function(vs) {
@@ -261,7 +261,7 @@ describe('vulnsManager', function() {
             var vulns = [];
 
             // insert new vuln in Couch
-            $httpBackend.expect('PUT', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
+            $httpBackend.expect('PUT', BASEURL + "ws/doc/" + id).respond(201, {"rev": "1234"});
 
             vulnsManager.createVuln("ws", vuln)
                 .then(function(vs) {
@@ -288,14 +288,14 @@ describe('vulnsManager', function() {
             delete vuln._rev;
 
             // insert new vuln in Couch
-            $httpBackend.expect('PUT', BASEURL + "ws/" + id).respond(201, {"rev": vuln1._rev});
+            $httpBackend.expect('PUT', BASEURL + "ws/doc/" + id).respond(201, {"rev": vuln1._rev});
 
             vulnsManager.createVuln("ws", vuln);
 
             $httpBackend.flush();
 
             // delete vuln
-            $httpBackend.expect('DELETE', BASEURL + 'ws/' + id + "?rev=" + vuln1._rev).respond(200);
+            $httpBackend.expect('DELETE', BASEURL + 'ws/doc/' + id + "?rev=" + vuln1._rev).respond(200);
 
             vulnsManager.deleteVuln(vulnsManager.vulns[0]);
             $httpBackend.flush();
@@ -310,13 +310,13 @@ describe('vulnsManager', function() {
             delete vuln._rev;
 
             // insert new vuln in Couch
-            $httpBackend.expect('PUT', BASEURL + "ws/" + id).respond(201, {"rev": "1234"});
+            $httpBackend.expect('PUT', BASEURL + "ws/doc/" + id).respond(201, {"rev": "1234"});
             // call to insert
             vulnsManager.createVuln("ws", vuln);
             $httpBackend.flush();
 
             // update vuln
-            $httpBackend.expect('PUT', BASEURL + 'ws/' + id).respond(200, {"rev": "1-abe16726389e434ca3f37384ea76128e"});
+            $httpBackend.expect('PUT', BASEURL + 'ws/doc/' + id).respond(200, {"rev": "1-abe16726389e434ca3f37384ea76128e"});
 
             var vulns = vulnsManager.updateVuln(vulnsManager.vulns[0], vuln2);
             $httpBackend.flush();

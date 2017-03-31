@@ -173,6 +173,12 @@ def getParserArgs():
 
     parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
 
+    f = open(FARADAY_VERSION_FILE)
+    f_version = f.read().strip()
+
+    parser.add_argument('-v', '--version', action='version',
+                        version='Faraday v{version}'.format(version=f_version))
+
     # args = parser.parse_args(['@parser_args.cfg'])
     return parser.parse_args()
 

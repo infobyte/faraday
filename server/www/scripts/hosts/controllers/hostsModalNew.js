@@ -24,6 +24,12 @@ angular.module('faradayApp')
             "interfaceOwner": "",
             "interfaceOwned": false
         };
+        
+        $scope.credentialData = {
+            'name': '',
+            'username': '',
+            'password': ''
+        };
 
         $scope.ok = function() {
             var hostnames = [];
@@ -35,7 +41,7 @@ angular.module('faradayApp')
             $scope.interfaceData.hostnames.forEach(function(hname){
                 hostnames.push(hname.hostname);
             });
-            
+
             $scope.interfaceData.hostnames = hostnames.filter(Boolean);
             $scope.hostdata.interfaceName = $scope.hostdata.name;
             $scope.hostdata.metadata = {
@@ -47,7 +53,8 @@ angular.module('faradayApp')
                 "update_controller_action": "UI Web New",
                 "owner": ""
             };
-            $modalInstance.close([$scope.hostdata,$scope.interfaceData]);
+
+            $modalInstance.close([$scope.hostdata,$scope.interfaceData, $scope.credentialData]);
         };
 
         $scope.cancel = function() {

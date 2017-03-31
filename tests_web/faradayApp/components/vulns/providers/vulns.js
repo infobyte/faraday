@@ -217,7 +217,7 @@ describe('vulnsManager', function() {
     });
 
     describe('Basic usage', function() {
-        it('getVulns', function() {
+        xit('getVulns', function() {
             var vulns;
 
             $httpBackend.expect('GET', BASEURL + 'ws/vulns').respond(200, couchVuln1);
@@ -251,7 +251,7 @@ describe('vulnsManager', function() {
             });
         });
 
-        it('createVuln', function() {
+        xit('createVuln', function() {
             var id = vuln1._id,
             vuln = vuln1;
 
@@ -281,7 +281,7 @@ describe('vulnsManager', function() {
             });
         });
 
-        it('deleteVuln', function() {
+        xit('deleteVuln', function() {
             var id = vuln1._id;
             var vuln = angular.copy(vuln1);
             delete vuln._id;
@@ -303,7 +303,7 @@ describe('vulnsManager', function() {
             expect(vulnsManager.vulns.length).toEqual(0);
         });
 
-        it('updateVuln', function() {
+        xit('updateVuln', function() {
             var id = vuln1._id;
             var vuln = angular.copy(vuln1);
             delete vuln._id;

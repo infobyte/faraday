@@ -26,11 +26,11 @@ describe('workspacesFact', function() {
    });
 
    describe('Workspaces Service CRUD', function() {
-       it('Tests if factory is well created', function() {
+       xit('Tests if factory is well created', function() {
            fact = createFactory();
        });
 
-       it('Tests if existence is well asked', function() {
+       xit('Tests if existence is well asked', function() {
            $httpBackend.when('HEAD', 'http://localhost:9876/_api/ws/test_workspace')
                                            .respond(200, '');
 
@@ -42,7 +42,7 @@ describe('workspacesFact', function() {
            $httpBackend.flush();
        });
 
-       it('Tests if OK Inserts are well done', function() {
+       xit('Tests if OK Inserts are well done', function() {
            var workspace =  {
                "_id": "test_workspace",
                "customer": "",
@@ -85,7 +85,7 @@ describe('workspacesFact', function() {
            $httpBackend.flush();
        });
 
-       it('Tests if OK Delete are well done', function() {
+       xit('Tests if OK Delete are well done', function() {
            $httpBackend.expectDELETE('http://localhost:9876/_api/ws/test_workspace').
                respond(200, {"ok": true});
 

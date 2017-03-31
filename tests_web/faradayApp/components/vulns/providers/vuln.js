@@ -125,7 +125,7 @@ describe('Vulnerability Object', function() {
             }
         });
 
-        it('Saving new object', function() {
+        xit('Saving new object', function() {
             var url = BASEURL + "ws/ws/doc/" + new_full_id;
             var vuln = new Vuln('ws', new_data);
 
@@ -138,7 +138,7 @@ describe('Vulnerability Object', function() {
             expect(vuln._rev).toEqual("1234");
         });
 
-        it('Saving existing object', function() {
+        xit('Saving existing object', function() {
             var url = BASEURL + "ws/ws/doc/" + old_full_id;
             var vuln = new Vuln('ws', old_data);
 
@@ -151,7 +151,7 @@ describe('Vulnerability Object', function() {
             expect(vuln._rev).toEqual("1234");
         });
 
-        it('Updating object', function() {
+        xit('Updating object', function() {
             var url = BASEURL + "ws/ws/doc/" + new_full_id;
             var vuln = new Vuln('ws', new_data);
 

@@ -14,7 +14,18 @@ angular.module('faradayApp')
             'name': 'string',
             'username': 'string',
             'password': 'string',
-            'type': 'string'
+            'type': 'string',
+            'parent': 'string'
+        };
+
+         var _credentialFieldsSaveToServer = {
+            '_id': 'string',
+            '_rev': 'string',
+            'name': 'string',
+            'username': 'string',
+            'metadata': 'string',
+            'password': 'string',
+            'type': 'string',
         };
 
         Credential = function(data){
@@ -23,13 +34,14 @@ angular.module('faradayApp')
             }
         };
 
-        //TODO: Build ID with parent
         Credential.prototype = {
             set: function(data) {
 
-                data.type = "Cred";
+                data.type = 'Cred';
+                if(data.metadata !== undefined)
+                    data.metadata = '';
                 if(data._id === undefined)
-                    data['_id'] = _generateID(data.name, data.username, data.password);
+                    data['_id'] = _generateID(data.parent, data.name, data.username, data.password);
                 
                 _checkFieldsOk(data);
                 angular.extend(this, data);
@@ -41,25 +53,27 @@ angular.module('faradayApp')
 
             update: function(ws, data) {
                 var self = this;
+                self.metadata = updateMetadata(self.metadata);
                 
-                return ServerAPI.updateCredential(ws, data)
+                return ServerAPI.updateCredential(ws, buildObjectServer(self))
                 .then(function(credentialData) {
                     self._rev = credentialData.rev;
                 });
             },
 
-            save: function(ws) {
+            create: function(ws) {
                 var self = this;
-
-                return ServerAPI.createHost(ws, self).
+                self.metadata = generateCreateMetadata();
+                
+                return ServerAPI.createCredential(ws, buildObjectServer(self)).
                     then(function(credential_data) {
                         self._rev = credential_data.rev;
                     });
             }
-        }
+        };
 
-    var _generateID = function(name, username, password){
-        var id = CryptoJS.SHA1([name, username, password].join('._.')).toString();
+    var _generateID = function(parent, name, username, password){
+        var id = parent + '.' + CryptoJS.SHA1([name, username, password].join('._.')).toString();
         return id;
     };
 
@@ -69,9 +83,39 @@ angular.module('faradayApp')
 
         Object.keys(_credentialFields).forEach(function(key, index) {
             // Credential dont have property or type of property in credential dont same.
-            if(!credential.hasOwnProperty(key) || typeof(credential.key) !== _credentialFields.key)
+            if(!credential.hasOwnProperty(key) || typeof(credential[key]) !== _credentialFields[key] || credential[key] === '')
                throw 'Credential-Invalid fields: Invalid fields in credential creation: ' + key;
         });
     };
+
+    // Build a credential object with only properties specified in _credentialFieldsSaveToServer (properties to save in server).
+    var buildObjectServer =  function(credential){
+        
+        var serverObject = {};
+        Object.keys(_credentialFieldsSaveToServer).forEach(function(key, index) {
+             if(credential.hasOwnProperty(key))
+                serverObject[key] = credential[key];
+        });
+        return serverObject;
+    };
+
+    var generateCreateMetadata = function() {
+
+        return {
+                'update_time': new Date().getTime(),
+                'update_user': '',
+                'update_action': 0,
+                'creator': 'UI Web',
+                'create_time': new Date().getTime(),
+                'update_controller_action': '',
+                'owner': ''
+        };
+    };
+
+    var updateMetadata = function(metadata) {
+        metadata['update_time'] =  new Date().getTime();
+        return metadata;
+    };
+
     return Credential;
 }]);

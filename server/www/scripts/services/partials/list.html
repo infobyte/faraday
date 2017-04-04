@@ -26,7 +26,7 @@
                                 <div class="col-md-3">
                                     <h5>Name</h5>
                                     <label class="sr-only" for="name">Name</label>
-                                    <input type="text" class="form-control" id="name" placeholder="Name" ng-model="host.name" />
+                                    <input type="text" class="form-control" id="name" placeholder="Name" ng-model="host.name" ng-disabled="!editing" />
                                     <span class="help-block normal-size">
                                         Example: 192.168.0.1
                                     </span>
@@ -34,18 +34,18 @@
                                 <div class="col-md-3">
                                     <h5>Description</h5>
                                     <label class="sr-only" for="description">Description</label>
-                                    <textarea class="form-control" id="description" placeholder="Description" ng-model="host.description"></textarea>
+                                    <textarea class="form-control" id="description" placeholder="Description" ng-model="host.description" ng-disabled="!editing"></textarea>
                                 </div>
                                 <div class="col-md-3">
                                     <h5>Operating System</h5>
                                     <label class="sr-only" for="os">Operating System</label>
-                                    <input type="text" class="form-control" id="os" placeholder="Operating System" ng-model="host.os"/>
+                                    <input type="text" class="form-control" id="os" placeholder="Operating System" ng-model="host.os" ng-disabled="!editing"/>
                                 </div>
                                 <div class="form-group">
                                     <div class="col-md-12">
                                         <div class="checkbox">
                                             <label>
-                                                <input type="checkbox" id="owned" ng-model="host.owned"/>
+                                                <input type="checkbox" id="owned" ng-model="host.owned" ng-disabled="!editing"/>
                                                 <span class="normal-size">Owned</span>
                                             </label>
                                         </div><!-- .checkbox -->
@@ -54,30 +54,30 @@
                                 <div class="form-group">
                                     <div class="col-md-12">
                                         <h5>Hostnames</h5>
-                                        <span class="input-group-addon button-radius" ng-click="newHostnames($event)">Add Hostname</span>
+                                        <span class="input-group-addon button-radius" ng-click="newHostnames($event)" ng-if="editing">Add Hostname</span>
                                     </div>
                                     <div class="col-md-12 input-margin" ng-repeat="hostname in interface.hostnames">
                                         <div class="input-group margin-bottom-sm col-md-12">
                                             <label class="sr-only" for="hostsnames">Hostname</label>
-                                            <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname.key"/>
-                                            <span class="input-group-addon" ng-click="interface.hostnames.splice($index, 1)" ng-hide="interface.hostnames.length == 1"><i class="fa fa-minus-circle"></i></span>
+                                            <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname.key" ng-disabled="!editing" />
+                                            <span class="input-group-addon" ng-click="interface.hostnames.splice($index, 1)" ng-hide="interface.hostnames.length == 1" ng-if="editing"><i class="fa fa-minus-circle"></i></span>
                                         </div>
                                     </div>
                                 </div><!-- .form-group -->
                                 <div class="form-group">
                                     <div class="col-md-6">
                                         <label class="sr-only" for="ipv4">IP v4</label>
-                                        <input type="text" class="form-control" id="ipv4" placeholder="IP v4" ng-model="interface.ipv4.address"/>
+                                        <input type="text" class="form-control" id="ipv4" placeholder="IP v4" ng-model="interface.ipv4.address" ng-disabled="!editing"/>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="sr-only" for="ipv6">IP v6</label>
-                                        <input type="text" class="form-control" id="ipv6" placeholder="IP v6" ng-model="interface.ipv6.address"/>
+                                        <input type="text" class="form-control" id="ipv6" placeholder="IP v6" ng-model="interface.ipv6.address" ng-disabled="!editing"/>
                                     </div>
                                 </div><!-- .form-group -->
                                 <div class="form-group">
                                     <div class="col-md-12">
                                         <label class="sr-only" for="mac">MAC</label>
-                                        <input type="text" class="form-control" id="mac" placeholder="MAC" ng-model="interface.mac"/>
+                                        <input type="text" class="form-control" id="mac" placeholder="MAC" ng-model="interface.mac" ng-disabled="!editing"/>
                                     </div>
                                 </div><!-- .form-group -->
                             </div><!-- .form-group -->
@@ -85,7 +85,11 @@
                         <div class="modal-footer">
                             <div class="modal-button">
                                 <!-- <button class="btn btn-danger" ng-click="cancel()">Cancel</button> -->
-                                <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()">OK</button>
+                                <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
+                                <button class="btn btn-default" ng-click="toggleEdit()" ng-if="!editing">
+                                    <span class="glyphicon glyphicon-pencil"></span>
+                                    Edit
+                                </button>
                             </div>
                         </div>
                     </div>

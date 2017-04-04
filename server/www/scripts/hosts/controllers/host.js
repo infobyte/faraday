@@ -19,6 +19,7 @@ angular.module('faradayApp')
             $scope.services = [];
             $scope.sortField = "ports";
             $scope.reverse = false;
+            $scope.editing = false;
 
             $scope.loadedServices = false;
 
@@ -122,7 +123,12 @@ angular.module('faradayApp')
             hostsManager.updateHost($scope.host, $scope.hostdata, $scope.interface,
                                     $scope.workspace).then(function(){
                                         $scope.interface.hostnames = old_hostnames;
+                                        $scope.editing = false;
                                     });
+        };
+
+        $scope.toggleEdit = function(){
+            $scope.editing = !$scope.editing;
         };
 
 

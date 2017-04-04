@@ -8,7 +8,7 @@ angular.module('faradayApp')
     .factory('credential', ['ServerAPI',
     function(ServerAPI) {
 
-        // All credentials need this properties minimum.
+        // All credentials need this properties minimum for build object.
         var _credentialFields = {
             '_id': 'string',
             'name': 'string',
@@ -18,7 +18,8 @@ angular.module('faradayApp')
             'parent': 'string'
         };
 
-         var _credentialFieldsSaveToServer = {
+        // Only this properties will be saved to server.
+        var _credentialFieldsSaveToServer = {
             '_id': 'string',
             '_rev': 'string',
             'name': 'string',
@@ -35,6 +36,7 @@ angular.module('faradayApp')
         };
 
         Credential.prototype = {
+            // Build object.
             set: function(data) {
 
                 data.type = 'Cred';
@@ -47,11 +49,20 @@ angular.module('faradayApp')
                 angular.extend(this, data);
             },
 
+            // Find object in server and build that.
+            load: function(ws, id){
+                ServerAPI.getObj(ws, id).then(function(data){
+                    this.set(data);
+                });
+            },
+
+            // Delete object object in server.
             delete: function(ws) {
                 return ServerAPI.deleteCredential(ws, this._id, this._rev);
             },
 
-            update: function(ws, data) {
+            // Update object in server.
+            update: function(ws) {
                 var self = this;
                 self.metadata = updateMetadata(self.metadata);
                 
@@ -61,6 +72,7 @@ angular.module('faradayApp')
                 });
             },
 
+            // Create object in server.
             create: function(ws) {
                 var self = this;
                 self.metadata = generateCreateMetadata();

@@ -15,6 +15,8 @@ class CredentialDAO(FaradayDAO):
 
     COLUMNS_MAP = {
         'couchid': [EntityMetadata.couchdb_id],
+        'host_id': [Credential.host_id],
+        'service_id': [Credential.service_id],
         'username': [Credential.username],
         'password': [Credential.password]}
 

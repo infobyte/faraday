@@ -206,6 +206,21 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             controller: 'commercialCtrl',
             title: 'Users | '
         }).
+        when('/credentials/ws/:wsId', {
+            templateUrl: 'scripts/credentials/partials/list.html',
+            controller: 'credentialsCtrl',
+            title: 'Credentials | '
+        }).
+        when('/credentials/ws/:wsId/hid/:hId', {
+            templateUrl: 'scripts/credentials/partials/list.html',
+            controller: 'credentialsCtrl',
+            title: 'Credentials | '
+        }).
+        when('/credentials/ws/:wsId/sid/:sId', {
+            templateUrl: 'scripts/credentials/partials/list.html',
+            controller: 'credentialsCtrl',
+            title: 'Credentials | '
+        }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html'
         });

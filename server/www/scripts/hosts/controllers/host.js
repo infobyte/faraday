@@ -5,9 +5,9 @@
 angular.module('faradayApp')
     .controller('hostCtrl',
         ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', '$q',
-            'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager', 
+            'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager', 'commonsFact',
             function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, $q,
-            hostsManager, workspacesFact, dashboardSrv, servicesManager) {
+            hostsManager, workspacesFact, dashboardSrv, servicesManager, commons) {
 
 	    init = function() {
 	    	$scope.selectall_service = false;
@@ -31,6 +31,10 @@ angular.module('faradayApp')
             // current host
             hostsManager.getHost(hostId, $scope.workspace)
                 .then(function(host) {
+                    hostsManager.getInterfaces($scope.workspace, host._id).then(function(resp){
+                        $scope.interface = resp[0].value;
+                        $scope.interface.hostnames = commons.arrayToObject($scope.interface.hostnames);
+                    });
                 	$scope.host = host;
                 });
 
@@ -95,6 +99,32 @@ angular.module('faradayApp')
             });
             return selected;
         };
+
+        $scope.newHostnames = function($event){
+            $scope.interface.hostnames.push({key:''});
+            $event.preventDefault();
+        }
+
+        $scope.ok = function() {
+            var date = new Date(),
+            timestamp = date.getTime()/1000.0;
+
+            // The objectToArray transform is necessary to call updateHost correctly
+            // If I don't restore the object after the call hostnames won't be shown in the interface
+            var old_hostnames = $scope.interface.hostnames;
+            $scope.interface.hostnames = commons.objectToArray($scope.interface.hostnames.filter(Boolean));
+            console.log('diff', JSON.stringify($scope.interface));
+
+            $scope.hostdata = $scope.host;
+            $scope.hostdata.metadata['update_time'] = timestamp;
+            $scope.hostdata.metadata['update_user'] = "UI Web";
+
+            hostsManager.updateHost($scope.host, $scope.hostdata, $scope.interface,
+                                    $scope.workspace).then(function(){
+                                        $scope.interface.hostnames = old_hostnames;
+                                    });
+        };
+
 
         // changes the URL according to search params
         $scope.searchFor = function(search, params) {

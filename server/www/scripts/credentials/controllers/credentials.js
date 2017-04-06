@@ -1,5 +1,5 @@
 // Faraday Penetration Test IDE
-// Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+// Copyright (C) 2017  Infobyte LLC (http://www.infobytesec.com/)
 // See the file 'doc/LICENSE' for the license information
 
 "use strict";
@@ -22,6 +22,8 @@ angular.module('faradayApp')
 
             var getParent = function() {
 
+                var deferred = $q.defer();
+
                 // Host is our parent.
                 if($routeParams.hId !== undefined){
 
@@ -31,7 +33,7 @@ angular.module('faradayApp')
 
                     ServerAPI.getObj($scope.workspace, $scope.parentObject.id).then(function (response) {
                         $scope.parentObject.nameHost = response['data']['name'];
-                        $scope.parentObject._idHost = response['data']['_id'];
+                        deferred.resolve();
                     });
                 }
 
@@ -44,37 +46,45 @@ angular.module('faradayApp')
 
                     ServerAPI.getObj($scope.workspace, $scope.parentObject.id).then(function (response) {
                         $scope.parentObject.nameService = response['data']['name'];
-                        $scope.parentObject._idService = response['data']['_id'];
 
                         // and also, load all host information needed.
                         var hostId = response['data']['_id'].split('.')[0];
 
-                        ServerAPI.getObj($scope.workspace, hostId ).then(function (response) {
+                        ServerAPI.getObj($scope.workspace, hostId).then(function (response) {
                             $scope.parentObject.nameHost = response['data']['name'];
-                            $scope.parentObject._idHost = response['data']['_id'];
+                            deferred.resolve();
                         });
                     });
                 }
+                // We dont have parent, resolve promise.
+                deferred.resolve();
+                return deferred.promise;
             };
 
-            var loadCredentials = function() {
+            var loadCredentials = function (credentials){
+                credentials.forEach(function(cred){
+                    $scope.credentials.push(new credential(cred.value));
+                });
+            }
+
+            var getAndLoadCredentials = function() {
                 
                 // Load all credentials, we dont have a parent.
                 if($scope.parentObject.type === undefined){
                     ServerAPI.getCredentials($scope.workspace).then(function(response){
-                        $scope.credentials = response.data.rows; 
+                        loadCredentials(response.data.rows);
                     });
                 }
                 else {
 
                     // Load all credentials, filtered by host internal id or service internal id.
                     if ($scope.parentObject.type === 'Host')
-                        var data = {'host_id': $scope.parentObject._idHost};
+                        var data = {'host_id': $scope.parentObject.id};
                     else if ($scope.parentObject.type === 'Service')
-                        var data = {'service_id': $scope.parentObject._idHost};
+                        var data = {'service_id': $scope.parentObject.id};
 
                     ServerAPI.getCredentials($scope.workspace, data).then(function(response){
-                        $scope.credentials = response.data.rows; 
+                        loadCredentials(response.data.rows);
                     });
                 }
             }
@@ -87,25 +97,37 @@ angular.module('faradayApp')
                 $scope.reverse = true;
 
                 $scope.workspace = $routeParams.wsId;
-                getParent();
-                loadCredentials();
+                
+                getParent().then(function(){
+                    getAndLoadCredentials();
+                });
+
             };
 
+            var removeFromView = function(credential){
+                var index = $scope.credentials.indexOf(credential);
+                $scope.credentials.splice(index, 1);     
+            }
+
             // Delete to server.
-            $scope.remove = function(ids) {
+            $scope.remove = function(credentials) {
                 var confirmations = [];
 
-                ids.forEach(function(id) {
+                credentials.forEach(function(cred) {
                     var deferred = $q.defer();
 
-                    ServerAPI.deleteCredential($scope.workspace, id)
-                        .then(function(resp) {
+                    var credentialToDelete = new credential();
+                    credentialToDelete.load($scope.workspace, cred._id).then(function(response){
+
+                        credentialToDelete.delete($scope.workspace).then(function(resp) {
                             deferred.resolve(resp);
+                            removeFromView(credentialToDelete);
                         }, function(message) {
                             deferred.reject(message);
                         });
 
-                    confirmations.push(deferred);
+                        confirmations.push(deferred);
+                    });
                 });
 
                 return $q.all(confirmations);
@@ -149,31 +171,34 @@ angular.module('faradayApp')
                 }
             };
 
-            $scope.insert = function(data) {
-                licensesManager.create(data)
-                    .catch(function(message) {
-                        commonsFact.errorDialog(message);
+            var createCredential = function(credentialData, parent_id){
+            
+                // Add parent id, create credential and save to server.
+                try {
+                    var credentialObj = new credential(credentialData, parent_id);
+                    
+                    credentialObj.create($scope.workspace).then(function(){
+                         $scope.credentials.push(credentialObj);
+                    }, function(){
+                        console.log('Error creating credential.');
                     });
+
+                } catch (error) {
+                    console.log(error);
+                }
             };
 
             $scope.new = function() {
                 var modal = $uibModal.open({
-                    templateUrl: 'scripts/licenses/partials/modalNew.html',
-                    controller: 'licensesModalNew',
+                    templateUrl: 'scripts/credentials/partials/modalNew.html',
+                    controller: 'modalNewCredentialCtrl',
                     size: 'lg',
                     resolve: {}
                  });
 
                 modal.result
                     .then(function(data) {
-                        $scope.insert(data);
-                    });
-            };
-
-            $scope.update = function(license, data) {
-                licensesManager.update(license, data)
-                    .catch(function(message) {
-                        commonsFact.errorDialog(message);
+                       createCredential(data, $scope.parentObject.id);
                     });
             };
 

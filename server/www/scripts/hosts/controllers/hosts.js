@@ -64,7 +64,7 @@ angular.module('faradayApp')
                 });
         };
 
-        var createCredential = function(parent_id, credentialData){
+        var createCredential = function(credentialData, parent_id){
             
             // Add parent id, create credential and save to server.
             try {
@@ -181,7 +181,7 @@ angular.module('faradayApp')
             var interfaceData = $scope.createInterface(hostdata, interfaceData);
             hostsManager.createHost(hostdata, interfaceData, $scope.workspace).then(function(host) {
                 if(credentialData.name && credentialData.username && credentialData.password){
-                    createCredential(hostdata._id, credentialData);
+                    createCredential(credentialData, hostdata._id);
                     host.credentials = 1;
                 }
                 $scope.hosts.push(host);

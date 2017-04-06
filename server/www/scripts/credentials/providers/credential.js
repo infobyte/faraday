@@ -5,8 +5,8 @@
 "use strict";
 
 angular.module('faradayApp')
-    .factory('credential', ['ServerAPI',
-    function(ServerAPI) {
+    .factory('credential', ['ServerAPI', '$q', 
+    function(ServerAPI, $q) {
 
         // All credentials need this properties minimum for build object.
         var _credentialFields = {
@@ -15,7 +15,6 @@ angular.module('faradayApp')
             'username': 'string',
             'password': 'string',
             'type': 'string',
-            'parent': 'string'
         };
 
         // Only this properties will be saved to server.
@@ -29,31 +28,38 @@ angular.module('faradayApp')
             'type': 'string',
         };
 
-        Credential = function(data){
+        Credential = function(data, parent){
             if(data) {
-                this.set(data);
+                this.set(data, parent);
             }
         };
 
         Credential.prototype = {
             // Build object.
-            set: function(data) {
+            set: function(data, parent) {
 
                 data.type = 'Cred';
                 if(data.metadata !== undefined)
                     data.metadata = '';
-                if(data._id === undefined)
-                    data['_id'] = _generateID(data.parent, data.name, data.username, data.password);
-                
+                if(data._id === undefined && parent)
+                    data['_id'] = _generateID(parent, data.name, data.username, data.password);
+
                 _checkFieldsOk(data);
                 angular.extend(this, data);
             },
 
             // Find object in server and build that.
             load: function(ws, id){
-                ServerAPI.getObj(ws, id).then(function(data){
-                    this.set(data);
+                
+                var deferred = $q.defer();
+                var self = this;
+                
+                ServerAPI.getObj(ws, id).then(function(response){
+                    angular.extend(self, response.data);
+                    deferred.resolve();
                 });
+                
+                return deferred.promise;
             },
 
             // Delete object object in server.
@@ -90,13 +96,13 @@ angular.module('faradayApp')
     };
 
     // Check object to construct have all fields and also, type of they are OK.
-    // All fields in _credentialFields should are in object.
+    // All fields in _credentialFields should are in object, except parent.
     var _checkFieldsOk = function(credential){
 
         Object.keys(_credentialFields).forEach(function(key, index) {
             // Credential dont have property or type of property in credential dont same.
             if(!credential.hasOwnProperty(key) || typeof(credential[key]) !== _credentialFields[key] || credential[key] === '')
-               throw 'Credential-Invalid fields: Invalid fields in credential creation: ' + key;
+                throw 'Credential-Invalid fields: Invalid fields in credential creation: ' + key;
         });
     };
 

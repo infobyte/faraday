@@ -97,7 +97,7 @@
                                         <span ng-if="!host.owned">not yet</span>
                                     </td>
                                     <td>
-                                        <span>{{host.credentials}}</span>
+                                        <a ng-href="#/credentials/ws/{{workspace}}/hid/{{host._id}}">{{host.credentials}}</a>
                                     </td>
                                 </tr>
                             </tbody>

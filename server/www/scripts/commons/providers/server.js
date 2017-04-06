@@ -413,7 +413,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteCredential = function(wsName, credentialId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, credentialid, rev);
+                var deleteUrl = createDeleteUrl(wsName, credentialId, rev);
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }

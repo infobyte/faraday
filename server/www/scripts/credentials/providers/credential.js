@@ -96,7 +96,7 @@ angular.module('faradayApp')
     };
 
     // Check object to construct have all fields and also, type of they are OK.
-    // All fields in _credentialFields should are in object, except parent.
+    // All fields in _credentialFields should are in object.
     var _checkFieldsOk = function(credential){
 
         Object.keys(_credentialFields).forEach(function(key, index) {

@@ -61,7 +61,7 @@ class HostDAO(FaradayDAO):
                              .outerjoin(Interface, Host.id == Interface.host_id)\
                              .outerjoin(Vulnerability, Host.id == Vulnerability.host_id)\
                              .outerjoin(Service, (Host.id == Service.host_id) & (Service.status.in_(("open", "running", "opened"))))\
-                             .outerjoin(Credential, Credential.host_id == Host.id)\
+                             .outerjoin(Credential, (Credential.host_id == Host.id) & Credential.service_id == None)\
                              .group_by(Host.id)
 
         # Apply pagination, sorting and filtering options to the query

@@ -114,7 +114,6 @@ angular.module('faradayApp')
             // If I don't restore the object after the call hostnames won't be shown in the interface
             var old_hostnames = $scope.interface.hostnames;
             $scope.interface.hostnames = commons.objectToArray($scope.interface.hostnames.filter(Boolean));
-            console.log('diff', JSON.stringify($scope.interface));
 
             $scope.hostdata = $scope.host;
             $scope.hostdata.metadata['update_time'] = timestamp;

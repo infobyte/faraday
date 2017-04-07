@@ -105,9 +105,11 @@ angular.module('faradayApp')
             };
 
             var removeFromView = function(credential){
-                var index = $scope.credentials.indexOf(credential);
-                $scope.credentials.splice(index, 1);     
-            }
+                $scope.credentials.forEach(function(item, index){
+                    if (item._id === credential._id)
+                        $scope.credentials.splice(index, 1);     
+                });
+            };
 
             // Delete to server.
             $scope.remove = function(credentials) {
@@ -137,38 +139,25 @@ angular.module('faradayApp')
             $scope.delete = function() {
                 var selected = $scope.selectedCredentials();
 
-                if(selected.length == 0) {
-                    $uibModal.open({
-                        templateUrl: 'scripts/commons/partials/modalKO.html',
-                        controller: 'commonsModalKoCtrl',
-                        size: 'sm',
-                        resolve: {
-                            msg: function() {
-                                return 'No credentials were selected to delete';
-                            }
-                        }
-                    });
-                } else {
-                    var message = "A credential will be deleted";
-                    if(selected.length > 1) {
-                        message = selected.length  + " credentials will be deleted";
-                    }
-                    message = message.concat(". This operation cannot be undone. Are you sure you want to proceed?");
-                    $uibModal.open({
-                        templateUrl: 'scripts/commons/partials/modalDelete.html',
-                        controller: 'commonsModalDelete',
-                        size: 'lg',
-                        resolve: {
-                            msg: function() {
-                                return message;
-                            }
-                        }
-                    }).result.then(function() {
-                        $scope.remove(selected);
-                    }, function() {
-                        //dismised, do nothing
-                    });
+                var message = "A credential will be deleted";
+                if(selected.length > 1) {
+                    message = selected.length  + " credentials will be deleted";
                 }
+                message = message.concat(". This operation cannot be undone. Are you sure you want to proceed?");
+                $uibModal.open({
+                    templateUrl: 'scripts/commons/partials/modalDelete.html',
+                    controller: 'commonsModalDelete',
+                    size: 'lg',
+                    resolve: {
+                        msg: function() {
+                            return message;
+                        }
+                    }
+                }).result.then(function() {
+                    $scope.remove(selected);
+                }, function() {
+                    //dismised, do nothing
+                });
             };
 
             var createCredential = function(credentialData, parent_id){
@@ -190,10 +179,17 @@ angular.module('faradayApp')
 
             $scope.new = function() {
                 var modal = $uibModal.open({
-                    templateUrl: 'scripts/credentials/partials/modalNew.html',
-                    controller: 'modalNewCredentialCtrl',
+                    templateUrl: 'scripts/credentials/partials/modalNewEdit.html',
+                    controller: 'modalNewEditCredentialCtrl',
                     size: 'lg',
-                    resolve: {}
+                    resolve: {
+                        title: function(){
+                            return 'New credential';
+                        },
+                        credential: function(){
+                            return undefined;
+                        }
+                    }
                  });
 
                 modal.result
@@ -202,26 +198,25 @@ angular.module('faradayApp')
                     });
             };
 
-            $scope.edit = function() {
-                if($scope.selectedCredentials().length == 1) {
-                    var license = $scope.selectedCredentials()[0];
-                    var modal = $uibModal.open({
-                        templateUrl: 'scripts/licenses/partials/modalEdit.html',
-                        controller: 'licensesModalEdit',
-                        size: 'lg',
-                        resolve: {
-                            license: function() {
-                                return license;
-                            }
+           $scope.edit = function() {
+                var modal = $uibModal.open({
+                    templateUrl: 'scripts/credentials/partials/modalNewEdit.html',
+                    controller: 'modalNewEditCredentialCtrl',
+                    size: 'lg',
+                    resolve: {
+                        title: function(){
+                            return 'Edit credential';
+                        },
+                        credential: function(){
+                            return $scope.selectedCredentials()[0];
                         }
-                     });
+                    }
+                 });
 
-                    modal.result.then(function(data) {
-                        $scope.update(license, data);
+                modal.result
+                    .then(function(data) {
+                       editCredential(data, $scope.parentObject.id);
                     });
-                } else {
-                    commonsFact.errorDialog("No licenses were selected to edit.");
-                }
             };
 
             $scope.selectedCredentials = function() {

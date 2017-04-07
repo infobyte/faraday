@@ -5,9 +5,11 @@
 "use strict";
 
 angular.module('faradayApp')
-    .controller('modalNewCredentialCtrl',
-        ['$scope', '$modalInstance',
-        function($scope, $modalInstance) {
+    .controller('modalNewEditCredentialCtrl',
+        ['$scope', '$modalInstance', 'title', 'credential',
+        function($scope, $modalInstance, title, credential) {
+
+        $scope.title = title;
 
         $scope.credentialData = {
             'name': '',
@@ -15,6 +17,14 @@ angular.module('faradayApp')
             'password': ''
         };
         
+        var init = function(){
+            if(credential !== undefined){
+                $scope.credentialData.name = credential.name;
+                $scope.credentialData.username = credential.username;
+                $scope.credentialData.password = credential.password;
+            }
+        };
+
         $scope.ok = function() {
              $modalInstance.close($scope.credentialData);
         };
@@ -22,4 +32,6 @@ angular.module('faradayApp')
         $scope.cancel = function() {
             $modalInstance.dismiss('cancel');
         };
+
+        init();
 }]);

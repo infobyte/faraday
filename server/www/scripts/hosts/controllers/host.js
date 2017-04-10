@@ -20,6 +20,7 @@ angular.module('faradayApp')
             $scope.sortField = "ports";
             $scope.reverse = false;
             $scope.editing = false;
+            $scope.showServices = true;
 
             $scope.loadedServices = false;
 

@@ -26,7 +26,7 @@
                                 <div class="col-md-3">
                                     <h5>Name</h5>
                                     <label class="sr-only" for="name">Name</label>
-                                    <input type="text" class="form-control" id="name" placeholder="Name" ng-model="host.name" ng-disabled="!editing" />
+                                    <input type="text" class="form-control" id="name" placeholder="Name" ng-model="host.name" ng-disabled="!editing" required/>
                                     <span class="help-block normal-size">
                                         Example: 192.168.0.1
                                     </span>
@@ -93,119 +93,121 @@
                             </div>
                         </div>
                     </div>
-                    <h3>Host services</h3>
-                    <div class="reports col-md-9 col-sm-9 col-xs-12" ng-if="loadedServices && services.length == 0">
-                        <h4>No services found for {{host.name}}</h4>
-                    </div>
-                    <div class="reports col-md-9 col-sm-9 col-xs-12">
-                        <div class="col-md-4 col-sm-3 col-xs-11">
-                            <h2 class="ws-label">
-                                <button type="button" class="btn btn-success btn-sm" title="New service" ng-click="new()">
-                                    <span class="glyphicon glyphicon-plus-sign"></span>
-                                    New service
-                                </button>
-                                <button type="button" class="btn btn-default btn-sm" title="Edit selected services" ng-click="edit()" ng-disabled="services.length == 0">
-                                    <span class="glyphicon glyphicon-pencil"></span>
-                                    Edit
-                                </button>
-                                <button type="button" class="btn btn-default btn-sm" title="Delete selected services" ng-click="delete()" ng-disabled="services.length == 0">
-                                    <span class="glyphicon glyphicon-trash"></span>
-                                    Delete
-                                </button>
-                            </h2><!-- .ws-label -->
+                    <span ng-if="showServices">
+                        <h3>Host services</h3>
+                        <div class="reports col-md-9 col-sm-9 col-xs-12" ng-if="loadedServices && services.length == 0">
+                            <h4>No services found for {{host.name}}</h4>
                         </div>
-                    </div>
-                    <div class="reports col-md-9 col-sm-9 col-xs-12" ng-show="loadedServices && services.length > 0">
-                        <div class="col-md-4 col-sm-3 col-xs-11">
-                            <form role="form" ng-submit="searchFor(true, searchParams)">
-                                <div class="form-group">
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
-                                        <input type="text" class="form-control" id="filter-by"
-                                        placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
-                                        <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                            <i class="fa fa-search" ng-if="services.length > 0 || !loadedServices"></i>
-                                            <i class="fa fa-refresh fa-spin" ng-if="services.length == 0 && loadedServices"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                            </form>
+                        <div class="reports col-md-9 col-sm-9 col-xs-12">
+                            <div class="col-md-4 col-sm-3 col-xs-11">
+                                <h2 class="ws-label">
+                                    <button type="button" class="btn btn-success btn-sm" title="New service" ng-click="new()">
+                                        <span class="glyphicon glyphicon-plus-sign"></span>
+                                        New service
+                                    </button>
+                                    <button type="button" class="btn btn-default btn-sm" title="Edit selected services" ng-click="edit()" ng-disabled="services.length == 0">
+                                        <span class="glyphicon glyphicon-pencil"></span>
+                                        Edit
+                                    </button>
+                                    <button type="button" class="btn btn-default btn-sm" title="Delete selected services" ng-click="delete()" ng-disabled="services.length == 0">
+                                        <span class="glyphicon glyphicon-trash"></span>
+                                        Delete
+                                    </button>
+                                </h2><!-- .ws-label -->
+                            </div>
                         </div>
-                        <table class="status-report hosts-list table table-responsive">
-                            <thead>
-                                <tr>
-                                    <th><input type="checkbox" ng-model="selectall" ng-click="checkAllServices()"/></th>
-                                    <th>
-                                        <a href="" ng-click="toggleSort('name')">Name</a>
-                                    </th>
-                                    <th>
-                                        <a href="" ng-click="toggleSort('version')">Version</a>
-                                    </th>
-                                    <th>
-                                        <a href="" ng-click="toggleSort('ports')">Ports</a>
-                                    </th>
-                                    <th>
-                                        <a href="" ng-click="toggleSort('protocol')">Protocol</a>
-                                    </th>
-                                    <th>
-                                        <a href="" ng-click="toggleSort('status')">Status</a>
-                                    </th>
-                                    <th>
-                                        <a href="" ng-click="toggleSort('vulns')">Vulns</a>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr ng-repeat="service in filtered = (services | filter:expression) | orderBy:sortField:reverse | startFrom:(currentPage-1)*pageSize | limitTo:pageSize"
-                                    selection-model selection-model-type="checkbox"
-                                    selection-model-mode="multiple-additive"
-                                    selection-model-selected-class="multi-selected">
-                                    <td><input type="checkbox" name="{{s._id}}"/></td>
-                                    <td>
-                                        <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/name={{service.name}}">
-                                            <span ng-bind="service.name"></span>
-                                        </a>
-                                        <a ng-href="//{{osint.host}}/search?query={{service.name}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
-                                            <img ng-src="images/{{osint.icon}}.png" height="15px" width="15px" />
-                                        </a>
-                                    </td>
-                                    <td ng-bind="service.version || '-'"></td>
-                                    <td>
-                                        <span ng-bind="service.ports"></span>
-                                        <a ng-href="//{{osint.host}}/search?query=port:{{service.ports}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
-                                            <img ng-src="images/{{osint.icon}}.png" height="15px" width="15px" />
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/protocol={{service.protocol}}">
-                                            <span ng-bind="service.protocol"></span>
-                                        </a>
-                                    </td>
-                                    <td ng-bind="service.status || '-'"></td>
-                                    <td>
-                                        <a ng-href="#/status/ws/{{workspace}}/search/service={{service.ports}}&target={{host.name}}">
-                                            <span ng-bind="service.vulns"></span>
-                                        </a>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table><!-- #hosts -->
-                        <div class="showPagination">
-                            <div class="form-group">
-                                <ul class="pagination">
-                                    <li><a ng-hide="prevPageDisabled()" ng-click="prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
-                                    <li><a>{{currentPage}}/{{pageCount()}}</a></li>
-                                    <li><a ng-hide="nextPageDisabled()" ng-click="nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
-                                </ul>
-                                <form name="goToPage" id="goToPageStatus">
-                                    <div class="col-md-2">
-                                        <input type="number" min="0" max="{{pageCount()}}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
+                        <div class="reports col-md-9 col-sm-9 col-xs-12" ng-show="loadedServices && services.length > 0">
+                            <div class="col-md-4 col-sm-3 col-xs-11">
+                                <form role="form" ng-submit="searchFor(true, searchParams)">
+                                    <div class="form-group">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
+                                            <input type="text" class="form-control" id="filter-by"
+                                            placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
+                                            <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
+                                                <i class="fa fa-search" ng-if="services.length > 0 || !loadedServices"></i>
+                                                <i class="fa fa-refresh fa-spin" ng-if="services.length == 0 && loadedServices"></i>
+                                            </span>
+                                        </div>
                                     </div>
-                                    <button class="btn btn-default" ng-click="go()">GO</button>
-                                    <input type="number" min="1" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />
                                 </form>
                             </div>
-                        </div><!-- .showPagination -->
-                    </div><!-- .reports -->
+                            <table class="status-report hosts-list table table-responsive">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" ng-model="selectall" ng-click="checkAllServices()"/></th>
+                                        <th>
+                                            <a href="" ng-click="toggleSort('name')">Name</a>
+                                        </th>
+                                        <th>
+                                            <a href="" ng-click="toggleSort('version')">Version</a>
+                                        </th>
+                                        <th>
+                                            <a href="" ng-click="toggleSort('ports')">Ports</a>
+                                        </th>
+                                        <th>
+                                            <a href="" ng-click="toggleSort('protocol')">Protocol</a>
+                                        </th>
+                                        <th>
+                                            <a href="" ng-click="toggleSort('status')">Status</a>
+                                        </th>
+                                        <th>
+                                            <a href="" ng-click="toggleSort('vulns')">Vulns</a>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="service in filtered = (services | filter:expression) | orderBy:sortField:reverse | startFrom:(currentPage-1)*pageSize | limitTo:pageSize"
+                                        selection-model selection-model-type="checkbox"
+                                                        selection-model-mode="multiple-additive"
+                                                        selection-model-selected-class="multi-selected">
+                                        <td><input type="checkbox" name="{{s._id}}"/></td>
+                                        <td>
+                                            <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/name={{service.name}}">
+                                                <span ng-bind="service.name"></span>
+                                            </a>
+                                            <a ng-href="//{{osint.host}}/search?query={{service.name}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
+                                                <img ng-src="images/{{osint.icon}}.png" height="15px" width="15px" />
+                                            </a>
+                                        </td>
+                                        <td ng-bind="service.version || '-'"></td>
+                                        <td>
+                                            <span ng-bind="service.ports"></span>
+                                            <a ng-href="//{{osint.host}}/search?query=port:{{service.ports}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
+                                                <img ng-src="images/{{osint.icon}}.png" height="15px" width="15px" />
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/protocol={{service.protocol}}">
+                                                <span ng-bind="service.protocol"></span>
+                                            </a>
+                                        </td>
+                                        <td ng-bind="service.status || '-'"></td>
+                                        <td>
+                                            <a ng-href="#/status/ws/{{workspace}}/search/service={{service.ports}}&target={{host.name}}">
+                                                <span ng-bind="service.vulns"></span>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table><!-- #hosts -->
+                            <div class="showPagination">
+                                <div class="form-group">
+                                    <ul class="pagination">
+                                        <li><a ng-hide="prevPageDisabled()" ng-click="prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                                        <li><a>{{currentPage}}/{{pageCount()}}</a></li>
+                                        <li><a ng-hide="nextPageDisabled()" ng-click="nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                                    </ul>
+                                    <form name="goToPage" id="goToPageStatus">
+                                        <div class="col-md-2">
+                                            <input type="number" min="0" max="{{pageCount()}}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
+                                        </div>
+                                        <button class="btn btn-default" ng-click="go()">GO</button>
+                                        <input type="number" min="1" class="form-control vuln_per_page" ng-model=newPageSize placeholder="Number page" />
+                                    </form>
+                                </div>
+                            </div><!-- .showPagination -->
+                        </div><!-- .reports -->
+                    </span>
                 </div><!-- #reports-main --></div><!-- .right-main -->
             </section><!-- #main -->

@@ -9,6 +9,17 @@ angular.module('faradayApp')
             function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, $q,
             hostsManager, workspacesFact, dashboardSrv, servicesManager, commons) {
 
+        loadHosts = function(){
+            hostsManager.getHost($routeParams.hidId, $scope.workspace)
+                .then(function(host) {
+                    hostsManager.getInterfaces($scope.workspace, host._id).then(function(resp){
+                        $scope.interface = resp[0].value;
+                        $scope.interface.hostnames = commons.arrayToObject($scope.interface.hostnames);
+                    });
+                	$scope.host = host;
+                });
+        };
+
 	    init = function() {
 	    	$scope.selectall_service = false;
             // current workspace
@@ -21,6 +32,7 @@ angular.module('faradayApp')
             $scope.reverse = false;
             $scope.editing = false;
             $scope.showServices = true;
+            $scope.creating = false;
 
             $scope.loadedServices = false;
 
@@ -31,14 +43,7 @@ angular.module('faradayApp')
                 });
 
             // current host
-            hostsManager.getHost(hostId, $scope.workspace)
-                .then(function(host) {
-                    hostsManager.getInterfaces($scope.workspace, host._id).then(function(resp){
-                        $scope.interface = resp[0].value;
-                        $scope.interface.hostnames = commons.arrayToObject($scope.interface.hostnames);
-                    });
-                	$scope.host = host;
-                });
+            loadHosts();
 
             // services by host
             dashboardSrv.getServicesByHost($scope.workspace, hostId)
@@ -125,6 +130,11 @@ angular.module('faradayApp')
                                         $scope.interface.hostnames = old_hostnames;
                                         $scope.editing = false;
                                     });
+        };
+
+        $scope.cancel = function(){
+            $scope.editing = false;
+            loadHosts();
         };
 
         $scope.toggleEdit = function(){

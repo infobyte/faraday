@@ -12,6 +12,7 @@ angular.module('faradayApp')
             $scope.workspace = $routeParams.wsId;
             $scope.editing = true;
             $scope.showServices = false;
+            $scope.creating = true;
 
             $scope.interface = {
                 "hostnames": [{key: ''}],

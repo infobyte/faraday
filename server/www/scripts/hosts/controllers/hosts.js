@@ -211,22 +211,8 @@ angular.module('faradayApp')
 
         $scope.edit = function() {
             if($scope.selectedHosts().length == 1) {
-                var modal = $uibModal.open({
-                    templateUrl: 'scripts/hosts/partials/modalEdit.html',
-                    controller: 'hostsModalEdit',
-                    size: 'lg',
-                    resolve: {
-                        host: function(){
-                            return $scope.selectedHosts()[0];
-                        }
-                    }
-                 });
-
-                modal.result.then(function(data) {
-                    hostdata = data[0];
-                    interfaceData = data[1];
-                    $scope.update($scope.selectedHosts()[0], hostdata, interfaceData);
-                });
+                var hostId = $scope.selectedHosts()[0]._id;
+                $location.path('/host/ws/' + $scope.workspace + '/hid/' + hostId);
             } else {
                 $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',

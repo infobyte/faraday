@@ -352,6 +352,32 @@ angular.module('faradayApp')
             }
         };
 
+        $scope.deleteHost = function(){
+            var message = "A host will be deleted along with all of its children. This operation cannot be undone. Are you sure you want to proceed?";
+            $uibModal.open({
+                templateUrl: 'scripts/commons/partials/modalDelete.html',
+                controller: 'commonsModalDelete',
+                size: 'lg',
+                resolve: {
+                    msg: function() {
+                        return message;
+                    }
+                }
+            }).result.then(function() {
+                $scope.removeHost($scope.host._id);
+            }, function() {
+                //dismised, do nothing
+            });
+        };
+
+        $scope.removeHost = function(id) {
+            hostsManager.deleteHost(id, $scope.workspace).then(function() {
+                $location.path('/hosts/ws/' + $scope.workspace);
+            }, function(message) {
+                console.log(message);
+            });
+        };
+
         $scope.remove = function(ids) {
             ids.forEach(function(id) {
                 servicesManager.deleteServices(id, $scope.workspace).then(function() {

@@ -13,7 +13,7 @@ angular.module('faradayApp')
             $scope.credentials = [];
             // Contains: type of parent(Host or Service), id(Couchid and internal id) of that and name of host and/or name of service(For show in view)
             $scope.parentObject = new Object();
-            
+
             // table stuff
             $scope.reverse;
             $scope.search;
@@ -65,10 +65,10 @@ angular.module('faradayApp')
                 credentials.forEach(function(cred){
                     $scope.credentials.push(new credential(cred.value));
                 });
-            }
+            };
 
             var getAndLoadCredentials = function() {
-                
+ 
                 // Load all credentials, we dont have a parent.
                 if($scope.parentObject.type === undefined){
                     ServerAPI.getCredentials($scope.workspace).then(function(response){
@@ -76,7 +76,6 @@ angular.module('faradayApp')
                     });
                 }
                 else {
-
                     // Load all credentials, filtered by host internal id or service internal id.
                     if ($scope.parentObject.type === 'Host')
                         var data = {'host_id': $scope.parentObject.id};
@@ -87,7 +86,7 @@ angular.module('faradayApp')
                         loadCredentials(response.data.rows);
                     });
                 }
-            }
+            };
 
             var init = function() {
 
@@ -97,11 +96,10 @@ angular.module('faradayApp')
                 $scope.reverse = true;
 
                 $scope.workspace = $routeParams.wsId;
-                
+
                 getParent().then(function(){
                     getAndLoadCredentials();
                 });
-
             };
 
             var removeFromView = function(credential){
@@ -112,27 +110,99 @@ angular.module('faradayApp')
             };
 
             // Delete to server.
-            $scope.remove = function(credentials) {
+            var remove = function(credentialsToDelete) {
+
                 var confirmations = [];
 
-                credentials.forEach(function(cred) {
+                credentialsToDelete.forEach(function(credToDelete) {
                     var deferred = $q.defer();
 
-                    var credentialToDelete = new credential();
-                    credentialToDelete.load($scope.workspace, cred._id).then(function(response){
-
-                        credentialToDelete.delete($scope.workspace).then(function(resp) {
-                            deferred.resolve(resp);
-                            removeFromView(credentialToDelete);
-                        }, function(message) {
-                            deferred.reject(message);
-                        });
-
-                        confirmations.push(deferred);
+                    $scope.credentials.forEach(function(credentialLocal){
+                        if(credentialLocal._id == credToDelete._id){
+                            credentialLocal.delete($scope.workspace).then(function(resp) {
+                                deferred.resolve(resp);
+                                removeFromView(credentialLocal);
+                            }, function(message) {
+                                deferred.reject(message);
+                            });
+                            confirmations.push(deferred);
+                        }
                     });
                 });
-
                 return $q.all(confirmations);
+            };
+
+            var createCredential = function(credentialData, parent_id){
+                // Add parent id, create credential and save to server.
+                try {
+                    var credentialObj = new credential(credentialData, parent_id);
+                    
+                    credentialObj.create($scope.workspace).then(function(){
+                         $scope.credentials.push(credentialObj);
+                    }, function(){
+                        console.log('Error creating credential.');
+                    });
+
+                } catch (error) {
+                    console.log(error);
+                }
+            };
+
+            var editCredential = function(credentialEdited, idCredentialEdited){
+                $scope.credentials.forEach(function(item, index){
+                    if (item._id === idCredentialEdited){
+                        item.name =  credentialEdited.name;
+                        item.username = credentialEdited.username;
+                        item.password = credentialEdited.password;
+                        item.update($scope.workspace);
+                    }
+                });
+            };
+
+            // Binded to New button.
+            $scope.new = function() {
+                var modal = $uibModal.open({
+                    templateUrl: 'scripts/credentials/partials/modalNewEdit.html',
+                    controller: 'modalNewEditCredentialCtrl',
+                    size: 'lg',
+                    resolve: {
+                        title: function(){
+                            return 'New credential';
+                        },
+                        credential: function(){
+                            return undefined;
+                        }
+                    }
+                 });
+                modal.result
+                    .then(function(data) {
+                       createCredential(data, $scope.parentObject.id);
+                    });
+            };
+
+            // Binded to Edit button.
+            $scope.edit = function() {
+
+                var credentialToEdit = $scope.selectedCredentials()[0];
+                
+                var modal = $uibModal.open({
+                    templateUrl: 'scripts/credentials/partials/modalNewEdit.html',
+                    controller: 'modalNewEditCredentialCtrl',
+                    size: 'lg',
+                    resolve: {
+                        title: function(){
+                            return 'Edit credential';
+                        },
+                        credential: function(){
+                            return credentialToEdit;
+                        }
+                    }
+                 });
+
+                modal.result
+                    .then(function(data) {
+                       editCredential(data, credentialToEdit._id);
+                    });
             };
 
             // Binded to Delete button, internal logic.
@@ -154,69 +224,10 @@ angular.module('faradayApp')
                         }
                     }
                 }).result.then(function() {
-                    $scope.remove(selected);
+                    remove(selected);
                 }, function() {
                     //dismised, do nothing
                 });
-            };
-
-            var createCredential = function(credentialData, parent_id){
-            
-                // Add parent id, create credential and save to server.
-                try {
-                    var credentialObj = new credential(credentialData, parent_id);
-                    
-                    credentialObj.create($scope.workspace).then(function(){
-                         $scope.credentials.push(credentialObj);
-                    }, function(){
-                        console.log('Error creating credential.');
-                    });
-
-                } catch (error) {
-                    console.log(error);
-                }
-            };
-
-            $scope.new = function() {
-                var modal = $uibModal.open({
-                    templateUrl: 'scripts/credentials/partials/modalNewEdit.html',
-                    controller: 'modalNewEditCredentialCtrl',
-                    size: 'lg',
-                    resolve: {
-                        title: function(){
-                            return 'New credential';
-                        },
-                        credential: function(){
-                            return undefined;
-                        }
-                    }
-                 });
-
-                modal.result
-                    .then(function(data) {
-                       createCredential(data, $scope.parentObject.id);
-                    });
-            };
-
-           $scope.edit = function() {
-                var modal = $uibModal.open({
-                    templateUrl: 'scripts/credentials/partials/modalNewEdit.html',
-                    controller: 'modalNewEditCredentialCtrl',
-                    size: 'lg',
-                    resolve: {
-                        title: function(){
-                            return 'Edit credential';
-                        },
-                        credential: function(){
-                            return $scope.selectedCredentials()[0];
-                        }
-                    }
-                 });
-
-                modal.result
-                    .then(function(data) {
-                       editCredential(data, $scope.parentObject.id);
-                    });
             };
 
             $scope.selectedCredentials = function() {
@@ -254,7 +265,7 @@ angular.module('faradayApp')
             // toggle column sort order
             $scope.toggleReverse = function() {
                 $scope.reverse = !$scope.reverse;
-            }
+            };
 
             init();
     }]);

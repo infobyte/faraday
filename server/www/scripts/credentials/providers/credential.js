@@ -39,7 +39,7 @@ angular.module('faradayApp')
             set: function(data, parent) {
 
                 data.type = 'Cred';
-                if(data.metadata !== undefined)
+                if(data.metadata === undefined)
                     data.metadata = '';
                 if(data._id === undefined && parent)
                     data['_id'] = _generateID(parent, data.name, data.username, data.password);

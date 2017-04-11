@@ -24,7 +24,6 @@ class HostDAO(FaradayDAO):
         "os": [Host.os],
         "owned": [Host.owned],
         "command_id": [EntityMetadata.command_id],
-        "credentials": ["credentials_count"]
     }
 
     STRICT_FILTERING = ["service", "couchid", "command_id"]

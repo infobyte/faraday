@@ -96,12 +96,12 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
         when('/host/ws/:wsId/hid/:hidId/search/:search', {
             templateUrl: 'scripts/services/partials/list.html',
             controller: 'hostCtrl',
-            title: 'Services | '
+            title: 'Host and services | '
         }).
         when('/host/ws/:wsId/hid/:hidId/search', {
             templateUrl: 'scripts/services/partials/list.html',
             controller: 'hostCtrl',
-            title: 'Services | '
+            title: 'Host and services | '
         }).
         when('/hosts', {
             templateUrl: 'scripts/commons/partials/workspaces.html',
@@ -111,12 +111,12 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
         when('/host/ws/:wsId/hid/:hidId', {
             templateUrl: 'scripts/services/partials/list.html',
             controller: 'hostCtrl',
-            title: 'Services | '
+            title: 'Host and services | '
         }).
         when('/host/ws/:wsId/hid/:hidId/:edit', {
             templateUrl: 'scripts/services/partials/list.html',
             controller: 'hostCtrl',
-            title: 'Services | '
+            title: 'Host and services | '
         }).
         when('/host/ws/:wsId/new', {
             templateUrl: 'scripts/services/partials/list.html',

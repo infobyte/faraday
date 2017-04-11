@@ -86,13 +86,13 @@
                         </div>
                         <div class="modal-footer">
                             <div class="modal-button">
-                                <button class="btn btn-danger" ng-click="cancel()" ng-if="editing && !creating">Cancel</button>
+                                <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-if="editing && !creating">Cancel</a>
                                 <a class="btn btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
                                 <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
-                                <button class="btn btn-default" ng-click="toggleEdit()" ng-if="!editing">
+                                <a class="btn btn-default" href="#/host/ws/{{workspace}}/hid/{{host._id}}/edit" ng-if="!editing">
                                     <span class="glyphicon glyphicon-pencil"></span>
                                     Edit
-                                </button>
+                                </a>
                                 <button type="button" class="btn btn-default" title="Delete host" ng-click="deleteHost()" ng-if="!editing">
                                     <span class="glyphicon glyphicon-trash"></span>
                                     Delete

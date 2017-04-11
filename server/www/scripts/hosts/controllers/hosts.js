@@ -212,7 +212,7 @@ angular.module('faradayApp')
         $scope.edit = function() {
             if($scope.selectedHosts().length == 1) {
                 var hostId = $scope.selectedHosts()[0]._id;
-                $location.path('/host/ws/' + $scope.workspace + '/hid/' + hostId);
+                $location.path('/host/ws/' + $scope.workspace + '/hid/' + hostId + '/edit');
             } else {
                 $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',

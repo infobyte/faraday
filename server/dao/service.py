@@ -7,7 +7,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm.query import Bundle
 
 from server.dao.base import FaradayDAO
-from server.models import Host, Interface, Service, EntityMetadata, Vulnerability
+from server.models import Host, Interface, Service, EntityMetadata, Vulnerability, Credential
 from server.utils.database import apply_search_filter
 
 class ServiceDAO(FaradayDAO):
@@ -22,8 +22,9 @@ class ServiceDAO(FaradayDAO):
         "version":      [Service.version],
         "status":       [Service.status],
         "owned":        [Service.owned],
-        "hostid":       [Host.id]
+        "hostid":       [Host.id],
     }
+
     STRICT_FILTERING = ["couchid", "interface", 'id', 'hostid']
 
     def list(self, service_filter={}):
@@ -34,13 +35,15 @@ class ServiceDAO(FaradayDAO):
                 func.count(distinct(Vulnerability.id)).label('vuln_count'), EntityMetadata.couchdb_id,\
                 EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
                 EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
-                EntityMetadata.update_controller_action, EntityMetadata.owner, EntityMetadata.command_id)
+                EntityMetadata.update_controller_action, EntityMetadata.owner, EntityMetadata.command_id,
+                func.count(distinct(Credential.id)).label("credentials_count"))
 
         query = self._session.query(service_bundle).\
                 group_by(Service.id).\
                 outerjoin(EntityMetadata, EntityMetadata.id == Service.entity_metadata_id).\
                 outerjoin(Vulnerability, Service.id == Vulnerability.service_id).group_by(Service.id).\
                 outerjoin(Interface, Interface.id == Service.interface_id).\
+                outerjoin(Credential, (Credential.service_id == Service.id) & Credential.host_id == None).\
                 outerjoin(Host, Host.id == Interface.host_id)
 
         query = apply_search_filter(query, self.COLUMNS_MAP, None, service_filter, self.STRICT_FILTERING)
@@ -72,12 +75,13 @@ class ServiceDAO(FaradayDAO):
                 },
                 'protocol': service.protocol,
                 'status': service.status,
-                'ports':  [ int(i) for i in service.ports.split(',') if service.ports],
+                'ports': [int(i) for i in service.ports.split(',') if service.ports],
                 'version': service.version,
                 'owned': service.owned,
                 'owner': service.owner
                 },
             'vulns': service.vuln_count,
+            'credentials': service.credentials_count
             }
 
     def count(self, group_by=None):

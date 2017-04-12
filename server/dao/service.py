@@ -23,6 +23,7 @@ class ServiceDAO(FaradayDAO):
         "status":       [Service.status],
         "owned":        [Service.owned],
         "hostid":       [Host.id],
+        "hostIdCouchdb": []
     }
 
     STRICT_FILTERING = ["couchid", "interface", 'id', 'hostid']
@@ -47,6 +48,11 @@ class ServiceDAO(FaradayDAO):
                 outerjoin(Host, Host.id == Interface.host_id)
 
         query = apply_search_filter(query, self.COLUMNS_MAP, None, service_filter, self.STRICT_FILTERING)
+
+        # 'LIKE' for search services started by hostId.%.%
+        if service_filter.get('hostIdCouchdb') is not None:
+            query = query.filter(
+                EntityMetadata.couchdb_id.like(service_filter.get('hostIdCouchdb') + ".%.%"))
 
         raw_services = query.all()
         services = [self.__get_service_data(r.service) for r in raw_services]
@@ -78,11 +84,10 @@ class ServiceDAO(FaradayDAO):
                 'ports': [int(i) for i in service.ports.split(',') if service.ports],
                 'version': service.version,
                 'owned': service.owned,
-                'owner': service.owner
+                'owner': service.owner,
+                'credentials': service.credentials_count
                 },
-            'vulns': service.vuln_count,
-            'credentials': service.credentials_count
-            }
+            'vulns': service.vuln_count}
 
     def count(self, group_by=None):
         total_count = self._session.query(func.count(Service.id)).scalar()

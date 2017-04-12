@@ -277,8 +277,9 @@ angular.module("faradayApp")
                 return ServerAPI.getServicesBy(wsName, 'name');
             }
 
-            ServerAPI.getServicesByHost = function(wsName) {
-                return ServerAPI.getServicesBy(wsName, 'hostid');
+            ServerAPI.getServicesByHost = function(wsName, hostId) {
+                var url = createGetUrl(wsName, 'services');
+                return get(url, {"hostIdCouchdb": hostId});
             }
 
             ServerAPI.getVulnsBySeverity = function(wsName, confirmed) {

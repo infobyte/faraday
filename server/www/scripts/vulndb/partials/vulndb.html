@@ -14,6 +14,10 @@
                         <span class="glyphicon glyphicon-trash"></span>
                         Delete
                     </button>
+                    <button id="tags" type="button" class="btn btn-default" title="Tags" ng-click="vulnsTags()" ng-disabled="user.roles[0] === 'client'">
+                        <span class="glyphicon glyphicon-tags"></span> 
+                            Tags 
+                    </button>
                     <div id="merge" class="btn-group btn-small-margin">
                         <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="disabledClick || edit()" ng-disabled="selectedModels().length != 1">
                             <span class="glyphicon glyphicon-pencil"></span>

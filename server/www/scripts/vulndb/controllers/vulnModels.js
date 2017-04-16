@@ -82,6 +82,37 @@ angular.module('faradayApp')
                     vulnModelsManager.get($scope.currentPage);
                 }
 
+                $scope.vulnsTags = function() {
+                    if($scope.selectedModels().length > 0) {
+                        var modal = $uibModal.open({
+                            templateUrl: 'scripts/tags/partials/modalTags.html',
+                            controller: 'modalTagsCtrl',
+                            size: 'lg',
+                            resolve: {
+                                vulns: function() {
+                                    return $scope.selectedModels();
+                                },
+                                workspace: function() {
+                                    return 'cwe';
+                                }
+                            }
+                        });
+                        modal.result.then(function(data) {
+                            $scope.putTag($scope.selectedModels(), data);
+                        });
+                    } else {
+                        showMessage('No vulnerabilities were selected to tag');
+                    }
+
+                }
+
+                $scope.putTag = function(models, data) {
+                    models.forEach(function(model) {
+                        model.tags = data.tags
+                        $scope.update(model, model);
+                    })
+                }
+
                 $scope.go = function() {
                     var page = $scope.newCurrentPage
                     if (page <= 0 || page > $scope.pageCount || ! page) { return }
@@ -222,6 +253,7 @@ angular.module('faradayApp')
                 };
 
                 $scope.update = function(model, data) {
+                    console.log(model, data)
                     vulnModelsManager.update(model, data)
                         .catch(function(message) {
                             commonsFact.errorDialog(message);

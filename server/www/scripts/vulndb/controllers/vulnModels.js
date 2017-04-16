@@ -89,8 +89,8 @@ angular.module('faradayApp')
                             controller: 'modalTagsCtrl',
                             size: 'lg',
                             resolve: {
-                                vulns: function() {
-                                    return $scope.selectedModels();
+                                models: function() {
+                                    return $scope.models;
                                 },
                                 workspace: function() {
                                     return 'cwe';
@@ -101,7 +101,7 @@ angular.module('faradayApp')
                             $scope.putTag($scope.selectedModels(), data);
                         });
                     } else {
-                        showMessage('No vulnerabilities were selected to tag');
+                        console.log('No vulnerabilities were selected to tag');
                     }
 
                 }
@@ -253,7 +253,6 @@ angular.module('faradayApp')
                 };
 
                 $scope.update = function(model, data) {
-                    console.log(model, data)
                     vulnModelsManager.update(model, data)
                         .catch(function(message) {
                             commonsFact.errorDialog(message);

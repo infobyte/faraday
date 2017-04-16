@@ -18,8 +18,7 @@
 	    </div>
 	</form>
     <h2 class="ws-label tagLabel">
-        <span class="label label-default"
-        title="Current workspace">Select Tags</span><!-- WS name -->
+        <span class="label label-default" title="Current workspace">Select Tags</span><!-- WS name -->
     </h2><!-- .ws-label -->
 	<div class="ws-list">
 	    <a class="ws-link" ng-repeat="tag in tags | filter:query" ng-click="addTag(tag.key);tags.splice($index,1);" ng-hide=""><p class="label label-primary ws-name">{{tag.key}}</p></a>

@@ -15,7 +15,8 @@ angular.module('faradayApp').
                 this.cwe = "";
                 this.desc_summary = "";
                 this.description = "";
-                this.tag = "";
+                this.formated_tags = "";
+                this.tags = [];
 
                 if (data) {
                     if(data.name === undefined || data.name === "") {
@@ -42,6 +43,10 @@ angular.module('faradayApp').
                             self[property] = data[property];
                         };
                     });
+
+                    if (data.tags) {
+                        this.formated_tags = data.tags.join();
+                    }
                 },
 
                 remove: function() {

@@ -9,13 +9,7 @@ angular.module('faradayApp')
 
         tagsFact.get = function(ws) {
             var tags;
-            tags_url = BASEURL + ws +"/_design/tags/_view/tag";
-
-            if(dashboardSrv.props['confirmed']) {
-                tags_url += "confirmed";
-            }
-
-            tags_url += "?group=true";
+            tags_url = BASEURL + 'cwe'
 
             // gets vulns json from couch
             $.getJSON(tags_url, function(data) {
@@ -23,46 +17,6 @@ angular.module('faradayApp')
             });
             return tags;
         }
-
-        tagsFact.getCloud = function(ws) {
-            var deferred = $q.defer(),
-            url = BASEURL + ws + "/_design/tags/_view/tag";
-
-            if(dashboardSrv.props['confirmed']) {
-                url += "confirmed";
-            }
-
-            url += "?group=true";
-
-            $http.get(url)
-                .then(function(resp) {
-                    var cant = 0,
-                    tags = resp.data.rows,
-                    ts = [];
-
-                    tags.forEach(function(tag) {
-                        cant += tag.value;
-                    });
-
-                    tags.forEach(function(tag) {
-                        ts.push({
-                            "key": tag.key,
-                            "value": tag.value,
-                            "perc": 100 * tag.value / cant
-                        });
-                    });
-
-                    ts.sort(function(a, b) {
-                        return b.value - a.value;
-                    });
-
-                    deferred.resolve(ts);
-                }, function() {
-                    deferred.reject("Unable to retrieve Tags from DB");
-                });
-
-            return deferred.promise;
-        };
 
         tagsFact.getById = function(ws, id){
             var object;

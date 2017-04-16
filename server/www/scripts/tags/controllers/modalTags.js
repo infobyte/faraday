@@ -4,10 +4,9 @@
 
 angular.module('faradayApp')
     .controller('modalTagsCtrl',
-        ['$scope', '$modalInstance', 'vulns', 'workspace', 'tagsFact',
-        function($scope, $modalInstance, vulns, workspace, tagsFact ) {
-        $scope.vulns = vulns;      
-        $scope.tags = tagsFact.get(workspace);
+        ['$scope', '$modalInstance', 'models', 'workspace', 'tagsFact',
+        function($scope, $modalInstance, models, workspace, tagsFact ) {
+        $scope.models = models;
         $scope.currentTags = [];
         $scope.result = {
             "tags": [],
@@ -20,15 +19,15 @@ angular.module('faradayApp')
             }
         };
 
-        for(vuln in $scope.vulns) {
-            if($scope.vulns[vuln].tags != undefined ) {
-    		    $scope.vulns[vuln].tags.forEach(function(tag){
+        for(vuln in $scope.models) {
+            if($scope.models[vuln].tags != undefined ) {
+    		    $scope.models[vuln].tags.forEach(function(tag){
                     if($scope.currentTags.indexOf(tag) < 0){
                         $scope.currentTags.push(tag);
                     }
     		    });
             }
-            $scope.result.objs.push($scope.vulns[vuln]);
+            $scope.result.objs.push($scope.models[vuln]);
         }
 
         $scope.ok = function(){

@@ -44,7 +44,6 @@ class AppscanParser():
         self.obj_xml = objectify.fromstring(output)
 
     def parse_issues(self):
-
         for issue in self.obj_xml["issue-type-group"]["item"]:
             url_list = []
             obj_issue = {}
@@ -52,7 +51,7 @@ class AppscanParser():
             obj_issue["name"] = issue["name"].text
             obj_issue['advisory'] = issue["advisory"]["ref"].text
 
-            if(issue["cve"]):
+            if("cve" in issue):
                 obj_issue['cve'] = issue["cve"].text
 
             for threat in self.obj_xml["url-group"]["item"]:
@@ -65,7 +64,7 @@ class AppscanParser():
                     for item in self.obj_xml["issue-group"]["item"]:
 
                         if int(item["url"]["ref"]) == int(threat.get('id')):
-                            if item["issue-type"]["ref"] == threat['issue-type']:
+                            if "test-http-traffic" in item["variant-group"]["item"] and item["issue-type"]["ref"] == threat['issue-type']:
 
                                 http_traffic = item["variant-group"]["item"]["test-http-traffic"].text.split("\n\n")
 
@@ -76,7 +75,8 @@ class AppscanParser():
 
                             obj_issue["severity"] = item["severity"].text
                             obj_issue["cvss_score"] = item["cvss-score"].text
-                            obj_issue["issue_description"] = item["variant-group"]["item"]["issue-information"]["issue-tip"].text
+                            if ("issue-tip" in item["variant-group"]["item"]["issue-information"]):
+                                obj_issue["issue_description"] = item["variant-group"]["item"]["issue-information"]["issue-tip"].text
                             break
 
             for recomendation in self.obj_xml["fix-recommendation-group"]["item"]:

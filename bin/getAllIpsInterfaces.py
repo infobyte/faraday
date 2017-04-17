@@ -1,13 +1,20 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
 '''
 Faraday Penetration Test IDE
-Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
+Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
-
 '''
 
-for host in api.__model_controller.getAllHosts():
-    if len(host.getAllInterfaces()) > 1:
-       print host.name
+from persistence.server import models
+
+__description__ = "Get all scanned interfaces"
+__prettyname__ = "Get All IPs Interfaces"
+
+
+def main(workspace='', args=None, parser=None):
+    for interface in models.get_interfaces(workspace):
+        print(interface.ipv4['address'])
+
+    return 0, None

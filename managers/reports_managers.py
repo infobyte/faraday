@@ -7,207 +7,337 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 import os
-import model.api
+#import model.api
 import threading
 import time
 import traceback
 import re
-import requests
+
+from utils.logs import getLogger
+
 try:
     import xml.etree.cElementTree as ET
-    
+
 except ImportError:
     print "cElementTree could not be imported. Using ElementTree instead"
     import xml.etree.ElementTree as ET
-from apis.rest.api import PluginControllerAPIClient
 
 from config.configuration import getInstanceConfiguration
 CONF = getInstanceConfiguration()
 
-class NoReportsWatchException(Exception): pass
-                                                                                
+
+class ReportProcessor():
+    def __init__(self, plugin_controller):
+        self.plugin_controller = plugin_controller
+
+    def processReport(self, filename):
+        """
+        Process one Report
+        """
+        getLogger(self).debug("Report file is %s" % filename)
+
+        parser = ReportParser(filename)
+
+        if parser.report_type is None:
+            getLogger(self).error(
+                'Plugin not found: automatic and manual try!')
+            return False
+
+        return self.sendReport(parser.report_type, filename)
+
+    def sendReport(self, plugin_id, filename):
+        """Sends a report to the appropiate plugin specified by plugin_id"""
+        getLogger(self).info(
+            'The file is %s, %s' % (filename, plugin_id))
+        if not self.plugin_controller.processReport(plugin_id, filename):
+            getLogger(self).error(
+                "Faraday doesn't have a plugin for this tool..."
+                " Processing: ABORT")
+            return False
+        return True
+
+    def onlinePlugin(self, cmd):
+
+        _, new_cmd = self.plugin_controller.processCommandInput('0', cmd, './')
+        self.plugin_controller.onCommandFinished('0', 0, cmd)
+
+
 class ReportManager(threading.Thread):
-    def __init__(self, timer, plugin_controller, path=None):
+    def __init__(self, timer, ws_name, plugin_controller):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.timer = timer
         self._stop = False
-        self.path = path
-        self.plugin_controller = plugin_controller
-        self._report_path = None
-        self._report_ppath = None
-
-    def run(self):
-        tmp_timer = 0
-        while not self._stop:
-                                   
-            time.sleep(1)
-            tmp_timer += 1
-            if tmp_timer == self.timer:
-                try:
-                    self.syncReports()
-                except Exception:
-                    model.api.log("An exception was captured while saving reports\n%s" % traceback.format_exc())
-                finally:
-                    tmp_timer = 0
-
-    def stop(self):
-        self._stop = True
-        
-    def watch(self, name):
-        self._report_path = os.path.join(CONF.getReportPath(), name)
+        self._report_path = os.path.join(CONF.getReportPath(), ws_name)
         self._report_ppath = os.path.join(self._report_path, "process")
+        self._report_upath = os.path.join(self._report_path, "unprocessed")
+        self.processor = ReportProcessor(plugin_controller)
 
         if not os.path.exists(self._report_path):
             os.mkdir(self._report_path)
 
         if not os.path.exists(self._report_ppath):
-            os.mkdir(self._report_ppath) 
+            os.mkdir(self._report_ppath)
 
-    def startWatch(self):
-        if not self._report_path:
-            raise NoReportsWatchException()
-        self.start()
-      
+        if not os.path.exists(self._report_upath):
+            os.mkdir(self._report_upath)
+
+    def run(self):
+        tmp_timer = 0
+        tmp_timer_sentinel = 0
+        while not self._stop:
+
+            time.sleep(1)
+            tmp_timer += 1
+            tmp_timer_sentinel += 1
+
+            if tmp_timer_sentinel == 1800:
+                tmp_timer_sentinel = 0
+                self.launchSentinel()
+
+            if tmp_timer == self.timer:
+                try:
+                    self.syncReports()
+                except Exception:
+                    getLogger(self).error(
+                        "An exception was captured while saving reports\n%s"
+                        % traceback.format_exc())
+                finally:
+                    tmp_timer = 0
+
+    def stop(self):
+        self._stop = True
+
+    def launchSentinel(self):
+        psettings = CONF.getPluginSettings()
+
+        name, cmd = "Sentinel", "sentinel"
+        if name in psettings:
+            if psettings[name]['settings']['Enable'] == "1":
+                getLogger(self).info("Plugin Started: Sentinel")
+                self.processor.onlinePlugin(cmd)
+                getLogger(self).info("Plugin Ended: Sentinel")
+
     def syncReports(self):
         """
         Synchronize report directory using the DataManager and Plugins online
         We first make sure that all shared reports were added to the repo
         """
-        
+        filenames = []
+
         for root, dirs, files in os.walk(self._report_path, False):
-                            
+
             if root == self._report_path:
                 for name in files:
-                    filename = os.path.join(root, name)
-                    model.api.log( "Report file is %s" % filename)
-                    
-                    parser = ReportXmlParser(filename)
-                    if (parser.report_type is not None):
-                        
-                        host = CONF.getApiConInfoHost()
-                        port_rest = int(CONF.getApiRestfulConInfoPort())
+                    filenames.append(os.path.join(root, name))
 
-                        client = PluginControllerAPIClient(host, port_rest)
+        for filename in filenames:
+            name = os.path.basename(filename)
 
-                        model.api.log("The file is %s, %s" % (filename,parser.report_type))
+            # If plugin not is detected... move to unprocessed
+            if self.processor.processReport(filename) is False:
 
-                        command_string = "./%s %s" % (parser.report_type.lower(), filename)
-                        model.api.log("Executing %s" % (command_string))
-                        
-                        new_cmd, output_file = client.send_cmd(command_string) 
-                        client.send_output(command_string, filename) 
-                    os.rename(filename, os.path.join(self._report_ppath, name)) 
+                os.rename(
+                    filename,
+                    os.path.join(self._report_upath, name))
+            else:
+                os.rename(
+                    filename,
+                    os.path.join(self._report_ppath, name))
 
         self.onlinePlugins()
 
-                    
     def onlinePlugins(self):
         """
         Process online plugins
         """
-        _pluginsOn={"MetasploitOn" : "./metasploiton online",}
-        _pluginsOn.update({"Beef" : "./beef online",})
-        _psettings=CONF.getPluginSettings()
-        
-        for k,v in _pluginsOn.iteritems():
-            if k in _psettings:
-                if _psettings[k]['settings']['Enable'] == "1":
-                    new_cmd = self.plugin_controller.processCommandInput("", "",
-                                                                             "",
-                                                                             v,
-                                                                             False)
-                    
-                    self.plugin_controller.storeCommandOutput("")
-                    
-                    self.plugin_controller.onCommandFinished()
-                            
+        pluginsOn = {"MetasploitOn": "./metasploiton online"}
+        pluginsOn.update({"Beef": "./beef online"})
+        psettings = CONF.getPluginSettings()
 
-                                                                                
-class ReportXmlParser(object):
-    
-    """Plugin that handles XML report files.
-    
-    :param xml_filepath: Xml file.
-    
-    :class:`.LoadReportXML`
+        for name, cmd in pluginsOn.iteritems():
+            if name in psettings:
+                if psettings[name]['settings']['Enable'] == "1":
+                    self.processor.onlinePlugin(cmd)
+
+    def sendReportToPluginById(self, plugin_id, filename):
+        """Sends a report to be processed by the specified plugin_id"""
+        self.processor.sendReport(plugin_id, filename)
+
+
+class ReportParser(object):
+
+    """
+    Class that handles reports files.
+
+    :param filepath: report file.
+
+    :class:`.LoadReport`
     """
 
-    def __init__(self, xml_report_path):
-        self.report_type = ""
-        root_tag,output = self.getRootTag(xml_report_path)
+    def __init__(self, report_path):
+        self.report_type = None
+        root_tag, output = self.getRootTag(report_path)
 
         if root_tag:
-            self.report_type = self.rType(root_tag,output)
-        
-    def getRootTag(self, xml_file_path):
-        result = f = None
+            self.report_type = self.rType(root_tag, output)
+
+        if self.report_type is None:
+
+            getLogger(self).debug(
+                'Automatical detection FAILED... Trying manual...')
+
+            self.report_type = self.getUserPluginName(report_path)
+
+    def getUserPluginName(self, pathFile):
+
+        if pathFile == None:
+            return None
+
+        rname = pathFile[pathFile.rfind('/') + 1:]
+        ext = rname.rfind('.')
+        if ext < 0:
+            ext = len(rname) + 1
+        rname = rname[0:ext]
+        faraday_index = rname.rfind('_faraday_')
+        if faraday_index > -1:
+            plugin = rname[faraday_index + 9:]
+            return plugin
+
+        return None
+
+    def open_file(self, file_path):
+        """
+        This method uses file signatures to recognize file types
+
+        :param file_path: report file.
+        """
+
+        """
+        If you need add support to a new report type
+        add the file signature here
+        and add the code in self.getRootTag() for get the root tag.
+        """
+
+        f = result = None
+
+        signatures = {
+         "\x50\x4B": "zip",
+         "\x3C\x3F\x78\x6D\x6C": "xml"
+        }
+
         try:
-            f = open(xml_file_path, 'rb')
+
+            if file_path == None:
+                return None, None
+
+            f = open(file_path, 'rb')
+            file_signature = f.read(10)
+            f.seek(0)
+
+            for key in signatures:
+                if file_signature.find(key) == 0:
+
+                    result = signatures[key]
+                    getLogger(self).debug("Report type detected: %s" % result)
+                    break
+
+        except IOError, err:
+            self.report_type = None
+            getLogger(self).error(
+                "Error while opening file.\n%s. %s" % (err, file_path))
+
+        return f, result
+
+    def getRootTag(self, file_path):
+
+        report_type = result = f = None
+
+        f, report_type = self.open_file(file_path)
+
+        # Check error in open_file()
+        if f is None and report_type is None:
+            self.report_type = None
+            return None, None
+
+        # Find root tag based in report_type
+        if report_type == "zip":
+            result = "maltego"
+
+        else:
+
             try:
                 for event, elem in ET.iterparse(f, ('start', )):
                     result = elem.tag
                     break
+
             except SyntaxError, err:
                 self.report_type = None
-                model.api.log("Not an xml file.\n %s" % (err))
+                getLogger(self).error("Not an xml file.\n %s" % (err))
 
-        except IOError, err:
-            self.report_type = None
-            model.api.log("Error while opening file.\n%s. %s" % (err, xml_file_path))
-        finally:
-            f.seek(0)
-            output=f.read()
-            if f: f.close()
-            
-        return result,output
-                    
+        f.seek(0)
+        output = f.read()
+        if f:
+            f.close()
+
+        return result, output
+
     def rType(self, tag, output):
         """Compares report root tag with known root tags.
-        
+
         :param root_tag
         :rtype
         """
-        if "arachni_report" == tag:
-            return "arachni"
-        elif "nmaprun" == tag:
-            return "nmap"
+        if "nmaprun" == tag:
+            return "Nmap"
         elif "w3af-run" == tag:
-            return "w3af"
+            return "W3af"
         elif "NessusClientData_v2" == tag:
-            return "nessus"
+            return "Nessus"
         elif "report" == tag:
-            if re.search("alertitem",output) is None:
-                return "openvas"
+
+            if re.search(
+                "https://raw.githubusercontent.com/Arachni/arachni/",
+                output) is not None:
+                return "Arachni"
+
+            elif re.search("OpenVAS", output) is not None or re.search(
+                '<omp><version>',
+                output) is not None:
+                return "Openvas"
+
             else:
-                return "zap"
+                return "Zap"
+
         elif "niktoscan" == tag:
-            return "nikto"
+            return "Nikto"
         elif "MetasploitV4" == tag:
-            return "metasploit"
+            return "Metasploit"
         elif "MetasploitV5" == tag:
-            return "metasploit"
+            return "Metasploit"
         elif "issues" == tag:
-            return "burp"
+            return "Burp"
         elif "OWASPZAPReport" == tag:
-            return "zap"
+            return "Zap"
         elif "ScanGroup" == tag:
-            return "acunetix"
+            return "Acunetix"
         elif "session" == tag:
-            return "x1"
+            return "X1"
         elif "landscapePolicy" == tag:
-            return "x1"
+            return "X1"
         elif "entities" == tag:
-            return "impact"
+            return "Core Impact"
         elif "NeXposeSimpleXML" == tag:
-            return "nexpose"
+            return "Nexpose"
         elif "NexposeReport" == tag:
-            return "nexpose-full"
-        elif "SCAN" == tag:
-            return "qualysguard"
+            return "NexposeFull"
+        elif "ASSET_DATA_REPORT" == tag or "SCAN" == tag:
+            return "Qualysguard"
         elif "scanJob" == tag:
-            return "retina"
+            return "Retina"
         elif "netsparker" == tag:
-            return "netsparker"
+            return "Netsparker"
+        elif "maltego" == tag:
+            return "Maltego"
         else:
             return None

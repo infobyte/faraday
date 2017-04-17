@@ -26,7 +26,9 @@ module.exports = function(config){
       '../views/reports/_attachments/script/angular-hotkeys.js',
       '../views/reports/_attachments/script/cryptojs-sha1.js',
       '../views/reports/_attachments/script/Chart.js',
-      '../views/reports/_attachments/script/angular-chart.min.js'
+      '../views/reports/_attachments/script/angular-chart.min.js',
+      '../views/reports/_attachments/script/sanitize.js',
+      '../views/reports/_attachments/script/ui-grid.js'
     ],
 
     autoWatch : true,

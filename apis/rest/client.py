@@ -7,6 +7,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 import requests
 import json
+import base64
 
 
 class RestApiClient(object):
@@ -81,3 +82,49 @@ class ModelRestApiClient(RestApiClient):
     def createCred(self, username, password, parent_id):
         return self._create(
             "cred", username=username, password=password, parent_id=parent_id)
+
+
+class PluginControllerAPIClient(object):
+    def __init__(self, hostname, port):
+        self.hostname = hostname
+        self.port = port
+        self.url_input = "http://%s:%d/cmd/input" % (self.hostname, self.port)
+        self.url_output = "http://%s:%d/cmd/output" % (self.hostname, self.port)
+        self.url_active_plugins = "http://%s:%d/cmd/active-plugins" % (self.hostname, self.port)
+        self.headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+
+    def send_cmd(self, cmd):
+        data = {"cmd": cmd}
+        new_cmd = cmd
+        output_file = None
+        try:
+            response = requests.post(self.url_input,
+                                     data=json.dumps(data),
+                                     headers=self.headers)
+
+            if response.status_code == 200:
+                json_response = response.json()
+                if "cmd" in json_response.keys():
+                    if json_response.get("cmd") is not None:
+                        new_cmd = json_response.get("cmd")
+                if "custom_output_file" in json_response.keys():
+                    output_file = json_response.get("custom_output_file")
+        except:
+            new_cmd = cmd
+        finally:
+            return new_cmd, output_file
+
+    def send_output(self, cmd, output_file=None):
+        # output_file could be None, when there is
+        # no output to send
+        output = ""
+        if output_file:
+            output_file = open(output_file)
+            output = base64.b64encode(output_file.read())
+        data = {"cmd": cmd, "output": output}
+        response = requests.post(self.url_output,
+                                 data=json.dumps(data),
+                                 headers=self.headers)
+        if response.status_code != 200:
+            return False
+        return True

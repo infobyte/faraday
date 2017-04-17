@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 '''
 Faraday Penetration Test IDE
 Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
@@ -7,10 +7,8 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 import subprocess
-import pip
 import couchdbkit
 import model.workspace
-import persistence.mappers.data_mappers as dm
 from utils.logs import getLogger
 from config.globals import *
 logger = getLogger('Updater')
@@ -22,6 +20,7 @@ import sys
 import os
 import shutil
 from managers.all import ViewsManager
+from persistence.server.models import create_workspace
 
 class Updater(object):
     def doUpdates(self):
@@ -31,39 +30,23 @@ class Updater(object):
         if query_yes_no('Proceed?', 'yes'):
             subprocess.call(['git', 'pull'])
 
-        logger.info('Checking qt3 libs')
-        QT().run()
+        try:
+            import pip
+            logger.info('Installing missing dependencies in pip')
+            pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
+        except ImportError:
+            logger.error("Checking missing dependencies in pip")
+            pass
 
-        logger.info('Installing missing dependencies in pip')
-        pip.main(['install', '-r', CONST_REQUIREMENTS_FILE, '--user'])
 
         # logger.info('Upgrading DBs to latest version')
-        # DB().run() 
+        # DB().run()
 
         logger.info('Upgrading DBs to latest version')
         CouchViews().run()
 
 class Update(object):
     pass
-
-class QT(Update):
-    def run(self): 
-        try:
-            import qt
-        except:
-            for name in ['libqt.so', 'libqt.so.3', 'libqt.so.3.3',
-                         'libqt.so.3.3.8', 'libqui.so', 'libqui.so.1',
-                         'libqui.so.1.0', 'libqui.so.1.0.0']:
-
-                qt_path = '/usr/local/qt/lib/'
-                lib_path = '/usr/local/lib/'
-                if os.path.exists(os.path.join(qt_path, name)):
-                    if not os.path.exists(os.path.join(lib_path, name)):
-                        shutil.copy(os.path.join(qt_path, name), os.path.join(lib_path, name))
-                else:
-                    logger.error("QT Dependencies not met. Have you run install.sh?")
-                    logger.info("QT Module not installed. You will only be able to run --gui=no-ui.")
-            os.system('ldconfig')
 
 class CouchViews(Update):
     def run(self):
@@ -83,7 +66,6 @@ class CouchViews(Update):
 	dbs = filter(lambda x: not x.startswith("_") and 'backup' not in x and x not in CONST_BLACKDBS, serv.all_dbs())
         logger.info('Dbs to upgrade: %s' % (', '.join(dbs)))
 
-
         logger.info('Preparing updates on Couchdbs')
         processed = 0
         views_uploader = ViewsManager()
@@ -93,7 +75,7 @@ class CouchViews(Update):
             views_uploader.addViews(db_source, force = True)
 
 
-class DB(Update): 
+class DB(Update):
     def __init__(self):
         pass
 
@@ -101,11 +83,11 @@ class DB(Update):
         if 'backup' in db_name:
             logger.info('Database [%s] is a backup, ignoring' % db_name)
             return
-            
+
         source_server = CONF.getCouchURI()
-        # Levanto los servidores 
+        # Levanto los servidores
         db_source = couchdbkit.Database("/".join((source_server, db_name)))
-        if db_source.doc_exist(db_name): 
+        if db_source.doc_exist(db_name):
             logger.info('DB: [%s] Already had suffer migration' % db_name)
             return
 
@@ -120,47 +102,48 @@ class DB(Update):
 
         # Crear documento 'workspace'
         logger.info('Creating workspace document')
-        workspace = model.workspace.Workspace(db_name,
-                                            'Migrated Workspace ')
-
-        dict_workspace = dm.WorkspaceMapper(None).serialize(workspace) 
-        db_source.save_doc(dict_workspace, force_update = True)
+        
+        create_workspace(db_name,
+                        'Migrated Workspace',
+                        int(time.time() * 1000),
+                        int(time.time() * 1000),
+                        "")
         types = {}
 
         logger.info('Updating modelobject documents')
-        for document in db_source.all_docs(include_docs=True): 
+        for document in db_source.all_docs(include_docs=True):
             # Alter parent id:
             doc = document['doc']
             if not('type' in doc):
                 continue
             if doc['type'] == 'CommandRunInformation':
                 # Should set the workspace here!
-                continue 
+                continue
             elif doc['type'] == 'Workspace':
                 # Already modified
                 continue
-            else: 
+            else:
                 # Modify the parent ID
                 parent = doc['parent']
                 if parent == 'None' or parent == '':
                     parent = None
                 else:
                     l_parent = doc['_id'].split('.')[:-1]
-                    parent = '.'.join(l_parent) 
+                    parent = '.'.join(l_parent)
                 doc['parent'] = parent
                 if doc['owned'] == '' or doc['owned'] is None:
                     doc['owned'] == False
-                else: 
+                else:
                     doc['owned'] = eval(doc['owned'])
 
-                document['doc'] = doc 
+                document['doc'] = doc
                 db_source.save_doc(doc, force_update = True)
 
             types[doc['type']] = types.get(doc['type'], 0) + 1
 
         logger.info("Transformed %s objects" % str(types))
 
-    
+
     def run(self):
         source_server = CONF.getCouchURI()
         if not source_server:
@@ -187,6 +170,6 @@ class DB(Update):
                 self.update_db(db_name)
                 processed = processed + 1
             except Exception as e:
-                logger.error(e) 
-            logger.info('Updated DB [%s]. %d remaining' % (db_name, len(dbs) - processed)) 
-        logger.info("Update process finish, be kind to review the process.\nBackuped databases won't be accesible") 
+                logger.error(e)
+            logger.info('Updated DB [%s]. %d remaining' % (db_name, len(dbs) - processed))
+        logger.info("Update process finish, be kind to review the process.\nBackuped databases won't be accesible")

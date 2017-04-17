@@ -50,6 +50,7 @@ CONST_UPDATEURI = "updates_uri"
 CONST_TKTURI = "tickets_uri"
 CONST_TKTAPIPARAMS = "tickets_api"
 CONST_TKTTEMPLATE = "tickets_template"
+CONST_OSINT = "osint"
 
 CONST_LAST_WORKSPACE = "last_workspace"
 CONST_PLUGIN_SETTINGS = "plugin_settings"
@@ -151,13 +152,14 @@ class Configuration:
             self._version = self._getValue(tree, CONST_VERSION)
             self._last_workspace = self._getValue(tree, CONST_LAST_WORKSPACE, default = "untitled")
             self._plugin_settings = json.loads(self._getValue(tree, CONST_PLUGIN_SETTINGS, default = "{}"))
+            self._osint = json.loads(self._getValue(tree, CONST_OSINT, default = "{\"host\": \"shodan.io\",\"icon\": \"shodan\",\"label\": \"Shodan\"}"))
 
             self._updates_uri = self._getValue(tree, CONST_UPDATEURI, default = "https://www.faradaysec.com/scripts/updates.php")
             self._tkts_uri = self._getValue(tree, CONST_TKTURI,default = "https://www.faradaysec.com/scripts/listener.php")
             self._tkt_api_params = self._getValue(tree, CONST_TKTAPIPARAMS,default ="{}")
             self._tkt_template = self._getValue(tree, CONST_TKTTEMPLATE,default ="{}")
 
-
+            self._merge_strategy = None
 
     def getApiConInfo(self):
         if str(self._api_con_info_host) == "None" or str(self._api_con_info_port) == "None":
@@ -173,10 +175,14 @@ class Configuration:
         return self._api_con_info_host
 
     def getApiConInfoPort(self):
-        return self._api_con_info_port
+        if str(self._api_con_info_port) == "None":
+            return None
+        return int(self._api_con_info_port)
 
     def getApiRestfulConInfoPort(self):
-        return self._api_restful_con_info_port
+        if str(self._api_restful_con_info_port) == "None":
+            return None
+        return int(self._api_restful_con_info_port)
 
     def getAppname(self):
         return self._appname
@@ -268,6 +274,9 @@ class Configuration:
     def getPluginSettings(self):
         return self._plugin_settings
 
+    def getOsint(self):
+        return self._osint
+
     def getUpdatesUri(self):
         return self._updates_uri
 
@@ -279,6 +288,9 @@ class Configuration:
 
     def getTktTemplate(self):
         return self._tkt_template
+
+    def getMergeStrategy(self):
+        return self._merge_strategy
 
     def setLastWorkspace(self, workspaceName):
         self._last_workspace = workspaceName
@@ -386,6 +398,12 @@ class Configuration:
     def setPluginSettings(self, settings):
         self._plugin_settings = settings
 
+    def setOsint(self, config):
+        self._osint = config
+
+    def setMergeStrategy(self, strategy):
+        self._merge_strategy = strategy
+
     def indent(self, elem, level=0):
         """ Indents the tree to make a pretty view of it. """
 
@@ -412,18 +430,18 @@ class Configuration:
         tree = self._getTree()
 
         API_CON_INFO_HOST = Element(CONST_API_CON_INFO_HOST)
-        API_CON_INFO_HOST.text = self._getValue(tree, CONST_API_CON_INFO_HOST)
-        # API_CON_INFO_HOST.text = self.getApiConInfoHost()
+        #API_CON_INFO_HOST.text = self._getValue(tree, CONST_API_CON_INFO_HOST)
+        API_CON_INFO_HOST.text = self.getApiConInfoHost()
         ROOT.append(API_CON_INFO_HOST)
 
         API_CON_INFO_PORT = Element(CONST_API_CON_INFO_PORT)
-        API_CON_INFO_PORT.text = self._getValue(tree, CONST_API_CON_INFO_PORT)
-        # API_CON_INFO_PORT.text = str(self.getApiConInfoPort())
+        #API_CON_INFO_PORT.text = self._getValue(tree, CONST_API_CON_INFO_PORT)
+        API_CON_INFO_PORT.text = str(self.getApiConInfoPort())
         ROOT.append(API_CON_INFO_PORT)
 
         API_RESTFUL_CON_INFO_PORT = Element(CONST_API_RESTFUL_CON_INFO_PORT)
-        API_RESTFUL_CON_INFO_PORT.text = self._getValue(tree, CONST_API_RESTFUL_CON_INFO_PORT)
-        # API_RESTFUL_CON_INFO_PORT.text = str(self.getApiRestfulConInfoPort())
+        #API_RESTFUL_CON_INFO_PORT.text = self._getValue(tree, CONST_API_RESTFUL_CON_INFO_PORT)
+        API_RESTFUL_CON_INFO_PORT.text = str(self.getApiRestfulConInfoPort())
         ROOT.append(API_RESTFUL_CON_INFO_PORT)
 
         APPNAME = Element(CONST_APPNAME)
@@ -465,7 +483,6 @@ class Configuration:
         HOME_PATH = Element(CONST_HOME_PATH)
         HOME_PATH.text = self.getHomePath()
         ROOT.append(HOME_PATH)
-
 
         HOST_TREE_TOGGLE = Element(CONST_HOST_TREE_TOGGLE)
         HOST_TREE_TOGGLE.text = self.getHostTreeToggle()
@@ -543,6 +560,10 @@ class Configuration:
         PLUGIN_SETTINGS.text = json.dumps(self.getPluginSettings())
         ROOT.append(PLUGIN_SETTINGS)
 
+        OSINT = Element(CONST_OSINT)
+        OSINT.text = json.dumps(self.getOsint())
+        ROOT.append(OSINT)
+
         UPDATE_URI = Element(CONST_UPDATEURI)
         UPDATE_URI.text = self.getUpdatesUri()
         ROOT.append(UPDATE_URI)
@@ -562,6 +583,7 @@ class Configuration:
         self.indent(ROOT, 0)
         xml_file = os.path.expanduser(xml_file)
         ElementTree(ROOT).write(xml_file)
+
 
 def getInstanceConfiguration():
     global the_config

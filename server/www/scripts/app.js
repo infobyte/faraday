@@ -119,7 +119,7 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             title: 'Host and services | '
         }).
         when('/host/ws/:wsId/new', {
-            templateUrl: 'scripts/services/partials/list.html',
+            templateUrl: 'scripts/hosts/partials/new.html',
             controller: 'newHostCtrl',
             title: 'New host | '
         }).

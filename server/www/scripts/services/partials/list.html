@@ -29,37 +29,31 @@
                         <div>
                             <div>
                                 <h2 class="ws-label">
-                                    <button type="button" class="btn btn-success btn-sm" title="New service" ng-click="new()">
+                                    <button type="button" class="btn btn-success btn-sm pull-left" title="New service" ng-click="new()">
                                         <span class="glyphicon glyphicon-plus-sign"></span>
                                         New service
                                     </button>
-                                    <button type="button" class="btn btn-default btn-sm" title="Edit selected services" ng-click="edit()" ng-disabled="services.length == 0">
+                                    <button type="button" class="btn btn-default btn-sm pull-left" title="Edit selected services" ng-click="edit()" ng-disabled="services.length == 0">
                                         <span class="glyphicon glyphicon-pencil"></span>
                                         Edit
                                     </button>
-                                    <button type="button" class="btn btn-default btn-sm" title="Delete selected services" ng-click="delete()" ng-disabled="services.length == 0">
+                                    <button type="button" class="btn btn-default btn-sm pull-left" title="Delete selected services" ng-click="delete()" ng-disabled="services.length == 0">
                                         <span class="glyphicon glyphicon-trash"></span>
                                         Delete
                                     </button>
+                                    <div class="input-group input-group-sm" style="padding-left: 10px">
+                                        <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
+                                        <input type="text" class="form-control" id="filter-by"
+                                        placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
+                                        <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
+                                            <i class="fa fa-search" ng-if="services.length > 0 || !loadedServices"></i>
+                                            <i class="fa fa-refresh fa-spin" ng-if="services.length == 0 && loadedServices"></i>
+                                        </span>
+                                    </div>
                                 </h2><!-- .ws-label -->
                             </div>
                         </div>
                         <div ng-show="loadedServices && services.length > 0">
-                            <div class="col-md-4 col-sm-3 col-xs-11">
-                                <form role="form" ng-submit="searchFor(true, searchParams)">
-                                    <div class="form-group">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
-                                            <input type="text" class="form-control" id="filter-by"
-                                            placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
-                                            <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                                <i class="fa fa-search" ng-if="services.length > 0 || !loadedServices"></i>
-                                                <i class="fa fa-refresh fa-spin" ng-if="services.length == 0 && loadedServices"></i>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
                             <table class="status-report hosts-list table table-responsive">
                                 <thead>
                                     <tr>

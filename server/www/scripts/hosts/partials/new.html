@@ -19,7 +19,7 @@
                             </ul><!-- WS navigation -->
                         </div><!-- #ws-control -->
                     </h2>
-                    <div class="reports col-md-4 col-sm-4 col-xs-4">
+                    <div class="reports col-md-6 col-sm-6 col-xs-6">
                         <h3>
                             Host details
                             <span style="float:right">
@@ -87,13 +87,13 @@
                                         </ul>
                                     </div>
                                 </span>
-                                <div class="col-md-12">
+                                <div class="col-md-6">
                                     <strong ng-if="!editing">IPv4</strong>
                                     <h5 ng-if="editing">IPv4</h5>
                                     <input type="text" class="form-control" id="ipv4" placeholder="IPv4" ng-model="interface.ipv4.address" ng-if="editing"/>
                                     <p ng-if="!editing">{{interface.ipv4.address}}</p>
                                 </div>
-                                <div class="col-md-12">
+                                <div class="col-md-6">
                                     <strong ng-if="!editing">IPv6</strong>
                                     <h5 ng-if="editing">IPv6</h5>
                                     <input type="text" class="form-control" id="ipv6" placeholder="IPv6" ng-model="interface.ipv6.address" ng-if="editing"/>

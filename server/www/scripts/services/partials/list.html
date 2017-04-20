@@ -27,34 +27,31 @@
                             <h4>No services found for {{host.name}}</h4>
                         </div>
                         <div>
-                            <div>
-                                <h2 class="ws-label">
-                                    <button type="button" class="btn btn-success btn-sm pull-left" title="New service" ng-click="new()">
-                                        <span class="glyphicon glyphicon-plus-sign"></span>
-                                        New service
-                                    </button>
-                                    <button type="button" class="btn btn-default btn-sm pull-left" title="Edit selected services" ng-click="edit()" ng-disabled="services.length == 0">
-                                        <span class="glyphicon glyphicon-pencil"></span>
-                                        Edit
-                                    </button>
-                                    <button type="button" class="btn btn-default btn-sm pull-left" title="Delete selected services" ng-click="delete()" ng-disabled="services.length == 0">
-                                        <span class="glyphicon glyphicon-trash"></span>
-                                        Delete
-                                    </button>
-                                    <div class="input-group input-group-sm" style="padding-left: 10px">
-                                        <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
-                                        <input type="text" class="form-control" id="filter-by"
-                                        placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
-                                        <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                            <i class="fa fa-search" ng-if="services.length > 0 || !loadedServices"></i>
-                                            <i class="fa fa-refresh fa-spin" ng-if="services.length == 0 && loadedServices"></i>
-                                        </span>
-                                    </div>
-                                </h2><!-- .ws-label -->
+                            <button type="button" class="btn btn-success btn-sm pull-left" title="New service" ng-click="new()">
+                                <span class="glyphicon glyphicon-plus-sign"></span>
+                                New service
+                            </button>
+                            <button type="button" class="btn btn-default btn-sm pull-left" title="Edit selected services" ng-click="edit()" ng-disabled="services.length == 0">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                                Edit
+                            </button>
+                            <button type="button" class="btn btn-default btn-sm pull-left" title="Delete selected services" ng-click="delete()" ng-disabled="services.length == 0">
+                                <span class="glyphicon glyphicon-trash"></span>
+                                Delete
+                            </button>
+                            <div class="input-group input-group-sm" style="padding-left: 10px">
+                                <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
+                                <input type="text" class="form-control" id="filter-by"
+                                                                        placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
+                                <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
+                                    <i class="fa fa-search" ng-if="services.length > 0 || !loadedServices"></i>
+                                    <i class="fa fa-refresh fa-spin" ng-if="services.length == 0 && loadedServices"></i>
+                                </span>
                             </div>
+                            <!-- .ws-label -->
                         </div>
                         <div ng-show="loadedServices && services.length > 0">
-                            <table class="status-report hosts-list table table-responsive">
+                            <table class="status-report hosts-list table table-responsive" style="margin-top: 15px">
                                 <thead>
                                     <tr>
                                         <th><input type="checkbox" ng-model="selectall" ng-click="checkAllServices()"/></th>
@@ -134,6 +131,14 @@
                     <div class="reports col-md-4 col-sm-4 col-xs-4" style="border-left: 1px solid #CCC">
                         <h3>Host details</h3>
                         <div class="form-horizontal">
+                            <a class="btn btn-sm btn-default" href="#/host/ws/{{workspace}}/hid/{{host._id}}/edit" ng-if="!editing">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                                Edit
+                            </a>
+                            <button type="button" class="btn btn-sm btn-default" title="Delete host" ng-click="deleteHost()" ng-if="!editing">
+                                <span class="glyphicon glyphicon-trash"></span>
+                                Delete
+                            </button>
                             <div class="form-group">
                                 <div class="col-md-12">
                                     <h5>Name</h5>
@@ -187,18 +192,10 @@
                             </div><!-- .form-group -->
                         </div>
                         <div class="modal-footer">
-                            <div class="modal-button">
+                            <div>
                                 <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-if="editing && !creating">Cancel</a>
                                 <a class="btn btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
                                 <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
-                                <a class="btn btn-default" href="#/host/ws/{{workspace}}/hid/{{host._id}}/edit" ng-if="!editing">
-                                    <span class="glyphicon glyphicon-pencil"></span>
-                                    Edit
-                                </a>
-                                <button type="button" class="btn btn-default" title="Delete host" ng-click="deleteHost()" ng-if="!editing">
-                                    <span class="glyphicon glyphicon-trash"></span>
-                                    Delete
-                                </button>
                             </div>
                         </div>
                     </div>

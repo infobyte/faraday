@@ -19,7 +19,7 @@
                             </ul><!-- WS navigation -->
                         </div><!-- #ws-control -->
                     </h2>
-                    <div class="reports col-md-6 col-sm-6 col-xs-6">
+                    <div class="reports col-md-8 col-sm-8 col-xs-8">
                         <h3>
                             Host details
                             <span style="float:right">
@@ -66,27 +66,6 @@
                                         {{host.os}}
                                     </p>
                                 </div>
-                                <div class="col-md-12">
-                                    <strong ng-if="!editing">Hostnames</strong>
-                                    <h5 ng-if="editing">Hostnames</h5>
-                                    <span class="input-group-addon button-radius" ng-click="newHostnames($event)" ng-if="editing">Add Hostname</span>
-                                </div>
-                                <span ng-if="editing">
-                                    <div class="col-md-12 input-margin" ng-repeat="hostname in interface.hostnames">
-                                        <div class="input-group margin-bottom-sm col-md-12">
-                                            <label class="sr-only" for="hostsnames">Hostname</label>
-                                            <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname.key" />
-                                            <span class="input-group-addon" ng-click="interface.hostnames.splice($index, 1)" ng-hide="interface.hostnames.length == 1" ng-if="editing"><i class="fa fa-minus-circle"></i></span>
-                                        </div>
-                                    </div>
-                                </span>
-                                <span ng-if="!editing">
-                                    <div class="col-md-12 input-margin">
-                                        <ul>
-                                            <li ng-repeat="hostname in interface.hostnames">{{hostname.key}}</li>
-                                        </ul>
-                                    </div>
-                                </span>
                                 <div class="col-md-6">
                                     <strong ng-if="!editing">IPv4</strong>
                                     <h5 ng-if="editing">IPv4</h5>
@@ -119,6 +98,23 @@
                             <a class="btn btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
                             <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
                         </div>
+                    </div>
+                    <div class="reports col-md-4 col-sm-4 col-xs-4">
+                        <h3>
+                            Hostnames
+                            <span style="float:right">
+                                <button class="btn btn-sm" ng-click="newHostnames($event)">Add Hostname</button>
+                            </span>
+                        </h3>
+                        <span ng-if="editing">
+                            <div class="col-md-12 input-margin" ng-repeat="hostname in interface.hostnames">
+                                <div class="input-group margin-bottom-sm col-md-12">
+                                    <label class="sr-only" for="hostsnames">Hostname</label>
+                                    <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname.key" />
+                                    <span class="input-group-addon" ng-click="interface.hostnames.splice($index, 1)" ng-hide="interface.hostnames.length == 1" ng-if="editing"><i class="fa fa-minus-circle"></i></span>
+                                </div>
+                            </div>
+                        </span>
                     </div>
                 </div><!-- #reports-main --></div><!-- .right-main -->
             </section><!-- #main -->

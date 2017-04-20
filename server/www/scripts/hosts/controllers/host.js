@@ -17,6 +17,7 @@ angular.module('faradayApp')
                         $scope.interface.hostnames = commons.arrayToObject($scope.interface.hostnames);
                     });
                 	$scope.host = host;
+                    $scope.loadIcons();
                 });
         };
 
@@ -450,6 +451,24 @@ angular.module('faradayApp')
             var tmp_services = $filter('orderBy')($scope.services, $scope.sortField, $scope.reverse);
             tmp_services = $filter('filter')(tmp_services, $scope.expression);
             return Math.ceil(tmp_services.length / $scope.pageSize);
+        };
+
+        $scope.loadIcons = function() {
+            var host = $scope.host;
+            // load icons into object for HTML
+            // maybe this part should be directly in the view somehow
+            // or, even better, in a CSS file
+            var oss = ["windows", "cisco", "router", "osx", "apple","linux", "unix"];
+            oss.forEach(function(os){
+                if(host.os.toLowerCase().indexOf(os) != -1) {
+                    host.icon = os;
+                    if(os == "unix") {
+                        host.icon = "linux";
+                    } else if(os == "apple") {
+                        host.icon = "osx";
+                    }
+                }
+            });
         };
 
 	    init();

@@ -129,16 +129,23 @@
                         </div><!-- .reports -->
                     </span>
                     <div class="reports col-md-4 col-sm-4 col-xs-4" style="border-left: 1px solid #CCC">
-                        <h3>Host details</h3>
+                        <h3>
+                            Host details
+                            <span style="float:right">
+                                <a class="btn btn-sm btn-default" href="#/host/ws/{{workspace}}/hid/{{host._id}}/edit" ng-if="!editing">
+                                    <span class="glyphicon glyphicon-pencil"></span>
+                                    Edit
+                                </a>
+                                <button type="button" class="btn btn-sm btn-default" title="Delete host" ng-click="deleteHost()" ng-if="!editing">
+                                    <span class="glyphicon glyphicon-trash"></span>
+                                    Delete
+                                </button>
+                                <a class="btn btn-sm btn-danger" href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-if="editing && !creating">Cancel</a>
+                                <a class="btn btn-sm btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
+                                <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
+                            </span>
+                        </h3>
                         <div class="form-horizontal">
-                            <a class="btn btn-sm btn-default" href="#/host/ws/{{workspace}}/hid/{{host._id}}/edit" ng-if="!editing">
-                                <span class="glyphicon glyphicon-pencil"></span>
-                                Edit
-                            </a>
-                            <button type="button" class="btn btn-sm btn-default" title="Delete host" ng-click="deleteHost()" ng-if="!editing">
-                                <span class="glyphicon glyphicon-trash"></span>
-                                Delete
-                            </button>
                             <div class="form-group">
                                 <div class="col-md-12">
                                     <strong ng-if="!editing">Name</strong>
@@ -213,12 +220,10 @@
                                 </div>
                             </div><!-- .form-group -->
                         </div>
-                        <div class="modal-footer">
-                            <div>
-                                <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-if="editing && !creating">Cancel</a>
-                                <a class="btn btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
-                                <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
-                            </div>
+                        <div style="float: right">
+                            <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-if="editing && !creating">Cancel</a>
+                            <a class="btn btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
+                            <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
                         </div>
                     </div>
                 </div><!-- #reports-main --></div><!-- .right-main -->

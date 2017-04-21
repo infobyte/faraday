@@ -102,15 +102,19 @@
                             </span>
                         </h3>
                         <h5 ng-if="editing" style="min-height: 1.1em"></h5>
-                        <span ng-if="editing">
-                            <div class="col-md-12 input-margin" ng-repeat="hostname in interface.hostnames">
-                                <div class="input-group margin-bottom-sm col-md-12">
-                                    <label class="sr-only" for="hostsnames">Hostname</label>
-                                    <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname.key" />
-                                    <span class="input-group-addon" ng-click="interface.hostnames.splice($index, 1)" ng-hide="interface.hostnames.length == 1" ng-if="editing"><i class="fa fa-minus-circle"></i></span>
-                                </div>
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <span ng-if="editing">
+                                    <div class="col-md-12 input-margin" ng-repeat="hostname in interface.hostnames">
+                                        <div class="input-group margin-bottom-sm col-md-12">
+                                            <label class="sr-only" for="hostsnames">Hostname</label>
+                                            <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname.key" />
+                                            <span class="input-group-addon" ng-click="interface.hostnames.splice($index, 1)" ng-hide="interface.hostnames.length == 1" ng-if="editing"><i class="fa fa-minus-circle"></i></span>
+                                        </div>
+                                    </div>
+                                </span>
                             </div>
-                        </span>
+                        </div>
                     </div>
                 </div><!-- #reports-main --></div><!-- .right-main -->
             </section><!-- #main -->

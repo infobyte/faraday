@@ -23,9 +23,6 @@
                     </h2>
                     <span ng-if="showServices" class="reports col-md-8 col-sm-8 col-xs-8">
                         <h3>Host services</h3>
-                        <div class="reports col-md-9 col-sm-9 col-xs-12" ng-if="loadedServices && services.length == 0">
-                            <h4>No services found for {{host.name}}</h4>
-                        </div>
                         <div>
                             <button type="button" class="btn btn-success btn-sm pull-left" title="New service" ng-click="new()">
                                 <span class="glyphicon glyphicon-plus-sign"></span>
@@ -44,11 +41,14 @@
                                 <input type="text" class="form-control" id="filter-by"
                                                                         placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
                                 <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                    <i class="fa fa-search" ng-if="services.length > 0 || !loadedServices"></i>
-                                    <i class="fa fa-refresh fa-spin" ng-if="services.length == 0 && loadedServices"></i>
+                                    <i class="fa fa-search" ng-if="loadedServices"></i>
+                                    <i class="fa fa-refresh fa-spin" ng-if="!loadedServices"></i>
                                 </span>
                             </div>
                             <!-- .ws-label -->
+                        </div>
+                        <div ng-if="loadedServices && services.length == 0">
+                            <h4>No services found for {{host.name}}</h4>
                         </div>
                         <div ng-show="loadedServices && services.length > 0">
                             <table class="status-report hosts-list table table-responsive" style="margin-top: 15px">

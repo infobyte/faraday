@@ -19,7 +19,7 @@
                             </ul><!-- WS navigation -->
                         </div><!-- #ws-control -->
                     </h2>
-                    <div class="reports col-md-8 col-sm-8 col-xs-8">
+                    <div class="reports col-md-8 col-sm-8 col-xs-8" style="border-right: 1px solid #CCC">
                         <h3>
                             Host details
                             <span style="float:right">
@@ -31,8 +31,7 @@
                                     <span class="glyphicon glyphicon-trash"></span>
                                     Delete
                                 </button>
-                                <a class="btn btn-sm btn-danger" href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-if="editing && !creating">Cancel</a>
-                                <a class="btn btn-sm btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
+                                <a class="btn btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
                                 <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
                             </span>
                         </h3>
@@ -92,11 +91,6 @@
                                     <p ng-if="!editing">{{host.description}}</p>
                                 </div>
                             </div><!-- .form-group -->
-                        </div>
-                        <div style="float: right">
-                            <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-if="editing && !creating">Cancel</a>
-                            <a class="btn btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
-                            <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
                         </div>
                     </div>
                     <div class="reports col-md-4 col-sm-4 col-xs-4">

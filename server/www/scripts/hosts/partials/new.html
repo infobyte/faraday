@@ -98,9 +98,10 @@
                         <h3>
                             Hostnames
                             <span style="float:right">
-                                <button class="btn btn-sm" ng-click="newHostnames($event)">Add Hostname</button>
+                                <button class="btn btn-success" ng-click="newHostnames($event)">Add Hostname</button>
                             </span>
                         </h3>
+                        <h5 ng-if="editing" style="min-height: 1.1em"></h5>
                         <span ng-if="editing">
                             <div class="col-md-12 input-margin" ng-repeat="hostname in interface.hostnames">
                                 <div class="input-group margin-bottom-sm col-md-12">

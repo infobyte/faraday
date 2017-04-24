@@ -140,8 +140,7 @@
                                     <span class="glyphicon glyphicon-trash"></span>
                                     Delete
                                 </button>
-                                <a class="btn btn-sm btn-danger" href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-if="editing && !creating">Cancel</a>
-                                <a class="btn btn-sm btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
+                                <a class="btn btn-danger" href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-if="editing && !creating">Cancel</a>
                                 <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
                             </span>
                         </h3>

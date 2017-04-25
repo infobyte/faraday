@@ -44,7 +44,7 @@ class ServiceDAO(FaradayDAO):
                 outerjoin(EntityMetadata, EntityMetadata.id == Service.entity_metadata_id).\
                 outerjoin(Vulnerability, Service.id == Vulnerability.service_id).group_by(Service.id).\
                 outerjoin(Interface, Interface.id == Service.interface_id).\
-                outerjoin(Credential, (Credential.service_id == Service.id) & Credential.host_id == None).\
+                outerjoin(Credential, (Credential.service_id == Service.id) and (Credential.host_id == None)).\
                 outerjoin(Host, Host.id == Interface.host_id)
 
         query = apply_search_filter(query, self.COLUMNS_MAP, None, service_filter, self.STRICT_FILTERING)

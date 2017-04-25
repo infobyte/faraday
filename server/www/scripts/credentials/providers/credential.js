@@ -87,6 +87,38 @@ angular.module('faradayApp')
                     then(function(credential_data) {
                         self._rev = credential_data.rev;
                     });
+            },
+
+            getParentName: function(ws){
+                
+                var deferred = $q.defer();
+                
+                var result = this._id.split('.');
+                var hostIdToSearch = undefined;
+                var serviceIdToSearch = undefined;
+
+                //Parent is Host
+                if (result.length === 2){
+                    hostIdToSearch = result[0];
+
+                    ServerAPI.getObj(ws, hostIdToSearch).then(function(response){
+                        deferred.resolve(response.data.name);
+                    });
+                }
+
+                //Parent is Service
+                else if (result.length === 4){
+                    hostIdToSearch = result[0];
+                    serviceIdToSearch = result.slice(0, result.length - 1).join('.');
+
+                     ServerAPI.getObj(ws, hostIdToSearch).then(function(responseHost){
+                         ServerAPI.getObj(ws, serviceIdToSearch).then(function(responseService){
+                            deferred.resolve(responseHost.data.name + '/' + responseService.data.name);
+                         });
+                    });
+                }
+
+                return deferred.promise;
             }
         };
 

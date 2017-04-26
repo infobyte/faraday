@@ -12,6 +12,7 @@ TBA:
 ---
 * Fixed bug when editing workspaces created in GTK
 * Improved host search in the WEB UI
+* Extended the config to support different searching engines in the WEB UI
 
 March 17, 2017:
 ---

@@ -10,7 +10,7 @@ New features in the latest update
 
 TBA:
 ---
-
+* Fixed bug when editing workspaces created in GTK
 
 March 17, 2017:
 ---

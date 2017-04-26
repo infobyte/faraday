@@ -85,13 +85,17 @@ angular.module('faradayApp')
 
         // changes the URL according to search params
         $scope.searchFor = function(search, params) {
-            if (search && params != "" && params != undefined) {
-                $scope.expression = commonsFact.parseSearchExpression(params);
-            } else {
-                $scope.expression = {};
+            // TODO: It would be nice to find a way for changing
+            // the url without reloading the controller
+            var url = "/hosts/ws/" + $routeParams.wsId;
+
+            if(search && params != "" && params != undefined) {
+                var filter = commonsFact.parseSearchExpression(params);
+                var URLParams = commonsFact.searchFilterToURLParams(filter);
+                url += "/search/" + URLParams;
             }
 
-            loadHosts();
+            $location.path(url);
         };
 
         $scope.go = function() {

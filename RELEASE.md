@@ -14,6 +14,7 @@ TBA:
 * Improved host search in the WEB UI
 * Extended the config to support different searching engines in the WEB UI
 * Check that client and server versions match when connecting
+* Adds the 'v' and 'version' argument for both the server and the client
 
 March 17, 2017:
 ---

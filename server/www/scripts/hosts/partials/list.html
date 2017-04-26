@@ -77,9 +77,7 @@
                                     <td><input type="checkbox" name="{{host._id}}"/></td>
                                     <td>
                                         <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}">{{host.name}}</a>
-                                        <a ng-href="//{{osint.host}}/search?query={{host.name}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
-                                            <img ng-src="images/{{osint.icon}}.png" height="15px" width="15px" />
-                                        </a>
+                                        <osint-link query="host.name" osint="osint"></osint-link>
                                     </td>
                                     <td><a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}" ng-bind="host.services || '-'"></a></td>
                                     <td><a ng-href="#/status/ws/{{workspace}}/search/target={{host.name}}" ng-bind="host.vulns"></a></td>

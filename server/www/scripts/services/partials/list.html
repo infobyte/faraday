@@ -111,18 +111,14 @@
                                     <td><input type="checkbox" name="{{s._id}}"/></td>
                                     <td>
                                         <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/name={{service.name}}">
-                                            <span ng-bind="service.name"></span>
+                                            <span ng-bind="service.name" osint="osint"></span>
                                         </a>
-                                        <a ng-href="//{{osint.host}}/search?query={{service.name}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
-                                            <img ng-src="images/{{osint.icon}}.png" height="15px" width="15px" />
-                                        </a>
+                                        <osint-link query="service.name" osint="osint"></osint-link>
                                     </td>
                                     <td ng-bind="service.version || '-'"></td>
                                     <td>
                                         <span ng-bind="service.ports"></span>
-                                        <a ng-href="//{{osint.host}}/search?query=port:{{service.ports}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
-                                            <img ng-src="images/{{osint.icon}}.png" height="15px" width="15px" />
-                                        </a>
+                                        <osint-link query="'port:' + service.ports"></osint-link>
                                     </td>
                                     <td>
                                         <a ng-href="#/host/ws/{{workspace}}/hid/{{host._id}}/search/protocol={{service.protocol}}">

@@ -94,6 +94,13 @@ def main():
     parser.add_argument('--stop', action='store_true', help='stop Faraday Server')
     parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
     parser.add_argument('--no-setup', action='store_true', help=argparse.SUPPRESS)
+
+    f = open(server.config.VERSION_FILE)
+    f_version = f.read().strip()
+
+    parser.add_argument('-v', '--version', action='version',
+                        version='Faraday v{version}'.format(version=f_version))
+
     args = parser.parse_args()
 
     if args.debug:

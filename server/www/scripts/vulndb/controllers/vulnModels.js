@@ -165,7 +165,7 @@ angular.module('faradayApp')
                                 vulns.forEach(function(vuln) {
                                     relevant_vuln = {};
                                     relevant_vuln.name = vuln.value.name;
-                                    relevant_vuln.description = vuln.value.dec_description;
+                                    relevant_vuln.description = vuln.value.dec_summary;
                                     relevant_vuln.resolution = vuln.value.resolution;
                                     relevant_vuln.exploitation = vuln.value.severity;
                                     relevant_vuln.references = vuln.value.references;

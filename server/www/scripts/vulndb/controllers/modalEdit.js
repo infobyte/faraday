@@ -4,14 +4,15 @@
 
 angular.module('faradayApp')
     .controller('vulndDbModalEdit',
-        ['$scope', '$modalInstance', 'VulnModel', 'model',
-        function($scope, $modalInstance, VulnModel, model) {
+                ['$scope', '$modalInstance', 'VulnModel', 'model', 'EXPLOITATIONS',
+                 function($scope, $modalInstance, VulnModel, model, EXPLOITATIONS) {
 
         $scope.data;
         $scope.openedStart;
         $scope.openedEnd;
 
         var init = function() {
+            $scope.exploitations = EXPLOITATIONS
             $scope.data = new VulnModel;
             $scope.data.set(model);
         };

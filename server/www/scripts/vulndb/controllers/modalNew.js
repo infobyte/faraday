@@ -4,16 +4,18 @@
 
 angular.module('faradayApp')
     .controller('vulnModelModalNew',
-        ['$scope', '$modalInstance', 'VulnModel', 'vulnModelsManager',
-        function($scope, $modalInstance, VulnModel, vulnModelsManager) {
+                ['$scope', '$modalInstance', 'VulnModel', 'vulnModelsManager', 'EXPLOITATIONS',
+                 function($scope, $modalInstance, VulnModel, vulnModelsManager, EXPLOITATIONS) {
 
         $scope.data;
+        $scope.exploitations;
         $scope.models;
 
         var init = function() {
+            $scope.exploitations = EXPLOITATIONS;
             $scope.data = new VulnModel;
-
             $scope.models = vulnModelsManager.models;
+            // $scope.exploitations = ['a'];
 
             $scope.$watch(function() {
                 return $scope.data.model;

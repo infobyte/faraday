@@ -37,6 +37,17 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         ];
         return severities;
     })())
+    .constant("EXPLOITATIONS", (function() {
+        var exploitations = [
+            "critical",
+            "high",
+            "med",
+            "low",
+            "info",
+            "unclassified"
+        ];
+        return exploitations;
+    })())
     .constant("STATUSES", (function() {
         var statuses = [
             "opened",

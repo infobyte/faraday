@@ -25,6 +25,12 @@
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
+                    <label for="CWE">CWE</label>
+                    <textarea class="form-control" name="cwe" placeholder="CWE" ng-model="data.cwe"></textarea>
+                </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-12">
                     <label for="description">Description</label>
                     <textarea class="form-control" name="description" placeholder="Description" ng-model="data.description"></textarea>
                 </div>
@@ -37,9 +43,19 @@
             </div><!-- .form-group -->
             <div class="form-group">
                 <div class="col-md-12">
-                    <label for="exploitation">Exploitation</label>
-                    <textarea class="form-control" name="exploitation" placeholder="exploitation" ng-model="data.exploitation"></textarea>
+                    <label for="References">References</label>
+                    <textarea class="form-control" name="References" placeholder="References" ng-model="data.references"></textarea>
                 </div>
+            </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label for="Explotation">Explotation</label>
+                <button type="button" class="btn btn-default dropdown-toggle" name="exploitation" data-toggle="dropdown" title="Choose exploitation" ng-class="{'button-error': data.exploitation === undefined}">
+                {{data.exploitation || 'Choose exploitation'}} <span class="caret"></span>
+                </button>
+                <ul id="nav" class="dropdown-menu dropdown-menu-left" role="menu">
+                    <li ng-repeat="s in exploitations"><a href="" class="ws color-{{s}}" ng-click="data.exploitation=s">{{s}}</a></li>
+                </ul><!-- WS navigation -->
             </div><!-- .form-group -->
             <p>All fields marked * are required</p>
         </div><!-- .form-horizontal -->

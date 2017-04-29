@@ -167,6 +167,8 @@ angular.module('faradayApp')
                                     relevant_vuln.name = vuln.value.name;
                                     relevant_vuln.description = vuln.value.description;
                                     relevant_vuln.resolution = vuln.value.resolution;
+                                    relevant_vuln.exploitation = vuln.value.severity;
+                                    relevant_vuln.references = vuln.value.references;
                                     $scope.insert(relevant_vuln);
                                 });
                             }).then(function() {

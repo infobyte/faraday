@@ -15,8 +15,6 @@ angular.module('faradayApp').
                 this.cwe = "";
                 this.desc_summary = "";
                 this.description = "";
-                this.formated_tags = "";
-                this.tags = [];
 
                 if (data) {
                     if(data.name === undefined || data.name === "") {
@@ -28,7 +26,7 @@ angular.module('faradayApp').
 
             VulnModel.prototype = {
 
-                public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'desc_summary', 'description', 'tags'],
+                public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'desc_summary', 'description'],
 
                 set: function(data) {
                     var self = this;
@@ -43,10 +41,6 @@ angular.module('faradayApp').
                             self[property] = data[property];
                         };
                     });
-
-                    if (data.tags) {
-                        this.formated_tags = data.tags.join();
-                    }
                 },
 
                 remove: function() {

@@ -59,66 +59,36 @@ angular.module('faradayApp')
                 };
 
                 $scope.pageCount = function() {
-                    return vulnModelsManager.totalNumberOfPages
-                }
+                    return vulnModelsManager.totalNumberOfPages;
+                };
 
                 $scope.prevPageDisabled = function() {
                     return $scope.currentPage <= 1;
-                }
+                };
 
                 $scope.nextPageDisabled = function() {
                     return $scope.currentPage >= $scope.pageCount();
-                }
+                };
 
                 $scope.nextPage = function() {
-                    if ($scope.currentPagepage <= 0 || $scope.currentPage > $scope.pageCount) { return }
+                    if ($scope.currentPagepage <= 0 || $scope.currentPage > $scope.pageCount) { return; }
                     $scope.currentPage += 1;
                     vulnModelsManager.get($scope.currentPage);
-                }
+                };
 
                 $scope.prevPage = function() {
-                    if ($scope.currentPagepage <= 0 || $scope.currentPage > $scope.pageCount) { return }
+                    if ($scope.currentPagepage <= 0 || $scope.currentPage > $scope.pageCount) { return; }
                     $scope.currentPage -= 1;
                     vulnModelsManager.get($scope.currentPage);
-                }
+                };
 
-                $scope.vulnsTags = function() {
-                    if($scope.selectedModels().length > 0) {
-                        var modal = $uibModal.open({
-                            templateUrl: 'scripts/tags/partials/modalTags.html',
-                            controller: 'modalTagsCtrl',
-                            size: 'lg',
-                            resolve: {
-                                models: function() {
-                                    return $scope.models;
-                                },
-                                workspace: function() {
-                                    return 'cwe';
-                                }
-                            }
-                        });
-                        modal.result.then(function(data) {
-                            $scope.putTag($scope.selectedModels(), data);
-                        });
-                    } else {
-                        console.log('No vulnerabilities were selected to tag');
-                    }
-
-                }
-
-                $scope.putTag = function(models, data) {
-                    models.forEach(function(model) {
-                        model.tags = data.tags
-                        $scope.update(model, model);
-                    })
-                }
 
                 $scope.go = function() {
-                    var page = $scope.newCurrentPage
-                    if (page <= 0 || page > $scope.pageCount || ! page) { return }
+                    var page = $scope.newCurrentPage;
+                    if (page <= 0 || page > $scope.pageCount || ! page) { return; }
                     $scope.currentPage = page;
                     vulnModelsManager.get($scope.currentPage);
-                }
+                };
 
 
                 $scope.remove = function(ids) {

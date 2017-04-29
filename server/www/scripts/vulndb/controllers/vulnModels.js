@@ -116,23 +116,36 @@ angular.module('faradayApp')
                         resolve: { }
                     });
 
-                    document.body.style.cursor='wait';
+                    var datas = [];
                     modal.result.then(
                         function(data) {
+                            document.body.style.cursor='wait';
                             $scope.disabledClick = true;
                             Papa.parse(data, {
                                 worker: true,
                                 header: true,
                                 skipEmptyLines: true,
                                 step: function(results) {
-                                    if (results.data) {
-                                        $scope.insert(results.data[0])
-                                    }
+                                    if (results.data) {datas.push(results.data[0]);}
+                                },
+                                complete: function(res, file) {
+                                    // i feel dirty, really, but it works.
+                                    // pro tip: 'complete' only means it has completed 'parsing'
+                                    // not completed doing whatever is defined on step
+                                    var length = datas.length;
+                                    var counter = 0;
+                                    datas.forEach(function(data) {
+                                        $scope.insert(data).then(function() {
+                                            counter = counter + 1;
+                                            if (length == counter) {
+                                                document.body.style.cursor = "default";
+                                                $scope.disabledClick = false;
+                                            }
+                                        });
+                                    });
                                 }
                             });
                         });
-                    document.body.style.cursor='default';
-                    $scope.disabledClick = false;
                 };
 
                 $scope.importFromWorkspace = function() {
@@ -143,23 +156,25 @@ angular.module('faradayApp')
                         resolve: { }
                     });
 
-                    document.body.style.cursor='wait';
                     modal.result.then(function(data) {
-                        ServerAPI.getVulns(data).then(function(vulns_data) {
-                            $scope.disabledClick = true;
-                            var vulns = vulns_data.data.vulnerabilities
-                            vulns.forEach(function(vuln) {
-                                relevant_vuln = {};
-                                relevant_vuln.name = vuln.value.name;
-                                relevant_vuln.description = vuln.value.description;
-                                relevant_vuln.resolution = vuln.value.resolution;
-                                $scope.insert(relevant_vuln)
+                        document.body.style.cursor='wait';
+                        ServerAPI.getVulns(data).then(
+                            function(vulns_data) {
+                                $scope.disabledClick = true;
+                                var vulns = vulns_data.data.vulnerabilities;
+                                vulns.forEach(function(vuln) {
+                                    relevant_vuln = {};
+                                    relevant_vuln.name = vuln.value.name;
+                                    relevant_vuln.description = vuln.value.description;
+                                    relevant_vuln.resolution = vuln.value.resolution;
+                                    $scope.insert(relevant_vuln);
+                                });
+                            }).then(function() {
+                                document.body.style.cursor = "default";
+                                $scope.disabledClick = false;
                             });
-                        })
-                    })
-                    document.body.style.cursor = "default";
-                    $scope.disabledClick = false;
-                }
+                        });
+                };
 
                 $scope.delete = function() {
                     var selected = $scope.selectedModels();
@@ -200,7 +215,7 @@ angular.module('faradayApp')
                 };
 
                 $scope.insert = function(data) {
-                    vulnModelsManager.create(data)
+                    return vulnModelsManager.create(data)
                         .catch(function(message) {
                             commonsFact.errorDialog(message);
                         });

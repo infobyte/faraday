@@ -24,7 +24,10 @@ angular.module('faradayApp')
                 });
         };
 
-        $scope.no = function() { };
+        $scope.no = function() {
+            $modalInstance.close(null);
+            $modalInstance.dismiss(null);
+        };
 
         init();
     }]);

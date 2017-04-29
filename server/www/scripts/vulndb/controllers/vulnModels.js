@@ -32,6 +32,7 @@ angular.module('faradayApp')
                                     }
                                 }, function(message) { 
                                     // no db created, do nothing!
+                                    return null;
 
                                 });
                             } else {

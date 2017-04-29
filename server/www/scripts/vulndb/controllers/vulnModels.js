@@ -28,12 +28,9 @@ angular.module('faradayApp')
                                 }).result.then(function(data) {
                                     if (data) {
                                         $scope.db_exists = true;
-
                                     }
                                 }, function(message) { 
                                     // no db created, do nothing!
-                                    return null;
-
                                 });
                             } else {
                                 $scope.db_exists = true;

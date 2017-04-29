@@ -7,10 +7,10 @@ angular.module('faradayApp').
         ['VulnModel', 'BASEURL', 'configSrv', '$http', '$q',
             function(VulnModel, BASEURL, configSrv, $http, $q) {
                 var vulnModelsManager = {};
-                vulnModelsManager.pageSize = 20
+                vulnModelsManager.pageSize = 20;
                 vulnModelsManager.models = [];
-                vulnModelsManager.totalNumberOfModels 
-                vulnModelsManager.totalNumberOfPages
+                vulnModelsManager.totalNumberOfModels;
+                vulnModelsManager.totalNumberOfPages = 1,
 
                 vulnModelsManager.DBExists = function() {
                     var deferred = $q.defer();
@@ -156,7 +156,13 @@ angular.module('faradayApp').
 
                 vulnModelsManager.updateState = function(numberOfModels) {
                     this.totalNumberOfModels = numberOfModels
-                    this.totalNumberOfPages = Math.ceil(this.totalNumberOfModels / this.pageSize)
+
+                    // if you have zero models, you still have 'one page' :)
+                    if (this.totalNumberOfModels === 0) {
+                        this.totalNumberOfPages = 1 
+                    } else {
+                        this.totalNumberOfPages = Math.ceil(this.totalNumberOfModels / this.pageSize)
+                    }
                 }
 
 

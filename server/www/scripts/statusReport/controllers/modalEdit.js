@@ -3,12 +3,11 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalEditCtrl', ['$modalInstance', 'vulnModelsManager', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact', 'severities', 'vuln', 'cweFact', 
-        function($modalInstance, vulnModelsManager, EASEOFRESOLUTION, STATUSES, commons, severities, vuln, cweFact) {
+    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact', 'severities', 'vuln', 'cweFact', 
+        function($modalInstance, EASEOFRESOLUTION, STATUSES, commons, severities, vuln, cweFact) {
         
         var vm = this;
 
-        vm.vulnModelsManager = vulnModelsManager;
         vm.saveAsModelDisabled = false;
         vm.easeofresolution;
         vm.new_ref;

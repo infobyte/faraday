@@ -7,11 +7,11 @@ angular.module('faradayApp')
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
                     'SEVERITIES', 'EASEOFRESOLUTION', 'STATUSES', 'hostsManager', 'commonsFact',
-                    'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants',
+                     'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants', 'vulnModelsManager',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,
-                        vulnsManager, workspacesFact, csvService, uiGridConstants) {
+                             vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager) {
         $scope.baseurl;
         $scope.columns;
         $scope.easeofresolution;
@@ -27,6 +27,7 @@ angular.module('faradayApp')
         $scope.newCurrentPage;
         $scope.newPageSize;
         $scope.gridOptions;
+        $scope.vulnModelsManager;
 
         $scope.vulnWebSelected;
         $scope.confirmed = false;
@@ -50,6 +51,7 @@ angular.module('faradayApp')
             $scope.reverse = true;
             $scope.vulns = [];
             $scope.selected = false;
+            $scope.vulnModelsManager = vulnModelsManager;
 
             $scope.gridOptions = {
                 multiSelect: true,
@@ -389,6 +391,18 @@ angular.module('faradayApp')
                 res = "Confirm";
             }
             return res;
+        };
+
+
+        $scope.saveAsModel = function() {
+            var self = this;
+            var selected = $scope.getCurrentSelection();
+            selected.forEach(function(vuln) {
+                vuln.exploitation = vuln.severity;
+                vuln.description = vuln.desc;
+                vuln.desc_summary = vuln.desc;
+                self.vulnModelsManager.create(vuln, true);
+            });
         };
 
         $scope.selectAll = function() {

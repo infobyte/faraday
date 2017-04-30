@@ -15,12 +15,11 @@ angular.module('faradayApp').
                 this.cwe = "";
                 this.desc = "";
                 this.description = "";
-
                 if (data) {
                     if(data.name === undefined || data.name === "") {
                         throw new Error("Unable to create a Vulnerability Model whithout a name");
                     }
-                    this.set(data)
+                    this.set(data);
                 }
             };
 
@@ -33,7 +32,9 @@ angular.module('faradayApp').
 
                     if(data._id != undefined) {
                         self._id = data._id;
-                        if(data._rev !== undefined) self._rev = data._rev;
+                        if(data._rev !== undefined) {
+                            self._rev = data._rev;
+                        };
                     }
 
                     self.public_properties.forEach(function(property) {

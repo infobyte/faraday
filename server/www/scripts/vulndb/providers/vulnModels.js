@@ -9,7 +9,7 @@ angular.module('faradayApp').
                 var vulnModelsManager = {};
                 vulnModelsManager.pageSize = 20;
                 vulnModelsManager.models = [];
-                vulnModelsManager.totalNumberOfModels;
+                vulnModelsManager.totalNumberOfModels = 0;
                 vulnModelsManager.totalNumberOfPages = 1,
 
                 vulnModelsManager.DBExists = function() {
@@ -54,7 +54,8 @@ angular.module('faradayApp').
                     return deferred.promise;
                 };
 
-                vulnModelsManager.create = function(data) {
+                vulnModelsManager.create = function(data, outsider) {
+                    if (outsider === undefined) { var outsider = false; };
                     var deferred = $q.defer();
                     var self = this;
 
@@ -62,14 +63,17 @@ angular.module('faradayApp').
                         var vulnModel = new VulnModel(data);
                         vulnModel.save().
                             then(function(resp) {
+                                if (outsider) {
+                                    deferred.resolve(resp);
+                                } else {
                                 vulnModelsManager.get().
                                     then(function() {
-                                        self.updateState(self.totalNumberOfModels + 1)
+                                        self.updateState(self.totalNumberOfModels + 1);
                                         deferred.resolve(self);
                                     }, function(reason) {
                                         deferred.reject(reason);
                                     });
-                            }, function(reason) {
+                                }}, function(reason) {
                                 deferred.reject(reason);
                             });
                     } catch(e) {
@@ -77,7 +81,7 @@ angular.module('faradayApp').
                     }
 
                     return deferred.promise;
-                }
+                };
 
                 vulnModelsManager.delete = function(vulnModel) {
                     var deferred = $q.defer();
@@ -87,7 +91,7 @@ angular.module('faradayApp').
                         then(function() {
                             vulnModelsManager.get().
                                 then(function(resp) {
-                                    self.updateState(self.totalNumberOfModels - 1)
+                                    self.updateState(self.totalNumberOfModels - 1);
                                     deferred.resolve(resp);
                                 }, function(reason) {
                                     deferred.reject(reason);
@@ -112,8 +116,7 @@ angular.module('faradayApp').
                             $http.get(url).
                                 then(function(res) {
                                     var data = res.data;
-
-                                    var vulnModels = []
+                                    var vulnModels = [];
 
                                     if (data.hasOwnProperty("rows")) {
                                         data.rows.forEach(function(row) {
@@ -141,29 +144,29 @@ angular.module('faradayApp').
 
                     configSrv.promise.
                         then(function() {
-                            var url = BASEURL + configSrv.vulnModelsDB + "/_all_docs"
+                            var url = BASEURL + configSrv.vulnModelsDB + "/_all_docs";
                             $http.get(url).
                                 then(function(res) {
                                     var data = res.data;
-                                    self.updateState(data.total_rows)
-                                    deferred.resolve()
+                                    self.updateState(data.total_rows);
+                                    deferred.resolve();
                                 }, function(data, status) {
-                                    deferred.reject("Unable to retrieve documents " + status)
-                                })
-                        })
+                                    deferred.reject("Unable to retrieve documents " + status);
+                                });
+                        });
                     return deferred.promise;
-                }
+                };
 
                 vulnModelsManager.updateState = function(numberOfModels) {
-                    this.totalNumberOfModels = numberOfModels
+                    this.totalNumberOfModels = numberOfModels;
 
                     // if you have zero models, you still have 'one page' :)
                     if (this.totalNumberOfModels === 0) {
-                        this.totalNumberOfPages = 1 
+                        this.totalNumberOfPages = 1;
                     } else {
-                        this.totalNumberOfPages = Math.ceil(this.totalNumberOfModels / this.pageSize)
+                        this.totalNumberOfPages = Math.ceil(this.totalNumberOfModels / this.pageSize);
                     }
-                }
+                };
 
 
                 vulnModelsManager.update = function(vulnModel, data) {

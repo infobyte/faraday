@@ -6,8 +6,10 @@
     <div class="right-main">
         <div id="reports-main" class="fila clearfix">
             <div class="ws-label">
-                <h2><span id="ws-name" title="Current workspace">Status report for {{ workspace }} ({{ confirmed === false ? 'all vulns' : 'confirmed' }}) ({{gridOptions.totalItems}} vulns)</span></h2><!-- WS name -->
-            </div><!-- .ws-label -->
+                <h2><span id="ws-name" title="Current workspace">Status report for {{ workspace }} ({{ confirmed === false ? 'all vulns' : 'confirmed' }}) ({{gridOptions.totalItems}} vulns)</span></h2>
+                <!-- WS name -->
+            </div>
+            <!-- .ws-label -->
             <div id="ws-control" class="btn-group btn-small-margin">
                 <button file-exporter="csv()" type="button" class="btn btn-success" title="Download CSV for current workspace">
                     <span class="glyphicon glyphicon-download"></span>
@@ -22,9 +24,11 @@
                     Change workspace <span class="caret"></span>
                 </button>
                 <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
-                    <li ng-repeat="ws in workspaces"><a href="#/status/ws/{{ws}}" class="ws" >{{ws}}</a></li>
-                </ul><!-- WS navigation -->
-            </div><!-- #ws-control -->
+                    <li ng-repeat="ws in workspaces"><a href="#/status/ws/{{ws}}" class="ws">{{ws}}</a></li>
+                </ul>
+                <!-- WS navigation -->
+            </div>
+            <!-- #ws-control -->
 
             <div class="button-control col-md-6 col-sm-6 col-xs-12">
                 <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="delete()">
@@ -36,10 +40,16 @@
                         <span class="glyphicon glyphicon-pencil"></span>
                         Edit
                     </button>
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="getCurrentSelection().length < 2">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="SingleActions" ng-show="getCurrentSelection().length === 1">
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li><a class="ws" ng-click="saveAsModel()">Create template</a></li>
+                    </ul>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Actions" ng-hide="getCurrentSelection().length < 2">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu" ng-show="getCurrentSelection().length >= 2">
                         <li><a class="ws" ng-click="editString('name')">Edit name</a></li>
                         <li><a class="ws" ng-click="editText('desc', 'description')">Edit description</a></li>
                         <li><a class="ws" ng-click="editText('data')">Edit data</a></li>
@@ -61,13 +71,14 @@
                         <li ng-show="vulnWebSelected"><a class="ws" ng-click="editText('response')">Edit response</a></li>
                         <li role="separator" class="divider"></li>
                         <li><a class="ws" ng-click="editCWE()">From CWE</a></li>
+                        <li><a class="ws" ng-click="saveAsModel()">Create templates</a></li>
                     </ul>
                 </div>
                 <div id="group-by" class="btn-group btn-small-margin">
                     <button type="button" ng-if="propertyGroupBy" class="btn btn-danger" title="Clear" ng-click="clearGroupBy()">
                         <i class="fa fa-times"></i>
                     </button>
-                    <button type="button" class="btn btn-default" title="{{propertyGroupBy || 'Group By'}}" >
+                    <button type="button" class="btn btn-default" title="{{propertyGroupBy || 'Group By'}}">
                         {{ (propertyGroupBy | uppercase) || "Group By"}}
                     </button>
                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Group By">
@@ -83,7 +94,8 @@
                     <span class="glyphicon glyphicon-plus-sign"></span>
                     New
                 </button>
-            </div><!-- .col-md-6 .col-sm-6 .col-xs-12 -->
+            </div>
+            <!-- .col-md-6 .col-sm-6 .col-xs-12 -->
             <div class="reports">
                 <div class="row">
                     <div class="col-md-6 col-sm-3 col-xs-11">
@@ -91,8 +103,7 @@
                             <div class="form-group">
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search && search != 'confirmed=true'"></span>
-                                    <input type="text" class="form-control" id="filter-by" 
-                                    placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
+                                    <input type="text" class="form-control" id="filter-by" placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
                                     <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
                                         <i class="fa fa-search" ng-if="gridOptions.data.length > 0 || gridOptions.totalItems >= 0"></i>
                                         <i class="fa fa-refresh fa-spin" ng-if="gridOptions.totalItems === null"></i>
@@ -108,7 +119,8 @@
                                 <a href="" ng-click="toggleShow(column, show)" ng-show="!show">
                                     <span class="label label-primary ws-name">{{column}}</span>
                                 </a>
-                            </li><!-- label-list -->
+                            </li>
+                            <!-- label-list -->
                         </ul>
                     </div>
                 </div>
@@ -126,6 +138,11 @@
                     <span>Selected</span>
                     <span class="counterNum">{{getCurrentSelection().length}}</span>
                 </div>
-            </div><!-- .reports -->
-    </div><!-- #reports-main --></div><!-- .right-main -->
-</section><!-- #main -->
+            </div>
+            <!-- .reports -->
+        </div>
+        <!-- #reports-main -->
+    </div>
+    <!-- .right-main -->
+</section>
+<!-- #main -->

@@ -6,10 +6,11 @@
 
 angular.module('faradayApp')
     .controller('credentialsCtrl',
-        ['$scope', '$filter', '$q', '$uibModal', '$routeParams', 'commonsFact', 'credential', 'ServerAPI',
-        function($scope, $filter, $q, $uibModal, $routeParams, commonsFact, credential, ServerAPI ) {
+        ['$scope', '$filter', '$q', '$uibModal', '$routeParams', '$window', 'commonsFact', 'credential', 'ServerAPI', 'workspacesFact',
+        function($scope, $filter, $q, $uibModal, $routeParams, $window, commonsFact, credential, ServerAPI, workspacesFact) {
 
             $scope.workspace;
+            $scope.workspaces;
             $scope.credentials = [];
             // Contains: type of parent(Host or Service), id(Couchid and internal id) of that and name of host and/or name of service(For show in view)
             $scope.parentObject = new Object();
@@ -100,6 +101,11 @@ angular.module('faradayApp')
                 $scope.selectall_credentials = false;
                 $scope.sort_field = "end";
                 $scope.reverse = true;
+
+                // Load all workspaces to list 'choose workspace'
+                workspacesFact.list().then(function(wss) {
+                    $scope.workspaces = wss;
+                });
 
                 $scope.workspace = $routeParams.wsId;
 
@@ -271,6 +277,10 @@ angular.module('faradayApp')
             // toggle column sort order
             $scope.toggleReverse = function() {
                 $scope.reverse = !$scope.reverse;
+            };
+
+            $scope.reloadPage = function() {
+                $window.location.reload();
             };
 
             init();

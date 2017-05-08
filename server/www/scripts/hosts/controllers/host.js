@@ -10,13 +10,14 @@ angular.module('faradayApp')
             hostsManager, workspacesFact, dashboardSrv, servicesManager, commons) {
 
         loadHosts = function(){
-            hostsManager.getHost($routeParams.hidId, $scope.workspace)
+            hostsManager.getHost($routeParams.hidId, $scope.workspace, true)
                 .then(function(host) {
                     hostsManager.getInterfaces($scope.workspace, host._id).then(function(resp){
                         $scope.interface = resp[0].value;
                         $scope.interface.hostnames = commons.arrayToObject($scope.interface.hostnames);
                     });
                 	$scope.host = host;
+                    $scope.hostName = host.name; // User can edit $scope.host.name but not $scope.hostName
                     $scope.loadIcons();
                 });
         };

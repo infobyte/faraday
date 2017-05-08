@@ -56,7 +56,7 @@ def workspace(workspace):
         flask.request.cookies, get_basic_auth())['workspaces']
     ws = get_workspace(workspace, flask.request.cookies, get_basic_auth()) if workspace in workspaces else None
     # TODO: When the workspace DAO is ready, we have to remove this next line
-    if not ws.get('fdate'): ws['fdate'] = ws.get('duration').get('end')
+    if not ws.get('fdate') and ws.get('duration'): ws['fdate'] = ws.get('duration').get('end')
     if not ws.get('description'): ws['description'] = ''
     return flask.jsonify(ws)
 

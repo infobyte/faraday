@@ -26,7 +26,7 @@
                 <td>{{srv.value.description}}</td>
                 <td>
                     {{srv.value.ports.toString().replace("[]", "")}}
-                    <osint-link query="srv.value.ports.toString().replace("[]", "")" osint="osint"></osint-link>
+                    <osint-link query="srv.value.ports.toString().replace('[]', '')" osint="osint"></osint-link>
                 </td>
                 <td>{{srv.value.protocol}}</td>
                 <td>{{srv.value.status}}</td>

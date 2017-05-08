@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('summarizedCtrlServicesModal',
-        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'host', 'osint',
-        function($scope, $modalInstance, dashboardSrv, workspace, host, osint) {
+        ['$scope', '$modalInstance', 'dashboardSrv', 'workspace', 'host', 'osint', 'ServerAPI',
+        function($scope, $modalInstance, dashboardSrv, workspace, host, osint, ServerAPI) {
 
             $scope.host = host
             $scope.sortField = 'port';
@@ -28,10 +28,10 @@ angular.module('faradayApp')
                 $scope.sortReverse = !$scope.sortReverse;
             }
 
-            dashboardSrv.getServicesByHost(workspace, host._id).then(function(services){
+            ServerAPI.getServicesByHost(workspace, host._id).then(function(response){
                 dashboardSrv.getName(workspace, host._id).then(function(name){
                     $scope.name = name;
-                    $scope.services = services;
+                    $scope.services = response.data.services;
                 })
             });
 

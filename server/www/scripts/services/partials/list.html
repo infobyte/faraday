@@ -101,6 +101,9 @@
                                     <th>
                                         <a href="" ng-click="toggleSort('vulns')">Vulns</a>
                                     </th>
+                                    <th>
+                                        <a href="" ng-click="toggleSort('credentials')">Credentials</a>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -130,6 +133,9 @@
                                         <a ng-href="#/status/ws/{{workspace}}/search/service={{service.ports}}&target={{host.name}}">
                                             <span ng-bind="service.vulns"></span>
                                         </a>
+                                    </td>
+                                    <td>
+                                        <a ng-href="#/credentials/ws/{{workspace}}/sid/{{service._id}}">{{service.credentials}}</a>
                                     </td>
                                 </tr>
                             </tbody>

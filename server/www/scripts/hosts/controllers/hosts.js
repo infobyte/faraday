@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('hostsCtrl',
-        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'commonsFact',
-        function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, commonsFact) {
+        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'commonsFact', 'credential',
+        function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, commonsFact, credential) {
 
         var init = function() {
             $scope.selectall_hosts = false;
@@ -62,6 +62,17 @@ angular.module('faradayApp')
                 .catch(function(e) {
                     console.log(e);
                 });
+        };
+
+        var createCredential = function(credentialData, parent_id){
+            
+            // Add parent id, create credential and save to server.
+            try {
+                var credentialObj = new credential(credentialData, parent_id);
+                credentialObj.create($scope.workspace);
+            } catch (error) {
+                console.log(error);
+            }
         };
 
         $scope.loadIcons = function() {
@@ -169,11 +180,17 @@ angular.module('faradayApp')
             }
         };
 
-        $scope.insert = function(hostdata, interfaceData) {
+        $scope.insert = function(hostdata, interfaceData, credentialData) {
+
             var interfaceData = $scope.createInterface(hostdata, interfaceData);
             hostsManager.createHost(hostdata, interfaceData, $scope.workspace).then(function(host) {
+                if(credentialData.name && credentialData.username && credentialData.password){
+                    createCredential(credentialData, hostdata._id);
+                    host.credentials = 1;
+                }
                 $scope.hosts.push(host);
                 $scope.loadIcons();
+
             }, function(message) {
                 $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',
@@ -199,7 +216,8 @@ angular.module('faradayApp')
             modal.result.then(function(data) {
                 var hostdata = data[0];
                 var interfaceData = data[1];
-                $scope.insert(hostdata, interfaceData);
+                var credentialData = data[2];
+                $scope.insert(hostdata, interfaceData, credentialData);
             });
         };
 

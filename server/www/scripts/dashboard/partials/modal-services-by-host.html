@@ -20,16 +20,16 @@
         <tbody>
             <tr ng-repeat="srv in services | orderBy:sortField:sortReverse">
                 <td>
-                    {{srv.name}}
-                    <osint-link query="srv.name" osint="osint"></osint-link>
+                    {{srv.value.name}}
+                    <osint-link query="srv.value.name" osint="osint"></osint-link>
                 </td>
-                <td>{{srv.description}}</td>
+                <td>{{srv.value.description}}</td>
                 <td>
-                    {{srv.ports}}
-                    <osint-link query="srv.ports" osint="osint"></osint-link>
+                    {{srv.value.ports.toString().replace("[]", "")}}
+                    <osint-link query="srv.value.ports.toString().replace("[]", "")" osint="osint"></osint-link>
                 </td>
-                <td>{{srv.protocol}}</td>
-                <td>{{srv.status}}</td>
+                <td>{{srv.value.protocol}}</td>
+                <td>{{srv.value.status}}</td>
             </tr>
         </tbody>
             <div class="col md-12" style="border-top:1px solid #e5e5e5">

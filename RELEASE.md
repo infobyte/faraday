@@ -17,6 +17,7 @@ TBA:
 * Adds the 'v' and 'version' argument for both the server and the client
 * Fixed "refresh" button in the Web UI
 * Fix API on /ws/<workspace> with duration object None
+* Added a CRUD for Credentials to the Web UI
 
 March 17, 2017:
 ---

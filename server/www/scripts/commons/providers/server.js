@@ -277,8 +277,9 @@ angular.module("faradayApp")
                 return ServerAPI.getServicesBy(wsName, 'name');
             }
 
-            ServerAPI.getServicesByHost = function(wsName) {
-                return ServerAPI.getServicesBy(wsName, 'hostid');
+            ServerAPI.getServicesByHost = function(wsName, hostId) {
+                var url = createGetUrl(wsName, 'services');
+                return get(url, {"hostIdCouchdb": hostId});
             }
 
             ServerAPI.getVulnsBySeverity = function(wsName, confirmed) {
@@ -413,7 +414,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteCredential = function(wsName, credentialId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, credentialid, rev);
+                var deleteUrl = createDeleteUrl(wsName, credentialId, rev);
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }

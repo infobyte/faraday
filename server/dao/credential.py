@@ -3,6 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 
 from sqlalchemy.orm.query import Bundle
+from sqlalchemy import not_
 
 from server.dao.base import FaradayDAO
 from server.models import Credential, EntityMetadata
@@ -16,7 +17,9 @@ class CredentialDAO(FaradayDAO):
     COLUMNS_MAP = {
         'couchid': [EntityMetadata.couchdb_id],
         'username': [Credential.username],
-        'password': [Credential.password]}
+        'password': [Credential.password],
+        'service_id': [],
+        'host_id': []}
 
     STRICT_FILTERING = ["couchid"]
 
@@ -42,6 +45,18 @@ class CredentialDAO(FaradayDAO):
 
         # Apply filtering options to the query
         query = apply_search_filter(query, self.COLUMNS_MAP, search, cred_filter, self.STRICT_FILTERING)
+
+        # I apply a custom filter for search by hostId and serviceId.
+        # 'LIKE' for search by serviceId.%, that return only credentials started with serviceId.
+        if cred_filter.get('service_id') is not None:
+            query = query.filter(EntityMetadata.couchdb_id.like(cred_filter.get('service_id') + ".%"))
+
+        # 'LIKE' for search by hostId.%, with that LIKE we receive credentials of services also.
+        # I need another like for filter credentials of services (%.%.%)
+        if cred_filter.get('host_id') is not None:
+            query = query.filter(
+                EntityMetadata.couchdb_id.like(cred_filter.get('host_id') + ".%")).filter(
+                    not_(EntityMetadata.couchdb_id.like("%.%.%")))
 
         results = query.all()
         return results

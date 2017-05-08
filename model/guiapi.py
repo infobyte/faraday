@@ -58,9 +58,9 @@ def deregisterWidget(widget):
         notification_center.deregisterWidget(widget)
 
 
-def createAndAddHost(name, os="Unknown", category=None, update=False, old_hostname=None):
+def createAndAddHost(name, os="Unknown"):
     host = model.api.newHost(name, os)
-    if addHost(host, category, update, old_hostname):
+    if addHost(host):
         return host.getID()
     return None
 
@@ -205,9 +205,9 @@ def createAndAddCredToService(host_id, service_id, username, password):
     return None
 
 
-def addHost(host, category=None, update = False, old_hostname = None):
+def addHost(host):
     if host is not None:
-        __model_controller.addHostSYNC(host, category, update, old_hostname)
+        __model_controller.addHostSYNC(host)
         return True
     return False
 
@@ -447,6 +447,8 @@ def editCred(cred, username=None, password=None):
 def getParent(parent_id):
     return __model_controller.find(parent_id)
 
+def conflictMissing(conflict):
+    __model_controller.conflictMissing(conflict)
 
 def resolveConflicts():
     __model_controller.resolveConflicts()
@@ -456,3 +458,21 @@ def resolveConflict(conflict, kwargs):
 
 def merge(host1, host2):
     return __model_controller.merge(host1, host2)
+
+def addHostFromChanges(obj):
+     if obj is not None:
+         notification_center.addHostFromChanges(obj)
+         return True
+     return False
+
+def deleteHostFromChanges(obj):
+     if obj is not None:
+         notification_center.deleteHostFromChanges(obj)
+         return True
+     return False
+
+def editHostFromChanges(obj):
+     if obj is not None:
+         notification_center.editHostFromChanges(obj)
+         return True
+     return False

@@ -11,10 +11,13 @@ import signal
 import threading
 import requests
 
+from json import loads
+from time import sleep
+
 from model.controller import ModelController
-from persistence.persistence_managers import DbManager
-from controllers.change import ChangeController
 from managers.workspace_manager import WorkspaceManager
+from plugins.controller import PluginController
+
 import model.api
 import model.guiapi
 import apis.rest.api as restapi
@@ -38,17 +41,30 @@ class TimerClass(threading.Thread):
         threading.Thread.__init__(self)
         self.__event = threading.Event()
 
+    def sendNewstoLogGTK(self, json_response):
+
+        information = loads(json_response)
+
+        for news in information["news"]:
+            model.guiapi.notification_center.sendCustomLog(
+                "NEWS -" + news["url"] + "|" + news["description"])
+
     def run(self):
         while not self.__event.is_set():
             try:
+                sleep(5)
                 res = requests.get(
                     "https://www.faradaysec.com/scripts/updatedb.php",
                     params={'version': CONF.getVersion()},
                     timeout=1,
                     verify=True)
-                res.status_code
+
+                self.sendNewstoLogGTK(res.text)
+
             except Exception:
-                model.api.devlog("CWE database couldn't be updated")
+                model.api.devlog(
+                    "NEWS: Can't connect to faradaysec.com...")
+
             self.__event.wait(43200)
 
     def stop(self):
@@ -56,8 +72,6 @@ class TimerClass(threading.Thread):
 
 
 class MainApplication(object):
-    """
-    """
 
     def __init__(self, args):
         self._original_excepthook = sys.excepthook
@@ -65,31 +79,38 @@ class MainApplication(object):
         self.args = args
 
         self._mappers_manager = MapperManager()
-        self._changes_controller = ChangeController()
-        self._db_manager = DbManager()
 
         self._model_controller = ModelController(self._mappers_manager)
 
         self._plugin_manager = PluginManager(
-            os.path.join(CONF.getConfigPath(), "plugins"),
-            self._mappers_manager)
+            os.path.join(CONF.getConfigPath(), "plugins"))
 
         self._workspace_manager = WorkspaceManager(
-            self._db_manager,
-            self._mappers_manager,
-            self._changes_controller)
+            self._mappers_manager)
+
+        # Create a PluginController and send this to UI selected.
+        self._plugin_controller = PluginController(
+            'PluginController',
+            self._plugin_manager,
+            self._mappers_manager
+        )
 
         if self.args.cli:
-            self.app = CliApp(self._workspace_manager)
+            self.app = CliApp(self._workspace_manager, self._plugin_controller)
             CONF.setMergeStrategy("new")
         else:
             self.app = UiFactory.create(self._model_controller,
                                         self._plugin_manager,
                                         self._workspace_manager,
+                                        self._plugin_controller,
                                         self.args.gui)
 
         self.timer = TimerClass()
         self.timer.start()
+
+    def on_connection_lost(self):
+        """All it does is send a notification to the notification center"""
+        model.guiapi.notification_center.CouchDBConnectionProblem()
 
     def enableExceptHook(self):
         sys.excepthook = exception_handler
@@ -118,11 +139,11 @@ class MainApplication(object):
             self._model_controller.start()
             model.api.startAPIServer()
             restapi.startAPIs(
-                self._plugin_manager,
+                self._plugin_controller,
                 self._model_controller,
-                self._mappers_manager,
                 CONF.getApiConInfoHost(),
-                CONF.getApiRestfulConInfoPort())
+                CONF.getApiRestfulConInfoPort()
+            )
 
             model.api.devlog("Faraday ready...")
 
@@ -147,7 +168,6 @@ class MainApplication(object):
         model.api.devlog("stopping model controller thread...")
         model.api.stopAPIServer()
         restapi.stopServer()
-        self._changes_controller.stop()
         self._model_controller.stop()
         self._model_controller.join()
         self.timer.stop()

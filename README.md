@@ -12,7 +12,7 @@ Please read the [RELEASE notes](https://github.com/infobyte/faraday/blob/master/
 
 Plugins
 ---
-Don't change the way you work today! Faraday plays well with others, right now it has more than [40 supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among them you will find: 
+Don't change the way you work today! Faraday plays well with others, right now it has more than [50 supported tools](https://github.com/infobyte/faraday/wiki/Plugin-List), among them you will find: 
 
 ![](https://raw.github.com/wiki/infobyte/faraday/images/plugins/Plugins.png)
 
@@ -27,11 +27,11 @@ The following platforms are supported:
 
 ![platform](https://raw.github.com/wiki/infobyte/faraday/images/platform/supported.png) 
 
-Read more about [supported platforms and installation specifics] (https://github.com/infobyte/faraday/wiki/Installation).
+Read more about [supported platforms and installation specifics](https://github.com/infobyte/faraday/wiki/First-steps).
 
 #### Quick install
 
-This applies only to Debian, Ubuntu, Kali and Backtrack. For the full installation guide [visit our wiki](https://github.com/infobyte/faraday/wiki/Installation).
+This applies only to Debian, Ubuntu, Kali and Backtrack. For the full installation guide [visit our wiki](https://github.com/infobyte/faraday/wiki/First-steps).
 
 Download the [latest tarball](https://github.com/infobyte/faraday/tarball/master) or clone our repo:
 
@@ -39,6 +39,7 @@ Download the [latest tarball](https://github.com/infobyte/faraday/tarball/master
 $ git clone https://github.com/infobyte/faraday.git faraday-dev
 $ cd faraday-dev
 $ ./install.sh
+$ ./faraday-server.py
 $ ./faraday.py
 ```
 
@@ -48,7 +49,7 @@ Want to read more about the project? Try our [wiki](https://github.com/infobyte/
 
 Already a user and have a question or bug report? Check out our [FAQ](https://github.com/infobyte/faraday/wiki/FAQ) and [troubleshooting](https://github.com/infobyte/faraday/wiki/troubleshooting) pages. If you're still having troubles you can [open a ticket](https://github.com/infobyte/faraday/issues/new).
 
-Join our community! Subscribe to our [mailing list](https://groups.google.com/forum/#!forum/faradaysec) or find us on Twitter [@faradaysec] (https://twitter.com/faradaysec) 
+Join our community! Subscribe to our [mailing list](https://groups.google.com/forum/#!forum/faradaysec) or find us on Twitter [@faradaysec](https://twitter.com/faradaysec) 
 
 Do you have a question? Troubleshooting? Joing our IRC channel #faraday-dev in [freenode](ircs://irc.freenode.net/faraday-dev) or access directly from this link: [![Visit our IRC channel](https://kiwiirc.com/buttons/irc.freenode.org/faraday-dev.png)](https://kiwiirc.com/client/irc.freenode.org/?nick=faraday_gi|?#faraday-dev)
 

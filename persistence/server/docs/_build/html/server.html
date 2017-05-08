@@ -1,0 +1,1543 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>server package &mdash; Faraday 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="Faraday 0.1 documentation" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Faraday
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <!-- Local TOC -->
+                <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">server package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-persistence.server.server">server.utils module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Faraday</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>server package</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/server.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="server-package">
+<h1>server package<a class="headerlink" href="#server-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-persistence.server.server">
+<span id="server-utils-module"></span><h2>server.utils module<a class="headerlink" href="#module-persistence.server.server" title="Permalink to this headline">¶</a></h2>
+<p>A module to handle request to the Faraday Server.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Before using this as an API, you should copy this file and edit
+the FARADAY_UP and the SERVER_URL variables found inmediatly
+below the imports.</p>
+<p class="last">FARADAY_UP should be set to False in the copy of the file, and SERVER_URL
+must be a valid server url.</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This module was though of primarly as a way of querying and removing
+information from the Faraday Server. Adding objects is supported, but should
+be used with care, specially regarding the ID of objects, which must
+be always unique.</p>
+</div>
+<dl class="function">
+<dt id="persistence.server.server.get_hosts">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_hosts</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_hosts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_hosts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get hosts from the server.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace from which to get the hosts.</li>
+<li><strong>**params</strong> &#8211; any of valid request parameters for CouchDB.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary containing the hosts matching the query.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_all_vulns">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_all_vulns</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_all_vulns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_all_vulns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get vulns, both normal and web, from the server.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace from which to get the vulns.</li>
+<li><strong>**params</strong> &#8211; any of valid request parameters for CouchDB.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary containing the vulns matching the query.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_vulns">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_vulns</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_vulns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_vulns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get only normal vulns from the server.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace from which to get the vulns.</li>
+<li><strong>**params</strong> &#8211; any of valid request parameters for CouchDB.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary containing the vulns matching the query.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_web_vulns">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_web_vulns</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_web_vulns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_web_vulns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get only web vulns from the server.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace from which to get the vulns.</li>
+<li><strong>**params</strong> &#8211; any of valid request parameters for CouchDB.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary containing the vulns matching the query.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_interfaces">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_interfaces</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_interfaces"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_interfaces" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get interfaces from the server.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace from which to get the interfaces.</li>
+<li><strong>**params</strong> &#8211; any of valid request parameters for CouchDB.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary containing the interfaces matching the query.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_services">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_services</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_services"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_services" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get services from the server.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace from which to get the services.</li>
+<li><strong>**params</strong> &#8211; any of valid request parameters for CouchDB.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary containing the services matching the query.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_credentials">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_credentials</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_credentials"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_credentials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get credentials from the server.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace from which to get the credentials.</li>
+<li><strong>**params</strong> &#8211; any of valid request parameters for CouchDB.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary containing the credentials matching the query.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_notes">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_notes</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_notes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_notes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get notes from the server.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace from which to get the notes.</li>
+<li><strong>**params</strong> &#8211; any of valid request parameters for CouchDB.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary containing the notes matching the query.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_commands">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_commands</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_commands"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_commands" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get commands from the server.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace from which to get the commands.</li>
+<li><strong>**params</strong> &#8211; any of valid request parameters for CouchDB.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary containing the commands matching the query.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_objects">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_objects</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>object_signature</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_objects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_objects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get any type of object from the server, be it hosts, vulns, interfaces,
+services, credentials, commands or notes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace from which to get the commands.</li>
+<li><strong>object_signature</strong> (<em>str</em>) &#8211; the type of object to get. Must equal &#8216;hosts&#8217;,
+&#8216;vulns&#8217;, &#8216;interfaces&#8217;, &#8216;services&#8217;, &#8216;credentials&#8217;, &#8216;notes&#8217; or &#8216;commands&#8217;</li>
+<li><strong>**params</strong> &#8211; any of valid request parameters for CouchDB.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A dictionary containing the commands matching the query.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">WrongObjectSignature</span></code> &#8211; if the object_signature string didn&#8217;t match</li>
+<li>a faraday object.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_changes_stream">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_changes_stream</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>since=0</em>, <em>heartbeat='1000'</em>, <em>**extra_params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_changes_stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_changes_stream" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_workspaces_names">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_workspaces_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_workspaces_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_workspaces_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns:
+A dictionary with a list with the workspaces names.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_object_before_last_revision">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_object_before_last_revision</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>object_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_object_before_last_revision"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_object_before_last_revision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an object before its last revision. Useful to get information about
+recently deleted objects.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Error-pronce process. You should check for &#8216;None&#8217; after usage,
+as that&#8217;s the return value if any problem arose during execution.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace where the object was</li>
+<li><strong>object_id</strong> (<em>str</em>) &#8211; the id of the object</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the object&#8217;s information.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_object">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_object</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>object_signature</em>, <em>object_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_object"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an unique object of arbitrary type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace where the object should be found.</li>
+<li><strong>object_signature</strong> (<em>str</em>) &#8211; must be either &#8216;hosts&#8217;, &#8216;vulns&#8217;, &#8216;interfaces&#8217;
+&#8216;services&#8217;, &#8216;credentials&#8217;, &#8216;notes&#8217; or &#8216;commands&#8217;.</li>
+<li><strong>object_id</strong> (<em>str</em>) &#8211; the id of the object</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A dictionary containing information about the object.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">MoreThanOneObjectFoundByID</span></code> &#8211; if for some reason the object_id is shared</li>
+<li>by two or more objects. This should never happen. If it does,</li>
+<li>contact Infobyte LCC.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_host">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_host</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>host_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_host" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an unique host.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace where the object should be found.</li>
+<li><strong>host_id</strong> (<em>str</em>) &#8211; the id of the host</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A dictionary containing information about the host.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">MoreThanOneObjectFoundByID</span></code> &#8211; if for some reason the host id is shared</li>
+<li>by two or more objects. This should never happen. If it does,</li>
+<li>contact Infobyte LCC.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_vuln">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_vuln</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>vuln_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_vuln"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_vuln" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an unique vuln.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace where the object should be found.</li>
+<li><strong>vuln_id</strong> (<em>str</em>) &#8211; the id of the vuln</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A dictionary containing information about the vuln.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">MoreThanOneObjectFoundByID</span></code> &#8211; if for some reason the vuln id is shared</li>
+<li>by two or more objects. This should never happen. If it does,</li>
+<li>contact Infobyte LCC.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_web_vuln">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_web_vuln</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>vuln_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_web_vuln"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_web_vuln" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an unique web vuln.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace where the object should be found.</li>
+<li><strong>vuln_id</strong> (<em>web</em>) &#8211; the id of the web vuln</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A dictionary containing information about the web vuln.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">MoreThanOneObjectFoundByID</span></code> &#8211; if for some reason the web vuln id is shared</li>
+<li>by two or more objects. This should never happen. If it does,</li>
+<li>contact Infobyte LCC.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_interface">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_interface</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>interface_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_interface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_interface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an unique interface.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace where the object should be found.</li>
+<li><strong>interface_id</strong> (<em>str</em>) &#8211; the id of the interface</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A dictionary containing information about the interface.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">MoreThanOneObjectFoundByID</span></code> &#8211; if for some reason the interface id is shared</li>
+<li>by two or more objects. This should never happen. If it does,</li>
+<li>contact Infobyte LCC.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_service">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_service</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>service_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_service"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_service" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an unique service.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace where the object should be found.</li>
+<li><strong>service_id</strong> (<em>str</em>) &#8211; the id of the service</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A dictionary containing information about the service.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">MoreThanOneObjectFoundByID</span></code> &#8211; if for some reason the service id is shared</li>
+<li>by two or more objects. This should never happen. If it does,</li>
+<li>contact Infobyte LCC.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_note">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_note</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>note_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_note"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_note" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an unique note.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace where the object should be found.</li>
+<li><strong>note_id</strong> (<em>str</em>) &#8211; the id of the note</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A dictionary containing information about the note.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">MoreThanOneObjectFoundByID</span></code> &#8211; if for some reason the note id is shared</li>
+<li>by two or more objects. This should never happen. If it does,</li>
+<li>contact Infobyte LCC.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_credential">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_credential</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>credential_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_credential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_credential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an unique credential.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace where the object should be found.</li>
+<li><strong>credential_id</strong> (<em>str</em>) &#8211; the id of the credential</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A dictionary containing information about the credential.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">MoreThanOneObjectFoundByID</span></code> &#8211; if for some reason the credential id is shared</li>
+<li>by two or more objects. This should never happen. If it does,</li>
+<li>contact Infobyte LCC.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_command">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_command</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>command_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_command"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an unique command.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace where the object should be found.</li>
+<li><strong>command_id</strong> (<em>str</em>) &#8211; the id of the command</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A dictionary containing information about the command.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">MoreThanOneObjectFoundByID</span></code> &#8211; if for some reason the command id is shared</li>
+<li>by two or more objects. This should never happen. If it does,</li>
+<li>contact Infobyte LCC.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_workspace">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_workspace</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_workspace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_workspace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an unique command.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>command_name</strong> (<em>str</em>) &#8211; the command where the object should be found.</li>
+<li><strong>command_id</strong> (<em>str</em>) &#8211; the id of the command</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A dictionary containing information about the command.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">MoreThanOneObjectFoundByID</span></code> &#8211; if for some reason the command id is shared</li>
+<li>by two or more objects. This should never happen. If it does,</li>
+<li>contact Infobyte LCC.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_workspace_summary">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_workspace_summary</code><span class="sig-paren">(</span><em>workspace_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_workspace_summary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_workspace_summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a collection of data about the workspace.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace to get the stats from.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A dictionary with the workspace&#8217;s information</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_workspace_numbers">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_workspace_numbers</code><span class="sig-paren">(</span><em>workspace_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_workspace_numbers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_workspace_numbers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of hosts, interfaces, services and vulns in the workspace.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace to query</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A tuple of 4 elements with the amounts of hosts, interfaces, services and vulns.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_hosts_number">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_hosts_number</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_hosts_number"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_hosts_number" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace to query</li>
+<li><strong>**params</strong> &#8211; any of the Couchdb request parameters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The amount of hosts in the workspace as an integer.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_services_number">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_services_number</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_services_number"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_services_number" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace to query</li>
+<li><strong>**params</strong> &#8211; any of the Couchdb request parameters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The amount of services in the workspace as an integer.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_interfaces_number">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_interfaces_number</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_interfaces_number"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_interfaces_number" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace to query</li>
+<li><strong>**params</strong> &#8211; any of the Couchdb request parameters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The amount of interfaces in the workspace as an integer.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_vulns_number">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_vulns_number</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_vulns_number"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_vulns_number" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace to query</li>
+<li><strong>**params</strong> &#8211; any of the Couchdb request parameters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The amount of vulns in the workspace as an integer.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_notes_number">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_notes_number</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_notes_number"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_notes_number" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace to query</li>
+<li><strong>**params</strong> &#8211; any of the Couchdb request parameters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The amount of notes in the workspace as an integer.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_credentials_number">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_credentials_number</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_credentials_number"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_credentials_number" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace to query</li>
+<li><strong>**params</strong> &#8211; any of the Couchdb request parameters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The amount of credentials in the workspace as an integer.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.get_commands_number">
+<code class="descclassname">persistence.server.server.</code><code class="descname">get_commands_number</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>**params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#get_commands_number"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.get_commands_number" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace to query</li>
+<li><strong>**params</strong> &#8211; any of the Couchdb request parameters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The amount of commands in the workspace as an integer.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.create_host">
+<code class="descclassname">persistence.server.server.</code><code class="descname">create_host</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>os</em>, <em>default_gateway</em>, <em>description=''</em>, <em>metadata=None</em>, <em>owned=False</em>, <em>owner=''</em>, <em>parent=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#create_host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.create_host" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a host.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the host will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the host. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the host&#8217;s name</li>
+<li><strong>os</strong> (<em>str</em>) &#8211; the operative system of the host</li>
+<li><strong>default_gateway</strong> (<em>str</em>) &#8211; the host&#8217;s default_gateway</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description.</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None.</li>
+<li><strong>owned</strong> (<em>bool</em>) &#8211; is the host owned or not?</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; an owner for the host</li>
+<li><strong>parent</strong> (<em>Faraday Object</em>) &#8211; the host&#8217;s parent. If you don&#8217;t know this, leave
+on None.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.update_host">
+<code class="descclassname">persistence.server.server.</code><code class="descname">update_host</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>os</em>, <em>default_gateway</em>, <em>description=''</em>, <em>metadata=None</em>, <em>owned=False</em>, <em>owner=''</em>, <em>parent=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#update_host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.update_host" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates a host.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the host will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the host. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the host&#8217;s name</li>
+<li><strong>os</strong> (<em>str</em>) &#8211; the operative system of the host</li>
+<li><strong>default_gateway</strong> (<em>str</em>) &#8211; the host&#8217;s default_gateway</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description.</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None, it will be created automatically.</li>
+<li><strong>owned</strong> (<em>bool</em>) &#8211; is the host owned or not?</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; an owner for the host</li>
+<li><strong>parent</strong> (<em>Faraday Object</em>) &#8211; the host&#8217;s parent. If you don&#8217;t know this, leave
+on None.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.create_interface">
+<code class="descclassname">persistence.server.server.</code><code class="descname">create_interface</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>description</em>, <em>mac</em>, <em>owned=False</em>, <em>owner=''</em>, <em>hostnames=None</em>, <em>network_segment=None</em>, <em>ipv4=None</em>, <em>ipv6=None</em>, <em>metadata=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#create_interface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.create_interface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an interface.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">DO NOT leave ipv4 and ipv6 values on None, as the default indicated.
+This is a known bug and we&#8217;re working to fix it. ipv4 and ipv6 need to
+be valid IP addresses, or, in case one of them is irrelevant, empty strings.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the interface will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the interface. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the interface&#8217;s name</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description.</li>
+<li><strong>mac</strong> (<em>str</em>) &#8211; </li>
+<li><strong>owned</strong> (<em>bool</em>) &#8211; is the host owned or not?</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; an owner for the host</li>
+<li><strong>hostnames</strong> (<em></em><em>[</em><em>str</em><em>]</em><em></em>) &#8211; a list of hostnames</li>
+<li><strong>network_segment</strong> (<em>str</em>) &#8211; the network segment</li>
+<li><strong>ipv4</strong> (<em>str</em>) &#8211; the ipv4 direction of the interface.</li>
+<li><strong>ipv6</strong> (<em>str</em>) &#8211; the ipv6 direction of the interface.</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None, it will be created automatically.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.update_interface">
+<code class="descclassname">persistence.server.server.</code><code class="descname">update_interface</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>description</em>, <em>mac</em>, <em>owned=False</em>, <em>owner=''</em>, <em>hostnames=None</em>, <em>network_segment=None</em>, <em>ipv4=None</em>, <em>ipv6=None</em>, <em>metadata=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#update_interface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.update_interface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an interface.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">DO NOT leave ipv4 and ipv6 values on None, as the default indicated.
+This is a known bug and we&#8217;re working to fix it. ipv4 and ipv6 need to
+be valid IP addresses, or, in case one of them is irrelevant, empty strings.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the interface will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the interface. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the interface&#8217;s name</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description.</li>
+<li><strong>mac</strong> (<em>str</em>) &#8211; </li>
+<li><strong>owned</strong> (<em>bool</em>) &#8211; is the host owned or not?</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; an owner for the host</li>
+<li><strong>hostnames</strong> (<em></em><em>[</em><em>str</em><em>]</em><em></em>) &#8211; a list of hostnames</li>
+<li><strong>network_segment</strong> (<em>str</em>) &#8211; the network segment</li>
+<li><strong>ipv4</strong> (<em>str</em>) &#8211; the ipv4 direction of the interface.</li>
+<li><strong>ipv6</strong> (<em>str</em>) &#8211; the ipv6 direction of the interface.</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None, it will be created automatically.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.create_service">
+<code class="descclassname">persistence.server.server.</code><code class="descname">create_service</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>description</em>, <em>ports</em>, <em>owned=False</em>, <em>owner=''</em>, <em>protocol=''</em>, <em>status=''</em>, <em>version=''</em>, <em>metadata=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#create_service"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.create_service" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a service.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the service will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the service. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the host&#8217;s name</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description.</li>
+<li><strong>ports</strong> (<em></em><em>[</em><em>str</em><em>]</em><em></em>) &#8211; a list of ports for the service.</li>
+<li><strong>owned</strong> (<em>bool</em>) &#8211; is the service owned or not?</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; an owner for the service</li>
+<li><strong>protocol</strong> (<em>str</em>) &#8211; the service&#8217;s protocol</li>
+<li><strong>status</strong> (<em>str</em>) &#8211; the service&#8217;s status</li>
+<li><strong>version</strong> (<em>str</em>) &#8211; the service&#8217;s version</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None, it will be created automatically.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.update_service">
+<code class="descclassname">persistence.server.server.</code><code class="descname">update_service</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>description</em>, <em>ports</em>, <em>owned=False</em>, <em>owner=''</em>, <em>protocol=''</em>, <em>status=''</em>, <em>version=''</em>, <em>metadata=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#update_service"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.update_service" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a service.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the service will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the service. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the service&#8217;s name</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description.</li>
+<li><strong>ports</strong> (<em></em><em>[</em><em>str</em><em>]</em><em></em>) &#8211; a list of ports for the service.</li>
+<li><strong>owned</strong> (<em>bool</em>) &#8211; is the host owned or not?</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; an owner for the service</li>
+<li><strong>protocol</strong> (<em>str</em>) &#8211; the service&#8217;s protocol</li>
+<li><strong>status</strong> (<em>str</em>) &#8211; the service&#8217;s status</li>
+<li><strong>version</strong> (<em>str</em>) &#8211; the service&#8217;s version</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None, it will be created automatically.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.create_vuln">
+<code class="descclassname">persistence.server.server.</code><code class="descname">create_vuln</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>description</em>, <em>owned=None</em>, <em>owner=''</em>, <em>confirmed=False</em>, <em>data=''</em>, <em>refs=None</em>, <em>severity='info'</em>, <em>resolution=''</em>, <em>desc=''</em>, <em>metadata=None</em>, <em>status=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#create_vuln"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.create_vuln" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a vuln.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the vuln will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the vuln. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the vuln&#8217;s name</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description.</li>
+<li><strong>owned</strong> (<em>bool</em>) &#8211; is the vuln owned or not?</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; an owner for the vuln</li>
+<li><strong>confirmed</strong> (<em>bool</em>) &#8211; is the vulnerability confirmed?</li>
+<li><strong>data</strong> (<em>str</em>) &#8211; any aditional data about the vuln</li>
+<li><strong>refs</strong> (<em></em><em>[</em><em>str</em><em>]</em><em></em>) &#8211; references for the vulnerability</li>
+<li><strong>severity</strong> (<em>str</em>) &#8211; a string indicating the vuln&#8217;s severity. can be &#8216;info&#8217;,
+&#8216;low&#8217;, &#8216;med&#8217;, &#8216;high&#8217;, &#8216;critical&#8217;</li>
+<li><strong>resolution</strong> (<em>str</em>) &#8211; the vuln&#8217;s possible resolution</li>
+<li><strong>desc</strong> (<em>str</em>) &#8211; a vuln&#8217;s description.</li>
+<li><strong>status</strong> (<em>str</em>) &#8211; the service&#8217;s status</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None, it will be created automatically.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.update_vuln">
+<code class="descclassname">persistence.server.server.</code><code class="descname">update_vuln</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>description</em>, <em>owned=None</em>, <em>owner=''</em>, <em>confirmed=False</em>, <em>data=''</em>, <em>refs=None</em>, <em>severity='info'</em>, <em>resolution=''</em>, <em>desc=''</em>, <em>metadata=None</em>, <em>status=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#update_vuln"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.update_vuln" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates a vuln.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the host will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the host. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the host&#8217;s name</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description.</li>
+<li><strong>owned</strong> (<em>bool</em>) &#8211; is the vuln owned or not?</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; an owner for the vuln</li>
+<li><strong>confirmed</strong> (<em>bool</em>) &#8211; is the vulnerability confirmed?</li>
+<li><strong>data</strong> (<em>str</em>) &#8211; any aditional data about the vuln</li>
+<li><strong>refs</strong> (<em></em><em>[</em><em>str</em><em>]</em><em></em>) &#8211; references for the vulnerability</li>
+<li><strong>severity</strong> (<em>str</em>) &#8211; a string indicating the vuln&#8217;s severity. can be &#8216;info&#8217;,
+&#8216;low&#8217;, &#8216;med&#8217;, &#8216;high&#8217;, &#8216;critical&#8217;</li>
+<li><strong>resolution</strong> (<em>str</em>) &#8211; the vuln&#8217;s possible resolution</li>
+<li><strong>desc</strong> (<em>str</em>) &#8211; a vuln&#8217;s description.</li>
+<li><strong>status</strong> (<em>str</em>) &#8211; the service&#8217;s status</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None, it will be created automatically.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.create_vuln_web">
+<code class="descclassname">persistence.server.server.</code><code class="descname">create_vuln_web</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>description</em>, <em>owned=None</em>, <em>owner=''</em>, <em>confirmed=False</em>, <em>data=''</em>, <em>refs=None</em>, <em>severity='info'</em>, <em>resolution=''</em>, <em>desc=''</em>, <em>metadata=None</em>, <em>method=None</em>, <em>params=''</em>, <em>path=None</em>, <em>pname=None</em>, <em>query=None</em>, <em>request=None</em>, <em>response=None</em>, <em>category=''</em>, <em>website=None</em>, <em>status=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#create_vuln_web"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.create_vuln_web" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a vuln web.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the vuln web will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the vuln web. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the vuln web&#8217;s name</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description.</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; an owner for the host</li>
+<li><strong>confirmed</strong> (<em>bool</em>) &#8211; is the vulnerability confirmed?</li>
+<li><strong>data</strong> (<em>str</em>) &#8211; any aditional data about the vuln</li>
+<li><strong>refs</strong> (<em></em><em>[</em><em>str</em><em>]</em><em></em>) &#8211; references for the vulnerability</li>
+<li><strong>severity</strong> (<em>str</em>) &#8211; a string indicating the vuln&#8217;s severity. can be &#8216;info&#8217;,
+&#8216;low&#8217;, &#8216;med&#8217;, &#8216;high&#8217;, &#8216;critical&#8217;</li>
+<li><strong>resolution</strong> (<em>str</em>) &#8211; the vuln&#8217;s possible resolution</li>
+<li><strong>desc</strong> (<em>str</em>) &#8211; a vuln&#8217;s description.</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None, it will be created automatically.</li>
+<li><strong>method</strong> (<em>str</em>) &#8211; the web vuln method</li>
+<li><strong>params</strong> (<em>str</em>) &#8211; the parameters for the web vuln</li>
+<li><strong>path</strong> (<em>str</em>) &#8211; the web vuln&#8217;s path</li>
+<li><strong>query</strong> (<em>str</em>) &#8211; the web vuln&#8217;s query</li>
+<li><strong>request</strong> (<em>str</em>) &#8211; the web vuln&#8217;s request</li>
+<li><strong>response</strong> (<em>str</em>) &#8211; the web vuln&#8217;s response</li>
+<li><strong>category</strong> (<em>str</em>) &#8211; a category for the web vuln&#8217;s</li>
+<li><strong>website</strong> (<em>str</em>) &#8211; the website where the vuln was found</li>
+<li><strong>status</strong> (<em>str</em>) &#8211; the web vulns&#8217;s status</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.update_vuln_web">
+<code class="descclassname">persistence.server.server.</code><code class="descname">update_vuln_web</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>description</em>, <em>owned=None</em>, <em>owner=''</em>, <em>confirmed=False</em>, <em>data=''</em>, <em>refs=None</em>, <em>severity='info'</em>, <em>resolution=''</em>, <em>desc=''</em>, <em>metadata=None</em>, <em>method=None</em>, <em>params=''</em>, <em>path=None</em>, <em>pname=None</em>, <em>query=None</em>, <em>request=None</em>, <em>response=None</em>, <em>category=''</em>, <em>website=None</em>, <em>status=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#update_vuln_web"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.update_vuln_web" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a vuln web.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the vuln web will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the vuln web. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the vuln web&#8217;s name</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description.</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; an owner for the host</li>
+<li><strong>confirmed</strong> (<em>bool</em>) &#8211; is the vulnerability confirmed?</li>
+<li><strong>data</strong> (<em>str</em>) &#8211; any aditional data about the vuln</li>
+<li><strong>refs</strong> (<em></em><em>[</em><em>str</em><em>]</em><em></em>) &#8211; references for the vulnerability</li>
+<li><strong>severity</strong> (<em>str</em>) &#8211; a string indicating the vuln&#8217;s severity. can be &#8216;info&#8217;,
+&#8216;low&#8217;, &#8216;med&#8217;, &#8216;high&#8217;, &#8216;critical&#8217;</li>
+<li><strong>resolution</strong> (<em>str</em>) &#8211; the vuln&#8217;s possible resolution</li>
+<li><strong>desc</strong> (<em>str</em>) &#8211; a vuln&#8217;s description.</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None, it will be created automatically.</li>
+<li><strong>method</strong> (<em>str</em>) &#8211; the web vuln method</li>
+<li><strong>params</strong> (<em>str</em>) &#8211; the parameters for the web vuln</li>
+<li><strong>path</strong> (<em>str</em>) &#8211; the web vuln&#8217;s path</li>
+<li><strong>query</strong> (<em>str</em>) &#8211; the web vuln&#8217;s query</li>
+<li><strong>request</strong> (<em>str</em>) &#8211; the web vuln&#8217;s request</li>
+<li><strong>response</strong> (<em>str</em>) &#8211; the web vuln&#8217;s response</li>
+<li><strong>category</strong> (<em>str</em>) &#8211; a category for the web vuln&#8217;s</li>
+<li><strong>website</strong> (<em>str</em>) &#8211; the website where the vuln was found</li>
+<li><strong>status</strong> (<em>str</em>) &#8211; the web vulns&#8217;s status</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.create_note">
+<code class="descclassname">persistence.server.server.</code><code class="descname">create_note</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>text</em>, <em>owned=None</em>, <em>owner=''</em>, <em>description=''</em>, <em>metadata=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#create_note"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.create_note" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a note.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the vuln web will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the vuln web. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the vuln web&#8217;s name</li>
+<li><strong>text</strong> (<em>str</em>) &#8211; the note&#8217;s text</li>
+<li><strong>owned</strong> (<em>bool</em>) &#8211; is the note owned?</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; the note&#8217;s owner</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None, it will be created automatically.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.update_note">
+<code class="descclassname">persistence.server.server.</code><code class="descname">update_note</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>text</em>, <em>owned=None</em>, <em>owner=''</em>, <em>description=''</em>, <em>metadata=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#update_note"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.update_note" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates a note.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the vuln web will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the vuln web. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the vuln web&#8217;s name</li>
+<li><strong>text</strong> (<em>str</em>) &#8211; the note&#8217;s text</li>
+<li><strong>owned</strong> (<em>bool</em>) &#8211; is the note owned?</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; the note&#8217;s owner</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None, it will be created automatically.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.create_credential">
+<code class="descclassname">persistence.server.server.</code><code class="descname">create_credential</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>username</em>, <em>password</em>, <em>owned=None</em>, <em>owner=''</em>, <em>description=''</em>, <em>metadata=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#create_credential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.create_credential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a credential.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the vuln web will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the vuln web. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the vuln web&#8217;s name</li>
+<li><strong>username</strong> (<em>str</em>) &#8211; </li>
+<li><strong>password</strong> (<em>str</em>) &#8211; </li>
+<li><strong>owned</strong> (<em>bool</em>) &#8211; is the note owned?</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; the note&#8217;s owner</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None, it will be created automatically.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.update_credential">
+<code class="descclassname">persistence.server.server.</code><code class="descname">update_credential</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>name</em>, <em>username</em>, <em>password</em>, <em>owned=None</em>, <em>owner=''</em>, <em>description=''</em>, <em>metadata=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#update_credential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.update_credential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates a credential.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the vuln web will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the vuln web. Must be unique.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the vuln web&#8217;s name</li>
+<li><strong>username</strong> (<em>str</em>) &#8211; </li>
+<li><strong>password</strong> (<em>str</em>) &#8211; </li>
+<li><strong>owned</strong> (<em>bool</em>) &#8211; is the note owned?</li>
+<li><strong>owner</strong> (<em>str</em>) &#8211; the note&#8217;s owner</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description</li>
+<li><strong>metadata</strong> &#8211; a collection of metadata. If you don&#8217;t know the metada. leave
+on None, it will be created automatically.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.create_command">
+<code class="descclassname">persistence.server.server.</code><code class="descname">create_command</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>command</em>, <em>duration=None</em>, <em>hostname=None</em>, <em>ip=None</em>, <em>itime=None</em>, <em>params=None</em>, <em>user=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#create_command"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.create_command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a command.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the vuln web will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the vuln web. Must be unique.</li>
+<li><strong>command</strong> (<em>str</em>) &#8211; the command to be created</li>
+<li><strong>duration</strong> (<em>str</em>) &#8211; </li>
+<li><strong>hostname</strong> (<em>str</em>) &#8211; the hostname where the command was executed</li>
+<li><strong>ip</strong> (<em>str</em>) &#8211; the ip of the host where the command was executed</li>
+<li><strong>itime</strong> (<em>str</em>) &#8211; the time it took to run</li>
+<li><strong>params</strong> (<em>str</em>) &#8211; the parameters given</li>
+<li><strong>user</strong> (<em>str</em>) &#8211; the user that ran the command</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.update_command">
+<code class="descclassname">persistence.server.server.</code><code class="descname">update_command</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>id</em>, <em>command</em>, <em>duration=None</em>, <em>hostname=None</em>, <em>ip=None</em>, <em>itime=None</em>, <em>params=None</em>, <em>user=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#update_command"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.update_command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates a command.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the name of the workspace where the vuln web will be saved.</li>
+<li><strong>id</strong> (<em>str</em>) &#8211; the id of the vuln web. Must be unique.</li>
+<li><strong>command</strong> (<em>str</em>) &#8211; the command to be created</li>
+<li><strong>duration</strong> (<em>str</em>) &#8211; </li>
+<li><strong>hostname</strong> (<em>str</em>) &#8211; the hostname where the command was executed</li>
+<li><strong>ip</strong> (<em>str</em>) &#8211; the ip of the host where the command was executed</li>
+<li><strong>itime</strong> (<em>str</em>) &#8211; the time it took to run</li>
+<li><strong>params</strong> (<em>str</em>) &#8211; the parameters given</li>
+<li><strong>user</strong> (<em>str</em>) &#8211; the user that ran the command</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.create_workspace">
+<code class="descclassname">persistence.server.server.</code><code class="descname">create_workspace</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>description</em>, <em>start_date</em>, <em>finish_date</em>, <em>customer=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#create_workspace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.create_workspace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a workspace.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>workspace_name</strong> (<em>str</em>) &#8211; the workspace&#8217;s name</li>
+<li><strong>description</strong> (<em>str</em>) &#8211; a description for the worksapce</li>
+<li><strong>start_date</strong> (<em>str</em>) &#8211; a date to represent when work began in the workspace</li>
+<li><strong>finish_date</strong> (<em>str</em>) &#8211; a date to represent when work will be finished on the workspace</li>
+<li><strong>customer</strong> (<em>str</em>) &#8211; the customer for which we are creating the workspace</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary with the server&#8217;s response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.delete_host">
+<code class="descclassname">persistence.server.server.</code><code class="descname">delete_host</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>host_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#delete_host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.delete_host" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete host of id host_id from the database.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.delete_interface">
+<code class="descclassname">persistence.server.server.</code><code class="descname">delete_interface</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>interface_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#delete_interface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.delete_interface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete interface of id interface_id from the database.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.delete_service">
+<code class="descclassname">persistence.server.server.</code><code class="descname">delete_service</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>service_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#delete_service"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.delete_service" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete service of id service_id from the database.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.delete_vuln">
+<code class="descclassname">persistence.server.server.</code><code class="descname">delete_vuln</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>vuln_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#delete_vuln"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.delete_vuln" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete vuln of id vuln_id from the database.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.delete_note">
+<code class="descclassname">persistence.server.server.</code><code class="descname">delete_note</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>note_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#delete_note"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.delete_note" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete note of id note_id from the database.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.delete_credential">
+<code class="descclassname">persistence.server.server.</code><code class="descname">delete_credential</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>credential_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#delete_credential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.delete_credential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete credential of id credential_id from the database.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.delete_command">
+<code class="descclassname">persistence.server.server.</code><code class="descname">delete_command</code><span class="sig-paren">(</span><em>workspace_name</em>, <em>command_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#delete_command"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.delete_command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete command of id command_id from the database.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.delete_workspace">
+<code class="descclassname">persistence.server.server.</code><code class="descname">delete_workspace</code><span class="sig-paren">(</span><em>workspace_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#delete_workspace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.delete_workspace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete the couch database of id workspace_name</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.is_server_up">
+<code class="descclassname">persistence.server.server.</code><code class="descname">is_server_up</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#is_server_up"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.is_server_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if we can stablish a connection with the server,
+False otherwise.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="persistence.server.server.test_server_url">
+<code class="descclassname">persistence.server.server.</code><code class="descname">test_server_url</code><span class="sig-paren">(</span><em>url_to_test</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/persistence/server/server.html#test_server_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#persistence.server.server.test_server_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the url_to_test is indeed a valid Faraday Server URL.
+False otherwise.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Infobyte.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

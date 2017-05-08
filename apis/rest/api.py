@@ -16,7 +16,6 @@ from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 
-from plugins.core import PluginControllerForApi
 from model.visitor import VulnsLookupVisitor
 
 import utils.logs as logger
@@ -41,10 +40,10 @@ def stopServer():
         _http_server.stop()
 
 
-def startAPIs(plugin_manager, model_controller, mapper_manager, hostname, port):
+def startAPIs(plugin_controller, model_controller, hostname, port):
     global _rest_controllers
     global _http_server
-    _rest_controllers = [PluginControllerAPI(plugin_manager, mapper_manager), ModelControllerAPI(model_controller)]
+    _rest_controllers = [PluginControllerAPI(plugin_controller), ModelControllerAPI(model_controller)]
 
     app = Flask('APISController')
 
@@ -92,12 +91,12 @@ class RESTApi(object):
     def badRequest(self, message):
         error = 400
         return jsonify(error=error,
-                       message=message), error
+                       message=message)
 
     def noContent(self, message):
         code = 204
         return jsonify(code=code,
-                       message=message), code
+                       message=message)
 
     def ok(self, message):
         code = 200
@@ -287,54 +286,71 @@ class ModelControllerAPI(RESTApi):
 
 
 class PluginControllerAPI(RESTApi):
-    def __init__(self, plugin_manager, mapper_manager):
-        self.plugin_controller = PluginControllerForApi(
-            "PluginController",
-            plugin_manager.getPlugins(),
-            mapper_manager)
+    def __init__(self, plugin_controller):
+        self.plugin_controller = plugin_controller
 
     def getRoutes(self):
         routes = []
         routes.append(Route(path='/cmd/input',
-                              view_func=self.postCmdInput,
-                              methods=['POST']))
+                            view_func=self.postCmdInput,
+                            methods=['POST']))
         routes.append(Route(path='/cmd/output',
-                              view_func=self.postCmdOutput,
-                              methods=['POST']))
+                            view_func=self.postCmdOutput,
+                            methods=['POST']))
         routes.append(Route(path='/cmd/active-plugins',
-                              view_func=self.clearActivePlugins,
-                              methods=['DELETE']))
+                            view_func=self.clearActivePlugins,
+                            methods=['DELETE']))
         return routes
 
-    def pluginAvailable(self, new_cmd, output_file):
+    def pluginAvailable(self, plugin, cmd):
         code = 200
         return jsonify(code=code,
-                       cmd=new_cmd,
-                       custom_output_file=output_file)
+                       cmd=cmd,
+                       plugin=plugin)
 
     def postCmdInput(self):
         json_data = request.get_json()
         if 'cmd' in json_data.keys():
-            cmd = json_data.get('cmd')
-            has_plugin, new_cmd, output_file = self.plugin_controller.\
-                processCommandInput(cmd)
-            if has_plugin:
-                return self.pluginAvailable(new_cmd, output_file)
-            return self.noContent("no plugin available for cmd")
-        #cmd not sent, bad request
-        return self.badRequest("cmd parameter not sent")
+            if 'pid' in json_data.keys():
+                if 'pwd' in json_data.keys():
+                    try:
+                        cmd = base64.b64decode(json_data.get('cmd'))
+                        pwd = base64.b64decode(json_data.get('pwd'))
+                    except:
+                        cmd = ''
+                        pwd = ''
+                    pid = json_data.get('pid')
+                    plugin, new_cmd = self.plugin_controller.\
+                        processCommandInput(pid, cmd, pwd)
+                    if plugin:
+                        return self.pluginAvailable(plugin, new_cmd)
+                    else:
+                        return self.noContent("no plugin available for cmd")
+                else:
+                    return self.badRequest("pwd parameter not sent")
+            else:
+                return self.badRequest("pid parameter not sent")
+        else:
+            return self.badRequest("cmd parameter not sent")
+
+
 
     def postCmdOutput(self):
         json_data = request.get_json()
-        if 'cmd' in json_data.keys():
+        if 'pid' in json_data.keys():
             if 'output' in json_data.keys():
-                cmd = json_data.get('cmd')
-                output = base64.b64decode(json_data.get('output'))
-                if self.plugin_controller.onCommandFinished(cmd, output):
-                    return self.ok("output successfully sent to plugin")
-                return self.badRequest("output received but no active plugin")
+                if 'exit_code' in json_data.keys():
+                    pid = json_data.get('pid')
+                    output = base64.b64decode(json_data.get('output'))
+                    exit_code = json_data.get('exit_code')
+                    if self.plugin_controller.onCommandFinished(
+                            pid, exit_code, output):
+                        return self.ok("output successfully sent to plugin")
+                    return self.badRequest(
+                        "output received but no active plugin")
+                return self.badRequest("exit_code parameter not sent")
             return self.badRequest("output parameter not sent")
-        return self.badRequest("cmd parameter not sent")
+        return self.badRequest("pid parameter not sent")
 
     def clearActivePlugins(self):
         self.plugin_controller.clearActivePlugins()

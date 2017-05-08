@@ -17,10 +17,9 @@ def sha1OfFile(filepath):
         return hashlib.sha1(f.read()).hexdigest()
 
 def sha1OfStr(strvalue):
-    return hashlib.sha1(strvalue).hexdigest()        
+    return hashlib.sha1(strvalue).hexdigest()
 
 def get_hash(parts):
-
     return hashlib.sha1("._.".join(parts)).hexdigest()
 
 def new_id():

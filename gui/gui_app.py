@@ -14,23 +14,22 @@ CONF = getInstanceConfiguration()
 
 class UiFactory(object):
     @staticmethod
-    def create(model_controller, plugin_manager, workspace_manager, gui="gtk"):
+    def create(model_controller, plugin_manager, workspace_manager, plugin_controller, gui="gtk"):
         if gui == "gtk":
             from gui.gtk.application import GuiApp
-        elif gui == "qt3":
-            from gui.qt3.application import GuiApp
         else:
             from gui.nogui.application import GuiApp
 
-        return GuiApp(model_controller, plugin_manager, workspace_manager)
+        return GuiApp(model_controller, plugin_manager, workspace_manager, plugin_controller)
 
 
 class FaradayUi(object):
-    def __init__(self, model_controller=None, plugin_manager=None,
-                 workspace_manager=None, gui="qt3"):
+    def __init__(self, model_controller, plugin_manager,
+                 workspace_manager, plugin_controller, gui="gtk"):
         self.model_controller = model_controller
         self.plugin_manager = plugin_manager
         self.workspace_manager = workspace_manager
+        self.plugin_controller = plugin_controller
         self.report_manager = None
 
     def getModelController(self):
@@ -70,33 +69,20 @@ class FaradayUi(object):
         pass
 
     def openWorkspace(self, name):
-        # The method openWorkspace can return a workspace or
-        # raise en Exception. For now, just raise it to the caller
+        """Open a workspace by name. Returns the workspace of raises an
+        exception if for some reason it couldn't.
+        """
         if self.report_manager:
             self.report_manager.stop()
             self.report_manager.join()
         try:
             ws = self.getWorkspaceManager().openWorkspace(name)
             self.report_manager = ReportManager(
-                10, name)
+                10,
+                name,
+                self.plugin_controller
+            )
             self.report_manager.start()
         except Exception as e:
             raise e
-        return ws
-
-    def openDefaultWorkspace(self):
-        """
-        Opens the default workspace (called 'untitled').
-        This method shouldn't fail, since the default workspace
-        should be always available
-
-        Returns the default workspace
-        """
-        if self.report_manager:
-            self.report_manager.stop()
-            self.report_manager.join()
-        ws = self.getWorkspaceManager().openDefaultWorkspace()
-        self.report_manager = ReportManager(
-                10, ws.name)
-        self.report_manager.start()
         return ws

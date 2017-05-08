@@ -1,0 +1,257 @@
+cwe,name,desc_summary,description,resolution,exploitation,references
+,Metadatos,"250+ Archivos conteniendo metadatos: Usuarios, Carpetas, fechas de edicion y modificacion, software usado, Direccion de impresoras locales",,"Datos privados son revelados a traves de los metadatos de documentos hosteados en el dominio (PDF, WORD). Datos como nombres de usuario, versiones de sistemas operativos, versiones de software utilizados, fechas y horas de cada modificacion del documento, direcciones de red de impresoras, etc. Se recomienda limpiar de metadatos documentos que luego seran publicados en internet",,
+,Session Cookie without Secure flag set,"La cookie no tiene la marca de ""Secure"". Esto instruye al navegador que dicha cookie puede ser solo accedida por canales SSL.",,Si es posible se deberia habilitar la flag Secure para esta cookie,Low,
+,Session Cookie without HttpOnly flag Set,"La cookie de sesion no esta marcada como HTTPOnly, cuando una cookie es marcada de esta manera da instruccion al navegador que esa cookie puede ser accedida solamente por el servdor y no por script del lado del cliente. Es una importante proteccion de seguridad para las cookies de sesion",,Si es posible se deberia habilitar la flag HTTPOnly para esta cookie,Low,
+,Apache httpd Remote Denial of Service,"* Alerta generada por el flag del servidor: ver: 2.2.15 *
+Se ha detectado un problema en las versiones de apache 1.3.0, 2.0.x hasta 2.0.64 y 2.2.X hasta 2.2.19 que mediante una herramienta automatizada un atacante usand una moderada cantidad de request puede causar un uso significativo de memoria y CPU en el servidor. Datos: http://seclists.org/fulldisclosure/2011/Aug/175.",,Actualizar version de apache,Medium,
+,Robots.txt,Robots.txt revela directorios sensibles. Un atacante busca directamente robots.txt para encontrar puntos desde donde comenzar su ataque.,,"Es conveniente manejar nombres de directorios que no describan el contenido, en especial en directorios sensibles. Por ejemplo en lugar de /setup o /app_data llamar al directorio /Dir_Code1. De esta manera no revelar a un atacante que clase de informacion contiene un directorio, que se intenta ocultar de los buscadores (mediante robots.txt)
+Otra practica que se me ocurre es la utilizacion de parametros. Por ejemplo:
+Disallow: /*AB/$ 
+Esto desactivará cualquier carpeta que termine con ""AB"" por ejemplo /sourceAB/. Evitando pasar cualquier dato a un atacante y centralizando las carpetas sensibles y ocultandolas simplemente colocando ""AB"" al final.",Info,
+,Typical Login Web,"Archivo de Login nombrado de manera ""comun"".",,Esto facilita a los robots de ataque encontrar paginas sensibles. Se recomienda no usar nombres estandard para paginas de login.,,
+,Credenciales en Texto Plano,Las Credenciales de usuario son trasmitidas por un canal sin cifrar y puede ser interceptada.,,Es altamente recomendable que las paginas de login se fuerzen a usar SSL (https),Medium,
+,Parametro __VIEWSTATE sin encriptar,"El parametro ""__VIEWSTATE"" no esta encriptado. Para reducir las posibilidades que alguien intercepte informacion guardada en ViewState es bueno encriptarlo.",,"Se recomienda encriptar el parametro ""__VIEWSTATE"", para hacer esto se debe setear el tipo de validacion a 3DES. Editar Web.Config y agregar la siguiente linea bajo <system.web>
+<machineKey validation=""3DES""/>",,
+,Insecure Captcha,"La resolucion del Captcha esta incluida en el mismo codigo:
+
+<img id=""ctl01_mainContent_imgCaptcha"" src=""http://test-www.bancofalabella.com.co/Data/Sites/1/ImgTemp/ImageFormat_THHvB.png"" 
+style=""border-width:0px;"" />
+
+Siendo la respuesta THHvB
+
+Facilitando la manera de automatizar un script para atacar el form",,Se recomienda implementar un sistema de Captcha que la resolucion no se incluya en el codigo.,,
+,"Mensaje de error de la aplicacion
+(Application error message)","El server responde con mensajes de error internos que no deberián mostrarse, facilitando de esta manera informacion que puede ser sensible o util para un atacante. Pudiendo de esta manera obtener datos para mejorar su vector de ataque",,"Se recomienda  deshabilitar los mensajes de error, para no proporcionar información de la tecnología o software implementado.
+
+",Low,
+,Apache httpOnly Cookie Disclosure,"El servidor Apache version 2.2.X hasta la 2.2.21 no restringe correctamente la informacion mostrada en la contrsuccion del error "" Bad Request "" (aka 400) permitiendo a un atacante obtener los parametros de HTTPOnly.
+Datos: http://fd.the-wildcat.de/apache_e36a9cf46c.php",,Actualizar el apache. La version 2.2.22 es la primer version que soluciona este problema.,Medium,
+,Input de Contraseña con Autocompletar,"Un form de login con autocompletar sugiere un problema de seguridad, sobretodo para los usuarios que utilizan el servicio desde computadoras publicas.",,"Se recomienta establecer el input con Autocomplete OFF:
+<INPUT TYPE=""password"" AUTOCOMPLETE=""off"">",Low,
+,Archivos de Backup,"Los archivos de Backup pueden contener codigo fuente de script, archivos de configuracion u otra informacion sensible que puede ayudar a un atacante a conocer el servidor y preparar ataques mas avanzados o especificos.",,Remover el/los archivo(s) si no son requeridos en el servidor en produccion. Como un paso adicional es recomendado implementar una politica de seguridad para no permitir la creacion de archivos de backup en directorios accesibles desde la web.,,
+,Possible sensitive directories,"Un posible directorio sensible fue encotnrado. Este directorio no esta directamente linkeado en el servidor Web.Se chekeo usando nombres comunes para directorios de configuracion, backups, bajadas de bases de datos, paginas de administracion, archivos temporales, etc. Usar nombres comunes de directorios para almacenar este tipo de informacion facilita a usuarios maliciosos buscar archivos sensibles.",,"Se recomienda llamar a estos directorios de manera no estandard, por ejemplo:
+config-->c0nfig05
+backup-->b4ccup
+Aunque es aun mas recomendabl, de ser posible, no dejar directorios de backup, configuracion, etc accesibles directamente desde la web",,
+,Slow HTTP Denial of Service Attack,"Los ataques conocidos como ""Slowloris"" y ""Slow HTTP POST DoS"" se basan en el hecho de que el protocolo HTTP, por diseño, requiere que las consultas esten completamente recividas por el servidor antes de poder ser procesadas. Si la consulta HTTP no esta completa, o si la tranferencia es muy lenta, el servidor mantiene recursos ocupados esperando el resto de la informacion. Si el servidor mantiene demasiados recursos ocupados, esto crea una denegacion de servicio.",,Es importante establecer los tiempos de espera del servidor. Se adjunta link de recomendacion para evitar este tipo de ataques: https://community.qualys.com/blogs/securitylabs/2011/11/02/how-to-protect-against-slow-http-attacks,Medium,
+,Clickjacking,"No se encuentra ningún tipo de impedimento para evitar que la web sea embebida dentro de un iframe. Esta restricción es importante ya que un atacante podría engañar a un usuario autenticado a realizar operaciones mediante un engaño llamado Clickjacking donde la víctima se le presenta una web, posiblemente con algun juego, utilizando algunos engaños de interfaz la victima podria ser engañada a aprobar una venta. Ref:http://javascript.info/tutorial/clickjacking",,"Todos los browsers modernos son capaces de interpretar los valores seteados en X-Frame-Options, si los mismos son incluidos en el Header del servidor.",Low,
+,"XSS Cross Site Scripting
+(Secuencias de comandos en sitios cruzados)","Es posible injectar tags html y código javascript malicioso, por una falta en la comprobación de los datos ingresados en los parameros. De esta forma, un atacante podría ejecutar código que le permita obtener las cookies del usuario atacado, y de esa forma, tomar control de su cuenta.",,"Recomendamos filtrar todos los parámetros en búsqueda de posibles injecciones, y escapar todos los datos de entrada que se vayan a mostrar en la respuesta.",High,
+,SSL 2.0 Obsolete Protocol,"El servicio remoto encripta el trafico utilizando una version obsoleta del protocolo SSL con errores y debilidades conocidas. Un atacante puede explotar estas vulneravilidades y conducir a un ataque de ""man in the middle"" o desencriptar la comunicaciones entre el servicio afectado y los clientes.",,Se recomienda desactivar SSL 2.0 y usar SSL 3.0 o TLS 1.0 en su lugar.,High,
+,"Metodo OPTIONS activado",El metodo HTTP OPTIONS esta activado en el servidor. El metodo OPTIONS provee una lista de los metodos que son soportados por el servidor web. El metodo OPTIONS puede exponer informasion sensible que puede ayudar a un usuario malicioso a preparar ataques mas avanzados,,Es recomendado desactivar el metodo OPTIONS en un servidor en produccion.,Low,
+,TLS1/SSLv3 Renegotiation Vulnerability,"Una vulnerabilidad en la manera que el protocol SSL and TLS acepta pedidos renegociaciones pueden permitir a un atacante inyectar texto plano en ect plaintext into an application protocol stream. This could result in a situation where the attacker may be able to issue commands to the server that appear to be coming from a legitimate source. This issue affects SSL version 3.0 and newer and TLS version 1.0 and newer.
+A remote, unauthenticated attacker may be able to inject an arbitrary amount of chosen plaintext into the beginning of the application protocol stream. This could allow and attacker to issue HTTP requests, or take action impersonating the user, among other consequences.",,http://www.g-sec.lu/practicaltls.pdf,,
+,File Inclusion,Es posible que un atacante remoto incluya un archivo de recursos locales o remotos y / o la ejecución de código de script arbitrario con los privilegios del servidor web.,,"Editar el código fuente para asegurarse de que la entrada esté correctamente validada. Cuando es posible, se recomienda hacer una lista de nombres de archivos aceptados y restringir la entrada a la lista.
+
+En PHP, la opción allow_url_fopen normalmente permite a un programador para abrir, incluir o utilizan de alguna manera un archivo remoto a través de una URL en lugar de una ruta de archivo local. Se recomienda desactivar esta opción de php.ini.",,
+CWE-319,"Credenciales enviadas por un canal en texto plano","Las credenciales de usuario se transmiten sobre un canal sin cifrar. Esta información siempre debe ser transferida a través de un canal cifrado (HTTPS) para evitar ser interceptados por usuarios maliciosos.
+
+Una tercera persona puede ser capaz de leer las credenciales de usuario mediante la interceptación de una conexión no cifrada de HTTP.",,"Debido que las credenciales del usuario son considerados información confidencial, siempre debe ser transferido al servidor a través de una conexión segura (HTTPS).",Medium,
+,URL Redirection,"Este script es vulnerable a los ataques de redireccion por URL
+
+La redireccion por URL es comunmente usado para pishing y suplantacion de identidad, ya que confunde al usuario a que sitio esta ingresando realmente. Un atacante puede redireccionar una visita desde un sitio valido hasta un servidor preparado por el, para poder hacer ataques como por ejemplo de pishin o distribucion de malware.",,"El script debe filtrar los sitios destinos del redirect, manteniendolo siempre dentro de los dominios validos.",,
+,Apache Server Status Enabled,"Server Status es una opcion de debug que muestra informacion sensible del servidor, como numero de peticiones, url de las peticiones, uso de memoria, threads, etc",,"Es recomendable desactivar esta opcion en servidores en produccion, o de ser necesaria la utilizacion de la misma, securizar la carpeta con contraseña o renombrarla para que no sea de facil ubicacion",,
+,Microsoft IIS tilde directory enumeration,"Es posible detectar nombres cortos de archivosy directorios cuyo nombrado sea en formato 8.3 en Windows usando vectores en varias versiones de Microsoft IIS. For instance, it is possible to detect all short-names of "".aspx"" files as they have 4 letters in their extensions. This can be a major issue especially for the .Net websites which are vulnerable to direct URL access as an attacker can find important files and folders that they are not normally visible.",,There is a way to disable Windows 8.3 short name creation.You can create a registry key named NtfsDisable8dot3NameCreation in HKLMSYSTEMCurrentControlSetControlFileSystem and set it to 1. That should disable short names creation. Refer to this Microsoft TechNet article to read more about the solution.,,
+,SQL Injection,"Debido al incorrecto filtrado de parámetros es posible ejecutar comandos SQL en la base de datos situada en el servidor mediante manipulación de parámetros. Un atacante podría utilizar esta técnica para extraer/modificar/eliminar el contenido de la base de datos, el único limitante son los privilegios del usuario utilizado por la web application aunque en muchos casos es posible, gracias a una inyeccion de SQL, es posible catapultar un acceso al sistema operativo.",,"Se debe modificar la aplicación para filtrar caracteres en los campos de input antes de ser enviados como consulta al servidor de base de datos.
+Es importante que se sigan buenas prácticas de programación, en todos los sitios desarrollados, y sobre todos los parámetros, y no solo sobre aquellos que sean vulnerables actualmente.
+Guía de cómo evitar estos ataques (en inglés): https://www.owasp.org/index.php/Guide_to_SQL_Injection",Very High,
+,ASP.NET debugging enabled,"El modo depuracion de ASP.NET esta activado en el servidor. Es recomendado desactivar este modo en servidores en produccion. Por defecto en la instalacion de IIS este modo esta desactivado, si fue activado para diagnosticar errores es conveniente luego desactivarlo.",,"Es posible que el modo debug muestre datos sensibles del servidor.
+Mas informacion de como desactivar el modo debug:
+http://support.microsoft.com/default.aspx?scid=kb;es-us;815157",,
+,Unicode tranfsormation Issues,"La pagina es vulnerable a varias tranformaciones de Unicode como ""Best-Fit Mappings"", ""Overlong byte sequences"" y ""Ill-formed sequences"". 
+Best-Fit Mappings ocurre cuando el caracter X es tranformado por un totalmente diferente caracter Y. En general, best-fit mappings occure cuando el caracter es transcodeado entre Unicode y otro encodificado. 
+
+************************************
+
+""Overlong byte sequences"" (no la forma corta) - UTF-8 allows for different representations of characters that also have a shorter form. For security reasons, a UTF-8 decoder must not accept UTF-8 sequences that are longer than necessary to encode a character. For example, the character U+000A (line feed) must be accepted from a UTF-8 stream only in the form 0x0A, but not in any of the following five possible overlong forms: 
+0xC0 0x8A 
+0xE0 0x80 0x8A 
+0xF0 0x80 0x80 0x8A 
+0xF8 0x80 0x80 0x80 0x8A 
+0xFC 0x80 0x80 0x80 0x80 0x8A 
+
+Ill-Formed Subsequences As REQUIRED by UNICODE 3.0, and noted in the Unicode Technical Report #36, if a leading byte is followed by an invalid successor byte, then it should NOT consume it. 
+
+
+Software vulnerabilities arise when Best-Fit mappings occur. For example, characters can be manipulated to bypass string handling filters, such as cross-site scripting (XSS) or SQL Injection filters, WAF's, and IDS devices. Overlong UTF-8 sequence could be abused to bypass UTF-8 substring tests that look only for the shortest possible encoding.",,"Se debe identificar el origen de esta tranformacion Unicode y reparar el problema. Se deja links a paginas con informacion:
+Links with more information: 
+http://www.blackhat.com/presentations/bh-usa-09/WEBER/BHUSA09-Weber-UnicodeSecurityPreview-PAPER.pdf
+http://www.cl.cam.ac.uk/~mgk25/unicode.html
+http://sirdarckcat.blogspot.ro/2009/10/couple-of-unicode-issues-on-php-and.html
+http://www.unicode.org/reports/tr36/",,
+,"File Upload XSS
+(Subida dearchivo de secuencias de comandos de sitios curzados)","El Script es vulnerable a XSS (Cross-site scripting). La aplicacion permite la carga de archivos y se subio un archivo conteniendo lenguaje HTML. Cuando este tipo de archivos es permitido en la carga, Lugo se pueden ejecutar o linkear, mostrando codigo o acciones malociosas en dicha web.
+
+Usuarios maliciosos pueden inyectar: JavaScript, VBScript, ActiveX, HTML o Flash en esta aplicacion vulnerable y engañar a un usuario para obtener informacion de el, tambien se puede robar datos de la sesion, asi como las cookies de la misma. Dependiendo del codigo que se pueda ejecutar, tambien se puede ganar acceso al wevidor web, archivos de configuracion o hasta ejecucion de binarios en el sistema operativo host.",,"Se deben restringir los tipos de archivos aceptados en el sistema de Carga: chekear la extension y solo aceptar ciertos tipos de archivos. Se recomienda una Whitelist en lugar de Un blacklist (es mejor especificar listado unico de extensiones permitidas, sobre un listado de denegadas). Tambien se debe chekear doble extensiones como .php.png. Chekear archivos sin nombre como "".htaccess"" (en ASP.NET, se debe chekear archivos de configuracion como web.config). Cambiar los permisos sobre la carpeta upload (de carga) para que los archivos no puedan ser ejecutados ahi. Si es posible, renombre los archivos que son subidos al servidor.
+Links con mas informacion:
+https://www.owasp.org/index.php/Unrestricted_File_Upload
+https://www.owasp.org/index.php/Testing_for_Stored_Cross_site_scripting_(OWASP-DV-002)",,
+,jQuery cross site scripting,"Esta pagina esta usando una version obsoleta de jQuery la cual es vulnerable a Cross Site Scripting. Muchos sitios estan utilisando la seleccion de elementos usando location.hash lo que permite la ejecucion de scripts en la pagina. El problema fue solucionado en la vercion jQuery 1.6.3 o superior.
+Usuarios malociosos pueden inyectar JavaScript, VBScript, ActiveX, HTML o Flash en la aplicacion vulnerable, pudiendo asi engañar a un usuario para sacarle informacion sensible.",,"Update to the latest version of jQuery.
+More info: http://ma.la/jquery_xss/
+http://blog.jquery.com/2011/09/01/jquery-1-6-3-released/",,
+,Host Header Attack,"Un atacante puede manipular el header Host y causar que la aplicacion se comporte de maneras inesperadas. Programadores aveces creen en el header host y programas el codigo basado en el: (_SERVER[""HTTP_HOST""] in PHP). Esto tambien se refleja en portales como joombla o wordpress donde los plugins y ejecucion de script, ejemplos:
+
+ <link href=""http://_SERVER['HOST']"" (Joomla)
+
+...haciendo un apend de keys secretas y tokens: 
+ <a href=""http://_SERVER['HOST']?token=topsecret""> (Django, Gallery y otros)
+....e importante directamente scripts: 
+ <script src=""http://_SERVER['HOST']/misc/jquery.js?v=1.4.4""> (Various)",,"La aplicacion web deberia usar una variable ""SERVER_NAME"" en lugar de basarse en le Host header.",High,
+,Login Page password-guessing attack,"Un problema común con el que se encuentran los programadores web son los ataques de fuerza bruta de logins. Un ataque de fuerza bruta es un intento de adivinar la contraseña por sistemáticamente probar todas las posibles combinaciones de números, letras y símbolos hasta descubrir la convencional correcta. Este ataque se mejora utilizando diccionarios con palabras comunes y combinaciones de las mismas
+
+Esta pagina de Login no tiene ninguna protección contra este ataque ya que se probaron 20 logins inválidos y el servidor no bloqueo el acceso para seguir intentando. Tampoco dispone de ninguna protección para evitar los intentos de login automáticos (como un captcha).",,"Es recomendable implementar algun tipo de bloqueo de intentos de login tras un numero de fallos en los intentos.
+Mas información:
+https://www.owasp.org/index.php/Blocking_Brute_Force_Attacks",,
+,Error page web server version disclosure (Pagina de error mostrando version de servidor ),Pidiendo una pagina que no existe el servidor responde con un error. En esta pagina de error se encuentran datos que contienen version del servidor web y/o modulos activados en este. Dicha informacion puede ser usada para mejorar las tacticas del atacante sabiendo a que se enfrenta,,Se debe configurar paginas de error customizadas evitando mostrar esta informacion.,Low,
+,Weak SSL,"El servidor esta utiizando un cifrado SSL dèbil. 
+
+Weak SSL ciphers (SSL2 on port 443): 
+
+SSL2_CK_RC4_128_EXPORT40_WITH_MD5 - Low strength
+SSL2_CK_RC2_128_CBC_EXPORT40_WITH_MD5 - Low strength
+SSL2_CK_DES_64_CBC_WITH_MD5 - Low strength
+
+Weak SSL ciphers (SSL3 on port 443): 
+
+SSL3_CK_RSA_RC4_40_MD5 - Low strength
+SSL3_CK_RSA_RC2_40_MD5 - Low strength
+SSL3_CK_RSA_DES_40_CBC_SHA - Low strength
+SSL3_CK_RSA_DES_64_CBC_SHA - Low strength
+SSL3_CK_EDH_RSA_DES_40_CBC_SHA - Low strength
+SSL3_CK_EDH_RSA_DES_64_CBC_SHA - Low strength
+
+Weak SSL ciphers (TLS1 on port 443): 
+
+TLS1_CK_RSA_EXPORT_WITH_RC4_40_MD5 - Low strength
+TLS1_CK_RSA_EXPORT_WITH_RC2_CBC_40_MD5 - Low strength
+TLS1_CK_RSA_EXPORT_WITH_DES40_CBC_SHA - Low strength
+TLS1_CK_RSA_WITH_DES_CBC_SHA - Low strength
+TLS1_CK_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA - Low strength
+TLS1_CK_DHE_RSA_WITH_DES_CBC_SHA - Low strength",,Reconfigurar el servidor para encriptado mas fuerte.,,
+,CRIME SSL/TLS attack,"Compression Ratio Info-leak Made Easy (CRIME) es un exploit contra las cookies secretas del servidor sobre conexiones usando protocolos HTTPS y SPDY que tambien esten usando compresion de datos. Cuando se recupera el contenido de la cookie de autentificacion, permite a un atacante robar la sesion, permitiendo iniciar otros ataques.
+
+CRIME es un ataque del lado cliente, pero el servidor puede proteger al cliente rechazando la combinacion de estas opciones. Para CRIME, la debilidad es la compresion Deflate.",,"CRIME puede ser combatido previniendo el uso de compresion, tanto del lado del cliente, desactivando la compresion de las peticiones HTTPS, o del lado del servidor previniendo el uso de compresion de datos en las transacciones que utilicen el protocolo TLS.
+
+Referencias WEB.
+http://blogs.cisco.com/security/breach-crime-and-blackhat/
+http://en.wikipedia.org/wiki/CRIME_(security_exploit)
+http://isecpartners.com/blog/2012/september/details-on-the-crime-attack.aspx",High,
+,Transaccion Insegura de HTTPS a HTTP en el form POST,La pagina segura (https) contiene un form que realiza el post sobre una pagina insegura (http). Esto puede confundir al usuario y hacerle creer que su datos son enviados encriptados cuando en realidad no.,,El destino del FORM debe apuntar a una pagina segura (https),,
+,Trace Method is Enabled (Metodo TRACE activado),"El metodo Trace esta habilitado en el servidor. En precencia de otras vulnerabilidades cross-domain en los navegadores web, informacion sensible del campo header puede ser leida desde cualquier dominio que soporte metodo HTTP TRACE.
+
+Un atacante poria abusar de la funcionabilidad HTTP TRACE para ganar acceso a la informacion de los headers HTTP como las cookies y datos de autenticacion.",,"Se recomienda desactivar el metodo TRACE en el servidor web.
+
+Referencias WEB:
+http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
+http://www.cgisecurity.com/lib/WH-WhitePaper_XST_ebook.pdf",Low,
+,Public Key SSL < 2048 bits (Certificado de llave Publica SSL menor de 2048 Bits),"El certificado SSL usado por el servidor contiene una llave publica de menos de 2048 bits de largo
+
+Los nuevos estandares de de la Industria de Certificados para SSL (SSL Certificates Industry) seteados por Certification Authority/Browser (CA/B) Forum requiere que los certificados expedidos despues de enero 1 del 2014. Deben ser al menos de 2048-bit largo. Con el incremento del poder de procesamiento de las computadoras, cualquier certificado menor de 2048-bit es riesgoso de ser comprometido por personas mal intecionadas con poder de procesamiento.",,"Si se tiene cualquier certificado de 1024-bito certificados con menos de 2048-bit de largo, sera necesario que se migre a 2048-bit.
+
+New Standard: https://www.cabforum.org/wp-content/uploads/Baseline_Requirements_V1.pdf",,
+,Ruby on Rails CookieStore session cookie persistence,"Ruby on Rails contiene un fallo en su diseño que podria permitir a atacantes facilitar el acceso a las aplicaciones. El problema esta en mecanicsmo de la CookieStore en guardar la cookie en el lado del cliente, mientras no guarda la entrada correspondiente en el lado del servidor. Cuando la aplicacion termina la sesion, Ruby on Rails no tiene manera de trackear esto y verdaderamente invalidad la cookie con la configuracion por defecto. Esto significa que persiste ""de por vida"" y puede ser usada para acceder a aplicaciones inclusive cuando se piensa que se termino la sesion.",,"Actualmente, no se conocen actualizaciones o parches para corregir esta vulnerabilidad. Si es posible migrar temporalmente implementando un sistema de autenticacion mas seguro (e.g. ActiveRecordStore).",,
+,Metadatos,"250+ Archivos conteniendo metadatos: Usuarios, Carpetas, fechas de edicion y modificacion, software usado, Direccion de impresoras locales",,"Datos privados son revelados a traves de los metadatos de documentos hosteados en el dominio (PDF, WORD). Datos como nombres de usuario, versiones de sistemas operativos, versiones de software utilizados, fechas y horas de cada modificacion del documento, direcciones de red de impresoras, etc. Se recomienda limpiar de metadatos documentos que luego seran publicados en internet",,
+,Robots.txt,Robots.txt revela directorios sensibles. Un atacante busca directamente robots.txt para encontrar puntos desde donde comenzar su ataque.,,"Es conveniente manejar nombres de directorios que no describan el contenido, en especial en directorios sensibles. Por ejemplo en lugar de /setup o /app_data llamar al directorio /Dir_Code1. De esta manera no revelar a un atacante que clase de informacion contiene un directorio, que se intenta ocultar de los buscadores (mediante robots.txt)
+Otra practica que se me ocurre es la utilizacion de parametros. Por ejemplo:
+Disallow: /*AB/$ 
+Esto desactivará cualquier carpeta que termine con ""AB"" por ejemplo /sourceAB/. Evitando pasar cualquier dato a un atacante y centralizando las carpetas sensibles y ocultandolas simplemente colocando ""AB"" al final.",,
+,Typical Login Web,"Archivo de Login nombrado de manera ""comun"".",,Esto facilita a los robots de ataque encontrar paginas sensibles. Se recomienda no usar nombres estandard para paginas de login.,,
+,Credentials in Plain Text,La pagina de login viaja sobre texto plano,,Es altamente recomendable que las paginas de login se fuerzen a usar SSL (https),Medium,
+,Unencrypted __VIEWSTATE parameter,"El parametro ""__VIEWSTATE"" no esta encriptado. Para reducir las posibilidades que alguien intercepte informacion guardada en ViewState es bueno encriptarlo.",,"Se recomienda encriptar el parametro ""__VIEWSTATE"", para hacer esto se debe setear el tipo de validacion a 3DES. Editar Web.Config y agregar la siguiente linea bajo <system.web>
+<machineKey validation=""3DES""/>",,
+,Insecure Captcha,"La resolucion del Captcha esta incluida en el mismo codigo:
+
+<img id=""ctl01_mainContent_imgCaptcha"" src=""http://test-www.bancofalabella.com.co/Data/Sites/1/ImgTemp/ImageFormat_THHvB.png"" 
+style=""border-width:0px;"" />
+
+Siendo la respuesta THHvB
+
+Facilitando la manera de automatizar un script para atacar el form",,Se recomienda implementar un sistema de Captcha que la resolucion no se incluya en el codigo.,,
+,Credenciales Repetidas,Existen multiples credeciales repetidas para un mismo acceso.,"Tener credenciales repetidas de un mismo servidor o acceso, posibilita a un atacante tener mayor impacto, pues utilizando un mismo password puede ingresar a distintos servicios o áreas",Evitar utilizar mismas credenciales en distintos servicios,High,
+,Ftp Anonimo,Es servicio de FTP posee el usuario : anonymous,"Los servidores FTP anónimos ofrecen sus servicios libremente a todos los usuarios, permiten acceder a sus archivos sin necesidad de tener un 'USER ID' o una cuenta de usuario. Es la manera más cómoda fuera del servicio web de permitir que todo el mundo tenga acceso a cierta información sin que para ello el administrador de un sistema tenga que crear una cuenta para cada usuario.
+
+Si un servidor posee servicio 'FTP anonymous' solamente con teclear la palabra «anonymous», cuando pregunte por tu usuario tendrás acceso a ese sistema. No se necesita ninguna contraseña preestablecida, aunque tendrás que introducir una sólo para ese momento, normalmente se suele utilizar la dirección de correo electrónico propia.",Evitar usuario anonimo,Medium,
+,Credenciales débiles Tomcat,"Se detectaron credenciales por defecto en servidores Tomcat, ejecutándose con privilegios elevados.
+Un atacante que intente loguearse con una lista de usuarios por defecto podría comprometer el servicio.
+En este caso en particular el usuario “admin” es muy común en servidores Tomcat, y cuenta con privilegios para ejecutar código, por lo que debe ser protegido con una contraseña fuerte.",,Aplicar una política de seguridad al servidor que obligue el uso de contraseñas de acuerdo con las políticas de seguridad interna.,High,
+,Wpad Spoofing,"En los ambientes Windows ante una falla a resolver un nombre de host, 
+realizan una segunda búsqueda utilizando NetBios. La naturaleza de este 
+pedido realizado utilizando broadcast es inseguro si no se tienen 
+recaudos.
+
+Un atacante podría utilizar esta vulnerabilidad para 
+registrar el dominio WPAD en netbios con el fin de redirigir y modificar
+ el tráfico de las workstations con las que comparte el segmento de red.
+ Este ataque podría derivar en la captura de credenciales o hashes que 
+le brinden acceso a sistemas críticos.",,"Deshabilitar la configuración automática de proxy en los equipos 
+windows, y registrar el nombre de domino wpad, para que ningún equipo de
+ la red pueda impersonarlo.",High,
+,Servicio de Telnet,"Las credenciales de usuario se transmiten sobre un canal sin cifrar (servicio telnet).
+Un atacante capaz de interceptar el tráfico entre los hosts y el usuario remoto, será capaz de obtener las credenciales utilizadas.",,"Reemplazar los servicios que permiten el envío de credenciales en texto plano, por aquellos que lo hacen de forma cifrada. En este caso, existen diferentes alternativas para reemplazar los servicios de administración remota, como por ejemplo ssh o rdp.",Medium,
+,Tokens cacheados,"Fue posible impersonar diferentes usuarios de dominio, incluido un administrador de dominio, a través de los tokens de acceso cacheados en el servidor.",,"No existe un parche para resolver este tipo de situaciones, ya que los tokens de acceso son propios de la arquitectura de Windows. Sin embargo es posible implementar algunas medidas a nivel operativo para mitigar en gran parte el impacto del cacheo de tokens. Recomendamos:
+> Asegurarse que usuarios con altos privilegios (especialmente administradores) tengan una cuenta específica para tareas de administración y otra para loguearse en sus sistemas.
+> Ejecutar aquellas tareas que requieran mayores privilegios utilizando la aplicación “RunAs”.
+> Asegurarse que los Domain Admins sólo sean utilizados para administrar el dominio. Crear diferentes cuentas de dominio y asignarle autorización administrativa solo para la unidad de negocio correspondiente.
+> Asegurarse que las cuentas administrativas de ambientes de desarrollo y test sean diferentes a las de los sistemas críticos de producción.
+> Ejecutar los servicios necesarios para el correcto funcionamiento de la unidad de negocio en un equipo diferente al Controlador de Dominio.
+> Utilizar la opción de Active Directory “Account is sensitive and cannot be delegated” (sólo aplica a los logueos interactivos, pero ayuda a reforzar la seguridad de la cuenta).
+
+Referencias:
+http://carnal0wnage.attackresearch.com/2008/05/token-passing-with-incognito-part-2.html 
+http://pentestmonkey.net/uncategorized/from-local-admin-to-domain-admin 
+http://www.offensive-security.com/metasploit-unleashed/Fun_With_Incognito",High,
+,Denegacion de Servicios(DOS),"un ataque de denegación de servicios, también llamado ataque DoS (de las siglas en inglés Denial of Service) o DDoS (de Distributed Denial of Service), es un ataque a un sistema de computadoras o red que causa que un servicio o recurso sea inaccesible a los usuarios legítimos. Normalmente provoca la pérdida de la conectividad de la red por el consumo del ancho de banda de la red de la víctima o sobrecarga de los recursos computacionales del sistema de la víctima",,La forma de prevenirlo: https://www.owasp.org/index.php/Denial_of_Service,High,
+,Revelacion de Informacion (Information Disclosure),Se puede obtener una información sensible del usuario. Esto podría ayudar a un atacante a tener control de una base de datos ó permitirle escalar hacia otro vector de ataque.,,"Determinar si esta información debería ser accesible desde la red, sin estar protegida por credenciales.",Medium,
+,Sitio sin Informar,,,/reclamaciones/home/index. ,,
+,Listado de Directorios,Muestra directorios que no deberian ser publicos,,Evitar que dichos directorios sean publicos,Medium,
+,Shell,"Una shell es parte de codigo programado en (PHP,Python,Ruby,etc) que una vez que es subido al host victima, puede ser utilizado para subir, bajar, borrar archivos.",,"Evitar entradas que posibiliten subir imagenes o codigo al servidor, sin ser adecuadamente controlado",,
+,Path Disclosure,Permite ver la ruta a archivos u aplicaciones que no deberian ser mostradas,,"Puede solucionarse desactivando los mensajes de error :
+En PHP modificando el archivo php.ini ( display_errors = 'off' )
+En Apache modificando el archivo httpd.conf ( php_flag display_errors off)",,
+,File Upload,Es posible subir código o imagenes sin ser fitradas adecuadamente.,,Evitar campos para subir archivos que no sean correctamente filtrados,,
+,Metodo Put habilitado (Put File Allow),"Sube, carga o realiza un upload de un recurso especificado (archivo), es el camino más eficiente para subir archivos a un servidor.",,"Evitar que el metodo PUT se encuentre con libre acceso a cualquier tipo de usuario, restringir acceso.",,
+,Leer Archivos (Read files),,,,,
+,Usuarios por defecto(default users),"Se debe evitar utilizar usuarios y contraseñas por defecto, pues el sistema puede quedar suseptible a un ataque de fuerza bruta o de diccionario.",,Cambiar usuarios y contraseñas de acuerdo a las politicas de la empresa,,
+,Sslstrip Attack,"Dado que la página no esta utilizando https para proteger sus credenciales, el panel de ingreso esta implementedo mediante http, y no https, es posible modificar los recursos obtenidos, si el atacante logra intereceptar la comunicación entre ambos sitios. ",,"Cargar todos los recursos a través de https, para los recursos externos recomendamos incluir los mismo de la siguiente manera src=""//dominio.com/recurso.js"" de esta manera el navegador automaticamete incluye el protocolo http o https segun la conexion inicial que genera.",High,
+,Enumerar Usuarios,,,,Medium,
+,Login User HTTP,"Las credenciales de usuario y contraseña, viajan en texto plano con lo cual un atacante podría obtener dichas credenciales para un posterior acceso",,Utilizar HTTPS para autenticar usuarios,Medium,
+,Falta de Control de Acceso,Se puede acceder a parte del sitio sin una sesion valida,,Validar correctamente la sesiones del sitio verifiquen que el usuario poseen una sesion valida,Medium,
+,Cookie Reutilization,La cookie puede ser modificada y reutilizada para hacer nuevas consultas o impersonar usuarios,,Evitar ,Medium,
+,Credenciales Debiles md5,"Se detecto que dentro del request  se envía el nombre de usuario y  la contraseña hasheada. Si bien la contraseña utiliza una funcion de md5, lo hace sin salt para protegerla.
+ Con lo cual un atacante que la intercepte, puede decifrar el md5 para luego obtener la contraseña en texto plano junto con el usuario para acceder al sistema.",,"Aplicar una política de seguridad al servidor que obligue el uso de contraseñas de acuerdo con las políticas de seguridad interna. 
+Se recomienda un cifrado mas robusto con la funcion salt",High,
+,CSRF,"Un ataque CSRF fuerza al navegador web validado de una víctima a enviar una petición a una aplicación web vulnerable, la cual entonces realiza la acción elegida a través de la víctima. Al contrario que en los ataques XSS, los cuales explotan la confianza que un usuario tiene en un sitio en particular, el cross site request forgery explota la confianza que un sitio tiene en un usuario en particular.",,"Recomendamos la imprementacion de un feature anti-csrf  con el fin de autenticar todoslos request,en particual aquellas peticiones sensibles como por ejemplo el cambiode contraseñas y asignacion de roles (dar permisos de administrador a un usuario). El framework de ASP.net cuenta con este feature llamado viewstate (https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Viewstate_.28ASP.NET.29)",Medium,
+,SSL weak ciphers (Cifrado debil),El servidor remoto soporta el uso de SSL pero ofrece una encriptacion debil,,Reconfigurar el servidor web con un nivel de encriptacion mayor,Medium,
+,Token de Session en URL,"Información sensible dentro de las URLs puede ser guardado en distintas lugares, por ejemplo en la información del navegador del usuario, en el webserver, o en cualquier proxy o reverse proxy. Las URLs se pueden ver en las pantallas, puede ser guardadas como favoritos o pueden ser enviada entre los usuarios. Esta información puede ser obtenida también como referer, en el histórico de la ultima pagina desde donde se ingresa a otra pagina. Guardar la sesiones en las URLs incrementa que esa información sea captura por un atacante para luego impersonarse como un usuario valido.",,La aplicación debería utilizar otros mecanismos para el envió de las sessiones como cookies o campos ocultos enviados a traves de métodos de POST ,Medium,
+,Autenticacion sin HTTPS,"La aplicación web no utiliza HTTPS para la autenticación de usuarios al sistema. Las credenciales de usuario y contraseña, viajan en texto plano con lo cual un atacante podría obtener dichas credenciales para un posterior acceso",,Siempre utilizar HTTPS para autenticar usuarios,High,
+,Es-Version Obsoleta / Desactualizada,"El servidor se encuentra utilizando una versión de Apache Tomcat MUY desactualizada (Apache Tomcat/4.1.31), la cual es vulnerable a multiples vulnerabilidades publicas. Actualmente la ultima versión estable es la 8.0.9 ",,"Recomendación actualizar y desactivar los mensajes de error del servidor, que puedan brindar información extra a un atacante",Medium,
+,Numero de Tarjeta en Texto Plano,"La respuesta del servidor, contiene el numero de tarjeta de crédito y otra información sensible que debería evitarse enviar en texto plano.",,Utilizar HTTPS en todo el sitio en donde la información sensible pueda ser expuesta.,High,
+,Server Version Discloure,El servidor web responde con la version del sistema facilitando a un atacante saber contra que se enfrenta,,"Filtrar en las respuestas del servidor, cualquier dato que demuestre la version del servidor y del sistema operativo del mismo",Low,
+,Archivo crossdomain.xml inseguro,"El modelo de seguridad del navegador normalmente previene el contenido web de ser accedido desde otro dominio. Esto comunmente es conocido como ""same origin policy"" (""politica del mismo origen""). Lo politica de archivos URL garantiza acceso cross-dominio para leer datos. Permiten operaciones que no son permitidas por defecto. La politica de acceso de archivo URL esta localizado, por defecto, en el directorio raiz del servidor destino, con el nombre crossdomain.xml (por ejemplo en www.ejemplo.com/crossdomain.xml). 
+
+Cuando un dominio es especificado en el archivo crossdomain.xml, el sitio declara que esta dispuesto a dar acceso a operadores de cualqueir server en ese dominio para obtener cualquier documento donde la regla reside. El archivo crossdomain.xml desplegado en este servidor web abre el servidor a todos los dominios (uso de un unico asterisco ""*"" de comodin es soportado) Como por ejemplo: 
+<cross-domain-policy>
+<allow-access-from domain=""*"" />
+</cross-domain-policy>
+
+Esta practica es correcta para servidores publicos, pero no deberia ser usada en servidores que se encuentran tras un firewall porque puede permitir acceso a areas protejidas. No deberia ser usada para sitios que requieren autenticacion en forma de contraseñas o cookies. ",,"Detenidamente evaluar que sitios deben tener permitido el acceso cross-dominio. Considerar la topologia de red y todos los mecanismos de autenticacion afectados por la configuracion o implementacion de la politica cross-domain.
+",Medium,
+,Archivos de backup en servidor de producción,"La aplicación web tiene multiples archivos de buckup disponibles para ser descargados, los cuales brindan información de la tecnología que se utiliza en el sitio, así como código fuente de las aplicaciones, nombres de usuarios, rutas de acceso y multiple información sensible del mismo.",,"Es recomendable aplicar buenas politicas deprotección de información sensible, evitando exponer buckups y otra información del sitio web",Very High,
+,Exposición de información a través del listado de directorios,"Estos directorios no deberian estar publicos, pues exponen información sensible del tipo de tecnología utilizada, código de programación, información sobre rutas de acceso a distintos lugares, particularmente en este caso podemos listar toda la información del servidor sin ningun tipo de restricción",,Siempre evitar que se puedan listar directorios de manera externa y sin permisos,High,
+,Archivos con información sensible,"Es posible acceder a archivos con información sensible, podemos ver el ""log error"" y dentro de este rutas de acceso, nombres de usuario, etc . Con lo cual un atacante con tiempo podría intentar obtener credeciales de un servicio ssh, ftp,o similar para luego crackearlo.
+",,Evitar exponer toda información sensible del sistema,High,
+,Revelación de IP interno,"La aplicación expone ip/s interno, con lo cual si por algun vector de ataque un atacante logra acceder al servidor o servicio podría continuar la explotación por dicho vector",,Evitar exponer toda información sensible y privada del sistemadel sistema,Low,
+,Archivos e información de desarollo en ambientes productivos,"Podemos ver código de programacion, con ejemplos concretos del funcionamiento interno y 
+de la lógica utilizada a la hora de programar, dejando en evidencia 
+informacion como nombres de usuarios, email, dni, telefonos, etc ",,Evitar exponer toda información sensible y privada del sistemadel sistema,High,
+,Sentencias SQL sin Prepared Statement,Se detecto que se utilizan una mala implementacion de sentencias SQL concatenando las variables manualmente pudiendo un atacante realizar ataques de SQL Injection,,"Utilizar para la sentencia de SQL Prepared Statement
+Reference:
+https://www.owasp.org/index.php/Query_Parameterization_Cheat_Sheet#Prepared_Statement_Examples",High,
+,Mysql lectura y escritura de archivos,Es posible utilizar mysql server para la lectura y escritura de archivos en el servidor,,"Seguir los siguientes lineamientos para el hardening de Mysql Server
+https://www.owasp.org/index.php/Testing_for_MySQL#Read_from_a_File",High,
+,Servidor productivo y desarrollo,"Por lo que pudimos observar este servidor sirve tanto para produccion como desarrollo, contiene muchisima informacion y pruebas que deberian ser eliminadas.",,"Eliminar el contenido de desarrollo, dejar solo lo necesario para el entorno productivo",High,
+,Servidor productivo y desarrollo,"Por lo que pudimos observar este servidor sirve tanto para produccion como desarrollo, contiene muchisima informacion y pruebas que deberian ser eliminadas.",,"Eliminar el contenido de desarrollo, dejar solo lo necesario para el entorno productivo",High,
+,Internal IP Address Disclosure,Una cadena coincidente con una direccion interna de IPv4 fue encontrada en esta pagina. Esto lleva a divulgar informacion sensible acerca del esquema de la red interna. Esta informacion puede ser usada para generar ataques especificos.,,Se recomienda prevenir que esta informacion sea mostrada al usuario,Low,
+,Cisco ASA Error,"El Cisco ASA es vulnerable a un Information Leak (CVE-2014-3392), un atacante podria obtener credenciales em base a un error.",,Actualizar a la ultima version del firmware del CISCO ASA,High,
+,Listado de directorios,"Evitar listar directorios, muchas veces a partir de aqui se pueden realizar distintos vectores de ataques, por claves almacenadas en archivos ocultos o por tener acceso a archivos de configuracion. ",,"Evitar listar directorios, es recomendable que se desabiliten o se resguarden con algun tipo de autenticacion.",Low,

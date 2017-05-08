@@ -14,7 +14,7 @@ import re
 import sys
 import traceback
 
-import plugins.core
+from plugins.controller import PluginController
 from config.configuration import getInstanceConfiguration
 from utils.logs import getLogger
 
@@ -22,43 +22,32 @@ CONF = getInstanceConfiguration()
 
 
 class PluginManager(object):
-    def __init__(self, plugin_repo_path, mapper_manager):
+    def __init__(self, plugin_repo_path):
         self._controllers = {}
         self._plugin_modules = {}
         self._loadPlugins(plugin_repo_path)
-        self._mapper_manager = mapper_manager
-
         self._plugin_settings = {}
         self._loadSettings()
 
-    def createController(self, id):
-        """
-        Creates a new plugin controller and adds it into the controllers list.
-        """
-        plugs = self._instancePlugins()
-        new_controller = plugins.core.PluginController(
-            id, plugs, self._mapper_manager)
-        self._controllers[new_controller.id] = new_controller
-        self.updateSettings(self._plugin_settings)
-        return new_controller
+    def addController(self, controller, id):
+        self._controllers[id] = controller
 
     def _loadSettings(self):
         _plugin_settings = CONF.getPluginSettings()
         if _plugin_settings:
-
             self._plugin_settings = _plugin_settings
 
         activep = self._instancePlugins()
         for plugin_id, plugin in activep.iteritems():
-
-            if plugin_id not in _plugin_settings:
-                self._plugin_settings[plugin_id] = {
-                    "name": plugin.name,
-                    "description": plugin.description,
-                    "version": plugin.version,
-                    "plugin_version": plugin.plugin_version,
-                    "settings": dict(plugin.getSettings())
-                    }
+            if plugin_id in _plugin_settings:
+                plugin.updateSettings(_plugin_settings[plugin_id]["settings"])
+            self._plugin_settings[plugin_id] = {
+                "name": plugin.name,
+                "description": plugin.description,
+                "version": plugin.version,
+                "plugin_version": plugin.plugin_version,
+                "settings": dict(plugin.getSettings())
+                }
 
         dplugins = []
         for k, v in self._plugin_settings.iteritems():
@@ -99,7 +88,6 @@ class PluginManager(object):
         try:
             os.stat(plugin_repo_path)
         except OSError:
-
             pass
 
         sys.path.append(plugin_repo_path)
@@ -122,10 +110,11 @@ class PluginManager(object):
                 pass
 
     def getPlugins(self):
-        return self._instancePlugins()
-
-    def _updatePluginSettings(self, new_plugin_id):
-        pass
+        plugins = self._instancePlugins()
+        for id, plugin in plugins.items():
+            if id in self._plugin_settings:
+                plugin.updateSettings(self._plugin_settings[id]["settings"])
+        return plugins
 
     def _verifyPlugin(self, new_plugin):
         """

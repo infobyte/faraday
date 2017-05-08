@@ -1,0 +1,41 @@
+<article class='panel panel-default left-big-box' ng-controller="activityFeedCtrl as activityFeed">
+
+        <header>
+            <h2>Activity Feed
+                <span class="glyphicon glyphicon-info-sign" uib-tooltip="Faraday feed"></span>
+            </h2>
+        </header>
+
+        <div ng-if="activityFeed.commands.length == 0" class="alert alert-info alert-dismissible no-margin-bottom">
+            <button type="button" class="close" data-dismiss="alert">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+            </button>
+            <p>No activities found yet.</p>
+        </div>
+
+       <table id="commands" ng-if="activityFeed.commands.length > 0" class="tablesorter table table-striped">
+        <tbody>
+            <tr ng-repeat="cmd in activityFeed.commands | orderBy : '-date' | limitTo:5">
+                <td align="left">
+                    <span ng-if="cmd.command_type == 'import'" class="fa fa-upload"/>
+                    <span ng-if="cmd.command_type == 'command'" class="fa fa-terminal"/>
+                    
+                    <b class="capitalize">{{cmd.user || Anonymous}}</b> <span ng-if="cmd.command_type == 'command'" uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">ran {{cmd.command}}</span>
+                    <span ng-if="cmd.command_type == 'import'" uib-tooltip="{{ cmd.command + ' ' + cmd.params}}">{{cmd.command.replace('Import', 'imported').replace(':', '')  || Unknown}}</span>
+                    <span> and found</span>
+                    <span ng-if="cmd.hosts_count == 0 && cmd.services_count == 0 && cmd.vulnerabilities_count == 0 "> nothing</span>
+                    <span ng-if="cmd.hosts_count != 0 || cmd.services_count != 0 || cmd.vulnerabilities_count != 0 ">: </span>
+                    <span ng-if="cmd.hosts_count > 0">{{cmd.hosts_count}} {{cmd.hosts_count == 1 ? 'host' : 'hosts'}}</span>
+                    <span ng-if="cmd.hosts_count != 0 && cmd.services_count != 0 && cmd.vulnerabilities_count != 0">, </span>
+                    <span ng-if="(cmd.hosts_count != 0 && cmd.services_count != 0 && cmd.vulnerabilities_count == 0) || (cmd.hosts_count != 0 && cmd.services_count == 0 && cmd.vulnerabilities_count != 0)"> & </span>
+                    <span ng-if="cmd.services_count > 0">{{cmd.services_count}} {{cmd.services_count == 1 ? 'service' : 'services'}}</span>
+                    <span ng-if="(cmd.hosts_count != 0 && cmd.services_count != 0 && cmd.vulnerabilities_count != 0) || (cmd.hosts_count == 0 && cmd.services_count != 0 && cmd.vulnerabilities_count != 0)"> & </span>
+                    <span ng-if="cmd.vulnerabilities_count > 0"><a ng-click="navigate('/status/ws/' + workspace + '/search/command_id=' + cmd._id)"> {{cmd.vulnerabilities_count}} {{cmd.vulnerabilities_count == 1 ? 'vulnerability' : 'vulnerabilities'}}</a></span>
+                    <span ng-if="cmd.criticalIssue > 0">- {{cmd.criticalIssue}} {{cmd.criticalIssue == 1 ? 'is' : 'are'}} rated as <b>Critical</b>.</span>
+                    <span class ="small-size" am-time-ago="cmd.date"/>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</article>

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Name=Faraday
+Comment=Collaborative Penetration Test IDE
+Exec=faraday
+Type=Application
+Icon=/usr/share/icons/hicolor/48x48/apps/faraday_icon.png
+Terminal=false
+Categories=Development;

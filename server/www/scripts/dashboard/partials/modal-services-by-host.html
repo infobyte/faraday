@@ -1,0 +1,48 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<div class="modal-header" hotkey="{enter:ok}">
+    <h3>Services for {{name}} ({{services.length}} total)</h3>
+</div>
+
+<div class="modal-body">
+    <table class="status-report">
+        <thead>
+            <tr>
+                <th><a href="" ng-click="toggleSort('name')">Name</a></th>
+                <th><a href="" ng-click="toggleSort('description')">Description</a></th>
+                <th><a href="" ng-click="toggleSort('port')">Port</a></th>
+                <th><a href="" ng-click="toggleSort('protocol')">Protocol</a></th>
+                <th><a href="" ng-click="toggleSort('status')">Status</a></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="srv in services | orderBy:sortField:sortReverse">
+                <td>
+                    {{srv.name}}
+                    <a href="//{{osint.hostl}}/search?query={{srv.name}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
+                        <img ng-src="images/{{osint.icon}}.png" height="15px" width="15px"/>
+                    </a>
+                </td>
+                <td>{{srv.description}}</td>
+                <td>
+                    {{srv.ports}}
+                    <a href="//{{osint.host}}/search?query=port:{{srv.ports}}" uib-tooltip="Search in {{osint.label}}" target="_blank">
+                        <img ng-src="images/{{osint.icon}}.png" height="15px" width="15px" />
+                    </a>
+                </td>
+                <td>{{srv.protocol}}</td>
+                <td>{{srv.status}}</td>
+            </tr>
+        </tbody>
+            <div class="col md-12" style="border-top:1px solid #e5e5e5">
+                <h5><span class="fa fa-laptop"></span> Operating System: <b>{{host.os}}</b></h5>
+                <h6><span class="glyphicon glyphicon-user"></span> Created <b><span am-time-ago="host.metadata.create_time * 1000"></span></b></h6>
+            </div><!-- .col md-12 -->
+    </table>
+</div>
+
+<div class="modal-footer">
+    <button class="btn btn-success" ng-click="ok()">OK</button>
+</div>

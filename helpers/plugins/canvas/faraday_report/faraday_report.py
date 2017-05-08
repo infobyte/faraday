@@ -118,12 +118,9 @@ class ParsingCanvas():
 
         #Create Host
         host_id = self.faraday_api.createAndAddHost(
-        node['resolved_from'],
-        op_sy,
-        'Unknown',
-        'Unknown',
-        node['ip']
-        )
+            node['resolved_from'],
+            op_sy)
+
         host = Host(node['ip'], host_id)
         self.host_list.append(host)
         return host
@@ -165,7 +162,7 @@ class ParsingCanvas():
                     interface_id,
                     str(int(float(port))),
                     'tcp?',
-                    int(float(port))
+                    [int(float(port)])
                     )
 
                     host.addService(ip, port, service_id)
@@ -313,13 +310,7 @@ class ParsingClientd(ParsingCanvas):
             info_host = self.data['clients'][ip]['agents'][agent]
 
             #Create Host
-            host_id = self.faraday_api.createAndAddHost(
-            ip,
-            os,
-            'Unknown',
-            'Unknown',
-            'Unknown'
-            )
+            host_id = self.faraday_api.createAndAddHost(ip, os)
 
             #'IE Flash' is a keyword only for Internet Explorer??'
             try:

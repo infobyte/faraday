@@ -1,0 +1,68 @@
+# autoscan.rc
+# Author: Sliim (Github: @Sliim / Twitter: @_Sliim_)
+
+# This Metasploit resource script will run several auxiliary scanners
+# against present hosts in current workspace. It get all services for
+# all hosts, and try to find auxiliary modules starting with `scanner/`
+# where default RPORT option match with a service.
+# We can blacklist some modules we don't want, the BLACKLIST option
+# is a comma separated list of module to disable.
+
+<ruby>
+begin
+  framework.db.hosts
+rescue ::ActiveRecord::ConnectionNotEstablished
+  print_error("Database connection isn't established")
+  return
+end
+
+# Check for blacklisted modules
+blacklist = []
+if (framework.datastore['BLACKLIST'] != nil)
+   blacklist = framework.datastore['BLACKLIST'].split(',')
+end
+
+scanners = {}
+count = 0
+ran = 0
+
+print_status("Getting scanners list, this may take a while...")
+framework.db.hosts.each do |host|
+  port_list = []
+  scanners[host.address] = []
+  print_status("Host: #{host.address} - #{host.os_name}")
+  print_status("Services: ")
+  host.services.each do |serv|
+    next if not serv.host
+    next if (serv.state != Msf::ServiceState::Open)
+    print_status("> :#{serv.port.to_i} - #{serv.proto} - #{serv.name}")
+    port_list << serv.port.to_i if not port_list.include? serv.port.to_i
+  end
+
+  framework.modules.auxiliary.each do |name, mod|
+    next if blacklist.include? name
+    next if not name.starts_with? "scanner/"
+    next unless mod
+    m = mod.new
+    next unless m.datastore.has_key? 'RPORT'
+    if port_list.include? m.datastore['RPORT'].to_i
+      scanners[host.address] << name
+      count += 1
+    end
+  end
+end
+
+print_status("Ok! Launching #{count} scanners..")
+scanners.each do |host, s|
+  s.each do |scanner|
+    print_line("[#{ran+1}/#{count}] Deploying auxiliary #{scanner} against #{host}")
+    run_single("use #{scanner}")
+    run_single("set RHOSTS #{host}")
+    run_single("show options")
+    run_single("run")
+    ran += 1
+  end
+end
+
+print_status("Done. Deployed #{ran} scanners.")
+</ruby>

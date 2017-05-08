@@ -1,0 +1,81 @@
+Source: faraday
+Section: python
+Priority: optional
+Maintainer: Sebastian Kulesz <sebikul@gmail.com>
+Build-Depends: debhelper (>= 9), dh-systemd
+Standards-Version: 3.9.8
+Homepage: http://faradaysec.com
+Vcs-Git: https://github.com/infobyte/faraday.git
+Vcs-Browser: https://github.com/infobyte/faraday
+
+Package: faraday
+Architecture: all
+Depends: faraday-server (= ${binary:Version}), faraday-client (= ${binary:Version})
+Description: Collaborative Penetration Test IDE
+ Faraday introduces a new concept (IPE) Integrated Penetration-Test Environment
+ a multiuser Penetration test IDE. Designed for distribution, indexation and
+ analysis of the generated data during the process of a security audit.
+ .
+ This is a metapackage which will install the Faraday client and server.
+
+Package: faraday-server
+Architecture: all
+Depends: python,
+ ipython,
+ python-couchdbkit,
+ python-mockito,
+ python-whoosh,
+ python-argparse,
+ python-ipy,
+ python-restkit,
+ python-requests (>= 2.7.0),
+ python-tornado,
+ python-flask (>= 0.10.1),
+ python-colorama,
+ python-psycopg2,
+ python-sip,
+ zsh,
+ python-twisted,
+ python-sqlalchemy,
+ python-openssl,
+ couchdb (>=1.6.0) |  couchdb (>=1.4.0),
+ python-pip
+Description: Collaborative Penetration Test IDE
+ Faraday introduces a new concept (IPE) Integrated Penetration-Test Environment
+ a multiuser Penetration test IDE. Designed for distribution, indexation and
+ analysis of the generated data during the process of a security audit.
+ .
+ This package includes the Faraday server.
+
+Package: faraday-client
+Architecture: all
+Depends: python,
+ ipython,
+ python-couchdbkit,
+ python-mockito,
+ python-whoosh,
+ python-argparse,
+ python-ipy,
+ python-restkit,
+ python-requests (>= 2.7.0),
+ python-tornado,
+ python-flask (>= 0.10.1),
+ python-colorama,
+ python-psycopg2,
+ python-sip,
+ zsh,
+ python-twisted,
+ python-sqlalchemy,
+ python-openssl,
+ curl,
+ gir1.2-gtk-3.0,
+ gir1.2-vte-2.90 | gir1.2-vte-2.91,
+ python-gobject,
+ zsh,
+ python-pip
+Description: Collaborative Penetration Test IDE
+ Faraday introduces a new concept (IPE) Integrated Penetration-Test Environment
+ a multiuser Penetration test IDE. Designed for distribution, indexation and
+ analysis of the generated data during the process of a security audit.
+ .
+  This package includes the Faraday client.

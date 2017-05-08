@@ -18,11 +18,12 @@ CONF = getInstanceConfiguration()
 
 
 class GuiApp(FaradayUi):
-    def __init__(self, model_controller, plugin_manager, workspace_manager):
+    def __init__(self, model_controller, plugin_manager, workspace_manager, plugin_controller):
         FaradayUi.__init__(self,
                            model_controller,
                            plugin_manager,
-                           workspace_manager)
+                           workspace_manager,
+                           plugin_controller)
         self._stop = False
         model.guiapi.setMainApp(self)
         self.event_watcher = EventWatcher()
@@ -35,9 +36,12 @@ class GuiApp(FaradayUi):
         except Exception as e:
             getLogger(self).error(
                 ("Your last workspace %s is not accessible, "
-                 "check configuration") % workspace)
+                 "check configuration.") % workspace)
+            getLogger(self).error(
+                    "You may try and go to ~/.faraday/config/user.xml "
+                    "to set a valid couch_uri and last_workspace")
             getLogger(self).error(str(e))
-            ws = self.openDefaultWorkspace()
+            return -1
         workspace = ws.name
         CONF.setLastWorkspace(workspace)
         CONF.saveConfig()

@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+
+UNAME_M = $(shell uname -m)
+
+%:
+	dh $@
+
+override_dh_installchangelogs:
+	dh_installchangelogs RELEASE.md

@@ -63,7 +63,7 @@ while read h; do
 
 echo "Processing target $h..."
 
-#echo $CS_OMP -u $USER_NAME -w $USER_PASSWORD --xml=\
+echo $CS_OMP -u $USER_NAME -w $USER_PASSWORD --xml=\
 "<create_target>\
 <name>TARG$(date +%s)</name><hosts>$h</hosts>\
 <alive_tests>$ALIVE_TEST</alive_tests>\

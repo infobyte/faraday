@@ -1,0 +1,81 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<section id="main" class="seccion clearfix">
+    <div class="right-main" ng-show="db_exists"><div id="reports-main" class="fila clearfix">
+        <h2 class="ws-label">
+            <span id="ws-name" title="Licenses">Licenses ({{licenses.length}})</span><!-- WS name -->
+            <button id="delete" type="button" class="btn btn-default" title="Delete selected licenses" ng-click="delete()">
+                <span class="glyphicon glyphicon-trash"></span>
+                Delete
+            </button>
+            <button id="merge" type="button" class="btn btn-default" title="Edit selected licenses" ng-disabled="selectedLicenses().length != 1 " ng-click="edit()">
+                <span class="glyphicon glyphicon-pencil"></span>
+                Edit
+            </button>
+            <button id="merge" type="button" class="btn btn-success" title="New license" ng-click="new()">
+                <span class="glyphicon glyphicon-plus-sign"></span>
+                New
+            </button>
+        </h2><!-- .ws-label -->
+        <div class="reports col-md-12 col-sm-12 col-xs-12">
+            <div class="col-md-6 col-sm-3 col-xs-11">
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" class="form-control input-sm" ng-model="search" placeholder="enter keywords" />
+                        <span class="input-group-btn">
+                            <button class="btn btn-sm" type="button">
+                                <i class="fa fa-search"></i>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="reports col-md-12 col-sm-12 cols-xs-12" ng-if="expiration_month == true">
+                <h4><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> The licenses marked in dark red are about to expire</h4>
+            </div>
+            <table class="status-report licenses-list table table-responsive">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" ng-model="selectall" ng-click="checkAll()"/></th>
+                        <th>
+                            <a href="" ng-click="toggleSort('product')">Product</a>
+                        </th>
+                        <th>
+                            <a href="" ng-click="toggleSort('lictype')">Type</a>
+                        </th>
+                        <th>
+                            <a href="" ng-click="toggleSort('notes')">Notes</a>
+                        </th>
+                        <th>
+                            <a href="" ng-click="toggleSort('start')">Start date</a>
+                        </th>
+                        <th>
+                            <a href="" ng-click="toggleSort('end')">End date</a>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="license in licenses | filter:search | orderBy:sort_field:reverse"
+                        selection-model selection-model-type="checkbox"
+                        selection-model-mode="multiple-additive"
+                        selection-model-selected-class="multi-selected"
+                        selection-model-on-change="selectedLicenses()"
+                        ng-class="{'almost-expired': almostExpired(license.end)}">
+                        <td><input type="checkbox" name="{{license._id}}"/></td>
+                        <td>{{license.product}}</td>
+                        <td>{{license.lictype}}</td>
+                        <td>{{license.notes}}</td>
+                        <td>{{license.start | date:'MM/dd/yyyy'}}</td>
+                        <td>{{license.end|date:'MM/dd/yyyy'}}</td>
+                        <td><i class="fa fa-history" aria-hidden="true">
+                            <a ng-href="{{store}}{{license.product}}" target="_blank">renew</a>
+                        </i></td>
+                    </tr>
+                </tbody>
+            </table><!-- #licenses -->
+        </div><!-- .reports -->
+    </div><!-- #reports-main --></div><!-- .right-main -->
+</section><!-- #main -->

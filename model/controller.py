@@ -8,19 +8,17 @@ import time
 import threading
 import Queue
 import traceback
-import model.common # this is to make sure the factory is created
-import model.hosts
+import model.common  # this is to make sure the factory is created
 
 from config.configuration import getInstanceConfiguration
-from model.common import TreeWordsTries
 from utils.logs import getLogger
 import model.api as api
-#import model.guiapi as guiapi
 from model.guiapi import notification_center as notifier
 from gui.customevents import *
+from functools import wraps
+from persistence.server import models
 
-
-#XXX: consider re-writing this module! There's alot of repeated code
+# XXX: consider re-writing this module! There's alot of repeated code
 # and things are really messy
 
 CONF = getInstanceConfiguration()
@@ -32,23 +30,16 @@ class modelactions:
     ADDINTERFACE = 2002
     DELINTERFACE = 2003
     ADDSERVICEINT = 2004
-    ADDSERVICEAPP = 2005
     DELSERVICEINT = 2006
-    DELSERVICEAPP = 2007
-    ADDAPPLICATION = 2009
     ADDCATEGORY = 2011
     ADDVULNINT = 2013
     DELVULNINT = 2014
-    ADDVULNAPP = 2015
-    DELVULNAPP = 2016
     ADDVULNHOST = 2017
     DELVULNHOST = 2018
     ADDVULNSRV = 2019
     DELVULNSRV = 2020
     ADDNOTEINT = 2021
     DELNOTEINT = 2022
-    ADDNOTEAPP = 2023
-    DELNOTEAPP = 2024
     ADDNOTEHOST = 2025
     DELNOTEHOST = 2026
     ADDNOTESRV = 2027
@@ -58,7 +49,6 @@ class modelactions:
     DELNOTEVULN = 2031
     EDITHOST = 2032
     EDITINTERFACE = 2033
-    EDITAPPLICATION = 2034
     EDITSERVICE = 2035
     ADDCREDSRV = 2036
     DELCREDSRV = 2037
@@ -84,15 +74,10 @@ class modelactions:
         ADDINTERFACE: "ADDINTERFACE",
         DELINTERFACE: "DELINTERFACE",
         ADDSERVICEINT: "ADDSERVICEINT",
-        ADDSERVICEAPP: "ADDSERVICEAPP",
         DELSERVICEINT: "DELSERVICEINT",
-        DELSERVICEAPP: "DELSERVICEAPP",
-        ADDAPPLICATION: "ADDAPPLICATION",
         ADDCATEGORY: "ADDCATEGORY",
         ADDVULNINT: "ADDVULNINT",
         DELVULNINT: "DELVULNINT",
-        ADDVULNAPP: "ADDVULNAPP",
-        DELVULNAPP: "DELVULNAPP",
         ADDVULNHOST: "ADDVULNHOST",
         DELVULNHOST: "DELVULNHOST",
         ADDVULNSRV: "ADDVULNSRV",
@@ -103,8 +88,6 @@ class modelactions:
         DELNOTENOTE: "DELNOTENOTE",
         EDITHOST: "EDITHOST",
         EDITINTERFACE: "EDITINTERFACE",
-        EDITAPPLICATION: "EDITAPPLICATION",
-        EDITSERVICE: "EDITAPPLICATION",
         ADDCREDSRV: "ADDCREDSRV",
         DELCREDSRV: "DELCREDSRV",
         ADDVULNWEBSRV: "ADDVULNSWEBRV",
@@ -146,7 +129,7 @@ class ModelController(threading.Thread):
         self.active_plugins_count = 0
         self.active_plugins_count_lock = threading.RLock()
 
-        #TODO: check if it is better using collections.deque
+        # TODO: check if it is better using collections.deque
         # a performance analysis should be done
         # http://docs.python.org/library/collections.html#collections.deque
 
@@ -171,9 +154,6 @@ class ModelController(threading.Thread):
 
         self.objects_with_updates = []
 
-        #used to highligthing
-        self.treeWordsTries = TreeWordsTries()
-
     def __getattr__(self, name):
         getLogger(self).debug("ModelObject attribute to refactor: %s" % name)
 
@@ -194,53 +174,79 @@ class ModelController(threading.Thread):
         """
         # This could be done in hosts module, but it seems easier to maintain
         # if we have all in one place inside the controller
-        self._object_factory.register(model.hosts.Host)
-        self._object_factory.register(model.hosts.Interface)
-        self._object_factory.register(model.hosts.Service)
-        self._object_factory.register(model.hosts.HostApplication)
-        self._object_factory.register(model.common.ModelObjectVuln)
-        self._object_factory.register(model.common.ModelObjectVulnWeb)
-        self._object_factory.register(model.common.ModelObjectNote)
-        self._object_factory.register(model.common.ModelObjectCred)
+        self._object_factory.register(models.Host)
+        self._object_factory.register(models.Interface)
+        self._object_factory.register(models.Service)
+        self._object_factory.register(models.Vuln)
+        self._object_factory.register(models.VulnWeb)
+        self._object_factory.register(models.Note)
+        self._object_factory.register(models.Credential)
+
+    def _checkParent(self, parent_type):
+        """Takes a parent_type and returns the appropiate checkParentDecorator,
+        a function that takes another function (most probably you are using
+        it for the __add method) and checks if the object as a parent of
+        parent_type before adding it.
+        """
+        def checkParentDecorator(add_func):
+            @wraps(add_func)
+            def addWrapper(new_obj, parent_id=None, *args):
+                parent = self.mappers_manager.find(parent_type, parent_id)
+                if parent:
+                    add_func(new_obj, parent_id, *args)
+                else:
+                    msg = "A parent is needed for %s objects" % new_obj.class_signature
+                    getLogger(self).error(msg)
+                    return False
+            return addWrapper
+        return checkParentDecorator
 
     def _setupActionDispatcher(self):
+
+        # these are decorators for the __add method.
+        checkParentHost = self._checkParent('Host')
+        checkParentInterface = self._checkParent('Interface')
+        checkParentService = self._checkParent('Service')
+        checkParentVuln = self._checkParent('Vuln')
+        checkParentNote = self._checkParent('Note')
+
         self._actionDispatcher = {
             modelactions.ADDHOST: self.__add,
             modelactions.DELHOST: self.__del,
             modelactions.EDITHOST: self.__edit,
-            modelactions.ADDINTERFACE: self.__add,
+            modelactions.ADDINTERFACE: checkParentHost(self.__add),
             modelactions.DELINTERFACE: self.__del,
             modelactions.EDITINTERFACE: self.__edit,
-            modelactions.ADDSERVICEINT: self.__add,
+            modelactions.ADDSERVICEINT: checkParentInterface(self.__add),
             modelactions.DELSERVICEINT: self.__del,
             modelactions.EDITSERVICE: self.__edit,
-            #Vulnerability
-            modelactions.ADDVULNINT: self.__add,
+            # Vulnerability
+            modelactions.ADDVULNINT: checkParentInterface(self.__add),
             modelactions.DELVULNINT: self.__del,
-            modelactions.ADDVULNHOST: self.__add,
+            modelactions.ADDVULNHOST: checkParentHost(self.__add),
             modelactions.DELVULNHOST: self.__del,
-            modelactions.ADDVULNSRV: self.__add,
+            modelactions.ADDVULNSRV: checkParentService(self.__add),
             modelactions.DELVULNSRV: self.__del,
             modelactions.ADDVULN: self.__add,
             modelactions.DELVULN: self.__del,
-            modelactions.ADDVULNWEBSRV: self.__add,
+            modelactions.ADDVULNWEBSRV: checkParentService(self.__add),
             modelactions.EDITVULN: self.__edit,
-            #Note
-            modelactions.ADDNOTEINT: self.__add,
+            # Note
+            modelactions.ADDNOTEINT: checkParentInterface(self.__add),
             modelactions.DELNOTEINT: self.__del,
-            modelactions.ADDNOTEHOST: self.__add,
+            modelactions.ADDNOTEHOST: checkParentHost(self.__add),
             modelactions.DELNOTEHOST: self.__del,
-            modelactions.ADDNOTESRV: self.__add,
+            modelactions.ADDNOTESRV: checkParentService(self.__add),
             modelactions.DELNOTESRV: self.__del,
-            modelactions.ADDNOTEVULN: self.__add,
+            modelactions.ADDNOTEVULN: checkParentVuln(self.__add),
             modelactions.ADDNOTE: self.__add,
             modelactions.DELNOTE: self.__del,
-            modelactions.ADDCREDSRV: self.__add,
+            modelactions.ADDCREDSRV: checkParentService(self.__add),
             modelactions.DELCREDSRV: self.__del,
-            modelactions.ADDNOTENOTE: self.__add,
+            modelactions.ADDNOTENOTE: checkParentNote(self.__add),
             modelactions.EDITNOTE: self.__edit,
             modelactions.EDITCRED: self.__edit,
-            modelactions.ADDCRED: self.__add,
+            modelactions.ADDCRED: checkParentHost(self.__add),
             modelactions.DELCRED: self.__del,
             # Plugin states
             modelactions.PLUGINSTART: self._pluginStart,
@@ -263,7 +269,7 @@ class ModelController(threading.Thread):
             res = action_callback(*args)
         except Exception:
             api.log("An exception occurred while dispatching an action (%r(%r)\n%s" %
-                   (action_callback, args, traceback.format_exc()), "ERROR")
+                    (action_callback, args, traceback.format_exc()), "ERROR")
         finally:
             self.__release_host_lock()
         return res
@@ -277,20 +283,28 @@ class ModelController(threading.Thread):
             self._sync_api_request = True
 
         api.devlog("_processAction - %s - parameters = %s" %
-                  (action, str(parameters)))
+                   (action, str(parameters)))
 
         action_callback = self._actionDispatcher[action]
         res = self._dispatchActionWithLock(action_callback, *parameters)
 
         # finally we notify the widgets about this change
-        #if res: # notify only if action was done successfuly
-            #self._notifyModelUpdated(*parameters)
-        #else:
+        # if res: # notify only if action was done successfuly
+        #     self._notifyModelUpdated(*parameters)
+        # else:
         if not res:
             api.devlog("Action code %d failed. Parameters = %s" %
-                      (action, str(parameters)))
+                    (action, str(parameters)))
         if sync:
             self._sync_api_request = False
+
+    def conflictMissing(self, conflict):
+        """
+        Conflict missing (Resolved by another one)
+        Remove conflict in original object and notify to clients
+        """
+        conflict.getFirstObject().updateResolved(conflict)
+        notifier.conflictUpdate(-1)
 
     def getConflicts(self):
         conflicts = []
@@ -304,27 +318,9 @@ class ModelController(threading.Thread):
     def resolveConflict(self, conflict, kwargs):
         if self.__edit(conflict.getFirstObject(), **kwargs):
             conflict.getFirstObject().updateResolved(conflict)
-            if conflict.getModelObjectType() == "Interface":
-                ipv4 = kwargs['ipv4']
-                ipv6 = kwargs['ipv6']
-                hostnames = kwargs['hostnames']
-
-                if not ipv4['address'] in ["0.0.0.0", None]:
-                    self.treeWordsTries.removeWord(ipv4['address'])
-                    self.treeWordsTries.addWord(ipv4['address'])
-
-                if not ipv6['address'] in ["0000:0000:0000:0000:0000:0000:0000:0000", None]:
-                    self.treeWordsTries.removeWord(ipv6['address'])
-                    self.treeWordsTries.addWord(ipv6['address'])
-
-                for h in hostnames:
-                    if h is not None:
-                        self.treeWordsTries.removeWord(h)
-                        self.treeWordsTries.addWord(h)
-
             notifier.conflictUpdate(-1)
-            #notifier.editHost(conflict.getFirstObject().getHost())
-            #self._notifyModelUpdated()
+            # notifier.editHost(conflict.getFirstObject().getHost())
+            # self._notifyModelUpdated()
 
     def removeConflictsByObject(self, obj):
         if obj in self.objects_with_updates:
@@ -376,7 +372,7 @@ class ModelController(threading.Thread):
         # if there is no new action it will block until timeout is reached
         try:
             # get new action or timeout (in secs)
-            #TODO: timeout should be set through config
+            # TODO: timeout should be set through config
             current_action = self._pending_actions.get(timeout=2)
             action = current_action[0]
             parameters = current_action[1:]
@@ -388,7 +384,8 @@ class ModelController(threading.Thread):
             # because if we don't do it, the daemon will be blocked forever
             pass
         except Exception:
-            getLogger(self).debug("something strange happened... unhandled exception?")
+            getLogger(self).debug(
+                "something strange happened... unhandled exception?")
             getLogger(self).debug(traceback.format_exc())
 
     def sync_lock(self):
@@ -414,103 +411,74 @@ class ModelController(threading.Thread):
 
     def addUpdate(self, old_object, new_object):
         # Returns True if the update was resolved without user interaction
-        res = True
         try:
             mergeAction = old_object.addUpdate(new_object)
             if mergeAction:
                 if old_object not in self.objects_with_updates:
                     self.objects_with_updates.append(old_object)
                 notifier.conflictUpdate(1)
-                res = False
+                return False
         except:
-            res = False
             api.devlog("(%s).addUpdate(%s, %s) - failed" %
-                      (self, old_object, new_object))
-        return res
+                       (self, old_object, new_object))
+            return False
+        self.mappers_manager.update(old_object)
+        notifier.editHost(old_object)
+        return True
 
+    # XXX: THIS DOESNT WORK
     def find(self, obj_id):
         return self.mappers_manager.find(obj_id)
 
-    def addHostASYNC(self, host, category=None, update=False, old_hostname=None):
+    def addHostASYNC(self, host):
         """
         ASYNC API
         Adds an action to the ModelController actions queue indicating a
         new host must be added to the model
         """
-        self.__addPendingAction(modelactions.ADDHOST, host, category, update, old_hostname)
+        self.__addPendingAction(modelactions.ADDHOST,
+                                host)
 
-    def addHostSYNC(self, host, category=None, update=False, old_hostname=None):
+    def addHostSYNC(self, host):
         """
         SYNC API
         Adds a host directly to the model
         """
         self._processAction(modelactions.ADDHOST, [host, None], sync=True)
 
-    def __add(self,  obj, parent_id=None, *args):
-        dataMapper = self.mappers_manager.getMapper(obj.class_signature)
-        old_obj = dataMapper.find(obj.getID())
-        if old_obj:
-            if not old_obj.needs_merge(obj):
-                # the object is exactly the same,
-                # so return and do nothing
-                return True
-            if not self.addUpdate(old_obj, obj):
-                return False
-            dataMapper.save(old_obj)
-            notifier.editHost(old_obj.getHost())
-        else:
-            object_parent = self.mappers_manager.find(parent_id)
-            if object_parent:
-                object_parent.addChild(obj)
-            # we have to make sure that certain objects have to have a parent
-            if (obj.class_signature in
-                [model.hosts.Interface.class_signature,
-                 model.hosts.Service.class_signature,
-                 model.common.ModelObjectNote.class_signature,
-                 model.common.ModelObjectVuln.class_signature,
-                 model.common.ModelObjectVulnWeb.class_signature,
-                 model.common.ModelObjectCred.class_signature] and object_parent is None):
-                # TODO: refactor log module. We need to log twice to see it in
-                # qt and in the terminal. Ugly.
-                msg = "A parent is needed for %s objects" % obj.class_signature
-                getLogger(self).error(msg)
-                return False
-            dataMapper.save(obj)
-            self.treeWordsTries.addWord(obj.getName())
-            if obj.class_signature == model.hosts.Host.class_signature:
-                notifier.addHost(obj)
-            else:
-                notifier.editHost(obj.getHost())
+    def _save_new_object(self, new_object):
+        res = self.mappers_manager.save(new_object)
+        if res: notifier.addObject(new_object)
+        return res
 
-        return True
+    def _handle_conflict(self, old_obj, new_obj):
+        if not old_obj.needs_merge(new_obj): return True
+        return self.addUpdate(old_obj, new_obj)
+
+    def __add(self, new_obj, parent_id=None, *args):
+        old_obj = self.mappers_manager.find(new_obj.class_signature, new_obj.getID())
+        if not old_obj:
+            return self._save_new_object(new_obj)
+        return self._handle_conflict(old_obj, new_obj)
 
     def __edit(self, obj, *args, **kwargs):
-        dataMapper = self.mappers_manager.getMapper(obj.class_signature)
         obj.updateAttributes(*args, **kwargs)
-        dataMapper.save(obj)
-        # self.treeWordsTries.addWord(obj.getName())
-
-        if obj.class_signature == model.hosts.Host.class_signature:
-            notifier.editHost(obj)
-        else:
-            notifier.editHost(obj.getHost())
+        self.mappers_manager.update(obj)
+        notifier.editHost(obj)
         return True
 
-    def __del(self,  objId, *args):
+    def __del(self, objId, *args):
         obj = self.mappers_manager.find(objId)
         if obj:
             obj_parent = obj.getParent()
             if obj_parent:
                 obj_parent.deleteChild(objId)
 
-            if obj.getName():
-                self.treeWordsTries.removeWord(obj.getName())
-
             self.removeConflictsByObject(obj)
 
-            self.mappers_manager.remove(objId)
+            self.mappers_manager.remove(objId, obj.class_signature)
 
-            if obj.class_signature == model.hosts.Host.class_signature:
+            if obj.class_signature == models.Host.class_signature:
                 notifier.delHost(objId)
             else:
                 notifier.editHost(obj.getHost())
@@ -532,13 +500,13 @@ class ModelController(threading.Thread):
         """
         self._processAction(modelactions.DELHOST, [hostId], sync=True)
 
-
     def editHostSYNC(self, host, name, description, os, owned):
         """
         SYNC API
         Modifies a host from model
         """
-        self._processAction(modelactions.EDITHOST, [host, name, description, os, owned], sync=True)
+        self._processAction(modelactions.EDITHOST, [
+                            host, name, description, os, owned], sync=True)
 
     def addInterfaceASYNC(self, hostid, interface, update=False):
         """
@@ -553,7 +521,8 @@ class ModelController(threading.Thread):
         SYNC API
         Adds interface directly to the model
         """
-        self._processAction(modelactions.ADDINTERFACE, [interface, hostId], sync=True)
+        self._processAction(modelactions.ADDINTERFACE, [
+                            interface, hostId], sync=True)
 
     def delInterfaceASYNC(self, hostId, interfaceId):
         """
@@ -568,7 +537,8 @@ class ModelController(threading.Thread):
         SYNC API
         Deletes an interface from model
         """
-        self._processAction(modelactions.DELINTERFACE, [interface_id], sync=True)
+        self._processAction(modelactions.DELINTERFACE,
+                            [interface_id], sync=True)
 
     def editInterfaceSYNC(self, interface, name, description, hostnames,
                           mac, ipv4, ipv6, network_segment,
@@ -590,7 +560,8 @@ class ModelController(threading.Thread):
         Adds an action to the ModelController actions queue indicating a
         new services must be added to a specific host in a specific interface
         """
-        self.__addPendingAction(modelactions.ADDSERVICEINT, newService, interfaceId)
+        self.__addPendingAction(
+            modelactions.ADDSERVICEINT, newService, interfaceId)
 
     def addServiceToInterfaceSYNC(self, host_id, interface_id, newService):
         """
@@ -598,7 +569,8 @@ class ModelController(threading.Thread):
         Adds a service to a specific host in a specific interface
         directly to the model
         """
-        self._processAction(modelactions.ADDSERVICEINT, [newService, interface_id], sync=True)
+        self._processAction(modelactions.ADDSERVICEINT, [
+                            newService, interface_id], sync=True)
 
     def delServiceFromInterfaceASYNC(self, host, interfaceId, serviceId):
         """
@@ -607,7 +579,8 @@ class ModelController(threading.Thread):
         particular service in a host and interface must be removed from the
         model Interface parameter can be "ALL"
         """
-        self.__addPendingAction(modelactions.DELSERVICEINT, serviceId, interfaceId)
+        self.__addPendingAction(
+            modelactions.DELSERVICEINT, serviceId, interfaceId)
 
     def delServiceFromInterfaceSYNC(self, host, interfaceId, serviceId):
         """
@@ -616,108 +589,92 @@ class ModelController(threading.Thread):
         """
         self._processAction(modelactions.DELSERVICEINT, [serviceId], sync=True)
 
-    def delServiceFromApplicationASYNC(self, host, appname, service):
-        """
-        ASYNC API
-        Adds an action to the ModelController actions queue indicating a
-        particular service in a host and interface must be removed from the model
-        appname parameter can be "ALL"
-        """
-        self.__addPendingAction(modelactions.DELSERVICEAPP, host, appname, service)
-
-    def delServiceFromApplicationSYNC(self, host, appname, service):
-        """
-        SYNC API
-        Delete a service in a host and application from the model
-        """
-        self._processAction(modelactions.DELSERVICEAPP, [host, appname, service], sync=True)
-
     def editServiceSYNC(self, service, name, description, protocol, ports, status, version, owned):
         """
         SYNC API
         Modifies a host from model
         """
-        self._processAction(modelactions.EDITSERVICE, [service, name, description, protocol, ports, status, version, owned], sync=True)
+        self._processAction(modelactions.EDITSERVICE, [
+                            service, name, description, protocol, ports, status, version, owned], sync=True)
 
     def editServiceASYNC(self, service, name, description, protocol, ports, status, version, owned):
         """
         ASYNC API
         Modifies a service from model
         """
-        self.__addPendingAction(modelactions.EDITSERVICE, service, name, description, protocol, ports, status, version, owned)
+        self.__addPendingAction(modelactions.EDITSERVICE, service,
+                                name, description, protocol, ports, status, version, owned)
 
     def __editService(self, service, name=None, description=None,
                       protocol=None, ports=None, status=None,
                       version=None, owned=None):
         res = False
         if service is not None:
-            service.updateAttributes(name, description, protocol, ports, status, version, owned)
+            service.updateAttributes(
+                name, description, protocol, ports, status, version, owned)
             notifier.editHost(service.getHost())
             res = True
         return res
 
-    def addPluginStart(self):
-        self.__addPendingAction(modelactions.PLUGINSTART)
+    def addPluginStart(self, name):
+        self.__addPendingAction(modelactions.PLUGINSTART, name)
 
-    def addPluginEnd(self):
-        self.__addPendingAction(modelactions.PLUGINEND)
+    def addPluginEnd(self, name):
+        self.__addPendingAction(modelactions.PLUGINEND, name)
 
-    def _pluginStart(self):
+    def _pluginStart(self, name):
         self.active_plugins_count_lock.acquire()
-        getLogger(self).info("Plugin Started")
+        getLogger(self).info("Plugin Started: " + name)
         self.active_plugins_count += 1
         self.active_plugins_count_lock.release()
+        return True
 
-    def _pluginEnd(self):
+    def _pluginEnd(self, name):
         self.active_plugins_count_lock.acquire()
-        getLogger(self).info("Plugin Ended")
+        getLogger(self).info("Plugin Ended: " + name)
         self.active_plugins_count -= 1
         self.active_plugins_count_lock.release()
+        return True
 
     def addVulnToInterfaceASYNC(self, host, intId, newVuln):
         self.__addPendingAction(modelactions.ADDVULNINT, newVuln, intId)
 
     def addVulnToInterfaceSYNC(self, host, intId, newVuln):
-        self._processAction(modelactions.ADDVULNINT, [newVuln, intId], sync=True)
-
-    def addVulnToApplicationASYNC(self, host, appname, newVuln):
-        self.__addPendingAction(modelactions.ADDVULNAPP, host, appname, newVuln)
-
-    def addVulnToApplicationSYNC(self, host, appname, newVuln):
-        self._processAction(modelactions.ADDVULNAPP, [host, appname, newVuln], sync=True)
+        self._processAction(modelactions.ADDVULNINT, [
+                            newVuln, intId], sync=True)
 
     def addVulnToHostASYNC(self, hostId, newVuln):
         self.__addPendingAction(modelactions.ADDVULNHOST, newVuln, hostId)
 
     def addVulnToHostSYNC(self, hostId, newVuln):
-        self._processAction(modelactions.ADDVULNHOST, [newVuln, hostId], sync=True)
+        self._processAction(modelactions.ADDVULNHOST, [
+                            newVuln, hostId], sync=True)
 
     def addVulnToServiceASYNC(self, host, srvId, newVuln):
         self.__addPendingAction(modelactions.ADDVULNSRV, newVuln, srvId)
 
     def addVulnToServiceSYNC(self, host, srvId, newVuln):
-        self._processAction(modelactions.ADDVULNSRV, [newVuln, srvId], sync=True)
+        self._processAction(modelactions.ADDVULNSRV, [
+                            newVuln, srvId], sync=True)
 
     def addVulnSYNC(self, modelObjectId, newVuln):
-        self._processAction(modelactions.ADDVULN, [newVuln, modelObjectId], sync=True)
+        self._processAction(modelactions.ADDVULN, [
+                            newVuln, modelObjectId], sync=True)
 
     def addVulnWebToServiceASYNC(self, host, srvId, newVuln):
         self.__addPendingAction(modelactions.ADDVULNWEBSRV, newVuln, srvId)
 
     def addVulnWebToServiceSYNC(self, host, srvId, newVuln):
-        self._processAction(modelactions.ADDVULNWEBSRV, [newVuln, srvId], sync=True)
-
-    def delVulnFromApplicationASYNC(self, hostname, appname, vuln):
-        self.__addPendingAction(modelactions.DELVULNAPP, hostname, appname, vuln)
-
-    def delVulnFromApplicationSYNC(self, hostname, appname, vuln):
-        self._processAction(modelactions.DELVULNAPP, [hostname, appname, vuln], sync=True)
+        self._processAction(modelactions.ADDVULNWEBSRV,
+                            [newVuln, srvId], sync=True)
 
     def delVulnFromInterfaceASYNC(self, hostname, intname, vuln):
-        self.__addPendingAction(modelactions.DELVULNINT, hostname, intname, vuln)
+        self.__addPendingAction(modelactions.DELVULNINT,
+                                hostname, intname, vuln)
 
     def delVulnFromInterfaceSYNC(self, hostname, intname, vuln):
-        self._processAction(modelactions.DELVULNINT, [hostname,intname, vuln], sync=True)
+        self._processAction(modelactions.DELVULNINT, [
+                            hostname, intname, vuln], sync=True)
 
     def delVulnFromHostASYNC(self, hostId, vulnId):
         self.__addPendingAction(modelactions.DELVULNHOST, vulnId)
@@ -734,12 +691,13 @@ class ModelController(threading.Thread):
     def delVulnSYNC(self, model_object, vuln_id):
         self._processAction(modelactions.DELVULN, [vuln_id], sync=True)
 
-
     def editVulnSYNC(self, vuln, name, desc, severity, resolution, refs):
-        self._processAction(modelactions.EDITVULN, [vuln, name, desc, severity, resolution, refs], sync=True)
+        self._processAction(modelactions.EDITVULN, [
+                            vuln, name, desc, severity, resolution, refs], sync=True)
 
     def editVulnASYNC(self, vuln, name, desc, severity, resolution, refs):
-        self.__addPendingAction(modelactions.EDITVULN, vuln, name, desc, severity, resolution, refs)
+        self.__addPendingAction(modelactions.EDITVULN,
+                                vuln, name, desc, severity, resolution, refs)
 
     def editVulnWebSYNC(self, vuln, name, desc, website, path, refs, severity, resolution,
                         request, response, method, pname, params, query,
@@ -753,27 +711,23 @@ class ModelController(threading.Thread):
                          params, query, category):
         self.__addPendingAction(modelactions.EDITVULN,
                                 vuln, name, desc, website, path, refs,
-                                 severity, resolution, request, response, method,
-                                 pname, params, query, category)
+                                severity, resolution, request, response, method,
+                                pname, params, query, category)
 
     # Note
     def addNoteToInterfaceASYNC(self, host, intId, newNote):
         self.__addPendingAction(modelactions.ADDNOTEINT, newNote, intId)
 
     def addNoteToInterfaceSYNC(self, host, intId, newNote):
-        self._processAction(modelactions.ADDNOTEINT, [newNote, intId], sync=True)
-
-    def addNoteToApplicationASYNC(self, host, appname, newNote):
-        self.__addPendingAction(modelactions.ADDNOTEAPP, host, appname, newNote)
-
-    def addNoteToApplicationSYNC(self, host, appname, newNote):
-        self._processAction(modelactions.ADDNOTEAPP, [host, appname, newNote], sync=True)
+        self._processAction(modelactions.ADDNOTEINT, [
+                            newNote, intId], sync=True)
 
     def addNoteToHostASYNC(self, hostId, newNote):
         self.__addPendingAction(modelactions.ADDNOTEHOST, newNote, hostId)
 
     def addNoteToHostSYNC(self, hostId, newNote):
-        self._processAction(modelactions.ADDNOTEHOST, [newNote, hostId], sync=True)
+        self._processAction(modelactions.ADDNOTEHOST, [
+                            newNote, hostId], sync=True)
 
     def addNoteToServiceASYNC(self, host, srvId, newNote):
         self.__addPendingAction(modelactions.ADDNOTESRV, newNote, srvId)
@@ -782,19 +736,16 @@ class ModelController(threading.Thread):
         self.__addPendingAction(modelactions.ADDNOTENOTE, newNote, note_id)
 
     def addNoteToNoteSYNC(self, noteId, newNote):
-        self._processAction(modelactions.ADDNOTENOTE, [newNote, noteId], sync=True)
+        self._processAction(modelactions.ADDNOTENOTE, [
+                            newNote, noteId], sync=True)
 
     def addNoteToServiceSYNC(self, host, srvId, newNote):
-        self._processAction(modelactions.ADDNOTESRV, [newNote, srvId], sync=True)
+        self._processAction(modelactions.ADDNOTESRV, [
+                            newNote, srvId], sync=True)
 
     def addNoteSYNC(self, model_object, newNote):
-        self._processAction(modelactions.ADDNOTE, [newNote, model_object], sync=True)
-
-    def delNoteFromApplicationASYNC(self, hostname, appname, note):
-        self.__addPendingAction(modelactions.DELNOTEAPP, hostname, appname, note)
-
-    def delNoteFromApplicationSYNC(self, hostname, appname, note):
-        self._processAction(modelactions.DELNOTEAPP, [hostname, appname, note], sync=True)
+        self._processAction(modelactions.ADDNOTE, [
+                            newNote, model_object], sync=True)
 
     def delNoteFromInterfaceASYNC(self, hostname, intname, noteId):
         self.__addPendingAction(modelactions.DELNOTEINT, noteId)
@@ -821,7 +772,8 @@ class ModelController(threading.Thread):
         self.__addPendingAction(modelactions.ADDCREDSRV, newCred, srvId)
 
     def addCredToServiceSYNC(self, host, srvId, newCred):
-        self._processAction(modelactions.ADDCREDSRV, [newCred, srvId], sync=True)
+        self._processAction(modelactions.ADDCREDSRV, [
+                            newCred, srvId], sync=True)
 
     def delCredFromServiceASYNC(self, hostname, srvname, credId):
         self.__addPendingAction(modelactions.DELCREDSRV, credId)
@@ -829,29 +781,32 @@ class ModelController(threading.Thread):
     def delCredFromServiceSYNC(self, hostname, srvname, credId):
         self._processAction(modelactions.DELCREDSRV, [credId], sync=True)
 
-
     def editNoteSYNC(self, note, name, text):
-        self._processAction(modelactions.EDITNOTE, [note, name, text], sync=True)
+        self._processAction(modelactions.EDITNOTE, [
+                            note, name, text], sync=True)
 
     def editNoteASYNC(self, note, name, text):
         self.__addPendingAction(modelactions.EDITNOTE, note, name, text)
 
     def editCredSYNC(self, cred, username, password):
-        self._processAction(modelactions.EDITCRED, [cred, username, password], sync=True)
+        self._processAction(modelactions.EDITCRED, [
+                            cred, username, password], sync=True)
 
     def editCredASYNC(self, cred, username, password):
-        self.__addPendingAction(modelactions.EDITCRED, cred, username, password)
+        self.__addPendingAction(modelactions.EDITCRED,
+                                cred, username, password)
 
     def addCredSYNC(self, model_object_id, newCred):
-        self._processAction(modelactions.ADDCRED, [newCred, model_object_id], sync=True)
+        self._processAction(modelactions.ADDCRED, [
+                            newCred, model_object_id], sync=True)
 
     def delCredSYNC(self, model_object, cred_id):
         self._processAction(modelactions.DELCRED, [cred_id], sync=True)
 
     def newHost(self, name, os="Unknown"):
         return model.common.factory.createModelObject(
-            model.hosts.Host.class_signature,
-            name, os=os, parent_id=None)
+            models.Host.class_signature, name,
+            self.mappers_manager.workspace_name, os=os, parent_id=None)
 
     def newInterface(self, name, mac="00:00:00:00:00:00",
                      ipv4_address="0.0.0.0",
@@ -862,26 +817,26 @@ class ModelController(threading.Thread):
                      ipv6_dns=[], network_segment="", hostname_resolution=[],
                      parent_id=None):
         return model.common.factory.createModelObject(
-            model.hosts.Interface.class_signature,
-            name, mac=mac, ipv4_address=ipv4_address,
+            models.Interface.class_signature, name,
+            self.mappers_manager.workspace_name, mac=mac, ipv4_address=ipv4_address,
             ipv4_mask=ipv4_mask, ipv4_gateway=ipv4_gateway, ipv4_dns=ipv4_dns,
             ipv6_address=ipv6_address, ipv6_prefix=ipv6_prefix,
             ipv6_gateway=ipv6_gateway, ipv6_dns=ipv6_dns,
             network_segment=network_segment,
-            hostname_resolution=hostname_resolution, parent_id=parent_id)
+            hostnames=hostname_resolution, parent_id=parent_id)
 
     def newService(self, name, protocol="tcp?", ports=[], status="running",
                    version="unknown", description="", parent_id=None):
         return model.common.factory.createModelObject(
-            model.hosts.Service.class_signature,
-            name, protocol=protocol, ports=ports, status=status,
+            models.Service.class_signature, name,
+            self.mappers_manager.workspace_name, protocol=protocol, ports=ports, status=status,
             version=version, description=description, parent_id=parent_id)
 
     def newVuln(self, name, desc="", ref=None, severity="", resolution="",
                 confirmed=False, parent_id=None):
         return model.common.factory.createModelObject(
-            model.common.ModelObjectVuln.class_signature,
-            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            models.Vuln.class_signature, name,
+            self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             confirmed=confirmed, parent_id=parent_id)
 
     def newVulnWeb(self, name, desc="", ref=None, severity="", resolution="",
@@ -889,49 +844,75 @@ class ModelController(threading.Thread):
                    pname="", params="", query="", category="", confirmed=False,
                    parent_id=None):
         return model.common.factory.createModelObject(
-            model.common.ModelObjectVulnWeb.class_signature,
-            name, desc=desc, ref=ref, severity=severity, resolution=resolution,
+            models.VulnWeb.class_signature, name,
+            self.mappers_manager.workspace_name, desc=desc, ref=ref, severity=severity, resolution=resolution,
             website=website, path=path, request=request, response=response,
             method=method, pname=pname, params=params, query=query,
             category=category, confirmed=confirmed, parent_id=parent_id)
 
     def newNote(self, name, text, parent_id=None):
         return model.common.factory.createModelObject(
-            model.common.ModelObjectNote.class_signature,
-            name, text=text, parent_id=parent_id)
+            models.Note.class_signature, name,
+            self.mappers_manager.workspace_name, text=text, parent_id=parent_id)
 
     def newCred(self, username, password, parent_id=None):
         return model.common.factory.createModelObject(
-            model.common.ModelObjectCred.class_signature,
+            models.Credential.class_signature, name,
             username, password=password, parent_id=parent_id)
 
     def getHost(self, name):
-        hosts_mapper = self.mappers_manager.getMapper(model.hosts.Host.__name__)
+        hosts_mapper = self.mappers_manager.getMapper(models.Host.class_signature)
         return hosts_mapper.find(name)
 
     def getAllHosts(self):
-        hosts = self.mappers_manager.getMapper(
-            model.hosts.Host.__name__).getAll()
+        """Return a list with every host. If there's an exception, assume there
+        are no hosts.
+        """
+        try:
+            hosts = self.mappers_manager.getMapper(
+                models.Host.class_signature.getAll())
+        except:
+            hosts = []
         return hosts
 
     def getWebVulns(self):
         return self.mappers_manager.getMapper(
-            model.common.ModelObjectVulnWeb.class_signature).getAll()
+            models.Vuln.class_signature).getAll()
 
-    def createIndex(self, hosts):
-        self.treeWordsTries = TreeWordsTries()
-        self.treeWordsTries.clear()
-        for k in hosts.keys():
-            h = hosts[k]
-            self.treeWordsTries.addWord(h.getName())
-            for intr in h.getAllInterfaces():
-                ipv4 = intr.ipv4
-                ipv6 = intr.ipv6
-                if not ipv4['address'] in ["0.0.0.0", None]:
-                    self.treeWordsTries.addWord(ipv4['address'])
+    def getHostsCount(self):
+        """Get how many hosts are in the workspace. If it can't, it will
+        return zero."""
+        try:
+            hosts = models.Hosts.class_signature
+            count = self.mappers_manager.getMapper(hosts).getCount()
+        except:
+            getLogger(self).debug(
+                "Couldn't get host count: assuming it is zero.")
+            count = 0
+        return count
 
-                if not ipv6['address'] in ["0000:0000:0000:0000:0000:0000:0000:0000", None]:
-                    self.treeWordsTries.addWord(ipv6['address'])
+    def getServicesCount(self):
+        """Get how many services are in the workspace. If it can't, it will
+        return zero."""
+        try:
+            services = models.Service.class_signature
+            count = self.mappers_manager.getMapper(services).getCount()
+        except:
+            getLogger(self).debug(
+                "Couldn't get services count: assuming it is zero.")
+            count = 0
+        return count
 
-                for hostname in intr.getHostnames():
-                    self.treeWordsTries.addWord(hostname)
+    def getVulnsCount(self):
+        """Get how many vulns (web + normal) are in the workspace.
+        If it can't, it will return zero."""
+        try:
+            vulns = models.Vuln.class_signature
+            web_vulns = models.WebVuln.class_signature
+            count = (self.mappers_manager.getMapper(vulns).getCount() +
+                     self.mappers_manager.getMapper(web_vulns).getCount())
+        except:
+            getLogger(self).debug(
+                "Couldn't get vulnerabilities count: assuming it is zero.")
+            count = 0
+        return count

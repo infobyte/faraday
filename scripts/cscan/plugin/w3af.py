@@ -1,9 +1,8 @@
-#!/usr/bin/env python
-###
-## Faraday Penetration Test IDE
-## Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
-## See the file 'doc/LICENSE' for the license information
-###
+#!/usr/bin/env python2
+
+# Faraday Penetration Test IDE
+# Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
+# See the file 'doc/LICENSE' for the license information
 
 from w3af_api_client import Connection, Scan
 import subprocess
@@ -15,12 +14,14 @@ from pprint import pprint
 import atexit
 child_pid = None
 
+
 def kill_child():
     global child_pid
     if child_pid is None:
         pass
     else:
         os.kill(child_pid, signal.SIGTERM)
+
 
 def main():
     atexit.register(kill_child)
@@ -29,15 +30,15 @@ def main():
     cmd = my_env["CS_W3AF"] if 'CS_W3AF' in my_env else "/root/tools/w3af/w3af_api"
     profile = my_env["CS_W3AF_PROFILE"] if 'CS_W3AF_PROFILE' in my_env else "/root/tools/w3af/profiles/fast_scan.pw3af"
 
-    #Parser argument in command line
+    # Parser argument in command line
     parser = argparse.ArgumentParser(description='w3af_client is develop for automating security testing')
-    parser.add_argument('-t','--target', help='Network or Host for scan', required=False)
-    parser.add_argument('-o','--output', help='Output file', required=False)
+    parser.add_argument('-t', '--target', help='Network or Host for scan', required=False)
+    parser.add_argument('-o', '--output', help='Output file', required=False)
     args = parser.parse_args()
 
-    if args.target == None or args.output == None:
-        print  "Argument errors check -h"
-        exit(0)      
+    if args.target is None or args.output is None:
+        print "Argument errors check -h"
+        exit(0)
 
     print 'Starting w3af api ...'
     global child_pid
@@ -52,7 +53,7 @@ def main():
     print conn.get_version()
 
     # Define the target and configuration
-    #scan_profile = file('/root/tools/w3af/profiles/fast_scan_xml.pw3af').read()
+    # scan_profile = file('/root/tools/w3af/profiles/fast_scan_xml.pw3af').read()
     scan_profile = file(profile).read()
     scan_profile = "[output.xml_file]\noutput_file = %s\n%s\n" % (args.output, scan_profile )
     # scan_profile = file('/root/tools/w3af/profiles/fast_scan.pw3af').read()

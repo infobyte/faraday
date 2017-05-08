@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 ###
 ## Faraday Penetration Test IDE
 ## Copyright (C) 2015  Infobyte LLC (http://www.infobytesec.com/)
@@ -20,6 +20,7 @@ profile = my_env["CS_NESSUS_PROFILE"] if 'CS_NESSUS_PROFILE' in my_env else "'Ba
 
 verify = False
 token = ''
+
 
 def build_url(resource):
     return '{0}{1}'.format(url, resource)
@@ -261,14 +262,14 @@ def history_delete(sid, hid):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='nessus_client is develop for automating security testing')
-    parser.add_argument('-t','--target', help='Network or Host for scan', required=False)
-    parser.add_argument('-o','--output', help='Output file', required=False)
+    parser.add_argument('-t', '--target', help='Network or Host for scan', required=False)
+    parser.add_argument('-o', '--output', help='Output file', required=False)
     args = parser.parse_args()
 
     # Review de Command input
-    if args.target == None or args.output == None:
-        print  "Argument errors check -h"
-        exit(0)    
+    if args.target is None or args.output is None:
+        print "Argument errors check -h"
+        exit(0)
 
     print('Login')
     try:
@@ -277,10 +278,9 @@ if __name__ == "__main__":
         print "Unexpected error:", sys.exc_info()[0]
         raise
 
-
     print('Adding new scan.' + token)
     print args.target
-    
+
     policies = get_policies()
     policy_id = policies[profile]
     scan_data = add('CScan nessus', 'Create a new scan with API', args.target, policy_id)
@@ -290,9 +290,8 @@ if __name__ == "__main__":
     scan_uuid = launch(scan_id)
     history_ids = get_history_ids(scan_id)
     history_id = history_ids[scan_uuid]
-    while status(scan_id, history_id) not in ('completed','canceled'):
+    while status(scan_id, history_id) not in ('completed', 'canceled'):
         time.sleep(5)
-
 
     print('Exporting the completed scan.')
     file_id = export(scan_id, history_id)
@@ -303,4 +302,4 @@ if __name__ == "__main__":
     delete(scan_id)
 
     print('Logout')
-    logout()    
+    logout()

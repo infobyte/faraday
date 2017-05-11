@@ -50,12 +50,13 @@
             <div class="form-group">
                 <div class="col-md-12">
                     <label for="Explotation">Explotation</label>
-                <button type="button" class="btn btn-default dropdown-toggle" name="exploitation" data-toggle="dropdown" title="Choose exploitation" ng-class="{'button-error': data.exploitation === undefined}">
-                {{data.exploitation || 'Choose exploitation'}} <span class="caret"></span>
-                </button>
-                <ul id="nav" class="dropdown-menu dropdown-menu-left" role="menu">
-                    <li ng-repeat="s in exploitations"><a href="" class="ws color-{{s}}" ng-click="data.exploitation=s">{{s}}</a></li>
-                </ul><!-- WS navigation -->
+                    <button type="button" class="btn btn-default dropdown-toggle" name="exploitation" data-toggle="dropdown" title="Choose exploitation" ng-class="{'button-error': data.exploitation === undefined}">
+                    {{data.exploitation || 'Choose exploitation'}} <span class="caret"></span>
+                    </button>
+                    <ul id="nav" class="dropdown-menu dropdown-menu-left" role="menu">
+                        <li ng-repeat="s in exploitations"><a href="" class="ws color-{{s}}" ng-click="data.exploitation=s">{{s}}</a></li>
+                    </ul><!-- WS navigation -->
+                </div>
             </div>
             <p>All fields marked * are required</p>
         </div><!-- .form-horizontal -->

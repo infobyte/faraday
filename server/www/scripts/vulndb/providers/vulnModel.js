@@ -14,6 +14,7 @@ angular.module('faradayApp').
                 this.resolution = "";
                 this.cwe = "";
                 this.description = "";
+                this.desc_summary = "";
                 if (data) {
                     if(data.name === undefined || data.name === "") {
                         throw new Error("Unable to create a Vulnerability Model whithout a name");

@@ -16,11 +16,16 @@ angular.module('faradayApp')
             } else {
                 $http.get(cwe_url).then(function(res) {
                     res.data.rows.forEach(function(obj) {
+                        var description = "";
+
+                        if(obj.doc.desc_summary) description += "Summary: " + obj.doc.desc_summary + "\n\n";
+                        if(obj.doc.description) description += obj.doc.description;
+
                         var c = {
                             id: obj.id,
                             cwe: obj.doc.cwe,
                             name: obj.doc.name,
-                            desc: "Summary: " + obj.doc.desc_summary + "\n\n" + obj.doc.description,
+                            desc: description,
                             resolution: obj.doc.resolution,
                             exploitation: obj.doc.exploitation,
                             refs: obj.doc.references

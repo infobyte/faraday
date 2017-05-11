@@ -28,6 +28,7 @@ angular.module('faradayApp')
             'type': 'string',
         };
 
+        var Credential;
         Credential = function(data, parent){
             if(data) {
                 this.set(data, parent);

@@ -163,12 +163,12 @@ angular.module('faradayApp')
                                 $scope.disabledClick = true;
                                 var vulns = vulns_data.data.vulnerabilities;
                                 vulns.forEach(function(vuln) {
-                                    relevant_vuln = {};
+                                    var relevant_vuln = {};
                                     relevant_vuln.name = vuln.value.name;
-                                    relevant_vuln.description = vuln.value.dec_summary;
+                                    relevant_vuln.description = vuln.value.desc;
                                     relevant_vuln.resolution = vuln.value.resolution;
                                     relevant_vuln.exploitation = vuln.value.severity;
-                                    relevant_vuln.references = vuln.value.references;
+                                    relevant_vuln.references = vuln.value.refs;
                                     $scope.insert(relevant_vuln);
                                 });
                             }).then(function() {

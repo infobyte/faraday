@@ -13,7 +13,6 @@ angular.module('faradayApp').
                 this.name = "";
                 this.resolution = "";
                 this.cwe = "";
-                this.desc = "";
                 this.description = "";
                 if (data) {
                     if(data.name === undefined || data.name === "") {

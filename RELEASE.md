@@ -19,6 +19,7 @@ TBA:
 * Fix API on /ws/<workspace> with duration object None
 * Added a CRUD for Credentials to the Web UI
 * Bug fixes on the Burp Online Plugin
+* Added a script to connect with Reposify
 
 March 17, 2017:
 ---

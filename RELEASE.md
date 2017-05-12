@@ -20,6 +20,7 @@ TBA:
 * Added a CRUD for Credentials to the Web UI
 * Bug fixes on the Burp Online Plugin
 * Added a script to connect with Reposify
+* Fixed Hostname import in Nessus Plugin
 
 March 17, 2017:
 ---

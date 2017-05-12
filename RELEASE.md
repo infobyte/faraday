@@ -18,6 +18,7 @@ TBA:
 * Fixed "refresh" button in the Web UI
 * Fix API on /ws/<workspace> with duration object None
 * Added a CRUD for Credentials to the Web UI
+* Added a script to connect with Reposify
 
 March 17, 2017:
 ---

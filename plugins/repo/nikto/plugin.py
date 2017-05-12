@@ -7,7 +7,7 @@ See the file 'doc/LICENSE' for the license information
 '''
 
 from __future__ import with_statement
-from plugins import core
+from plugins import core, plugin_utils
 import re
 import os
 import sys
@@ -357,11 +357,9 @@ class NiktoPlugin(core.PluginBase):
                     s_id,
                     name=item.desc,
                     ref=item.osvdbid,
-                    website=host.targethostname,
                     method=item.method,
-                    path=item.namelink,
-                    query=item.uri,
-                    params=', '.join(item.params)
+                    params=', '.join(item.params),
+                    **plugin_utils.get_vulnweb_url_fields(item.namelink)
                 )
 
         del parser

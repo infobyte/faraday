@@ -22,6 +22,9 @@ TBA:
 * Added a script to connect with Reposify
 * Fixed Hostname import in Nessus Plugin
 * Make plugin methods log() and devlog() work again
+* Fixed bug in SQLMap plugin that made the client freeze
+* Improved SQLMap plugin to support more options and to show errors in GTK log console
+* Fixed bug when creating/updating Credentials
 
 March 17, 2017:
 ---

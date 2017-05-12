@@ -93,6 +93,7 @@ class SqlmapPlugin(PluginTerminalOutput):
         self.params = ""
         self.fullpath = ""
         self.path = ""
+        self.ignore_parsing = False
 
         self.addSetting("Sqlmap path", str, "/root/tools/sqlmap")
 
@@ -196,7 +197,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             try:
                 tree = ET.fromstring(f.read())
             except SyntaxError, err:
-                print "SyntaxError: %s. %s" % (err, filepath)
+                self.log("SyntaxError: %s. %s" % (err, filepath), "ERROR")
                 return None
 
         for node in tree.findall("dbms[@value='" + db + "']/" + name + ''):
@@ -382,6 +383,8 @@ class SqlmapPlugin(PluginTerminalOutput):
         output being sent is valid.
         """
 
+        if self.ignore_parsing:
+            return
         sys.path.append(self.getSetting("Sqlmap path"))
 
         try:
@@ -389,7 +392,7 @@ class SqlmapPlugin(PluginTerminalOutput):
             from lib.core.enums import HASHDB_KEYS
             from lib.core.settings import UNICODE_ENCODING
         except:
-            print 'ERROR: Remember set your Sqlmap Path Setting!... Abort plugin.'
+            self.log('Remember set your Sqlmap Path Setting!... Abort plugin.', 'ERROR')
             return
 
         self.HASHDB_MILESTONE_VALUE = HASHDB_MILESTONE_VALUE
@@ -592,7 +595,12 @@ class SqlmapPlugin(PluginTerminalOutput):
             pass
 
         if args.r:
-            with open(args.r, 'r') as f:
+            filename = os.path.expanduser(args.r)
+            if not os.path.isabs(filename):
+                self.log('Please use an absolute path in -r option of sqlmap', 'ERROR')
+                self.ignore_parsing = True
+                return
+            with open(filename, 'r') as f:
                 request = self.HTTPRequest(f.read())
                 args.u = "http://" + request.headers['host'] + request.path
                 f.close()

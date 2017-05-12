@@ -18,6 +18,7 @@ TBA:
 * Fixed "refresh" button in the Web UI
 * Fix API on /ws/<workspace> with duration object None
 * Added a CRUD for Credentials to the Web UI
+* Bug fixes on the Burp Online Plugin
 
 March 17, 2017:
 ---

@@ -44,6 +44,9 @@ class CmdPingPlugin(core.PluginBase):
             hostname = reg.group(1)
 
             h_id = self.createAndAddHost(ip_address)
+            self.devlog('probando logging!!!!')
+            self.log('INFO MESSAGE')
+            self.log('ERROR MESSAGE', 'ERROR')
             if self._isIPV4(ip_address):
                 i_id = self.createAndAddInterface(
                     h_id, ip_address, ipv4_address=ip_address, hostname_resolution=[hostname])

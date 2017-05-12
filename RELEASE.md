@@ -8,6 +8,7 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+<<<<<<< HEAD
 TBA:
 ---
 * Fixed bug when editing workspaces created in GTK
@@ -21,6 +22,7 @@ TBA:
 * Bug fixes on the Burp Online Plugin
 * Added a script to connect with Reposify
 * Fixed Hostname import in Nessus Plugin
+* Make plugin methods log() and devlog() work again
 
 March 17, 2017:
 ---

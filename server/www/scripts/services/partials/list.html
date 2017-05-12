@@ -21,7 +21,7 @@
                             </ul><!-- WS navigation -->
                         </div><!-- #ws-control -->
                     </h2>
-                    <span ng-if="showServices" class="reports col-md-8 col-sm-8 col-xs-8">
+                    <span ng-hide="!showServices" class="reports col-md-8 col-sm-8 col-xs-8">
                         <h3>Host services</h3>
                         <div>
                             <button type="button" class="btn btn-success btn-sm pull-left" title="New service" ng-click="new()">

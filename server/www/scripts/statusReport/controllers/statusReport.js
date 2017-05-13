@@ -503,7 +503,7 @@ angular.module('faradayApp')
             if (success) {
                 var templateUrl = 'scripts/commons/partials/modalOK.html';
             } else {
-                var templateUrl = 'scripts/commons/partials/modalOK.html';
+                var templateUrl = 'scripts/commons/partials/modalKO.html';
             }
             var modal = $uibModal.open({
                     templateUrl: templateUrl,

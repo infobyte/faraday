@@ -29,7 +29,7 @@ angular.module('faradayApp')
                                     if (data) {
                                         $scope.db_exists = true;
                                     }
-                                }, function(message) { 
+                                }, function(message) {
                                     // no db created, do nothing!
                                 });
                             } else {
@@ -41,7 +41,7 @@ angular.module('faradayApp')
                                     });
                                 vulnModelsManager.getSize().
                                     then(function() {
-                                        $scope.totalModels = vulnModelsManager.totalNumberOfModels
+                                        $scope.totalModels = vulnModelsManager.totalNumberOfModels;
                                     });
                             }
                         }, function(message) {
@@ -57,7 +57,7 @@ angular.module('faradayApp')
                 };
 
                 $scope.pageCount = function() {
-                    return vulnModelsManager.totalNumberOfPages;
+                    return ($scope.howManyInSearch() || vulnModelsManager.totalNumberOfPages);
                 };
 
                 $scope.prevPageDisabled = function() {
@@ -278,6 +278,15 @@ angular.module('faradayApp')
                     return selected;
                 };
 
+                $scope.howManyInSearch = function() {
+                    if (! $scope.search) { return 0; }   // if nothing is searched, there's nothing there
+                    var visible = [];
+                    $filter('filter')($scope.models, $scope.search).forEach(function(model) {
+                        visible.push(model);
+                    });
+                    return visible.length;
+                };
+
                 $scope.checkAll = function() {
                     $scope.selectall_models = !$scope.selectall_models;
 
@@ -315,9 +324,7 @@ angular.module('faradayApp')
                 // toggle column sort order
                 $scope.toggleReverse = function() {
                     $scope.reverse = !$scope.reverse;
-                }
+                };
 
                 init();
             }]);
-
-

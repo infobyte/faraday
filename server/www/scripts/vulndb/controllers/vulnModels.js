@@ -116,36 +116,62 @@ angular.module('faradayApp')
                         resolve: { }
                     });
 
-                    var datas = [];
-                    modal.result.then(
-                        function(data) {
-                            document.body.style.cursor='wait';
-                            $scope.disabledClick = true;
-                            Papa.parse(data, {
-                                worker: true,
-                                header: true,
-                                skipEmptyLines: true,
-                                step: function(results) {
-                                    if (results.data) {datas.push(results.data[0]);}
-                                },
-                                complete: function(res, file) {
-                                    // i feel dirty, really, but it works.
-                                    // pro tip: 'complete' only means it has completed 'parsing'
-                                    // not completed doing whatever is defined on step
-                                    var length = datas.length;
-                                    var counter = 0;
-                                    datas.forEach(function(data) {
-                                        $scope.insert(data).then(function() {
-                                            counter = counter + 1;
-                                            if (length == counter) {
-                                                document.body.style.cursor = "default";
-                                                $scope.disabledClick = false;
-                                            }
-                                        });
-                                    });
+                    var loadCSV = function(data) {
+                        var datas = [];
+                        Papa.parse(data, {
+                            worker: true,
+                            header: true,
+                            skipEmptyLines: true,
+                            step: function(results) {
+                                console.log(results);
+                                if (results.data) {
+                                    datas.push(results.data[0]);
                                 }
-                            });
+                            },
+                            complete: function(res, file) {
+                                // i feel dirty, really, but it works.
+                                // pro tip: 'complete' only means it has completed 'parsing'
+                                // not completed doing whatever is defined on step
+                                var length = datas.length;
+                                var counter = 0;
+                                datas.forEach(function(data) {
+                                    $scope.insert(data).then(function() {
+                                        counter = counter + 1;
+                                        if (length == counter) {
+                                            document.body.style.cursor = "default";
+                                            $scope.disabledClick = false;
+                                        }
+                                    });
+                                });
+                            }
                         });
+                    };
+
+                    modal.result.then(function(data) {
+                        document.body.style.cursor='wait';
+                        $scope.disabledClick = true;
+                        var reader = new FileReader();
+                        reader.readAsText(data);
+                        reader.onload = function(e) {
+                            var text = reader.result;
+                            var expected_header = 'cwe,name,desc_summary,description,resolution,exploitation,references';
+                            if (text.split('\n').shift() !== expected_header) {
+                                document.body.style.cursor = "default";
+                                $scope.disabledClick = false;
+                                $uibModal.open({
+                                    templateUrl: "scripts/commons/partials/modalKO.html",
+                                    controller: "commonsModalKoCtrl",
+                                    resolve: {
+                                        msg: function() {
+                                            return "It appears your CSV has the wrong headers. Headers MUST be present.";
+                                        }
+                                    }
+                                });
+                                return;
+                            };
+                            loadCSV(data);
+                        };
+                    });
                 };
 
                 $scope.importFromWorkspace = function() {

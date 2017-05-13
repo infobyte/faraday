@@ -57,7 +57,15 @@ angular.module('faradayApp')
                 };
 
                 $scope.pageCount = function() {
-                    return ($scope.howManyInSearch() || vulnModelsManager.totalNumberOfPages);
+                    // if the guy searched for something with exactly 0 results, there's just '1' page;
+                    // the one she's seeing with zero results
+                    var searchPages = $scope.pagesOnSearch();
+                    if (searchPages === undefined) {
+                        return vulnModelsManager.totalNumberOfPages;
+                    } else {
+                        // if searchpages is zero, pretend like its one
+                        return (searchPages || 1);
+                    }
                 };
 
                 $scope.prevPageDisabled = function() {
@@ -304,8 +312,14 @@ angular.module('faradayApp')
                     return selected;
                 };
 
+                $scope.pagesOnSearch = function() {
+                    var number = $scope.howManyInSearch();
+                    if (number === undefined) { return undefined; }
+                    return Math.ceil(number / 20);
+                };
+
                 $scope.howManyInSearch = function() {
-                    if (! $scope.search) { return 0; }   // if nothing is searched, there's nothing there
+                    if (! $scope.search) { return undefined; }   // if nothing is searched, there's nothing there
                     var visible = [];
                     $filter('filter')($scope.models, $scope.search).forEach(function(model) {
                         visible.push(model);

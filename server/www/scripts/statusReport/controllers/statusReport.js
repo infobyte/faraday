@@ -363,7 +363,7 @@ angular.module('faradayApp')
         var groupByColumn = function() {
             for (var i = 0; i < $scope.gridOptions.columnDefs.length; i++) {
                 var column = $scope.gridOptions.columnDefs[i];
-                var colname = column.displayName !== undefined ? column.displayName : column.name; 
+                var colname = column.displayName !== undefined ? column.displayName : column.name;
                 if ( colname == $scope.propertyGroupBy && $scope.columns[colname] == true) {
                     column.grouping = { groupPriority: 0 };
                     paginationOptions.sortColumn = colname;
@@ -403,6 +403,7 @@ angular.module('faradayApp')
                 vuln.desc_summary = vuln.desc;
                 self.vulnModelsManager.create(vuln, true);
             });
+            showMessage("Created " + selected.length + " templates successfully.", true);
         };
 
         $scope.selectAll = function() {
@@ -497,9 +498,15 @@ angular.module('faradayApp')
             loadVulns();
         };
 
-        var showMessage = function(msg) {
+        var showMessage = function(msg, success) {
+            if (! success) { var success = false }
+            if (success) {
+                var templateUrl = 'scripts/commons/partials/modalOK.html';
+            } else {
+                var templateUrl = 'scripts/commons/partials/modalOK.html';
+            }
             var modal = $uibModal.open({
-                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    templateUrl: templateUrl,
                     controller: 'commonsModalKoCtrl',
                     resolve: {
                         msg: function() {

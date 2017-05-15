@@ -36,15 +36,17 @@
                                 <span class="glyphicon glyphicon-trash"></span>
                                 Delete
                             </button>
-                            <div class="input-group input-group-sm" style="padding-left: 10px">
-                                <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
-                                <input type="text" class="form-control" id="filter-by"
-                                                                        placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
-                                <span class="input-group-addon glyphicon-btn" ng-click="searchFor(true, searchParams)">
-                                    <i class="fa fa-search" ng-if="loadedServices"></i>
-                                    <i class="fa fa-refresh fa-spin" ng-if="!loadedServices"></i>
-                                </span>
-                            </div>
+                            <form ng-submit="searchFor(true, searchParams)">
+                                <div class="input-group input-group-sm" style="padding-left: 10px">
+                                        <span class="input-group-addon glyphicon-btn glyphicon glyphicon-remove" ng-click="searchFor(false, '')" ng-if="search"></span>
+                                        <input type="text" class="form-control" id="filter-by"
+                                        placeholder="enter keywords" ng-change="currentPage = 0" ng-model="searchParams" />
+                                        <span class="input-group-addon glyphicon-btn">
+                                            <i class="fa fa-search" ng-if="loadedServices"></i>
+                                            <i class="fa fa-refresh fa-spin" ng-if="!loadedServices"></i>
+                                        </span>
+                                </div>
+                            </form>
                             <!-- .ws-label -->
                         </div>
                         <div ng-if="loadedServices && services.length == 0">

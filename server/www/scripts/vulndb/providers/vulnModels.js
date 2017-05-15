@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 //
 angular.module('faradayApp').
-    factory('vulnModelsManager', 
+    factory('vulnModelsManager',
         ['VulnModel', 'BASEURL', 'configSrv', '$http', '$q',
             function(VulnModel, BASEURL, configSrv, $http, $q) {
                 var vulnModelsManager = {};
@@ -104,14 +104,15 @@ angular.module('faradayApp').
 
                 vulnModelsManager.get = function(page, all) {
                     var deferred = $q.defer();
+                    var all = true;
                     var self = this;
 
                     configSrv.promise.
                         then(function() {
                             var skip;
-                            if (page) { skip = (page - 1) * self.pageSize } else { skip = 0 }
+                            // if (page) { skip = (page - 1) * self.pageSize } else { skip = 0 }
                             var url = BASEURL + configSrv.vulnModelsDB + "/_all_docs?include_docs=true&limit=" + self.pageSize + "&skip=" + skip;
-                            if (all) { url = BASEURL + configSrv.vulnModelsDB + "_all_docs?include_docs=true" }
+                            if (all) { url = BASEURL + configSrv.vulnModelsDB + "/_all_docs?include_docs=true" }
 
                             $http.get(url).
                                 then(function(res) {
@@ -173,7 +174,7 @@ angular.module('faradayApp').
                     var deferred = $q.defer();
                     var self = this;
 
-                    if (data._rev === undefined) { 
+                    if (data._rev === undefined) {
                         data._rev = vulnModel._rev;
                     }
 

@@ -397,13 +397,16 @@ angular.module('faradayApp')
         $scope.saveAsModel = function() {
             var self = this;
             var selected = $scope.getCurrentSelection();
-            selected.forEach(function(vuln) {
-                vuln.exploitation = vuln.severity;
-                vuln.description = vuln.desc;
-                vuln.desc_summary = vuln.desc;
-                self.vulnModelsManager.create(vuln, true);
-            });
-            showMessage("Created " + selected.length + " templates successfully.", true);
+            try {
+                selected.forEach(function(vuln) {
+                    vuln.exploitation = vuln.severity;
+                    vuln.description = vuln.desc;
+                    vuln.desc_summary = vuln.desc;
+                    self.vulnModelsManager.create(vuln, true);
+                });
+            } catch {
+                showMessage("Created " + selected.length + " templates successfully.", true);
+            }
         };
 
         $scope.selectAll = function() {

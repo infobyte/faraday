@@ -104,7 +104,11 @@ angular.module('faradayApp').
                                     self._rev = data.rev;
                                     deferred.resolve(self);
                                 }, function(res) {
-                                    deferred.reject("Unable to save the Vuln Model. " + res.data.reason)
+                                    try {
+                                        deferred.reject("Unable to save the Vuln Model. " + res.data.reason);
+                                    } catch(err) {
+                                        deferred.reject(err);
+                                    }
                                 });
                         }, function(reason) {
                             deferred.reject(reason);

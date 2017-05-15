@@ -397,15 +397,21 @@ angular.module('faradayApp')
         $scope.saveAsModel = function() {
             var self = this;
             var selected = $scope.getCurrentSelection();
+            var promises = [];
             try {
                 selected.forEach(function(vuln) {
                     vuln.exploitation = vuln.severity;
                     vuln.description = vuln.desc;
                     vuln.desc_summary = vuln.desc;
-                    self.vulnModelsManager.create(vuln, true);
+                    promises.push(self.vulnModelsManager.create(vuln, true));
                 });
-            } catch {
-                showMessage("Created " + selected.length + " templates successfully.", true);
+                $q.all(promises).then(function(success) {
+                    showMessage("Created " + selected.length + " templates successfully.", true);
+                }, function(failed) {
+                    showMessage("Something failed when creating some of the templates.");
+                });
+            } catch(err) {
+                showMessage("Something failed when creating some of the templates.");
             }
         };
 

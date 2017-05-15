@@ -30,10 +30,10 @@ angular.module('faradayApp')
                 var self = this;
                 return ServerAPI.updateHost(ws, data)
                 .then(function(hostData) {
+                    self._rev = hostData.data.rev;
                     ServerAPI.updateInterface(ws, interfaceData)
                     .then(function(intData) {
-                            self._rev = hostData.rev;
-                            interfaceData._rev = intData.rev;
+                            interfaceData._rev = intData.data.rev;
                     });
                 });
             },

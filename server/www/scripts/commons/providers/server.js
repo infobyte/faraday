@@ -61,6 +61,7 @@ angular.module("faradayApp")
                 if (typeof is_update === "undefined") {var is_update = false;}
                 if (is_update && !data._rev) {
                     // ok, undefined, you win
+                    console.log('ok, undefined, you win');
                     return get(url).then(function s(r) {
                         data._rev = r.data._rev;
                         return serverComm("PUT", url, data);

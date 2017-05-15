@@ -1,0 +1,124 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+            <section id="main" class="seccion clearfix">
+
+                <div class="right-main"><div id="reports-main" class="fila clearfix">
+                    <h2 class="ws-label">
+                        <span id="ws-name" title="Hosts" ng-if="editing && !host._id">Creating host</span><!-- WS name -->
+                        <div id="ws-control" class="btn-group">
+                            <button id="refresh" type="button" class="btn btn-danger" title="Refresh current workspace" ng-click="location.reload()">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" title="Change current workspace">
+                                Change workspace <span class="caret"></span>
+                            </button>
+                            <ul id="nav" class="dropdown-menu dropdown-menu-right" role="menu">
+                                <li ng-repeat="ws in workspaces"><a href="#/hosts/ws/{{ws}}" class="ws" >{{ws}}</a></li>
+                            </ul><!-- WS navigation -->
+                        </div><!-- #ws-control -->
+                    </h2>
+                    <div class="reports col-md-8 col-sm-8 col-xs-8" style="border-right: 1px solid #CCC">
+                        <form name="form">
+                            <h3>
+                                Host details
+                                <span style="float:right">
+                                    <a class="btn btn-sm btn-default" href="#/host/ws/{{workspace}}/hid/{{host._id}}/edit" ng-if="!editing">
+                                        <span class="glyphicon glyphicon-pencil"></span>
+                                        Edit
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-default" title="Delete host" ng-click="deleteHost()" ng-if="!editing">
+                                        <span class="glyphicon glyphicon-trash"></span>
+                                        Delete
+                                    </button>
+                                    <a class="btn btn-danger" href="#/hosts/ws/{{workspace}}" ng-if="editing && creating">Cancel</a>
+                                    <button class="btn btn-success" ng-disabled="form.$invalid" ng-click="ok()" ng-if="editing">OK</button>
+                                </span>
+                            </h3>
+                            <div class="form-horizontal">
+                                <div class="form-group" ng-class="{'has-error': !host.name }">
+                                    <div class="col-md-12">
+                                        <strong ng-if="!editing">Name</strong>
+                                        <h5 ng-if="editing">Name</h5>
+                                        <label class="sr-only" for="name">Name</label>
+                                        <input type="text" class="form-control" id="name" placeholder="Name" ng-model="host.name" ng-if="editing" required/>
+                                        <p ng-if="!editing">{{host.name}}</p>
+                                        <span class="help-block normal-size" ng-if="editing">
+                                            Example: 192.168.0.1
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-md-3" style="margin-bottom: 15px">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" id="owned" ng-model="host.owned" ng-disabled="!editing"/>
+                                                <span class="normal-size">Owned</span>
+                                            </label>
+                                        </div><!-- .checkbox -->
+                                    </div>
+                                    <div class="col-md-12">
+                                        <strong ng-if="!editing">Operating System</strong>
+                                        <h5 ng-if="editing">Operating System</h5>
+                                        <label class="sr-only" for="os">Operating System</label>
+                                        <input type="text" class="form-control" id="os" placeholder="Operating System" ng-model="host.os" ng-if="editing"/>
+                                        <p ng-if="!editing">
+                                        <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
+                                        {{host.os}}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong ng-if="!editing">IPv4</strong>
+                                        <h5 ng-if="editing">IPv4</h5>
+                                        <input type="text" class="form-control" id="ipv4" placeholder="IPv4" ng-model="interface.ipv4.address" ng-if="editing"/>
+                                        <p ng-if="!editing">{{interface.ipv4.address}}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong ng-if="!editing">IPv6</strong>
+                                        <h5 ng-if="editing">IPv6</h5>
+                                        <input type="text" class="form-control" id="ipv6" placeholder="IPv6" ng-model="interface.ipv6.address" ng-if="editing"/>
+                                        <p ng-if="!editing">{{interface.ipv6.address}}</p>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <strong ng-if="!editing">MAC</strong>
+                                        <h5 ng-if="editing">MAC</h5>
+                                        <input type="text" class="form-control" id="ipv4" placeholder="MAC" ng-model="interface.mac" ng-if="editing"/>
+                                        <p ng-if="!editing">{{interface.mac}}</p>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <strong ng-if="!editing">Description</strong>
+                                        <h5 ng-if="editing">Description</h5>
+                                        <label class="sr-only" for="description">Description</label>
+                                        <textarea class="form-control" id="description" placeholder="Description" ng-model="host.description" ng-if="editing"></textarea>
+                                        <p ng-if="!editing">{{host.description}}</p>
+                                    </div>
+                                </div><!-- .form-group -->
+                            </div>
+                        </form>
+                    </div>
+                    <div class="reports col-md-4 col-sm-4 col-xs-4">
+                        <h3>
+                            Hostnames
+                            <span style="float:right">
+                                <button class="btn btn-success" ng-click="newHostnames($event)">Add Hostname</button>
+                            </span>
+                        </h3>
+                        <h5 ng-if="editing" style="min-height: 1.1em"></h5>
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <span ng-if="editing">
+                                    <div class="col-md-12 input-margin" ng-repeat="hostname in interface.hostnames">
+                                        <div class="input-group margin-bottom-sm col-md-12">
+                                            <label class="sr-only" for="hostsnames">Hostname</label>
+                                            <input type="text" class="form-control" id="hostsnames" placeholder="Hostname" ng-model="hostname.key" />
+                                            <span class="input-group-addon" ng-click="interface.hostnames.splice($index, 1)" ng-hide="interface.hostnames.length == 1" ng-if="editing"><i class="fa fa-minus-circle"></i></span>
+                                        </div>
+                                    </div>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- #reports-main --></div><!-- .right-main -->
+            </section><!-- #main -->
+

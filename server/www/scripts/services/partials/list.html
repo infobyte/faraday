@@ -174,7 +174,7 @@
                                         <label class="sr-only" for="os">Operating System</label>
                                         <input type="text" class="form-control" id="os" placeholder="Operating System" ng-model="host.os" ng-if="editing"/>
                                         <p ng-if="!editing">
-                                        <img ng-if="host.icon != undefined" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
+                                        <img ng-if="host.icon && host.icon != 'unknown'" ng-src="images/{{host.icon}}.png" uib-tooltip="{{host.os}}"/>
                                         {{host.os}}
                                         </p>
                                     </div>

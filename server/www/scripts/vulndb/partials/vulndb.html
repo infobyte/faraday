@@ -65,7 +65,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="model in models | filter:search | orderBy:name"
+                    <tr ng-repeat="model in models | filter:search | startFrom:currentPage*pageSize | limitTo:pageSize | orderBy:name"
                         selection-model selection-model-type="checkbox"
                         selection-model-mode="multiple-additive"
                         selection-model-selected-class="multi-selected"
@@ -79,21 +79,21 @@
                     </tr>
                 </tbody>
             </table>
-            <!-- <div class="showPagination"> -->
-            <!-- <div class="form-group"> -->
-            <!-- <ul class="pagination"> -->
-            <!-- <li><a ng-hide="prevPageDisabled()" ng-click="disabledClick || prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li> -->
-            <!-- <li><a>{{currentPage}}/{{pageCount()}}</a></li> -->
-            <!-- <li><a ng-hide="nextPageDisabled()" ng-click="disabledClick || nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li> -->
-            <!-- </ul> -->
-            <!-- <form name="goToPage" id="goToPageStatus"> -->
-            <!-- <div class="col-md-2"> -->
-            <!-- <input type="number" min="1" max="{{pageCount()}}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/> -->
-            <!-- </div> -->
-            <!-- <button class="btn btn-default" ng-click="disabledClick || go()">GO</button> -->
-                            <!-- </form> -->
-                            <!-- </div> -->
-                            <!-- </div><!-- .showPagination -->
+            <div class="showPagination">
+                    <div class="form-group">
+                        <ul class="pagination">
+                            <li><a ng-hide="prevPageDisabled()" ng-click="disabledClick || prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                            <li><a>{{currentPage}}/{{pageCount()}}</a></li>
+                            <li><a ng-hide="nextPageDisabled()" ng-click="disabledClick || nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                        </ul>
+                        <form name="goToPage" id="goToPageStatus">
+                            <div class="col-md-2">
+                                <input type="number" min="1" max="{{pageCount()}}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
+                            </div>
+                            <button class="btn btn-default" ng-click="disabledClick || go()">GO</button>
+                        </form>
+                    </div>
+            </div><!-- .showPagination -->
         </div><!-- .reports -->
     </div><!-- #reports-main --></div><!-- .right-main -->
 </section><!-- #main -->

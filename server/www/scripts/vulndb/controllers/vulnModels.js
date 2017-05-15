@@ -8,8 +8,9 @@ angular.module('faradayApp')
                 $scope.totalModels = 0;
                 $scope.disabledClick = false;
                 $scope.reverse;
-                $scope.search;
+                $scope.search = '';
                 $scope.currentPage;
+                $scope.pageSize = 20;
 
                 var init = function() {
                     // table stuff
@@ -54,6 +55,13 @@ angular.module('faradayApp')
                         $scope.models = vulnModelsManager.models;
                         $scope.loaded_models = true;
                     }, true);
+                    $scope.$watch(function() {
+                        return $scope.pageCount();
+                    }, function(newVal, oldVal, scope) {
+                        if (scope.currentPage > scope.pageCount()) {
+                            $scope.currentPage = $scope.pageCount();
+                        }
+                    });;
                 };
 
                 $scope.pageCount = function() {
@@ -79,13 +87,11 @@ angular.module('faradayApp')
                 $scope.nextPage = function() {
                     if ($scope.currentPagepage <= 0 || $scope.currentPage > $scope.pageCount) { return; }
                     $scope.currentPage += 1;
-                    vulnModelsManager.get($scope.currentPage);
                 };
 
                 $scope.prevPage = function() {
                     if ($scope.currentPagepage <= 0 || $scope.currentPage > $scope.pageCount) { return; }
                     $scope.currentPage -= 1;
-                    vulnModelsManager.get($scope.currentPage);
                 };
 
 
@@ -93,7 +99,6 @@ angular.module('faradayApp')
                     var page = $scope.newCurrentPage;
                     if (page <= 0 || page > $scope.pageCount || ! page) { return; }
                     $scope.currentPage = page;
-                    vulnModelsManager.get($scope.currentPage);
                 };
 
 
@@ -385,3 +390,12 @@ angular.module('faradayApp')
 
                 init();
             }]);
+
+//We already have a limitTo filter built-in to angular,
+//let's make a startFrom filter
+angular.module('faradayApp').filter('startFrom', function() {
+    return function(input, start) {
+        start = +start; //parse to int
+        return input.slice(start);
+    };
+});

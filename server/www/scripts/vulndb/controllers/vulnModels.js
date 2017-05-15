@@ -131,7 +131,6 @@ angular.module('faradayApp')
                             header: true,
                             skipEmptyLines: true,
                             step: function(results) {
-                                console.log(results);
                                 if (results.data) {
                                     datas.push(results.data[0]);
                                 }
@@ -162,8 +161,10 @@ angular.module('faradayApp')
                         reader.readAsText(data);
                         reader.onload = function(e) {
                             var text = reader.result;
-                            var expected_header = 'cwe,name,desc_summary,description,resolution,exploitation,references';
-                            if (text.split('\n').shift() !== expected_header) {
+                            var expected_header = ["cwe", "description", "desc_summary", "exploitation", "name", "references", "resolution"];
+                            var actual_header = text.split('\n').shift().trim().toLowerCase().split(",");
+
+                            if(!equalAsSets(expected_header, actual_header)) {
                                 document.body.style.cursor = "default";
                                 $scope.disabledClick = false;
                                 $uibModal.open({
@@ -171,7 +172,9 @@ angular.module('faradayApp')
                                     controller: "commonsModalKoCtrl",
                                     resolve: {
                                         msg: function() {
-                                            return "It appears your CSV has the wrong headers. Headers MUST be present.";
+                                            return "It appears your CSV has the wrong headers. Headers MUST be present."+
+                                                    " Expected headers: " + expected_header.join(', ')+
+                                                    " Actual file headers: " + actual_header.join(', ');
                                         }
                                     }
                                 });
@@ -364,6 +367,20 @@ angular.module('faradayApp')
                 // toggle column sort order
                 $scope.toggleReverse = function() {
                     $scope.reverse = !$scope.reverse;
+                };
+
+                var equalAsSets = function(a, b) {
+                    if(a.length != b.length) return false;
+
+                    a.forEach(function(elem) {
+                        if(b.indexOf(elem) == -1) return false
+                    });
+
+                    b.forEach(function(elem) {
+                        if(a.indexOf(elem) == -1) return false
+                    });
+
+                    return true;
                 };
 
                 init();

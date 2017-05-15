@@ -18,6 +18,14 @@ TBA:
 * Fixed "refresh" button in the Web UI
 * Fix API on /ws/<workspace> with duration object None
 * Added a CRUD for Credentials to the Web UI
+* Bug fixes on the Burp Online Plugin
+* Added a script to connect with Reposify
+* Fixed Hostname import in Nessus Plugin
+* Make plugin methods log() and devlog() work again
+* Fixed bug in SQLMap plugin that made the client freeze
+* Improved SQLMap plugin to support more options and to show errors in GTK log console
+* Fixed bug when creating/updating Credentials
+* Improve plugins usage of vulnweb URL fields
 
 March 17, 2017:
 ---

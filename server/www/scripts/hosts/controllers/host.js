@@ -459,7 +459,7 @@ angular.module('faradayApp')
             // load icons into object for HTML
             // maybe this part should be directly in the view somehow
             // or, even better, in a CSS file
-            var oss = ["windows", "cisco", "router", "osx", "apple","linux", "unix"];
+            var oss = ["windows", "cisco", "router", "osx", "apple","linux", "unix", "unknown"];
             oss.forEach(function(os){
                 if(host.os.toLowerCase().indexOf(os) != -1) {
                     host.icon = os;

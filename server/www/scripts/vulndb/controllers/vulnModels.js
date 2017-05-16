@@ -68,8 +68,9 @@ angular.module('faradayApp')
                     // if the guy searched for something with exactly 0 results, there's just '1' page;
                     // the one she's seeing with zero results
                     var searchPages = $scope.pagesOnSearch();
+
                     if (searchPages === undefined) {
-                        return vulnModelsManager.totalNumberOfPages;
+                        return (Math.ceil(vulnModelsManager.totalNumberOfModels / this.pageSize) || 1);
                     } else {
                         // if searchpages is zero, pretend like its one
                         return (searchPages || 1);

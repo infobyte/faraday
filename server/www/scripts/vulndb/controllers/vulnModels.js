@@ -58,7 +58,7 @@ angular.module('faradayApp')
                     $scope.$watch(function() {
                         return $scope.pageCount();
                     }, function(newVal, oldVal, scope) {
-                        if (scope.currentPage > scope.pageCount()) {
+                        if ($scope.currentPage > $scope.pageCount()) {
                             $scope.currentPage = $scope.pageCount();
                         }
                     });;
@@ -329,11 +329,11 @@ angular.module('faradayApp')
 
                 $scope.howManyInSearch = function() {
                     if (! $scope.search) { return undefined; }   // if nothing is searched, there's nothing there
-                    var visible = [];
-                    $filter('filter')($scope.models, $scope.search).forEach(function(model) {
-                        visible.push(model);
-                    });
-                    return visible.length;
+                    var filteredModels = $filter('filter')($scope.models, $scope.search);
+                    if (filteredModels.length == 4) {
+                        console.log(filteredModels);
+                    }
+                    return filteredModels.length;
                 };
 
                 $scope.checkAll = function() {

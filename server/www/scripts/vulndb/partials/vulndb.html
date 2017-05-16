@@ -65,7 +65,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="model in models | filter:search | startFrom:currentPage*pageSize | limitTo:pageSize | orderBy:name"
+                    <tr ng-repeat="model in models | filter:search | startFrom:(currentPage*pageSize)-20 | limitTo:pageSize | orderBy:name"
                         selection-model selection-model-type="checkbox"
                         selection-model-mode="multiple-additive"
                         selection-model-selected-class="multi-selected"

@@ -176,8 +176,11 @@ describe('statusReportCtrl', function() {
             vulnsManagerMock = {
                 vulns: [],
                 getVulns: function(workspace) {
-                    vulnsManagerMock.vulns = [vuln1, vuln2, vuln3];
-                    return returnPromise(vulnsManagerMock.vulns);
+                    if (vulnsManagerMock.vulns.length == 0)
+                        vulnsManagerMock.vulns = [vuln1, vuln2, vuln3];
+                    return returnPromise({
+                        vulnerabilities: vulnsManagerMock.vulns,
+                        count: vulnsManagerMock.vulns.length});
                 },
                 deleteVuln: function(vuln) {
                     if (vuln._id === "1.2.3.4" ||

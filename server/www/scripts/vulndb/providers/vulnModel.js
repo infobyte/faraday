@@ -14,7 +14,6 @@ angular.module('faradayApp').
                 this.resolution = "";
                 this.cwe = "";
                 this.description = "";
-                this.desc_summary = "";
                 if (data) {
                     if(data.name === undefined || data.name === "") {
                         throw new Error("Unable to create a Vulnerability Model whithout a name");
@@ -25,7 +24,7 @@ angular.module('faradayApp').
 
             VulnModel.prototype = {
 
-                public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'desc_summary', 'description'],
+                public_properties: ['exploitation', 'references', 'name', 'resolution', 'cwe', 'description'],
 
                 set: function(data) {
                     var self = this;
@@ -120,5 +119,3 @@ angular.module('faradayApp').
 
             return VulnModel;
         }]);
-
-

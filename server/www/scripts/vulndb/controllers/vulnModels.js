@@ -167,7 +167,7 @@ angular.module('faradayApp')
                         reader.readAsText(data);
                         reader.onload = function(e) {
                             var text = reader.result;
-                            var expected_header = ["cwe", "description", "desc_summary", "exploitation", "name", "references", "resolution"];
+                            var expected_header = ["cwe", "description", "exploitation", "name", "references", "resolution"];
                             var actual_header = text.split('\n').shift().trim().toLowerCase().split(",");
 
                             if(!equalAsSets(expected_header, actual_header)) {

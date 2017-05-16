@@ -10,6 +10,12 @@
             </div><!-- .ws-label -->
             <div class="reports col-md-12 col-sm-12 col-xs-12">
                 <div class="button-control col-md-6 col-sm-6 col-xs-12">
+                    <div id="merge" class="btn-group btn-small-margin">
+                        <button id="import" type="button" class="btn btn-success" title="Import from CSV" ng-click="disabledClick || importCSV()">
+                            <span class="glyphicon glyphicon-upload"></span>
+                            Import
+                        </button>
+                    </div>
                     <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="disabledClick || delete()">
                         <span class="glyphicon glyphicon-trash"></span>
                         Delete
@@ -25,16 +31,7 @@
                         New
                     </button>
                 </div><!-- .col-md-6 .col-sm-6 .col-xs-12 -->
-                <div id="ws-control" class="btn-group btn-small-margin">
-                    <button id="import" type="button" class="btn btn-success" title="Import from CSV" ng-click="disabledClick || importCSV()">
-                        <span class="glyphicon glyphicon-upload"></span>
-                    </button>
-                    <button id="importFromWs" type="button" class="btn btn-success" title="Import from Workspace" ng-click="disabledClick || importFromWorkspace()">
-                        <span class="glyphicon glyphicon-transfer"></span>
-                    </button>
-                </div><!-- #ws-control -->
-                <!-- <div class="col-md-6 col-sm-3 col-xs-11"> UNCOMMENT TO GET MINIMAL SEARCH BAR-->
-                    <div class="form-group">
+                <div class="form-group">
                         <div class="input-group">
                             <input type="text" class="form-control input-sm" ng-model="search" placeholder="enter keywords" />
                             <span class="input-group-btn">
@@ -43,7 +40,6 @@
                                 </button>
                             </span>
                         </div>
-                    <!-- </div> -->
                 </div>
             <table class="status-report licenses-list table table-responsive">
                 <thead>

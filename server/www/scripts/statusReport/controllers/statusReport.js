@@ -802,7 +802,7 @@ angular.module('faradayApp')
                 size: 'lg',
                 resolve: {
                     msg: function() {
-                        return 'CWE template';
+                        return 'Vulnerability template';
                     }
                 }
             });

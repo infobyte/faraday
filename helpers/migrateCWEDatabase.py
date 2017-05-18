@@ -56,8 +56,10 @@ def main():
     parser.add_argument('--convert-only', action="store_true",
                         help="Only convert the CSV file. Don't touch CouchDB")
 
-    parser.add_argument('csvfile', action='store', type=str,
-                        help='CSV vulnerability template file')
+    parser.add_argument('-f', '--csvfile', action='store', type=str,
+                        dest='csvfile', default="data/cwe.csv",
+                        help='CSV vulnerability template file '
+                            '(default data/cwe.csv)')
 
     args = parser.parse_args()
 

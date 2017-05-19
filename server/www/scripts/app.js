@@ -37,6 +37,17 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         ];
         return severities;
     })())
+    .constant("EXPLOITATIONS", (function() {
+        var exploitations = [
+            "critical",
+            "high",
+            "med",
+            "low",
+            "info",
+            "unclassified"
+        ];
+        return exploitations;
+    })())
     .constant("STATUSES", (function() {
         var statuses = [
             "opened",
@@ -235,6 +246,11 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/credentials/partials/list.html',
             controller: 'credentialsCtrl',
             title: 'Credentials | '
+        }).
+        when('/vulndb', {
+            templateUrl: 'scripts/vulndb/partials/vulndb.html',
+            controller: 'vulnModelsCtrl',
+            title: 'Vulnerabilities |'
         }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html'

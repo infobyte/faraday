@@ -1,0 +1,95 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+
+<section id="main" class="seccion clearfix">
+    <div class="right-main" ng-show="db_exists">
+        <div id="reports-main" class="fila clearfix">
+            <div class="ws-label">
+                <h2><span id="ws-name" title="">Vulnerability Templates</span></h2><!-- WS name -->
+            </div><!-- .ws-label -->
+            <div class="reports col-md-12 col-sm-12 col-xs-12">
+                <div class="button-control col-md-6 col-sm-6 col-xs-12">
+                    <div id="merge" class="btn-group btn-small-margin">
+                        <button id="import" type="button" class="btn btn-success" title="Import from CSV" ng-click="disabledClick || importCSV()">
+                            <span class="glyphicon glyphicon-upload"></span>
+                            Import
+                        </button>
+                    </div>
+                    <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="disabledClick || delete()">
+                        <span class="glyphicon glyphicon-trash"></span>
+                        Delete
+                    </button>
+                    <div id="merge" class="btn-group btn-small-margin">
+                        <button type="button" class="btn btn-default" title="Edit selected vulns" ng-click="disabledClick || edit()" ng-disabled="selectedModels().length != 1">
+                            <span class="glyphicon glyphicon-pencil"></span>
+                            Edit
+                        </button>
+                    </div>
+                    <button id="new" type="button" class="btn btn-success" title="New Vulnerablity Model" ng-click="disabledClick || new()">
+                        <span class="glyphicon glyphicon-plus-sign"></span>
+                        New
+                    </button>
+                </div><!-- .col-md-6 .col-sm-6 .col-xs-12 -->
+                <div class="form-group">
+                        <div class="input-group">
+                            <input type="text" class="form-control input-sm" ng-model="search" placeholder="enter keywords" />
+                            <span class="input-group-btn">
+                                <button class="btn btn-sm" type="button">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </span>
+                        </div>
+                </div>
+            <table class="status-report licenses-list table table-responsive">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" ng-model="selectall" ng-click="disabledClick || checkAll()"/></th>
+                        <th>
+                            <a href="" ng-click="toggleSort('name')">Name</a>
+                        </th>
+                        <th>
+                            <a href="" ng-click="toggleSort('description')">Description</a>
+                        </th>
+                        <th>
+                            <a href="" ng-click="toggleSort('resolution')">Resolution</a>
+                        </th>
+                        <th>
+                            <a href="" ng-click="toggleSort('exploitation')">Exploitation</a>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="model in models | filter:search | startFrom:(currentPage*pageSize)-20 | limitTo:pageSize | orderBy:name"
+                        selection-model selection-model-type="checkbox"
+                        selection-model-mode="multiple-additive"
+                        selection-model-selected-class="multi-selected"
+                        selection-model-on-change="selectedModels()">
+                        <td><input type="checkbox" name="{{model._id}}"/></td>
+                        <td>{{model.name}}</td>
+                        <td>{{model.description}}</td>
+                        <td>{{model.resolution}}</td>
+                        <td>{{model.exploitation}}</td>
+                        </div>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="showPagination">
+                    <div class="form-group">
+                        <ul class="pagination">
+                            <li><a ng-hide="prevPageDisabled()" ng-click="disabledClick || prevPage()"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+                            <li><a>{{currentPage}}/{{pageCount()}}</a></li>
+                            <li><a ng-hide="nextPageDisabled()" ng-click="disabledClick || nextPage()"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+                        </ul>
+                        <form name="goToPage" id="goToPageStatus">
+                            <div class="col-md-2">
+                                <input type="number" min="1" max="{{pageCount()}}" class="form-control" ng-model="newCurrentPage" placeholder="Go to page"/>
+                            </div>
+                            <button class="btn btn-default" ng-click="disabledClick || go()">GO</button>
+                        </form>
+                    </div>
+            </div><!-- .showPagination -->
+        </div><!-- .reports -->
+    </div><!-- #reports-main --></div><!-- .right-main -->
+</section><!-- #main -->

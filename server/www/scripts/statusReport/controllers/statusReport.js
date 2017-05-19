@@ -7,11 +7,11 @@ angular.module('faradayApp')
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
                     'SEVERITIES', 'EASEOFRESOLUTION', 'STATUSES', 'hostsManager', 'commonsFact',
-                    'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants',
+                     'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants', 'vulnModelsManager',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,
-                        vulnsManager, workspacesFact, csvService, uiGridConstants) {
+                             vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager) {
         $scope.baseurl;
         $scope.columns;
         $scope.easeofresolution;
@@ -25,6 +25,7 @@ angular.module('faradayApp')
         $scope.workspaces;
         $scope.currentPage;
         $scope.gridOptions;
+        $scope.vulnModelsManager;
 
         $scope.vulnWebSelected;
         $scope.confirmed = false;
@@ -48,6 +49,7 @@ angular.module('faradayApp')
             $scope.reverse = true;
             $scope.vulns = [];
             $scope.selected = false;
+            $scope.vulnModelsManager = vulnModelsManager;
 
             $scope.gridOptions = {
                 multiSelect: true,
@@ -398,7 +400,7 @@ angular.module('faradayApp')
         var groupByColumn = function() {
             for (var i = 0; i < $scope.gridOptions.columnDefs.length; i++) {
                 var column = $scope.gridOptions.columnDefs[i];
-                var colname = column.displayName !== undefined ? column.displayName : column.name; 
+                var colname = column.displayName !== undefined ? column.displayName : column.name;
                 if ( colname == $scope.propertyGroupBy && $scope.columns[colname] == true) {
                     column.grouping = { groupPriority: 0 };
                     paginationOptions.sortColumn = colname;
@@ -428,6 +430,28 @@ angular.module('faradayApp')
                 res = "Confirm";
             }
             return res;
+        };
+
+
+        $scope.saveAsModel = function() {
+            var self = this;
+            var selected = $scope.getCurrentSelection();
+            var promises = [];
+            try {
+                selected.forEach(function(vuln) {
+                    vuln.exploitation = vuln.severity;
+                    vuln.description = vuln.desc;
+                    vuln.desc_summary = vuln.desc;
+                    promises.push(self.vulnModelsManager.create(vuln, true));
+                });
+                $q.all(promises).then(function(success) {
+                    showMessage("Created " + selected.length + " templates successfully.", true);
+                }, function(failed) {
+                    showMessage("Something failed when creating some of the templates.");
+                });
+            } catch(err) {
+                showMessage("Something failed when creating some of the templates.");
+            }
         };
 
         $scope.selectAll = function() {
@@ -522,9 +546,15 @@ angular.module('faradayApp')
             loadVulns();
         };
 
-        var showMessage = function(msg) {
+        var showMessage = function(msg, success) {
+            if (! success) { var success = false }
+            if (success) {
+                var templateUrl = 'scripts/commons/partials/modalOK.html';
+            } else {
+                var templateUrl = 'scripts/commons/partials/modalKO.html';
+            }
             var modal = $uibModal.open({
-                    templateUrl: 'scripts/commons/partials/modalKO.html',
+                    templateUrl: templateUrl,
                     controller: 'commonsModalKoCtrl',
                     resolve: {
                         msg: function() {
@@ -811,7 +841,7 @@ angular.module('faradayApp')
                 size: 'lg',
                 resolve: {
                     msg: function() {
-                        return 'CWE template';
+                        return 'Vulnerability template';
                     }
                 }
             });

@@ -86,7 +86,7 @@ def main():
         file_csv = open('vulndb.csv','w')
 
         file_csv.write(
-        'cwe,name,desc_summary,description,resolution,exploitation,references,severity\n'
+        'cwe,name,description,resolution,exploitation,references,severity\n'
         )
 
         writer = csv.writer(
@@ -106,7 +106,6 @@ def main():
                 result = (
                 csv_content.cwe,
                 csv_content.name,
-                '',
                 csv_content.description,
                 csv_content.resolution,
                 '',

@@ -8,6 +8,7 @@ angular.module('faradayApp')
         
         var vm = this;
 
+        vm.saveAsModelDisabled = false;
         vm.easeofresolution;
         vm.new_ref;
         vm.icons;
@@ -21,6 +22,7 @@ angular.module('faradayApp')
         vm.vuln;
 
         init = function() {
+            vm.modelMessage = "Click here."
             vm.easeofresolution = EASEOFRESOLUTION;
             vm.severities = severities;
             vm.statuses = STATUSES;
@@ -73,6 +75,12 @@ angular.module('faradayApp')
                 vm.icons = commons.loadIcons(vm.data._attachments); 
             }
         };
+
+        vm.saveAsModel = function() {
+            vm.modelMessage = "Done."
+            vm.vulnModelsManager.create(vm.data);
+            vm.saveAsModelDisabled = true;
+        }
         
         vm.selectedFiles = function(files, e) {
             files.forEach(function(file) {

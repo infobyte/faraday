@@ -4,13 +4,16 @@ import csv
 import tempfile
 import os
 from couchdbkit import Server
+from sys import exit
 
 def delete_cwe_db(couchdb_url):
     response = requests.delete(couchdb_url + "/cwe")
     if response.status_code == 200:
         print "[*] Deleted old CWE database: OK"
+        return True
     else:
         print "[*] Deleted old CWE database failed:", response.text
+        return False
 
 def push_cwe(couchdb_url, filename):
     __serv = Server(uri=couchdb_url)
@@ -66,7 +69,9 @@ def main():
     delete_summary_csv(args.csvfile)
 
     if not args.convert_only:
-        delete_cwe_db(args.couchdb)
+
+        if not delete_cwe_db(args.couchdb):
+            exit()
         push_cwe(args.couchdb, args.csvfile)
 
 if __name__ == "__main__":

@@ -26,6 +26,7 @@ TBA:
 * Improved SQLMap plugin to support more options and to show errors in GTK log console
 * Fixed bug when creating/updating Credentials
 * Improve plugins usage of vulnweb URL fields
+* Fixed order of Report Plugins in the GTK import list
 
 March 17, 2017:
 ---

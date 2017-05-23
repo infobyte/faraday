@@ -12,6 +12,8 @@ angular.module('faradayApp')
         		$scope.header = "workspace comparison";
         	} else if ($location.path().split("/")[1] === "communication") {
         		$scope.header = "chat";
+            } else if ($location.path().split("/")[1] === "data_analysis") {
+                $scope.header = "data analysis";
         	} else {
         		$scope.header = $location.path().split("/")[1];
         	}

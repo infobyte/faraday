@@ -252,6 +252,10 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             controller: 'vulnModelsCtrl',
             title: 'Vulnerabilities |'
         }).
+        when('/data_analysis', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl'
+        }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html'
         });

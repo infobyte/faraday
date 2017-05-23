@@ -1133,3 +1133,8 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .small-size {
     font-size:10px;
 }
+
+.header_right {
+    float: right;
+    margin: 8px;
+}

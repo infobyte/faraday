@@ -8,7 +8,7 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
-TBA:
+May 24, 2017:
 ---
 * Fixed bug when editing workspaces created in GTK
 * Improved host search in the WEB UI

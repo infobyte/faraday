@@ -134,7 +134,7 @@ angular.module('faradayApp')
 
         Object.keys(_credentialFields).forEach(function(key, index) {
             // Credential dont have property or type of property in credential dont same.
-            if(!credential.hasOwnProperty(key) || typeof(credential[key]) !== _credentialFields[key] || credential[key] === '')
+            if(!credential.hasOwnProperty(key) || typeof(credential[key]) !== _credentialFields[key])
                 throw 'Credential-Invalid fields: Invalid fields in credential creation: ' + key;
         });
     };

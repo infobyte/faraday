@@ -232,6 +232,11 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             controller: 'credentialsCtrl',
             title: 'Credentials | '
         }).
+        when('/credentials/ws', {
+            templateUrl: 'scripts/credentials/partials/list.html',
+            controller: 'credentialsCtrl',
+            title: 'Credentials | '
+        }).
         when('/credentials/ws/:wsId', {
             templateUrl: 'scripts/credentials/partials/list.html',
             controller: 'credentialsCtrl',

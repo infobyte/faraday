@@ -173,6 +173,12 @@ def getParserArgs():
 
     parser.add_argument('--nodeps', action='store_true', help='Skip dependency check')
 
+    f = open(FARADAY_VERSION_FILE)
+    f_version = f.read().strip()
+
+    parser.add_argument('-v', '--version', action='version',
+                        version='Faraday v{version}'.format(version=f_version))
+
     # args = parser.parse_args(['@parser_args.cfg'])
     return parser.parse_args()
 
@@ -497,18 +503,11 @@ def checkVersion():
 
 
 def check_faraday_version():
-    server_info = server.server_info()
-
-    faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
-
-    file_path = os.path.join(faraday_directory, 'VERSION')
-
-    with open(file_path, 'r') as version_file:
-        version = version_file.read().strip()
-
-    if server_info is not None and version != server_info['Version']:
+    try:
+        server.check_faraday_version()
+    except RuntimeError:
         getLogger("launcher").error("The server is running a different Faraday version than the client "
-                                    "you are running. Version numbers must much!")
+                                    "you are running. Version numbers must match!")
 
         sys.exit(2)
 

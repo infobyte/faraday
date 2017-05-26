@@ -5,9 +5,22 @@
 angular.module('faradayApp')
     .controller('hostCtrl',
         ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', '$q',
-            'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager', 
+            'hostsManager', 'workspacesFact', 'dashboardSrv', 'servicesManager', 'commonsFact',
             function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, $q,
-            hostsManager, workspacesFact, dashboardSrv, servicesManager) {
+            hostsManager, workspacesFact, dashboardSrv, servicesManager, commons) {
+
+        loadHosts = function(){
+            hostsManager.getHost($routeParams.hidId, $scope.workspace, true)
+                .then(function(host) {
+                    hostsManager.getInterfaces($scope.workspace, host._id).then(function(resp){
+                        $scope.interface = resp[0].value;
+                        $scope.interface.hostnames = commons.arrayToObject($scope.interface.hostnames);
+                    });
+                	$scope.host = host;
+                    $scope.hostName = host.name; // User can edit $scope.host.name but not $scope.hostName
+                    $scope.loadIcons();
+                });
+        };
 
 	    init = function() {
 	    	$scope.selectall_service = false;
@@ -19,6 +32,9 @@ angular.module('faradayApp')
             $scope.services = [];
             $scope.sortField = "ports";
             $scope.reverse = false;
+            $scope.editing = ($routeParams.edit == 'edit');
+            $scope.showServices = true;
+            $scope.creating = false;
 
             $scope.loadedServices = false;
 
@@ -29,10 +45,7 @@ angular.module('faradayApp')
                 });
 
             // current host
-            hostsManager.getHost(hostId, $scope.workspace)
-                .then(function(host) {
-                	$scope.host = host;
-                });
+            loadHosts();
 
             // services by host
             dashboardSrv.getServicesByHost($scope.workspace, hostId)
@@ -95,6 +108,41 @@ angular.module('faradayApp')
             });
             return selected;
         };
+
+        $scope.newHostnames = function($event){
+            $scope.interface.hostnames.push({key:''});
+            $event.preventDefault();
+        }
+
+        $scope.ok = function() {
+            var date = new Date(),
+            timestamp = date.getTime()/1000.0;
+
+            // The objectToArray transform is necessary to call updateHost correctly
+            // If I don't restore the object after the call hostnames won't be shown in the interface
+            var old_hostnames = $scope.interface.hostnames;
+            $scope.interface.hostnames = commons.objectToArray($scope.interface.hostnames.filter(Boolean));
+
+            $scope.hostdata = $scope.host;
+            $scope.hostdata.metadata['update_time'] = timestamp;
+            $scope.hostdata.metadata['update_user'] = "UI Web";
+
+            hostsManager.updateHost($scope.host, $scope.hostdata, $scope.interface,
+                                    $scope.workspace).then(function(){
+                                        $scope.interface.hostnames = old_hostnames;
+                                        $location.path('/host/ws/' + $scope.workspace + '/hid/' + $scope.host._id);
+                                    });
+        };
+
+        $scope.cancel = function(){
+            $scope.editing = false;
+            loadHosts();
+        };
+
+        $scope.toggleEdit = function(){
+            $scope.editing = !$scope.editing;
+        };
+
 
         // changes the URL according to search params
         $scope.searchFor = function(search, params) {
@@ -306,6 +354,32 @@ angular.module('faradayApp')
             }
         };
 
+        $scope.deleteHost = function(){
+            var message = "A host will be deleted along with all of its children. This operation cannot be undone. Are you sure you want to proceed?";
+            $uibModal.open({
+                templateUrl: 'scripts/commons/partials/modalDelete.html',
+                controller: 'commonsModalDelete',
+                size: 'lg',
+                resolve: {
+                    msg: function() {
+                        return message;
+                    }
+                }
+            }).result.then(function() {
+                $scope.removeHost($scope.host._id);
+            }, function() {
+                //dismised, do nothing
+            });
+        };
+
+        $scope.removeHost = function(id) {
+            hostsManager.deleteHost(id, $scope.workspace).then(function() {
+                $location.path('/hosts/ws/' + $scope.workspace);
+            }, function(message) {
+                console.log(message);
+            });
+        };
+
         $scope.remove = function(ids) {
             ids.forEach(function(id) {
                 servicesManager.deleteServices(id, $scope.workspace).then(function() {
@@ -378,6 +452,24 @@ angular.module('faradayApp')
             var tmp_services = $filter('orderBy')($scope.services, $scope.sortField, $scope.reverse);
             tmp_services = $filter('filter')(tmp_services, $scope.expression);
             return Math.ceil(tmp_services.length / $scope.pageSize);
+        };
+
+        $scope.loadIcons = function() {
+            var host = $scope.host;
+            // load icons into object for HTML
+            // maybe this part should be directly in the view somehow
+            // or, even better, in a CSS file
+            var oss = ["windows", "cisco", "router", "osx", "apple","linux", "unix", "unknown"];
+            oss.forEach(function(os){
+                if(host.os.toLowerCase().indexOf(os) != -1) {
+                    host.icon = os;
+                    if(os == "unix") {
+                        host.icon = "linux";
+                    } else if(os == "apple") {
+                        host.icon = "osx";
+                    }
+                }
+            });
         };
 
 	    init();

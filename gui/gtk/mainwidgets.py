@@ -349,7 +349,7 @@ class HostsSidebar(Gtk.Widget):
         host_ids = map(self._find_host_id, vulns)
         self._modify_vuln_amounts_of_hosts_in_model(host_ids, lambda x: x + 1)
 
-    def remove_relevant_vulns_from_model(self, vuln_ids):
+    def remove_relevant_vulns_from_model(self, vulns_ids):
         """Takes vulns_ids, a list of vuln ids, and removes them from
         the model by modifying their corresponding hosts in the model.
         Return None.

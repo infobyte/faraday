@@ -61,6 +61,7 @@ angular.module("faradayApp")
                 if (typeof is_update === "undefined") {var is_update = false;}
                 if (is_update && !data._rev) {
                     // ok, undefined, you win
+                    console.log('ok, undefined, you win');
                     return get(url).then(function s(r) {
                         data._rev = r.data._rev;
                         return serverComm("PUT", url, data);
@@ -277,8 +278,9 @@ angular.module("faradayApp")
                 return ServerAPI.getServicesBy(wsName, 'name');
             }
 
-            ServerAPI.getServicesByHost = function(wsName) {
-                return ServerAPI.getServicesBy(wsName, 'hostid');
+            ServerAPI.getServicesByHost = function(wsName, hostId) {
+                var url = createGetUrl(wsName, 'services');
+                return get(url, {"hostIdCouchdb": hostId});
             }
 
             ServerAPI.getVulnsBySeverity = function(wsName, confirmed) {
@@ -413,7 +415,7 @@ angular.module("faradayApp")
             }
 
             ServerAPI.deleteCredential = function(wsName, credentialId, rev) {
-                var deleteUrl = createDeleteUrl(wsName, credentialid, rev);
+                var deleteUrl = createDeleteUrl(wsName, credentialId, rev);
                 if (typeof rev === "undefined") {
                     return _delete(deleteUrl, false)
                 }

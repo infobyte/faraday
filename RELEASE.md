@@ -8,6 +8,26 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+May 24, 2017:
+---
+* Fixed bug when editing workspaces created in GTK
+* Improved host search in the WEB UI
+* Extended the config to support different searching engines in the WEB UI
+* Check that client and server versions match when connecting
+* Adds the 'v' and 'version' argument for both the server and the client
+* Fixed "refresh" button in the Web UI
+* Fix API on /ws/<workspace> with duration object None
+* Added a CRUD for Credentials to the Web UI
+* Bug fixes on the Burp Online Plugin
+* Added a script to connect with Reposify
+* Fixed Hostname import in Nessus Plugin
+* Make plugin methods log() and devlog() work again
+* Fixed bug in SQLMap plugin that made the client freeze
+* Improved SQLMap plugin to support more options and to show errors in GTK log console
+* Fixed bug when creating/updating Credentials
+* Improve plugins usage of vulnweb URL fields
+* Fixed order of Report Plugins in the GTK import list
+
 March 17, 2017:
 ---
 * Added link to name column in Hosts list

@@ -301,14 +301,12 @@ angular.module('faradayApp')
             return deferred.promise;
         };
 
-        // XXX: still uses a CouchDB view 
-        // server hasn't implemented services/count?group_by=host
         dashboardSrv.getServicesByHost = function(ws, host_id) {
+
             var deferred = $q.defer();
-            var url = BASEURL + "/" + ws + "/_design/services/_view/byhost?key=\"" + host_id + "\"";
-            dashboardSrv._getView(url).then(function(res){
+            ServerAPI.getServicesByHost(ws, host_id).then(function(res){
                 var tmp = [];
-                res.forEach(function(service){
+                res.data.services.forEach(function(service){
                     var _service = service.value;
                     _service["id"] = service.id;
                     _service["port"] = _service.ports;

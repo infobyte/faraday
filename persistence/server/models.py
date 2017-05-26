@@ -1305,7 +1305,7 @@ class Credential(ModelBase):
         self.password = credential['password']
 
     def setID(self, parent_id):
-        ModelBase.setID(self, parent_id, self.username, self.password)
+        ModelBase.setID(self, parent_id, self.name, self.username, self.password)
 
     def updateAttributes(self, username=None, password=None):
         if username is not None:

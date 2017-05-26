@@ -37,6 +37,17 @@ var faradayApp = angular.module('faradayApp', ['ngRoute', 'selectionModel', 'ui.
         ];
         return severities;
     })())
+    .constant("EXPLOITATIONS", (function() {
+        var exploitations = [
+            "critical",
+            "high",
+            "med",
+            "low",
+            "info",
+            "unclassified"
+        ];
+        return exploitations;
+    })())
     .constant("STATUSES", (function() {
         var statuses = [
             "opened",
@@ -96,12 +107,12 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
         when('/host/ws/:wsId/hid/:hidId/search/:search', {
             templateUrl: 'scripts/services/partials/list.html',
             controller: 'hostCtrl',
-            title: 'Services | '
+            title: 'Host and services | '
         }).
         when('/host/ws/:wsId/hid/:hidId/search', {
             templateUrl: 'scripts/services/partials/list.html',
             controller: 'hostCtrl',
-            title: 'Services | '
+            title: 'Host and services | '
         }).
         when('/hosts', {
             templateUrl: 'scripts/commons/partials/workspaces.html',
@@ -111,7 +122,17 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
         when('/host/ws/:wsId/hid/:hidId', {
             templateUrl: 'scripts/services/partials/list.html',
             controller: 'hostCtrl',
-            title: 'Services | '
+            title: 'Host and services | '
+        }).
+        when('/host/ws/:wsId/hid/:hidId/:edit', {
+            templateUrl: 'scripts/services/partials/list.html',
+            controller: 'hostCtrl',
+            title: 'Host and services | '
+        }).
+        when('/host/ws/:wsId/new', {
+            templateUrl: 'scripts/hosts/partials/new.html',
+            controller: 'newHostCtrl',
+            title: 'New host | '
         }).
         when('/license/lid/:lidId', {
             templateUrl: 'scripts/licenses/partials/license.html',
@@ -205,6 +226,40 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/commons/partials/commercial.html',
             controller: 'commercialCtrl',
             title: 'Users | '
+        }).
+        when('/credentials', {
+            templateUrl: 'scripts/credentials/partials/list.html',
+            controller: 'credentialsCtrl',
+            title: 'Credentials | '
+        }).
+        when('/credentials/ws', {
+            templateUrl: 'scripts/credentials/partials/list.html',
+            controller: 'credentialsCtrl',
+            title: 'Credentials | '
+        }).
+        when('/credentials/ws/:wsId', {
+            templateUrl: 'scripts/credentials/partials/list.html',
+            controller: 'credentialsCtrl',
+            title: 'Credentials | '
+        }).
+        when('/credentials/ws/:wsId/hid/:hId', {
+            templateUrl: 'scripts/credentials/partials/list.html',
+            controller: 'credentialsCtrl',
+            title: 'Credentials | '
+        }).
+        when('/credentials/ws/:wsId/sid/:sId', {
+            templateUrl: 'scripts/credentials/partials/list.html',
+            controller: 'credentialsCtrl',
+            title: 'Credentials | '
+        }).
+        when('/vulndb', {
+            templateUrl: 'scripts/vulndb/partials/vulndb.html',
+            controller: 'vulnModelsCtrl',
+            title: 'Vulnerabilities |'
+        }).
+        when('/data_analysis', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl'
         }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html'

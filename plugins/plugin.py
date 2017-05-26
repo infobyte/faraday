@@ -160,6 +160,11 @@ class PluginBase(object):
         ipv6_gateway="0000:0000:0000:0000:0000:0000:0000:0000", ipv6_dns=[],
         network_segment="", hostname_resolution=[]):
 
+        # hostname_resolution must be a list. Many plugins are passing a string
+        # as argument causing errors in the WEB UI.
+        if isinstance(hostname_resolution, str):
+            hostname_resolution = [hostname_resolution]
+
         int_obj = model.common.factory.createModelObject(
             Interface.class_signature,
             name, mac=mac, ipv4_address=ipv4_address,

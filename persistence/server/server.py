@@ -23,6 +23,7 @@ Warning:
     be always unique.
 """
 
+import os
 import requests
 import json
 from persistence.server.utils import force_unique
@@ -1394,7 +1395,7 @@ def update_command(workspace_name, id, command, duration=None, hostname=None,
 
 
 def create_workspace(workspace_name, description, start_date, finish_date,
-                     customer=None):
+                     customer=None, duration=None):
     """Create a workspace.
 
     Args:
@@ -1407,12 +1408,15 @@ def create_workspace(workspace_name, description, start_date, finish_date,
     Returns:
         A dictionary with the server's response.
     """
+    if duration is None:
+        duration = {"start": start_date, "end": finish_date}
     return _save_db_to_server(workspace_name,
                               name=workspace_name,
                               description=description,
                               customer=customer,
                               sdate=start_date,
                               fdate=finish_date,
+                              duration=duration,
                               type="Workspace")
 
 def delete_host(workspace_name, host_id):
@@ -1456,6 +1460,21 @@ def server_info():
         return _get("{0}/info".format(_create_server_api_url()))
     except:
         return None
+
+def check_faraday_version():
+    """Raise RuntimeError if client and server aren't running the same version"""
+    info = server_info()
+    #print "INFO", infok
+
+    faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
+
+    file_path = os.path.join(faraday_directory, 'VERSION')
+
+    with open(file_path, 'r') as version_file:
+        version = version_file.read().strip()
+
+    if info is not None and version != info['Version']:
+        raise RuntimeError('Client and server versions do not match')
 
 def test_server_url(url_to_test):
     """Return True if the url_to_test is indeed a valid Faraday Server URL.

@@ -4,8 +4,8 @@
 
 angular.module('faradayApp')
     .controller('hostsCtrl',
-        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'commonsFact',
-        function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, commonsFact) {
+        ['$scope', '$cookies', '$filter', '$location', '$route', '$routeParams', '$uibModal', 'hostsManager', 'workspacesFact', 'commonsFact', 'credential',
+        function($scope, $cookies, $filter, $location, $route, $routeParams, $uibModal, hostsManager, workspacesFact, commonsFact, credential) {
 
         var init = function() {
             $scope.selectall_hosts = false;
@@ -64,6 +64,17 @@ angular.module('faradayApp')
                 });
         };
 
+        var createCredential = function(credentialData, parent_id){
+            
+            // Add parent id, create credential and save to server.
+            try {
+                var credentialObj = new credential(credentialData, parent_id);
+                credentialObj.create($scope.workspace);
+            } catch (error) {
+                console.log(error);
+            }
+        };
+
         $scope.loadIcons = function() {
             $scope.hosts.forEach(function(host) {
                 // load icons into object for HTML
@@ -85,13 +96,17 @@ angular.module('faradayApp')
 
         // changes the URL according to search params
         $scope.searchFor = function(search, params) {
-            if (search && params != "" && params != undefined) {
-                $scope.expression = commonsFact.parseSearchExpression(params);
-            } else {
-                $scope.expression = {};
+            // TODO: It would be nice to find a way for changing
+            // the url without reloading the controller
+            var url = "/hosts/ws/" + $routeParams.wsId;
+
+            if(search && params != "" && params != undefined) {
+                var filter = commonsFact.parseSearchExpression(params);
+                var URLParams = commonsFact.searchFilterToURLParams(filter);
+                url += "/search/" + URLParams;
             }
 
-            loadHosts();
+            $location.path(url);
         };
 
         $scope.go = function() {
@@ -165,11 +180,17 @@ angular.module('faradayApp')
             }
         };
 
-        $scope.insert = function(hostdata, interfaceData) {
+        $scope.insert = function(hostdata, interfaceData, credentialData) {
+
             var interfaceData = $scope.createInterface(hostdata, interfaceData);
             hostsManager.createHost(hostdata, interfaceData, $scope.workspace).then(function(host) {
+                if(credentialData.name && credentialData.username && credentialData.password){
+                    createCredential(credentialData, hostdata._id);
+                    host.credentials = 1;
+                }
                 $scope.hosts.push(host);
                 $scope.loadIcons();
+
             }, function(message) {
                 $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',
@@ -195,7 +216,8 @@ angular.module('faradayApp')
             modal.result.then(function(data) {
                 var hostdata = data[0];
                 var interfaceData = data[1];
-                $scope.insert(hostdata, interfaceData);
+                var credentialData = data[2];
+                $scope.insert(hostdata, interfaceData, credentialData);
             });
         };
 
@@ -211,22 +233,8 @@ angular.module('faradayApp')
 
         $scope.edit = function() {
             if($scope.selectedHosts().length == 1) {
-                var modal = $uibModal.open({
-                    templateUrl: 'scripts/hosts/partials/modalEdit.html',
-                    controller: 'hostsModalEdit',
-                    size: 'lg',
-                    resolve: {
-                        host: function(){
-                            return $scope.selectedHosts()[0];
-                        }
-                    }
-                 });
-
-                modal.result.then(function(data) {
-                    hostdata = data[0];
-                    interfaceData = data[1];
-                    $scope.update($scope.selectedHosts()[0], hostdata, interfaceData);
-                });
+                var hostId = $scope.selectedHosts()[0]._id;
+                $location.path('/host/ws/' + $scope.workspace + '/hid/' + hostId + '/edit');
             } else {
                 $uibModal.open({
                     templateUrl: 'scripts/commons/partials/modalKO.html',

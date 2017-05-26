@@ -328,7 +328,7 @@ article.untercio{
 /* Home Menu grande > Professional */
 .home-list.professional .item:nth-child(5) {clear:left;}
 /* Home Menu grande > Corporate */
-.home-list.corporate .item:nth-child(5), .home-list.corporate .item:nth-child(9) {clear:left;}
+.home-list.corporate .item:nth-child(5), .home-list.corporate .item:nth-child(9), .home-list.corporate .item:nth-child(13) {clear:left;}
 
 
 .item:nth-child(0) {-webkit-animation-delay: 0s;}
@@ -1132,4 +1132,9 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 
 .small-size {
     font-size:10px;
+}
+
+.header_right {
+    float: right;
+    margin: 8px;
 }

@@ -6,7 +6,7 @@ Author: Ezequiel Tavella
 
 This script generate a CSV file with information about the cfdb database.
 CSV Format:
-cwe,name,desc_summary,description,resolution,exploitation,references
+cwe,name,description,resolution,exploitation,references
 '''
 
 from subprocess import call
@@ -22,7 +22,6 @@ class parseFile():
 
         self.cwe = ''
         self.name = None
-        self.desc_summary = None
         self.description = None
         self.resolution = None
         self.explotation = None
@@ -55,21 +54,15 @@ class parseFile():
         while line != '':
 
             title = line.startswith('Title: ')
-            summary = line.startswith('Description: ')
-            description = line.startswith('## Summary')
+            description = line.startswith('Description: ')
             resolution = line.startswith('## Remediation')
             references = line.startswith('## References')
             explotation = line.startswith('## Exploitation')
 
-            #Slice title and summary... read line and continue with other line
+            #Slice title... read line and continue with other line
             if title:
 
                 self.name = line[title + 6:].strip('\n\r')
-                line = self.file.readline()
-                continue
-
-            elif summary:
-                self.desc_summary = line[title + 12:].strip('\n\r')
                 line = self.file.readline()
                 continue
 
@@ -103,7 +96,7 @@ def main():
     file_csv = open('cfdb.csv','w')
 
     file_csv.write(
-    'cwe,name,desc_summary,description,resolution,exploitation,references\n'
+    'cwe,name,description,resolution,exploitation,references\n'
     )
 
     #CSV Writer
@@ -133,7 +126,6 @@ def main():
                         result = (
                         csv_content.cwe,
                         csv_content.name,
-                        csv_content.desc_summary,
                         csv_content.description,
                         csv_content.resolution,
                         csv_content.explotation,

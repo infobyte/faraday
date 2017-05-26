@@ -10,6 +10,12 @@ angular.module('faradayApp')
             var values = angular.copy(values);
             var obj_content = "",
             aProperties = [];
+            if (ws === null) {
+                var title = 'Vulnerability Model CSV'
+            } else {
+                var title = "SR-" + ws
+            }
+
 
             for(key in properties) {
                 if(properties.hasOwnProperty(key)) {
@@ -45,7 +51,7 @@ angular.module('faradayApp')
             var csvObj = {
                 "content":  content,
                 "extension": "csv",
-                "title":    "SR-" + ws,
+                "title":    title,
                 "type": "text/csv"
             };
 

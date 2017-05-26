@@ -8,8 +8,10 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import with_statement
+from bs4 import BeautifulSoup, Comment
 from plugins import core
 from model import api
+import distutils.util
 import re
 import os
 import sys
@@ -28,9 +30,9 @@ current_path = os.path.abspath(os.getcwd())
 
 __author__ = "Francisco Amato"
 __copyright__ = "Copyright (c) 2013, Infobyte LLC"
-__credits__ = ["Francisco Amato"]
+__credits__ = ["Francisco Amato", "Micaela Ranea Sanchez"]
 __license__ = ""
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __maintainer__ = "Francisco Amato"
 __email__ = "famato@infobytesec.com"
 __status__ = "Development"
@@ -136,11 +138,20 @@ class Item(object):
         severity = item_node.findall('severity')[0]
         request = item_node.findall('./requestresponse/request')[0].text if len(
             item_node.findall('./requestresponse/request')) > 0 else ""
-        response = item_node.findall('./requestresponse/response')[0].text if len(
-            item_node.findall('./requestresponse/response')) > 0 else ""
+        response = ""
+
+        if len(item_node.findall('./requestresponse/response')) > 0:
+            response_node = item_node.findall('./requestresponse/response')[0]
+
+            if "base64" in response_node.attrib:
+                if distutils.util.strtobool(response_node.get("base64")):
+                    response = response_node.text.decode("base64", "strict")
+                else:
+                    response = response_node.text
 
         detail = self.do_clean(item_node.findall('issueDetail'))
         remediation = self.do_clean(item_node.findall('remediationBackground'))
+        background = self.do_clean(item_node.findall('issueBackground'))
 
         self.url = host_node.text
 
@@ -169,6 +180,7 @@ class Item(object):
         self.response = response
         self.detail = detail
         self.remediation = remediation
+        self.background = background
 
     def do_clean(self, value):
 
@@ -248,9 +260,11 @@ class BurpPlugin(core.PluginBase):
                 item.host,
                 "")
 
-            item.response = ""
-            desc = item.detail
-            resolution = item.remediation if item.remediation else ""
+            desc = "Detail\n" + item.detail
+            if item.background:
+                desc += "\nBackground\n" + item.background
+            desc = self.removeHtml(desc)
+            resolution = self.removeHtml(item.remediation) if item.remediation else ""
 
             v_id = self.createAndAddVulnWebToService(
                 h_id,
@@ -268,6 +282,33 @@ class BurpPlugin(core.PluginBase):
 
     def processCommandString(self, username, current_path, command_string):
         return None
+
+    def removeHtml(self, markup):
+        soup = BeautifulSoup(markup, "html.parser")
+
+        # Replace line breaks and paragraphs for new lines
+        for tag in soup.find_all(["br", "p"]):
+            tag.append("\n")
+            tag.unwrap()
+
+        # Replace lists for * and new lines
+        for tag in soup.find_all(["ul", "ol"]):
+            for item in tag.find_all("li"):
+                item.insert_before("* ")
+                item.append("\n")
+                item.unwrap()
+            tag.unwrap()
+
+        # Remove all other HTML tags
+        for tag in soup.find_all():
+            tag.unwrap()
+
+        # Remove all comments
+        for child in soup.children:
+            if isinstance(child, Comment):
+                child.extract()
+
+        return str(soup)
 
     def setHost(self):
         pass

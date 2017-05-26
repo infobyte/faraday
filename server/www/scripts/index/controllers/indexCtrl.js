@@ -4,11 +4,24 @@
 
 angular.module('faradayApp')
     .controller('indexCtrl', 
-        ['$scope', 'indexFact',
-        function($scope, indexFact) {
+        ['$scope', '$uibModal', 'indexFact',
+        function($scope, $uibModal, indexFact) {
         	indexFact.getConf().then(function(conf) {
-        		$scope.version = conf.data.ver;
-			    $scope.osint = conf.data.osint;
+                $scope.version = conf.data.ver;
+
+                var osint = conf.data.osint;
+                osint.prefix = osint.prefix || "/search?query=";
+                osint.suffix = osint.suffix || "";
+                if(!osint.use_external_icon)
+                    osint.icon = "images/" + osint.icon + ".png";
+                $scope.osint = osint;
         	});
+
+            $scope.about = function() {
+                var modal = $uibModal.open({
+                    templateUrl: 'scripts/commons/partials/modalAbout.html',
+                    scope: $scope
+                });
+            };
 
         }]);

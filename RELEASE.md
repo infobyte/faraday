@@ -10,6 +10,7 @@ New features in the latest update
 
 TBA:
 ---
+* Added "Policy Violations" field for Vulnerabilities
 
 
 May 24, 2017:

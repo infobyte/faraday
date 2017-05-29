@@ -10,6 +10,7 @@ function(doc) {
             "confidentiality": false,
             "integrity": false
         },
+        policyviolations = [],
         resolution = "",
         confirmed = false;
         if(doc.easeofresolution !== undefined) {
@@ -17,6 +18,9 @@ function(doc) {
         }
         if(doc.impact !== undefined) {
             impact = doc.impact;
+        }
+        if(doc.policyviolations !== undefined) {
+            policyviolations = doc.policyviolations;
         }
         if(doc.resolution !== undefined) {
             resolution = doc.resolution;
@@ -28,19 +32,20 @@ function(doc) {
             "_attachments":     doc._attachments,
             "confirmed":        doc.confirmed || confirmed,
             "data":             doc.data,
-            "desc":             doc.desc, 
+            "desc":             doc.desc,
             "easeofresolution": easeofresolution,
             "impact":           impact,
             "metadata":         doc.metadata,
-            "name":             doc.name, 
+            "name":             doc.name,
             "obj_id":           doc.obj_id,
             "owned":            doc.owned,
             "owner":            doc.owner,
-            "parent":           doc.parent, 
+            "parent":           doc.parent,
+            "policyviolations": policyviolations,
             "refs":             doc.refs,
             "resolution":       resolution,
-            "severity":         doc.severity, 
-            "type":             doc.type,
+            "severity":         doc.severity,
+            "type":             doc.type
         };
 
         if(doc.type == "VulnerabilityWeb") {

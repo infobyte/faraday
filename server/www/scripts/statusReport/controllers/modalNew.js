@@ -13,6 +13,7 @@ angular.module('faradayApp')
         vm.easeofresolution;
         vm.workspace;
         vm.new_ref;
+        vm.new_policyviolation;
         vm.icons;
         vm.cweList;
         vm.cweLimit;
@@ -38,6 +39,7 @@ angular.module('faradayApp')
             vm.severities = severities;
             vm.workspace = workspace;
             vm.new_ref = "";
+            vm.new_policyviolation = "";
             vm.icons = {};
 
             vm.cweList = [];
@@ -71,14 +73,15 @@ angular.module('faradayApp')
                 refs: [],
                 resolution: "",
                 severity: undefined,
-                method: "", 
-                path: "", 
-                pname: "", 
+                method: "",
+                path: "",
+                pname: "",
                 params: "",
-                query: "", 
+                query: "",
                 request: "",
                 response: "",
-                website: ""
+                website: "",
+                policyviolations: []
             };
 
             vm.targets = [];
@@ -122,6 +125,12 @@ angular.module('faradayApp')
                 });
                 vm.data.refs = refs;
 
+                var policyviolations = [];
+                vm.data.policyviolations.forEach(function(violation) {
+                    policyviolations.push(violation.value);
+                });
+                vm.data.policyviolations = policyviolations;
+
                 // delete selection
                 delete vm.data.parent.selected_modalNewCtrl;
 
@@ -161,10 +170,20 @@ angular.module('faradayApp')
             }
         }
 
+        vm.newPolicyviolation = function() {
+            if (vm.new_policyviolation != "") {
+                // we need to check if the policy violation already exists
+                if (vm.data.policyviolations.filter(function(policyviolation) {return policyviolation.value === vm.new_policyviolation}).length == 0) {
+                    vm.data.policyviolations.push({value: vm.new_policyviolation});
+                    vm.new_policyviolation = "";
+                }
+            }
+        }
+
         vm.populate = function(item, model, label) {
 
             for (var key in item) {
-                if (key != "refs" && vm.data.hasOwnProperty(key)) {
+                if(key != "refs" && key != "policyviolations" && vm.data.hasOwnProperty(key)) {
                     vm.data[key] = item[key];
                 }
             }
@@ -175,6 +194,12 @@ angular.module('faradayApp')
                 refs.push({value: ref});
             });
             vm.data.refs = refs;
+
+            var policyviolations = [];
+            item.policyviolations.forEach(function(policyviolation) {
+                policyviolations.push({value: policyviolation});
+            });
+            vm.data.policyviolations = policyviolations;
         }
 
         init();

@@ -1029,6 +1029,7 @@ class Vuln(ModelBase):
         self.confirmed = vuln.get('confirmed', False)
         self.resolution = vuln.get('resolution')
         self.status = vuln.get('status', "opened")
+        self.policyviolations = vuln.get('policyviolations', list())
 
     def setID(self, parent_id):
         ModelBase.setID(self, parent_id, self.name, self.description)
@@ -1100,7 +1101,7 @@ class Vuln(ModelBase):
         return severity
 
     def updateAttributes(self, name=None, desc=None, data=None,
-                         severity=None, resolution=None, refs=None, status=None):
+                         severity=None, resolution=None, refs=None, status=None, policyviolations=None):
         if name is not None:
             self.name = name
         if desc is not None:
@@ -1115,6 +1116,8 @@ class Vuln(ModelBase):
             self.refs = refs
         if status is not None:
             self.setStatus(status)
+        if policyviolations is not None:
+            self.policyviolations = policyviolations
 
     def getID(self): return self.id
     def getDesc(self): return self.desc
@@ -1124,6 +1127,7 @@ class Vuln(ModelBase):
     def getConfirmed(self): return self.confirmed
     def getResolution(self): return self.resolution
     def getStatus(self): return self.status
+    def getPolicyViolations(self): return self.policyviolations
 
     def setStatus(self, status):
         self.status = status
@@ -1155,6 +1159,7 @@ class VulnWeb(Vuln):
         self.tags = vuln_web.get('tags')
         self.target = vuln_web.get('target')
         self.parent = vuln_web.get('parent')
+        self.policyviolations = vuln_web.get('policyviolations', list())
 
     def setID(self, parent_id):
         ModelBase.setID(self, parent_id, self.name, self.website, self.path, self.description)
@@ -1178,7 +1183,7 @@ class VulnWeb(Vuln):
 
     def updateAttributes(self, name=None, desc=None, data=None, website=None, path=None, refs=None,
                         severity=None, resolution=None, request=None,response=None, method=None,
-                        pname=None, params=None, query=None, category=None, status=None):
+                        pname=None, params=None, query=None, category=None, status=None, policyviolations=None):
 
         super(self.__class__, self).updateAttributes(name, desc, data, severity, resolution, refs, status)
 
@@ -1200,6 +1205,8 @@ class VulnWeb(Vuln):
             self.query = query
         if category is not None:
             self.category = category
+        if policyviolations is not None:
+            self.policyviolations = policyviolations
 
     def getDescription(self): return self.description
     def getPath(self): return self.path
@@ -1220,6 +1227,7 @@ class VulnWeb(Vuln):
     def getTags(self): return self.tags
     def getTarget(self): return self.target
     def getParent(self): return self.parent
+    def getPolicyViolations(self): return self.policyviolations
 
     def tieBreakable(self, key):
         """

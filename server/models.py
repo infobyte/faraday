@@ -309,6 +309,7 @@ class Vulnerability(FaradayEntity, Base):
     severity = Column(String(50))
     owned = Column(Boolean)
     attachments = Column(Text(), nullable=True)
+    policyviolations = Column(Text())
 
     impact_accountability = Column(Boolean)
     impact_availability = Column(Boolean)
@@ -347,6 +348,7 @@ class Vulnerability(FaradayEntity, Base):
         self.severity=document.get('severity')
         self.owned=document.get('owned', False)
         self.attachments = json.dumps(document.get('_attachments', {}))
+        self.policyviolations = json.dumps(document.get('policyviolations', []))
         self.impact_accountability=document.get('impact', {}).get('accountability')
         self.impact_availability=document.get('impact', {}).get('availability')
         self.impact_confidentiality=document.get('impact', {}).get('confidentiality')

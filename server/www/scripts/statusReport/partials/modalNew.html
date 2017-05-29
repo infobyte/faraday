@@ -127,6 +127,22 @@
                     <textarea class="form-control" id="vuln-resolution" placeholder="Resolution" ng-model="modal.data.resolution"></textarea>
                 </div>
             </div><!-- .form-group -->
+            <div class="form-group">
+                <div class="col-md-12">
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="vuln-policyviolations">Policy Violations</label>
+                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violations" ng-model="modal.new_policyviolation"/>
+                        <span class="input-group-addon cursor" ng-click="modal.newPolicyviolation()"><i class="fa fa-plus-circle"></i></span>
+                    </div>
+                </div>
+                <div class="col-md-12 reference" ng-repeat="policyviolation in modal.data.policyviolations">
+                    <div class="input-group margin-bottom-sm">
+                        <label class="sr-only" for="vuln-policyviolations">Policy Violation</label>
+                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violation" ng-model="policyviolation.value"/>
+                        <span class="input-group-addon cursor" ng-click="modal.data.policyviolations.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
+                    </div>
+                </div>
+            </div><!-- .form-group -->
         </div>
 
         <div class="animate-switch-container" ng-switch on="modal.data.type">

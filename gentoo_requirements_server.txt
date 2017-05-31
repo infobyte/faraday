@@ -1,0 +1,9 @@
+## some libs are in gentoo_requirements.txt already. 
+## http://gpo.zugaina.org/ search engine of use... 
+# https://packages.gentoo.org
+## Gentoo/(Pentoo/Funtoo/Calculate) Emerge or Sabayon/Rogentos equo i (or emerge if wanted from sources.) 
+
+dev-python/flask-sqlalchemy
+dev-python/service_identity
+dev-python/twisted
+dev-python/pyopenssl

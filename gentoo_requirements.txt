@@ -1,0 +1,29 @@
+#dev-python/configargparse ##  dev-python/argparse Drop-in replacement for argparse supporting config files and env variables
+#https://packages.gentoo.org/packages/dev-python/configargparse
+#USE="Introspection" for gir in GTK, some items yanked from Install sh. 
+#for Gentoo Emerge packagnames. for sabayon equo if you want bins, else you can Emerge.
+######################
+
+dev-python/couchdbkit
+dev-java/mockito
+dev-python/Whoosh
+dev-python/configargparse
+dev-python/ipy
+dev-python/restkit
+dev-python/requests
+www-servers/tornado
+dev-python/flask
+dev-python/colorama
+dev-python/ipython
+dev-python/setuptools
+dev-python/pip 
+dev-libs/libpqxx
+libffi-dev 
+dev-db/couchdb 
+dev-libs/gobject-introspection
+net-libs/webkit-gtk
+x11-libs/gtk+
+x11-libs/vte
+dev-python/pygobject 
+app-shells/zsh
+net-misc/curl

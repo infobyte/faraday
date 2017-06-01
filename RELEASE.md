@@ -10,6 +10,7 @@ New features in the latest update
 
 TBA:
 ---
+* Merged PR #182 - problems with zonatransfer.me
 
 
 May 24, 2017:

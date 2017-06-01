@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-  .directive('d3Treemap', ['d3Service', 
+  .directive('d3Treemap', ['d3Service',
   function(d3Service) {
     return {
       restrict: 'EA',
@@ -79,11 +79,17 @@ angular.module('faradayApp')
                 }
               })
               .on('mouseover', function(d){
-                if (!data.width){
-                  document.getElementById("treemapText").innerHTML = "<div style='background-color:" + d.color + "'>" + d.name + '</div>' + d.count;
-                }else{
-                  document.getElementById("treemapTextModel").innerHTML = "<div style='background-color:" + d.color + "'>" + d.name + '</div>' + d.count;
-                }
+                  if (!data.width){
+                    var element = document.getElementById("treemapText");
+                      //.innerHTML = "<div style='background-color:" + d.color + "'>" + d.name + '</div>' + d.count;
+                  }else{
+                    var element = document.getElementById("treemapTextModel");
+                  }
+                  var colored = document.createElement('div');
+                  colored.style = "background-color:" + d.color; // Color is safe (its value is in a whitelist)
+                  colored.innerText = d.name;
+                  element.appendChild(colored);
+                  element.appendChild(document.createTextNode(d.count));
               })
               .on('mouseenter', function(d) {
                 var line = d3.select('.tm-'+d.name)

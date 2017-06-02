@@ -27,7 +27,7 @@ The following platforms are supported:
 
 ![platform](https://raw.github.com/wiki/infobyte/faraday/images/platform/supported.png) 
 
-Read more about [supported platforms and installation specifics] (https://github.com/infobyte/faraday/wiki/First-steps).
+Read more about [supported platforms and installation specifics](https://github.com/infobyte/faraday/wiki/First-steps).
 
 #### Quick install
 
@@ -49,7 +49,7 @@ Want to read more about the project? Try our [wiki](https://github.com/infobyte/
 
 Already a user and have a question or bug report? Check out our [FAQ](https://github.com/infobyte/faraday/wiki/FAQ) and [troubleshooting](https://github.com/infobyte/faraday/wiki/troubleshooting) pages. If you're still having troubles you can [open a ticket](https://github.com/infobyte/faraday/issues/new).
 
-Join our community! Subscribe to our [mailing list](https://groups.google.com/forum/#!forum/faradaysec) or find us on Twitter [@faradaysec] (https://twitter.com/faradaysec) 
+Join our community! Subscribe to our [mailing list](https://groups.google.com/forum/#!forum/faradaysec) or find us on Twitter [@faradaysec](https://twitter.com/faradaysec) 
 
 Do you have a question? Troubleshooting? Joing our IRC channel #faraday-dev in [freenode](ircs://irc.freenode.net/faraday-dev) or access directly from this link: [![Visit our IRC channel](https://kiwiirc.com/buttons/irc.freenode.org/faraday-dev.png)](https://kiwiirc.com/client/irc.freenode.org/?nick=faraday_gi|?#faraday-dev)
 

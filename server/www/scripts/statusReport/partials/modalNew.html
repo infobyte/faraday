@@ -5,28 +5,36 @@
 <form name="form" novalidate>
     <div class="modal-header">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined">OK</button>
+            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined || (modal.data.type === 'VulnerabilityWeb' && modal.host_parents)">OK</button>
             <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
         <h3 class="modal-title">Vulnerability creation</h3>
     </div>
     <div class="modal-body">
         <div class="form-horizontal">
+            <h5>Target</h5>
+            <div class="form-group">
+                <div class="col-md-9">
+                    <div class="form-group input-accordion">
+                        <input type="text" ng-model="modal.target_filter" class="form-control input-sm" placeholder="Search targets" ng-change="modal.currentPage = 0">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <input class="btn btn-default btn-sm" type="button" value="Deselect all" ng-click="modal.resetTarget()">
+                    <input class="btn btn-default btn-sm" type="button" value="Select all" ng-click="modal.setAllTargets()">
+                </div>
+            </div>
             <div class="form-group">
                 <div class="col-md-12">
-                    <div class="form-group input-accordion">
-                        <input type="text" ng-model="modal.target_filter" class="form-control input-sm" placeholder="Search" ng-change="modal.currentPage = 0">
-                    </div>
                     <uib-accordion close-others="true">
                         <uib-accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize">
-                        <uib-accordion-heading>
-                        <a ng-click="modal.setTarget(host)" ng-class="{'multi-selected': host.selected_modalNewCtrl == true}">{{host.name}} ({{host.hostnames[0]}})</a>
-                        <i class="pull-right glyphicon"
-                        ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
-                        </uib-accordion-heading>
-                        <div class="panel-body" ng-repeat="service in host.services">
-                            <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': service.selected_modalNewCtrl == true}">{{service.name}}  {{service.ports}}</a>
-                        </div>
+                            <uib-accordion-heading>
+                                <a ng-click="modal.setTarget(host)" ng-class="{'multi-selected': modal.data.parents.indexOf(host) >= 0}">{{host.name}} ({{host.hostnames[0]}})</a>
+                                <i class="pull-right glyphicon" ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
+                            </uib-accordion-heading>
+                            <div class="panel-body" ng-repeat="service in host.services">
+                                <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': modal.data.parents.indexOf(service) >= 0}">{{service.name}}  {{service.ports}}</a>
+                            </div>
                         </uib-accordion-group>
                     </uib-accordion>
                     <div class="showPagination" ng-show="modal.targets_filtered.length > modal.pageSize">
@@ -46,22 +54,22 @@
                     </div>
                 </div>
             </div>
+            <div class="alert alert-danger target_not_selected" role="alert" ng-hide="modal.data.parents.length > 0">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                <span class="sr-only">Error:</span>
+                There is no target selected
+                </div>
+            <div class="alert alert-danger target_not_selected" role="alert" ng-show="modal.data.type === 'VulnerabilityWeb' && modal.host_parents">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                <span class="sr-only">Error:</span>
+                Trying to create a Web Vulnerability with one or more Host parents. Please deselect the Host targets or <a href="" ng-click="modal.resetTarget()">click here to deselect all targets</a>
+            </div>
         </div>
 
-        <div class="alert alert-danger target_not_selected" role="alert" ng-hide="modal.data.parent != undefined">
-            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            <span class="sr-only">Error:</span>
-            There is no target selected
-            </div>
-        <div class="alert alert-danger target_not_selected" role="alert" ng-show="modal.data.type === 'VulnerabilityWeb' && modal.data.parent.type === 'Host'">
-            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            <span class="sr-only">Error:</span>
-            Vulnerability incompatible with host target, please select a service
-        </div>
         <div class="form-horizontal">
             <div class="form-group">
                 <div class="col-md-12">
-                    <h5>Search vulnerability database templates <a href="https://github.com/infobyte/faraday/wiki/vulnerabilities-database" target="_blank"><span class="glyphicon glyphicon-question-sign" title="Read more about vulnerability templates in Faraday Documentation"></span></a></h5>
+                    <h5>Search vulnerability database templates <a href="https://github.com/infobyte/faraday/wiki/vulnerabilities-database" target="_blank"><span class="glyphicon glyphicon-question-sign" title="Read more about vulnerability templates in the official Faraday Documentation"></span></a></h5>
                     <input type="text" ng-model="modal.cwe_selected" class="form-control input-sm" placeholder="Search for vulnerability templates" uib-typeahead="cwe as cwe.name for cwe in modal.cweList | filter:{name: $viewValue} | limitTo:10" typeahead-on-select="modal.populate($item, $model, $label)">
                 </div>
             </div>
@@ -209,7 +217,7 @@
     </div><!-- .modal-body -->
     <div class="modal-footer">
         <div class="modal-button">
-            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined">OK</button>
+            <button class="btn btn-success" ng-click="modal.ok()" ng-disabled="form.$invalid || modal.data.severity === undefined || (modal.data.type === 'VulnerabilityWeb' && modal.host_parents)">OK</button>
             <button class="btn btn-danger" ng-click="modal.cancel()">Cancel</button>
         </div>
     </div>

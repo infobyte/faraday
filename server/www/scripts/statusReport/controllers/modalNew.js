@@ -24,10 +24,13 @@ angular.module('faradayApp')
         vm.newCurrentPage;
         vm.pageSize;
 
-        vm.targets; 
+        vm.targets;
         vm.target_filter;
 
         vm.data;
+
+        // true if all the parents in data.parents are type Host
+        vm.host_parents;
 
         init = function() {
             vm.vuln_types = [
@@ -40,6 +43,8 @@ angular.module('faradayApp')
             vm.new_ref = "";
             vm.icons = {};
 
+            vm.host_parents = false;
+
             vm.cweList = [];
             cweFact.get().then(function(data) {
                 vm.cweList = data;
@@ -48,14 +53,13 @@ angular.module('faradayApp')
             vm.cwe_filter = "";
 
             vm.file_name_error = false;
- 
+
             vm.pageSize = 5;
             vm.currentPage = 0;
             vm.newCurrentPage = 0;
 
             vm.data = {
                 _attachments: {},
-                type: "Vulnerability",
                 data: "",
                 desc: "",
                 easeofresolution: undefined,
@@ -65,19 +69,20 @@ angular.module('faradayApp')
                     confidentiality: false,
                     integrity: false
                 },
+                method: "",
                 name: "",
                 owned: false,
-                parent: undefined,
-                refs: [],
-                resolution: "",
-                severity: undefined,
-                method: "", 
-                path: "", 
-                pname: "", 
                 params: "",
-                query: "", 
+                parents: [],
+                path: "",
+                pname: "",
+                query: "",
+                refs: [],
                 request: "",
+                resolution: "",
                 response: "",
+                severity: undefined,
+                type: "Vulnerability",
                 website: ""
             };
 
@@ -111,36 +116,56 @@ angular.module('faradayApp')
         };
 
         vm.ok = function() {
-            if (!(vm.data.type === "VulnerabilityWeb" && vm.data.parent.type === "Host")) {
-                // add the ref in new_ref, if there's any
-                vm.newReference();
+            // add the ref in new_ref, if there's any
+            vm.newReference();
 
-                // convert refs to an array of strings
-                var refs = [];
-                vm.data.refs.forEach(function(ref) {
-                    refs.push(ref.value);
-                });
-                vm.data.refs = refs;
+            // convert refs to an array of strings
+            var refs = [];
+            vm.data.refs.forEach(function(ref) {
+                refs.push(ref.value);
+            });
+            vm.data.refs = refs;
 
-                // delete selection
-                delete vm.data.parent.selected_modalNewCtrl;
+            var parents = vm.data.parents;
+            vm.data.parents = [];
+            parents.forEach(function(parent) {
+                vm.data.parents.push(parent._id);
+            });
 
-                vm.data.parent = vm.data.parent._id;
-
-                $modalInstance.close(vm.data);
-            }
+            $modalInstance.close(vm.data);
         };
 
         vm.cancel = function() {
             $modalInstance.dismiss('cancel');
         };
 
+        vm.resetTarget = function () {
+            vm.data.parents = [];
+            vm.host_parents = false;
+        };
+
+        vm.setAllTargets = function() {
+            vm.data.parents = vm.targets;
+            vm.host_parents = vm.data.parents.some(function(elem, ind, arr) {
+                return elem.type === 'Host';
+            });
+        };
+
         vm.setTarget = function(target) {
-            if (vm.data.parent != undefined) {
-                delete vm.data.parent.selected_modalNewCtrl;
+            var index = vm.data.parents.indexOf(target);
+
+            if(index >= 0) {
+                // if target already selected, user is deselecting
+                vm.data.parents.splice(index, 1);
+            } else {
+                // else, add to parents list
+                vm.data.parents.push(target);
             }
-            target.selected_modalNewCtrl = true;
-            vm.data.parent = target;
+
+            // refresh host_parents var
+            vm.host_parents = vm.data.parents.some(function(elem, ind, arr) {
+                return elem.type === 'Host';
+            });
         }
 
         vm.go = function() {

@@ -10,6 +10,7 @@ New features in the latest update
 
 TBA:
 ---
+* Added the ability to select more than one target when creating a vuln in the Web UI
 
 
 May 24, 2017:

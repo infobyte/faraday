@@ -7,10 +7,13 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 
-import threading, time, requests
+import time
+import threading
+
 from model.guiapi import notification_center
 from decorators import safe_io_with_server
 from persistence.server import models, server_io_exceptions
+
 
 class ServerIO(object):
     def __init__(self, active_workspace):
@@ -99,7 +102,6 @@ class ServerIO(object):
         coming from other instances of Faraday. Return the thread on any
         exception, of if self.stream is None.
         """
-
         # There is very arcane, dark magic involved in this method.
         # What you need to know: do not touch it.
         # If you touch it, do check out persitence/server/changes_stream.py
@@ -160,22 +162,25 @@ class ServerIO(object):
 
         def get_changes():
             # dark maaaaaagic *sing with me!* dark maaaaaagic
-            if self.stream:
-                try:
-                    for change, obj_type, obj_name in self.stream:
-                        with self.changes_lock:
-                            change = filter_changes(change, obj_type)
-                        if change:
-                            deleted = bool(change.get('deleted'))
-                            obj_id = change.get('id')
-                            revision = change.get("changes")[-1].get('rev')
-                            notification_dispatcher(obj_id, obj_type, obj_name,
-                                                    deleted, revision)
-                except server_io_exceptions.ChangesStreamStoppedAbruptly:
-                    notification_center.WorkspaceProblem()
+            while True:
+                if self.stream:
+                    try:
+                        for change, obj_type, obj_name in self.stream:
+                            print(change, obj_type, obj_name)
+                            with self.changes_lock:
+                                change = filter_changes(change, obj_type)
+                            if change:
+                                deleted = bool(change.get('deleted'))
+                                obj_id = change.get('id')
+                                revision = change.get("changes")[-1].get('rev')
+                                notification_dispatcher(obj_id, obj_type, obj_name,
+                                                        deleted, revision)
+                    except server_io_exceptions.ChangesStreamStoppedAbruptly:
+                        notification_center.WorkspaceProblem()
+                        return False
+                else:
                     return False
-            else:
-                return False
+                time.sleep(0.5)
 
         get_changes_thread = threading.Thread(target=get_changes)
         get_changes_thread.daemon = True

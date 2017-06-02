@@ -4,16 +4,24 @@
 
 import os
 import functools
-import twisted.web
-import server.config
 
+import twisted.web
 from twisted.web import proxy
 from twisted.internet import ssl, reactor, error
 from twisted.protocols.tls import TLSMemoryBIOFactory
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
+from autobahn.twisted.websocket import (
+    WebSocketServerFactory,
+    listenWS
+)
+import server.config
 from server.utils import logger
 from server.app import app
+from server.websocket_factories import (
+    WorkspaceServerFactory,
+    BroadcastServerProtocol
+)
 
 
 class HTTPProxyClient(proxy.ProxyClient):
@@ -53,7 +61,7 @@ class HTTPProxyResource(proxy.ReverseProxyResource):
         if enabled.
         """
         client_factory = HTTPProxyClientFactory(*args, **kwargs)
-        
+
         if self.__ssl_enabled:
             with open(server.config.ssl.certificate) as cert_file:
                 cert = ssl.Certificate.loadPEM(cert_file.read())
@@ -65,7 +73,7 @@ class HTTPProxyResource(proxy.ReverseProxyResource):
                 isClient=True, wrappedFactory=client_factory)
         else:
             return client_factory
-    
+
     def getChild(self, path, request):
         """
         Keeps the implementation of this class throughout the path
@@ -87,7 +95,7 @@ class WebServer(object):
         self.__config_server()
         self.__config_couchdb_conn()
         self.__build_server_tree()
-    
+
     def __config_server(self):
         self.__bind_address = server.config.faraday_server.bind_address
         self.__listen_port = int(server.config.faraday_server.port)
@@ -135,10 +143,16 @@ class WebServer(object):
     def __build_api_resource(self):
         return WSGIResource(reactor, reactor.getThreadPool(), app)
 
+    def __build_websockets_resource(self):
+        print(u"wss://{0}:9000".format(self.__bind_address))
+        factory = WorkspaceServerFactory(u"ws://{0}:9000".format(self.__bind_address))
+        factory.protocol = BroadcastServerProtocol
+        return factory
+
     def run(self):
         site = twisted.web.server.Site(self.__root_resource)
         self.__listen_func(
             self.__listen_port, site,
             interface=self.__bind_address)
+        listenWS(self.__build_websockets_resource())
         reactor.run()
-

@@ -3,13 +3,15 @@
 # See the file 'doc/LICENSE' for the license information
 
 import flask
+from flask_socketio import SocketIO
+
 import server.config
 import server.database
 
 from server.utils.logger import LOGGING_HANDLERS
 
-
 app = flask.Flask(__name__)
+
 
 def setup():
     app.debug = server.config.is_debug_mode()
@@ -23,6 +25,7 @@ def setup():
     for handler in LOGGING_HANDLERS:
         app.logger.addHandler(handler)
 
+
 def minify_json_output(app):
     class MiniJSONEncoder(flask.json.JSONEncoder):
         item_separator = ','
@@ -34,4 +37,3 @@ def minify_json_output(app):
 # Load APIs
 import server.api
 import server.modules.info
-

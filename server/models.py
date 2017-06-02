@@ -4,7 +4,15 @@
 
 import json
 
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, Text, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    ForeignKey,
+    Float,
+    Text,
+    UniqueConstraint)
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -13,9 +21,11 @@ SCHEMA_VERSION = 'W.2.4.0'
 
 Base = declarative_base()
 
+
 class EntityNotFound(Exception):
     def __init__(self, entity_id):
         super(EntityNotFound, self).__init__("Entity (%s) wasn't found" % entity_id)
+
 
 class FaradayEntity(object):
     # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace', u'Interface']
@@ -226,6 +236,7 @@ class Interface(FaradayEntity, Base):
         query = session.query(Host).join(EntityMetadata).filter(EntityMetadata.couchdb_id == host_id)
         self.host = query.one()
 
+
 class Service(FaradayEntity, Base):
     DOC_TYPE = 'Service'
 
@@ -390,6 +401,7 @@ class Vulnerability(FaradayEntity, Base):
             query = session.query(Service).join(EntityMetadata).filter(EntityMetadata.couchdb_id == parent_id)
             self.service = query.one()
 
+
 class Note(FaradayEntity, Base):
     DOC_TYPE = 'Note'
 
@@ -409,6 +421,7 @@ class Note(FaradayEntity, Base):
         self.text=document.get('text', None)
         self.description=document.get('description', None)
         self.owned=document.get('owned', False)
+
 
 class Credential(FaradayEntity, Base):
     DOC_TYPE = 'Cred'
@@ -462,6 +475,7 @@ class Credential(FaradayEntity, Base):
             query = session.query(Service).join(EntityMetadata).filter(EntityMetadata.couchdb_id == parent_id)
             self.service = query.one()
 
+
 class Command(FaradayEntity, Base):
     DOC_TYPE = 'CommandRunInformation'
 
@@ -490,4 +504,3 @@ class Command(FaradayEntity, Base):
         self.params = document.get('params', None)
         self.user = document.get('user', None)
         self.workspace = document.get('workspace', None)
-

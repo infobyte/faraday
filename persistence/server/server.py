@@ -34,7 +34,10 @@ from persistence.server.server_io_exceptions import (WrongObjectSignature,
                                                      Unauthorized,
                                                      MoreThanOneObjectFoundByID)
 
-from persistence.server.changes_stream import CouchChangesStream
+from persistence.server.changes_stream import (
+    CouchChangesStream,
+    WebsocketsChangesStream
+)
 
 # NOTE: Change is you want to use this module by itself.
 # If FARADAY_UP is False, SERVER_URL must be a valid faraday server url
@@ -459,9 +462,17 @@ def get_objects(workspace_name, object_signature, **params):
 
     return appropiate_function(workspace_name, **params)
 
+
+def _websockets_changes(workspace_name, **extra_params):
+    return WebsocketsChangesStream(workspace_name, 'localhost', **extra_params)
+
+
 # cha cha cha chaaaanges!
-def get_changes_stream(workspace_name, since=0, heartbeat='1000', **extra_params):
-    return _couch_changes(workspace_name, since=since, feed='continuous',
+def get_changes_stream(workspace_name, since=0, heartbeat='1000', stream_provider=_websockets_changes, **extra_params):
+    """
+      stream_provider: A function that returns an instance of a Stream provider
+    """
+    return stream_provider(workspace_name, since=since, feed='continuous',
                           heartbeat=heartbeat, **extra_params)
 
 def get_workspaces_names():

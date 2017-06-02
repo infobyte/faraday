@@ -8,3 +8,5 @@ requests
 tornado
 flask
 colorama
+websocket-client
+autobahn

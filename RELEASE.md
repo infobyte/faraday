@@ -10,7 +10,7 @@ New features in the latest update
 
 TBA:
 ---
-
+Fix in AppScan plugin.
 
 May 24, 2017:
 ---

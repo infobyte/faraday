@@ -10,7 +10,7 @@ New features in the latest update
 
 TBA:
 ---
-
+* Add new plugin: Junit XML
 
 May 24, 2017:
 ---

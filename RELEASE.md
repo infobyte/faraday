@@ -10,6 +10,7 @@ New features in the latest update
 
 TBA:
 ---
+* Fixed DOM-based XSS in the Top Services widget of the dashboard
 
 
 May 24, 2017:

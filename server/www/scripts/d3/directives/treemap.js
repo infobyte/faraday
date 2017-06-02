@@ -61,12 +61,18 @@ angular.module('faradayApp')
               .sticky(true)
               .value(function(d) {return d.count});
 
+            function nameToClassSafeName(name) {
+              // Remove non alphanumeric characters to safely use the (modified)
+              // name as a class name
+              return name.replace(/[^0-9a-zA-Z]/g, '');
+            }
+
             var node = div.datum(data_cp).selectAll(".node")
               .data(treemap.nodes)
             .enter().append("div")
               .attr("class", function(d) {
                   var ret = "node treemap-tooltip";
-                  if(d.name) ret += " tm-" + d.name;
+                  if(d.name) ret += " tm-" + nameToClassSafeName(d.name);
                   return ret;
               })
               .call(position)
@@ -79,6 +85,7 @@ angular.module('faradayApp')
                 }
               })
               .on('mouseover', function(d){
+                  if(typeof(d.name) === 'undefined') return; // I don't know why this happens
                   if (!data.width){
                     var element = document.getElementById("treemapText");
                       //.innerHTML = "<div style='background-color:" + d.color + "'>" + d.name + '</div>' + d.count;
@@ -92,11 +99,13 @@ angular.module('faradayApp')
                   element.appendChild(document.createTextNode(d.count));
               })
               .on('mouseenter', function(d) {
-                var line = d3.select('.tm-'+d.name)
+                if(typeof(d.name) === 'undefined') return; // I don't know why this happens
+                var line = d3.select('.tm-'+nameToClassSafeName(d.name))
                     .style("opacity", 1);
               })
               .on('mouseleave', function(d) {
-                var line = d3.select('.tm-'+d.name)
+                if(typeof(d.name) === 'undefined') return; // I don't know why this happens
+                var line = d3.select('.tm-'+nameToClassSafeName(d.name))
                     .style("opacity", 0.8);
                 document.getElementById("treemapText").innerHTML = "";
               })

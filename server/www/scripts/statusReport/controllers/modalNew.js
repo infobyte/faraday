@@ -145,9 +145,9 @@ angular.module('faradayApp')
 
         vm.go = function() {
             vm.currentPage = 0;
-            if(vm.newCurrentPage <= parseInt(vm.targets.length/vm.pageSize)
-                    && vm.newCurrentPage > -1) {
-                vm.currentPage = vm.newCurrentPage;
+            if((vm.newCurrentPage-1) <= parseInt(vm.targets.length/vm.pageSize)
+                    && (vm.newCurrentPage-1) > -1) {
+                vm.currentPage = (vm.newCurrentPage-1);
             }
         }
 

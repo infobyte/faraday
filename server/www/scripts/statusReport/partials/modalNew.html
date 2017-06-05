@@ -33,7 +33,7 @@
                         <div class="form-group">
                             <ul class="pagination">
                                 <li><a ng-hide="modal.currentPage <= 0" ng-click="modal.currentPage = modal.currentPage - 1"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
-                                <li><a>{{modal.currentPage}}/{{ ((modal.targets_filtered.length / modal.pageSize) | integer)}}</a></li>
+                                <li><a>{{modal.currentPage+1}}/{{ ((modal.targets_filtered.length / modal.pageSize) | integer) + 1}}</a></li>
                                 <li><a ng-hide="modal.currentPage >= ((modal.targets_filtered.length / modal.pageSize) | integer)" ng-click="modal.currentPage = modal.currentPage + 1"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
                             </ul>
                             <ng-form name="goToPage">

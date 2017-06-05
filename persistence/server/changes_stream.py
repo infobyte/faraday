@@ -112,7 +112,7 @@ class WebsocketsChangesStream(ChangesStream):
             data = json.loads(self.changes_queue.get_nowait())
         except Empty:
             raise StopIteration
-        yield data[0], data[1], data[2]
+        yield data
 
     def _get_object_type_and_name_from_change(self, change):
         try:

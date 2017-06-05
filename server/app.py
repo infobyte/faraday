@@ -37,3 +37,6 @@ def minify_json_output(app):
 # Load APIs
 import server.api
 import server.modules.info
+
+# Load SQLAlchemy Events
+import server.events

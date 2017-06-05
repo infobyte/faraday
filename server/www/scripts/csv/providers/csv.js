@@ -34,7 +34,7 @@ angular.module('faradayApp')
                         object[prop] = "";
                     }
                     if(prop === "date") object[prop] = parseDate(v["metadata"]["create_time"] * 1000);
-                    if(prop === "creator") object[prop] = v["metadata"]["creator"];
+                    if(prop === "creator") object[prop] = excelEscape(v["metadata"]["creator"]);
                     if(prop === "web") {
                         if(v.type === "Vulnerability") {
                             object[prop] = false;
@@ -59,7 +59,7 @@ angular.module('faradayApp')
         };
 
         cleanCSV = function(field) {
-            return field.replace(/\"/g, "\"\"");
+            return excelEscape(field.replace(/\"/g, "\"\""));
         };
 
         parseObject = function(object) {
@@ -77,13 +77,25 @@ angular.module('faradayApp')
                 });
             }
             parsedData = parsedData.substring(0, parsedData.length - 1);
-            return parsedData;
+            return excelEscape(parsedData);
         };
 
         parseDate = function(date) {
             var d = new Date(date);
-            return d.getMonth()+1 +"/" + d.getDate() + "/" + d.getFullYear();
+            return excelEscape(d.getMonth()+1 +"/" + d.getDate() + "/" + d.getFullYear());
         };
+
+        excelEscape = function(data){
+            // Patch possible formula injection attacks
+            // See https://www.contextis.com/resources/blog/comma-separated-vulnerabilities/ for more info.
+            if(data.startsWith('=') || data.startsWith('+')
+                                    || data.startsWith('-')
+                                    || data.startsWith('@')){
+                return "'" + data
+            }else{
+                return data
+            }
+        }
 
         return csvService;
     });

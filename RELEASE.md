@@ -10,6 +10,7 @@ New features in the latest update
 
 TBA:
 ---
+* Improved pagination in new vuln modal of status report
 
 
 May 24, 2017:

@@ -10,6 +10,7 @@ New features in the latest update
 
 TBA:
 ---
+* Fixed formula injection vulnerability in export to CSV feature
 
 
 May 24, 2017:

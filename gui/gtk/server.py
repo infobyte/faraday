@@ -77,7 +77,7 @@ class ServerIO(object):
     def get_host(self, host_id):
         return models.get_host(self.active_workspace, host_id)
 
-    @safe_io_with_server((0,0,0,0))
+    @safe_io_with_server((0, 0, 0, 0))
     def get_workspace_numbers(self):
         return models.get_workspace_numbers(self.active_workspace)
 
@@ -119,15 +119,14 @@ class ServerIO(object):
                         elif action == 'UPDATE':
                             notification_center.editObject(obj)
                         elif action == 'DELETE':
-                            notification_center.deleteObject(obj_id)
+                            notification_center.deleteObject(obj_id, obj_type)
                         else:
                             raise Exception('Invalid action')
                         notification_center.changeFromInstance(
+                                action,
                                 obj_id,
                                 obj_type,
-                                obj_name,
-                                deleted=action == 'DELETE',
-                                update=action == 'UPDATE')
+                                obj_name)
                 except server_io_exceptions.ChangesStreamStoppedAbruptly:
                     notification_center.WorkspaceProblem()
                     return False

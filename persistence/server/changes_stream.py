@@ -6,7 +6,6 @@ Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import time
 import json
 import threading
 from Queue import Queue, Empty
@@ -69,6 +68,7 @@ class ChangesStream(object):
 
 
 class WebsocketsChangesStream(ChangesStream):
+
     def __init__(self, workspace_name, server_url, **params):
         self._base_url = server_url
         self.changes_queue = Queue()

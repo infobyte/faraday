@@ -79,12 +79,24 @@ class WebsocketsChangesStream(ChangesStream):
                 "ws://{0}:9000".format(self._base_url),
                 on_message=self.on_message,
                 on_error=self.on_error,
+                on_open=self.on_open,
                 on_close=self.on_close)
-
-        self.ws.on_open = self.on_open
+        # ws.run_forever will call on_message, on_error, on_close and on_open
+        # see websocket client python docs on:
+        # https://github.com/websocket-client/websocket-client
         thread = threading.Thread(target=self.ws.run_forever, args=())
         thread.daemon = True
         thread.start()
+
+    def stop(self):
+        self.ws.close()
+        super(WebsocketsChangesStream, self).stop()
+
+    def on_open(self, ws):
+        self.ws.send(json.dumps({
+            'action': 'JOIN_WORKSPACE',
+            'workspace': self.workspace_name,
+        }))
 
     def on_message(self, ws, message):
         self.changes_queue.put(message)
@@ -95,7 +107,6 @@ class WebsocketsChangesStream(ChangesStream):
     def on_close(selg, ws):
         print "### closed ###"
 
-    def on_open(self, ws):
         print 'open'
 
     def __enter__(self):

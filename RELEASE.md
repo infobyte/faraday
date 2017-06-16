@@ -18,6 +18,7 @@ TBA:
 * Fix in AppScan plugin.
 * Fix HTML injection in Vulnerability template.
 * Add new plugin: Junit XML
+* Improved pagination in new vuln modal of status report
 
 May 24, 2017:
 ---

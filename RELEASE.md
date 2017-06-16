@@ -16,6 +16,7 @@ TBA:
 * Fixed formula injection vulnerability in export to CSV feature
 * Fixed DOM-based XSS in the Top Services widget of the dashboard
 * Fix in AppScan plugin.
+* Fix HTML injection in Vulnerability template.
 
 May 24, 2017:
 ---

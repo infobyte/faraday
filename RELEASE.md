@@ -17,6 +17,7 @@ TBA:
 * Fixed DOM-based XSS in the Top Services widget of the dashboard
 * Fix in AppScan plugin.
 * Fix HTML injection in Vulnerability template.
+* Add new plugin: Junit XML
 
 May 24, 2017:
 ---

@@ -11,7 +11,8 @@ New features in the latest update
 TBA:
 ---
 * Added the ability to select more than one target when creating a vuln in the Web UI
-
+* Merged PR #182 - problems with zonatransfer.me
+* Fixed bug in Download CSV of Status report with old versions of Firefox.
 
 May 24, 2017:
 ---

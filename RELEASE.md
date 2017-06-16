@@ -15,6 +15,7 @@ TBA:
 * Fixed bug in Download CSV of Status report with old versions of Firefox.
 * Fixed formula injection vulnerability in export to CSV feature
 * Fixed DOM-based XSS in the Top Services widget of the dashboard
+* Fix in AppScan plugin.
 
 May 24, 2017:
 ---

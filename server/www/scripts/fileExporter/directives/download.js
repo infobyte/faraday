@@ -32,7 +32,10 @@ angular.module('faradayApp')
                 a_href = element.find('a')[0];
                 
                 $click.on(a_href);
-                $timeout(function() {$blob.revoke(url);});
+
+                //Delay is necesary only for old versions of firefox browser.
+                //Ref: https://stackoverflow.com/questions/30694453/blob-createobjecturl-download-not-working-in-firefox-but-works-when-debugging
+                $timeout(function() {$blob.revoke(url);}, 1000);
                 
                 element[0].removeChild(a_href);
               });

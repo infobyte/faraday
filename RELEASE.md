@@ -14,6 +14,7 @@ TBA:
 * Merged PR #182 - problems with zonatransfer.me
 * Fixed bug in Download CSV of Status report with old versions of Firefox.
 * Fixed formula injection vulnerability in export to CSV feature
+* Fixed DOM-based XSS in the Top Services widget of the dashboard
 
 May 24, 2017:
 ---

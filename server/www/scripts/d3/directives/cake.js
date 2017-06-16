@@ -100,7 +100,12 @@ angular.module('faradayApp')
                 .style("stroke-width", "0.5")
                 .style("opacity", 0)
                 .on('mouseover', function(d) {
-                    document.getElementById("cakeText").innerHTML = "<div style='background-color:" + d.color + "'><b>" + d.key + '</b></div>' + d.value;
+                    var element = document.getElementById("cakeText");
+                    var colored = document.createElement('div');
+                    colored.style = "background-color:" + d.color; // Color is safe (its value is in a whitelist)
+                    colored.innerText = d.key;
+                    element.appendChild(colored);
+                    element.appendChild(document.createTextNode(d.value));
                 })
                 .on('mouseenter', function(d) {
                     var slice = d3.select('.cake-'+d.key)

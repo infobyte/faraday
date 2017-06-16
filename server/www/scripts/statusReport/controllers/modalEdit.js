@@ -93,7 +93,7 @@ angular.module('faradayApp')
                     vm.file_name_error = true;
                 }
             });
-            vm.icons = commons.loadIcons(vm._attachments); 
+            vm.icons = commons.loadIcons(vm._attachments);
         }
 
         vm.removeEvidence = function(name) {
@@ -104,7 +104,7 @@ angular.module('faradayApp')
         vm.toggleImpact = function(key) {
             vm.data.impact[key] = !vm.data.impact[key];
         };
-        
+
         vm.ok = function() {
             // add the ref in new_ref, if there's any
             vm.newReference();

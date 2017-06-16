@@ -116,7 +116,7 @@
                 <div class="col-md-12 reference" ng-repeat="reference in modal.data.refs">
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="vuln-refs">References</label>
-                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.value"/>
+                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.value" disabled/>
                         <span class="input-group-addon cursor" ng-click="modal.data.refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                     </div>
                 </div>
@@ -132,13 +132,13 @@
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="vuln-policyviolations">Policy Violations</label>
                         <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violations" ng-model="modal.new_policyviolation"/>
-                        <span class="input-group-addon cursor" ng-click="modal.newPolicyviolation()"><i class="fa fa-plus-circle"></i></span>
+                        <span class="input-group-addon cursor" ng-click="modal.newPolicyViolation()"><i class="fa fa-plus-circle"></i></span>
                     </div>
                 </div>
                 <div class="col-md-12 reference" ng-repeat="policyviolation in modal.data.policyviolations">
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="vuln-policyviolations">Policy Violation</label>
-                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violation" ng-model="policyviolation.value"/>
+                        <input type="text" class="form-control" id="vuln-policyviolations" placeholder="Policy Violation" ng-model="policyviolation.value" disabled/>
                         <span class="input-group-addon cursor" ng-click="modal.data.policyviolations.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                     </div>
                 </div>

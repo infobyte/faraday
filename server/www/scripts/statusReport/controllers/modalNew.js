@@ -170,7 +170,7 @@ angular.module('faradayApp')
             }
         }
 
-        vm.newPolicyviolation = function() {
+        vm.newPolicyViolation = function() {
             if (vm.new_policyviolation != "") {
                 // we need to check if the policy violation already exists
                 if (vm.data.policyviolations.filter(function(policyviolation) {return policyviolation.value === vm.new_policyviolation}).length == 0) {

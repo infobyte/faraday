@@ -57,7 +57,6 @@ angular.module('faradayApp')
 
             vm.data = {
                 _attachments: {},
-                type: "Vulnerability",
                 data: "",
                 desc: "",
                 easeofresolution: undefined,
@@ -67,21 +66,22 @@ angular.module('faradayApp')
                     confidentiality: false,
                     integrity: false
                 },
+                method: "",
                 name: "",
                 owned: false,
+                params: "",
                 parent: undefined,
-                refs: [],
-                resolution: "",
-                severity: undefined,
-                method: "",
                 path: "",
                 pname: "",
-                params: "",
+                policyviolations: [],
                 query: "",
+                refs: [],
                 request: "",
+                resolution: "",
                 response: "",
-                website: "",
-                policyviolations: []
+                severity: undefined,
+                type: "Vulnerability",
+                website: ""
             };
 
             vm.targets = [];

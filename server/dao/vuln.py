@@ -51,7 +51,8 @@ class VulnerabilityDAO(FaradayDAO):
         "web":              [],
         "issuetracker":     [],
         "creator":          [EntityMetadata.creator],
-        "command_id":       [EntityMetadata.command_id]
+        "command_id":       [EntityMetadata.command_id],
+        "policyviolations":  [Vulnerability.policyviolations]
     }
 
     STRICT_FILTERING = ["type", "service", "couchid", "hostid", "serviceid", 'interfaceid', 'id', 'status', 'command_id']
@@ -80,7 +81,8 @@ class VulnerabilityDAO(FaradayDAO):
             Vulnerability.method, Vulnerability.params, Vulnerability.pname, Vulnerability.query,\
             EntityMetadata.couchdb_id, EntityMetadata.revision, EntityMetadata.create_time, EntityMetadata.creator,\
             EntityMetadata.owner, EntityMetadata.update_action, EntityMetadata.update_controller_action,\
-            EntityMetadata.update_time, EntityMetadata.update_user, EntityMetadata.document_type, EntityMetadata.command_id, Vulnerability.attachments)
+            EntityMetadata.update_time, EntityMetadata.update_user, EntityMetadata.document_type, EntityMetadata.command_id, \
+            Vulnerability.attachments, Vulnerability.policyviolations)
         service_bundle = Bundle('service', Service.name.label('s_name'), Service.ports, Service.protocol, Service.id)
         host_bundle = Bundle('host', Host.name)
 
@@ -172,6 +174,7 @@ class VulnerabilityDAO(FaradayDAO):
                 'owned': vuln.owned,
                 'owner': vuln.owner,
                 'parent': get_parent_id(vuln.couchdb_id),
+                'policyviolations': json.loads(vuln.policyviolations),
                 'refs': json.loads(vuln.refs),
                 'status': vuln.status,
                 'website': vuln.website,

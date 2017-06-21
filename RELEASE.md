@@ -19,6 +19,7 @@ TBA:
 * Fix HTML injection in Vulnerability template.
 * Add new plugin: Junit XML
 * Improved pagination in new vuln modal of status report
+* Added "Policy Violations" field for Vulnerabilities
 
 May 24, 2017:
 ---

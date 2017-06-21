@@ -45,6 +45,7 @@ angular.module('faradayApp')
             this.type = "Vulnerability";
             this.ws = "";
             this.status = "opened";
+            this.policyviolations = "";
 
             if(data) {
                 if(data.name === undefined || data.name === "") {
@@ -55,9 +56,9 @@ angular.module('faradayApp')
         };
 
         var public_properties = [
-            '_attachments', 'confirmed', 'data', 'desc', 'easeofresolution', 
-            'impact', 'name', 'owned', 'refs', 'resolution', 'severity',
-            'status',
+            '_attachments', 'confirmed', 'data', 'desc', 'easeofresolution',
+            'impact', 'name', 'owned', 'policyviolations', 'refs', 'resolution',
+            'severity', 'status',
         ];
 
         var saved_properties = public_properties.concat(
@@ -86,7 +87,7 @@ angular.module('faradayApp')
 
                 if(data.owner !== undefined) self.owner = data.owner;
                 self.ws = ws;
-                if(data.parent !== undefined) self.parent = data.parent; 
+                if(data.parent !== undefined) self.parent = data.parent;
 
                 self.public_properties.forEach(function(property) {
                     if(data[property] !== undefined) self[property] = data[property];

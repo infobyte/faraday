@@ -27,10 +27,9 @@
             <div class="form-group">
                 <div class="col-md-12">
                     <uib-accordion close-others="true">
-                        <uib-accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize">
+                        <uib-accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize" template-url="scripts/statusReport/partials/accordion-group.html">
                             <uib-accordion-heading>
                                 <a ng-click="modal.setTarget(host)" ng-class="{'multi-selected': modal.data.parents.indexOf(host) >= 0}">{{host.name}} ({{host.hostnames[0]}})</a>
-                                <i class="pull-right glyphicon" ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
                             </uib-accordion-heading>
                             <div class="panel-body" ng-repeat="service in host.services">
                                 <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': modal.data.parents.indexOf(service) >= 0}">{{service.name}}  {{service.ports}}</a>

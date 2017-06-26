@@ -21,14 +21,14 @@
                 </div>
                 <div class="col-md-4">
                     <input class="btn btn-default btn-sm" type="button" value="Deselect all" ng-click="modal.resetTarget()">
-                    <input class="btn btn-default btn-sm" type="button" value="Select all" ng-click="modal.setAllTargets()">
-                    <input class="btn btn-default btn-sm" type="button" value="Select page" ng-click="modal.setPageTargets(modal.currentPage*modal.pageSize)">
+                    <input class="btn btn-default btn-sm" type="button" value="Select all" ng-click="modal.setPageTargets(false, 0, modal.targets.length)">
+                    <input class="btn btn-default btn-sm" type="button" value="Select page" ng-click="modal.setPageTargets(true, modal.currentPage*modal.pageSize, modal.pageSize)">
                 </div>
             </div>
             <div class="form-group">
                 <div class="col-md-12">
                     <uib-accordion close-others="true">
-                        <uib-accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize" template-url="scripts/statusReport/partials/accordion-group.html">
+                        <uib-accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize" template-url="scripts/statusReport/partials/accordion-group.html" is-disabled="host.services.length < 1">
                             <uib-accordion-heading>
                                 <a ng-click="modal.setTarget(host)" ng-class="{'multi-selected': modal.data.parents.indexOf(host) >= 0}">{{host.name}} ({{host.hostnames[0]}})</a>
                             </uib-accordion-heading>

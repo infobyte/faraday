@@ -144,17 +144,24 @@ angular.module('faradayApp')
             vm.host_parents = false;
         };
 
-        vm.setPageTargets = function(start) {
-            var end = start + vm.pageSize;
+        vm.setPageTargets = function(filter, start, size) {
+            var end = start + size,
+            targets = vm.targets;
 
-            vm.data.parents = vm.targets_filtered.slice(start, end);
-            vm.host_parents = vm.data.parents.some(function(elem, ind, arr) {
-                return elem.type === 'Host';
+            if(filter) {
+                targets = vm.targets_filtered;
+            }
+
+            targets = targets.slice(start, end);
+
+            vm.data.parents = targets;
+
+            vm.targets.forEach(function(target) {
+                if(target.type === 'Host' && target.services.length > 0) {
+                    vm.data.parents = vm.data.parents.concat(target.services);
+                }
             });
-        };
 
-        vm.setAllTargets = function() {
-            vm.data.parents = vm.targets;
             vm.host_parents = vm.data.parents.some(function(elem, ind, arr) {
                 return elem.type === 'Host';
             });

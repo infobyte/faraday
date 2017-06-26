@@ -1144,3 +1144,7 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
     right: 10px;
     top: -25px !important;
 }
+
+.accordion-expand-button-disabled {
+    display: none !important;
+}

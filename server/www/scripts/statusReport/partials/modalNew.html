@@ -14,14 +14,15 @@
         <div class="form-horizontal">
             <h5>Target</h5>
             <div class="form-group">
-                <div class="col-md-9">
+                <div class="col-md-8">
                     <div class="form-group input-accordion">
                         <input type="text" ng-model="modal.target_filter" class="form-control input-sm" placeholder="Search targets" ng-change="modal.currentPage = 0">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <input class="btn btn-default btn-sm" type="button" value="Deselect all" ng-click="modal.resetTarget()">
                     <input class="btn btn-default btn-sm" type="button" value="Select all" ng-click="modal.setAllTargets()">
+                    <input class="btn btn-default btn-sm" type="button" value="Select page" ng-click="modal.setPageTargets(modal.currentPage*modal.pageSize)">
                 </div>
             </div>
             <div class="form-group">

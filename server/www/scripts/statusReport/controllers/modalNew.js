@@ -144,6 +144,15 @@ angular.module('faradayApp')
             vm.host_parents = false;
         };
 
+        vm.setPageTargets = function(start) {
+            var end = start + vm.pageSize;
+
+            vm.data.parents = vm.targets_filtered.slice(start, end);
+            vm.host_parents = vm.data.parents.some(function(elem, ind, arr) {
+                return elem.type === 'Host';
+            });
+        };
+
         vm.setAllTargets = function() {
             vm.data.parents = vm.targets;
             vm.host_parents = vm.data.parents.some(function(elem, ind, arr) {

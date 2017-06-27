@@ -156,7 +156,7 @@ angular.module('faradayApp')
 
             vm.data.parents = targets;
 
-            vm.targets.forEach(function(target) {
+            targets.forEach(function(target) {
                 if(target.type === 'Host' && target.services.length > 0) {
                     vm.data.parents = vm.data.parents.concat(target.services);
                 }

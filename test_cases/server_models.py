@@ -14,6 +14,7 @@ class ModelsTest(unittest.TestCase):
     def test_(self):
         interface = Interface(INTERFACE_TEST_CASE_1)
         interface.update_from_document(INTERFACE_TEST_CASE_1)
+        self.assertEquals(interface.hostname, '')
 
 
 if __name__ == '__main__':

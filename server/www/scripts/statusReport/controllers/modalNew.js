@@ -151,13 +151,16 @@ angular.module('faradayApp')
             $modalInstance.dismiss('cancel');
         };
 
-        vm.resetTarget = function () {
-            vm.data.parents = [];
-            vm.host_parents = false;
-        };
+        vm.setTargets = function(filter, start, size) {
+            var end = start + size,
+            targets = vm.targets;
 
-        vm.setAllTargets = function() {
-            vm.data.parents = vm.targets;
+            if(filter) {
+                targets = vm.targets_filtered;
+            }
+
+            vm.data.parents = targets.slice(start, end);
+
             vm.host_parents = vm.data.parents.some(function(elem, ind, arr) {
                 return elem.type === 'Host';
             });

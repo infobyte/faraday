@@ -1138,3 +1138,13 @@ a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
     float: right;
     margin: 8px;
 }
+
+.accordion-expand-button {
+    color: #008000;
+    right: 10px;
+    top: -25px !important;
+}
+
+.accordion-expand-button-disabled {
+    display: none !important;
+}

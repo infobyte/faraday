@@ -14,23 +14,39 @@
         <div class="form-horizontal">
             <h5>Target</h5>
             <div class="form-group">
-                <div class="col-md-9">
+                <div class="col-md-10">
                     <div class="form-group input-accordion">
                         <input type="text" ng-model="modal.target_filter" class="form-control input-sm" placeholder="Search targets" ng-change="modal.currentPage = 0">
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <input class="btn btn-default btn-sm" type="button" value="Deselect all" ng-click="modal.resetTarget()">
-                    <input class="btn btn-default btn-sm" type="button" value="Select all" ng-click="modal.setAllTargets()">
+                <div class="col-md-2">
+                    <div class="btn-group btn-small-margin">
+                        <button type="button" class="btn btn-default btn-sm" title="Select page" ng-click="modal.setTargets(true, modal.currentPage*modal.pageSize, modal.pageSize)">
+                            Select page
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" title="Select options">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                            <li ng-show="modal.target_filter && modal.targets_filtered.length > 0">
+                                <a class="ws" ng-click="modal.setTargets(true, 0, modal.targets_filtered.length)">Select all hosts in search</a>
+                            </li>
+                            <li>
+                                <a class="ws" ng-click="modal.setTargets(false, 0, modal.targets.length)">Select all hosts</a>
+                            </li>
+                            <li>
+                                <a class="ws" ng-click="modal.setTargets(false, 0, 0)">Clear selection</a>
+                            </li>
+                        </ul>
+                    </div><!-- .btn-group -->
                 </div>
             </div>
             <div class="form-group">
                 <div class="col-md-12">
                     <uib-accordion close-others="true">
-                        <uib-accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize">
+                        <uib-accordion-group is-open="isopen" ng-repeat="host in modal.targets_filtered = (modal.targets | filter:modal.target_filter) | startFrom:modal.currentPage*modal.pageSize | limitTo:modal.pageSize" template-url="scripts/statusReport/partials/accordion-group.html" is-disabled="host.services.length < 1">
                             <uib-accordion-heading>
                                 <a ng-click="modal.setTarget(host)" ng-class="{'multi-selected': modal.data.parents.indexOf(host) >= 0}">{{host.name}} ({{host.hostnames[0]}})</a>
-                                <i class="pull-right glyphicon" ng-class="{'glyphicon glyphicon-minus-sign': isopen, 'glyphicon glyphicon-plus-sign': !isopen}"></i>
                             </uib-accordion-heading>
                             <div class="panel-body" ng-repeat="service in host.services">
                                 <a ng-model="service" ng-click="modal.setTarget(service)" ng-class="{'multi-selected': modal.data.parents.indexOf(service) >= 0}">{{service.name}}  {{service.ports}}</a>

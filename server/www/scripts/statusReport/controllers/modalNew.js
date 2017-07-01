@@ -121,6 +121,7 @@ angular.module('faradayApp')
         vm.ok = function() {
             // add the ref in new_ref, if there's any
             vm.newReference();
+            vm.newPolicyViolation();
 
             // convert refs to an array of strings
             var refs = [];
@@ -134,9 +135,6 @@ angular.module('faradayApp')
                 policyviolations.push(violation.value);
             });
             vm.data.policyviolations = policyviolations;
-
-            // delete selection
-            delete vm.data.parent.selected_modalNewCtrl;
 
             var parents = vm.data.parents;
             vm.data.parents = [];

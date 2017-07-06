@@ -95,6 +95,10 @@ angular.module('faradayApp')
                   var colored = document.createElement('div');
                   colored.style = "background-color:" + d.color; // Color is safe (its value is in a whitelist)
                   colored.innerText = d.name;
+                  while (element.firstChild) {
+                      // https://stackoverflow.com/questions/3955229/remove-all-child-elements-of-a-dom-node-in-javascript
+                      element.removeChild(element.firstChild);
+                  }
                   element.appendChild(colored);
                   element.appendChild(document.createTextNode(d.count));
               })

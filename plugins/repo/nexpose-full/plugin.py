@@ -90,14 +90,14 @@ class NexposeFullXmlParser(object):
                     ret += self.parse_html_type(child)
             else:
                 ret += node.text.encode(
-                    "ascii", errors="backslashreplace").strip() if node.get('text') else ""
+                    "ascii", errors="backslashreplace").strip() if node.text else ""
         if tag == 'listitem':
             if len(list(node)) > 0:
                 for child in list(node):
                     ret += self.parse_html_type(child)
             else:
                 ret = node.text.encode(
-                    "ascii", errors="backslashreplace").strip() if node.get('text') else ""
+                    "ascii", errors="backslashreplace").strip() if node.text else ""
         if tag == 'orderedlist':
             i = 1
             for item in list(node):
@@ -109,7 +109,7 @@ class NexposeFullXmlParser(object):
                     ret += self.parse_html_type(child)
             else:
                 ret += node.text.encode("ascii",
-                                        errors="backslashreplace") if node.get('text') else ""
+                                        errors="backslashreplace") if node.text else ""
         if tag == 'unorderedlist':
             for item in list(node):
                 ret += "\t" + "* " + self.parse_html_type(item) + "\n"
@@ -179,8 +179,8 @@ class NexposeFullXmlParser(object):
                                 vuln['refs'].append(title + ' ' + link)
                     if item.tag == 'references':
                         for ref in list(item):
-                            if ref.get('text'):
-                                rf = ref.get('text').encode(
+                            if ref.text:
+                                rf = ref.text.encode(
                                     "ascii", errors="backslashreplace").strip()
                                 vuln['refs'].append(rf)
                     if item.tag == 'solution':

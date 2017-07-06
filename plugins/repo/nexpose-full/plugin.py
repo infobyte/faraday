@@ -134,7 +134,7 @@ class NexposeFullXmlParser(object):
         """
         vulns = list()
 
-        for tests in node.iter('tests'):
+        for tests in node.findall('tests'):
             for test in tests.iter('test'):
                 vuln = dict()
                 if test.get('id').lower() in vulnsDefinitions:

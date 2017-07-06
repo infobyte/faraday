@@ -51,10 +51,10 @@ class NexposeFullXmlParser(object):
 
     def __init__(self, xml_output):
         tree = self.parse_xml(xml_output)
-        vulns = self.get_vuln_definitions(tree)
+        self.vulns = self.get_vuln_definitions(tree)
 
         if tree:
-            self.items = self.get_items(tree, vulns)
+            self.items = self.get_items(tree, self.vulns)
         else:
             self.items = []
 

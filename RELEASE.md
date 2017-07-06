@@ -8,7 +8,7 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
-TBA:
+July 7, 2017:
 ---
 * Added the ability to select more than one target when creating a vuln in the Web UI
 * Merged PR #182 - problems with zonatransfer.me
@@ -19,6 +19,7 @@ TBA:
 * Fix HTML injection in Vulnerability template.
 * Add new plugin: Junit XML
 * Improved pagination in new vuln modal of status report
+* Added "Policy Violations" field for Vulnerabilities
 
 May 24, 2017:
 ---

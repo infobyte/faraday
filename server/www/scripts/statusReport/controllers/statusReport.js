@@ -175,7 +175,8 @@ angular.module('faradayApp')
                 "query":            false,
                 "response":         false,
                 "web":              false,
-                "creator":          false
+                "creator":          false,
+                "policyviolations":  false
             };
 
             // created object for columns cookie columns
@@ -393,6 +394,14 @@ angular.module('faradayApp')
                 width: '100',
                 sort: getColumnSort('metadata.creator'),
                 visible: $scope.columns["creator"]
+            });
+            $scope.gridOptions.columnDefs.push({ name : 'policyviolations',
+                displayName : "policy violations",
+                cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/policyviolationscolumn.html',
+                headerCellTemplate: header,
+                width: '100',
+                sort: getColumnSort('policyviolations'),
+                visible: $scope.columns["policyviolations"]
             });
         };
 
@@ -734,6 +743,25 @@ angular.module('faradayApp')
                 'Enter the new easeofresolution:',
                 'easeofresolution',
                 {options: EASEOFRESOLUTION});
+        };
+
+        $scope.editPolicyviolations = function() {
+            editProperty(
+                'scripts/commons/partials/editArray.html',
+                'commonsModalEditArray',
+                'Enter the new policy violations:',
+                'policyviolations',
+                {callback: function (vuln, policyviolations) {
+                    var violations = vuln.policyviolations.concat([]);
+                    policyviolations.forEach(function(policyviolation) {
+                        if(vuln.policyviolations.indexOf(policyviolation) == -1){
+                            violations.push(policyviolation);
+                        }
+                    });
+
+                    return {'policyviolations': violations};
+                }}
+                );
         };
 
         $scope.editReferences = function() {

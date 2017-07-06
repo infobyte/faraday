@@ -13,6 +13,7 @@ angular.module('faradayApp')
         vm.easeofresolution;
         vm.workspace;
         vm.new_ref;
+        vm.new_policyviolation;
         vm.icons;
         vm.cweList;
         vm.cweLimit;
@@ -41,6 +42,7 @@ angular.module('faradayApp')
             vm.severities = severities;
             vm.workspace = workspace;
             vm.new_ref = "";
+            vm.new_policyviolation = "";
             vm.icons = {};
 
             vm.host_parents = false;
@@ -76,6 +78,7 @@ angular.module('faradayApp')
                 parents: [],
                 path: "",
                 pname: "",
+                policyviolations: [],
                 query: "",
                 refs: [],
                 request: "",
@@ -118,6 +121,7 @@ angular.module('faradayApp')
         vm.ok = function() {
             // add the ref in new_ref, if there's any
             vm.newReference();
+            vm.newPolicyViolation();
 
             // convert refs to an array of strings
             var refs = [];
@@ -125,6 +129,12 @@ angular.module('faradayApp')
                 refs.push(ref.value);
             });
             vm.data.refs = refs;
+
+            var policyviolations = [];
+            vm.data.policyviolations.forEach(function(violation) {
+                policyviolations.push(violation.value);
+            });
+            vm.data.policyviolations = policyviolations;
 
             var parents = vm.data.parents;
             vm.data.parents = [];
@@ -139,13 +149,16 @@ angular.module('faradayApp')
             $modalInstance.dismiss('cancel');
         };
 
-        vm.resetTarget = function () {
-            vm.data.parents = [];
-            vm.host_parents = false;
-        };
+        vm.setTargets = function(filter, start, size) {
+            var end = start + size,
+            targets = vm.targets;
 
-        vm.setAllTargets = function() {
-            vm.data.parents = vm.targets;
+            if(filter) {
+                targets = vm.targets_filtered;
+            }
+
+            vm.data.parents = targets.slice(start, end);
+
             vm.host_parents = vm.data.parents.some(function(elem, ind, arr) {
                 return elem.type === 'Host';
             });
@@ -186,10 +199,20 @@ angular.module('faradayApp')
             }
         }
 
+        vm.newPolicyViolation = function() {
+            if (vm.new_policyviolation != "") {
+                // we need to check if the policy violation already exists
+                if (vm.data.policyviolations.filter(function(policyviolation) {return policyviolation.value === vm.new_policyviolation}).length == 0) {
+                    vm.data.policyviolations.push({value: vm.new_policyviolation});
+                    vm.new_policyviolation = "";
+                }
+            }
+        }
+
         vm.populate = function(item, model, label) {
 
             for (var key in item) {
-                if (key != "refs" && vm.data.hasOwnProperty(key)) {
+                if(key != "refs" && key != "policyviolations" && vm.data.hasOwnProperty(key)) {
                     vm.data[key] = item[key];
                 }
             }
@@ -200,6 +223,12 @@ angular.module('faradayApp')
                 refs.push({value: ref});
             });
             vm.data.refs = refs;
+
+            var policyviolations = [];
+            item.policyviolations.forEach(function(policyviolation) {
+                policyviolations.push({value: policyviolation});
+            });
+            vm.data.policyviolations = policyviolations;
         }
 
         init();

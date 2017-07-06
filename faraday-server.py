@@ -2,10 +2,10 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-import argparse
 import os
-import subprocess
 import sys
+import argparse
+import subprocess
 
 import server.config
 import server.couchdb
@@ -13,6 +13,7 @@ import server.utils.logger
 from server.utils import daemonize
 from utils import dependencies
 from utils.user_input import query_yes_no
+from faraday import FARADAY_BASE
 
 logger = server.utils.logger.get_logger(__name__)
 
@@ -87,6 +88,7 @@ def run_server(args):
 
 
 def main():
+    os.chdir(FARADAY_BASE)
     parser = argparse.ArgumentParser()
     parser.add_argument('--ssl', action='store_true', help='enable HTTPS')
     parser.add_argument('--debug', action='store_true', help='run Faraday Server in debug mode')

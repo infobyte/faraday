@@ -138,7 +138,7 @@ class NexposeFullXmlParser(object):
             for test in tests.iter('test'):
                 vuln = dict()
                 if test.get('id').lower() in vulnsDefinitions:
-                    vuln = vulnsDefinitions[test.get('id').lower()]
+                    vuln = vulnsDefinitions[test.get('id').lower()].copy()
                     for desc in list(test):
                         vuln['desc'] += self.parse_html_type(desc)
                     vulns.append(vuln)

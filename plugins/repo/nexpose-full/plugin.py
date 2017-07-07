@@ -169,7 +169,8 @@ class NexposeFullXmlParser(object):
                     'refs': ["vector: " + vector, vid],
                     'resolution': "",
                     'severity': (int(vulnDef.get('severity')) - 1) / 2,
-                    'tags': list()
+                    'tags': list(),
+                    'is_web': vid.startswith('http-')
                 }
 
                 for item in list(vulnDef):
@@ -298,8 +299,10 @@ class NexposeFullPlugin(core.PluginBase):
                                                            status=s['status'],
                                                            version=version)
                 for v in s['vulns']:
-                    v_id = self.createAndAddVulnToService(h_id, s_id, v['name'], v['desc'], v[
-                                                          'refs'], v['severity'], v['resolution'])
+                    f = (self.createAndAddVulnWebToService if v['is_web'] else
+                        self.createAndAddVulnToService)
+                    v_id = f(h_id, s_id, v['name'], v['desc'], v['refs'],
+                             v['severity'], v['resolution'])
         del parser
 
     def processCommandString(self, username, current_path, command_string):

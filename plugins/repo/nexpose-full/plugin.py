@@ -132,25 +132,18 @@ class NexposeFullXmlParser(object):
 
         @return vulns A list of vulnerabilities according to vulnsDefinitions
         """
-        vulns = dict()
+        vulns = list()
 
         for tests in node.findall('tests'):
             for test in tests.iter('test'):
-                vid = test.get('id').lower()
-                if vid in vulns:
-                    # Use existing vulnerability of the same type
-                    vuln = vulns[vid]
-                else:
-                    # Create new vuln
-                    try:
-                        vuln = vulnsDefinitions[vid].copy()
-                    except KeyError:
-                        continue
-                for desc in list(test):
-                    vuln['desc'] += '\n' + self.parse_html_type(desc)
-                vulns[vid] = vuln
+                vuln = dict()
+                if test.get('id').lower() in vulnsDefinitions:
+                    vuln = vulnsDefinitions[test.get('id').lower()].copy()
+                    for desc in list(test):
+                        vuln['desc'] += self.parse_html_type(desc)
+                    vulns.append(vuln)
 
-        return list(vulns.values())
+        return vulns
 
     def get_vuln_definitions(self, tree):
         """

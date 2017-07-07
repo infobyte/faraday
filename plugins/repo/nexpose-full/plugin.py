@@ -139,6 +139,11 @@ class NexposeFullXmlParser(object):
                 vuln = dict()
                 if test.get('id').lower() in vulnsDefinitions:
                     vuln = vulnsDefinitions[test.get('id').lower()].copy()
+                    key = test.get('key', '')
+                    if key.startswith('/'):
+                        # It has the path where the vuln was found
+                        # Example key: "/comments.asp||content"
+                        vuln['path'] = key[:key.find('|')]
                     for desc in list(test):
                         vuln['desc'] += self.parse_html_type(desc)
                     vulns.append(vuln)
@@ -292,10 +297,15 @@ class NexposeFullPlugin(core.PluginBase):
                                                            status=s['status'],
                                                            version=version)
                 for v in s['vulns']:
-                    f = (self.createAndAddVulnWebToService if v['is_web'] else
-                        self.createAndAddVulnToService)
-                    v_id = f(h_id, s_id, v['name'], v['desc'], v['refs'],
-                             v['severity'], v['resolution'])
+                    if v['is_web']:
+                        v_id = self.createAndAddVulnWebToService(
+                            h_id, s_id, v['name'], v['desc'], v['refs'],
+                            v['severity'], v['resolution'],
+                            path=v.get('path',''))
+                    else:
+                        v_id = self.createAndAddVulnToService(
+                            h_id, s_id, v['name'], v['desc'], v['refs'],
+                            v['severity'], v['resolution'])
         del parser
 
     def processCommandString(self, username, current_path, command_string):

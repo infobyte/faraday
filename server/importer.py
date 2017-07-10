@@ -340,6 +340,7 @@ class FaradayEntityImporter(object):
         raise Exception('MUST IMPLEMENT')
 
 
+
 def import_workspaces():
     """
         Main entry point for couchdb import
@@ -386,7 +387,6 @@ def import_workspace_into_database(workspace_name, couchdb_server_conn):
 
     _import_from_couchdb(workspace, couchdb_server_conn)
     session.commit()
-
     return created
 
 

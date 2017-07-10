@@ -6,6 +6,7 @@ import json
 
 from server.dao.base import FaradayDAO
 from server.utils.database import (
+    GroupConcat,
     paginate,
     sort_results,
     apply_search_filter,
@@ -21,6 +22,7 @@ from server.models import (
     Vulnerability,
     EntityMetadata
 )
+
 
 
 class VulnerabilityDAO(FaradayDAO):
@@ -86,8 +88,9 @@ class VulnerabilityDAO(FaradayDAO):
         # directly.
         query = self._session.query(vuln_bundle,
                                     service_bundle,
-                                    host_bundle)\
-                             .group_by(Vulnerability.id)\
+                                    host_bundle,
+                                    GroupConcat(Interface.hostnames))\
+                             .group_by(Vulnerability.id, EntityMetadata.id, Service.id, Host.id)\
                              .outerjoin(EntityMetadata, EntityMetadata.id == Vulnerability.entity_metadata_id)\
                              .outerjoin(Service, Service.id == Vulnerability.service_id)\
                              .outerjoin(Host, Host.id == Vulnerability.host_id)\
@@ -201,10 +204,9 @@ class VulnerabilityDAO(FaradayDAO):
             return None
 
         col = VulnerabilityDAO.COLUMNS_MAP.get(group_by)[0]
-        vuln_bundle = Bundle('vuln', Vulnerability.id, col)
+        vuln_bundle = Bundle('vuln', col)
         query = self._session.query(vuln_bundle, func.count())\
-                             .group_by(col)\
-                             .outerjoin(EntityMetadata, EntityMetadata.id == Vulnerability.entity_metadata_id)
+                             .group_by(col)
 
         query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter, self.STRICT_FILTERING)
         result = query.all()

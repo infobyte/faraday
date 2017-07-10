@@ -94,7 +94,7 @@ def apply_search_filter(query, field_to_col_map, free_text_search=None, field_fi
                 # ignore this list since its purpose is clearly to
                 # match anything it can find.
                 if is_direct_filter_search and attribute in strict_filter:
-                    search_term = column.is_(field_filter.get(attribute))
+                    search_term = column.op('=')(field_filter.get(attribute))
                 else:
                     search_term = column.like(like_str)
 

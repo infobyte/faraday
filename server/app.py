@@ -3,13 +3,38 @@
 # See the file 'doc/LICENSE' for the license information
 
 import flask
+from flask_security import Security, login_required, \
+    SQLAlchemySessionUserDatastore
+
 import server.config
 import server.database
-
+import server.models
 from server.utils.logger import LOGGING_HANDLERS
 
 
 app = flask.Flask(__name__)
+app.config['SECRET_KEY'] = 'supersecret'
+app.config['SECURITY_PASSWORD_SINGLE_HASH'] = True
+
+# Setup Flask-Security
+user_datastore = SQLAlchemySessionUserDatastore(server.database.common_session,
+                                                server.models.User,
+                                                server.models.Role)
+security = Security(app, user_datastore)
+
+# Create a user to test with
+@app.before_first_request
+def create_user():
+    server.database.init_common_db()
+    user_datastore.create_user(email='matt@nobien.net', password='password')
+    server.database.common_session.commit()
+
+# Views
+@app.route('/test')
+@login_required
+def home():
+    return 'Logged in!!'
+
 
 def setup():
     app.debug = server.config.is_debug_mode()

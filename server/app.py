@@ -22,6 +22,12 @@ user_datastore = SQLAlchemySessionUserDatastore(server.database.common_session,
                                                 server.models.Role)
 security = Security(app, user_datastore)
 
+# We are exposing a RESTful API, so don't redirect a user to a login page in
+# case of being unauthorized, raise a 403 error instead
+@app.login_manager.unauthorized_handler
+def unauthorized():
+    flask.abort(403)
+
 # Create a user to test with
 @app.before_first_request
 def create_user():

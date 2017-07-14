@@ -29,18 +29,22 @@ def unauthorized():
     flask.abort(403)
 
 # Create a user to test with
-@app.before_first_request
-def create_user():
-    server.database.init_common_db()
-    user_datastore.create_user(email='matt@nobien.net', password='password')
-    server.database.common_session.commit()
+# @app.before_first_request
+# def create_user():
+server.database.init_common_db()
+user_datastore.create_user(email='matt@nobien.net', password='password')
+server.database.common_session.commit()
 
-# Views
-@app.route('/test')
-@login_required
-def home():
-    return 'Logged in!!'
-
+# Make API endpoints require a login user by default. Based on
+# https://stackoverflow.com/questions/13428708/best-way-to-make-flask-logins-login-required-the-default
+app.view_functions['security.login'].is_public = True
+app.view_functions['security.logout'].is_public = True
+@app.before_request
+def default_login_required():
+    view = app.view_functions.get(flask.request.endpoint)
+    logged_in = 'user_id' in flask.session
+    if (not logged_in and not getattr(view, 'is_public', False)):
+        flask.abort(403)
 
 def setup():
     app.debug = server.config.is_debug_mode()

@@ -446,7 +446,7 @@ class WorkspaceNotFound(Exception):
 # Connection to a database common to al workspaces
 #
 
-common_engine = create_engine('sqlite://')
+common_engine = create_engine('sqlite:////tmp/test.db')
 common_session = scoped_session(sessionmaker(autocommit=False,
                                             autoflush=False,
                                             bind=common_engine))

@@ -29,6 +29,8 @@ angular.module('faradayApp')
 
         $scope.vulnWebSelected;
         $scope.confirmed = false;
+
+        $scope.gridHeight;
         var allVulns;
 
         var searchFilter = {};
@@ -64,7 +66,7 @@ angular.module('faradayApp')
                 enableHorizontalScrollbar: 0,
                 treeRowHeaderAlwaysVisible: false,
                 enableGroupHeaderSelection: true,
-                rowHeight: 95
+                rowHeight: 30
             };
             $scope.gridOptions.columnDefs = [];
 
@@ -202,6 +204,11 @@ angular.module('faradayApp')
 
             loadVulns();
 
+            resizeGrid();
+
+            angular.element($window).bind('resize', function () {
+                resizeGrid();
+            }); 
         };
 
         var defineColumns = function() {
@@ -441,6 +448,19 @@ angular.module('faradayApp')
             return res;
         };
 
+        var resizeGrid = function() {
+            $scope.gridHeight = getGridHeight('grid', 'right-main', 15);
+        } 
+
+        var getGridHeight = function(gridClass, contentClass, bottomOffset) {
+            var contentOffset = angular.element(document.getElementsByClassName(contentClass)[0]).offset();
+            var contentHeight = angular.element(document.getElementsByClassName(contentClass)[0]).height();
+            var gridOffset = angular.element(document.getElementsByClassName(gridClass)).offset();            
+            if (gridOffset !== undefined) {
+                var gridHeight = contentHeight - (gridOffset.top) - bottomOffset;
+                return gridHeight + 'px';
+            }  
+        }      
 
         $scope.saveAsModel = function() {
             var self = this;

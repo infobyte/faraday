@@ -1037,8 +1037,8 @@ div.btn-group .vulns-filter{left: -2px;}
 div.btn-group .dropdown-menu.margin{margin-left: 38px}
 /* UI GRID */
 .ui-grid-cell.ui-grid-disable-selection.ui-grid-row-header-cell{pointer-events: auto!important;}
-.grid {
-  height: 98vh;
+.grid {  
+  height: 100%;
 }
 .ui-grid-cell-contents.left-rows.text-center.ng-scope{white-space: normal!important; }
 .ui-grid .ui-grid-row:nth-child(odd) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid .ui-grid-row:nth-child(even) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid-cell-contents{
@@ -1050,7 +1050,7 @@ div.btn-group .dropdown-menu.margin{margin-left: 38px}
 .white-space{white-space: pre!important; word-wrap: break-word;}
 .ui-grid-cell-contents.center > .pos-middle.crop-text{top: 2%!important;white-space: inherit!important;}
 .overflow-cell{
-    height: 95px!important;
+    height: 30px!important;
     overflow-y: auto!important;
 }
 div.ui-grid-header-cell .ui-grid-cell-contents{white-space: normal;}
@@ -1058,6 +1058,15 @@ div.alert.alert-danger.alert-dismissible .ws-list{text-align: center; text-trans
 div.alert.alert-danger.alert-dismissible .ws-list a:hover{text-decoration: none}
 a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .almost-expired{background-color: #dca7a7 !important}
+
+.statusReport-Search:before,.statusReport-Search:after {
+    display: table;
+    content: " ";
+}
+
+.statusReport-Search:after {
+    clear: both;
+}
 
 #custom-search-input{
     border: solid 1px #E4E4E4;

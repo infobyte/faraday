@@ -725,7 +725,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
         justify-content: center;
         align-items: center;
     }
-    #merge, #delete, #new, #tags, #group-by, left{margin:5px;float:right}
+    #merge, #delete, #new, #tags, #group-by, #add-columns, left{margin:5px;float:right}
     .left_auths{margin:5px;float:right;margin-top: -52px;}
     .left_auth{margin:5px;float:right;margin-top: -40px;}
 

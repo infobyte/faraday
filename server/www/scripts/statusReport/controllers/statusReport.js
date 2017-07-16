@@ -217,9 +217,7 @@ angular.module('faradayApp')
 
         var defineColumns = function() {
             $scope.gridOptions.columnDefs.push({ name: 'selectAll', width: '20', headerCellTemplate: "<i class=\"fa fa-check cursor\" ng-click=\"grid.appScope.selectAll()\" ng-style=\"{'opacity':(grid.appScope.selected === true) ? '1':'0.6'}\"></i>", pinnedLeft:true });
-            $scope.gridOptions.columnDefs.push({ name: 'confirmVuln', width: '40', headerCellTemplate: "<div></div>", cellTemplate: 'scripts/statusReport/partials/ui-grid/confirmbutton.html' });
-            $scope.gridOptions.columnDefs.push({ name: 'deleteVuln', width: '40', headerCellTemplate: "<div></div>", cellTemplate: 'scripts/statusReport/partials/ui-grid/deletebutton.html' });
-            $scope.gridOptions.columnDefs.push({ name: 'editVuln', width: '30', headerCellTemplate: "<div></div>", cellTemplate: 'scripts/statusReport/partials/ui-grid/editbutton.html' });
+            $scope.gridOptions.columnDefs.push({ name: 'confirmVuln', width: '22', headerCellTemplate: "<div></div>", cellTemplate: 'scripts/statusReport/partials/ui-grid/confirmbutton.html' });
 
             function getColumnSort(columnName){
                 if($cookies.get('SRsortColumn') === columnName){
@@ -666,10 +664,6 @@ angular.module('faradayApp')
         // action triggered from EDIT button
         $scope.edit = function() {
             _edit($scope.getCurrentSelection());
-        };
-
-        $scope.editVuln = function(vuln) {
-            _edit([vuln]);
         };
 
         var _edit = function(vulns) {

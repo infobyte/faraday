@@ -75,11 +75,24 @@
                         <li><a class="ws" ng-click="saveAsModel()">Create vulnerability templates</a></li>
                     </ul>
                 </div>
+                <div id="add-columns" class="btn-group btn-small-margin">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add columns">
+                        Add columns
+                    </button>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add Columns">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li ng-repeat="(column, show) in columns">
+                            <a class="ws" ng-click="toggleShow(column, show)" ng-show="!show">{{column}}</a>
+                        </li>
+                    </ul>
+                </div>
                 <div id="group-by" class="btn-group btn-small-margin">
                     <button type="button" ng-if="propertyGroupBy" class="btn btn-danger" title="Clear" ng-click="clearGroupBy()">
                         <i class="fa fa-times"></i>
                     </button>
-                    <button type="button" class="btn btn-default" title="{{propertyGroupBy || 'Group By'}}">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="{{propertyGroupBy || 'Group By'}}">
                         {{ (propertyGroupBy | uppercase) || "Group By"}}
                     </button>
                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Group By">
@@ -90,7 +103,7 @@
                             <a class="ws" ng-show="show && (column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date')" ng-click="groupBy(column)">{{column}}</a>
                         </li>
                     </ul>
-                </div>
+                </div>                
                 <button id="new" type="button" class="btn btn-success" title="New Vulns" ng-click="new()">
                     <span class="glyphicon glyphicon-plus-sign"></span>
                     New
@@ -112,18 +125,7 @@
                                 </div>
                             </div>
                         </form>
-                    </div>
-                    <div class="col-md-12 col-sm-9 col-xs-12">
-                        <h4><span class="label label-default" title="Add columns">Add columns</span></h4>
-                        <ul class="label-list">
-                            <li ng-repeat="(column, show) in columns">
-                                <a href="" ng-click="toggleShow(column, show)" ng-show="!show">
-                                    <span class="label label-primary ws-name">{{column}}</span>
-                                </a>
-                            </li>
-                            <!-- label-list -->
-                        </ul>
-                    </div>
+                    </div>                    
                 </div>
 
                 <div ui-grid="gridOptions" ui-grid-grouping ui-grid-selection ui-grid-pagination ui-grid-pinning class="grid" ng-style="{'height' : gridHeight }"></div>

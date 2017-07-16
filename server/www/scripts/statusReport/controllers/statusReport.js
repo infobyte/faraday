@@ -126,6 +126,10 @@ angular.module('faradayApp')
                     }
                     loadVulns();
                 });
+
+                $scope.gridApi.core.on.rowsRendered($scope, function() {
+                    resizeGrid();
+                });
             };
 
             // load all workspaces
@@ -207,8 +211,6 @@ angular.module('faradayApp')
             groupByColumn();
 
             loadVulns();
-
-            resizeGrid();
 
             angular.element($window).bind('resize', function () {
                 resizeGrid();
@@ -405,7 +407,7 @@ angular.module('faradayApp')
                 visible: $scope.columns["creator"]
             });
             $scope.gridOptions.columnDefs.push({ name : 'policyviolations',
-                displayName : "policy violations",
+                displayName : "policyviolations",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/policyviolationscolumn.html',
                 headerCellTemplate: header,
                 width: '100',

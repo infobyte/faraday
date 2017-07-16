@@ -1056,6 +1056,9 @@ div.btn-group .dropdown-menu.margin{margin-left: 38px}
 div.ui-grid-header-cell .ui-grid-cell-contents{white-space: normal;}
 div.alert.alert-danger.alert-dismissible .ws-list{text-align: center; text-transform: uppercase; padding: 10px}
 div.alert.alert-danger.alert-dismissible .ws-list a:hover{text-decoration: none}
+.grid .ui-grid-header {
+    padding: 3px 5px;
+}
 a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .almost-expired{background-color: #dca7a7 !important}
 

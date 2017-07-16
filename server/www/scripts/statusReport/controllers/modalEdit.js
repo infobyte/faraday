@@ -3,8 +3,8 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact', 'severities', 'vuln', 'cweFact', 
-        function($modalInstance, EASEOFRESOLUTION, STATUSES, commons, severities, vuln, cweFact) {
+    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact', 'severities', 'vuln', 'cweFact', 'referenceService',
+        function($modalInstance, EASEOFRESOLUTION, STATUSES, commons, severities, vuln, cweFact, referenceService) {
         
         var vm = this;
 
@@ -138,6 +138,11 @@ angular.module('faradayApp')
                     vm.new_ref = "";
                 }
             }
+        }
+
+        vm.openReference = function(text)
+        {
+              window.open(referenceService.processReference(text), '_blank');
         }
 
         vm.newPolicyViolation = function() {

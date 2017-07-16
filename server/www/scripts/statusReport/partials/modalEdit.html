@@ -75,7 +75,7 @@
                 <div class="col-md-12 reference" ng-repeat="reference in modal.data.refs">
                     <div class="input-group margin-bottom-sm">
                         <label class="sr-only" for="vuln-refs">References</label>
-                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.value" disabled/>
+                        <input type="text" class="form-control" id="vuln-refs" placeholder="Reference" ng-model="reference.value" ng-click="modal.openReference(reference.value)" role="button" readonly />
                         <span class="input-group-addon cursor" ng-click="modal.data.refs.splice($index, 1)"><i class="fa fa-minus-circle"></i></span>
                     </div>
                 </div>

@@ -3,6 +3,10 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
+    .filter('removeLinesbreak',function(){
+        return function(text){        
+            return text?text.replace(/\n/g, ' '):'';
+    }})
     .controller('statusReportCtrl',
                     ['$scope', '$filter', '$routeParams',
                     '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
@@ -245,7 +249,7 @@ angular.module('faradayApp')
                 displayName : "date",
                 cellTemplate: 'scripts/statusReport/partials/ui-grid/columns/datecolumn.html',
                 headerCellTemplate: header,
-                width: '90',
+                width: '75',
                 sort: getColumnSort('date'),
                 visible: $scope.columns["date"]
             });
@@ -431,12 +435,6 @@ angular.module('faradayApp')
             $cookies.put('SRsortColumn', columnName || '');
             $cookies.put('SRsortDirection', sortDirection || '');
         }
-
-        $scope.ifTooltip = function(text) {
-            if(text !== undefined && text.length > 450) {
-                return text;
-            }
-        };
 
         $scope.confirmedTooltip = function(isConfirmed) {
             var res = "";
@@ -1038,6 +1036,22 @@ angular.module('faradayApp')
             //TODO: this is horrible
             var srvName = srvStr.split(') ')[1];
             return $scope.encodeUrl(srvName);
+        }
+
+        $scope.concatForTooltip = function (items, isArray, useDoubleLinebreak) {
+            var elements = [];
+            for (var property in items) {
+                if (items.hasOwnProperty(property)) {
+                    if (isArray) {
+                        elements.push(items[property])
+                    }
+                    else {
+                        elements.push(property)
+                    }
+                }
+            }
+
+            return elements.join("\n" + (useDoubleLinebreak ? "\n" : ""));
         }
 
         init();

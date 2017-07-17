@@ -5,7 +5,8 @@
 angular.module('faradayApp')
     .factory('referenceFact', [
         function () {
-            referenceFact = {};
+           var referenceFact = {};
+
             referenceFact.processReference = function (text) {
                 var url = 'http://google.com/',
                     url_pattern = new RegExp('^(http|https):\\/\\/?');

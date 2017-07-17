@@ -3,10 +3,6 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .filter('removeLinesbreak',function(){
-        return function(text){
-            return text?text.replace(/\n/g, ' '):'';
-    }})
     .controller('statusReportCtrl',
                     ['$scope', '$filter', '$routeParams',
                      '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
@@ -1007,7 +1003,7 @@ angular.module('faradayApp')
             //TODO: this is horrible
             var srvName = srvStr.split(') ')[1];
             return $scope.encodeUrl(srvName);
-        }
+        };
 
         $scope.concatForTooltip = function (items, isArray, useDoubleLinebreak) {
             var elements = [];
@@ -1023,7 +1019,7 @@ angular.module('faradayApp')
             }
 
             return elements.join("\n" + (useDoubleLinebreak ? "\n" : ""));
-        }
+        };
 
         init();
     }]);

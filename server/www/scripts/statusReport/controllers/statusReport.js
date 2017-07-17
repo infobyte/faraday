@@ -4,7 +4,7 @@
 
 angular.module('faradayApp')
     .filter('removeLinesbreak',function(){
-        return function(text){        
+        return function(text){
             return text?text.replace(/\n/g, ' '):'';
     }})
     .controller('statusReportCtrl',
@@ -12,11 +12,11 @@ angular.module('faradayApp')
                      '$location', '$uibModal', '$cookies', '$q', '$window', 'BASEURL',
                      'SEVERITIES', 'EASEOFRESOLUTION', 'STATUSES', 'hostsManager', 'commonsFact',
                      'vulnsManager', 'workspacesFact', 'csvService', 'uiGridConstants', 'vulnModelsManager',
-                     'referenceService',
+                     'referenceFact',
                     function($scope, $filter, $routeParams,
                         $location, $uibModal, $cookies, $q, $window, BASEURL,
                         SEVERITIES, EASEOFRESOLUTION, STATUSES, hostsManager, commonsFact,
-                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceService) {
+                        vulnsManager, workspacesFact, csvService, uiGridConstants, vulnModelsManager, referenceFact) {
         $scope.baseurl;
         $scope.columns;
         $scope.easeofresolution;
@@ -30,7 +30,7 @@ angular.module('faradayApp')
         $scope.workspaces;
         $scope.currentPage;
         $scope.gridOptions;
-        $scope.vulnModelsManager;        
+        $scope.vulnModelsManager;
 
         $scope.vulnWebSelected;
         $scope.confirmed = false;
@@ -56,7 +56,7 @@ angular.module('faradayApp')
             $scope.reverse = true;
             $scope.vulns = [];
             $scope.selected = false;
-            $scope.vulnModelsManager = vulnModelsManager;            
+            $scope.vulnModelsManager = vulnModelsManager;
 
             $scope.gridOptions = {
                 multiSelect: true,
@@ -215,7 +215,7 @@ angular.module('faradayApp')
 
             angular.element($window).bind('resize', function () {
                 resizeGrid();
-            }); 
+            });
         };
 
         var defineColumns = function() {
@@ -450,17 +450,17 @@ angular.module('faradayApp')
 
         var resizeGrid = function() {
             $scope.gridHeight = getGridHeight('grid', 'right-main', 15);
-        } 
+        };
 
         var getGridHeight = function(gridClass, contentClass, bottomOffset) {
             var contentOffset = angular.element(document.getElementsByClassName(contentClass)[0]).offset();
             var contentHeight = angular.element(document.getElementsByClassName(contentClass)[0]).height();
-            var gridOffset = angular.element(document.getElementsByClassName(gridClass)).offset();            
+            var gridOffset = angular.element(document.getElementsByClassName(gridClass)).offset();
             if (gridOffset !== undefined) {
                 var gridHeight = contentHeight - (gridOffset.top) - bottomOffset;
                 return gridHeight + 'px';
-            }  
-        }      
+            }
+        };
 
         $scope.saveAsModel = function() {
             var self = this;
@@ -502,7 +502,7 @@ angular.module('faradayApp')
         };
 
         $scope.processReference = function(text) {
-            return referenceService.processReference(text);
+            return referenceFact.processReference(text);
         };
 
         $scope.groupBy = function(property) {
@@ -919,13 +919,13 @@ angular.module('faradayApp')
                 // Add the total amount of vulnerabilities as an option for pagination
                 // if it is larger than our biggest page size
                 if ($scope.gridOptions.totalItems > paginationOptions.defaultPageSizes[paginationOptions.defaultPageSizes.length - 1]) {
-                    
+
                     $scope.gridOptions.paginationPageSizes = paginationOptions.defaultPageSizes.concat([$scope.gridOptions.totalItems]);
-                    
+
                     // sadly, this will load the vuln list again because it fires a paginationChanged event
                     if ($scope.gridOptions.paginationPageSize > $scope.gridOptions.totalItems)
                         $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;
-                    
+
                     // New vuln and MAX items per page setted => reload page size.
                     if ($scope.gridOptions.paginationPageSize === $scope.gridOptions.totalItems - 1)
                         $scope.gridOptions.paginationPageSize = $scope.gridOptions.totalItems;

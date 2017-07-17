@@ -3,9 +3,10 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .factory('referenceService', function () {
-        return {
-            processReference: function (text) {
+    .factory('referenceFact', [
+        function () {
+            referenceFact = {};
+            referenceFact.processReference = function (text) {
                 var url = 'http://google.com/',
                     url_pattern = new RegExp('^(http|https):\\/\\/?');
 
@@ -35,5 +36,6 @@ angular.module('faradayApp')
 
                 return url;
             }
-        }
-    });
+
+            return referenceFact;
+        }]);

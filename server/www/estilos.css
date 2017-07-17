@@ -118,7 +118,7 @@ aside {
     }
     	aside nav a:hover {background-color: #d13434;}
     	aside nav a.active {background-color: #e1372f;}
-    	
+
         .left-nav {
             position:fixed;
             top:50px;
@@ -369,7 +369,7 @@ article.untercio{
     }
     .dato2 .txt {
         font-size: 11px;
-        text-transform: uppercase;        
+        text-transform: uppercase;
     }
     .dato2 span{
         cursor: pointer;
@@ -456,7 +456,7 @@ div.modal-button .btn.btn-success{float: right}
 div.modal-footer button.btn{bottom: 1%;right: 1%;}
 div.modal-footer button.btn.btn-success{right: 10%}
 div.modal-footer button.btn-footer{position: absolute;}
-.modal-content table.csv-export.status-report{ 
+.modal-content table.csv-export.status-report{
     width: 60%;
 }
 
@@ -473,8 +473,8 @@ table.status-report {
 		table.status-report thead th a {
 			color: #3a3a3a;
 			text-shadow: 0 1px 0 #fff;
-		}   
-table.status-report thead tr th, table.status-report tfoot tr th {   
+		}
+table.status-report thead tr th, table.status-report tfoot tr th {
     background-image: linear-gradient(to bottom,#E8EFF0 0,#DDDDDD 100%);
 		background-image: -webkit-linear-gradient(top,#E8EFF0 0,#DDDDDD 100%);
 		filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#E8EFF0', endColorstr='#DDDDDD', GradientType=0);
@@ -623,7 +623,7 @@ select.ng-valid{
         #bar svg{margin-left: -10px;}
 
 #contenido{text-align: left;}
-#sequence { 
+#sequence {
   height: 0px;
 }
     #sequence text, #legend text {
@@ -718,7 +718,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
             border-radius: 10px;
             color: #FFF;
         }
-    .box{   
+    .box{
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
@@ -767,7 +767,7 @@ text.host-name{font-size: 13px;font-weight:bold;}
 }
     a.ws-link span.impact-ok{top: 2px;left: -4px;color: #5cb85c;}
     a.ws-link span.impact-del{top: 3px;left: 2px;color: #d9534f;}
-a.ws-link:hover {    
+a.ws-link:hover {
     color: #ffffff;
     text-decoration: none;
 }
@@ -833,95 +833,95 @@ aside .alert.alert-danger.alert-dismissible{
     z-index: 1000;
 }
 
-.label-unclassified { 
-      color: #FFFFFF; 
-        background-color: #444147; 
-          border-color: #444147; 
-} 
- 
- .label-unclassified:hover, 
- .label-unclassified:focus, 
- .label-unclassified:active, 
- .label-unclassified.active, 
- .open .dropdown-toggle.label-unclassified { 
-       color: #FFFFFF; 
-         background-color: #111012; 
-           border-color: #444147; 
- } 
-  
-  .label-unclassified:active, 
-  .label-unclassified.active, 
-  .open .dropdown-toggle.label-unclassified { 
-        background-image: none; 
-  } 
-   
-   .label-unclassified.disabled, 
-   .label-unclassified[disabled], 
-   fieldset[disabled] .label-unclassified, 
-   .label-unclassified.disabled:hover, 
-   .label-unclassified[disabled]:hover, 
-   fieldset[disabled] .label-unclassified:hover, 
-   .label-unclassified.disabled:focus, 
-   .label-unclassified[disabled]:focus, 
-   fieldset[disabled] .label-unclassified:focus, 
-   .label-unclassified.disabled:active, 
-   .label-unclassified[disabled]:active, 
-   fieldset[disabled] .label-unclassified:active, 
-   .label-unclassified.disabled.active, 
-   .label-unclassified[disabled].active, 
-   fieldset[disabled] .label-unclassified.active { 
-         background-color: #444147; 
-           border-color: #444147; 
-   } 
-    
-    .label-unclassified .badge { 
-          color: #444147; 
-            background-color: #FFFFFF; 
+.label-unclassified {
+      color: #FFFFFF;
+        background-color: #444147;
+          border-color: #444147;
+}
+
+ .label-unclassified:hover,
+ .label-unclassified:focus,
+ .label-unclassified:active,
+ .label-unclassified.active,
+ .open .dropdown-toggle.label-unclassified {
+       color: #FFFFFF;
+         background-color: #111012;
+           border-color: #444147;
+ }
+
+  .label-unclassified:active,
+  .label-unclassified.active,
+  .open .dropdown-toggle.label-unclassified {
+        background-image: none;
+  }
+
+   .label-unclassified.disabled,
+   .label-unclassified[disabled],
+   fieldset[disabled] .label-unclassified,
+   .label-unclassified.disabled:hover,
+   .label-unclassified[disabled]:hover,
+   fieldset[disabled] .label-unclassified:hover,
+   .label-unclassified.disabled:focus,
+   .label-unclassified[disabled]:focus,
+   fieldset[disabled] .label-unclassified:focus,
+   .label-unclassified.disabled:active,
+   .label-unclassified[disabled]:active,
+   fieldset[disabled] .label-unclassified:active,
+   .label-unclassified.disabled.active,
+   .label-unclassified[disabled].active,
+   fieldset[disabled] .label-unclassified.active {
+         background-color: #444147;
+           border-color: #444147;
+   }
+
+    .label-unclassified .badge {
+          color: #444147;
+            background-color: #FFFFFF;
     }
-.label-high { 
-      color: #ffffff; 
-        background-color: #DF3936; 
-          border-color: #DF3936; 
-} 
- 
- .label-high:hover, 
- .label-high:focus, 
- .label-high:active, 
- .label-high.active, 
- .open .dropdown-toggle.label-high { 
-       color: #ffffff; 
-         background-color: #992826; 
-           border-color: #DF3936; 
- } 
-  
-  .label-high:active, 
-  .label-high.active, 
-  .open .dropdown-toggle.label-high { 
-        background-image: none; 
-  } 
-   
-   .label-high.disabled, 
-   .label-high[disabled], 
-   fieldset[disabled] .label-high, 
-   .label-high.disabled:hover, 
-   .label-high[disabled]:hover, 
-   fieldset[disabled] .label-high:hover, 
-   .label-high.disabled:focus, 
-   .label-high[disabled]:focus, 
-   fieldset[disabled] .label-high:focus, 
-   .label-high.disabled:active, 
-   .label-high[disabled]:active, 
-   fieldset[disabled] .label-high:active, 
-   .label-high.disabled.active, 
-   .label-high[disabled].active, 
-   fieldset[disabled] .label-high.active { 
-         background-color: #DF3936; 
-           border-color: #DF3936; 
-   } 
-    
-    .label-high .badge { 
-          color: #DF3936; 
-            background-color: #ffffff; 
+.label-high {
+      color: #ffffff;
+        background-color: #DF3936;
+          border-color: #DF3936;
+}
+
+ .label-high:hover,
+ .label-high:focus,
+ .label-high:active,
+ .label-high.active,
+ .open .dropdown-toggle.label-high {
+       color: #ffffff;
+         background-color: #992826;
+           border-color: #DF3936;
+ }
+
+  .label-high:active,
+  .label-high.active,
+  .open .dropdown-toggle.label-high {
+        background-image: none;
+  }
+
+   .label-high.disabled,
+   .label-high[disabled],
+   fieldset[disabled] .label-high,
+   .label-high.disabled:hover,
+   .label-high[disabled]:hover,
+   fieldset[disabled] .label-high:hover,
+   .label-high.disabled:focus,
+   .label-high[disabled]:focus,
+   fieldset[disabled] .label-high:focus,
+   .label-high.disabled:active,
+   .label-high[disabled]:active,
+   fieldset[disabled] .label-high:active,
+   .label-high.disabled.active,
+   .label-high[disabled].active,
+   fieldset[disabled] .label-high.active {
+         background-color: #DF3936;
+           border-color: #DF3936;
+   }
+
+    .label-high .badge {
+          color: #DF3936;
+            background-color: #ffffff;
     }
 .btn-small-margin {
     margin-bottom: 15px !important;
@@ -1037,7 +1037,7 @@ div.btn-group .vulns-filter{left: -2px;}
 div.btn-group .dropdown-menu.margin{margin-left: 38px}
 /* UI GRID */
 .ui-grid-cell.ui-grid-disable-selection.ui-grid-row-header-cell{pointer-events: auto!important;}
-.grid {  
+.grid {
   height: 100%;
 }
 .ui-grid-cell-contents.left-rows.text-center.ng-scope{white-space: normal!important; }
@@ -1062,12 +1062,12 @@ div.alert.alert-danger.alert-dismissible .ws-list a:hover{text-decoration: none}
 a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .almost-expired{background-color: #dca7a7 !important}
 
-.statusReport-Search:before,.statusReport-Search:after {
+.status-report-search:before,.status-report-search:after {
     display: table;
     content: " ";
 }
 
-.statusReport-Search:after {
+.status-report-search:after {
     clear: both;
 }
 

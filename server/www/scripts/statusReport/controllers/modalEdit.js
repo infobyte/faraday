@@ -3,9 +3,9 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact', 'severities', 'vuln', 'cweFact', 'referenceService',
-        function($modalInstance, EASEOFRESOLUTION, STATUSES, commons, severities, vuln, cweFact, referenceService) {
-        
+    .controller('modalEditCtrl', ['$modalInstance', 'EASEOFRESOLUTION', 'STATUSES', 'commonsFact', 'severities', 'vuln', 'cweFact', 'referenceFact',
+        function($modalInstance, EASEOFRESOLUTION, STATUSES, commons, severities, vuln, cweFact, referenceFact) {
+
         var vm = this;
 
         vm.saveAsModelDisabled = false;
@@ -39,7 +39,7 @@ angular.module('faradayApp')
             vm.cwe_filter = "";
 
             vm.file_name_error = false;
- 
+
             vm.data = {
                 _attachments: {},
                 confirmed: false,
@@ -56,11 +56,11 @@ angular.module('faradayApp')
                 refs: {},
                 resolution: "",
                 severity: undefined,
-                method: "", 
-                path: "", 
-                pname: "", 
+                method: "",
+                path: "",
+                pname: "",
                 params: "",
-                query: "", 
+                query: "",
                 request: "",
                 response: "",
                 website: "",
@@ -72,10 +72,10 @@ angular.module('faradayApp')
 
             vm.populate(vm.vuln);
 
-            // TODO: EVIDENCE SHOUD BE LOADED ALREADY?    
+            // TODO: EVIDENCE SHOUD BE LOADED ALREADY?
             if(vm.vuln._attachments !== undefined) {
                 vm.data._attachments = vm.vuln._attachments;
-                vm.icons = commons.loadIcons(vm.data._attachments); 
+                vm.icons = commons.loadIcons(vm.data._attachments);
             }
         };
 
@@ -84,7 +84,7 @@ angular.module('faradayApp')
             vm.vulnModelsManager.create(vm.data);
             vm.saveAsModelDisabled = true;
         }
-        
+
         vm.selectedFiles = function(files, e) {
             files.forEach(function(file) {
                 if(file.name.charAt(0) != "_") {
@@ -142,7 +142,7 @@ angular.module('faradayApp')
 
         vm.openReference = function(text)
         {
-              window.open(referenceService.processReference(text), '_blank');
+              window.open(referenceFact.processReference(text), '_blank');
         }
 
         vm.newPolicyViolation = function() {

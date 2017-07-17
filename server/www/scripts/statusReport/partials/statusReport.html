@@ -103,7 +103,7 @@
                             <a class="ws" ng-show="show && (column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date')" ng-click="groupBy(column)">{{column}}</a>
                         </li>
                     </ul>
-                </div>                
+                </div>
                 <button id="new" type="button" class="btn btn-success" title="New Vulns" ng-click="new()">
                     <span class="glyphicon glyphicon-plus-sign"></span>
                     New
@@ -111,7 +111,7 @@
             </div>
             <!-- .col-md-6 .col-sm-6 .col-xs-12 -->
             <div class="reports">
-                <div class="statusReport-Search">
+                <div class="status-report-search">
                     <div class="col-md-6 col-sm-3 col-xs-11">
                         <form role="form" ng-submit="searchFor(true, searchParams)">
                             <div class="form-group">
@@ -125,7 +125,7 @@
                                 </div>
                             </div>
                         </form>
-                    </div>                    
+                    </div>
                 </div>
 
                 <div ui-grid="gridOptions" ui-grid-grouping ui-grid-selection ui-grid-pagination ui-grid-pinning class="grid" ng-style="{'height' : gridHeight }"></div>

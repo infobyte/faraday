@@ -2,6 +2,7 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
+import os
 import flask
 from flask_security import Security, login_required, \
     SQLAlchemySessionUserDatastore
@@ -17,7 +18,8 @@ app.config['SECRET_KEY'] = 'supersecret'
 app.config['SECURITY_PASSWORD_SINGLE_HASH'] = True
 
 # Setup Flask-Security
-user_datastore = SQLAlchemySessionUserDatastore(server.database.common_session,
+common_session = server.database.setup_common()
+user_datastore = SQLAlchemySessionUserDatastore(common_session,
                                                 server.models.User,
                                                 server.models.Role)
 security = Security(app, user_datastore)
@@ -31,9 +33,11 @@ def unauthorized():
 # Create a user to test with
 @app.before_first_request
 def create_user():
-    server.database.init_common_db()
-    # user_datastore.create_user(email='matt@nobien.net', password='password')
-    # server.database.common_session.commit()
+    if app.testing:
+        return
+    # server.database.init_common_db()
+    user_datastore.create_user(email='matt@nobien.net', password='password')
+    common_session.commit()
 
 # Make API endpoints require a login user by default. Based on
 # https://stackoverflow.com/questions/13428708/best-way-to-make-flask-logins-login-required-the-default

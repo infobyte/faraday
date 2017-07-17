@@ -3,7 +3,10 @@ import sys
 sys.path.append(os.path.abspath(os.getcwd()))
 import unittest
 import tempfile
-from server.database import init_common_db
+import server.app as server
+from flask_security import Security, SQLAlchemySessionUserDatastore
+from server.models import User, Role
+from server.database import setup_common
 
 def endpoint():
     return 'OK'
@@ -14,11 +17,19 @@ class AuthTestCase(unittest.TestCase):
 
     def setUp(self):
         self.db_fd, self.db_name = tempfile.mkstemp()
-        os.environ['COMMON_DB_PATH'] = 'sqlite:///' + self.db_name
-        from server.app import app
-        app.testing = True
-        self.app = app.test_client()
-        app.route(self.ENDPOINT_ROUTE)(endpoint)
+        db_path = 'sqlite:///' + self.db_name
+        server.app.testing = True
+
+        server.common_session = setup_common(db_path)
+        server.user_datastore = SQLAlchemySessionUserDatastore(
+            server.common_session, User, Role)
+        server.security.datastore = server.user_datastore
+
+        self.user = server.user_datastore.create_user(
+            email='user@test.net', password='password')
+        server.common_session.commit()
+        self.app = server.app.test_client()
+        server.app.route(self.ENDPOINT_ROUTE)(endpoint)
 
     def tearDown(self):
         os.close(self.db_fd)
@@ -47,6 +58,11 @@ class AuthTestCase(unittest.TestCase):
         res = self.app.get('/')
         self.assertEqual(res.status_code, 200)
         endpoint.is_public = False
+
+    def test_403_when_logged_user_is_inactive(self):
+        self.assertTrue(self.user_datastore.deactivate_user(self.user.id))
+        res = self.app.get('/')
+        self.assertEqual(res.status_code, 403)
 
 if __name__ == '__main__':
     unittest.main()

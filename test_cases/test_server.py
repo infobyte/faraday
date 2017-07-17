@@ -60,9 +60,15 @@ class AuthTestCase(unittest.TestCase):
         endpoint.is_public = False
 
     def test_403_when_logged_user_is_inactive(self):
-        self.assertTrue(self.user_datastore.deactivate_user(self.user.id))
+        self.assertTrue(server.user_datastore.deactivate_user(self.user))
         res = self.app.get('/')
         self.assertEqual(res.status_code, 403)
+
+    def test_403_when_logged_user_is_deleted(self):
+        server.user_datastore.delete_user(self.user)
+        res = self.app.get('/')
+        self.assertEqual(res.status_code, 403)
+
 
 if __name__ == '__main__':
     unittest.main()

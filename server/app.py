@@ -36,7 +36,8 @@ def create_user():
     if app.testing:
         return
     # server.database.init_common_db()
-    user_datastore.create_user(email='matt@nobien.net', password='password')
+    user_datastore.create_user(email='matt@nobien.net',
+                               password='password')
     common_session.commit()
 
 # Make API endpoints require a login user by default. Based on

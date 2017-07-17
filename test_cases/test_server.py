@@ -11,8 +11,8 @@ from server.database import setup_common
 def endpoint():
     return 'OK'
 
-class AuthTestCase(unittest.TestCase):
 
+class BaseAPITestCase(unittest.TestCase):
     ENDPOINT_ROUTE = '/'
 
     def setUp(self):
@@ -25,15 +25,26 @@ class AuthTestCase(unittest.TestCase):
             server.common_session, User, Role)
         server.security.datastore = server.user_datastore
 
-        self.user = server.user_datastore.create_user(
-            email='user@test.net', password='password')
-        server.common_session.commit()
         self.app = server.app.test_client()
         server.app.route(self.ENDPOINT_ROUTE)(endpoint)
 
     def tearDown(self):
         os.close(self.db_fd)
         os.unlink(self.db_name)
+
+    def login_as(self, user):
+        with self.app.session_transaction() as sess:
+            sess['user_id'] = user.id
+
+class TestAuthentication(BaseAPITestCase):
+    """Tests related to allow/dissallow access depending of whether
+    the user is logged in or not"""
+
+    def setUp(self):
+        super(TestAuthentication, self).setUp()
+        self.user = server.user_datastore.create_user(
+            email='user@test.net', password='password')
+        server.common_session.commit()
 
     def test_403_when_getting_an_existent_view_and_not_logged(self):
         res = self.app.get('/')
@@ -48,8 +59,7 @@ class AuthTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 403)
 
     def test_200_when_logged_in(self):
-        with self.app.session_transaction() as sess:
-            sess['user_id'] = 1
+        self.login_as(self.user)
         res = self.app.get('/')
         self.assertEqual(res.status_code, 200)
 
@@ -57,7 +67,7 @@ class AuthTestCase(unittest.TestCase):
         endpoint.is_public = True
         res = self.app.get('/')
         self.assertEqual(res.status_code, 200)
-        endpoint.is_public = False
+        del endpoint.is_public
 
     def test_403_when_logged_user_is_inactive(self):
         self.assertTrue(server.user_datastore.deactivate_user(self.user))

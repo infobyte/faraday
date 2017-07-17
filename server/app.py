@@ -29,11 +29,11 @@ def unauthorized():
     flask.abort(403)
 
 # Create a user to test with
-# @app.before_first_request
-# def create_user():
-server.database.init_common_db()
-user_datastore.create_user(email='matt@nobien.net', password='password')
-server.database.common_session.commit()
+@app.before_first_request
+def create_user():
+    server.database.init_common_db()
+    # user_datastore.create_user(email='matt@nobien.net', password='password')
+    # server.database.common_session.commit()
 
 # Make API endpoints require a login user by default. Based on
 # https://stackoverflow.com/questions/13428708/best-way-to-make-flask-logins-login-required-the-default

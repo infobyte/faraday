@@ -166,7 +166,7 @@
                 <ul>
                     <li ng-repeat="(name, file) in modal.data._attachments">
                         <div class="btn-group">
-                            <button type="button" class="btn btn-default">
+                            <button type="button" class="btn btn-default" ng-click="modal.openEvidence(name)">
                                 <span class="fa {{icons[name]}}" title="Evidence {{name | decodeURIComponent}}"></span> {{name | decodeURIComponent}}
                             </button><!-- ng-repeat -->
                             <button type="button" class="btn btn-danger" ng-click="modal.removeEvidence(name)">

@@ -1040,10 +1040,14 @@ div.btn-group .dropdown-menu.margin{margin-left: 38px}
 .grid {
   height: 100%;
 }
+.ui-grid-cell-contents p{
+    margin-bottom: 0;
+}
 .ui-grid-cell-contents.left-rows.text-center.ng-scope{white-space: normal!important; }
 .ui-grid .ui-grid-row:nth-child(odd) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid .ui-grid-row:nth-child(even) .ui-grid-cell .ui-grid-cell-contents .crop-text, .ui-grid-cell-contents{
     white-space: pre;
     word-wrap: break-word!important;
+    font-size: 13px !important;
 }
 .grid.ui-grid{font-family: 12px!important;}
 .ui-grid-cell-contents.row-tooltip.text-center{white-space: normal!important; }
@@ -1058,6 +1062,9 @@ div.alert.alert-danger.alert-dismissible .ws-list{text-align: center; text-trans
 div.alert.alert-danger.alert-dismissible .ws-list a:hover{text-decoration: none}
 .grid .ui-grid-header {
     padding: 3px 5px;
+}
+.ui-grid-text-center {
+    text-align: center;
 }
 a.button-disable{cursor: not-allowed;pointer-events: none;opacity: 0.5}
 .almost-expired{background-color: #dca7a7 !important}

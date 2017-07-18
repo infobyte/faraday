@@ -59,15 +59,20 @@ p {margin-bottom: 1em;}
         .unsexto {width: 85px;}
 
 header.head {
-    background: #3a3a3a;
     height: 50px;
     text-align: left;
     position: fixed;
     width:100%;
     z-index:1000;
 }
+header.head .logo-container{
+    background-color:#E0E0E0;
+    width: 61px;
+    height: 50px;
+    overflow: hidden;
+}
     header.head .logo {
-        margin: 15px 20px;
+        margin: 15px 10px;
     }
     header.head nav {
         height: 50px;
@@ -98,7 +103,7 @@ header.head {
                 }
 
 aside {
-    background: #3A3A3A;
+    background: #E0E0E0;
     width: 76px;
     height: 100%;
     position: fixed;
@@ -125,6 +130,10 @@ aside {
             left:0;
             width: 61px;
             z-index: 1;
+        }
+        aside nav a img{
+            width: 36px;
+            height: 36px;
         }
 .right-main {
     position: absolute;
@@ -193,7 +202,9 @@ article.untercio{
                         position: relative;
                     }
                         .sin_padding h2{padding-bottom: 16px;}
-
+.ws-label{
+    margin-bottom: 25px;
+}
 /* ==== General COLORS ==== */
 /* Backgrounds Legacy */
 .fondo-rojo, .fondo-high, .fondo-error, .fondo-opened {background-color: #DF3936 !important;}

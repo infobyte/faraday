@@ -31,6 +31,35 @@
             <!-- #ws-control -->
 
             <div class="button-control col-md-6 col-sm-6 col-xs-12">
+                <div id="add-columns" class="btn-group btn-small-margin">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add columns">
+                        Add columns
+                    </button>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add Columns">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li ng-repeat="(column, show) in columns">
+                            <a class="ws" ng-click="toggleShow(column, show)" ng-show="!show">{{column}}</a>
+                        </li>
+                    </ul>
+                </div>
+                <div id="group-by" class="btn-group btn-small-margin">
+                    <button type="button" ng-if="propertyGroupBy" class="btn btn-danger" title="Clear" ng-click="clearGroupBy()">
+                        <i class="fa fa-times"></i>
+                    </button>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="{{propertyGroupBy || 'Group By'}}">
+                        {{ (propertyGroupBy | uppercase) || "Group By"}}
+                    </button>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Group By">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li ng-repeat="(column, show) in columns">
+                            <a class="ws" ng-show="show && (column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date')" ng-click="groupBy(column)">{{column}}</a>
+                        </li>
+                    </ul>
+                </div>
                 <button id="delete" type="button" class="btn btn-default" title="Delete selected items" ng-click="delete()">
                     <span class="glyphicon glyphicon-trash"></span>
                     Delete
@@ -73,35 +102,6 @@
                         <li role="separator" class="divider"></li>
                         <li><a class="ws" ng-click="editCWE()">From vulnerability template</a></li>
                         <li><a class="ws" ng-click="saveAsModel()">Create vulnerability templates</a></li>
-                    </ul>
-                </div>
-                <div id="add-columns" class="btn-group btn-small-margin">
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add columns">
-                        Add columns
-                    </button>
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Add Columns">
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                        <li ng-repeat="(column, show) in columns">
-                            <a class="ws" ng-click="toggleShow(column, show)" ng-show="!show">{{column}}</a>
-                        </li>
-                    </ul>
-                </div>
-                <div id="group-by" class="btn-group btn-small-margin">
-                    <button type="button" ng-if="propertyGroupBy" class="btn btn-danger" title="Clear" ng-click="clearGroupBy()">
-                        <i class="fa fa-times"></i>
-                    </button>
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="{{propertyGroupBy || 'Group By'}}">
-                        {{ (propertyGroupBy | uppercase) || "Group By"}}
-                    </button>
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" title="Group By">
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                        <li ng-repeat="(column, show) in columns">
-                            <a class="ws" ng-show="show && (column !== 'evidence' && column !== 'impact' && column !== 'web' && column !== 'easeofresolution' && column !== 'date')" ng-click="groupBy(column)">{{column}}</a>
-                        </li>
                     </ul>
                 </div>
                 <button id="new" type="button" class="btn btn-success" title="New Vulns" ng-click="new()">

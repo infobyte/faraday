@@ -1,23 +1,24 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 200 200" style="enable-background:new 0 0 200 200;" xml:space="preserve">
+	 viewBox="0 0 170 170" style="enable-background:new 0 0 170 170;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:none;stroke:#5C5D63;stroke-width:8;stroke-linecap:square;stroke-miterlimit:10;}
+	.st1{fill:#5C5D63;}
+	.st2{fill:none;stroke:#5C5D63;stroke-width:6;stroke-linecap:square;stroke-miterlimit:10;}
+	.st3{fill:#FFFFFF;stroke:#5C5D63;stroke-width:8;stroke-miterlimit:10;}
+</style>
 <g>
 	<g>
-		
-			<rect x="40.571" y="49.677" style="fill:none;stroke:#5B5C62;stroke-width:8;stroke-linecap:square;stroke-miterlimit:10;" width="120.001" height="128.999"/>
-		<rect x="57.988" y="75.677" style="fill:#5B5C62;" width="15.331" height="54"/>
-		<rect x="80.984" y="110.677" style="fill:#5B5C62;" width="15.331" height="19"/>
-		<rect x="103.982" y="97.677" style="fill:#5B5C62;" width="15.331" height="32"/>
-		<rect x="126.98" y="90.017" style="fill:#5B5C62;" width="15.331" height="39.66"/>
-		
-			<line style="fill:none;stroke:#5B5C62;stroke-width:6;stroke-linecap:square;stroke-miterlimit:10;" x1="62.571" y1="142.677" x2="138.571" y2="142.677"/>
-		
-			<line style="fill:none;stroke:#5B5C62;stroke-width:6;stroke-linecap:square;stroke-miterlimit:10;" x1="62.571" y1="158.677" x2="81.377" y2="158.677"/>
-		
-			<line style="fill:none;stroke:#5B5C62;stroke-width:6;stroke-linecap:square;stroke-miterlimit:10;" x1="93.377" y1="158.677" x2="104.377" y2="158.677"/>
+		<rect x="24.6" y="34.7" class="st0" width="120" height="129"/>
+		<rect x="42" y="60.7" class="st1" width="15.3" height="54"/>
+		<rect x="65" y="95.7" class="st1" width="15.3" height="19"/>
+		<rect x="88" y="82.7" class="st1" width="15.3" height="32"/>
+		<rect x="111" y="75" class="st1" width="15.3" height="39.7"/>
+		<line class="st2" x1="46.6" y1="127.7" x2="122.6" y2="127.7"/>
+		<line class="st2" x1="46.6" y1="143.7" x2="65.4" y2="143.7"/>
+		<line class="st2" x1="77.4" y1="143.7" x2="88.4" y2="143.7"/>
 	</g>
-	<path style="fill:#FFFFFF;stroke:#5B5C62;stroke-width:8;stroke-miterlimit:10;" d="M134.571,37.677h-16.117
-		c-0.996-8.999-8.618-16-17.883-16s-16.887,7.001-17.883,16H66.571l-4,23h76L134.571,37.677z"/>
+	<path class="st3" d="M118.6,22.7h-16.1c-1-9-8.6-16-17.9-16s-16.9,7-17.9,16H50.6l-4,23h76L118.6,22.7z"/>
 </g>
 </svg>

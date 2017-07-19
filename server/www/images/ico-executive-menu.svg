@@ -1,29 +1,26 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 200 200" style="enable-background:new 0 0 200 200;" xml:space="preserve">
+	 viewBox="-14 16 170 170" style="enable-background:new -14 16 170 170;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:none;stroke:#5B5C62;stroke-width:6;stroke-linecap:square;stroke-miterlimit:10;}
+	.st1{fill:none;stroke:#5B5C62;stroke-width:6;stroke-linejoin:bevel;stroke-miterlimit:10;}
+	.st2{fill:none;stroke:#5B5C62;stroke-width:8;stroke-miterlimit:10;}
+	.st3{fill:#5B5C62;}
+</style>
 <g>
-	
-		<line style="fill:none;stroke:#5B5C62;stroke-width:6;stroke-linecap:square;stroke-miterlimit:10;" x1="63.559" y1="110.199" x2="96.559" y2="110.199"/>
-	
-		<line style="fill:none;stroke:#5B5C62;stroke-width:6;stroke-linecap:square;stroke-miterlimit:10;" x1="63.559" y1="94.199" x2="96.559" y2="94.199"/>
-	
-		<line style="fill:none;stroke:#5B5C62;stroke-width:6;stroke-linecap:square;stroke-miterlimit:10;" x1="63.559" y1="78.199" x2="96.559" y2="78.199"/>
-	
-		<line style="fill:none;stroke:#5B5C62;stroke-width:6;stroke-linecap:square;stroke-miterlimit:10;" x1="63.559" y1="127.197" x2="145.559" y2="127.197"/>
-	
-		<line style="fill:none;stroke:#5B5C62;stroke-width:6;stroke-linecap:square;stroke-miterlimit:10;" x1="63.559" y1="143.197" x2="84.559" y2="143.197"/>
-	
-		<line style="fill:none;stroke:#5B5C62;stroke-width:6;stroke-linejoin:bevel;stroke-miterlimit:10;" x1="96.559" y1="143.197" x2="107.559" y2="143.197"/>
-	<path style="fill:none;stroke:#5B5C62;stroke-width:8;stroke-miterlimit:10;" d="M55.559,33.698h113.5
-		c6.351,0,11.5,5.149,11.5,11.5v12.5h-114v-12.5c0-6.351-5.149-11.5-11.5-11.5h0c-6.351,0-11.5,5.149-11.5,11.5v37v29.498v43
-		c0,6.351-5.149,11.5-11.5,11.5h0c-6.351,0-11.5-5.149-11.5-11.5v-12.5h23"/>
-	<path style="fill:none;stroke:#5B5C62;stroke-width:8;stroke-miterlimit:10;" d="M161.817,57.698v91.125
-		c0,9.595-7.779,17.374-17.374,17.374H31.559"/>
+	<line class="st0" x1="33.7" y1="114.6" x2="66.7" y2="114.6"/>
+	<line class="st0" x1="33.7" y1="98.6" x2="66.7" y2="98.6"/>
+	<line class="st0" x1="33.7" y1="82.6" x2="66.7" y2="82.6"/>
+	<line class="st0" x1="33.7" y1="131.6" x2="115.7" y2="131.6"/>
+	<line class="st0" x1="33.7" y1="147.6" x2="54.7" y2="147.6"/>
+	<line class="st1" x1="66.7" y1="147.6" x2="77.7" y2="147.6"/>
+	<path class="st2" d="M25.7,38.1h113.5c6.4,0,11.5,5.1,11.5,11.5v12.5h-114V49.6c0-6.4-5.1-11.5-11.5-11.5l0,0
+		c-6.4,0-11.5,5.1-11.5,11.5v37v29.5v43c0,6.4-5.1,11.5-11.5,11.5l0,0c-6.4,0-11.5-5.1-11.5-11.5v-12.5h23"/>
+	<path class="st2" d="M131.9,62.1v91.1c0,9.6-7.8,17.4-17.4,17.4H1.7"/>
 	<g>
-		<path style="fill:#5B5C62;" d="M125.785,77.853c-14.332,0-24.8,16.542-13.353,31.574c0.001,0.001,0.003,0.003,0.004,0.004
-			c15.032,11.447,31.574,0.979,31.574-13.353l-18.226,0V77.853z"/>
-		<path style="fill:#5B5C62;" d="M131.43,72.208v18.226h0h18.226C149.656,80.368,141.496,72.208,131.43,72.208z"/>
+		<path class="st3" d="M95.9,82.3c-14.3,0-24.8,16.5-13.4,31.6l0,0c15,11.4,31.6,1,31.6-13.4H95.9V82.3L95.9,82.3z"/>
+		<path class="st3" d="M101.5,76.6v18.2l0,0h18.2C119.8,84.8,111.6,76.6,101.5,76.6z"/>
 	</g>
 </g>
 </svg>

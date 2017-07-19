@@ -65,14 +65,14 @@ header.head {
     width:100%;
     z-index:1000;
 }
-header.head .logo-container{
+/* header.head .logo-container{
     background-color:#E0E0E0;
     width: 61px;
     height: 50px;
-    overflow: hidden;
-}
+} */
     header.head .logo {
-        margin: 15px 10px;
+        margin: 7px 12px;
+        width: 38px;
     }
     header.head nav {
         height: 50px;
@@ -126,7 +126,7 @@ aside {
 
         .left-nav {
             position:fixed;
-            top:50px;
+            padding-top:50px;
             left:0;
             width: 61px;
             z-index: 1;

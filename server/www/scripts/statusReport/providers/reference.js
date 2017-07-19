@@ -5,7 +5,7 @@
 angular.module('faradayApp')
     .factory('referenceFact', [
         function () {
-           var referenceFact = {};
+            var referenceFact = {};
 
             referenceFact.processReference = function (text) {
                 var url = 'http://google.com/',

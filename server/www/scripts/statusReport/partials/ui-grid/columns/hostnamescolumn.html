@@ -1,6 +1,6 @@
 <div ng-if="row.entity._id != undefined">
-    <div class="ui-grid-cell-contents center" uib-tooltip="{{grid.appScope.concatForTooltip(COL_FIELD, true) | decodeURIComponent}}">
-        <p ng-repeat="hostname in COL_FIELD"><a href="{{grid.appScope.hash}}/search/hostnames={{hostname}}">{{hostname}}</a></p>
-    </div>
+        <div class="ui-grid-cell-contents center" uib-tooltip="{{grid.appScope.concatForTooltip(COL_FIELD, true) | decodeURIComponent}}">
+            <span ng-repeat="hostname in COL_FIELD"><a href="{{grid.appScope.hash}}/search/hostnames={{hostname}}">{{hostname}}</a>&nbsp;</span>
+        </div>
 </div>
 <div ng-if="row.groupHeader && col.grouping.groupPriority !== undefined" class="ui-grid-cell-contents white-space">{{COL_FIELD.split('(')[0] !== ' ' ? COL_FIELD : 'EMPTY' + COL_FIELD}}</div>

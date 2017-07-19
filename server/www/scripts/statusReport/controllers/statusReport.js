@@ -231,7 +231,7 @@ angular.module('faradayApp')
 
             var header = '<div ng-class="{ \'sortable\': sortable }">'+
                     '       <div class="ui-grid-cell-contents" col-index="renderIndex" title="TOOLTIP">{{ col.displayName CUSTOM_FILTERS }}'+
-                    '           <a href="" ng-click="grid.appScope.toggleShow(col.name, true)">'+
+                    '           <a href="" ng-click="grid.appScope.toggleShow(col.displayName, true)">'+
                     '               <span style="color:#000;" class="glyphicon glyphicon-remove"></span>'+
                     '           </a>'+
                     '           <span ui-grid-visible="col.sort.direction" ng-class="{ \'ui-grid-icon-up-dir\': col.sort.direction == asc, \'ui-grid-icon-down-dir\': col.sort.direction == desc, \'ui-grid-icon-blank\': !col.sort.direction }">&nbsp;</span>'+

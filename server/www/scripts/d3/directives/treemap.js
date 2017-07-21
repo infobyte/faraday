@@ -3,7 +3,7 @@
 // See the file 'doc/LICENSE' for the license information
 
 angular.module('faradayApp')
-  .directive('d3Treemap', ['d3Service', 
+  .directive('d3Treemap', ['d3Service',
   function(d3Service) {
     return {
       restrict: 'EA',
@@ -61,12 +61,18 @@ angular.module('faradayApp')
               .sticky(true)
               .value(function(d) {return d.count});
 
+            function nameToClassSafeName(name) {
+              // Remove non alphanumeric characters to safely use the (modified)
+              // name as a class name
+              return name.replace(/[^0-9a-zA-Z]/g, '');
+            }
+
             var node = div.datum(data_cp).selectAll(".node")
               .data(treemap.nodes)
             .enter().append("div")
               .attr("class", function(d) {
                   var ret = "node treemap-tooltip";
-                  if(d.name) ret += " tm-" + d.name;
+                  if(d.name) ret += " tm-" + nameToClassSafeName(d.name);
                   return ret;
               })
               .call(position)
@@ -79,18 +85,31 @@ angular.module('faradayApp')
                 }
               })
               .on('mouseover', function(d){
-                if (!data.width){
-                  document.getElementById("treemapText").innerHTML = "<div style='background-color:" + d.color + "'>" + d.name + '</div>' + d.count;
-                }else{
-                  document.getElementById("treemapTextModel").innerHTML = "<div style='background-color:" + d.color + "'>" + d.name + '</div>' + d.count;
-                }
+                  if(typeof(d.name) === 'undefined') return; // I don't know why this happens
+                  if (!data.width){
+                    var element = document.getElementById("treemapText");
+                      //.innerHTML = "<div style='background-color:" + d.color + "'>" + d.name + '</div>' + d.count;
+                  }else{
+                    var element = document.getElementById("treemapTextModel");
+                  }
+                  var colored = document.createElement('div');
+                  colored.style = "background-color:" + d.color; // Color is safe (its value is in a whitelist)
+                  colored.innerText = d.name;
+                  while (element.firstChild) {
+                      // https://stackoverflow.com/questions/3955229/remove-all-child-elements-of-a-dom-node-in-javascript
+                      element.removeChild(element.firstChild);
+                  }
+                  element.appendChild(colored);
+                  element.appendChild(document.createTextNode(d.count));
               })
               .on('mouseenter', function(d) {
-                var line = d3.select('.tm-'+d.name)
+                if(typeof(d.name) === 'undefined') return; // I don't know why this happens
+                var line = d3.select('.tm-'+nameToClassSafeName(d.name))
                     .style("opacity", 1);
               })
               .on('mouseleave', function(d) {
-                var line = d3.select('.tm-'+d.name)
+                if(typeof(d.name) === 'undefined') return; // I don't know why this happens
+                var line = d3.select('.tm-'+nameToClassSafeName(d.name))
                     .style("opacity", 0.8);
                 document.getElementById("treemapText").innerHTML = "";
               })

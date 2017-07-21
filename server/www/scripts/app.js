@@ -261,6 +261,11 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             templateUrl: 'scripts/commons/partials/commercial.html',
             controller: 'commercialCtrl'
         }).
+        when('/taskgroup', {
+            templateUrl: 'scripts/commons/partials/commercial.html',
+            controller: 'commercialCtrl',
+            title: 'Methodologies | '
+        }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html'
         });

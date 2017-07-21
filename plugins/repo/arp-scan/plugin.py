@@ -56,14 +56,14 @@ class CmdArpScanPlugin(core.PluginBase):
             for line in output.split('\n'):
                 vals = line.split("\t")
 
-                if len(vals[0].split(".")) == 4:
+                if len(vals) == 3:
 
-                    host = vals[0]
-                    h_id = self.createAndAddHost(host)
-                    i_id = self.createAndAddInterface(
-                        h_id, host, ipv4_address=host, mac=vals[1])
-                    n_id = self.createAndAddNoteToHost(
-                        h_id, "NIC VENDOR:", vals[2])
+                    if len(vals[0].split(".")) == 4:
+
+                        host = vals[0]
+                        h_id = self.createAndAddHost(host)
+                        i_id = self.createAndAddInterface(h_id, host, ipv4_address=host, mac=vals[1])
+                        n_id = self.createAndAddNoteToHost(h_id, "NIC VENDOR:", vals[2])
 
         return True
 

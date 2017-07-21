@@ -80,7 +80,16 @@ angular.module('faradayApp')
                     var hurl    = "/" + workspace + "/_design/hosts/_view/hosts";
                     hosts    = get_obj(hurl);
                     var name = hosts[d.key].name;
-                    document.getElementById("barText").innerHTML =  "<div style='background-color:" + d.color + "'><b>" + name + '</b></div>' + d.value;
+                    var element = document.getElementById("barText");
+                    var colored = document.createElement('div');
+                    colored.style = "background-color:" + d.color; // Color is safe (its value is in a whitelist)
+                    colored.innerText = name;
+                    while (element.firstChild) {
+                        // https://stackoverflow.com/questions/3955229/remove-all-child-elements-of-a-dom-node-in-javascript
+                        element.removeChild(element.firstChild);
+                    }
+                    element.appendChild(colored);
+                    element.appendChild(document.createTextNode(d.value));
                 })
                 .on('mouseenter', function(d) {
                     var line = d3.select('.id-'+d.key)

@@ -9,13 +9,24 @@ angular.module('faradayApp')
         var vulnsManager = {};
 
         vulnsManager.createVuln = function(ws, data) {
-            if(data.type == "Vulnerability") {
-                var vuln = new Vuln(ws, data);
-            } else {
-                var vuln = new WebVuln(ws, data);
-            }
+            var parents = data.parents,
+            promises = [];
 
-            return vuln.save();
+            delete data.parents;
+
+            parents.forEach(function(parent_id) {
+                data.parent = parent_id;
+
+                if(data.type == "Vulnerability") {
+                    var vuln = new Vuln(ws, data);
+                } else {
+                    var vuln = new WebVuln(ws, data);
+                }
+
+                promises.push(vuln.save());
+            });
+
+            return $q.all(promises);
         };
 
         vulnsManager.deleteVuln = function(vuln) {

@@ -11,8 +11,17 @@ from server.dao.vuln import VulnerabilityDAO
 from server.dao.service import ServiceDAO
 from server.dao.interface import InterfaceDAO
 from server.dao.note import NoteDAO
-from server.utils.web import gzipped, validate_workspace, get_basic_auth, validate_admin_perm, validate_database, build_bad_request_response
-from server.couchdb import list_workspaces_as_user, get_workspace, get_auth_info
+from server.utils.web import (
+    gzipped,
+    validate_workspace,
+    get_basic_auth,
+    validate_admin_perm,
+    build_bad_request_response
+)
+from server.couchdb import (
+    list_workspaces_as_user,
+    get_workspace
+)
 from server.database import get_manager
 
 
@@ -22,6 +31,7 @@ def workspace_list():
     return flask.jsonify(
         list_workspaces_as_user(
             flask.request.cookies, get_basic_auth()))
+
 
 @app.route('/ws/<workspace>/summary', methods=['GET'])
 @gzipped
@@ -48,6 +58,7 @@ def workspace_summary(workspace=None):
 
     return flask.jsonify(response)
 
+
 @app.route('/ws/<workspace>', methods=['GET'])
 @gzipped
 def workspace(workspace):
@@ -56,9 +67,12 @@ def workspace(workspace):
         flask.request.cookies, get_basic_auth())['workspaces']
     ws = get_workspace(workspace, flask.request.cookies, get_basic_auth()) if workspace in workspaces else None
     # TODO: When the workspace DAO is ready, we have to remove this next line
-    if not ws.get('fdate') and ws.get('duration'): ws['fdate'] = ws.get('duration').get('end')
-    if not ws.get('description'): ws['description'] = ''
+    if not ws.get('fdate') and ws.get('duration'):
+        ws['fdate'] = ws.get('duration').get('end')
+    if not ws.get('description'):
+        ws['description'] = ''
     return flask.jsonify(ws)
+
 
 @app.route('/ws/<workspace>', methods=['PUT'])
 @gzipped
@@ -87,7 +101,7 @@ def workspace_create_or_update(workspace):
     elif workspace not in db_manager and not is_update_request:
         res = db_manager.create_workspace(document)
     else:
-        abort(400)
+        flask.abort(400)
 
     if not res:
         response = flask.jsonify({'error': "There was an error {0} the workspace".format("updating" if is_update_request else "creating")})
@@ -95,6 +109,7 @@ def workspace_create_or_update(workspace):
         return response
 
     return flask.jsonify({'ok': True})
+
 
 @app.route('/ws/<workspace>', methods=['DELETE'])
 @gzipped

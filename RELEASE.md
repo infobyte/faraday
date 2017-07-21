@@ -8,6 +8,19 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+July 19, 2017:
+---
+* Added the ability to select more than one target when creating a vuln in the Web UI
+* Merged PR #182 - problems with zonatransfer.me
+* Fixed bug in Download CSV of Status report with old versions of Firefox.
+* Fixed formula injection vulnerability in export to CSV feature
+* Fixed DOM-based XSS in the Top Services widget of the dashboard
+* Fix in AppScan plugin.
+* Fix HTML injection in Vulnerability template.
+* Add new plugin: Junit XML
+* Improved pagination in new vuln modal of status report
+* Added "Policy Violations" field for Vulnerabilities
+
 May 24, 2017:
 ---
 * Fixed bug when editing workspaces created in GTK

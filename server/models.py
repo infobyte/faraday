@@ -524,3 +524,19 @@ class User(CommonBase, UserMixin):
     confirmed_at = Column(DateTime())
     roles = relationship('Role', secondary='roles_users',
                          backref=backref('users', lazy='dynamic'))
+
+    @property
+    def role(self):
+        """ "admin", "pentester", "client" or None """
+        try:
+            return next(role_name for role_name
+                        in ['admin', 'pentester', 'client']
+                        if self.has_role(role_name))
+        except StopIteration:
+            return None
+
+    def get_security_payload(self):
+        return {
+            "username": self.email,
+            "role": self.role
+        }

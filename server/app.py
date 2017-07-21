@@ -16,6 +16,7 @@ from server.utils.logger import LOGGING_HANDLERS
 app = flask.Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecret'
 app.config['SECURITY_PASSWORD_SINGLE_HASH'] = True
+app.config['WTF_CSRF_ENABLED'] = False
 
 # Setup Flask-Security
 common_session = server.database.setup_common()

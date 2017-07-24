@@ -138,16 +138,8 @@ class Item(object):
         severity = item_node.findall('severity')[0]
         request = item_node.findall('./requestresponse/request')[0].text if len(
             item_node.findall('./requestresponse/request')) > 0 else ""
-        response = ""
-
-        if len(item_node.findall('./requestresponse/response')) > 0:
-            response_node = item_node.findall('./requestresponse/response')[0]
-
-            if "base64" in response_node.attrib:
-                if distutils.util.strtobool(response_node.get("base64")):
-                    response = response_node.text.decode("base64", "strict")
-                else:
-                    response = response_node.text
+        request = self.decode_binary_node('./requestresponse/request')
+        response = self.decode_binary_node('./requestresponse/response')
 
         detail = self.do_clean(item_node.findall('issueDetail'))
         remediation = self.do_clean(item_node.findall('remediationBackground'))
@@ -189,6 +181,23 @@ class Item(object):
             if len(value) > 0:
                 myreturn = value[0].text
         return myreturn
+
+    def decode_binary_node(self, path):
+        """
+        Finds a subnode matching `path` and returns its inner text if
+        it has no base64 attribute or its base64 decoded inner text if
+        it has it.
+        """
+        nodes = self.node.findall(path)
+        try:
+            subnode = nodes[0]
+        except IndexError:
+            return ""
+        encoded = distutils.util.strtobool(subnode.get('base64', 'false'))
+        if encoded:
+            return subnode.text.decode('base64', 'strict')
+        else:
+            return subnode.text
 
     def get_text_from_subnode(self, subnode_xpath_expr):
         """

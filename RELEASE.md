@@ -8,7 +8,7 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
-July 7, 2017:
+July 19, 2017:
 ---
 * Added the ability to select more than one target when creating a vuln in the Web UI
 * Merged PR #182 - problems with zonatransfer.me

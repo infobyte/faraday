@@ -8,6 +8,10 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+TBA
+---
+* Improved Acunetix plugin to avoid conflicts and missing imported data
+
 July 19, 2017:
 ---
 * Added the ability to select more than one target when creating a vuln in the Web UI

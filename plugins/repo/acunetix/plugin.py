@@ -204,6 +204,13 @@ class Item(object):
         else:
             self.desc += ""
 
+        # Add path and params to the description to create different IDs if at
+        # least one of this fields is different
+        if self.uri:
+            self.desc += '\nPath: ' + self.uri
+        if self.parameter:
+            self.desc += '\nParameter: ' + self.parameter
+
         self.ref = []
         for n in item_node.findall('References/Reference'):
             n2 = n.find('URL')

@@ -6,11 +6,11 @@
 	.st0{fill:none;stroke:#5C5D63;stroke-width:8;stroke-linecap:square;stroke-miterlimit:10;}
 	.st1{fill:#5C5D63;}
 	.st2{fill:none;stroke:#5C5D63;stroke-width:6;stroke-linecap:square;stroke-miterlimit:10;}
-	.st3{fill:#FFFFFF;stroke:#5C5D63;stroke-width:8;stroke-miterlimit:10;}
+	.st3{fill:none;stroke:#5C5D63;stroke-width:8;stroke-miterlimit:10;}
 </style>
 <g>
 	<g>
-		<rect x="24.6" y="34.7" class="st0" width="120" height="129"/>
+		<polyline class="st0" points="121.6,34.7 144.6,34.7 144.6,163.7 24.6,163.7 24.6,34.7 47.3,34.7 		"/>
 		<rect x="42" y="60.7" class="st1" width="15.3" height="54"/>
 		<rect x="65" y="95.7" class="st1" width="15.3" height="19"/>
 		<rect x="88" y="82.7" class="st1" width="15.3" height="32"/>

@@ -11,6 +11,7 @@ from __future__ import with_statement
 from bs4 import BeautifulSoup, Comment
 from plugins import core
 from model import api
+from urlparse import urlsplit
 import distutils.util
 import re
 import os
@@ -147,19 +148,14 @@ class Item(object):
 
         self.url = host_node.text
 
-        rhost = re.search(
-            "(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp;%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|localhost|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))[\:]*([0-9]+)*([/]*($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+)).*?$",
-            self.url)
+        url_data = urlsplit(self.url)
 
-        self.protocol = rhost.group(1)
-        self.host = rhost.group(4)
+        self.protocol = url_data.scheme
+        self.host = url_data.hostname
 
-        self.port = 80
-        if self.protocol == 'https':
-            self.port = 443
-
-        if rhost.group(11) is not None:
-            self.port = rhost.group(11)
+        # Use the port in the URL if it is defined, or 80 or 443 by default
+        self.port = url_data.port or (443 if url_data.scheme == "https"
+                                      else 80)
 
         self.name = name.text
         self.location = location.text

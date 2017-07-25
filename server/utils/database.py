@@ -6,6 +6,7 @@ import server.utils.logger
 
 from sqlalchemy import distinct, Boolean
 from sqlalchemy.sql import func, asc, desc
+from sqlalchemy.sql.expression import ClauseElement
 
 
 class ORDER_DIRECTIONS:
@@ -20,6 +21,7 @@ def paginate(query, page, page_size):
     if not (page >= 0 and page_size >=0):
         raise Exception("invalid values for pagination (page: %d, page_size: %d)" % (page, page_size))
     return query.limit(page_size).offset(page * page_size)
+
 
 def sort_results(query, field_to_col_map, order_field, order_dir, default=None):
     """
@@ -37,6 +39,7 @@ def sort_results(query, field_to_col_map, order_field, order_dir, default=None):
         order_cols = [default] if default is not None else None
 
     return query.order_by(*order_cols) if order_cols else query
+
 
 def apply_search_filter(query, field_to_col_map, free_text_search=None, field_filter={}, strict_filter=[]):
     """
@@ -106,11 +109,14 @@ def apply_search_filter(query, field_to_col_map, free_text_search=None, field_fi
     sql_filter = concat_and_search_term(fts_sql_filter, dfs_sql_filter)
     return query.filter(sql_filter) if sql_filter is not None else query
 
+
 def concat_and_search_term(left, right):
     return concat_search_terms(left, right, operator='and')
 
+
 def concat_or_search_term(left, right):
     return concat_search_terms(left, right, operator='or')
+
 
 def concat_search_terms(sql_filter_left, sql_filter_right, operator='and'):
     if sql_filter_left is None and sql_filter_right is None:
@@ -127,6 +133,7 @@ def concat_search_terms(sql_filter_left, sql_filter_right, operator='and'):
         else:
             return None
 
+
 def prepare_boolean_filter(column, search_term):
     if search_term in ['true', '1']:
         return column.is_(True)
@@ -135,19 +142,30 @@ def prepare_boolean_filter(column, search_term):
     else:
         return None
 
+
 def get_count(query, count_col=None):
     """
     Get a query row's count. This implementation performs significantly better
-    than messaging a query's count method. 
+    than messaging a query's count method.
     """
     if count_col is None:
         count_filter = [func.count()]
     else:
         count_filter = [func.count(distinct(count_col))]
-    
-    count_q = query.statement.with_only_columns(count_filter).\
-              order_by(None).group_by(None)
+
+    count_q = query.statement.with_only_columns(count_filter).order_by(None).group_by(None)
     count = query.session.execute(count_q).scalar()
 
     return count
 
+
+def get_or_create(session, model, defaults=None, **kwargs):
+    instance = session.query(model).filter_by(**kwargs).first()
+    if instance:
+        return instance, False
+    else:
+        params = dict((k, v) for k, v in kwargs.items() if not isinstance(v, ClauseElement))
+        params.update(defaults or {})
+        instance = model(**params)
+        session.add(instance)
+        return instance, True

@@ -17,228 +17,28 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound
 
 logger = server.utils.logger.get_logger(__name__)
+engine = create_engine('sqlite:////home/leonardo/faraday.sqlite', echo=True)
+session = scoped_session(sessionmaker(autocommit=False,
+                                           autoflush=False,
+                                           bind=engine))
 
-
-_db_manager = None
 
 def initialize():
-    global _db_manager
-    _db_manager = Manager()
+    server.models.Base.metadata.create_all(engine)
+
 
 def is_valid_workspace(workspace_name):
-    return _db_manager.is_valid_workspace(workspace_name)
+    return session.query(server.models.Workspace).filter_by(name=workspace_name).first() is not None
+
 
 def get(workspace_name):
-    return _db_manager.get_workspace(workspace_name)
+    return session.query(server.models.Workspace).filter_by(name=workspace_name).first()
+
 
 def teardown_context():
     """ This is called by Flask to cleanup sessions created in the context of a request """
-    _db_manager.close_sessions()
+    # _db_manager.close_sessions()
 
-def get_manager():
-    return _db_manager
-
-
-class Manager(object):
-    def __init__(self):
-        self.__workspaces = {}
-
-        # Open all existent databases on workspaces path
-        self.__init_sessions()
-
-        # Register database closing to be executed when process goes down
-        atexit.register(self.close_databases)
-
-    def __init_sessions(self):
-        # Only loads does databases that are already created and
-        # are present on the current CouchDB instance
-        databases = self.__list_databases().intersection(self.__list_workspaces())
-
-        for database_name in databases:
-            self.__init_workspace(database_name)
-
-    def __list_databases(self):
-        def is_a_valid_database(filename):
-            return is_a_file(filename) and is_a_valid_name(filename)
-        def is_a_file(filename):
-            return os.path.isfile(os.path.join(server.config.FARADAY_SERVER_DBS_DIR, filename))
-        def is_a_valid_name(filename):
-            return bool(re.match('^[a-z][a-z0-9_$()+/-]*\\.db$', filename))
-
-        # List all valid databases stored on configured directory
-        db_filenames = filter(is_a_valid_database, os.listdir(server.config.FARADAY_SERVER_DBS_DIR))
-
-        # Remove extensions and move on
-        return set([os.path.splitext(filename)[0] for filename in db_filenames])
-
-    def __list_workspaces(self):
-        couchdb_server_conn = server.couchdb.CouchDBServer()
-        return set(couchdb_server_conn.list_workspaces())
-
-    def __init_workspace(self, ws_name, db_conn=None):
-        if ws_name not in self.__workspaces:
-            new_workspace = Workspace(ws_name, db_conn=db_conn)
-            self.__workspaces[ws_name] = new_workspace
-
-    def get_workspace(self, ws_name):
-        try:
-            return self.__workspaces[ws_name]
-        except KeyError:
-            raise WorkspaceNotFound(ws_name)
-
-    def create_workspace(self, workspace):
-        # create the couch database first
-        ok = server.couchdb.create_workspace(workspace)
-        if ok:
-            self.__process_new_workspace(workspace.get('name'))
-        return ok
-
-    def update_workspace(self, workspace):
-        # update the couch database
-        return server.couchdb.update_workspace(workspace)
-
-    def delete_workspace(self, ws_name):
-        # create the couch database first
-        ok = server.couchdb.delete_workspace(ws_name)
-        if ok:
-            self.__process_delete_workspace(ws_name)
-        return ok
-
-    def __process_new_workspace(self, ws_name):
-        if ws_name in self.__workspaces:
-            logger.info(u"Workspace {} already exists. Ignoring change.".format(ws_name))
-        elif not server.couchdb.server_has_access_to(ws_name):
-            logger.error(u"Unauthorized access to CouchDB for Workspace {}. Make sure faraday-server's"\
-                         " configuration file has CouchDB admin's credentials set".format(ws_name))
-        else:
-            self.__create_and_import_workspace(ws_name)
-
-    def __create_and_import_workspace(self, ws_name):
-        new_db_conn = Connector(ws_name)
-
-        if new_db_conn.exists():
-            # TODO(mrocha): if somehow this happens, then we should check for integrity and reimport
-            # if necessary. After that we should add it into the databases dict
-            logger.warning(u"Workspace {} already exists but wasn't registered at startup".format(ws_name))
-        else:
-            server.importer.import_workspace_into_database(ws_name, new_db_conn)
-
-        self.__init_workspace(ws_name, db_conn=new_db_conn)
-
-    def __process_delete_workspace(self, ws_name):
-        if ws_name not in self.__workspaces:
-            logger.info(u"Workspace {} doesn't exist. Ignoring change.".format(ws_name))
-        else:
-            logger.info(u"Deleting workspace {} from Faraday Server".format(ws_name))
-            self.__delete_workspace(ws_name)
-
-    def __delete_workspace(self, ws_name):
-        self.get_workspace(ws_name).delete()
-        del self.__workspaces[ws_name]
-
-    def is_valid_workspace(self, ws_name):
-        return ws_name in self.__workspaces
-
-    def __contains__(self, ws_name):
-        return self.is_valid_workspace(ws_name)
-
-    def close_sessions(self):
-        for workspace in self.__workspaces.values():
-            workspace.close_session()
-
-    def close_databases(self):
-        for workspace in self.__workspaces.values():
-            workspace.close()
-
-
-class Workspace(object):
-    def __init__(self, db_name, db_conn=None, couchdb_conn=None, couchdb_server_conn=None):
-        self.__db_conn = db_conn or Connector(db_name)
-        self.__couchdb_conn = couchdb_conn or server.couchdb.Workspace(db_name, couchdb_server_conn)
-
-    @property
-    def connector(self):
-        return self.__db_conn
-
-    @property
-    def session(self):
-        # TODO(mrocha): should we check if session is None here???
-        return self.__db_conn.session
-
-    @property
-    def couchdb(self):
-        return self.__couchdb_conn
-
-    def close_session(self):
-        self.__db_conn.close()
-
-    def close(self):
-        self.close_session()
-
-    def delete(self):
-        self.close()
-        self.__db_conn.delete()
-
-
-class Connector(object):
-    def __init__(self, db_name):
-        self.db_name = db_name
-
-        self.__db_path = self.__get_db_path()
-        self.__db_conf = Configuration(self)
-        self.__setup_engine()
-
-        # From here it is now ready to open, or create/open
-        if self.exists():
-            self.session = self.__open_session()
-        else:
-            self.session = None
-
-    def __get_db_path(self):
-        return os.path.join(server.config.FARADAY_SERVER_DBS_DIR, '%s.db' % self.db_name)
-
-    def __setup_engine(self):
-        self.__engine = create_engine('sqlite:///%s' % self.__db_path) # XXX: is this safe?
-        # TODO(mrocha): review this piece of code. i'm not sure what this implicates
-        # when having multiple databases open using the same model
-        server.models.Base.metadata.bind = self.__engine
-
-    def __open_session(self):
-        return scoped_session(sessionmaker(autocommit=False,
-                                           autoflush=False,
-                                           bind=self.__engine))
-
-    def create(self):
-        if self.exists():
-            raise RuntimeError("Cannot create new database. Database {} already exists".format(self.db_name))
-
-        server.models.Base.metadata.create_all(self.__engine)
-        self.session = self.__open_session()
-        self.__db_conf.setup_new_database()
-
-    def exists(self):
-        return os.path.exists(self.__db_path)
-
-    def close(self):
-        # TODO(mrocha): Detail how this works
-        if self.session is not None:
-            self.session.remove()
-
-    def delete(self):
-        self.close()
-        os.remove(self.__db_path)
-
-    def is_integrous(self):
-        if not self.__db_conf.was_migration_successful():
-            logger.info(u"Workspace {} wasn't migrated successfully".format(self.db_name))
-            return False
-
-        elif self.__db_conf.get_schema_version() != server.models.SCHEMA_VERSION:
-            logger.info(u"Workspace {} has an old schema version ({} != {})".format(
-                self.db_name, self.__db_conf.get_schema_version(), server.models.SCHEMA_VERSION))
-            return False
-
-        return True
 
 class DocumentImporter(object):
     def __init__(self, db_conn, post_processing_change_cbk=None):

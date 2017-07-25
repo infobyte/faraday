@@ -22,7 +22,6 @@ from server.couchdb import (
     list_workspaces_as_user,
     get_workspace
 )
-from server.database import get_manager
 
 
 @app.route('/ws', methods=['GET'])
@@ -93,8 +92,6 @@ def workspace_create_or_update(workspace):
     document['_id'] = document.get('name')  # document dictionary does not have id, add it
 
     is_update_request = bool(document.get('_rev', False))
-
-    db_manager = get_manager()
 
     if workspace in db_manager and is_update_request:
         res = db_manager.update_workspace(document)

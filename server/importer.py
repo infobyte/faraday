@@ -7,9 +7,14 @@ import server.utils.logger
 import server.couchdb
 import server.database
 import server.models
+from server.utils.database import get_or_create
+from server.database import session
 from restkit.errors import RequestError, Unauthorized
 
+from tqdm import tqdm
+
 logger = server.utils.logger.get_logger(__name__)
+
 
 def import_workspaces():
     couchdb_server_conn, workspaces_list = _open_couchdb_conn()
@@ -23,6 +28,7 @@ def import_workspaces():
             sys.exit(1)
 
         import_workspace_into_database(workspace_name, couchdb_server_conn=couchdb_server_conn)
+
 
 def _open_couchdb_conn():
     try:
@@ -42,61 +48,23 @@ def _open_couchdb_conn():
 
     return couchdb_server_conn, workspaces_list
 
-def import_workspace_into_database(workspace_name, db_conn=None, couchdb_conn=None, couchdb_server_conn=None):
-    db_conn = db_conn or server.database.Connector(workspace_name)
-    couchdb_conn = couchdb_conn or server.couchdb.Workspace(workspace_name, couchdb_server_conn)
 
-    # If database doesn't exist. Create and import workspace
-    if not db_conn.exists():
-        import_on_new_database(db_conn, couchdb_conn)
-
-    # Database exists. Check if it is corrupt to reimport
-    elif not db_conn.is_integrous():
-        reimport_on_database(db_conn, couchdb_conn)
-
-    return db_conn
-
-def import_on_new_database(db_conn, couchdb_conn):
-    if db_conn.exists():
-        raise RuntimeError('Database {} already exists'.format(db_conn.db_name))
-
-    logger.info(u'Creating database for workspace {}'.format(db_conn.db_name))
-    _create_and_import_db(db_conn, couchdb_conn)
-
-def reimport_on_database(db_conn, couchdb_conn):
-    """ WARNING: Make sure to do all necessary verifications on
-    the database you are working on. If the database exists then
-    it will truncate and lose all data previously stored there"""
-    if not db_conn.exists():
-        raise RuntimeError('Database {} does not exist'.format(db_conn.db_name))
-
-    logger.info(u'Importing workspace {} again'.format(db_conn.db_name))
-    _truncate_and_import_db(db_conn, couchdb_conn)
-
-def _create_and_import_db(db_conn, couchdb_conn):
-    db_conn.create()
-    db_conf = server.database.Configuration(db_conn)
-    db_conf.set_last_seq(couchdb_conn.get_last_seq())
-
+def import_workspace_into_database(workspace_name, couchdb_server_conn):
+    workspace, created = get_or_create(session, server.models.Workspace, name=workspace_name)
     try:
-        _import_from_couchdb(db_conn, couchdb_conn)
-    except Exception, e:
-        import traceback
-        logger.debug(traceback.format_exc())
-        logger.error(u'Error while importing workspace {}: {!s}'.format(db_conn.db_name, e))
-        db_conn.delete()
-        raise e
+        # import checks if the object exists.
+        # the import is idempotent
+        _import_from_couchdb(workspace, couchdb_conn)
+        session.commit()
+    except Exception as ex:
+        logger.exception(ex)
+        session.rollback()
+        raise ex
 
-    # Reaching this far without errors means a successful migration
-    db_conf.set_migration_status(True)
+    return created
 
-def _truncate_and_import_db(db_conn, couchdb_conn):
-    db_conn.delete()
 
-    db_conn = server.database.Connector(db_conn.db_name)
-    _create_and_import_db(db_conn, couchdb_conn)
-
-def _import_from_couchdb(db_conn, couchdb_conn):
+def _import_from_couchdb(workspace, couchdb_conn):
     total_amount = couchdb_conn.get_total_amount_of_documents()
     processed_docs, progress = 0, 0
     should_flush_changes = False
@@ -104,14 +72,14 @@ def _import_from_couchdb(db_conn, couchdb_conn):
 
     def flush_changes():
         host_entities.clear()
-        db_conn.session.commit()
-        db_conn.session.expunge_all()
+        session.commit()
+        session.expunge_all()
 
-    for doc in couchdb_conn.get_documents(per_request=1000):
+    for doc in tqdm(couchdb_conn.get_documents(per_request=1000), total=total_amount):
         processed_docs = processed_docs + 1
         current_progress = (processed_docs * 100) / total_amount
         if current_progress > progress:
-            _show_progress(u'  * Importing {} from CouchDB'.format(db_conn.db_name), progress)
+            _show_progress(u'  * Importing {} from CouchDB'.format(workspace.name), progress)
             progress = current_progress
             should_flush_changes = True
 
@@ -123,17 +91,17 @@ def _import_from_couchdb(db_conn, couchdb_conn):
 
             try:
                 entity.add_relationships_from_dict(host_entities)
-            except server.models.EntityNotFound as e:
+            except server.models.EntityNotFound:
                 logger.warning(u"Ignoring {} entity ({}) because its parent wasn't found".format(
                     entity.entity_metadata.document_type, entity.entity_metadata.couchdb_id))
             else:
                 host_entities[doc.get('key')] = entity
-                db_conn.session.add(entity)
+                session.add(entity)
 
-    logger.info(u'{} importation done!'.format(db_conn.db_name))
+    logger.info(u'{} importation done!'.format(workspace.name))
     flush_changes()
+
 
 def _show_progress(msg, percentage):
     sys.stdout.write('{}: {}%\r'.format(msg, percentage))
     sys.stdout.flush()
-

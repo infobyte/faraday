@@ -21,6 +21,7 @@ def get_integer_parameter(query_parameter, default=None):
     except ValueError:
         abort(400)
 
+
 def get_mandatory_integer_parameter(query_parameter):
     """Obtains an integer parameter and ensures its type, if it can't
     will raise an 400 response"""
@@ -30,12 +31,14 @@ def get_mandatory_integer_parameter(query_parameter):
     except ValueError:
         abort(400)
 
+
 def filter_request_args(*filter_out_args):
     filtered_args = {}
     for arg in request.args:
         if arg not in filter_out_args:
             filtered_args[arg] = request.args.get(arg)
     return filtered_args
+
 
 def gzipped(f):
     """Decorates a flask request function to return a gzipped response"""
@@ -71,6 +74,7 @@ def gzipped(f):
 
     return view_func
 
+
 def get_basic_auth():
     if request.authorization:
         user, passwd = request.authorization.get('username'), request.authorization.get('password')
@@ -78,10 +82,12 @@ def get_basic_auth():
             return (user, passwd)
     return None
 
+
 def build_bad_request_response(msg):
     response = jsonify({'error': msg})
     response.status_code = 400
     return response
+
 
 def validate_workspace(workspace_name, timeout_sync=0.1):
     if not server.database.is_valid_workspace(workspace_name):
@@ -90,15 +96,18 @@ def validate_workspace(workspace_name, timeout_sync=0.1):
     if not server.couchdb.has_permissions_for(workspace_name, request.cookies, get_basic_auth()):
         abort(401)
 
+
 def validate_database(workspace_name):
     if server.database.is_valid_workspace(workspace_name):
         # 412: Precondition failed, since database already exists
         abort(412)
 
+
 def validate_admin_perm():
     def __get_server_sessions_uri():
         couchdb_port = config.couchdb.port if config.couchdb.protocol == 'http' else config.couchdb.ssl_port
         return "%s://%s:%s/_session" % (config.couchdb.protocol, config.couchdb.host, couchdb_port)
+
     def __check_response(response):
         response = response.json()
         if response.get('ok', False) and '_admin' in response.get('userCtx', {}).get('roles', []):

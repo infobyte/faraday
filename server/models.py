@@ -4,7 +4,16 @@
 
 import json
 
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, Text, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    ForeignKey,
+    Float,
+    Text,
+    UniqueConstraint
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -13,9 +22,11 @@ SCHEMA_VERSION = 'W.2.6.0'
 
 Base = declarative_base()
 
+
 class EntityNotFound(Exception):
     def __init__(self, entity_id):
         super(EntityNotFound, self).__init__("Entity (%s) wasn't found" % entity_id)
+
 
 class FaradayEntity(object):
     # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace', u'Interface']
@@ -139,6 +150,9 @@ class Host(FaradayEntity, Base):
     vulnerabilities = relationship('Vulnerability')
     credentials = relationship('Credential')
 
+    workspace = relationship('Workspace')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+
     def update_from_document(self, document):
         # Ticket #3387: if the 'os' field is None, we default to 'unknown'
         if not document.get('os'): document['os']='unknown'
@@ -193,6 +207,8 @@ class Interface(FaradayEntity, Base):
 
     host_id = Column(Integer, ForeignKey(Host.id), index=True)
     host = relationship('Host', back_populates='interfaces')
+    workspace = relationship('Workspace')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
     services = relationship('Service')
 
@@ -252,6 +268,8 @@ class Service(FaradayEntity, Base):
 
     vulnerabilities = relationship('Vulnerability')
     credentials = relationship('Credential')
+    workspace = relationship('Workspace')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
     def update_from_document(self, document):
         self.name=document.get('name')
@@ -336,6 +354,9 @@ class Vulnerability(FaradayEntity, Base):
     service_id = Column(Integer, ForeignKey(Service.id), index=True)
     service = relationship('Service', back_populates='vulnerabilities')
 
+    workspace = relationship('Workspace')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+
     def update_from_document(self, document):
         self.name = document.get('name')
         self.description=document.get('desc')
@@ -405,6 +426,8 @@ class Note(FaradayEntity, Base):
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+    workspace = relationship('Workspace')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
     def update_from_document(self, document):
         self.name=document.get('name')
@@ -432,6 +455,8 @@ class Credential(FaradayEntity, Base):
 
     service_id = Column(Integer, ForeignKey(Service.id), index=True)
     service = relationship('Service', back_populates='credentials')
+    workspace = relationship('Workspace')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
     def update_from_document(self, document):
         self.username = document.get('username')
@@ -478,7 +503,8 @@ class Command(FaradayEntity, Base):
     params = Column(String(250), nullable=True)
     user = Column(String(250), nullable=True)
     workspace = Column(String(250), nullable=True)
-
+    workspace = relationship('Workspace')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
@@ -493,3 +519,9 @@ class Command(FaradayEntity, Base):
         self.user = document.get('user', None)
         self.workspace = document.get('workspace', None)
 
+
+class Workspace(FaradayEntity, Base):
+
+    __tablename__ = 'workspace'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), nullable=True)

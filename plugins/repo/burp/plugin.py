@@ -137,8 +137,6 @@ class Item(object):
         path = item_node.findall('path')[0]
         location = item_node.findall('location')[0]
         severity = item_node.findall('severity')[0]
-        request = item_node.findall('./requestresponse/request')[0].text if len(
-            item_node.findall('./requestresponse/request')) > 0 else ""
         request = self.decode_binary_node('./requestresponse/request')
         response = self.decode_binary_node('./requestresponse/response')
 

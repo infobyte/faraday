@@ -8,12 +8,14 @@ See the file 'doc/LICENSE' for the license information
 
 '''
 from __future__ import with_statement
-from plugins import core
-from model import api
 import re
 import os
-import pprint
 import sys
+import logging
+
+from plugins import core
+
+logger = logging.getLogger(__name__)
 
 try:
     import xml.etree.cElementTree as ET
@@ -66,8 +68,8 @@ class ImpactXmlParser(object):
         """
         try:
             tree = ET.fromstring(xml_output)
-        except SyntaxError, err:
-            print "SyntaxError: %s. %s" % (err, xml_output)
+        except SyntaxError as err:
+            logger.error("SyntaxError: %s. %s" % (err, xml_output))
             return None
 
         return tree
@@ -102,18 +104,9 @@ class Item(object):
             "property/[@key='os']/property/[@key='entity name']")
 
         self.ports = []
-
-        for p in item_node.findall("property/[@key='tcp_ports']/property/[@type='port']"):
-
-            self.ports.append({'port': p.get('key'),
-                               'protocol': "tcp",
-                               'status': "open" if p.text == "listen" else p.text})
-
-        for p in item_node.findall("property/[@key='udp_ports']/property/[@type='port']"):
-
-            self.ports.append({'port': p.get('key'),
-                               'protocol': "udp",
-                               'status': "open" if p.text == "listen" else p.text})
+        self.services = []
+        self.process_ports(item_node)
+        self.process_services(item_node)
 
         self.agent = False
 
@@ -127,29 +120,53 @@ class Item(object):
                 self.agentip = agentip
 
                 self.ipfrom = self.get_text_from_subnode(
-                    "property/[@key='Connection Properties']/property/[@key='ip']")
+                    "property/[@key='Connection Properties']/property/[@key='ip']") or agentip
 
                 self.agentype = node.get("type")
 
                 self.agentport = self.get_text_from_subnode(
-                    "property/[@key='Connection Properties']//property/[@key='port']")
+                    "property/[@key='Connection Properties']//property/[@key='port']") or ""
 
                 self.agentsubtype = self.get_text_from_subnode(
-                    "property/[@key='Connection Properties']//property/[@key='subtype']")
+                    "property/[@key='Connection Properties']//property/[@key='subtype']") or ""
 
                 self.agentcon = self.get_text_from_subnode(
-                    "property/[@key='Connection Properties']//property/[@key='type']")
+                    "property/[@key='Connection Properties']//property/[@key='type']") or ""
 
                 self.agent = True
                 break
 
         self.results = self.getResults(item_node)
 
+    def process_ports(self, item_node):
+        for p in item_node.findall("property/[@key='tcp_ports']/property/[@type='port']"):
+            self.ports.append({'port': p.get('key'),
+                               'protocol': "tcp",
+                               'status': "open" if p.text == "listen" else p.text})
+
+        for p in item_node.findall("property/[@key='udp_ports']/property/[@type='port']"):
+            self.ports.append({'port': p.get('key'),
+                               'protocol': "udp",
+                               'status': "open" if p.text == "listen" else p.text})
+
+    def process_services(self, item_node):
+        for service in item_node.findall("property/[@key='services']/property"):
+            service_name = service.get("key")
+            port, protocol = service.findall('property')[0].get('key').split('-')
+            self.services.append({
+                "name": service_name,
+                "protocol": protocol,
+                "port": port
+            })
+
     def getResults(self, tree):
         """
         :param tree:
         """
         for self.issues in tree.findall("property/[@key='Vulnerabilities']/property/[@type='container']"):
+            yield Results(self.issues)
+        # 2017R1 compatibility
+        for self.issues in tree.findall("property/[@key='exposures']/property/[@type='container']"):
             yield Results(self.issues)
 
     def get_text_from_subnode(self, subnode_xpath_expr):
@@ -168,14 +185,27 @@ class Item(object):
 class Results():
 
     def __init__(self, issue_node):
-
         self.node = issue_node
-        self.ref = issue_node.get('key')
+        self.ref = issue_node.get("key")
+        self.severity = ""
+        self.port = "Unknown"
+        self.service_name = "n/a"
+        self.protocol = "tcp?"
         vuln = issue_node.find("property/property")
-        self.name = vuln.get("key")
-        self.node = vuln
-        self.desc = self.get_text_from_subnode("property/[@key='description']")
-        self.port = self.get_text_from_subnode("property/[@key='port']")
+        if not vuln:
+            # 2017R1 compatibility
+            self.ref = []
+            vuln = issue_node.find("property")
+            self.name = self.get_text_from_subnode("property/[@key='title']")
+            self.desc = self.get_text_from_subnode("property/[@key='description']")
+            self.severity = self.get_text_from_subnode("property/[@key='severity']")
+            self.service_name = self.get_text_from_subnode("property/[@key='service']")
+        else:
+            # 2013R3 xml version
+            self.name = vuln.get("key")
+            self.node = vuln
+            self.desc = self.get_text_from_subnode("property/[@key='description']")
+            self.port = self.get_text_from_subnode("property/[@key='port']")
 
     def get_text_from_subnode(self, subnode_xpath_expr):
         """
@@ -199,8 +229,8 @@ class ImpactPlugin(core.PluginBase):
         core.PluginBase.__init__(self)
         self.id = "Core Impact"
         self.name = "Core Impact XML Output Plugin"
-        self.plugin_version = "0.0.1"
-        self.version = "Core Impact 2013R1"
+        self.plugin_version = "0.0.2"
+        self.version = "Core Impact 2013R1/2017R2"
         self.framework_version = "1.0.0"
         self.options = None
         self._current_output = None
@@ -211,29 +241,31 @@ class ImpactPlugin(core.PluginBase):
                                               "impact_output-%s.xml" % self._rid)
 
     def parseOutputString(self, output, debug=False):
-
         parser = ImpactXmlParser(output)
+        mapped_services = {}
+        mapped_ports = {}
         for item in parser.items:
 
             h_id = self.createAndAddHost(
                 item.ip,
                 item.os + " " + item.arch)
-            
+
             i_id = self.createAndAddInterface(
                 h_id,
-                item.ip, 
-                ipv4_address=item.ip, 
+                item.ip,
+                ipv4_address=item.ip,
                 hostname_resolution=item.host)
 
-            for p in item.ports:
-            
+            for service in item.services:
                 s_id = self.createAndAddServiceToInterface(
                     h_id,
                     i_id,
-                    p['port'],
-                    p['protocol'],
-                    ports=[p['port']],
-                    status=p['status'])
+                    service['name'],
+                    service['protocol'],
+                    ports=[service['port']],
+                    status='open')
+                mapped_services[service['name']] = s_id
+                mapped_ports[service['port']] = s_id
 
             if item.agent:
                 desc = "Agent Type: " + item.agentype
@@ -242,34 +274,40 @@ class ImpactPlugin(core.PluginBase):
                 desc += "\nProtocol:" + item.agentsubtype
                 desc += "\nConn:" + item.agentcon
 
-                v_id = self.createAndAddVulnToHost(
+                self.createAndAddVulnToHost(
                     h_id,
                     "Core Impact Agent",
                     desc=desc,
                     severity="HIGH")
 
             for v in item.results:
-
-                if v.port == "Unknown":
-                    v_id = self.createAndAddVulnToHost(
+                if v.service_name == "n/a" and v.port == "Unknown":
+                    self.createAndAddVulnToHost(
                         h_id,
                         v.name,
                         desc=v.desc,
+                        severity=v.severity,
                         ref=v.ref)
                 else:
-                    s_id = self.createAndAddServiceToInterface(
-                        h_id,
-                        i_id,
-                        v.port,
-                        ports=[str(v.port)],
-                        status="open")
-
-                    v_id = self.createAndAddVulnToService(
+                    s_id = mapped_services.get(v.service_name) or mapped_ports.get(v.port)
+                    print(v.service_name)
+                    print(s_id)
+                    self.createAndAddVulnToService(
                         h_id,
                         s_id,
                         v.name,
                         desc=v.desc,
+                        severity=v.severity,
                         ref=v.ref)
+
+            for p in item.ports:
+                s_id = self.createAndAddServiceToInterface(
+                    h_id,
+                    i_id,
+                    p['port'],
+                    p['protocol'],
+                    ports=[p['port']],
+                    status=p['status'])
         del parser
 
     def processCommandString(self, username, current_path, command_string):
@@ -282,8 +320,9 @@ class ImpactPlugin(core.PluginBase):
 def createPlugin():
     return ImpactPlugin()
 
+
 if __name__ == '__main__':
     parser = ImpactXmlParser(sys.argv[1])
     for item in parser.items:
         if item.status == 'up':
-            print item
+            print(item)

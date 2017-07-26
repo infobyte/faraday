@@ -186,7 +186,7 @@ class Results():
 
     def __init__(self, issue_node):
         self.node = issue_node
-        self.ref = issue_node.get("key")
+        self.ref = [issue_node.get("key")]
         self.severity = ""
         self.port = "Unknown"
         self.service_name = "n/a"

@@ -2,29 +2,19 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 
-import os
-import re
-import atexit
 import server.models
 import server.config
 import server.couchdb
-import server.importer
 import server.utils.logger
 
-from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound
 
 logger = server.utils.logger.get_logger(__name__)
-engine = create_engine('sqlite:////home/leonardo/faraday.sqlite', echo=True)
-session = scoped_session(sessionmaker(autocommit=False,
-                                           autoflush=False,
-                                           bind=engine))
 
 
 def initialize():
-    server.models.Base.metadata.create_all(engine)
+    server.models.Base.metadata.create_all(server.models.engine)
 
 
 def is_valid_workspace(workspace_name):

@@ -14,13 +14,21 @@ from sqlalchemy import (
     Text,
     UniqueConstraint
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy import create_engine
+from sqlalchemy.orm import relationship, scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+
+from server.utils.database import get_or_create
 
 
 SCHEMA_VERSION = 'W.2.6.0'
 
 Base = declarative_base()
+engine = create_engine('sqlite:////home/leonardo/faraday.sqlite', echo=False)
+session = scoped_session(sessionmaker(autocommit=False,
+                                           autoflush=False,
+                                           bind=engine))
+
 
 
 class EntityNotFound(Exception):
@@ -95,13 +103,9 @@ class EntityMetadata(Base):
     revision = Column(String(250))
     document_type = Column(String(250))
 
-    def __init__(self, document=None):
-        if document:
-            self.update_from_document(document)
-
     @classmethod
     def update_from_document(cls, document):
-        entity = cls()
+        entity, created = get_or_create(session, cls, couchdb_id=document.get('_id'))
         metadata = document.get('metadata', dict())
         entity.update_time = metadata.get('update_time', None)
         entity.update_user = metadata.get('update_user', None)
@@ -110,7 +114,6 @@ class EntityMetadata(Base):
         entity.owner = metadata.get('owner', None)
         entity.create_time = metadata.get('create_time', None)
         entity.update_controller_action = metadata.get('update_controller_action', None)
-        entity.couchdb_id = document.get('_id')
         entity.revision = document.get('_rev')
         entity.document_type = document.get('type')
         entity.command_id = metadata.get('command_id', None)
@@ -531,7 +534,7 @@ class Command(FaradayEntity, Base):
 
     @classmethod
     def update_from_document(cls, document):
-        command = cls()
+        command, instance = get_or_create(session, cls, command=document.get('command', None))
         command.command = document.get('command', None)
         command.duration = document.get('duration', None)
         command.itime = document.get('itime', None)
@@ -539,7 +542,12 @@ class Command(FaradayEntity, Base):
         command.hostname = document.get('hostname', None)
         command.params = document.get('params', None)
         command.user = document.get('user', None)
-        command.workspace = document.get('workspace', None)
+
+        workspace_name = document.get('workspace', None)
+        if workspace_name:
+            workspace, instance = get_or_create(session, Workspace, name=document.get('workspace', None))
+            command.workspace = workspace
+
         return command
 
 

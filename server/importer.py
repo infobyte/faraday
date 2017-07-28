@@ -8,7 +8,7 @@ import server.couchdb
 import server.database
 import server.models
 from server.utils.database import get_or_create
-from server.database import session
+from server.models import session
 from restkit.errors import RequestError, Unauthorized
 
 from tqdm import tqdm
@@ -101,8 +101,3 @@ def _import_from_couchdb(workspace, couchdb_conn):
 
     logger.info(u'{} importation done!'.format(workspace.name))
     flush_changes()
-
-
-def _show_progress(msg, percentage):
-    sys.stdout.write('{}: {}%\r'.format(msg, percentage))
-    sys.stdout.flush()

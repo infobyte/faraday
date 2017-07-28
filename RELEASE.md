@@ -10,7 +10,7 @@ New features in the latest update
 
 TBA
 ---
-* Improved Acunetix plugin to avoid conflicts and missing imported data
+* Improved Acunetix plugin to avoid conflicts and missing imported data, and to correctly parse URLs and resolutions
 
 July 19, 2017:
 ---

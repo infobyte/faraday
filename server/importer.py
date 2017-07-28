@@ -17,6 +17,9 @@ logger = server.utils.logger.get_logger(__name__)
 
 
 def import_workspaces():
+    """
+        Main entry point for couchdb import
+    """
     couchdb_server_conn, workspaces_list = _open_couchdb_conn()
 
     for workspace_name in workspaces_list:
@@ -54,9 +57,11 @@ def import_workspace_into_database(workspace_name, couchdb_server_conn):
     try:
         # import checks if the object exists.
         # the import is idempotent
-        _import_from_couchdb(workspace, couchdb_conn)
+        _import_from_couchdb(workspace, couchdb_server_conn)
         session.commit()
     except Exception as ex:
+        import traceback
+        traceback.print_exc()
         logger.exception(ex)
         session.rollback()
         raise ex
@@ -65,7 +70,8 @@ def import_workspace_into_database(workspace_name, couchdb_server_conn):
 
 
 def _import_from_couchdb(workspace, couchdb_conn):
-    total_amount = couchdb_conn.get_total_amount_of_documents()
+    couchdb_workspace = server.couchdb.CouchDBWorkspace(workspace.name, couchdb_server_conn=couchdb_conn)
+    total_amount = couchdb_workspace.get_total_amount_of_documents()
     processed_docs, progress = 0, 0
     should_flush_changes = False
     host_entities = {}
@@ -75,13 +81,8 @@ def _import_from_couchdb(workspace, couchdb_conn):
         session.commit()
         session.expunge_all()
 
-    for doc in tqdm(couchdb_conn.get_documents(per_request=1000), total=total_amount):
+    for doc in tqdm(couchdb_workspace.get_documents(per_request=1000), total=total_amount):
         processed_docs = processed_docs + 1
-        current_progress = (processed_docs * 100) / total_amount
-        if current_progress > progress:
-            _show_progress(u'  * Importing {} from CouchDB'.format(workspace.name), progress)
-            progress = current_progress
-            should_flush_changes = True
 
         entity = server.models.FaradayEntity.parse(doc.get('doc'))
         if entity is not None:

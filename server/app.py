@@ -11,6 +11,7 @@ from server.utils.logger import LOGGING_HANDLERS
 
 app = flask.Flask(__name__)
 
+
 def setup():
     app.debug = server.config.is_debug_mode()
     minify_json_output(app)

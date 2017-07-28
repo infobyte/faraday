@@ -35,8 +35,8 @@ class FaradayEntity(object):
         """Get an instance of a DAO object given a document"""
         entity_cls = cls.get_entity_class_from_doc(document)
         if entity_cls is not None:
-            entity = entity_cls(document)
-            metadata = EntityMetadata(document)
+            entity = entity_cls.update_from_document(document)
+            metadata = EntityMetadata.update_from_document(document)
             entity.entity_metadata = metadata
             return entity
         return None
@@ -56,9 +56,7 @@ class FaradayEntity(object):
                     return entity_cls
         return None
 
-    def __init__(self, document):
-        self.update_from_document(document)
-
+    @classmethod
     def update_from_document(self, document):
         raise Exception('MUST IMPLEMENT')
 
@@ -97,30 +95,35 @@ class EntityMetadata(Base):
     revision = Column(String(250))
     document_type = Column(String(250))
 
-    def __init__(self, document):
-        self.update_from_document(document)
+    def __init__(self, document=None):
+        if document:
+            self.update_from_document(document)
 
-    def update_from_document(self, document):
+    @classmethod
+    def update_from_document(cls, document):
+        entity = cls()
         metadata = document.get('metadata', dict())
-        self.update_time=metadata.get('update_time', None)
-        self.update_user=metadata.get('update_user', None)
-        self.update_action=metadata.get('update_action', None)
-        self.creator=metadata.get('creator', None)
-        self.owner=metadata.get('owner', None)
-        self.create_time=metadata.get('create_time', None)
-        self.update_controller_action=metadata.get('update_controller_action', None)
-        self.couchdb_id=document.get('_id')
-        self.revision=document.get('_rev')
-        self.document_type=document.get('type')
-        self.command_id = metadata.get('command_id', None)
+        entity.update_time = metadata.get('update_time', None)
+        entity.update_user = metadata.get('update_user', None)
+        entity.update_action = metadata.get('update_action', None)
+        entity.creator = metadata.get('creator', None)
+        entity.owner = metadata.get('owner', None)
+        entity.create_time = metadata.get('create_time', None)
+        entity.update_controller_action = metadata.get('update_controller_action', None)
+        entity.couchdb_id = document.get('_id')
+        entity.revision = document.get('_rev')
+        entity.document_type = document.get('type')
+        entity.command_id = metadata.get('command_id', None)
 
-        if self.create_time is not None:
-            self.create_time = self.__truncate_to_epoch_in_seconds(self.create_time)
+        if entity.create_time is not None:
+            entity.create_time = entity.__truncate_to_epoch_in_seconds(entity.create_time)
+
+        return entity
 
     def __truncate_to_epoch_in_seconds(self, timestamp):
         """ In a not so elegant fashion, identifies and truncate
         epoch timestamps expressed in milliseconds to seconds"""
-        limit = 32503680000 # 01 Jan 3000 00:00:00 GMT
+        limit = 32503680000  # 01 Jan 3000 00:00:00 GMT
         if timestamp > limit:
             return timestamp / 1000
         else:
@@ -153,25 +156,22 @@ class Host(FaradayEntity, Base):
     workspace = relationship('Workspace')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
-    def update_from_document(self, document):
+    @classmethod
+    def update_from_document(cls, document):
         # Ticket #3387: if the 'os' field is None, we default to 'unknown'
-        if not document.get('os'): document['os']='unknown'
+        host = cls()
+        if not document.get('os'):
+            document['os'] = 'unknown'
 
-        default_gateway = self.__get_default_gateway(document)
-
-        self.name=document.get('name')
-        self.description=document.get('description')
-        self.os=document.get('os')
-        self.default_gateway_ip=default_gateway[0]
-        self.default_gateway_mac=default_gateway[1]
-        self.owned=document.get('owned', False)
-
-    def __get_default_gateway(self, document):
         default_gateway = document.get('default_gateway', None)
-        if default_gateway:
-            return default_gateway
-        else:
-            return u'', u''
+
+        host.name = document.get('name')
+        host.description = document.get('description')
+        host.os = document.get('os')
+        host.default_gateway_ip = default_gateway and default_gateway[0] or ''
+        host.default_gateway_mac = default_gateway and default_gateway[1] or ''
+        host.owned = document.get('owned', False)
+        return host
 
 
 class Interface(FaradayEntity, Base):
@@ -212,24 +212,27 @@ class Interface(FaradayEntity, Base):
 
     services = relationship('Service')
 
-    def update_from_document(self, document):
-        self.name=document.get('name')
-        self.description=document.get('description')
-        self.mac=document.get('mac')
-        self.owned=document.get('owned', False)
-        self.hostnames=u','.join(document.get('hostnames'))
-        self.network_segment=document.get('network_segment')
-        self.ipv4_address=document.get('ipv4').get('address')
-        self.ipv4_gateway=document.get('ipv4').get('gateway')
-        self.ipv4_dns=u','.join(document.get('ipv4').get('DNS'))
-        self.ipv4_mask=document.get('ipv4').get('mask')
-        self.ipv6_address=document.get('ipv6').get('address')
-        self.ipv6_gateway=document.get('ipv6').get('gateway')
-        self.ipv6_dns=u','.join(document.get('ipv6').get('DNS'))
-        self.ipv6_prefix=str(document.get('ipv6').get('prefix'))
-        self.ports_filtered=document.get('ports',{}).get('filtered')
-        self.ports_opened=document.get('ports',{}).get('opened')
-        self.ports_closed=document.get('ports',{}).get('closed')
+    @classmethod
+    def update_from_document(cls, document):
+        interface = cls()
+        interface.name = document.get('name')
+        interface.description = document.get('description')
+        interface.mac = document.get('mac')
+        interface.owned = document.get('owned', False)
+        interface.hostnames = u','.join(document.get('hostnames'))
+        interface.network_segment = document.get('network_segment')
+        interface.ipv4_address = document.get('ipv4').get('address')
+        interface.ipv4_gateway = document.get('ipv4').get('gateway')
+        interface.ipv4_dns = u','.join(document.get('ipv4').get('DNS'))
+        interface.ipv4_mask = document.get('ipv4').get('mask')
+        interface.ipv6_address = document.get('ipv6').get('address')
+        interface.ipv6_gateway = document.get('ipv6').get('gateway')
+        interface.ipv6_dns = u','.join(document.get('ipv6').get('DNS'))
+        interface.ipv6_prefix = str(document.get('ipv6').get('prefix'))
+        interface.ports_filtered = document.get('ports', {}).get('filtered')
+        interface.ports_opened = document.get('ports', {}).get('opened')
+        interface.ports_closed = document.get('ports', {}).get('closed')
+        return interface
 
     def add_relationships_from_dict(self, entities):
         host_id = '.'.join(self.entity_metadata.couchdb_id.split('.')[:-1])
@@ -241,6 +244,7 @@ class Interface(FaradayEntity, Base):
         host_id = '.'.join(self.entity_metadata.couchdb_id.split('.')[:-1])
         query = session.query(Host).join(EntityMetadata).filter(EntityMetadata.couchdb_id == host_id)
         self.host = query.one()
+
 
 class Service(FaradayEntity, Base):
     DOC_TYPE = 'Service'
@@ -271,19 +275,22 @@ class Service(FaradayEntity, Base):
     workspace = relationship('Workspace')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
-    def update_from_document(self, document):
-        self.name=document.get('name')
-        self.description=document.get('description')
-        self.owned=document.get('owned', False)
-        self.protocol=document.get('protocol')
-        self.status=document.get('status')
-        self.version=document.get('version')
+    @classmethod
+    def update_from_document(cls, document):
+        service = cls()
+        service.name = document.get('name')
+        service.description = document.get('description')
+        service.owned = document.get('owned', False)
+        service.protocol = document.get('protocol')
+        service.status = document.get('status')
+        service.version = document.get('version')
 
         # We found workspaces where ports are defined as an integer
         if isinstance(document.get('ports', None), (int, long)):
-            self.ports = str(document.get('ports'))
+            service.ports = str(document.get('ports'))
         else:
-            self.ports = u','.join(map(str, document.get('ports')))
+            service.ports = u','.join(map(str, document.get('ports')))
+        return service
 
     def add_relationships_from_dict(self, entities):
         couchdb_id = self.entity_metadata.couchdb_id
@@ -357,37 +364,41 @@ class Vulnerability(FaradayEntity, Base):
     workspace = relationship('Workspace')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
-    def update_from_document(self, document):
-        self.name = document.get('name')
-        self.description=document.get('desc')
-        self.confirmed=document.get('confirmed')
-        self.vuln_type=document.get('type')
-        self.data=document.get('data')
-        self.easeofresolution=document.get('easeofresolution')
-        self.refs=json.dumps(document.get('refs', []))
-        self.resolution=document.get('resolution')
-        self.severity=document.get('severity')
-        self.owned=document.get('owned', False)
-        self.attachments = json.dumps(document.get('_attachments', {}))
-        self.policyviolations = json.dumps(document.get('policyviolations', []))
-        self.impact_accountability=document.get('impact', {}).get('accountability')
-        self.impact_availability=document.get('impact', {}).get('availability')
-        self.impact_confidentiality=document.get('impact', {}).get('confidentiality')
-        self.impact_integrity=document.get('impact', {}).get('integrity')
-        self.method=document.get('method')
-        self.path=document.get('path')
-        self.pname=document.get('pname')
-        self.query=document.get('query')
-        self.request=document.get('request')
-        self.response=document.get('response')
-        self.website=document.get('website')
-        self.status=document.get('status', 'opened')
+    @classmethod
+    def update_from_document(cls, document):
+        vulnerability = cls()
+        vulnerability.name = document.get('name')
+        vulnerability.description = document.get('desc')
+        vulnerability.confirmed = document.get('confirmed')
+        vulnerability.vuln_type = document.get('type')
+        vulnerability.data = document.get('data')
+        vulnerability.easeofresolution = document.get('easeofresolution')
+        vulnerability.refs = json.dumps(document.get('refs', []))
+        vulnerability.resolution = document.get('resolution')
+        vulnerability.severity = document.get('severity')
+        vulnerability.owned = document.get('owned', False)
+        vulnerability.attachments = json.dumps(document.get('_attachments', {}))
+        vulnerability.policyviolations = json.dumps(document.get('policyviolations', []))
+        vulnerability.impact_accountability = document.get('impact', {}).get('accountability')
+        vulnerability.impact_availability = document.get('impact', {}).get('availability')
+        vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality')
+        vulnerability.impact_integrity = document.get('impact', {}).get('integrity')
+        vulnerability.method = document.get('method')
+        vulnerability.path = document.get('path')
+        vulnerability.pname = document.get('pname')
+        vulnerability.query = document.get('query')
+        vulnerability.request = document.get('request')
+        vulnerability.response = document.get('response')
+        vulnerability.website = document.get('website')
+        vulnerability.status = document.get('status', 'opened')
 
         params = document.get('params', u'')
         if isinstance(params, (list, tuple)):
-            self.params = (u' '.join(params)).strip()
+            vulnerability.params = (u' '.join(params)).strip()
         else:
-            self.params = params if params is not None else u''
+            vulnerability.params = params if params is not None else u''
+
+        return vulnerability
 
     def add_relationships_from_dict(self, entities):
         couchdb_id = self.entity_metadata.couchdb_id
@@ -413,6 +424,7 @@ class Vulnerability(FaradayEntity, Base):
             query = session.query(Service).join(EntityMetadata).filter(EntityMetadata.couchdb_id == parent_id)
             self.service = query.one()
 
+
 class Note(FaradayEntity, Base):
     DOC_TYPE = 'Note'
 
@@ -429,11 +441,15 @@ class Note(FaradayEntity, Base):
     workspace = relationship('Workspace')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
-    def update_from_document(self, document):
-        self.name=document.get('name')
-        self.text=document.get('text', None)
-        self.description=document.get('description', None)
-        self.owned=document.get('owned', False)
+    @classmethod
+    def update_from_document(cls, document):
+        note = cls*()
+        note.name = document.get('name')
+        note.text = document.get('text', None)
+        note.description = document.get('description', None)
+        note.owned = document.get('owned', False)
+        return note
+
 
 class Credential(FaradayEntity, Base):
     DOC_TYPE = 'Cred'
@@ -458,12 +474,15 @@ class Credential(FaradayEntity, Base):
     workspace = relationship('Workspace')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
-    def update_from_document(self, document):
-        self.username = document.get('username')
-        self.password = document.get('password', '')
-        self.owned = document.get('owned', False)
-        self.description = document.get('description', '')
-        self.name = document.get('name', '')
+    @classmethod
+    def update_from_document(cls, document):
+        credential = cls()
+        credential.username = document.get('username')
+        credential.password = document.get('password', '')
+        credential.owned = document.get('owned', False)
+        credential.description = document.get('description', '')
+        credential.name = document.get('name', '')
+        return credential
 
     def add_relationships_from_dict(self, entities):
         couchdb_id = self.entity_metadata.couchdb_id
@@ -489,6 +508,7 @@ class Credential(FaradayEntity, Base):
             query = session.query(Service).join(EntityMetadata).filter(EntityMetadata.couchdb_id == parent_id)
             self.service = query.one()
 
+
 class Command(FaradayEntity, Base):
     DOC_TYPE = 'CommandRunInformation'
 
@@ -509,19 +529,29 @@ class Command(FaradayEntity, Base):
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
-    def update_from_document(self, document):
-        self.command = document.get('command', None)
-        self.duration = document.get('duration', None)
-        self.itime = document.get('itime', None)
-        self.ip = document.get('ip', None)
-        self.hostname = document.get('hostname', None)
-        self.params = document.get('params', None)
-        self.user = document.get('user', None)
-        self.workspace = document.get('workspace', None)
+    @classmethod
+    def update_from_document(cls, document):
+        command = cls()
+        command.command = document.get('command', None)
+        command.duration = document.get('duration', None)
+        command.itime = document.get('itime', None)
+        command.ip = document.get('ip', None)
+        command.hostname = document.get('hostname', None)
+        command.params = document.get('params', None)
+        command.user = document.get('user', None)
+        command.workspace = document.get('workspace', None)
+        return command
 
 
 class Workspace(FaradayEntity, Base):
+    DOC_TYPE = 'Workspace'
 
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=True)
+
+    @classmethod
+    def update_from_document(cls, document):
+        workspace = cls()
+        workspace.name = document.get('name', None)
+        return workspace

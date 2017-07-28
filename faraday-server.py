@@ -11,6 +11,7 @@ import server.config
 import server.couchdb
 import server.utils.logger
 from server.utils import daemonize
+from server.database import initialize
 from utils import dependencies
 from utils.user_input import query_yes_no
 from faraday import FARADAY_BASE
@@ -78,7 +79,7 @@ def is_server_running():
 def run_server(args):
     import server.web
 
-    server.database.initialize()
+    initialize()
     server.app.setup()
     web_server = server.web.WebServer(enable_ssl=args.ssl)
 
@@ -120,6 +121,7 @@ def main():
 
     if not args.no_setup:
         setup_environment(not args.nodeps)
+        initialize()
         import_workspaces()
 
     if args.start:
@@ -127,8 +129,10 @@ def main():
         # and without --start nor --stop
         devnull = open('/dev/null', 'w')
         params = ['/usr/bin/env', 'python2.7', os.path.join(server.config.FARADAY_BASE, __file__), '--no-setup']
-        if args.ssl: params.append('--ssl')
-        if args.debug: params.append('--debug')
+        if args.ssl:
+            params.append('--ssl')
+        if args.debug:
+            params.append('--debug')
         logger.info('Faraday Server is running as a daemon')
         subprocess.Popen(params, stdout=devnull, stderr=devnull)
     else:

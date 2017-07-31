@@ -538,5 +538,7 @@ class User(CommonBase, UserMixin):
     def get_security_payload(self):
         return {
             "username": self.email,
-            "role": self.role
+            "role": self.role,
+            "roles": [role.name for role in self.roles],  # Deprectated
+            "name": self.email
         }

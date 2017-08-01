@@ -6,6 +6,7 @@ import server.models
 import server.config
 import server.couchdb
 import server.utils.logger
+from server.models import session
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import MultipleResultsFound

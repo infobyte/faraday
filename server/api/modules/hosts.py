@@ -14,8 +14,6 @@ from server.dao.host import HostDAO
 @gzipped
 @app.route('/ws/<workspace>/hosts', methods=['GET'])
 def list_hosts(workspace=None):
-    import ipdb
-    ipdb.set_trace()
     validate_workspace(workspace)
     get_logger(__name__).debug("Request parameters: {!r}"\
         .format(flask.request.args))

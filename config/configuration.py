@@ -4,7 +4,8 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-import sys, os, string, ast, json
+import os
+import json
 
 try:
     import xml.etree.cElementTree as ET
@@ -56,7 +57,7 @@ CONST_LAST_WORKSPACE = "last_workspace"
 CONST_PLUGIN_SETTINGS = "plugin_settings"
 
 
-DEFAULT_XML = os.path.dirname(__file__) +  "/default.xml"
+DEFAULT_XML = os.path.dirname(__file__) + "/default.xml"
 
 
 class Configuration:
@@ -66,7 +67,8 @@ class Configuration:
 
         self.filepath = xml_file
 
-        if self._isConfig(): self._getConfig()
+        if self._isConfig():
+            self._getConfig()
 
     def _isConfig(self):
         """ Checks whether the given file exists and belongs
@@ -89,7 +91,8 @@ class Configuration:
             return False
 
         finally:
-            if f: f.close()
+            if f:
+                f.close()
 
         return (root == "faraday")
 
@@ -104,7 +107,7 @@ class Configuration:
             return None
         return tree
 
-    def _getValue(self, tree, var, default = None):
+    def _getValue(self, tree, var, default=None):
         """ Returns generic value from a variable on an XML tree. """
 
         elem = tree.findall(var)
@@ -420,7 +423,6 @@ class Configuration:
         else:
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
-
 
     def saveConfig(self, xml_file="~/.faraday/config/user.xml"):
         """ Saves XML config on new file. """

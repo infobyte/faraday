@@ -4,7 +4,7 @@
 
 import flask
 import os
-from server.app import app
+from server.web import app
 
 
 @app.route('/info', methods=['GET'])

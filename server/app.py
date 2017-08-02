@@ -1,31 +1,43 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import sys
+from ConfigParser import NoOptionError
 
-import flask
+from flask import Flask
+from flask.json import JSONEncoder
+
 import server.config
-import server.database
-
 from server.utils.logger import LOGGING_HANDLERS
 
 
-app = flask.Flask(__name__)
-
-
-def setup():
+def create_app(config_filename=None):
+    app = Flask(__name__)
     app.debug = server.config.is_debug_mode()
     minify_json_output(app)
 
-    @app.teardown_appcontext
-    def remove_session_context(exception=None):
-        server.database.teardown_context()
-
-    # Add our logging handlers to Flask
     for handler in LOGGING_HANDLERS:
         app.logger.addHandler(handler)
 
+    try:
+        app.config['SQLALCHEMY_DATABASE_URI'] = server.config.database.connection_string.strip("'")
+    except NoOptionError as ex:
+        print('Missing [database] section on server.ini. Please configure the database before running the server.')
+        sys.exit(1)
+
+    from server.models import db
+    db.init_app(app)
+
+    # from yourapplication.views.admin import admin
+    # from yourapplication.views.frontend import frontend
+    # app.register_blueprint(admin)
+    # app.register_blueprint(frontend)
+
+    return app
+
+
 def minify_json_output(app):
-    class MiniJSONEncoder(flask.json.JSONEncoder):
+    class MiniJSONEncoder(JSONEncoder):
         item_separator = ','
         key_separator = ':'
 
@@ -35,4 +47,3 @@ def minify_json_output(app):
 # Load APIs
 import server.api
 import server.modules.info
-

@@ -5,12 +5,13 @@
 import gzip
 import functools
 import requests
-import server.database
-import server.couchdb
-from server import config
+from cStringIO import StringIO as IO
 
 from flask import after_this_request, request, abort, jsonify
-from cStringIO import StringIO as IO
+
+from server.models import db, Workspace
+import server.couchdb
+from server import config
 
 
 def get_integer_parameter(query_parameter, default=None):
@@ -90,7 +91,7 @@ def build_bad_request_response(msg):
 
 
 def validate_workspace(workspace_name, timeout_sync=0.1):
-    if not server.database.is_valid_workspace(workspace_name):
+    if not db.session.query(Workspace).filter_by(name=workspace_name).first():
         abort(404)
 
     if not server.couchdb.has_permissions_for(workspace_name, request.cookies, get_basic_auth()):

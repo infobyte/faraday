@@ -1,9 +1,6 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-
-import json
-
 from sqlalchemy import (
     Column,
     Integer,
@@ -14,31 +11,25 @@ from sqlalchemy import (
     Text,
     UniqueConstraint
 )
-from sqlalchemy import create_engine
-from sqlalchemy.orm import relationship, scoped_session, sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from flask_sqlalchemy import SQLAlchemy
 
-from server.utils.database import get_or_create
+import server.config
+
+db = SQLAlchemy()
 
 
 SCHEMA_VERSION = 'W.2.6.0'
 
-Base = declarative_base()
-engine = create_engine('sqlite:////home/leonardo/faraday.sqlite', echo=False)
-session = scoped_session(sessionmaker(autocommit=False,
-                                           autoflush=False,
-                                           bind=engine))
 
-
-
-class DatabaseMetadata(Base):
+class DatabaseMetadata(db.Model):
     __tablename__ = 'db_metadata'
     id = Column(Integer, primary_key=True)
     option = Column(String(250), nullable=False)
     value = Column(String(250), nullable=False)
 
 
-class EntityMetadata(Base):
+class EntityMetadata(db.Model):
     __tablename__ = 'metadata'
     __table_args__ = (
         UniqueConstraint('couchdb_id'),
@@ -59,7 +50,7 @@ class EntityMetadata(Base):
     document_type = Column(String(250))
 
 
-class Host(Base):
+class Host(db.Model):
     __tablename__ = 'host'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False)
@@ -83,7 +74,7 @@ class Host(Base):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
 
-class Interface(Base):
+class Interface(db.Model):
     __tablename__ = 'interface'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False)
@@ -119,7 +110,7 @@ class Interface(Base):
     services = relationship('Service')
 
 
-class Service(Base):
+class Service(db.Model):
     # Table schema
     __tablename__ = 'service'
     id = Column(Integer, primary_key=True)
@@ -147,7 +138,7 @@ class Service(Base):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
 
-class Vulnerability(Base):
+class Vulnerability(db.Model):
     __tablename__ = 'vulnerability'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False)
@@ -193,7 +184,7 @@ class Vulnerability(Base):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
 
-class Note(Base):
+class Note(db.Model):
     __tablename__ = 'note'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False)
@@ -207,7 +198,7 @@ class Note(Base):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
 
-class Credential(Base):
+class Credential(db.Model):
     __tablename__ = 'credential'
     id = Column(Integer, primary_key=True)
     username = Column(String(250), nullable=False)
@@ -228,7 +219,7 @@ class Credential(Base):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
 
-class Command(Base):
+class Command(db.Model):
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
     command = Column(String(250), nullable=True)
@@ -245,7 +236,15 @@ class Command(Base):
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
 
-class Workspace(Base):
+class Workspace(db.Model):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=True)
+
+
+def is_valid_workspace(workspace_name):
+    return db.session.query(server.models.Workspace).filter_by(name=workspace_name).first() is not None
+
+
+def get(workspace_name):
+    return db.session.query(Workspace).filter_by(name=workspace_name).first()

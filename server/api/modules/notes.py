@@ -4,7 +4,7 @@
 
 from flask import request, jsonify, abort
 
-from server.app import app
+from server.web import app
 
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace, filter_request_args
@@ -15,7 +15,7 @@ from server.dao.note import NoteDAO
 @gzipped
 @app.route('/ws/<workspace>/notes', methods=['GET'])
 def list_notes(workspace=None):
-    
+
     validate_workspace(workspace)
     get_logger(__name__).debug(
         "Request parameters: {!r}".format(request.args))

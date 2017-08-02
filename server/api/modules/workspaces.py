@@ -5,7 +5,7 @@
 import flask
 import json
 
-from server.app import app
+from server.web import app
 from server.dao.host import HostDAO
 from server.dao.vuln import VulnerabilityDAO
 from server.dao.service import ServiceDAO

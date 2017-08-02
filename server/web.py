@@ -13,7 +13,9 @@ from twisted.protocols.tls import TLSMemoryBIOFactory
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from server.utils import logger
-from server.app import app
+from server.app import create_app
+
+app = create_app()  # creates a Flask(__name__) app
 
 
 class HTTPProxyClient(proxy.ProxyClient):
@@ -53,7 +55,7 @@ class HTTPProxyResource(proxy.ReverseProxyResource):
         if enabled.
         """
         client_factory = HTTPProxyClientFactory(*args, **kwargs)
-        
+
         if self.__ssl_enabled:
             with open(server.config.ssl.certificate) as cert_file:
                 cert = ssl.Certificate.loadPEM(cert_file.read())
@@ -65,7 +67,7 @@ class HTTPProxyResource(proxy.ReverseProxyResource):
                 isClient=True, wrappedFactory=client_factory)
         else:
             return client_factory
-    
+
     def getChild(self, path, request):
         """
         Keeps the implementation of this class throughout the path
@@ -87,7 +89,7 @@ class WebServer(object):
         self.__config_server()
         self.__config_couchdb_conn()
         self.__build_server_tree()
-    
+
     def __config_server(self):
         self.__bind_address = server.config.faraday_server.bind_address
         self.__listen_port = int(server.config.faraday_server.port)

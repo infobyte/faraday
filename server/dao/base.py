@@ -5,7 +5,7 @@
 import server.database
 import server.utils.logger
 
-from server.models import EntityMetadata
+from server.models import db, EntityMetadata
 
 
 class FaradayDAO(object):
@@ -14,9 +14,8 @@ class FaradayDAO(object):
 
     def __init__(self, workspace):
         self._logger = server.utils.logger.get_logger(self)
-        ws_instance = server.database.get(workspace)
-        self._session = ws_instance.session
-        self._couchdb = ws_instance.couchdb
+        self._session = db.session
+        self._couchdb = None
 
     def get_all(self):
         self.__check_valid_operation()

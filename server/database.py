@@ -1,34 +1,15 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-
 import server.models
 import server.config
 import server.couchdb
 import server.utils.logger
-from server.models import session
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import MultipleResultsFound
 
 logger = server.utils.logger.get_logger(__name__)
-
-
-def initialize():
-    server.models.Base.metadata.create_all(server.models.engine)
-
-
-def is_valid_workspace(workspace_name):
-    return session.query(server.models.Workspace).filter_by(name=workspace_name).first() is not None
-
-
-def get(workspace_name):
-    return session.query(server.models.Workspace).filter_by(name=workspace_name).first()
-
-
-def teardown_context():
-    """ This is called by Flask to cleanup sessions created in the context of a request """
-    # _db_manager.close_sessions()
 
 
 class DocumentImporter(object):

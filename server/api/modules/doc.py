@@ -6,7 +6,7 @@ import flask, json
 import server.database
 import server.utils.logger
 
-from server.app import app
+from server.web import app
 from server.utils.web import validate_workspace, build_bad_request_response, get_basic_auth
 from server.couchdb import get_user_from_session
 from restkit.errors import RequestFailed, ResourceError

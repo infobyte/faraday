@@ -1,5 +1,6 @@
 from flask import request, jsonify, abort
-from server.app import app
+
+from server.web import app
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace,\
     get_integer_parameter, filter_request_args

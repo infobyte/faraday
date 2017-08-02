@@ -11,7 +11,6 @@ import server.config
 import server.couchdb
 import server.utils.logger
 from server.utils import daemonize
-from server.database import initialize
 from utils import dependencies
 from utils.user_input import query_yes_no
 from faraday import FARADAY_BASE
@@ -79,8 +78,6 @@ def is_server_running():
 def run_server(args):
     import server.web
 
-    initialize()
-    server.app.setup()
     web_server = server.web.WebServer(enable_ssl=args.ssl)
 
     daemonize.create_pid_file()
@@ -121,7 +118,6 @@ def main():
 
     if not args.no_setup:
         setup_environment(not args.nodeps)
-        initialize()
         import_workspaces()
 
     if args.start:

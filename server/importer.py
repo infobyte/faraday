@@ -5,13 +5,14 @@
 import sys
 import json
 
+import server.app
 import server.utils.logger
 import server.couchdb
 import server.database
 import server.models
 from server.utils.database import get_or_create
 from server.models import (
-    session,
+    db,
     EntityMetadata,
     Host,
     Interface,
@@ -26,6 +27,7 @@ from restkit.errors import RequestError, Unauthorized
 from tqdm import tqdm
 
 logger = server.utils.logger.get_logger(__name__)
+session = db.session
 
 
 class EntityNotFound(Exception):
@@ -382,6 +384,10 @@ def import_workspaces():
     """
         Main entry point for couchdb import
     """
+    app = server.app.create_app()
+    app.app_context().push()
+    db.create_all()
+
     couchdb_server_conn, workspaces_list = _open_couchdb_conn()
 
     for workspace_name in workspaces_list:

@@ -4,7 +4,7 @@
 
 import flask
 
-from server.app import app
+from server.web import app
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace, filter_request_args, get_integer_parameter
 from server.dao.command import CommandDAO
@@ -23,7 +23,6 @@ def list_commands(workspace=None):
         'page', 'page_size')
 
     dao = CommandDAO(workspace)
-
     result = dao.list(
         page=page,
         page_size=page_size,

@@ -4,7 +4,7 @@
 
 import flask
 
-from server.app import app
+from server.web import app
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace, filter_request_args
 from server.dao.credential import CredentialDAO

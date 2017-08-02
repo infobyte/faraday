@@ -21,7 +21,7 @@ def create_app(config_filename=None):
 
     try:
         app.config['SQLALCHEMY_DATABASE_URI'] = server.config.database.connection_string.strip("'")
-    except NoOptionError as ex:
+    except (NoOptionError, AttributeError) as ex:
         print('Missing [database] section on server.ini. Please configure the database before running the server.')
         sys.exit(1)
 

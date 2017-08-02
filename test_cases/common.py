@@ -5,7 +5,7 @@ Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/)
 See the file 'doc/LICENSE' for the license information
 
 '''
-from model.hosts import Host, Interface, Service, ModelObjectVuln
+from server.models import Host, Interface, Service, Vulnerability
 import random
 def new_random_workspace_name():
     return ("aworkspace" + "".join(random.sample([chr(i) for i in range(65, 90)
@@ -28,19 +28,19 @@ def create_service(self, host, interface, service_name = "coquito"):
     return service
 
 def create_host_vuln(self, host, name, desc, severity):
-    vuln = ModelObjectVuln(name, desc, severity)
+    vuln = Vulnerability(name, desc, severity)
     self.model_controller.addVulnToHostSYNC(host.getID(), vuln)
 
     return vuln
 
 def create_int_vuln(self, host, interface, name, desc, severity):
-    vuln = ModelObjectVuln(name, desc, severity)
+    vuln = Vulnerability(name, desc, severity)
     self.model_controller.addVulnToInterfaceSYNC( host.getID(), interface.getID(), vuln)
 
     return vuln
 
 def create_serv_vuln(self, host, service, name, desc, severity):
-    vuln = ModelObjectVuln(name, desc, severity)
+    vuln = Vulnerability(name, desc, severity)
     self.model_controller.addVulnToServiceSYNC( host.getID(), service.getID(), vuln)
 
     return vuln

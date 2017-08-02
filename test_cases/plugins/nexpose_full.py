@@ -16,12 +16,15 @@ sys.path.append(os.path.abspath(os.getcwd()))
 import importlib
 plugin = importlib.import_module('plugins.repo.nexpose-full.plugin')
 NexposeFullPlugin = plugin.NexposeFullPlugin
-from model.common import (
-    factory, ModelObjectVuln, ModelObjectCred,
-    ModelObjectVulnWeb, ModelObjectNote
-)
-from model.hosts import (
-    Host, Service, Interface
+from model.common import factory
+from persistence.server.models import (
+    Vuln,
+    Credential,
+    VulnWeb,
+    Note,
+    Host,
+    Service,
+    Interface
 )
 from plugins.modelactions import modelactions
 
@@ -34,27 +37,28 @@ class NexposeTest(unittest.TestCase):
         factory.register(Host)
         factory.register(Interface)
         factory.register(Service)
-        factory.register(ModelObjectVuln)
-        factory.register(ModelObjectVulnWeb)
-        factory.register(ModelObjectNote)
-        factory.register(ModelObjectCred)
+        factory.register(Vuln)
+        factory.register(VulnWeb)
+        factory.register(Note)
+        factory.register(Credential)
 
     def test_Plugin_creates_apropiate_objects(self):
         self.plugin.processReport(self.cd + '/nexpose_full_xml')
         action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.CADDHOST)
-        self.assertEqual(action[1], "192.168.1.1")
+        self.assertEqual(action[0], modelactions.ADDHOST)
+        self.assertEqual(action[1].name, "192.168.1.1")
         action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.CADDINTERFACE)
-        self.assertEqual(action[2], "192.168.1.1")
+        self.assertEqual(action[0], modelactions.ADDINTERFACE)
+        self.assertEqual(action[2].name, "192.168.1.1")
         for i in range(131):
             action = self.plugin._pending_actions.get(block=True)
-            self.assertEqual(action[0], modelactions.CADDVULNHOST)
+            self.assertEqual(action[0], modelactions.ADDVULNHOST)
         action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.CADDSERVICEINT)
+        self.assertEqual(action[0], modelactions.ADDSERVICEINT)
         for i in range(15):
             action = self.plugin._pending_actions.get(block=True)
-            self.assertEqual(action[0], modelactions.CADDVULNSRV)
+            self.assertEqual(action[0], modelactions.ADDVULNSRV)
+
 
 if __name__ == '__main__':
     unittest.main()

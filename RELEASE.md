@@ -12,6 +12,7 @@ TBA:
 ---
 * Updated Core Impact plugin to be compatible with 2016 version
 * Improved loading of fields request and website in Burp Plugin
+* Improved Nexpose Full plugin
 
 July 19, 2017:
 ---

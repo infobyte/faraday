@@ -11,7 +11,7 @@ modules_path = os.path.join(os.path.dirname(__file__), 'modules')
 sys.path.append(modules_path)
 
 # Get modules path, compiled or not
-modules_files  = glob.glob(os.path.join(modules_path, '*.py'))
+modules_files = glob.glob(os.path.join(modules_path, '*.py'))
 modules_files += glob.glob(os.path.join(modules_path, '*.pyc'))
 
 # Remove duplicate names
@@ -22,6 +22,6 @@ modules = set(map(extract_module_name, modules_files))
 for handler_name in modules:
     globals()[handler_name] = __import__(handler_name)
 
+
 def get_handlers():
     return BaseHandler.BaseHandler.get_handlers()
-

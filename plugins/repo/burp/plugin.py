@@ -11,6 +11,7 @@ from __future__ import with_statement
 from bs4 import BeautifulSoup, Comment
 from plugins import core
 from model import api
+from urlparse import urlsplit
 import distutils.util
 import re
 import os
@@ -136,18 +137,8 @@ class Item(object):
         path = item_node.findall('path')[0]
         location = item_node.findall('location')[0]
         severity = item_node.findall('severity')[0]
-        request = item_node.findall('./requestresponse/request')[0].text if len(
-            item_node.findall('./requestresponse/request')) > 0 else ""
-        response = ""
-
-        if len(item_node.findall('./requestresponse/response')) > 0:
-            response_node = item_node.findall('./requestresponse/response')[0]
-
-            if "base64" in response_node.attrib:
-                if distutils.util.strtobool(response_node.get("base64")):
-                    response = response_node.text.decode("base64", "strict")
-                else:
-                    response = response_node.text
+        request = self.decode_binary_node('./requestresponse/request')
+        response = self.decode_binary_node('./requestresponse/response')
 
         detail = self.do_clean(item_node.findall('issueDetail'))
         remediation = self.do_clean(item_node.findall('remediationBackground'))
@@ -155,19 +146,14 @@ class Item(object):
 
         self.url = host_node.text
 
-        rhost = re.search(
-            "(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp;%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|localhost|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))[\:]*([0-9]+)*([/]*($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+)).*?$",
-            self.url)
+        url_data = urlsplit(self.url)
 
-        self.protocol = rhost.group(1)
-        self.host = rhost.group(4)
+        self.protocol = url_data.scheme
+        self.host = url_data.hostname
 
-        self.port = 80
-        if self.protocol == 'https':
-            self.port = 443
-
-        if rhost.group(11) is not None:
-            self.port = rhost.group(11)
+        # Use the port in the URL if it is defined, or 80 or 443 by default
+        self.port = url_data.port or (443 if url_data.scheme == "https"
+                                      else 80)
 
         self.name = name.text
         self.location = location.text
@@ -189,6 +175,23 @@ class Item(object):
             if len(value) > 0:
                 myreturn = value[0].text
         return myreturn
+
+    def decode_binary_node(self, path):
+        """
+        Finds a subnode matching `path` and returns its inner text if
+        it has no base64 attribute or its base64 decoded inner text if
+        it has it.
+        """
+        nodes = self.node.findall(path)
+        try:
+            subnode = nodes[0]
+        except IndexError:
+            return ""
+        encoded = distutils.util.strtobool(subnode.get('base64', 'false'))
+        if encoded:
+            return subnode.text.decode('base64', 'strict')
+        else:
+            return subnode.text
 
     def get_text_from_subnode(self, subnode_xpath_expr):
         """

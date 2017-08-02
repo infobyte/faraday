@@ -11,6 +11,7 @@ New features in the latest update
 TBA:
 ---
 * Updated Core Impact plugin to be compatible with 2016 version
+* Improved loading of fields request and website in Burp Plugin
 
 July 19, 2017:
 ---

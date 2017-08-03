@@ -213,3 +213,18 @@ class WorkspaceNotFound(Exception):
     def __init__(self, workspace_name):
         super(WorkspaceNotFound, self).__init__('Workspace "%s" not found' % workspace_name)
 
+
+#
+# Connection to a database common to all workspaces
+#
+
+def setup_common(db_path='sqlite:////tmp/test.db'):
+    common_engine = create_engine(db_path)
+    common_session = scoped_session(sessionmaker(autocommit=False,
+                                                autoflush=False,
+                                                bind=common_engine))
+    server.models.CommonBase.metadata.bind = common_engine
+    from server.models import CommonBase
+    CommonBase.metadata.create_all(bind=common_engine)
+    CommonBase.query = common_session.query_property()
+    return common_session

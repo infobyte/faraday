@@ -1,27 +1,36 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import json
 
-import flask, json
+import flask
+from flask import Blueprint
+
 import server.database
 import server.utils.logger
 
-from server.web import app
-from server.utils.web import validate_workspace, build_bad_request_response, get_basic_auth
+from server.utils.web import (
+    validate_workspace,
+    build_bad_request_response,
+    get_basic_auth
+)
 from server.couchdb import get_user_from_session
 from restkit.errors import RequestFailed, ResourceError
 
 logger = server.utils.logger.get_logger(__name__)
+doc_api = Blueprint('doc_api', __name__)
 
-@app.route('/ws/<workspace>/doc/<doc_id>', methods=['GET'])
+
+@doc_api.route('/ws/<workspace>/doc/<doc_id>', methods=['GET'])
 def get_document(workspace, doc_id):
     validate_workspace(workspace)
-    ws =  server.database.get(workspace)
+    ws = server.database.get(workspace)
     couchdb_conn = ws.couchdb
     response = couchdb_conn.get_document(doc_id)
     return flask.jsonify(response)
 
-@app.route('/ws/<workspace>/doc/<doc_id>', methods=['PUT'])
+
+@doc_api.route('/ws/<workspace>/doc/<doc_id>', methods=['PUT'])
 def add_or_update_document(workspace, doc_id):
     validate_workspace(workspace)
 
@@ -37,9 +46,9 @@ def add_or_update_document(workspace, doc_id):
 
     # change user in metadata based on session information
     user = get_user_from_session(flask.request.cookies, get_basic_auth())
-    if document.get('metadata', {}).has_key('owner'):
+    if 'owner' in document.get('metadata', {}):
         document['metadata']['owner'] = user
-    if document.get('metadata', {}).has_key('update_user'):
+    if 'update_user' in document.get('metadata', {}):
         document['metadata']['update_user'] = user
 
     try:
@@ -62,7 +71,8 @@ def add_or_update_document(workspace, doc_id):
 
     return flask.jsonify(response)
 
-@app.route('/ws/<workspace>/doc/<doc_id>', methods=['DELETE'])
+
+@doc_api.route('/ws/<workspace>/doc/<doc_id>', methods=['DELETE'])
 def delete_document_and_children(workspace, doc_id):
 
     def delete_document(doc_id, doc_rev):

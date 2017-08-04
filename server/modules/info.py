@@ -1,13 +1,15 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+import os
 
 import flask
-import os
-from server.web import app
+from flask import Blueprint
+
+info_api = Blueprint('info_api', __name__)
 
 
-@app.route('/info', methods=['GET'])
+@info_api.route('/info', methods=['GET'])
 def show_info():
     faraday_directory = os.path.dirname(os.path.realpath('faraday.py'))
 

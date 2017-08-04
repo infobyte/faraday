@@ -3,15 +3,18 @@
 # See the file 'doc/LICENSE' for the license information
 
 import flask
+from flask import Blueprint
 
-from server.web import app
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace, filter_request_args
 from server.dao.credential import CredentialDAO
 
 
+credentials_api = Blueprint('credentials_api', __name__)
+
+
 @gzipped
-@app.route('/ws/<workspace>/credentials', methods=['GET'])
+@credentials_api.route('/ws/<workspace>/credentials', methods=['GET'])
 def list_credentials(workspace=None):
 
     validate_workspace(workspace)

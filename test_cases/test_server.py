@@ -3,10 +3,11 @@ import sys
 sys.path.append(os.path.abspath(os.getcwd()))
 import unittest
 import tempfile
-import server.app as server
-from flask_security import Security, SQLAlchemySessionUserDatastore
-from server.models import User, Role
+from server.app import create_app
+from flask_security import Security, SQLAlchemyUserDatastore
+from server.models import db, User, Role
 from server.database import setup_common
+
 
 def endpoint():
     return 'OK'
@@ -18,15 +19,10 @@ class BaseAPITestCase(unittest.TestCase):
     def setUp(self):
         self.db_fd, self.db_name = tempfile.mkstemp()
         db_path = 'sqlite:///' + self.db_name
-        server.app.testing = True
+        self.flask_app = create_app(db_connection_string=db_path, testing=True)
 
-        server.common_session = setup_common(db_path)
-        server.user_datastore = SQLAlchemySessionUserDatastore(
-            server.common_session, User, Role)
-        server.security.datastore = server.user_datastore
-
-        self.app = server.app.test_client()
-        server.app.route(self.ENDPOINT_ROUTE)(endpoint)
+        self.app = self.flask_app.test_client()
+        self.flask_app.route(self.ENDPOINT_ROUTE)(endpoint)
 
     def tearDown(self):
         os.close(self.db_fd)
@@ -36,15 +32,19 @@ class BaseAPITestCase(unittest.TestCase):
         with self.app.session_transaction() as sess:
             sess['user_id'] = user.id
 
+
 class TestAuthentication(BaseAPITestCase):
     """Tests related to allow/dissallow access depending of whether
     the user is logged in or not"""
 
     def setUp(self):
         super(TestAuthentication, self).setUp()
-        self.user = server.user_datastore.create_user(
-            email='user@test.net', password='password')
-        server.common_session.commit()
+        with self.flask_app.app_context():
+            db.create_all()
+            self.user = self.flask_app.user_datastore.create_user(
+                email='user@test.net', password='password')
+            db.session.add(self.user)
+            db.session.commit()
 
     def test_403_when_getting_an_existent_view_and_not_logged(self):
         res = self.app.get('/')
@@ -70,12 +70,14 @@ class TestAuthentication(BaseAPITestCase):
         del endpoint.is_public
 
     def test_403_when_logged_user_is_inactive(self):
-        self.assertTrue(server.user_datastore.deactivate_user(self.user))
+        with self.flask_app.app_context():
+            self.assertTrue(self.flask_app.user_datastore.deactivate_user(self.user))
         res = self.app.get('/')
         self.assertEqual(res.status_code, 403)
 
     def test_403_when_logged_user_is_deleted(self):
-        server.user_datastore.delete_user(self.user)
+        with self.flask_app.app_context():
+            self.flask_app.user_datastore.delete_user(self.user)
         res = self.app.get('/')
         self.assertEqual(res.status_code, 403)
 

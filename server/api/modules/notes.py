@@ -3,17 +3,18 @@
 # See the file 'doc/LICENSE' for the license information
 
 from flask import request, jsonify, abort
-
-from server.web import app
+from flask import Blueprint
 
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace, filter_request_args
 
 from server.dao.note import NoteDAO
 
+notes_api = Blueprint('notes_api', __name__)
+
 
 @gzipped
-@app.route('/ws/<workspace>/notes', methods=['GET'])
+@notes_api.route('/ws/<workspace>/notes', methods=['GET'])
 def list_notes(workspace=None):
 
     validate_workspace(workspace)
@@ -28,7 +29,8 @@ def list_notes(workspace=None):
 
     return jsonify(result)
 
-@app.route('/ws/<workspace>/notes/count', methods=['GET'])
+
+@notes_api.route('/ws/<workspace>/notes/count', methods=['GET'])
 @gzipped
 def count_notes(workspace=None):
     validate_workspace(workspace)

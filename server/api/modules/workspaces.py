@@ -1,11 +1,11 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-
-import flask
 import json
 
-from server.web import app
+import flask
+from flask import Blueprint
+
 from server.dao.host import HostDAO
 from server.dao.vuln import VulnerabilityDAO
 from server.dao.service import ServiceDAO
@@ -23,8 +23,11 @@ from server.couchdb import (
     get_workspace
 )
 
+workspace_api = Blueprint('workspace_api', __name__)
 
-@app.route('/ws', methods=['GET'])
+
+
+@workspace_api.route('/ws', methods=['GET'])
 @gzipped
 def workspace_list():
     return flask.jsonify(
@@ -32,7 +35,7 @@ def workspace_list():
             flask.request.cookies, get_basic_auth()))
 
 
-@app.route('/ws/<workspace>/summary', methods=['GET'])
+@workspace_api.route('/ws/<workspace>/summary', methods=['GET'])
 @gzipped
 def workspace_summary(workspace=None):
     validate_workspace(workspace)
@@ -58,7 +61,7 @@ def workspace_summary(workspace=None):
     return flask.jsonify(response)
 
 
-@app.route('/ws/<workspace>', methods=['GET'])
+@workspace_api.route('/ws/<workspace>', methods=['GET'])
 @gzipped
 def workspace(workspace):
     validate_workspace(workspace)
@@ -73,7 +76,7 @@ def workspace(workspace):
     return flask.jsonify(ws)
 
 
-@app.route('/ws/<workspace>', methods=['PUT'])
+@workspace_api.route('/ws/<workspace>', methods=['PUT'])
 @gzipped
 def workspace_create_or_update(workspace):
     # only admins can create workspaces
@@ -108,7 +111,7 @@ def workspace_create_or_update(workspace):
     return flask.jsonify({'ok': True})
 
 
-@app.route('/ws/<workspace>', methods=['DELETE'])
+@workspace_api.route('/ws/<workspace>', methods=['DELETE'])
 @gzipped
 def workspace_delete(workspace):
     # only admins can delete workspaces

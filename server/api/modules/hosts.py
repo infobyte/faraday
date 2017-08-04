@@ -3,16 +3,18 @@
 # See the file 'doc/LICENSE' for the license information
 
 import flask
+from flask import Blueprint
 
-from server.web import app
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace,\
     get_integer_parameter, filter_request_args
 from server.dao.host import HostDAO
 
+host_api = Blueprint('host_api', __name__)
+
 
 @gzipped
-@app.route('/ws/<workspace>/hosts', methods=['GET'])
+@host_api.route('/ws/<workspace>/hosts', methods=['GET'])
 def list_hosts(workspace=None):
     validate_workspace(workspace)
     get_logger(__name__).debug("Request parameters: {!r}"\
@@ -35,4 +37,3 @@ def list_hosts(workspace=None):
                       host_filter=host_filter)
 
     return flask.jsonify(result)
-

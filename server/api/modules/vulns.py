@@ -3,14 +3,16 @@
 # See the file 'doc/LICENSE' for the license information
 
 from flask import request, jsonify, abort
-from server.web import app
+from flask import Blueprint
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace,\
     get_integer_parameter, filter_request_args
 from server.dao.vuln import VulnerabilityDAO
 
+vulns_api = Blueprint('vulns_api', __name__)
 
-@app.route('/ws/<workspace>/vulns', methods=['GET'])
+
+@vulns_api.route('/ws/<workspace>/vulns', methods=['GET'])
 @gzipped
 def get_vulnerabilities(workspace=None):
     validate_workspace(workspace)
@@ -37,7 +39,8 @@ def get_vulnerabilities(workspace=None):
 
     return jsonify(result)
 
-@app.route('/ws/<workspace>/vulns/count', methods=['GET'])
+
+@vulns_api.route('/ws/<workspace>/vulns/count', methods=['GET'])
 @gzipped
 def count_vulnerabilities(workspace=None):
     validate_workspace(workspace)
@@ -56,4 +59,3 @@ def count_vulnerabilities(workspace=None):
         abort(400)
 
     return jsonify(result)
-

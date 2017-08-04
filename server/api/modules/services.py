@@ -3,14 +3,16 @@
 # See the file 'doc/LICENSE' for the license information
 
 import flask
-
-from server.web import app
+from flask import Blueprint
 from server.utils.logger import get_logger
 from server.dao.service import ServiceDAO
 from server.utils.web import gzipped, validate_workspace, get_integer_parameter
 
 
-@app.route('/ws/<workspace>/services', methods=['GET'])
+services_api = Blueprint('services_api', __name__)
+
+
+@services_api.route('/ws/<workspace>/services', methods=['GET'])
 @gzipped
 def list_services(workspace=None):
     validate_workspace(workspace)
@@ -23,7 +25,7 @@ def list_services(workspace=None):
 
     return flask.jsonify(services)
 
-@app.route('/ws/<workspace>/services/count', methods=['GET'])
+@services_api.route('/ws/<workspace>/services/count', methods=['GET'])
 @gzipped
 def count_services(workspace=None):
     validate_workspace(workspace)
@@ -38,4 +40,3 @@ def count_services(workspace=None):
         flask.abort(400)
 
     return flask.jsonify(result)
-

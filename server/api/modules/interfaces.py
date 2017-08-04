@@ -3,24 +3,26 @@
 # See the file 'doc/LICENSE' for the license information
 
 import flask
+from flask import Blueprint
 
-from server.web import app
 from server.utils.logger import get_logger
-from server.utils.web import gzipped, validate_workspace,\
-    get_integer_parameter, filter_request_args, get_mandatory_integer_parameter
+from server.utils.web import (
+    gzipped,
+    validate_workspace,
+)
 
 from server.dao.interface import InterfaceDAO
 
+interfaces_api = Blueprint('interface_api', __name__)
+
 
 @gzipped
-@app.route('/ws/<workspace>/interfaces', methods=['GET'])
+@interfaces_api.route('/ws/<workspace>/interfaces', methods=['GET'])
 def list_interfaces(workspace=None):
     validate_workspace(workspace)
-    get_logger(__name__).debug("Request parameters: {!r}"\
-        .format(flask.request.args))
+    get_logger(__name__).debug("Request parameters: {!r}".format(flask.request.args))
 
     dao = InterfaceDAO(workspace)
     result = dao.list(interface_filter=flask.request.args)
 
     return flask.jsonify(result)
-

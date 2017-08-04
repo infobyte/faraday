@@ -3,14 +3,21 @@
 # See the file 'doc/LICENSE' for the license information
 
 import flask
+from flask import Blueprint
 
-from server.web import app
 from server.utils.logger import get_logger
-from server.utils.web import gzipped, validate_workspace, filter_request_args, get_integer_parameter
+from server.utils.web import (
+    gzipped,
+    validate_workspace,
+    filter_request_args, get_integer_parameter
+)
 from server.dao.command import CommandDAO
 
+commandsrun_api = Blueprint('commandsrun_api', __name__)
+
+
 @gzipped
-@app.route('/ws/<workspace>/commands', methods=['GET'])
+@commandsrun_api.route('/ws/<workspace>/commands', methods=['GET'])
 def list_commands(workspace=None):
     validate_workspace(workspace)
     get_logger(__name__).debug(

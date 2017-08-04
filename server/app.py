@@ -4,6 +4,7 @@
 import sys
 from ConfigParser import NoOptionError
 
+import flask
 from flask import Flask
 from flask.json import JSONEncoder
 from flask_security import (
@@ -15,7 +16,7 @@ import server.config
 from server.utils.logger import LOGGING_HANDLERS
 
 
-def create_app(config_filename=None):
+def create_app(db_connection_string=None, testing=None):
     app = Flask(__name__)
 
     app.config['SECRET_KEY'] = 'supersecret'
@@ -29,7 +30,7 @@ def create_app(config_filename=None):
     app.user_datastore = SQLAlchemyUserDatastore(db,
                                                  server.models.User,
                                                  server.models.Role)
-    Security(app, user_datastore)
+    Security(app, app.user_datastore)
     # Make API endpoints require a login user by default. Based on
     # https://stackoverflow.com/questions/13428708/best-way-to-make-flask-logins-login-required-the-default
     app.view_functions['security.login'].is_public = True
@@ -42,7 +43,7 @@ def create_app(config_filename=None):
         app.logger.addHandler(handler)
 
     try:
-        app.config['SQLALCHEMY_DATABASE_URI'] = server.config.database.connection_string.strip("'")
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or server.config.database.connection_string.strip("'")
     except AttributeError:
         print('Missing [database] section on server.ini. Please configure the database before running the server.')
         sys.exit(1)
@@ -50,11 +51,39 @@ def create_app(config_filename=None):
         print('Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
         sys.exit(1)
 
+    from server.api.modules.workspaces import workspace_api
+    from server.api.modules.doc import doc_api
+    from server.api.modules.interfaces import interfaces_api
+    from server.api.modules.vuln_csv import vuln_csv_api
+    from server.api.modules.hosts import host_api
+    from server.api.modules.commandsrun import commandsrun_api
+    from server.api.modules.services import services_api
+    from server.api.modules.credentials import credentials_api
+    from server.api.modules.notes import notes_api
+    from server.modules.info import info_api
+    app.register_blueprint(workspace_api)
+    app.register_blueprint(doc_api)
+    app.register_blueprint(interfaces_api)
+    app.register_blueprint(vuln_csv_api)
+    app.register_blueprint(host_api)
+    app.register_blueprint(commandsrun_api)
+    app.register_blueprint(services_api)
+    app.register_blueprint(credentials_api)
+    app.register_blueprint(notes_api)
+    app.register_blueprint(info_api)
 
-    # from yourapplication.views.admin import admin
-    # from yourapplication.views.frontend import frontend
-    # app.register_blueprint(admin)
-    # app.register_blueprint(frontend)
+    # We are exposing a RESTful API, so don't redirect a user to a login page in
+    # case of being unauthorized, raise a 403 error instead
+    @app.login_manager.unauthorized_handler
+    def unauthorized():
+        flask.abort(403)
+
+    @app.before_request
+    def default_login_required():
+        view = app.view_functions.get(flask.request.endpoint)
+        logged_in = 'user_id' in flask.session
+        if (not logged_in and not getattr(view, 'is_public', False)):
+            flask.abort(403)
 
     return app
 

@@ -8,5 +8,4 @@ requests
 tornado
 flask==0.12.2
 colorama
-Flask-SQLAlchemy==2.2
 tqdm==4.15.0

@@ -30,6 +30,10 @@ class BaseAPITestCase(unittest.TestCase):
 
     def login_as(self, user):
         with self.app.session_transaction() as sess:
+            # Without this line the test breaks. Taken from
+            # http://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
+            db.session.add(self.user)
+
             sess['user_id'] = user.id
 
 
@@ -71,6 +75,10 @@ class TestAuthentication(BaseAPITestCase):
 
     def test_403_when_logged_user_is_inactive(self):
         with self.flask_app.app_context():
+            # Without this line the test breaks. Taken from
+            # http://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
+            db.session.add(self.user)
+
             self.assertTrue(self.flask_app.user_datastore.deactivate_user(self.user))
         res = self.app.get('/')
         self.assertEqual(res.status_code, 403)

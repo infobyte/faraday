@@ -10,3 +10,4 @@ service_identity>=16.0.0
 pyasn1-modules
 flask-security
 bcrypt
+Flask-SQLAlchemy==2.2

@@ -287,6 +287,11 @@ class NoteImporter(object):
         note.owned = document.get('owned', False)
         return note
 
+    def add_relationships_from_dict(self, entity, entities):
+        # this method is not required since update_from_document uses
+        # workspace name to create the relation
+        pass
+
 
 class CredentialImporter(object):
     DOC_TYPE = 'Cred'
@@ -368,8 +373,12 @@ class FaradayEntityImporter(object):
             'Note': NoteImporter,
             'CommandRunInformation': CommandImporter,
             'Workspace': WorkspaceImporter,
-            'Vulnerability': VulnerabilityImporter
+            'Vulnerability': VulnerabilityImporter,
+            'VulnerabilityWeb': VulnerabilityImporter,
         }
+        if doc_type in ('Communication', 'Cred', 'Reports',
+                        'Task', 'TaskGroup'):
+            return
         importer_cls = importer_class_mapper.get(doc_type, None)
         if not importer_cls:
             raise NotImplementedError('Class importer for {0} not implemented'.format(doc_type))

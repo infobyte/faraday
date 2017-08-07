@@ -67,6 +67,8 @@ def workspace(workspace):
     validate_workspace(workspace)
     workspaces = list_workspaces_as_user(
         flask.request.cookies, get_basic_auth())['workspaces']
+    if not workspaces:
+        return flask.abort(404)
     ws = get_workspace(workspace, flask.request.cookies, get_basic_auth()) if workspace in workspaces else None
     # TODO: When the workspace DAO is ready, we have to remove this next line
     if not ws.get('fdate') and ws.get('duration'):

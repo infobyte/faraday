@@ -6,6 +6,7 @@ import json
 import flask
 from flask import Blueprint
 
+from server.models import db, Workspace
 from server.dao.host import HostDAO
 from server.dao.vuln import VulnerabilityDAO
 from server.dao.service import ServiceDAO
@@ -95,13 +96,12 @@ def workspace_create_or_update(workspace):
     if document.get('name').startswith('_'):
         return build_bad_request_response('database cannot start with an underscore')
     document['_id'] = document.get('name')  # document dictionary does not have id, add it
-
-    is_update_request = bool(document.get('_rev', False))
-
-    if workspace in db_manager and is_update_request:
-        res = db_manager.update_workspace(document)
-    elif workspace not in db_manager and not is_update_request:
-        res = db_manager.create_workspace(document)
+    workspace_exists = db.session.query(Workspace).filter_by(name=workspace).first()
+    if not workspace_exists:
+        new_workspace = Workspace(name=workspace)
+        db.session.add(new_workspace)
+        db.session.commit()
+        res = True
     else:
         flask.abort(400)
 

@@ -60,6 +60,7 @@ def create_app(db_connection_string=None, testing=None):
     from server.api.modules.services import services_api
     from server.api.modules.credentials import credentials_api
     from server.api.modules.notes import notes_api
+    from server.api.modules.session import session_api
     from server.modules.info import info_api
     app.register_blueprint(workspace_api)
     app.register_blueprint(doc_api)
@@ -71,6 +72,7 @@ def create_app(db_connection_string=None, testing=None):
     app.register_blueprint(credentials_api)
     app.register_blueprint(notes_api)
     app.register_blueprint(info_api)
+    app.register_blueprint(session_api)
 
     # We are exposing a RESTful API, so don't redirect a user to a login page in
     # case of being unauthorized, raise a 403 error instead

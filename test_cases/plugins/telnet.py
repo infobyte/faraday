@@ -13,12 +13,15 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.getcwd()))
 from plugins.repo.telnet.plugin import TelnetRouterPlugin
-from model.common import (
-    factory, ModelObjectVuln, ModelObjectCred,
-    ModelObjectVulnWeb, ModelObjectNote
-)
-from model.hosts import (
-    Host, Service, Interface
+from model.common import factory
+from persistence.server.models import (
+    Vuln,
+    Credential,
+    VulnWeb,
+    Note,
+    Host,
+    Service,
+    Interface
 )
 from plugins.modelactions import modelactions
 
@@ -40,19 +43,20 @@ class CmdPingPluginTest(unittest.TestCase):
         factory.register(Host)
         factory.register(Interface)
         factory.register(Service)
-        factory.register(ModelObjectVuln)
-        factory.register(ModelObjectVulnWeb)
-        factory.register(ModelObjectNote)
-        factory.register(ModelObjectCred)
+        factory.register(Vuln)
+        factory.register(VulnWeb)
+        factory.register(Note)
+        factory.register(Credential)
 
     def test_Plugin_Calls_createAndAddHost(self):
         self.plugin.parseOutputString(self.outputTelnetLocalhost)
         action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.CADDHOST)
-        self.assertEqual(action[1], "127.0.0.1")
+        self.assertEqual(action[0], modelactions.ADDHOST)
+        self.assertEqual(action[1].name, "127.0.0.1")
         action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.CADDINTERFACE)
-        self.assertEqual(action[2], "127.0.0.1")
+        self.assertEqual(action[0], modelactions.ADDINTERFACE)
+        self.assertEqual(action[2].name, "127.0.0.1")
+
 
 if __name__ == '__main__':
     unittest.main()

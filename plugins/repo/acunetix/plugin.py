@@ -10,6 +10,7 @@ See the file 'doc/LICENSE' for the license information
 from __future__ import with_statement
 from plugins import core
 from model import api
+from urlparse import urlsplit
 import socket
 import sys
 import re
@@ -125,24 +126,14 @@ class Site(object):
         self.node = item_node
 
         self.url = self.get_text_from_subnode('StartURL')
-        mregex = re.search(
-            "(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp;%\$\-]+)"
-            "*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]"
-            ")\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0"
-            ")\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0"
-            ")\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|"
-            "localhost|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|int|mil"
-            "|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))[\:"
-            "]*([0-9]+)*([/]*($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+)).*?$",
-            self.url)
+        url_data = urlsplit(self.url)
 
-        self.protocol = mregex.group(1)
-        self.host = mregex.group(4)
-        self.port = 80
-        if self.protocol == 'https':
-            self.port = 443
-        if mregex.group(11) is not None:
-            self.port = mregex.group(11)
+        self.protocol = url_data.scheme
+        self.host = url_data.hostname
+
+        # Use the port in the URL if it is defined, or 80 or 443 by default
+        self.port = url_data.port or (443 if url_data.scheme == "https"
+                                      else 80)
 
         self.ip = self.resolve(self.host)
         self.os = self.get_text_from_subnode('Os')
@@ -194,15 +185,21 @@ class Item(object):
         self.desc = self.get_text_from_subnode('Description')
 
         if self.get_text_from_subnode('Recommendation'):
-            self.desc += "\nSolution: " + self.get_text_from_subnode(
-                'Recommendation')
+            self.resolution = self.get_text_from_subnode('Recommendation')
         else:
-            self.desc += ""
+            self.resolution = ""
 
         if self.get_text_from_subnode('reference'):
             self.desc += "\nDetails: " + self.get_text_from_subnode('Details')
         else:
             self.desc += ""
+
+        # Add path and params to the description to create different IDs if at
+        # least one of this fields is different
+        if self.uri:
+            self.desc += '\nPath: ' + self.uri
+        if self.parameter:
+            self.desc += '\nParameter: ' + self.parameter
 
         self.ref = []
         for n in item_node.findall('References/Reference'):
@@ -292,6 +289,7 @@ class AcunetixPlugin(core.PluginBase):
                     item.desc,
                     website=site.host,
                     severity=item.severity,
+                    resolution=item.resolution,
                     path=item.uri,
                     params=item.parameter,
                     request=item.request,

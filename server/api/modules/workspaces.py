@@ -103,7 +103,9 @@ def workspace_create_or_update(workspace):
         db.session.commit()
         res = True
     else:
-        flask.abort(400)
+        response = flask.jsonify({'error': "Workspace {0} already exists.".format(workspace)})
+        response.status_code = 409
+        return response
 
     if not res:
         response = flask.jsonify({'error': "There was an error {0} the workspace".format("updating" if is_update_request else "creating")})

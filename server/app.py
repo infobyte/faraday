@@ -22,6 +22,9 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SECRET_KEY'] = 'supersecret'
     app.config['SECURITY_PASSWORD_SINGLE_HASH'] = True
     app.config['WTF_CSRF_ENABLED'] = False
+    app.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = ['username']
+    app.config['SECURITY_POST_LOGIN_VIEW'] = '/_api/session'
+    app.config['SECURITY_POST_LOGOUT_VIEW'] = '/_api/login'
 
     from server.models import db
     db.init_app(app)

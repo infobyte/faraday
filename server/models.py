@@ -297,7 +297,7 @@ class User(db.Model, UserMixin):
 
     def get_security_payload(self):
         return {
-            "username": self.email,
+            "username": self.username,
             "role": self.role,
             "roles": [role.name for role in self.roles],  # Deprectated
             "name": self.email

@@ -51,10 +51,10 @@ class NexposeFullXmlParser(object):
 
     def __init__(self, xml_output):
         tree = self.parse_xml(xml_output)
-        vulns = self.get_vuln_definitions(tree)
+        self.vulns = self.get_vuln_definitions(tree)
 
         if tree:
-            self.items = self.get_items(tree, vulns)
+            self.items = self.get_items(tree, self.vulns)
         else:
             self.items = []
 
@@ -90,14 +90,14 @@ class NexposeFullXmlParser(object):
                     ret += self.parse_html_type(child)
             else:
                 ret += node.text.encode(
-                    "ascii", errors="backslashreplace").strip() if node.get('text') else ""
+                    "ascii", errors="backslashreplace").strip() if node.text else ""
         if tag == 'listitem':
             if len(list(node)) > 0:
                 for child in list(node):
                     ret += self.parse_html_type(child)
             else:
                 ret = node.text.encode(
-                    "ascii", errors="backslashreplace").strip() if node.get('text') else ""
+                    "ascii", errors="backslashreplace").strip() if node.text else ""
         if tag == 'orderedlist':
             i = 1
             for item in list(node):
@@ -109,7 +109,7 @@ class NexposeFullXmlParser(object):
                     ret += self.parse_html_type(child)
             else:
                 ret += node.text.encode("ascii",
-                                        errors="backslashreplace") if node.get('text') else ""
+                                        errors="backslashreplace") if node.text else ""
         if tag == 'unorderedlist':
             for item in list(node):
                 ret += "\t" + "* " + self.parse_html_type(item) + "\n"
@@ -134,11 +134,16 @@ class NexposeFullXmlParser(object):
         """
         vulns = list()
 
-        for tests in node.iter('tests'):
+        for tests in node.findall('tests'):
             for test in tests.iter('test'):
                 vuln = dict()
                 if test.get('id').lower() in vulnsDefinitions:
-                    vuln = vulnsDefinitions[test.get('id').lower()]
+                    vuln = vulnsDefinitions[test.get('id').lower()].copy()
+                    key = test.get('key', '')
+                    if key.startswith('/'):
+                        # It has the path where the vuln was found
+                        # Example key: "/comments.asp||content"
+                        vuln['path'] = key[:key.find('|')]
                     for desc in list(test):
                         vuln['desc'] += self.parse_html_type(desc)
                     vulns.append(vuln)
@@ -162,7 +167,8 @@ class NexposeFullXmlParser(object):
                     'refs': ["vector: " + vector, vid],
                     'resolution': "",
                     'severity': (int(vulnDef.get('severity')) - 1) / 2,
-                    'tags': list()
+                    'tags': list(),
+                    'is_web': vid.startswith('http-')
                 }
 
                 for item in list(vulnDef):
@@ -179,8 +185,8 @@ class NexposeFullXmlParser(object):
                                 vuln['refs'].append(title + ' ' + link)
                     if item.tag == 'references':
                         for ref in list(item):
-                            if ref.get('text'):
-                                rf = ref.get('text').encode(
+                            if ref.text:
+                                rf = ref.text.encode(
                                     "ascii", errors="backslashreplace").strip()
                                 vuln['refs'].append(rf)
                     if item.tag == 'solution':
@@ -291,8 +297,15 @@ class NexposeFullPlugin(core.PluginBase):
                                                            status=s['status'],
                                                            version=version)
                 for v in s['vulns']:
-                    v_id = self.createAndAddVulnToService(h_id, s_id, v['name'], v['desc'], v[
-                                                          'refs'], v['severity'], v['resolution'])
+                    if v['is_web']:
+                        v_id = self.createAndAddVulnWebToService(
+                            h_id, s_id, v['name'], v['desc'], v['refs'],
+                            v['severity'], v['resolution'],
+                            path=v.get('path',''))
+                    else:
+                        v_id = self.createAndAddVulnToService(
+                            h_id, s_id, v['name'], v['desc'], v['refs'],
+                            v['severity'], v['resolution'])
         del parser
 
     def processCommandString(self, username, current_path, command_string):

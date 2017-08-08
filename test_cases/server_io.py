@@ -1,6 +1,10 @@
+import os
+import sys
+import unittest
+
 import responses
 import requests
-import unittest
+sys.path.append(os.path.abspath(os.getcwd()))
 from persistence.server import server
 from persistence.server import server_io_exceptions
 from mock import MagicMock, patch
@@ -8,6 +12,8 @@ from mock import MagicMock, patch
 server.FARADAY_UP = False
 server.SERVER_URL = "http://s:p"
 example_url = "http://just_some_url"
+
+
 class ClientServerAPITests(unittest.TestCase):
 
     def setUp(self):

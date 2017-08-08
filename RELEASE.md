@@ -8,6 +8,13 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+August 7, 2017:
+---
+* Updated Core Impact plugin to be compatible with 2016 version
+* Improved loading of fields request and website in Burp Plugin
+* Improved Nexpose Full plugin
+* Improved Acunetix plugin to avoid conflicts and missing imported data, and to correctly parse URLs and resolutions
+
 July 19, 2017:
 ---
 * Added the ability to select more than one target when creating a vuln in the Web UI

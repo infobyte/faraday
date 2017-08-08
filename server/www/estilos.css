@@ -809,6 +809,45 @@ span.input-group-addon.button-radius{
 .normal-size {
     font-size: 14px !important;
 }
+/* Login */
+.contenedor {
+  position: relative;
+}
+.centrado {
+  position: absolute;
+  width: 300px;
+  background: #dd3b3c;
+  left: 50%;
+  margin-left: -150px;
+  top: 150px;
+  padding: 40px 20px 20px;
+  text-align: center;
+  color: #fff;
+}
+.footer_centrado {
+    position: absolute;
+    width: 50%;
+    left: 75%;
+    margin-left: -150px;
+    top: 95%;
+    text-align: center;
+    color: #fff;
+}
+.faraday-iso {
+  position: absolute;
+
+  width: 80px;
+
+
+  margin-left: -40px;
+
+  left: 50%;
+
+  top: -60px;
+
+}
+
+/* Login */
 .upsize {
     font-size: 13px;
     cursor: pointer;

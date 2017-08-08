@@ -61,28 +61,33 @@
     <script type="text/javascript" src="script/papaparse.min.js"></script>
 </head>
 
-<body>
-    <div id="cont">
+<body ng-controller="loginBackgroundCtrl" ng-class="{'login': isLogin}">
+<div id="cont">
         <div class="wrapper" ng-controller="indexCtrl">
-            <header class="head">
+            <header class="head" ng-show="!isLogin">
                 <a href="#" class="ws-dashboard" uib-tooltip="{{version}}" tooltip-placement="bottom"><img class="logo animated fadeInDown" src="images/logo-faraday.svg" alt="Faraday home | WS Dashboard"/></a>
-                <div class="btn-group dropdown header_right" uib-dropdown="" is-open="status.isopen">
-                    <button id="single-button" type="button" class="btn btn-default dropdown-toggle" uib-dropdown-toggle="" ng-disabled="disabled" aria-haspopup="true" aria-expanded="true">
-                        <i class="fa fa-cog fa-lg"></i> <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu="" role="menu" aria-labelledby="single-button">
-                        <li role="menuitem"><a href="#/workspaces">Workspaces</a></li>
-                        <li role="menuitem"><a href="#/users">Users</a></li>
-                        <li role="menuitem"><a href="#/licenses">Licenses</a></li>
-                        <li class="divider"></li>
-                        <li role="menuitem"><a href="#/help">Help</a></li>
-                        <li role="menuitem"><a href="" ng-click="about()">About</a></li>
-                    </ul>
-                </div><!-- .btn-group -->
+                <div ng-controller="loginBarCtrl" ng-switch="auth">
+                    <div ng-switch-when="true" class="header_right">
+                        <div class="btn-group dropdown" uib-dropdown="" is-open="status.isopen">
+                            <button id="single-button" type="button" class="btn btn-default dropdown-toggle" uib-dropdown-toggle="" ng-disabled="disabled" aria-haspopup="true" aria-expanded="true">
+                                <span>{{user.name}} </span><i class="fa fa-cog fa-lg"></i> <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu="" role="menu" aria-labelledby="single-button">
+                                <li role="menuitem"><a href="#/workspaces">Workspaces</a></li>
+                                <li role="menuitem" ng-if="user.roles.indexOf('admin') >= 0"><a href="#/users">Users</a></li>
+                                <li role="menuitem" ng-if="user.roles.indexOf('client') < 0"><a href="#/licenses">Licenses</a></li>
+                                <li class="divider"></li>
+                                <li role="menuitem"><a href="" ng-click="changePassword()">Change password</a></li>
+                                <li role="menuitem"><a href="" ng-click="logout()">Logout</a></li>
+                                <li class="divider"></li>
+                                <li role="menuitem"><a href="#/help">Help</a></li>
+                                <li role="menuitem"><a href="" ng-click="about()">About</a></li>
+                            </ul>
+                        </div><!-- .btn-group -->
+                    </div><!-- ng-switch=true -->
+                </div><!-- ng-controller=loginBarCtrl -->
             </header>
-
             <div ng-controller="navigationCtrl" ng-include="'scripts/navigation/partials/leftBar.html'"></div>
-
             <div ng-view></div>
         </div><!--!/#wrapper -->
     </div><!--!/#container -->
@@ -140,6 +145,9 @@
     <script type="text/javascript" src="scripts/workspaces/controllers/workspacesModalEdit.js"></script>
     <script type="text/javascript" src="scripts/workspaces/controllers/workspacesModalNew.js"></script>
     <script type="text/javascript" src="scripts/workspaces/providers/workspaces.js"></script>
+    <script type="text/javascript" src="scripts/auth/controllers/login.js"></script>
+    <script type="text/javascript" src="scripts/auth/services/login.js"></script>
+    <script type="text/javascript" src="scripts/auth/services/interceptor.js"></script>
     <script type="text/javascript" src="scripts/dashboard/controllers/commandsCtrl.js"></script>
     <script type="text/javascript" src="scripts/dashboard/controllers/compoundCtrl.js"></script>
     <script type="text/javascript" src="scripts/dashboard/controllers/dashboard.js"></script>

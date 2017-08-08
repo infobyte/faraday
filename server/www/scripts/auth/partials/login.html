@@ -1,0 +1,35 @@
+<!-- Faraday Penetration Test IDE -->
+<!-- Copyright (C) 2013  Infobyte LLC (http://www.infobytesec.com/) -->
+<!-- See the file 'doc/LICENSE' for the license information -->
+<section id="main" class="seccion clearfix">
+    <div class="contenedor">
+	    <div class="centrado">
+	    	<img src="images/faraday-iso.svg" class="faraday-iso" />
+		    <section id="main" class="seccion clearfix">
+			    <div class="form-signin">
+					
+					<h2 class="ws-label">WELCOME!</h2>
+					<p class="normal-size">Login to your account</p>
+					
+					<label class="text-left-login">Username</label>
+			        <label class="sr-only" for="username"></label>
+			        <input id="username" class="form-control" type="text" autofocus required ng-model="data.user" ng-change="checkResetError()" ng-keyup="$event.keyCode == 13 && login()">
+
+					<label class="text-left-login margin-top-login">Password</label>
+			        <label class="sr-only" for="password"></label>
+			        <input id="password" class="form-control" type="password" required ng-model="data.pass" ng-change="checkResetError()" ng-keyup="$event.keyCode == 13 && login()">
+			        
+					<h5>{{errorMessage}}</h5>
+					<button class="btn margin-top-login btn-lg btn-info btn-block" type="submit" ng-click="login()" ng-disabled="data.user == null || data.pass == null">Login</button>
+			    </div><!-- .form-signin -->
+			</section>
+		
+	    </div>
+	</div>
+	<p class="normal-size footer_centrado">Faraday Professional - <a href="https://www.faradaysec.com">faradaysec.com</a></p>
+</section>
+
+<section role=stage id=branding>
+	<canvas width=3000 height=1000></canvas>
+</section>
+<script src=script/animacion.js></script> 

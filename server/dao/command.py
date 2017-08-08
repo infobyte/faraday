@@ -33,7 +33,7 @@ class CommandDAO(FaradayDAO):
                                 Command.hostname,
                                 Command.command,
                                 Command.user,
-                                Command.workspace,
+                                Command.workspace_id,
                                 Command.duration,
                                 Command.params,
                                 EntityMetadata.couchdb_id)

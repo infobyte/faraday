@@ -8,6 +8,6 @@ sqlalchemy>=1.0.12
 pyopenssl>=16.0.0
 service_identity>=16.0.0
 pyasn1-modules
-flask-security
+Flask-Security==3.0.0
 bcrypt
 Flask-SQLAlchemy==2.2

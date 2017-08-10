@@ -5,12 +5,23 @@
 import json
 
 from server.dao.base import FaradayDAO
-from server.utils.database import paginate, sort_results, apply_search_filter, get_count
+from server.utils.database import (
+    paginate,
+    sort_results,
+    apply_search_filter,
+    get_count
+)
 
 from sqlalchemy import case
 from sqlalchemy.sql import func
 from sqlalchemy.orm.query import Bundle
-from server.models import Host, Interface, Service, Vulnerability, EntityMetadata
+from server.models import (
+    Host,
+    Interface,
+    Service,
+    Vulnerability,
+    EntityMetadata
+)
 
 
 class VulnerabilityDAO(FaradayDAO):
@@ -97,8 +108,8 @@ class VulnerabilityDAO(FaradayDAO):
                              .outerjoin(EntityMetadata, EntityMetadata.id == Vulnerability.entity_metadata_id)\
                              .outerjoin(Service, Service.id == Vulnerability.service_id)\
                              .outerjoin(Host, Host.id == Vulnerability.host_id)\
-                             .join(Interface, Interface.host_id == Host.id)
-
+                             .join(Interface, Interface.host_id == Host.id)\
+                             .filter_by(workspace=self.workspace)
         # Apply pagination, sorting and filtering options to the query
         query = self.__specialized_sort(query, order_by, order_dir)
         query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter, self.STRICT_FILTERING)

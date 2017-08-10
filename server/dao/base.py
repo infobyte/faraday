@@ -5,7 +5,7 @@
 import server.database
 import server.utils.logger
 
-from server.models import db, EntityMetadata
+from server.models import db, Workspace, EntityMetadata
 
 
 class FaradayDAO(object):
@@ -16,10 +16,13 @@ class FaradayDAO(object):
         self._logger = server.utils.logger.get_logger(self)
         self._session = db.session
         self._couchdb = None
+        self.workspace = workspace
+        if not getattr(workspace, 'name', None):
+            self.workspace = db.session.query(Workspace).filter_by(name=workspace)
 
     def get_all(self):
         self.__check_valid_operation()
-        return self._session.query(self.MAPPED_ENTITY).all()
+        return self._session.query(self.MAPPED_ENTITY).filter_by(workspace=self.workspace)
 
     def __check_valid_operation(self):
         if self.MAPPED_ENTITY is None:

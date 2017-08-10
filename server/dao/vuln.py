@@ -29,7 +29,7 @@ class VulnerabilityDAO(FaradayDAO):
     COLUMNS_MAP = {
         "couchid":          [EntityMetadata.couchdb_id],
         "id":               [Vulnerability.id],
-        "date":             [EntityMetadata.create_time], # TODO: fix search for this field
+        "date":             [EntityMetadata.create_time],  # TODO: fix search for this field
         "confirmed":        [Vulnerability.confirmed],
         "name":             [Vulnerability.name],
         "severity":         [Vulnerability.severity],
@@ -83,7 +83,7 @@ class VulnerabilityDAO(FaradayDAO):
         # Instead of using SQLAlchemy ORM facilities to fetch rows, we bundle involved columns for
         # organizational and MAINLY performance reasons. Doing it this way, we improve retrieving
         # times from large workspaces almost 2x.
-        vuln_bundle = Bundle('vuln', Vulnerability.id.label('server_id'),Vulnerability.name.label('v_name'),\
+        vuln_bundle = Bundle('vuln', Vulnerability.id.label('server_id'), Vulnerability.name.label('v_name'),\
             Vulnerability.confirmed, Vulnerability.data,\
             Vulnerability.description, Vulnerability.easeofresolution, Vulnerability.impact_accountability,\
             Vulnerability.impact_availability, Vulnerability.impact_confidentiality, Vulnerability.impact_integrity,\
@@ -130,12 +130,12 @@ class VulnerabilityDAO(FaradayDAO):
             # instead of a lexicographycally one
             column_map = {
                 'severity': [case(
-                    { 'unclassified': 0,
+                    {'unclassified': 0,
                       'info': 1,
                       'low': 2,
                       'med': 3,
                       'high': 4,
-                      'critical': 5 },
+                      'critical': 5},
                     value=Vulnerability.severity
                 )]
             }
@@ -147,6 +147,7 @@ class VulnerabilityDAO(FaradayDAO):
     def __get_vuln_data(self, vuln, service, host, hostnames):
         def get_own_id(couchdb_id):
             return couchdb_id.split('.')[-1]
+
         def get_parent_id(couchdb_id):
             return '.'.join(couchdb_id.split('.')[:-1])
 
@@ -207,14 +208,15 @@ class VulnerabilityDAO(FaradayDAO):
 
     def count(self, group_by=None, search=None, vuln_filter={}):
         query = self._session.query(Vulnerability.vuln_type, func.count())\
+                             .filter_by(workspace=self.workspace)\
                              .group_by(Vulnerability.vuln_type)
         query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter)
         total_count = dict(query.all())
 
         # Return total amount of services if no group-by field was provided
-        result_count = { 'total_count':    sum(total_count.values()),
-                         'web_vuln_count': total_count.get('VulnerabilityWeb', 0),
-                         'vuln_count':     total_count.get('Vulnerability', 0), }
+        result_count = {'total_count':    sum(total_count.values()),
+                        'web_vuln_count': total_count.get('VulnerabilityWeb', 0),
+                        'vuln_count':     total_count.get('Vulnerability', 0)}
 
         if group_by is None:
             return result_count
@@ -234,7 +236,7 @@ class VulnerabilityDAO(FaradayDAO):
         query = apply_search_filter(query, self.COLUMNS_MAP, search, vuln_filter, self.STRICT_FILTERING)
         result = query.all()
 
-        result_count['groups'] = [ { group_by: value[1], 'count': count } for value, count in result ]
+        result_count['groups'] = [{group_by: value[1], 'count': count} for value, count in result]
 
         return result_count
 

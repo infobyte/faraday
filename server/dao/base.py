@@ -38,4 +38,3 @@ class FaradayDAO(object):
     def save(self, obj):
         self._session.add(obj)
         self._session.commit()
-

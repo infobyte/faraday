@@ -23,7 +23,7 @@ class VulnerabilityDAOTestCases(unittest.TestCase):
         with app.app_context():
             db.drop_all()
 
-    def test_vulnerability_count_per_workspace_is_filtered(self):
+    def test_vulnerability_count_and_list_per_workspace_is_filtered(self):
         """
             Verifies that the dao return the correct count from each workspace
         """
@@ -42,6 +42,12 @@ class VulnerabilityDAOTestCases(unittest.TestCase):
             another_expected = {'total_count': 1, 'web_vuln_count': 0, 'vuln_count': 1}
             assert ws_count == ws_expected
             assert another_ws_count == another_expected
+            ws_list = vuln_dao.list()
+            assert vuln_1 in ws_list['vulnerabilities']
+            another_ws_list = another_vuln_dao.list()
+            assert vuln_2 in another_ws_list['vulnerabilities']
+
+
 
     def test_count_by_type(self):
         with app.app_context():

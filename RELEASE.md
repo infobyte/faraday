@@ -8,7 +8,7 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
-TBA:
+August 11, 2017:
 ---
 * Add check to the vuln creation modal for empty targets in the Web UI
 

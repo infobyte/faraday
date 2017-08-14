@@ -302,3 +302,7 @@ class User(db.Model, UserMixin):
             "roles": [role.name for role in self.roles],  # Deprectated
             "name": self.email
         }
+
+    def __repr__(self):
+        return '<%sUser: %s>' % ('LDAP ' if self.is_ldap else '',
+                                 self.username)

@@ -7,8 +7,16 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm.query import Bundle
 
 from server.dao.base import FaradayDAO
-from server.models import Host, Interface, Service, EntityMetadata, Vulnerability, Credential
+from server.models import (
+    Host,
+    Interface,
+    Service,
+    EntityMetadata,
+    Vulnerability,
+    Credential
+)
 from server.utils.database import apply_search_filter
+
 
 class ServiceDAO(FaradayDAO):
     MAPPED_ENTITY = Service
@@ -94,7 +102,7 @@ class ServiceDAO(FaradayDAO):
 
         # Return total amount of services if no group-by field was provided
         if group_by is None:
-            return { 'total_count': total_count }
+            return {'total_count': total_count}
 
         # Otherwise return the amount of services grouped by the field specified
         if group_by not in ServiceDAO.COLUMNS_MAP:
@@ -107,7 +115,5 @@ class ServiceDAO(FaradayDAO):
 
         res = query.all()
 
-        return { 'total_count': total_count,
-                 'groups': [ { group_by: value, 'count': count } for value, count in res ] }
-
-
+        return {'total_count': total_count,
+                'groups': [{group_by: value, 'count': count} for value, count in res]}

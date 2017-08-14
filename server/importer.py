@@ -336,14 +336,12 @@ class WorkspaceImporter(object):
 
     @classmethod
     def update_from_document(cls, document):
-        workspace = Workspace()
-        workspace.name = document.get('name', None)
+        workspace, created = get_or_create(session, server.models.Workspace, name=document.get('name', None))
         return workspace
 
     def add_relationships_from_dict(self, entity, entities):
         for couch_id, child_entity in entities.items():
             child_entity.workspace = entity
-
 
 
 class FaradayEntityImporter(object):
@@ -430,18 +428,11 @@ def _open_couchdb_conn():
 
 
 def import_workspace_into_database(workspace_name, couchdb_server_conn):
+
     workspace, created = get_or_create(session, server.models.Workspace, name=workspace_name)
-    try:
-        # import checks if the object exists.
-        # the import is idempotent
-        _import_from_couchdb(workspace, couchdb_server_conn)
-        session.commit()
-    except Exception as ex:
-        import traceback
-        traceback.print_exc()
-        logger.exception(ex)
-        session.rollback()
-        raise ex
+
+    _import_from_couchdb(workspace, couchdb_server_conn)
+    session.commit()
 
     return created
 

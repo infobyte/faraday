@@ -275,6 +275,7 @@ class User(db.Model, UserMixin):
     email = Column(String(255), unique=True)
     username = Column(String(255))
     password = Column(String(255))
+    is_ldap = Column(Boolean(), nullable=False)
     last_login_at = Column(DateTime())
     current_login_at = Column(DateTime())
     last_login_ip = Column(String(100))

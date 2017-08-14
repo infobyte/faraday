@@ -108,7 +108,6 @@ class VulnerabilityDAO(FaradayDAO):
                              .outerjoin(EntityMetadata, EntityMetadata.id == Vulnerability.entity_metadata_id)\
                              .outerjoin(Service, Service.id == Vulnerability.service_id)\
                              .outerjoin(Host, Host.id == Vulnerability.host_id)\
-                             .join(Interface, Interface.host_id == Host.id)\
                              .filter(Vulnerability.workspace == self.workspace)
 
         # Apply pagination, sorting and filtering options to the query

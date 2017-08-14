@@ -40,6 +40,7 @@ class HostFactory(FaradayFactory):
 
 
 class EntityMetadataFactory(FaradayFactory):
+    couchdb_id = factory.Sequence(lambda n: '{0}.1.2'.format(n))
 
     class Meta:
         model = EntityMetadata
@@ -47,6 +48,10 @@ class EntityMetadataFactory(FaradayFactory):
 
 
 class InterfaceFactory(FaradayFactory):
+    name = FuzzyText()
+    description = FuzzyText()
+    mac = FuzzyText()
+    host = factory.SubFactory(HostFactory)
 
     class Meta:
         model = Interface
@@ -57,6 +62,8 @@ class ServiceFactory(FaradayFactory):
     name = FuzzyText()
     description = FuzzyText()
     ports = FuzzyChoice(['443', '80', '22'])
+    interface = factory.SubFactory(InterfaceFactory)
+    host = factory.SubFactory(HostFactory)
 
     class Meta:
         model = Service
@@ -72,6 +79,10 @@ class VulnerabilityFactory(FaradayFactory):
     service = factory.SubFactory(ServiceFactory)
     workspace = factory.SubFactory(WorkspaceFactory)
     vuln_type = FuzzyChoice(['Vulnerability', 'VulnerabilityWeb'])
+    attachments = '[]'
+    policyviolations = '[]'
+    refs = '[]'
+
 
     class Meta:
         model = Vulnerability

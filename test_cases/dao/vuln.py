@@ -43,9 +43,10 @@ class VulnerabilityDAOTestCases(unittest.TestCase):
             assert ws_count == ws_expected
             assert another_ws_count == another_expected
             ws_list = vuln_dao.list()
-            assert vuln_1 in ws_list['vulnerabilities']
+
+            assert vuln_1.id == ws_list['vulnerabilities'][0]['_id']
             another_ws_list = another_vuln_dao.list()
-            assert vuln_2 in another_ws_list['vulnerabilities']
+            assert vuln_2.id == another_ws_list['vulnerabilities'][0]['_id']
 
 
 

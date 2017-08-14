@@ -1,8 +1,10 @@
 import os
 import sys
-sys.path.append(os.path.abspath(os.getcwd()))
 import unittest
 import tempfile
+import pytest
+
+sys.path.append(os.path.abspath(os.getcwd()))
 from server.app import create_app
 from flask_security import Security, SQLAlchemyUserDatastore
 from server.models import db, User, Role
@@ -14,19 +16,13 @@ def endpoint():
 
 
 class BaseAPITestCase(unittest.TestCase):
-    ENDPOINT_ROUTE = '/'
 
-    def setUp(self):
-        self.db_fd, self.db_name = tempfile.mkstemp()
-        db_path = 'sqlite:///' + self.db_name
-        self.flask_app = create_app(db_connection_string=db_path, testing=True)
-
-        self.app = self.flask_app.test_client()
-        self.flask_app.route(self.ENDPOINT_ROUTE)(endpoint)
-
-    def tearDown(self):
-        os.close(self.db_fd)
-        os.unlink(self.db_name)
+    @pytest.fixture(autouse=True)
+    def load_app(self, app):
+        """Use this to avoid having to use an app argument to every
+        function"""
+        self.flask_app = app
+        self.app = app.test_client()
 
     def login_as(self, user):
         with self.app.session_transaction() as sess:
@@ -41,14 +37,15 @@ class TestAuthentication(BaseAPITestCase):
     """Tests related to allow/dissallow access depending of whether
     the user is logged in or not"""
 
-    def setUp(self):
-        super(TestAuthentication, self).setUp()
-        with self.flask_app.app_context():
-            db.create_all()
-            self.user = self.flask_app.user_datastore.create_user(
-                email='user@test.net', password='password')
-            db.session.add(self.user)
-            db.session.commit()
+    ENDPOINT_ROUTE = '/'
+
+    @pytest.fixture(autouse=True)
+    def load_user(self, user):
+        self.user = user
+
+    @pytest.fixture(autouse=True)
+    def route_endpoint(self, app):
+        app.route(self.ENDPOINT_ROUTE)(endpoint)
 
     def test_403_when_getting_an_existent_view_and_not_logged(self):
         res = self.app.get('/')

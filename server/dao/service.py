@@ -90,7 +90,7 @@ class ServiceDAO(FaradayDAO):
             'vulns': service.vuln_count}
 
     def count(self, group_by=None):
-        total_count = self._session.query(func.count(Service.id)).scalar()
+        total_count = self._session.query(func.count(Service.id)).filter_by(workspace=self.workspace).scalar()
 
         # Return total amount of services if no group-by field was provided
         if group_by is None:

@@ -72,12 +72,12 @@ def create_user(app, username, email, password, **kwargs):
 
 
 @pytest.fixture
-def user(app):
+def user(app, session):
     return create_user(app, 'test', 'user@test.com', 'password', is_ldap=False)
 
 
 @pytest.fixture
-def ldap_user(app):
+def ldap_user(app, session):
     return create_user(app, 'ldap', 'ldap@test.com', 'password', is_ldap=True)
 
 

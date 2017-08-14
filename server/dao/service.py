@@ -55,6 +55,7 @@ class ServiceDAO(FaradayDAO):
                 outerjoin(Credential, (Credential.service_id == Service.id) and (Credential.host_id == None)).\
                 outerjoin(Host, Host.id == Interface.host_id)
 
+        query = query.filter(Service.workspace == self.workspace)
         query = apply_search_filter(query, self.COLUMNS_MAP, None, service_filter, self.STRICT_FILTERING)
 
         # 'LIKE' for search services started by hostId.%.%

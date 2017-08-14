@@ -23,6 +23,10 @@ def app(monkeypatch):
     os.close(db_fd)
     os.unlink(db_name)
 
+@pytest.fixture
+def test_client(app):
+    return app.test_client()
+
 
 def create_user(app, username, email, password, **kwargs):
     user = app.user_datastore.create_user(username=username,
@@ -33,10 +37,25 @@ def create_user(app, username, email, password, **kwargs):
     db.session.commit()
     return user
 
+
 @pytest.fixture
 def user(app):
     return create_user(app, 'test', 'user@test.com', 'password', is_ldap=False)
 
+
 @pytest.fixture
 def ldap_user(app):
     return create_user(app, 'ldap', 'ldap@test.com', 'password', is_ldap=True)
+
+
+def login_as(test_client, user):
+    with test_client.session_transaction() as sess:
+        # Without this line the test breaks. Taken from
+        # http://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
+        db.session.add(user)
+        sess['user_id'] = user.id
+
+@pytest.fixture
+def logged_user(test_client, user):
+    login_as(test_client, user)
+    return user

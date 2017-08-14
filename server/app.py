@@ -25,6 +25,8 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = ['username']
     app.config['SECURITY_POST_LOGIN_VIEW'] = '/_api/session'
     app.config['SECURITY_POST_LOGOUT_VIEW'] = '/_api/login'
+    if testing:
+        app.config['TESTING'] = testing
 
     from server.models import db
     db.init_app(app)

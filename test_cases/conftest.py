@@ -1,6 +1,5 @@
 import os
 import sys
-import tempfile
 import pytest
 
 sys.path.append(os.path.abspath(os.getcwd()))
@@ -8,20 +7,54 @@ from server.app import create_app
 from server.models import db
 
 
-@pytest.fixture
-def app(monkeypatch):
-    db_fd, db_name = tempfile.mkstemp()
-    db_path = 'sqlite:///' + db_name
-    app = create_app(db_connection_string=db_path, testing=True)
+@pytest.fixture(scope='session')
+def app(request):
+    # we use sqlite memory for tests
+    test_conn_string = 'sqlite://'
+    app = create_app(db_connection_string=test_conn_string, testing=True)
 
-    # monkeypatch.setattr('flask.current_app', app)
-    # monkeypatch.setattr('flask_security.forms.current_app', app)
+    # Establish an application context before running the tests.
+    ctx = app.app_context()
+    ctx.push()
 
-    with app.app_context():
-        db.create_all()
-        yield app#.test_client()
-    os.close(db_fd)
-    os.unlink(db_name)
+    def teardown():
+        ctx.pop()
+
+    request.addfinalizer(teardown)
+    return app
+
+
+@pytest.fixture(scope='session')
+def database(app, request):
+    """Session-wide test database."""
+
+    def teardown():
+        db.drop_all()
+
+    db.app = app
+    db.create_all()
+
+    request.addfinalizer(teardown)
+    return db
+
+
+@pytest.fixture(scope='function')
+def session(database, request):
+    connection = db.engine.connect()
+    transaction = connection.begin()
+
+    options = {"bind": connection, 'binds': {}}
+    session = db.create_scoped_session(options=options)
+
+    db.session = session
+
+    def teardown():
+        transaction.rollback()
+        connection.close()
+        session.remove()
+
+    request.addfinalizer(teardown)
+    return session
 
 
 def create_user(app, username, email, password, **kwargs):
@@ -33,9 +66,11 @@ def create_user(app, username, email, password, **kwargs):
     db.session.commit()
     return user
 
+
 @pytest.fixture
 def user(app):
     return create_user(app, 'test', 'user@test.com', 'password', is_ldap=False)
+
 
 @pytest.fixture
 def ldap_user(app):

@@ -113,7 +113,7 @@ class InterfaceImporter(object):
         interface.description = document.get('description')
         interface.mac = document.get('mac')
         interface.owned = document.get('owned', False)
-        interface.hostnames = u','.join(document.get('hostnames'))
+        interface.hostnames = u','.join(document.get('hostnames') or [])
         interface.network_segment = document.get('network_segment')
         interface.ipv4_address = document.get('ipv4').get('address')
         interface.ipv4_gateway = document.get('ipv4').get('gateway')

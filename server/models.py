@@ -24,7 +24,7 @@ import server.config
 db = SQLAlchemy()
 
 
-SCHEMA_VERSION = 'W.2.6.1'
+SCHEMA_VERSION = 'W.2.6.3'
 
 
 class DatabaseMetadata(db.Model):

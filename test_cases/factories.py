@@ -10,6 +10,7 @@ from server.models import (
     Service,
     Interface,
     Workspace,
+    Credential,
     Vulnerability,
     EntityMetadata,
 )
@@ -83,14 +84,22 @@ class VulnerabilityFactory(FaradayFactory):
     policyviolations = '[]'
     refs = '[]'
 
-
     class Meta:
         model = Vulnerability
         sqlalchemy_session = db.session
 
+
+class CredentialFactory(FaradayFactory):
+    username = FuzzyText()
+    password = FuzzyText()
+
+    class Meta:
+        model = Credential
+        sqlalchemy_session = db.session
 
 register(WorkspaceFactory)
 register(HostFactory)
 register(ServiceFactory)
 register(InterfaceFactory)
 register(VulnerabilityFactory)
+register(CredentialFactory)

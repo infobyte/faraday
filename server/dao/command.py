@@ -8,6 +8,7 @@ from server.dao.base import FaradayDAO
 from server.models import Command, EntityMetadata
 from server.utils.database import apply_search_filter, paginate
 
+
 class CommandDAO(FaradayDAO):
     MAPPED_ENTITY = Command
     COLUMNS_MAP = {
@@ -18,7 +19,7 @@ class CommandDAO(FaradayDAO):
     def list(self, search=None, page=0, page_size=0, command_filter={}):
         results = self.__query_database(search, page, page_size, command_filter)
 
-        rows = [ self.__get_command_data(result.command) for result in results ]
+        rows = [self.__get_command_data(result.command) for result in results]
 
         result = {
             'commands': rows
@@ -33,8 +34,8 @@ class CommandDAO(FaradayDAO):
                                 Command.hostname,
                                 Command.command,
                                 Command.user,
-                                Command.workspace_id,
                                 Command.duration,
+                                Command.workspace_id,
                                 Command.params,
                                 EntityMetadata.couchdb_id)
 

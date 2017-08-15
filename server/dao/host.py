@@ -3,12 +3,24 @@
 # See the file "doc/LICENSE" for the license information
 
 from server.dao.base import FaradayDAO
-from server.utils.database import paginate, sort_results, apply_search_filter, get_count
+from server.utils.database import (
+    paginate,
+    sort_results,
+    apply_search_filter,
+    get_count
+)
 
 from sqlalchemy import distinct
 from sqlalchemy.orm.query import Bundle
 from sqlalchemy.sql import func
-from server.models import Host, Interface, Service, Vulnerability, EntityMetadata, Credential
+from server.models import (
+    Host,
+    Interface,
+    Service,
+    Vulnerability,
+    EntityMetadata,
+    Credential
+)
 
 
 class HostDAO(FaradayDAO):

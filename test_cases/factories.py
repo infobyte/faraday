@@ -7,6 +7,7 @@ from pytest_factoryboy import register
 from server.models import (
     db,
     Host,
+    Command,
     Service,
     Interface,
     Workspace,
@@ -96,6 +97,15 @@ class CredentialFactory(FaradayFactory):
     class Meta:
         model = Credential
         sqlalchemy_session = db.session
+
+
+class CommandFactory(FaradayFactory):
+    command = FuzzyText()
+
+    class Meta:
+        model = Command
+        sqlalchemy_session = db.session
+
 
 register(WorkspaceFactory)
 register(HostFactory)

@@ -42,6 +42,7 @@ class CommandDAO(FaradayDAO):
                              .outerjoin(EntityMetadata, EntityMetadata.id == Command.entity_metadata_id)
 
         # Apply filtering options to the query
+        query = query.filter(Command.workspace == self.workspace)
         query = apply_search_filter(query, self.COLUMNS_MAP, None, command_filter, self.STRICT_FILTERING)
 
         if page_size:
@@ -62,6 +63,6 @@ class CommandDAO(FaradayDAO):
                 "hostname": command.hostname,
                 "command": command.command,
                 "user": command.user,
-                "workspace": command.workspace,
+                "workspace": command.workspace_id,
                 "duration": command.duration,
                 "params": command.params}}

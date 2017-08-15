@@ -63,6 +63,7 @@ class HostDAO(FaradayDAO):
                              .outerjoin(Credential, (Credential.host_id == Host.id) & Credential.service_id == None)\
                              .group_by(Host.id)
 
+        query = query.filter(Host.workspace == self.workspace)
         # Apply pagination, sorting and filtering options to the query
         query = sort_results(query, self.COLUMNS_MAP, order_by, order_dir, default=Host.id)
         query = apply_search_filter(query, self.COLUMNS_MAP, search, host_filter, self.STRICT_FILTERING)

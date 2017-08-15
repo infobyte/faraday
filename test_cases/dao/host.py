@@ -34,3 +34,29 @@ def test_list_with_multiple_workspace(app, session):
 
         res = hosts_dao.list()
         assert expected == res
+
+
+def test_count_with_multiple_workspace(app, session):
+    with app.app_context():
+        workspace = WorkspaceFactory.build()
+
+        hosts_dao = HostDAO(workspace)
+        expected = {'total_count': 0}
+
+        res = hosts_dao.count()
+        assert expected == res
+
+        host = HostFactory.build(workspace=workspace)
+        session.add(host)
+        session.commit()
+
+        another_workspace = WorkspaceFactory.build()
+
+        another_host = HostFactory.build(workspace=another_workspace)
+        session.add(another_host)
+        session.commit()
+
+        expected = {'total_count': 1}
+
+        res = hosts_dao.count()
+        assert expected == res

@@ -120,7 +120,7 @@ class HostDAO(FaradayDAO):
             }}
 
     def count(self, group_by=None):
-        total_count = self._session.query(func.count(Host.id)).scalar()
+        total_count = self._session.query(func.count(Host.id)).filter_by(workspace=self.workspace).scalar()
 
         # Return total amount of services if no group-by field was provided
         result_count = {"total_count": total_count}

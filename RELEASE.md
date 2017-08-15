@@ -8,6 +8,14 @@ Make sure you run ```./faraday.py --update``` the first time after an update!
 New features in the latest update
 =====================================
 
+August 11, 2017:
+---
+* Add check to the vuln creation modal for empty targets in the Web UI
+
+August 9, 2017:
+---
+No changes
+
 August 7, 2017:
 ---
 * Updated Core Impact plugin to be compatible with 2016 version

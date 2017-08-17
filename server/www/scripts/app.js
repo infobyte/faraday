@@ -271,6 +271,10 @@ faradayApp.config(['$routeProvider', 'ngClipProvider', '$uibTooltipProvider',
             controller: 'commercialCtrl',
             title: 'Methodologies | '
         }).
+        when('/forbidden', {
+            templateUrl: 'scripts/auth/partials/forbidden.html',
+            title: ' Forbidden |'
+        }).
         otherwise({
             templateUrl: 'scripts/commons/partials/home.html'
         });
@@ -281,13 +285,5 @@ faradayApp.run(['$location', '$rootScope', 'loginSrv', function($location, $root
         if(current.hasOwnProperty('$$route')) {
             $rootScope.title = current.$$route.title;
         }
-    });
-    $rootScope.$on('$routeChangeStart', function(event){
-        // Require in all routes (except the login one)
-        // Taken from http://stackoverflow.com/questions/26145871/redirect-on-all-routes-to-login-if-not-authenticated
-        // I don't know why this doesn't cause an infinite loop
-        loginSrv.isAuthenticated().then(function(auth){
-            if(!auth) $location.path('/login');
-        });
     });
 }]);

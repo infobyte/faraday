@@ -102,8 +102,3 @@ def minify_json_output(app):
 
     app.json_encoder = MiniJSONEncoder
     app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
-
-
-# Load APIs
-import server.api
-import server.modules.info

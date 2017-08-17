@@ -80,10 +80,10 @@ def create_app(db_connection_string=None, testing=None):
     app.register_blueprint(session_api)
 
     # We are exposing a RESTful API, so don't redirect a user to a login page in
-    # case of being unauthorized, raise a 403 error instead
+    # case of being unauthorized, raise a 401 error instead
     @app.login_manager.unauthorized_handler
     def unauthorized():
-        flask.abort(403)
+        flask.abort(401)
 
     @app.before_request
     def default_login_required():

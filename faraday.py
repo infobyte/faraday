@@ -17,7 +17,22 @@ import shutil
 import sys
 
 from config.configuration import getInstanceConfiguration
-from config.globals import *
+from config.globals import (
+    CONST_USER_HOME,
+    CONST_FARADAY_HOME_PATH,
+    CONST_FARADAY_PLUGINS_PATH,
+    CONST_FARADAY_PLUGINS_REPO_PATH,
+    CONST_FARADAY_IMAGES,
+    CONST_FARADAY_USER_CFG,
+    CONST_FARADAY_BASE_CFG,
+    CONST_USER_ZSHRC,
+    CONST_FARADAY_ZSHRC,
+    CONST_ZSH_PATH,
+    CONST_FARADAY_ZSH_FARADAY,
+    CONST_VERSION_FILE,
+    CONST_REQUIREMENTS_FILE,
+    CONST_FARADAY_FOLDER_LIST,
+)
 from utils import dependencies
 from utils.logs import getLogger, setUpLogger
 from utils.profilehooks import profile
@@ -478,7 +493,7 @@ def checkCouchUrl():
         to set the path of the cert
         """
         sys.exit(-1)
-    except Exception as e:
+    except Exception:
         # Non fatal error
         pass
 
@@ -496,7 +511,7 @@ def checkVersion():
         getInstanceConfiguration().setVersion(f_version)
         f.close()
 
-    except Exception as e:
+    except Exception:
         getLogger("launcher").error(
             "It seems that something's wrong with your version\nPlease contact customer support")
         sys.exit(-1)

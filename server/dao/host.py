@@ -3,12 +3,24 @@
 # See the file "doc/LICENSE" for the license information
 
 from server.dao.base import FaradayDAO
-from server.utils.database import paginate, sort_results, apply_search_filter, get_count
+from server.utils.database import (
+    paginate,
+    sort_results,
+    apply_search_filter,
+    get_count
+)
 
 from sqlalchemy import distinct
 from sqlalchemy.orm.query import Bundle
 from sqlalchemy.sql import func
-from server.models import Host, Interface, Service, Vulnerability, EntityMetadata, Credential
+from server.models import (
+    Host,
+    Interface,
+    Service,
+    Vulnerability,
+    EntityMetadata,
+    Credential
+)
 
 
 class HostDAO(FaradayDAO):
@@ -63,6 +75,7 @@ class HostDAO(FaradayDAO):
                              .outerjoin(Credential, (Credential.host_id == Host.id) & Credential.service_id == None)\
                              .group_by(Host.id)
 
+        query = query.filter(Host.workspace == self.workspace)
         # Apply pagination, sorting and filtering options to the query
         query = sort_results(query, self.COLUMNS_MAP, order_by, order_dir, default=Host.id)
         query = apply_search_filter(query, self.COLUMNS_MAP, search, host_filter, self.STRICT_FILTERING)
@@ -107,7 +120,7 @@ class HostDAO(FaradayDAO):
             }}
 
     def count(self, group_by=None):
-        total_count = self._session.query(func.count(Host.id)).scalar()
+        total_count = self._session.query(func.count(Host.id)).filter_by(workspace=self.workspace).scalar()
 
         # Return total amount of services if no group-by field was provided
         result_count = {"total_count": total_count}

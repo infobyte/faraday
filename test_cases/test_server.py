@@ -1,8 +1,10 @@
 import os
 import sys
-sys.path.append(os.path.abspath(os.getcwd()))
 import unittest
 import tempfile
+import pytest
+
+sys.path.append(os.path.abspath(os.getcwd()))
 from server.app import create_app
 from flask_security import Security, SQLAlchemyUserDatastore
 from server.models import db, User, Role
@@ -13,42 +15,28 @@ def endpoint():
     return 'OK'
 
 
-class BaseAPITestCase(unittest.TestCase):
+class BaseAPITestCase:
     ENDPOINT_ROUTE = '/'
 
-    def setUp(self):
-        self.db_fd, self.db_name = tempfile.mkstemp()
-        db_path = 'sqlite:///' + self.db_name
-        self.flask_app = create_app(db_connection_string=db_path, testing=True)
+    @pytest.fixture(autouse=True)
+    def load_app(self, app, test_client):
+        """Use this to avoid having to use an app argument to every
+        function"""
+        self.flask_app = app
+        self.app = test_client
 
-        self.app = self.flask_app.test_client()
-        self.flask_app.route(self.ENDPOINT_ROUTE)(endpoint)
+    @pytest.fixture(autouse=True)
+    def load_user(self, user):
+        self.user = user
 
-    def tearDown(self):
-        os.close(self.db_fd)
-        os.unlink(self.db_name)
-
-    def login_as(self, user):
-        with self.app.session_transaction() as sess:
-            # Without this line the test breaks. Taken from
-            # http://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
-            db.session.add(self.user)
-
-            sess['user_id'] = user.id
+    @pytest.fixture(autouse=True)
+    def route_endpoint(self, app):
+        app.route(self.ENDPOINT_ROUTE)(endpoint)
 
 
-class TestAuthentication(BaseAPITestCase):
+class TestAuthentication(BaseAPITestCase, unittest.TestCase):
     """Tests related to allow/dissallow access depending of whether
     the user is logged in or not"""
-
-    def setUp(self):
-        super(TestAuthentication, self).setUp()
-        with self.flask_app.app_context():
-            db.create_all()
-            self.user = self.flask_app.user_datastore.create_user(
-                email='user@test.net', password='password')
-            db.session.add(self.user)
-            db.session.commit()
 
     def test_403_when_getting_an_existent_view_and_not_logged(self):
         res = self.app.get('/')
@@ -61,11 +49,6 @@ class TestAuthentication(BaseAPITestCase):
     def test_403_when_accessing_a_non_existent_view_and_not_logged(self):
         res = self.app.post('/dfsdfsdd', 'data')
         self.assertEqual(res.status_code, 403)
-
-    def test_200_when_logged_in(self):
-        self.login_as(self.user)
-        res = self.app.get('/')
-        self.assertEqual(res.status_code, 200)
 
     def test_200_when_not_logged_but_endpoint_is_public(self):
         endpoint.is_public = True
@@ -88,6 +71,14 @@ class TestAuthentication(BaseAPITestCase):
             self.flask_app.user_datastore.delete_user(self.user)
         res = self.app.get('/')
         self.assertEqual(res.status_code, 403)
+
+
+class TestAuthenticationPytest(BaseAPITestCase):
+
+    @pytest.mark.usefixtures('logged_user')
+    def test_200_when_logged_in(self, test_client):
+        res = test_client.get('/')
+        assert res.status_code == 200
 
 
 if __name__ == '__main__':

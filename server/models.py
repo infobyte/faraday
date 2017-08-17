@@ -24,7 +24,7 @@ import server.config
 db = SQLAlchemy()
 
 
-SCHEMA_VERSION = 'W.2.6.0'
+SCHEMA_VERSION = 'W.2.6.3'
 
 
 class DatabaseMetadata(db.Model):
@@ -275,6 +275,7 @@ class User(db.Model, UserMixin):
     email = Column(String(255), unique=True)
     username = Column(String(255))
     password = Column(String(255))
+    is_ldap = Column(Boolean(), nullable=False)
     last_login_at = Column(DateTime())
     current_login_at = Column(DateTime())
     last_login_ip = Column(String(100))
@@ -297,8 +298,12 @@ class User(db.Model, UserMixin):
 
     def get_security_payload(self):
         return {
-            "username": self.email,
+            "username": self.username,
             "role": self.role,
             "roles": [role.name for role in self.roles],  # Deprectated
             "name": self.email
         }
+
+    def __repr__(self):
+        return '<%sUser: %s>' % ('LDAP ' if self.is_ldap else '',
+                                 self.username)

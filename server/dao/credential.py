@@ -34,15 +34,20 @@ class CredentialDAO(FaradayDAO):
         return result
 
     def __query_database(self, search=None, cred_filter={}):
-        creds_bundle = Bundle('cred', Credential.username, Credential.password, Credential.name,
-                Credential.description, Credential.owned, EntityMetadata.couchdb_id,\
-                EntityMetadata.revision, EntityMetadata.update_time, EntityMetadata.update_user,\
-                EntityMetadata.update_action, EntityMetadata.creator, EntityMetadata.create_time,\
-                EntityMetadata.update_controller_action, EntityMetadata.owner, EntityMetadata.command_id)
+        creds_bundle = Bundle(
+                'cred', Credential.username, Credential.password,
+                Credential.name, EntityMetadata.couchdb_id,
+                Credential.description, Credential.owned,
+                EntityMetadata.revision, EntityMetadata.update_time,
+                EntityMetadata.update_user, EntityMetadata.create_time,
+                EntityMetadata.update_action, EntityMetadata.creator,
+                EntityMetadata.update_controller_action, EntityMetadata.owner,
+                EntityMetadata.command_id)
 
         query = self._session.query(creds_bundle)\
                              .outerjoin(EntityMetadata, EntityMetadata.id == Credential.entity_metadata_id)
 
+        query = query.filter(Credential.workspace == self.workspace)
         # Apply filtering options to the query
         query = apply_search_filter(query, self.COLUMNS_MAP, search, cred_filter, self.STRICT_FILTERING)
 

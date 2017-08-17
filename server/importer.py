@@ -4,6 +4,7 @@
 
 import sys
 import json
+import os
 
 import server.app
 import server.utils.logger
@@ -438,6 +439,8 @@ def import_workspace_into_database(workspace_name, couchdb_server_conn):
 
 
 def _import_from_couchdb(workspace, couchdb_conn):
+    if 'FARADAY_DONT_IMPORT' in os.environ:
+        return
     couchdb_workspace = server.couchdb.CouchDBWorkspace(workspace.name, couchdb_server_conn=couchdb_conn)
     total_amount = couchdb_workspace.get_total_amount_of_documents()
     processed_docs, progress = 0, 0

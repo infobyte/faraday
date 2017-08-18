@@ -52,12 +52,12 @@ class NexposeTest(unittest.TestCase):
         self.assertEqual(action[2].name, "192.168.1.1")
         for i in range(131):
             action = self.plugin._pending_actions.get(block=True)
-            self.assertEqual(action[0], modelactions.ADDVULNHOST)
+            if type(action[2]) in [Vuln, VulnWeb]:
+                assert action[0] == modelactions.ADDVULNHOST
+            elif type(action[-1]) == Service:
+                assert action[0] == modelactions.ADDSERVICEINT
         action = self.plugin._pending_actions.get(block=True)
-        self.assertEqual(action[0], modelactions.ADDSERVICEINT)
-        for i in range(15):
-            action = self.plugin._pending_actions.get(block=True)
-            self.assertEqual(action[0], modelactions.ADDVULNSRV)
+        assert action[0] == modelactions.ADDVULNSRV
 
 
 if __name__ == '__main__':

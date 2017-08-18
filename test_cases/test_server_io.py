@@ -45,7 +45,7 @@ class ClientServerAPITests(unittest.TestCase):
     @responses.activate
     def test_raise_conflict_in_database(self):
         url = "http://just_raise_conflict.com"
-        responses.add(responses.PUT, url, body='{"name": "betcha"}', status=409,
+        responses.add(responses.PUT, url, status=409,
                       content_type="application/json", json={'error': 'conflict'})
         with self.assertRaises(server_io_exceptions.ConflictInDatabase):
             server._unsafe_io_with_server(requests.put, 200, url, json={"name": "betcha"})

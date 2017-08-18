@@ -34,13 +34,13 @@ def create_host_vuln(self, host, name, desc, severity):
     return vuln
 
 def create_int_vuln(self, host, interface, name, desc, severity):
-    vuln = Vulnerability(name, desc, severity)
-    self.model_controller.addVulnToInterfaceSYNC( host.getID(), interface.getID(), vuln)
+    vuln = Vulnerability(name=name, description=desc, severity=severity)
+    self.model_controller.addVulnToInterfaceSYNC(host.getID(), interface.getID(), vuln)
 
     return vuln
 
 def create_serv_vuln(self, host, service, name, desc, severity):
-    vuln = Vulnerability(name, desc, severity)
-    self.model_controller.addVulnToServiceSYNC( host.getID(), service.getID(), vuln)
+    vuln = Vulnerability(name=name, description=desc, severity=severity)
+    self.model_controller.addVulnToServiceSYNC(host.getID(), service.getID(), vuln)
 
     return vuln

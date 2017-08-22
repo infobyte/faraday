@@ -25,6 +25,17 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = ['username']
     app.config['SECURITY_POST_LOGIN_VIEW'] = '/_api/session'
     app.config['SECURITY_POST_LOGOUT_VIEW'] = '/_api/login'
+    app.config['SECURITY_PASSWORD_SCHEMES'] = [
+        'bcrypt',  # This should be the default value
+        # 'des_crypt',
+        'pbkdf2_sha1',  # Used by CouchDB passwords
+        # 'pbkdf2_sha256',
+        # 'pbkdf2_sha512',
+        # 'sha256_crypt',
+        # 'sha512_crypt',
+        # And always last one...
+        'plaintext'  # TODO: remove
+    ]
     if testing:
         app.config['TESTING'] = testing
 

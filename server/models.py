@@ -244,7 +244,7 @@ class Command(db.Model):
 class Workspace(db.Model):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=True)
+    name = Column(String(250), nullable=False, unique=True)
 
 
 def is_valid_workspace(workspace_name):
@@ -266,25 +266,27 @@ class Role(db.Model, RoleMixin):
     __tablename__ = 'role'
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True)
-    description = Column(String(255))
+    description = Column(String(255), nullable=True)
 
 
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
-    email = Column(String(255), unique=True)
-    username = Column(String(255))
-    password = Column(String(255))
-    is_ldap = Column(Boolean(), nullable=False)
-    last_login_at = Column(DateTime())
-    current_login_at = Column(DateTime())
-    last_login_ip = Column(String(100))
-    current_login_ip = Column(String(100))
-    login_count = Column(Integer)
-    active = Column(Boolean())
+    username = Column(String(255), unique=True, nullable=False)
+    password = Column(String(255), nullable=True)
+    email = Column(String(255), unique=True, nullable=True)  # TBI
+    name = Column(String(255), nullalbe=True)  # TBI
+    is_ldap = Column(Boolean(), nullable=False, default=False)
+    last_login_at = Column(DateTime())  # flask-security
+    current_login_at = Column(DateTime())  # flask-security
+    last_login_ip = Column(String(100))  # flask-security
+    current_login_ip = Column(String(100))  # flask-security
+    login_count = Column(Integer)  # flask-security
+    active = Column(Boolean(), default=True, nullable=False)  # TBI flask-security
     confirmed_at = Column(DateTime())
     roles = relationship('Role', secondary='roles_users',
                          backref=backref('users', lazy='dynamic'))
+    # TODO: add  many to many relationship to add permission to workspace
 
     @property
     def role(self):

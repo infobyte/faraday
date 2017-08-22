@@ -143,31 +143,55 @@ class Service(db.Model):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
 
+class Reference(db.Model):
+    __tablename__ = 'reference'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250))
+
+    workspace = relationship('Workspace')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+
+    vulnerability = relationship('Vulnerability')
+    vulnerability_id = Column(Integer, ForeignKey('vulnerbility.id'), index=True)
+
+
+class PolicyViolation(db.Model):
+    __tablename__ = 'policiy_violation'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250))
+
+    workspace = relationship('Workspace')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+
+    vulnerability = relationship('Vulnerability', backref='policy_violations')
+    vulnerability_id = Column(Integer, ForeignKey('vulnerbility.id'), index=True)
+
+
 class Vulnerability(db.Model):
+    # TODO: add unique constraint to -> name, description, severity, parent, method, pname, path, website
+    # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
     __tablename__ = 'vulnerability'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False)
     description = Column(Text(), nullable=False)
 
-    confirmed = Column(Boolean)
-    vuln_type = Column(String(250))
+    confirmed = Column(Boolean, default=False)
+    vuln_type = Column(String(250))  # TODO: add enum
     data = Column(Text())
-    easeofresolution = Column(String(50))
-    refs = Column(Text())
-    resolution = Column(Text())
-    severity = Column(String(50))
-    owned = Column(Boolean)
-    attachments = Column(Text(), nullable=True)
-    policyviolations = Column(Text())
+    ease_of_resolution = Column(String(50))  # TODO: add enum
+    resolution = Column(Text(), nullable=True)
+    severity = Column(String(50), nullalbe=False)  # TODO: add enum
+    # TODO add evidence
 
-    impact_accountability = Column(Boolean)
-    impact_availability = Column(Boolean)
-    impact_confidentiality = Column(Boolean)
-    impact_integrity = Column(Boolean)
+    impact_accountability = Column(Boolean, default=False)
+    impact_availability = Column(Boolean, default=False)
+    impact_confidentiality = Column(Boolean, default=False)
+    impact_integrity = Column(Boolean, default=False)
 
-    method = Column(String(50))
-    params = Column(String(500))
-    path = Column(String(500))
+    method = Column(String(50), nullable=True)
+    params = Column(String(500), nullable=True)
+    path = Column(String(500), nullable=True)
+    # REVIEW FROM FROM HERE
     pname = Column(String(250))
     query = Column(Text())
     request = Column(Text())
@@ -190,6 +214,7 @@ class Vulnerability(db.Model):
 
 
 class Note(db.Model):
+    # TODO: review this model
     __tablename__ = 'note'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False)
@@ -208,18 +233,18 @@ class Credential(db.Model):
     id = Column(Integer, primary_key=True)
     username = Column(String(250), nullable=False)
     password = Column(Text(), nullable=False)
-    owned = Column(Boolean)
     description = Column(Text(), nullable=True)
     name = Column(String(250), nullable=True)
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
-    host_id = Column(Integer, ForeignKey(Host.id), index=True)
+    host_id = Column(Integer, ForeignKey(Host.id), index=True, nullalbe=False)
     host = relationship('Host', back_populates='credentials')
 
-    service_id = Column(Integer, ForeignKey(Service.id), index=True)
+    service_id = Column(Integer, ForeignKey(Service.id), index=True, nullalbe=False)
     service = relationship('Service', back_populates='credentials')
+
     workspace = relationship('Workspace')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
@@ -227,16 +252,16 @@ class Credential(db.Model):
 class Command(db.Model):
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
-    command = Column(String(250), nullable=True)
-    duration = Column(Float, nullable=True)
-    itime = Column(Float, nullable=True)
-    ip = Column(String(250), nullable=True)
-    hostname = Column(String(250), nullable=True)
+    command = Column(String(250), nullable=False)
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+    ip = Column(String(250), nullable=False)  # where the command was executed
+    hostname = Column(String(250), nullable=False)  # where the command was executed
     params = Column(String(250), nullable=True)
-    user = Column(String(250), nullable=True)
+    user = Column(String(250), nullable=True)  # where the command was executed
     workspace = relationship('Workspace')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
-
+    # TODO: add Tool relationship and report_attachment
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
@@ -245,17 +270,14 @@ class Workspace(db.Model):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
     # TODO: change nullable=True for appropriate fields
-    create_date = Column(DateTime(), nullable=True)
-    creator = Column(Integer(), nullable=True)
-    customer = Column(String(250), nullable=True)
+    customer = Column(String(250), nullable=True)  # TBI
     description = Column(Text(), nullable=True)
-    disabled = Column(Boolean(), nullable=True)
+    active = Column(Boolean(), nullable=False, default=True)  # TBI
     end_date = Column(DateTime(), nullable=True)
-    name = Column(String(250), nullable=True, unique=True)
-    public = Column(Boolean(), nullable=True)
+    name = Column(String(250), nullable=False, unique=True)
+    public = Column(Boolean(), nullable=False, default=True)  # TBI
     scope = Column(Text(), nullable=True)
     start_date = Column(DateTime(), nullable=True)
-    update_date = Column(DateTime(), nullable=True)
 
 
 def is_valid_workspace(workspace_name):

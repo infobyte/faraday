@@ -244,7 +244,18 @@ class Command(db.Model):
 class Workspace(db.Model):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=True)
+    # TODO: change nullable=True for appropriate fields
+    create_date = Column(DateTime(), nullable=True)
+    creator = Column(Integer(), nullable=True)
+    customer = Column(String(250), nullable=True)
+    description = Column(Text(), nullable=True)
+    disabled = Column(Boolean(), nullable=True)
+    end_date = Column(DateTime(), nullable=True)
+    name = Column(String(250), nullable=True, unique=True)
+    public = Column(Boolean(), nullable=True)
+    scope = Column(Text(), nullable=True)
+    start_date = Column(DateTime(), nullable=True)
+    update_date = Column(DateTime(), nullable=True)
 
 
 def is_valid_workspace(workspace_name):

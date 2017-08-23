@@ -10,7 +10,8 @@ from sqlalchemy import (
     Float,
     Text,
     UniqueConstraint,
-    DateTime
+    DateTime,
+    Enum,
 )
 from sqlalchemy.orm import relationship, backref
 from flask_sqlalchemy import SQLAlchemy
@@ -59,7 +60,7 @@ class Host(db.Model):
     # TODO: add unique constraint -> ip, workspace
     __tablename__ = 'host'
     id = Column(Integer, primary_key=True)
-    ip = Column(Text, nullable=False) # IP v4 or v6
+    ip = Column(Text, nullable=False)  # IP v4 or v6
     description = Column(Text, nullable=True)
     os = Column(Text, nullable=True)
 
@@ -90,6 +91,11 @@ class Hostname(db.Model):
 
 class Service(db.Model):
     # TODO: add unique constraint to -> port, protocol, host_id, workspace
+    STATUSES = [
+        'open',
+        'closed',
+        'filtered'
+    ]
     __tablename__ = 'service'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=True)
@@ -98,8 +104,7 @@ class Service(db.Model):
     owned = Column(Boolean, nullable=False, default=False)
 
     protocol = Column(Text, nullable=False)
-    # open, closed, filtered
-    status = Column(Text, nullable=True) # TODO: add enum
+    status = Column(Enum(*STATUSES), nullable=True)
     version = Column(Text, nullable=True)
 
     banner = Column(Text, nullable=True)
@@ -157,17 +162,34 @@ class PolicyViolation(db.Model):
 class Vulnerability(db.Model):
     # TODO: add unique constraint to -> name, description, severity, parent, method, pname, path, website, workspace
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
+    VULN_TYPES = [
+        'vuln',
+        'vuln_web',
+        'source_code']
+    EASE_OF_RESOLUTIONS = [
+        'trivial',
+        'simple',
+        'moderate',
+        'difficult',
+        'infeasible'
+    ]
+    STATUSES = [
+        'open',
+        'closed',
+        're-opened',
+        'risk-accepted'
+    ]
     __tablename__ = 'vulnerability'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False)
     description = Column(Text(), nullable=False)
 
     confirmed = Column(Boolean, default=False)
-    vuln_type = Column(String(250))  # TODO: add enum
+    vuln_type = Column(Enum(*VULN_TYPES))
     data = Column(Text())
-    ease_of_resolution = Column(String(50))  # TODO: add enum
+    ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS))
     resolution = Column(Text(), nullable=True)
-    severity = Column(String(50), nullalbe=False)  # TODO: add enum
+    severity = Column(String(50), nullalbe=False)
     # TODO add evidence
 
     impact_accountability = Column(Boolean, default=False)
@@ -186,7 +208,7 @@ class Vulnerability(db.Model):
     website = Column(String(250), nullable=True)
 
     # open, closed, re-opened, risk-accepted
-    status = Column(String(250), nullable=False, default="open") # TODO: add enum
+    status = Column(Enum(*STATUSES), nullable=False, default="open")
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)

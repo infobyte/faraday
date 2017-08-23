@@ -360,3 +360,99 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return '<%sUser: %s>' % ('LDAP ' if self.is_ldap else '',
                                  self.username)
+
+
+class MethodologyTemplate(db.Model):
+    # TODO: reset template_id in methodologies when deleting meth template
+    __tablename__ = 'methodology_template'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False)
+
+
+class Methodology(db.Model):
+    # TODO: add unique constraint -> name, workspace
+    __tablename__ = 'methodology'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False)
+
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    template = relationship('MethodologyTemplate', backref='methodologies')
+    template_id = Column(
+                    Integer,
+                    ForeignKey('methodology_template.id'),
+                    index=True,
+                    nullable=True,
+                    )
+
+    workspace = relationship('Workspace', backref='methodologies')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+
+
+class TaskABC(db.Model):
+    __tablename__ = 'task_abc'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False)
+    description = Column(Text, nullable=False)
+
+
+class TaskTemplate(TaskABC):
+    __tablename__ = 'task_template'
+    id = Column(Integer, primary_key=True)
+
+    __mapper_args__ = {
+        'concrete': True
+    }
+
+    template = relationship('MethodologyTemplate', backref='tasks')
+    template_id = Column(
+                    Integer,
+                    ForeignKey('methodology_template.id'),
+                    index=True,
+                    nullable=False,
+                    )
+
+
+class Task(TaskABC):
+    STATUSES = [
+        'new',
+        'in progress',
+        'review',
+        'completed',
+    ]
+
+    __tablename__ = 'task'
+    id = Column(Integer, primary_key=True)
+
+    due_date = Column(DateTime, nullable=True)
+    status = Column(Enum(*STATUSES), nullable=True)
+
+    __mapper_args__ = {
+        'concrete': True
+    }
+
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    assigned_to = relationship('User', backref='assigned_tasks')
+    assigned_to_id = Column(Integer, ForeignKey('user.id'), nullable=True)
+
+    methodology = relationship('Methodology', backref='tasks')
+    methodology_id = Column(
+                    Integer,
+                    ForeignKey('methodology.id'),
+                    index=True,
+                    nullable=False,
+                    )
+
+    template = relationship('TaskTemplate', backref='tasks')
+    template_id = Column(
+                    Integer,
+                    ForeignKey('task_template.id'),
+                    index=True,
+                    nullable=True,
+                    )
+
+    workspace = relationship('Workspace', backref='tasks')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)

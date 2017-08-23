@@ -56,119 +56,106 @@ class EntityMetadata(db.Model):
 
 
 class Host(db.Model):
+    # TODO: add unique constraint -> ip, workspace
     __tablename__ = 'host'
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
-    description = Column(Text(), nullable=False)
-    os = Column(String(250), nullable=False)
+    ip = Column(Text, nullable=False) # IP v4 or v6
+    description = Column(Text, nullable=True)
+    os = Column(Text, nullable=True)
 
-    owned = Column(Boolean)
+    owned = Column(Boolean, nullable=False, default=False)
 
-    default_gateway_ip = Column(String(250))
-    default_gateway_mac = Column(String(250))
+    default_gateway_ip = Column(Text, nullable=True)
+    default_gateway_mac = Column(Text, nullable=True)
+
+    mac = Column(Text, nullable=True)
+    net_segment = Column(Text, nullable=True)
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
-    interfaces = relationship('Interface')
-    services = relationship('Service')
-    vulnerabilities = relationship('Vulnerability')
-    credentials = relationship('Credential')
-
-    workspace = relationship('Workspace')
+    workspace = relationship('Workspace', backref='hosts')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
 
-class Interface(db.Model):
-    __tablename__ = 'interface'
+class Hostname(db.Model):
+    # TODO: add unique constraint -> name, host, workspace
+    __tablename__ = 'hostname'
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
-    description = Column(String(250), nullable=False)
-    mac = Column(String(250), nullable=False)
-    owned = Column(Boolean)
+    name = Column(Text, nullable=False)
 
-    hostnames = Column(String(250))
-    network_segment = Column(String(250))
-
-    ipv4_address = Column(String(250))
-    ipv4_gateway = Column(String(250))
-    ipv4_dns = Column(String(250))
-    ipv4_mask = Column(String(250))
-
-    ipv6_address = Column(String(250))
-    ipv6_gateway = Column(String(250))
-    ipv6_dns = Column(String(250))
-    ipv6_prefix = Column(String(250))
-
-    ports_filtered = Column(Integer)
-    ports_opened = Column(Integer)
-    ports_closed = Column(Integer)
-
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
-
-    host_id = Column(Integer, ForeignKey(Host.id), index=True)
-    host = relationship('Host', back_populates='interfaces')
-    workspace = relationship('Workspace')
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
-
-    services = relationship('Service')
+    host = relationship('Host', backref='hostnames')
+    host_id = Column(Integer, ForeignKey('host.id'), index=True)
 
 
 class Service(db.Model):
-    # Table schema
+    # TODO: add unique constraint to -> port, protocol, host_id, workspace
     __tablename__ = 'service'
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
-    description = Column(String(250), nullable=False)
-    ports = Column(String(250), nullable=False)
-    owned = Column(Boolean)
+    name = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)
+    port = Column(Integer, nullable=False)
+    owned = Column(Boolean, nullable=False, default=False)
 
-    protocol = Column(String(250))
-    status = Column(String(250))
-    version = Column(String(250))
+    protocol = Column(Text, nullable=False)
+    # open, closed, filtered
+    status = Column(Text, nullable=True) # TODO: add enum
+    version = Column(Text, nullable=True)
+
+    banner = Column(Text, nullable=True)
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
-    host_id = Column(Integer, ForeignKey(Host.id), index=True)
-    host = relationship('Host', back_populates='services')
+    host = relationship('Host', backref='services')
+    host_id = Column(Integer, ForeignKey('host.id'), index=True)
 
-    interface_id = Column(Integer, ForeignKey(Interface.id), index=True)
-    interface = relationship('Interface', back_populates='services')
-
-    vulnerabilities = relationship('Vulnerability')
-    credentials = relationship('Credential')
-    workspace = relationship('Workspace')
+    workspace = relationship('Workspace', backref='services')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
 
 
 class Reference(db.Model):
     __tablename__ = 'reference'
     id = Column(Integer, primary_key=True)
-    name = Column(String(250))
+    name = Column(Text, nullable=False)
 
-    workspace = relationship('Workspace')
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace = relationship('Workspace', backref='references')
+    workspace_id = Column(
+                        Integer,
+                        ForeignKey('workspace.id'),
+                        index=True
+                        )
 
-    vulnerability = relationship('Vulnerability')
-    vulnerability_id = Column(Integer, ForeignKey('vulnerbility.id'), index=True)
+    vulnerability = relationship('Vulnerability', backref='references')
+    vulnerability_id = Column(
+                            Integer,
+                            ForeignKey('vulnerbility.id'),
+                            index=True
+                            )
 
 
 class PolicyViolation(db.Model):
-    __tablename__ = 'policiy_violation'
+    __tablename__ = 'policy_violation'
     id = Column(Integer, primary_key=True)
-    name = Column(String(250))
+    name = Column(Text, nullable=False)
 
-    workspace = relationship('Workspace')
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace = relationship('Workspace', backref='policy_violations')
+    workspace_id = Column(
+                        Integer,
+                        ForeignKey('workspace.id'),
+                        index=True
+                        )
 
     vulnerability = relationship('Vulnerability', backref='policy_violations')
-    vulnerability_id = Column(Integer, ForeignKey('vulnerbility.id'), index=True)
+    vulnerability_id = Column(
+                            Integer,
+                            ForeignKey('vulnerbility.id'),
+                            index=True
+                            )
 
 
 class Vulnerability(db.Model):
-    # TODO: add unique constraint to -> name, description, severity, parent, method, pname, path, website
+    # TODO: add unique constraint to -> name, description, severity, parent, method, pname, path, website, workspace
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
     __tablename__ = 'vulnerability'
     id = Column(Integer, primary_key=True)
@@ -189,16 +176,17 @@ class Vulnerability(db.Model):
     impact_integrity = Column(Boolean, default=False)
 
     method = Column(String(50), nullable=True)
-    params = Column(String(500), nullable=True)
+    parameters = Column(String(500), nullable=True)
     path = Column(String(500), nullable=True)
     # REVIEW FROM FROM HERE
-    pname = Column(String(250))
-    query = Column(Text())
-    request = Column(Text())
-    response = Column(Text())
-    website = Column(String(250))
+    parameter_name = Column(String(250), nullable=True)
+    query = Column(Text(), nullable=True)
+    request = Column(Text(), nullable=True)
+    response = Column(Text(), nullable=True)
+    website = Column(String(250), nullable=True)
 
-    status = Column(String(250))
+    # open, closed, re-opened, risk-accepted
+    status = Column(String(250), nullable=False, default="open") # TODO: add enum
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
@@ -210,7 +198,12 @@ class Vulnerability(db.Model):
     service = relationship('Service', back_populates='vulnerabilities')
 
     workspace = relationship('Workspace')
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(
+                        Integer,
+                        ForeignKey('workspace.id'),
+                        index=True,
+                        back_populates='vulnerabilities'
+                        )
 
 
 class Note(db.Model):
@@ -229,6 +222,8 @@ class Note(db.Model):
 
 
 class Credential(db.Model):
+    # TODO: add unique constraint -> username, host o service y workspace
+    # TODO: add constraint host y service, uno o el otro
     __tablename__ = 'credential'
     id = Column(Integer, primary_key=True)
     username = Column(String(250), nullable=False)
@@ -239,14 +234,14 @@ class Credential(db.Model):
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
-    host_id = Column(Integer, ForeignKey(Host.id), index=True, nullalbe=False)
-    host = relationship('Host', back_populates='credentials')
+    host = relationship('Host', backref='credentials')
+    host_id = Column(Integer, ForeignKey(Host.id), index=True, nullalbe=True)
 
-    service_id = Column(Integer, ForeignKey(Service.id), index=True, nullalbe=False)
-    service = relationship('Service', back_populates='credentials')
+    service = relationship('Service', backref='credentials')
+    service_id = Column(Integer, ForeignKey(Service.id), index=True, nullalbe=True)
 
-    workspace = relationship('Workspace')
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace = relationship('Workspace', backref='credentials')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
 
 class Command(db.Model):
@@ -262,6 +257,7 @@ class Command(db.Model):
     workspace = relationship('Workspace')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
     # TODO: add Tool relationship and report_attachment
+
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 

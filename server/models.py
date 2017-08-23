@@ -228,21 +228,6 @@ class Vulnerability(db.Model):
                         )
 
 
-class Note(db.Model):
-    # TODO: review this model
-    __tablename__ = 'note'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
-    text = Column(Text(), nullable=True)
-    description = Column(Text(), nullable=True)
-    owned = Column(Boolean)
-
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
-    workspace = relationship('Workspace')
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
-
-
 class Credential(db.Model):
     # TODO: add unique constraint -> username, host o service y workspace
     # TODO: add constraint host y service, uno o el otro
@@ -455,4 +440,49 @@ class Task(TaskABC):
                     )
 
     workspace = relationship('Workspace', backref='tasks')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+
+
+class License(db.Model):
+    __tablename__ = 'license'
+    id = Column(Integer, primary_key=True)
+    product = Column(Text, nullable=False)
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+
+    type = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+
+
+class Tag(db.Model):
+    __tablename__ = 'tag'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False, unique=True)
+    slug = Column(Text, nullable=False, unique=True)
+
+
+class TagObject(db.Model):
+    __tablename__ = 'tag_object'
+    id = Column(Integer, primary_key=True)
+
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Text, nullable=False)
+
+    tag = relationship('Tag', backref='tagged_objects')
+    tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
+
+
+class Comment(db.Model):
+    __tablename__ = 'comment'
+    id = Column(Integer, primary_key=True)
+
+    text = Column(Text, nullable=False)
+
+    reply_to = relationship('Comment', backref='replies')
+    reply_to_id = Column(Integer, ForeignKey('comment.id'))
+
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Text, nullable=False)
+
+    workspace = relationship('Workspace')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)

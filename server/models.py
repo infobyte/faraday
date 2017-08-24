@@ -159,13 +159,14 @@ class PolicyViolation(db.Model):
                             )
 
 
-class Vulnerability(db.Model):
+class VulnerabilityABC(db.Model):
     # TODO: add unique constraint to -> name, description, severity, parent, method, pname, path, website, workspace
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
     VULN_TYPES = [
         'vuln',
         'vuln_web',
-        'source_code']
+        'source_code'
+    ]
     EASE_OF_RESOLUTIONS = [
         'trivial',
         'simple',
@@ -179,17 +180,20 @@ class Vulnerability(db.Model):
         're-opened',
         'risk-accepted'
     ]
-    __tablename__ = 'vulnerability'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
-    description = Column(Text(), nullable=False)
 
-    confirmed = Column(Boolean, default=False)
-    vuln_type = Column(Enum(*VULN_TYPES))
-    data = Column(Text())
-    ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS))
-    resolution = Column(Text(), nullable=True)
-    severity = Column(String(50), nullalbe=False)
+    __abstract__ = True
+
+    id = Column(Integer, primary_key=True)
+
+    confirmed = Column(Boolean, nullable=False, default=False)
+    data = Column(Text, nullable=True)
+    description = Column(Text, nullable=False)
+    ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS), nullable=True)
+    name = Column(Text, nullable=False)
+    resolution = Column(Text, nullable=True)
+    severity = Column(String(50), nullable=False)
+    status = Column(Enum(*STATUSES), nullable=False, default="open")
+    vuln_type = Column(Enum(*VULN_TYPES), nullable=False)
     # TODO add evidence
 
     impact_accountability = Column(Boolean, default=False)
@@ -197,18 +201,28 @@ class Vulnerability(db.Model):
     impact_confidentiality = Column(Boolean, default=False)
     impact_integrity = Column(Boolean, default=False)
 
+    # Web Vulns
     method = Column(String(50), nullable=True)
     parameters = Column(String(500), nullable=True)
-    path = Column(String(500), nullable=True)
-    # REVIEW FROM FROM HERE
     parameter_name = Column(String(250), nullable=True)
+    path = Column(String(500), nullable=True)
     query = Column(Text(), nullable=True)
     request = Column(Text(), nullable=True)
     response = Column(Text(), nullable=True)
     website = Column(String(250), nullable=True)
 
-    # open, closed, re-opened, risk-accepted
-    status = Column(Enum(*STATUSES), nullable=False, default="open")
+    # Code Vulns
+    line = Column(Integer, nullable=True)
+
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+
+class Vulnerability(VulnerabilityABC):
+    __tablename__ = 'vulnerability'
+    id = Column(Integer, primary_key=True)
+
+    vuln_type = Column(Enum(*VulnerabilityABC.VULN_TYPES), nullable=False)
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
@@ -226,6 +240,12 @@ class Vulnerability(db.Model):
                         index=True,
                         back_populates='vulnerabilities'
                         )
+
+
+class VulnerabilityTemplate(VulnerabilityABC):
+    __tablename__ = 'vulnerability_template'
+
+    vuln_type = Column(Enum(*VULN_TYPES), nullable=False)
 
 
 class Credential(db.Model):
@@ -376,7 +396,8 @@ class Methodology(db.Model):
 
 
 class TaskABC(db.Model):
-    __tablename__ = 'task_abc'
+    __abstract__ = True
+
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
     description = Column(Text, nullable=False)

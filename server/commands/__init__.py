@@ -10,9 +10,13 @@ except ImportError:
 
 from flask import current_app
 from flask_script import Command
+from colorama import init
+from colorama import Fore, Back, Style
+
 
 from config.globals import CONST_FARADAY_HOME_PATH
 from server.config import LOCAL_CONFIG_FILE
+init()
 
 
 class InitDB(Command):
@@ -22,7 +26,7 @@ class InitDB(Command):
             config.get('database', 'connection_string')
             reconfigure = None
             while not reconfigure:
-                reconfigure = raw_input('Database section \e[31m already found. \e[30m Do you want to reconfigure database? (yes/no) ')
+                reconfigure = raw_input('Database section {red} already found.{white} Do you want to reconfigure database? (yes/no) '.format(red=Fore.RED, white=Fore.WHITE))
                 if reconfigure.lower() == 'no':
                     return False
                 elif reconfigure.lower() == 'yes':
@@ -35,24 +39,27 @@ class InitDB(Command):
         return True
 
     def run(self):
-        config = ConfigParser()
-        config.read(LOCAL_CONFIG_FILE)
-        if not self._check_current_config(config):
-            return
-        faraday_path_conf = os.path.expanduser(CONST_FARADAY_HOME_PATH)
-        psql_log_filename = os.path.join(faraday_path_conf, 'logs', 'psql_log.log')
-        with open(psql_log_filename, 'a+') as psql_log_file:
-            username, password = self._configure_postgres(psql_log_file)
-            database_name = self._create_database(username, psql_log_file)
-        conn_string = self._save_config(config, username, password, database_name)
-        self._create_tables(conn_string)
+        try:
+            config = ConfigParser()
+            config.read(LOCAL_CONFIG_FILE)
+            if not self._check_current_config(config):
+                return
+            faraday_path_conf = os.path.expanduser(CONST_FARADAY_HOME_PATH)
+            psql_log_filename = os.path.join(faraday_path_conf, 'logs', 'psql_log.log')
+            with open(psql_log_filename, 'a+') as psql_log_file:
+                username, password = self._configure_postgres(psql_log_file)
+                database_name = self._create_database(username, psql_log_file)
+            conn_string = self._save_config(config, username, password, database_name)
+            self._create_tables(conn_string)
+        except KeyboardInterrupt:
+            print('User cancelled.')
 
     def _configure_postgres(self, psql_log_file):
-        username = raw_input('Please enter the \e[21m database user \e[0m (press enter to use "faraday"): ') or 'faraday'
+        username = raw_input('Please enter the {red} database user {white} (press enter to use "faraday"): '.format(red=Fore.RED, white=Fore.WHITE)) or 'faraday'
         postgres_command = ['sudo', '-u', 'postgres']
         password = None
         while not password:
-            password = getpass.getpass(prompt='Please enter the \e[21m password for the postgreSQL username \e[0m: ')
+            password = getpass.getpass(prompt='Please enter the {red} password for the postgreSQL username {white}: '.format(red=Fore.RED, white=Fore.WHITE))
             if not password:
                 print('Please type a valid password')
         command = postgres_command + ['psql', '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
@@ -62,7 +69,7 @@ class InitDB(Command):
 
     def _create_database(self, username, psql_log_file):
         postgres_command = ['sudo', '-u', 'postgres']
-        database_name = raw_input('Please enter the \e[21m database name \e[0m (press enter to use "faraday"): ') or 'faraday'
+        database_name = raw_input('Please enter the {red} database name {white} (press enter to use "faraday"): '.format(red=Fore.RED, white=Fore.WHITE)) or 'faraday'
         print('Creating database {0}'.format(database_name))
         command = postgres_command + ['createdb', '-O', username, database_name]
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file)
@@ -71,7 +78,7 @@ class InitDB(Command):
 
     def _save_config(self, config, username, password, database_name):
         db_server = 'localhost'
-        print('\e[5m\e[39mSaving \e[30m database credentials file in {0}'.format(LOCAL_CONFIG_FILE))
+        print('{red}Saving {white} database credentials file in {0}'.format(LOCAL_CONFIG_FILE, red=Fore.RED, white=Fore.WHITE))
 
         conn_string = 'postgresql+psycopg2://{username}:{password}@{server}/{database_name}'.format(
             username=username,

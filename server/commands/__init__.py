@@ -1,6 +1,7 @@
 import os
 import sys
 import getpass
+from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
 
 try:
@@ -39,22 +40,50 @@ class InitDB(Command):
         return True
 
     def run(self):
+        """
+             Main entry point that executes these steps:
+                 * creates role in database.
+                 * creates database.
+                 * save new configuration on server.ini.
+                 * creates tables.
+        """
+        current_psql_output = TemporaryFile()
         try:
             config = ConfigParser()
             config.read(LOCAL_CONFIG_FILE)
             if not self._check_current_config(config):
                 return
             faraday_path_conf = os.path.expanduser(CONST_FARADAY_HOME_PATH)
+            # we use psql_log_filename for historical saving. we will ask faraday users this file.
+            # current_psql_output is for checking psql command already known errors for each execution.
             psql_log_filename = os.path.join(faraday_path_conf, 'logs', 'psql_log.log')
             with open(psql_log_filename, 'a+') as psql_log_file:
-                username, password = self._configure_postgres(psql_log_file)
-                database_name = self._create_database(username, psql_log_file)
+                username, password = self._configure_postgres(current_psql_output)
+                current_psql_output.seek(0)
+                psql_output = current_psql_output.read()
+                psql_log_file.write(psql_output)
+                current_psql_output.seek(0)
+                psql_output = current_psql_output.read()
+                self._check_psql_output(psql_output)
+                database_name = self._create_database(username, current_psql_output)
+                self._check_psql_output(psql_output)
+            current_psql_output.close()
             conn_string = self._save_config(config, username, password, database_name)
             self._create_tables(conn_string)
         except KeyboardInterrupt:
+            current_psql_output.close()
             print('User cancelled.')
+            sys.exit(1)
+
+    def _check_psql_output(self, psql_log_output):
+        if 'unknown user: postgres' in psql_log_output:
+            raise UserWarning('postgres user not found. did you installed postgresql?')
 
     def _configure_postgres(self, psql_log_file):
+        """
+            This step will create the role on the database.
+            we return username and password and those values will be saved in the config file.
+        """
         username = raw_input('Please enter the {red} database user {white} (press enter to use "faraday"): '.format(red=Fore.RED, white=Fore.WHITE)) or 'faraday'
         postgres_command = ['sudo', '-u', 'postgres']
         password = None
@@ -68,6 +97,9 @@ class InitDB(Command):
         return username, password
 
     def _create_database(self, username, psql_log_file):
+        """
+             This step uses the createdb command to add a new database.
+        """
         postgres_command = ['sudo', '-u', 'postgres']
         database_name = raw_input('Please enter the {red} database name {white} (press enter to use "faraday"): '.format(red=Fore.RED, white=Fore.WHITE)) or 'faraday'
         print('Creating database {0}'.format(database_name))
@@ -77,6 +109,9 @@ class InitDB(Command):
         return database_name
 
     def _save_config(self, config, username, password, database_name):
+        """
+             This step saves database configuration to server.ini
+        """
         db_server = 'localhost'
         print('{red}Saving {white} database credentials file in {0}'.format(LOCAL_CONFIG_FILE, red=Fore.RED, white=Fore.WHITE))
 
@@ -95,4 +130,9 @@ class InitDB(Command):
         print('Creating tables')
         from server.models import db
         current_app.config['SQLALCHEMY_DATABASE_URI'] = conn_string
-        db.create_all()
+        try:
+            db.create_all()
+        except ImportError as ex:
+            if 'psycopg2' in ex:
+                print('Missing python depency {red}psycopg2{white}. Please install it with {green}pip install psycopg2'.format(red=Fore.RED, white=Fore.WHITE, green=Fore.GREEN))
+                sys.exit(1)

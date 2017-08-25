@@ -2,30 +2,29 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 from sqlalchemy import (
-    Column,
-    Integer,
-    String,
     Boolean,
-    ForeignKey,
-    Float,
-    Text,
-    UniqueConstraint,
+    Column,
     DateTime,
     Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship, backref
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import (
-    UserMixin,
     RoleMixin,
+    UserMixin,
 )
 
 import server.config
 
 db = SQLAlchemy()
 
-
-SCHEMA_VERSION = 'W.2.6.3'
+SCHEMA_VERSION = 'W.3.0.0'
 
 
 class DatabaseMetadata(db.Model):
@@ -179,26 +178,16 @@ class VulnerabilityABC(db.Model):
         'difficult',
         'infeasible'
     ]
-    STATUSES = [
-        'open',
-        'closed',
-        're-opened',
-        'risk-accepted'
-    ]
 
     __abstract__ = True
-
     id = Column(Integer, primary_key=True)
 
-    confirmed = Column(Boolean, nullable=False, default=False)
     data = Column(Text, nullable=True)
     description = Column(Text, nullable=False)
     ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS), nullable=True)
     name = Column(Text, nullable=False)
     resolution = Column(Text, nullable=True)
     severity = Column(String(50), nullable=False)
-    status = Column(Enum(*STATUSES), nullable=False, default="open")
-    vuln_type = Column(Enum(*VULN_TYPES), nullable=False)
     # TODO add evidence
 
     impact_accountability = Column(Boolean, default=False)
@@ -206,24 +195,18 @@ class VulnerabilityABC(db.Model):
     impact_confidentiality = Column(Boolean, default=False)
     impact_integrity = Column(Boolean, default=False)
 
-    # Web Vulns
-    method = Column(String(50), nullable=True)
-    parameters = Column(String(500), nullable=True)
-    parameter_name = Column(String(250), nullable=True)
-    path = Column(String(500), nullable=True)
-    query = Column(Text(), nullable=True)
-    request = Column(Text(), nullable=True)
-    response = Column(Text(), nullable=True)
-    website = Column(String(250), nullable=True)
 
-    # Code Vulns
-    line = Column(Integer, nullable=True)
-
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+class VulnerabilityTemplate(VulnerabilityABC):
+    __tablename__ = 'vulnerability_template'
 
 
 class VulnerabilityGeneric(VulnerabilityABC):
+    STATUSES = [
+        'open',
+        'closed',
+        're-opened',
+        'risk-accepted'
+    ]
     VULN_TYPES = [
         'vulnerability',
         'vulnerability_web',
@@ -231,7 +214,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
     ]
 
     __tablename__ = 'vulnerability'
-
+    confirmed = Column(Boolean, nullable=False, default=False)
+    status = Column(Enum(*STATUSES), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES), nullable=False)
 
     workspace = relationship('Workspace', backref='vulnerabilities')
@@ -265,6 +249,14 @@ class Vulnerability(VulnerabilityGeneric):
 
 class VulnerabilityWeb(VulnerabilityGeneric):
     id = Column(Integer, primary_key=True)
+    method = Column(String(50), nullable=True)
+    parameters = Column(String(500), nullable=True)
+    parameter_name = Column(String(250), nullable=True)
+    path = Column(String(500), nullable=True)
+    query = Column(Text(), nullable=True)
+    request = Column(Text(), nullable=True)
+    response = Column(Text(), nullable=True)
+    website = Column(String(250), nullable=True)
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
@@ -279,6 +271,7 @@ class VulnerabilityWeb(VulnerabilityGeneric):
 
 class VulnerabilityCode(VulnerabilityGeneric):
     id = Column(Integer, primary_key=True)
+    line = Column(Integer, nullable=True)
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)

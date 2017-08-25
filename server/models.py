@@ -2,30 +2,29 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 from sqlalchemy import (
-    Column,
-    Integer,
-    String,
     Boolean,
-    ForeignKey,
-    Float,
-    Text,
-    UniqueConstraint,
+    Column,
     DateTime,
     Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship, backref
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import (
-    UserMixin,
     RoleMixin,
+    UserMixin,
 )
 
 import server.config
 
 db = SQLAlchemy()
 
-
-SCHEMA_VERSION = 'W.2.6.3'
+SCHEMA_VERSION = 'W.3.0.0'
 
 
 class DatabaseMetadata(db.Model):
@@ -195,9 +194,6 @@ class VulnerabilityABC(db.Model):
     impact_availability = Column(Boolean, default=False)
     impact_confidentiality = Column(Boolean, default=False)
     impact_integrity = Column(Boolean, default=False)
-
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
 
 class VulnerabilityTemplate(VulnerabilityABC):

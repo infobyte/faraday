@@ -28,6 +28,14 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     if testing:
         app.config['TESTING'] = testing
+    try:
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or server.config.database.connection_string.strip("'")
+    except AttributeError:
+        print('Missing [database] section on server.ini. Please configure the database before running the server.')
+        sys.exit(1)
+    except NoOptionError:
+        print('Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
+        sys.exit(1)
 
     from server.models import db
     db.init_app(app)
@@ -47,15 +55,6 @@ def create_app(db_connection_string=None, testing=None):
 
     for handler in LOGGING_HANDLERS:
         app.logger.addHandler(handler)
-
-    try:
-        app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or server.config.database.connection_string.strip("'")
-    except AttributeError:
-        print('Missing [database] section on server.ini. Please configure the database before running the server.')
-        sys.exit(1)
-    except NoOptionError:
-        print('Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
-        sys.exit(1)
 
     from server.api.modules.workspaces import workspace_api
     from server.api.modules.doc import doc_api

@@ -148,62 +148,6 @@ class Service(db.Model):
                             )
 
 
-class Reference(db.Model):
-    __tablename__ = 'reference'
-    id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
-
-    workspace_id = Column(
-                        Integer,
-                        ForeignKey('workspace.id'),
-                        index=True
-                        )
-    workspace = relationship(
-                            'Workspace',
-                            backref='references',
-                            foreign_keys=[workspace_id],
-                            )
-
-    vulnerability_id = Column(
-                            Integer,
-                            ForeignKey('vulnerability.id'),
-                            index=True
-                            )
-    vulnerability = relationship(
-                                'Vulnerability',
-                                backref='references',
-                                foreign_keys=[vulnerability_id],
-                                )
-
-
-class PolicyViolation(db.Model):
-    __tablename__ = 'policy_violation'
-    id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
-
-    workspace_id = Column(
-                        Integer,
-                        ForeignKey('workspace.id'),
-                        index=True
-                        )
-    workspace = relationship(
-                            'Workspace',
-                            backref='policy_violations',
-                            foreign_keys=[workspace_id],
-                            )
-
-    vulnerability_id = Column(
-                            Integer,
-                            ForeignKey('vulnerability.id'),
-                            index=True
-                            )
-    vulnerability = relationship(
-                                'Vulnerability',
-                                backref='policy_violations',
-                                foreign_keys=[vulnerability_id]
-                                )
-
-
 class VulnerabilityABC(db.Model):
     # TODO: add unique constraint to -> name, description, severity, parent, method, pname, path, website, workspace
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
@@ -333,6 +277,62 @@ class VulnerabilityCode(VulnerabilityGeneric):
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[2]
     }
+
+
+class Reference(db.Model):
+    __tablename__ = 'reference'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False)
+
+    workspace_id = Column(
+                        Integer,
+                        ForeignKey('workspace.id'),
+                        index=True
+                        )
+    workspace = relationship(
+                            'Workspace',
+                            backref='references',
+                            foreign_keys=[workspace_id],
+                            )
+
+    vulnerability_id = Column(
+                            Integer,
+                            ForeignKey(VulnerabilityGeneric.id),
+                            index=True
+                            )
+    vulnerability = relationship(
+                                'VulnerabilityGeneric',
+                                backref='references',
+                                foreign_keys=[vulnerability_id],
+                                )
+
+
+class PolicyViolation(db.Model):
+    __tablename__ = 'policy_violation'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False)
+
+    workspace_id = Column(
+                        Integer,
+                        ForeignKey('workspace.id'),
+                        index=True
+                        )
+    workspace = relationship(
+                            'Workspace',
+                            backref='policy_violations',
+                            foreign_keys=[workspace_id],
+                            )
+
+    vulnerability_id = Column(
+                            Integer,
+                            ForeignKey(VulnerabilityGeneric.id),
+                            index=True
+                            )
+    vulnerability = relationship(
+                                'VulnerabilityGeneric',
+                                backref='policy_violations',
+                                foreign_keys=[vulnerability_id]
+                                )
 
 
 class Credential(db.Model):

@@ -231,16 +231,15 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
 
 class Vulnerability(VulnerabilityGeneric):
-    id = Column(Integer, primary_key=True)
-
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
-
     host = relationship('Host', backref='vulnerabilities')
     host_id = Column(Integer, ForeignKey(Host.id), index=True)
 
     service = relationship('Service', backref='vulnerabilities')
     service_id = Column(Integer, ForeignKey(Service.id), index=True)
+
+    __table_args__ = {
+        'extend_existing': True
+    }
 
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[0]
@@ -248,7 +247,6 @@ class Vulnerability(VulnerabilityGeneric):
 
 
 class VulnerabilityWeb(VulnerabilityGeneric):
-    id = Column(Integer, primary_key=True)
     method = Column(String(50), nullable=True)
     parameters = Column(String(500), nullable=True)
     parameter_name = Column(String(250), nullable=True)
@@ -258,11 +256,12 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     response = Column(Text(), nullable=True)
     website = Column(String(250), nullable=True)
 
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
-
-    service = relationship('Service', backref='vulnerabilities')
+    service = relationship('Service', backref='vulnerabilities_web')
     service_id = Column(Integer, ForeignKey(Service.id), index=True)
+
+    __table_args__ = {
+        'extend_existing': True
+    }
 
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[1]
@@ -270,14 +269,14 @@ class VulnerabilityWeb(VulnerabilityGeneric):
 
 
 class VulnerabilityCode(VulnerabilityGeneric):
-    id = Column(Integer, primary_key=True)
     line = Column(Integer, nullable=True)
-
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
     source_code = relationship('SourceCode', backref='vulnerabilities')
     source_code_id = Column(Integer, ForeignKey('SourceCode.id'), index=True)
+
+    __table_args__ = {
+        'extend_existing': True
+    }
 
     __mapper_args__ = {
         'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[2]
@@ -298,10 +297,10 @@ class Credential(db.Model):
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
     host = relationship('Host', backref='credentials')
-    host_id = Column(Integer, ForeignKey(Host.id), index=True, nullalbe=True)
+    host_id = Column(Integer, ForeignKey(Host.id), index=True, nullable=True)
 
     service = relationship('Service', backref='credentials')
-    service_id = Column(Integer, ForeignKey(Service.id), index=True, nullalbe=True)
+    service_id = Column(Integer, ForeignKey(Service.id), index=True, nullable=True)
 
     workspace = relationship('Workspace', backref='credentials')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
@@ -367,7 +366,7 @@ class User(db.Model, UserMixin):
     username = Column(String(255), unique=True, nullable=False)
     password = Column(String(255), nullable=True)
     email = Column(String(255), unique=True, nullable=True)  # TBI
-    name = Column(String(255), nullalbe=True)  # TBI
+    name = Column(String(255), nullable=True)  # TBI
     is_ldap = Column(Boolean(), nullable=False, default=False)
     last_login_at = Column(DateTime())  # flask-security
     current_login_at = Column(DateTime())  # flask-security

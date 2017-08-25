@@ -56,6 +56,16 @@ class EntityMetadata(db.Model):
     document_type = Column(String(250))
 
 
+class SourceCode(db.Model):
+    # TODO: add unique constraint -> filename, workspace
+    __tablename__ = 'source_code'
+    id = Column(Integer, primary_key=True)
+    filename = Column(Text, nullable=False)
+
+    workspace = relationship('Workspace', backref='source_codes')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+
+
 class Host(db.Model):
     # TODO: add unique constraint -> ip, workspace
     __tablename__ = 'host'
@@ -162,11 +172,6 @@ class PolicyViolation(db.Model):
 class VulnerabilityABC(db.Model):
     # TODO: add unique constraint to -> name, description, severity, parent, method, pname, path, website, workspace
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
-    VULN_TYPES = [
-        'vuln',
-        'vuln_web',
-        'source_code'
-    ]
     EASE_OF_RESOLUTIONS = [
         'trivial',
         'simple',
@@ -218,34 +223,72 @@ class VulnerabilityABC(db.Model):
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
 
-class Vulnerability(VulnerabilityABC):
+class VulnerabilityGeneric(VulnerabilityABC):
+    VULN_TYPES = [
+        'vulnerability',
+        'vulnerability_web',
+        'vulnerability_code'
+    ]
+
     __tablename__ = 'vulnerability'
-    id = Column(Integer, primary_key=True)
 
-    vuln_type = Column(Enum(*VulnerabilityABC.VULN_TYPES), nullable=False)
+    type = Column(Enum(*VULN_TYPES), nullable=False)
 
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
-
-    host_id = Column(Integer, ForeignKey(Host.id), index=True)
-    host = relationship('Host', back_populates='vulnerabilities')
-
-    service_id = Column(Integer, ForeignKey(Service.id), index=True)
-    service = relationship('Service', back_populates='vulnerabilities')
-
-    workspace = relationship('Workspace')
+    workspace = relationship('Workspace', backref='vulnerabilities')
     workspace_id = Column(
                         Integer,
                         ForeignKey('workspace.id'),
                         index=True,
-                        back_populates='vulnerabilities'
                         )
 
+    __mapper_args__ = {
+        'polymorphic_on': type
+    }
 
-class VulnerabilityTemplate(VulnerabilityABC):
-    __tablename__ = 'vulnerability_template'
 
-    vuln_type = Column(Enum(*VULN_TYPES), nullable=False)
+class Vulnerability(VulnerabilityGeneric):
+    id = Column(Integer, primary_key=True)
+
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    host = relationship('Host', backref='vulnerabilities')
+    host_id = Column(Integer, ForeignKey(Host.id), index=True)
+
+    service = relationship('Service', backref='vulnerabilities')
+    service_id = Column(Integer, ForeignKey(Service.id), index=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[0]
+    }
+
+
+class VulnerabilityWeb(VulnerabilityGeneric):
+    id = Column(Integer, primary_key=True)
+
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    service = relationship('Service', backref='vulnerabilities')
+    service_id = Column(Integer, ForeignKey(Service.id), index=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[1]
+    }
+
+
+class VulnerabilityCode(VulnerabilityGeneric):
+    id = Column(Integer, primary_key=True)
+
+    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
+    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+    source_code = relationship('SourceCode', backref='vulnerabilities')
+    source_code_id = Column(Integer, ForeignKey('SourceCode.id'), index=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': VulnerabilityGeneric.VULN_TYPES[2]
+    }
 
 
 class Credential(db.Model):

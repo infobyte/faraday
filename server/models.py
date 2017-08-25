@@ -198,7 +198,6 @@ class VulnerabilityABC(db.Model):
     resolution = Column(Text, nullable=True)
     severity = Column(String(50), nullable=False)
     status = Column(Enum(*STATUSES), nullable=False, default="open")
-    vuln_type = Column(Enum(*VULN_TYPES), nullable=False)
     # TODO add evidence
 
     impact_accountability = Column(Boolean, default=False)
@@ -221,6 +220,10 @@ class VulnerabilityABC(db.Model):
 
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+
+
+class VulnerabilityTemplate(VulnerabilityABC):
+    __tablename__ = 'vulnerability_template'
 
 
 class VulnerabilityGeneric(VulnerabilityABC):

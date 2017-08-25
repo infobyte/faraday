@@ -10,8 +10,6 @@ from server.models import db, Workspace
 from server.dao.host import HostDAO
 from server.dao.vuln import VulnerabilityDAO
 from server.dao.service import ServiceDAO
-from server.dao.interface import InterfaceDAO
-from server.dao.note import NoteDAO
 from server.dao.workspace import WorkspaceDAO
 from server.utils.logger import get_logger
 from server.utils.web import (
@@ -65,8 +63,6 @@ def workspace_summary(workspace=None):
     services_count = ServiceDAO(workspace).count()
     vuln_count = VulnerabilityDAO(workspace).count(vuln_filter=flask.request.args)
     host_count = HostDAO(workspace).count()
-    iface_count = InterfaceDAO(workspace).count()
-    note_count = NoteDAO(workspace).count()
 
     response = {
         'stats': {
@@ -75,8 +71,6 @@ def workspace_summary(workspace=None):
             'web_vulns':   vuln_count.get('web_vuln_count', 0),
             'std_vulns':   vuln_count.get('vuln_count', 0),
             'hosts':       host_count.get('total_count', 0),
-            'interfaces':  iface_count.get('total_count', 0),
-            'notes':       note_count.get('total_count', 0),
         }
     }
 

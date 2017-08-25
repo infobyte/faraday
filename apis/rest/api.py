@@ -126,10 +126,6 @@ class ModelControllerAPI(RESTApi):
                             view_func=self.listWebVulns,
                             methods=['GET']))
 
-        routes.append(Route(path='/model/interface',
-                            view_func=self.createInterface,
-                            methods=['PUT']))
-
         routes.append(Route(path='/model/service',
                             view_func=self.createService,
                             methods=['PUT']))
@@ -244,14 +240,6 @@ class ModelControllerAPI(RESTApi):
         return self._create(
             self.controller.newHost,
             ['name', 'os'])
-
-    def createInterface(self):
-        return self._create(
-            self.controller.newInterface,
-            ['name', 'mac', 'ipv6_address', 'ipv4_mask', 'ipv4_gateway',
-             'ipv4_dns', 'ipv6_address', 'ipv6_prefix', 'ipv6_gateway',
-             'ipv6_dns', 'network_segment', 'hostname_resolution',
-             'parent_id'])
 
     def createService(self):
         return self._create(

@@ -61,8 +61,8 @@ class SourceCode(db.Model):
     id = Column(Integer, primary_key=True)
     filename = Column(Text, nullable=False)
 
-    workspace = relationship('Workspace', backref='source_codes')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace = relationship('Workspace', backref='source_codes')
 
 
 class Host(db.Model):
@@ -81,11 +81,21 @@ class Host(db.Model):
     mac = Column(Text, nullable=True)
     net_segment = Column(Text, nullable=True)
 
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+    entity_metadata = relationship(
+                                EntityMetadata,
+                                uselist=False,
+                                cascade="all, delete-orphan",
+                                single_parent=True,
+                                foreign_keys=[entity_metadata_id]
+                                )
 
-    workspace = relationship('Workspace', backref='hosts')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace = relationship(
+                            'Workspace',
+                            backref='hosts',
+                            foreign_keys=[workspace_id]
+                            )
 
 
 class Hostname(db.Model):
@@ -94,8 +104,8 @@ class Hostname(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
-    host = relationship('Host', backref='hostnames')
     host_id = Column(Integer, ForeignKey('host.id'), index=True)
+    host = relationship('Host', backref='hostnames')
 
 
 class Service(db.Model):
@@ -118,14 +128,24 @@ class Service(db.Model):
 
     banner = Column(Text, nullable=True)
 
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+    entity_metadata = relationship(
+                                EntityMetadata,
+                                uselist=False,
+                                cascade="all, delete-orphan",
+                                single_parent=True,
+                                foreign_keys=[entity_metadata_id]
+                                )
 
-    host = relationship('Host', backref='services')
     host_id = Column(Integer, ForeignKey('host.id'), index=True)
+    host = relationship('Host', backref='services', foreign_keys=[host_id])
 
-    workspace = relationship('Workspace', backref='services')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace = relationship(
+                            'Workspace',
+                            backref='services',
+                            foreign_keys=[workspace_id]
+                            )
 
 
 class Reference(db.Model):
@@ -133,19 +153,27 @@ class Reference(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
-    workspace = relationship('Workspace', backref='references')
     workspace_id = Column(
                         Integer,
                         ForeignKey('workspace.id'),
                         index=True
                         )
+    workspace = relationship(
+                            'Workspace',
+                            backref='references',
+                            foreign_keys=[workspace_id],
+                            )
 
-    vulnerability = relationship('Vulnerability', backref='references')
     vulnerability_id = Column(
                             Integer,
-                            ForeignKey('vulnerbility.id'),
+                            ForeignKey('vulnerability.id'),
                             index=True
                             )
+    vulnerability = relationship(
+                                'Vulnerability',
+                                backref='references',
+                                foreign_keys=[vulnerability_id],
+                                )
 
 
 class PolicyViolation(db.Model):
@@ -153,19 +181,27 @@ class PolicyViolation(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
-    workspace = relationship('Workspace', backref='policy_violations')
     workspace_id = Column(
                         Integer,
                         ForeignKey('workspace.id'),
                         index=True
                         )
+    workspace = relationship(
+                            'Workspace',
+                            backref='policy_violations',
+                            foreign_keys=[workspace_id],
+                            )
 
-    vulnerability = relationship('Vulnerability', backref='policy_violations')
     vulnerability_id = Column(
                             Integer,
-                            ForeignKey('vulnerbility.id'),
+                            ForeignKey('vulnerability.id'),
                             index=True
                             )
+    vulnerability = relationship(
+                                'Vulnerability',
+                                backref='policy_violations',
+                                foreign_keys=[vulnerability_id]
+                                )
 
 
 class VulnerabilityABC(db.Model):
@@ -218,12 +254,12 @@ class VulnerabilityGeneric(VulnerabilityABC):
     status = Column(Enum(*STATUSES), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES), nullable=False)
 
-    workspace = relationship('Workspace', backref='vulnerabilities')
     workspace_id = Column(
                         Integer,
                         ForeignKey('workspace.id'),
                         index=True,
                         )
+    workspace = relationship('Workspace', backref='vulnerabilities')
 
     __mapper_args__ = {
         'polymorphic_on': type
@@ -231,11 +267,19 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
 
 class Vulnerability(VulnerabilityGeneric):
-    host = relationship('Host', backref='vulnerabilities')
     host_id = Column(Integer, ForeignKey(Host.id), index=True)
+    host = relationship(
+                    'Host',
+                    backref='vulnerabilities',
+                    foreign_keys=[host_id],
+                    )
 
-    service = relationship('Service', backref='vulnerabilities')
     service_id = Column(Integer, ForeignKey(Service.id), index=True)
+    service = relationship(
+                        'Service',
+                        backref='vulnerabilities',
+                        foreign_keys=[service_id],
+                        )
 
     __table_args__ = {
         'extend_existing': True
@@ -256,8 +300,12 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     response = Column(Text(), nullable=True)
     website = Column(String(250), nullable=True)
 
-    service = relationship('Service', backref='vulnerabilities_web')
-    service_id = Column(Integer, ForeignKey(Service.id), index=True)
+    service_id_lala = Column(Integer, ForeignKey(Service.id), index=True)
+    service_lala = relationship(
+                            'Service',
+                            backref='vulnerabilities_web',
+                            foreign_keys=[service_id_lala],
+                            )
 
     __table_args__ = {
         'extend_existing': True
@@ -271,8 +319,12 @@ class VulnerabilityWeb(VulnerabilityGeneric):
 class VulnerabilityCode(VulnerabilityGeneric):
     line = Column(Integer, nullable=True)
 
-    source_code = relationship('SourceCode', backref='vulnerabilities')
-    source_code_id = Column(Integer, ForeignKey('SourceCode.id'), index=True)
+    source_code_id = Column(Integer, ForeignKey(SourceCode.id), index=True)
+    source_code = relationship(
+                            SourceCode,
+                            backref='vulnerabilities',
+                            foreign_keys=[source_code_id]
+                            )
 
     __table_args__ = {
         'extend_existing': True
@@ -293,17 +345,31 @@ class Credential(db.Model):
     description = Column(Text(), nullable=True)
     name = Column(String(250), nullable=True)
 
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+    entity_metadata = relationship(
+                                EntityMetadata,
+                                uselist=False,
+                                cascade="all, delete-orphan",
+                                single_parent=True,
+                                foreign_keys=[entity_metadata_id],
+                                )
 
-    host = relationship('Host', backref='credentials')
     host_id = Column(Integer, ForeignKey(Host.id), index=True, nullable=True)
+    host = relationship('Host', backref='credentials', foreign_keys=[host_id])
 
-    service = relationship('Service', backref='credentials')
     service_id = Column(Integer, ForeignKey(Service.id), index=True, nullable=True)
+    service = relationship(
+                        'Service',
+                        backref='credentials',
+                        foreign_keys=[service_id],
+                        )
 
-    workspace = relationship('Workspace', backref='credentials')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+                            'Workspace',
+                            backref='credentials',
+                            foreign_keys=[workspace_id],
+                            )
 
 
 class Command(db.Model):
@@ -316,12 +382,23 @@ class Command(db.Model):
     hostname = Column(String(250), nullable=False)  # where the command was executed
     params = Column(String(250), nullable=True)
     user = Column(String(250), nullable=True)  # where the command was executed
-    workspace = relationship('Workspace')
+
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace = relationship('Workspace', foreign_keys=[workspace_id])
     # TODO: add Tool relationship and report_attachment
 
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+    entity_metadata_id = Column(
+                                Integer,
+                                ForeignKey(EntityMetadata.id),
+                                index=True
+                                )
+    entity_metadata = relationship(
+                                EntityMetadata,
+                                uselist=False,
+                                cascade="all, delete-orphan",
+                                single_parent=True,
+                                foreign_keys=[entity_metadata_id]
+                                )
 
 
 class Workspace(db.Model):
@@ -415,8 +492,18 @@ class Methodology(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
-    entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
-    entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
+    entity_metadata_id = Column(
+                            Integer,
+                            ForeignKey(EntityMetadata.id),
+                            index=True
+                            )
+    entity_metadata = relationship(
+                                EntityMetadata,
+                                uselist=False,
+                                cascade="all, delete-orphan",
+                                single_parent=True,
+                                foreign_keys=[entity_metadata_id]
+                                )
 
     template = relationship('MethodologyTemplate', backref='methodologies')
     template_id = Column(
@@ -534,11 +621,15 @@ class Comment(db.Model):
 
     text = Column(Text, nullable=False)
 
-    reply_to = relationship('Comment', backref='replies')
     reply_to_id = Column(Integer, ForeignKey('comment.id'))
+    reply_to = relationship(
+                        'Comment',
+                        remote_side=[id],
+                        foreign_keys=[reply_to_id]
+                        )
 
     object_id = Column(Integer, nullable=False)
     object_type = Column(Text, nullable=False)
 
-    workspace = relationship('Workspace')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace = relationship('Workspace', foreign_keys=[workspace_id])

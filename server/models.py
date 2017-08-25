@@ -279,6 +279,23 @@ class VulnerabilityCode(VulnerabilityGeneric):
     }
 
 
+class ReferenceTemplate(db.Model):
+    __tablename__ = 'reference_template'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False)
+
+    vulnerability_id = Column(
+                            Integer,
+                            ForeignKey(VulnerabilityTemplate.id),
+                            index=True
+                            )
+    vulnerability = relationship(
+                                'VulnerabilityTemplate',
+                                backref='references',
+                                foreign_keys=[vulnerability_id],
+                                )
+
+
 class Reference(db.Model):
     __tablename__ = 'reference'
     id = Column(Integer, primary_key=True)
@@ -304,6 +321,23 @@ class Reference(db.Model):
                                 'VulnerabilityGeneric',
                                 backref='references',
                                 foreign_keys=[vulnerability_id],
+                                )
+
+
+class PolicyViolationTemplate(db.Model):
+    __tablename__ = 'policy_violation_template'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False)
+
+    vulnerability_id = Column(
+                            Integer,
+                            ForeignKey(VulnerabilityTemplate.id),
+                            index=True
+                            )
+    vulnerability = relationship(
+                                'VulnerabilityTemplate',
+                                backref='policy_violations',
+                                foreign_keys=[vulnerability_id]
                                 )
 
 

@@ -84,7 +84,9 @@ class InitDB(Command):
             print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
         elif process_status > 0:
             print('ERROR: ' + psql_log_output)
-        sys.exit(1)
+
+        if process_status is not 0:
+            sys.exit(process_status)
 
     def _configure_postgres(self, psql_log_file):
         """

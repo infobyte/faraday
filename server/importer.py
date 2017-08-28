@@ -6,15 +6,22 @@ import sys
 import json
 import os
 
+import requests
+from tqdm import tqdm
+from flask_script import Command as FlaskScriptCommand
+from restkit.errors import RequestError, Unauthorized
+
 import server.app
 import server.utils.logger
 import server.couchdb
 import server.database
 import server.models
+import server.config
 from server.utils.database import get_or_create
 from server.models import (
     db,
     EntityMetadata,
+    Credential,
     Host,
     Interface,
     Service,
@@ -23,9 +30,7 @@ from server.models import (
     Workspace,
     Vulnerability
 )
-from restkit.errors import RequestError, Unauthorized
 
-from tqdm import tqdm
 
 logger = server.utils.logger.get_logger(__name__)
 session = db.session
@@ -73,9 +78,9 @@ class HostImporter(object):
     DOC_TYPE = 'Host'
 
     @classmethod
-    def update_from_document(cls, document):
+    def update_from_document(cls, document, workspace):
         # Ticket #3387: if the 'os' field is None, we default to 'unknown'
-        host = Host()
+        host, created = get_or_create(session, Host, name=document.get('name'))
         if not document.get('os'):
             document['os'] = 'unknown'
 
@@ -87,29 +92,19 @@ class HostImporter(object):
         host.default_gateway_ip = default_gateway and default_gateway[0] or ''
         host.default_gateway_mac = default_gateway and default_gateway[1] or ''
         host.owned = document.get('owned', False)
+        host.workspace = workspace
         return host
 
-    def add_relationships_from_dict(self, host, entities):
-        assert len(filter(lambda entity: isinstance(entity, Workspace), entities)) <= 1
-        for couch_id, entity in entities.items():
-            if isinstance(entity, Workspace):
-                host.workspace = entity
-
-
-    def __get_default_gateway(self, document):
-        default_gateway = document.get('default_gateway', None)
-        if default_gateway:
-            return default_gateway
-        else:
-            return u'', u''
+    def set_parent(self, host, parent):
+        raise NotImplementedError
 
 
 class InterfaceImporter(object):
     DOC_TYPE = 'Interface'
 
     @classmethod
-    def update_from_document(cls, document):
-        interface = Interface()
+    def update_from_document(cls, document, workspace):
+        interface, created = get_or_create(session, Interface, name=document.get('name'))
         interface.name = document.get('name')
         interface.description = document.get('description')
         interface.mac = document.get('mac')
@@ -127,32 +122,28 @@ class InterfaceImporter(object):
         interface.ports_filtered = document.get('ports', {}).get('filtered')
         interface.ports_opened = document.get('ports', {}).get('opened')
         interface.ports_closed = document.get('ports', {}).get('closed')
+        interface.workspace = workspace
         return interface
 
-    def add_relationships_from_dict(self, entity, entities):
-        host_id = '.'.join(entity.entity_metadata.couchdb_id.split('.')[:-1])
-        if host_id not in entities:
-            raise EntityNotFound(host_id)
-        entity.host = entities[host_id]
+    @classmethod
+    def set_parent(cls, interface, parent_relation_db_id, level):
+        interface.host = session.query(Host).filter_by(id=parent_relation_db_id).first()
 
-    def add_relationships_from_db(self, entity, session):
-        host_id = '.'.join(entity.entity_metadata.couchdb_id.split('.')[:-1])
-        query = session.query(Host).join(EntityMetadata).filter(EntityMetadata.couchdb_id == host_id)
-        entity.host = query.one()
 
 
 class ServiceImporter(object):
     DOC_TYPE = 'Service'
 
     @classmethod
-    def update_from_document(cls, document):
-        service = Service()
+    def update_from_document(cls, document, workspace):
+        service, created = get_or_create(session, Service, name=document.get('name'))
         service.name = document.get('name')
         service.description = document.get('description')
         service.owned = document.get('owned', False)
         service.protocol = document.get('protocol')
         service.status = document.get('status')
         service.version = document.get('version')
+        service.workspace = workspace
 
         # We found workspaces where ports are defined as an integer
         if isinstance(document.get('ports', None), (int, long)):
@@ -161,38 +152,16 @@ class ServiceImporter(object):
             service.ports = u','.join(map(str, document.get('ports')))
         return service
 
-    def add_relationships_from_dict(self, entity, entities):
-        couchdb_id = entity.entity_metadata.couchdb_id
-
-        host_id = couchdb_id.split('.')[0]
-        if host_id not in entities:
-            raise EntityNotFound(host_id)
-        entity.host = entities[host_id]
-
-        interface_id = '.'.join(couchdb_id.split('.')[:-1])
-        if interface_id not in entities:
-            raise EntityNotFound(interface_id)
-        entity.interface = entities[interface_id]
-
-    def add_relationships_from_db(self, entity, session):
-        couchdb_id = entity.entity_metadata.couchdb_id
-        host_id = couchdb_id.split('.')[0]
-        query = session.query(Host).join(EntityMetadata).filter(EntityMetadata.couchdb_id == host_id)
-        entity.host = query.one()
-
-        interface_id = '.'.join(couchdb_id.split('.')[:-1])
-        query = session.query(Interface).join(EntityMetadata).filter(EntityMetadata.couchdb_id == interface_id)
-        entity.interface = query.one()
+    def set_parent(self, service, parent_id):
+        raise NotImplementedError
 
 
 class VulnerabilityImporter(object):
     DOC_TYPE = ['Vulnerability', 'VulnerabilityWeb']
 
     @classmethod
-    def update_from_document(cls, document):
-        vulnerability = Vulnerability()
-        vulnerability.name = document.get('name')
-        vulnerability.description = document.get('desc')
+    def update_from_document(cls, document, workspace):
+        vulnerability, created = get_or_create(session, Vulnerability, name=document.get('name'), description= document.get('desc'))
         vulnerability.confirmed = document.get('confirmed')
         vulnerability.vuln_type = document.get('type')
         vulnerability.data = document.get('data')
@@ -215,6 +184,7 @@ class VulnerabilityImporter(object):
         vulnerability.response = document.get('response')
         vulnerability.website = document.get('website')
         vulnerability.status = document.get('status', 'opened')
+        vulnerability.workspace = workspace
 
         params = document.get('params', u'')
         if isinstance(params, (list, tuple)):
@@ -224,36 +194,19 @@ class VulnerabilityImporter(object):
 
         return vulnerability
 
-    def add_relationships_from_dict(self, entity, entities):
-        couchdb_id = entity.entity_metadata.couchdb_id
-        host_id = couchdb_id.split('.')[0]
-        if host_id not in entities:
-            raise EntityNotFound(host_id)
-        entity.host = entities[host_id]
-
-        parent_id = '.'.join(couchdb_id.split('.')[:-1])
-        if parent_id != host_id:
-            if parent_id not in entities:
-                raise EntityNotFound(parent_id)
-            entity.service = entities[parent_id]
-
-    def add_relationships_from_db(self, entity, session):
-        couchdb_id = entity.entity_metadata.couchdb_id
-        host_id = couchdb_id.split('.')[0]
-        query = session.query(Host).join(EntityMetadata).filter(EntityMetadata.couchdb_id == host_id)
-        entity.host = query.one()
-
-        parent_id = '.'.join(couchdb_id.split('.')[:-1])
-        if parent_id != host_id:
-            query = session.query(Service).join(EntityMetadata).filter(EntityMetadata.couchdb_id == parent_id)
-            entity.service = query.one()
-
+    @classmethod
+    def set_parent(self, vulnerability, parent_id, level=2):
+        logger.debug('Set parent for vulnerabiity level {0}'.format(level))
+        if level == 2:
+            vulnerability.host = session.query(Host).filter_by(id=parent_id).first()
+        if level == 3:
+            vulnerability.service = session.query(Service).filter_by(id=parent_id).first()
 
 class CommandImporter(object):
     DOC_TYPE = 'CommandRunInformation'
 
     @classmethod
-    def update_from_document(cls, document):
+    def update_from_document(cls, document, workspace):
         command, instance = get_or_create(session, Command, command=document.get('command', None))
         command.command = document.get('command', None)
         command.duration = document.get('duration', None)
@@ -262,18 +215,12 @@ class CommandImporter(object):
         command.hostname = document.get('hostname', None)
         command.params = document.get('params', None)
         command.user = document.get('user', None)
-
-        workspace_name = document.get('workspace', None)
-        if workspace_name:
-            workspace, instance = get_or_create(session, Workspace, name=document.get('workspace', None))
-            command.workspace = workspace
+        command.workspace = workspace
 
         return command
 
-    def add_relationships_from_dict(self, entity, entities):
-        # this method is not required since update_from_document uses
-        # workspace name to create the relation
-        pass
+    def set_parent(self, command, parent_id):
+        raise NotImplementedError
 
 
 class NoteImporter(object):
@@ -298,38 +245,18 @@ class CredentialImporter(object):
     DOC_TYPE = 'Cred'
 
     @classmethod
-    def update_from_document(cls, document):
-        credential = Credential()
+    def update_from_document(cls, document, workspace):
+        credential, created = get_or_create(session, Credential, name=document.get('username'))
         credential.username = document.get('username')
         credential.password = document.get('password', '')
         credential.owned = document.get('owned', False)
         credential.description = document.get('description', '')
         credential.name = document.get('name', '')
+        credential.workspace = workspace
         return credential
 
-    def add_relationships_from_dict(self, entity, entities):
-        couchdb_id = entity.entity_metadata.couchdb_id
-        host_id = couchdb_id.split('.')[0]
-        if host_id not in entities:
-            raise EntityNotFound(host_id)
-        entity.host = entities[host_id]
-
-        parent_id = '.'.join(couchdb_id.split('.')[:-1])
-        if parent_id != host_id:
-            if parent_id not in entities:
-                raise EntityNotFound(parent_id)
-            entity.service = entities[parent_id]
-
-    def add_relationships_from_db(self, entity, session):
-        couchdb_id = entity.entity_metadata.couchdb_id
-        host_id = couchdb_id.split('.')[0]
-        query = session.query(Host).join(EntityMetadata).filter(EntityMetadata.couchdb_id == host_id)
-        entity.host = query.one()
-
-        parent_id = '.'.join(couchdb_id.split('.')[:-1])
-        if parent_id != host_id:
-            query = session.query(Service).join(EntityMetadata).filter(EntityMetadata.couchdb_id == parent_id)
-            entity.service = query.one()
+    def set_parent(self, credential, parent_id):
+        raise NotImplementedError
 
 
 class WorkspaceImporter(object):
@@ -360,10 +287,8 @@ class FaradayEntityImporter(object):
         return None, None
 
     @classmethod
-    def get_importer_from_document(cls, document):
-        doc_type = document.get('type')
-        if not doc_type:
-            return
+    def get_importer_from_document(cls, doc_type):
+        logger.info('Getting class importer for {0}'.format(doc_type))
         importer_class_mapper = {
             'EntityMetadata': EntityMetadataImporter,
             'Host': HostImporter,
@@ -388,87 +313,92 @@ class FaradayEntityImporter(object):
         raise Exception('MUST IMPLEMENT')
 
 
-def import_workspaces():
-    """
-        Main entry point for couchdb import
-    """
-    app = server.app.create_app()
-    app.app_context().push()
-    db.create_all()
+class ImportCouchDB(FlaskScriptCommand):
 
-    couchdb_server_conn, workspaces_list = _open_couchdb_conn()
+    def _open_couchdb_conn(self):
+        try:
+            couchdb_server_conn = server.couchdb.CouchDBServer()
+            workspaces_list = couchdb_server_conn.list_workspaces()
 
-    for workspace_name in workspaces_list:
-        logger.info(u'Setting up workspace {}'.format(workspace_name))
-
-        if not server.couchdb.server_has_access_to(workspace_name):
-            logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
-                         " configuration file has CouchDB admin's credentials set")
+        except RequestError:
+            logger.error(u"CouchDB is not running at {}. Check faraday-server's"\
+                " configuration and make sure CouchDB is running".format(
+                server.couchdb.get_couchdb_url()))
             sys.exit(1)
 
-        import_workspace_into_database(workspace_name, couchdb_server_conn=couchdb_server_conn)
+        except Unauthorized:
+            logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
+                " configuration file has CouchDB admin's credentials set")
+            sys.exit(1)
 
+        return couchdb_server_conn, workspaces_list
 
-def _open_couchdb_conn():
-    try:
-        couchdb_server_conn = server.couchdb.CouchDBServer()
-        workspaces_list = couchdb_server_conn.list_workspaces()
+    def run(self):
+        """
+            Main entry point for couchdb import
+        """
+        couchdb_server_conn, workspaces_list = self._open_couchdb_conn()
 
-    except RequestError:
-        logger.error(u"CouchDB is not running at {}. Check faraday-server's"\
-            " configuration and make sure CouchDB is running".format(
-            server.couchdb.get_couchdb_url()))
-        sys.exit(1)
+        for workspace_name in workspaces_list:
+            logger.info(u'Setting up workspace {}'.format(workspace_name))
 
-    except Unauthorized:
-        logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
-            " configuration file has CouchDB admin's credentials set")
-        sys.exit(1)
+            if not server.couchdb.server_has_access_to(workspace_name):
+                logger.error(u"Unauthorized access to CouchDB. Make sure faraday-server's"\
+                             " configuration file has CouchDB admin's credentials set")
+                sys.exit(1)
 
-    return couchdb_server_conn, workspaces_list
+            self.import_workspace_into_database(workspace_name)
 
+    def get_objs(self, host, obj_type, level):
+        data = {
+            "map": "function(doc) { if(doc.type == '%s' && doc._id.split('.').length == %d) emit(null, doc); }" % (obj_type, level)
+        }
 
-def import_workspace_into_database(workspace_name, couchdb_server_conn):
+        r = requests.post(host, json=data)
 
-    workspace, created = get_or_create(session, server.models.Workspace, name=workspace_name)
+        return r.json()
 
-    _import_from_couchdb(workspace, couchdb_server_conn)
-    session.commit()
+    def import_workspace_into_database(self, workspace_name):
 
-    return created
+        faraday_importer = FaradayEntityImporter()
+        workspace, created = get_or_create(session, server.models.Workspace, name=workspace_name)
 
+        couch_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_temp_view?include_docs=true".format(
+                    username=server.config.couchdb.user,
+                    password=server.config.couchdb.password,
+                    hostname=server.config.couchdb.host,
+                    port=server.config.couchdb.port,
+                    workspace_name=workspace_name
+                )
 
-def _import_from_couchdb(workspace, couchdb_conn):
-    if 'FARADAY_DONT_IMPORT' in os.environ:
-        return
-    couchdb_workspace = server.couchdb.CouchDBWorkspace(workspace.name, couchdb_server_conn=couchdb_conn)
-    total_amount = couchdb_workspace.get_total_amount_of_documents()
-    processed_docs, progress = 0, 0
-    should_flush_changes = False
-    host_entities = {}
+        obj_types = [
+            (1, 'Host'),
+            (1, 'EntityMetadata'),
+            (1, 'Note'),
+            (1, 'CommandRunInformation'),
+            (2, 'Interface'),
+            (2, 'Service'),
+            (2, 'Vulnerability'),
+            (2, 'VulnerabilityWeb'),
+            (3, 'Vulnerability'),
+            (3, 'VulnerabilityWeb'),
+        ]
+        couchdb_relational_map = {}
 
-    def flush_changes():
-        host_entities.clear()
-        session.commit()
-        session.expunge_all()
+        for level, obj_type in obj_types:
+            obj_importer = faraday_importer.get_importer_from_document(obj_type)
+            objs_dict = self.get_objs(couch_url, obj_type, level)
+            for raw_obj in tqdm(objs_dict.get('rows', [])):
+                raw_obj = raw_obj['value']
+                couchdb_id = raw_obj['_id']
+                new_obj = obj_importer.update_from_document(raw_obj, workspace)
+                if raw_obj.get('parent', None):
+                    obj_importer.set_parent(
+                        new_obj,
+                        couchdb_relational_map[raw_obj['parent']],
+                        level
+                    )
+                session.commit()
+                couchdb_relational_map[couchdb_id] = new_obj.id
 
-    for doc in tqdm(couchdb_workspace.get_documents(per_request=1000), total=total_amount):
-        processed_docs = processed_docs + 1
-        entity_data = doc.get('doc')
-        importer, entity = FaradayEntityImporter.parse(entity_data)
-        if entity is not None:
-            if isinstance(entity, server.models.Host) and should_flush_changes:
-                flush_changes()
-                should_flush_changes = False
-
-            try:
-                importer.add_relationships_from_dict(entity, host_entities)
-            except EntityNotFound:
-                logger.warning(u"Ignoring {} entity ({}) because its parent wasn't found".format(
-                    entity.entity_metadata.document_type, entity.entity_metadata.couchdb_id))
-            else:
-                host_entities[doc.get('key')] = entity
-                session.add(entity)
-
-    logger.info(u'{} importation done!'.format(workspace.name))
-    flush_changes()
+        return created

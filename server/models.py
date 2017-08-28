@@ -14,6 +14,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.ext.declarative import declared_attr
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import (
     RoleMixin,
@@ -218,12 +219,21 @@ class Vulnerability(VulnerabilityGeneric):
                     foreign_keys=[host_id],
                     )
 
-    service_id = Column(Integer, ForeignKey(Service.id), index=True)
+    @declared_attr
+    def service_id(cls):
+        return VulnerabilityGeneric.__table__.c.get(
+                                                'service_id',
+                                                Column(
+                                                    Integer,
+                                                    ForeignKey(Service.id),
+                                                    index=True
+                                                )
+                                                )
+
     service = relationship(
-                        'Service',
-                        backref='vulnerabilities',
-                        foreign_keys=[service_id],
-                        )
+                    'Service',
+                    backref='vulnerabilities',
+                    )
 
     __table_args__ = {
         'extend_existing': True
@@ -244,12 +254,21 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     response = Column(Text(), nullable=True)
     website = Column(String(250), nullable=True)
 
-    service_id_lala = Column(Integer, ForeignKey(Service.id), index=True)
-    service_lala = relationship(
-                            'Service',
-                            backref='vulnerabilities_web',
-                            foreign_keys=[service_id_lala],
-                            )
+    @declared_attr
+    def service_id(cls):
+        return VulnerabilityGeneric.__table__.c.get(
+                                                'service_id',
+                                                Column(
+                                                    Integer,
+                                                    ForeignKey(Service.id),
+                                                    index=True,
+                                                )
+                                                )
+
+    service = relationship(
+                    'Service',
+                    backref='vulnerabilities_web',
+                    )
 
     __table_args__ = {
         'extend_existing': True

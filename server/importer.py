@@ -16,9 +16,7 @@ from server.models import (
     db,
     EntityMetadata,
     Host,
-    Interface,
     Service,
-    Note,
     Command,
     Workspace,
     Vulnerability
@@ -104,43 +102,6 @@ class HostImporter(object):
             return u'', u''
 
 
-class InterfaceImporter(object):
-    DOC_TYPE = 'Interface'
-
-    @classmethod
-    def update_from_document(cls, document):
-        interface = Interface()
-        interface.name = document.get('name')
-        interface.description = document.get('description')
-        interface.mac = document.get('mac')
-        interface.owned = document.get('owned', False)
-        interface.hostnames = u','.join(document.get('hostnames') or [])
-        interface.network_segment = document.get('network_segment')
-        interface.ipv4_address = document.get('ipv4').get('address')
-        interface.ipv4_gateway = document.get('ipv4').get('gateway')
-        interface.ipv4_dns = u','.join(document.get('ipv4').get('DNS'))
-        interface.ipv4_mask = document.get('ipv4').get('mask')
-        interface.ipv6_address = document.get('ipv6').get('address')
-        interface.ipv6_gateway = document.get('ipv6').get('gateway')
-        interface.ipv6_dns = u','.join(document.get('ipv6').get('DNS'))
-        interface.ipv6_prefix = str(document.get('ipv6').get('prefix'))
-        interface.ports_filtered = document.get('ports', {}).get('filtered')
-        interface.ports_opened = document.get('ports', {}).get('opened')
-        interface.ports_closed = document.get('ports', {}).get('closed')
-        return interface
-
-    def add_relationships_from_dict(self, entity, entities):
-        host_id = '.'.join(entity.entity_metadata.couchdb_id.split('.')[:-1])
-        if host_id not in entities:
-            raise EntityNotFound(host_id)
-        entity.host = entities[host_id]
-
-    def add_relationships_from_db(self, entity, session):
-        host_id = '.'.join(entity.entity_metadata.couchdb_id.split('.')[:-1])
-        query = session.query(Host).join(EntityMetadata).filter(EntityMetadata.couchdb_id == host_id)
-        entity.host = query.one()
-
-
 class ServiceImporter(object):
     DOC_TYPE = 'Service'
 
@@ -169,20 +130,11 @@ class ServiceImporter(object):
             raise EntityNotFound(host_id)
         entity.host = entities[host_id]
 
-        interface_id = '.'.join(couchdb_id.split('.')[:-1])
-        if interface_id not in entities:
-            raise EntityNotFound(interface_id)
-        entity.interface = entities[interface_id]
-
     def add_relationships_from_db(self, entity, session):
         couchdb_id = entity.entity_metadata.couchdb_id
         host_id = couchdb_id.split('.')[0]
         query = session.query(Host).join(EntityMetadata).filter(EntityMetadata.couchdb_id == host_id)
         entity.host = query.one()
-
-        interface_id = '.'.join(couchdb_id.split('.')[:-1])
-        query = session.query(Interface).join(EntityMetadata).filter(EntityMetadata.couchdb_id == interface_id)
-        entity.interface = query.one()
 
 
 class VulnerabilityImporter(object):
@@ -346,7 +298,7 @@ class WorkspaceImporter(object):
 
 
 class FaradayEntityImporter(object):
-    # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace', u'Interface']
+    # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace']
     @classmethod
     def parse(cls, document):
         """Get an instance of a DAO object given a document"""
@@ -367,7 +319,6 @@ class FaradayEntityImporter(object):
         importer_class_mapper = {
             'EntityMetadata': EntityMetadataImporter,
             'Host': HostImporter,
-            'Interface': InterfaceImporter,
             'Service': ServiceImporter,
             'Note': NoteImporter,
             'CommandRunInformation': CommandImporter,
@@ -375,8 +326,9 @@ class FaradayEntityImporter(object):
             'Vulnerability': VulnerabilityImporter,
             'VulnerabilityWeb': VulnerabilityImporter,
         }
+        # TODO: remove this!
         if doc_type in ('Communication', 'Cred', 'Reports',
-                        'Task', 'TaskGroup'):
+                        'Task', 'TaskGroup', 'Interface', 'Note'):
             return
         importer_cls = importer_class_mapper.get(doc_type, None)
         if not importer_cls:

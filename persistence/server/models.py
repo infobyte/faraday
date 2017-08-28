@@ -19,7 +19,6 @@ from persistence.server.server_io_exceptions import (WrongObjectSignature,
 from persistence.server.utils import (force_unique,
                                       get_hash,
                                       get_host_properties,
-                                      get_interface_properties,
                                       get_service_properties,
                                       get_vuln_properties,
                                       get_vuln_web_properties,
@@ -102,17 +101,16 @@ def _flatten_dictionary(dictionary):
 def _get_faraday_ready_objects(workspace_name, faraday_ready_object_dictionaries,
                                faraday_object_name):
     """Takes a workspace name, a faraday object ('hosts', 'vulns',
-    'interfaces' or 'services') a row_name (the name of the row where
+    or 'services') a row_name (the name of the row where
     the information about the objects live) and an arbitray number
     of params to customize to request.
 
     Return a list of faraday objects: either
-    Host, Interface, Service, Vuln, VulnWeb, Credential or Command.
+    Host, Service, Vuln, VulnWeb, Credential or Command.
     """
     object_to_class = {'hosts': Host,
                        'vulns': Vuln,
                        'vulns_web': VulnWeb,
-                       'interfaces': Interface,
                        'services': Service,
                        'notes': Note,
                        'credentials': Credential,
@@ -149,10 +147,6 @@ def _get_faraday_ready_vulns(workspace_name, vulns_dictionaries, vulns_type=None
 def _get_faraday_ready_services(workspace_name, services_dictionaries):
     """Return a list of Services created with the information found on services_dictionaries"""
     return _get_faraday_ready_objects(workspace_name, services_dictionaries, 'services')
-
-def _get_faraday_ready_interfaces(workspace_name, interfaces_dictionaries):
-    """Return a list of Interfaces created with the information found on interfaces_dictionaries"""
-    return _get_faraday_ready_objects(workspace_name, interfaces_dictionaries, 'interfaces')
 
 def _get_faraday_ready_credentials(workspace_name, credentials_dictionaries):
     """Return a list of Credentials created with the information found on credentials_dictionaries"""
@@ -224,19 +218,6 @@ def get_web_vuln(workspace_name, vuln_id):
     """Return the WebVuln of id vuln_id. None if not found."""
     return force_unique(get_web_vulns(workspace_name, couchid=vuln_id))
 
-def get_interfaces(workspace_name, **params):
-    """Take a workspace name and a arbitrary number of params to customize the
-    request.
-
-    Return a list of Interfaces objects
-    """
-    interfaces_dictionaries = server.get_interfaces(workspace_name, **params)
-    return _get_faraday_ready_interfaces(workspace_name, interfaces_dictionaries)
-
-def get_interface(workspace_name, interface_id):
-    """Return the Interface of id interface_id. None if not found."""
-    return force_unique(get_interfaces(workspace_name, couchid=interface_id))
-
 def get_services(workspace_name, **params):
     """Take a workspace name and a arbitrary number of params to customize the
     request.
@@ -300,13 +281,12 @@ def get_object(workspace_name, object_signature, object_id):
     about 'object_signature' objects matching the query.
 
     object_signature must be either 'Host', 'Vulnerability', 'VulnerabilityWeb',
-    'Interface', 'Service', 'Cred', 'Note' or 'CommandRunInformation'.
+    'Service', 'Cred', 'Note' or 'CommandRunInformation'.
     Will raise an WrongObjectSignature error if this condition is not met.
     """
     object_to_func = {Host.class_signature: get_host,
                       Vuln.class_signature: get_vuln,
                       VulnWeb.class_signature: get_web_vuln,
-                      Interface.class_signature: get_interface,
                       Service.class_signature: get_service,
                       Credential.class_signature: get_credential,
                       Note.class_signature: get_note,
@@ -341,23 +321,6 @@ def update_host(workspace_name, host):
     """
     host_properties = get_host_properties(host)
     return server.update_host(workspace_name, **host_properties)
-
-@_ignore_in_changes
-def create_interface(workspace_name, interface):
-    """Take a workspace_name and an interface object and save it to the sever.
-    Return the server's json response as a dictionary.
-    """
-    interface_properties = get_interface_properties(interface)
-    return server.create_interface(workspace_name, **interface_properties)
-
-@_ignore_in_changes
-def update_interface(workspace_name, interface):
-    """Take a workspace_name and an interface object and update it in the sever.
-
-    Return the server's json response as a dictionary.
-    """
-    interface_properties = get_interface_properties(interface)
-    return server.update_interface(workspace_name, **interface_properties)
 
 @_ignore_in_changes
 def create_service(workspace_name, service):
@@ -464,13 +427,12 @@ def create_object(workspace_name, object_signature, obj):
     object_signature must match the type of the object.
 
     object_signature must be either 'Host', 'Vulnerability', 'VulnerabilityWeb',
-    'Interface', 'Service', 'Cred', 'Note' or 'CommandRunInformation'.
+    'Service', 'Cred', 'Note' or 'CommandRunInformation'.
     Will raise an WrongObjectSignature error if this condition is not met.
     """
     object_to_func = {Host.class_signature: create_host,
                       Vuln.class_signature: create_vuln,
                       VulnWeb.class_signature: create_vuln_web,
-                      Interface.class_signature: create_interface,
                       Service.class_signature: create_service,
                       Credential.class_signature: create_credential,
                       Note.class_signature: create_note,
@@ -489,14 +451,13 @@ def update_object(workspace_name, object_signature, obj):
     object_signature must match the type of the object.
 
     object_signature must be either 'Host', 'Vulnerability', 'VulnerabilityWeb',
-    'Interface', 'Service', 'Cred', 'Note' or 'CommandRunInformation'.
+    'Service', 'Cred', 'Note' or 'CommandRunInformation'.
     Will raise an WrongObjectSignature error if this condition is not met.
 
     """
     object_to_func = {Host.class_signature: update_host,
                       Vuln.class_signature: update_vuln,
                       VulnWeb.class_signature: update_vuln_web,
-                      Interface.class_signature: update_interface,
                       Service.class_signature: update_service,
                       Credential.class_signature: update_credential,
                       Note.class_signature: update_note,
@@ -527,7 +488,7 @@ def get_workspace_summary(workspace_name):
     return server.get_workspace_summary(workspace_name)
 
 def get_workspace_numbers(workspace_name):
-    """Return a tuple with the number of hosts, interfaces, services and vulns
+    """Return a tuple with the number of hosts, services and vulns
     on the workspace of name workspace_name.
     """
     return server.get_workspace_numbers(workspace_name)
@@ -542,18 +503,13 @@ def get_services_number(workspace_name, **params):
     """
     return server.get_services_number(workspace_name, **params)
 
-def get_interfaces_number(workspace_name, **params):
-    """Return the number of interfaces found on the workspace of name workspace_name
-    """
-    return server.get_interfaces_number(workspace_name, **params)
-
 def get_vulns_number(workspace_name, **params):
     """Return the number of vulns found on the workspace of name workspace_name
     """
     return server.get_vulns_number(workspace_name, **params)
 
 # NOTE: the delete functions are actually the same.
-# there's no difference between delete_host and delete_interface
+# there's no difference between delete_host and
 # except for their names.
 # maybe implement some kind of validation in the future?
 
@@ -563,13 +519,6 @@ def delete_host(workspace_name, host_id):
     Return the json response from the server.
     """
     return server.delete_host(workspace_name, host_id)
-
-@_ignore_in_changes
-def delete_interface(workspace_name, interface_id):
-    """Delete the interface of id interface_id on workspace workspace_name.
-    Return the json response from the server.
-    """
-    return server.delete_interface(workspace_name, interface_id)
 
 @_ignore_in_changes
 def delete_service(workspace_name, service_id):
@@ -617,13 +566,12 @@ def delete_object(workspace_name, object_signature, obj_id):
     """Given a workspace name, an object_signature as string and an object id.
 
     object_signature must be either 'Host', 'Vulnerability', 'VulnerabilityWeb',
-    'Interface', 'Service', 'Cred', 'Note' or 'CommandRunInformation'.
+    'Service', 'Cred', 'Note' or 'CommandRunInformation'.
     Will raise an WrongObjectSignature error if this condition is not met.
     """
     object_to_func = {Host.class_signature: delete_host,
                       Vuln.class_signature: delete_vuln,
                       VulnWeb.class_signature: delete_vuln_web,
-                      Interface.class_signature: delete_interface,
                       Service.class_signature: delete_service,
                       Credential.class_signature: delete_credential,
                       Note.class_signature: delete_note,
@@ -809,147 +757,147 @@ class Host(ModelBase):
     def getDefaultGateway(self): return self.default_gateway
     def getVulns(self):
         return get_all_vulns(self._workspace_name, hostid=self._server_id)
-    def getInterface(self, interface_couch_id):
-        service = get_interfaces(self._workspace_name, couchid=interface_couch_id)
-        return service[0]
-    def getAllInterfaces(self):
-        return get_interfaces(self._workspace_name, host=self._server_id)
+    # def getInterface(self, interface_couch_id):
+    #     service = get_interfaces(self._workspace_name, couchid=interface_couch_id)
+    #     return service[0]
+    # def getAllInterfaces(self):
+    #     return get_interfaces(self._workspace_name, host=self._server_id)
     def getServices(self):
         return get_services(self._workspace_name, hostid=self._server_id)
 
 
-class Interface(ModelBase):
-    """A simple Interface class. Should implement all the methods of the
-    Interface object in Model.Host
-    Any method here more than a couple of lines long probably represent
-    a search the server is missing.
-    """
-    class_signature = 'Interface'
+# class Interface(ModelBase):
+#     """A simple Interface class. Should implement all the methods of the
+#     Interface object in Model.Host
+#     Any method here more than a couple of lines long probably represent
+#     a search the server is missing.
+#     """
+#     class_signature = 'Interface'
 
-    def __init__(self, interface, workspace_name):
-        ModelBase.__init__(self, interface, workspace_name)
-        self.hostnames = interface.get('hostnames', [])
+#     def __init__(self, interface, workspace_name):
+#         ModelBase.__init__(self, interface, workspace_name)
+#         self.hostnames = interface.get('hostnames', [])
 
-        # NOTE. i don't know why this is like this
-        # probably a remnant of the old faraday style classes
-        try:
-            self.ipv4 = interface['ipv4']
-            self.ipv6 = interface['ipv6']
-        except KeyError:
-            self.ipv4 = {'address': interface['ipv4_address'],
-                         'gateway': interface['ipv4_gateway'],
-                         'mask': interface['ipv4_mask'],
-                         'DNS': interface['ipv4_dns']}
-            self.ipv6 = {'address': interface['ipv6_address'],
-                         'gateway': interface['ipv6_gateway'],
-                         'prefix': interface['ipv6_prefix'],
-                         'DNS': interface['ipv6_dns']}
-        self.mac = interface.get('mac')
-        self.network_segment = interface.get('network_segment')
-        self.ports = interface.get('ports')
+#         # NOTE. i don't know why this is like this
+#         # probably a remnant of the old faraday style classes
+#         try:
+#             self.ipv4 = interface['ipv4']
+#             self.ipv6 = interface['ipv6']
+#         except KeyError:
+#             self.ipv4 = {'address': interface['ipv4_address'],
+#                          'gateway': interface['ipv4_gateway'],
+#                          'mask': interface['ipv4_mask'],
+#                          'DNS': interface['ipv4_dns']}
+#             self.ipv6 = {'address': interface['ipv6_address'],
+#                          'gateway': interface['ipv6_gateway'],
+#                          'prefix': interface['ipv6_prefix'],
+#                          'DNS': interface['ipv6_dns']}
+#         self.mac = interface.get('mac')
+#         self.network_segment = interface.get('network_segment')
+#         self.ports = interface.get('ports')
 
-        self.amount_ports_opened   = 0
-        self.amount_ports_closed   = 0
-        self.amount_ports_filtered = 0
+#         self.amount_ports_opened   = 0
+#         self.amount_ports_closed   = 0
+#         self.amount_ports_filtered = 0
 
-    def setID(self, parent_id):
-        try:
-            ipv4_address = self.ipv4_address
-            ipv6_address = self.ipv6_address
-        except AttributeError:
-            ipv4_address = self.ipv4['address']
-            ipv6_address = self.ipv6['address']
+#     def setID(self, parent_id):
+#         try:
+#             ipv4_address = self.ipv4_address
+#             ipv6_address = self.ipv6_address
+#         except AttributeError:
+#             ipv4_address = self.ipv4['address']
+#             ipv6_address = self.ipv6['address']
 
-        ModelBase.setID(self, parent_id, self.network_segment, ipv4_address, ipv6_address)
+#         ModelBase.setID(self, parent_id, self.network_segment, ipv4_address, ipv6_address)
 
-    @staticmethod
-    def publicattrsrefs():
-        publicattrs = dict(ModelBase.publicattrsrefs(), **{
-            'MAC Address' : 'mac',
-            'IPV4 Settings' : 'ipv4',
-            'IPV6 Settings' : 'ipv6',
-            'Network Segment' : 'network_segment',
-            'Hostnames' : 'hostnames'
-        })
-        return publicattrs
+#     @staticmethod
+#     def publicattrsrefs():
+#         publicattrs = dict(ModelBase.publicattrsrefs(), **{
+#             'MAC Address' : 'mac',
+#             'IPV4 Settings' : 'ipv4',
+#             'IPV6 Settings' : 'ipv6',
+#             'Network Segment' : 'network_segment',
+#             'Hostnames' : 'hostnames'
+#         })
+#         return publicattrs
 
-    def tieBreakable(self, property_key):
-        """
-        Return true if we can auto resolve this conflict.
-        """
-        if property_key in ["hostnames"]:
-            return True
-        return False
+#     def tieBreakable(self, property_key):
+#         """
+#         Return true if we can auto resolve this conflict.
+#         """
+#         if property_key in ["hostnames"]:
+#             return True
+#         return False
 
-    def tieBreak(self, key, prop1, prop2):
-        """
-        Return the 'choosen one'
-        Return a tuple with prop1, prop2 if we cant resolve conflict.
-        """
-        if key == "hostnames":
-            prop1.extend(prop2)
-            # Remove duplicated with set...
-            return list(set(prop1))
+#     def tieBreak(self, key, prop1, prop2):
+#         """
+#         Return the 'choosen one'
+#         Return a tuple with prop1, prop2 if we cant resolve conflict.
+#         """
+#         if key == "hostnames":
+#             prop1.extend(prop2)
+#             # Remove duplicated with set...
+#             return list(set(prop1))
 
-        return (prop1, prop2)
+#         return (prop1, prop2)
 
-    def updateAttributes(self, name=None, description=None, hostnames=None, mac=None, ipv4=None, ipv6=None,
-                         network_segment=None, amount_ports_opened=None, amount_ports_closed=None,
-                         amount_ports_filtered=None, owned=None):
+#     def updateAttributes(self, name=None, description=None, hostnames=None, mac=None, ipv4=None, ipv6=None,
+#                          network_segment=None, amount_ports_opened=None, amount_ports_closed=None,
+#                          amount_ports_filtered=None, owned=None):
 
-        if name is not None:
-            self.name = name
-        if description is not None:
-            self.description = description
-        if hostnames is not None:
-            self.hostnames = hostnames
-        if mac is not None:
-            self.mac = mac
-        if ipv4 is not None:
-            self.ipv4 = ipv4
-        if ipv6 is not None:
-            self.ipv6 = ipv6
-        if network_segment is not None:
-            self.network_segment = network_segment
-        if amount_ports_opened is not None:
-            self.setPortsOpened(amount_ports_opened)
-        if amount_ports_closed is not None:
-            self.setPortsClosed(amount_ports_closed)
-        if amount_ports_filtered is not None:
-            self.setPortsFiltered(amount_ports_filtered)
-        if owned is not None:
-            self.owned = owned
+#         if name is not None:
+#             self.name = name
+#         if description is not None:
+#             self.description = description
+#         if hostnames is not None:
+#             self.hostnames = hostnames
+#         if mac is not None:
+#             self.mac = mac
+#         if ipv4 is not None:
+#             self.ipv4 = ipv4
+#         if ipv6 is not None:
+#             self.ipv6 = ipv6
+#         if network_segment is not None:
+#             self.network_segment = network_segment
+#         if amount_ports_opened is not None:
+#             self.setPortsOpened(amount_ports_opened)
+#         if amount_ports_closed is not None:
+#             self.setPortsClosed(amount_ports_closed)
+#         if amount_ports_filtered is not None:
+#             self.setPortsFiltered(amount_ports_filtered)
+#         if owned is not None:
+#             self.owned = owned
 
-    def setPortsOpened(self, ports_opened):
-        self.amount_ports_opened   = ports_opened
+#     def setPortsOpened(self, ports_opened):
+#         self.amount_ports_opened   = ports_opened
 
-    def setPortsClosed(self, ports_closed):
-        self.amount_ports_closed   = ports_closed
+#     def setPortsClosed(self, ports_closed):
+#         self.amount_ports_closed   = ports_closed
 
-    def setPortsFiltered(self, ports_filtered):
-        self.amount_ports_filtered = ports_filtered
+#     def setPortsFiltered(self, ports_filtered):
+#         self.amount_ports_filtered = ports_filtered
 
-    def __str__(self): return "{0}".format(self.name)
-    def getID(self): return self.id
-    def getHostnames(self): return self.hostnames
-    def getIPv4(self): return self.ipv4
-    def getIPv6(self): return self.ipv6
-    def getIPv4Address(self): return self.ipv4['address']
-    def getIPv4Mask(self): return self.ipv4['mask']
-    def getIPv4Gateway(self): return self.ipv4['gateway']
-    def getIPv4DNS(self): return self.ipv4['DNS']
-    def getIPv6Address(self): return self.ipv6['address']
-    def getIPv6Gateway(self): return self.ipv6['gateway']
-    def getIPv6DNS(self): return self.ipv6['DNS']
-    def getMAC(self): return self.mac
-    def getNetworkSegment(self): return self.network_segment
+#     def __str__(self): return "{0}".format(self.name)
+#     def getID(self): return self.id
+#     def getHostnames(self): return self.hostnames
+#     def getIPv4(self): return self.ipv4
+#     def getIPv6(self): return self.ipv6
+#     def getIPv4Address(self): return self.ipv4['address']
+#     def getIPv4Mask(self): return self.ipv4['mask']
+#     def getIPv4Gateway(self): return self.ipv4['gateway']
+#     def getIPv4DNS(self): return self.ipv4['DNS']
+#     def getIPv6Address(self): return self.ipv6['address']
+#     def getIPv6Gateway(self): return self.ipv6['gateway']
+#     def getIPv6DNS(self): return self.ipv6['DNS']
+#     def getMAC(self): return self.mac
+#     def getNetworkSegment(self): return self.network_segment
 
-    def getService(self, service_couch_id):
-        return get_service(self._workspace_name, service_couch_id)
-    def getAllServices(self):
-        return get_services(self._workspace_name, interface=self._server_id)
-    def getVulns(self):
-        return get_all_vulns(self._workspace_name, interfaceid=self._server_id)
+#     def getService(self, service_couch_id):
+#         return get_service(self._workspace_name, service_couch_id)
+#     def getAllServices(self):
+#         return get_services(self._workspace_name, interface=self._server_id)
+#     def getVulns(self):
+#         return get_all_vulns(self._workspace_name, interfaceid=self._server_id)
 
 
 class Service(ModelBase):

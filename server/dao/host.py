@@ -15,7 +15,6 @@ from sqlalchemy.orm.query import Bundle
 from sqlalchemy.sql import func
 from server.models import (
     Host,
-    Interface,
     Service,
     Vulnerability,
     EntityMetadata,
@@ -29,7 +28,7 @@ class HostDAO(FaradayDAO):
 
     COLUMNS_MAP = {
         "couchid": [EntityMetadata.couchdb_id],
-        "name": [Host.name],
+        "ip": [Host.ip],
         "service": [Service.name],
         "services": ["open_services_count"],
         "vulns": ["vuln_count"],
@@ -55,21 +54,19 @@ class HostDAO(FaradayDAO):
     def __query_database(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, host_filter={}):
 
         host_bundle = Bundle(
-            "host", Host.id, Host.name, Host.os, Host.description, Host.owned,
+            "host", Host.id, Host.ip, Host.os, Host.description, Host.owned,
             Host.default_gateway_ip, Host.default_gateway_mac,
             EntityMetadata.couchdb_id, EntityMetadata.revision,
             EntityMetadata.update_time, EntityMetadata.update_user,
             EntityMetadata.update_action, EntityMetadata.creator,
             EntityMetadata.create_time, EntityMetadata.update_controller_action,
             EntityMetadata.owner, EntityMetadata.command_id,
-            func.group_concat(distinct(Interface.id)).label("interfaces"),
             func.count(distinct(Vulnerability.id)).label("vuln_count"),
             func.count(distinct(Service.id)).label("open_services_count"),
             func.count(distinct(Credential.id)).label("credentials_count"))
 
         query = self._session.query(host_bundle)\
                              .outerjoin(EntityMetadata, EntityMetadata.id == Host.entity_metadata_id)\
-                             .outerjoin(Interface, Host.id == Interface.host_id)\
                              .outerjoin(Vulnerability, Host.id == Vulnerability.host_id)\
                              .outerjoin(Service, (Host.id == Service.host_id) & (Service.status.in_(("open", "running", "opened"))))\
                              .outerjoin(Credential, (Credential.host_id == Host.id) & Credential.service_id == None)\
@@ -97,7 +94,7 @@ class HostDAO(FaradayDAO):
             "value": {
                 "_id": host.couchdb_id,
                 "_rev": host.revision,
-                "name": host.name,
+                "ip": host.ip,
                 "os": host.os,
                 "owned": host.owned,
                 "owner": host.owner,
@@ -115,7 +112,6 @@ class HostDAO(FaradayDAO):
                 },
                 "vulns": host.vuln_count,
                 "services": host.open_services_count,
-                "interfaces": map(int, host.interfaces.split(",")) if host.interfaces else [],
                 "credentials": host.credentials_count
             }}
 
@@ -129,7 +125,7 @@ class HostDAO(FaradayDAO):
 
         # Otherwise return the amount of services grouped by the field specified
         # Strict restriction is applied for this entity
-        if group_by not in ["name", "os"]:
+        if group_by not in ["ip", "os"]:
             return None
 
         col = HostDAO.COLUMNS_MAP.get(group_by)[0]

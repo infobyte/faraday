@@ -17,7 +17,6 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm.query import Bundle
 from server.models import (
     Host,
-    Interface,
     Service,
     Vulnerability,
     EntityMetadata
@@ -33,40 +32,27 @@ class VulnerabilityDAO(FaradayDAO):
         "confirmed":        [Vulnerability.confirmed],
         "name":             [Vulnerability.name],
         "severity":         [Vulnerability.severity],
-        "service":          [Service.ports, Service.protocol, Service.name],
-        "target":           [Host.name],
+        "service":          [Service.port, Service.protocol, Service.name],
+        "target":           [Host.ip],
         "desc":             [Vulnerability.description],
         "resolution":       [Vulnerability.resolution],
         "data":             [Vulnerability.data],
         "owner":            [EntityMetadata.owner],
-        "owned":            [Vulnerability.owned],
-        "easeofresolution": [Vulnerability.easeofresolution],
+        "ease_of_resolution": [Vulnerability.ease_of_resolution],
         "type":             [EntityMetadata.document_type],
         "status":           [Vulnerability.status],
-        "website":          [Vulnerability.website],
-        "path":             [Vulnerability.path],
-        "request":          [Vulnerability.request],
-        "refs":             [Vulnerability.refs],
         "tags":             [],
         "evidence":         [],
-        "hostnames":        [Interface.hostnames],
         "impact":           [],
-        "method":           [Vulnerability.method],
-        "params":           [Vulnerability.params],
-        "pname":            [Vulnerability.pname],
-        "query":            [Vulnerability.query],
-        "response":         [Vulnerability.response],
         "hostid":           [Host.id],
         "serviceid":        [Service.id],
-        "interfaceid":      [Interface.id],
         "web":              [],
         "issuetracker":     [],
         "creator":          [EntityMetadata.creator],
-        "command_id":       [EntityMetadata.command_id],
-        "policyviolations":  [Vulnerability.policyviolations]
+        "command_id":       [EntityMetadata.command_id]
     }
 
-    STRICT_FILTERING = ["type", "service", "couchid", "hostid", "serviceid", 'interfaceid', 'id', 'status', 'command_id']
+    STRICT_FILTERING = ["type", "service", "couchid", "hostid", "serviceid", 'id', 'status', 'command_id']
 
     def list(self, search=None, page=0, page_size=0, order_by=None, order_dir=None, vuln_filter={}):
         results, count = self.__query_database(search, page, page_size, order_by, order_dir, vuln_filter)
@@ -85,25 +71,22 @@ class VulnerabilityDAO(FaradayDAO):
         # times from large workspaces almost 2x.
         vuln_bundle = Bundle('vuln', Vulnerability.id.label('server_id'), Vulnerability.name.label('v_name'),\
             Vulnerability.confirmed, Vulnerability.data,\
-            Vulnerability.description, Vulnerability.easeofresolution, Vulnerability.impact_accountability,\
+            Vulnerability.description, Vulnerability.ease_of_resolution, Vulnerability.impact_accountability,\
             Vulnerability.impact_availability, Vulnerability.impact_confidentiality, Vulnerability.impact_integrity,\
-            Vulnerability.refs, Vulnerability.resolution, Vulnerability.severity, Vulnerability.owned, Vulnerability.status,\
-            Vulnerability.website, Vulnerability.path, Vulnerability.request, Vulnerability.response,\
-            Vulnerability.method, Vulnerability.params, Vulnerability.pname, Vulnerability.query,\
+            Vulnerability.resolution, Vulnerability.severity, Vulnerability.status,\
             EntityMetadata.couchdb_id, EntityMetadata.revision, EntityMetadata.create_time, EntityMetadata.creator,\
             EntityMetadata.owner, EntityMetadata.update_action, EntityMetadata.update_controller_action,\
             EntityMetadata.update_time, EntityMetadata.update_user, EntityMetadata.document_type, EntityMetadata.command_id, \
-            Vulnerability.attachments, Vulnerability.policyviolations)
-        service_bundle = Bundle('service', Service.name.label('s_name'), Service.ports, Service.protocol, Service.id)
-        host_bundle = Bundle('host', Host.name)
+            Vulnerability.attachments)
+        service_bundle = Bundle('service', Service.name.label('s_name'), Service.port, Service.protocol, Service.id)
+        host_bundle = Bundle('host', Host.ip)
 
         # IMPORTANT: OUTER JOINS on those tables is IMPERATIVE. Changing them could result in loss of
         # data. For example, on vulnerabilities not associated with any service and instead to its host
         # directly.
         query = self._session.query(vuln_bundle,
                                     service_bundle,
-                                    host_bundle,
-                                    func.group_concat(Interface.hostnames))\
+                                    host_bundle)\
                              .group_by(Vulnerability.id)\
                              .outerjoin(EntityMetadata, EntityMetadata.id == Vulnerability.entity_metadata_id)\
                              .outerjoin(Service, Service.id == Vulnerability.service_id)\
@@ -162,7 +145,7 @@ class VulnerabilityDAO(FaradayDAO):
                 'data': vuln.data,
                 'desc': vuln.description,
                 'description': vuln.description,
-                'easeofresolution': vuln.easeofresolution,
+                'ease_of_resolution': vuln.ease_of_resolution,
                 'impact': {
                     'accountability': vuln.impact_accountability,
                     'availability': vuln.impact_availability,
@@ -186,24 +169,14 @@ class VulnerabilityDAO(FaradayDAO):
                 'owned': vuln.owned,
                 'owner': vuln.owner,
                 'parent': get_parent_id(vuln.couchdb_id),
-                'policyviolations': json.loads(vuln.policyviolations),
-                'refs': json.loads(vuln.refs),
                 'status': vuln.status,
-                'website': vuln.website,
-                'path': vuln.path,
-                'request': vuln.request,
-                'response': vuln.response,
-                'method': vuln.method,
-                'params': vuln.params,
-                'pname': vuln.pname,
-                'query': vuln.query,
                 'resolution': vuln.resolution,
                 'severity': vuln.severity,
                 'tags': [],
                 'type': vuln.document_type,
-                'target': host.name,
+                'target': Host.ip,
                 'hostnames': hostnames.split(',') if hostnames else '',
-                'service': "(%s/%s) %s" % (service.ports, service.protocol, service.s_name) if service.ports else ''
+                'service': "(%s/%s) %s" % (service.port, service.protocol, service.s_name) if service.port else ''
             }}
 
     def count(self, group_by=None, search=None, vuln_filter={}):

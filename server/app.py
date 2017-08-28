@@ -28,6 +28,14 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     if testing:
         app.config['TESTING'] = testing
+    try:
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or server.config.database.connection_string.strip("'")
+    except AttributeError:
+        print('Missing [database] section on server.ini. Please configure the database before running the server.')
+        sys.exit(1)
+    except NoOptionError:
+        print('Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
+        sys.exit(1)
 
     from server.models import db
     db.init_app(app)
@@ -48,35 +56,22 @@ def create_app(db_connection_string=None, testing=None):
     for handler in LOGGING_HANDLERS:
         app.logger.addHandler(handler)
 
-    try:
-        app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or server.config.database.connection_string.strip("'")
-    except AttributeError:
-        print('Missing [database] section on server.ini. Please configure the database before running the server.')
-        sys.exit(1)
-    except NoOptionError:
-        print('Missing connection_string on [database] section on server.ini. Please configure the database before running the server.')
-        sys.exit(1)
-
     from server.api.modules.workspaces import workspace_api
     from server.api.modules.doc import doc_api
-    from server.api.modules.interfaces import interfaces_api
     from server.api.modules.vuln_csv import vuln_csv_api
     from server.api.modules.hosts import host_api
     from server.api.modules.commandsrun import commandsrun_api
     from server.api.modules.services import services_api
     from server.api.modules.credentials import credentials_api
-    from server.api.modules.notes import notes_api
     from server.api.modules.session import session_api
     from server.modules.info import info_api
     app.register_blueprint(workspace_api)
     app.register_blueprint(doc_api)
-    app.register_blueprint(interfaces_api)
     app.register_blueprint(vuln_csv_api)
     app.register_blueprint(host_api)
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(services_api)
     app.register_blueprint(credentials_api)
-    app.register_blueprint(notes_api)
     app.register_blueprint(info_api)
     app.register_blueprint(session_api)
 

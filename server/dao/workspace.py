@@ -19,21 +19,15 @@ class WorkspaceDAO(object):
     MAPPED_ENTITY = Workspace
 
     COLUMNS_MAP = {
-        "create_date": [Workspace.create_date],
-        "creator": [Workspace.creator],
+        "active": [Workspace.active],
         "customer": [Workspace.customer],
         "description": [Workspace.description],
-        "disabled": [Workspace.disabled],
         "end_date": [Workspace.end_date],
         "name": [Workspace.name],
         "public": [Workspace.public],
         "scope": [Workspace.scope],
-        "start_date": [Workspace.start_date],
-        "update_date": [Workspace.update_date]
+        "start_date": [Workspace.start_date]
     }
-
-    STRICT_FILTERING = ["name", "creator", "customer", "disabled",
-                        "public", "update_date"]
 
     def __init__(self):
         self._logger = logger.get_logger(self)
@@ -72,18 +66,18 @@ class WorkspaceDAO(object):
                          order_by=None, order_dir=None, workspace_filter={}):
 
         workspace_bundle = Bundle('workspace',
-                                  Workspace.create_date,
-                                  Workspace.creator,
+                                  Workspace.active,
                                   Workspace.customer,
                                   Workspace.description,
-                                  Workspace.disabled,
                                   Workspace.end_date,
                                   Workspace.name,
                                   Workspace.public,
                                   Workspace.scope,
                                   Workspace.start_date,
-                                  Workspace.update_date)
+                                )
 
+        STRICT_FILTERING = ["name", "customer", "disabled",
+                        "public", "update_date"]
         query = self._session.query(workspace_bundle)
 
         query = apply_search_filter(query, self.COLUMNS_MAP, search,
@@ -100,15 +94,12 @@ class WorkspaceDAO(object):
     def __get_workspace_data(self, workspace):
 
         return {
-            "create_date": workspace.create_date,
-            "creator": workspace.creator,
+            "active": workspace.active,
             "customer": workspace.customer,
             "description": workspace.description,
-            "disabled": workspace.disabled,
             "end_date": workspace.end_date,
             "name": workspace.name,
             "public": workspace.public,
             "scope": workspace.scope,
-            "start_date": workspace.start_date,
-            "update_date": workspace.update_date
+            "start_date": workspace.start_date
         }

@@ -29,7 +29,7 @@ class InitDB(Command):
             config.get('database', 'connection_string')
             reconfigure = None
             while not reconfigure:
-                reconfigure = raw_input('Database section {yellow} already found.{white} Do you want to reconfigure database? (yes/no) '.format(yellow=Fore.YELLOW, white=Fore.WHITE))
+                reconfigure = raw_input('Database section {yellow} already found{white}. Do you want to reconfigure database? (yes/no) '.format(yellow=Fore.YELLOW, white=Fore.WHITE))
                 if reconfigure.lower() == 'no':
                     return False
                 elif reconfigure.lower() == 'yes':
@@ -60,15 +60,15 @@ class InitDB(Command):
             # current_psql_output is for checking psql command already known errors for each execution.
             psql_log_filename = os.path.join(faraday_path_conf, 'logs', 'psql_log.log')
             with open(psql_log_filename, 'a+') as psql_log_file:
-                username, password = self._configure_postgres(current_psql_output)
+                username, password, process_status = self._configure_postgres(current_psql_output)
                 current_psql_output.seek(0)
                 psql_output = current_psql_output.read()
                 psql_log_file.write(psql_output)
                 current_psql_output.seek(0)
                 psql_output = current_psql_output.read()
-                self._check_psql_output(psql_output)
-                database_name = self._create_database(username, current_psql_output)
-                self._check_psql_output(psql_output)
+                self._check_psql_output(psql_output, process_status)
+                database_name, process_status = self._create_database(username, current_psql_output)
+                self._check_psql_output(psql_output, process_status)
             current_psql_output.close()
             conn_string = self._save_config(config, username, password, database_name)
             self._create_tables(conn_string)
@@ -77,16 +77,22 @@ class InitDB(Command):
             print('User cancelled.')
             sys.exit(1)
 
-    def _check_psql_output(self, psql_log_output):
+    def _check_psql_output(self, psql_log_output, process_status):
         if 'unknown user: postgres' in psql_log_output:
-            raise UserWarning('postgres user not found. did you install postgresql?')
+            print('ERROR: Postgres user not found. Did you install package {blue}postgresql{white}?'.format(blue=Fore.BLUE, white=Fore.WHITE))
+        elif 'could not connect to server' in psql_log_output:
+            print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
+        elif process_status > 0:
+            print('ERROR: ' + psql_log_output)
+        sys.exit(1)
 
     def _configure_postgres(self, psql_log_file):
         """
             This step will create the role on the database.
             we return username and password and those values will be saved in the config file.
         """
-        username = raw_input('Please enter the {blue} database user {white} (press enter to use "faraday"): '.format(blue=Fore.BLUE, white=Fore.WHITE)) or 'faraday'
+        username_default = 'faraday_db_admin'
+        username = raw_input('Please enter the {blue} database user {white} (press enter to use "{0}"): '.format(username_default, blue=Fore.BLUE, white=Fore.WHITE)) or username_default
         postgres_command = ['sudo', '-u', 'postgres']
         password = None
         while not password:
@@ -96,7 +102,7 @@ class InitDB(Command):
         command = postgres_command + ['psql', '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file)
         p.wait()
-        return username, password
+        return username, password, p.returncode
 
     def _create_database(self, username, psql_log_file):
         """
@@ -136,14 +142,14 @@ class InitDB(Command):
             db.create_all()
         except OperationalError as ex:
             if 'could not connect to server' in ex.message:
-                print('[ERROR] {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
+                print('ERROR: {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
                 sys.exit(1)
             else:
                 raise
         except ImportError as ex:
             if 'psycopg2' in ex:
                 print(
-                    '[ERROR] Missing python depency {red}psycopg2{white}. Please install it with {blue}pip install psycopg2'.format(red=Fore.RED, white=Fore.WHITE, blue=Fore.BLUE))
+                    'ERROR: Missing python depency {red}psycopg2{white}. Please install it with {blue}pip install psycopg2'.format(red=Fore.RED, white=Fore.WHITE, blue=Fore.BLUE))
                 sys.exit(1)
             else:
                 raise

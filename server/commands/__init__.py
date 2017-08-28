@@ -5,15 +5,17 @@ from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
 
 try:
+    # py2.7
     from configparser import ConfigParser, NoSectionError, NoOptionError
 except ImportError:
+    # py3
     from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
 from flask import current_app
 from flask_script import Command
 from colorama import init
 from colorama import Fore, Back, Style
-
+from sqlalchemy.exc import OperationalError
 
 from config.globals import CONST_FARADAY_HOME_PATH
 from server.config import LOCAL_CONFIG_FILE
@@ -27,7 +29,7 @@ class InitDB(Command):
             config.get('database', 'connection_string')
             reconfigure = None
             while not reconfigure:
-                reconfigure = raw_input('Database section {red} already found.{white} Do you want to reconfigure database? (yes/no) '.format(red=Fore.RED, white=Fore.WHITE))
+                reconfigure = raw_input('Database section {yellow} already found.{white} Do you want to reconfigure database? (yes/no) '.format(yellow=Fore.YELLOW, white=Fore.WHITE))
                 if reconfigure.lower() == 'no':
                     return False
                 elif reconfigure.lower() == 'yes':
@@ -77,18 +79,18 @@ class InitDB(Command):
 
     def _check_psql_output(self, psql_log_output):
         if 'unknown user: postgres' in psql_log_output:
-            raise UserWarning('postgres user not found. did you installed postgresql?')
+            raise UserWarning('postgres user not found. did you install postgresql?')
 
     def _configure_postgres(self, psql_log_file):
         """
             This step will create the role on the database.
             we return username and password and those values will be saved in the config file.
         """
-        username = raw_input('Please enter the {red} database user {white} (press enter to use "faraday"): '.format(red=Fore.RED, white=Fore.WHITE)) or 'faraday'
+        username = raw_input('Please enter the {blue} database user {white} (press enter to use "faraday"): '.format(blue=Fore.BLUE, white=Fore.WHITE)) or 'faraday'
         postgres_command = ['sudo', '-u', 'postgres']
         password = None
         while not password:
-            password = getpass.getpass(prompt='Please enter the {red} password for the postgreSQL username {white}: '.format(red=Fore.RED, white=Fore.WHITE))
+            password = getpass.getpass(prompt='Please enter the {blue} password for the postgreSQL username {white}: '.format(blue=Fore.BLUE, white=Fore.WHITE))
             if not password:
                 print('Please type a valid password')
         command = postgres_command + ['psql', '-c', 'CREATE ROLE {0} WITH LOGIN PASSWORD \'{1}\';'.format(username, password)]
@@ -101,19 +103,19 @@ class InitDB(Command):
              This step uses the createdb command to add a new database.
         """
         postgres_command = ['sudo', '-u', 'postgres']
-        database_name = raw_input('Please enter the {red} database name {white} (press enter to use "faraday"): '.format(red=Fore.RED, white=Fore.WHITE)) or 'faraday'
+        database_name = raw_input('Please enter the {blue} database name {white} (press enter to use "faraday"): '.format(blue=Fore.BLUE, white=Fore.WHITE)) or 'faraday'
         print('Creating database {0}'.format(database_name))
         command = postgres_command + ['createdb', '-O', username, database_name]
         p = Popen(command, stderr=psql_log_file, stdout=psql_log_file)
         p.wait()
-        return database_name
+        return database_name, p.returncode
 
     def _save_config(self, config, username, password, database_name):
         """
              This step saves database configuration to server.ini
         """
         db_server = 'localhost'
-        print('{red}Saving {white} database credentials file in {0}'.format(LOCAL_CONFIG_FILE, red=Fore.RED, white=Fore.WHITE))
+        print('Saving database credentials file in {0}'.format(LOCAL_CONFIG_FILE))
 
         conn_string = 'postgresql+psycopg2://{username}:{password}@{server}/{database_name}'.format(
             username=username,
@@ -132,7 +134,16 @@ class InitDB(Command):
         current_app.config['SQLALCHEMY_DATABASE_URI'] = conn_string
         try:
             db.create_all()
+        except OperationalError as ex:
+            if 'could not connect to server' in ex.message:
+                print('[ERROR] {red}PostgreSQL service{white} is not running. Please verify that it is running in port 5432 before executing setup script.'.format(red=Fore.RED, white=Fore.WHITE))
+                sys.exit(1)
+            else:
+                raise
         except ImportError as ex:
             if 'psycopg2' in ex:
-                print('Missing python depency {red}psycopg2{white}. Please install it with {green}pip install psycopg2'.format(red=Fore.RED, white=Fore.WHITE, green=Fore.GREEN))
+                print(
+                    '[ERROR] Missing python depency {red}psycopg2{white}. Please install it with {blue}pip install psycopg2'.format(red=Fore.RED, white=Fore.WHITE, blue=Fore.BLUE))
                 sys.exit(1)
+            else:
+                raise

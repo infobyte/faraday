@@ -124,7 +124,7 @@ class Service(db.Model):
     owned = Column(Boolean, nullable=False, default=False)
 
     protocol = Column(Text, nullable=False)
-    status = Column(Enum(*STATUSES), nullable=True)
+    status = Column(Enum(*STATUSES, name='service_statuses'), nullable=True)
     version = Column(Text, nullable=True)
 
     banner = Column(Text, nullable=True)
@@ -165,7 +165,7 @@ class VulnerabilityABC(db.Model):
 
     data = Column(Text, nullable=True)
     description = Column(Text, nullable=False)
-    ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS), nullable=True)
+    ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS, name='vulnerability_ease_of_resolution'), nullable=True)
     name = Column(Text, nullable=False)
     resolution = Column(Text, nullable=True)
     severity = Column(String(50), nullable=False)
@@ -196,8 +196,8 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     __tablename__ = 'vulnerability'
     confirmed = Column(Boolean, nullable=False, default=False)
-    status = Column(Enum(*STATUSES), nullable=False, default="open")
-    type = Column(Enum(*VULN_TYPES), nullable=False)
+    status = Column(Enum(*STATUSES, name='vulnerbaility_statuses'), nullable=False, default="open")
+    type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
 
     workspace_id = Column(
                         Integer,
@@ -607,7 +607,7 @@ class Task(TaskABC):
     id = Column(Integer, primary_key=True)
 
     due_date = Column(DateTime, nullable=True)
-    status = Column(Enum(*STATUSES), nullable=True)
+    status = Column(Enum(*STATUSES, name='task_statuses'), nullable=True)
 
     __mapper_args__ = {
         'concrete': True

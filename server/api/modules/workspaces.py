@@ -12,12 +12,16 @@ from server.dao.vuln import VulnerabilityDAO
 from server.dao.service import ServiceDAO
 from server.dao.interface import InterfaceDAO
 from server.dao.note import NoteDAO
+from server.dao.workspace import WorkspaceDAO
+from server.utils.logger import get_logger
 from server.utils.web import (
-    gzipped,
-    validate_workspace,
+    build_bad_request_response,
+    filter_request_args,
     get_basic_auth,
+    get_integer_parameter,
+    gzipped,
     validate_admin_perm,
-    build_bad_request_response
+    validate_workspace
 )
 from server.couchdb import (
     list_workspaces_as_user,
@@ -27,13 +31,30 @@ from server.couchdb import (
 workspace_api = Blueprint('workspace_api', __name__)
 
 
-
 @workspace_api.route('/ws', methods=['GET'])
 @gzipped
 def workspace_list():
-    return flask.jsonify(
-        list_workspaces_as_user(
-            flask.request.cookies, get_basic_auth()))
+    get_logger(__name__).debug("Request parameters: {!r}"
+        .format(flask.request.args))
+
+    page = get_integer_parameter('page', default=0)
+    page_size = get_integer_parameter('page_size', default=0)
+    search = flask.request.args.get('search')
+    order_by = flask.request.args.get('sort')
+    order_dir = flask.request.args.get('sort_dir')
+
+    ws_filter = filter_request_args('page', 'page_size', 'search', 'sort', 'sort_dir')
+
+    ws_dao = WorkspaceDAO()
+
+    result = ws_dao.list(search=search,
+                           page=page,
+                           page_size=page_size,
+                           order_by=order_by,
+                           order_dir=order_dir,
+                           workspace_filter=ws_filter)
+
+    return flask.jsonify(result)
 
 
 @workspace_api.route('/ws/<workspace>/summary', methods=['GET'])

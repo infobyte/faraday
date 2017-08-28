@@ -12,7 +12,7 @@ manager = Manager(app)
 
 
 if __name__ == "__main__":
-    manager.add_command('import-from-couchdb', ImportCouchDB())
+    manager.add_command('import_from_couchdb', ImportCouchDB())
     manager.add_command('generate_database_schemas', DatabaseSchema())
     manager.add_command('initdb', InitDB())
     manager.add_command('faraday_schema_display', DatabaseSchema())

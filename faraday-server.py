@@ -52,11 +52,6 @@ def setup_environment(check_deps=False):
     server.couchdb.push_reports()
 
 
-def import_workspaces():
-    import server.importer
-    server.importer.import_workspaces()
-
-
 def stop_server():
     if not daemonize.stop_server():
         # Exists with an error if it couldn't close the server
@@ -118,7 +113,6 @@ def main():
 
     if not args.no_setup:
         setup_environment(not args.nodeps)
-        import_workspaces()
 
     if args.start:
         # Starts a new process on background with --ignore-setup

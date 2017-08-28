@@ -23,9 +23,7 @@ from server.models import (
     EntityMetadata,
     Credential,
     Host,
-    Interface,
     Service,
-    Note,
     Command,
     Workspace,
     Vulnerability
@@ -128,7 +126,6 @@ class InterfaceImporter(object):
     @classmethod
     def set_parent(cls, interface, parent_relation_db_id, level):
         interface.host = session.query(Host).filter_by(id=parent_relation_db_id).first()
-
 
 
 class ServiceImporter(object):
@@ -273,7 +270,7 @@ class WorkspaceImporter(object):
 
 
 class FaradayEntityImporter(object):
-    # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace', u'Interface']
+    # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace']
     @classmethod
     def parse(cls, document):
         """Get an instance of a DAO object given a document"""
@@ -292,7 +289,6 @@ class FaradayEntityImporter(object):
         importer_class_mapper = {
             'EntityMetadata': EntityMetadataImporter,
             'Host': HostImporter,
-            'Interface': InterfaceImporter,
             'Service': ServiceImporter,
             'Note': NoteImporter,
             'CommandRunInformation': CommandImporter,
@@ -300,8 +296,9 @@ class FaradayEntityImporter(object):
             'Vulnerability': VulnerabilityImporter,
             'VulnerabilityWeb': VulnerabilityImporter,
         }
+        # TODO: remove this!
         if doc_type in ('Communication', 'Cred', 'Reports',
-                        'Task', 'TaskGroup'):
+                        'Task', 'TaskGroup', 'Interface', 'Note'):
             return
         importer_cls = importer_class_mapper.get(doc_type, None)
         if not importer_cls:

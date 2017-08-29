@@ -196,7 +196,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
 
     __tablename__ = 'vulnerability'
     confirmed = Column(Boolean, nullable=False, default=False)
-    status = Column(Enum(*STATUSES, name='vulnerbaility_statuses'), nullable=False, default="open")
+    status = Column(Enum(*STATUSES, name='vulnerability_statuses'), nullable=False, default="open")
     type = Column(Enum(*VULN_TYPES, name='vulnerability_types'), nullable=False)
 
     workspace_id = Column(

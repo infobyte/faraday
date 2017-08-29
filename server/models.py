@@ -219,17 +219,7 @@ class Vulnerability(VulnerabilityGeneric):
                     foreign_keys=[host_id],
                     )
 
-    @declared_attr
-    def service_id(cls):
-        return VulnerabilityGeneric.__table__.c.get(
-                                                'service_id',
-                                                Column(
-                                                    Integer,
-                                                    ForeignKey(Service.id),
-                                                    index=True
-                                                )
-                                                )
-
+    service_id = Column(Integer, ForeignKey(Service.id))
     service = relationship(
                     'Service',
                     backref='vulnerabilities',
@@ -254,17 +244,7 @@ class VulnerabilityWeb(VulnerabilityGeneric):
     response = Column(Text(), nullable=True)
     website = Column(String(250), nullable=True)
 
-    @declared_attr
-    def service_id(cls):
-        return VulnerabilityGeneric.__table__.c.get(
-                                                'service_id',
-                                                Column(
-                                                    Integer,
-                                                    ForeignKey(Service.id),
-                                                    index=True,
-                                                )
-                                                )
-
+    service_id = Column(Integer, ForeignKey(Service.id))
     service = relationship(
                     'Service',
                     backref='vulnerabilities_web',

@@ -669,7 +669,9 @@ class Comment(db.Model):
 
 class ExecutiveReport(db.Model):
     STATUSES = [
-        'created'
+        'created',
+        'error',
+        'processing',
     ]
     __tablename__ = 'executive_report'
     id = Column(Integer, primary_key=True)

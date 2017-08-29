@@ -43,7 +43,7 @@ class EntityNotFound(Exception):
 class EntityMetadataImporter(object):
 
     @classmethod
-    def update_from_document(cls, document):
+    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
         entity, created = get_or_create(session, EntityMetadata, couchdb_id=document.get('_id'))
         metadata = document.get('metadata', dict())
         entity.update_time = metadata.get('update_time', None)
@@ -60,7 +60,7 @@ class EntityMetadataImporter(object):
         if entity.create_time is not None:
             entity.create_time = cls.__truncate_to_epoch_in_seconds(entity.create_time)
 
-        return entity
+        yield entity
 
     @classmethod
     def __truncate_to_epoch_in_seconds(self, timestamp):
@@ -77,7 +77,7 @@ class HostImporter(object):
     DOC_TYPE = 'Host'
 
     @classmethod
-    def update_from_document(cls, document, workspace):
+    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
         # Ticket #3387: if the 'os' field is None, we default to 'unknown'
         host, created = get_or_create(session, Host, ip=document.get('name'))
         if not document.get('os'):
@@ -92,7 +92,7 @@ class HostImporter(object):
         host.default_gateway_mac = default_gateway and default_gateway[1] or ''
         host.owned = document.get('owned', False)
         host.workspace = workspace
-        return host
+        yield host
 
     def set_parent(self, host, parent):
         raise NotImplementedError
@@ -108,7 +108,7 @@ class InterfaceImporter(object):
     DOC_TYPE = 'Interface'
 
     @classmethod
-    def update_from_document(cls, document, workspace):
+    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
 
         interface = {}
         interface['name'] = document.get('name')
@@ -130,7 +130,7 @@ class InterfaceImporter(object):
         interface['ports_opened'] = document.get('ports', {}).get('opened')
         interface['ports_closed'] = document.get('ports', {}).get('closed')
         interface['workspace'] = workspace
-        return interface
+        yield interface
 
     @classmethod
     def set_parent(cls, interface, parent_relation_db_id, level):
@@ -159,32 +159,44 @@ class ServiceImporter(object):
     DOC_TYPE = 'Service'
 
     @classmethod
-    def update_from_document(cls, document, workspace):
-        service, created = get_or_create(session, Service, name=document.get('name'))
-        service.name = document.get('name')
-        service.description = document.get('description')
-        service.owned = document.get('owned', False)
-        service.protocol = document.get('protocol')
-        service.status = document.get('status')
-        service.version = document.get('version')
-        service.workspace = workspace
+    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
+        #service was always above interface, not it's above host.
+        try:
+            parent_id = document['parent'].split('.')[0]
+        except KeyError:
+            # some services are missing the parent key
+            parent_id = document['_id'].split('.')[0]
+        host, created = get_or_create(session, Host, id=couchdb_relational_map[parent_id])
+        for port in document.get('ports'):
+            service, created = get_or_create(session, Service, name=document.get('name'), port=port)
+            service.name = document.get('name')
+            service.description = document.get('description')
+            service.owned = document.get('owned', False)
+            service.protocol = document.get('protocol')
+            if not document.get('status'):
+                logger.warning('Service {0} with empty status. Using open as status'.format(document['_id']))
+                document['status'] = 'open'
+            status_mapper = {
+                'open': 'open',
+                'closed': 'closed',
+                'filtered': 'filtered'
+            }
+            service.status = status_mapper[document.get('status')]
+            service.version = document.get('version')
+            service.workspace = workspace
 
-        # We found workspaces where ports are defined as an integer
-        if isinstance(document.get('ports', None), (int, long)):
-            service.ports = str(document.get('ports'))
-        else:
-            service.ports = u','.join(map(str, document.get('ports')))
-        return service
+            yield service
 
-    def set_parent(self, service, parent_id):
-        raise NotImplementedError
+    @classmethod
+    def set_parent(self, service, parent_id, level):
+        pass
 
 
 class VulnerabilityImporter(object):
     DOC_TYPE = ['Vulnerability', 'VulnerabilityWeb']
 
     @classmethod
-    def update_from_document(cls, document, workspace):
+    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
         vulnerability, created = get_or_create(session, Vulnerability, name=document.get('name'), description= document.get('desc'))
         vulnerability.confirmed = document.get('confirmed')
         vulnerability.vuln_type = document.get('type')
@@ -221,7 +233,7 @@ class VulnerabilityImporter(object):
         else:
             vulnerability.params = params if params is not None else u''
 
-        return vulnerability
+        yield vulnerability
 
     @classmethod
     def set_parent(self, vulnerability, parent_id, level=2):
@@ -235,7 +247,7 @@ class CommandImporter(object):
     DOC_TYPE = 'CommandRunInformation'
 
     @classmethod
-    def update_from_document(cls, document, workspace):
+    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
         start_date = datetime.datetime.fromtimestamp(document.get('itime'))
         end_date = start_date + datetime.timedelta(seconds=document.get('duration'))
         command, instance = get_or_create(
@@ -252,7 +264,7 @@ class CommandImporter(object):
         command.user = document.get('user', None)
         command.workspace = workspace
 
-        return command
+        yield command
 
     def set_parent(self, command, parent_id):
         raise NotImplementedError
@@ -262,13 +274,13 @@ class NoteImporter(object):
     DOC_TYPE = 'Note'
 
     @classmethod
-    def update_from_document(cls, document):
+    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
         note = Note()
         note.name = document.get('name')
         note.text = document.get('text', None)
         note.description = document.get('description', None)
         note.owned = document.get('owned', False)
-        return note
+        yield note
 
     def add_relationships_from_dict(self, entity, entities):
         # this method is not required since update_from_document uses
@@ -280,18 +292,25 @@ class CredentialImporter(object):
     DOC_TYPE = 'Cred'
 
     @classmethod
-    def update_from_document(cls, document, workspace):
-        credential, created = get_or_create(session, Credential, name=document.get('username'))
+    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
+        host = None
+        service = None
+        if level == 2:
+            parent_id = couchdb_relational_map[document['_id'].split('.')[0]]
+            host = session.query(Host).filter_by(id=parent_id).first()
+        if level == 4:
+            parent_id = couchdb_relational_map['.'.join(document['_id'].split('.')[:3])]
+            service = session.query(Service).filter_by(id=parent_id).first()
+        if not host and not service:
+            raise Exception('Missing host or service for credential {0}'.format(document['_id']))
+        credential, created = get_or_create(session, Credential, name=document.get('username'), host=host, service=service)
         credential.username = document.get('username')
         credential.password = document.get('password', '')
         credential.owned = document.get('owned', False)
         credential.description = document.get('description', '')
         credential.name = document.get('name', '')
         credential.workspace = workspace
-        return credential
-
-    def set_parent(self, credential, parent_id):
-        raise NotImplementedError
+        yield credential
 
 
 class WorkspaceImporter(object):
@@ -300,7 +319,7 @@ class WorkspaceImporter(object):
     @classmethod
     def update_from_document(cls, document):
         workspace, created = get_or_create(session, server.models.Workspace, name=document.get('name', None))
-        return workspace
+        yield workspace
 
     def add_relationships_from_dict(self, entity, entities):
         for couch_id, child_entity in entities.items():
@@ -329,6 +348,7 @@ class FaradayEntityImporter(object):
             'Host': HostImporter,
             'Service': ServiceImporter,
             'Note': NoteImporter,
+            'Credential': CredentialImporter,
             'Interface': InterfaceImporter,
             'CommandRunInformation': CommandImporter,
             'Workspace': WorkspaceImporter,
@@ -382,6 +402,8 @@ class ImportCouchDB(FlaskScriptCommand):
             self.import_workspace_into_database(workspace_name)
 
     def get_objs(self, host, obj_type, level):
+        if obj_type == 'Credential':
+            obj_type = 'Cred'
         data = {
             "map": "function(doc) { if(doc.type == '%s' && doc._id.split('.').length == %d) emit(null, doc); }" % (obj_type, level)
         }
@@ -413,12 +435,16 @@ class ImportCouchDB(FlaskScriptCommand):
             (1, 'CommandRunInformation'),
             (2, 'Interface'),
             (2, 'Service'),
+            (2, 'Credential'),
             (2, 'Vulnerability'),
             (2, 'VulnerabilityWeb'),
             (3, 'Vulnerability'),
             (3, 'VulnerabilityWeb'),
+            (3, 'Service'),
+            (4, 'Credential'), # Level 4 is for interface
         ]
         couchdb_relational_map = {}
+        couchdb_removed_objs = set()
         removed_objs = ['Interface']
         for level, obj_type in obj_types:
             obj_importer = faraday_importer.get_importer_from_document(obj_type)
@@ -426,18 +452,20 @@ class ImportCouchDB(FlaskScriptCommand):
             for raw_obj in tqdm(objs_dict.get('rows', [])):
                 raw_obj = raw_obj['value']
                 couchdb_id = raw_obj['_id']
-                if obj_importer is None:
-                    import ipdb
-                    ipdb.set_trace()
-                new_obj = obj_importer.update_from_document(raw_obj, workspace)
-                if raw_obj.get('parent', None):
-                    obj_importer.set_parent(
-                        new_obj,
-                        couchdb_relational_map[raw_obj['parent']],
-                        level
-                    )
-                session.commit()
-                if obj_type not in removed_objs:
-                    couchdb_relational_map[couchdb_id] = new_obj.id
+                for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
+                    if raw_obj.get('parent', None):
+                        parent_id = raw_obj['parent']
+                        if parent_id in couchdb_removed_objs:
+                            parent_id = '.'.join(parent_id.split('.')[:-1])
+                        obj_importer.set_parent(
+                            new_obj,
+                            couchdb_relational_map[parent_id],
+                            level
+                        )
+                    session.commit()
+                    if obj_type not in removed_objs:
+                        couchdb_relational_map[couchdb_id] = new_obj.id
+                    else:
+                        couchdb_removed_objs.add(couchdb_id)
 
         return created

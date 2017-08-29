@@ -428,13 +428,13 @@ class Credential(db.Model):
 class Command(db.Model):
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
-    command = Column(String(250), nullable=False)
+    command = Column(Text(), nullable=False)
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
     ip = Column(String(250), nullable=False)  # where the command was executed
     hostname = Column(String(250), nullable=False)  # where the command was executed
-    params = Column(String(250), nullable=True)
-    user = Column(String(250), nullable=True)  # where the command was executed
+    params = Column(Text(), nullable=True)
+    user = Column(String(250), nullable=True)  # os username where the command was executed
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])

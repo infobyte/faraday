@@ -4,7 +4,7 @@
 
 import sys
 import json
-import os
+import datetime
 
 import requests
 from tqdm import tqdm
@@ -26,6 +26,7 @@ from server.models import (
     Service,
     Command,
     Workspace,
+    Hostname,
     Vulnerability
 )
 
@@ -78,7 +79,7 @@ class HostImporter(object):
     @classmethod
     def update_from_document(cls, document, workspace):
         # Ticket #3387: if the 'os' field is None, we default to 'unknown'
-        host, created = get_or_create(session, Host, name=document.get('name'))
+        host, created = get_or_create(session, Host, ip=document.get('name'))
         if not document.get('os'):
             document['os'] = 'unknown'
 
@@ -98,34 +99,60 @@ class HostImporter(object):
 
 
 class InterfaceImporter(object):
+    """
+        Class interface was removed in the new model.
+        We will merge the interface data with the host.
+        For ports we will create new services for open ports
+        if it was not previously created.
+    """
     DOC_TYPE = 'Interface'
 
     @classmethod
     def update_from_document(cls, document, workspace):
-        interface, created = get_or_create(session, Interface, name=document.get('name'))
-        interface.name = document.get('name')
-        interface.description = document.get('description')
-        interface.mac = document.get('mac')
-        interface.owned = document.get('owned', False)
-        interface.hostnames = u','.join(document.get('hostnames') or [])
-        interface.network_segment = document.get('network_segment')
-        interface.ipv4_address = document.get('ipv4').get('address')
-        interface.ipv4_gateway = document.get('ipv4').get('gateway')
-        interface.ipv4_dns = u','.join(document.get('ipv4').get('DNS'))
-        interface.ipv4_mask = document.get('ipv4').get('mask')
-        interface.ipv6_address = document.get('ipv6').get('address')
-        interface.ipv6_gateway = document.get('ipv6').get('gateway')
-        interface.ipv6_dns = u','.join(document.get('ipv6').get('DNS'))
-        interface.ipv6_prefix = str(document.get('ipv6').get('prefix'))
-        interface.ports_filtered = document.get('ports', {}).get('filtered')
-        interface.ports_opened = document.get('ports', {}).get('opened')
-        interface.ports_closed = document.get('ports', {}).get('closed')
-        interface.workspace = workspace
+
+        interface = {}
+        interface['name'] = document.get('name')
+        interface['description'] = document.get('description')
+        interface['mac'] = document.get('mac')
+        interface['owned'] = document.get('owned', False)
+        interface['hostnames'] = document.get('hostnames')
+        interface['network_segment'] = document.get('network_segment')
+        interface['ipv4_address'] = document.get('ipv4').get('address')
+        interface['ipv4_gateway'] = document.get('ipv4').get('gateway')
+        interface['ipv4_dns'] = document.get('ipv4').get('DNS')
+        interface['ipv4_mask'] = document.get('ipv4').get('mask')
+        interface['ipv6_address'] = document.get('ipv6').get('address')
+        interface['ipv6_gateway'] = document.get('ipv6').get('gateway')
+        interface['ipv6_dns'] = document.get('ipv6').get('DNS')
+        interface['ipv6_prefix'] = str(document.get('ipv6').get('prefix'))
+        # ports_* are integers with counts
+        interface['ports_filtered'] = document.get('ports', {}).get('filtered')
+        interface['ports_opened'] = document.get('ports', {}).get('opened')
+        interface['ports_closed'] = document.get('ports', {}).get('closed')
+        interface['workspace'] = workspace
         return interface
 
     @classmethod
     def set_parent(cls, interface, parent_relation_db_id, level):
-        interface.host = session.query(Host).filter_by(id=parent_relation_db_id).first()
+        host = session.query(Host).filter_by(id=parent_relation_db_id).first()
+        assert host.workspace == interface['workspace']
+        if interface['mac']:
+            host.mac = interface['mac']
+        if interface['owned']:
+            host.owned = interface['owned']
+        if interface['ipv4_address'] or interface['ipv6_address']:
+            host.ip = interface['ipv4_address'] or interface['ipv6_address']
+        if interface['ipv4_gateway'] or interface['ipv6_gateway']:
+            host.default_gateway_ip = interface['ipv4_gateway'] or interface['ipv6_gateway']
+        #host.default_gateway_mac
+        if interface['network_segment']:
+            host.net_segment = interface['network_segment']
+        if interface['description']:
+            host.description += '\n {0}'.format(interface['description'])
+
+        for hostname in interface['hostnames']:
+            hostname, created = get_or_create(session, Hostname, name=hostname, host=host)
+        host.owned = host.owned or interface['owned']
 
 
 class ServiceImporter(object):
@@ -180,7 +207,12 @@ class VulnerabilityImporter(object):
         vulnerability.request = document.get('request')
         vulnerability.response = document.get('response')
         vulnerability.website = document.get('website')
-        vulnerability.status = document.get('status', 'opened')
+        status_map = {
+            'opened': 'open',
+            'closed': 'closed',
+        }
+        status = status_map[document.get('status', 'opened')]
+        vulnerability.status = status
         vulnerability.workspace = workspace
 
         params = document.get('params', u'')
@@ -204,10 +236,16 @@ class CommandImporter(object):
 
     @classmethod
     def update_from_document(cls, document, workspace):
-        command, instance = get_or_create(session, Command, command=document.get('command', None))
+        start_date = datetime.datetime.fromtimestamp(document.get('itime'))
+        end_date = start_date + datetime.timedelta(seconds=document.get('duration'))
+        command, instance = get_or_create(
+                session,
+                Command,
+                command=document.get('command', None),
+                start_date=start_date,
+                end_date=end_date
+        )
         command.command = document.get('command', None)
-        command.duration = document.get('duration', None)
-        command.itime = document.get('itime', None)
         command.ip = document.get('ip', None)
         command.hostname = document.get('hostname', None)
         command.params = document.get('params', None)
@@ -291,15 +329,12 @@ class FaradayEntityImporter(object):
             'Host': HostImporter,
             'Service': ServiceImporter,
             'Note': NoteImporter,
+            'Interface': InterfaceImporter,
             'CommandRunInformation': CommandImporter,
             'Workspace': WorkspaceImporter,
             'Vulnerability': VulnerabilityImporter,
             'VulnerabilityWeb': VulnerabilityImporter,
         }
-        # TODO: remove this!
-        if doc_type in ('Communication', 'Cred', 'Reports',
-                        'Task', 'TaskGroup', 'Interface', 'Note'):
-            return
         importer_cls = importer_class_mapper.get(doc_type, None)
         if not importer_cls:
             raise NotImplementedError('Class importer for {0} not implemented'.format(doc_type))
@@ -368,6 +403,9 @@ class ImportCouchDB(FlaskScriptCommand):
                     workspace_name=workspace_name
                 )
 
+        # obj_types are tuples. the first value is the level on the tree
+        # for the desired obj.
+        # the idea is to improt by level from couchdb data.
         obj_types = [
             (1, 'Host'),
             (1, 'EntityMetadata'),
@@ -381,13 +419,16 @@ class ImportCouchDB(FlaskScriptCommand):
             (3, 'VulnerabilityWeb'),
         ]
         couchdb_relational_map = {}
-
+        removed_objs = ['Interface']
         for level, obj_type in obj_types:
             obj_importer = faraday_importer.get_importer_from_document(obj_type)
             objs_dict = self.get_objs(couch_url, obj_type, level)
             for raw_obj in tqdm(objs_dict.get('rows', [])):
                 raw_obj = raw_obj['value']
                 couchdb_id = raw_obj['_id']
+                if obj_importer is None:
+                    import ipdb
+                    ipdb.set_trace()
                 new_obj = obj_importer.update_from_document(raw_obj, workspace)
                 if raw_obj.get('parent', None):
                     obj_importer.set_parent(
@@ -396,6 +437,7 @@ class ImportCouchDB(FlaskScriptCommand):
                         level
                     )
                 session.commit()
-                couchdb_relational_map[couchdb_id] = new_obj.id
+                if obj_type not in removed_objs:
+                    couchdb_relational_map[couchdb_id] = new_obj.id
 
         return created

@@ -666,3 +666,26 @@ class Comment(db.Model):
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
+
+class ExecutiveReport(db.Model):
+    STATUSES = [
+        'created'
+    ]
+    __tablename__ = 'executive_report'
+    id = Column(Integer, primary_key=True)
+
+    grouped = Column(Boolean, nullable=False, default=False)
+    name = Column(Text, nullable=False, index=True)
+    status = Column(Enum(*STATUSES, name='executive_report_statuses'), nullable=True)
+    template_name = Column(Text, nullable=False)
+
+    conclusions = Column(Text, nullable=True)
+    enterprise = Column(Text, nullable=True)
+    objectives = Column(Text, nullable=True)
+    recommendations = Column(Text, nullable=True)
+    scope = Column(Text, nullable=True)
+    summary = Column(Text, nullable=True)
+    title = Column(Text, nullable=True)
+
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace = relationship('Workspace', foreign_keys=[workspace_id])

@@ -42,8 +42,7 @@ class EntityNotFound(Exception):
 
 class EntityMetadataImporter(object):
 
-    @classmethod
-    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
+    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         entity, created = get_or_create(session, EntityMetadata, couchdb_id=document.get('_id'))
         metadata = document.get('metadata', dict())
         entity.update_time = metadata.get('update_time', None)
@@ -58,11 +57,11 @@ class EntityMetadataImporter(object):
         entity.command_id = metadata.get('command_id', None)
 
         if entity.create_time is not None:
-            entity.create_time = cls.__truncate_to_epoch_in_seconds(entity.create_time)
+            entity.create_time = self.__truncate_to_epoch_in_seconds(entity.create_time)
 
         yield entity
 
-    @classmethod
+
     def __truncate_to_epoch_in_seconds(self, timestamp):
         """ In a not so elegant fashion, identifies and truncate
         epoch timestamps expressed in milliseconds to seconds"""
@@ -76,8 +75,7 @@ class EntityMetadataImporter(object):
 class HostImporter(object):
     DOC_TYPE = 'Host'
 
-    @classmethod
-    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
+    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         # Ticket #3387: if the 'os' field is None, we default to 'unknown'
         host, created = get_or_create(session, Host, ip=document.get('name'))
         if not document.get('os'):
@@ -94,9 +92,6 @@ class HostImporter(object):
         host.workspace = workspace
         yield host
 
-    def set_parent(self, host, parent):
-        raise NotImplementedError
-
 
 class InterfaceImporter(object):
     """
@@ -107,8 +102,7 @@ class InterfaceImporter(object):
     """
     DOC_TYPE = 'Interface'
 
-    @classmethod
-    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
+    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
 
         interface = {}
         interface['name'] = document.get('name')
@@ -130,10 +124,14 @@ class InterfaceImporter(object):
         interface['ports_opened'] = document.get('ports', {}).get('opened')
         interface['ports_closed'] = document.get('ports', {}).get('closed')
         interface['workspace'] = workspace
+        couch_parent_id = document.get('parent', None)
+        if not couch_parent_id:
+            couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
+        parent_id = couchdb_relational_map[couch_parent_id]
+        self.merge_with_host(interface, parent_id)
         yield interface
 
-    @classmethod
-    def set_parent(cls, interface, parent_relation_db_id, level):
+    def merge_with_host(self, interface, parent_relation_db_id):
         host = session.query(Host).filter_by(id=parent_relation_db_id).first()
         assert host.workspace == interface['workspace']
         if interface['mac']:
@@ -158,8 +156,8 @@ class InterfaceImporter(object):
 class ServiceImporter(object):
     DOC_TYPE = 'Service'
 
-    @classmethod
-    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
+
+    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         #service was always above interface, not it's above host.
         try:
             parent_id = document['parent'].split('.')[0]
@@ -187,16 +185,12 @@ class ServiceImporter(object):
 
             yield service
 
-    @classmethod
-    def set_parent(self, service, parent_id, level):
-        pass
-
 
 class VulnerabilityImporter(object):
     DOC_TYPE = ['Vulnerability', 'VulnerabilityWeb']
 
-    @classmethod
-    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
+
+    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         vulnerability, created = get_or_create(session, Vulnerability, name=document.get('name'), description= document.get('desc'))
         vulnerability.confirmed = document.get('confirmed')
         vulnerability.vuln_type = document.get('type')
@@ -233,9 +227,13 @@ class VulnerabilityImporter(object):
         else:
             vulnerability.params = params if params is not None else u''
 
+        couch_parent_id = document.get('parent', None)
+        if not couch_parent_id:
+            couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
+        parent_id = couchdb_relational_map[couch_parent_id]
+        self.set_parent(vulnerability, parent_id, level)
         yield vulnerability
 
-    @classmethod
     def set_parent(self, vulnerability, parent_id, level=2):
         logger.debug('Set parent for vulnerabiity level {0}'.format(level))
         if level == 2:
@@ -243,11 +241,12 @@ class VulnerabilityImporter(object):
         if level == 3:
             vulnerability.service = session.query(Service).filter_by(id=parent_id).first()
 
+
 class CommandImporter(object):
     DOC_TYPE = 'CommandRunInformation'
 
-    @classmethod
-    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
+
+    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         start_date = datetime.datetime.fromtimestamp(document.get('itime'))
         end_date = start_date + datetime.timedelta(seconds=document.get('duration'))
         command, instance = get_or_create(
@@ -266,15 +265,12 @@ class CommandImporter(object):
 
         yield command
 
-    def set_parent(self, command, parent_id):
-        raise NotImplementedError
-
 
 class NoteImporter(object):
     DOC_TYPE = 'Note'
 
-    @classmethod
-    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
+
+    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         note = Note()
         note.name = document.get('name')
         note.text = document.get('text', None)
@@ -282,17 +278,11 @@ class NoteImporter(object):
         note.owned = document.get('owned', False)
         yield note
 
-    def add_relationships_from_dict(self, entity, entities):
-        # this method is not required since update_from_document uses
-        # workspace name to create the relation
-        pass
-
 
 class CredentialImporter(object):
     DOC_TYPE = 'Cred'
 
-    @classmethod
-    def update_from_document(cls, document, workspace, level=None, couchdb_relational_map=None):
+    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         host = None
         service = None
         if level == 2:
@@ -316,22 +306,17 @@ class CredentialImporter(object):
 class WorkspaceImporter(object):
     DOC_TYPE = 'Workspace'
 
-    @classmethod
-    def update_from_document(cls, document):
+    def update_from_document(self, document):
         workspace, created = get_or_create(session, server.models.Workspace, name=document.get('name', None))
         yield workspace
-
-    def add_relationships_from_dict(self, entity, entities):
-        for couch_id, child_entity in entities.items():
-            child_entity.workspace = entity
 
 
 class FaradayEntityImporter(object):
     # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace']
-    @classmethod
-    def parse(cls, document):
+
+    def parse(self, document):
         """Get an instance of a DAO object given a document"""
-        importer_class = cls.get_importer_from_document(document)
+        importer_class = self.get_importer_from_document(document)
         if importer_class is not None:
             importer = importer_class()
             entity = importer.update_from_document(document)
@@ -340,8 +325,7 @@ class FaradayEntityImporter(object):
             return importer, entity
         return None, None
 
-    @classmethod
-    def get_importer_from_document(cls, doc_type):
+    def get_importer_from_document(self, doc_type):
         logger.info('Getting class importer for {0}'.format(doc_type))
         importer_class_mapper = {
             'EntityMetadata': EntityMetadataImporter,
@@ -355,14 +339,10 @@ class FaradayEntityImporter(object):
             'Vulnerability': VulnerabilityImporter,
             'VulnerabilityWeb': VulnerabilityImporter,
         }
-        importer_cls = importer_class_mapper.get(doc_type, None)
-        if not importer_cls:
+        importer_self = importer_class_mapper.get(doc_type, None)
+        if not importer_self:
             raise NotImplementedError('Class importer for {0} not implemented'.format(doc_type))
-        return importer_cls
-
-    @classmethod
-    def update_from_document(self, document):
-        raise Exception('MUST IMPLEMENT')
+        return importer_self
 
 
 class ImportCouchDB(FlaskScriptCommand):
@@ -447,21 +427,12 @@ class ImportCouchDB(FlaskScriptCommand):
         couchdb_removed_objs = set()
         removed_objs = ['Interface']
         for level, obj_type in obj_types:
-            obj_importer = faraday_importer.get_importer_from_document(obj_type)
+            obj_importer = faraday_importer.get_importer_from_document(obj_type)()
             objs_dict = self.get_objs(couch_url, obj_type, level)
             for raw_obj in tqdm(objs_dict.get('rows', [])):
                 raw_obj = raw_obj['value']
                 couchdb_id = raw_obj['_id']
                 for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
-                    if raw_obj.get('parent', None):
-                        parent_id = raw_obj['parent']
-                        if parent_id in couchdb_removed_objs:
-                            parent_id = '.'.join(parent_id.split('.')[:-1])
-                        obj_importer.set_parent(
-                            new_obj,
-                            couchdb_relational_map[parent_id],
-                            level
-                        )
                     session.commit()
                     if obj_type not in removed_objs:
                         couchdb_relational_map[couchdb_id] = new_obj.id

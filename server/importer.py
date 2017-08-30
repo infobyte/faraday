@@ -31,7 +31,8 @@ from server.models import (
     Command,
     Workspace,
     Hostname,
-    Vulnerability
+    Vulnerability,
+    User,
 )
 
 COUCHDB_USER_PREFIX = 'org.couchdb.user:'
@@ -398,12 +399,13 @@ class ImportCouchDBUsers(FlaskScriptCommand):
         # Import admin users
         for (username, password) in admins.items():
             logger.info('Creating user {0}'.format(username))
-            app.user_datastore.create_user(
-                username=username,
-                email=username + '@test.com',
-                password=self.convert_couchdb_hash(password),
-                is_ldap=False
-            )
+            if not db.session.query(User).filter_by(username=username).first():
+                app.user_datastore.create_user(
+                    username=username,
+                    email=username + '@test.com',
+                    password=self.convert_couchdb_hash(password),
+                    is_ldap=False
+                )
 
     def import_users(self, all_users, admins):
         # Import non admin users
@@ -416,12 +418,13 @@ class ImportCouchDBUsers(FlaskScriptCommand):
                 # This is an already imported admin user, skip
                 continue
             logger.info('Importing {0}'.format(user['name']))
-            app.user_datastore.create_user(
-                username=user['name'],
-                email=user['name'] + '@test.com',
-                password=self.get_hash_from_document(user),
-                is_ldap=False
-            )
+            if not db.session.query(User).filter_by(username=user['name']).first():
+                app.user_datastore.create_user(
+                    username=user['name'],
+                    email=user['name'] + '@test.com',
+                    password=self.get_hash_from_document(user),
+                    is_ldap=False
+                )
 
     def run(self):
         all_users, admins = self.get_users_and_admins()

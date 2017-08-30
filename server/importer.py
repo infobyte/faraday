@@ -1,7 +1,7 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
-
+import os
 import sys
 import json
 import datetime
@@ -10,6 +10,7 @@ import requests
 from tqdm import tqdm
 from flask_script import Command as FlaskScriptCommand
 from restkit.errors import RequestError, Unauthorized
+from IPy import IP
 
 import server.app
 import server.utils.logger
@@ -60,7 +61,6 @@ class EntityMetadataImporter(object):
             entity.create_time = self.__truncate_to_epoch_in_seconds(entity.create_time)
 
         yield entity
-
 
     def __truncate_to_epoch_in_seconds(self, timestamp):
         """ In a not so elegant fashion, identifies and truncate
@@ -156,9 +156,8 @@ class InterfaceImporter(object):
 class ServiceImporter(object):
     DOC_TYPE = 'Service'
 
-
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
-        #service was always above interface, not it's above host.
+        #  service was always above interface, not it's above host.
         try:
             parent_id = document['parent'].split('.')[0]
         except KeyError:
@@ -188,7 +187,6 @@ class ServiceImporter(object):
 
 class VulnerabilityImporter(object):
     DOC_TYPE = ['Vulnerability', 'VulnerabilityWeb']
-
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         vulnerability, created = get_or_create(session, Vulnerability, name=document.get('name'), description= document.get('desc'))
@@ -245,7 +243,6 @@ class VulnerabilityImporter(object):
 class CommandImporter(object):
     DOC_TYPE = 'CommandRunInformation'
 
-
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         start_date = datetime.datetime.fromtimestamp(document.get('itime'))
         end_date = start_date + datetime.timedelta(seconds=document.get('duration'))
@@ -268,7 +265,6 @@ class CommandImporter(object):
 
 class NoteImporter(object):
     DOC_TYPE = 'Note'
-
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         note = Note()
@@ -391,6 +387,35 @@ class ImportCouchDB(FlaskScriptCommand):
 
         return r.json()
 
+    def verify_import_data(self, couchdb_relational_map, couchdb_removed_objs, workspace):
+        all_docs_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_all_docs?include_docs=true".format(
+                    username=server.config.couchdb.user,
+                    password=server.config.couchdb.password,
+                    hostname=server.config.couchdb.host,
+                    port=server.config.couchdb.port,
+                    workspace_name=workspace.name
+        )
+        all_ids = map(lambda x: x['doc']['_id'], requests.get(all_docs_url).json()['rows'])
+        if len(all_ids) != len(couchdb_relational_map.keys()) + len(couchdb_removed_objs):
+            missing_objs_filename = os.path.join(os.path.expanduser('~/.faraday'), 'logs', 'import_missing_objects_{0}.json'.format(workspace.name))
+            logger.warning('Not all objects were imported. Saving difference to file {0}'.format(missing_objs_filename))
+            missing_ids = set(all_ids) - set(couchdb_relational_map.keys()).union(couchdb_removed_objs)
+            objs_diff = []
+            logger.info('Downloading missing couchdb docs')
+            for missing_id in tqdm(missing_ids):
+                doc_url = 'http://{username}:{password}@{hostname}:{port}/{workspace_name}/{doc_id}'.format(
+                    username=server.config.couchdb.user,
+                    password=server.config.couchdb.password,
+                    hostname=server.config.couchdb.host,
+                    port=server.config.couchdb.port,
+                    workspace_name=workspace.name,
+                    doc_id=missing_id
+                )
+                objs_diff.append(requests.get(doc_url).json())
+
+            with open(missing_objs_filename, 'w') as missing_objs_file:
+                missing_objs_file.write(json.dumps(objs_diff))
+
     def import_workspace_into_database(self, workspace_name):
 
         faraday_importer = FaradayEntityImporter()
@@ -420,7 +445,7 @@ class ImportCouchDB(FlaskScriptCommand):
             (3, 'Vulnerability'),
             (3, 'VulnerabilityWeb'),
             (3, 'Service'),
-            (4, 'Credential'), # Level 4 is for interface
+            (4, 'Credential'),  # Level 4 is for interface
         ]
         couchdb_relational_map = {}
         couchdb_removed_objs = set()
@@ -437,5 +462,5 @@ class ImportCouchDB(FlaskScriptCommand):
                         couchdb_relational_map[couchdb_id] = new_obj.id
                     else:
                         couchdb_removed_objs.add(couchdb_id)
-
+        self.verify_import_data(couchdb_relational_map, couchdb_removed_objs, workspace)
         return created

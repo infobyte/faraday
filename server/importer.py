@@ -243,7 +243,7 @@ class VulnerabilityImporter(object):
         logger.debug('Set parent for vulnerabiity level {0}'.format(level))
         if level == 2:
             vulnerability.host = session.query(Host).filter_by(id=parent_id).first()
-        if level == 3:
+        if level == 4:
             vulnerability.service = session.query(Service).filter_by(id=parent_id).first()
 
 
@@ -537,10 +537,10 @@ class ImportCouchDB(FlaskScriptCommand):
             (2, 'Credential'),
             (2, 'Vulnerability'),
             (2, 'VulnerabilityWeb'),
-            (3, 'Vulnerability'),
-            (3, 'VulnerabilityWeb'),
             (3, 'Service'),
             (4, 'Credential'),  # Level 4 is for interface
+            (4, 'Vulnerability'),
+            (4, 'VulnerabilityWeb'),
         ]
         couchdb_relational_map = {}
         couchdb_removed_objs = set()

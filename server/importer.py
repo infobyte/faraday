@@ -293,12 +293,11 @@ class CredentialImporter(object):
             service = session.query(Service).filter_by(id=parent_id).first()
         if not host and not service:
             raise Exception('Missing host or service for credential {0}'.format(document['_id']))
-        credential, created = get_or_create(session, Credential, name=document.get('username'), host=host, service=service)
-        credential.username = document.get('username')
-        credential.password = document.get('password', '')
+        credential, created = get_or_create(session, Credential, username=document.get('username'), host=host, service=service)
+        credential.password = document.get('password', None)
         credential.owned = document.get('owned', False)
-        credential.description = document.get('description', '')
-        credential.name = document.get('name', '')
+        credential.description = document.get('description', None)
+        credential.name = document.get('name', None)
         credential.workspace = workspace
         yield credential
 

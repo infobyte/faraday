@@ -5,14 +5,17 @@ import os
 import sys
 import json
 import datetime
+from binascii import unhexlify
 
 import requests
 from tqdm import tqdm
 from flask_script import Command as FlaskScriptCommand
 from restkit.errors import RequestError, Unauthorized
 from IPy import IP
+from passlib.utils.binary import ab64_encode
+from passlib.hash import pbkdf2_sha1
 
-import server.app
+from server.web import app
 import server.utils.logger
 import server.couchdb
 import server.database
@@ -30,6 +33,9 @@ from server.models import (
     Hostname,
     Vulnerability
 )
+
+COUCHDB_USER_PREFIX = 'org.couchdb.user:'
+COUCHDB_PASSWORD_PREXFIX = '-pbkdf2-'
 
 
 logger = server.utils.logger.get_logger(__name__)
@@ -340,6 +346,90 @@ class FaradayEntityImporter(object):
         return importer_self
 
 
+class ImportCouchDBUsers(FlaskScriptCommand):
+
+    def modular_crypt_pbkdf2_sha1(self, checksum, salt, iterations=1000):
+        return '$pbkdf2${iterations}${salt}${checksum}'.format(
+            iterations=iterations,
+            salt=ab64_encode(salt),
+            checksum=ab64_encode(unhexlify(checksum)),
+        )
+
+    def convert_couchdb_hash(self, original_hash):
+        if not original_hash.startswith(COUCHDB_PASSWORD_PREXFIX):
+            # Should be a plaintext password
+            return original_hash
+        checksum, salt, iterations = original_hash[
+            len(COUCHDB_PASSWORD_PREXFIX):].split(',')
+        iterations = int(iterations)
+        return self.modular_crypt_pbkdf2_sha1(checksum, salt, iterations)
+
+    def get_hash_from_document(self, doc):
+        scheme = doc.get('password_scheme', 'unset')
+        if scheme != 'pbkdf2':
+            raise ValueError('Unknown password scheme: %s' % scheme)
+        return self.modular_crypt_pbkdf2_sha1(doc['derived_key'], doc['salt'],
+                                         doc['iterations'])
+
+    def parse_all_docs(self, doc):
+        return [row['doc'] for row in doc['rows']]
+
+    def get_users_and_admins(self):
+        admins_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
+                    username=server.config.couchdb.user,
+                    password=server.config.couchdb.password,
+                    hostname=server.config.couchdb.host,
+                    port=server.config.couchdb.port,
+                    path='_config/admins'
+        )
+
+        users_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
+                    username=server.config.couchdb.user,
+                    password=server.config.couchdb.password,
+                    hostname=server.config.couchdb.host,
+                    port=server.config.couchdb.port,
+                    path='_users/_all_docs?include_docs=true'
+        )
+        admins = requests.get(admins_url).json()
+        users = requests.get(users_url).json()
+        return users, admins
+
+    def import_admins(self, admins):
+        # Import admin users
+        for (username, password) in admins.items():
+            logger.info('Creating user {0}'.format(username))
+            app.user_datastore.create_user(
+                username=username,
+                email=username + '@test.com',
+                password=self.convert_couchdb_hash(password),
+                is_ldap=False
+            )
+
+    def import_users(self, all_users, admins):
+        # Import non admin users
+        for user in all_users['rows']:
+            user = user['doc']
+            if not user['_id'].startswith(COUCHDB_USER_PREFIX):
+                # It can be a view or something other than a user
+                continue
+            if user['name'] in admins.keys():
+                # This is an already imported admin user, skip
+                continue
+            logger.info('Importing {0}'.format(user['name']))
+            app.user_datastore.create_user(
+                username=user['name'],
+                email=user['name'] + '@test.com',
+                password=self.get_hash_from_document(user),
+                is_ldap=False
+            )
+
+    def run(self):
+        all_users, admins = self.get_users_and_admins()
+        self.import_users(all_users, admins)
+        self.import_admins(admins)
+        db.session.commit()
+
+
 class ImportCouchDB(FlaskScriptCommand):
 
     def _open_couchdb_conn(self):
@@ -364,6 +454,8 @@ class ImportCouchDB(FlaskScriptCommand):
         """
             Main entry point for couchdb import
         """
+        users_import = ImportCouchDBUsers()
+        users_import.run()
         couchdb_server_conn, workspaces_list = self._open_couchdb_conn()
 
         for workspace_name in workspaces_list:

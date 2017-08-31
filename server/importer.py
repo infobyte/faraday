@@ -28,6 +28,7 @@ from server.models import (
     Credential,
     Host,
     Service,
+    Reference,
     Command,
     Workspace,
     Hostname,
@@ -201,7 +202,6 @@ class VulnerabilityImporter(object):
         vulnerability.vuln_type = document.get('type')
         vulnerability.data = document.get('data')
         vulnerability.easeofresolution = document.get('easeofresolution')
-        vulnerability.refs = json.dumps(document.get('refs', []))
         vulnerability.resolution = document.get('resolution')
         vulnerability.severity = document.get('severity')
         vulnerability.owned = document.get('owned', False)
@@ -237,7 +237,13 @@ class VulnerabilityImporter(object):
             couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
         parent_id = couchdb_relational_map[couch_parent_id]
         self.set_parent(vulnerability, parent_id, level)
+        self.add_references(document, vulnerability, workspace)
         yield vulnerability
+
+    def add_references(self, document, vulnerability, workspace):
+        for ref in document.get('refs', []):
+            new_ref, created = get_or_create(session, Reference, name=ref, workspace=workspace, vulnerability=vulnerability)
+
 
     def set_parent(self, vulnerability, parent_id, level=2):
         logger.debug('Set parent for vulnerabiity level {0}'.format(level))

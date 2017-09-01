@@ -601,7 +601,6 @@ class ImportCouchDB(FlaskScriptCommand):
         all_ids = map(lambda x: x['doc']['_id'], requests.get(all_docs_url).json()['rows'])
         if len(all_ids) != len(couchdb_relational_map.keys()) + len(couchdb_removed_objs):
             missing_objs_filename = os.path.join(os.path.expanduser('~/.faraday'), 'logs', 'import_missing_objects_{0}.json'.format(workspace.name))
-            logger.warning('Not all objects were imported. Saving difference to file {0}'.format(missing_objs_filename))
             missing_ids = set(all_ids) - set(couchdb_relational_map.keys()).union(couchdb_removed_objs)
             objs_diff = []
             logger.info('Downloading missing couchdb docs')
@@ -614,7 +613,13 @@ class ImportCouchDB(FlaskScriptCommand):
                     workspace_name=workspace.name,
                     doc_id=missing_id
                 )
-                objs_diff.append(requests.get(doc_url).json())
+                not_imported_obj = requests.get(doc_url).json()
+                filter_keys = ['views', 'validate_doc_update']
+                if not any(map(lambda x: x not in filter_keys,not_imported_obj.keys())):
+                    # we filter custom views, validation funcs, etc
+                    logger.warning(
+                        'Not all objects were imported. Saving difference to file {0}'.format(missing_objs_filename))
+                    objs_diff.append()
 
             with open(missing_objs_filename, 'w') as missing_objs_file:
                 missing_objs_file.write(json.dumps(objs_diff))

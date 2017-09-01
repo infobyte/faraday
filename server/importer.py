@@ -191,7 +191,8 @@ class ServiceImporter(object):
             status_mapper = {
                 'open': 'open',
                 'closed': 'closed',
-                'filtered': 'filtered'
+                'filtered': 'filtered',
+                'open|filtered': 'filtered'
             }
             service.status = status_mapper[document.get('status')]
             service.version = document.get('version')
@@ -213,7 +214,7 @@ class VulnerabilityImporter(object):
             name=document.get('name'),
             description=document.get('desc')
         )
-        vulnerability.confirmed = document.get('confirmed')
+        vulnerability.confirmed = document.get('confirmed', False)
         vulnerability.data = document.get('data')
         vulnerability.easeofresolution = document.get('easeofresolution')
         vulnerability.resolution = document.get('resolution')
@@ -288,14 +289,16 @@ class CommandImporter(object):
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         start_date = datetime.datetime.fromtimestamp(document.get('itime'))
-        end_date = start_date + datetime.timedelta(seconds=document.get('duration'))
+
         command, instance = get_or_create(
                 session,
                 Command,
                 command=document.get('command', None),
                 start_date=start_date,
-                end_date=end_date
         )
+        if document.get('duration'):
+            command.end_date = start_date + datetime.timedelta(seconds=document.get('duration'))
+
         command.command = document.get('command', None)
         command.ip = document.get('ip', None)
         command.hostname = document.get('hostname', None)
@@ -401,7 +404,7 @@ class ReportsImporter(object):
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         report, created = get_or_create(session, ExecutiveReport, name=document.get('name'))
-        report.template_name = document.get('name')
+        report.template_name = document.get('template_name', 'generic_default.docx')
         report.title = document.get('title')
         report.status = document.get('status')
         # TODO: add tags
@@ -412,8 +415,7 @@ class ReportsImporter(object):
         report.summary = document.get('summary')
         report.scope = document.get('scope')
         report.objectives = document.get('objectives')
-        if report.status != 'error':
-            report.grouped = document.get('grouped')
+        report.grouped = document.get('grouped', False)
         report.workspace = workspace
         yield report
 
@@ -476,7 +478,9 @@ class ImportCouchDBUsers(FlaskScriptCommand):
     def get_hash_from_document(self, doc):
         scheme = doc.get('password_scheme', 'unset')
         if scheme != 'pbkdf2':
-            raise ValueError('Unknown password scheme: %s' % scheme)
+            # Flask Security will encrypt the password next time the user logs in.
+            logger.warning('Found user {0} without password.'.format(doc.get('name')))
+            return 'changeme'
         return self.modular_crypt_pbkdf2_sha1(doc['derived_key'], doc['salt'],
                                          doc['iterations'])
 
@@ -615,14 +619,14 @@ class ImportCouchDB(FlaskScriptCommand):
                 )
                 not_imported_obj = requests.get(doc_url).json()
                 filter_keys = ['views', 'validate_doc_update']
-                if not any(map(lambda x: x not in filter_keys,not_imported_obj.keys())):
+                if not any(map(lambda x: x not in filter_keys, not_imported_obj.keys())):
                     # we filter custom views, validation funcs, etc
                     logger.warning(
                         'Not all objects were imported. Saving difference to file {0}'.format(missing_objs_filename))
-                    objs_diff.append()
+                    objs_diff.append(not_imported_obj)
 
-            with open(missing_objs_filename, 'w') as missing_objs_file:
-                missing_objs_file.write(json.dumps(objs_diff))
+                    with open(missing_objs_filename, 'w') as missing_objs_file:
+                        missing_objs_file.write(json.dumps(objs_diff))
 
     def import_workspace_into_database(self, workspace_name):
 

@@ -410,7 +410,7 @@ class Command(db.Model):
     id = Column(Integer, primary_key=True)
     command = Column(Text(), nullable=False)
     start_date = Column(DateTime, nullable=False)
-    end_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=True)
     ip = Column(String(250), nullable=False)  # where the command was executed
     hostname = Column(String(250), nullable=False)  # where the command was executed
     params = Column(Text(), nullable=True)

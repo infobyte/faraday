@@ -33,7 +33,14 @@ from server.models import (
     Workspace,
     Hostname,
     Vulnerability,
+    VulnerabilityWeb,
     User,
+    PolicyViolation,
+    Task,
+    TaskTemplate,
+    Methodology,
+    MethodologyTemplate,
+    ExecutiveReport
 )
 
 COUCHDB_USER_PREFIX = 'org.couchdb.user:'
@@ -197,27 +204,34 @@ class VulnerabilityImporter(object):
     DOC_TYPE = ['Vulnerability', 'VulnerabilityWeb']
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
-        vulnerability, created = get_or_create(session, Vulnerability, name=document.get('name'), description= document.get('desc'))
+        vuln_class = Vulnerability
+        if document['type'] == 'VulnerabilityWeb':
+            vuln_class = VulnerabilityWeb
+        vulnerability, created = get_or_create(
+            session,
+            vuln_class,
+            name=document.get('name'),
+            description=document.get('desc')
+        )
         vulnerability.confirmed = document.get('confirmed')
-        vulnerability.vuln_type = document.get('type')
         vulnerability.data = document.get('data')
         vulnerability.easeofresolution = document.get('easeofresolution')
         vulnerability.resolution = document.get('resolution')
         vulnerability.severity = document.get('severity')
         vulnerability.owned = document.get('owned', False)
-        vulnerability.attachments = json.dumps(document.get('_attachments', {}))
-        vulnerability.policyviolations = json.dumps(document.get('policyviolations', []))
+        #vulnerability.attachments = json.dumps(document.get('_attachments', {}))
         vulnerability.impact_accountability = document.get('impact', {}).get('accountability')
         vulnerability.impact_availability = document.get('impact', {}).get('availability')
         vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality')
         vulnerability.impact_integrity = document.get('impact', {}).get('integrity')
-        vulnerability.method = document.get('method')
-        vulnerability.path = document.get('path')
-        vulnerability.pname = document.get('pname')
-        vulnerability.query = document.get('query')
-        vulnerability.request = document.get('request')
-        vulnerability.response = document.get('response')
-        vulnerability.website = document.get('website')
+        if document['type'] == 'VulnerabilityWeb':
+            vulnerability.method = document.get('method')
+            vulnerability.path = document.get('path')
+            vulnerability.pname = document.get('pname')
+            vulnerability.query = document.get('query')
+            vulnerability.request = document.get('request')
+            vulnerability.response = document.get('response')
+            vulnerability.website = document.get('website')
         status_map = {
             'opened': 'open',
             'closed': 'closed',
@@ -238,19 +252,35 @@ class VulnerabilityImporter(object):
         parent_id = couchdb_relational_map[couch_parent_id]
         self.set_parent(vulnerability, parent_id, level)
         self.add_references(document, vulnerability, workspace)
+        self.add_policy_violations(document, vulnerability, workspace)
         yield vulnerability
+
+    def add_policy_violations(self, document, vulnerability, workspace):
+        for policy_violation in document.get('policyviolations', []):
+            get_or_create(
+                session,
+                PolicyViolation,
+                name=policy_violation,
+                workspace=workspace,
+                vulnerability=vulnerability
+            )
 
     def add_references(self, document, vulnerability, workspace):
         for ref in document.get('refs', []):
-            new_ref, created = get_or_create(session, Reference, name=ref, workspace=workspace, vulnerability=vulnerability)
-
+            get_or_create(
+                session,
+                Reference,
+                name=ref,
+                workspace=workspace,
+                vulnerability=vulnerability
+            )
 
     def set_parent(self, vulnerability, parent_id, level=2):
         logger.debug('Set parent for vulnerabiity level {0}'.format(level))
         if level == 2:
-            vulnerability.host = session.query(Host).filter_by(id=parent_id).first()
+            vulnerability.host_id = session.query(Host).filter_by(id=parent_id).first().id
         if level == 4:
-            vulnerability.service = session.query(Service).filter_by(id=parent_id).first()
+            vulnerability.service_id = session.query(Service).filter_by(id=parent_id).first().id
 
 
 class CommandImporter(object):
@@ -314,9 +344,75 @@ class CredentialImporter(object):
 class WorkspaceImporter(object):
     DOC_TYPE = 'Workspace'
 
-    def update_from_document(self, document):
+    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         workspace, created = get_or_create(session, server.models.Workspace, name=document.get('name', None))
+        workspace.description = document.get('description')
+        workspace.start_date = datetime.datetime.fromtimestamp(document.get('duration')['start']/1000)
+        workspace.end_date = datetime.datetime.fromtimestamp(document.get('duration')['end']/1000)
+        workspace.scope = document.get('scope')
         yield workspace
+
+
+class MethodologyImporter(object):
+    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
+        if document.get('group_type') == 'template':
+            methodology, created = get_or_create(session, MethodologyTemplate, name=document.get('name'))
+
+            yield methodology
+
+        if document.get('group_type') == 'instance':
+            methodology, created = get_or_create(session, Methodology, name=document.get('name'))
+            methodology.workspace = workspace
+            yield methodology
+#        methodology.
+
+
+class TaskImporter(object):
+
+    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
+        methodology_id = couchdb_relational_map[document.get('group_id')]
+        methodology = session.query(Methodology).filter_by(id=methodology_id).first()
+        task_class = Task
+        if not methodology:
+            methodology = session.query(MethodologyTemplate).filter_by(id=methodology_id).first()
+            task_class = TaskTemplate
+        task, created = get_or_create(session, task_class, name=document.get('name'))
+        if task_class == TaskTemplate:
+            task.template = methodology
+        else:
+            task.methodology = methodology
+        task.description = document.get('description')
+        task.assigned_to = session.query(User).filter_by(username=document.get('username')).first()
+        mapped_status = {
+            'New': 'new',
+            'In Progress': 'in progress',
+            'Review': 'review',
+            'Completed': 'completed'
+        }
+        task.status = mapped_status[document.get('status')]
+        #tags
+        #task.due_date = datetime.datetime.fromtimestamp(document.get('due_date'))
+        yield task
+
+
+class ReportsImporter(object):
+
+    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
+        report, created = get_or_create(session, ExecutiveReport, name=document.get('name'))
+        report.template_name = document.get('name')
+        report.title = document.get('title')
+        report.status = document.get('status')
+        # TODO: add tags
+        report.conclusions = document.get('conclusions')
+        report.summary = document.get('summary')
+        report.recommendations = document.get('recommendations')
+        report.enterprise = document.get('enterprise')
+        report.summary = document.get('summary')
+        report.scope = document.get('scope')
+        report.objectives = document.get('objectives')
+        report.grouped = document.get('grouped')
+        report.workspace = workspace
+        yield report
 
 
 class FaradayEntityImporter(object):
@@ -346,6 +442,9 @@ class FaradayEntityImporter(object):
             'Workspace': WorkspaceImporter,
             'Vulnerability': VulnerabilityImporter,
             'VulnerabilityWeb': VulnerabilityImporter,
+            'TaskGroup': MethodologyImporter,
+            'Task': TaskImporter,
+            'Reports': ReportsImporter,
         }
         importer_self = importer_class_mapper.get(doc_type, None)
         if not importer_self:
@@ -538,6 +637,10 @@ class ImportCouchDB(FlaskScriptCommand):
             (1, 'EntityMetadata'),
             (1, 'Note'),
             (1, 'CommandRunInformation'),
+            (1, 'TaskGroup'),
+            (1, 'Task'),
+            (1, 'Workspace'),
+            (1, 'Reports'),
             (2, 'Interface'),
             (2, 'Service'),
             (2, 'Credential'),
@@ -557,6 +660,7 @@ class ImportCouchDB(FlaskScriptCommand):
             for raw_obj in tqdm(objs_dict.get('rows', [])):
                 raw_obj = raw_obj['value']
                 couchdb_id = raw_obj['_id']
+
                 for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
                     session.commit()
                     if obj_type not in removed_objs:

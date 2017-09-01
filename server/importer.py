@@ -347,8 +347,10 @@ class WorkspaceImporter(object):
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         workspace, created = get_or_create(session, server.models.Workspace, name=document.get('name', None))
         workspace.description = document.get('description')
-        workspace.start_date = datetime.datetime.fromtimestamp(document.get('duration')['start']/1000)
-        workspace.end_date = datetime.datetime.fromtimestamp(document.get('duration')['end']/1000)
+        if document.get('duration')['start']:
+            workspace.start_date = datetime.datetime.fromtimestamp(float(document.get('duration')['start'])/1000)
+        if document.get('duration')['end']:
+            workspace.end_date = datetime.datetime.fromtimestamp(float(document.get('duration')['end'])/1000)
         workspace.scope = document.get('scope')
         yield workspace
 
@@ -410,7 +412,8 @@ class ReportsImporter(object):
         report.summary = document.get('summary')
         report.scope = document.get('scope')
         report.objectives = document.get('objectives')
-        report.grouped = document.get('grouped')
+        if report.status != 'error':
+            report.grouped = document.get('grouped')
         report.workspace = workspace
         yield report
 

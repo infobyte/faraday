@@ -616,7 +616,7 @@ class Task(TaskABC):
                     )
 
     workspace = relationship('Workspace', backref='tasks')
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
 
 class License(db.Model):

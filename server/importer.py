@@ -214,7 +214,7 @@ class VulnerabilityImporter(object):
             name=document.get('name'),
             description=document.get('desc')
         )
-        vulnerability.confirmed = document.get('confirmed', False)
+        vulnerability.confirmed = document.get('confirmed', False) or False
         vulnerability.data = document.get('data')
         vulnerability.easeofresolution = document.get('easeofresolution')
         vulnerability.resolution = document.get('resolution')
@@ -350,9 +350,9 @@ class WorkspaceImporter(object):
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         workspace, created = get_or_create(session, server.models.Workspace, name=document.get('name', None))
         workspace.description = document.get('description')
-        if document.get('duration')['start']:
+        if document.get('duration') and document.get('duration')['start']:
             workspace.start_date = datetime.datetime.fromtimestamp(float(document.get('duration')['start'])/1000)
-        if document.get('duration')['end']:
+        if document.get('duration') and document.get('duration')['end']:
             workspace.end_date = datetime.datetime.fromtimestamp(float(document.get('duration')['end'])/1000)
         workspace.scope = document.get('scope')
         yield workspace
@@ -362,7 +362,7 @@ class MethodologyImporter(object):
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         if document.get('group_type') == 'template':
             methodology, created = get_or_create(session, MethodologyTemplate, name=document.get('name'))
-
+            methodology.workspace = workspace
             yield methodology
 
         if document.get('group_type') == 'instance':
@@ -375,7 +375,11 @@ class MethodologyImporter(object):
 class TaskImporter(object):
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
-        methodology_id = couchdb_relational_map[document.get('group_id')]
+        try:
+            methodology_id = couchdb_relational_map[document.get('group_id')]
+        except KeyError:
+            logger.warn('Could not found methodology with id {0}'.format(document.get('group_id')))
+            return []
         methodology = session.query(Methodology).filter_by(id=methodology_id).first()
         task_class = Task
         if not methodology:
@@ -395,9 +399,10 @@ class TaskImporter(object):
             'Completed': 'completed'
         }
         task.status = mapped_status[document.get('status')]
+        task.workspace = workspace
         #tags
         #task.due_date = datetime.datetime.fromtimestamp(document.get('due_date'))
-        yield task
+        return [task]
 
 
 class ReportsImporter(object):
@@ -674,6 +679,8 @@ class ImportCouchDB(FlaskScriptCommand):
                 couchdb_id = raw_obj['_id']
 
                 for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
+                    if not new_obj:
+                        continue
                     session.commit()
                     if obj_type not in removed_objs:
                         couchdb_relational_map[couchdb_id] = new_obj.id

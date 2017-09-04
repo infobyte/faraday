@@ -167,7 +167,6 @@ def parse_vulnerability_web(register):
         "vulnerability_web_severity" : "severity",
         "vulnerability_web_refs" : "refs", #list
         "vulnerability_web_confirmed" : "confirmed", #boolean
-        "vulnerability_web_resolution" : "resolution",
         "vulnerability_web_status" : "status",
         "vulnerability_web_website" : "website",
         "vulnerability_web_request" : "request",

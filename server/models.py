@@ -211,7 +211,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                         Integer,
                         ForeignKey('workspace.id'),
                         index=True,
-                        nullable = False
+                        nullable=False,
                         )
     workspace = relationship('Workspace', backref='vulnerabilities')
 
@@ -639,6 +639,10 @@ class License(db.Model):
 
     type = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint('product', 'start_date', 'end_date', name='uix_license'),
+    )
 
 
 class Tag(db.Model):

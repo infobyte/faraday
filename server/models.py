@@ -3,6 +3,7 @@
 # See the file 'doc/LICENSE' for the license information
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
     Enum,
@@ -123,7 +124,6 @@ class Hostname(db.Model):
 
 
 class Service(db.Model):
-    # TODO: add unique constraint to -> port, protocol, host_id, workspace
     STATUSES = [
         'open',
         'closed',
@@ -166,7 +166,6 @@ class Service(db.Model):
 
 
 class VulnerabilityABC(db.Model):
-    # TODO: add unique constraint to -> name, description, severity, parent, method, pname, path, website, workspace
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
     EASE_OF_RESOLUTIONS = [
         'trivial',
@@ -238,19 +237,6 @@ class VulnerabilityGeneric(VulnerabilityABC):
     __mapper_args__ = {
         'polymorphic_on': type
     }
-
-    __table_args__ = (
-        UniqueConstraint('name',
-                         'severity',
-                         'host_id',
-                         'service_id',
-                         'method',
-                         'parameter_name',
-                         'path',
-                         'website',
-                         'workspace_id',
-                         name='uix_vulnerability'),
-    )
 
 
 class Vulnerability(VulnerabilityGeneric):
@@ -336,6 +322,10 @@ class ReferenceTemplate(db.Model):
                                 foreign_keys=[vulnerability_id],
                                 )
 
+    __table_args__ = (
+        UniqueConstraint('name', 'vulnerability_id', name='uix_reference_template_name_vulnerability'),
+    )
+
 
 class Reference(db.Model):
     __tablename__ = 'reference'
@@ -365,6 +355,10 @@ class Reference(db.Model):
                                 foreign_keys=[vulnerability_id],
                                 )
 
+    __table_args__ = (
+        UniqueConstraint('name', 'vulnerability_id', 'workspace_id', name='uix_reference_name_vulnerability_workspace'),
+    )
+
 
 class PolicyViolationTemplate(db.Model):
     __tablename__ = 'policy_violation_template'
@@ -381,6 +375,13 @@ class PolicyViolationTemplate(db.Model):
                                 backref='policy_violations',
                                 foreign_keys=[vulnerability_id]
                                 )
+
+    __table_args__ = (
+        UniqueConstraint(
+                        'name',
+                        'vulnerability_id',
+                        name='uix_policy_violation_template_name_vulnerability'),
+    )
 
 
 class PolicyViolation(db.Model):
@@ -410,6 +411,14 @@ class PolicyViolation(db.Model):
                                 backref='policy_violations',
                                 foreign_keys=[vulnerability_id]
                                 )
+
+    __table_args__ = (
+        UniqueConstraint(
+                        'name',
+                        'vulnerability_id',
+                        'workspace_id',
+                        name='uix_policy_violation_template_name_vulnerability_workspace'),
+    )
 
 
 class Credential(db.Model):
@@ -447,6 +456,19 @@ class Credential(db.Model):
                             backref='credentials',
                             foreign_keys=[workspace_id],
                             )
+
+    __table_args__ = (
+        CheckConstraint('(host_id IS NULL AND service_id IS NOT NULL) OR '
+                        '(host_id IS NOT NULL AND service_id IS NULL)',
+                        name='check_credential_host_service'),
+        UniqueConstraint(
+                        'username',
+                        'host_id',
+                        'service_id',
+                        'workspace_id',
+                        name='uix_credential_username_host_service_workspace'
+                        ),
+    )
 
 
 class Command(db.Model):
@@ -618,9 +640,9 @@ class TaskTemplate(TaskABC):
                     nullable=False,
                     )
 
-    __table_args__ = (
-        UniqueConstraint(TaskABC.name, template_id, name='uix_tass_template_name_desc_template'),
-    )
+    # __table_args__ = (
+    #     UniqueConstraint(template_id, name='uix_task_template_name_desc_template_delete'),
+    # )
 
 
 class Task(TaskABC):
@@ -666,9 +688,9 @@ class Task(TaskABC):
     workspace = relationship('Workspace', backref='tasks')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
-    __table_args__ = (
-        UniqueConstraint(TaskABC.name, methodology_id, workspace_id, name='uix_task_name_desc_methodology_workspace'),
-    )
+    # __table_args__ = (
+    #     UniqueConstraint(TaskABC.name, methodology_id, workspace_id, name='uix_task_name_desc_methodology_workspace'),
+    # )
 
 
 class License(db.Model):
@@ -747,3 +769,26 @@ class ExecutiveReport(db.Model):
 
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
+
+
+# This constraint uses Columns from different classes
+# Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
+# However, since it contains columns from children classes, this cannot be done
+# This is a workaround suggested by SQLAlchemy's creator
+CheckConstraint('((Vulnerability.host_id IS NULL)::int+'
+                '(Vulnerability.service_id IS NULL)::int+'
+                '(Vulnerability.source_code_id IS NULL)::int)=1',
+                name='check_vulnerability_host_service_source_code',
+                table=VulnerabilityGeneric.__table__)
+UniqueConstraint(VulnerabilityGeneric.name,
+                 VulnerabilityGeneric.severity,
+                 Vulnerability.host_id,
+                 VulnerabilityWeb.service_id,
+                 VulnerabilityWeb.method,
+                 VulnerabilityWeb.parameter_name,
+                 VulnerabilityWeb.path,
+                 VulnerabilityWeb.website,
+                 VulnerabilityGeneric.workspace_id,
+                 VulnerabilityCode.source_code_id,
+                 name='uix_vulnerability'
+)

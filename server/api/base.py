@@ -56,13 +56,16 @@ class GenericWorkspacedView(FlaskView):
     def _get_lookup_field(self):
         return getattr(self.model_class, self.lookup_field)
 
-    def _get_base_query(self, workspace_name):
+    def _get_workspace(self, workspace_name):
         try:
             ws = Workspace.query.filter_by(name=workspace_name).one()
         except NoResultFound:
             flask.abort(404, "No such workspace: %s" % workspace_name)
+        return ws
+
+    def _get_base_query(self, workspace_name):
         return self.model_class.query.join(Workspace) \
-            .filter(Workspace.id==ws.id)
+            .filter(Workspace.id==self._get_workspace(workspace_name).id)
 
     def _get_object(self, workspace_name, object_id):
         try:

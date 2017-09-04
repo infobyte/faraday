@@ -10,11 +10,15 @@ from test_cases import factories
 
 
 
-register(factories.WorkspaceFactory)
-register(factories.HostFactory)
-register(factories.ServiceFactory)
-register(factories.VulnerabilityFactory)
-register(factories.CredentialFactory)
+enabled_factories = [
+    factories.WorkspaceFactory,
+    factories.HostFactory,
+    factories.ServiceFactory,
+    factories.VulnerabilityFactory,
+    factories.CredentialFactory,
+]
+for factory in enabled_factories:
+    register(factory)
 
 
 @pytest.fixture(scope='session')
@@ -50,13 +54,19 @@ def database(app, request):
 
 @pytest.fixture(scope='function')
 def session(database, request):
-    connection = db.engine.connect()
+    connection = database.engine.connect()
     transaction = connection.begin()
 
     options = {"bind": connection, 'binds': {}}
     session = db.create_scoped_session(options=options)
 
+    database.session = session
     db.session = session
+
+    for factory in enabled_factories:
+        factory._meta.sqlalchemy_session = session
+
+
 
     def teardown():
         transaction.rollback()
@@ -71,24 +81,25 @@ def test_client(app):
     return app.test_client()
 
 
-def create_user(app, username, email, password, **kwargs):
+def create_user(app, session, username, email, password, **kwargs):
     user = app.user_datastore.create_user(username=username,
                                           email=email,
                                           password=password,
                                           **kwargs)
-    db.session.add(user)
-    db.session.commit()
+    session.add(user)
+    session.commit()
     return user
 
 
 @pytest.fixture
-def user(app, session):
-    return create_user(app, 'test', 'user@test.com', 'password', is_ldap=False)
+def user(app, database, session):
+    # print 'user', id(session), session
+    return create_user(app, session, 'test', 'user@test.com', 'password', is_ldap=False)
 
 
 @pytest.fixture
 def ldap_user(app, session):
-    return create_user(app, 'ldap', 'ldap@test.com', 'password', is_ldap=True)
+    return create_user(app, session, 'ldap', 'ldap@test.com', 'password', is_ldap=True)
 
 
 def login_as(test_client, user):

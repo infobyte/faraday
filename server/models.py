@@ -159,6 +159,14 @@ class VulnerabilityABC(db.Model):
         'difficult',
         'infeasible'
     ]
+    SEVERITIES = [
+        'critical',
+        'high',
+        'medium',
+        'low',
+        'informational',
+        'unclassified',
+    ]
 
     __abstract__ = True
     id = Column(Integer, primary_key=True)
@@ -168,7 +176,7 @@ class VulnerabilityABC(db.Model):
     ease_of_resolution = Column(Enum(*EASE_OF_RESOLUTIONS, name='vulnerability_ease_of_resolution'), nullable=True)
     name = Column(Text, nullable=False)
     resolution = Column(Text, nullable=True)
-    severity = Column(String(50), nullable=False)
+    severity = Column(Enum(*SEVERITIES, name='vulnerability_severity'), nullable=False)
     # TODO add evidence
 
     impact_accountability = Column(Boolean, default=False)

@@ -682,7 +682,7 @@ class License(db.Model):
     notes = Column(Text, nullable=True)
 
     __table_args__ = (
-        UniqueConstraint('product', 'start_date', 'end_date', name='uix_license'),
+        UniqueConstraint('product', 'start_date', 'end_date', name='uix_license_product_start_end_dates'),
     )
 
 

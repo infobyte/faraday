@@ -57,7 +57,6 @@ class EntityMetadata(db.Model):
 
 
 class SourceCode(db.Model):
-    # TODO: add unique constraint -> filename, workspace
     __tablename__ = 'source_code'
     id = Column(Integer, primary_key=True)
     filename = Column(Text, nullable=False)
@@ -65,9 +64,12 @@ class SourceCode(db.Model):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref='source_codes')
 
+    __table_args__ = (
+        UniqueConstraint(filename, workspace_id, name='uix_source_code_filename_workspace'),
+    )
+
 
 class Host(db.Model):
-    # TODO: add unique constraint -> ip, workspace
     __tablename__ = 'host'
     id = Column(Integer, primary_key=True)
     ip = Column(Text, nullable=False)  # IP v4 or v6
@@ -97,16 +99,27 @@ class Host(db.Model):
                             backref='hosts',
                             foreign_keys=[workspace_id]
                             )
+    __table_args__ = (
+        UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
+    )
 
 
 class Hostname(db.Model):
-    # TODO: add unique constraint -> name, host, workspace
     __tablename__ = 'hostname'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
-    host_id = Column(Integer, ForeignKey('host.id'), index=True)
+    host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
     host = relationship('Host', backref='hostnames')
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+    workspace = relationship(
+        'Workspace',
+        backref='hosts',
+        foreign_keys=[workspace_id]
+    )
+    __table_args__ = (
+        UniqueConstraint(name, host_id, workspace_id, name='uix_hostname_host_workspace'),
+    )
 
 
 class Service(db.Model):
@@ -147,6 +160,9 @@ class Service(db.Model):
                             backref='services',
                             foreign_keys=[workspace_id]
                             )
+    __table_args__ = (
+        UniqueConstraint(port, protocol, host_id, workspace_id, name='uix_service_port_protocol_host_workspace'),
+    )
 
 
 class VulnerabilityABC(db.Model):
@@ -180,6 +196,10 @@ class VulnerabilityABC(db.Model):
 class VulnerabilityTemplate(VulnerabilityABC):
     __tablename__ = 'vulnerability_template'
 
+    __table_args__ = (
+        UniqueConstraint('name', name='uix_vulnerability_template_name'),
+    )
+
 
 class VulnerabilityGeneric(VulnerabilityABC):
     STATUSES = [
@@ -210,6 +230,19 @@ class VulnerabilityGeneric(VulnerabilityABC):
     __mapper_args__ = {
         'polymorphic_on': type
     }
+
+    __table_args__ = (
+        UniqueConstraint('name',
+                         'severity',
+                         'host_id',
+                         'service_id',
+                         'method',
+                         'parameter_name',
+                         'path',
+                         'website',
+                         'workspace_id',
+                         name='uix_vulnerability'),
+    )
 
 
 class Vulnerability(VulnerabilityGeneric):
@@ -577,6 +610,10 @@ class TaskTemplate(TaskABC):
                     nullable=False,
                     )
 
+    __table_args__ = (
+        UniqueConstraint(TaskABC.name, template_id, name='uix_tass_template_name_desc_template'),
+    )
+
 
 class Task(TaskABC):
     STATUSES = [
@@ -602,24 +639,28 @@ class Task(TaskABC):
     assigned_to = relationship('User', backref='assigned_tasks')
     assigned_to_id = Column(Integer, ForeignKey('user.id'), nullable=True)
 
-    methodology = relationship('Methodology', backref='tasks')
     methodology_id = Column(
                     Integer,
                     ForeignKey('methodology.id'),
                     index=True,
                     nullable=False,
                     )
+    methodology = relationship('Methodology', backref='tasks')
 
-    template = relationship('TaskTemplate', backref='tasks')
     template_id = Column(
                     Integer,
                     ForeignKey('task_template.id'),
                     index=True,
                     nullable=True,
                     )
+    template = relationship('TaskTemplate', backref='tasks')
 
     workspace = relationship('Workspace', backref='tasks')
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(TaskABC.name, methodology_id, workspace_id, name='uix_task_name_desc_methodology_workspace'),
+    )
 
 
 class License(db.Model):

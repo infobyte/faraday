@@ -105,8 +105,8 @@ class HostImporter(object):
             document['os'] = 'unknown'
 
         default_gateway = document.get('default_gateway', None)
-
-        host.name = document.get('name')
+        if not host.ip:
+            host.ip = document.get('name')
         host.description = document.get('description')
         host.os = document.get('os')
         host.default_gateway_ip = default_gateway and default_gateway[0]

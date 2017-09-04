@@ -9,6 +9,7 @@ from binascii import unhexlify
 
 import requests
 from tqdm import tqdm
+from IPy import IP
 from flask_script import Command as FlaskScriptCommand
 from restkit.errors import RequestError, Unauthorized
 from IPy import IP
@@ -40,7 +41,9 @@ from server.models import (
     TaskTemplate,
     Methodology,
     MethodologyTemplate,
-    ExecutiveReport
+    ExecutiveReport,
+    VulnerabilityTemplate,
+    ReferenceTemplate,
 )
 
 COUCHDB_USER_PREFIX = 'org.couchdb.user:'
@@ -92,7 +95,12 @@ class HostImporter(object):
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
         # Ticket #3387: if the 'os' field is None, we default to 'unknown'
-        host, created = get_or_create(session, Host, ip=document.get('name'))
+        try:
+            IP(document.get('name'))  # this will raise ValueError on valid IPs
+            host, created = get_or_create(session, Host, ip=document.get('name'))
+        except ValueError:
+            host, created = get_or_create(session, Host, ip=document.get('ip'))
+
         if not document.get('os'):
             document['os'] = 'unknown'
 
@@ -101,8 +109,8 @@ class HostImporter(object):
         host.name = document.get('name')
         host.description = document.get('description')
         host.os = document.get('os')
-        host.default_gateway_ip = default_gateway and default_gateway[0] or ''
-        host.default_gateway_mac = default_gateway and default_gateway[1] or ''
+        host.default_gateway_ip = default_gateway and default_gateway[0]
+        host.default_gateway_mac = default_gateway and default_gateway[1]
         host.owned = document.get('owned', False)
         host.workspace = workspace
         yield host
@@ -118,7 +126,7 @@ class InterfaceImporter(object):
     DOC_TYPE = 'Interface'
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
-
+        # interface dict is used to merge interface with host and connect it the services to the host
         interface = {}
         interface['name'] = document.get('name')
         interface['description'] = document.get('description')
@@ -143,7 +151,8 @@ class InterfaceImporter(object):
         if not couch_parent_id:
             couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
         parent_id = couchdb_relational_map[couch_parent_id]
-        self.merge_with_host(interface, parent_id)
+        interface['parent_id'] = parent_id
+        host = self.merge_with_host(interface, parent_id)
         yield interface
 
     def merge_with_host(self, interface, parent_relation_db_id):
@@ -161,11 +170,12 @@ class InterfaceImporter(object):
         if interface['network_segment']:
             host.net_segment = interface['network_segment']
         if interface['description']:
-            host.description += '\n {0}'.format(interface['description'])
+            host.description += '\n Interface data: {0}'.format(interface['description'])
 
         for hostname in interface['hostnames']:
             hostname, created = get_or_create(session, Hostname, name=hostname, host=host)
         host.owned = host.owned or interface['owned']
+        return host
 
 
 class ServiceImporter(object):
@@ -180,10 +190,14 @@ class ServiceImporter(object):
             parent_id = document['_id'].split('.')[0]
         host, created = get_or_create(session, Host, id=couchdb_relational_map[parent_id])
         for port in document.get('ports'):
-            service, created = get_or_create(session, Service, name=document.get('name'), port=port)
-            service.name = document.get('name')
+            service, created = get_or_create(session,
+                                             Service,
+                                             name=document.get('name'),
+                                             port=port,
+                                             host=host)
             service.description = document.get('description')
             service.owned = document.get('owned', False)
+            service.banner = document.get('banner')
             service.protocol = document.get('protocol')
             if not document.get('status'):
                 logger.warning('Service {0} with empty status. Using open as status'.format(document['_id']))
@@ -233,6 +247,11 @@ class VulnerabilityImporter(object):
             vulnerability.request = document.get('request')
             vulnerability.response = document.get('response')
             vulnerability.website = document.get('website')
+            params = document.get('params', u'')
+            if isinstance(params, (list, tuple)):
+                vulnerability.parameters = (u' '.join(params)).strip()
+            else:
+                vulnerability.parameters = params if params is not None else u''
         status_map = {
             'opened': 'open',
             'closed': 'closed',
@@ -241,11 +260,7 @@ class VulnerabilityImporter(object):
         vulnerability.status = status
         vulnerability.workspace = workspace
 
-        params = document.get('params', u'')
-        if isinstance(params, (list, tuple)):
-            vulnerability.params = (u' '.join(params)).strip()
-        else:
-            vulnerability.params = params if params is not None else u''
+
 
         couch_parent_id = document.get('parent', None)
         if not couch_parent_id:
@@ -390,6 +405,7 @@ class TaskImporter(object):
             task.template = methodology
         else:
             task.methodology = methodology
+            task.workspace = workspace
         task.description = document.get('description')
         task.assigned_to = session.query(User).filter_by(username=document.get('username')).first()
         mapped_status = {
@@ -399,7 +415,6 @@ class TaskImporter(object):
             'Completed': 'completed'
         }
         task.status = mapped_status[document.get('status')]
-        task.workspace = workspace
         #tags
         #task.due_date = datetime.datetime.fromtimestamp(document.get('due_date'))
         return [task]
@@ -550,6 +565,38 @@ class ImportCouchDBUsers(FlaskScriptCommand):
         db.session.commit()
 
 
+
+class ImportVulnerabilityTemplates(FlaskScriptCommand):
+
+    def run(self):
+        cwe_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
+            username=server.config.couchdb.user,
+            password=server.config.couchdb.password,
+            hostname=server.config.couchdb.host,
+            port=server.config.couchdb.port,
+            path='cwe/_all_docs?include_docs=true'
+        )
+        cwes = requests.get(cwe_url).json()['rows']
+        for cwe in cwes:
+            document = cwe['doc']
+            vuln_template, created = get_or_create(session,
+                                                   VulnerabilityTemplate,
+                                                   name=document.get('name'),
+                                                   severity=document.get('exploitation'),
+                                                   description=document.get('description'))
+            vuln_template.resolution = document.get('resolution')
+            for ref_doc in document['references']:
+                get_or_create(session,
+                             ReferenceTemplate,
+                             vulnerability=vuln_template,
+                             name=ref_doc)
+
+
+
+
+
+
+
 class ImportCouchDB(FlaskScriptCommand):
 
     def _open_couchdb_conn(self):
@@ -574,6 +621,8 @@ class ImportCouchDB(FlaskScriptCommand):
         """
             Main entry point for couchdb import
         """
+        vuln_templates_import = ImportVulnerabilityTemplates()
+        vuln_templates_import.run()
         users_import = ImportCouchDBUsers()
         users_import.run()
         couchdb_server_conn, workspaces_list = self._open_couchdb_conn()
@@ -685,6 +734,7 @@ class ImportCouchDB(FlaskScriptCommand):
                     if obj_type not in removed_objs:
                         couchdb_relational_map[couchdb_id] = new_obj.id
                     else:
+                        couchdb_relational_map[couchdb_id] = new_obj['parent_id']
                         couchdb_removed_objs.add(couchdb_id)
         self.verify_import_data(couchdb_relational_map, couchdb_removed_objs, workspace)
         return created

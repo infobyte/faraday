@@ -62,7 +62,7 @@ class SourceCode(db.Model):
     id = Column(Integer, primary_key=True)
     filename = Column(Text, nullable=False)
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', backref='source_codes')
 
 
@@ -91,7 +91,7 @@ class Host(db.Model):
                                 foreign_keys=[entity_metadata_id]
                                 )
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
                             'Workspace',
                             backref='hosts',
@@ -138,10 +138,10 @@ class Service(db.Model):
                                 foreign_keys=[entity_metadata_id]
                                 )
 
-    host_id = Column(Integer, ForeignKey('host.id'), index=True)
+    host_id = Column(Integer, ForeignKey('host.id'), index=True, nullable=False)
     host = relationship('Host', backref='services', foreign_keys=[host_id])
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
                             'Workspace',
                             backref='services',
@@ -211,6 +211,7 @@ class VulnerabilityGeneric(VulnerabilityABC):
                         Integer,
                         ForeignKey('workspace.id'),
                         index=True,
+                        nullable = False
                         )
     workspace = relationship('Workspace', backref='vulnerabilities')
 
@@ -311,7 +312,8 @@ class Reference(db.Model):
     workspace_id = Column(
                         Integer,
                         ForeignKey('workspace.id'),
-                        index=True
+                        index=True,
+                        nullable=False
                         )
     workspace = relationship(
                             'Workspace',
@@ -356,7 +358,8 @@ class PolicyViolation(db.Model):
     workspace_id = Column(
                         Integer,
                         ForeignKey('workspace.id'),
-                        index=True
+                        index=True,
+                        nullable=False
                         )
     workspace = relationship(
                             'Workspace',
@@ -416,15 +419,15 @@ class Credential(db.Model):
 class Command(db.Model):
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
-    command = Column(String(250), nullable=False)
+    command = Column(Text(), nullable=False)
     start_date = Column(DateTime, nullable=False)
-    end_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=True)
     ip = Column(String(250), nullable=False)  # where the command was executed
     hostname = Column(String(250), nullable=False)  # where the command was executed
-    params = Column(String(250), nullable=True)
-    user = Column(String(250), nullable=True)  # where the command was executed
+    params = Column(Text(), nullable=True)
+    user = Column(String(250), nullable=True)  # os username where the command was executed
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
     # TODO: add Tool relationship and report_attachment
 
@@ -555,7 +558,7 @@ class Methodology(db.Model):
                     )
 
     workspace = relationship('Workspace', backref='methodologies')
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
 
 class TaskABC(db.Model):
@@ -624,7 +627,7 @@ class Task(TaskABC):
                     )
 
     workspace = relationship('Workspace', backref='tasks')
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
 
 class License(db.Model):
@@ -672,7 +675,7 @@ class Comment(db.Model):
     object_id = Column(Integer, nullable=False)
     object_type = Column(Text, nullable=False)
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
 
 class ExecutiveReport(db.Model):
@@ -697,5 +700,5 @@ class ExecutiveReport(db.Model):
     summary = Column(Text, nullable=True)
     title = Column(Text, nullable=True)
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])

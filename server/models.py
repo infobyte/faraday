@@ -91,7 +91,7 @@ class Host(db.Model):
                                 foreign_keys=[entity_metadata_id]
                                 )
 
-    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True)
+    workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
                             'Workspace',
                             backref='hosts',

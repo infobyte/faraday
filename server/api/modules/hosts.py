@@ -10,7 +10,7 @@ from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace,\
     get_integer_parameter, filter_request_args
 from server.dao.host import HostDAO
-from server.api.base import ReadOnlyWorkspacedView
+from server.api.base import ReadWriteWorkspacedView
 from server.models import Host
 
 host_api = Blueprint('host_api', __name__)
@@ -23,7 +23,7 @@ class HostSchema(Schema):
     os = fields.String()
 
 
-class HostsView(ReadOnlyWorkspacedView):
+class HostsView(ReadWriteWorkspacedView):
     route_base = 'hosts'
     model_class = Host
     schema_class = HostSchema

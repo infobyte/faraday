@@ -4,7 +4,8 @@ import json
 from flask_classful import FlaskView
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.routing import parse_rule
-from server.models import Workspace
+from webargs.flaskparser import FlaskParser
+from server.models import Workspace, db
 
 
 def output_json(data, code, headers=None):
@@ -78,6 +79,27 @@ class GenericWorkspacedView(FlaskView):
     def _dump(self, obj, **kwargs):
         return self._get_schema_class()(**kwargs).dump(obj)
 
+    def _parse_data(self, schema, request, *args, **kwargs):
+        return FlaskParser().parse(schema, request, locations=('json',),
+                                   *args, **kwargs)
+
+    @classmethod
+    def register(cls, app, *args, **kwargs):
+        """Register and add JSON error handler. Use error code
+        400 instead of 422"""
+        super(GenericWorkspacedView, cls).register(app, *args, **kwargs)
+        @app.errorhandler(422)
+        def handle_unprocessable_entity(err):
+            # webargs attaches additional metadata to the `data` attribute
+            exc = getattr(err, 'exc')
+            if exc:
+                # Get validations from the ValidationError object
+                messages = exc.messages
+            else:
+                messages = ['Invalid request']
+            return flask.jsonify({
+                'messages': messages,
+            }), 400
 
 class ListWorkspacedMixin(object):
     """Add GET /<workspace_name>/ route"""
@@ -94,8 +116,26 @@ class RetrieveWorkspacedMixin(object):
         return self._dump(self._get_object(workspace_name, object_id))
 
 
-class ReadOnlyWorkspacedView(GenericWorkspacedView,
-                             ListWorkspacedMixin,
-                             RetrieveWorkspacedMixin):
+class ReadOnlyWorkspacedView(ListWorkspacedMixin,
+                             RetrieveWorkspacedMixin,
+                             GenericWorkspacedView):
     """A generic view with list and retrieve endpoints"""
+    pass
+
+
+class CreateWorkspacedMixin(object):
+
+    def post(self, workspace_name):
+        data = self._parse_data(self._get_schema_class()(strict=True),
+                                flask.request)
+        obj = self.model_class(**data)
+        obj.workspace = self._get_workspace(workspace_name)
+        db.session.add(obj)
+        db.session.commit()
+        return self._dump(obj).data, 201
+
+
+class ReadWriteWorkspacedView(CreateWorkspacedMixin,
+                              ReadOnlyWorkspacedView,
+                              GenericWorkspacedView):
     pass

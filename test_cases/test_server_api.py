@@ -1,6 +1,6 @@
 import pytest
 from test_cases import factories
-from server.models import db, Workspace
+from server.models import db, Workspace, Host
 
 PREFIX = '/v2/'
 HOSTS_COUNT = 5
@@ -46,3 +46,33 @@ class TestHostAPI:
         res = test_client.get(self.url(self.workspace.hosts[0], new))
         assert res.status_code == 404
 
+    def test_create_a_host_succeeds(self, test_client):
+        res = test_client.post(self.url(), data={
+            "ip": "127.0.0.1",
+            "description": "aaaaa",
+            # os is not required
+        })
+        print res.data
+        assert res.status_code == 201
+        host_id = res.json['id']
+        host = Host.query.get(host_id)
+        assert host.ip == "127.0.0.1"
+        assert host.description == "aaaaa"
+        assert host.os is None
+        assert host.workspace == self.workspace
+
+    def test_create_a_host_fails_with_missing_desc(self, test_client):
+        res = test_client.post(self.url(), data={
+            "ip": "127.0.0.1",
+        })
+        assert res.status_code == 400
+
+    def test_create_a_host_fails_with_existing_ip(self, test_client,
+                                                  session, host):
+        session.add(host)
+        session.commit()
+        res = test_client.post(self.url(), data={
+            "ip": host.ip,
+            "description": "aaaaa",
+        })
+        assert res.status_code == 400

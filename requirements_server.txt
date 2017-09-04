@@ -14,3 +14,4 @@ Flask-SQLAlchemy==2.2
 Flask-Script==2.0.5
 flask-classful
 marshmallow
+webargs

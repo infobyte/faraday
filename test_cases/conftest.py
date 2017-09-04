@@ -24,7 +24,15 @@ for factory in enabled_factories:
 
 
 class CustomClient(FlaskClient):
+
     def open(self, *args, **kwargs):
+        if kwargs.pop('use_json_data', True) and 'data' in kwargs:
+            # JSON-encode data by default
+            kwargs['data'] = json.dumps(kwargs['data'])
+            kwargs['headers'] = kwargs.get('headers', []) + [
+                ('Content-Type', 'application/json'),
+            ]
+
         ret = super(CustomClient, self).open(*args, **kwargs)
         try:
             ret.json = json.loads(ret.data)

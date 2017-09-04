@@ -1,6 +1,8 @@
 import os
 import sys
+import json
 import pytest
+from flask.testing import FlaskClient
 from pytest_factoryboy import register
 
 sys.path.append(os.path.abspath(os.getcwd()))
@@ -21,11 +23,22 @@ for factory in enabled_factories:
     register(factory)
 
 
+class CustomClient(FlaskClient):
+    def open(self, *args, **kwargs):
+        ret = super(CustomClient, self).open(*args, **kwargs)
+        try:
+            ret.json = json.loads(ret.data)
+        except ValueError:
+            ret.json = None
+        return ret
+
+
 @pytest.fixture(scope='session')
 def app(request):
     # we use sqlite memory for tests
     test_conn_string = 'sqlite://'
     app = create_app(db_connection_string=test_conn_string, testing=True)
+    app.test_client_class = CustomClient
 
     # Establish an application context before running the tests.
     ctx = app.app_context()

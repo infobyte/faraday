@@ -1,5 +1,4 @@
 import pytest
-from json import loads as decode_json
 from test_cases import factories
 from server.models import db, Workspace
 
@@ -10,7 +9,7 @@ HOSTS_COUNT = 5
 class TestHostAPI:
 
     @pytest.fixture(autouse=True)
-    def load_workspace_with_hosts(self, request, database, session, workspace, host_factory):
+    def load_workspace_with_hosts(self, database, session, workspace, host_factory):
         host_factory.create_batch(HOSTS_COUNT, workspace=workspace)
         database.session.commit()
         assert workspace.id is not None
@@ -28,7 +27,7 @@ class TestHostAPI:
     def test_list_retrieves_all_items(self, test_client):
         res = test_client.get(self.url())
         assert res.status_code == 200
-        assert len(decode_json(res.data)) == HOSTS_COUNT
+        assert len(res.json) == HOSTS_COUNT
 
     def test_retrieve_one_host(self, test_client, database):
         # self.workspace = Workspace.query.first()
@@ -36,5 +35,14 @@ class TestHostAPI:
         assert host.id is not None
         res = test_client.get(self.url(host))
         assert res.status_code == 200
-        assert decode_json(res.data)['ip'] == host.ip
+        assert res.json['ip'] == host.ip
+
+    def test_retrieve_fails_with_host_of_another_workspace(self,
+                                                           test_client,
+                                                           session,
+                                                           workspace_factory):
+        new = workspace_factory.create()
+        session.commit()
+        res = test_client.get(self.url(self.workspace.hosts[0], new))
+        assert res.status_code == 404
 

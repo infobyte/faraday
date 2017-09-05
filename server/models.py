@@ -97,7 +97,7 @@ class Host(db.Model):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
                             'Workspace',
-                            backref='hosts',
+                            backref='workspace_hosts',
                             foreign_keys=[workspace_id]
                             )
     __table_args__ = (

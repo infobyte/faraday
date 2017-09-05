@@ -152,10 +152,10 @@ class InterfaceImporter(object):
             couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
         parent_id = couchdb_relational_map[couch_parent_id]
         interface['parent_id'] = parent_id
-        host = self.merge_with_host(interface, parent_id)
+        host = self.merge_with_host(interface, workspace, parent_id)
         yield interface
 
-    def merge_with_host(self, interface, parent_relation_db_id):
+    def merge_with_host(self, interface, workspace, parent_relation_db_id):
         host = session.query(Host).filter_by(id=parent_relation_db_id).first()
         assert host.workspace == interface['workspace']
         if interface['mac']:
@@ -173,7 +173,13 @@ class InterfaceImporter(object):
             host.description += '\n Interface data: {0}'.format(interface['description'])
 
         for hostname in interface['hostnames']:
-            hostname, created = get_or_create(session, Hostname, name=hostname, host=host)
+            hostname, created = get_or_create(
+                session,
+                Hostname,
+                name=hostname,
+                host=host,
+                workspace=workspace
+            )
         host.owned = host.owned or interface['owned']
         return host
 
@@ -189,7 +195,10 @@ class ServiceImporter(object):
             # some services are missing the parent key
             parent_id = document['_id'].split('.')[0]
         host, created = get_or_create(session, Host, id=couchdb_relational_map[parent_id])
-        for port in document.get('ports'):
+        ports = document.get('ports')
+        if len(ports) > 2:
+            logger.warn('More than one port found in services!')
+        for port in ports:
             service, created = get_or_create(session,
                                              Service,
                                              name=document.get('name'),
@@ -232,7 +241,15 @@ class VulnerabilityImporter(object):
         vulnerability.data = document.get('data')
         vulnerability.easeofresolution = document.get('easeofresolution')
         vulnerability.resolution = document.get('resolution')
-        vulnerability.severity = document.get('severity')
+        mapped_severity = {
+            'med': 'medium',
+            'critical': 'critical',
+            'high':'high',
+            'low': 'low',
+            'info': 'informational',
+            'unclassified': 'unclassified',
+        }
+        vulnerability.severity = mapped_severity[document.get('severity')]
         vulnerability.owned = document.get('owned', False)
         #vulnerability.attachments = json.dumps(document.get('_attachments', {}))
         vulnerability.impact_accountability = document.get('impact', {}).get('accountability')
@@ -291,7 +308,7 @@ class VulnerabilityImporter(object):
                 vulnerability=vulnerability
             )
 
-    def set_parent(self, vulnerability, parent_id, level=2):
+    def set_parent(self, vulnerability, parent_id, level):
         logger.debug('Set parent for vulnerabiity level {0}'.format(level))
         if level == 2:
             vulnerability.host_id = session.query(Host).filter_by(id=parent_id).first().id
@@ -579,10 +596,18 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
         cwes = requests.get(cwe_url).json()['rows']
         for cwe in cwes:
             document = cwe['doc']
+            mapped_exploitation = {
+                'critical': 'critical',
+                'med': 'medium',
+                'high':'high',
+                'low': 'low',
+                'info': 'informational',
+            'unclassified': 'unclassified',
+            }
             vuln_template, created = get_or_create(session,
                                                    VulnerabilityTemplate,
                                                    name=document.get('name'),
-                                                   severity=document.get('exploitation'),
+                                                   severity=mapped_exploitation[document.get('exploitation')],
                                                    description=document.get('description'))
             vuln_template.resolution = document.get('resolution')
             for ref_doc in document['references']:
@@ -724,17 +749,19 @@ class ImportCouchDB(FlaskScriptCommand):
             obj_importer = faraday_importer.get_importer_from_document(obj_type)()
             objs_dict = self.get_objs(couch_url, obj_type, level)
             for raw_obj in tqdm(objs_dict.get('rows', [])):
-                raw_obj = raw_obj['value']
-                couchdb_id = raw_obj['_id']
+                # we use no_autoflush since some queries triggers flush and some relationship are missing in the middle
+                with session.no_autoflush:
+                    raw_obj = raw_obj['value']
+                    couchdb_id = raw_obj['_id']
 
-                for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
-                    if not new_obj:
-                        continue
-                    session.commit()
-                    if obj_type not in removed_objs:
-                        couchdb_relational_map[couchdb_id] = new_obj.id
-                    else:
-                        couchdb_relational_map[couchdb_id] = new_obj['parent_id']
+                    for new_obj in obj_importer.update_from_document(raw_obj, workspace, level, couchdb_relational_map):
+                        if not new_obj:
+                            continue
+                        session.commit()
+                        if obj_type not in removed_objs:
+                            couchdb_relational_map[couchdb_id] = new_obj.id
+                        else:
+                            couchdb_relational_map[couchdb_id] = new_obj['parent_id']
                         couchdb_removed_objs.add(couchdb_id)
         self.verify_import_data(couchdb_relational_map, couchdb_removed_objs, workspace)
         return created

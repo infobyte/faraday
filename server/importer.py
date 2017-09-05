@@ -160,6 +160,8 @@ class InterfaceImporter(object):
             return False
         if not ip_str or ip_str == '0000:0000:0000:0000:0000:0000:0000:0000':
             return False
+        if not ip_str or ip_str == '0000:0000:0000:0000:0000:0000:0000:0001':
+            return False
         return True
 
     def merge_with_host(self, interface, workspace, parent_relation_db_id):
@@ -169,8 +171,16 @@ class InterfaceImporter(object):
             host.mac = interface['mac']
         if interface['owned']:
             host.owned = interface['owned']
-        if self.check_ip_address(interface['ipv4_address']) or self.check_ip_address(interface['ipv6_address']):
-            host.ip = interface['ipv4_address'] or interface['ipv6_address']
+        if self.check_ip_address(interface['ipv4_address']):
+            interface_ip = interface['ipv4_address']
+            if host.ip != interface_ip:
+                logger.warn('Overriding host ip address {0} with new ip {1}'.format(host.ip, interface_ip))
+                host.ip = interface_ip
+        if self.check_ip_address(interface['ipv6_address']):
+            interface_ip = interface['ipv6_address']
+            if host.ip != interface_ip:
+                logger.warn('Overriding host ip address {0} with new ip {1}'.format(host.ip, interface_ip))
+                host.ip = interface_ip
         if self.check_ip_address(interface['ipv4_gateway']) or self.check_ip_address(interface['ipv6_gateway']):
             host.default_gateway_ip = interface['ipv4_gateway'] or interface['ipv6_gateway']
         #host.default_gateway_mac
@@ -178,12 +188,16 @@ class InterfaceImporter(object):
             host.net_segment = interface['network_segment']
         if interface['description']:
             host.description += '\n Interface data: {0}'.format(interface['description'])
-
-        for hostname in interface['hostnames']:
+        if type(interface['hostnames']) in (str, unicode):
+            interface['hostnames'] = [interface['hostnames']]
+        for hostname_str in interface['hostnames']:
+            if not hostname_str:
+                # skip empty hostnames
+                continue
             hostname, created = get_or_create(
                 session,
                 Hostname,
-                name=hostname,
+                name=hostname_str,
                 host=host,
                 workspace=workspace
             )
@@ -235,15 +249,37 @@ class VulnerabilityImporter(object):
     DOC_TYPE = ['Vulnerability', 'VulnerabilityWeb']
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
-        vuln_class = Vulnerability
+        couch_parent_id = document.get('parent', None)
+        if not couch_parent_id:
+            couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
+        parent_id = couchdb_relational_map[couch_parent_id]
+        if level == 2:
+            parent = session.query(Host).filter_by(id=parent_id).first()
+        if level == 4:
+            parent = session.query(Service).filter_by(id=parent_id).first()
         if document['type'] == 'VulnerabilityWeb':
-            vuln_class = VulnerabilityWeb
-        vulnerability, created = get_or_create(
-            session,
-            vuln_class,
-            name=document.get('name'),
-            description=document.get('desc')
-        )
+            vulnerability, created = get_or_create(
+                session,
+                VulnerabilityWeb,
+                name=document.get('name'),
+                description=document.get('desc'),
+                service_id=parent.id,
+            )
+        if document['type'] == 'Vulnerability':
+            vuln_params = {
+                'name': document.get('name'),
+                'description': document.get('desc')
+            }
+            if type(parent) == Host:
+                vuln_params.update({'host_id': parent.id})
+            elif type(parent) == Service:
+                vuln_params.update({'service_id': parent.id})
+            vulnerability, created = get_or_create(
+                session,
+                Vulnerability,
+                **vuln_params
+            )
+
         vulnerability.confirmed = document.get('confirmed', False) or False
         vulnerability.data = document.get('data')
         vulnerability.easeofresolution = document.get('easeofresolution')
@@ -284,13 +320,6 @@ class VulnerabilityImporter(object):
         vulnerability.status = status
         vulnerability.workspace = workspace
 
-
-
-        couch_parent_id = document.get('parent', None)
-        if not couch_parent_id:
-            couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
-        parent_id = couchdb_relational_map[couch_parent_id]
-        self.set_parent(vulnerability, parent_id, level)
         self.add_references(document, vulnerability, workspace)
         self.add_policy_violations(document, vulnerability, workspace)
         yield vulnerability
@@ -314,13 +343,6 @@ class VulnerabilityImporter(object):
                 workspace=workspace,
                 vulnerability=vulnerability
             )
-
-    def set_parent(self, vulnerability, parent_id, level):
-        logger.debug('Set parent for vulnerabiity level {0}'.format(level))
-        if level == 2:
-            vulnerability.host_id = session.query(Host).filter_by(id=parent_id).first().id
-        if level == 4:
-            vulnerability.service_id = session.query(Service).filter_by(id=parent_id).first().id
 
 
 class CommandImporter(object):
@@ -387,7 +409,6 @@ class WorkspaceImporter(object):
     DOC_TYPE = 'Workspace'
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
-        workspace, created = get_or_create(session, server.models.Workspace, name=document.get('name', None))
         workspace.description = document.get('description')
         if document.get('duration') and document.get('duration')['start']:
             workspace.start_date = datetime.datetime.fromtimestamp(float(document.get('duration')['start'])/1000)
@@ -717,7 +738,8 @@ class ImportCouchDB(FlaskScriptCommand):
     def import_workspace_into_database(self, workspace_name):
 
         faraday_importer = FaradayEntityImporter()
-        workspace, created = get_or_create(session, server.models.Workspace, name=workspace_name)
+        workspace, created = get_or_create(session, Workspace, name=workspace_name)
+        session.commit()
 
         couch_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_temp_view?include_docs=true".format(
                     username=server.config.couchdb.user,

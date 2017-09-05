@@ -38,27 +38,27 @@ def main(workspace='', args=None, parser=None):
     ipv4_dns = filter(None, parsed_args.ipv4dns.split(','))
     ipv6_dns = filter(None, parsed_args.ipv6dns.split(','))
 
-    obj = factory.createModelObject(models.Interface.class_signature, parsed_args.name, workspace,
+    obj_interface = factory.createModelObject(models.Interface.class_signature, parsed_args.name, workspace,
                                     mac=parsed_args.mac,
                                     ipv4_address=parsed_args.ipv4address,
                                     ipv4_mask=parsed_args.ipv4mask,
                                     ipv4_gateway=parsed_args.ipv4gateway,
-                                    ipv4_dns=ipv4_dns,
+                                    ipv4_dns=parsed_args.ipv4_dns,
                                     ipv6_address=parsed_args.ipv6address,
                                     ipv6_prefix=parsed_args.ipv6prefix,
                                     ipv6_gateway=parsed_args.ipv6gateway,
-                                    ipv6_dns=ipv6_dns,
+                                    ipv6_dns=parsed_args.ipv6_dns,
                                     network_segment=parsed_args.netsegment,
                                     hostname_resolution=parsed_args.hostres,
                                     parent_id=parsed_args.host_id)
 
-    old = models.get_interface(workspace, obj.getID())
+    old_interface = models.get_interface(workspace, obj_interface.getID())
 
-    if old is None:
+    if old_interface is None:
         if not parsed_args.dry_run:
-            models.create_interface(workspace, obj)
+            models.create_interface(workspace, obj_interface)
     else:
-        print "An interface with ID %s already exists!" % obj.getID()
+        print "An interface with ID %s already exists!" % obj_interface.getID()
         return 2, None
 
     return 0, obj.getID()

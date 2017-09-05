@@ -775,9 +775,9 @@ class ExecutiveReport(db.Model):
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
 # However, since it contains columns from children classes, this cannot be done
 # This is a workaround suggested by SQLAlchemy's creator
-CheckConstraint('((Vulnerability.host_id IS NULL)::int+'
-                '(Vulnerability.service_id IS NULL)::int+'
-                '(Vulnerability.source_code_id IS NULL)::int)=1',
+CheckConstraint('((Vulnerability.host_id IS NOT NULL)::int+'
+                '(Vulnerability.service_id IS NOT NULL)::int+'
+                '(Vulnerability.source_code_id IS NOT NULL)::int)=1',
                 name='check_vulnerability_host_service_source_code',
                 table=VulnerabilityGeneric.__table__)
 UniqueConstraint(VulnerabilityGeneric.name,

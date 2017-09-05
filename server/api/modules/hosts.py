@@ -27,6 +27,7 @@ class HostsView(ReadWriteWorkspacedView):
     route_base = 'hosts'
     model_class = Host
     schema_class = HostSchema
+    unique_fields = ['ip']
 
 HostsView.register(host_api)
 

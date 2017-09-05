@@ -97,6 +97,9 @@ class Host(db.Model):
                             backref='hosts',
                             foreign_keys=[workspace_id]
                             )
+    __table_args__ = (
+        UniqueConstraint(ip, workspace_id, name='uix_host_ip_workspace'),
+    )
 
 
 class Hostname(db.Model):

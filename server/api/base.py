@@ -4,7 +4,8 @@ import json
 from flask_classful import FlaskView
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.routing import parse_rule
-from webargs.flaskparser import FlaskParser
+from webargs.flaskparser import FlaskParser, abort
+from webargs.core import ValidationError
 from server.models import Workspace, db
 
 
@@ -33,6 +34,7 @@ class GenericWorkspacedView(FlaskView):
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
     representations = {'application/json': output_json}
     lookup_field = 'id'
+    unique_fields = []  # Fields unique together with workspace_id
 
     @classmethod
     def get_route_base(cls):
@@ -83,6 +85,19 @@ class GenericWorkspacedView(FlaskView):
         return FlaskParser().parse(schema, request, locations=('json',),
                                    *args, **kwargs)
 
+    def _validate_uniqueness(self, obj):
+        assert obj.workspace is not None, "Object must have a " \
+            "workspace attribute set to call _validate_uniqueness"
+        for field_name in self.unique_fields:
+            field = getattr(self.model_class, field_name)
+            value = getattr(obj, field_name)
+            query = self._get_base_query(obj.workspace.name).filter(
+                field==value)
+            if query.one_or_none():
+                abort(422, ValidationError('Existing value for %s field: %s' % (
+                    field_name, value
+                )))
+
     @classmethod
     def register(cls, app, *args, **kwargs):
         """Register and add JSON error handler. Use error code
@@ -129,13 +144,23 @@ class CreateWorkspacedMixin(object):
         data = self._parse_data(self._get_schema_class()(strict=True),
                                 flask.request)
         obj = self.model_class(**data)
-        obj.workspace = self._get_workspace(workspace_name)
-        db.session.add(obj)
+        created = self._perform_create(workspace_name, obj)
+        return self._dump(created).data, 201
+
+    def _perform_create(self, workspace_name, obj):
+        assert not db.session.new
+        with db.session.no_autoflush:
+            # Required because _validate_uniqueness does a select. Doing this
+            # outside a no_autoflush block would result in a premature create.
+            obj.workspace = self._get_workspace(workspace_name)
+            self._validate_uniqueness(obj)
+            db.session.add(obj)
         db.session.commit()
-        return self._dump(obj).data, 201
+        return obj
 
 
 class ReadWriteWorkspacedView(CreateWorkspacedMixin,
                               ReadOnlyWorkspacedView,
                               GenericWorkspacedView):
+    """A generic view with list, retrieve and create endpoints"""
     pass

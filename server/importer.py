@@ -155,6 +155,13 @@ class InterfaceImporter(object):
         host = self.merge_with_host(interface, workspace, parent_id)
         yield interface
 
+    def check_ip_address(self, ip_str):
+        if not ip_str or ip_str == '0.0.0.0':
+            return False
+        if not ip_str or ip_str == '0000:0000:0000:0000:0000:0000:0000:0000':
+            return False
+        return True
+
     def merge_with_host(self, interface, workspace, parent_relation_db_id):
         host = session.query(Host).filter_by(id=parent_relation_db_id).first()
         assert host.workspace == interface['workspace']
@@ -162,9 +169,9 @@ class InterfaceImporter(object):
             host.mac = interface['mac']
         if interface['owned']:
             host.owned = interface['owned']
-        if interface['ipv4_address'] or interface['ipv6_address']:
+        if self.check_ip_address(interface['ipv4_address']) or self.check_ip_address(interface['ipv6_address']):
             host.ip = interface['ipv4_address'] or interface['ipv6_address']
-        if interface['ipv4_gateway'] or interface['ipv6_gateway']:
+        if self.check_ip_address(interface['ipv4_gateway']) or self.check_ip_address(interface['ipv6_gateway']):
             host.default_gateway_ip = interface['ipv4_gateway'] or interface['ipv6_gateway']
         #host.default_gateway_mac
         if interface['network_segment']:

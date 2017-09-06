@@ -8,21 +8,17 @@ import datetime
 from binascii import unhexlify
 
 import requests
-from tqdm import tqdm
 from IPy import IP
 from flask_script import Command as FlaskScriptCommand
-from restkit.errors import RequestError, Unauthorized
-from IPy import IP
 from passlib.utils.binary import ab64_encode
-from passlib.hash import pbkdf2_sha1
+from restkit.errors import RequestError, Unauthorized
+from tqdm import tqdm
 
-from server.web import app
-import server.utils.logger
+import server.config
 import server.couchdb
 import server.database
 import server.models
-import server.config
-from server.utils.database import get_or_create
+import server.utils.logger
 from server.models import (
     db,
     EntityMetadata,
@@ -44,7 +40,12 @@ from server.models import (
     ExecutiveReport,
     VulnerabilityTemplate,
     ReferenceTemplate,
+    License,
+    Comment,
+    CommentObject,
 )
+from server.utils.database import get_or_create
+from server.web import app
 
 COUCHDB_USER_PREFIX = 'org.couchdb.user:'
 COUCHDB_PASSWORD_PREFIX = '-pbkdf2-'
@@ -512,6 +513,23 @@ class ReportsImporter(object):
         yield report
 
 
+class CommunicationImporter(object):
+    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
+        comment, created = get_or_create(
+            session,
+            Comment,
+            text=document.get('text'),
+            workspace=workspace)
+
+        get_or_create(
+            session,
+            CommentObject,
+            object_id=workspace.id,
+            object_type='Workspace',
+            comment=comment,
+        )
+        yield comment
+
 class FaradayEntityImporter(object):
     # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace']
 
@@ -541,6 +559,7 @@ class FaradayEntityImporter(object):
             'TaskGroup': MethodologyImporter,
             'Task': TaskImporter,
             'Reports': ReportsImporter,
+            'Communication': CommunicationImporter
         }
         importer_self = importer_class_mapper.get(doc_type, None)
         if not importer_self:
@@ -671,6 +690,30 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
                              name=ref_doc)
 
 
+class ImportLicense(FlaskScriptCommand):
+
+    def run(self):
+        cwe_url = "http://{username}:{password}@{hostname}:{port}/{path}".format(
+            username=server.config.couchdb.user,
+            password=server.config.couchdb.password,
+            hostname=server.config.couchdb.host,
+            port=server.config.couchdb.port,
+            path='faraday_licenses/_all_docs?include_docs=true'
+        )
+        licenses = requests.get(cwe_url).json()['rows']
+        for license in licenses:
+            document = license['doc']
+
+            license_obj, created = get_or_create(session,
+                                                   License,
+                                                   product=document.get('product'),
+                                                   start_date=datetime.datetime.strptime(document['start'], "%Y-%m-%dT%H:%M:%S.%fZ"),
+                                                   end_date=datetime.datetime.strptime(document['end'], "%Y-%m-%dT%H:%M:%S.%fZ"),
+                                                   notes=document.get('notes'),
+                                                   type=document.get('lictype')
+                                                   )
+
+
 class ImportCouchDB(FlaskScriptCommand):
 
     def _open_couchdb_conn(self):
@@ -695,6 +738,8 @@ class ImportCouchDB(FlaskScriptCommand):
         """
             Main entry point for couchdb import
         """
+        license_import = ImportLicense()
+        license_import.run()
         vuln_templates_import = ImportVulnerabilityTemplates()
         vuln_templates_import.run()
         users_import = ImportCouchDBUsers()
@@ -780,6 +825,7 @@ class ImportCouchDB(FlaskScriptCommand):
             (1, 'CommandRunInformation'),
             (1, 'TaskGroup'),
             (1, 'Task'),
+            (1, 'Communication'),
             (1, 'Workspace'),
             (1, 'Reports'),
             (2, 'Service'),

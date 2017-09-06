@@ -53,6 +53,81 @@ COUCHDB_PASSWORD_PREXFIX = '-pbkdf2-'
 logger = server.utils.logger.get_logger(__name__)
 session = db.session
 
+OBJ_TYPES = [
+            (1, 'Host'),
+            (1, 'EntityMetadata'),
+            (1, 'Note'),
+            (1, 'CommandRunInformation'),
+            (1, 'TaskGroup'),
+            (1, 'Task'),
+            (1, 'Workspace'),
+            (1, 'Reports'),
+            (2, 'Interface'),
+            (2, 'Service'),
+            (2, 'Credential'),
+            (2, 'Vulnerability'),
+            (2, 'VulnerabilityWeb'),
+            (3, 'Service'),
+            (4, 'Credential'),  # Level 4 is for interface
+            (4, 'Vulnerability'),
+            (4, 'VulnerabilityWeb'),
+        ]
+
+def get_children_from_couch(workspace, parent_couchdb_id, child_type, level):
+    """
+    Performance for temporary views suck, so this method uploads a view and queries it instead
+
+    :param workspace: workspace to upload the view
+    :param parent_couchdb_id: ID of the parent document
+    :param child_type: type of the child obj we're looking for
+    :param level: level of the child obj we're looking for, must match those in OBJ_TYPES
+    :return:
+    """
+    if (level, child_type) not in OBJ_TYPES:
+        logger.warn('Unable to retrieve children of type {0} at level {1}'.format(child_type, level))
+        return []
+
+    couch_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/".format(
+        username=server.config.couchdb.user,
+        password=server.config.couchdb.password,
+        hostname=server.config.couchdb.host,
+        port=server.config.couchdb.port,
+        workspace_name=workspace.name,
+    )
+
+    # create the new view
+    view_url = "{}_design/importer".format(couch_url)
+    view_data = {
+        "views": {
+            "children_by_parent_and_type": {
+                "map": "function(doc) { id_parent = doc._id.split('.').slice(0, -1).join('.');"
+                "key = [id_parent,doc.type]; emit(key, doc); }"
+            }
+        }
+    }
+
+    try:
+        r = requests.put(view_url, json=view_data)
+    except requests.exceptions.RequestException as e:
+        logger.warn(e)
+        return []
+
+    # and now, finally query it!
+    couch_url += "_design/importer/_view/children_by_parent_and_type?" \
+                 "startkey=[\"{parent_id}\",\"{child_type}\"]&" \
+                 "endkey=[\"{parent_id}\",\"{child_type}\"]".format(
+        parent_id=parent_couchdb_id,
+        child_type=child_type,
+    )
+
+    try:
+        r = requests.get(couch_url)
+    except requests.exceptions.RequestException as e:
+        logger.warn(e)
+        return []
+
+    return r.json()['rows']
+
 
 class EntityNotFound(Exception):
     def __init__(self, entity_id):
@@ -645,13 +720,7 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
                              name=ref_doc)
 
 
-
-
-
-
-
 class ImportCouchDB(FlaskScriptCommand):
-
     def _open_couchdb_conn(self):
         try:
             couchdb_server_conn = server.couchdb.CouchDBServer()
@@ -752,25 +821,7 @@ class ImportCouchDB(FlaskScriptCommand):
         # obj_types are tuples. the first value is the level on the tree
         # for the desired obj.
         # the idea is to improt by level from couchdb data.
-        obj_types = [
-            (1, 'Host'),
-            (1, 'EntityMetadata'),
-            (1, 'Note'),
-            (1, 'CommandRunInformation'),
-            (1, 'TaskGroup'),
-            (1, 'Task'),
-            (1, 'Workspace'),
-            (1, 'Reports'),
-            (2, 'Interface'),
-            (2, 'Service'),
-            (2, 'Credential'),
-            (2, 'Vulnerability'),
-            (2, 'VulnerabilityWeb'),
-            (3, 'Service'),
-            (4, 'Credential'),  # Level 4 is for interface
-            (4, 'Vulnerability'),
-            (4, 'VulnerabilityWeb'),
-        ]
+        obj_types = OBJ_TYPES
         couchdb_relational_map = {}
         couchdb_removed_objs = set()
         removed_objs = ['Interface']

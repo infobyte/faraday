@@ -79,6 +79,16 @@ class TestHostAPI:
         assert res.status_code == 400
         assert Host.query.count() == HOSTS_COUNT + 1
 
-#     def test_create_a_host_with_ip_of_other_workspace(self, test_client,
-#                                                       second_workspace, host):
-#         pass
+    def test_create_a_host_with_ip_of_other_workspace(self, test_client,
+                                                      session,
+                                                      second_workspace, host):
+        session.add(host)
+        session.commit()
+
+        res = test_client.post(self.url(workspace=second_workspace), data={
+            "ip": host.ip,
+            "description": "aaaaa",
+        })
+        assert res.status_code == 201
+        # It should create two hosts, one for each workspace
+        assert Host.query.count() == HOSTS_COUNT + 2

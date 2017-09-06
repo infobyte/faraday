@@ -47,7 +47,7 @@ from server.models import (
 )
 
 COUCHDB_USER_PREFIX = 'org.couchdb.user:'
-COUCHDB_PASSWORD_PREXFIX = '-pbkdf2-'
+COUCHDB_PASSWORD_PREFIX = '-pbkdf2-'
 
 
 logger = server.utils.logger.get_logger(__name__)
@@ -90,99 +90,125 @@ class EntityMetadataImporter(object):
             return timestamp
 
 
+def check_ip_address(ip_str):
+    if not ip_str:
+     return False
+    if ip_str == '0.0.0.0':
+        return False
+    if ip_str == '0000:0000:0000:0000:0000:0000:0000:0000':
+        return False
+    if ip_str == '0000:0000:0000:0000:0000:0000:0000:0001':
+        return False
+    try:
+        IP(ip_str)
+    except ValueError:
+        return False
+    return True
+
+
 class HostImporter(object):
-    DOC_TYPE = 'Host'
-
-    def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
-        # Ticket #3387: if the 'os' field is None, we default to 'unknown'
-        try:
-            IP(document.get('name'))  # this will raise ValueError on valid IPs
-            host, created = get_or_create(session, Host, ip=document.get('name'))
-        except ValueError:
-            host, created = get_or_create(session, Host, ip=document.get('ip'))
-
-        if not document.get('os'):
-            document['os'] = 'unknown'
-
-        default_gateway = document.get('default_gateway', None)
-        if not host.ip:
-            host.ip = document.get('name')
-        host.description = document.get('description')
-        host.os = document.get('os')
-        host.default_gateway_ip = default_gateway and default_gateway[0]
-        host.default_gateway_mac = default_gateway and default_gateway[1]
-        host.owned = document.get('owned', False)
-        host.workspace = workspace
-        yield host
-
-
-class InterfaceImporter(object):
     """
         Class interface was removed in the new model.
         We will merge the interface data with the host.
         For ports we will create new services for open ports
         if it was not previously created.
     """
-    DOC_TYPE = 'Interface'
+
+    def retrieve_ips_from_host_document(self, document):
+        """
+
+        :param document: json document from couchdb with host data
+        :return: str with ip or name if no valid ip was found.
+        """
+        try:
+            IP(document.get('name'))  # this will raise ValueError on invalid IPs
+            yield document.get('name')
+        except ValueError:
+            host_ip = document.get('ipv4')
+            created_ipv4 = False
+            created_ipv6 = False
+            if check_ip_address(host_ip):
+                yield host_ip
+                created_ipv4 = True
+            host_ip = document.get('ipv6')
+            if check_ip_address(host_ip):
+                yield host_ip
+            if not created_ipv4 or not created_ipv6:
+                # sometimes the host lacks the ip.
+                yield document.get('name')
+            if created_ipv4 and created_ipv6:
+                logger.warn('Two host will be created one with ipv4 and another one with ipv6. Couch id is {0}'.format(document.get('_id')))
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
-        # interface dict is used to merge interface with host and connect it the services to the host
-        interface = {}
-        interface['name'] = document.get('name')
-        interface['description'] = document.get('description')
-        interface['mac'] = document.get('mac')
-        interface['owned'] = document.get('owned', False)
-        interface['hostnames'] = document.get('hostnames')
-        interface['network_segment'] = document.get('network_segment')
-        interface['ipv4_address'] = document.get('ipv4').get('address')
-        interface['ipv4_gateway'] = document.get('ipv4').get('gateway')
-        interface['ipv4_dns'] = document.get('ipv4').get('DNS')
-        interface['ipv4_mask'] = document.get('ipv4').get('mask')
-        interface['ipv6_address'] = document.get('ipv6').get('address')
-        interface['ipv6_gateway'] = document.get('ipv6').get('gateway')
-        interface['ipv6_dns'] = document.get('ipv6').get('DNS')
-        interface['ipv6_prefix'] = str(document.get('ipv6').get('prefix'))
-        # ports_* are integers with counts
-        interface['ports_filtered'] = document.get('ports', {}).get('filtered')
-        interface['ports_opened'] = document.get('ports', {}).get('opened')
-        interface['ports_closed'] = document.get('ports', {}).get('closed')
-        interface['workspace'] = workspace
-        couch_parent_id = document.get('parent', None)
-        if not couch_parent_id:
-            couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
-        parent_id = couchdb_relational_map[couch_parent_id]
-        interface['parent_id'] = parent_id
-        host = self.merge_with_host(interface, workspace, parent_id)
-        yield interface
+        hosts = []
+        host_ips = [name_or_ip for name_or_ip in self.retrieve_ips_from_host_document(document)]
+        interfaces = self.host_interfaces_from_couch(workspace, document.get('_id'))
+        for interface in interfaces:
+            interface = interface['value']
+            if check_ip_address(interface['ipv4']['address']):
+                interface_ip = interface['ipv4']['address']
+                host, created = get_or_create(session, Host, ip=interface_ip, workspace=workspace)
+                host.default_gateway_ip = interface['ipv4']['gateway']
+                self.merge_with_host(host, interface, workspace)
+                hosts.append(host)
+            if check_ip_address(interface['ipv6']['address']):
+                interface_ip = interface['ipv6']['address']
+                host, created = get_or_create(session, Host, ip=interface_ip, workspace=workspace)
+                host.default_gateway_ip = interface['ipv6']['gateway']
+                self.merge_with_host(host, interface, workspace)
+                hosts.append(host)
+        if not hosts:
+            # if not host were created after inspecting interfaces
+            # we create a host with "name" as ip to avoid losing hosts.
+            # some hosts lacks of interface
+            for name_or_ip in host_ips:
+                host, created = get_or_create(session, Host, ip=name_or_ip, workspace=workspace)
+                hosts.append(host)
 
-    def check_ip_address(self, ip_str):
-        if not ip_str or ip_str == '0.0.0.0':
-            return False
-        if not ip_str or ip_str == '0000:0000:0000:0000:0000:0000:0000:0000':
-            return False
-        if not ip_str or ip_str == '0000:0000:0000:0000:0000:0000:0000:0001':
-            return False
-        return True
+        if len(hosts) > 1:
+            logger.warning('Total hosts found {0} for couchdb id {1}'.format(len(hosts), document.get('_id')))
 
-    def merge_with_host(self, interface, workspace, parent_relation_db_id):
-        host = session.query(Host).filter_by(id=parent_relation_db_id).first()
-        assert host.workspace == interface['workspace']
+        for host in hosts:
+            # we update or set other host attributes in this cycle
+            # Ticket #3387: if the 'os' field is None, we default to 'unknown
+            if not document.get('os'):
+                document['os'] = 'unknown'
+
+            default_gateway = document.get('default_gateway', None)
+
+            host.description = document.get('description')
+            host.os = document.get('os')
+            host.default_gateway_ip = default_gateway and default_gateway[0]
+            host.default_gateway_mac = default_gateway and default_gateway[1]
+            host.owned = document.get('owned', False)
+            host.workspace = workspace
+            yield host
+
+    def host_interfaces_from_couch(self, workspace, host_couchdb_id):
+        couch_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_temp_view?include_docs=true".format(
+                    username=server.config.couchdb.user,
+                    password=server.config.couchdb.password,
+                    hostname=server.config.couchdb.host,
+                    port=server.config.couchdb.port,
+                    workspace_name=workspace.name
+                )
+        data = {
+            "map": "function(doc) { if(doc.type == '%s' && doc._id.split('.').slice(0, 1).join('.') == '%s') emit(null, doc); }" % (
+            'Interface', host_couchdb_id)
+        }
+
+        r = requests.post(couch_url, json=data)
+        try:
+            return r.json()['rows']
+        except Exception as ex:
+            print('sadsa')
+
+    def merge_with_host(self, host, interface, workspace):
         if interface['mac']:
             host.mac = interface['mac']
         if interface['owned']:
             host.owned = interface['owned']
-        if self.check_ip_address(interface['ipv4_address']):
-            interface_ip = interface['ipv4_address']
-            if host.ip != interface_ip:
-                logger.warn('Overriding host ip address {0} with new ip {1}'.format(host.ip, interface_ip))
-                host.ip = interface_ip
-        if self.check_ip_address(interface['ipv6_address']):
-            interface_ip = interface['ipv6_address']
-            if host.ip != interface_ip:
-                logger.warn('Overriding host ip address {0} with new ip {1}'.format(host.ip, interface_ip))
-                host.ip = interface_ip
-        if self.check_ip_address(interface['ipv4_gateway']) or self.check_ip_address(interface['ipv6_gateway']):
-            host.default_gateway_ip = interface['ipv4_gateway'] or interface['ipv6_gateway']
+
         #host.default_gateway_mac
         if interface['network_segment']:
             host.net_segment = interface['network_segment']
@@ -190,6 +216,7 @@ class InterfaceImporter(object):
             host.description += '\n Interface data: {0}'.format(interface['description'])
         if type(interface['hostnames']) in (str, unicode):
             interface['hostnames'] = [interface['hostnames']]
+
         for hostname_str in interface['hostnames']:
             if not hostname_str:
                 # skip empty hostnames
@@ -209,7 +236,7 @@ class ServiceImporter(object):
     DOC_TYPE = 'Service'
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
-        #  service was always above interface, not it's above host.
+        #  service was always below interface, not it's below host.
         try:
             parent_id = document['parent'].split('.')[0]
         except KeyError:
@@ -507,7 +534,6 @@ class FaradayEntityImporter(object):
             'Service': ServiceImporter,
             'Note': NoteImporter,
             'Credential': CredentialImporter,
-            'Interface': InterfaceImporter,
             'CommandRunInformation': CommandImporter,
             'Workspace': WorkspaceImporter,
             'Vulnerability': VulnerabilityImporter,
@@ -532,11 +558,11 @@ class ImportCouchDBUsers(FlaskScriptCommand):
         )
 
     def convert_couchdb_hash(self, original_hash):
-        if not original_hash.startswith(COUCHDB_PASSWORD_PREXFIX):
+        if not original_hash.startswith(COUCHDB_PASSWORD_PREFIX):
             # Should be a plaintext password
             return original_hash
         checksum, salt, iterations = original_hash[
-            len(COUCHDB_PASSWORD_PREXFIX):].split(',')
+            len(COUCHDB_PASSWORD_PREFIX):].split(',')
         iterations = int(iterations)
         return self.modular_crypt_pbkdf2_sha1(checksum, salt, iterations)
 
@@ -645,11 +671,6 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
                              name=ref_doc)
 
 
-
-
-
-
-
 class ImportCouchDB(FlaskScriptCommand):
 
     def _open_couchdb_conn(self):
@@ -751,7 +772,7 @@ class ImportCouchDB(FlaskScriptCommand):
 
         # obj_types are tuples. the first value is the level on the tree
         # for the desired obj.
-        # the idea is to improt by level from couchdb data.
+        # the idea is to import by level from couchdb data.
         obj_types = [
             (1, 'Host'),
             (1, 'EntityMetadata'),
@@ -761,7 +782,6 @@ class ImportCouchDB(FlaskScriptCommand):
             (1, 'Task'),
             (1, 'Workspace'),
             (1, 'Reports'),
-            (2, 'Interface'),
             (2, 'Service'),
             (2, 'Credential'),
             (2, 'Vulnerability'),

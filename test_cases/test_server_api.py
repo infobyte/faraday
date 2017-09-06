@@ -52,8 +52,8 @@ class TestHostAPI:
             "description": "aaaaa",
             # os is not required
         })
-        print res.data
         assert res.status_code == 201
+        assert Host.query.count() == HOSTS_COUNT + 1
         host_id = res.json['id']
         host = Host.query.get(host_id)
         assert host.ip == "127.0.0.1"
@@ -67,12 +67,18 @@ class TestHostAPI:
         })
         assert res.status_code == 400
 
-    def test_create_a_host_fails_with_existing_ip(self, test_client,
-                                                  session, host):
+    def test_create_a_host_fails_with_existing_ip(self, session,
+                                                  test_client, host):
         session.add(host)
         session.commit()
+
         res = test_client.post(self.url(), data={
             "ip": host.ip,
             "description": "aaaaa",
         })
         assert res.status_code == 400
+        assert Host.query.count() == HOSTS_COUNT + 1
+
+#     def test_create_a_host_with_ip_of_other_workspace(self, test_client,
+#                                                       second_workspace, host):
+#         pass

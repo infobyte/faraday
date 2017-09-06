@@ -94,6 +94,7 @@ class GenericWorkspacedView(FlaskView):
             query = self._get_base_query(obj.workspace.name).filter(
                 field==value)
             if query.one_or_none():
+                db.session.rollback()
                 abort(422, ValidationError('Existing value for %s field: %s' % (
                     field_name, value
                 )))

@@ -3,6 +3,7 @@ import sys
 import json
 import pytest
 from flask.testing import FlaskClient
+from sqlalchemy import event
 from pytest_factoryboy import register
 
 sys.path.append(os.path.abspath(os.getcwd()))
@@ -21,6 +22,8 @@ enabled_factories = [
 ]
 for factory in enabled_factories:
     register(factory)
+
+register(factories.WorkspaceFactory, "second_workspace")
 
 
 class CustomClient(FlaskClient):
@@ -74,7 +77,7 @@ def database(app, request):
 
 
 @pytest.fixture(scope='function')
-def session(database, request):
+def fake_session(database, request):
     connection = database.engine.connect()
     transaction = connection.begin()
 
@@ -87,15 +90,66 @@ def session(database, request):
     for factory in enabled_factories:
         factory._meta.sqlalchemy_session = session
 
-
-
     def teardown():
+        # rollback - everything that happened with the
+        # Session above (including calls to commit())
+        # is rolled back.
+        # be careful with this!!!!!
         transaction.rollback()
         connection.close()
         session.remove()
 
     request.addfinalizer(teardown)
     return session
+
+
+@pytest.fixture(scope='function')
+def session(database, request):
+    """Use this fixture if the function being tested does a session
+    rollback.
+
+    See http://docs.sqlalchemy.org/en/latest/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites
+    for further information
+    """
+    connection = database.engine.connect()
+    transaction = connection.begin()
+
+    options = {"bind": connection, 'binds': {}}
+    session = db.create_scoped_session(options=options)
+
+    # start the session in a SAVEPOINT...
+    session.begin_nested()
+
+    # then each time that SAVEPOINT ends, reopen it
+    @event.listens_for(session, "after_transaction_end")
+    def restart_savepoint(session, transaction):
+        if transaction.nested and not transaction._parent.nested:
+
+            # ensure that state is expired the way
+            # session.commit() at the top level normally does
+            # (optional step)
+            session.expire_all()
+
+            session.begin_nested()
+
+    database.session = session
+    db.session = session
+
+    for factory in enabled_factories:
+        factory._meta.sqlalchemy_session = session
+
+    def teardown():
+        # rollback - everything that happened with the
+        # Session above (including calls to commit())
+        # is rolled back.
+        # be careful with this!!!!!
+        transaction.rollback()
+        connection.close()
+        session.remove()
+
+    request.addfinalizer(teardown)
+    return session
+
 
 @pytest.fixture
 def test_client(app):

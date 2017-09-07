@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy.orm.util import was_deleted
 from test_cases import factories
 from server.models import db, Workspace, Host
 
@@ -124,3 +125,16 @@ class TestHostAPI:
             "ip": "1.2.3.4",  # Existing IP
         })
         assert res.status_code == 400
+
+    def test_delete_a_host(self, test_client):
+        host = self.workspace.hosts[0]
+        res = test_client.delete(self.url(host))
+        assert res.status_code == 204  # No content
+        assert was_deleted(host)
+
+    def test_delete_host_from_other_workspace_fails(self, test_client,
+                                                    second_workspace):
+        host = self.workspace.hosts[0]
+        res = test_client.delete(self.url(host, workspace=second_workspace))
+        assert res.status_code == 404  # No content
+        assert not was_deleted(host)

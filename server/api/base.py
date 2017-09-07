@@ -187,8 +187,20 @@ class UpdateWorkspacedMixin(object):
         db.session.commit()
 
 
+class DeleteWorkspacedMixin(object):
+    def delete(self, workspace_name, object_id):
+        obj = self._get_object(workspace_name, object_id)
+        self._perform_delete(obj)
+        return None, 204
+
+    def _perform_delete(self, obj):
+        db.session.delete(obj)
+        db.session.commit()
+
+
 class ReadWriteWorkspacedView(CreateWorkspacedMixin,
                               UpdateWorkspacedMixin,
+                              DeleteWorkspacedMixin,
                               ReadOnlyWorkspacedView,
                               GenericWorkspacedView):
     """A generic view with list, retrieve and create endpoints"""

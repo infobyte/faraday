@@ -527,6 +527,10 @@ class TaskImporter(object):
         except KeyError:
             logger.warn('Could not found methodology with id {0}'.format(document.get('group_id')))
             return []
+        except IndexError:
+            logger.warn('Could not find methodology {0} of task {1}'.format(document.get('group_id'), document.get('_id')))
+            return []
+
         if len(couchdb_relational_map[document.get('group_id')]) > 1:
             logger.error('It was expected only one parent in methodology {0}'.format(document.get('_id')))
 

@@ -496,7 +496,7 @@ class CredentialImporter(object):
             parents = session.query(Host).filter(Host.id.in_(parent_ids)).all()
         if level == 4:
             parent_ids = couchdb_relational_map['.'.join(document['_id'].split('.')[:3])]
-            parents = session.query(Service).filter(Host.id.in_(parent_ids)).all()
+            parents = session.query(Service).filter(Service.id.in_(parent_ids)).all()
         if not parents:
             raise Exception('Missing host or service for credential {0}'.format(document['_id']))
         for parent in parents:

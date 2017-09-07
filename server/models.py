@@ -422,8 +422,6 @@ class PolicyViolation(db.Model):
 
 
 class Credential(db.Model):
-    # TODO: add unique constraint -> username, host o service y workspace
-    # TODO: add constraint host y service, uno o el otro
     __tablename__ = 'credential'
     id = Column(Integer, primary_key=True)
     username = Column(String(250), nullable=False)

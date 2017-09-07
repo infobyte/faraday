@@ -33,6 +33,12 @@ class WorkspaceFactory(FaradayFactory):
 class WorkspaceObjectFactory(FaradayFactory):
     workspace = factory.SubFactory(WorkspaceFactory)
 
+    @classmethod
+    def build_dict(cls, **kwargs):
+        ret = factory.build(dict, FACTORY_CLASS=cls)
+        del ret['workspace']  # It is passed in the URL, not in POST data
+        return ret
+
 
 class HostFactory(WorkspaceObjectFactory):
     ip = factory.Faker('ipv4')

@@ -65,6 +65,7 @@ OBJ_TYPES = [
             (1, 'Workspace'),
             (1, 'Reports'),
             (1, 'Communication'),
+            (1, 'Note'),
             (2, 'Service'),
             (2, 'Credential'),
             (2, 'Vulnerability'),
@@ -74,6 +75,19 @@ OBJ_TYPES = [
             (4, 'Vulnerability'),
             (4, 'VulnerabilityWeb'),
         ]
+
+
+def get_object_from_couchdb(couchdb_id, workspace):
+    doc_url = 'http://{username}:{password}@{hostname}:{port}/{workspace_name}/{doc_id}'.format(
+        username=server.config.couchdb.user,
+        password=server.config.couchdb.password,
+        hostname=server.config.couchdb.host,
+        port=server.config.couchdb.port,
+        workspace_name=workspace.name,
+        doc_id=couchdb_id
+    )
+    return requests.get(doc_url).json()
+
 
 def get_children_from_couch(workspace, parent_couchdb_id, child_type):
     """
@@ -452,15 +466,24 @@ class CommandImporter(object):
 
 
 class NoteImporter(object):
-    DOC_TYPE = 'Note'
 
     def update_from_document(self, document, workspace, level=None, couchdb_relational_map=None):
-        note = Note()
-        note.name = document.get('name')
-        note.text = document.get('text', None)
-        note.description = document.get('description', None)
-        note.owned = document.get('owned', False)
-        yield note
+        couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
+        parent_document = get_object_from_couchdb(couch_parent_id, workspace)
+        comment, created = get_or_create(
+            session,
+            Comment,
+            text='{0}\n{1}'.format(document.get('text', ''), document.get('description', '')),
+            workspace=workspace)
+
+        get_or_create(
+            session,
+            CommentObject,
+            object_id=couchdb_relational_map[parent_document.get('_id')],
+            object_type=parent_document['type'],
+            comment=comment,
+        )
+        yield comment
 
 
 class CredentialImporter(object):
@@ -741,7 +764,7 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
                 'high':'high',
                 'low': 'low',
                 'info': 'informational',
-            'unclassified': 'unclassified',
+                'unclassified': 'unclassified',
             }
             vuln_template, created = get_or_create(session,
                                                    VulnerabilityTemplate,
@@ -850,15 +873,8 @@ class ImportCouchDB(FlaskScriptCommand):
             if missing_ids:
                 logger.info('Downloading missing couchdb docs')
             for missing_id in tqdm(missing_ids):
-                doc_url = 'http://{username}:{password}@{hostname}:{port}/{workspace_name}/{doc_id}'.format(
-                    username=server.config.couchdb.user,
-                    password=server.config.couchdb.password,
-                    hostname=server.config.couchdb.host,
-                    port=server.config.couchdb.port,
-                    workspace_name=workspace.name,
-                    doc_id=missing_id
-                )
-                not_imported_obj = requests.get(doc_url).json()
+                not_imported_obj = get_object_from_couchdb(missing_id, workspace)
+
                 if not_imported_obj['type'] == 'Interface':
                     # we know that interface obj was not imported
                     continue

@@ -92,3 +92,35 @@ class TestHostAPI:
         assert res.status_code == 201
         # It should create two hosts, one for each workspace
         assert Host.query.count() == HOSTS_COUNT + 2
+
+    def test_update_a_host(self, test_client):
+        host = self.workspace.hosts[0]
+        res = test_client.put(self.url(host), data={
+            "ip": host.ip,
+            "description": "bbbbb",
+        })
+        assert res.status_code == 200
+        assert res.json['description'] == 'bbbbb'
+        assert Host.query.get(res.json['id']).description == 'bbbbb'
+        assert Host.query.count() == HOSTS_COUNT
+
+    def test_update_a_host_fails_with_existing_ip(self, test_client, session):
+        host = self.workspace.hosts[0]
+        original_ip = host.ip
+        original_desc = host.description
+        res = test_client.put(self.url(host), data={
+            "ip": self.workspace.hosts[1].ip,  # Existing IP
+            "description": "bbbbb",
+        })
+        assert res.status_code == 400
+        session.refresh(host)
+        assert host.ip == original_ip
+        assert host.description == original_desc  # It shouldn't do a partial update
+
+    def test_update_a_host_fails_with_missing_fields(self, test_client):
+        """To do this the user should use a PATCH request"""
+        host = self.workspace.hosts[0]
+        res = test_client.put(self.url(host), data={
+            "ip": "1.2.3.4",  # Existing IP
+        })
+        assert res.status_code == 400

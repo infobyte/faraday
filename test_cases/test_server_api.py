@@ -12,7 +12,7 @@ class TestHostAPI:
     @pytest.fixture(autouse=True)
     def load_workspace_with_hosts(self, database, session, workspace, host_factory):
         host_factory.create_batch(HOSTS_COUNT, workspace=workspace)
-        database.session.commit()
+        session.commit()
         assert workspace.id is not None
         assert workspace.hosts[0].id is not None
         self.workspace = workspace
@@ -25,13 +25,17 @@ class TestHostAPI:
             url += str(host.id)
         return url
 
-    def test_list_retrieves_all_items(self, test_client):
+    def test_list_retrieves_all_items_from_workspace(self, test_client,
+                                                     second_workspace,
+                                                     session,
+                                                     host_factory):
+        other_host = host_factory.create(workspace=second_workspace)
+        session.commit()
         res = test_client.get(self.url())
         assert res.status_code == 200
         assert len(res.json) == HOSTS_COUNT
 
     def test_retrieve_one_host(self, test_client, database):
-        # self.workspace = Workspace.query.first()
         host = self.workspace.hosts[0]
         assert host.id is not None
         res = test_client.get(self.url(host))

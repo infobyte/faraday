@@ -34,8 +34,6 @@ class SQLAlchemy(OriginalSQLAlchemy):
     and https://bitbucket.org/zzzeek/sqlalchemy/issues/3561/sqlite-nested-transactions-fail-with
     for furhter information"""
 
-    # TODO: only do this on sqlite, not on postgres!
-
     def make_connector(self, app=None, bind=None):
         """Creates the connector for a given state and bind."""
         return CustomEngineConnector(self, self.get_app(app), bind)
@@ -53,17 +51,19 @@ class CustomEngineConnector(_EngineConnector):
 
         # Call original metohd and register events
         rv = super(CustomEngineConnector, self).get_engine()
-        with self._lock:
-            @event.listens_for(rv, "connect")
-            def do_connect(dbapi_connection, connection_record):
-                # disable pysqlite's emitting of the BEGIN statement entirely.
-                # also stops it from emitting COMMIT before any DDL.
-                dbapi_connection.isolation_level = None
+        if uri.startswith('sqlite://'):
+            with self._lock:
+                @event.listens_for(rv, "connect")
+                def do_connect(dbapi_connection, connection_record):
+                    # disable pysqlite's emitting of the BEGIN statement
+                    # entirely.  also stops it from emitting COMMIT before any
+                    # DDL.
+                    dbapi_connection.isolation_level = None
 
-            @event.listens_for(rv, "begin")
-            def do_begin(conn):
-                # emit our own BEGIN
-                conn.execute("BEGIN")
+                @event.listens_for(rv, "begin")
+                def do_begin(conn):
+                    # emit our own BEGIN
+                    conn.execute("BEGIN")
         return rv
 
 

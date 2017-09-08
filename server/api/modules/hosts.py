@@ -4,6 +4,7 @@
 
 import flask
 from flask import Blueprint
+from flask_classful import route
 from marshmallow import Schema, fields
 
 from server.utils.logger import get_logger
@@ -17,10 +18,19 @@ host_api = Blueprint('host_api', __name__)
 
 
 class HostSchema(Schema):
-    id = fields.String(required=True, dump_only=True)
+    id = fields.Integer(required=True, dump_only=True)
     ip = fields.String(required=True)
     description = fields.String(required=True)
     os = fields.String()
+
+
+class ServiceSchema(Schema):
+    id = fields.Integer(required=True, dump_only=True)
+    name = fields.String(required=True)
+    description = fields.String(required=False)
+    port = fields.Integer(required=True)
+    protocol = fields.String(required=True)
+    status = fields.String(required=True)
 
 
 class HostsView(ReadWriteWorkspacedView):
@@ -28,6 +38,11 @@ class HostsView(ReadWriteWorkspacedView):
     model_class = Host
     schema_class = HostSchema
     unique_fields = ['ip']
+
+    @route('/<host_id>/services/')
+    def service_list(self, workspace_name, host_id):
+        services = self._get_object(workspace_name, host_id).services
+        return ServiceSchema(many=True).dump(services)
 
 HostsView.register(host_api)
 

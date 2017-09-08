@@ -1,7 +1,8 @@
 import factory
 from factory.fuzzy import (
+    FuzzyChoice,
+    FuzzyInteger,
     FuzzyText,
-    FuzzyChoice
 )
 from server.models import (
     db,
@@ -61,8 +62,10 @@ class EntityMetadataFactory(WorkspaceObjectFactory):
 class ServiceFactory(WorkspaceObjectFactory):
     name = FuzzyText()
     description = FuzzyText()
-    ports = FuzzyChoice(['443', '80', '22'])
+    port = FuzzyInteger(1, 65535)
+    protocol = FuzzyChoice(['tcp', 'udp'])
     host = factory.SubFactory(HostFactory)
+    status = FuzzyChoice(Service.STATUSES)
 
     class Meta:
         model = Service

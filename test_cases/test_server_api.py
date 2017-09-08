@@ -11,7 +11,9 @@ class TestHostAPI:
 
     @pytest.fixture(autouse=True)
     def load_workspace_with_hosts(self, database, session, workspace, host_factory):
-        host_factory.create_batch(HOSTS_COUNT, workspace=workspace)
+        self.hosts = host_factory.create_batch(HOSTS_COUNT,
+                                               workspace=workspace)
+        self.first_host = self.hosts[0]
         session.commit()
         assert workspace.id is not None
         assert workspace.hosts[0].id is not None
@@ -24,6 +26,9 @@ class TestHostAPI:
         if host is not None:
             url += str(host.id)
         return url
+
+    def services_url(self, host, workspace=None):
+        return self.url(host, workspace) + '/services/'
 
     def test_list_retrieves_all_items_from_workspace(self, test_client,
                                                      second_workspace,
@@ -142,6 +147,32 @@ class TestHostAPI:
         res = test_client.delete(self.url(host, workspace=second_workspace))
         assert res.status_code == 404  # No content
         assert not was_deleted(host)
+
+    def test_get_host_services(self, test_client, session,
+                               second_workspace,
+                               service_factory):
+        SERVICE_COUNT = 10
+
+        # Create the services that must be shown
+        real = service_factory.create_batch(
+            SERVICE_COUNT,
+            host=self.first_host,
+            workspace=self.first_host.workspace)
+
+        # Create a service of other host, must not be shown
+        other_host = service_factory.create(
+            host=self.hosts[1],
+            workspace=self.hosts[1].workspace)
+
+        session.commit()
+        ids_expected = {host.id for host in real}
+
+        res = test_client.get(self.services_url(self.first_host))
+        assert res.status_code == 200
+        ids_returned = {host['id'] for host in res.json}
+        assert other_host.id not in ids_returned
+        assert ids_expected == ids_returned
+
 
 
 PREFIX = '/v2/'

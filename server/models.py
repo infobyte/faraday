@@ -1,6 +1,9 @@
 # Faraday Penetration Test IDE
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
+from datetime import datetime
+
+import pytz
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -36,6 +39,22 @@ class DatabaseMetadata(db.Model):
     value = Column(String(250), nullable=False)
 
 
+class Metadata(db.Model):
+
+    __abstract__ = True
+
+    @declared_attr
+    def creator_id(cls):
+        return Column(Integer, ForeignKey('user.id'), nullable=True)
+
+    @declared_attr
+    def creator(cls):
+        return relationship('User', foreign_keys=[cls.creator_id])
+
+    create_date = Column(DateTime, default=datetime.utcnow)
+    update_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class EntityMetadata(db.Model):
     __tablename__ = 'metadata'
     __table_args__ = (
@@ -57,7 +76,7 @@ class EntityMetadata(db.Model):
     document_type = Column(String(250))
 
 
-class SourceCode(db.Model):
+class SourceCode(Metadata):
     __tablename__ = 'source_code'
     id = Column(Integer, primary_key=True)
     filename = Column(Text, nullable=False)
@@ -70,7 +89,7 @@ class SourceCode(db.Model):
     )
 
 
-class Host(db.Model):
+class Host(Metadata):
     __tablename__ = 'host'
     id = Column(Integer, primary_key=True)
     ip = Column(Text, nullable=False)  # IP v4 or v6
@@ -105,7 +124,7 @@ class Host(db.Model):
     )
 
 
-class Hostname(db.Model):
+class Hostname(Metadata):
     __tablename__ = 'hostname'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
@@ -123,7 +142,7 @@ class Hostname(db.Model):
     )
 
 
-class Service(db.Model):
+class Service(Metadata):
     STATUSES = [
         'open',
         'closed',
@@ -165,7 +184,7 @@ class Service(db.Model):
     )
 
 
-class VulnerabilityABC(db.Model):
+class VulnerabilityABC(Metadata):
     # revisar plugin nexpose, netspark para terminar de definir uniques. asegurar que se carguen bien
     EASE_OF_RESOLUTIONS = [
         'trivial',
@@ -306,7 +325,7 @@ class VulnerabilityCode(VulnerabilityGeneric):
     }
 
 
-class ReferenceTemplate(db.Model):
+class ReferenceTemplate(Metadata):
     __tablename__ = 'reference_template'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
@@ -327,7 +346,7 @@ class ReferenceTemplate(db.Model):
     )
 
 
-class Reference(db.Model):
+class Reference(Metadata):
     __tablename__ = 'reference'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
@@ -360,7 +379,7 @@ class Reference(db.Model):
     )
 
 
-class PolicyViolationTemplate(db.Model):
+class PolicyViolationTemplate(Metadata):
     __tablename__ = 'policy_violation_template'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
@@ -384,7 +403,7 @@ class PolicyViolationTemplate(db.Model):
     )
 
 
-class PolicyViolation(db.Model):
+class PolicyViolation(Metadata):
     __tablename__ = 'policy_violation'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
@@ -421,7 +440,7 @@ class PolicyViolation(db.Model):
     )
 
 
-class Credential(db.Model):
+class Credential(Metadata):
     __tablename__ = 'credential'
     id = Column(Integer, primary_key=True)
     username = Column(String(250), nullable=False)
@@ -469,7 +488,7 @@ class Credential(db.Model):
     )
 
 
-class Command(db.Model):
+class Command(Metadata):
     __tablename__ = 'command'
     id = Column(Integer, primary_key=True)
     command = Column(Text(), nullable=False)
@@ -498,7 +517,7 @@ class Command(db.Model):
                                 )
 
 
-class Workspace(db.Model):
+class Workspace(Metadata):
     __tablename__ = 'workspace'
     id = Column(Integer, primary_key=True)
     # TODO: change nullable=True for appropriate fields
@@ -527,14 +546,14 @@ class RolesUsers(db.Model):
     role_id = Column('role_id', Integer(), ForeignKey('role.id'))
 
 
-class Role(db.Model, RoleMixin):
+class Role(Metadata, RoleMixin):
     __tablename__ = 'role'
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True)
     description = Column(String(255), nullable=True)
 
 
-class User(db.Model, UserMixin):
+class User(Metadata, UserMixin):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
     username = Column(String(255), unique=True, nullable=False)
@@ -576,14 +595,14 @@ class User(db.Model, UserMixin):
                                  self.username)
 
 
-class MethodologyTemplate(db.Model):
+class MethodologyTemplate(Metadata):
     # TODO: reset template_id in methodologies when deleting meth template
     __tablename__ = 'methodology_template'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
 
-class Methodology(db.Model):
+class Methodology(Metadata):
     # TODO: add unique constraint -> name, workspace
     __tablename__ = 'methodology'
     id = Column(Integer, primary_key=True)
@@ -614,7 +633,7 @@ class Methodology(db.Model):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
 
 
-class TaskABC(db.Model):
+class TaskABC(Metadata):
     __abstract__ = True
 
     id = Column(Integer, primary_key=True)
@@ -664,8 +683,8 @@ class Task(TaskABC):
     entity_metadata = relationship(EntityMetadata, uselist=False, cascade="all, delete-orphan", single_parent=True)
     entity_metadata_id = Column(Integer, ForeignKey(EntityMetadata.id), index=True)
 
-    assigned_to = relationship('User', backref='assigned_tasks')
     assigned_to_id = Column(Integer, ForeignKey('user.id'), nullable=True)
+    assigned_to = relationship('User', backref='assigned_tasks', foreign_keys=[assigned_to_id])
 
     methodology_id = Column(
                     Integer,
@@ -691,7 +710,7 @@ class Task(TaskABC):
     # )
 
 
-class License(db.Model):
+class License(Metadata):
     __tablename__ = 'license'
     id = Column(Integer, primary_key=True)
     product = Column(Text, nullable=False)
@@ -706,7 +725,7 @@ class License(db.Model):
     )
 
 
-class Tag(db.Model):
+class Tag(Metadata):
     __tablename__ = 'tag'
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, unique=True)
@@ -735,7 +754,7 @@ class CommentObject(db.Model):
     comment_id = Column(Integer, ForeignKey('comment.id'), index=True)
 
 
-class Comment(db.Model):
+class Comment(Metadata):
     __tablename__ = 'comment'
     id = Column(Integer, primary_key=True)
 
@@ -752,7 +771,7 @@ class Comment(db.Model):
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
 
 
-class ExecutiveReport(db.Model):
+class ExecutiveReport(Metadata):
     STATUSES = [
         'created',
         'error',

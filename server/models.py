@@ -45,7 +45,7 @@ class Metadata(db.Model):
 
     @declared_attr
     def creator_id(cls):
-        return Column(Integer, ForeignKey('user.id'), nullable=True)
+        return Column(Integer, ForeignKey('user.id'), nullable=False)
 
     @declared_attr
     def creator(cls):

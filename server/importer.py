@@ -771,7 +771,7 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
             mapped_exploitation = {
                 'critical': 'critical',
                 'med': 'medium',
-                'high':'high',
+                'high': 'high',
                 'low': 'low',
                 'info': 'informational',
                 'unclassified': 'unclassified',

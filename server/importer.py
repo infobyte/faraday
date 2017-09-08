@@ -799,7 +799,17 @@ class ImportLicense(FlaskScriptCommand):
             port=server.config.couchdb.port,
             path='faraday_licenses/_all_docs?include_docs=true'
         )
-        licenses = requests.get(cwe_url).json()['rows']
+
+        if not requests.head(cwe_url).ok:
+            logger.info('No Licenses database found, nothing to see here, move along!')
+            return
+
+        try:
+            licenses = requests.get(cwe_url).json()['rows']
+        except requests.exceptions.RequestException as e:
+            logger.warn(e)
+            return
+
         for license in licenses:
             document = license['doc']
 

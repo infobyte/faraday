@@ -347,23 +347,42 @@ class VulnerabilityImporter(object):
         if not couch_parent_id:
             couch_parent_id = '.'.join(document['_id'].split('.')[:-1])
         parent_ids = couchdb_relational_map[couch_parent_id]
+        mapped_severity = {
+            'med': 'medium',
+            'critical': 'critical',
+            'high': 'high',
+            'low': 'low',
+            'info': 'informational',
+            'unclassified': 'unclassified',
+        }
+        severity = mapped_severity[document.get('severity')]
         for parent_id in parent_ids:
             if level == 2:
                 parent = session.query(Host).filter_by(id=parent_id).first()
             if level == 4:
                 parent = session.query(Service).filter_by(id=parent_id).first()
             if document['type'] == 'VulnerabilityWeb':
+                method = document.get('method')
+                path = document.get('path')
+                pname = document.get('pname')
+                website = document.get('website')
                 vulnerability, created = get_or_create(
                     session,
                     VulnerabilityWeb,
                     name=document.get('name'),
-                    description=document.get('desc'),
+                    severity=severity,
                     service_id=parent.id,
+                    method=method,
+                    parameter_name=pname,
+                    path=path,
+                    website=website,
+                    workspace=workspace,
                 )
             if document['type'] == 'Vulnerability':
                 vuln_params = {
                     'name': document.get('name'),
-                    'description': document.get('desc')
+                    'severity': severity,
+                    'workspace': workspace,
                 }
                 if type(parent) == Host:
                     vuln_params.update({'host_id': parent.id})
@@ -374,20 +393,12 @@ class VulnerabilityImporter(object):
                     Vulnerability,
                     **vuln_params
                 )
-
+            vulnerability.description = document.get('desc'),
             vulnerability.confirmed = document.get('confirmed', False) or False
             vulnerability.data = document.get('data')
             vulnerability.easeofresolution = document.get('easeofresolution')
             vulnerability.resolution = document.get('resolution')
-            mapped_severity = {
-                'med': 'medium',
-                'critical': 'critical',
-                'high':'high',
-                'low': 'low',
-                'info': 'informational',
-                'unclassified': 'unclassified',
-            }
-            vulnerability.severity = mapped_severity[document.get('severity')]
+
             vulnerability.owned = document.get('owned', False)
             #vulnerability.attachments = json.dumps(document.get('_attachments', {}))
             vulnerability.impact_accountability = document.get('impact', {}).get('accountability')
@@ -395,13 +406,12 @@ class VulnerabilityImporter(object):
             vulnerability.impact_confidentiality = document.get('impact', {}).get('confidentiality')
             vulnerability.impact_integrity = document.get('impact', {}).get('integrity')
             if document['type'] == 'VulnerabilityWeb':
-                vulnerability.method = document.get('method')
-                vulnerability.path = document.get('path')
-                vulnerability.pname = document.get('pname')
+
+
                 vulnerability.query = document.get('query')
                 vulnerability.request = document.get('request')
                 vulnerability.response = document.get('response')
-                vulnerability.website = document.get('website')
+
                 params = document.get('params', u'')
                 if isinstance(params, (list, tuple)):
                     vulnerability.parameters = (u' '.join(params)).strip()
@@ -413,7 +423,6 @@ class VulnerabilityImporter(object):
             }
             status = status_map[document.get('status', 'opened')]
             vulnerability.status = status
-            vulnerability.workspace = workspace
 
             self.add_references(document, vulnerability, workspace)
             self.add_policy_violations(document, vulnerability, workspace)
@@ -855,7 +864,28 @@ class ImportCouchDB(FlaskScriptCommand):
 
         return r.json()
 
-    def verify_import_data(self, couchdb_relational_map, workspace):
+    def verify_host_vulns_count_is_correct(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
+        hosts = session.query(Host).filter_by(workspace=workspace)
+        for host in hosts:
+            parent_couchdb_id = None
+            for couchdb_id, relational_ids in couchdb_relational_map_by_type.items():
+                for obj_data in relational_ids:
+                    if obj_data['type'] == 'Host' and host.id == obj_data['id']:
+                        parent_couchdb_id = couchdb_id
+                        break
+                if parent_couchdb_id:
+                    break
+            if not parent_couchdb_id:
+                raise Exception('Could not found couchdb id!')
+            vulns = get_children_from_couch(workspace, parent_couchdb_id, 'Vulnerability')
+            interfaces = get_children_from_couch(workspace, parent_couchdb_id, 'Interface')
+            for interface in interfaces:
+                interface = interface['value']
+                vulns += get_children_from_couch(workspace, interface.get('_id'), 'Vulnerability')
+            assert len(vulns) == len(host.vulnerabilities)
+
+    def verify_import_data(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
+        self.verify_host_vulns_count_is_correct(couchdb_relational_map, couchdb_relational_map_by_type, workspace)
         all_docs_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_all_docs?include_docs=true".format(
                     username=server.config.couchdb.user,
                     password=server.config.couchdb.password,
@@ -906,6 +936,7 @@ class ImportCouchDB(FlaskScriptCommand):
         # for the desired obj.
         obj_types = OBJ_TYPES
         couchdb_relational_map = defaultdict(list)
+        couchdb_relational_map_by_type = defaultdict(list)
         for level, obj_type in obj_types:
             obj_importer = faraday_importer.get_importer_from_document(obj_type)()
             objs_dict = self.get_objs(couch_url, obj_type, level)
@@ -919,6 +950,7 @@ class ImportCouchDB(FlaskScriptCommand):
                         if not new_obj:
                             continue
                         session.commit()
+                        couchdb_relational_map_by_type[couchdb_id].append({'type': obj_type, 'id': new_obj.id})
                         couchdb_relational_map[couchdb_id].append(new_obj.id)
-        self.verify_import_data(couchdb_relational_map, workspace)
+        self.verify_import_data(couchdb_relational_map, couchdb_relational_map_by_type, workspace)
         return created

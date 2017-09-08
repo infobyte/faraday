@@ -2,6 +2,7 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import os
+import re
 import sys
 import json
 import datetime
@@ -897,8 +898,7 @@ class ImportCouchDB(FlaskScriptCommand):
         if len(all_ids) != len(couchdb_relational_map.keys()):
             missing_objs_filename = os.path.join(os.path.expanduser('~/.faraday'), 'logs', 'import_missing_objects_{0}.json'.format(workspace.name))
             missing_ids = set(all_ids) - set(couchdb_relational_map.keys())
-            missing_ids = missing_ids - set([u'_design/commands', u'_design/hosts', u'_design/comms', u'_design/tags', u'_design/vulns', u'_design/utils', u'_design/importer', u'_design/auth', u'_design/mapper', u'_design/services', u'_design/interfaces', u'_design/changes', u'_design/reports',
-])
+            missing_ids = set([x for x in missing_ids if not re.match(r'^\_design', x)])
             objs_diff = []
             if missing_ids:
                 logger.info('Downloading missing couchdb docs')

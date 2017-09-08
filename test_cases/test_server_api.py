@@ -5,6 +5,7 @@ from server.models import db, Workspace, Host
 
 PREFIX = '/v2/'
 HOSTS_COUNT = 5
+SERVICE_COUNT = [10, 5]  # 10 services to the first host, 5 to the second
 
 @pytest.mark.usefixtures('database', 'logged_user')
 class TestHostAPI:
@@ -19,6 +20,20 @@ class TestHostAPI:
         assert workspace.hosts[0].id is not None
         self.workspace = workspace
         return workspace
+
+    @pytest.fixture
+    def host_services(self, session, service_factory):
+        """
+        Add some services to the first len(SERVICE_COUNT) hosts.
+
+        Return a dictionary mapping hosts to a list of services
+        """
+        ret = {}
+        for (count, host) in zip(SERVICE_COUNT, self.hosts):
+            ret[host] = service_factory.create_batch(
+                count, host=host, workspace=host.workspace)
+        session.commit()
+        return ret
 
     def url(self, host=None, workspace=None):
         workspace = workspace or self.workspace
@@ -149,13 +164,10 @@ class TestHostAPI:
         assert not was_deleted(host)
 
     def test_get_host_services(self, test_client, session,
-                               second_workspace,
                                service_factory):
-        SERVICE_COUNT = 10
-
         # Create the services that must be shown
         real = service_factory.create_batch(
-            SERVICE_COUNT,
+            SERVICE_COUNT[0],
             host=self.first_host,
             workspace=self.first_host.workspace)
 
@@ -172,6 +184,20 @@ class TestHostAPI:
         ids_returned = {host['id'] for host in res.json}
         assert other_host.id not in ids_returned
         assert ids_expected == ids_returned
+
+    def test_retrieve_shows_service_count(self, test_client, host_services):
+        for (host, services) in host_services.items():
+            res = test_client.get(self.url(host))
+            assert res.json['service_count'] == len(services)
+
+    def test_index_shows_service_count(self, test_client, host_services):
+        ids_map = {host.id: services
+                   for (host, services) in host_services.items()}
+        res = test_client.get(self.url())
+        assert len(res.json) >= len(ids_map)  # Some hosts can have no services
+        for host in res.json:
+            if host['id'] in ids_map:
+                assert host['service_count'] == len(ids_map[host['id']])
 
 
 

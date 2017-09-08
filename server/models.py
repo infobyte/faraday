@@ -15,6 +15,9 @@ from sqlalchemy import (
     event
 )
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.sql import select
+from sqlalchemy import func
+from sqlalchemy.orm import column_property
 from sqlalchemy.ext.declarative import declared_attr
 from flask_sqlalchemy import (
     SQLAlchemy as OriginalSQLAlchemy,
@@ -194,6 +197,12 @@ class Service(db.Model):
                             backref='services',
                             foreign_keys=[workspace_id]
                             )
+
+# TODO: Move this to Host definition. I need a way to reference Service before
+# it is declared
+Host.service_count = column_property((select([func.count(Service.id)]).
+            where(Service.host_id == Host.id)#.label('service_count')
+            ), deferred=True)
 
 
 class VulnerabilityABC(db.Model):

@@ -6,6 +6,7 @@ import flask
 from flask import Blueprint
 from flask_classful import route
 from marshmallow import Schema, fields
+from sqlalchemy.orm import undefer
 
 from server.utils.logger import get_logger
 from server.utils.web import gzipped, validate_workspace,\
@@ -22,6 +23,7 @@ class HostSchema(Schema):
     ip = fields.String(required=True)
     description = fields.String(required=True)
     os = fields.String()
+    service_count = fields.Integer()
 
 
 class ServiceSchema(Schema):
@@ -43,6 +45,12 @@ class HostsView(ReadWriteWorkspacedView):
     def service_list(self, workspace_name, host_id):
         services = self._get_object(workspace_name, host_id).services
         return ServiceSchema(many=True).dump(services)
+
+    def _get_base_query(self, workspace_name):
+        """Get services_count in one query and not deferred, that doe
+        one query per host"""
+        original = super(HostsView, self)._get_base_query(workspace_name)
+        return original.options(undefer(Host.service_count))
 
 HostsView.register(host_api)
 

@@ -35,6 +35,7 @@ class GenericWorkspacedView(FlaskView):
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
     representations = {'application/json': output_json}
     lookup_field = 'id'
+    lookup_field_type = int
     unique_fields = []  # Fields unique together with workspace_id
 
     @classmethod
@@ -72,6 +73,7 @@ class GenericWorkspacedView(FlaskView):
             .filter(Workspace.id==self._get_workspace(workspace_name).id)
 
     def _get_object(self, workspace_name, object_id):
+        self._validate_object_id(object_id)
         try:
             obj = self._get_base_query(workspace_name).filter(
                 self._get_lookup_field() == object_id).one()
@@ -85,6 +87,12 @@ class GenericWorkspacedView(FlaskView):
     def _parse_data(self, schema, request, *args, **kwargs):
         return FlaskParser().parse(schema, request, locations=('json',),
                                    *args, **kwargs)
+
+    def _validate_object_id(self, object_id):
+        try:
+            self.lookup_field_type(object_id)
+        except ValueError:
+            flask.abort(404, 'Invalid format of lookup field')
 
     def _validate_uniqueness(self, obj, object_id=None):
         assert obj.workspace is not None, "Object must have a " \

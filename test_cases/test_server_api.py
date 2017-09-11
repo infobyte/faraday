@@ -1,3 +1,4 @@
+#-*- coding: utf8 -*-
 import pytest
 from sqlalchemy.orm.util import was_deleted
 from test_cases import factories
@@ -236,7 +237,9 @@ class GenericAPITest:
         workspace = workspace or self.workspace
         url = PREFIX + workspace.name + '/' + self.api_endpoint + '/'
         if obj is not None:
-            url += str(obj.id)
+            id_ = unicode(obj.id) if isinstance(
+                obj, self.model) else unicode(obj)
+            url += id_
         return url
 
 
@@ -264,6 +267,13 @@ class RetrieveTestsMixin:
                                                       session,
                                                       second_workspace):
         res = test_client.get(self.url(self.first_object, second_workspace))
+        assert res.status_code == 404
+
+    @pytest.mark.parametrize('object_id', [123, -1, 'xxx', u'áá'])
+    def test_404_when_retrieving_unexistent_object(self, test_client,
+                                                   object_id):
+        url = self.url(object_id)
+        res = test_client.get(url)
         assert res.status_code == 404
 
 

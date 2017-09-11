@@ -40,11 +40,11 @@ class TestHostAPI:
         workspace = workspace or self.workspace
         url = PREFIX + workspace.name + '/hosts/'
         if host is not None:
-            url += str(host.id)
+            url += str(host.id) + '/'
         return url
 
     def services_url(self, host, workspace=None):
-        return self.url(host, workspace) + '/services/'
+        return self.url(host, workspace) + 'services/'
 
     def test_list_retrieves_all_items_from_workspace(self, test_client,
                                                      second_workspace,
@@ -239,7 +239,7 @@ class GenericAPITest:
         if obj is not None:
             id_ = unicode(obj.id) if isinstance(
                 obj, self.model) else unicode(obj)
-            url += id_
+            url += id_ + u'/'
         return url
 
 

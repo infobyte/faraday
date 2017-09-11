@@ -38,22 +38,6 @@ class GenericWorkspacedView(FlaskView):
     lookup_field_type = int
     unique_fields = []  # Fields unique together with workspace_id
 
-    @classmethod
-    def get_route_base(cls):
-        """Fix issue with base_args overriding
-
-        See https://github.com/teracyhq/flask-classful/issues/50 for
-        more information"""
-
-        if cls.route_base is not None:
-            route_base = cls.route_base
-            base_rule = parse_rule(route_base)
-            cls.base_args += [r[2] for r in base_rule]
-        else:
-            route_base = cls.default_route_base()
-
-        return route_base.strip("/")
-
     def _get_schema_class(self):
         assert self.schema_class is not None, "You must define schema_class"
         return self.schema_class

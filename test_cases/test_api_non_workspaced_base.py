@@ -59,13 +59,6 @@ class RetrieveTestsMixin:
         assert res.status_code == 200
         assert isinstance(res.json, dict)
 
-    def test_retrieve_fails_object_of_other_workspcae(self,
-                                                      test_client,
-                                                      session,
-                                                      second_workspace):
-        res = test_client.get(self.url(self.first_object, second_workspace))
-        assert res.status_code == 404
-
     @pytest.mark.parametrize('object_id', [123, -1, 'xxx', u'áá'])
     def test_404_when_retrieving_unexistent_object(self, test_client,
                                                    object_id):
@@ -154,7 +147,7 @@ class DeleteTestsMixin:
 
 
 class ReadWriteTestsMixin(ListTestsMixin,
-                          # RetrieveTestsMixin,
+                          RetrieveTestsMixin,
                           # CreateTestsMixin,
                           # UpdateTestsMixin,
                           # DeleteTestsMixin

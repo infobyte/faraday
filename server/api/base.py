@@ -145,7 +145,7 @@ class GenericWorkspacedView(GenericView):
 
 
 class ListMixin(object):
-    """Add GET /<workspace_name>/ route"""
+    """Add GET / route"""
 
     def index(self, **kwargs):
         return self._dump(self._get_base_query(**kwargs).all(),
@@ -153,20 +153,28 @@ class ListMixin(object):
 
 
 class ListWorkspacedMixin(ListMixin):
+    """Add GET /<workspace_name>/ route"""
     # There are no differences with the non-workspaced implementations. The code
     # inside the view generic methods is enough
     pass
 
 
-class RetrieveWorkspacedMixin(object):
-    """Add GET /<workspace_name>/<id>/ route"""
+class RetrieveMixin(object):
+    """Add GET /<id>/ route"""
 
-    def get(self, workspace_name, object_id):
-        return self._dump(self._get_object(object_id, workspace_name))
+    def get(self, object_id, **kwargs):
+        return self._dump(self._get_object(object_id, **kwargs))
+
+
+class RetrieveWorkspacedMixin(RetrieveMixin):
+    """Add GET /<workspace_name>/<id>/ route"""
+    # There are no differences with the non-workspaced implementations. The code
+    # inside the view generic methods is enough
+    pass
 
 
 class ReadOnlyView(ListMixin,
-                   # RetrieveMixin,
+                   RetrieveMixin,
                    GenericView):
     """A generic view with list and retrieve endpoints"""
     pass
@@ -234,7 +242,7 @@ class DeleteWorkspacedMixin(object):
 
 class ReadWriteView(#CreateWorkspacedMixin,
                     #UpdateWorkspacedMixin,
-                    # DeleteWorkspacedMixin,
+                    #DeleteWorkspacedMixin,
                     ReadOnlyView):
     """A generic view with list, retrieve and create endpoints"""
     pass

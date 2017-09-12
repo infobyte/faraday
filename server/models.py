@@ -7,6 +7,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     Enum,
+    event,
     Float,
     ForeignKey,
     Integer,
@@ -15,7 +16,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.schema import DDL
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import (
     RoleMixin,
@@ -97,7 +98,7 @@ class Host(db.Model):
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship(
                             'Workspace',
-                            backref='hosts',
+                            backref='workspace_hosts',
                             foreign_keys=[workspace_id]
                             )
     __table_args__ = (
@@ -422,8 +423,6 @@ class PolicyViolation(db.Model):
 
 
 class Credential(db.Model):
-    # TODO: add unique constraint -> username, host o service y workspace
-    # TODO: add constraint host y service, uno o el otro
     __tablename__ = 'credential'
     id = Column(Integer, primary_key=True)
     username = Column(String(250), nullable=False)
@@ -726,6 +725,17 @@ class TagObject(db.Model):
     tag_id = Column(Integer, ForeignKey('tag.id'), index=True)
 
 
+class CommentObject(db.Model):
+    __tablename__ = 'comment_object'
+    id = Column(Integer, primary_key=True)
+
+    object_id = Column(Integer, nullable=False)
+    object_type = Column(Text, nullable=False)
+
+    comment = relationship('Comment', backref='comment_objects')
+    comment_id = Column(Integer, ForeignKey('comment.id'), index=True)
+
+
 class Comment(db.Model):
     __tablename__ = 'comment'
     id = Column(Integer, primary_key=True)
@@ -739,11 +749,9 @@ class Comment(db.Model):
                         foreign_keys=[reply_to_id]
                         )
 
-    object_id = Column(Integer, nullable=False)
-    object_type = Column(Text, nullable=False)
-
     workspace_id = Column(Integer, ForeignKey('workspace.id'), index=True, nullable=False)
     workspace = relationship('Workspace', foreign_keys=[workspace_id])
+
 
 class ExecutiveReport(db.Model):
     STATUSES = [
@@ -775,20 +783,20 @@ class ExecutiveReport(db.Model):
 # Since it applies to the table vulnerability it should be adVulnerability.ded to the Vulnerability class
 # However, since it contains columns from children classes, this cannot be done
 # This is a workaround suggested by SQLAlchemy's creator
-CheckConstraint('((Vulnerability.host_id IS NULL)::int+'
-                '(Vulnerability.service_id IS NULL)::int+'
-                '(Vulnerability.source_code_id IS NULL)::int)=1',
+CheckConstraint('((Vulnerability.host_id IS NOT NULL)::int+'
+                '(Vulnerability.service_id IS NOT NULL)::int+'
+                '(Vulnerability.source_code_id IS NOT NULL)::int)=1',
                 name='check_vulnerability_host_service_source_code',
                 table=VulnerabilityGeneric.__table__)
-UniqueConstraint(VulnerabilityGeneric.name,
-                 VulnerabilityGeneric.severity,
-                 Vulnerability.host_id,
-                 VulnerabilityWeb.service_id,
-                 VulnerabilityWeb.method,
-                 VulnerabilityWeb.parameter_name,
-                 VulnerabilityWeb.path,
-                 VulnerabilityWeb.website,
-                 VulnerabilityGeneric.workspace_id,
-                 VulnerabilityCode.source_code_id,
-                 name='uix_vulnerability'
+
+vulnerability_uniqueness = DDL(
+    "CREATE UNIQUE INDEX uix_vulnerability ON %(fullname)s "
+    "(name, md5(description), severity, host_id, service_id, "
+    "method, parameter_name, path, website, workspace_id, source_code_id);"
+)
+
+event.listen(
+    VulnerabilityGeneric.__table__,
+    'after_create',
+    vulnerability_uniqueness.execute_if(dialect='postgresql')
 )

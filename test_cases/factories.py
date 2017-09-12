@@ -6,10 +6,10 @@ from factory.fuzzy import (
 from pytest_factoryboy import register
 from server.models import (
     db,
+    User,
     Host,
     Command,
     Service,
-    Interface,
     Workspace,
     Credential,
     Vulnerability,
@@ -22,9 +22,18 @@ class FaradayFactory(factory.alchemy.SQLAlchemyModelFactory):
     id = factory.Sequence(lambda n: n)
 
 
+class UserFactory(FaradayFactory):
+
+    username = FuzzyText()
+
+    class Meta:
+        model = User
+        sqlalchemy_session = db.session
+
 class WorkspaceFactory(FaradayFactory):
 
     name = FuzzyText()
+    creator = factory.SubFactory(UserFactory)
 
     class Meta:
         model = Workspace
@@ -32,9 +41,11 @@ class WorkspaceFactory(FaradayFactory):
 
 
 class HostFactory(FaradayFactory):
-    name = FuzzyText()
+    ip = FuzzyText()
     description = FuzzyText()
     os = FuzzyChoice(['Linux', 'Windows', 'OSX', 'Android', 'iOS'])
+    workspace = factory.SubFactory(WorkspaceFactory)
+    creator = factory.SubFactory(UserFactory)
 
     class Meta:
         model = Host
@@ -49,23 +60,14 @@ class EntityMetadataFactory(FaradayFactory):
         sqlalchemy_session = db.session
 
 
-class InterfaceFactory(FaradayFactory):
-    name = FuzzyText()
-    description = FuzzyText()
-    mac = FuzzyText()
-    host = factory.SubFactory(HostFactory)
-
-    class Meta:
-        model = Interface
-        sqlalchemy_session = db.session
-
-
 class ServiceFactory(FaradayFactory):
     name = FuzzyText()
     description = FuzzyText()
-    ports = FuzzyChoice(['443', '80', '22'])
-    interface = factory.SubFactory(InterfaceFactory)
+    port = FuzzyChoice(['443', '80', '22'])
+    protocol = FuzzyChoice(['TCP', 'UDP'])
     host = factory.SubFactory(HostFactory)
+    workspace = factory.SubFactory(WorkspaceFactory)
+    creator = factory.SubFactory(UserFactory)
 
     class Meta:
         model = Service
@@ -76,14 +78,11 @@ class VulnerabilityFactory(FaradayFactory):
 
     name = FuzzyText()
     description = FuzzyText()
-    host = factory.SubFactory(HostFactory)
-    entity_metadata = factory.SubFactory(EntityMetadataFactory)
-    service = factory.SubFactory(ServiceFactory)
+    # host = factory.SubFactory(HostFactory)
+    # service = factory.SubFactory(ServiceFactory)
     workspace = factory.SubFactory(WorkspaceFactory)
-    vuln_type = FuzzyChoice(['Vulnerability', 'VulnerabilityWeb'])
-    attachments = '[]'
-    policyviolations = '[]'
-    refs = '[]'
+    creator = factory.SubFactory(UserFactory)
+    severity = FuzzyChoice(['critical', 'high'])
 
     class Meta:
         model = Vulnerability
@@ -106,10 +105,9 @@ class CommandFactory(FaradayFactory):
         model = Command
         sqlalchemy_session = db.session
 
-
+register(UserFactory)
 register(WorkspaceFactory)
 register(HostFactory)
 register(ServiceFactory)
-register(InterfaceFactory)
 register(VulnerabilityFactory)
 register(CredentialFactory)

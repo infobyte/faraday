@@ -632,6 +632,9 @@ class CommunicationImporter(object):
 class FaradayEntityImporter(object):
     # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace']
 
+    def __init__(self, workspace_name):
+        self.workspace_name = workspace_name
+
     def parse(self, document):
         """Get an instance of a DAO object given a document"""
         importer_class = self.get_importer_from_document(document)
@@ -644,7 +647,7 @@ class FaradayEntityImporter(object):
         return None, None
 
     def get_importer_from_document(self, doc_type):
-        logger.info('Getting class importer for {0}'.format(doc_type))
+        logger.info('Getting class importer for {0} in workspace {1}'.format(doc_type, self.workspace_name))
         importer_class_mapper = {
             'EntityMetadata': EntityMetadataImporter,
             'Host': HostImporter,
@@ -930,7 +933,7 @@ class ImportCouchDB(FlaskScriptCommand):
 
     def import_workspace_into_database(self, workspace_name):
 
-        faraday_importer = FaradayEntityImporter()
+        faraday_importer = FaradayEntityImporter(workspace_name)
         workspace, created = get_or_create(session, Workspace, name=workspace_name)
         session.commit()
 

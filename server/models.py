@@ -553,7 +553,7 @@ class Role(Metadata, RoleMixin):
     description = Column(String(255), nullable=True)
 
 
-class User(Metadata, UserMixin):
+class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
     username = Column(String(255), unique=True, nullable=False)

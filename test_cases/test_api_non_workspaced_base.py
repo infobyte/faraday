@@ -76,7 +76,6 @@ class CreateTestsMixin:
         assert self.model.query.count() == OBJECT_COUNT + 1
         object_id = res.json['id']
         obj = self.model.query.get(object_id)
-        assert obj.workspace == self.workspace
 
     def test_create_fails_with_empty_dict(self, test_client):
         res = test_client.post(self.url(), data={})
@@ -89,20 +88,6 @@ class CreateTestsMixin:
             res = test_client.post(self.url(), data=data)
             assert res.status_code == 400
             assert self.model.query.count() == OBJECT_COUNT
-
-    def test_create_with_existing_in_other_workspace(self, test_client,
-                                                     session,
-                                                     second_workspace):
-        unique_field = self.unique_fields[0]
-        other_object = self.factory.create(workspace=second_workspace)
-        session.commit()
-
-        data = self.factory.build_dict()
-        data[unique_field] = getattr(other_object, unique_field)
-        res = test_client.post(self.url(), data=data)
-        assert res.status_code == 201
-        # It should create two hosts, one for each workspace
-        assert self.model.query.count() == OBJECT_COUNT + 2
 
 
 class UpdateTestsMixin:
@@ -148,7 +133,7 @@ class DeleteTestsMixin:
 
 class ReadWriteTestsMixin(ListTestsMixin,
                           RetrieveTestsMixin,
-                          # CreateTestsMixin,
+                          CreateTestsMixin,
                           # UpdateTestsMixin,
                           # DeleteTestsMixin
                           ):

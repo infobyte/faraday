@@ -187,25 +187,34 @@ class ReadOnlyWorkspacedView(ListWorkspacedMixin,
     pass
 
 
-class CreateWorkspacedMixin(object):
+class CreateMixin(object):
+    """Add POST / route"""
 
-    def post(self, workspace_name):
+    def post(self, **kwargs):
         data = self._parse_data(self._get_schema_class()(strict=True),
                                 flask.request)
         obj = self.model_class(**data)
-        created = self._perform_create(workspace_name, obj)
+        created = self._perform_create(obj, **kwargs)
         return self._dump(created).data, 201
 
-    def _perform_create(self, workspace_name, obj):
-        assert not db.session.new
+    def _perform_create(self, obj):
+        # assert not db.session.new
         with db.session.no_autoflush:
             # Required because _validate_uniqueness does a select. Doing this
             # outside a no_autoflush block would result in a premature create.
-            obj.workspace = self._get_workspace(workspace_name)
             self._validate_uniqueness(obj)
             db.session.add(obj)
         db.session.commit()
         return obj
+
+
+class CreateWorkspacedMixin(CreateMixin):
+    """Add POST /<workspace_name>/ route"""
+
+    def _perform_create(self, obj, workspace_name):
+        assert not db.session.new
+        obj.workspace = self._get_workspace(workspace_name)
+        return super(CreateWorkspacedMixin, self)._perform_create(obj)
 
 
 class UpdateWorkspacedMixin(object):
@@ -240,9 +249,9 @@ class DeleteWorkspacedMixin(object):
         db.session.commit()
 
 
-class ReadWriteView(#CreateWorkspacedMixin,
-                    #UpdateWorkspacedMixin,
-                    #DeleteWorkspacedMixin,
+class ReadWriteView(CreateMixin,
+                    #UpdateMixin,
+                    #DeleteMixin,
                     ReadOnlyView):
     """A generic view with list, retrieve and create endpoints"""
     pass

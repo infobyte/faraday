@@ -11,7 +11,7 @@ class TestLicensesAPI(ReadWriteAPITests):
     model = License
     factory = factories.LicenseFactory
     api_endpoint = 'licenses'
-    unique_fields = ['ip']
-    update_fields = ['ip', 'description', 'os']
+    # unique_fields = ['ip']
+    # update_fields = ['ip', 'description', 'os']
 
 

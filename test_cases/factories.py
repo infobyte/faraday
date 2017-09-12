@@ -39,6 +39,11 @@ class FaradayFactory(factory.alchemy.SQLAlchemyModelFactory):
     # id = factory.Sequence(lambda n: n)
     pass
 
+    @classmethod
+    def build_dict(cls, **kwargs):
+        return factory.build(dict, FACTORY_CLASS=cls)
+
+
 
 class WorkspaceFactory(FaradayFactory):
 
@@ -54,7 +59,7 @@ class WorkspaceObjectFactory(FaradayFactory):
 
     @classmethod
     def build_dict(cls, **kwargs):
-        ret = factory.build(dict, FACTORY_CLASS=cls)
+        ret = super(WorkspaceObjectFactory, cls).build_dict(**kwargs)
         del ret['workspace']  # It is passed in the URL, not in POST data
         return ret
 
@@ -134,3 +139,11 @@ class LicenseFactory(FaradayFactory):
     class Meta:
         model = License
         sqlalchemy_session = db.session
+
+    @classmethod
+    def build_dict(cls, **kwargs):
+        # Ugly hack to JSON-serialize datetimes
+        ret = super(LicenseFactory, cls).build_dict(**kwargs)
+        ret['start_date'] = ret['start_date'].isoformat()
+        ret['end_date'] = ret['end_date'].isoformat()
+        return ret

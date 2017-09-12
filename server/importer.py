@@ -849,13 +849,14 @@ class ImportCouchDB(FlaskScriptCommand):
         """
             Main entry point for couchdb import
         """
+        couchdb_server_conn, workspaces_list = self._open_couchdb_conn()
         license_import = ImportLicense()
         license_import.run()
         vuln_templates_import = ImportVulnerabilityTemplates()
         vuln_templates_import.run()
         users_import = ImportCouchDBUsers()
         users_import.run()
-        couchdb_server_conn, workspaces_list = self._open_couchdb_conn()
+
 
         for workspace_name in workspaces_list:
             logger.info(u'Setting up workspace {}'.format(workspace_name))

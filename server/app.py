@@ -26,8 +26,8 @@ def create_app(db_connection_string=None, testing=None):
     app.config['SECURITY_POST_LOGIN_VIEW'] = '/_api/session'
     app.config['SECURITY_POST_LOGOUT_VIEW'] = '/_api/login'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # app.config['SQLALCHEMY_ECHO'] = True
     if testing:
-        # app.config['SQLALCHEMY_ECHO'] = True
         app.config['TESTING'] = testing
     try:
         app.config['SQLALCHEMY_DATABASE_URI'] = db_connection_string or server.config.database.connection_string.strip("'")

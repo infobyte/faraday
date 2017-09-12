@@ -22,21 +22,21 @@ def output_json(data, code, headers=None):
 
 
 # TODO: Require @view decorator to enable custom routes
-class GenericWorkspacedView(FlaskView):
-    """Abstract class for a view that depends on the workspace, that is
-    passed in the URL"""
+class GenericView(FlaskView):
+    """Abstract class to provide helpers. Inspired in Django REST
+    Framework generic viewsets"""
 
     # Must-implement attributes
     model_class = None
     schema_class = None
 
     # Default attributes
-    route_prefix = '/v2/<workspace_name>/'
-    base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
+    route_prefix = '/v2/'
+    base_args = []
     representations = {'application/json': output_json}
     lookup_field = 'id'
     lookup_field_type = int
-    unique_fields = []  # Fields unique together with workspace_id
+    unique_fields = []  # Fields unique
 
     def _get_schema_class(self):
         assert self.schema_class is not None, "You must define schema_class"
@@ -45,21 +45,19 @@ class GenericWorkspacedView(FlaskView):
     def _get_lookup_field(self):
         return getattr(self.model_class, self.lookup_field)
 
-    def _get_workspace(self, workspace_name):
+    def _validate_object_id(self, object_id):
         try:
-            ws = Workspace.query.filter_by(name=workspace_name).one()
-        except NoResultFound:
-            flask.abort(404, "No such workspace: %s" % workspace_name)
-        return ws
+            self.lookup_field_type(object_id)
+        except ValueError:
+            flask.abort(404, 'Invalid format of lookup field')
 
-    def _get_base_query(self, workspace_name):
-        return self.model_class.query.join(Workspace) \
-            .filter(Workspace.id==self._get_workspace(workspace_name).id)
+    def _get_base_query(self):
+        return self.model_class.query
 
-    def _get_object(self, workspace_name, object_id):
+    def _get_object(self, object_id, **kwargs):
         self._validate_object_id(object_id)
         try:
-            obj = self._get_base_query(workspace_name).filter(
+            obj = self._get_base_query(**kwargs).filter(
                 self._get_lookup_field() == object_id).one()
         except NoResultFound:
             flask.abort(404, 'Object with id "%s" not found' % object_id)
@@ -72,13 +70,61 @@ class GenericWorkspacedView(FlaskView):
         return FlaskParser().parse(schema, request, locations=('json',),
                                    *args, **kwargs)
 
-    def _validate_object_id(self, object_id):
+    def _validate_uniqueness(self, obj, object_id=None):
+        # TODO: Implement this
+        return True
+
+    @classmethod
+    def register(cls, app, *args, **kwargs):
+        """Register and add JSON error handler. Use error code
+        400 instead of 422"""
+        super(GenericView, cls).register(app, *args, **kwargs)
+        @app.errorhandler(422)
+        def handle_unprocessable_entity(err):
+            # webargs attaches additional metadata to the `data` attribute
+            exc = getattr(err, 'exc')
+            if exc:
+                # Get validations from the ValidationError object
+                messages = exc.messages
+            else:
+                messages = ['Invalid request']
+            return flask.jsonify({
+                'messages': messages,
+            }), 400
+
+
+class GenericWorkspacedView(GenericView):
+    """Abstract class for a view that depends on the workspace, that is
+    passed in the URL"""
+
+    # Default attributes
+    route_prefix = '/v2/<workspace_name>/'
+    base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
+    unique_fields = []  # Fields unique together with workspace_id
+
+    def _get_workspace(self, workspace_name):
         try:
-            self.lookup_field_type(object_id)
-        except ValueError:
-            flask.abort(404, 'Invalid format of lookup field')
+            ws = Workspace.query.filter_by(name=workspace_name).one()
+        except NoResultFound:
+            flask.abort(404, "No such workspace: %s" % workspace_name)
+        return ws
+
+    def _get_base_query(self, workspace_name):
+        base = super(GenericWorkspacedView, self)._get_base_query()
+        return base.join(Workspace).filter(
+            Workspace.id==self._get_workspace(workspace_name).id)
+
+    def _get_object(self, object_id, workspace_name):
+        self._validate_object_id(object_id)
+        try:
+            obj = self._get_base_query(workspace_name).filter(
+                self._get_lookup_field() == object_id).one()
+        except NoResultFound:
+            flask.abort(404, 'Object with id "%s" not found' % object_id)
+        return obj
 
     def _validate_uniqueness(self, obj, object_id=None):
+        # TODO: Use implementation of GenericView
         assert obj.workspace is not None, "Object must have a " \
             "workspace attribute set to call _validate_uniqueness"
         primary_key_field = inspect(self.model_class).primary_key[0]
@@ -97,23 +143,6 @@ class GenericWorkspacedView(FlaskView):
                     field_name, value
                 )))
 
-    @classmethod
-    def register(cls, app, *args, **kwargs):
-        """Register and add JSON error handler. Use error code
-        400 instead of 422"""
-        super(GenericWorkspacedView, cls).register(app, *args, **kwargs)
-        @app.errorhandler(422)
-        def handle_unprocessable_entity(err):
-            # webargs attaches additional metadata to the `data` attribute
-            exc = getattr(err, 'exc')
-            if exc:
-                # Get validations from the ValidationError object
-                messages = exc.messages
-            else:
-                messages = ['Invalid request']
-            return flask.jsonify({
-                'messages': messages,
-            }), 400
 
 class ListWorkspacedMixin(object):
     """Add GET /<workspace_name>/ route"""
@@ -127,7 +156,7 @@ class RetrieveWorkspacedMixin(object):
     """Add GET /<workspace_name>/<id>/ route"""
 
     def get(self, workspace_name, object_id):
-        return self._dump(self._get_object(workspace_name, object_id))
+        return self._dump(self._get_object(object_id, workspace_name))
 
 
 class ReadOnlyWorkspacedView(ListWorkspacedMixin,
@@ -162,7 +191,7 @@ class UpdateWorkspacedMixin(object):
     def put(self, workspace_name, object_id):
         data = self._parse_data(self._get_schema_class()(strict=True),
                                 flask.request)
-        obj = self._get_object(workspace_name, object_id)
+        obj = self._get_object(object_id, workspace_name)
         self._update_object(obj, data)
         updated = self._perform_update(workspace_name, object_id, obj)
         return self._dump(obj).data, 200
@@ -181,7 +210,7 @@ class UpdateWorkspacedMixin(object):
 
 class DeleteWorkspacedMixin(object):
     def delete(self, workspace_name, object_id):
-        obj = self._get_object(workspace_name, object_id)
+        obj = self._get_object(object_id, workspace_name)
         self._perform_delete(obj)
         return None, 204
 

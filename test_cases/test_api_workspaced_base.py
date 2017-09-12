@@ -1,4 +1,7 @@
 #-*- coding: utf8 -*-
+
+"""Generic tests for APIs prefixed with a workspace_name"""
+
 import pytest
 from sqlalchemy.orm.util import was_deleted
 from server.models import db, Workspace

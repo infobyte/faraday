@@ -2,6 +2,7 @@
 # Copyright (C) 2016  Infobyte LLC (http://www.infobytesec.com/)
 # See the file 'doc/LICENSE' for the license information
 import os
+import re
 import sys
 import json
 import datetime
@@ -631,6 +632,9 @@ class CommunicationImporter(object):
 class FaradayEntityImporter(object):
     # Document Types: [u'Service', u'Communication', u'Vulnerability', u'CommandRunInformation', u'Reports', u'Host', u'Workspace']
 
+    def __init__(self, workspace_name):
+        self.workspace_name = workspace_name
+
     def parse(self, document):
         """Get an instance of a DAO object given a document"""
         importer_class = self.get_importer_from_document(document)
@@ -643,7 +647,7 @@ class FaradayEntityImporter(object):
         return None, None
 
     def get_importer_from_document(self, doc_type):
-        logger.info('Getting class importer for {0}'.format(doc_type))
+        logger.info('Getting class importer for {0} in workspace {1}'.format(doc_type, self.workspace_name))
         importer_class_mapper = {
             'EntityMetadata': EntityMetadataImporter,
             'Host': HostImporter,
@@ -770,7 +774,7 @@ class ImportVulnerabilityTemplates(FlaskScriptCommand):
             mapped_exploitation = {
                 'critical': 'critical',
                 'med': 'medium',
-                'high':'high',
+                'high': 'high',
                 'low': 'low',
                 'info': 'informational',
                 'unclassified': 'unclassified',
@@ -798,7 +802,17 @@ class ImportLicense(FlaskScriptCommand):
             port=server.config.couchdb.port,
             path='faraday_licenses/_all_docs?include_docs=true'
         )
-        licenses = requests.get(cwe_url).json()['rows']
+
+        if not requests.head(cwe_url).ok:
+            logger.info('No Licenses database found, nothing to see here, move along!')
+            return
+
+        try:
+            licenses = requests.get(cwe_url).json()['rows']
+        except requests.exceptions.RequestException as e:
+            logger.warn(e)
+            return
+
         for license in licenses:
             document = license['doc']
 
@@ -835,13 +849,14 @@ class ImportCouchDB(FlaskScriptCommand):
         """
             Main entry point for couchdb import
         """
+        couchdb_server_conn, workspaces_list = self._open_couchdb_conn()
         license_import = ImportLicense()
         license_import.run()
         vuln_templates_import = ImportVulnerabilityTemplates()
         vuln_templates_import.run()
         users_import = ImportCouchDBUsers()
         users_import.run()
-        couchdb_server_conn, workspaces_list = self._open_couchdb_conn()
+
 
         for workspace_name in workspaces_list:
             logger.info(u'Setting up workspace {}'.format(workspace_name))
@@ -897,8 +912,7 @@ class ImportCouchDB(FlaskScriptCommand):
         if len(all_ids) != len(couchdb_relational_map.keys()):
             missing_objs_filename = os.path.join(os.path.expanduser('~/.faraday'), 'logs', 'import_missing_objects_{0}.json'.format(workspace.name))
             missing_ids = set(all_ids) - set(couchdb_relational_map.keys())
-            missing_ids = missing_ids - set([u'_design/commands', u'_design/hosts', u'_design/comms', u'_design/tags', u'_design/vulns', u'_design/utils', u'_design/importer', u'_design/auth', u'_design/mapper', u'_design/services', u'_design/interfaces', u'_design/changes', u'_design/reports',
-])
+            missing_ids = set([x for x in missing_ids if not re.match(r'^\_design', x)])
             objs_diff = []
             if missing_ids:
                 logger.info('Downloading missing couchdb docs')
@@ -920,7 +934,7 @@ class ImportCouchDB(FlaskScriptCommand):
 
     def import_workspace_into_database(self, workspace_name):
 
-        faraday_importer = FaradayEntityImporter()
+        faraday_importer = FaradayEntityImporter(workspace_name)
         workspace, created = get_or_create(session, Workspace, name=workspace_name)
         session.commit()
 

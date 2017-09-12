@@ -10,6 +10,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     Enum,
+    event,
     Float,
     ForeignKey,
     Integer,
@@ -18,7 +19,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.schema import DDL
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import (
     RoleMixin,
@@ -156,7 +157,7 @@ class Service(Metadata):
     owned = Column(Boolean, nullable=False, default=False)
 
     protocol = Column(Text, nullable=False)
-    status = Column(Enum(*STATUSES, name='service_statuses'), nullable=True)
+    status = Column(Enum(*STATUSES, name='service_statuses'), nullable=False)
     version = Column(Text, nullable=True)
 
     banner = Column(Text, nullable=True)
@@ -806,15 +807,15 @@ CheckConstraint('((Vulnerability.host_id IS NOT NULL)::int+'
                 '(Vulnerability.source_code_id IS NOT NULL)::int)=1',
                 name='check_vulnerability_host_service_source_code',
                 table=VulnerabilityGeneric.__table__)
-UniqueConstraint(VulnerabilityGeneric.name,
-                 VulnerabilityGeneric.severity,
-                 Vulnerability.host_id,
-                 VulnerabilityWeb.service_id,
-                 VulnerabilityWeb.method,
-                 VulnerabilityWeb.parameter_name,
-                 VulnerabilityWeb.path,
-                 VulnerabilityWeb.website,
-                 VulnerabilityGeneric.workspace_id,
-                 VulnerabilityCode.source_code_id,
-                 name='uix_vulnerability'
+
+vulnerability_uniqueness = DDL(
+    "CREATE UNIQUE INDEX uix_vulnerability ON %(fullname)s "
+    "(name, md5(description), severity, host_id, service_id, "
+    "method, parameter_name, path, website, workspace_id, source_code_id);"
+)
+
+event.listen(
+    VulnerabilityGeneric.__table__,
+    'after_create',
+    vulnerability_uniqueness.execute_if(dialect='postgresql')
 )

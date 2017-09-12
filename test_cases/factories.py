@@ -3,7 +3,6 @@ from factory.fuzzy import (
     FuzzyText,
     FuzzyChoice
 )
-from pytest_factoryboy import register
 from server.models import (
     db,
     User,
@@ -19,7 +18,8 @@ from server.models import (
 
 class FaradayFactory(factory.alchemy.SQLAlchemyModelFactory):
 
-    id = factory.Sequence(lambda n: n)
+    # id = factory.Sequence(lambda n: n)
+    pass
 
 
 class UserFactory(FaradayFactory):
@@ -29,6 +29,7 @@ class UserFactory(FaradayFactory):
     class Meta:
         model = User
         sqlalchemy_session = db.session
+
 
 class WorkspaceFactory(FaradayFactory):
 
@@ -40,11 +41,14 @@ class WorkspaceFactory(FaradayFactory):
         sqlalchemy_session = db.session
 
 
-class HostFactory(FaradayFactory):
-    ip = FuzzyText()
+class WorkspaceObjectFactory(FaradayFactory):
+    workspace = factory.SubFactory(WorkspaceFactory)
+
+
+class HostFactory(WorkspaceObjectFactory):
+    ip = factory.Faker('ipv4')
     description = FuzzyText()
     os = FuzzyChoice(['Linux', 'Windows', 'OSX', 'Android', 'iOS'])
-    workspace = factory.SubFactory(WorkspaceFactory)
     creator = factory.SubFactory(UserFactory)
 
     class Meta:
@@ -52,7 +56,7 @@ class HostFactory(FaradayFactory):
         sqlalchemy_session = db.session
 
 
-class EntityMetadataFactory(FaradayFactory):
+class EntityMetadataFactory(WorkspaceObjectFactory):
     couchdb_id = factory.Sequence(lambda n: '{0}.1.2'.format(n))
 
     class Meta:
@@ -60,13 +64,12 @@ class EntityMetadataFactory(FaradayFactory):
         sqlalchemy_session = db.session
 
 
-class ServiceFactory(FaradayFactory):
+class ServiceFactory(WorkspaceObjectFactory):
     name = FuzzyText()
     description = FuzzyText()
-    port = FuzzyChoice(['443', '80', '22'])
+    ports = FuzzyChoice(['443', '80', '22'])
     protocol = FuzzyChoice(['TCP', 'UDP'])
     host = factory.SubFactory(HostFactory)
-    workspace = factory.SubFactory(WorkspaceFactory)
     creator = factory.SubFactory(UserFactory)
 
     class Meta:
@@ -74,7 +77,7 @@ class ServiceFactory(FaradayFactory):
         sqlalchemy_session = db.session
 
 
-class VulnerabilityFactory(FaradayFactory):
+class VulnerabilityFactory(WorkspaceObjectFactory):
 
     name = FuzzyText()
     description = FuzzyText()
@@ -89,7 +92,7 @@ class VulnerabilityFactory(FaradayFactory):
         sqlalchemy_session = db.session
 
 
-class CredentialFactory(FaradayFactory):
+class CredentialFactory(WorkspaceObjectFactory):
     username = FuzzyText()
     password = FuzzyText()
 
@@ -98,16 +101,9 @@ class CredentialFactory(FaradayFactory):
         sqlalchemy_session = db.session
 
 
-class CommandFactory(FaradayFactory):
+class CommandFactory(WorkspaceObjectFactory):
     command = FuzzyText()
 
     class Meta:
         model = Command
         sqlalchemy_session = db.session
-
-register(UserFactory)
-register(WorkspaceFactory)
-register(HostFactory)
-register(ServiceFactory)
-register(VulnerabilityFactory)
-register(CredentialFactory)

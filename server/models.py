@@ -138,7 +138,7 @@ class Service(db.Model):
     owned = Column(Boolean, nullable=False, default=False)
 
     protocol = Column(Text, nullable=False)
-    status = Column(Enum(*STATUSES, name='service_statuses'), nullable=True)
+    status = Column(Enum(*STATUSES, name='service_statuses'), nullable=False)
     version = Column(Text, nullable=True)
 
     banner = Column(Text, nullable=True)

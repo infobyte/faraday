@@ -19,6 +19,7 @@ enabled_factories = [
     factories.ServiceFactory,
     factories.VulnerabilityFactory,
     factories.CredentialFactory,
+    factories.LicenseFactory,
 ]
 for factory in enabled_factories:
     register(factory)

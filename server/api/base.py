@@ -144,12 +144,18 @@ class GenericWorkspacedView(GenericView):
                 )))
 
 
-class ListWorkspacedMixin(object):
+class ListMixin(object):
     """Add GET /<workspace_name>/ route"""
 
-    def index(self, workspace_name):
-        return self._dump(self._get_base_query(workspace_name).all(),
+    def index(self, **kwargs):
+        return self._dump(self._get_base_query(**kwargs).all(),
                           many=True)
+
+
+class ListWorkspacedMixin(ListMixin):
+    # There are no differences with the non-workspaced implementations. The code
+    # inside the view generic methods is enough
+    pass
 
 
 class RetrieveWorkspacedMixin(object):
@@ -159,10 +165,17 @@ class RetrieveWorkspacedMixin(object):
         return self._dump(self._get_object(object_id, workspace_name))
 
 
+class ReadOnlyView(ListMixin,
+                   # RetrieveMixin,
+                   GenericView):
+    """A generic view with list and retrieve endpoints"""
+    pass
+
+
 class ReadOnlyWorkspacedView(ListWorkspacedMixin,
                              RetrieveWorkspacedMixin,
                              GenericWorkspacedView):
-    """A generic view with list and retrieve endpoints"""
+    """A workspaced generic view with list and retrieve endpoints"""
     pass
 
 
@@ -219,10 +232,18 @@ class DeleteWorkspacedMixin(object):
         db.session.commit()
 
 
+class ReadWriteView(#CreateWorkspacedMixin,
+                    #UpdateWorkspacedMixin,
+                    # DeleteWorkspacedMixin,
+                    ReadOnlyView):
+    """A generic view with list, retrieve and create endpoints"""
+    pass
+
+
 class ReadWriteWorkspacedView(CreateWorkspacedMixin,
                               UpdateWorkspacedMixin,
                               DeleteWorkspacedMixin,
-                              ReadOnlyWorkspacedView,
-                              GenericWorkspacedView):
-    """A generic view with list, retrieve and create endpoints"""
+                              ReadOnlyWorkspacedView):
+    """A generic workspaced view with list, retrieve and create
+    endpoints"""
     pass

@@ -59,6 +59,7 @@ def create_app(db_connection_string=None, testing=None):
     from server.api.modules.doc import doc_api
     from server.api.modules.vuln_csv import vuln_csv_api
     from server.api.modules.hosts import host_api
+    from server.api.modules.licenses import license_api
     from server.api.modules.commandsrun import commandsrun_api
     from server.api.modules.services import services_api
     from server.api.modules.credentials import credentials_api
@@ -68,6 +69,7 @@ def create_app(db_connection_string=None, testing=None):
     app.register_blueprint(doc_api)
     app.register_blueprint(vuln_csv_api)
     app.register_blueprint(host_api)
+    app.register_blueprint(license_api)
     app.register_blueprint(commandsrun_api)
     app.register_blueprint(services_api)
     app.register_blueprint(credentials_api)

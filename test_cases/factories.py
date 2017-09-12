@@ -1,19 +1,37 @@
 import factory
+import datetime
 from factory.fuzzy import (
     FuzzyChoice,
+    FuzzyNaiveDateTime,
     FuzzyInteger,
     FuzzyText,
 )
 from server.models import (
     db,
-    Host,
     Command,
-    Service,
-    Workspace,
     Credential,
-    Vulnerability,
     EntityMetadata,
+    Host,
+    License,
+    Service,
+    Vulnerability,
+    Workspace,
 )
+
+# Make partials for start and end date. End date must be after start date
+FuzzyStartTime = lambda: (
+    FuzzyNaiveDateTime(
+        datetime.datetime.now() - datetime.timedelta(days=40),
+        datetime.datetime.now() - datetime.timedelta(days=20),
+    )
+)
+FuzzyEndTime = lambda: (
+    FuzzyNaiveDateTime(
+        datetime.datetime.now() - datetime.timedelta(days=19),
+        datetime.datetime.now()
+    )
+)
+
 
 
 class FaradayFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -104,4 +122,15 @@ class CommandFactory(WorkspaceObjectFactory):
 
     class Meta:
         model = Command
+        sqlalchemy_session = db.session
+
+
+class LicenseFactory(FaradayFactory):
+    product = FuzzyText()
+    start_date = FuzzyStartTime()
+    end_date = FuzzyEndTime()
+    type = FuzzyText()
+
+    class Meta:
+        model = License
         sqlalchemy_session = db.session

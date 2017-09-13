@@ -868,16 +868,30 @@ class ImportCouchDB(FlaskScriptCommand):
 
             self.import_workspace_into_database(workspace_name)
 
-    def get_objs(self, host, obj_type, level):
+    def get_objs(self, host, obj_type, level, workspace):
         if obj_type == 'Credential':
             obj_type = 'Cred'
         data = {
             "map": "function(doc) { if(doc.type == '%s' && doc._id.split('.').length == %d) emit(null, doc); }" % (obj_type, level)
         }
 
-        r = requests.post(host, json=data)
+        documents = requests.post(host, json=data).json()
+        for doc in documents['rows']:
+            doc['value']['deleted'] = False
+            doc_status_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_all_docs?keys=[\"{doc_id}\"]".format(
+                username=server.config.couchdb.user,
+                password=server.config.couchdb.password,
+                hostname=server.config.couchdb.host,
+                port=server.config.couchdb.port,
+                workspace_name=workspace.name,
+                doc_id=doc['value']['_id']
+        )
+            document_status = requests.get(doc_status_url).json()
+            assert len(document_status['rows']) == 1
+            if any(map(lambda doc_hist: 'error' in doc_hist, document_status['rows'])):
+                doc['value']['deleted'] = True
 
-        return r.json()
+        return documents
 
     def verify_host_vulns_count_is_correct(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
         hosts = session.query(Host).filter_by(workspace=workspace)
@@ -897,7 +911,9 @@ class ImportCouchDB(FlaskScriptCommand):
             for interface in interfaces:
                 interface = interface['value']
                 vulns += get_children_from_couch(workspace, interface.get('_id'), 'Vulnerability')
-            assert len(vulns) == len(host.vulnerabilities)
+            # some vulns had the same name but different description.
+            # we check that we have the same vuln names now
+            assert len(set(map(lambda vuln: vuln['value'].get('name'), vulns))) == len(set(map(lambda vuln: vuln.name, host.vulnerabilities)))
 
     def verify_import_data(self, couchdb_relational_map, couchdb_relational_map_by_type, workspace):
         self.verify_host_vulns_count_is_correct(couchdb_relational_map, couchdb_relational_map_by_type, workspace)
@@ -939,12 +955,12 @@ class ImportCouchDB(FlaskScriptCommand):
         session.commit()
 
         couch_url = "http://{username}:{password}@{hostname}:{port}/{workspace_name}/_temp_view?include_docs=true".format(
-                    username=server.config.couchdb.user,
-                    password=server.config.couchdb.password,
-                    hostname=server.config.couchdb.host,
-                    port=server.config.couchdb.port,
-                    workspace_name=workspace_name
-                )
+                username=server.config.couchdb.user,
+                password=server.config.couchdb.password,
+                hostname=server.config.couchdb.host,
+                port=server.config.couchdb.port,
+                workspace_name=workspace_name
+        )
 
         # obj_types are tuples. the first value is the level on the tree
         # for the desired obj.
@@ -953,8 +969,11 @@ class ImportCouchDB(FlaskScriptCommand):
         couchdb_relational_map_by_type = defaultdict(list)
         for level, obj_type in obj_types:
             obj_importer = faraday_importer.get_importer_from_document(obj_type)()
-            objs_dict = self.get_objs(couch_url, obj_type, level)
+            objs_dict = self.get_objs(couch_url, obj_type, level, workspace)
             for raw_obj in tqdm(objs_dict.get('rows', [])):
+                if raw_obj['value']['deleted']:
+                    logger.warn('Skipping deleted object from couchdb {0}'.format(raw_obj['value']['_id']))
+                    continue
                 # we use no_autoflush since some queries triggers flush and some relationship are missing in the middle
                 with session.no_autoflush:
                     raw_obj = raw_obj['value']

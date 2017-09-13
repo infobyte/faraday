@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy.orm.util import was_deleted
 from server.models import db, Workspace
 
-API_PREFIX = '/v2/'
+API_PREFIX = '/v2/ws/'
 OBJECT_COUNT = 5
 
 

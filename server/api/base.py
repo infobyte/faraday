@@ -98,7 +98,7 @@ class GenericWorkspacedView(GenericView):
     passed in the URL"""
 
     # Default attributes
-    route_prefix = '/v2/<workspace_name>/'
+    route_prefix = '/v2/ws/<workspace_name>/'
     base_args = ['workspace_name']  # Required to prevent double usage of <workspace_name>
     unique_fields = []  # Fields unique together with workspace_id
 
